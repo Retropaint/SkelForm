@@ -12,6 +12,8 @@ use winit::{
     window::{Theme, Window},
 };
 
+mod ui;
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct Vertex {
@@ -211,18 +213,7 @@ impl ApplicationHandler for App {
                 let input = gui_state.take_egui_input(window);
                 gui_state.egui_ctx().begin_pass(input);
 
-                #[cfg(not(target_arch = "wasm32"))]
-                let title = "Rust/Wgpu";
-
-                #[cfg(feature = "webgpu")]
-                let title = "Rust/Wgpu/Webgpu";
-
-                #[cfg(feature = "webgl")]
-                let title = "Rust/Wgpu/Webgl";
-
-                egui::Window::new(title).show(gui_state.egui_ctx(), |ui| {
-                    //ui.checkbox(&mut self.panels_visible, "Show Panels");
-                });
+                ui::draw_ui(gui_state.egui_ctx());
 
                 let egui_winit::egui::FullOutput {
                     textures_delta,
