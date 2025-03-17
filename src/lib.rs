@@ -225,7 +225,7 @@ impl ApplicationHandler for App {
                 log::info!("Resizing renderer surface to: ({width}, {height})");
                 renderer.resize(width, height);
                 self.last_size = (width, height);
-                self.skelements.window = [self.last_size.0, self.last_size.1];
+                self.skelements.window = vec2!{self.last_size.0 as f32, self.last_size.1 as f32};
             }
             WindowEvent::CloseRequested => {
                 log::info!("Close requested. Exiting...");
@@ -235,7 +235,7 @@ impl ApplicationHandler for App {
                 device_id,
                 position,
             } => {
-                self.skelements.mouse = [position.x as f32, position.y as f32];
+                self.skelements.mouse = vec2!{position.x as f32, position.y as f32};
             }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
@@ -266,7 +266,12 @@ impl ApplicationHandler for App {
                     }
                 };
 
-                renderer.render_frame(screen_descriptor, paint_jobs, textures_delta, &self.skelements);
+                renderer.render_frame(
+                    screen_descriptor,
+                    paint_jobs,
+                    textures_delta,
+                    &self.skelements,
+                );
             }
             _ => (),
         }
@@ -429,7 +434,7 @@ impl Renderer {
         screen_descriptor: egui_wgpu::ScreenDescriptor,
         paint_jobs: Vec<egui::epaint::ClippedPrimitive>,
         textures_delta: egui::TexturesDelta,
-        skelements: &Skelements
+        skelements: &Skelements,
     ) {
         for (id, image_delta) in &textures_delta.set {
             self.egui_renderer
@@ -511,8 +516,7 @@ impl Renderer {
         render_pass.set_bind_group(0, &bind_group, &[]);
 
         let mut vertices = VERTICES.clone();
-        vertices[0].position[0] = -1. + ((skelements.mouse[0] / skelements.window[0] as f32) * 2.);
-        vertices[0].position[1] = -(-1. + ((skelements.mouse[1] / skelements.window[1] as f32) * 2.));
+        vertices[0].position = utils::screen_to_world_space(skelements.mouse, skelements.window);
         let vertex_buffer = wgpu::util::DeviceExt::create_buffer_init(
             &self.gpu.device,
             &wgpu::util::BufferInitDescriptor {
