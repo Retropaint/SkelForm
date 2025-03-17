@@ -13,30 +13,47 @@ use winit::{
 };
 
 mod ui;
+mod utils;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+struct Vec2 {
+    pub x: f32,
+    pub y: f32,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 struct Vertex {
-    position: [f32; 2],
-    color: [f32; 2],
+    position: Vec2,
+    uv: Vec2,
+}
+
+macro_rules! vec2 {
+    ($x_var:expr, $y_var:expr) => {
+        Vec2 {
+            x: $x_var,
+            y: $y_var,
+        }
+    };
 }
 
 const VERTICES: [Vertex; 4] = [
     Vertex {
-        position: [0.5, 0.5],
-        color: [1., 0.],
+        position: vec2! {0.5, 0.5},
+        uv: vec2! {1., 0.},
     },
     Vertex {
-        position: [-0.5, -0.5],
-        color: [0., 1.],
+        position: vec2! {-0.5, -0.5},
+        uv: vec2! {0., 1.},
     },
     Vertex {
-        position: [-0.5, 0.5],
-        color: [0., 0.],
+        position: vec2! {-0.5, 0.5},
+        uv: vec2! {0., 0.},
     },
     Vertex {
-        position: [0.5, -0.5],
-        color: [1., 1.],
+        position: vec2! {0.5, -0.5},
+        uv: vec2! {1., 1.},
     },
 ];
 
@@ -51,13 +68,13 @@ pub struct App {
     #[cfg(target_arch = "wasm32")]
     renderer_receiver: Option<futures::channel::oneshot::Receiver<Renderer>>,
     last_size: (u32, u32),
-    skelements: Skelements
+    skelements: Skelements,
 }
 
 #[derive(Default)]
 pub struct Skelements {
-    pub mouse: [f32; 2],
-    pub window: [u32; 2]
+    pub mouse: Vec2,
+    pub window: Vec2,
 }
 
 impl ApplicationHandler for App {
