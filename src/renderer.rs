@@ -94,9 +94,9 @@ pub fn create_texture(
     let rgba;
 
     if img_path == "" {
-        // create 1-pixel image if path is empty
+        // create solid magenta image if path is empty
         dimensions = (1, 1);
-        diffuse_rgba = &[0xf, 0xf, 0xf, 0xf];
+        diffuse_rgba = &[255, 0, 255, 255];
     } else {
         let bytes = fs::read(img_path);
         diffuse_image = Ok(image::load_from_memory(&bytes.unwrap()).unwrap());
