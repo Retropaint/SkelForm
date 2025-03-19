@@ -1,10 +1,8 @@
-use image::{DynamicImage, ImageResult, RgbaImage};
-use utils::screen_to_world_space;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
-use wgpu::{BindGroup, BindGroupLayout, InstanceDescriptor};
+use wgpu::{BindGroupLayout, InstanceDescriptor};
 
-use std::{fs, sync::Arc};
+use std::sync::Arc;
 use web_time::Instant;
 use winit::{
     application::ApplicationHandler,
@@ -13,12 +11,13 @@ use winit::{
     window::{Theme, Window},
 };
 
+mod renderer;
 mod ui;
 mod utils;
 
 #[repr(C)]
 #[derive(Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vec2 {
+pub struct Vec2 {
     pub x: f32,
     pub y: f32,
 }
@@ -38,27 +37,6 @@ macro_rules! vec2 {
         }
     };
 }
-
-const VERTICES: [Vertex; 4] = [
-    Vertex {
-        position: vec2! {0.5, 0.5},
-        uv: vec2! {1., 0.},
-    },
-    Vertex {
-        position: vec2! {-0.5, -0.5},
-        uv: vec2! {0., 1.},
-    },
-    Vertex {
-        position: vec2! {-0.5, 0.5},
-        uv: vec2! {0., 0.},
-    },
-    Vertex {
-        position: vec2! {0.5, -0.5},
-        uv: vec2! {1., 1.},
-    },
-];
-
-const INDICES: [u32; 6] = [0, 1, 2, 0, 1, 3];
 
 #[derive(Default)]
 pub struct App {
@@ -226,17 +204,17 @@ impl ApplicationHandler for App {
                 log::info!("Resizing renderer surface to: ({width}, {height})");
                 renderer.resize(width, height);
                 self.last_size = (width, height);
-                self.skelements.window = vec2!{self.last_size.0 as f32, self.last_size.1 as f32};
+                self.skelements.window = vec2! {self.last_size.0 as f32, self.last_size.1 as f32};
             }
             WindowEvent::CloseRequested => {
                 log::info!("Close requested. Exiting...");
                 event_loop.exit();
             }
             WindowEvent::CursorMoved {
-                device_id,
+                device_id: _,
                 position,
             } => {
-                self.skelements.mouse = vec2!{position.x as f32, position.y as f32};
+                self.skelements.mouse = vec2! {position.x as f32, position.y as f32};
             }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
@@ -245,6 +223,7 @@ impl ApplicationHandler for App {
                 let input = gui_state.take_egui_input(window);
                 gui_state.egui_ctx().begin_pass(input);
 
+                // ui logic handled in ui.rs
                 ui::draw_ui(gui_state.egui_ctx());
 
                 let egui_winit::egui::FullOutput {
@@ -267,7 +246,12 @@ impl ApplicationHandler for App {
                     }
                 };
 
-                renderer.render_frame(screen_descriptor, paint_jobs, textures_delta, &self.skelements);
+                renderer.render_frame(
+                    screen_descriptor,
+                    paint_jobs,
+                    textures_delta,
+                    &self.skelements,
+                );
             }
             _ => (),
         }
@@ -343,94 +327,12 @@ impl Renderer {
         self.depth_texture_view = self.gpu.create_depth_texture(width, height);
     }
 
-    fn create_texture(&self, img_path: &str, bind_group_layout: BindGroupLayout) -> BindGroup {
-        let diffuse_image: ImageResult<DynamicImage>;
-        let diffuse_rgba: RgbaImage;
-        let dimensions: (u32, u32);
-
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let bytes = fs::read(img_path);
-            diffuse_image = Ok(image::load_from_memory(&bytes.unwrap()).unwrap());
-            dimensions = diffuse_image.as_ref().unwrap().dimensions();
-            diffuse_rgba = diffuse_image.unwrap().to_rgba8();
-        }
-
-        use image::GenericImageView;
-
-        let tex_size = wgpu::Extent3d {
-            width: dimensions.0,
-            height: dimensions.1,
-            depth_or_array_layers: 1,
-        };
-        let tex = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
-            size: tex_size,
-            mip_level_count: 1, // We'll talk about this a little later
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8UnormSrgb,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-            label: Some("diffuse_texture"),
-            view_formats: &[],
-        });
-        self.gpu.queue.write_texture(
-            // Tells wgpu where to copy the pixel data
-            wgpu::TexelCopyTextureInfo {
-                texture: &tex,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            // The actual pixel data
-            &diffuse_rgba,
-            // The layout of the texture
-            wgpu::TexelCopyBufferLayout {
-                offset: 0,
-                bytes_per_row: Some(4 * dimensions.0),
-                rows_per_image: Some(dimensions.1),
-            },
-            tex_size,
-        );
-
-        let tex_view = tex.create_view(&wgpu::TextureViewDescriptor::default());
-
-        let sampler = self.gpu.device.create_sampler(&wgpu::SamplerDescriptor {
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Nearest,
-            mipmap_filter: wgpu::FilterMode::Nearest,
-            ..Default::default()
-        });
-
-        let bind_group = self
-            .gpu
-            .device
-            .create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &bind_group_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: wgpu::BindingResource::TextureView(&tex_view),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::Sampler(&sampler),
-                    },
-                ],
-                label: Some("diffuse_bind_group"),
-            });
-
-        bind_group
-    }
-
     pub fn render_frame(
         &mut self,
         screen_descriptor: egui_wgpu::ScreenDescriptor,
         paint_jobs: Vec<egui::epaint::ClippedPrimitive>,
         textures_delta: egui::TexturesDelta,
-        skelements: &Skelements
+        skelements: &Skelements,
     ) {
         for (id, image_delta) in &textures_delta.set {
             self.egui_renderer
@@ -506,27 +408,10 @@ impl Renderer {
             occlusion_query_set: None,
         });
 
-        let bind_group = self.create_texture("./gopher.png", self.bind_group_layout.clone());
-
         render_pass.set_pipeline(&self.scene.pipeline);
-        render_pass.set_bind_group(0, &bind_group, &[]);
 
-        let mut vertices = VERTICES.clone();
-        vertices[0].position = screen_to_world_space(skelements.mouse, skelements.window);
-        let vertex_buffer = wgpu::util::DeviceExt::create_buffer_init(
-            &self.gpu.device,
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(&vertices),
-                usage: wgpu::BufferUsages::VERTEX,
-            },
-        );
-
-        render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-        render_pass.set_index_buffer(self.scene.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-
-        render_pass.draw_indexed(0..3, 0, 0..1);
-        render_pass.draw_indexed(3..6, 0, 0..1);
+        // core rendering logic handled in renderer.rs
+        renderer::render(&mut render_pass, &self.gpu.queue, &self.gpu.device, &skelements, &self.bind_group_layout);
 
         self.egui_renderer.render(
             &mut render_pass.forget_lifetime(),
@@ -660,8 +545,6 @@ impl Gpu {
 }
 
 struct Scene {
-    pub vertex_buffer: wgpu::Buffer,
-    pub index_buffer: wgpu::Buffer,
     pub pipeline: wgpu::RenderPipeline,
 }
 
@@ -671,29 +554,10 @@ impl Scene {
         surface_format: wgpu::TextureFormat,
         bind_group_layout: &BindGroupLayout,
     ) -> Self {
-        let vertex_buffer = wgpu::util::DeviceExt::create_buffer_init(
-            device,
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(&VERTICES),
-                usage: wgpu::BufferUsages::VERTEX,
-            },
-        );
-        let index_buffer = wgpu::util::DeviceExt::create_buffer_init(
-            device,
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("index Buffer"),
-                contents: bytemuck::cast_slice(&INDICES),
-                usage: wgpu::BufferUsages::INDEX,
-            },
-        );
-
         let pipeline = Self::create_pipeline(device, surface_format, &bind_group_layout);
 
         Self {
             pipeline,
-            vertex_buffer,
-            index_buffer,
         }
     }
 
