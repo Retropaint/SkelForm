@@ -14,6 +14,7 @@ use winit::{
 mod renderer;
 mod ui;
 mod utils;
+mod shared;
 
 #[repr(C)]
 #[derive(Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -47,13 +48,7 @@ pub struct App {
     #[cfg(target_arch = "wasm32")]
     renderer_receiver: Option<futures::channel::oneshot::Receiver<Renderer>>,
     last_size: (u32, u32),
-    skelements: Skelements,
-}
-
-#[derive(Default)]
-pub struct Skelements {
-    pub mouse: Vec2,
-    pub window: Vec2,
+    shared: shared::Shared,
 }
 
 impl ApplicationHandler for App {
@@ -204,7 +199,7 @@ impl ApplicationHandler for App {
                 log::info!("Resizing renderer surface to: ({width}, {height})");
                 renderer.resize(width, height);
                 self.last_size = (width, height);
-                self.skelements.window = vec2! {self.last_size.0 as f32, self.last_size.1 as f32};
+                self.shared.window = vec2! {self.last_size.0 as f32, self.last_size.1 as f32};
             }
             WindowEvent::CloseRequested => {
                 log::info!("Close requested. Exiting...");
@@ -214,7 +209,7 @@ impl ApplicationHandler for App {
                 device_id: _,
                 position,
             } => {
-                self.skelements.mouse = vec2! {position.x as f32, position.y as f32};
+                self.shared.mouse = vec2! {position.x as f32, position.y as f32};
             }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
@@ -250,7 +245,7 @@ impl ApplicationHandler for App {
                     screen_descriptor,
                     paint_jobs,
                     textures_delta,
-                    &self.skelements,
+                    &mut self.shared,
                 );
             }
             _ => (),
@@ -332,7 +327,7 @@ impl Renderer {
         screen_descriptor: egui_wgpu::ScreenDescriptor,
         paint_jobs: Vec<egui::epaint::ClippedPrimitive>,
         textures_delta: egui::TexturesDelta,
-        skelements: &Skelements,
+        shared: &mut shared::Shared,
     ) {
         for (id, image_delta) in &textures_delta.set {
             self.egui_renderer
@@ -411,7 +406,7 @@ impl Renderer {
         render_pass.set_pipeline(&self.scene.pipeline);
 
         // core rendering logic handled in renderer.rs
-        renderer::render(&mut render_pass, &self.gpu.queue, &self.gpu.device, &skelements, &self.bind_group_layout);
+        renderer::render(&mut render_pass, &self.gpu.queue, &self.gpu.device, shared, &self.bind_group_layout);
 
         self.egui_renderer.render(
             &mut render_pass.forget_lifetime(),
