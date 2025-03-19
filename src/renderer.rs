@@ -1,11 +1,11 @@
 /// This is the core rendering logic, abstracted from the rest of WGPU
+use std::{fs, io::BufRead};
 
-use std::fs;
-
-use image::{DynamicImage, ImageResult, RgbaImage};
+use image::{DynamicImage, EncodableLayout, ImageResult, RgbaImage};
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
-use crate::{utils::screen_to_world_space, Skelements, Vec2, Vertex};
+use crate::{shared::Shared, utils::screen_to_world_space, Vec2, Vertex};
+use image::GenericImageView;
 
 macro_rules! vec2 {
     ($x_var:expr, $y_var:expr) => {
@@ -41,15 +41,22 @@ pub fn render(
     render_pass: &mut RenderPass,
     queue: &Queue,
     device: &Device,
-    skelements: &Skelements,
+    mut shared: &mut Shared,
     bind_group_layout: &BindGroupLayout,
 ) {
-    let bind_group = create_texture(queue, device, "./gopher.png", &bind_group_layout);
+    if shared.bind_groups.len() == 0 {
+        shared.bind_groups.push(create_texture(
+            queue,
+            device,
+            "./gopher.png",
+            &bind_group_layout,
+        ));
+    }
 
-    render_pass.set_bind_group(0, &bind_group, &[]);
+    render_pass.set_bind_group(0, &shared.bind_groups[0], &[]);
 
     let mut vertices = VERTICES.clone();
-    vertices[0].position = screen_to_world_space(skelements.mouse, skelements.window);
+    vertices[0].position = screen_to_world_space(shared.mouse, shared.window);
     let vertex_buffer = wgpu::util::DeviceExt::create_buffer_init(
         device,
         &wgpu::util::BufferInitDescriptor {
@@ -75,25 +82,28 @@ pub fn render(
     render_pass.draw_indexed(3..6, 0, 0..1);
 }
 
-fn create_texture(
+pub fn create_texture(
     queue: &Queue,
     device: &Device,
     img_path: &str,
     bind_group_layout: &BindGroupLayout,
 ) -> BindGroup {
     let diffuse_image: ImageResult<DynamicImage>;
-    let diffuse_rgba: RgbaImage;
+    let diffuse_rgba: &[u8];
     let dimensions: (u32, u32);
+    let rgba;
 
-    #[cfg(not(target_arch = "wasm32"))]
-    {
+    if img_path == "" {
+        // create 1-pixel image if path is empty
+        dimensions = (1, 1);
+        diffuse_rgba = &[0xf, 0xf, 0xf, 0xf];
+    } else {
         let bytes = fs::read(img_path);
         diffuse_image = Ok(image::load_from_memory(&bytes.unwrap()).unwrap());
         dimensions = diffuse_image.as_ref().unwrap().dimensions();
-        diffuse_rgba = diffuse_image.unwrap().to_rgba8();
+        rgba = diffuse_image.unwrap().to_rgba8();
+        diffuse_rgba = rgba.as_bytes();
     }
-
-    use image::GenericImageView;
 
     let tex_size = wgpu::Extent3d {
         width: dimensions.0,
@@ -102,7 +112,7 @@ fn create_texture(
     };
     let tex = device.create_texture(&wgpu::TextureDescriptor {
         size: tex_size,
-        mip_level_count: 1, // We'll talk about this a little later
+        mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
         format: wgpu::TextureFormat::Rgba8UnormSrgb,
@@ -111,16 +121,13 @@ fn create_texture(
         view_formats: &[],
     });
     queue.write_texture(
-        // Tells wgpu where to copy the pixel data
         wgpu::TexelCopyTextureInfo {
             texture: &tex,
             mip_level: 0,
             origin: wgpu::Origin3d::ZERO,
             aspect: wgpu::TextureAspect::All,
         },
-        // The actual pixel data
         &diffuse_rgba,
-        // The layout of the texture
         wgpu::TexelCopyBufferLayout {
             offset: 0,
             bytes_per_row: Some(4 * dimensions.0),
