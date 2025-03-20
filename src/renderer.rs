@@ -1,4 +1,4 @@
-/// This is the core rendering logic, abstracted from the rest of WGPU
+//! Core rendering logic, abstracted from the rest of WGPU
 use std::{fs, io::BufRead};
 
 use image::{DynamicImage, EncodableLayout, ImageResult, RgbaImage};

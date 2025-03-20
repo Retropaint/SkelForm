@@ -11,10 +11,10 @@ use winit::{
     window::{Theme, Window},
 };
 
-mod renderer;
-mod ui;
-mod utils;
-mod shared;
+pub mod renderer;
+pub mod shared;
+pub mod ui;
+pub mod utils;
 
 #[repr(C)]
 #[derive(Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
