@@ -1,5 +1,4 @@
-/// All user interface logic goes here
-/// certain logic may be in renderer.rs, but only if necessary
+//! Core user interface logic
 
 use egui::Context;
 
