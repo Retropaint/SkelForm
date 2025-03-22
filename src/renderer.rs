@@ -1,4 +1,4 @@
-//! Core rendering logic, abstracted from the rest of WGPU
+//! Core rendering logic, abstracted from the rest of WGPU.
 
 use image::EncodableLayout;
 
@@ -53,7 +53,7 @@ const VERTICES: [Vertex; 4] = [
 
 const INDICES: [u32; 6] = [0, 1, 2, 0, 1, 3];
 
-/// The `main` of this module
+/// The `main` of this module.
 pub fn render(
     render_pass: &mut RenderPass,
     queue: &Queue,
@@ -101,7 +101,7 @@ pub fn render(
     render_pass.draw_indexed(3..6, 0, 0..1);
 }
 
-/// Get bind group of a texture
+/// Get bind group of a texture.
 pub fn create_texture(
     img_path: &str,
     queue: &Queue,
