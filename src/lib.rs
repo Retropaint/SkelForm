@@ -219,7 +219,7 @@ impl ApplicationHandler for App {
                 gui_state.egui_ctx().begin_pass(input);
 
                 // ui logic handled in ui.rs
-                ui::draw_ui(gui_state.egui_ctx());
+                ui::draw(gui_state.egui_ctx());
 
                 let egui_winit::egui::FullOutput {
                     textures_delta,
