@@ -1,11 +1,25 @@
 //! Core rendering logic, abstracted from the rest of WGPU
-use std::{fs, io::BufRead};
 
-use image::{DynamicImage, EncodableLayout, ImageResult, RgbaImage};
-use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
+use image::EncodableLayout;
 
 use crate::{shared::Shared, utils::screen_to_world_space, Vec2, Vertex};
-use image::GenericImageView;
+use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
+
+#[cfg(target_arch = "wasm32")]
+mod wasm {
+    pub use crate::utils::load_image_wasm;
+}
+#[cfg(target_arch = "wasm32")]
+use wasm::*;
+
+#[cfg(not(target_arch = "wasm32"))]
+mod native {
+    pub use image::GenericImageView;
+    pub use image::{DynamicImage, ImageBuffer, ImageResult, Rgba};
+    pub use std::fs;
+}
+#[cfg(not(target_arch = "wasm32"))]
+use native::*;
 
 macro_rules! vec2 {
     ($x_var:expr, $y_var:expr) => {
@@ -41,7 +55,7 @@ pub fn render(
     render_pass: &mut RenderPass,
     queue: &Queue,
     device: &Device,
-    mut shared: &mut Shared,
+    shared: &mut Shared,
     bind_group_layout: &BindGroupLayout,
 ) {
     if shared.bind_groups.len() == 0 {
@@ -88,21 +102,36 @@ pub fn create_texture(
     img_path: &str,
     bind_group_layout: &BindGroupLayout,
 ) -> BindGroup {
+    #[cfg(not(target_arch = "wasm32"))]
     let diffuse_image: ImageResult<DynamicImage>;
+    #[cfg(not(target_arch = "wasm32"))]
+    let rgba: ImageBuffer<Rgba<u8>, Vec<u8>>;
+    #[cfg(target_arch = "wasm32")]
+    let rgba: Vec<u8>;
+
     let diffuse_rgba: &[u8];
     let dimensions: (u32, u32);
-    let rgba;
 
     if img_path == "" {
         // create solid magenta image if path is empty
         dimensions = (1, 1);
         diffuse_rgba = &[255, 0, 255, 255];
     } else {
-        let bytes = fs::read(img_path);
-        diffuse_image = Ok(image::load_from_memory(&bytes.unwrap()).unwrap());
-        dimensions = diffuse_image.as_ref().unwrap().dimensions();
-        rgba = diffuse_image.unwrap().to_rgba8();
-        diffuse_rgba = rgba.as_bytes();
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let bytes = fs::read(img_path);
+            diffuse_image = Ok(image::load_from_memory(&bytes.unwrap()).unwrap());
+            dimensions = diffuse_image.as_ref().unwrap().dimensions();
+            rgba = diffuse_image.unwrap().to_rgba8();
+            diffuse_rgba = rgba.as_bytes();
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            let dims: Vec2;
+            (rgba, dims) = load_image_wasm();
+            dimensions = (dims.x as u32, dims.y as u32);
+            diffuse_rgba = rgba.as_bytes();
+        }
     }
 
     let tex_size = wgpu::Extent3d {
