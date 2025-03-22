@@ -1,6 +1,6 @@
-//! Struct for easily-accessible, frequently-shared data
+//! Struct for easily-accessible, frequently-shared data.
 
-use wgpu::{BindGroup, Sampler};
+use wgpu::BindGroup;
 
 use crate::Vec2;
 
