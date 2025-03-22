@@ -5,6 +5,7 @@ use image::EncodableLayout;
 use crate::{shared::Shared, utils::screen_to_world_space, Vec2, Vertex};
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
+// wasm-only imports
 #[cfg(target_arch = "wasm32")]
 mod wasm {
     pub use crate::utils::load_image_wasm;
@@ -12,6 +13,7 @@ mod wasm {
 #[cfg(target_arch = "wasm32")]
 use wasm::*;
 
+// native-only imports
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
     pub use image::GenericImageView;
@@ -59,6 +61,7 @@ pub fn render(
     shared: &mut Shared,
     bind_group_layout: &BindGroupLayout,
 ) {
+    // automatic first bind group for testing
     if shared.bind_groups.len() == 0 {
         shared.bind_groups.push(create_texture(
             "./gopher.png",
@@ -67,9 +70,9 @@ pub fn render(
             &bind_group_layout,
         ));
     }
-
     render_pass.set_bind_group(0, &shared.bind_groups[0], &[]);
 
+    // set up vertices
     let mut vertices = VERTICES.clone();
     vertices[0].position = screen_to_world_space(shared.mouse, shared.window);
     let vertex_buffer = wgpu::util::DeviceExt::create_buffer_init(
@@ -80,7 +83,9 @@ pub fn render(
             usage: wgpu::BufferUsages::VERTEX,
         },
     );
+    render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
 
+    // set up indices
     let index_buffer = wgpu::util::DeviceExt::create_buffer_init(
         device,
         &wgpu::util::BufferInitDescriptor {
@@ -89,10 +94,9 @@ pub fn render(
             usage: wgpu::BufferUsages::INDEX,
         },
     );
-
-    render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
     render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
 
+    // finally, draw!
     render_pass.draw_indexed(0..3, 0, 0..1);
     render_pass.draw_indexed(3..6, 0, 0..1);
 }
@@ -119,6 +123,7 @@ pub fn create_texture(
         dimensions = (1, 1);
         diffuse_rgba = &[255, 0, 255, 255];
     } else {
+        // load image via fs & image crate for native
         #[cfg(not(target_arch = "wasm32"))]
         {
             let bytes = fs::read(img_path);
@@ -127,6 +132,7 @@ pub fn create_texture(
             rgba = diffuse_image.unwrap().to_rgba8();
             diffuse_rgba = rgba.as_bytes();
         }
+        // load image via DOM for WASM
         #[cfg(target_arch = "wasm32")]
         {
             let dims: Vec2;
