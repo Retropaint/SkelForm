@@ -61,10 +61,10 @@ pub fn render(
 ) {
     if shared.bind_groups.len() == 0 {
         shared.bind_groups.push(create_texture(
+            "./gopher.png",
             queue,
             device,
             &bind_group_layout,
-            "./gopher.png",
         ));
     }
 
@@ -97,12 +97,12 @@ pub fn render(
     render_pass.draw_indexed(3..6, 0, 0..1);
 }
 
-/// Return a bind group with 
+/// Get bind group of a texture
 pub fn create_texture(
+    img_path: &str,
     queue: &Queue,
     device: &Device,
     bind_group_layout: &BindGroupLayout,
-    img_path: &str,
 ) -> BindGroup {
     #[cfg(not(target_arch = "wasm32"))]
     let diffuse_image: ImageResult<DynamicImage>;
