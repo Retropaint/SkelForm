@@ -51,6 +51,7 @@ const VERTICES: [Vertex; 4] = [
 
 const INDICES: [u32; 6] = [0, 1, 2, 0, 1, 3];
 
+/// The `main` of this module
 pub fn render(
     render_pass: &mut RenderPass,
     queue: &Queue,
@@ -62,8 +63,8 @@ pub fn render(
         shared.bind_groups.push(create_texture(
             queue,
             device,
-            "./gopher.png",
             &bind_group_layout,
+            "./gopher.png",
         ));
     }
 
@@ -96,11 +97,12 @@ pub fn render(
     render_pass.draw_indexed(3..6, 0, 0..1);
 }
 
+/// Return a bind group with 
 pub fn create_texture(
     queue: &Queue,
     device: &Device,
-    img_path: &str,
     bind_group_layout: &BindGroupLayout,
+    img_path: &str,
 ) -> BindGroup {
     #[cfg(not(target_arch = "wasm32"))]
     let diffuse_image: ImageResult<DynamicImage>;
