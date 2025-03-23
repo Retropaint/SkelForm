@@ -2,7 +2,7 @@
 
 use image::EncodableLayout;
 
-use crate::{shared::Shared, utils::screen_to_world_space, Vec2, Vertex};
+use crate::{shared::Shared, utils, Vec2, Vertex};
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
 // wasm-only imports
@@ -32,26 +32,30 @@ macro_rules! vec2 {
     };
 }
 
-const VERTICES: [Vertex; 4] = [
+const VERTICES: [Vertex; 5] = [
     Vertex {
-        position: vec2! {0.5, 0.5},
+        pos: vec2! {0.5, 0.5},
         uv: vec2! {1., 0.},
     },
     Vertex {
-        position: vec2! {-0.5, -0.5},
+        pos: vec2! {-0.5, -0.5},
         uv: vec2! {0., 1.},
     },
     Vertex {
-        position: vec2! {-0.5, 0.5},
+        pos: vec2! {-0.5, 0.5},
         uv: vec2! {0., 0.},
     },
     Vertex {
-        position: vec2! {0.5, -0.5},
+        pos: vec2! {0.5, -0.5},
+        uv: vec2! {1., 1.},
+    },
+    Vertex {
+        pos: vec2! {0.25, -0.25},
         uv: vec2! {1., 1.},
     },
 ];
 
-const INDICES: [u32; 6] = [0, 1, 2, 0, 1, 3];
+const INDICES: [u32; 9] = [0, 1, 2, 0, 1, 3, 0, 1, 4];
 
 /// The `main` of this module.
 pub fn render(
@@ -61,20 +65,15 @@ pub fn render(
     shared: &mut Shared,
     bind_group_layout: &BindGroupLayout,
 ) {
-    // automatic first bind group for testing
-    if shared.bind_groups.len() == 0 {
-        shared.bind_groups.push(create_texture(
-            "./gopher.png",
-            queue,
-            device,
-            &bind_group_layout,
-        ));
+    if shared.placeholder_bind_group == None {
+        shared.placeholder_bind_group = Some(create_texture("", queue, device, &bind_group_layout));
     }
-    render_pass.set_bind_group(0, &shared.bind_groups[0], &[]);
 
     // set up vertices
-    let mut vertices = VERTICES.clone();
-    vertices[0].position = screen_to_world_space(shared.mouse, shared.window);
+    let vertices = VERTICES.clone();
+
+    // todo: render vertices on the fly via bones
+
     let vertex_buffer = wgpu::util::DeviceExt::create_buffer_init(
         device,
         &wgpu::util::BufferInitDescriptor {
@@ -96,7 +95,15 @@ pub fn render(
     );
     render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
 
+    if utils::in_bounding_box(&shared.mouse, &vertices.to_vec(), &shared.window) {
+        let ferris = create_texture("./ferris.png", queue, device, &bind_group_layout);
+        render_pass.set_bind_group(0, &ferris, &[]);
+        render_pass.draw_indexed(0..3, 0, 0..1);
+        render_pass.draw_indexed(3..6, 0, 0..1);
+    }
+
     // finally, draw!
+    render_pass.set_bind_group(0, &shared.placeholder_bind_group, &[]);
     render_pass.draw_indexed(0..3, 0, 0..1);
     render_pass.draw_indexed(3..6, 0, 0..1);
 }
@@ -152,8 +159,11 @@ pub fn create_texture(
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8UnormSrgb,
-        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+        format: wgpu::TextureFormat::Rgba8Unorm,
+        usage: wgpu::TextureUsages::TEXTURE_BINDING
+            | wgpu::TextureUsages::COPY_DST
+            | wgpu::TextureUsages::COPY_SRC
+            | wgpu::TextureUsages::RENDER_ATTACHMENT,
         label: Some("diffuse_texture"),
         view_formats: &[],
     });
@@ -182,6 +192,7 @@ pub fn create_texture(
         mag_filter: wgpu::FilterMode::Linear,
         min_filter: wgpu::FilterMode::Nearest,
         mipmap_filter: wgpu::FilterMode::Nearest,
+        compare: None,
         ..Default::default()
     });
 
