@@ -11,12 +11,12 @@ use winit::{
     window::{Theme, Window},
 };
 
+pub mod armature_window;
+pub mod bone_window;
 pub mod renderer;
 pub mod shared;
 pub mod ui;
 pub mod utils;
-pub mod armature_window;
-pub mod bone_window;
 
 #[repr(C)]
 #[derive(Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -27,8 +27,8 @@ pub struct Vec2 {
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    position: Vec2,
+pub struct Vertex {
+    pos: Vec2,
     uv: Vec2,
 }
 
@@ -408,7 +408,13 @@ impl Renderer {
         render_pass.set_pipeline(&self.scene.pipeline);
 
         // core rendering logic handled in renderer.rs
-        renderer::render(&mut render_pass, &self.gpu.queue, &self.gpu.device, shared, &self.bind_group_layout);
+        renderer::render(
+            &mut render_pass,
+            &self.gpu.queue,
+            &self.gpu.device,
+            shared,
+            &self.bind_group_layout,
+        );
 
         self.egui_renderer.render(
             &mut render_pass.forget_lifetime(),
@@ -553,9 +559,7 @@ impl Scene {
     ) -> Self {
         let pipeline = Self::create_pipeline(device, surface_format, &bind_group_layout);
 
-        Self {
-            pipeline,
-        }
+        Self { pipeline }
     }
 
     fn create_pipeline(
@@ -603,7 +607,7 @@ impl Scene {
             },
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: Renderer::DEPTH_FORMAT,
-                depth_write_enabled: true,
+                depth_write_enabled: false, // disabled for transparency
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
