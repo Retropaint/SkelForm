@@ -1,8 +1,10 @@
+use image::{ImageBuffer, ImageReader, Rgba};
+use shared::*;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
-use wgpu::{BindGroupLayout, InstanceDescriptor};
+use wgpu::{BindGroupLayout, Device, InstanceDescriptor, Queue};
 
-use std::sync::Arc;
+use std::{fs, sync::Arc};
 use web_time::Instant;
 use winit::{
     application::ApplicationHandler,
@@ -168,6 +170,12 @@ impl ApplicationHandler for App {
             }
         }
 
+        read_temp_file(
+            &mut self.shared,
+            &self.renderer.as_ref().unwrap().gpu.queue,
+            &self.renderer.as_ref().unwrap().gpu.device,
+            &self.renderer.as_ref().unwrap().bind_group_layout,
+        );
         let (Some(gui_state), Some(renderer), Some(window), Some(last_render_time)) = (
             self.gui_state.as_mut(),
             self.renderer.as_mut(),
@@ -630,5 +638,54 @@ impl Scene {
             multiview: None,
             cache: None,
         })
+    }
+}
+
+/// read temporary files created from file dialogs
+fn read_temp_file(
+    shared: &mut Shared,
+    queue: &Queue,
+    device: &Device,
+    bind_group_layout: &BindGroupLayout,
+) {
+    if !fs::exists(".skelform_img_path").unwrap() {
+        return;
+    }
+
+    // delete files if selected bone is invalid
+    if shared.armature.bones.len() == 0 || shared.selected_bone > shared.armature.bones.len() - 1 {
+        del_temp_files();
+        return;
+    }
+
+    let img_path = fs::read_to_string(".skelform_img_path").unwrap();
+    if img_path == "" {
+        del_temp_files();
+        return;
+    }
+
+    shared.bind_groups.push(renderer::create_texture(
+        &img_path,
+        &mut shared.armature.textures,
+        queue,
+        device,
+        bind_group_layout,
+    ));
+
+    shared.armature.bones[shared.selected_bone].tex_idx = shared.armature.textures.len() - 1;
+
+    del_temp_files();
+}
+
+fn del_temp_files() {
+    #[rustfmt::skip]
+    let files = [
+        ".skelform_img_path", 
+        ".skelform_bone_idx"
+    ];
+    for f in files {
+        if fs::exists(f).unwrap() {
+            fs::remove_file(f).unwrap();
+        }
     }
 }

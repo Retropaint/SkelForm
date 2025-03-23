@@ -2,7 +2,10 @@
 
 use image::EncodableLayout;
 
-use crate::{shared::Shared, utils, Vec2, Vertex};
+use crate::{
+    shared::{Armature, Bone, Shared},
+    utils, Vec2, Vertex,
+};
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
 // wasm-only imports
@@ -32,31 +35,6 @@ macro_rules! vec2 {
     };
 }
 
-const VERTICES: [Vertex; 5] = [
-    Vertex {
-        pos: vec2! {0.5, 0.5},
-        uv: vec2! {1., 0.},
-    },
-    Vertex {
-        pos: vec2! {-0.5, -0.5},
-        uv: vec2! {0., 1.},
-    },
-    Vertex {
-        pos: vec2! {-0.5, 0.5},
-        uv: vec2! {0., 0.},
-    },
-    Vertex {
-        pos: vec2! {0.5, -0.5},
-        uv: vec2! {1., 1.},
-    },
-    Vertex {
-        pos: vec2! {0.25, -0.25},
-        uv: vec2! {1., 1.},
-    },
-];
-
-const INDICES: [u32; 9] = [0, 1, 2, 0, 1, 3, 0, 1, 4];
-
 /// The `main` of this module.
 pub fn render(
     render_pass: &mut RenderPass,
@@ -65,52 +43,27 @@ pub fn render(
     shared: &mut Shared,
     bind_group_layout: &BindGroupLayout,
 ) {
-    if shared.placeholder_bind_group == None {
-        shared.placeholder_bind_group = Some(create_texture("", queue, device, &bind_group_layout));
+    for b in &shared.armature.bones {
+        if b.tex_idx == usize::MAX {
+            continue;
+        }
+        let verts = rect_verts(&shared.armature, &b);
+        render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx], &[]);
+        render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
+        render_pass.set_index_buffer(
+            index_buffer([0, 1, 2, 0, 1, 3].to_vec(), &device).slice(..),
+            wgpu::IndexFormat::Uint32,
+        );
+        render_pass.draw_indexed(0..6, 0, 0..1);
+        if utils::in_bounding_box(&shared.mouse, &verts, &shared.window) {}
     }
 
-    // set up vertices
-    let vertices = VERTICES.clone();
-
-    // todo: render vertices on the fly via bones
-
-    let vertex_buffer = wgpu::util::DeviceExt::create_buffer_init(
-        device,
-        &wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(&vertices),
-            usage: wgpu::BufferUsages::VERTEX,
-        },
-    );
-    render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-
-    // set up indices
-    let index_buffer = wgpu::util::DeviceExt::create_buffer_init(
-        device,
-        &wgpu::util::BufferInitDescriptor {
-            label: Some("index Buffer"),
-            contents: bytemuck::cast_slice(&INDICES),
-            usage: wgpu::BufferUsages::INDEX,
-        },
-    );
-    render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-
-    if utils::in_bounding_box(&shared.mouse, &vertices.to_vec(), &shared.window) {
-        let ferris = create_texture("./ferris.png", queue, device, &bind_group_layout);
-        render_pass.set_bind_group(0, &ferris, &[]);
-        render_pass.draw_indexed(0..3, 0, 0..1);
-        render_pass.draw_indexed(3..6, 0, 0..1);
-    }
-
-    // finally, draw!
-    render_pass.set_bind_group(0, &shared.placeholder_bind_group, &[]);
-    render_pass.draw_indexed(0..3, 0, 0..1);
-    render_pass.draw_indexed(3..6, 0, 0..1);
 }
 
 /// Get bind group of a texture.
 pub fn create_texture(
     img_path: &str,
+    textures: &mut Vec<crate::shared::Texture>,
     queue: &Queue,
     device: &Device,
     bind_group_layout: &BindGroupLayout,
@@ -148,6 +101,12 @@ pub fn create_texture(
             diffuse_rgba = rgba.as_bytes();
         }
     }
+
+    // add to shared textures
+    textures.push(crate::Texture {
+        size: vec2!(dimensions.0 as f32, dimensions.1 as f32),
+        pixels: diffuse_rgba.to_vec(),
+    });
 
     let tex_size = wgpu::Extent3d {
         width: dimensions.0,
@@ -212,4 +171,53 @@ pub fn create_texture(
     });
 
     bind_group
+}
+
+fn index_buffer(indices: Vec<u32>, device: &Device) -> wgpu::Buffer {
+    wgpu::util::DeviceExt::create_buffer_init(
+        device,
+        &wgpu::util::BufferInitDescriptor {
+            label: Some("index Buffer"),
+            contents: bytemuck::cast_slice(&indices),
+            usage: wgpu::BufferUsages::INDEX,
+        },
+    )
+}
+
+fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
+    wgpu::util::DeviceExt::create_buffer_init(
+        device,
+        &wgpu::util::BufferInitDescriptor {
+            label: Some("index Buffer"),
+            contents: bytemuck::cast_slice(&vertices),
+            usage: wgpu::BufferUsages::VERTEX,
+        },
+    )
+}
+
+fn rect_verts(armature: &Armature, bone: &Bone) -> Vec<Vertex> {
+    let vertices: Vec<Vertex> = vec![
+        Vertex {
+            pos: vec2! {0.5, 0.5},
+            uv: vec2! {1., 0.},
+        },
+        Vertex {
+            pos: vec2! {-0.5, -0.5},
+            uv: vec2! {0., 1.},
+        },
+        Vertex {
+            pos: vec2! {-0.5, 0.5},
+            uv: vec2! {0., 0.},
+        },
+        Vertex {
+            pos: vec2! {0.5, -0.5},
+            uv: vec2! {1., 1.},
+        },
+        Vertex {
+            pos: vec2! {0.25, -0.25},
+            uv: vec2! {1., 1.},
+        },
+    ];
+
+    vertices
 }

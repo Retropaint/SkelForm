@@ -16,7 +16,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             // bone options
             ui.horizontal(|ui| {
                 if ui.button("New Bone").clicked() {
-                    create_bone(bones);
+                    new_bone(bones);
                 }
                 let drag_name = if shared.dragging { "Stay" } else { "Drag" };
                 if ui.button(drag_name).clicked() {
@@ -77,12 +77,13 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         });
 }
 
-pub fn create_bone(bones: &mut Vec<Bone>) {
+pub fn new_bone(bones: &mut Vec<Bone>) {
     bones.push(Bone {
         name: "bone".to_string() + &bones.len().to_string(),
         parent_id: -1,
         id: generate_id(&bones),
         scale: Vec2 { x: 1., y: 1. },
+        tex_idx: usize::MAX,
         ..Default::default()
     });
 }

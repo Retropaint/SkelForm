@@ -29,7 +29,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             });
             ui.horizontal(|ui| {
                 ui.label("Texture:");
-                #[cfg(target_arch = "wasm32")]
+                let bone_idx = shared.selected_bone;
+                #[cfg(not(target_arch = "wasm32"))]
                 if ui.button("Get Image").clicked() {
                     open_file_dialog(bone_idx);
                 };
@@ -75,7 +76,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 fn open_file_dialog(bone_idx: usize) {
     #[cfg(not(target_arch = "wasm32"))]
     thread::spawn(move || {
-        let task = rfd::FileDialog::new().pick_file();
+        let task = rfd::FileDialog::new().add_filter("image", &["png", "jpg"]).pick_file();
         let mut img_path = File::create(".skelform_img_path").unwrap();
         img_path
             .write_all(task.unwrap().as_path().to_str().unwrap().as_bytes())
