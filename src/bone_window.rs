@@ -12,8 +12,10 @@ use std::io::Write;
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     egui::Window::new("Bone")
         .movable(false)
-        .anchor(Align2::RIGHT_TOP, Vec2 { x: -20., y: 35. })
+        .anchor(Align2::RIGHT_TOP, Vec2 { x: 0., y: 0. })
         .max_width(150.)
+        .collapsible(false)
+        .resizable(false)
         .show(egui_ctx, |ui| {
             let mut bone: Bone = Bone::default();
             if shared.selected_bone != usize::MAX {

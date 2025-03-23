@@ -9,6 +9,9 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
     egui::Window::new("Armature")
         .movable(false)
+        .anchor(Align2::LEFT_TOP, egui::Vec2{x: 0., y: 0.})
+        .collapsible(false)
+        .resizable(false)
         .show(egui_ctx, |ui| {
             // bone options
             ui.horizontal(|ui| {
