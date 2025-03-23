@@ -29,7 +29,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             });
             ui.horizontal(|ui| {
                 ui.label("Texture:");
-                let bone_idx = shared.selected_bone;
                 #[cfg(target_arch = "wasm32")]
                 if ui.button("Get Image").clicked() {
                     open_file_dialog(bone_idx);

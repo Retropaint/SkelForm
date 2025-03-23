@@ -1,6 +1,6 @@
 use egui::*;
 
-use crate::{shared::Shared, utils::screen_to_world_space, Vec2, Vertex};
+use crate::{shared::Shared, Vec2};
 
 use crate::shared::*;
 
@@ -82,10 +82,6 @@ pub fn create_bone(bones: &mut Vec<Bone>) {
         name: "bone".to_string() + &bones.len().to_string(),
         parent_id: -1,
         id: generate_id(&bones),
-        tex: BoneTexture {
-            idx: usize::MAX,
-            ..BoneTexture::default()
-        },
         scale: Vec2 { x: 1., y: 1. },
         ..Default::default()
     });
