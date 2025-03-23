@@ -2,15 +2,22 @@
 
 use egui::Context;
 
-use crate::{armature_window, bone_window};
 use crate::shared::Shared;
+use crate::{armature_window, bone_window};
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
-    egui::Window::new("lol").show(context, |ui| {
-        ui.label("test");
-    });
+    styling(context);
 
     armature_window::draw(context, shared);
     bone_window::draw(context, shared);
+}
+
+pub fn styling(context: &Context) {
+    let mut visuals = egui::Visuals::dark();
+
+    // remove rounded corners on windows
+    visuals.window_corner_radius = egui::CornerRadius::ZERO;
+
+    context.set_visuals(visuals);
 }
