@@ -15,6 +15,8 @@ pub mod renderer;
 pub mod shared;
 pub mod ui;
 pub mod utils;
+pub mod armature_window;
+pub mod bone_window;
 
 #[repr(C)]
 #[derive(Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -48,7 +50,7 @@ pub struct App {
     #[cfg(target_arch = "wasm32")]
     renderer_receiver: Option<futures::channel::oneshot::Receiver<Renderer>>,
     last_size: (u32, u32),
-    shared: shared::Shared,
+    pub shared: shared::Shared,
 }
 
 impl ApplicationHandler for App {
@@ -219,7 +221,7 @@ impl ApplicationHandler for App {
                 gui_state.egui_ctx().begin_pass(input);
 
                 // ui logic handled in ui.rs
-                ui::draw(gui_state.egui_ctx());
+                ui::draw(gui_state.egui_ctx(), &mut self.shared);
 
                 let egui_winit::egui::FullOutput {
                     textures_delta,
