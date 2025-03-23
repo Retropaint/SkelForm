@@ -19,6 +19,7 @@ nalgebra-glm = { version = "0.19.0", features = [
     "convert-bytemuck",
     "serde-serialize",
 ] }
+rfd = "0.15.3"
 
 web-sys = { version = "0.3.77", features = ["Window", "Document", "HtmlImageElement", "CanvasRenderingContext2d", "HtmlCanvasElement", "ImageData"] }
 web-time = "1.1.0"
