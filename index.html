@@ -29,19 +29,62 @@
 
             .main-canvas {
                 display: block;
+                z-index: 1;
+            }
+
+            .resolution-message {
+                position: absolute;
+                z-index: 0;
+                margin-left: 20px;
+            }
+
+            .file-dialog {
+                position: absolute; 
+                width: 100%; 
+                height: 100%; 
+                background: rgb(0, 0, 0, 0.25); 
+                visibility: hidden;
+                z-index: 2;
             }
         </style>
     </head>
 
     <body>
+        <div id="file-dialog" class="file-dialog">
+            <div style="position: absolute; top: 50%; left: 50%">
+                <input type="file" accept="image/jpeg, image/png" onchange="toggleFileDialog(false); loadImage(event)"/>
+            </div>
+        </div>
+
+        <p class="resolution-message">If you see this message, please refresh this page. <br> If it persists, please adjust the browser zoom level or adjust your desktop resolution.</p>
         <link data-trunk rel="rust" href="Cargo.toml" data-target-name="skeller_app" />
         <div class="root">
             <canvas class="main-canvas" id="canvas"></canvas>
         </div>
 
-        <img src="../gopher.png" id="last-image" />
+        <img src="" id="last-image" />
+
+        <a href="#" id="select_logo">Select Logo</a> <input type="file" id="logo">
 
         <script>
+            var img = document.getElementById("last-image");
+            function toggleFileDialog(open) {
+                let str = open ? "visible" : "hidden";
+                document.getElementById("file-dialog").style.visibility = str;
+            }
+
+            function loadImage(event) {
+                var reader = new FileReader();
+                reader.onload = function(event) {
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(event.target.files[0]);
+            }
+
+            function removeImage() {
+                img.src = "";               
+            }
+        
             function resizeCanvas() {
                 const canvas = document.getElementById("canvas");
                 canvas.width = window.innerWidth;

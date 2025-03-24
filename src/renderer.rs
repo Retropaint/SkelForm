@@ -4,7 +4,7 @@ use image::EncodableLayout;
 
 use crate::{
     shared::{Armature, Bone, Shared},
-    utils, Vec2, Vertex,
+    utils, vec2, Vec2, Vertex,
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
@@ -16,32 +16,11 @@ mod wasm {
 #[cfg(target_arch = "wasm32")]
 use wasm::*;
 
-// native-only imports
-#[cfg(not(target_arch = "wasm32"))]
-mod native {
-    pub use image::GenericImageView;
-    pub use image::{DynamicImage, ImageBuffer, ImageResult, Rgba};
-    pub use std::fs;
-}
-#[cfg(not(target_arch = "wasm32"))]
-use native::*;
-
-macro_rules! vec2 {
-    ($x_var:expr, $y_var:expr) => {
-        Vec2 {
-            x: $x_var,
-            y: $y_var,
-        }
-    };
-}
-
 /// The `main` of this module.
 pub fn render(
     render_pass: &mut RenderPass,
-    queue: &Queue,
     device: &Device,
     shared: &mut Shared,
-    bind_group_layout: &BindGroupLayout,
 ) {
     for b in &shared.armature.bones {
         if b.tex_idx == usize::MAX {
@@ -57,60 +36,26 @@ pub fn render(
         render_pass.draw_indexed(0..6, 0, 0..1);
         if utils::in_bounding_box(&shared.mouse, &verts, &shared.window) {}
     }
-
 }
 
 /// Get bind group of a texture.
 pub fn create_texture(
-    img_path: &str,
+    pixels: Vec<u8>,
+    dimensions: Vec2,
     textures: &mut Vec<crate::shared::Texture>,
     queue: &Queue,
     device: &Device,
     bind_group_layout: &BindGroupLayout,
 ) -> BindGroup {
-    #[cfg(not(target_arch = "wasm32"))]
-    let diffuse_image: ImageResult<DynamicImage>;
-    #[cfg(not(target_arch = "wasm32"))]
-    let rgba: ImageBuffer<Rgba<u8>, Vec<u8>>;
-    #[cfg(target_arch = "wasm32")]
-    let rgba: Vec<u8>;
-
-    let diffuse_rgba: &[u8];
-    let dimensions: (u32, u32);
-
-    if img_path == "" {
-        // create solid magenta image if path is empty
-        dimensions = (1, 1);
-        diffuse_rgba = &[255, 0, 255, 255];
-    } else {
-        // load image via fs & image crate for native
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let bytes = fs::read(img_path);
-            diffuse_image = Ok(image::load_from_memory(&bytes.unwrap()).unwrap());
-            dimensions = diffuse_image.as_ref().unwrap().dimensions();
-            rgba = diffuse_image.unwrap().to_rgba8();
-            diffuse_rgba = rgba.as_bytes();
-        }
-        // load image via DOM for WASM
-        #[cfg(target_arch = "wasm32")]
-        {
-            let dims: Vec2;
-            (rgba, dims) = load_image_wasm();
-            dimensions = (dims.x as u32, dims.y as u32);
-            diffuse_rgba = rgba.as_bytes();
-        }
-    }
-
     // add to shared textures
     textures.push(crate::Texture {
-        size: vec2!(dimensions.0 as f32, dimensions.1 as f32),
-        pixels: diffuse_rgba.to_vec(),
+        size: dimensions,
+        pixels: pixels.to_vec(),
     });
 
     let tex_size = wgpu::Extent3d {
-        width: dimensions.0,
-        height: dimensions.1,
+        width: dimensions.x as u32,
+        height: dimensions.y as u32,
         depth_or_array_layers: 1,
     };
     let tex = device.create_texture(&wgpu::TextureDescriptor {
@@ -133,11 +78,11 @@ pub fn create_texture(
             origin: wgpu::Origin3d::ZERO,
             aspect: wgpu::TextureAspect::All,
         },
-        &diffuse_rgba,
+        &pixels,
         wgpu::TexelCopyBufferLayout {
             offset: 0,
-            bytes_per_row: Some(4 * dimensions.0),
-            rows_per_image: Some(dimensions.1),
+            bytes_per_row: Some(4 * dimensions.x as u32),
+            rows_per_image: Some(dimensions.y as u32),
         },
         tex_size,
     );
