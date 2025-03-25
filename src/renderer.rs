@@ -13,13 +13,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if b.tex_idx == usize::MAX {
             continue;
         }
-        if shared.mouse_left < 2 {
-            let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
-            shared.mouse_bone_offset = vec2! {b.pos.x - mouse_world.x, b.pos.y - mouse_world.y};
-        }
-        if shared.selected_bone == i && shared.mouse_left > 0 {
-            let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
-            b.pos = vec2! { mouse_world.x + shared.mouse_bone_offset.x, mouse_world.y + shared.mouse_bone_offset.y };
+        if shared.selected_bone == i {
+            if shared.mouse_left < 2 {
+                // get distance between mouse and bone
+                let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
+                shared.mouse_bone_offset = vec2! {b.pos.x - mouse_world.x, b.pos.y - mouse_world.y};
+            } else {
+                // move bone around with mouse, with their distance as the offset
+                let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
+                b.pos = vec2! { mouse_world.x + shared.mouse_bone_offset.x, mouse_world.y + shared.mouse_bone_offset.y };
+            }
         }
         let verts = rect_verts(&b);
         render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx], &[]);
@@ -29,7 +32,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             wgpu::IndexFormat::Uint32,
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
-        if utils::in_bounding_box(&shared.mouse, &verts, &shared.window) {}
         i += 1;
     }
 }
@@ -43,6 +45,7 @@ pub fn create_texture(
     device: &Device,
     bind_group_layout: &BindGroupLayout,
 ) -> BindGroup {
+    println!("test");
     // add to shared textures
     textures.push(crate::Texture {
         size: dimensions,
@@ -63,8 +66,7 @@ pub fn create_texture(
         usage: wgpu::TextureUsages::TEXTURE_BINDING
             | wgpu::TextureUsages::COPY_DST
             | wgpu::TextureUsages::COPY_SRC
-            | wgpu::TextureUsages::RENDER_ATTACHMENT,
-        label: Some("diffuse_texture"),
+            | wgpu::TextureUsages::RENDER_ATTACHMENT, label: Some("diffuse_texture"),
         view_formats: &[],
     });
     queue.write_texture(
