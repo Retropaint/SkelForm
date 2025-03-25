@@ -41,6 +41,11 @@ pub struct Shared {
     pub armature: Armature,
     pub bind_groups: Vec<BindGroup>,
 
+    pub mouse_bone_offset: Vec2,
+
+    /// how long the left click has been held for
+    pub mouse_left: i32,
+
     /// useful if you don't want to provide an actual bind group during testing
     pub placeholder_bind_group: Option<BindGroup>,
 }

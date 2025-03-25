@@ -7,16 +7,21 @@ use crate::{
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
 /// The `main` of this module.
-pub fn render(
-    render_pass: &mut RenderPass,
-    device: &Device,
-    shared: &mut Shared,
-) {
-    for b in &shared.armature.bones {
+pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
+    let mut i = 0;
+    for b in &mut shared.armature.bones {
         if b.tex_idx == usize::MAX {
             continue;
         }
-        let verts = rect_verts(&shared.armature, &b);
+        if shared.mouse_left < 2 {
+            let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
+            shared.mouse_bone_offset = vec2! {b.pos.x - mouse_world.x, b.pos.y - mouse_world.y};
+        }
+        if shared.selected_bone == i && shared.mouse_left > 0 {
+            let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
+            b.pos = vec2! { mouse_world.x + shared.mouse_bone_offset.x, mouse_world.y + shared.mouse_bone_offset.y };
+        }
+        let verts = rect_verts(&b);
         render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx], &[]);
         render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
         render_pass.set_index_buffer(
@@ -25,6 +30,7 @@ pub fn render(
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
         if utils::in_bounding_box(&shared.mouse, &verts, &shared.window) {}
+        i += 1;
     }
 }
 
@@ -130,26 +136,26 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
     )
 }
 
-fn rect_verts(_armature: &Armature, _bone: &Bone) -> Vec<Vertex> {
+fn rect_verts(bone: &Bone) -> Vec<Vertex> {
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: vec2! {0.5, 0.5},
+            pos: vec2! {0.5 + bone.pos.x, 0.5 + bone.pos.y},
             uv: vec2! {1., 0.},
         },
         Vertex {
-            pos: vec2! {-0.5, -0.5},
+            pos: vec2! {-0.5 + bone.pos.x, -0.5 + bone.pos.y},
             uv: vec2! {0., 1.},
         },
         Vertex {
-            pos: vec2! {-0.5, 0.5},
+            pos: vec2! {-0.5 + bone.pos.x, 0.5 + bone.pos.y},
             uv: vec2! {0., 0.},
         },
         Vertex {
-            pos: vec2! {0.5, -0.5},
+            pos: vec2! {0.5 + bone.pos.x, -0.5 + bone.pos.y},
             uv: vec2! {1., 1.},
         },
         Vertex {
-            pos: vec2! {0.25, -0.25},
+            pos: vec2! {0.25 + bone.pos.x, -0.25 + bone.pos.y},
             uv: vec2! {1., 1.},
         },
     ];
