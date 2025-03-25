@@ -43,11 +43,12 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             if ui.button("Delete Bone").clicked() {
                 shared.armature.bones.remove(shared.selected_bone);
                 shared.selected_bone = usize::MAX;
+                return;
             };
+
             ui.horizontal(|ui| {
                 let l = ui.label("Name:");
-                ui.text_edit_singleline(&mut bone!().name)
-                    .labelled_by(l.id);
+                ui.text_edit_singleline(&mut bone!().name).labelled_by(l.id);
             });
             ui.horizontal(|ui| {
                 ui.label("Texture:");
