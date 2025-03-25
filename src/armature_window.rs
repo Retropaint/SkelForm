@@ -126,7 +126,7 @@ fn check_bone_dragging(bones: &mut Vec<Bone>, ui: &mut Ui, drag: Response, idx: 
             get_all_children(
                 bones,
                 &mut children,
-                bones[*dragged_payload as usize].clone(),
+                &bones[*dragged_payload as usize],
             );
             for c in children {
                 if bones[idx as usize].id == c.id {
@@ -148,7 +148,7 @@ fn check_bone_dragging(bones: &mut Vec<Bone>, ui: &mut Ui, drag: Response, idx: 
 }
 
 pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_parent: bool) {
-    let main = bones[old_idx as usize].clone();
+    let main = &bones[old_idx as usize];
     let anchor = bones[new_idx as usize].clone();
 
     // gather all bones to be moved (this and its children)
@@ -173,7 +173,7 @@ pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_p
 }
 
 /// Retrieve all children of this bone (recursive)
-pub fn get_all_children(bones: &Vec<Bone>, children_vec: &mut Vec<Bone>, parent: Bone) {
+pub fn get_all_children(bones: &Vec<Bone>, children_vec: &mut Vec<Bone>, parent: &Bone) {
     let mut i: usize = 1;
     let idx = find_bone_idx(bones, parent.id);
 
@@ -188,7 +188,7 @@ pub fn get_all_children(bones: &Vec<Bone>, children_vec: &mut Vec<Bone>, parent:
 
     while bones[idx as usize + i].parent_id == parent.id {
         children_vec.push(bones[idx as usize + i].clone());
-        get_all_children(bones, children_vec, bones[idx as usize + i].clone());
+        get_all_children(bones, children_vec, &bones[idx as usize + i]);
         i += 1;
         check_bounds!();
     }
