@@ -7,8 +7,6 @@ use crate::{shared::Shared, Vec2};
 use crate::shared::*;
 
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
-    let bones = &mut shared.armature.bones;
-
     egui::SidePanel::left("Armature")
         .default_width(125.)
         .resizable(false)
@@ -22,7 +20,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 if ui.button("New Bone").clicked() {
-                    new_bone(bones);
+                    new_bone(&mut shared.armature.bones);
                 }
                 let drag_name = if shared.dragging { "Stay" } else { "Drag" };
                 if ui.button(drag_name).clicked() {
@@ -30,7 +28,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 }
             });
 
-            if bones.len() == 0 {
+            if shared.armature.bones.len() == 0 {
                 return;
             }
             ui.separator();
@@ -40,10 +38,11 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                 ui.set_min_width(ui.available_width());
                 let mut idx = 0;
-                for s in bones.clone() {
+                let bones = shared.armature.bones.clone();
+                for s in &bones {
                     ui.horizontal(|ui| {
                         // add space to the left if this is a child
-                        let mut nb = &s;
+                        let mut nb: &Bone = &s;
                         while nb.parent_id != -1 {
                             nb = find_bone(&bones, nb.parent_id).unwrap();
                             ui.add_space(20.);
@@ -65,7 +64,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                     ui.label(RichText::new(&s.name.to_string()));
                                 })
                                 .response;
-                            check_bone_dragging(bones, ui, d, idx);
+                            check_bone_dragging(&mut shared.armature.bones, ui, d, idx);
                         } else {
                             // regular, boring buttons
 
