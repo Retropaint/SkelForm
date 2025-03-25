@@ -6,8 +6,8 @@ use wgpu::{BindGroupLayout, InstanceDescriptor};
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
-    pub use std::fs;
     pub use image::*;
+    pub use std::fs;
 }
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
@@ -17,7 +17,7 @@ use web_time::Instant;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
-    event::WindowEvent,
+    event::{ElementState, MouseButton, WindowEvent},
     window::{Theme, Window},
 };
 
@@ -211,6 +211,11 @@ impl ApplicationHandler for App {
             return;
         }
 
+        // increase mouse_left if it's being held down
+        if self.shared.mouse_left >= 0 {
+            self.shared.mouse_left += 1;
+        }
+
         // If the gui didn't consume the event, handle it
         match event {
             WindowEvent::KeyboardInput {
@@ -241,6 +246,19 @@ impl ApplicationHandler for App {
                 position,
             } => {
                 self.shared.mouse = vec2! {position.x as f32, position.y as f32};
+            }
+            WindowEvent::MouseInput {
+                device_id,
+                state,
+                button,
+            } => {
+                if button == MouseButton::Left {
+                    if state == ElementState::Pressed {
+                        self.shared.mouse_left = 0;
+                    } else {
+                        self.shared.mouse_left = -1;
+                    }
+                }
             }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();

@@ -69,9 +69,9 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.label("Position:");
             ui.horizontal(|ui| {
                 ui.label("x:");
-                float_input(ui, &mut bone!().pos.x);
+                //float_input(ui, &mut bone!().pos.x);
                 ui.label("y:");
-                float_input(ui, &mut bone!().pos.y);
+                //float_input(ui, &mut bone!().pos.y);
             });
             ui.label("Scale:");
             ui.horizontal(|ui| {
