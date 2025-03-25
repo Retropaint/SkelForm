@@ -9,13 +9,17 @@ use crate::shared::*;
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     let bones = &mut shared.armature.bones;
 
-    egui::Window::new("Armature")
-        .movable(false)
-        .anchor(Align2::LEFT_TOP, egui::Vec2{x: 0., y: 0.})
-        .collapsible(false)
+    egui::SidePanel::left("Armature")
+        .default_width(125.)
         .resizable(false)
         .show(egui_ctx, |ui| {
-            // bone options
+            ui.horizontal(|ui| {
+                ui.heading("Armature");
+            });
+
+            ui.separator();
+            ui.add_space(3.);
+
             ui.horizontal(|ui| {
                 if ui.button("New Bone").clicked() {
                     new_bone(bones);
@@ -29,10 +33,12 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             if bones.len() == 0 {
                 return;
             }
+            ui.separator();
 
             // hierarchy
-            let frame = Frame::default().inner_margin(10.0);
+            let frame = Frame::default().inner_margin(5.);
             ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                ui.set_min_width(ui.available_width());
                 let mut idx = 0;
                 for s in bones.clone() {
                     ui.horizontal(|ui| {
@@ -52,6 +58,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
                         if shared.dragging {
                             // add draggable labels
+                            ui.add_space(4.);
                             let id = Id::new(("bone", idx, 0));
                             let d = ui
                                 .dnd_drag_source(id, idx, |ui| {
