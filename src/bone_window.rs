@@ -21,22 +21,33 @@ extern "C" {
 }
 
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
-    egui::Window::new("Bone")
-        .movable(false)
-        .anchor(Align2::RIGHT_TOP, Vec2 { x: 0., y: 0. })
-        .max_size([150., 0.])
-        .collapsible(false)
+    egui::SidePanel::right("Bone")
         .resizable(false)
+        .default_width(130.)
         .show(egui_ctx, |ui| {
-            let mut bone: Bone = Bone::default();
-            if shared.selected_bone != usize::MAX {
-                bone = shared.armature.bones[shared.selected_bone].clone();
-            } else {
+            ui.heading("Bone");
+            ui.separator();
+            ui.add_space(3.);
+
+            if shared.selected_bone == usize::MAX {
                 ui.disable();
+                return;
             }
+
+            macro_rules! bone {
+                () => {
+                    shared.armature.bones[shared.selected_bone]
+                };
+            }
+
+            if ui.button("Delete Bone").clicked() {
+                shared.armature.bones.remove(shared.selected_bone);
+                shared.selected_bone = usize::MAX;
+            };
             ui.horizontal(|ui| {
                 let l = ui.label("Name:");
-                ui.text_edit_singleline(&mut bone.name).labelled_by(l.id);
+                ui.text_edit_singleline(&mut bone!().name)
+                    .labelled_by(l.id);
             });
             ui.horizontal(|ui| {
                 ui.label("Texture:");
@@ -54,38 +65,34 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             if shared.selected_bone == usize::MAX {
                 return;
             }
+            ui.label("Position:");
             ui.horizontal(|ui| {
-                ui.label("Position:");
                 ui.label("x:");
-                float_input(ui, &mut shared.armature.bones[shared.selected_bone].pos.x);
+                float_input(ui, &mut bone!().pos.x);
                 ui.label("y:");
-                float_input(ui, &mut shared.armature.bones[shared.selected_bone].pos.y);
+                float_input(ui, &mut bone!().pos.y);
             });
+            ui.label("Scale:");
             ui.horizontal(|ui| {
-                ui.label("Scale:");
                 ui.label("x:");
-                float_input(ui, &mut shared.armature.bones[shared.selected_bone].scale.x);
+                float_input(ui, &mut bone!().scale.x);
                 ui.label("y:");
-                float_input(ui, &mut shared.armature.bones[shared.selected_bone].scale.y);
+                float_input(ui, &mut bone!().scale.y);
             });
             ui.horizontal(|ui| {
                 ui.label("Rotation:");
-                let deg = shared.armature.bones[shared.selected_bone].rot / PI * 180.;
+                let deg = bone!().rot / PI * 180.;
                 let mut str = deg.round().to_string();
                 if !str.contains(".") {
                     str.push('.');
                 }
                 ui.add_sized([30., 20.], egui::TextEdit::singleline(&mut str));
                 if let Ok(f) = str.parse::<f32>() {
-                    shared.armature.bones[shared.selected_bone].rot = f * PI / 180.;
+                    bone!().rot = f * PI / 180.;
                 } else {
-                    shared.armature.bones[shared.selected_bone].rot = 0.;
+                    bone!().rot = 0.;
                 }
             });
-            if ui.button("Delete Bone").clicked() {
-                shared.armature.bones.remove(shared.selected_bone);
-                shared.selected_bone = usize::MAX;
-            };
         });
 }
 
