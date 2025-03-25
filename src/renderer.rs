@@ -1,20 +1,10 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
-use image::EncodableLayout;
-
 use crate::{
     shared::{Armature, Bone, Shared},
     utils, vec2, Vec2, Vertex,
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
-
-// wasm-only imports
-#[cfg(target_arch = "wasm32")]
-mod wasm {
-    pub use crate::utils::load_image_wasm;
-}
-#[cfg(target_arch = "wasm32")]
-use wasm::*;
 
 /// The `main` of this module.
 pub fn render(
@@ -140,7 +130,7 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
     )
 }
 
-fn rect_verts(armature: &Armature, bone: &Bone) -> Vec<Vertex> {
+fn rect_verts(_armature: &Armature, _bone: &Bone) -> Vec<Vertex> {
     let vertices: Vec<Vertex> = vec![
         Vertex {
             pos: vec2! {0.5, 0.5},

@@ -1,4 +1,4 @@
-//! Core user interface logic.
+//! Core UI (user interface) logic.
 
 use egui::Context;
 
@@ -13,6 +13,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     bone_window::draw(context, shared);
 }
 
+/// General styling to apply across all UI.
 pub fn styling(context: &Context) {
     let mut visuals = egui::Visuals::dark();
 

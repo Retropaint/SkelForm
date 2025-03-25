@@ -1,3 +1,5 @@
+//! UI Armature window.
+
 use egui::*;
 
 use crate::{shared::Shared, Vec2};
