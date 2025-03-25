@@ -1,15 +1,19 @@
+//! UI Bone window.
+
 use egui::*;
 use web_sys::js_sys::wasm_bindgen;
 
-use wasm_bindgen::prelude::*;
 use crate::shared::*;
 use std::f32::consts::PI;
+use wasm_bindgen::prelude::*;
 
-use std::thread;
-
-use std::fs::File;
-
-use std::io::Write;
+// native-only imports
+#[cfg(not(target_arch = "wasm32"))]
+mod native {
+    pub use std::{fs::File, io::Write, thread};
+}
+#[cfg(not(target_arch = "wasm32"))]
+pub use native::*;
 
 #[wasm_bindgen]
 extern "C" {
@@ -36,15 +40,15 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             });
             ui.horizontal(|ui| {
                 ui.label("Texture:");
-                let bone_idx = shared.selected_bone;
                 if ui.button("Get Image").clicked() {
                     #[cfg(not(target_arch = "wasm32"))]
-                    open_file_dialog(bone_idx);
+                    {
+                        let bone_idx = shared.selected_bone;
+                        open_file_dialog(bone_idx);
+                    }
 
                     #[cfg(target_arch = "wasm32")]
-                    {
-                        toggleFileDialog(true);             
-                    }
+                    toggleFileDialog(true);
                 };
             });
             if shared.selected_bone == usize::MAX {
@@ -85,6 +89,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         });
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn open_file_dialog(bone_idx: usize) {
     #[cfg(not(target_arch = "wasm32"))]
     thread::spawn(move || {

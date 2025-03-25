@@ -4,17 +4,8 @@ use web_sys::{
     window as web_window, CanvasRenderingContext2d, Document, HtmlCanvasElement, HtmlImageElement,
 };
 
-use crate::{Vec2, Vertex};
+use crate::{Vec2, Vertex, vec2};
 use web_sys::wasm_bindgen::JsCast;
-
-macro_rules! vec2 {
-    ($x_var:expr, $y_var:expr) => {
-        Vec2 {
-            x: $x_var,
-            y: $y_var,
-        }
-    };
-}
 
 /// Convert a point from screen to world space.
 pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
