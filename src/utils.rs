@@ -10,6 +10,15 @@ pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
     }
 }
 
+/// Rotate a point via rotation matrix.
+pub fn rotate(point: &Vec2, rot: f32) -> Vec2 {
+    Vec2 {
+        x: point.x * rot.cos() - point.y * rot.sin(),
+        y: point.x * rot.sin() + point.y * rot.cos(),
+    }
+}
+
+/// Check if a point is in a rectangle (formed by vertices).
 pub fn in_bounding_box(point: &Vec2, verts: &Vec<Vertex>, window_size: &Vec2) -> bool {
     // get the bound based on infinitely-long lines
     let mut top = -f32::INFINITY;

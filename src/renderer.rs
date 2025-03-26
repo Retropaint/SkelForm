@@ -65,7 +65,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // render bone
         render_pass.set_bind_group(0, &shared.bind_groups[bone!().tex_idx], &[]);
-        render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..)); render_pass.set_index_buffer(
+        render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
+        render_pass.set_index_buffer(
             index_buffer([0, 1, 2, 0, 1, 3].to_vec(), &device).slice(..),
             wgpu::IndexFormat::Uint32,
         );
@@ -183,36 +184,44 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
 /// Accounts for texture size and aspect ratio
 fn rect_verts(bone: &Bone, tex: &Texture, aspect_ratio: f32) -> Vec<Vertex> {
     let hard_scale = 0.001;
-    let vertices: Vec<Vertex> = vec![
+    let mut vertices: Vec<Vertex> = vec![
         Vertex {
             pos: Vec2::new(
-                (hard_scale * tex.size.x) / aspect_ratio + bone.pos.x,
+                (hard_scale * tex.size.x) + bone.pos.x,
                 (hard_scale * tex.size.y) + bone.pos.y,
             ),
             uv: Vec2::new(1., 0.),
         },
         Vertex {
             pos: Vec2::new(
-                (-hard_scale * tex.size.x) / aspect_ratio + bone.pos.x,
+                (-hard_scale * tex.size.x) + bone.pos.x,
                 (-hard_scale * tex.size.y) + bone.pos.y,
             ),
             uv: Vec2::new(0., 1.),
         },
         Vertex {
             pos: Vec2::new(
-                (-hard_scale * tex.size.x) / aspect_ratio + bone.pos.x,
+                (-hard_scale * tex.size.x) + bone.pos.x,
                 (hard_scale * tex.size.y) + bone.pos.y,
             ),
             uv: Vec2::new(0., 0.),
         },
         Vertex {
             pos: Vec2::new(
-                (hard_scale * tex.size.x) / aspect_ratio + bone.pos.x,
+                (hard_scale * tex.size.x) + bone.pos.x,
                 (-hard_scale * tex.size.y) + bone.pos.y,
             ),
             uv: Vec2::new(1., 1.),
         },
     ];
+
+    for v in &mut vertices {
+        // rotate bone
+        v.pos = utils::rotate(&v.pos, 90. * 3.14 / 180.);
+
+        // adjust bone according to aspect ratio
+        v.pos.x /= aspect_ratio;
+    }
 
     vertices
 }
