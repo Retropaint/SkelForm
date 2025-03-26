@@ -29,13 +29,6 @@ pub mod shared;
 pub mod ui;
 pub mod utils;
 
-// Declare the JS function
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
-extern "C" {
-    fn removeImage();
-}
-
 #[repr(C)]
 #[derive(Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vec2 {
