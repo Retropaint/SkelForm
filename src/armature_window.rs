@@ -136,11 +136,11 @@ fn check_bone_dragging(bones: &mut Vec<Bone>, ui: &mut Ui, drag: Response, idx: 
 
             if move_type == 0 {
                 // move dragged bone above target
-                bones[*dragged_payload as usize].parent_id = bones[idx as usize].clone().id;
+                bones[*dragged_payload as usize].parent_id = bones[idx as usize].id;
                 move_bone(bones, *dragged_payload, idx, true);
             } else if move_type == 1 {
                 // set dragged bone's parent as target
-                bones[*dragged_payload as usize].parent_id = bones[idx as usize].clone().parent_id;
+                bones[*dragged_payload as usize].parent_id = bones[idx as usize].parent_id;
                 move_bone(bones, *dragged_payload, idx, false);
             }
         }
