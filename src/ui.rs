@@ -11,6 +11,15 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     armature_window::draw(context, shared);
     bone_window::draw(context, shared);
+
+    egui::Window::new("Mode").show(context, |ui| {
+        if ui.button("Translate").clicked() {
+            shared.edit_mode = 0;
+        }
+        if ui.button("Rotate").clicked() {
+            shared.edit_mode = 1;
+        }
+    });
 }
 
 /// General styling to apply across all UI.

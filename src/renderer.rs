@@ -13,17 +13,24 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     for b in &mut shared.armature.bones {
         if shared.selected_bone == i {
-            // drag if holding left click
-            if shared.mouse_left != -1 {
-                if let Some(offset) = shared.mouse_bone_offset {
-                    // move bone with mouse, keeping in mind their distance
-                    let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
-                    b.pos = Vec2::new(mouse_world.x + offset.x, mouse_world.y + offset.y);
-                } else {
-                    // get initial distance between bone and mouse
-                    let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
-                    shared.mouse_bone_offset =
-                        Some(Vec2::new(b.pos.x - mouse_world.x, b.pos.y - mouse_world.y));
+            if shared.edit_mode == 0 {
+                // drag if holding left click
+                if shared.mouse_left != -1 {
+                    if let Some(offset) = shared.mouse_bone_offset {
+                        // move bone with mouse, keeping in mind their distance
+                        let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
+                        b.pos = Vec2::new(mouse_world.x + offset.x, mouse_world.y + offset.y);
+                    } else {
+                        // get initial distance between bone and mouse
+                        let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
+                        shared.mouse_bone_offset =
+                            Some(Vec2::new(b.pos.x - mouse_world.x, b.pos.y - mouse_world.y));
+                    }
+                }
+            } else if shared.edit_mode == 1 {
+                // todo: implement proper rotating
+                if shared.mouse_left != -1 {
+                    b.rot += 0.01;
                 }
             }
         }
@@ -47,11 +54,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
 
-        // inherit from parent bone
+        // get parent bone
         let mut p = Bone::default();
         if let Some(pp) = find_bone(&temp_bones, bone!().parent_id) {
             p = pp.clone();
         }
+
+        bone!().rot += p.rot;
+
+        // rotate such that it will orbit the parent once it's position is inherited
+        bone!().pos = utils::rotate(&bone!().pos, p.rot);
 
         // inherit position from parent
         bone!().pos.x += p.pos.x;
@@ -59,6 +71,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         let verts = rect_verts(
             &bone!(),
+            p.rot,
             &shared.armature.textures[bone!().tex_idx],
             shared.window.x / shared.window.y,
         );
@@ -85,7 +98,6 @@ pub fn create_texture(
     device: &Device,
     bind_group_layout: &BindGroupLayout,
 ) -> BindGroup {
-    println!("test");
     // add to shared textures
     textures.push(crate::Texture {
         size: dimensions,
@@ -182,50 +194,41 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
 /// Generate and return the vertices of a bone
 ///
 /// Accounts for texture size and aspect ratio
-fn rect_verts(bone: &Bone, tex: &Texture, aspect_ratio: f32) -> Vec<Vertex> {
+fn rect_verts(bone: &Bone, extra_rot: f32, tex: &Texture, aspect_ratio: f32) -> Vec<Vertex> {
     let hard_scale = 0.001;
     let mut vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: Vec2::new(
-                (hard_scale * tex.size.x) + bone.pos.x,
-                (hard_scale * tex.size.y) + bone.pos.y,
-            ),
+            pos: Vec2::new(hard_scale * tex.size.x, hard_scale * tex.size.y),
             uv: Vec2::new(1., 0.),
         },
         Vertex {
-            pos: Vec2::new(
-                (-hard_scale * tex.size.x) + bone.pos.x,
-                (-hard_scale * tex.size.y) + bone.pos.y,
-            ),
+            pos: Vec2::new(-hard_scale * tex.size.x, -hard_scale * tex.size.y),
             uv: Vec2::new(0., 1.),
         },
         Vertex {
-            pos: Vec2::new(
-                (-hard_scale * tex.size.x) + bone.pos.x,
-                (hard_scale * tex.size.y) + bone.pos.y,
-            ),
+            pos: Vec2::new(-hard_scale * tex.size.x, hard_scale * tex.size.y),
             uv: Vec2::new(0., 0.),
         },
         Vertex {
-            pos: Vec2::new(
-                (hard_scale * tex.size.x) + bone.pos.x,
-                (-hard_scale * tex.size.y) + bone.pos.y,
-            ),
+            pos: Vec2::new(hard_scale * tex.size.x, -hard_scale * tex.size.y),
             uv: Vec2::new(1., 1.),
         },
     ];
 
     for v in &mut vertices {
-        // rotate bone
-        v.pos = utils::rotate(&v.pos, 90. * 3.14 / 180.);
+        // rotate verts
+        v.pos = utils::rotate(&v.pos, bone.rot);
 
-        // adjust bone according to aspect ratio
+        // move verts with bone
+        v.pos.x += bone.pos.x;
+        v.pos.y += bone.pos.y;
+
+        // adjust verts according to aspect ratio
         v.pos.x /= aspect_ratio;
     }
 
     vertices
 }
-
 pub fn find_bone(bones: &Vec<Bone>, id: i32) -> Option<&Bone> {
     for b in bones {
         if b.id == id {

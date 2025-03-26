@@ -59,6 +59,10 @@ pub struct Shared {
     pub armature: Armature,
     pub bind_groups: Vec<BindGroup>,
 
+    // should be enum but too lazy atm
+    pub edit_mode: i32,
+
+    /// stored distance between bone and mouse on initial left click
     pub mouse_bone_offset: Option<Vec2>,
 
     /// how long the left click has been held for
