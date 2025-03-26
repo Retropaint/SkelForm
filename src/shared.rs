@@ -41,7 +41,7 @@ pub struct Shared {
     pub armature: Armature,
     pub bind_groups: Vec<BindGroup>,
 
-    pub mouse_bone_offset: Vec2,
+    pub mouse_bone_offset: Option<Vec2>,
 
     /// how long the left click has been held for
     pub mouse_left: i32,
