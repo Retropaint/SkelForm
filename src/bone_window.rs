@@ -23,7 +23,8 @@ extern "C" {
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     egui::SidePanel::right("Bone")
         .resizable(false)
-        .default_width(130.)
+        .default_width(150.)
+        .max_width(150.)
         .show(egui_ctx, |ui| {
             ui.heading("Bone");
             ui.separator();
@@ -68,20 +69,20 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             }
             ui.label("Position:");
             ui.horizontal(|ui| {
-                ui.label("x:");
-                //float_input(ui, &mut bone!().pos.x);
-                ui.label("y:");
-                //float_input(ui, &mut bone!().pos.y);
+                ui.label("X");
+                float_input(ui, &mut bone!().pos.x);
+                ui.label("Y");
+                float_input(ui, &mut bone!().pos.y);
             });
             ui.label("Scale:");
             ui.horizontal(|ui| {
-                ui.label("x:");
+                ui.label("X");
                 float_input(ui, &mut bone!().scale.x);
-                ui.label("y:");
+                ui.label("Y");
                 float_input(ui, &mut bone!().scale.y);
             });
             ui.horizontal(|ui| {
-                ui.label("Rotation:");
+                ui.label("Rotation");
                 let deg = bone!().rot / PI * 180.;
                 let mut str = deg.round().to_string();
                 if !str.contains(".") {
@@ -117,11 +118,12 @@ fn open_file_dialog(bone_idx: usize) {
 
 // helper for editable float inputs
 fn float_input(ui: &mut Ui, float: &mut f32) {
-    let mut str = float.to_string();
+    let truncated = (*float * 100.).trunc() / 100.;
+    let mut str = truncated.to_string();
     if !str.contains(".") {
         str.push('.');
     }
-    ui.add_sized([30., 20.], egui::TextEdit::singleline(&mut str));
+    ui.add_sized([40., 20.], egui::TextEdit::singleline(&mut str));
     if let Ok(f) = str.parse::<f32>() {
         *float = f;
     } else {
