@@ -6,6 +6,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     let mut app = skeller::App::default();
     app.shared.selected_bone = usize::MAX;
     app.shared.mouse_left = -1;
+    app.shared.debug = true;
     event_loop.run_app(&mut app)?;
     Ok(())
 }
