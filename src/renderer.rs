@@ -1,18 +1,17 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
 use crate::{
-    shared::{Armature, Bone, Shared, Texture},
-    utils, Vec2, Vertex,
+    shared::{Bone, Shared, Texture, Vec2, Vertex},
+    utils,
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
+    let mut temp_bones: Vec<Bone> = vec![];
     let mut i = 0;
+
     for b in &mut shared.armature.bones {
-        if b.tex_idx == usize::MAX {
-            continue;
-        }
         if shared.selected_bone == i {
             // drag if holding left click
             if shared.mouse_left != -1 {
@@ -28,18 +27,50 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 }
             }
         }
+
+        temp_bones.push(b.clone());
+        i += 1;
+    }
+
+    i = 0;
+
+    // using while loop to prevent borrow errors
+    while i < temp_bones.len() {
+        macro_rules! bone {
+            () => {
+                temp_bones[i]
+            };
+        }
+
+        if bone!().tex_idx == usize::MAX {
+            i += 1;
+            continue;
+        }
+
+        // inherit from parent bone
+        let mut p = Bone::default();
+        if let Some(pp) = find_bone(&temp_bones, bone!().parent_id) {
+            p = pp.clone();
+        }
+
+        // inherit position from parent
+        bone!().pos.x += p.pos.x;
+        bone!().pos.y += p.pos.y;
+
         let verts = rect_verts(
-            &b,
-            &shared.armature.textures[b.tex_idx],
+            &bone!(),
+            &shared.armature.textures[bone!().tex_idx],
             shared.window.x / shared.window.y,
         );
-        render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx], &[]);
-        render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
-        render_pass.set_index_buffer(
+
+        // render bone
+        render_pass.set_bind_group(0, &shared.bind_groups[bone!().tex_idx], &[]);
+        render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..)); render_pass.set_index_buffer(
             index_buffer([0, 1, 2, 0, 1, 3].to_vec(), &device).slice(..),
             wgpu::IndexFormat::Uint32,
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
+
         i += 1;
     }
 }
@@ -154,22 +185,43 @@ fn rect_verts(bone: &Bone, tex: &Texture, aspect_ratio: f32) -> Vec<Vertex> {
     let hard_scale = 0.001;
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: Vec2::new((hard_scale * tex.size.x) / aspect_ratio + bone.pos.x, (hard_scale * tex.size.y) + bone.pos.y),
+            pos: Vec2::new(
+                (hard_scale * tex.size.x) / aspect_ratio + bone.pos.x,
+                (hard_scale * tex.size.y) + bone.pos.y,
+            ),
             uv: Vec2::new(1., 0.),
         },
         Vertex {
-            pos: Vec2::new((-hard_scale * tex.size.x) / aspect_ratio + bone.pos.x, (-hard_scale * tex.size.y) + bone.pos.y),
+            pos: Vec2::new(
+                (-hard_scale * tex.size.x) / aspect_ratio + bone.pos.x,
+                (-hard_scale * tex.size.y) + bone.pos.y,
+            ),
             uv: Vec2::new(0., 1.),
         },
         Vertex {
-            pos: Vec2::new((-hard_scale * tex.size.x) / aspect_ratio + bone.pos.x, (hard_scale * tex.size.y) + bone.pos.y),
+            pos: Vec2::new(
+                (-hard_scale * tex.size.x) / aspect_ratio + bone.pos.x,
+                (hard_scale * tex.size.y) + bone.pos.y,
+            ),
             uv: Vec2::new(0., 0.),
         },
         Vertex {
-            pos: Vec2::new((hard_scale * tex.size.x) / aspect_ratio + bone.pos.x, (-hard_scale * tex.size.y) + bone.pos.y),
+            pos: Vec2::new(
+                (hard_scale * tex.size.x) / aspect_ratio + bone.pos.x,
+                (-hard_scale * tex.size.y) + bone.pos.y,
+            ),
             uv: Vec2::new(1., 1.),
         },
     ];
 
     vertices
+}
+
+pub fn find_bone(bones: &Vec<Bone>, id: i32) -> Option<&Bone> {
+    for b in bones {
+        if b.id == id {
+            return Some(&b);
+        }
+    }
+    None
 }
