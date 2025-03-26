@@ -36,21 +36,17 @@ pub struct Vec2 {
     pub y: f32,
 }
 
+impl Vec2 {
+    fn new(x: f32, y: f32) -> Vec2 {
+        Vec2 { x, y }
+    }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
     pos: Vec2,
     uv: Vec2,
-}
-
-#[macro_export]
-macro_rules! vec2 {
-    ($x_var:expr, $y_var:expr) => {
-        Vec2 {
-            x: $x_var,
-            y: $y_var,
-        }
-    };
 }
 
 #[derive(Default)]
@@ -228,7 +224,7 @@ impl ApplicationHandler for App {
                 log::info!("Resizing renderer surface to: ({width}, {height})");
                 renderer.resize(width, height);
                 self.last_size = (width, height);
-                self.shared.window = vec2! {self.last_size.0 as f32, self.last_size.1 as f32};
+                self.shared.window = Vec2::new(self.last_size.0 as f32, self.last_size.1 as f32);
             }
             WindowEvent::CloseRequested => {
                 log::info!("Close requested. Exiting...");
@@ -238,7 +234,7 @@ impl ApplicationHandler for App {
                 device_id: _,
                 position,
             } => {
-                self.shared.mouse = vec2! {position.x as f32, position.y as f32};
+                self.shared.mouse = Vec2::new(position.x as f32, position.y as f32);
             }
             WindowEvent::MouseInput {
                 device_id,

@@ -1,8 +1,8 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
 use crate::{
-    shared::{Armature, Bone, Shared},
-    utils, vec2, Vec2, Vertex,
+    shared::{Armature, Bone, Shared, Texture},
+    utils, Vec2, Vertex,
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
@@ -14,17 +14,25 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
         if shared.selected_bone == i {
-            if shared.mouse_left < 2 {
-                // get distance between mouse and bone
-                let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
-                shared.mouse_bone_offset = vec2! {b.pos.x - mouse_world.x, b.pos.y - mouse_world.y};
-            } else {
-                // move bone around with mouse, with their distance as the offset
-                let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
-                b.pos = vec2! { mouse_world.x + shared.mouse_bone_offset.x, mouse_world.y + shared.mouse_bone_offset.y };
+            // drag if holding left click
+            if shared.mouse_left != -1 {
+                if let Some(offset) = shared.mouse_bone_offset {
+                    // move bone with mouse, keeping in mind their distance
+                    let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
+                    b.pos = Vec2::new(mouse_world.x + offset.x, mouse_world.y + offset.y);
+                } else {
+                    // get initial distance between bone and mouse
+                    let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
+                    shared.mouse_bone_offset =
+                        Some(Vec2::new(b.pos.x - mouse_world.x, b.pos.y - mouse_world.y));
+                }
             }
         }
-        let verts = rect_verts(&b);
+        let verts = rect_verts(
+            &b,
+            &shared.armature.textures[b.tex_idx],
+            shared.window.x / shared.window.y,
+        );
         render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx], &[]);
         render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
         render_pass.set_index_buffer(
@@ -66,7 +74,8 @@ pub fn create_texture(
         usage: wgpu::TextureUsages::TEXTURE_BINDING
             | wgpu::TextureUsages::COPY_DST
             | wgpu::TextureUsages::COPY_SRC
-            | wgpu::TextureUsages::RENDER_ATTACHMENT, label: Some("diffuse_texture"),
+            | wgpu::TextureUsages::RENDER_ATTACHMENT,
+        label: Some("diffuse_texture"),
         view_formats: &[],
     });
     queue.write_texture(
@@ -138,27 +147,27 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
     )
 }
 
-fn rect_verts(bone: &Bone) -> Vec<Vertex> {
+/// Generate and return the vertices of a bone
+///
+/// Accounts for texture size and aspect ratio
+fn rect_verts(bone: &Bone, tex: &Texture, aspect_ratio: f32) -> Vec<Vertex> {
+    let hard_scale = 0.001;
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: vec2! {0.5 + bone.pos.x, 0.5 + bone.pos.y},
-            uv: vec2! {1., 0.},
+            pos: Vec2::new((hard_scale * tex.size.x) / aspect_ratio + bone.pos.x, (hard_scale * tex.size.y) + bone.pos.y),
+            uv: Vec2::new(1., 0.),
         },
         Vertex {
-            pos: vec2! {-0.5 + bone.pos.x, -0.5 + bone.pos.y},
-            uv: vec2! {0., 1.},
+            pos: Vec2::new((-hard_scale * tex.size.x) / aspect_ratio + bone.pos.x, (-hard_scale * tex.size.y) + bone.pos.y),
+            uv: Vec2::new(0., 1.),
         },
         Vertex {
-            pos: vec2! {-0.5 + bone.pos.x, 0.5 + bone.pos.y},
-            uv: vec2! {0., 0.},
+            pos: Vec2::new((-hard_scale * tex.size.x) / aspect_ratio + bone.pos.x, (hard_scale * tex.size.y) + bone.pos.y),
+            uv: Vec2::new(0., 0.),
         },
         Vertex {
-            pos: vec2! {0.5 + bone.pos.x, -0.5 + bone.pos.y},
-            uv: vec2! {1., 1.},
-        },
-        Vertex {
-            pos: vec2! {0.25 + bone.pos.x, -0.25 + bone.pos.y},
-            uv: vec2! {1., 1.},
+            pos: Vec2::new((hard_scale * tex.size.x) / aspect_ratio + bone.pos.x, (-hard_scale * tex.size.y) + bone.pos.y),
+            uv: Vec2::new(1., 1.),
         },
     ];
 
