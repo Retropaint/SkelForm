@@ -110,24 +110,20 @@ fn check_bone_dragging(bones: &mut Vec<Bone>, ui: &mut Ui, drag: Response, idx: 
         } else if pointer.y < rect.center().y {
             // above bone (move dragged bone above it)
             ui.painter().hline(rect.x_range(), rect.top(), stroke);
-            1
+            0
         } else {
             // in bone (turn dragged bone to child)
             ui.painter().hline(rect.x_range(), rect.top(), stroke);
             ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
             ui.painter().vline(rect.right(), rect.y_range(), stroke);
             ui.painter().vline(rect.left(), rect.y_range(), stroke);
-            0
+            1
         };
 
         if let Some(dragged_payload) = drag.dnd_release_payload::<i32>() {
             // ignore if target bone is a child of this
             let mut children: Vec<Bone> = vec![];
-            get_all_children(
-                bones,
-                &mut children,
-                &bones[*dragged_payload as usize],
-            );
+            get_all_children(bones, &mut children, &bones[*dragged_payload as usize]);
             for c in children {
                 if bones[idx as usize].id == c.id {
                     return;
@@ -135,13 +131,13 @@ fn check_bone_dragging(bones: &mut Vec<Bone>, ui: &mut Ui, drag: Response, idx: 
             }
 
             if move_type == 0 {
-                // move dragged bone above target
-                bones[*dragged_payload as usize].parent_id = bones[idx as usize].id;
-                move_bone(bones, *dragged_payload, idx, true);
-            } else if move_type == 1 {
                 // set dragged bone's parent as target
                 bones[*dragged_payload as usize].parent_id = bones[idx as usize].parent_id;
                 move_bone(bones, *dragged_payload, idx, false);
+            } else if move_type == 1 {
+                // move dragged bone above target
+                bones[*dragged_payload as usize].parent_id = bones[idx as usize].id;
+                move_bone(bones, *dragged_payload, idx, true);
             }
         }
     }
