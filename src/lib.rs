@@ -3,11 +3,13 @@ use shared::*;
 use wasm_bindgen::prelude::*;
 use wgpu::{BindGroupLayout, InstanceDescriptor};
 
+use std::io::Write;
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
     pub use image::*;
     pub use std::fs;
+    use std::fs::File;
 }
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
@@ -199,6 +201,11 @@ impl ApplicationHandler for App {
                 if matches!(key_code, winit::keyboard::KeyCode::Escape) {
                     event_loop.exit();
                 }
+
+                if matches!(key_code, winit::keyboard::KeyCode::KeyW) {
+                    self.shared.armature.bones[1].tex_idx = 0;
+                    self.shared.armature.bones[2].tex_idx = 0;
+                }
             }
             WindowEvent::Resized(PhysicalSize { width, height }) => {
                 log::info!("Resizing renderer surface to: ({width}, {height})");
@@ -268,6 +275,20 @@ impl ApplicationHandler for App {
                 );
             }
             _ => (),
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        if self.shared.debug {
+            self.shared.debug = false;
+            self.shared.selected_bone = 0;
+            armature_window::new_bone(&mut self.shared.armature.bones);
+            armature_window::new_bone(&mut self.shared.armature.bones);
+            armature_window::new_bone(&mut self.shared.armature.bones);
+            self.shared.armature.bones[2].parent_id = 1;
+            self.shared.armature.bones[1].parent_id = 0;
+
+            let mut img_path = std::fs::File::create(".skelform_img_path").unwrap();
+            let _ = img_path.write_all(b"/Users/o/projects/code/rust/skelform_wgpu/gopher.png");
         }
 
         window.request_redraw();
