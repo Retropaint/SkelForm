@@ -1,6 +1,6 @@
 //! Isolated set of helper functions.
 
-use crate::{Vec2, Vertex};
+use crate::{shared::Vec2, shared::Vertex};
 
 /// Convert a point from screen to world space.
 pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
