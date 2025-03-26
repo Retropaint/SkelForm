@@ -2,7 +2,25 @@
 
 use wgpu::BindGroup;
 
-use crate::Vec2;
+#[repr(C)]
+#[derive(Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct Vec2 {
+    pub x: f32,
+    pub y: f32,
+}
+
+impl Vec2 {
+    pub fn new(x: f32, y: f32) -> Vec2 {
+        Vec2 { x, y }
+    }
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct Vertex {
+    pub pos: Vec2,
+    pub uv: Vec2,
+}
 
 #[derive(Clone, Default)]
 pub struct Bone {

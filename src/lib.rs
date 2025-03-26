@@ -29,26 +29,6 @@ pub mod shared;
 pub mod ui;
 pub mod utils;
 
-#[repr(C)]
-#[derive(Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vec2 {
-    pub x: f32,
-    pub y: f32,
-}
-
-impl Vec2 {
-    fn new(x: f32, y: f32) -> Vec2 {
-        Vec2 { x, y }
-    }
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex {
-    pos: Vec2,
-    uv: Vec2,
-}
-
 #[derive(Default)]
 pub struct App {
     window: Option<Arc<Window>>,
