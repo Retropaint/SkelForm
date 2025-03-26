@@ -246,6 +246,7 @@ impl ApplicationHandler for App {
                         self.shared.mouse_left = 0;
                     } else {
                         self.shared.mouse_left = -1;
+                        self.shared.mouse_bone_offset = None;
                     }
                 }
             }
