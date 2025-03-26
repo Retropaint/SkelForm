@@ -7,6 +7,12 @@ use crate::*;
 #[cfg(target_arch = "wasm32")]
 use web_sys::*;
 
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+extern "C" {
+    fn removeImage();
+}
+
 /// read temporary files created from file dialogs (native & WASM)
 pub fn read_image_loaders(
     shared: &mut Shared,
