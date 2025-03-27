@@ -1,8 +1,5 @@
 //! Isolated set of helper functions.
 
-use nalgebra_glm::atan2;
-use web_sys::js_sys::Math::atanh;
-
 use crate::{shared::{Vertex, Vec2}};
 
 /// Convert a point from screen to world space.
