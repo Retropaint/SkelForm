@@ -2,7 +2,7 @@
 
 use egui::*;
 
-use crate::{shared::Shared, Vec2};
+use crate::{shared::{Shared, Vec2}};
 
 use crate::shared::*;
 

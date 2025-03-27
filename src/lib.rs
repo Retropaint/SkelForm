@@ -183,8 +183,8 @@ impl ApplicationHandler for App {
         }
 
         // increase mouse_left if it's being held down
-        if self.shared.mouse_left >= 0 {
-            self.shared.mouse_left += 1;
+        if self.shared.input.mouse_left >= 0 {
+            self.shared.input.mouse_left += 1;
         }
 
         // If the gui didn't consume the event, handle it
@@ -193,6 +193,7 @@ impl ApplicationHandler for App {
                 event:
                     winit::event::KeyEvent {
                         physical_key: winit::keyboard::PhysicalKey::Code(key_code),
+                        state,
                         ..
                     },
                 ..
@@ -205,6 +206,14 @@ impl ApplicationHandler for App {
                 if matches!(key_code, winit::keyboard::KeyCode::KeyW) {
                     self.shared.armature.bones[1].tex_idx = 0;
                     self.shared.armature.bones[2].tex_idx = 0;
+                }
+
+                if matches!(key_code, winit::keyboard::KeyCode::SuperLeft) {
+                    if state == ElementState::Pressed {
+                        self.shared.input.modifier = 1;
+                    } else {
+                        self.shared.input.modifier = -1;
+                    }
                 }
             }
             WindowEvent::Resized(PhysicalSize { width, height }) => {
@@ -230,10 +239,10 @@ impl ApplicationHandler for App {
             } => {
                 if button == MouseButton::Left {
                     if state == ElementState::Pressed {
-                        self.shared.mouse_left = 0;
+                        self.shared.input.mouse_left = 0;
                     } else {
-                        self.shared.mouse_left = -1;
-                        self.shared.mouse_bone_offset = None;
+                        self.shared.input.mouse_left = -1;
+                        self.shared.input.mouse_bone_offset = None;
                     }
                 }
             }
