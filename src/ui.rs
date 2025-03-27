@@ -12,13 +12,22 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     armature_window::draw(context, shared);
     bone_window::draw(context, shared);
 
+    // edit mode window
     egui::Window::new("Mode").show(context, |ui| {
-        if ui.button("Translate").clicked() {
-            shared.edit_mode = 0;
+        macro_rules! button {
+            ($name:expr, $mode:expr) => {
+                let mut col = egui::Color32::from_rgb(60, 60, 60);
+                if shared.edit_mode == $mode {
+                    col = egui::Color32::from_rgb(100, 100, 100);
+                }
+                if ui.add(egui::Button::new($name).fill(col)).clicked() {
+                    shared.edit_mode = $mode;
+                }
+            };
         }
-        if ui.button("Rotate").clicked() {
-            shared.edit_mode = 1;
-        }
+
+        button!("Translate", 0);
+        button!("Rotate", 1);
     });
 }
 
