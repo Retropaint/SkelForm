@@ -37,9 +37,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             let frame = Frame::default().inner_margin(5.);
             ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                 ui.set_min_width(ui.available_width());
-                let mut idx = 0;
                 let bones = shared.armature.bones.clone();
-                for s in &bones {
+                for (idx, s) in bones.iter().enumerate() {
                     ui.horizontal(|ui| {
                         // add space to the left if this is a child
                         let mut nb: &Bone = &s;
@@ -64,7 +63,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                     ui.label(RichText::new(&s.name.to_string()));
                                 })
                                 .response;
-                            check_bone_dragging(&mut shared.armature.bones, ui, d, idx);
+                            check_bone_dragging(&mut shared.armature.bones, ui, d, idx as i32);
                         } else {
                             // regular, boring buttons
 
@@ -77,8 +76,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 shared.selected_bone = idx as usize;
                             };
                         }
-
-                        idx += 1;
                     });
                 }
             });
@@ -200,12 +197,10 @@ pub fn find_bone(bones: &Vec<Bone>, id: i32) -> Option<&Bone> {
 }
 
 pub fn find_bone_idx(bones: &Vec<Bone>, id: i32) -> i32 {
-    let mut i = 0;
-    for b in bones {
+    for (i, b) in bones.iter().enumerate() {
         if b.id == id {
-            return i;
+            return i as i32;
         }
-        i += 1;
     }
     -1
 }
