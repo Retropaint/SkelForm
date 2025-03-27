@@ -1,5 +1,8 @@
 //! Isolated set of helper functions.
 
+use nalgebra_glm::atan2;
+use web_sys::js_sys::Math::atanh;
+
 use crate::{shared::Vec2, shared::Vertex};
 
 /// Convert a point from screen to world space.
@@ -16,6 +19,11 @@ pub fn rotate(point: &Vec2, rot: f32) -> Vec2 {
         x: point.x * rot.cos() - point.y * rot.sin(),
         y: point.x * rot.sin() + point.y * rot.cos(),
     }
+}
+
+/// Return the angle that the source would need to look at target.
+pub fn look_at(source: &Vec2, target: &Vec2) -> f32 {
+    f32::atan2(-(target.x - source.x), target.y - source.y)
 }
 
 /// Check if a point is in a rectangle (formed by vertices).

@@ -10,6 +10,7 @@ use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
     let mut temp_bones: Vec<Bone> = vec![];
     let mut i = 0;
+    let mut mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
 
     if shared.selected_bone != usize::MAX {
         macro_rules! bone {
@@ -17,31 +18,34 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.armature.bones[shared.selected_bone]
             };
         }
-        if shared.edit_mode == 0 {
-            // drag if holding left click
-            if shared.mouse_left != -1 {
-                let mut mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
+
+        if shared.mouse_left != -1 {
+            // translation
+            if shared.edit_mode == 0 {
+                if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
+                    // counteract bone's rotation caused by parent,
+                    // so that the translation is global
+                    mouse_world = utils::rotate(&mouse_world, -parent.rot);
+                }
                 if let Some(offset) = shared.mouse_bone_offset {
                     // move bone with mouse, keeping in mind their distance
-                    if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
-                        // counteract bone's rotation caused by parent,
-                        // so that the translation is global
-                        mouse_world = utils::rotate(&mouse_world, -parent.rot);
-                    }
                     bone!().pos = Vec2::new(mouse_world.x + offset.x, mouse_world.y + offset.y);
                 } else {
                     // get initial distance between bone and cursor,
-                    // so that the bone can 'follow' it 
+                    // so that the bone can 'follow' it
                     shared.mouse_bone_offset = Some(Vec2::new(
                         bone!().pos.x - mouse_world.x,
                         bone!().pos.y - mouse_world.y,
                     ));
                 }
-            }
-        } else if shared.edit_mode == 1 {
-            // todo: implement proper rotating
-            if shared.mouse_left != -1 {
-                bone!().rot += 0.01;
+            // rotation
+            } else if shared.edit_mode == 1 {
+                bone!().rot = utils::look_at(&bone!().pos, &mouse_world);
+                if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
+                    // counteract bone's rotation caused by parent,
+                    // so that the rotation is global
+                    bone!().rot -= parent.rot;
+                }
             }
         }
     }
