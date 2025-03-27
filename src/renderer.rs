@@ -61,14 +61,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // for rendering purposes, bones need to have many of their attributes manipulated
     // this is easier to do with a separate copy of them
     let mut temp_bones: Vec<Bone> = vec![];
-    let mut i = 0;
     for b in &mut shared.armature.bones {
         temp_bones.push(b.clone());
-        i += 1;
     }
 
-    i = 0;
-
+    let mut i = 0;
     // using while loop to prevent borrow errors
     while i < temp_bones.len() {
         macro_rules! bone {
