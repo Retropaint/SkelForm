@@ -2,8 +2,8 @@
 
 use std::{fmt, ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign}};
 
-use nalgebra_glm::trunc;
 use wgpu::BindGroup;
+use winit::keyboard::KeyCode;
 
 #[repr(C)]
 #[derive(Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -175,6 +175,8 @@ pub struct InputStates {
     pub initial_mouse: Option<Vec2>,
     pub mouse_left: i32,
     pub mouse: Vec2,
+
+    pub pressed: Vec<KeyCode>,
 
     /// stored distance between bone and mouse on initial left click
     pub mouse_bone_offset: Option<Vec2>,
