@@ -13,23 +13,28 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     bone_window::draw(context, shared);
 
     // edit mode window
-    egui::Window::new("Mode").show(context, |ui| {
-        macro_rules! button {
-            ($name:expr, $mode:expr) => {
-                let mut col = egui::Color32::from_rgb(60, 60, 60);
-                if shared.edit_mode == $mode {
-                    col = egui::Color32::from_rgb(100, 100, 100);
-                }
-                if ui.add(egui::Button::new($name).fill(col)).clicked() {
-                    shared.edit_mode = $mode;
-                }
-            };
-        }
+    egui::Window::new("Mode")
+        .resizable(false)
+        .max_width(100.)
+        .show(context, |ui| {
 
-        button!("Translate", 0);
-        button!("Rotate", 1);
-        button!("Scale", 2);
-    });
+            ui.horizontal(|ui| {
+                macro_rules! button {
+                    ($name:expr, $mode:expr) => {
+                        let mut col = egui::Color32::from_rgb(60, 60, 60);
+                        if shared.edit_mode == $mode {
+                            col = egui::Color32::from_rgb(100, 100, 100);
+                        }
+                        if ui.add(egui::Button::new($name).fill(col)).clicked() {
+                            shared.edit_mode = $mode;
+                        }
+                    };
+                }
+                button!("Translate", 0);
+                button!("Rotate", 1);
+                button!("Scale", 2);
+            });
+        });
 }
 
 /// General styling to apply across all UI.
