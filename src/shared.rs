@@ -1,6 +1,6 @@
 //! Easily-accessible and frequently-shared data
 
-use std::ops::{Add, AddAssign, Div, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, MulAssign, Mul, Sub, SubAssign};
 
 use wgpu::BindGroup;
 
@@ -69,6 +69,18 @@ impl Div<f32> for Vec2 {
         }
     }
 }
+
+impl Mul<f32> for Vec2 {
+    type Output = Self;
+    #[inline(always)]
+    fn mul(self, rhs: f32) -> Self {
+        Self {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
+
 impl Sub for Vec2 {
     type Output = Self;
     #[inline(always)]
