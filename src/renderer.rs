@@ -1,22 +1,27 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
 use crate::{
-    shared::{Bone, Vec2, Shared, Texture, Vertex},
+    shared::{Bone, Shared, Texture, Vec2, Vertex},
     utils,
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
-    let mut temp_bones: Vec<Bone> = vec![];
-    let mut i = 0;
-    let mut mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
+    let mut mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
 
-    if shared.input.mouse_left != -1 {
-        if (shared.input.modifier != -1) {
-            //if let Some(im) = shared.input.initial_mouse {
-            //    shared.camera.pos.x = utils::
-            //}
+    if shared.input.mouse_left == -1 {
+        shared.input.initial_mouse = None;
+    } else {
+        if shared.input.modifier != -1 {
+            // move camera if holding mod key
+            if let Some(im) = shared.input.initial_mouse {
+                let initial_world = utils::screen_to_world_space(im, shared.window);
+                shared.camera.pos = shared.camera.initial_pos - (mouse_world - initial_world);
+            } else {
+                shared.camera.initial_pos = shared.camera.pos;
+                shared.input.initial_mouse = Some(shared.input.mouse);
+            }
         } else if shared.selected_bone != usize::MAX {
             macro_rules! bone {
                 () => {
@@ -48,13 +53,15 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     bone!().rot -= parent.rot;
                 }
             } else if shared.edit_mode == 2 {
-                bone!().scale = shared.mouse / shared.window * 2.;
+                bone!().scale = shared.input.mouse / shared.window * 2.;
             }
         }
     }
 
     // for rendering purposes, bones need to have many of their attributes manipulated
     // this is easier to do with a separate copy of them
+    let mut temp_bones: Vec<Bone> = vec![];
+    let mut i = 0;
     for b in &mut shared.armature.bones {
         temp_bones.push(b.clone());
         i += 1;
@@ -95,11 +102,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         // inherit position from parent
         bone!().pos += p.pos;
 
-        bone!().pos -= shared.camera.pos;
-
         let verts = rect_verts(
             &bone!(),
-            p.rot,
+            &shared.camera.pos,
             &shared.armature.textures[bone!().tex_idx],
             shared.window.x / shared.window.y,
         );
@@ -222,21 +227,15 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
 /// Generate and return the vertices of a bone
 ///
 /// Accounts for texture size and aspect ratio
-fn rect_verts(bone: &Bone, extra_rot: f32, tex: &Texture, aspect_ratio: f32) -> Vec<Vertex> {
+fn rect_verts(bone: &Bone, camera: &Vec2, tex: &Texture, aspect_ratio: f32) -> Vec<Vertex> {
     let hard_scale = 0.001;
     let mut vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: Vec2::new(
-                hard_scale * tex.size.x * bone.scale.x,
-                hard_scale * tex.size.y * bone.scale.y,
-            ),
+            pos: tex.size * bone.scale * hard_scale,
             uv: Vec2::new(1., 0.),
         },
         Vertex {
-            pos: Vec2::new(
-                -hard_scale * tex.size.x * bone.scale.x,
-                -hard_scale * tex.size.y * bone.scale.y,
-            ),
+            pos: tex.size * bone.scale * -hard_scale,
             uv: Vec2::new(0., 1.),
         },
         Vertex {
@@ -260,8 +259,10 @@ fn rect_verts(bone: &Bone, extra_rot: f32, tex: &Texture, aspect_ratio: f32) -> 
         v.pos = utils::rotate(&v.pos, bone.rot);
 
         // move verts with bone
-        v.pos.x += bone.pos.x;
-        v.pos.y += bone.pos.y;
+        v.pos += bone.pos;
+
+        // offset bone with camera
+        v.pos -= *camera;
 
         // adjust verts according to aspect ratio
         v.pos.x /= aspect_ratio;
