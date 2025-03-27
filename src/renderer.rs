@@ -46,10 +46,17 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     // so that the rotation is global
                     bone!().rot -= parent.rot;
                 }
+            } else if shared.edit_mode == 2 {
+                bone!().scale = Vec2::new(
+                    shared.mouse.x / shared.window.x * 2.,
+                    shared.mouse.y / shared.window.y * 2.,
+                );
             }
         }
     }
 
+    // for rendering purposes, bones need to have many of their attributes manipulated
+    // this is easier to do with a separate copy of them
     for b in &mut shared.armature.bones {
         temp_bones.push(b.clone());
         i += 1;
@@ -72,11 +79,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // get parent bone
         let mut p = Bone::default();
+        p.scale.x = 1.;
+        p.scale.y = 1.;
         if let Some(pp) = find_bone(&temp_bones, bone!().parent_id) {
             p = pp.clone();
         }
 
         bone!().rot += p.rot;
+        bone!().scale.x *= p.scale.x;
+        bone!().scale.y *= p.scale.y;
+
+        // adjust bone's position based on parent's scale
+        bone!().pos.x *= p.scale.x;
+        bone!().pos.y *= p.scale.y;
 
         // rotate such that it will orbit the parent once it's position is inherited
         bone!().pos = utils::rotate(&bone!().pos, p.rot);
@@ -214,19 +229,31 @@ fn rect_verts(bone: &Bone, extra_rot: f32, tex: &Texture, aspect_ratio: f32) -> 
     let hard_scale = 0.001;
     let mut vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: Vec2::new(hard_scale * tex.size.x, hard_scale * tex.size.y),
+            pos: Vec2::new(
+                hard_scale * tex.size.x * bone.scale.x,
+                hard_scale * tex.size.y * bone.scale.y,
+            ),
             uv: Vec2::new(1., 0.),
         },
         Vertex {
-            pos: Vec2::new(-hard_scale * tex.size.x, -hard_scale * tex.size.y),
+            pos: Vec2::new(
+                -hard_scale * tex.size.x * bone.scale.x,
+                -hard_scale * tex.size.y * bone.scale.y,
+            ),
             uv: Vec2::new(0., 1.),
         },
         Vertex {
-            pos: Vec2::new(-hard_scale * tex.size.x, hard_scale * tex.size.y),
+            pos: Vec2::new(
+                -hard_scale * tex.size.x * bone.scale.x,
+                hard_scale * tex.size.y * bone.scale.y,
+            ),
             uv: Vec2::new(0., 0.),
         },
         Vertex {
-            pos: Vec2::new(hard_scale * tex.size.x, -hard_scale * tex.size.y),
+            pos: Vec2::new(
+                hard_scale * tex.size.x * bone.scale.x,
+                -hard_scale * tex.size.y * bone.scale.y,
+            ),
             uv: Vec2::new(1., 1.),
         },
     ];
