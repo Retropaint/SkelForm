@@ -3,13 +3,12 @@ use shared::*;
 use wasm_bindgen::prelude::*;
 use wgpu::{BindGroupLayout, InstanceDescriptor};
 
-use std::io::Write;
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
     pub use image::*;
     pub use std::fs;
-    use std::fs::File;
+    pub use std::io::Write;
 }
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
@@ -19,7 +18,7 @@ use web_time::Instant;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
-    event::{ElementState, MouseButton, WindowEvent},
+    event::{MouseButton, WindowEvent},
     window::{Theme, Window},
 };
 
