@@ -7,7 +7,6 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     app.shared.selected_bone = usize::MAX;
     app.shared.mouse_left = -1;
     app.shared.debug = true;
-    app.shared.edit_mode = 1;
     event_loop.run_app(&mut app)?;
     Ok(())
 }
