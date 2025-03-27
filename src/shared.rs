@@ -1,7 +1,8 @@
-//! Easily-accessible and frequently-shared data
+//! Easily-accessible and frequently-shared data.
 
-use std::ops::{Add, AddAssign, Div, MulAssign, Mul, Sub, SubAssign};
+use std::{fmt, ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign}};
 
+use nalgebra_glm::trunc;
 use wgpu::BindGroup;
 
 #[repr(C)]
@@ -14,6 +15,10 @@ pub struct Vec2 {
 impl Vec2 {
     pub fn new(x: f32, y: f32) -> Vec2 {
         Vec2 { x, y }
+    }
+
+    pub fn equal_to(self: &Self, other: Vec2) -> bool {
+        return self.x != other.x || self.y != other.y
     }
 }
 
@@ -37,6 +42,7 @@ impl SubAssign for Vec2 {
         self.y -= other.y;
     }
 }
+
 impl Add for Vec2 {
     type Output = Self;
     #[inline(always)]
@@ -81,6 +87,17 @@ impl Mul<f32> for Vec2 {
     }
 }
 
+impl Mul for Vec2 {
+    type Output = Self;
+    #[inline(always)]
+    fn mul(self, rhs: Vec2) -> Self {
+        Self {
+            x: self.x * rhs.x,
+            y: self.y * rhs.y,
+        }
+    }
+}
+
 impl Sub for Vec2 {
     type Output = Self;
     #[inline(always)]
@@ -89,6 +106,21 @@ impl Sub for Vec2 {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
         }
+    }
+}
+
+impl fmt::Display for Vec2 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let decimal_places = 3;
+
+        let mut p = 0;
+        let mut dp = 1.;
+        while p < decimal_places {
+            dp *= 10.;
+            p += 1;
+        }
+
+        write!(f, "{}, {}", (self.x * dp).trunc() / dp, (self.y * dp).trunc() / dp)
     }
 }
 
@@ -131,6 +163,7 @@ pub struct Texture {
 pub struct Camera {
     pub pos: Vec2,
     pub zoom: f32,
+    pub initial_pos: Vec2
 }
 
 /// Input-related fields.
@@ -141,6 +174,7 @@ pub struct InputStates {
     // mouse stuff
     pub initial_mouse: Option<Vec2>,
     pub mouse_left: i32,
+    pub mouse: Vec2,
 
     /// stored distance between bone and mouse on initial left click
     pub mouse_bone_offset: Option<Vec2>,
@@ -148,7 +182,6 @@ pub struct InputStates {
 
 #[derive(Default)]
 pub struct Shared {
-    pub mouse: Vec2,
     pub window: Vec2,
     pub dragging: bool,
     pub selected_bone: usize,
