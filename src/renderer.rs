@@ -37,7 +37,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 } else {
                     // get initial distance between bone and cursor,
                     // so that the bone can 'follow' it
-                    shared.input.mouse_bone_offset = Some(bone!().pos + mouse_world);
+                    shared.input.mouse_bone_offset = Some(bone!().pos - mouse_world);
                 }
             // rotation
             } else if shared.edit_mode == 1 {
