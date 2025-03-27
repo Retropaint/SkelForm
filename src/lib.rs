@@ -26,6 +26,7 @@ use winit::{
 pub mod armature_window;
 pub mod bone_window;
 pub mod image_reader;
+pub mod input;
 pub mod renderer;
 pub mod shared;
 pub mod ui;
@@ -198,23 +199,7 @@ impl ApplicationHandler for App {
                     },
                 ..
             } => {
-                // Exit by pressing the escape key
-                if matches!(key_code, winit::keyboard::KeyCode::Escape) {
-                    event_loop.exit();
-                }
-
-                if matches!(key_code, winit::keyboard::KeyCode::KeyW) {
-                    self.shared.armature.bones[1].tex_idx = 0;
-                    self.shared.armature.bones[2].tex_idx = 0;
-                }
-
-                if matches!(key_code, winit::keyboard::KeyCode::SuperLeft) {
-                    if state == ElementState::Pressed {
-                        self.shared.input.modifier = 1;
-                    } else {
-                        self.shared.input.modifier = -1;
-                    }
-                }
+                input::keyboard_input(&key_code, &state, &mut self.shared);
             }
             WindowEvent::Resized(PhysicalSize { width, height }) => {
                 log::info!("Resizing renderer surface to: ({width}, {height})");
@@ -230,21 +215,14 @@ impl ApplicationHandler for App {
                 device_id: _,
                 position,
             } => {
-                self.shared.mouse = Vec2::new(position.x as f32, position.y as f32);
+                self.shared.input.mouse = Vec2::new(position.x as f32, position.y as f32);
             }
             WindowEvent::MouseInput {
-                device_id,
+                device_id: _,
                 state,
                 button,
             } => {
-                if button == MouseButton::Left {
-                    if state == ElementState::Pressed {
-                        self.shared.input.mouse_left = 0;
-                    } else {
-                        self.shared.input.mouse_left = -1;
-                        self.shared.input.mouse_bone_offset = None;
-                    }
-                }
+                input::mouse_input(&button, &state, &mut self.shared);
             }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
