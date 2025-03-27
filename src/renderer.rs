@@ -48,7 +48,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     bone!().rot -= parent.rot;
                 }
             } else if shared.edit_mode == 2 {
-                bone!().scale = shared.mouse / shared.window / 2.;
+                bone!().scale = shared.mouse / shared.window * 2.;
             }
         }
     }
