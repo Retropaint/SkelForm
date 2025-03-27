@@ -20,15 +20,22 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if shared.edit_mode == 0 {
             // drag if holding left click
             if shared.mouse_left != -1 {
+                let mut mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
                 if let Some(offset) = shared.mouse_bone_offset {
                     // move bone with mouse, keeping in mind their distance
-                    let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
+                    if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
+                        // counteract bone's rotation caused by parent,
+                        // so that the translation is global
+                        mouse_world = utils::rotate(&mouse_world, -parent.rot);
+                    }
                     bone!().pos = Vec2::new(mouse_world.x + offset.x, mouse_world.y + offset.y);
                 } else {
-                    // get initial distance between bone and mouse
-                    let mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
-                    shared.mouse_bone_offset =
-                        Some(Vec2::new(bone!().pos.x - mouse_world.x, bone!().pos.y - mouse_world.y));
+                    // get initial distance between bone and cursor,
+                    // so that the bone can 'follow' it 
+                    shared.mouse_bone_offset = Some(Vec2::new(
+                        bone!().pos.x - mouse_world.x,
+                        bone!().pos.y - mouse_world.y,
+                    ));
                 }
             }
         } else if shared.edit_mode == 1 {
