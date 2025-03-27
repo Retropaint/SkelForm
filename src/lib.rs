@@ -81,6 +81,11 @@ impl ApplicationHandler for App {
             if first_window_handle {
                 let gui_context = egui::Context::default();
 
+                // turn off egui kb zoom
+                gui_context.options_mut(|op| {
+                    op.zoom_with_keyboard = false;
+                });
+
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     let inner_size = window_handle.inner_size();
