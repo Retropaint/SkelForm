@@ -1,7 +1,7 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
 use crate::{
-    shared::{Bone, Shared, Texture, Vec2, Vertex},
+    shared::{Bone, Vec2, Shared, Texture, Vertex},
     utils,
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
@@ -12,14 +12,18 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     let mut i = 0;
     let mut mouse_world = utils::screen_to_world_space(shared.mouse, shared.window);
 
-    if shared.selected_bone != usize::MAX {
-        macro_rules! bone {
-            () => {
-                shared.armature.bones[shared.selected_bone]
-            };
-        }
+    if shared.input.mouse_left != -1 {
+        if (shared.input.modifier != -1) {
+            //if let Some(im) = shared.input.initial_mouse {
+            //    shared.camera.pos.x = utils::
+            //}
+        } else if shared.selected_bone != usize::MAX {
+            macro_rules! bone {
+                () => {
+                    shared.armature.bones[shared.selected_bone]
+                };
+            }
 
-        if shared.mouse_left != -1 {
             // translation
             if shared.edit_mode == 0 {
                 if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
@@ -27,16 +31,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     // so that the translation is global
                     mouse_world = utils::rotate(&mouse_world, -parent.rot);
                 }
-                if let Some(offset) = shared.mouse_bone_offset {
+                if let Some(offset) = shared.input.mouse_bone_offset {
                     // move bone with mouse, keeping in mind their distance
-                    bone!().pos = Vec2::new(mouse_world.x + offset.x, mouse_world.y + offset.y);
+                    bone!().pos = mouse_world + offset;
                 } else {
                     // get initial distance between bone and cursor,
                     // so that the bone can 'follow' it
-                    shared.mouse_bone_offset = Some(Vec2::new(
-                        bone!().pos.x - mouse_world.x,
-                        bone!().pos.y - mouse_world.y,
-                    ));
+                    shared.input.mouse_bone_offset = Some(bone!().pos + mouse_world);
                 }
             // rotation
             } else if shared.edit_mode == 1 {
@@ -47,10 +48,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     bone!().rot -= parent.rot;
                 }
             } else if shared.edit_mode == 2 {
-                bone!().scale = Vec2::new(
-                    shared.mouse.x / shared.window.x * 2.,
-                    shared.mouse.y / shared.window.y * 2.,
-                );
+                bone!().scale = shared.mouse / shared.window / 2.;
             }
         }
     }
@@ -86,19 +84,18 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         bone!().rot += p.rot;
-        bone!().scale.x *= p.scale.x;
-        bone!().scale.y *= p.scale.y;
+        bone!().scale *= p.scale;
 
         // adjust bone's position based on parent's scale
-        bone!().pos.x *= p.scale.x;
-        bone!().pos.y *= p.scale.y;
+        bone!().pos *= p.scale;
 
         // rotate such that it will orbit the parent once it's position is inherited
         bone!().pos = utils::rotate(&bone!().pos, p.rot);
 
         // inherit position from parent
-        bone!().pos.x += p.pos.x;
-        bone!().pos.y += p.pos.y;
+        bone!().pos += p.pos;
+
+        bone!().pos -= shared.camera.pos;
 
         let verts = rect_verts(
             &bone!(),

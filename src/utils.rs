@@ -3,7 +3,7 @@
 use nalgebra_glm::atan2;
 use web_sys::js_sys::Math::atanh;
 
-use crate::{shared::Vec2, shared::Vertex};
+use crate::{shared::{Vertex, Vec2}};
 
 /// Convert a point from screen to world space.
 pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
@@ -52,4 +52,8 @@ pub fn in_bounding_box(point: &Vec2, verts: &Vec<Vertex>, window_size: &Vec2) ->
 
     // finally, check if point is inside
     point.y > top && point.y < bot && point.x > left && point.x < right
+}
+
+pub fn to_vec2(f: f32) -> Vec2 {
+    Vec2::new(f, f)
 }
