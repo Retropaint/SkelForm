@@ -28,6 +28,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
         button!("Translate", 0);
         button!("Rotate", 1);
+        button!("Scale", 2);
     });
 }
 
