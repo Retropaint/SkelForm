@@ -1,6 +1,6 @@
 //! Easily-accessible and frequently-shared data.
 
-use std::{fmt, ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign}};
+use std::{fmt, ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign, DivAssign}};
 
 use wgpu::BindGroup;
 use winit::keyboard::KeyCode;
@@ -26,6 +26,13 @@ impl MulAssign for Vec2 {
     fn mul_assign(&mut self, other: Vec2) {
         self.x *= other.x;
         self.y *= other.y;
+    }
+}
+
+impl DivAssign<f32> for Vec2 {
+    fn div_assign(&mut self, other: f32) {
+        self.x /= other;
+        self.y /= other;
     }
 }
 
@@ -191,6 +198,12 @@ pub struct Shared {
     pub bind_groups: Vec<BindGroup>,
     pub camera: Camera,
     pub input: InputStates,
+
+    // tracking zoom every frame for smooth effect
+    pub current_zoom: f32,
+
+    // actual zoom
+    pub zoom: f32,
 
     // should be enum but too lazy atm
     pub edit_mode: i32,
