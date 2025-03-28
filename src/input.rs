@@ -4,6 +4,7 @@ use crate::*;
 
 use winit::event::ElementState;
 use winit::keyboard::*;
+use winit::window::CursorIcon;
 
 pub fn keyboard_input(
     key: &winit::keyboard::KeyCode,
@@ -77,17 +78,20 @@ pub fn mouse_input(
         }
     }
 
-    if shared.input.mouse_left == -1 {
-        shared.input.initial_mouse = None;
-    } else {
-        // move camera if holding mod key
-        if let Some(im) = shared.input.initial_mouse {
-            let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-            let initial_world = utils::screen_to_world_space(im, shared.window);
-            shared.camera.pos = shared.camera.initial_pos - (mouse_world - initial_world);
-        } else {
-            shared.camera.initial_pos = shared.camera.pos;
-            shared.input.initial_mouse = Some(shared.input.mouse);
+    // increase mouse_left if it's being held down
+    if shared.input.mouse_left >= 0 {
+        shared.input.mouse_left += 1;
+    }
+}
+
+pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
+    let sens_reducer = 100.;
+    match delta {
+        MouseScrollDelta::LineDelta(x, y) => {
+            ui::set_zoom(shared.zoom + (y as f32 / sens_reducer), shared);
+        }
+        MouseScrollDelta::PixelDelta(pos) => {
+            ui::set_zoom(shared.zoom + (pos.y as f32 / sens_reducer), shared);
         }
     }
 }
