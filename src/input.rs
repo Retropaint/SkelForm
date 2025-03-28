@@ -1,4 +1,4 @@
-//! Receives inputs from winit events. Actual input logic is handled per-module.
+//! Receives inputs from winit events. Most of actual input logic is handled per-module.
 
 use crate::*;
 
@@ -36,6 +36,24 @@ pub fn keyboard_input(
         }
     }
 
+    if is_pressing(KeyCode::Equal, &shared) {
+        shared.zoom -= 0.1;
+    } else if is_pressing(KeyCode::Minus, &shared) {
+        shared.zoom += 0.1;
+    }
+
+    if shared.input.modifier != -1 {
+        // move camera if holding mod key
+        if let Some(im) = shared.input.initial_mouse {
+            let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+            let initial_world = utils::screen_to_world_space(im, shared.window);
+            shared.camera.pos = shared.camera.initial_pos - (mouse_world - initial_world);
+        } else {
+            shared.camera.initial_pos = shared.camera.pos;
+            shared.input.initial_mouse = Some(shared.input.mouse);
+        }
+    }
+
     if *key == KeyCode::SuperLeft {
         if *state == ElementState::Pressed {
             shared.input.modifier = 1;
@@ -43,8 +61,6 @@ pub fn keyboard_input(
             shared.input.modifier = -1;
         }
     }
-
-    println!("{:?}", shared.input.pressed);
 }
 
 pub fn mouse_input(
@@ -60,4 +76,27 @@ pub fn mouse_input(
             shared.input.mouse_bone_offset = None;
         }
     }
+
+    if shared.input.mouse_left == -1 {
+        shared.input.initial_mouse = None;
+    } else {
+        // move camera if holding mod key
+        if let Some(im) = shared.input.initial_mouse {
+            let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+            let initial_world = utils::screen_to_world_space(im, shared.window);
+            shared.camera.pos = shared.camera.initial_pos - (mouse_world - initial_world);
+        } else {
+            shared.camera.initial_pos = shared.camera.pos;
+            shared.input.initial_mouse = Some(shared.input.mouse);
+        }
+    }
+}
+
+pub fn is_pressing(key: KeyCode, shared: &Shared) -> bool {
+    for k in &shared.input.pressed {
+        if *k == key {
+            return true;
+        }
+    }
+    false
 }

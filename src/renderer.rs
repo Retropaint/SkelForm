@@ -8,54 +8,8 @@ use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
-    let mut mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-
-    if shared.input.mouse_left == -1 {
-        shared.input.initial_mouse = None;
-    } else {
-        if shared.input.modifier != -1 {
-            // move camera if holding mod key
-            if let Some(im) = shared.input.initial_mouse {
-                let initial_world = utils::screen_to_world_space(im, shared.window);
-                shared.camera.pos = shared.camera.initial_pos - (mouse_world - initial_world);
-            } else {
-                shared.camera.initial_pos = shared.camera.pos;
-                shared.input.initial_mouse = Some(shared.input.mouse);
-            }
-        } else if shared.selected_bone != usize::MAX {
-            macro_rules! bone {
-                () => {
-                    shared.armature.bones[shared.selected_bone]
-                };
-            }
-
-            // translation
-            if shared.edit_mode == 0 {
-                if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
-                    // counteract bone's rotation caused by parent,
-                    // so that the translation is global
-                    mouse_world = utils::rotate(&mouse_world, -parent.rot);
-                }
-                if let Some(offset) = shared.input.mouse_bone_offset {
-                    // move bone with mouse, keeping in mind their distance
-                    bone!().pos = mouse_world + offset;
-                } else {
-                    // get initial distance between bone and cursor,
-                    // so that the bone can 'follow' it
-                    shared.input.mouse_bone_offset = Some(bone!().pos - mouse_world);
-                }
-            // rotation
-            } else if shared.edit_mode == 1 {
-                bone!().rot = utils::look_at(&bone!().pos, &mouse_world);
-                if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
-                    // counteract bone's rotation caused by parent,
-                    // so that the rotation is global
-                    bone!().rot -= parent.rot;
-                }
-            } else if shared.edit_mode == 2 {
-                bone!().scale = shared.input.mouse / shared.window * 2.;
-            }
-        }
+    if shared.input.mouse_left != -1 && shared.selected_bone != usize::MAX {
+        edit_bone_with_mouse(shared);
     }
 
     // for rendering purposes, bones need to have many of their attributes manipulated
@@ -85,6 +39,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         p.scale.y = 1.;
         if let Some(pp) = find_bone(&temp_bones, bone!().parent_id) {
             p = pp.clone();
+        } else {
+            bone!().pos /= shared.zoom;
+            bone!().scale /= shared.zoom;
         }
 
         bone!().rot += p.rot;
@@ -116,6 +73,43 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         render_pass.draw_indexed(0..6, 0, 0..1);
 
         i += 1;
+    }
+}
+
+pub fn edit_bone_with_mouse(shared: &mut Shared) {
+    let mut mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+
+    macro_rules! bone {
+        () => {
+            shared.armature.bones[shared.selected_bone]
+        };
+    }
+
+    // translation
+    if shared.edit_mode == 0 {
+        if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
+            // counteract bone's rotation caused by parent,
+            // so that the translation is global
+            mouse_world = utils::rotate(&mouse_world, -parent.rot);
+        }
+        if let Some(offset) = shared.input.mouse_bone_offset {
+            // move bone with mouse, keeping in mind their distance
+            bone!().pos = mouse_world*shared.zoom + offset;
+        } else {
+            // get initial distance between bone and cursor,
+            // so that the bone can 'follow' it
+            shared.input.mouse_bone_offset = Some(bone!().pos - mouse_world*shared.zoom);
+        }
+    // rotation
+    } else if shared.edit_mode == 1 {
+        bone!().rot = utils::look_at(&bone!().pos, &mouse_world);
+        if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
+            // counteract bone's rotation caused by parent,
+            // so that the rotation is global
+            bone!().rot -= parent.rot;
+        }
+    } else if shared.edit_mode == 2 {
+        bone!().scale = shared.input.mouse / shared.window * 2.;
     }
 }
 
