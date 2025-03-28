@@ -82,4 +82,7 @@ pub fn styling(context: &Context) {
 
 pub fn set_zoom(zoom: f32, shared: &mut Shared) {
     shared.zoom = zoom;
+    if shared.zoom < 0.1 {
+        shared.zoom = 0.1;
+    }
 }

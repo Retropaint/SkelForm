@@ -1,9 +1,13 @@
 //! Easily-accessible and frequently-shared data.
 
-use std::{fmt, ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign, DivAssign}};
+use std::{
+    fmt,
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
+};
 
+use egui::Context;
 use wgpu::BindGroup;
-use winit::keyboard::KeyCode;
+use winit::{keyboard::KeyCode, window::CursorIcon};
 
 #[repr(C)]
 #[derive(Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -18,7 +22,7 @@ impl Vec2 {
     }
 
     pub fn equal_to(self: &Self, other: Vec2) -> bool {
-        return self.x != other.x || self.y != other.y
+        return self.x != other.x || self.y != other.y;
     }
 }
 
@@ -127,7 +131,12 @@ impl fmt::Display for Vec2 {
             p += 1;
         }
 
-        write!(f, "{}, {}", (self.x * dp).trunc() / dp, (self.y * dp).trunc() / dp)
+        write!(
+            f,
+            "{}, {}",
+            (self.x * dp).trunc() / dp,
+            (self.y * dp).trunc() / dp
+        )
     }
 }
 
@@ -170,7 +179,7 @@ pub struct Texture {
 pub struct Camera {
     pub pos: Vec2,
     pub zoom: f32,
-    pub initial_pos: Vec2
+    pub initial_pos: Vec2,
 }
 
 /// Input-related fields.
@@ -198,6 +207,8 @@ pub struct Shared {
     pub bind_groups: Vec<BindGroup>,
     pub camera: Camera,
     pub input: InputStates,
+    pub egui_ctx: Context,
+    pub cursor_icon: CursorIcon,
 
     // tracking zoom every frame for smooth effect
     pub current_zoom: f32,

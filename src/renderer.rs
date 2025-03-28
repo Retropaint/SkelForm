@@ -3,12 +3,30 @@
 use crate::{
     shared::{Bone, Shared, Texture, Vec2, Vertex},
     utils,
+    input
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
+use winit::{window::CursorIcon, keyboard::KeyCode};
 
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
     if shared.input.mouse_left != -1 && shared.selected_bone != usize::MAX {
+        if input::is_pressing(KeyCode::SuperLeft, &shared) {
+            if shared.input.mouse_left == -1 {
+                shared.input.initial_mouse = None;
+            } else {
+                // move camera if holding mod key
+                if let Some(im) = shared.input.initial_mouse {
+                    let mouse_world =
+                        utils::screen_to_world_space(shared.input.mouse, shared.window);
+                    let initial_world = utils::screen_to_world_space(im, shared.window);
+                    shared.camera.pos = shared.camera.initial_pos - (mouse_world - initial_world);
+                } else {
+                    shared.camera.initial_pos = shared.camera.pos;
+                    shared.input.initial_mouse = Some(shared.input.mouse);
+                }
+            }
+        }
         edit_bone_with_mouse(shared);
     }
 
@@ -78,6 +96,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
 pub fn edit_bone_with_mouse(shared: &mut Shared) {
     let mut mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+    mouse_world.x *= shared.window.x / shared.window.y;
 
     macro_rules! bone {
         () => {
@@ -87,6 +106,7 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
 
     // translation
     if shared.edit_mode == 0 {
+        shared.cursor_icon = CursorIcon::Move;
         if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
             // counteract bone's rotation caused by parent,
             // so that the translation is global
@@ -94,22 +114,24 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
         }
         if let Some(offset) = shared.input.mouse_bone_offset {
             // move bone with mouse, keeping in mind their distance
-            bone!().pos = mouse_world*shared.zoom + offset;
+            bone!().pos = (mouse_world * shared.zoom) + offset;
         } else {
             // get initial distance between bone and cursor,
             // so that the bone can 'follow' it
-            shared.input.mouse_bone_offset = Some(bone!().pos - mouse_world*shared.zoom);
+            shared.input.mouse_bone_offset = Some(bone!().pos - (mouse_world * shared.zoom));
         }
     // rotation
     } else if shared.edit_mode == 1 {
-        bone!().rot = utils::look_at(&bone!().pos, &mouse_world);
-        if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
-            // counteract bone's rotation caused by parent,
-            // so that the rotation is global
-            bone!().rot -= parent.rot;
-        }
+        bone!().rot = (shared.input.mouse.x / shared.window.x) * 2.;
+       
+        //bone!().rot = utils::look_at(&bone!().pos, &mouse_world);
+        //if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
+        //    // counteract bone's rotation caused by parent,
+        //    // so that the rotation is global
+        //    bone!().rot -= parent.rot;
+        //}
     } else if shared.edit_mode == 2 {
-        bone!().scale = shared.input.mouse / shared.window * 2.;
+        bone!().scale = (shared.input.mouse / shared.window) * 2.;
     }
 }
 
