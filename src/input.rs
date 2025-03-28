@@ -37,9 +37,9 @@ pub fn keyboard_input(
     }
 
     if is_pressing(KeyCode::Equal, &shared) {
-        shared.zoom -= 0.1;
+        ui::set_zoom(shared.zoom - 0.1, shared)
     } else if is_pressing(KeyCode::Minus, &shared) {
-        shared.zoom += 0.1;
+        ui::set_zoom(shared.zoom + 0.1, shared)
     }
 
     if shared.input.modifier != -1 {

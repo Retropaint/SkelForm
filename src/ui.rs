@@ -9,6 +9,40 @@ use crate::{armature_window, bone_window};
 pub fn draw(context: &Context, shared: &mut Shared) {
     styling(context);
 
+    egui::TopBottomPanel::top("test").show(context, |ui| {
+        egui::menu::bar(ui, |ui| {
+            ui.menu_button("File", |ui| {});
+            ui.menu_button("View", |ui| {
+                if shared.input.mouse_left != -1 && !ui.rect_contains_pointer(ui.min_rect()) {
+                    ui.close_menu();
+                }
+
+                ui.horizontal(|ui| {
+                    ui.set_max_width(80.);
+                    if ui.button("Zoom in").clicked() {
+                        set_zoom(shared.zoom - 0.1, shared);
+                        ui.close_menu();
+                    }
+
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.label("=");
+                    });
+                });
+                ui.horizontal(|ui| {
+                    ui.set_max_width(80.);
+                    if ui.button("Zoom out").clicked() {
+                        set_zoom(shared.zoom + 0.1, shared);
+                        ui.close_menu();
+                    }
+
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.label("-");
+                    });
+                })
+            });
+        });
+    });
+
     armature_window::draw(context, shared);
     bone_window::draw(context, shared);
 
@@ -17,7 +51,6 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         .resizable(false)
         .max_width(100.)
         .show(context, |ui| {
-
             ui.horizontal(|ui| {
                 macro_rules! button {
                     ($name:expr, $mode:expr) => {
@@ -45,4 +78,8 @@ pub fn styling(context: &Context) {
     visuals.window_corner_radius = egui::CornerRadius::ZERO;
 
     context.set_visuals(visuals);
+}
+
+pub fn set_zoom(zoom: f32, shared: &mut Shared) {
+    shared.zoom = zoom;
 }
