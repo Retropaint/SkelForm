@@ -50,7 +50,7 @@ impl ApplicationHandler for App {
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            attributes = attributes.with_title("Standalone Winit/Wgpu Example");
+            attributes = attributes.with_title("Skellar");
         }
 
         #[allow(unused_assignments)]
