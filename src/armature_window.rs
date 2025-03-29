@@ -79,6 +79,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     });
                 }
             });
+            shared.ui.edit_bar_pos.x = ui.min_rect().right();
         });
 }
 
@@ -93,7 +94,7 @@ pub fn new_bone(bones: &mut Vec<Bone>) {
     });
 }
 
-fn check_bone_dragging(bones: &mut Vec<Bone>, ui: &mut Ui, drag: Response, idx: i32) {
+fn check_bone_dragging(bones: &mut Vec<Bone>, ui: &mut egui::Ui, drag: Response, idx: i32) {
     if let (Some(pointer), Some(hovered_payload)) = (
         ui.input(|i| i.pointer.interact_pos()),
         drag.dnd_hover_payload::<i32>(),

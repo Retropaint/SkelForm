@@ -16,6 +16,12 @@ pub struct Vec2 {
     pub y: f32,
 }
 
+impl From<egui::Pos2> for Vec2 {
+    fn from(pos: egui::Pos2) -> Vec2 {
+        Vec2::new(pos.x, pos.y)
+    }
+}
+
 impl Vec2 {
     pub fn new(x: f32, y: f32) -> Vec2 {
         Vec2 { x, y }
@@ -198,6 +204,11 @@ pub struct InputStates {
     pub mouse_bone_offset: Option<Vec2>,
 }
 
+#[derive(Clone, Default)]
+pub struct Ui {
+    pub edit_bar_pos: Vec2,
+}
+
 #[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
@@ -209,6 +220,7 @@ pub struct Shared {
     pub input: InputStates,
     pub egui_ctx: Context,
     pub cursor_icon: CursorIcon,
+    pub ui: Ui,
 
     // tracking zoom every frame for smooth effect
     pub current_zoom: f32,

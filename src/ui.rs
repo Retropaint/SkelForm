@@ -1,9 +1,11 @@
 //! Core UI (user interface) logic.
 
-use egui::Context;
+use std::borrow::BorrowMut;
+
+use egui::{Context, Rangef, Stroke, Ui};
 
 use crate::shared::Shared;
-use crate::{armature_window, bone_window};
+use crate::{armature_window, bone_window, keyframe_editor, Vec2};
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
@@ -11,7 +13,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     egui::TopBottomPanel::top("test").show(context, |ui| {
         egui::menu::bar(ui, |ui| {
-            ui.menu_button("File", |ui| {});
+            ui.menu_button("File", |_ui| {});
             ui.menu_button("View", |ui| {
                 if shared.input.mouse_left != -1 && !ui.rect_contains_pointer(ui.min_rect()) {
                     ui.close_menu();
@@ -40,16 +42,24 @@ pub fn draw(context: &Context, shared: &mut Shared) {
                     });
                 })
             });
+            shared.ui.edit_bar_pos.y = ui.min_rect().bottom();
         });
     });
 
+    keyframe_editor::draw(context, shared);
     armature_window::draw(context, shared);
     bone_window::draw(context, shared);
 
     // edit mode window
     egui::Window::new("Mode")
         .resizable(false)
+        .title_bar(false)
         .max_width(100.)
+        .movable(false)
+        .current_pos(egui::Pos2::new(
+            shared.ui.edit_bar_pos.x + 7.5,
+            shared.ui.edit_bar_pos.y + 1.,
+        ))
         .show(context, |ui| {
             ui.horizontal(|ui| {
                 macro_rules! button {

@@ -43,6 +43,14 @@ pub fn keyboard_input(
         ui::set_zoom(shared.zoom + 0.1, shared)
     }
 
+    if *key == KeyCode::SuperLeft {
+        if *state == ElementState::Pressed {
+            shared.input.modifier = 1;
+        } else {
+            shared.input.modifier = -1;
+        }
+    }
+
     if shared.input.modifier != -1 {
         // move camera if holding mod key
         if let Some(im) = shared.input.initial_mouse {
@@ -52,14 +60,6 @@ pub fn keyboard_input(
         } else {
             shared.camera.initial_pos = shared.camera.pos;
             shared.input.initial_mouse = Some(shared.input.mouse);
-        }
-    }
-
-    if *key == KeyCode::SuperLeft {
-        if *state == ElementState::Pressed {
-            shared.input.modifier = 1;
-        } else {
-            shared.input.modifier = -1;
         }
     }
 }
