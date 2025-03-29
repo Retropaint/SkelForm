@@ -2,7 +2,7 @@
 
 use egui::*;
 
-use crate::shared::{Shared, Vec2};
+use crate::{shared::{Shared, Vec2}, ui as ui_mod};
 
 use crate::shared::*;
 
@@ -19,11 +19,11 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.add_space(3.);
 
             ui.horizontal(|ui| {
-                if ui.button("New Bone").clicked() {
+                if ui_mod::button("New Bone", ui).clicked() {
                     new_bone(&mut shared.armature.bones);
                 }
                 let drag_name = if shared.dragging { "Stay" } else { "Drag" };
-                if ui.button(drag_name).clicked() {
+                if ui_mod::button(drag_name, ui).clicked() {
                     shared.dragging = !shared.dragging;
                 }
             });
