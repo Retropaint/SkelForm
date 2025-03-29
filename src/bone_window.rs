@@ -117,7 +117,7 @@ fn open_file_dialog(bone_idx: usize) {
 }
 
 // helper for editable float inputs
-fn float_input(ui: &mut Ui, float: &mut f32) {
+fn float_input(ui: &mut egui::Ui, float: &mut f32) {
     let truncated = (*float * 100.).trunc() / 100.;
     let mut str = truncated.to_string();
     if !str.contains(".") {

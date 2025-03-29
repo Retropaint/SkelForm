@@ -30,6 +30,7 @@ pub mod renderer;
 pub mod shared;
 pub mod ui;
 pub mod utils;
+pub mod keyframe_editor;
 
 #[derive(Default)]
 pub struct App {
