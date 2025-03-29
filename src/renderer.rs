@@ -1,32 +1,30 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
 use crate::{
+    input,
     shared::{Bone, Shared, Texture, Vec2, Vertex},
     utils,
-    input
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
-use winit::{window::CursorIcon, keyboard::KeyCode};
+use winit::{keyboard::KeyCode, window::CursorIcon};
 
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
-    if shared.input.mouse_left != -1 && shared.selected_bone != usize::MAX {
-        if input::is_pressing(KeyCode::SuperLeft, &shared) {
-            if shared.input.mouse_left == -1 {
-                shared.input.initial_mouse = None;
+    if input::is_pressing(KeyCode::SuperLeft, &shared) {
+        if shared.input.mouse_left == -1 {
+            shared.input.initial_mouse = None;
+        } else {
+            // move camera if holding mod key
+            if let Some(im) = shared.input.initial_mouse {
+                let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+                let initial_world = utils::screen_to_world_space(im, shared.window);
+                shared.camera.pos = shared.camera.initial_pos - (mouse_world - initial_world);
             } else {
-                // move camera if holding mod key
-                if let Some(im) = shared.input.initial_mouse {
-                    let mouse_world =
-                        utils::screen_to_world_space(shared.input.mouse, shared.window);
-                    let initial_world = utils::screen_to_world_space(im, shared.window);
-                    shared.camera.pos = shared.camera.initial_pos - (mouse_world - initial_world);
-                } else {
-                    shared.camera.initial_pos = shared.camera.pos;
-                    shared.input.initial_mouse = Some(shared.input.mouse);
-                }
+                shared.camera.initial_pos = shared.camera.pos;
+                shared.input.initial_mouse = Some(shared.input.mouse);
             }
         }
+    } else if shared.input.mouse_left != -1 && shared.selected_bone != usize::MAX {
         edit_bone_with_mouse(shared);
     }
 
@@ -123,7 +121,7 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
     // rotation
     } else if shared.edit_mode == 1 {
         bone!().rot = (shared.input.mouse.x / shared.window.x) * 2.;
-       
+
         //bone!().rot = utils::look_at(&bone!().pos, &mouse_world);
         //if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
         //    // counteract bone's rotation caused by parent,
