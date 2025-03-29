@@ -3,7 +3,7 @@
 use egui::*;
 use web_sys::js_sys::wasm_bindgen;
 
-use crate::shared::*;
+use crate::{shared::*, ui as ui_mod};
 use std::f32::consts::PI;
 use wasm_bindgen::prelude::*;
 
@@ -41,7 +41,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 };
             }
 
-            if ui.button("Delete Bone").clicked() {
+            if ui_mod::button("Delete Bone", ui).clicked() {
                 shared.armature.bones.remove(shared.selected_bone);
                 shared.selected_bone = usize::MAX;
                 return;
@@ -53,7 +53,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             });
             ui.horizontal(|ui| {
                 ui.label("Texture:");
-                if ui.button("Get Image").clicked() {
+                if ui_mod::button("Get Image", ui).clicked() {
                     #[cfg(not(target_arch = "wasm32"))]
                     {
                         let bone_idx = shared.selected_bone;
