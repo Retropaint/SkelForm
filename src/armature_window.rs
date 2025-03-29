@@ -2,7 +2,7 @@
 
 use egui::*;
 
-use crate::{shared::{Shared, Vec2}};
+use crate::shared::{Shared, Vec2};
 
 use crate::shared::*;
 
@@ -37,13 +37,13 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             let frame = Frame::default().inner_margin(5.);
             ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                 ui.set_min_width(ui.available_width());
-                let bones = shared.armature.bones.clone();
-                for (idx, s) in bones.iter().enumerate() {
+                let mut idx = 0;
+                for s in shared.armature.bones.clone() {
                     ui.horizontal(|ui| {
                         // add space to the left if this is a child
                         let mut nb: &Bone = &s;
                         while nb.parent_id != -1 {
-                            nb = find_bone(&bones, nb.parent_id).unwrap();
+                            nb = find_bone(&shared.armature.bones, nb.parent_id).unwrap();
                             ui.add_space(20.);
                         }
 
@@ -76,6 +76,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 shared.selected_bone = idx as usize;
                             };
                         }
+                        idx += 1;
                     });
                 }
             });
