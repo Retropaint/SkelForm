@@ -1,12 +1,12 @@
 [package]
-name = "skeller_app"
+name = "skellar_app"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 path = "src/lib.rs"
-name = "skeller"
+name = "skellar"
 
 [dependencies]
 bytemuck = { version = "1.21.0", features = ["derive"] }
