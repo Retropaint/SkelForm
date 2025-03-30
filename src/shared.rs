@@ -220,6 +220,7 @@ pub struct Texture {
 
 #[derive(Clone, Default)]
 pub struct Animation {
+    pub name: String,
     pub keyframes: Vec<Keyframe>
 }
 
