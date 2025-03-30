@@ -1,11 +1,9 @@
 //! UI Bone window.
 
 use egui::*;
-use web_sys::js_sys::wasm_bindgen;
 
 use crate::{shared::*, ui as ui_mod};
 use std::f32::consts::PI;
-use wasm_bindgen::prelude::*;
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
@@ -15,6 +13,17 @@ mod native {
 #[cfg(not(target_arch = "wasm32"))]
 pub use native::*;
 
+// web-only imports
+#[cfg(target_arch = "wasm32")]
+mod web {
+    pub use crate::wasm_bindgen::*;
+    pub use web_sys::js_sys::wasm_bindgen;
+    pub use wasm_bindgen::prelude::wasm_bindgen;
+}
+#[cfg(target_arch = "wasm32")]
+pub use web::*;
+
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 extern "C" {
     fn toggleFileDialog(open: bool);
@@ -37,6 +46,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 return;
             }
 
+            // shorthand
             macro_rules! bone {
                 () => {
                     shared.armature.bones[shared.selected_bone]

@@ -1,11 +1,19 @@
 //! Reading uploaded images to turn into textures.
+// test
 
 use wgpu::*;
 
 use crate::*;
 
+// web-only imports
 #[cfg(target_arch = "wasm32")]
-use web_sys::*;
+mod web {
+    pub use wasm_bindgen::prelude::wasm_bindgen;
+    pub use web_sys::*;
+}
+
+#[cfg(target_arch = "wasm32")]
+pub use web::*;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]

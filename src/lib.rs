@@ -1,6 +1,4 @@
 use shared::*;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
 use wgpu::{BindGroupLayout, InstanceDescriptor};
 
 // native-only imports
@@ -9,12 +7,22 @@ mod native {
     pub use image::*;
     pub use std::fs;
     pub use std::io::Write;
+    pub use std::time::Instant;
 }
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
 
+// native-only imports
+#[cfg(target_arch = "wasm32")]
+mod web {
+    pub use wasm_bindgen::*;
+    pub use web_sys::*;
+    pub use web_time::Instant;
+}
+#[cfg(target_arch = "wasm32")]
+use web::*;
+
 use std::sync::Arc;
-use web_time::Instant;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
@@ -128,6 +136,7 @@ impl ApplicationHandler for App {
                     self.renderer_receiver = Some(receiver);
                     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
                     console_log::init().expect("Failed to initialize logger!");
+                    #[cfg(target_arch = "wasm32")]
                     log::info!("Canvas dimensions: ({canvas_width} x {canvas_height})");
                     wasm_bindgen_futures::spawn_local(async move {
                         let renderer =
@@ -207,12 +216,14 @@ impl ApplicationHandler for App {
                 input::keyboard_input(&key_code, &state, &mut self.shared);
             }
             WindowEvent::Resized(PhysicalSize { width, height }) => {
+                #[cfg(target_arch = "wasm32")]
                 log::info!("Resizing renderer surface to: ({width}, {height})");
                 renderer.resize(width, height);
                 self.last_size = (width, height);
                 self.shared.window = Vec2::new(self.last_size.0 as f32, self.last_size.1 as f32);
             }
             WindowEvent::CloseRequested => {
+                #[cfg(target_arch = "wasm32")]
                 log::info!("Close requested. Exiting...");
                 event_loop.exit();
             }
@@ -288,7 +299,7 @@ impl ApplicationHandler for App {
             self.shared.armature.animations.push(Animation {
                 name: "lol".to_string(),
                 keyframes: vec![],
-                fps: 24
+                fps: 24,
             });
 
             let mut img_path = std::fs::File::create(".skelform_img_path").unwrap();
@@ -532,6 +543,7 @@ impl Gpu {
             .await
             .expect("Failed to request adapter!");
         let (device, queue) = {
+            #[cfg(target_arch = "wasm32")]
             log::info!("WGPU Adapter Features: {:#?}", adapter.features());
             adapter
                 .request_device(

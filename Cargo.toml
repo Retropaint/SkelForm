@@ -12,12 +12,8 @@ name = "skellar"
 bytemuck = { version = "1.21.0", features = ["derive"] }
 egui = "0.31.0"
 egui-wgpu = { version = "0.31.0", features = ["winit"] }
-futures = "0.3.31"
 image = "0.25.5"
-log = "0.4.26"
 rfd = "0.15.3"
-web-sys = { version = "0.3.77", features = ["Window", "Document", "HtmlImageElement", "CanvasRenderingContext2d", "HtmlCanvasElement", "ImageData"] }
-web-time = "1.1.0"
 wgpu = { version = "24.0.1", default-features = false }
 winit = "0.30.9"
 
@@ -27,6 +23,10 @@ egui-winit = "0.31.0"
 pollster = "0.4.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+web-sys = { version = "0.3.77", features = ["Window", "Document", "HtmlImageElement", "CanvasRenderingContext2d", "HtmlCanvasElement", "ImageData"] }
+futures = "0.3.31"
+log = "0.4.26"
+web-time = "1.1.0"
 console_error_panic_hook = "0.1.7"
 console_log = "1.0.0"
 egui-winit = { version = "0.31.0", default-features = false }
