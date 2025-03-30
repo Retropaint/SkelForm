@@ -26,11 +26,11 @@ pub mod armature_window;
 pub mod bone_window;
 pub mod image_reader;
 pub mod input;
+pub mod keyframe_editor;
 pub mod renderer;
 pub mod shared;
 pub mod ui;
 pub mod utils;
-pub mod keyframe_editor;
 
 #[derive(Default)]
 pub struct App {
@@ -232,7 +232,7 @@ impl ApplicationHandler for App {
             WindowEvent::MouseWheel {
                 device_id: _,
                 delta,
-                phase 
+                phase,
             } => {
                 input::mouse_wheel_input(delta, &mut self.shared);
             }
@@ -285,6 +285,10 @@ impl ApplicationHandler for App {
             armature_window::new_bone(&mut self.shared.armature.bones);
             self.shared.armature.bones[2].parent_id = 1;
             self.shared.armature.bones[1].parent_id = 0;
+            self.shared.armature.animations.push(Animation {
+                name: "lol".to_string(),
+                keyframes: vec![],
+            });
 
             let mut img_path = std::fs::File::create(".skelform_img_path").unwrap();
             let _ = img_path.write_all(b"/Users/o/projects/code/rust/skelform_wgpu/gopher.png");
