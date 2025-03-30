@@ -1,6 +1,6 @@
-# Skeller_wgpu
+# Skellar_wgpu
 
-Skeller was originally made in Miniquad, but with some convincing from the Rust gamedev Discord, it has been migrated to WGPU for better long-term support (if it will survive to need it).
+Skellar was originally made in Miniquad, but with some convincing from the Rust gamedev Discord, it has been migrated to WGPU for better long-term support (if it will survive to need it).
 
 # Usage
 
