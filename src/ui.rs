@@ -28,87 +28,10 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     style_once!(armature_window::draw(context, shared));
     style_once!(bone_window::draw(context, shared));
 
-    // edit mode window
-    egui::Window::new("Mode")
-        .resizable(false)
-        .title_bar(false)
-        .max_width(100.)
-        .movable(false)
-        .current_pos(egui::Pos2::new(
-            shared.ui.edit_bar_pos.x + 7.5,
-            shared.ui.edit_bar_pos.y + 1.,
-        ))
-        .show(context, |ui| {
-            ui.horizontal(|ui| {
-                macro_rules! button {
-                    ($name:expr, $mode:expr) => {
-                        let mut col = COLOR_ACCENT;
-                        if shared.edit_mode == $mode {
-                            let add = 20;
-                            col = egui::Color32::from_rgb(
-                                col.r() + add,
-                                col.g() + add,
-                                col.b() + add,
-                            );
-                        }
-                        if ui
-                            .add(
-                                egui::Button::new($name)
-                                    .fill(col)
-                                    .corner_radius(egui::CornerRadius::ZERO),
-                            )
-                            .clicked()
-                        {
-                            shared.edit_mode = $mode;
-                        }
-                    };
-                }
-                button!("Translate", 0);
-                button!("Rotate", 1);
-                button!("Scale", 2);
-            });
-        });
-
-    egui::Window::new("Animating")
-        .resizable(false)
-        .title_bar(false)
-        .max_width(100.)
-        .movable(false)
-        .current_pos(egui::Pos2::new(
-            shared.ui.animate_mode_bar_pos.x - shared.ui.animate_mode_bar_scale.x - 21.,
-            shared.ui.animate_mode_bar_pos.y + 1.,
-        ))
-        .show(context, |ui| {
-            ui.horizontal(|ui| {
-                macro_rules! button {
-                    ($name:expr, $mode:expr) => {
-                        let mut col = COLOR_ACCENT;
-                        if shared.animating == $mode {
-                            let add = 20;
-                            col = egui::Color32::from_rgb(
-                                col.r() + add,
-                                col.g() + add,
-                                col.b() + add,
-                            );
-                        }
-                        if ui
-                            .add(
-                                egui::Button::new($name)
-                                    .fill(col)
-                                    .corner_radius(egui::CornerRadius::ZERO),
-                            )
-                            .clicked()
-                        {
-                            shared.animating = $mode;
-                        }
-                    };
-                }
-                button!("Armature", false);
-                button!("Animation", true);
-                shared.ui.animate_mode_bar_scale = ui.min_rect().size().into();
-            });
-        });
+    edit_mode_bar(context, shared);
+    animate_bar(context, shared);
 }
+
 fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
     let mut visuals = egui::Visuals::dark();
     visuals.panel_fill = COLOR_MAIN;
@@ -152,6 +75,91 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 });
                 shared.ui.edit_bar_pos.y = ui.min_rect().bottom();
                 shared.ui.animate_mode_bar_pos.y = ui.min_rect().bottom();
+            });
+        });
+}
+
+fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
+    // edit mode window
+    egui::Window::new("Mode")
+        .resizable(false)
+        .title_bar(false)
+        .max_width(100.)
+        .movable(false)
+        .current_pos(egui::Pos2::new(
+            shared.ui.edit_bar_pos.x + 7.5,
+            shared.ui.edit_bar_pos.y + 1.,
+        ))
+        .show(egui_ctx, |ui| {
+            ui.horizontal(|ui| {
+                macro_rules! button {
+                    ($name:expr, $mode:expr) => {
+                        let mut col = COLOR_ACCENT;
+                        if shared.edit_mode == $mode {
+                            let add = 20;
+                            col = egui::Color32::from_rgb(
+                                col.r() + add,
+                                col.g() + add,
+                                col.b() + add,
+                            );
+                        }
+                        if ui
+                            .add(
+                                egui::Button::new($name)
+                                    .fill(col)
+                                    .corner_radius(egui::CornerRadius::ZERO),
+                            )
+                            .clicked()
+                        {
+                            shared.edit_mode = $mode;
+                        }
+                    };
+                }
+                button!("Translate", 0);
+                button!("Rotate", 1);
+                button!("Scale", 2);
+            });
+        });
+}
+
+fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
+    egui::Window::new("Animating")
+        .resizable(false)
+        .title_bar(false)
+        .max_width(100.)
+        .movable(false)
+        .current_pos(egui::Pos2::new(
+            shared.ui.animate_mode_bar_pos.x - shared.ui.animate_mode_bar_scale.x - 21.,
+            shared.ui.animate_mode_bar_pos.y + 1.,
+        ))
+        .show(egui_ctx, |ui| {
+            ui.horizontal(|ui| {
+                macro_rules! button {
+                    ($name:expr, $mode:expr) => {
+                        let mut col = COLOR_ACCENT;
+                        if shared.animating == $mode {
+                            let add = 20;
+                            col = egui::Color32::from_rgb(
+                                col.r() + add,
+                                col.g() + add,
+                                col.b() + add,
+                            );
+                        }
+                        if ui
+                            .add(
+                                egui::Button::new($name)
+                                    .fill(col)
+                                    .corner_radius(egui::CornerRadius::ZERO),
+                            )
+                            .clicked()
+                        {
+                            shared.animating = $mode;
+                        }
+                    };
+                }
+                button!("Armature", false);
+                button!("Animation", true);
+                shared.ui.animate_mode_bar_scale = ui.min_rect().size().into();
             });
         });
 }
