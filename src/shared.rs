@@ -154,6 +154,34 @@ pub struct Vertex {
 }
 
 #[derive(Clone, Default)]
+pub struct Camera {
+    pub pos: Vec2,
+    pub zoom: f32,
+    pub initial_pos: Vec2,
+}
+
+/// Input-related fields.
+#[derive(Clone, Default)]
+pub struct InputStates {
+    pub modifier: i32,
+
+    // mouse stuff
+    pub initial_mouse: Option<Vec2>,
+    pub mouse_left: i32,
+    pub mouse: Vec2,
+
+    pub pressed: Vec<KeyCode>,
+
+    /// stored distance between bone and mouse on initial left click
+    pub mouse_bone_offset: Option<Vec2>,
+}
+
+#[derive(Clone, Default)]
+pub struct Ui {
+    pub edit_bar_pos: Vec2,
+}
+
+#[derive(Clone, Default)]
 pub struct Bone {
     pub id: i32,
     pub name: String,
@@ -182,33 +210,16 @@ pub struct Texture {
 }
 
 #[derive(Clone, Default)]
-pub struct Camera {
+pub struct Animation {
+    pub keyframes: Vec<Keyframe>
+}
+
+#[derive(Clone, Default)]
+pub struct Keyframe {
     pub pos: Vec2,
-    pub zoom: f32,
-    pub initial_pos: Vec2,
+    pub rot: f32,
+    pub scale: Vec2
 }
-
-/// Input-related fields.
-#[derive(Clone, Default)]
-pub struct InputStates {
-    pub modifier: i32,
-
-    // mouse stuff
-    pub initial_mouse: Option<Vec2>,
-    pub mouse_left: i32,
-    pub mouse: Vec2,
-
-    pub pressed: Vec<KeyCode>,
-
-    /// stored distance between bone and mouse on initial left click
-    pub mouse_bone_offset: Option<Vec2>,
-}
-
-#[derive(Clone, Default)]
-pub struct Ui {
-    pub edit_bar_pos: Vec2,
-}
-
 #[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
