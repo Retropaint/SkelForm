@@ -22,9 +22,12 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 if ui_mod::button("New Bone", ui).clicked() {
                     new_bone(&mut shared.armature.bones);
                 }
-                let drag_name = if shared.dragging { "Stay" } else { "Drag" };
+                let drag_name = if shared.dragging { "Edit" } else { "Drag" };
                 if ui_mod::button(drag_name, ui).clicked() {
                     shared.dragging = !shared.dragging;
+                    if shared.dragging {
+                        shared.selected_bone = usize::MAX;
+                    }
                 }
             });
 
