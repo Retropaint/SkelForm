@@ -20,7 +20,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                     return;
                 }
 
-                keyframe_editor(egui_ctx, ui, shared);
+                timeline_editor(egui_ctx, ui, shared);
             });
         });
 }
@@ -62,8 +62,8 @@ fn animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
         });
 }
 
-fn keyframe_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Shared) {
-    // keyframe editor
+fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Shared) {
+    // timeline editor
     egui::Frame::new()
         .outer_margin(egui::Margin {
             left: 0,
