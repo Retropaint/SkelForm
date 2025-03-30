@@ -49,6 +49,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
 
+        let mut zoom = 1.;
+
         // get parent bone
         let mut p = Bone::default();
         p.scale.x = 1.;
@@ -56,8 +58,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if let Some(pp) = find_bone(&temp_bones, bone!().parent_id) {
             p = pp.clone();
         } else {
-            bone!().pos /= shared.zoom;
-            bone!().scale /= shared.zoom;
+            zoom = shared.zoom;
         }
 
         bone!().rot += p.rot;
@@ -75,6 +76,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let verts = rect_verts(
             &bone!(),
             &shared.camera.pos,
+            zoom,
             &shared.armature.textures[bone!().tex_idx],
             shared.window.x / shared.window.y,
         );
@@ -238,7 +240,13 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
 /// Generate and return the vertices of a bone
 ///
 /// Accounts for texture size and aspect ratio
-fn rect_verts(bone: &Bone, camera: &Vec2, tex: &Texture, aspect_ratio: f32) -> Vec<Vertex> {
+fn rect_verts(
+    bone: &Bone,
+    camera: &Vec2,
+    zoom: f32,
+    tex: &Texture,
+    aspect_ratio: f32,
+) -> Vec<Vertex> {
     let hard_scale = 0.001;
     let mut vertices: Vec<Vertex> = vec![
         Vertex {
@@ -274,6 +282,8 @@ fn rect_verts(bone: &Bone, camera: &Vec2, tex: &Texture, aspect_ratio: f32) -> V
 
         // offset bone with camera
         v.pos -= *camera;
+
+        v.pos /= zoom;
 
         // adjust verts according to aspect ratio
         v.pos.x /= aspect_ratio;
