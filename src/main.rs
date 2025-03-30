@@ -10,6 +10,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     app.shared.debug = true;
     app.shared.camera.zoom = 1.;
     app.shared.zoom = 1.;
+    app.shared.animating = true;
     event_loop.run_app(&mut app)?;
     Ok(())
 }
