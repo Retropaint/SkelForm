@@ -1,8 +1,5 @@
 //! Animation keyframe editor. Very early and only proof-of-concept.
 
-use std::ops::MulAssign;
-
-use egui::{epaint::Marginf, Margin};
 use ui as ui_mod;
 
 use ui::COLOR_ACCENT;
