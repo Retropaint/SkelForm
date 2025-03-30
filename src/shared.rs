@@ -190,7 +190,7 @@ pub struct Ui {
 
     // what point of time is selected in the anim timeline
     pub selected_anim: usize,
-    pub anim_point: f32,
+    pub anim_pointing_frame: f32,
 }
 
 #[derive(Clone, Default)]
@@ -225,11 +225,13 @@ pub struct Texture {
 #[derive(Clone, Default)]
 pub struct Animation {
     pub name: String,
-    pub keyframes: Vec<Keyframe>
+    pub keyframes: Vec<Keyframe>,
+    pub fps: i32,
 }
 
 #[derive(Clone, Default)]
 pub struct Keyframe {
+    pub frame: i32,
     pub bone_id: i32,
     pub pos: Vec2,
     pub rot: f32,
