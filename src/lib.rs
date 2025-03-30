@@ -288,6 +288,7 @@ impl ApplicationHandler for App {
             self.shared.armature.animations.push(Animation {
                 name: "lol".to_string(),
                 keyframes: vec![],
+                fps: 24
             });
 
             let mut img_path = std::fs::File::create(".skelform_img_path").unwrap();
