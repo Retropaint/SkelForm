@@ -3,6 +3,8 @@
 use std::ops::MulAssign;
 
 use egui::{epaint::Marginf, Margin};
+use ui as ui_mod;
+
 use ui::COLOR_ACCENT;
 
 use crate::*;
@@ -40,12 +42,24 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                                         },
                                     );
                                 });
-                                for a in &shared.armature.animations {
-                                    if ui.button(a.name.clone()).clicked() {}
+                                for (i, a) in shared.armature.animations.iter().enumerate() {
+                                    if ui_mod::selection_button(
+                                        &a.name,
+                                        i == shared.ui.selected_anim,
+                                        ui
+                                    )
+                                    .clicked()
+                                    {
+                                        shared.ui.selected_anim = i;
+                                    }
                                 }
                             })
                         });
                     });
+
+                if shared.ui.selected_anim == usize::MAX {
+                    return;
+                }
 
                 // keyframe editor
                 egui::Frame::new()

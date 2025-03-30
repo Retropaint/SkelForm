@@ -186,7 +186,11 @@ pub struct InputStates {
 pub struct Ui {
     pub edit_bar_pos: Vec2,
     pub animate_mode_bar_pos: Vec2,
-    pub animate_mode_bar_scale: Vec2
+    pub animate_mode_bar_scale: Vec2,
+
+    // what point of time is selected in the anim timeline
+    pub selected_anim: usize,
+    pub anim_point: f32,
 }
 
 #[derive(Clone, Default)]
