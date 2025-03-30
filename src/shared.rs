@@ -185,6 +185,8 @@ pub struct InputStates {
 #[derive(Clone, Default)]
 pub struct Ui {
     pub edit_bar_pos: Vec2,
+    pub animate_mode_bar_pos: Vec2,
+    pub animate_mode_bar_scale: Vec2
 }
 
 #[derive(Clone, Default)]
@@ -205,6 +207,7 @@ pub struct Bone {
 pub struct Armature {
     /// index relative to skelements texture vector
     pub bones: Vec<Bone>,
+    pub animations: Vec<Animation>,
 
     pub textures: Vec<Texture>,
 }
@@ -222,6 +225,7 @@ pub struct Animation {
 
 #[derive(Clone, Default)]
 pub struct Keyframe {
+    pub bone_id: i32,
     pub pos: Vec2,
     pub rot: f32,
     pub scale: Vec2
@@ -247,6 +251,8 @@ pub struct Shared {
 
     // should be enum but too lazy atm
     pub edit_mode: i32,
+
+    pub animating: bool,
 
     /// useful if you don't want to provide an actual bind group during testing
     pub placeholder_bind_group: Option<BindGroup>,

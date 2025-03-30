@@ -95,6 +95,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     bone!().rot = 0.;
                 }
             });
+            shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
         });
 }
 
