@@ -94,32 +94,15 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
         ))
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
-                macro_rules! button {
-                    ($name:expr, $mode:expr) => {
-                        let mut col = COLOR_ACCENT;
-                        if shared.edit_mode == $mode {
-                            let add = 20;
-                            col = egui::Color32::from_rgb(
-                                col.r() + add,
-                                col.g() + add,
-                                col.b() + add,
-                            );
-                        }
-                        if ui
-                            .add(
-                                egui::Button::new($name)
-                                    .fill(col)
-                                    .corner_radius(egui::CornerRadius::ZERO),
-                            )
-                            .clicked()
-                        {
-                            shared.edit_mode = $mode;
-                        }
-                    };
-                }
-                button!("Translate", 0);
-                button!("Rotate", 1);
-                button!("Scale", 2);
+                if selection_button("Move", shared.edit_mode == 0, ui).clicked() {
+                    shared.edit_mode = 0;
+                };
+                if selection_button("Rotate", shared.edit_mode == 1, ui).clicked() {
+                    shared.edit_mode = 1;
+                };
+                if selection_button("Scale", shared.edit_mode == 2, ui).clicked() {
+                    shared.edit_mode = 2;
+                };
             });
         });
 }
@@ -136,31 +119,12 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
         ))
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
-                macro_rules! button {
-                    ($name:expr, $mode:expr) => {
-                        let mut col = COLOR_ACCENT;
-                        if shared.animating == $mode {
-                            let add = 20;
-                            col = egui::Color32::from_rgb(
-                                col.r() + add,
-                                col.g() + add,
-                                col.b() + add,
-                            );
-                        }
-                        if ui
-                            .add(
-                                egui::Button::new($name)
-                                    .fill(col)
-                                    .corner_radius(egui::CornerRadius::ZERO),
-                            )
-                            .clicked()
-                        {
-                            shared.animating = $mode;
-                        }
-                    };
+                if selection_button("Armature", !shared.animating, ui).clicked() {
+                    shared.animating = false;
                 }
-                button!("Armature", false);
-                button!("Animation", true);
+                if selection_button("Armature", shared.animating, ui).clicked() {
+                    shared.animating = true;
+                }
                 shared.ui.animate_mode_bar_scale = ui.min_rect().size().into();
             });
         });
@@ -198,6 +162,19 @@ pub fn button(text: &str, ui: &mut egui::Ui) -> egui::Response {
     ui.add(
         egui::Button::new(text)
             .fill(COLOR_ACCENT)
+            .corner_radius(egui::CornerRadius::ZERO),
+    )
+}
+
+pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::Response {
+    let mut col = COLOR_ACCENT;
+    if selected {
+        // emilk forgot to add += for Color32
+        col = col + egui::Color32::from_rgb(20, 20, 20);
+    }
+    ui.add(
+        egui::Button::new(text)
+            .fill(col)
             .corner_radius(egui::CornerRadius::ZERO),
     )
 }
