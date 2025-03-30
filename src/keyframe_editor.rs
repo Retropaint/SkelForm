@@ -3,39 +3,61 @@
 use crate::*;
 
 pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
-    egui::TopBottomPanel::bottom("bruh")
+    egui::TopBottomPanel::bottom("Keyframe")
         .min_height(150.)
         .show(egui_ctx, |ui| {
+            let full_height = ui.available_height();
 
-            egui::Frame::new().show(ui, |ui| {
-                ui.set_min_width(ui.available_width());
-                ui.set_min_height(20.);
-                let pos = Vec2::from(ui.min_rect().center());
-                let mut i = 0;
-                while i < 10 {
-                    let painter = ui.painter_at(ui.min_rect());
-                    draw_diamond(&painter, Vec2::new(40. * i as f32, pos.y));
-                    i += 1;
-                }
-            });
+            ui.horizontal(|ui| {
+                ui.set_height(full_height);
+                egui::Resize::default()
+                    .min_height(full_height)
+                    .max_height(full_height)
+                    .default_width(150.)
+                    .with_stroke(false)
+                    .show(ui, |ui| {
+                        egui::Frame::new().show(ui, |ui| {
+                            ui.vertical(|ui| {
+                                ui.horizontal(|ui| {
+                                    ui.heading("Animation");
 
-            egui::Frame::new()
-                .outer_margin(5.)
-                .fill(egui::Color32::DARK_GRAY)
-                .show(ui, |ui| {
+                                    ui.with_layout(
+                                        egui::Layout::right_to_left(egui::Align::Center),
+                                        |ui| {
+                                            ui.add_space(5.);
+                                            if ui.button("New").clicked() {
+                                                shared.armature.animations.push(Animation {
+                                                    name: "New_Anim".to_string(),
+                                                    keyframes: vec![],
+                                                })
+                                            }
+                                        },
+                                    );
+                                });
+                                for a in &shared.armature.animations {
+                                    if ui.button(a.name.clone()).clicked() {}
+                                }
+                            })
+                        });
+                    });
+                //ui.separator();
+                egui::Frame::new().show(ui, |ui| {
                     ui.set_min_width(ui.available_width());
                     ui.set_min_height(ui.available_height());
-                    let painter = ui.painter_at(ui.min_rect());
                     let mut i = 0;
                     while i < 10 {
-                        painter.vline(
-                            40. * i as f32,
-                            egui::Rangef::new(ui.min_rect().top(), ui.min_rect().bottom()),
-                            egui::Stroke::new(1., egui::Color32::WHITE),
+                        let painter = ui.painter_at(ui.min_rect());
+                        draw_diamond(
+                            &painter,
+                            Vec2::new(
+                                40. * i as f32 + ui.min_rect().left() + 10.,
+                                ui.min_rect().top() + 12.,
+                            ),
                         );
                         i += 1;
                     }
                 });
+            });
         });
 }
 
@@ -63,7 +85,7 @@ fn draw_diamond(painter: &egui::Painter, pos: Vec2) {
     // Draw the diamond
     painter.add(egui::Shape::convex_polygon(
         points,
-        egui::Color32::TRANSPARENT,             // Fill color (transparent)
+        egui::Color32::TRANSPARENT, // Fill color (transparent)
         egui::Stroke::new(2.0, egui::Color32::WHITE), // Stroke width & color
     ));
 }
