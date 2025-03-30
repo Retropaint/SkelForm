@@ -33,6 +33,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     }
                 }
             });
+            
+            shared.ui.edit_bar_pos.x = ui.min_rect().right();
 
             if shared.armature.bones.len() == 0 {
                 return;
@@ -86,7 +88,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     });
                 }
             });
-            shared.ui.edit_bar_pos.x = ui.min_rect().right();
         });
 }
 

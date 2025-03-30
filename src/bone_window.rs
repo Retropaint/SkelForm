@@ -30,6 +30,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.separator();
             ui.add_space(3.);
 
+            shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
+
             if shared.selected_bone == usize::MAX {
                 ui.disable();
                 return;
@@ -95,7 +97,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     bone!().rot = 0.;
                 }
             });
-            shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
         });
 }
 
