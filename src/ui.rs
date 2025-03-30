@@ -24,7 +24,9 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     }
 
     style_once!(top_panel(context, shared));
-    style_once!(keyframe_editor::draw(context, shared));
+    if shared.animating {
+        style_once!(keyframe_editor::draw(context, shared));
+    }
     style_once!(armature_window::draw(context, shared));
     style_once!(bone_window::draw(context, shared));
 
@@ -172,7 +174,6 @@ pub fn default_styling(context: &Context) {
     visuals.window_corner_radius = egui::CornerRadius::ZERO;
 
     visuals.window_shadow = Shadow::NONE;
-
     visuals.window_fill = COLOR_MAIN;
     visuals.panel_fill = COLOR_MAIN;
     visuals.window_stroke = egui::Stroke::new(1., COLOR_ACCENT);
