@@ -2,7 +2,7 @@
 
 use std::borrow::BorrowMut;
 
-use egui::{Context, Rangef, Stroke, Ui};
+use egui::{Context, Rangef, Shadow, Stroke, Ui};
 
 use crate::shared::*;
 use crate::{armature_window, bone_window, keyframe_editor, Vec2};
@@ -51,7 +51,14 @@ pub fn draw(context: &Context, shared: &mut Shared) {
                                 col.b() + add,
                             );
                         }
-                        if ui.add(egui::Button::new($name).fill(col).corner_radius(egui::CornerRadius::ZERO)).clicked() {
+                        if ui
+                            .add(
+                                egui::Button::new($name)
+                                    .fill(col)
+                                    .corner_radius(egui::CornerRadius::ZERO),
+                            )
+                            .clicked()
+                        {
                             shared.edit_mode = $mode;
                         }
                     };
@@ -59,6 +66,46 @@ pub fn draw(context: &Context, shared: &mut Shared) {
                 button!("Translate", 0);
                 button!("Rotate", 1);
                 button!("Scale", 2);
+            });
+        });
+
+    egui::Window::new("Animating")
+        .resizable(false)
+        .title_bar(false)
+        .max_width(100.)
+        .movable(false)
+        .current_pos(egui::Pos2::new(
+            shared.ui.animate_mode_bar_pos.x - shared.ui.animate_mode_bar_scale.x - 21.,
+            shared.ui.animate_mode_bar_pos.y + 1.,
+        ))
+        .show(context, |ui| {
+            ui.horizontal(|ui| {
+                macro_rules! button {
+                    ($name:expr, $mode:expr) => {
+                        let mut col = COLOR_ACCENT;
+                        if shared.animating == $mode {
+                            let add = 20;
+                            col = egui::Color32::from_rgb(
+                                col.r() + add,
+                                col.g() + add,
+                                col.b() + add,
+                            );
+                        }
+                        if ui
+                            .add(
+                                egui::Button::new($name)
+                                    .fill(col)
+                                    .corner_radius(egui::CornerRadius::ZERO),
+                            )
+                            .clicked()
+                        {
+                            shared.animating = $mode;
+                        }
+                    };
+                }
+                button!("Armature", false);
+                button!("Animation", true);
+                shared.ui.animate_mode_bar_scale = ui.min_rect().size().into();
             });
         });
 }
@@ -104,6 +151,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     })
                 });
                 shared.ui.edit_bar_pos.y = ui.min_rect().bottom();
+                shared.ui.animate_mode_bar_pos.y = ui.min_rect().bottom();
             });
         });
 }
@@ -114,6 +162,8 @@ pub fn default_styling(context: &Context) {
 
     // remove rounded corners on windows
     visuals.window_corner_radius = egui::CornerRadius::ZERO;
+
+    visuals.window_shadow = Shadow::NONE;
 
     visuals.window_fill = COLOR_MAIN;
     visuals.panel_fill = COLOR_MAIN;
@@ -136,5 +186,9 @@ pub fn set_zoom(zoom: f32, shared: &mut Shared) {
 }
 
 pub fn button(text: &str, ui: &mut egui::Ui) -> egui::Response {
-    ui.add(egui::Button::new(text).fill(COLOR_ACCENT).corner_radius(egui::CornerRadius::ZERO))
+    ui.add(
+        egui::Button::new(text)
+            .fill(COLOR_ACCENT)
+            .corner_radius(egui::CornerRadius::ZERO),
+    )
 }
