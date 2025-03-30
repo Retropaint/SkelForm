@@ -25,7 +25,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                     .with_stroke(false)
                     .show(ui, |ui| {
                         egui::Frame::new().show(ui, |ui| {
-                            // prevent self-resizing with ver and hor wraps
+                            // use a ver and hor wrap to prevent self-resizing
                             ui.vertical(|ui| {
                                 ui.horizontal(|ui| {
                                     ui.heading("Animation");
