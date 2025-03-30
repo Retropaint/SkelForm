@@ -232,7 +232,7 @@ impl ApplicationHandler for App {
             WindowEvent::MouseWheel {
                 device_id: _,
                 delta,
-                phase,
+                phase: _phase,
             } => {
                 input::mouse_wheel_input(delta, &mut self.shared);
             }
