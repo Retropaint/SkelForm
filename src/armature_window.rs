@@ -2,7 +2,10 @@
 
 use egui::*;
 
-use crate::{shared::{Shared, Vec2}, ui as ui_mod};
+use crate::{
+    shared::{Shared, Vec2},
+    ui as ui_mod,
+};
 
 use crate::shared::*;
 

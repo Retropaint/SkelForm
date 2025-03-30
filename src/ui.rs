@@ -1,11 +1,9 @@
 //! Core UI (user interface) logic.
 
-use std::borrow::BorrowMut;
-
-use egui::{Context, Rangef, Shadow, Stroke, Ui};
+use egui::{Context, Shadow, Stroke};
 
 use crate::shared::*;
-use crate::{armature_window, bone_window, keyframe_editor, Vec2};
+use crate::{armature_window, bone_window, keyframe_editor};
 
 // UI colors
 pub const COLOR_ACCENT: egui::Color32 = egui::Color32::from_rgb(60, 60, 60);

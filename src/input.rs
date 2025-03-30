@@ -4,7 +4,6 @@ use crate::*;
 
 use winit::event::ElementState;
 use winit::keyboard::*;
-use winit::window::CursorIcon;
 
 pub fn keyboard_input(
     key: &winit::keyboard::KeyCode,
