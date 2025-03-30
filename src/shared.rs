@@ -188,9 +188,14 @@ pub struct Ui {
     pub animate_mode_bar_pos: Vec2,
     pub animate_mode_bar_scale: Vec2,
 
-    // what point of time is selected in the anim timeline
-    pub selected_anim: usize,
-    pub anim_pointing_frame: f32,
+    pub anim: UiAnim,
+}
+
+#[derive(Clone, Default)]
+pub struct UiAnim {
+    pub selected: usize,
+    pub hovering_frame: i32,
+    pub selected_frame: i32
 }
 
 #[derive(Clone, Default)]
@@ -235,7 +240,7 @@ pub struct Keyframe {
     pub bone_id: i32,
     pub pos: Vec2,
     pub rot: f32,
-    pub scale: Vec2
+    pub scale: Vec2,
 }
 #[derive(Default)]
 pub struct Shared {
