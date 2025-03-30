@@ -74,7 +74,7 @@ pub fn mouse_input(
 pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
     let sens_reducer = 100.;
     match delta {
-        MouseScrollDelta::LineDelta(x, y) => {
+        MouseScrollDelta::LineDelta(_x, y) => {
             ui::set_zoom(shared.zoom + (y as f32 / sens_reducer), shared);
         }
         MouseScrollDelta::PixelDelta(pos) => {
