@@ -18,7 +18,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             if let Some(im) = shared.input.initial_mouse {
                 let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
                 let initial_world = utils::screen_to_world_space(im, shared.window);
-                shared.camera.pos = shared.camera.initial_pos - (mouse_world - initial_world);
+                shared.camera.pos = shared.camera.initial_pos - (mouse_world - initial_world) * shared.zoom;
             } else {
                 shared.camera.initial_pos = shared.camera.pos;
                 shared.input.initial_mouse = Some(shared.input.mouse);
