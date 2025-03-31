@@ -12,15 +12,14 @@ name = "skellar"
 bytemuck = { version = "1.21.0", features = ["derive"] }
 egui = "0.31.0"
 egui-wgpu = { version = "0.31.0", features = ["winit"] }
-image = "0.25.5"
-rfd = "0.15.3"
 wgpu = { version = "24.0.1", default-features = false }
 winit = "0.30.9"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-env_logger = "0.11.6"
 egui-winit = "0.31.0"
 pollster = "0.4.0"
+image = "0.25.5"
+rfd = "0.15.3"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3.77", features = ["Window", "Document", "HtmlImageElement", "CanvasRenderingContext2d", "HtmlCanvasElement", "ImageData"] }
