@@ -203,7 +203,7 @@ pub struct UiAnim {
     pub hovering_frame: i32,
     pub selected_frame: i32,
     pub timeline_zoom: f32,
-    pub lines_x: Vec<f32>
+    pub lines_x: Vec<f32>,
 }
 
 #[derive(Clone, Default)]
@@ -245,7 +245,12 @@ pub struct Animation {
 #[derive(Clone, Default)]
 pub struct Keyframe {
     pub frame: i32,
-    pub bone_id: i32,
+    pub bones: Vec<AnimBone>,
+}
+
+#[derive(Clone, Default)]
+pub struct AnimBone {
+    pub id: i32,
     pub pos: Vec2,
     pub rot: f32,
     pub scale: Vec2,

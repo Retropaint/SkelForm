@@ -3,7 +3,7 @@
 use crate::{
     input,
     shared::{Bone, Shared, Texture, Vec2, Vertex},
-    utils,
+    utils, AnimBone,
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::{keyboard::KeyCode, window::CursorIcon};
@@ -119,25 +119,10 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
         if let Some(offset) = shared.input.initial_mouse {
             // move bone with mouse, keeping in mind their distance
             bone!().pos = (mouse_world * shared.zoom) + offset;
+
+            // record to keyframe if in proper animation context
             if shared.animating && shared.ui.anim.selected != usize::MAX {
-                macro_rules! anim {
-                    () => {
-                        shared.armature.animations[shared.ui.anim.selected as usize]
-                    };
-                }
-
-                let kf = anim!()
-                    .keyframes
-                    .iter()
-                    .position(|k| k.frame == shared.ui.anim.selected_frame);
-
-                if kf == None {
-                    // create new keyframe
-                    anim!().keyframes.push(crate::Keyframe {
-                        frame: shared.ui.anim.selected_frame,
-                        ..Default::default()
-                    });
-                }
+                record_to_keyframe(&bone!().clone(), shared);
             }
         } else {
             // get initial distance between bone and cursor,
@@ -315,6 +300,50 @@ fn rect_verts(
 
     vertices
 }
+
+fn record_to_keyframe(bone: &Bone, shared: &mut Shared) {
+    macro_rules! anim {
+        () => {
+            shared.armature.animations[shared.ui.anim.selected as usize]
+        };
+    }
+
+    let kf = anim!()
+        .keyframes
+        .iter()
+        .position(|k| k.frame == shared.ui.anim.selected_frame);
+
+    if kf == None {
+        // create new keyframe
+        anim!().keyframes.push(crate::Keyframe {
+            frame: shared.ui.anim.selected_frame,
+            bones: vec![AnimBone {
+                id: bone.id,
+                ..Default::default()
+            }],
+        });
+    } else {
+        // check if this bone is in keyframe
+        let mut idx = anim!().keyframes[kf.unwrap()]
+            .bones
+            .iter()
+            .position(|bone| bone.id == bone.id);
+
+        if idx == None {
+            // create anim bone
+            anim!().keyframes[kf.unwrap()].bones.push(AnimBone {
+                id: bone.id,
+                ..Default::default()
+            });
+            idx = Some(anim!().keyframes[kf.unwrap()].bones.len());
+        }
+
+        // record position into keyframe
+        anim!().keyframes[kf.unwrap()].bones[idx.unwrap()].pos = bone.pos;
+        println!("{}", anim!().keyframes[kf.unwrap()].bones[idx.unwrap()].pos);
+    }
+}
+
 pub fn find_bone(bones: &Vec<Bone>, id: i32) -> Option<&Bone> {
     for b in bones {
         if b.id == id {
