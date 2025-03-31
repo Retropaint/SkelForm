@@ -17,8 +17,8 @@ pub use native::*;
 #[cfg(target_arch = "wasm32")]
 mod web {
     pub use crate::wasm_bindgen::*;
-    pub use web_sys::js_sys::wasm_bindgen;
     pub use wasm_bindgen::prelude::wasm_bindgen;
+    pub use web_sys::js_sys::wasm_bindgen;
 }
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
@@ -41,7 +41,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
 
-            if shared.selected_bone == usize::MAX {
+            if shared.selected_bone == usize::MAX || shared.dragging {
                 ui.disable();
                 return;
             }
