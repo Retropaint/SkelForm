@@ -85,19 +85,16 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                 egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
                     ui.set_width(ui.available_width());
                     ui.set_height(20.);
-                    for (i, _) in shared.armature.animations[shared.ui.anim.selected]
+                    for (i, kf) in shared.armature.animations[shared.ui.anim.selected]
                         .keyframes
                         .iter()
                         .enumerate()
                     {
                         // Wait for the last diamond's position to be determined
                         // on the next frame.
-                        if i == shared.ui.anim.diamond_x.len() {
-                            break;
-                        }
 
                         let pos = Vec2::new(
-                            ui.min_rect().left() + shared.ui.anim.diamond_x[i],
+                            ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
                             ui.min_rect().top() + 10.,
                         );
                         draw_diamond(ui, pos);
@@ -156,21 +153,14 @@ fn draw_frame_lines(egui_ctx: &egui::Context, ui: &egui::Ui, shared: &mut Shared
     let zoomed_width = ui.min_rect().width() / shared.ui.anim.timeline_zoom;
     let hitbox = zoomed_width / fps!() as f32 / 2.;
 
-    shared.ui.anim.diamond_x = vec![];
+    shared.ui.anim.lines_x = vec![];
 
     let mut x = 0.;
     let mut i = 0;
     while x < ui.min_rect().width() {
         x = i as f32 / fps!() as f32 * zoomed_width + LINE_OFFSET;
 
-        let kf = shared.armature.animations[shared.ui.anim.selected]
-            .keyframes
-            .iter()
-            .position(|k| k.frame == i);
-
-        if kf != None {
-            shared.ui.anim.diamond_x.push(x);
-        }
+        shared.ui.anim.lines_x.push(x);
 
         let mut color = egui::Color32::DARK_GRAY;
         if shared.ui.anim.selected_frame == i {
@@ -178,7 +168,7 @@ fn draw_frame_lines(egui_ctx: &egui::Context, ui: &egui::Ui, shared: &mut Shared
         } else if cursor_x < x + hitbox && cursor_x > x - hitbox {
             color = egui::Color32::GRAY;
             // select this frame if clicked
-            if shared.input.mouse_left != -1 {
+            if shared.input.mouse_left == 0 {
                 shared.ui.anim.selected_frame = i;
             }
         }
