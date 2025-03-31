@@ -28,9 +28,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 let drag_name = if shared.dragging { "Edit" } else { "Drag" };
                 if ui_mod::button(drag_name, ui).clicked() {
                     shared.dragging = !shared.dragging;
-                    if shared.dragging {
-                        shared.selected_bone = usize::MAX;
-                    }
                 }
             });
 
