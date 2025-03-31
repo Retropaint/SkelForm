@@ -7,16 +7,19 @@ use ui::COLOR_ACCENT;
 
 use crate::*;
 
+const LINE_OFFSET: f32 = 30.;
+
 pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
     egui::TopBottomPanel::bottom("Keyframe")
         .min_height(150.)
+        .resizable(true)
         .show(egui_ctx, |ui| {
             let full_height = ui.available_height();
             ui.horizontal(|ui| {
                 ui.set_height(full_height);
                 animations_list(ui, shared);
 
-                if shared.ui.selected_anim == usize::MAX {
+                if shared.ui.anim.selected == usize::MAX {
                     return;
                 }
 
@@ -51,10 +54,10 @@ fn animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                         });
                     });
                     for (i, a) in shared.armature.animations.iter().enumerate() {
-                        if ui_mod::selection_button(&a.name, i == shared.ui.selected_anim, ui)
+                        if ui_mod::selection_button(&a.name, i == shared.ui.anim.selected, ui)
                             .clicked()
                         {
-                            shared.ui.selected_anim = i;
+                            shared.ui.anim.selected = i;
                         }
                     }
                 })
@@ -63,7 +66,6 @@ fn animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
 }
 
 fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Shared) {
-    // timeline editor
     egui::Frame::new()
         .outer_margin(egui::Margin {
             left: 0,
@@ -84,78 +86,95 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                 egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
                     ui.set_width(ui.available_width());
                     ui.set_height(20.);
-                    let painter = ui.painter_at(ui.min_rect());
                     let pos = Vec2::new(ui.min_rect().left() + 10., ui.min_rect().top() + 10.);
-                    draw_diamond(&painter, pos);
+                    draw_diamond(ui, pos);
                 });
 
-                // timeline graph
-                egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
-                    ui.set_width(ui.available_width());
-                    ui.set_height(ui.available_height());
-                    let mut i = 0;
-                    while i < shared.armature.animations[shared.ui.selected_anim].fps {
-                        let x = i as f32 / (shared.armature.animations[shared.ui.selected_anim].fps - 1) as f32 * ui.min_rect().width() as f32;
-                        let painter = ui.painter_at(ui.min_rect());
-                        painter.vline(
-                            ui.min_rect().left() + x,
-                            egui::Rangef {
-                                min: ui.min_rect().top(),
-                                max: ui.min_rect().bottom(),
-                            },
-                            Stroke {
-                                width: 2.,
-                                color: egui::Color32::DARK_GRAY,
-                            },
-                        );
-                        i += 1;
-                    }
-                    draw_pointing_line(egui_ctx, ui, shared);
+                // The options bar has to be at the bottom, but it needs to be created first
+                // so that the remaining height can be taken up by timeline graph.
+                ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+                    // options
+                    egui::Frame::new().show(ui, |ui| {
+                        ui.set_width(ui.available_width());
+                        ui.set_height(20.);
+                        ui.horizontal(|ui| {
+                            if ui.button("+").clicked() {
+                                shared.ui.anim.timeline_zoom -= 0.1;
+                            }
+                            if ui.button("-").clicked() {
+                                shared.ui.anim.timeline_zoom += 0.1;
+                            }
+                        });
+                    });
+
+                    // timeline graph
+                    egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
+                        ui.set_width(ui.available_width());
+                        ui.set_height(ui.available_height());
+                        draw_frame_lines(egui_ctx, ui, shared);
+                    });
                 });
             });
         });
 }
 
-fn draw_pointing_line(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Shared) {
-    // get cursor pos on the frame (or 0, 0 if can't)
-    let mut cursor_x: f32;
-    let mut frame: i32;
-    let cursor_pos = egui_ctx.input(|i| {
-        if let Some(result) = i.pointer.hover_pos() {
-            result
-        } else {
-            egui::Pos2::new(0., 0.)
+/// Draw all lines representing frames in the timeline.
+fn draw_frame_lines(egui_ctx: &egui::Context, ui: &egui::Ui, shared: &mut Shared) {
+    macro_rules! fps {
+        () => {
+            shared.armature.animations[shared.ui.anim.selected].fps
+        };
+    }
+
+    // get cursor pos on the graph (or 0, 0 if can't)
+    let mut cursor_x = -1.;
+    if ui.ui_contains_pointer() {
+        let cursor_pos = egui_ctx.input(|i| {
+            if let Some(result) = i.pointer.hover_pos() {
+                result
+            } else {
+                egui::Pos2::new(0., 0.)
+            }
+        });
+        cursor_x = cursor_pos.x - ui.min_rect().left();
+    }
+
+    let zoomed_width = ui.min_rect().width() / shared.ui.anim.timeline_zoom;
+    let hitbox = zoomed_width / fps!() as f32 / 2.;
+
+    let mut x = 0.;
+    let mut i = 0;
+    while x < ui.min_rect().width() {
+        x = i as f32 / fps!() as f32 * zoomed_width + LINE_OFFSET;
+
+        let mut color = egui::Color32::DARK_GRAY;
+        if shared.ui.anim.selected_frame == i {
+            color = egui::Color32::WHITE;
+        } else if cursor_x < x + hitbox && cursor_x > x - hitbox {
+            color = egui::Color32::GRAY;
+            // select this frame if clicked
+            if shared.input.mouse_left != -1 {
+                shared.ui.anim.selected_frame = i;
+            }
         }
-    });
-    cursor_x = cursor_pos.x - ui.min_rect().left();
 
-    // get cursor % of graph
-    cursor_x /= ui.min_rect().width();
-    cursor_x *= (shared.armature.animations[shared.ui.selected_anim].fps - 1) as f32;
-
-    // round frame to integer
-    frame = cursor_x.round() as i32;
-    cursor_x = cursor_x.round();
-
-    // reverse process to get rounded graph line
-    cursor_x /= (shared.armature.animations[shared.ui.selected_anim].fps - 1) as f32;
-    cursor_x *= ui.min_rect().width();
-
-    let painter = ui.painter_at(ui.min_rect());
-    painter.vline(
-        ui.min_rect().left() + cursor_x,
-        egui::Rangef {
-            min: ui.min_rect().top(),
-            max: ui.min_rect().bottom(),
-        },
-        Stroke {
-            width: 2.,
-            color: egui::Color32::WHITE,
-        },
-    );
+        // draw the line!
+        let painter = ui.painter_at(ui.min_rect());
+        painter.vline(
+            ui.min_rect().left() + x,
+            egui::Rangef {
+                min: ui.min_rect().top(),
+                max: ui.min_rect().bottom(),
+            },
+            Stroke { width: 2., color },
+        );
+        i += 1;
+    }
 }
 
-fn draw_diamond(painter: &egui::Painter, pos: Vec2) {
+fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
+    let painter = ui.painter_at(ui.min_rect());
+
     // Define the center and size of the diamond
     let size = 5.0; // Half of the width/height
 

@@ -195,7 +195,8 @@ pub struct Ui {
 pub struct UiAnim {
     pub selected: usize,
     pub hovering_frame: i32,
-    pub selected_frame: i32
+    pub selected_frame: i32,
+    pub timeline_zoom: f32,
 }
 
 #[derive(Clone, Default)]

@@ -21,6 +21,15 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         };
     }
 
+    // todo: rework click logic to use egui instead of winit
+    context.input(|i| {
+        if i.pointer.primary_clicked() {
+            shared.input.mouse_left = 0;
+        } else {
+            shared.input.mouse_left = -1;
+        }
+    });
+
     style_once!(top_panel(context, shared));
     if shared.animating {
         style_once!(keyframe_editor::draw(context, shared));
