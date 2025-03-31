@@ -123,7 +123,6 @@ impl ApplicationHandler for App {
 
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    env_logger::init();
                     let renderer = pollster::block_on(async move {
                         Renderer::new(window_handle.clone(), width, height).await
                     });
