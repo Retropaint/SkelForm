@@ -125,11 +125,14 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
                         shared.armature.animations[shared.ui.anim.selected as usize]
                     };
                 }
+
                 let kf = anim!()
                     .keyframes
                     .iter()
                     .position(|k| k.frame == shared.ui.anim.selected_frame);
+
                 if kf == None {
+                    // create new keyframe
                     anim!().keyframes.push(crate::Keyframe {
                         frame: shared.ui.anim.selected_frame,
                         ..Default::default()
