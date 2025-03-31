@@ -119,7 +119,7 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
         if let Some(offset) = shared.input.initial_mouse {
             // move bone with mouse, keeping in mind their distance
             bone!().pos = (mouse_world * shared.zoom) + offset;
-            if shared.animating {
+            if shared.animating && shared.ui.anim.selected != usize::MAX {
                 macro_rules! anim {
                     () => {
                         shared.armature.animations[shared.ui.anim.selected as usize]
