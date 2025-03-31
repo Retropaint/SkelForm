@@ -21,12 +21,14 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         };
     }
 
-    // todo: rework click logic to use egui instead of winit
     context.input(|i| {
-        if i.pointer.primary_clicked() {
-            shared.input.mouse_left = 0;
+        if i.pointer.primary_down() {
+            if shared.input.mouse_left == -1 {
+                shared.input.mouse_left = 0;
+            }
         } else {
             shared.input.mouse_left = -1;
+            shared.input.initial_mouse = None;
         }
     });
 
