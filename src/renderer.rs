@@ -119,6 +119,23 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
         if let Some(offset) = shared.input.initial_mouse {
             // move bone with mouse, keeping in mind their distance
             bone!().pos = (mouse_world * shared.zoom) + offset;
+            if shared.animating {
+                macro_rules! anim {
+                    () => {
+                        shared.armature.animations[shared.ui.anim.selected as usize]
+                    };
+                }
+                let kf = anim!()
+                    .keyframes
+                    .iter()
+                    .position(|k| k.frame == shared.ui.anim.selected_frame);
+                if kf == None {
+                    anim!().keyframes.push(crate::Keyframe {
+                        frame: shared.ui.anim.selected_frame,
+                        ..Default::default()
+                    });
+                }
+            }
         } else {
             // get initial distance between bone and cursor,
             // so that the bone can 'follow' it

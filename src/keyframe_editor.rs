@@ -82,12 +82,26 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
             });
 
             ui.vertical(|ui| {
-                // diamond bar
                 egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
                     ui.set_width(ui.available_width());
                     ui.set_height(20.);
-                    let pos = Vec2::new(ui.min_rect().left() + 10., ui.min_rect().top() + 10.);
-                    draw_diamond(ui, pos);
+                    for (i, _) in shared.armature.animations[shared.ui.anim.selected]
+                        .keyframes
+                        .iter()
+                        .enumerate()
+                    {
+                        // Wait for the last diamond's position to be determined
+                        // on the next frame.
+                        if i == shared.ui.anim.diamond_x.len() {
+                            break;
+                        }
+
+                        let pos = Vec2::new(
+                            ui.min_rect().left() + shared.ui.anim.diamond_x[i],
+                            ui.min_rect().top() + 10.,
+                        );
+                        draw_diamond(ui, pos);
+                    }
                 });
 
                 // The options bar has to be at the bottom, but it needs to be created first
@@ -142,10 +156,21 @@ fn draw_frame_lines(egui_ctx: &egui::Context, ui: &egui::Ui, shared: &mut Shared
     let zoomed_width = ui.min_rect().width() / shared.ui.anim.timeline_zoom;
     let hitbox = zoomed_width / fps!() as f32 / 2.;
 
+    shared.ui.anim.diamond_x = vec![];
+
     let mut x = 0.;
     let mut i = 0;
     while x < ui.min_rect().width() {
         x = i as f32 / fps!() as f32 * zoomed_width + LINE_OFFSET;
+
+        let kf = shared.armature.animations[shared.ui.anim.selected]
+            .keyframes
+            .iter()
+            .position(|k| k.frame == i);
+
+        if kf != None {
+            shared.ui.anim.diamond_x.push(x);
+        }
 
         let mut color = egui::Color32::DARK_GRAY;
         if shared.ui.anim.selected_frame == i {

@@ -197,6 +197,7 @@ pub struct UiAnim {
     pub hovering_frame: i32,
     pub selected_frame: i32,
     pub timeline_zoom: f32,
+    pub diamond_x: Vec<f32>
 }
 
 #[derive(Clone, Default)]
