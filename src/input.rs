@@ -58,10 +58,9 @@ pub fn mouse_input(
 ) {
     if *button == MouseButton::Left {
         if *state == ElementState::Pressed {
-            shared.input.mouse_left = 0;
+            shared.input.on_ui = false;
         } else {
-            shared.input.mouse_left = -1;
-            shared.input.mouse_bone_offset = None;
+            shared.input.on_ui = true;
         }
     }
 

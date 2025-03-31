@@ -21,4 +21,8 @@ fn init_shared(shared: &mut Shared) {
     shared.animating = true;
     shared.ui.anim.selected = usize::MAX;
     shared.ui.anim.timeline_zoom = 1.;
+
+    // if this were false, the first click would always
+    // be considered non-UI
+    shared.input.on_ui = true;
 }

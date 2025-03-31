@@ -176,10 +176,10 @@ pub struct InputStates {
     pub mouse_left: i32,
     pub mouse: Vec2,
 
-    pub pressed: Vec<KeyCode>,
+    // is mouse on UI?
+    pub on_ui: bool,
 
-    /// stored distance between bone and mouse on initial left click
-    pub mouse_bone_offset: Option<Vec2>,
+    pub pressed: Vec<KeyCode>,
 }
 
 #[derive(Clone, Default)]
