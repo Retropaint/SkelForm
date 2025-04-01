@@ -12,7 +12,8 @@ use crate::shared::*;
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     egui::SidePanel::left("Armature")
         .default_width(125.)
-        .resizable(false)
+        .min_width(125.)
+        .resizable(true)
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.heading("Armature");
