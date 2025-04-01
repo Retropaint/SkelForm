@@ -280,7 +280,7 @@ pub struct Shared {
     pub animating: bool,
 
     /// useful if you don't want to provide an actual bind group during testing
-    pub placeholder_bind_group: Option<BindGroup>,
+    pub highlight_bindgroup: Option<BindGroup>,
 
     /// triggers debug stuff
     pub debug: bool,

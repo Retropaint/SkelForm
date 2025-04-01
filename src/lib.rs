@@ -301,6 +301,14 @@ impl ApplicationHandler for App {
                 fps: 24,
             });
 
+            self.shared.highlight_bindgroup = Some(renderer::create_texture(
+                vec![255, 255, 255, 100],
+                Vec2::new(1., 1.),
+                &self.renderer.as_ref().unwrap().gpu.queue,
+                &self.renderer.as_ref().unwrap().gpu.device,
+                &self.renderer.as_ref().unwrap().bind_group_layout,
+            ));
+
             let mut img_path = std::fs::File::create(".skelform_img_path").unwrap();
             let _ = img_path.write_all(b"/Users/o/projects/code/rust/skelform_wgpu/gopher.png");
         }
