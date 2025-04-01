@@ -21,6 +21,9 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         };
     }
 
+    // Although counter-intuitive, mouse inputs are recorded here.
+    // This is because egui can detect all of them even if they were not on the UI itself.
+    // To determine if the mouse is on the UI, winit's mouse input is used instead (see input.rs).
     context.input(|i| {
         if i.pointer.primary_down() {
             if shared.input.mouse_left == -1 {
