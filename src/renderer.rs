@@ -1,5 +1,7 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
+use std::f32::consts::PI;
+
 use crate::{
     input,
     shared::{Bone, Shared, Texture, Vec2, Vertex},
@@ -131,14 +133,7 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
         }
     // rotation
     } else if shared.edit_mode == 1 {
-        bone!().rot = (shared.input.mouse.x / shared.window.x) * 2.;
-
-        //bone!().rot = utils::look_at(&bone!().pos, &mouse_world);
-        //if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
-        //    // counteract bone's rotation caused by parent,
-        //    // so that the rotation is global
-        //    bone!().rot -= parent.rot;
-        //}
+        bone!().rot = (shared.input.mouse.x / shared.window.x) * PI * 2.;
     } else if shared.edit_mode == 2 {
         bone!().scale = (shared.input.mouse / shared.window) * 2.;
     }
@@ -340,7 +335,6 @@ fn record_to_keyframe(bone: &Bone, shared: &mut Shared) {
 
         // record position into keyframe
         anim!().keyframes[kf.unwrap()].bones[idx.unwrap()].pos = bone.pos;
-        println!("{}", anim!().keyframes[kf.unwrap()].bones[idx.unwrap()].pos);
     }
 }
 
