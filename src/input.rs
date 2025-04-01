@@ -15,7 +15,7 @@ pub fn keyboard_input(
         shared.armature.bones[2].tex_idx = 0;
     }
 
-    // Record all pressed keys (and remove released ones)
+    // record all pressed keys (and remove released ones)
     if *state == ElementState::Pressed {
         let mut add = true;
         for pressed_key in &mut shared.input.pressed {
@@ -56,10 +56,11 @@ pub fn mouse_input(
     state: &ElementState,
     shared: &mut crate::shared::Shared,
 ) {
+    // mouse inputs coming from winit only do so if it's not on egui
     if *button == MouseButton::Left {
         if *state == ElementState::Pressed {
             shared.input.on_ui = false;
-        } else {
+       } else {
             shared.input.on_ui = true;
         }
     }
