@@ -35,16 +35,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
 
-        let mut zoom = 1.;
-
         // get parent bone
         let mut p = Bone::default();
         p.scale.x = 1.;
         p.scale.y = 1.;
         if let Some(pp) = find_bone(&temp_bones, bone!().parent_id) {
             p = pp.clone();
-        } else {
-            zoom = shared.zoom;
         }
 
         bone!().rot += p.rot;
@@ -63,7 +59,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let this_verts = rect_verts(
             &bone!(),
             &shared.camera.pos,
-            zoom,
+            shared.zoom,
             &shared.armature.textures[bone!().tex_idx],
             shared.window.x / shared.window.y,
         );
