@@ -148,7 +148,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 }
 
 pub fn edit_bone_with_mouse(shared: &mut Shared) {
+    if shared.armature.bones[shared.selected_bone].tex_idx == usize::MAX {
+        return;
+    }
+    
     let mut mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+
+    // since this is world space, it has to be adjusted for aspect ratio
     mouse_world.x *= shared.window.x / shared.window.y;
 
     macro_rules! bone {
