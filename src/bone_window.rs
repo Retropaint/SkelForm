@@ -31,9 +31,9 @@ extern "C" {
 
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     egui::SidePanel::right("Bone")
-        .resizable(false)
+        .resizable(true)
         .default_width(150.)
-        .max_width(150.)
+        .max_width(200.)
         .show(egui_ctx, |ui| {
             ui.heading("Bone");
             ui.separator();
