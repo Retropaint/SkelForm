@@ -143,17 +143,10 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
 pub fn create_texture(
     pixels: Vec<u8>,
     dimensions: Vec2,
-    textures: &mut Vec<crate::shared::Texture>,
     queue: &Queue,
     device: &Device,
     bind_group_layout: &BindGroupLayout,
 ) -> BindGroup {
-    // add to shared textures
-    textures.push(crate::Texture {
-        size: dimensions,
-        pixels: pixels.to_vec(),
-    });
-
     let tex_size = wgpu::Extent3d {
         width: dimensions.x as u32,
         height: dimensions.y as u32,

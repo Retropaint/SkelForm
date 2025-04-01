@@ -81,11 +81,15 @@ pub fn read_image_loaders(
     shared.bind_groups.push(renderer::create_texture(
         pixels.to_vec(),
         dimensions,
-        &mut shared.armature.textures,
         queue,
         device,
         bind_group_layout,
     ));
+
+    shared.armature.textures.push(crate::Texture {
+        size: dimensions,
+        pixels,
+    });
 
     // assign this texture to the selected bone
     shared.armature.bones[shared.selected_bone].tex_idx = shared.armature.textures.len() - 1;
