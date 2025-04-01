@@ -1,6 +1,6 @@
 //! Isolated set of helper functions.
 
-use crate::{shared::{Vertex, Vec2}};
+use crate::shared::{Vec2, Vertex};
 
 /// Convert a point from screen to world space.
 pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
@@ -24,7 +24,11 @@ pub fn look_at(source: &Vec2, target: &Vec2) -> f32 {
 }
 
 /// Check if a point is in a rectangle (formed by vertices).
-pub fn in_bounding_box(point: &Vec2, verts: &Vec<Vertex>, window_size: &Vec2) -> bool {
+pub fn in_bounding_box(
+    point: &Vec2,
+    verts: &Vec<Vertex>,
+    window_size: &Vec2,
+) -> (Vec<Vertex>, bool) {
     // get the bound based on infinitely-long lines
     let mut top = -f32::INFINITY;
     let mut bot = f32::INFINITY;
@@ -37,6 +41,25 @@ pub fn in_bounding_box(point: &Vec2, verts: &Vec<Vertex>, window_size: &Vec2) ->
         top = f32::max(top, v.pos.y);
     }
 
+    let vertices: Vec<Vertex> = vec![
+        Vertex {
+            pos: Vec2::new(right, top),
+            uv: Vec2::new(1., 0.),
+        },
+        Vertex {
+            pos: Vec2::new(left, top),
+            uv: Vec2::new(0., 1.),
+        },
+        Vertex {
+            pos: Vec2::new(left, bot),
+            uv: Vec2::new(0., 0.),
+        },
+        Vertex {
+            pos: Vec2::new(right, bot),
+            uv: Vec2::new(1., 1.),
+        },
+    ];
+
     // convert bound positions to screen space
     let half = Vec2 {
         x: window_size.x / 2.,
@@ -48,7 +71,10 @@ pub fn in_bounding_box(point: &Vec2, verts: &Vec<Vertex>, window_size: &Vec2) ->
     right = half.x + (half.x * right);
 
     // finally, check if point is inside
-    point.y > top && point.y < bot && point.x > left && point.x < right
+    (
+        vertices,
+        point.y > top && point.y < bot && point.x > left && point.x < right,
+    )
 }
 
 pub fn to_vec2(f: f32) -> Vec2 {
