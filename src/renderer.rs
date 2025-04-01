@@ -12,27 +12,7 @@ use winit::{keyboard::KeyCode, window::CursorIcon};
 
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
-    if !shared.input.on_ui {
-        if input::is_pressing(KeyCode::SuperLeft, &shared) {
-            if shared.input.mouse_left == -1 {
-                shared.input.initial_mouse = None;
-            } else {
-                // move camera if holding mod key
-                if let Some(im) = shared.input.initial_mouse {
-                    let mouse_world =
-                        utils::screen_to_world_space(shared.input.mouse, shared.window);
-                    let initial_world = utils::screen_to_world_space(im, shared.window);
-                    shared.camera.pos =
-                        shared.camera.initial_pos - (mouse_world - initial_world) * shared.zoom;
-                } else {
-                    shared.camera.initial_pos = shared.camera.pos;
-                    shared.input.initial_mouse = Some(shared.input.mouse);
-                }
-            }
-        } else if shared.input.mouse_left != -1 && shared.selected_bone != usize::MAX {
-            edit_bone_with_mouse(shared);
-        }
-    }
+    let mut verts = vec![];
 
     // for rendering purposes, bones need to have many of their attributes manipulated
     // this is easier to do with a separate copy of them
@@ -79,24 +59,96 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         // inherit position from parent
         bone!().pos += p.pos;
 
-        let verts = rect_verts(
+        // generate the vertices to be used later
+        let this_verts = rect_verts(
             &bone!(),
             &shared.camera.pos,
             zoom,
             &shared.armature.textures[bone!().tex_idx],
             shared.window.x / shared.window.y,
         );
+        verts.push(this_verts);
 
-        // render bone
-        render_pass.set_bind_group(0, &shared.bind_groups[bone!().tex_idx], &[]);
-        render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
+        i += 1;
+    }
+
+    let mut hovered_bone = -1;
+
+    // Check for bone being hovered on.
+    // This has to be in reverse (for now) since bones are rendered in ascending order of the array,
+    // so it visually makes sense to click the one that shows in front
+    while i > 0 {
+        i -= 1;
+        if shared.armature.bones[i].tex_idx == usize::MAX {
+            continue;
+        }
+        if utils::in_bounding_box(&shared.input.mouse, &verts[i], &shared.window) {
+            // highlight bone for selection if not already selected
+            if shared.selected_bone != i {
+                hovered_bone = i as i32;
+
+                // select if left clicked
+                if shared.input.mouse_left == 0 {
+                    shared.selected_bone = i;
+                }
+            }
+            break;
+        }
+    }
+
+    // finally, draw the bones
+    for (i, b) in temp_bones.iter().enumerate() {
+        if b.tex_idx == usize::MAX {
+            continue;
+        }
+
+        // draw the hovering highlight section
+        if hovered_bone as usize == i {
+            let mut selection_verts = verts[i].clone();
+            for v in &mut selection_verts {
+                // slightly expand the highlight section
+                v.pos = v.pos * 1.05;
+            }
+            render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
+            render_pass.set_vertex_buffer(0, vertex_buffer(&selection_verts, device).slice(..));
+            render_pass.set_index_buffer(
+                index_buffer([0, 1, 2, 3, 0, 1].to_vec(), &device).slice(..),
+                wgpu::IndexFormat::Uint32,
+            );
+            render_pass.draw_indexed(0..6, 0, 0..1);
+        }
+
+        // draw bone
+        render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx], &[]);
+        render_pass.set_vertex_buffer(0, vertex_buffer(&verts[i], device).slice(..));
         render_pass.set_index_buffer(
             index_buffer([0, 1, 2, 0, 1, 3].to_vec(), &device).slice(..),
             wgpu::IndexFormat::Uint32,
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
+    }
 
-        i += 1;
+    // mouse inputs
+    if !shared.input.on_ui {
+        if !input::is_pressing(KeyCode::SuperLeft, &shared) {
+            edit_bone_with_mouse(shared);
+        } else if shared.input.mouse_left != -1 && shared.selected_bone != usize::MAX {
+            if shared.input.mouse_left == -1 {
+                shared.input.initial_mouse = None;
+            } else {
+                // move camera if holding mod key
+                if let Some(im) = shared.input.initial_mouse {
+                    let mouse_world =
+                        utils::screen_to_world_space(shared.input.mouse, shared.window);
+                    let initial_world = utils::screen_to_world_space(im, shared.window);
+                    shared.camera.pos =
+                        shared.camera.initial_pos - (mouse_world - initial_world) * shared.zoom;
+                } else {
+                    shared.camera.initial_pos = shared.camera.pos;
+                    shared.input.initial_mouse = Some(shared.input.mouse);
+                }
+            }
+        }
     }
 }
 
@@ -112,7 +164,6 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
 
     // translation
     if shared.edit_mode == 0 {
-        shared.cursor_icon = CursorIcon::Move;
         if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
             // counteract bone's rotation caused by parent,
             // so that the translation is global
@@ -126,6 +177,7 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
             if shared.animating && shared.ui.anim.selected != usize::MAX {
                 record_to_keyframe(&bone!().clone(), shared);
             }
+            shared.cursor_icon = CursorIcon::Move;
         } else {
             // get initial distance between bone and cursor,
             // so that the bone can 'follow' it
