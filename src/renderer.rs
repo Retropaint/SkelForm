@@ -69,6 +69,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     let mut hovered_bone = -1;
+    let mut hovered_bone_verts: Vec<Vertex> = vec![];
 
     // Check for bone being hovered on.
     // This has to be in reverse (for now) since bones are rendered in ascending order of the array,
@@ -78,7 +79,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if shared.armature.bones[i].tex_idx == usize::MAX {
             continue;
         }
-        if utils::in_bounding_box(&shared.input.mouse, &verts[i], &shared.window) {
+        let is_in_box: bool;
+        (hovered_bone_verts, is_in_box) =
+            utils::in_bounding_box(&shared.input.mouse, &verts[i], &shared.window);
+        if is_in_box {
             // highlight bone for selection if not already selected
             if shared.selected_bone != i {
                 hovered_bone = i as i32;
@@ -100,13 +104,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // draw the hovering highlight section
         if hovered_bone as usize == i {
-            let mut selection_verts = verts[i].clone();
-            for v in &mut selection_verts {
-                // slightly expand the highlight section
-                v.pos = v.pos * 1.05;
-            }
             render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
-            render_pass.set_vertex_buffer(0, vertex_buffer(&selection_verts, device).slice(..));
+            render_pass.set_vertex_buffer(0, vertex_buffer(&hovered_bone_verts, device).slice(..));
             render_pass.set_index_buffer(
                 index_buffer([0, 1, 2, 3, 0, 1].to_vec(), &device).slice(..),
                 wgpu::IndexFormat::Uint32,
