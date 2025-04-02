@@ -10,7 +10,7 @@ use wgpu::BindGroup;
 use winit::{keyboard::KeyCode, window::CursorIcon};
 
 #[repr(C)]
-#[derive(Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(serde::Serialize, Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
@@ -206,21 +206,22 @@ pub struct UiAnim {
     pub lines_x: Vec<f32>,
 }
 
-#[derive(Clone, Default)]
+#[derive(serde::Serialize, Clone, Default)]
 pub struct Bone {
     pub id: i32,
     pub name: String,
     pub parent_id: i32,
-    pub pos: Vec2,
-    pub rot: f32,
-    pub scale: Vec2,
     pub tex_idx: usize,
 
     /// used to properly offset bone's movement to counteract it's parent
     pub parent_rot: f32,
+
+    pub rot: f32,
+    pub scale: Vec2,
+    pub pos: Vec2,
 }
 
-#[derive(Clone, Default)]
+#[derive(serde::Serialize, Clone, Default)]
 pub struct Armature {
     /// index relative to skelements texture vector
     pub bones: Vec<Bone>,
@@ -229,30 +230,30 @@ pub struct Armature {
     pub textures: Vec<Texture>,
 }
 
-#[derive(Clone, Default)]
+#[derive(serde::Serialize, Clone, Default)]
 pub struct Texture {
     pub size: Vec2,
     pub pixels: Vec<u8>,
 }
 
-#[derive(Clone, Default)]
+#[derive(serde::Serialize, Clone, Default)]
 pub struct Animation {
     pub name: String,
-    pub keyframes: Vec<Keyframe>,
     pub fps: i32,
+    pub keyframes: Vec<Keyframe>,
 }
 
-#[derive(Clone, Default)]
+#[derive(serde::Serialize, Clone, Default)]
 pub struct Keyframe {
     pub frame: i32,
     pub bones: Vec<AnimBone>,
 }
 
-#[derive(Clone, Default)]
+#[derive(serde::Serialize, Clone, Default)]
 pub struct AnimBone {
     pub id: i32,
-    pub pos: Vec2,
     pub rot: f32,
+    pub pos: Vec2,
     pub scale: Vec2,
 }
 #[derive(Default)]
