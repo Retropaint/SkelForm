@@ -2,8 +2,8 @@
 
 use egui::{Context, Shadow, Stroke};
 
-use crate::shared::*;
 use crate::{armature_window, bone_window, keyframe_editor};
+use crate::{input, shared::*};
 
 // UI colors
 pub const COLOR_ACCENT: egui::Color32 = egui::Color32::from_rgb(60, 60, 60);
@@ -58,12 +58,25 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
         })
         .show(egui_ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                ui.menu_button("File", |_ui| {});
-                ui.menu_button("View", |ui| {
-                    if shared.input.mouse_left != -1 && !ui.rect_contains_pointer(ui.min_rect()) {
-                        ui.close_menu();
-                    }
+                ui.menu_button("File", |ui| {
+                    ui.horizontal(|ui| {
+                        ui.set_max_width(80.);
+                        if ui.button("Export").clicked() {
+                            crate::utils::export_textures(&shared.armature.textures);
+                            ui.close_menu();
+                        }
 
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            ui.label("E");
+                        });
+
+                        if input::is_pressing(winit::keyboard::KeyCode::KeyE, &shared) {
+                            crate::utils::export_textures(&shared.armature.textures);
+                            ui.close_menu();
+                        }
+                    });
+                });
+                ui.menu_button("View", |ui| {
                     ui.horizontal(|ui| {
                         ui.set_max_width(80.);
                         if ui.button("Zoom in").clicked() {

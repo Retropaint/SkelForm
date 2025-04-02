@@ -80,3 +80,48 @@ pub fn in_bounding_box(
 pub fn to_vec2(f: f32) -> Vec2 {
     Vec2::new(f, f)
 }
+
+pub fn export_textures(textures: &Vec<crate::Texture>) {
+    // get the image size in advance
+    let mut size = Vec2::default();
+    for tex in textures {
+        size.x += tex.size.x;
+        if tex.size.y > size.y {
+            size.y = tex.size.y;
+        }
+    }
+
+    // this is the buffer that will be saved as an image
+    let mut final_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size.x as u32, size.y as u32);
+
+    let mut offset: u32 = 0;
+    for tex in textures {
+        // get current texture as a buffer
+        let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
+            tex.size.x as u32,
+            tex.size.y as u32,
+            tex.pixels.clone(),
+        )
+        .unwrap();
+
+        // add it to the final buffer
+        for x in 0..img_buf.width() {
+            for y in 0..img_buf.height() {
+                final_buf.put_pixel(x + offset, y, *img_buf.get_pixel(x, y));
+            }
+        }
+
+        // make sure the next texture will be added beside this one, instead of overwriting
+        offset += img_buf.width();
+    }
+
+    // finally, the final buffer as an image
+    image::save_buffer(
+        "hello.png",
+        &final_buf.to_vec(),
+        final_buf.width() as u32,
+        final_buf.height() as u32,
+        image::ExtendedColorType::Rgba8,
+    )
+    .unwrap();
+}
