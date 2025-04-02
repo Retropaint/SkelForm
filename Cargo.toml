@@ -16,6 +16,7 @@ serde = { version = "1.0.219", features = ["serde_derive"] }
 serde_json = "1.0.140"
 wgpu = { version = "24.0.1", default-features = false }
 winit = "0.30.9"
+zip = "2.5.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 egui-winit = "0.31.0"
