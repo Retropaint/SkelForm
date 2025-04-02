@@ -14,15 +14,15 @@ use winit::{keyboard::KeyCode, window::CursorIcon};
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
     let mut verts = vec![];
 
-    // for rendering purposes, bones need to have many of their attributes manipulated
-    // this is easier to do with a separate copy of them
+    // For rendering purposes, bones need to have many of their attributes manipulated.
+    // This is easier to do with a separate copy of them.
     let mut temp_bones: Vec<Bone> = vec![];
     for b in &mut shared.armature.bones {
         temp_bones.push(b.clone());
     }
 
     let mut i = 0;
-    // using while loop to prevent borrow errors
+    // using while loop to prevent borrow issues
     while i < temp_bones.len() {
         macro_rules! bone {
             () => {
@@ -71,9 +71,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     let mut hovered_bone = -1;
     let mut hovered_bone_verts: Vec<Vertex> = vec![];
 
-    // Check for bone being hovered on.
+    // Check for the bone being hovered on.
     // This has to be in reverse (for now) since bones are rendered in ascending order of the array,
-    // so it visually makes sense to click the one that shows in front
+    // so it visually makes sense to click the one that shows in front.
     while i > 0 {
         i -= 1;
         if shared.armature.bones[i].tex_idx == usize::MAX {
@@ -333,6 +333,7 @@ fn rect_verts(
         // offset bone with camera
         v.pos -= *camera;
 
+        // adjust for zoom level
         v.pos /= zoom;
 
         // adjust verts according to aspect ratio
@@ -349,6 +350,7 @@ fn record_to_keyframe(bone: &Bone, shared: &mut Shared) {
         };
     }
 
+    // check if this keyframe exists
     let kf = anim!()
         .keyframes
         .iter()
