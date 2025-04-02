@@ -118,7 +118,7 @@ pub fn export_textures(textures: &Vec<crate::Texture>, armature: &crate::Armatur
 
     // finally, the final buffer as an image
     image::save_buffer(
-        "hello.png",
+        "temp.png",
         &final_buf.to_vec(),
         final_buf.width() as u32,
         final_buf.height() as u32,
@@ -126,13 +126,27 @@ pub fn export_textures(textures: &Vec<crate::Texture>, armature: &crate::Armatur
     )
     .unwrap();
 
-    let mut armature_json = armature.clone();
-    armature_json.textures = vec![];
+    let img_data = std::fs::read("./temp.png").unwrap();
 
-    let result = serde_json::to_string(&armature_json).unwrap();
+    // clone armature and make some edits, then serialize it
+    let mut armature_copy = armature.clone();
+    armature_copy.textures = vec![];
+    let armature_json = serde_json::to_string(&armature_copy).unwrap();
 
-    let mut file = std::fs::File::create("test.json").unwrap();
-    file
-        .write_all(result.as_bytes())
-        .unwrap();
+    // create zip file
+    let mut zip = zip::ZipWriter::new(std::fs::File::create("armature.zip").unwrap());
+    let options =
+        zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+
+    // save armature json and texture image
+    zip.start_file("armature.json", options).unwrap();
+    zip.write(armature_json.as_bytes()).unwrap();
+    zip.start_file("textures.png", options).unwrap();
+    zip.write(&img_data.to_vec()).unwrap();
+
+    // Apply the changes you've made.
+    // Dropping the `ZipWriter` will have the same effect, but may silently fail
+    zip.finish().unwrap();
+
+    std::fs::remove_file("temp.png").unwrap();
 }
