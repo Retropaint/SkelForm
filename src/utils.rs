@@ -2,6 +2,7 @@
 
 use crate::shared::{Vec2, Vertex};
 
+use std::io::Write;
 /// Convert a point from screen to world space.
 pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
     Vec2 {
@@ -81,7 +82,7 @@ pub fn to_vec2(f: f32) -> Vec2 {
     Vec2::new(f, f)
 }
 
-pub fn export_textures(textures: &Vec<crate::Texture>) {
+pub fn export_textures(textures: &Vec<crate::Texture>, armature: &crate::Armature) {
     // get the image size in advance
     let mut size = Vec2::default();
     for tex in textures {
@@ -124,4 +125,14 @@ pub fn export_textures(textures: &Vec<crate::Texture>) {
         image::ExtendedColorType::Rgba8,
     )
     .unwrap();
+
+    let mut armature_json = armature.clone();
+    armature_json.textures = vec![];
+
+    let result = serde_json::to_string(&armature_json).unwrap();
+
+    let mut file = std::fs::File::create("test.json").unwrap();
+    file
+        .write_all(result.as_bytes())
+        .unwrap();
 }
