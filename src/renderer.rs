@@ -31,7 +31,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let mut p = Bone::default();
         p.scale.x = 1.;
         p.scale.y = 1.;
-        if let Some(pp) = utils::find_bone(&temp_bones, temp_bones[i].parent_id) {
+        if let Some(pp) = shared.find_bone(temp_bones[i].parent_id) {
             p = pp.clone();
         }
 
@@ -149,7 +149,7 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
     // translation
     if shared.edit_mode == 0 {
         let parent_id = shared.selected_bone().parent_id;
-        if let Some(parent) = utils::find_bone(&shared.armature.bones, parent_id) {
+        if let Some(parent) = shared.find_bone(parent_id) {
             // counter-act parent's rotation so that translation is global
             mouse_world = utils::rotate(&mouse_world, -parent.rot);
         }

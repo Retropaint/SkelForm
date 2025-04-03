@@ -150,12 +150,3 @@ pub fn export_textures(textures: &Vec<crate::Texture>, armature: &crate::Armatur
 
     std::fs::remove_file("temp.png").unwrap();
 }
-
-pub fn find_bone(bones: &Vec<crate::Bone>, id: i32) -> Option<&crate::Bone> {
-    for b in bones {
-        if b.id == id {
-            return Some(&b);
-        }
-    }
-    None
-}
