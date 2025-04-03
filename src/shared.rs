@@ -252,6 +252,8 @@ pub struct Animation {
 
     #[serde(skip)]
     pub pos_top: f32,
+    #[serde(skip)]
+    pub rot_top: f32,
 }
 
 #[derive(serde::Serialize, Clone, Default)]
@@ -309,5 +311,14 @@ impl Shared {
 
     pub fn selected_bone(&mut self) -> &mut Bone {
         &mut self.armature.bones[self.selected_bone_idx]
+    }
+
+    pub fn find_bone(&mut self, id: i32) -> Option<&Bone>{
+        for b in &self.armature.bones {
+            if b.id == id {
+                return Some(&b);
+            }
+        }
+        None
     }
 }
