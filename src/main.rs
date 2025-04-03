@@ -12,7 +12,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 }
 
 fn init_shared(shared: &mut Shared) {
-    shared.selected_bone = usize::MAX;
+    shared.selected_bone_idx = usize::MAX;
     shared.input.mouse_left = -1;
     shared.input.modifier = -1;
     shared.debug = true;

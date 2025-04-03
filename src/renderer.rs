@@ -39,28 +39,28 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let mut p = Bone::default();
         p.scale.x = 1.;
         p.scale.y = 1.;
-        if let Some(pp) = find_bone(&temp_bones, bone!().parent_id) {
+        if let Some(pp) = utils::find_bone(&temp_bones, temp_bones[i].parent_id) {
             p = pp.clone();
         }
 
-        bone!().rot += p.rot;
-        bone!().scale *= p.scale;
+        temp_bones[i].rot += p.rot;
+        temp_bones[i].scale *= p.scale;
 
         // adjust bone's position based on parent's scale
-        bone!().pos *= p.scale;
+        temp_bones[i].pos *= p.scale;
 
         // rotate such that it will orbit the parent once it's position is inherited
-        bone!().pos = utils::rotate(&bone!().pos, p.rot);
+        temp_bones[i].pos = utils::rotate(&temp_bones[i].pos, p.rot);
 
         // inherit position from parent
-        bone!().pos += p.pos;
+        temp_bones[i].pos += p.pos;
 
         // generate the vertices to be used later
         let this_verts = rect_verts(
             &bone!(),
             &shared.camera.pos,
             shared.zoom,
-            &shared.armature.textures[bone!().tex_idx],
+            &shared.armature.textures[temp_bones[i].tex_idx],
             shared.window.x / shared.window.y,
         );
         verts.push(this_verts);
@@ -84,12 +84,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             utils::in_bounding_box(&shared.input.mouse, &verts[i], &shared.window);
         if is_in_box {
             // highlight bone for selection if not already selected
-            if shared.selected_bone != i {
+            if shared.selected_bone_idx != i {
                 hovered_bone = i as i32;
 
                 // select if left clicked
                 if shared.input.mouse_left == 0 {
-                    shared.selected_bone = i;
+                    shared.selected_bone_idx = i;
                 }
             }
             break;
@@ -127,7 +127,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     if !shared.input.on_ui {
         if !input::is_pressing(KeyCode::SuperLeft, &shared) {
             edit_bone_with_mouse(shared);
-        } else if shared.input.mouse_left != -1 && shared.selected_bone != usize::MAX {
+        } else if shared.input.mouse_left != -1 && shared.selected_bone_idx != usize::MAX {
             if shared.input.mouse_left == -1 {
                 shared.input.initial_mouse = None;
             } else {
@@ -148,47 +148,43 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 }
 
 pub fn edit_bone_with_mouse(shared: &mut Shared) {
-    if shared.armature.bones[shared.selected_bone].tex_idx == usize::MAX {
+    if shared.armature.bones[shared.selected_bone_idx].tex_idx == usize::MAX {
         return;
     }
-    
+
     let mut mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
 
     // since this is world space, it has to be adjusted for aspect ratio
     mouse_world.x *= shared.window.x / shared.window.y;
 
-    macro_rules! bone {
-        () => {
-            shared.armature.bones[shared.selected_bone]
-        };
-    }
-
     // translation
     if shared.edit_mode == 0 {
-        if let Some(parent) = find_bone(&shared.armature.bones, bone!().parent_id) {
+        let parent_id = shared.selected_bone().parent_id;
+        if let Some(parent) = utils::find_bone(&shared.armature.bones, parent_id) {
             // counteract bone's rotation caused by parent,
             // so that the translation is global
             mouse_world = utils::rotate(&mouse_world, -parent.rot);
         }
         if let Some(offset) = shared.input.initial_mouse {
             // move bone with mouse, keeping in mind their distance
-            bone!().pos = (mouse_world * shared.zoom) + offset;
+            shared.selected_bone().pos = (mouse_world * shared.zoom) + offset;
 
             // record to keyframe if in proper animation context
             if shared.animating && shared.ui.anim.selected != usize::MAX {
-                record_to_keyframe(&bone!().clone(), shared);
+                record_to_keyframe(&shared.selected_bone().clone(), shared);
             }
             shared.cursor_icon = CursorIcon::Move;
         } else {
             // get initial distance between bone and cursor,
             // so that the bone can 'follow' it
-            shared.input.initial_mouse = Some(bone!().pos - (mouse_world * shared.zoom));
+            shared.input.initial_mouse =
+                Some(shared.selected_bone().pos - (mouse_world * shared.zoom));
         }
     // rotation
     } else if shared.edit_mode == 1 {
-        bone!().rot = (shared.input.mouse.x / shared.window.x) * PI * 2.;
+        shared.selected_bone().rot = (shared.input.mouse.x / shared.window.x) * PI * 2.;
     } else if shared.edit_mode == 2 {
-        bone!().scale = (shared.input.mouse / shared.window) * 2.;
+        shared.selected_bone().scale = (shared.input.mouse / shared.window) * 2.;
     }
 }
 
@@ -344,53 +340,47 @@ fn rect_verts(
 }
 
 fn record_to_keyframe(bone: &Bone, shared: &mut Shared) {
-    macro_rules! anim {
-        () => {
-            shared.armature.animations[shared.ui.anim.selected as usize]
-        };
-    }
-
+    let frame = shared.ui.anim.selected_frame;
     // check if this keyframe exists
-    let kf = anim!()
+    let kf = shared
+        .selected_animation()
         .keyframes
         .iter()
-        .position(|k| k.frame == shared.ui.anim.selected_frame);
+        .position(|k| k.frame == frame);
 
     if kf == None {
         // create new keyframe
-        anim!().keyframes.push(crate::Keyframe {
-            frame: shared.ui.anim.selected_frame,
+        shared.selected_animation().keyframes.push(crate::Keyframe {
+            frame,
             bones: vec![AnimBone {
                 id: bone.id,
                 ..Default::default()
             }],
+            ..Default::default()
         });
     } else {
         // check if this bone is in keyframe
-        let mut idx = anim!().keyframes[kf.unwrap()]
+        let mut idx = shared.selected_animation().keyframes[kf.unwrap()]
             .bones
             .iter()
             .position(|bone| bone.id == bone.id);
 
         if idx == None {
             // create anim bone
-            anim!().keyframes[kf.unwrap()].bones.push(AnimBone {
-                id: bone.id,
-                ..Default::default()
-            });
-            idx = Some(anim!().keyframes[kf.unwrap()].bones.len());
+            shared.selected_animation().keyframes[kf.unwrap()]
+                .bones
+                .push(AnimBone {
+                    id: bone.id,
+                    ..Default::default()
+                });
+            idx = Some(
+                shared.selected_animation().keyframes[kf.unwrap()]
+                    .bones
+                    .len(),
+            );
         }
 
         // record position into keyframe
-        anim!().keyframes[kf.unwrap()].bones[idx.unwrap()].pos = bone.pos;
+        shared.selected_animation().keyframes[kf.unwrap()].bones[idx.unwrap()].pos = bone.pos;
     }
-}
-
-pub fn find_bone(bones: &Vec<Bone>, id: i32) -> Option<&Bone> {
-    for b in bones {
-        if b.id == id {
-            return Some(&b);
-        }
-    }
-    None
 }

@@ -41,7 +41,7 @@ pub fn read_image_loaders(
 
         // delete files if selected bone is invalid
         if shared.armature.bones.len() == 0
-            || shared.selected_bone > shared.armature.bones.len() - 1
+            || shared.selected_bone_idx > shared.armature.bones.len() - 1
         {
             del_temp_files();
             return;
@@ -92,7 +92,7 @@ pub fn read_image_loaders(
     });
 
     // assign this texture to the selected bone
-    shared.armature.bones[shared.selected_bone].tex_idx = shared.armature.textures.len() - 1;
+    shared.armature.bones[shared.selected_bone_idx].tex_idx = shared.armature.textures.len() - 1;
 }
 
 #[cfg(not(target_arch = "wasm32"))]
