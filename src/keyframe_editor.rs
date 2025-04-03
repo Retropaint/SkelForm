@@ -49,6 +49,7 @@ fn animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                     name: "New_Anim".to_string(),
                                     keyframes: vec![],
                                     fps: 60,
+                                    ..Default::default()
                                 })
                             }
                         });
@@ -76,16 +77,40 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
             ui.set_height(ui.available_height());
 
             // bones list
+            let mut bone_ids: Vec<i32> = vec![];
             ui.vertical(|ui| {
                 ui.add_space(30.);
-                ui.label("test");
+                for i in 0..shared.selected_animation().keyframes.len() {
+                    for j in 0..shared.selected_animation().keyframes[i].bones.len() {
+                        let b = &shared.selected_animation().keyframes[i].bones[j];
+
+                        // skip if bone was already added
+                        if bone_ids.iter().position(|id| b.id == *id) != None {
+                            continue;
+                        }
+
+                        bone_ids.push(b.id);
+
+                        let id = b.id;
+                        let bone = utils::find_bone(&shared.armature.bones, id).unwrap();
+                        ui.label(bone.name.clone());
+                        if bone.pos != Vec2::ZERO {
+                            ui.horizontal(|ui| {
+                                ui.add_space(20.);
+                                let text = ui.label("Pos");
+                                shared.selected_animation().pos_top = text.rect.top();
+                            });
+                        }
+                    }
+                }
             });
 
+            // diamond bar
             ui.vertical(|ui| {
                 egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
                     ui.set_width(ui.available_width());
                     ui.set_height(20.);
-                    for (i, kf) in shared.armature.animations[shared.ui.anim.selected]
+                    for (_, kf) in shared.armature.animations[shared.ui.anim.selected]
                         .keyframes
                         .iter()
                         .enumerate()
@@ -131,12 +156,6 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
 
 /// Draw all lines representing frames in the timeline.
 fn draw_frame_lines(egui_ctx: &egui::Context, ui: &egui::Ui, shared: &mut Shared) {
-    macro_rules! fps {
-        () => {
-            shared.armature.animations[shared.ui.anim.selected].fps
-        };
-    }
-
     // get cursor pos on the graph (or 0, 0 if can't)
     let mut cursor_x = -1.;
     if ui.ui_contains_pointer() {
@@ -151,14 +170,14 @@ fn draw_frame_lines(egui_ctx: &egui::Context, ui: &egui::Ui, shared: &mut Shared
     }
 
     let zoomed_width = ui.min_rect().width() / shared.ui.anim.timeline_zoom;
-    let hitbox = zoomed_width / fps!() as f32 / 2.;
+    let hitbox = zoomed_width / shared.selected_animation().fps as f32 / 2.;
 
     shared.ui.anim.lines_x = vec![];
 
     let mut x = 0.;
     let mut i = 0;
     while x < ui.min_rect().width() {
-        x = i as f32 / fps!() as f32 * zoomed_width + LINE_OFFSET;
+        x = i as f32 / shared.selected_animation().fps as f32 * zoomed_width + LINE_OFFSET;
 
         shared.ui.anim.lines_x.push(x);
 
@@ -183,7 +202,20 @@ fn draw_frame_lines(egui_ctx: &egui::Context, ui: &egui::Ui, shared: &mut Shared
             },
             Stroke { width: 2., color },
         );
+
         i += 1;
+    }
+
+    for kf in &shared.armature.animations[shared.ui.anim.selected].keyframes {
+        for b in &kf.bones {
+            if b.pos != Vec2::ZERO {
+                let pos = Vec2::new(
+                    ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
+                    shared.armature.animations[shared.ui.anim.selected].pos_top + 10.,
+                );
+                draw_diamond(ui, pos);
+            }
+        }
     }
 }
 
