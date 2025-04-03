@@ -82,23 +82,30 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                 ui.add_space(30.);
                 for i in 0..shared.selected_animation().keyframes.len() {
                     for j in 0..shared.selected_animation().keyframes[i].bones.len() {
-                        let b = &shared.selected_animation().keyframes[i].bones[j];
-
                         // skip if bone was already added
-                        if bone_ids.iter().position(|id| b.id == *id) != None {
+                        if bone_ids.iter().position(|id| {
+                            shared.selected_animation().keyframes[i].bones[j].id == *id
+                        }) != None
+                        {
                             continue;
                         }
 
-                        bone_ids.push(b.id);
+                        bone_ids.push(shared.selected_animation().keyframes[i].bones[j].id);
 
-                        let id = b.id;
-                        let bone = utils::find_bone(&shared.armature.bones, id).unwrap();
-                        ui.label(bone.name.clone());
-                        if bone.pos != Vec2::ZERO {
+                        let id = shared.selected_animation().keyframes[i].bones[j].id;
+                        ui.label(shared.find_bone(id).unwrap().name.clone());
+                        if shared.find_bone(id).unwrap().pos != Vec2::ZERO {
                             ui.horizontal(|ui| {
                                 ui.add_space(20.);
                                 let text = ui.label("Pos");
                                 shared.selected_animation().pos_top = text.rect.top();
+                            });
+                        }
+                        if shared.find_bone(id).unwrap().rot != 0. {
+                            ui.horizontal(|ui| {
+                                ui.add_space(20.);
+                                let text = ui.label("Rot");
+                                shared.selected_animation().rot_top = text.rect.top();
                             });
                         }
                     }
@@ -115,9 +122,8 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                         .iter()
                         .enumerate()
                     {
-                        // Wait for the last diamond's position to be determined
-                        // on the next frame.
-
+                        // wait for the last diamond's position to be determined
+                        // on the next frame
                         let pos = Vec2::new(
                             ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
                             ui.min_rect().top() + 10.,
@@ -206,12 +212,20 @@ fn draw_frame_lines(egui_ctx: &egui::Context, ui: &egui::Ui, shared: &mut Shared
         i += 1;
     }
 
+    // draw diamonds
     for kf in &shared.armature.animations[shared.ui.anim.selected].keyframes {
         for b in &kf.bones {
             if b.pos != Vec2::ZERO {
                 let pos = Vec2::new(
                     ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
                     shared.armature.animations[shared.ui.anim.selected].pos_top + 10.,
+                );
+                draw_diamond(ui, pos);
+            }
+            if b.rot != 0. {
+                let pos = Vec2::new(
+                    ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
+                    shared.armature.animations[shared.ui.anim.selected].rot_top + 10.,
                 );
                 draw_diamond(ui, pos);
             }

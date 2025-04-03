@@ -150,28 +150,30 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
     if shared.edit_mode == 0 {
         let parent_id = shared.selected_bone().parent_id;
         if let Some(parent) = utils::find_bone(&shared.armature.bones, parent_id) {
-            // counteract bone's rotation caused by parent,
-            // so that the translation is global
+            // counter-act parent's rotation so that translation is global
             mouse_world = utils::rotate(&mouse_world, -parent.rot);
         }
+
         if let Some(offset) = shared.input.initial_mouse {
-            // move bone with mouse, keeping in mind their distance
+            // move bone, keeping it's distance with mouse in mind
             shared.selected_bone().pos = (mouse_world * shared.zoom) + offset;
 
-            // record to keyframe if in proper animation context
             if shared.animating && shared.ui.anim.selected != usize::MAX {
-                record_to_keyframe(&shared.selected_bone().clone(), shared);
+                record_to_keyframe(&shared.selected_bone().clone(), shared, 0);
             }
             shared.cursor_icon = CursorIcon::Move;
         } else {
-            // get initial distance between bone and cursor,
-            // so that the bone can 'follow' it
             shared.input.initial_mouse =
                 Some(shared.selected_bone().pos - (mouse_world * shared.zoom));
         }
     // rotation
     } else if shared.edit_mode == 1 {
         shared.selected_bone().rot = (shared.input.mouse.x / shared.window.x) * PI * 2.;
+
+        if shared.animating && shared.ui.anim.selected != usize::MAX {
+            record_to_keyframe(&shared.selected_bone().clone(), shared, 1);
+        }
+    // scale
     } else if shared.edit_mode == 2 {
         shared.selected_bone().scale = (shared.input.mouse / shared.window) * 2.;
     }
@@ -328,7 +330,7 @@ fn rect_verts(
     vertices
 }
 
-fn record_to_keyframe(bone: &Bone, shared: &mut Shared) {
+fn record_to_keyframe(bone: &Bone, shared: &mut Shared, record_type: i32) {
     let frame = shared.ui.anim.selected_frame;
     // check if this keyframe exists
     let kf = shared
@@ -370,6 +372,13 @@ fn record_to_keyframe(bone: &Bone, shared: &mut Shared) {
         }
 
         // record position into keyframe
-        shared.selected_animation().keyframes[kf.unwrap()].bones[idx.unwrap()].pos = bone.pos;
+        if record_type == 0 {
+            shared.selected_animation().keyframes[kf.unwrap()].bones[idx.unwrap()].pos = bone.pos;
+        } else if record_type == 1 {
+            shared.selected_animation().keyframes[kf.unwrap()].bones[idx.unwrap()].rot = bone.rot;
+        } else if record_type == 2 {
+            shared.selected_animation().keyframes[kf.unwrap()].bones[idx.unwrap()].scale =
+                bone.scale;
+        }
     }
 }
