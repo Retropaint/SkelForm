@@ -1,5 +1,7 @@
 //! Receives inputs from winit events. Most of actual input logic is handled per-module.
 
+use std::cmp::max_by;
+
 use crate::*;
 
 use winit::event::ElementState;
@@ -39,7 +41,7 @@ pub fn keyboard_input(
     if is_pressing(KeyCode::Equal, &shared) {
         ui::set_zoom(shared.zoom - 0.1, shared)
     } else if is_pressing(KeyCode::Minus, &shared) {
-        ui::set_zoom(shared.zoom + 0.1, shared)
+        ui::set_zoom(shared.zoom + 0.1, shared);
     }
 
     if *key == KeyCode::SuperLeft {
@@ -60,7 +62,7 @@ pub fn mouse_input(
     if *button == MouseButton::Left {
         if *state == ElementState::Pressed {
             shared.input.on_ui = false;
-       } else {
+        } else {
             shared.input.on_ui = true;
         }
     }

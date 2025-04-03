@@ -35,7 +35,9 @@ impl Into<egui::Pos2> for Vec2 {
 }
 
 impl Vec2 {
-    pub fn new(x: f32, y: f32) -> Vec2 {
+    pub const ZERO: Self = Self::new(0., 0.);
+
+    pub const fn new(x: f32, y: f32) -> Vec2 {
         Vec2 { x, y }
     }
 
@@ -138,6 +140,11 @@ impl Sub for Vec2 {
     }
 }
 
+impl PartialEq for Vec2 {
+    fn eq(&self, other: &Vec2) -> bool {
+        return self.x == other.x && self.y == other.y;
+    }
+}
 impl fmt::Display for Vec2 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let decimal_places = 3;
@@ -227,6 +234,7 @@ pub struct Armature {
     pub bones: Vec<Bone>,
     pub animations: Vec<Animation>,
 
+    #[serde(skip)]
     pub textures: Vec<Texture>,
 }
 
@@ -241,6 +249,9 @@ pub struct Animation {
     pub name: String,
     pub fps: i32,
     pub keyframes: Vec<Keyframe>,
+
+    #[serde(skip)]
+    pub pos_top: f32,
 }
 
 #[derive(serde::Serialize, Clone, Default)]
@@ -255,12 +266,15 @@ pub struct AnimBone {
     pub rot: f32,
     pub pos: Vec2,
     pub scale: Vec2,
+
+    #[serde(skip)]
+    pub pos_top: f32,
 }
 #[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
     pub dragging: bool,
-    pub selected_bone: usize,
+    pub selected_bone_idx: usize,
     pub armature: Armature,
     pub bind_groups: Vec<BindGroup>,
     pub camera: Camera,
@@ -285,4 +299,15 @@ pub struct Shared {
 
     /// triggers debug stuff
     pub debug: bool,
+}
+
+// mostly for shorthands for cleaner code
+impl Shared {
+    pub fn selected_animation(&mut self) -> &mut Animation {
+        &mut self.armature.animations[self.ui.anim.selected]
+    }
+
+    pub fn selected_bone(&mut self) -> &mut Bone {
+        &mut self.armature.bones[self.selected_bone_idx]
+    }
 }

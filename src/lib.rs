@@ -289,7 +289,7 @@ impl ApplicationHandler for App {
         #[cfg(not(target_arch = "wasm32"))]
         if self.shared.debug {
             self.shared.debug = false;
-            self.shared.selected_bone = 0;
+            self.shared.selected_bone_idx = 0;
             armature_window::new_bone(&mut self.shared.armature.bones);
             armature_window::new_bone(&mut self.shared.armature.bones);
             armature_window::new_bone(&mut self.shared.armature.bones);
@@ -299,6 +299,7 @@ impl ApplicationHandler for App {
                 name: "lol".to_string(),
                 keyframes: vec![],
                 fps: 24,
+                ..Default::default()
             });
 
             self.shared.highlight_bindgroup = Some(renderer::create_texture(
