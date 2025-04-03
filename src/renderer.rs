@@ -21,17 +21,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         temp_bones.push(b.clone());
     }
 
-    let mut i = 0;
     // using while loop to prevent borrow issues
-    while i < temp_bones.len() {
-        macro_rules! bone {
-            () => {
-                temp_bones[i]
-            };
-        }
-
-        if bone!().tex_idx == usize::MAX {
-            i += 1;
+    for i in 0..temp_bones.len() {
+        if temp_bones[i].tex_idx == usize::MAX {
             continue;
         }
 
@@ -57,15 +49,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // generate the vertices to be used later
         let this_verts = rect_verts(
-            &bone!(),
+            &temp_bones[i],
             &shared.camera.pos,
             shared.zoom,
             &shared.armature.textures[temp_bones[i].tex_idx],
             shared.window.x / shared.window.y,
         );
         verts.push(this_verts);
-
-        i += 1;
     }
 
     let mut hovered_bone = -1;
@@ -74,8 +64,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // Check for the bone being hovered on.
     // This has to be in reverse (for now) since bones are rendered in ascending order of the array,
     // so it visually makes sense to click the one that shows in front.
-    while i > 0 {
-        i -= 1;
+    for i in (0..temp_bones.len()).rev() {
         if shared.armature.bones[i].tex_idx == usize::MAX {
             continue;
         }
