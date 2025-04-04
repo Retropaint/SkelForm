@@ -185,9 +185,11 @@ pub struct InputStates {
     pub modifier: i32,
 
     // mouse stuff
-    pub initial_mouse: Option<Vec2>,
+    pub initial_points: Vec<Vec2>,
     pub mouse_left: i32,
     pub mouse: Vec2,
+
+    pub mouse_prev: Vec2,
 
     // is mouse on UI?
     pub on_ui: bool,
@@ -262,7 +264,15 @@ pub struct Keyframe {
     pub bones: Vec<AnimBone>,
 }
 
-#[derive(serde::Serialize, Clone, Default)]
+impl Keyframe {
+    pub fn uninit(&mut self) -> Keyframe {
+        let mut new = Keyframe::default();
+        new.frame = -1;
+        new
+    }
+}
+
+#[derive(PartialEq, serde::Serialize, Clone, Default)]
 pub struct AnimBone {
     pub id: i32,
     pub rot: f32,
@@ -309,6 +319,26 @@ impl Shared {
         &mut self.armature.animations[self.ui.anim.selected]
     }
 
+    pub fn selected_keyframe(&mut self) -> Option<&mut Keyframe> {
+        let frame = self.ui.anim.selected_frame;
+        for kf in &mut self.selected_animation().keyframes {
+            if kf.frame == frame {
+                return Some(kf);
+            }
+        }
+        None
+    }
+
+    pub fn selected_anim_bone(&mut self) -> Option<&mut AnimBone> {
+        let id = self.armature.bones[self.selected_bone_idx].id;
+        for b in &mut self.selected_keyframe().unwrap().bones {
+            if b.id == id {
+                return Some(b);
+            }
+        }
+        None
+    }
+
     pub fn selected_bone(&mut self) -> &mut Bone {
         &mut self.armature.bones[self.selected_bone_idx]
     }
@@ -320,5 +350,46 @@ impl Shared {
             }
         }
         None
+    }
+
+    pub fn animate(&mut self, anim_idx: usize, frame: i32) -> Vec<Bone> {
+        let mut bones = self.armature.bones.clone();
+        for kf in &self.armature.animations[anim_idx].keyframes {
+            // this frame exists
+            if kf.frame == frame {
+                for kf_b in &kf.bones {
+                    for b in &mut bones {
+                        if b.id == kf_b.id {
+                            b.pos += kf_b.pos;
+                        }
+                    }
+                }
+            }
+        }
+
+        bones
+    }
+
+    pub fn move_with_mouse(&mut self, value: &Vec2, counter_parent: bool) -> Vec2 {
+        // get mouse in world space
+        let mut mouse_world = crate::utils::screen_to_world_space(self.input.mouse, self.window);
+        mouse_world.x *= self.window.x / self.window.y;
+
+        // Counter-act parent's rotation so that translation is global.
+        // Only used in bone translation.
+        if counter_parent {
+            let parent_id = self.selected_bone().parent_id;
+            if let Some(parent) = self.find_bone(parent_id) {
+                mouse_world = crate::utils::rotate(&mouse_world, -parent.rot);
+            }
+        }
+
+        // get initial values to allow 'dragging'
+        if self.input.initial_points.len() == 0 {
+            let initial = mouse_world * self.zoom;
+            self.input.initial_points.push(*value - initial);
+        }
+
+        (mouse_world * self.zoom) + self.input.initial_points[0]
     }
 }

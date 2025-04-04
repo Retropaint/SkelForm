@@ -12,12 +12,18 @@ use winit::{keyboard::KeyCode, window::CursorIcon};
 
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
+    let mut bones = shared.armature.bones.clone();
+
+    if shared.animating && shared.ui.anim.selected != usize::MAX {
+        bones = shared.animate(shared.ui.anim.selected, shared.ui.anim.selected_frame);
+    }
+
     let mut verts = vec![];
 
     // For rendering purposes, bones need to have many of their attributes manipulated.
     // This is easier to do with a separate copy of them.
     let mut temp_bones: Vec<Bone> = vec![];
-    for b in &mut shared.armature.bones {
+    for b in &mut bones {
         temp_bones.push(b.clone());
     }
 
@@ -118,19 +124,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             edit_bone_with_mouse(shared);
         } else if shared.input.mouse_left != -1 && shared.selected_bone_idx != usize::MAX {
             if shared.input.mouse_left == -1 {
-                shared.input.initial_mouse = None;
+                shared.input.initial_points = vec![];
             } else {
                 // move camera if holding mod key
-                if let Some(im) = shared.input.initial_mouse {
-                    let mouse_world =
-                        utils::screen_to_world_space(shared.input.mouse, shared.window);
-                    let initial_world = utils::screen_to_world_space(im, shared.window);
-                    shared.camera.pos =
-                        shared.camera.initial_pos - (mouse_world - initial_world) * shared.zoom;
-                } else {
+                if shared.input.initial_points.len() == 0 {
                     shared.camera.initial_pos = shared.camera.pos;
-                    shared.input.initial_mouse = Some(shared.input.mouse);
+                    shared.input.initial_points.push(shared.input.mouse);
                 }
+
+                let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+                let initial_world =
+                    utils::screen_to_world_space(shared.input.initial_points[0], shared.window);
+                shared.camera.pos =
+                    shared.camera.initial_pos - (mouse_world - initial_world) * shared.zoom;
             }
         }
     }
@@ -141,37 +147,24 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
         return;
     }
 
-    let mut mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-
-    // since this is world space, it has to be adjusted for aspect ratio
-    mouse_world.x *= shared.window.x / shared.window.y;
-
     // translation
     if shared.edit_mode == 0 {
-        let parent_id = shared.selected_bone().parent_id;
-        if let Some(parent) = shared.find_bone(parent_id) {
-            // counter-act parent's rotation so that translation is global
-            mouse_world = utils::rotate(&mouse_world, -parent.rot);
-        }
+        shared.cursor_icon = CursorIcon::Move;
 
-        if let Some(offset) = shared.input.initial_mouse {
-            shared.selected_bone().pos = (mouse_world * shared.zoom) + offset;
-
-            // move bone, keeping it's distance with mouse in mind
-            if shared.animating && shared.ui.anim.selected != usize::MAX {
-                record_to_keyframe(&shared.selected_bone().clone(), shared, 0);
-            }
-            shared.cursor_icon = CursorIcon::Move;
+        // modify either the armature's, or animation keyframe's bone
+        if shared.animating && shared.ui.anim.selected != usize::MAX {
+            check_if_in_keyframe(shared.selected_bone().id, shared);
+            let pos = shared.selected_anim_bone().unwrap().pos;
+            shared.selected_anim_bone().unwrap().pos = shared.move_with_mouse(&pos, true);
         } else {
-            shared.input.initial_mouse =
-                Some(shared.selected_bone().pos - (mouse_world * shared.zoom));
+            let pos = shared.selected_bone().pos;
+            shared.selected_bone().pos = shared.move_with_mouse(&pos, true);
         }
     // rotation
     } else if shared.edit_mode == 1 {
         shared.selected_bone().rot = (shared.input.mouse.x / shared.window.x) * PI * 2.;
-
         if shared.animating && shared.ui.anim.selected != usize::MAX {
-            record_to_keyframe(&shared.selected_bone().clone(), shared, 1);
+            check_if_in_keyframe(shared.selected_bone().id, shared);
         }
     // scale
     } else if shared.edit_mode == 2 {
@@ -330,7 +323,7 @@ fn rect_verts(
     vertices
 }
 
-fn record_to_keyframe(bone: &Bone, shared: &mut Shared, record_type: i32) {
+fn check_if_in_keyframe(id: i32, shared: &mut Shared) {
     let frame = shared.ui.anim.selected_frame;
     // check if this keyframe exists
     let kf = shared
@@ -344,14 +337,14 @@ fn record_to_keyframe(bone: &Bone, shared: &mut Shared, record_type: i32) {
         shared.selected_animation().keyframes.push(crate::Keyframe {
             frame,
             bones: vec![AnimBone {
-                id: bone.id,
+                id,
                 ..Default::default()
             }],
             ..Default::default()
         });
     } else {
         // check if this bone is in keyframe
-        let mut idx = shared.selected_animation().keyframes[kf.unwrap()]
+        let idx = shared.selected_animation().keyframes[kf.unwrap()]
             .bones
             .iter()
             .position(|bone| bone.id == bone.id);
@@ -361,24 +354,9 @@ fn record_to_keyframe(bone: &Bone, shared: &mut Shared, record_type: i32) {
             shared.selected_animation().keyframes[kf.unwrap()]
                 .bones
                 .push(AnimBone {
-                    id: bone.id,
+                    id,
                     ..Default::default()
                 });
-            idx = Some(
-                shared.selected_animation().keyframes[kf.unwrap()]
-                    .bones
-                    .len(),
-            );
-        }
-
-        // record position into keyframe
-        if record_type == 0 {
-            shared.selected_animation().keyframes[kf.unwrap()].bones[idx.unwrap()].pos = bone.pos;
-        } else if record_type == 1 {
-            shared.selected_animation().keyframes[kf.unwrap()].bones[idx.unwrap()].rot = bone.rot;
-        } else if record_type == 2 {
-            shared.selected_animation().keyframes[kf.unwrap()].bones[idx.unwrap()].scale =
-                bone.scale;
         }
     }
 }

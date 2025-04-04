@@ -88,20 +88,22 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                         }) != None
                         {
                             continue;
+                        } else {
+                            bone_ids.push(shared.selected_animation().keyframes[i].bones[j].id);
                         }
 
-                        bone_ids.push(shared.selected_animation().keyframes[i].bones[j].id);
+                        let bone_id = shared.selected_animation().keyframes[i].bones[j].id;
+                        ui.label(shared.find_bone(bone_id).unwrap().name.clone());
 
-                        let id = shared.selected_animation().keyframes[i].bones[j].id;
-                        ui.label(shared.find_bone(id).unwrap().name.clone());
-                        if shared.find_bone(id).unwrap().pos != Vec2::ZERO {
+                        // add changes to the list
+                        if shared.selected_animation().keyframes[i].bones[j].pos != Vec2::ZERO {
                             ui.horizontal(|ui| {
                                 ui.add_space(20.);
                                 let text = ui.label("Pos");
                                 shared.selected_animation().pos_top = text.rect.top();
                             });
                         }
-                        if shared.find_bone(id).unwrap().rot != 0. {
+                        if shared.selected_animation().keyframes[i].bones[j].rot != 0. {
                             ui.horizontal(|ui| {
                                 ui.add_space(20.);
                                 let text = ui.label("Rot");
@@ -192,6 +194,7 @@ fn draw_frame_lines(egui_ctx: &egui::Context, ui: &egui::Ui, shared: &mut Shared
             color = egui::Color32::WHITE;
         } else if cursor_x < x + hitbox && cursor_x > x - hitbox {
             color = egui::Color32::GRAY;
+
             // select this frame if clicked
             if shared.input.mouse_left == 0 {
                 shared.ui.anim.selected_frame = i;
@@ -212,19 +215,20 @@ fn draw_frame_lines(egui_ctx: &egui::Context, ui: &egui::Ui, shared: &mut Shared
         i += 1;
     }
 
-    // draw diamonds
+    // draw per-change diamonds
     for kf in &shared.armature.animations[shared.ui.anim.selected].keyframes {
         for b in &kf.bones {
+            let x = ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize];
             if b.pos != Vec2::ZERO {
                 let pos = Vec2::new(
-                    ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
+                    x,
                     shared.armature.animations[shared.ui.anim.selected].pos_top + 10.,
                 );
                 draw_diamond(ui, pos);
             }
             if b.rot != 0. {
                 let pos = Vec2::new(
-                    ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
+                    x,
                     shared.armature.animations[shared.ui.anim.selected].rot_top + 10.,
                 );
                 draw_diamond(ui, pos);
