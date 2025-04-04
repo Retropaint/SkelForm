@@ -17,7 +17,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // For rendering purposes, bones need to have many of their attributes manipulated.
     // This is easier to do with a separate copy of them.
     let mut temp_bones: Vec<Bone> = vec![];
-    for b in &mut shared.armature.bones {
+    let mut armature = &mut shared.armature;
+    if shared.animating {
+        armature = &mut shared.animated_armature;
+    }
+    for b in &mut armature.bones {
         temp_bones.push(b.clone());
     }
 
@@ -156,10 +160,10 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
 
         if let Some(offset) = shared.input.initial_mouse {
             // move bone, keeping it's distance with mouse in mind
-            shared.selected_bone().pos = (mouse_world * shared.zoom) + offset;
-
             if shared.animating && shared.ui.anim.selected != usize::MAX {
                 record_to_keyframe(&shared.selected_bone().clone(), shared, 0);
+            } else {
+                shared.selected_bone().pos = (mouse_world * shared.zoom) + offset;
             }
             shared.cursor_icon = CursorIcon::Move;
         } else {

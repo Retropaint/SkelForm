@@ -285,6 +285,8 @@ pub struct Shared {
     pub cursor_icon: CursorIcon,
     pub ui: Ui,
 
+    pub animated_armature: Armature,
+
     // tracking zoom every frame for smooth effect
     pub current_zoom: f32,
 
@@ -310,15 +312,26 @@ impl Shared {
     }
 
     pub fn selected_bone(&mut self) -> &mut Bone {
-        &mut self.armature.bones[self.selected_bone_idx]
+        if !self.animating {
+            &mut self.armature.bones[self.selected_bone_idx]
+        } else {
+            &mut self.animated_armature.bones[self.selected_bone_idx]
+        }
     }
 
-    pub fn find_bone(&mut self, id: i32) -> Option<&Bone>{
+    pub fn find_bone(&mut self, id: i32) -> Option<&Bone> {
         for b in &self.armature.bones {
             if b.id == id {
                 return Some(&b);
             }
         }
         None
+    }
+
+    pub fn toggle_animating(&mut self, toggle: bool) {
+        self.animating = toggle;
+        if toggle {
+            self.animated_armature = self.armature.clone();
+        }
     }
 }
