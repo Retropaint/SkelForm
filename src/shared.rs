@@ -321,11 +321,4 @@ impl Shared {
         }
         None
     }
-
-    pub fn toggle_animating(&mut self, toggle: bool) {
-        self.animating = toggle;
-        if toggle {
-            self.animated_armature = self.armature.clone();
-        }
-    }
 }
