@@ -264,14 +264,6 @@ pub struct Keyframe {
     pub bones: Vec<AnimBone>,
 }
 
-impl Keyframe {
-    pub fn uninit(&mut self) -> Keyframe {
-        let mut new = Keyframe::default();
-        new.frame = -1;
-        new
-    }
-}
-
 #[derive(PartialEq, serde::Serialize, Clone, Default)]
 pub struct AnimBone {
     pub id: i32,
