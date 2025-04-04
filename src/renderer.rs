@@ -159,11 +159,11 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
         }
 
         if let Some(offset) = shared.input.initial_mouse {
+            shared.selected_bone().pos = (mouse_world * shared.zoom) + offset;
+
             // move bone, keeping it's distance with mouse in mind
             if shared.animating && shared.ui.anim.selected != usize::MAX {
                 record_to_keyframe(&shared.selected_bone().clone(), shared, 0);
-            } else {
-                shared.selected_bone().pos = (mouse_world * shared.zoom) + offset;
             }
             shared.cursor_icon = CursorIcon::Move;
         } else {
