@@ -145,10 +145,10 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
                 if selection_button("Armature", !shared.animating, ui).clicked() {
-                    shared.toggle_animating(false);
+                    shared.animating = false;
                 }
                 if selection_button("Animation", shared.animating, ui).clicked() {
-                    shared.toggle_animating(true);
+                    shared.animating = true;
                 }
                 shared.ui.animate_mode_bar_scale = ui.min_rect().size().into();
             });
