@@ -31,7 +31,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             }
         } else {
             shared.input.mouse_left = -1;
-            shared.input.initial_mouse = None;
+            shared.input.initial_points = vec![];
         }
     });
 
