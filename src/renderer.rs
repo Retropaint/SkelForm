@@ -36,8 +36,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let mut p = Bone::default();
         p.scale.x = 1.;
         p.scale.y = 1.;
-        if let Some(pp) = shared.find_bone(temp_bones[i].parent_id) {
-            p = pp.clone();
+        for b in &temp_bones {
+            if b.id == temp_bones[i].parent_id {
+                p = b.clone();
+            }
         }
 
         temp_bones[i].rot += p.rot;
