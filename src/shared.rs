@@ -350,19 +350,31 @@ impl Shared {
 
     pub fn animate(&mut self, anim_idx: usize, frame: i32) -> Vec<Bone> {
         let mut bones = self.armature.bones.clone();
+
+        let kf_len = self.armature.animations[anim_idx].keyframes.len();
+        if kf_len == 0 {
+            return bones;
+        }
+
+        // use last frame by default
+        let mut keyframe = &self.armature.animations[anim_idx].keyframes[kf_len - 1];
+
         for kf in &self.armature.animations[anim_idx].keyframes {
-            // this frame exists
+            // get proper keyframe if it exists at this frame
             if kf.frame == frame {
-                for kf_b in &kf.bones {
-                    for b in &mut bones {
-                        if b.id == kf_b.id {
-                            b.pos += kf_b.pos;
-                        }
-                    }
-                }
+                keyframe = kf;
+                break;
             }
         }
 
+        // animate bones with this keyframe
+        for kf_b in &keyframe.bones {
+            for b in &mut bones {
+                if b.id == kf_b.id {
+                    b.pos += kf_b.pos;
+                }
+            }
+        }
         bones
     }
 
@@ -400,24 +412,41 @@ impl Ui {
         if self.rename_id != *rename_id {
             return false;
         }
+
+        let default_name = "New Animation";
+
+        // initialize input if it was just made
         let mut just_made = false;
         if self.original_name == "" {
             just_made = true;
             self.original_name = str.clone();
         }
-        let text_edit = egui::TextEdit::singleline(str);
-        let input = ui.add(text_edit.cursor_at_end(true));
-        if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-            *str = self.original_name.clone();
-            self.rename_id = "".to_owned();
-            self.original_name = "".to_owned();
-        } else if input.lost_focus() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-            self.rename_id = "".to_owned();
-            self.original_name = "".to_owned();
-        }
+
+        let input = ui.add(egui::TextEdit::singleline(str));
+
+        // immediately focus on this input if it was just made
         if just_made {
             input.request_focus();
         }
+
+        if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+            if str == "" && self.original_name == "" {
+                *str = default_name.to_string();
+            } else {
+                *str = self.original_name.clone();
+            }
+            self.rename_id = "".to_owned();
+            self.original_name = "".to_owned();
+        } else if input.lost_focus() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+            if str == "" && self.original_name == "" {
+                *str = default_name.to_string();
+            } else if str == "" {
+                *str = self.original_name.clone();
+            }
+            self.rename_id = "".to_owned();
+            self.original_name = "".to_owned();
+        }
+
         true
     }
 }
