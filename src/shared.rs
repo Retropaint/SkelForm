@@ -203,6 +203,9 @@ pub struct Ui {
     pub animate_mode_bar_pos: Vec2,
     pub animate_mode_bar_scale: Vec2,
 
+    pub rename_id: String,
+    pub original_name: String,
+
     pub anim: UiAnim,
 }
 
@@ -232,7 +235,6 @@ pub struct Bone {
 
 #[derive(serde::Serialize, Clone, Default)]
 pub struct Armature {
-    /// index relative to skelements texture vector
     pub bones: Vec<Bone>,
     pub animations: Vec<Animation>,
 
@@ -251,11 +253,6 @@ pub struct Animation {
     pub name: String,
     pub fps: i32,
     pub keyframes: Vec<Keyframe>,
-
-    #[serde(skip)]
-    pub pos_top: f32,
-    #[serde(skip)]
-    pub rot_top: f32,
 }
 
 #[derive(serde::Serialize, Clone, Default)]
@@ -273,6 +270,13 @@ pub struct AnimBone {
 
     #[serde(skip)]
     pub pos_top: f32,
+    #[serde(skip)]
+    pub rot_top: f32,
+}
+pub struct BoneTops {
+    pub id: i32,
+    pub pos_top: f32,
+    pub rot_top: f32,
 }
 #[derive(Default)]
 pub struct Shared {
@@ -383,5 +387,32 @@ impl Shared {
         }
 
         (mouse_world * self.zoom) + self.input.initial_points[0]
+    }
+}
+
+impl Ui {
+    pub fn check_renaming(
+        &mut self,
+        rename_id: &String,
+        str: &mut String,
+        ui: &mut egui::Ui,
+    ) -> bool {
+        if self.rename_id != *rename_id {
+            return false;
+        }
+        if self.original_name == "" {
+            self.original_name = str.clone();
+        }
+        let text_edit = egui::TextEdit::singleline(str);
+        let input = ui.add(text_edit);
+        if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+            *str = self.original_name.clone();
+            self.rename_id = "".to_owned();
+            self.original_name = "".to_owned();
+        } else if input.lost_focus() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+            self.rename_id = "".to_owned();
+            self.original_name = "".to_owned();
+        }
+        true
     }
 }

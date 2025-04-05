@@ -13,7 +13,6 @@ use winit::{keyboard::KeyCode, window::CursorIcon};
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
     let mut bones = shared.armature.bones.clone();
-
     if shared.animating && shared.ui.anim.selected != usize::MAX {
         bones = shared.animate(shared.ui.anim.selected, shared.ui.anim.selected_frame);
     }
@@ -347,7 +346,7 @@ fn check_if_in_keyframe(id: i32, shared: &mut Shared) {
         let idx = shared.selected_animation().keyframes[kf.unwrap()]
             .bones
             .iter()
-            .position(|bone| bone.id == bone.id);
+            .position(|bone| bone.id == id);
 
         if idx == None {
             // create anim bone
