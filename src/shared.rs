@@ -5,7 +5,7 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
-use egui::Context;
+use egui::{text::CCursor, Context};
 use wgpu::BindGroup;
 use winit::{keyboard::KeyCode, window::CursorIcon};
 
@@ -400,11 +400,13 @@ impl Ui {
         if self.rename_id != *rename_id {
             return false;
         }
+        let mut just_made = false;
         if self.original_name == "" {
+            just_made = true;
             self.original_name = str.clone();
         }
         let text_edit = egui::TextEdit::singleline(str);
-        let input = ui.add(text_edit);
+        let input = ui.add(text_edit.cursor_at_end(true));
         if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
             *str = self.original_name.clone();
             self.rename_id = "".to_owned();
@@ -412,6 +414,9 @@ impl Ui {
         } else if input.lost_focus() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
             self.rename_id = "".to_owned();
             self.original_name = "".to_owned();
+        }
+        if just_made {
+            input.request_focus();
         }
         true
     }

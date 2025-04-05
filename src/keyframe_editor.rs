@@ -50,7 +50,10 @@ fn animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                     keyframes: vec![],
                                     fps: 60,
                                     ..Default::default()
-                                })
+                                });
+                                let idx = shared.armature.animations.len() - 1;
+                                shared.ui.original_name = "".to_string();
+                                shared.ui.rename_id = "animation ".to_owned() + &idx.to_string();
                             }
                         });
                     });
