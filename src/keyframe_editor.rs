@@ -54,13 +54,27 @@ fn animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                             }
                         });
                     });
-                    for (i, a) in shared.armature.animations.iter().enumerate() {
-                        if ui_mod::selection_button(&a.name, i == shared.ui.anim.selected, ui)
-                            .clicked()
-                        {
-                            shared.ui.anim.selected = i;
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        ui.set_width(ui.available_width());
+                        for i in 0..shared.armature.animations.len() {
+                            // initialize renaming
+                            let rename_id = "animation ".to_owned() + &i.to_string();
+                            let name = &mut shared.armature.animations[i].name;
+                            if shared.ui.check_renaming(&rename_id, name, ui) {
+                                continue;
+                            }
+
+                            let button =
+                                ui_mod::selection_button(&name, i == shared.ui.anim.selected, ui);
+                            if button.clicked() {
+                                shared.ui.anim.selected = i;
+                                shared.ui.anim.selected_frame = 0;
+                            }
+                            if button.double_clicked() {
+                                shared.ui.rename_id = rename_id;
+                            }
                         }
-                    }
+                    });
                 })
             });
         });
