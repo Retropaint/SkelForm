@@ -46,7 +46,7 @@ fn animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                             ui.add_space(5.);
                             if ui.button("New").clicked() {
                                 shared.armature.animations.push(Animation {
-                                    name: "New_Anim".to_string(),
+                                    name: "".to_string(),
                                     keyframes: vec![],
                                     fps: 60,
                                     ..Default::default()
