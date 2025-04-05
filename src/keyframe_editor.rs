@@ -76,6 +76,8 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
             ui.set_width(ui.available_width());
             ui.set_height(ui.available_height());
 
+            let mut bone_tops: Vec<BoneTops> = vec![];
+
             // bones list
             let mut bone_ids: Vec<i32> = vec![];
             ui.vertical(|ui| {
@@ -95,21 +97,29 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                         let bone_id = shared.selected_animation().keyframes[i].bones[j].id;
                         ui.label(shared.find_bone(bone_id).unwrap().name.clone());
 
+                        let mut pos_top = 0.;
+                        let mut rot_top = 0.;
+
                         // add changes to the list
                         if shared.selected_animation().keyframes[i].bones[j].pos != Vec2::ZERO {
                             ui.horizontal(|ui| {
                                 ui.add_space(20.);
                                 let text = ui.label("Pos");
-                                shared.selected_animation().pos_top = text.rect.top();
+                                pos_top = text.rect.top();
                             });
                         }
                         if shared.selected_animation().keyframes[i].bones[j].rot != 0. {
                             ui.horizontal(|ui| {
                                 ui.add_space(20.);
                                 let text = ui.label("Rot");
-                                shared.selected_animation().rot_top = text.rect.top();
+                                rot_top = text.rect.top();
                             });
                         }
+                        bone_tops.push(shared::BoneTops {
+                            id: bone_id,
+                            pos_top,
+                            rot_top,
+                        });
                     }
                 }
             });
@@ -155,7 +165,7 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                     egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
                         ui.set_width(ui.available_width());
                         ui.set_height(ui.available_height());
-                        draw_frame_lines(egui_ctx, ui, shared);
+                        draw_frame_lines(egui_ctx, ui, shared, bone_tops);
                     });
                 });
             });
@@ -163,7 +173,12 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
 }
 
 /// Draw all lines representing frames in the timeline.
-fn draw_frame_lines(egui_ctx: &egui::Context, ui: &egui::Ui, shared: &mut Shared) {
+fn draw_frame_lines(
+    egui_ctx: &egui::Context,
+    ui: &egui::Ui,
+    shared: &mut Shared,
+    bone_tops: Vec<BoneTops>,
+) {
     // get cursor pos on the graph (or 0, 0 if can't)
     let mut cursor_x = -1.;
     if ui.ui_contains_pointer() {
@@ -219,18 +234,20 @@ fn draw_frame_lines(egui_ctx: &egui::Context, ui: &egui::Ui, shared: &mut Shared
     for kf in &shared.armature.animations[shared.ui.anim.selected].keyframes {
         for b in &kf.bones {
             let x = ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize];
+            let mut pos_top = 0.;
+            let mut rot_top = 0.;
+            for bt in &bone_tops {
+                if bt.id == b.id {
+                    pos_top = bt.pos_top;
+                    rot_top = bt.rot_top;
+                }
+            }
             if b.pos != Vec2::ZERO {
-                let pos = Vec2::new(
-                    x,
-                    shared.armature.animations[shared.ui.anim.selected].pos_top + 10.,
-                );
+                let pos = Vec2::new(x, pos_top + 10.);
                 draw_diamond(ui, pos);
             }
             if b.rot != 0. {
-                let pos = Vec2::new(
-                    x,
-                    shared.armature.animations[shared.ui.anim.selected].rot_top + 10.,
-                );
+                let pos = Vec2::new(x, rot_top + 10.);
                 draw_diamond(ui, pos);
             }
         }
