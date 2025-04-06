@@ -122,7 +122,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // mouse inputs
     if !shared.input.on_ui {
         if !input::is_pressing(KeyCode::SuperLeft, &shared) {
-            edit_bone_with_mouse(shared);
+            edit_bone_with_mouse(shared, bones);
         } else if shared.input.mouse_left != -1 && shared.selected_bone_idx != usize::MAX {
             if shared.input.mouse_left == -1 {
                 shared.input.initial_points = vec![];
@@ -143,7 +143,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 }
 
-pub fn edit_bone_with_mouse(shared: &mut Shared) {
+pub fn edit_bone_with_mouse(shared: &mut Shared, bones: Vec<Bone>) {
     if shared.armature.bones[shared.selected_bone_idx].tex_idx == usize::MAX {
         return;
     }
@@ -155,7 +155,7 @@ pub fn edit_bone_with_mouse(shared: &mut Shared) {
         // modify either the armature's, or animation keyframe's bone
         if shared.animating && shared.ui.anim.selected != usize::MAX {
             check_if_in_keyframe(shared.selected_bone().id, shared);
-            let pos = shared.selected_anim_bone().unwrap().pos;
+            let pos = bones[shared.selected_bone_idx].pos;
             shared.selected_anim_bone().unwrap().pos = shared.move_with_mouse(&pos, true);
         } else {
             let pos = shared.selected_bone().pos;
