@@ -357,7 +357,7 @@ impl Shared {
         None
     }
 
-    pub fn animate(&mut self, anim_idx: usize, frame: i32) -> Vec<Bone> {
+    pub fn animate(&mut self, _anim_idx: usize, frame: i32) -> Vec<Bone> {
         let mut bones = self.armature.bones.clone();
 
         // ignore if this animation has no keyframes
@@ -412,17 +412,17 @@ impl Shared {
             }
         }
 
-        let mut total_frames = next_kf.frame - prev_kf.frame;
+        let mut tween_frames = next_kf.frame - prev_kf.frame;
         // Set total frames to 1 if there are none, 
         // as Tweener can't accept a duration of 0.
-        if total_frames == 0 {
-            total_frames = 1;
+        if tween_frames == 0 {
+            tween_frames = 1;
         }
 
         // get the current frame being pointed to
-        let mut current_frame = frame - prev_kf.frame;
-        if current_frame < 0 {
-            current_frame = 0;
+        let mut tween_current_frame = frame - prev_kf.frame;
+        if tween_current_frame < 0 {
+            tween_current_frame = 0;
         }
 
         for b in &mut bones {
@@ -448,8 +448,8 @@ impl Shared {
             if prev_bone != None || next_bone != None {
                 // animate pos
                 b.pos +=
-                    Tweener::linear(prev_bone.unwrap().pos, next_bone.unwrap().pos, total_frames)
-                        .move_to(current_frame);
+                    Tweener::linear(prev_bone.unwrap().pos, next_bone.unwrap().pos, tween_frames)
+                        .move_to(tween_current_frame);
             }
         }
 
