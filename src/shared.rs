@@ -366,101 +366,56 @@ impl Shared {
             return bones;
         }
 
-        // get the 2 frames between the chosen one to inerpolate
-        let mut prev_kf_idx = usize::MAX;
-        let mut next_kf_idx = usize::MAX;
-        for (i, kf) in self.selected_animation().keyframes.iter().enumerate() {
-            if kf.frame == frame {
-                prev_kf_idx = i;
-                next_kf_idx = i;
-                break;
-            }
-            if kf.frame <= frame {
-                prev_kf_idx = i;
-            } else if kf.frame > frame && next_kf_idx == usize::MAX {
-                next_kf_idx = i;
-            }
-        }
-        if prev_kf_idx == usize::MAX {
-            prev_kf_idx = next_kf_idx;
-        }
-        if next_kf_idx == usize::MAX {
-            next_kf_idx = prev_kf_idx;
-        }
-
-        let prev_kf = self.selected_animation().keyframes[prev_kf_idx].clone();
-        let mut next_kf = self.selected_animation().keyframes[next_kf_idx].clone();
-
-        // get the latest state of all bones that are prior to the ones being interpolated
-        let mut ongoing_bone_ids: Vec<i32> = vec![];
-        for i in (0..self.selected_animation().keyframes.len()).rev() {
-            let kf = &self.selected_animation().keyframes[i];
-            if kf.frame > prev_kf.frame {
-                for (_, ab) in kf.bones.iter().enumerate() {
-                    ongoing_bone_ids.push(ab.id);
-                }
-                continue;
-            }
-            let mut idx: Vec<usize> = vec![];
-            for (i, ab) in kf.bones.iter().enumerate() {
-                idx.push(i);
-                for b in &next_kf.bones {
-                    if b.id == ab.id {
-                        idx.pop();
-                        break;
-                    }
-                }
-                for ob_id in &ongoing_bone_ids {
-                    if ab.id == *ob_id {
-                        idx.pop();
-                        break;
-                    }
-                }
-            }
-            for i in idx {
-                next_kf.bones.push(kf.bones[i].clone());
-            }
-        }
-
-        let mut tween_frames = next_kf.frame - prev_kf.frame;
-        // Set total frames to 1 if there are none,
-        // as Tweener can't accept a duration of 0.
-        if tween_frames == 0 {
-            tween_frames = 1;
-        }
-
-        // get the current frame being pointed to
-        let mut tween_current_frame = frame - prev_kf.frame;
-        if tween_current_frame < 0 {
-            tween_current_frame = 0;
-        }
-
         for b in &mut bones {
-            let mut prev_bone: Option<&AnimBone> = None;
-            let mut next_bone: Option<&AnimBone> = None;
-            for ab in &prev_kf.bones {
-                if ab.id == b.id {
-                    prev_bone = Some(&ab);
-                }
-            }
-            for ab in &next_kf.bones {
-                if ab.id == b.id {
-                    next_bone = Some(&ab);
+            let mut start_kf: Option<&Keyframe> = None;
+            let mut end_kf: Option<&Keyframe> = None;
+            let mut start_bone: Option<&AnimBone> = None;
+            let mut end_bone: Option<&AnimBone> = None;
+
+            let mut sorted_frames = self.selected_animation().keyframes.clone();
+            sorted_frames.sort_by(|a, b| a.frame.cmp(&b.frame));
+
+            for kf in &sorted_frames {
+                for ab in &kf.bones {
+                    if ab.id != b.id {
+                        continue;
+                    }
+                    if kf.frame == frame {
+                        start_kf = Some(&kf);
+                        start_bone = Some(&ab);
+                        end_kf = Some(&kf);
+                        end_bone = Some(&ab);
+                        break;
+                    }
+                    if kf.frame <= frame || frame < sorted_frames[0].frame && start_kf == None {
+                        start_kf = Some(&kf);
+                        start_bone = Some(&ab);
+                    } else if kf.frame > frame && end_kf == None {
+                        end_kf = Some(&kf);
+                        end_bone = Some(&ab);
+                    }
                 }
             }
 
-            if next_bone == None {
-                next_bone = prev_bone;
-            } else if prev_bone == None {
-                prev_bone = next_bone;
+            if start_kf == None {
+                start_kf = end_kf;
+                start_bone = end_bone;
+            } else if end_kf == None {
+                end_kf = start_kf;
+                end_bone = start_bone;
             }
 
-            if prev_bone != None || next_bone != None {
-                // animate pos
-                b.pos +=
-                    Tweener::linear(prev_bone.unwrap().pos, next_bone.unwrap().pos, tween_frames)
-                        .move_to(tween_current_frame);
+            if start_bone == None && end_bone == None {
+                return bones;
             }
+
+            let mut total_frames = end_kf.unwrap().frame - start_kf.unwrap().frame;
+            if total_frames == 0 {
+                total_frames = 1;
+            }
+
+            b.pos = Tweener::linear(start_bone.unwrap().pos, end_bone.unwrap().pos, total_frames)
+                .move_to(frame - start_kf.unwrap().frame);
         }
 
         bones
