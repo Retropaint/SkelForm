@@ -1,7 +1,5 @@
 //! Receives inputs from winit events. Most of actual input logic is handled per-module.
 
-use std::cmp::max_by;
-
 use crate::*;
 
 use winit::event::ElementState;
