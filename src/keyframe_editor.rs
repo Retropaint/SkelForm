@@ -58,7 +58,7 @@ fn animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                         ui.heading("Animation");
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             ui.add_space(5.);
-                            if ui.button("New").clicked() {
+                            if ui::button("New", ui).clicked() {
                                 shared.armature.animations.push(Animation {
                                     name: "".to_string(),
                                     keyframes: vec![],
@@ -115,6 +115,7 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
             ui.set_width(ui.available_width());
             ui.set_height(ui.available_height());
 
+            // track the Y of bone change labels for their diamonds
             let mut bone_tops: Vec<BoneTops> = vec![];
 
             // bones list
@@ -168,18 +169,42 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                 egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
                     ui.set_width(ui.available_width());
                     ui.set_height(20.);
-                    for (_, kf) in shared.armature.animations[shared.ui.anim.selected]
-                        .keyframes
-                        .iter()
-                        .enumerate()
-                    {
-                        // wait for the last diamond's position to be determined
-                        // on the next frame
+                    let mut i = 0;
+                    while i < shared.selected_animation().keyframes.len() {
+                        let kf = &shared.selected_animation().keyframes[i];
                         let pos = Vec2::new(
                             ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
                             ui.min_rect().top() + 10.,
                         );
                         draw_diamond(ui, pos);
+
+                        let rect =
+                            egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5. * 2.0));
+                        let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
+
+                        if response.hovered() {
+                            shared.cursor_icon = egui::CursorIcon::Grab;
+                        }
+
+                        if response.dragged() {
+                            shared.cursor_icon = egui::CursorIcon::Grabbing;
+                            let cursor = shared.ui.get_cursor(egui_ctx, ui);
+                            let zoomed_width = ui.min_rect().width() / shared.ui.anim.timeline_zoom;
+                            let hitbox = zoomed_width / shared.selected_animation().fps as f32 / 2.;
+                            let mut x = 0.;
+
+                            let mut idx: i32 = 0;
+                            while x < ui.min_rect().width() {
+                                x = idx as f32 / shared.selected_animation().fps as f32
+                                    * zoomed_width
+                                    + LINE_OFFSET;
+                                if cursor.x < x + hitbox && cursor.x > x - hitbox {
+                                    shared.selected_animation_mut().keyframes[i].frame = idx;
+                                }
+                                idx += 1;
+                            }
+                        }
+                        i += 1
                     }
                 });
 
@@ -226,16 +251,9 @@ fn draw_frame_lines(
     bone_tops: Vec<BoneTops>,
 ) {
     // get cursor pos on the graph (or 0, 0 if can't)
-    let mut cursor_x = -1.;
+    let mut cursor = Vec2::default();
     if ui.ui_contains_pointer() {
-        let cursor_pos = egui_ctx.input(|i| {
-            if let Some(result) = i.pointer.hover_pos() {
-                result
-            } else {
-                egui::Pos2::new(0., 0.)
-            }
-        });
-        cursor_x = cursor_pos.x - ui.min_rect().left();
+        cursor = shared.ui.get_cursor(egui_ctx, ui);
     }
 
     let zoomed_width = ui.min_rect().width() / shared.ui.anim.timeline_zoom;
@@ -253,7 +271,8 @@ fn draw_frame_lines(
         let mut color = egui::Color32::DARK_GRAY;
         if shared.ui.anim.selected_frame == i {
             color = egui::Color32::WHITE;
-        } else if cursor_x < x + hitbox && cursor_x > x - hitbox {
+        } else if cursor.x < x + hitbox && cursor.x > x - hitbox {
+            shared.cursor_icon = egui::CursorIcon::PointingHand;
             color = egui::Color32::GRAY;
 
             // select this frame if clicked
@@ -303,15 +322,7 @@ fn draw_frame_lines(
 fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
     let painter = ui.painter_at(ui.min_rect());
 
-    // Define the center and size of the diamond
-    let size = 5.0; // Half of the width/height
-
-    //let rect = egui::Rect::from_center_size(center, egui::Vec2::splat(size * 2.0));
-    //let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
-
-    //if response.dragged() {
-    //  println!("Dragging!");
-    //}
+    let size = 5.0;
 
     // Define the four points of the diamond
     let points = vec![
