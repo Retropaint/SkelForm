@@ -156,20 +156,20 @@ pub fn edit_bone_with_mouse(shared: &mut Shared, bones: Vec<Bone>) {
         if shared.animating && shared.ui.anim.selected != usize::MAX {
             check_if_in_keyframe(shared.selected_bone().id, shared);
             let pos = bones[shared.selected_bone_idx].pos;
-            shared.selected_anim_bone().unwrap().pos = shared.move_with_mouse(&pos, true);
+            shared.selected_anim_bone_mut().unwrap().pos = shared.move_with_mouse(&pos, true);
         } else {
             let pos = shared.selected_bone().pos;
-            shared.selected_bone().pos = shared.move_with_mouse(&pos, true);
+            shared.selected_bone_mut().pos = shared.move_with_mouse(&pos, true);
         }
     // rotation
     } else if shared.edit_mode == 1 {
-        shared.selected_bone().rot = (shared.input.mouse.x / shared.window.x) * PI * 2.;
+        shared.selected_bone_mut().rot = (shared.input.mouse.x / shared.window.x) * PI * 2.;
         if shared.animating && shared.ui.anim.selected != usize::MAX {
             check_if_in_keyframe(shared.selected_bone().id, shared);
         }
     // scale
     } else if shared.edit_mode == 2 {
-        shared.selected_bone().scale = (shared.input.mouse / shared.window) * 2.;
+        shared.selected_bone_mut().scale = (shared.input.mouse / shared.window) * 2.;
     }
 }
 
@@ -335,7 +335,7 @@ fn check_if_in_keyframe(id: i32, shared: &mut Shared) {
 
     if kf == None {
         // create new keyframe
-        shared.selected_animation().keyframes.push(crate::Keyframe {
+        shared.selected_animation_mut().keyframes.push(crate::Keyframe {
             frame,
             bones: vec![AnimBone {
                 id,
@@ -352,7 +352,7 @@ fn check_if_in_keyframe(id: i32, shared: &mut Shared) {
 
         if idx == None {
             // create anim bone
-            shared.selected_animation().keyframes[kf.unwrap()]
+            shared.selected_animation_mut().keyframes[kf.unwrap()]
                 .bones
                 .push(AnimBone {
                     id,

@@ -216,6 +216,23 @@ pub struct Ui {
     pub anim: UiAnim,
 }
 
+impl Ui {
+    pub fn get_cursor(&self, egui_ctx: &egui::Context, ui: &egui::Ui) -> Vec2 {
+        let mut cursor = Vec2::default();
+        if ui.ui_contains_pointer() {
+            let cursor_pos = egui_ctx.input(|i| {
+                if let Some(result) = i.pointer.hover_pos() {
+                    result
+                } else {
+                    egui::Pos2::new(0., 0.)
+                }
+            });
+            cursor = (cursor_pos - ui.min_rect().left_top()).into();
+        }
+        cursor
+    }
+}
+
 #[derive(Clone, Default)]
 pub struct UiAnim {
     pub selected: usize,
@@ -320,13 +337,17 @@ pub struct Shared {
 
 // mostly for shorthands for cleaner code
 impl Shared {
-    pub fn selected_animation(&mut self) -> &mut Animation {
+    pub fn selected_animation(&self) -> &Animation {
+        &self.armature.animations[self.ui.anim.selected]
+    }
+
+    pub fn selected_animation_mut(&mut self) -> &mut Animation {
         &mut self.armature.animations[self.ui.anim.selected]
     }
 
-    pub fn selected_keyframe(&mut self) -> Option<&mut Keyframe> {
+    pub fn selected_keyframe(&self) -> Option<&Keyframe> {
         let frame = self.ui.anim.selected_frame;
-        for kf in &mut self.selected_animation().keyframes {
+        for kf in &self.selected_animation().keyframes {
             if kf.frame == frame {
                 return Some(kf);
             }
@@ -334,9 +355,19 @@ impl Shared {
         None
     }
 
-    pub fn selected_anim_bone(&mut self) -> Option<&mut AnimBone> {
+    pub fn selected_keyframe_mut(&mut self) -> Option<&mut Keyframe> {
+        let frame = self.ui.anim.selected_frame;
+        for kf in &mut self.selected_animation_mut().keyframes {
+            if kf.frame == frame {
+                return Some(kf);
+            }
+        }
+        None
+    }
+
+    pub fn selected_anim_bone_mut(&mut self) -> Option<&mut AnimBone> {
         let id = self.selected_bone().id;
-        for b in &mut self.selected_keyframe().unwrap().bones {
+        for b in &mut self.selected_keyframe_mut().unwrap().bones {
             if b.id == id {
                 return Some(b);
             }
@@ -344,11 +375,25 @@ impl Shared {
         None
     }
 
-    pub fn selected_bone(&mut self) -> &mut Bone {
+    pub fn selected_anim_bone(&self) -> Option<&AnimBone> {
+        let id = self.selected_bone().id;
+        for b in &self.selected_keyframe().unwrap().bones {
+            if b.id == id {
+                return Some(b);
+            }
+        }
+        None
+    }
+
+    pub fn selected_bone(&self) -> &Bone {
+        &self.armature.bones[self.selected_bone_idx]
+    }
+
+    pub fn selected_bone_mut(&mut self) -> &mut Bone {
         &mut self.armature.bones[self.selected_bone_idx]
     }
 
-    pub fn find_bone(&mut self, id: i32) -> Option<&Bone> {
+    pub fn find_bone(&self, id: i32) -> Option<&Bone> {
         for b in &self.armature.bones {
             if b.id == id {
                 return Some(&b);
@@ -357,7 +402,7 @@ impl Shared {
         None
     }
 
-    pub fn animate(&mut self, _anim_idx: usize, frame: i32) -> Vec<Bone> {
+    pub fn animate(&self, _anim_idx: usize, frame: i32) -> Vec<Bone> {
         let mut bones = self.armature.bones.clone();
 
         // ignore if this animation has no keyframes

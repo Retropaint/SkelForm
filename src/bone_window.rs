@@ -55,7 +55,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 let l = ui.label("Name:");
-                ui.text_edit_singleline(&mut shared.selected_bone().name).labelled_by(l.id);
+                ui.text_edit_singleline(&mut shared.selected_bone_mut().name).labelled_by(l.id);
             });
             ui.horizontal(|ui| {
                 ui.label("Texture:");
@@ -76,16 +76,16 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.label("Position:");
             ui.horizontal(|ui| {
                 ui.label("X");
-                float_input(ui, &mut shared.selected_bone().pos.x);
+                float_input(ui, &mut shared.selected_bone_mut().pos.x);
                 ui.label("Y");
-                float_input(ui, &mut shared.selected_bone().pos.y);
+                float_input(ui, &mut shared.selected_bone_mut().pos.y);
             });
             ui.label("Scale:");
             ui.horizontal(|ui| {
                 ui.label("X");
-                float_input(ui, &mut shared.selected_bone().scale.x);
+                float_input(ui, &mut shared.selected_bone_mut().scale.x);
                 ui.label("Y");
-                float_input(ui, &mut shared.selected_bone().scale.y);
+                float_input(ui, &mut shared.selected_bone_mut().scale.y);
             });
             ui.horizontal(|ui| {
                 ui.label("Rotation");
@@ -96,9 +96,9 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 }
                 ui.add_sized([30., 20.], egui::TextEdit::singleline(&mut str));
                 if let Ok(f) = str.parse::<f32>() {
-                    shared.selected_bone().rot = f * PI / 180.;
+                    shared.selected_bone_mut().rot = f * PI / 180.;
                 } else {
-                    shared.selected_bone().rot = 0.;
+                    shared.selected_bone_mut().rot = 0.;
                 }
             });
         });
