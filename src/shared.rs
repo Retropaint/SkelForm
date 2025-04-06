@@ -8,7 +8,7 @@ use std::{
 use egui::Context;
 use tween::Tweener;
 use wgpu::BindGroup;
-use winit::{keyboard::KeyCode, window::CursorIcon};
+use winit::keyboard::KeyCode;
 
 #[repr(C)]
 #[derive(Debug, serde::Serialize, Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -218,18 +218,14 @@ pub struct Ui {
 
 impl Ui {
     pub fn get_cursor(&self, egui_ctx: &egui::Context, ui: &egui::Ui) -> Vec2 {
-        let mut cursor = Vec2::default();
-        if ui.ui_contains_pointer() {
-            let cursor_pos = egui_ctx.input(|i| {
-                if let Some(result) = i.pointer.hover_pos() {
-                    result
-                } else {
-                    egui::Pos2::new(0., 0.)
-                }
-            });
-            cursor = (cursor_pos - ui.min_rect().left_top()).into();
-        }
-        cursor
+        let cursor_pos = egui_ctx.input(|i| {
+            if let Some(result) = i.pointer.hover_pos() {
+                result
+            } else {
+                egui::Pos2::new(0., 0.)
+            }
+        });
+        (cursor_pos - ui.min_rect().left_top()).into()
     }
 }
 
@@ -314,7 +310,7 @@ pub struct Shared {
     pub camera: Camera,
     pub input: InputStates,
     pub egui_ctx: Context,
-    pub cursor_icon: CursorIcon,
+    pub cursor_icon: egui::CursorIcon,
     pub ui: Ui,
 
     // tracking zoom every frame for smooth effect
