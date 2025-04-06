@@ -27,7 +27,7 @@ use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
     event::{MouseButton, MouseScrollDelta, WindowEvent},
-    window::{Cursor, CursorIcon, Theme, Window},
+    window::{Theme, Window},
 };
 
 pub mod armature_window;
@@ -314,8 +314,6 @@ impl ApplicationHandler for App {
             let _ = img_path.write_all(b"/Users/o/projects/code/rust/skelform_wgpu/gopher.png");
         }
 
-        window.set_cursor(Cursor::Icon(self.shared.cursor_icon));
-        self.shared.cursor_icon = CursorIcon::default();
         window.request_redraw();
     }
 }
