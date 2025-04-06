@@ -366,48 +366,87 @@ impl Shared {
             return bones;
         }
 
-        // get the 2 frames between this to inerpolate
-        let mut prev_kf: Option<&Keyframe> = None;
-        let mut next_kf: Option<&Keyframe> = None;
-        for kf in &self.selected_animation().keyframes {
+        // get the 2 frames between the chosen one to inerpolate
+        let mut prev_kf_idx = usize::MAX;
+        let mut next_kf_idx = usize::MAX;
+        for (i, kf) in self.selected_animation().keyframes.iter().enumerate() {
+            if kf.frame == frame {
+                prev_kf_idx = i;
+                next_kf_idx = i;
+                break
+            }
             if kf.frame <= frame {
-                prev_kf = Some(&kf);
-            } else if kf.frame > frame && next_kf == None {
-                next_kf = Some(&kf);
+                prev_kf_idx = i;
+            } else if kf.frame > frame && next_kf_idx == usize::MAX {
+                next_kf_idx = i;
+            }
+        }
+        if prev_kf_idx == usize::MAX {
+            prev_kf_idx = next_kf_idx;
+        }
+        if next_kf_idx == usize::MAX {
+            next_kf_idx = prev_kf_idx;
+        }
+
+        let prev_kf = self.selected_animation().keyframes[prev_kf_idx].clone();
+        let mut next_kf = self.selected_animation().keyframes[next_kf_idx].clone();
+
+        // get the latest state of all bones that are prior to the ones being interpolated
+        for i in (0..self.selected_animation().keyframes.len()).rev() {
+            let kf = &self.selected_animation().keyframes[i];
+            if kf.frame > prev_kf.frame {
+                continue;
+            }
+            let mut idx: Vec<usize> = vec![];
+            for (i, ab) in kf.bones.iter().enumerate() {
+                idx.push(i);
+                for b in &next_kf.bones {
+                    if b.id == ab.id {
+                        idx.pop();
+                        break;
+                    }
+                }
+            }
+            for i in idx {
+                next_kf.bones.push(kf.bones[i].clone());
             }
         }
 
-        // Next_kf can be None if pointing directly under a keyframe,
-        // so just set it to prev_kf to make other logic consistent.
-        if next_kf == None {
-            next_kf = prev_kf;
-        }
-
-        let mut total_frames = next_kf.unwrap().frame - prev_kf.unwrap().frame;
-
-        // Tween requires a duration of at least 1, so if there are no frames
-        // (caused by pointing directly at a keyframe) then set it to 1.
+        let mut total_frames = next_kf.frame - prev_kf.frame;
+        // Set total frames to 1 if there are none, 
+        // as Tweener can't accept a duration of 0.
         if total_frames == 0 {
             total_frames = 1;
         }
 
         // get the current frame being pointed to
-        let current_frame = frame - prev_kf.unwrap().frame;
+        let mut current_frame = frame - prev_kf.frame;
+        if current_frame < 0 {
+            current_frame = 0;
+        }
 
         for b in &mut bones {
             let mut prev_bone: Option<&AnimBone> = None;
             let mut next_bone: Option<&AnimBone> = None;
-            for ab in &prev_kf.unwrap().bones {
+            for ab in &prev_kf.bones {
                 if ab.id == b.id {
                     prev_bone = Some(&ab);
                 }
             }
-            for ab in &next_kf.unwrap().bones {
+            for ab in &next_kf.bones {
                 if ab.id == b.id {
                     next_bone = Some(&ab);
                 }
             }
-            if prev_bone != None && next_bone != None {
+
+            if next_bone == None {
+                next_bone = prev_bone;
+            } else if prev_bone == None {
+                prev_bone = next_bone;
+            }
+
+            if prev_bone != None || next_bone != None {
+                // animate pos
                 b.pos +=
                     Tweener::linear(prev_bone.unwrap().pos, next_bone.unwrap().pos, total_frames)
                         .move_to(current_frame);
@@ -461,7 +500,7 @@ impl Ui {
             self.original_name = str.clone();
         }
 
-        let input = ui.add(egui::TextEdit::singleline(str));
+        let input = ui.add(egui::TextEdit::singleline(str).hint_text(default_name));
 
         // immediately focus on this input if it was just made
         if just_made {
