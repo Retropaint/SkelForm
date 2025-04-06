@@ -6,14 +6,21 @@ use std::{
 };
 
 use egui::{text::CCursor, Context};
+use tween::{Tween, Tweener};
 use wgpu::BindGroup;
 use winit::{keyboard::KeyCode, window::CursorIcon};
 
 #[repr(C)]
-#[derive(serde::Serialize, Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Debug, serde::Serialize, Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
+}
+
+impl tween::TweenValue for Vec2 {
+    fn scale(self, scale: f32) -> Self {
+        self * scale
+    }
 }
 
 impl From<egui::Pos2> for Vec2 {
@@ -257,7 +264,7 @@ pub struct Animation {
     pub keyframes: Vec<Keyframe>,
 }
 
-#[derive(serde::Serialize, Clone, Default)]
+#[derive(PartialEq, serde::Serialize, Clone, Default)]
 pub struct Keyframe {
     pub frame: i32,
     pub bones: Vec<AnimBone>,
@@ -328,7 +335,7 @@ impl Shared {
     }
 
     pub fn selected_anim_bone(&mut self) -> Option<&mut AnimBone> {
-        let id = self.armature.bones[self.selected_bone_idx].id;
+        let id = self.selected_bone().id;
         for b in &mut self.selected_keyframe().unwrap().bones {
             if b.id == id {
                 return Some(b);
@@ -353,30 +360,60 @@ impl Shared {
     pub fn animate(&mut self, anim_idx: usize, frame: i32) -> Vec<Bone> {
         let mut bones = self.armature.bones.clone();
 
-        let kf_len = self.armature.animations[anim_idx].keyframes.len();
+        // ignore if this animation has no keyframes
+        let kf_len = self.selected_animation().keyframes.len();
         if kf_len == 0 {
             return bones;
         }
 
-        // use last frame by default
-        let mut keyframe = &self.armature.animations[anim_idx].keyframes[kf_len - 1];
-
-        for kf in &self.armature.animations[anim_idx].keyframes {
-            // get proper keyframe if it exists at this frame
-            if kf.frame == frame {
-                keyframe = kf;
-                break;
+        // get the 2 frames between this to inerpolate
+        let mut prev_kf: Option<&Keyframe> = None;
+        let mut next_kf: Option<&Keyframe> = None;
+        for kf in &self.selected_animation().keyframes {
+            if kf.frame <= frame {
+                prev_kf = Some(&kf);
+            } else if kf.frame > frame && next_kf == None {
+                next_kf = Some(&kf);
             }
         }
 
-        // animate bones with this keyframe
-        for kf_b in &keyframe.bones {
-            for b in &mut bones {
-                if b.id == kf_b.id {
-                    b.pos += kf_b.pos;
+        // Next_kf can be None if pointing directly under a keyframe,
+        // so just set it to prev_kf to make other logic consistent.
+        if next_kf == None {
+            next_kf = prev_kf;
+        }
+
+        let mut total_frames = next_kf.unwrap().frame - prev_kf.unwrap().frame;
+
+        // Tween requires a duration of at least 1, so if there are no frames
+        // (caused by pointing directly at a keyframe) then set it to 1.
+        if total_frames == 0 {
+            total_frames = 1;
+        }
+
+        // get the current frame being pointed to
+        let current_frame = frame - prev_kf.unwrap().frame;
+
+        for b in &mut bones {
+            let mut prev_bone: Option<&AnimBone> = None;
+            let mut next_bone: Option<&AnimBone> = None;
+            for ab in &prev_kf.unwrap().bones {
+                if ab.id == b.id {
+                    prev_bone = Some(&ab);
                 }
             }
+            for ab in &next_kf.unwrap().bones {
+                if ab.id == b.id {
+                    next_bone = Some(&ab);
+                }
+            }
+            if prev_bone != None && next_bone != None {
+                b.pos +=
+                    Tweener::linear(prev_bone.unwrap().pos, next_bone.unwrap().pos, total_frames)
+                        .move_to(current_frame);
+            }
         }
+
         bones
     }
 
@@ -394,7 +431,7 @@ impl Shared {
             }
         }
 
-        // get initial values to allow 'dragging'
+        // Upon immediately clicking, track initial values to allow 'dragging'
         if self.input.initial_points.len() == 0 {
             let initial = mouse_world * self.zoom;
             self.input.initial_points.push(*value - initial);
