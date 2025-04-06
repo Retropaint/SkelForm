@@ -216,6 +216,8 @@ pub struct UiAnim {
     pub selected_frame: i32,
     pub timeline_zoom: f32,
     pub lines_x: Vec<f32>,
+    pub playing: bool,
+    pub elapsed: i32,
 }
 
 #[derive(serde::Serialize, Clone, Default)]

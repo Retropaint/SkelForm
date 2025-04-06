@@ -10,6 +10,20 @@ use crate::*;
 const LINE_OFFSET: f32 = 30.;
 
 pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
+    if shared.ui.anim.playing {
+        shared.ui.anim.elapsed += 1;
+        let fps = shared.selected_animation().fps;
+        if shared.ui.anim.elapsed > 60 / fps {
+            shared.ui.anim.selected_frame += 1;
+            shared.ui.anim.elapsed = 0;
+            if shared.ui.anim.selected_frame > fps - 1 {
+                shared.ui.anim.selected_frame = 0;
+            }
+        }
+    } else {
+        shared.ui.anim.elapsed = 0;
+    }
+
     egui::TopBottomPanel::bottom("Keyframe")
         .min_height(150.)
         .resizable(true)
@@ -164,11 +178,18 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                 // The options bar has to be at the bottom, but it needs to be created first
                 // so that the remaining height can be taken up by timeline graph.
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-                    // options
+                    // bottom bar
                     egui::Frame::new().show(ui, |ui| {
                         ui.set_width(ui.available_width());
                         ui.set_height(20.);
                         ui.horizontal(|ui| {
+                            if ui.button("Play").clicked() {
+                                shared.ui.anim.playing = true;
+                            }
+
+                            if ui.button("Pause").clicked() {
+                                shared.ui.anim.playing = false;
+                            }
                             if ui.button("+").clicked() {
                                 shared.ui.anim.timeline_zoom -= 0.1;
                             }
