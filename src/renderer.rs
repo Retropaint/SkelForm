@@ -8,7 +8,7 @@ use crate::{
     utils, AnimBone,
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
-use winit::{keyboard::KeyCode, window::CursorIcon};
+use winit::keyboard::KeyCode;
 
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
@@ -150,7 +150,7 @@ pub fn edit_bone_with_mouse(shared: &mut Shared, bones: Vec<Bone>) {
 
     // translation
     if shared.edit_mode == 0 {
-        shared.cursor_icon = CursorIcon::Move;
+        shared.cursor_icon = egui::CursorIcon::Move;
 
         // modify either the armature's, or animation keyframe's bone
         if shared.animating && shared.ui.anim.selected != usize::MAX {

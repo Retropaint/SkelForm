@@ -35,6 +35,9 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         }
     });
 
+    context.set_cursor_icon(shared.cursor_icon);
+    shared.cursor_icon = egui::CursorIcon::Default;
+
     style_once!(top_panel(context, shared));
     if shared.animating {
         style_once!(keyframe_editor::draw(context, shared));
@@ -62,7 +65,10 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     ui.horizontal(|ui| {
                         ui.set_max_width(80.);
                         if ui.button("Export").clicked() {
-                            crate::utils::export_textures(&shared.armature.textures, &shared.armature);
+                            crate::utils::export_textures(
+                                &shared.armature.textures,
+                                &shared.armature,
+                            );
                             ui.close_menu();
                         }
 
@@ -71,7 +77,10 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         });
 
                         if input::is_pressing(winit::keyboard::KeyCode::KeyE, &shared) {
-                            crate::utils::export_textures(&shared.armature.textures, &shared.armature);
+                            crate::utils::export_textures(
+                                &shared.armature.textures,
+                                &shared.armature,
+                            );
                             ui.close_menu();
                         }
                     });
@@ -189,6 +198,7 @@ pub fn button(text: &str, ui: &mut egui::Ui) -> egui::Response {
             .fill(COLOR_ACCENT)
             .corner_radius(egui::CornerRadius::ZERO),
     )
+    .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
 pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::Response {
@@ -202,4 +212,5 @@ pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::
             .fill(col)
             .corner_radius(egui::CornerRadius::ZERO),
     )
+    .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
