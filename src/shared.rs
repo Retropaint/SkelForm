@@ -373,7 +373,7 @@ impl Shared {
             if kf.frame == frame {
                 prev_kf_idx = i;
                 next_kf_idx = i;
-                break
+                break;
             }
             if kf.frame <= frame {
                 prev_kf_idx = i;
@@ -392,9 +392,13 @@ impl Shared {
         let mut next_kf = self.selected_animation().keyframes[next_kf_idx].clone();
 
         // get the latest state of all bones that are prior to the ones being interpolated
+        let mut ongoing_bone_ids: Vec<i32> = vec![];
         for i in (0..self.selected_animation().keyframes.len()).rev() {
             let kf = &self.selected_animation().keyframes[i];
             if kf.frame > prev_kf.frame {
+                for (_, ab) in kf.bones.iter().enumerate() {
+                    ongoing_bone_ids.push(ab.id);
+                }
                 continue;
             }
             let mut idx: Vec<usize> = vec![];
@@ -406,6 +410,12 @@ impl Shared {
                         break;
                     }
                 }
+                for ob_id in &ongoing_bone_ids {
+                    if ab.id == *ob_id {
+                        idx.pop();
+                        break;
+                    }
+                }
             }
             for i in idx {
                 next_kf.bones.push(kf.bones[i].clone());
@@ -413,7 +423,7 @@ impl Shared {
         }
 
         let mut tween_frames = next_kf.frame - prev_kf.frame;
-        // Set total frames to 1 if there are none, 
+        // Set total frames to 1 if there are none,
         // as Tweener can't accept a duration of 0.
         if tween_frames == 0 {
             tween_frames = 1;
@@ -481,11 +491,12 @@ impl Shared {
 }
 
 impl Ui {
-    pub fn check_renaming(
+    pub fn check_renaming<T: FnOnce(bool)>(
         &mut self,
         rename_id: &String,
         str: &mut String,
         ui: &mut egui::Ui,
+        after_enter: T,
     ) -> bool {
         if self.rename_id != *rename_id {
             return false;
@@ -515,6 +526,7 @@ impl Ui {
             }
             self.rename_id = "".to_owned();
             self.original_name = "".to_owned();
+            after_enter(false);
         } else if input.lost_focus() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
             if str == "" && self.original_name == "" {
                 *str = default_name.to_string();
@@ -523,8 +535,14 @@ impl Ui {
             }
             self.rename_id = "".to_owned();
             self.original_name = "".to_owned();
+            after_enter(true);
         }
 
         true
+    }
+
+    pub fn select_anim(&mut self, idx: usize) {
+        self.anim.selected = idx;
+        self.anim.selected_frame = 0;
     }
 }
