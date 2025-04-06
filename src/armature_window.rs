@@ -73,12 +73,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         } else {
                             // regular, boring buttons
 
-                            let mut col = Color32::from_rgb(60, 60, 60);
-                            if idx as usize == shared.selected_bone_idx {
-                                col = Color32::from_rgb(100, 100, 100);
-                            }
-
-                            if ui.add(Button::new(&s.name.to_string()).fill(col)).clicked() {
+                            if ui_mod::selection_button(&s.name.to_string(), idx as usize == shared.selected_bone_idx, ui).clicked() {
                                 shared.selected_bone_idx = idx as usize;
                             };
                         }
