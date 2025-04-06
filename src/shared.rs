@@ -5,8 +5,8 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
-use egui::{text::CCursor, Context};
-use tween::{Tween, Tweener};
+use egui::Context;
+use tween::Tweener;
 use wgpu::BindGroup;
 use winit::{keyboard::KeyCode, window::CursorIcon};
 
