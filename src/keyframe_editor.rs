@@ -77,7 +77,15 @@ fn animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                             // initialize renaming
                             let rename_id = "animation ".to_owned() + &i.to_string();
                             let name = &mut shared.armature.animations[i].name;
-                            if shared.ui.check_renaming(&rename_id, name, ui) {
+                            let mut just_made = false;
+                            if shared
+                                .ui
+                                .check_renaming(&rename_id, name, ui, |_| just_made = true)
+                            {
+                                if just_made {
+                                    shared.ui.anim.selected = i;
+                                    shared.ui.anim.selected_frame = 0;
+                                }
                                 continue;
                             }
 
