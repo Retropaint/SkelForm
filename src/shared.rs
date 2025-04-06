@@ -372,9 +372,12 @@ impl Shared {
             let mut start_bone: Option<&AnimBone> = None;
             let mut end_bone: Option<&AnimBone> = None;
 
+            // sort keyframes by frame
+            // may or may not cause slowdown on heavy animations
             let mut sorted_frames = self.selected_animation().keyframes.clone();
             sorted_frames.sort_by(|a, b| a.frame.cmp(&b.frame));
 
+            // get the frames to interpolate (or otherwise)
             for kf in &sorted_frames {
                 for ab in &kf.bones {
                     if ab.id != b.id {
@@ -397,6 +400,7 @@ impl Shared {
                 }
             }
 
+            // ensure start and end are always pointing somewhere
             if start_kf == None {
                 start_kf = end_kf;
                 start_bone = end_bone;
@@ -414,8 +418,11 @@ impl Shared {
                 total_frames = 1;
             }
 
+            let current_frame = frame - start_kf.unwrap().frame;
+
+            // interpolate!
             b.pos = Tweener::linear(start_bone.unwrap().pos, end_bone.unwrap().pos, total_frames)
-                .move_to(frame - start_kf.unwrap().frame);
+                .move_to(current_frame);
         }
 
         bones
