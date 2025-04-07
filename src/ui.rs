@@ -89,7 +89,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     ui.horizontal(|ui| {
                         ui.set_max_width(80.);
                         if ui.button("Zoom in").clicked() {
-                            set_zoom(shared.zoom - 0.1, shared);
+                            set_zoom(shared.camera.zoom - 0.1, shared);
                             ui.close_menu();
                         }
 
@@ -100,7 +100,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     ui.horizontal(|ui| {
                         ui.set_max_width(80.);
                         if ui.button("Zoom out").clicked() {
-                            set_zoom(shared.zoom + 0.1, shared);
+                            set_zoom(shared.camera.zoom + 0.1, shared);
                             ui.close_menu();
                         }
 
@@ -186,9 +186,9 @@ pub fn styling_once<T: FnOnce(&mut egui::Visuals)>(context: &Context, changes: T
 }
 
 pub fn set_zoom(zoom: f32, shared: &mut Shared) {
-    shared.zoom = zoom;
-    if shared.zoom < 0.1 {
-        shared.zoom = 0.1;
+    shared.camera.zoom = zoom;
+    if shared.camera.zoom < 0.1 {
+        shared.camera.zoom = 0.1;
     }
 }
 

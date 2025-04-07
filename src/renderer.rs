@@ -58,7 +58,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let this_verts = rect_verts(
             &temp_bones[i],
             &shared.camera.pos,
-            shared.zoom,
+            shared.camera.zoom,
             &shared.armature.textures[temp_bones[i].tex_idx],
             shared.window.x / shared.window.y,
         );
@@ -137,7 +137,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 let initial_world =
                     utils::screen_to_world_space(shared.input.initial_points[0], shared.window);
                 shared.camera.pos =
-                    shared.camera.initial_pos - (mouse_world - initial_world) * shared.zoom;
+                    shared.camera.initial_pos - (mouse_world - initial_world) * shared.camera.zoom;
             }
         }
     }

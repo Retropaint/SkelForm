@@ -37,9 +37,9 @@ pub fn keyboard_input(
     }
 
     if is_pressing(KeyCode::Equal, &shared) {
-        ui::set_zoom(shared.zoom - 0.1, shared)
+        ui::set_zoom(shared.camera.zoom - 0.1, shared)
     } else if is_pressing(KeyCode::Minus, &shared) {
-        ui::set_zoom(shared.zoom + 0.1, shared);
+        ui::set_zoom(shared.camera.zoom + 0.1, shared);
     }
 
     if *key == KeyCode::SuperLeft {
@@ -75,10 +75,10 @@ pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
     let sens_reducer = 100.;
     match delta {
         MouseScrollDelta::LineDelta(_x, y) => {
-            ui::set_zoom(shared.zoom + (y as f32 / sens_reducer), shared);
+            ui::set_zoom(shared.camera.zoom + (y as f32 / sens_reducer), shared);
         }
         MouseScrollDelta::PixelDelta(pos) => {
-            ui::set_zoom(shared.zoom + (pos.y as f32 / sens_reducer), shared);
+            ui::set_zoom(shared.camera.zoom + (pos.y as f32 / sens_reducer), shared);
         }
     }
 }

@@ -238,6 +238,7 @@ pub struct UiAnim {
     pub lines_x: Vec<f32>,
     pub playing: bool,
     pub elapsed: i32,
+    pub timeline_offset: f32
 }
 
 #[derive(serde::Serialize, Clone, Default)]
@@ -315,9 +316,6 @@ pub struct Shared {
 
     // tracking zoom every frame for smooth effect
     pub current_zoom: f32,
-
-    // actual zoom
-    pub zoom: f32,
 
     // should be enum but too lazy atm
     pub edit_mode: i32,
@@ -493,11 +491,11 @@ impl Shared {
 
         // Upon immediately clicking, track initial values to allow 'dragging'
         if self.input.initial_points.len() == 0 {
-            let initial = mouse * self.zoom;
+            let initial = mouse * self.camera.zoom;
             self.input.initial_points.push(*value - initial);
         }
 
-        (mouse * self.zoom) + self.input.initial_points[0]
+        (mouse * self.camera.zoom) + self.input.initial_points[0]
     }
 }
 
