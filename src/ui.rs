@@ -202,15 +202,27 @@ pub fn button(text: &str, ui: &mut egui::Ui) -> egui::Response {
 }
 
 pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::Response {
-    let mut col = COLOR_ACCENT;
+    let mut bg_col = COLOR_ACCENT;
+    let mut cursor = egui::CursorIcon::PointingHand;
+    let mut text_col = egui::Color32::from_rgb(170, 170, 170);
+
     if selected {
-        // emilk forgot to add += for Color32
-        col = col + egui::Color32::from_rgb(20, 20, 20);
+        bg_col = bg_col + egui::Color32::from_rgb(20, 20, 20);
+        cursor = egui::CursorIcon::Default;
+        text_col = egui::Color32::from_rgb(200, 200, 200);
     }
-    ui.add(
-        egui::Button::new(text)
-            .fill(col)
-            .corner_radius(egui::CornerRadius::ZERO),
-    )
-    .on_hover_cursor(egui::CursorIcon::PointingHand)
+
+    let button = egui::Button::new(egui::RichText::new(text).color(text_col))
+        .fill(bg_col)
+        .corner_radius(egui::CornerRadius::ZERO);
+
+    let response = ui
+        .add(if selected {
+            button.sense(egui::Sense::empty())
+        } else {
+            button
+        })
+        .on_hover_cursor(cursor);
+
+    response
 }
