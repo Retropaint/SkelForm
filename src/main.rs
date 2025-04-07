@@ -17,7 +17,6 @@ fn init_shared(shared: &mut Shared) {
     shared.input.modifier = -1;
     shared.debug = true;
     shared.camera.zoom = 1.;
-    shared.zoom = 1.;
     shared.ui.anim.selected = usize::MAX;
     shared.ui.anim.timeline_zoom = 1.;
 
