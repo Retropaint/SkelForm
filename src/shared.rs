@@ -455,6 +455,7 @@ impl Shared {
             }
 
             let mut total_frames = end_kf.unwrap().frame - start_kf.unwrap().frame;
+            // Tweener can't have 0 duration
             if total_frames == 0 {
                 total_frames = 1;
             }
@@ -464,32 +465,39 @@ impl Shared {
             // interpolate!
             b.pos = Tweener::linear(start_bone.unwrap().pos, end_bone.unwrap().pos, total_frames)
                 .move_to(current_frame);
+            b.rot = Tweener::linear(start_bone.unwrap().rot, end_bone.unwrap().rot, total_frames)
+                .move_to(current_frame);
         }
 
         bones
     }
 
-    pub fn move_with_mouse(&mut self, value: &Vec2, counter_parent: bool) -> Vec2 {
+    pub fn get_mouse_world(&mut self) -> Vec2 {
         // get mouse in world space
         let mut mouse_world = crate::utils::screen_to_world_space(self.input.mouse, self.window);
         mouse_world.x *= self.window.x / self.window.y;
+        mouse_world
+    }
+
+    pub fn move_with_mouse(&mut self, value: &Vec2, counter_parent: bool) -> Vec2 {
+        let mut mouse = self.get_mouse_world();
 
         // Counter-act parent's rotation so that translation is global.
         // Only used in bone translation.
         if counter_parent {
             let parent_id = self.selected_bone().parent_id;
             if let Some(parent) = self.find_bone(parent_id) {
-                mouse_world = crate::utils::rotate(&mouse_world, -parent.rot);
+                mouse = crate::utils::rotate(&mouse, -parent.rot);
             }
         }
 
         // Upon immediately clicking, track initial values to allow 'dragging'
         if self.input.initial_points.len() == 0 {
-            let initial = mouse_world * self.zoom;
+            let initial = mouse * self.zoom;
             self.input.initial_points.push(*value - initial);
         }
 
-        (mouse_world * self.zoom) + self.input.initial_points[0]
+        (mouse * self.zoom) + self.input.initial_points[0]
     }
 }
 
