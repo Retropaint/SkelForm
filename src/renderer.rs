@@ -338,17 +338,14 @@ fn check_if_in_keyframe(id: i32, shared: &mut Shared) {
 
     if kf == None {
         // create new keyframe
-        shared
-            .selected_animation_mut()
-            .keyframes
-            .push(crate::Keyframe {
-                frame,
-                bones: vec![AnimBone {
-                    id,
-                    ..Default::default()
-                }],
+        shared.create_keyframe(crate::Keyframe {
+            frame,
+            bones: vec![AnimBone {
+                id,
                 ..Default::default()
-            });
+            }],
+            ..Default::default()
+        });
     } else {
         // check if this bone is in keyframe
         let idx = shared.selected_animation().keyframes[kf.unwrap()]

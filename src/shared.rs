@@ -240,7 +240,7 @@ pub struct UiAnim {
     pub lines_x: Vec<f32>,
     pub playing: bool,
     pub elapsed: i32,
-    pub timeline_offset: f32
+    pub timeline_offset: f32,
 }
 
 #[derive(serde::Serialize, Clone, Default)]
@@ -413,13 +413,8 @@ impl Shared {
             let mut start_bone: Option<&AnimBone> = None;
             let mut end_bone: Option<&AnimBone> = None;
 
-            // sort keyframes by frame
-            // may or may not cause slowdown on heavy animations
-            let mut sorted_frames = self.selected_animation().keyframes.clone();
-            sorted_frames.sort_by(|a, b| a.frame.cmp(&b.frame));
-
             // get the frames to interpolate (or otherwise)
-            for kf in &sorted_frames {
+            for kf in &self.selected_animation().keyframes {
                 for ab in &kf.bones {
                     if ab.id != b.id {
                         continue;
@@ -431,7 +426,7 @@ impl Shared {
                         end_bone = Some(&ab);
                         break;
                     }
-                    if kf.frame <= frame || frame < sorted_frames[0].frame && start_kf == None {
+                    if kf.frame <= frame || frame < self.selected_animation().keyframes[0].frame && start_kf == None {
                         start_kf = Some(&kf);
                         start_bone = Some(&ab);
                     } else if kf.frame > frame && end_kf == None {
@@ -498,6 +493,11 @@ impl Shared {
         }
 
         (mouse * self.camera.zoom) + self.input.initial_points[0]
+    }
+
+    pub fn create_keyframe(&mut self, kf: Keyframe) {
+        self.selected_animation_mut().keyframes.push(kf);
+        self.selected_animation_mut().keyframes.sort_by(|a, b| a.frame.cmp(&b.frame));
     }
 }
 
