@@ -33,6 +33,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             shared.input.mouse_left = -1;
             shared.input.initial_points = vec![];
         }
+        shared.input.scroll = Vec2::new(i.raw_scroll_delta.x, i.raw_scroll_delta.y);
     });
 
     context.set_cursor_icon(shared.cursor_icon);

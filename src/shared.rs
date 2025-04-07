@@ -196,6 +196,8 @@ pub struct InputStates {
     pub mouse_left: i32,
     pub mouse: Vec2,
 
+    pub scroll: Vec2,
+
     pub mouse_prev: Vec2,
 
     // is mouse on UI?

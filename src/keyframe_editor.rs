@@ -1,5 +1,7 @@
 //! Animation keyframe editor. Very early and only proof-of-concept.
 
+use std::path::absolute;
+
 use egui::Stroke;
 use ui as ui_mod;
 
@@ -158,52 +160,67 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
 
             // diamond bar
             ui.vertical(|ui| {
-                egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
-                    ui.set_width(ui.available_width());
-                    ui.set_height(20.);
-                    let mut i = 0;
-                    while i < shared.selected_animation().keyframes.len() {
-                        let kf = &shared.selected_animation().keyframes[i];
-                        let pos = Vec2::new(
-                            ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
-                            ui.min_rect().top() + 10.,
-                        );
-                        draw_diamond(ui, pos);
+                egui::ScrollArea::horizontal()
+                    .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
+                    .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset, 0.))
+                    .show(ui, |ui| {
+                        egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
+                            ui.set_width(999.);
+                            ui.set_height(20.);
+                            let mut i = 0;
+                            while i < shared.selected_animation().keyframes.len() {
+                                let kf = &shared.selected_animation().keyframes[i];
+                                let pos = Vec2::new(
+                                    ui.min_rect().left()
+                                        + shared.ui.anim.lines_x[kf.frame as usize],
+                                    ui.min_rect().top() + 10.,
+                                );
+                                draw_diamond(ui, pos);
 
-                        // create dragging area for diamond
-                        let rect =
-                            egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5. * 2.0));
-                        let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
+                                // create dragging area for diamond
+                                let rect = egui::Rect::from_center_size(
+                                    pos.into(),
+                                    egui::Vec2::splat(5. * 2.0),
+                                )
+                                .with_min_x(ui.min_rect().left());
 
-                        if response.hovered() {
-                            shared.cursor_icon = egui::CursorIcon::Grab;
-                        }
+                                let response: egui::Response =
+                                    ui.allocate_rect(rect, egui::Sense::drag());
 
-                        if response.dragged() {
-                            shared.cursor_icon = egui::CursorIcon::Grabbing;
-                            let cursor = shared.ui.get_cursor(egui_ctx, ui);
-                            let zoomed_width = ui.min_rect().width() / shared.ui.anim.timeline_zoom;
-                            let hitbox = zoomed_width / shared.selected_animation().fps as f32 / 2.;
-
-                            // check which line the diamond is being dragged to
-                            let mut x = 0.;
-                            let mut idx: i32 = 0;
-                            while x < ui.min_rect().width() {
-                                x = idx as f32 / shared.selected_animation().fps as f32
-                                    * zoomed_width
-                                    + LINE_OFFSET;
-
-                                // set it to this line
-                                if cursor.x < x + hitbox && cursor.x > x - hitbox {
-                                    shared.selected_animation_mut().keyframes[i].frame = idx;
+                                if response.hovered() {
+                                    shared.cursor_icon = egui::CursorIcon::Grab;
                                 }
 
-                                idx += 1;
+                                if response.dragged() {
+                                    shared.cursor_icon = egui::CursorIcon::Grabbing;
+                                    let cursor = shared.ui.get_cursor(egui_ctx, ui);
+                                    let zoomed_width =
+                                        ui.min_rect().width() / shared.ui.anim.timeline_zoom;
+                                    let hitbox =
+                                        zoomed_width / shared.selected_animation().fps as f32 / 2.;
+
+                                    // check which line the diamond is being dragged to
+                                    let mut x = 0.;
+                                    let mut idx: i32 = 0;
+                                    while x < ui.min_rect().width() {
+                                        x = idx as f32 / shared.selected_animation().fps as f32
+                                            * zoomed_width
+                                            + LINE_OFFSET
+                                            - shared.ui.anim.timeline_offset;
+
+                                        // set it to this line
+                                        if cursor.x < x + hitbox && cursor.x > x - hitbox {
+                                            shared.selected_animation_mut().keyframes[i].frame =
+                                                idx;
+                                        }
+
+                                        idx += 1;
+                                    }
+                                }
+                                i += 1
                             }
-                        }
-                        i += 1
-                    }
-                });
+                        });
+                    });
 
                 // The options bar has to be at the bottom, but it needs to be created first
                 // so that the remaining height can be taken up by timeline graph.
@@ -230,10 +247,18 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                     });
 
                     // timeline graph
-                    egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
-                        ui.set_width(ui.available_width());
-                        ui.set_height(ui.available_height());
-                        draw_frame_lines(egui_ctx, ui, shared, bone_tops);
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                        egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
+                            let response =
+                                egui::ScrollArea::horizontal()
+                                    .id_salt("test")
+                                    .show(ui, |ui| {
+                                        ui.set_width(999.);
+                                        ui.set_height(ui.available_height());
+                                        draw_frame_lines(egui_ctx, ui, shared, bone_tops);
+                                    });
+                            shared.ui.anim.timeline_offset = response.state.offset.x;
+                        });
                     });
                 });
             });
@@ -253,15 +278,15 @@ fn draw_frame_lines(
         cursor = shared.ui.get_cursor(egui_ctx, ui);
     }
 
-    let zoomed_width = ui.min_rect().width() / shared.ui.anim.timeline_zoom;
-    let hitbox = zoomed_width / shared.selected_animation().fps as f32 / 2.;
+    let gap = 400.;
+    let hitbox = gap / shared.ui.anim.timeline_zoom / shared.selected_animation().fps as f32 / 2.;
 
     shared.ui.anim.lines_x = vec![];
 
     let mut x = 0.;
     let mut i = 0;
     while x < ui.min_rect().width() {
-        x = i as f32 / shared.selected_animation().fps as f32 * zoomed_width + LINE_OFFSET;
+        x = i as f32 * hitbox * 2. + LINE_OFFSET;
 
         shared.ui.anim.lines_x.push(x);
 
