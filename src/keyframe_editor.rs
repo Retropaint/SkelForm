@@ -119,47 +119,39 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
             let mut bone_tops: Vec<BoneTops> = vec![];
 
             // bones list
-            let mut bone_ids: Vec<i32> = vec![];
             ui.vertical(|ui| {
                 ui.add_space(30.);
                 for i in 0..shared.selected_animation().keyframes.len() {
                     for j in 0..shared.selected_animation().keyframes[i].bones.len() {
+                        let bone = &shared.selected_animation().keyframes[i].bones[j];
+                        let mut bt = bone_tops.iter().position(|b| b.id == bone.id);
+
                         // skip if bone was already added
-                        if bone_ids.iter().position(|id| {
-                            shared.selected_animation().keyframes[i].bones[j].id == *id
-                        }) != None
-                        {
-                            continue;
-                        } else {
-                            bone_ids.push(shared.selected_animation().keyframes[i].bones[j].id);
+                        if bt == None {
+                            bone_tops.push(BoneTops {
+                                id: bone.id,
+                                pos_top: -1.,
+                                rot_top: -1.,
+                            });
+                            ui.label(shared.find_bone(bone.id).unwrap().name.clone());
+                            bt = Some(bone_tops.len() - 1);
                         }
 
-                        let bone_id = shared.selected_animation().keyframes[i].bones[j].id;
-                        ui.label(shared.find_bone(bone_id).unwrap().name.clone());
-
-                        let mut pos_top = 0.;
-                        let mut rot_top = 0.;
-
                         // add changes to the list
-                        if shared.selected_animation().keyframes[i].bones[j].pos != Vec2::ZERO {
+                        if bone.pos != Vec2::ZERO && bone_tops[bt.unwrap()].pos_top == -1. {
                             ui.horizontal(|ui| {
                                 ui.add_space(20.);
                                 let text = ui.label("Pos");
-                                pos_top = text.rect.top();
+                                bone_tops[bt.unwrap()].pos_top = text.rect.top();
                             });
                         }
-                        if shared.selected_animation().keyframes[i].bones[j].rot != 0. {
+                        if bone.rot != 0. && bone_tops[bt.unwrap()].rot_top == -1. {
                             ui.horizontal(|ui| {
                                 ui.add_space(20.);
                                 let text = ui.label("Rot");
-                                rot_top = text.rect.top();
+                                bone_tops[bt.unwrap()].rot_top = text.rect.top();
                             });
                         }
-                        bone_tops.push(shared::BoneTops {
-                            id: bone_id,
-                            pos_top,
-                            rot_top,
-                        });
                     }
                 }
             });
