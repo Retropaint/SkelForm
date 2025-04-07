@@ -163,9 +163,12 @@ pub fn edit_bone_with_mouse(shared: &mut Shared, bones: Vec<Bone>) {
         }
     // rotation
     } else if shared.edit_mode == 1 {
-        shared.selected_bone_mut().rot = (shared.input.mouse.x / shared.window.x) * PI * 2.;
+        let rot = (shared.input.mouse.x / shared.window.x) * PI * 2.;
         if shared.animating && shared.ui.anim.selected != usize::MAX {
             check_if_in_keyframe(shared.selected_bone().id, shared);
+            shared.selected_anim_bone_mut().unwrap().rot = rot;
+        } else {
+            shared.selected_bone_mut().rot = rot;
         }
     // scale
     } else if shared.edit_mode == 2 {
@@ -335,14 +338,17 @@ fn check_if_in_keyframe(id: i32, shared: &mut Shared) {
 
     if kf == None {
         // create new keyframe
-        shared.selected_animation_mut().keyframes.push(crate::Keyframe {
-            frame,
-            bones: vec![AnimBone {
-                id,
+        shared
+            .selected_animation_mut()
+            .keyframes
+            .push(crate::Keyframe {
+                frame,
+                bones: vec![AnimBone {
+                    id,
+                    ..Default::default()
+                }],
                 ..Default::default()
-            }],
-            ..Default::default()
-        });
+            });
     } else {
         // check if this bone is in keyframe
         let idx = shared.selected_animation().keyframes[kf.unwrap()]
