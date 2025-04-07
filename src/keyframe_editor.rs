@@ -170,6 +170,7 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                         );
                         draw_diamond(ui, pos);
 
+                        // create dragging area for diamond
                         let rect =
                             egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5. * 2.0));
                         let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
@@ -183,16 +184,20 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                             let cursor = shared.ui.get_cursor(egui_ctx, ui);
                             let zoomed_width = ui.min_rect().width() / shared.ui.anim.timeline_zoom;
                             let hitbox = zoomed_width / shared.selected_animation().fps as f32 / 2.;
-                            let mut x = 0.;
 
+                            // check which line the diamond is being dragged to
+                            let mut x = 0.;
                             let mut idx: i32 = 0;
                             while x < ui.min_rect().width() {
                                 x = idx as f32 / shared.selected_animation().fps as f32
                                     * zoomed_width
                                     + LINE_OFFSET;
+
+                                // set it to this line
                                 if cursor.x < x + hitbox && cursor.x > x - hitbox {
                                     shared.selected_animation_mut().keyframes[i].frame = idx;
                                 }
+
                                 idx += 1;
                             }
                         }
