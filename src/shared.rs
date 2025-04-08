@@ -426,7 +426,9 @@ impl Shared {
                         end_bone = Some(&ab);
                         break;
                     }
-                    if kf.frame <= frame || frame < self.selected_animation().keyframes[0].frame && start_kf == None {
+                    if kf.frame <= frame
+                        || frame < self.selected_animation().keyframes[0].frame && start_kf == None
+                    {
                         start_kf = Some(&kf);
                         start_bone = Some(&ab);
                     } else if kf.frame > frame && end_kf == None {
@@ -497,7 +499,13 @@ impl Shared {
 
     pub fn create_keyframe(&mut self, kf: Keyframe) {
         self.selected_animation_mut().keyframes.push(kf);
-        self.selected_animation_mut().keyframes.sort_by(|a, b| a.frame.cmp(&b.frame));
+        self.selected_animation_mut()
+            .keyframes
+            .sort_by(|a, b| a.frame.cmp(&b.frame));
+    }
+
+    pub fn last_keyframe(&self) -> Option<&Keyframe> {
+        self.selected_animation().keyframes.last()
     }
 }
 

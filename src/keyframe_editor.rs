@@ -1,5 +1,6 @@
 //! Animation keyframe editor. Very early and only proof-of-concept.
 
+use std::f32::INFINITY;
 use std::path::absolute;
 
 use egui::Stroke;
@@ -18,7 +19,9 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         if shared.ui.anim.elapsed > 60 / fps {
             shared.ui.anim.selected_frame += 1;
             shared.ui.anim.elapsed = 0;
-            if shared.ui.anim.selected_frame > fps - 1 {
+            if shared.ui.anim.selected_frame
+                > shared.selected_animation().keyframes.last().unwrap().frame
+            {
                 shared.ui.anim.selected_frame = 0;
             }
         }
@@ -165,10 +168,28 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                     .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset, 0.))
                     .show(ui, |ui| {
                         egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
+                            let painter = ui.painter_at(ui.min_rect());
                             ui.set_width(999.);
                             ui.set_height(20.);
+                            for (i, x) in shared.ui.anim.lines_x.iter().enumerate() {
+                                if i as i32 % (shared.selected_animation().fps - 1) != 0 {
+                                    continue;
+                                }
+                                let checkpoint_frame =
+                                    i as i32 / (shared.selected_animation().fps - 1);
+                                painter.text(
+                                    egui::Pos2::new(
+                                        ui.min_rect().left() + x,
+                                        ui.min_rect().top() + 10.,
+                                    ),
+                                    egui::Align2::LEFT_TOP,
+                                    "test",
+                                    egui::FontId::new(20., egui::FontFamily::default()),
+                                    egui::Color32::WHITE,
+                                );
+                            }
                             let mut i = 0;
-                            while i < shared.selected_animation().keyframes.len() {
+                            return while i < shared.selected_animation().keyframes.len() {
                                 let kf = &shared.selected_animation().keyframes[i];
                                 let pos = Vec2::new(
                                     ui.min_rect().left()
@@ -191,34 +212,9 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                                     shared.cursor_icon = egui::CursorIcon::Grab;
                                 }
 
-                                if response.dragged() {
-                                    shared.cursor_icon = egui::CursorIcon::Grabbing;
-                                    let cursor = shared.ui.get_cursor(egui_ctx, ui);
-                                    let zoomed_width =
-                                        ui.min_rect().width() / shared.ui.anim.timeline_zoom;
-                                    let hitbox =
-                                        zoomed_width / shared.selected_animation().fps as f32 / 2.;
-
-                                    // check which line the diamond is being dragged to
-                                    let mut x = 0.;
-                                    let mut idx: i32 = 0;
-                                    while x < ui.min_rect().width() {
-                                        x = idx as f32 / shared.selected_animation().fps as f32
-                                            * zoomed_width
-                                            + LINE_OFFSET
-                                            - shared.ui.anim.timeline_offset;
-
-                                        // set it to this line
-                                        if cursor.x < x + hitbox && cursor.x > x - hitbox {
-                                            shared.selected_animation_mut().keyframes[i].frame =
-                                                idx;
-                                        }
-
-                                        idx += 1;
-                                    }
-                                }
+                                if response.dragged() {}
                                 i += 1
-                            }
+                            };
                         });
                     });
 
@@ -248,17 +244,49 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
 
                     // timeline graph
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                        egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
-                            let response =
-                                egui::ScrollArea::horizontal()
-                                    .id_salt("test")
-                                    .show(ui, |ui| {
+                        let response =
+                            egui::ScrollArea::horizontal()
+                                .id_salt("test")
+                                .show(ui, |ui| {
+                                    egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
                                         ui.set_width(999.);
                                         ui.set_height(ui.available_height());
+
+                                        if shared.last_keyframe() != None {
+                                            let (rect, _) = ui.allocate_exact_size(
+                                                egui::vec2(
+                                                    ui.available_width(),
+                                                    ui.available_height(),
+                                                ),
+                                                egui::Sense::empty(),
+                                            );
+                                            let painter = ui.painter_at(rect);
+                                            let rect = egui::vec2(
+                                                shared.ui.anim.lines_x[shared
+                                                    .last_keyframe()
+                                                    .unwrap()
+                                                    .frame
+                                                    as usize],
+                                                0.,
+                                            );
+                                            
+                                            let rect_to_fill = egui::Rect::from_min_size(
+                                                ui.min_rect().left_top() + rect,
+                                                ui.min_rect().size(),
+                                            );
+
+                                            let gray = 50;
+                                            painter.rect_filled(
+                                                rect_to_fill,
+                                                0.0, // corner rounding radius
+                                                egui::Color32::from_rgb(gray, gray, gray),
+                                            );
+                                        }
+
                                         draw_frame_lines(egui_ctx, ui, shared, bone_tops);
                                     });
-                            shared.ui.anim.timeline_offset = response.state.offset.x;
-                        });
+                                });
+                        shared.ui.anim.timeline_offset = response.state.offset.x;
                     });
                 });
             });
@@ -291,6 +319,12 @@ fn draw_frame_lines(
         shared.ui.anim.lines_x.push(x);
 
         let mut color = egui::Color32::DARK_GRAY;
+        let last_keyframe = shared.selected_animation().keyframes.last();
+        if last_keyframe != None && last_keyframe.unwrap().frame < i {
+            let gray = 60;
+            color = egui::Color32::from_rgb(gray, gray, gray);
+        }
+
         if shared.ui.anim.selected_frame == i {
             color = egui::Color32::WHITE;
         } else if cursor.x < x + hitbox && cursor.x > x - hitbox {
@@ -305,6 +339,7 @@ fn draw_frame_lines(
 
         // draw the line!
         let painter = ui.painter_at(ui.min_rect());
+
         painter.vline(
             ui.min_rect().left() + x,
             egui::Rangef {
