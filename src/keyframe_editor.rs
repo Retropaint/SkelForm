@@ -32,6 +32,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
     egui::TopBottomPanel::bottom("Keyframe")
         .min_height(150.)
         .resizable(true)
+        .exact_height(150.)
         .show(egui_ctx, |ui| {
             let full_height = ui.available_height();
             ui.horizontal(|ui| {
@@ -161,6 +162,18 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                 }
             });
 
+            let gap = 400.;
+            let hitbox =
+                gap / shared.ui.anim.timeline_zoom / shared.selected_animation().fps as f32 / 2.;
+
+            // add 1 second worth of frames after the last keyframe
+            let mut frames = shared.selected_animation().fps;
+            if shared.last_keyframe() != None {
+                frames = shared.last_keyframe().unwrap().frame + shared.selected_animation().fps;
+            }
+
+            let width = hitbox * frames as f32 * 2. + LINE_OFFSET;
+
             // diamond bar
             ui.vertical(|ui| {
                 egui::ScrollArea::horizontal()
@@ -169,7 +182,7 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                     .show(ui, |ui| {
                         egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
                             let painter = ui.painter_at(ui.min_rect());
-                            ui.set_width(999.);
+                            ui.set_width(width);
                             ui.set_height(20.);
                             for (i, x) in shared.ui.anim.lines_x.iter().enumerate() {
                                 if i as i32 % (shared.selected_animation().fps - 1) != 0 {
@@ -239,6 +252,11 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                             if ui.button("-").clicked() {
                                 shared.ui.anim.timeline_zoom += 0.1;
                             }
+
+                            ui.add_sized(
+                                [ui.available_width(), 20.0],
+                                egui::TextEdit::singleline(&mut "test"),
+                            );
                         });
                     });
 
@@ -249,8 +267,8 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                                 .id_salt("test")
                                 .show(ui, |ui| {
                                     egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
-                                        ui.set_width(999.);
-                                        ui.set_height(ui.available_height());
+                                        ui.set_width(width);
+                                        //ui.set_height(ui.available_height());
 
                                         if shared.last_keyframe() != None {
                                             let (rect, _) = ui.allocate_exact_size(
@@ -269,7 +287,7 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                                                     as usize],
                                                 0.,
                                             );
-                                            
+
                                             let rect_to_fill = egui::Rect::from_min_size(
                                                 ui.min_rect().left_top() + rect,
                                                 ui.min_rect().size(),
