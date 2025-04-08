@@ -216,6 +216,9 @@ pub struct Ui {
     pub original_name: String,
 
     pub anim: UiAnim,
+
+    // the initial value of what is being edited via input
+    pub edit_value: Option<String>,
 }
 
 impl Ui {
@@ -563,5 +566,34 @@ impl Ui {
     pub fn select_anim(&mut self, idx: usize) {
         self.anim.selected = idx;
         self.anim.selected_frame = 0;
+    }
+
+    pub fn singleline_input(&mut self, mut value: f32, ui: &mut egui::Ui) -> f32 {
+        ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
+            if self.edit_value != None {
+                let mut string = self.edit_value.clone().unwrap();
+                let input = ui.add_sized([40., 20.], egui::TextEdit::singleline(&mut string));
+                input.request_focus();
+                self.edit_value = Some(string);
+                if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    input.surrender_focus();
+                    if let Ok(f) = self.edit_value.clone().unwrap().parse::<f32>() {
+                        value = f;
+                    } else {
+                        value = 0.;
+                    }
+                    self.edit_value = None;
+                }
+            } else {
+                let mut string = value.to_string();
+                println!("{}", string);
+                let input = ui.add_sized([40., 20.], egui::TextEdit::singleline(&mut string));
+                if input.has_focus() {
+                    self.edit_value = Some(value.to_string());
+                }
+            }
+        });
+
+        value
     }
 }
