@@ -5,7 +5,6 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
-use egui::Context;
 use tween::Tweener;
 use wgpu::BindGroup;
 use winit::keyboard::KeyCode;
@@ -218,12 +217,12 @@ pub struct Ui {
     pub anim: UiAnim,
 
     // the initial value of what is being edited via input
-    pub edit_value: Option<String>,
+    edit_value: Option<String>,
 }
 
 impl Ui {
-    pub fn get_cursor(&self, egui_ctx: &egui::Context, ui: &egui::Ui) -> Vec2 {
-        let cursor_pos = egui_ctx.input(|i| {
+    pub fn get_cursor(&self, ui: &egui::Ui) -> Vec2 {
+        let cursor_pos = ui.ctx().input(|i| {
             if let Some(result) = i.pointer.hover_pos() {
                 result
             } else {
@@ -315,7 +314,7 @@ pub struct Shared {
     pub bind_groups: Vec<BindGroup>,
     pub camera: Camera,
     pub input: InputStates,
-    pub egui_ctx: Context,
+    pub egui_ctx: egui::Context,
     pub cursor_icon: egui::CursorIcon,
     pub ui: Ui,
 
