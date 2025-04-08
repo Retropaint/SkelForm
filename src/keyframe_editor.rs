@@ -1,9 +1,5 @@
 //! Animation keyframe editor. Very early and only proof-of-concept.
 
-use std::f32::INFINITY;
-use std::ops::RangeInclusive;
-use std::path::absolute;
-
 use egui::Stroke;
 use ui as ui_mod;
 
@@ -14,20 +10,18 @@ use crate::*;
 const LINE_OFFSET: f32 = 30.;
 
 pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
-    if shared.ui.anim.playing {
+    if !shared.ui.anim.playing {
+        shared.ui.anim.elapsed = 0;
+    } else {
         shared.ui.anim.elapsed += 1;
         let fps = shared.selected_animation().fps;
         if shared.ui.anim.elapsed > 60 / fps {
             shared.ui.anim.selected_frame += 1;
             shared.ui.anim.elapsed = 0;
-            if shared.ui.anim.selected_frame
-                > shared.selected_animation().keyframes.last().unwrap().frame
-            {
+            if shared.ui.anim.selected_frame > shared.last_keyframe().unwrap().frame {
                 shared.ui.anim.selected_frame = 0;
             }
         }
-    } else {
-        shared.ui.anim.elapsed = 0;
     }
 
     egui::TopBottomPanel::bottom("Keyframe")
@@ -122,22 +116,29 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
             // track the Y of bone change labels for their diamonds
             let mut bone_tops: Vec<BoneTops> = vec![];
 
-            // bones list
             draw_bones_list(ui, shared, &mut bone_tops);
 
+            // calculate how far apart each keyframe should visually be
             let gap = 400.;
             let hitbox =
                 gap / shared.ui.anim.timeline_zoom / shared.selected_animation().fps as f32 / 2.;
 
             // add 1 second worth of frames after the last keyframe
-            let mut frames = shared.selected_animation().fps;
+            let frames: i32;
             if shared.last_keyframe() != None {
                 frames = shared.last_keyframe().unwrap().frame + shared.selected_animation().fps;
+            } else {
+                frames = shared.selected_animation().fps
             }
 
-            let width = hitbox * frames as f32 * 2. + LINE_OFFSET;
+            let width: f32;
+            let generated_width = hitbox * frames as f32 * 2. + LINE_OFFSET;
+            if generated_width > ui.min_rect().width() {
+                width = generated_width;
+            } else {
+                width = ui.min_rect().width();
+            }
 
-            // diamond bar
             ui.vertical(|ui| {
                 draw_top_bar(ui, shared, width);
 
