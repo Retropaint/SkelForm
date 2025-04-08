@@ -140,13 +140,13 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
             }
 
             ui.vertical(|ui| {
-                draw_top_bar(ui, shared, width);
+                draw_top_bar(ui, shared, width, hitbox);
 
                 // The options bar has to be at the bottom, but it needs to be created first
                 // so that the remaining height can be taken up by timeline graph.
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                     draw_bottom_bar(ui, shared);
-                    draw_timeline_graph(egui_ctx, ui, shared, width, bone_tops);
+                    draw_timeline_graph(egui_ctx, ui, shared, width, bone_tops, hitbox);
                 });
             });
         });
@@ -191,7 +191,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut V
     });
 }
 
-pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32) {
+pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: f32) {
     egui::ScrollArea::horizontal()
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
         .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset, 0.))
@@ -220,7 +220,9 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32) {
                         shared.cursor_icon = egui::CursorIcon::Grab;
                     }
 
-                    if response.dragged() {}
+                    if response.dragged() {
+                        shared.cursor_icon = egui::CursorIcon::Grabbing;
+                    }
                     i += 1
                 }
             });
@@ -233,6 +235,7 @@ pub fn draw_timeline_graph(
     shared: &mut Shared,
     width: f32,
     bone_tops: Vec<BoneTops>,
+    hitbox: f32,
 ) {
     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
         let response = egui::ScrollArea::horizontal()
@@ -267,7 +270,7 @@ pub fn draw_timeline_graph(
                         );
                     }
 
-                    draw_frame_lines(egui_ctx, ui, shared, bone_tops);
+                    draw_frame_lines(egui_ctx, ui, shared, bone_tops, hitbox);
                 });
             });
         shared.ui.anim.timeline_offset = response.state.offset.x;
@@ -312,6 +315,7 @@ fn draw_frame_lines(
     ui: &egui::Ui,
     shared: &mut Shared,
     bone_tops: Vec<BoneTops>,
+    hitbox: f32
 ) {
     // get cursor pos on the graph (or 0, 0 if can't)
     let cursor: Vec2;
@@ -320,9 +324,6 @@ fn draw_frame_lines(
     } else {
         cursor = Vec2::default();
     }
-
-    let gap = 400.;
-    let hitbox = gap / shared.ui.anim.timeline_zoom / shared.selected_animation().fps as f32 / 2.;
 
     shared.ui.anim.lines_x = vec![];
 
@@ -344,10 +345,7 @@ fn draw_frame_lines(
         let above_scrollbar = cursor.y < ui.min_rect().height() - 13.;
         if shared.ui.anim.selected_frame == i {
             color = egui::Color32::WHITE;
-        } else if cursor.x < x + hitbox
-            && cursor.x > x - hitbox
-            && above_scrollbar
-        {
+        } else if cursor.x < x + hitbox && cursor.x > x - hitbox && above_scrollbar {
             shared.cursor_icon = egui::CursorIcon::PointingHand;
             color = egui::Color32::GRAY;
 
