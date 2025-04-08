@@ -218,10 +218,18 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
 
                     if response.hovered() {
                         shared.cursor_icon = egui::CursorIcon::Grab;
-                    }
-
-                    if response.dragged() {
+                    } else if response.dragged() {
                         shared.cursor_icon = egui::CursorIcon::Grabbing;
+                        let cursor = shared.ui.get_cursor(ui);
+
+                        let mut j = 0;
+                        for x in shared.ui.anim.lines_x.clone() {
+                            if cursor.x < x + hitbox && cursor.x > x - hitbox {
+                                shared.selected_animation_mut().keyframes[i].frame = j as i32;
+                                shared.sort_keyframes();
+                            }
+                            j += 1;
+                        }
                     }
                     i += 1
                 }
