@@ -1,6 +1,7 @@
 //! Animation keyframe editor. Very early and only proof-of-concept.
 
 use std::f32::INFINITY;
+use std::ops::RangeInclusive;
 use std::path::absolute;
 
 use egui::Stroke;
@@ -32,18 +33,15 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
     egui::TopBottomPanel::bottom("Keyframe")
         .min_height(150.)
         .resizable(true)
-        .exact_height(150.)
         .show(egui_ctx, |ui| {
             let full_height = ui.available_height();
             ui.horizontal(|ui| {
                 ui.set_height(full_height);
                 draw_animations_list(ui, shared);
 
-                if shared.ui.anim.selected == usize::MAX {
-                    return;
+                if shared.ui.anim.selected != usize::MAX {
+                    timeline_editor(egui_ctx, ui, shared);
                 }
-
-                timeline_editor(egui_ctx, ui, shared);
             });
         });
 }
@@ -223,7 +221,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32) {
 
                     if response.dragged() {}
                     i += 1
-                };
+                }
             });
         });
 }
@@ -294,10 +292,15 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 shared.ui.anim.timeline_zoom += 0.1;
             }
 
-            ui.add_sized(
-                [ui.available_width(), 20.0],
-                egui::TextEdit::singleline(&mut "test"),
-            );
+            ui.add_space(20.);
+
+            //shared.ui.anim.selected_frame = shared
+            //    .ui
+            //    .singleline_input(shared.ui.anim.selected_frame as f32, ui)
+            //    as i32;
+
+            ui.label("frame:");
+            ui.add(egui::DragValue::new(&mut shared.ui.anim.selected_frame).speed(0.1));
         });
     });
 }
