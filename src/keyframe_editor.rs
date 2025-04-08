@@ -37,7 +37,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
             let full_height = ui.available_height();
             ui.horizontal(|ui| {
                 ui.set_height(full_height);
-                animations_list(ui, shared);
+                draw_animations_list(ui, shared);
 
                 if shared.ui.anim.selected == usize::MAX {
                     return;
@@ -48,7 +48,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         });
 }
 
-fn animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
+fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
     let full_height = ui.available_height();
     // animations list
     egui::Resize::default()
@@ -125,42 +125,7 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
             let mut bone_tops: Vec<BoneTops> = vec![];
 
             // bones list
-            ui.vertical(|ui| {
-                ui.add_space(30.);
-                for i in 0..shared.selected_animation().keyframes.len() {
-                    for j in 0..shared.selected_animation().keyframes[i].bones.len() {
-                        let bone = &shared.selected_animation().keyframes[i].bones[j];
-                        let mut bt = bone_tops.iter().position(|b| b.id == bone.id);
-
-                        // skip if bone was already added
-                        if bt == None {
-                            bone_tops.push(BoneTops {
-                                id: bone.id,
-                                pos_top: -1.,
-                                rot_top: -1.,
-                            });
-                            ui.label(shared.find_bone(bone.id).unwrap().name.clone());
-                            bt = Some(bone_tops.len() - 1);
-                        }
-
-                        // add changes to the list
-                        if bone.pos != Vec2::ZERO && bone_tops[bt.unwrap()].pos_top == -1. {
-                            ui.horizontal(|ui| {
-                                ui.add_space(20.);
-                                let text = ui.label("Pos");
-                                bone_tops[bt.unwrap()].pos_top = text.rect.top();
-                            });
-                        }
-                        if bone.rot != 0. && bone_tops[bt.unwrap()].rot_top == -1. {
-                            ui.horizontal(|ui| {
-                                ui.add_space(20.);
-                                let text = ui.label("Rot");
-                                bone_tops[bt.unwrap()].rot_top = text.rect.top();
-                            });
-                        }
-                    }
-                }
-            });
+            draw_bones_list(ui, shared, &mut bone_tops);
 
             let gap = 400.;
             let hitbox =
@@ -176,139 +141,178 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
 
             // diamond bar
             ui.vertical(|ui| {
-                egui::ScrollArea::horizontal()
-                    .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
-                    .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset, 0.))
-                    .show(ui, |ui| {
-                        egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
-                            let painter = ui.painter_at(ui.min_rect());
-                            ui.set_width(width);
-                            ui.set_height(20.);
-                            for (i, x) in shared.ui.anim.lines_x.iter().enumerate() {
-                                if i as i32 % (shared.selected_animation().fps - 1) != 0 {
-                                    continue;
-                                }
-                                let checkpoint_frame =
-                                    i as i32 / (shared.selected_animation().fps - 1);
-                                painter.text(
-                                    egui::Pos2::new(
-                                        ui.min_rect().left() + x,
-                                        ui.min_rect().top() + 10.,
-                                    ),
-                                    egui::Align2::LEFT_TOP,
-                                    "test",
-                                    egui::FontId::new(20., egui::FontFamily::default()),
-                                    egui::Color32::WHITE,
-                                );
-                            }
-                            let mut i = 0;
-                            return while i < shared.selected_animation().keyframes.len() {
-                                let kf = &shared.selected_animation().keyframes[i];
-                                let pos = Vec2::new(
-                                    ui.min_rect().left()
-                                        + shared.ui.anim.lines_x[kf.frame as usize],
-                                    ui.min_rect().top() + 10.,
-                                );
-                                draw_diamond(ui, pos);
-
-                                // create dragging area for diamond
-                                let rect = egui::Rect::from_center_size(
-                                    pos.into(),
-                                    egui::Vec2::splat(5. * 2.0),
-                                )
-                                .with_min_x(ui.min_rect().left());
-
-                                let response: egui::Response =
-                                    ui.allocate_rect(rect, egui::Sense::drag());
-
-                                if response.hovered() {
-                                    shared.cursor_icon = egui::CursorIcon::Grab;
-                                }
-
-                                if response.dragged() {}
-                                i += 1
-                            };
-                        });
-                    });
+                draw_top_bar(ui, shared, width);
 
                 // The options bar has to be at the bottom, but it needs to be created first
                 // so that the remaining height can be taken up by timeline graph.
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-                    // bottom bar
-                    egui::Frame::new().show(ui, |ui| {
-                        ui.set_width(ui.available_width());
-                        ui.set_height(20.);
-                        ui.horizontal(|ui| {
-                            if ui.button("Play").clicked() {
-                                shared.ui.anim.playing = true;
-                            }
-
-                            if ui.button("Pause").clicked() {
-                                shared.ui.anim.playing = false;
-                            }
-                            if ui.button("+").clicked() {
-                                shared.ui.anim.timeline_zoom -= 0.1;
-                            }
-                            if ui.button("-").clicked() {
-                                shared.ui.anim.timeline_zoom += 0.1;
-                            }
-
-                            ui.add_sized(
-                                [ui.available_width(), 20.0],
-                                egui::TextEdit::singleline(&mut "test"),
-                            );
-                        });
-                    });
-
-                    // timeline graph
-                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                        let response =
-                            egui::ScrollArea::horizontal()
-                                .id_salt("test")
-                                .show(ui, |ui| {
-                                    egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
-                                        ui.set_width(width);
-                                        //ui.set_height(ui.available_height());
-
-                                        if shared.last_keyframe() != None {
-                                            let (rect, _) = ui.allocate_exact_size(
-                                                egui::vec2(
-                                                    ui.available_width(),
-                                                    ui.available_height(),
-                                                ),
-                                                egui::Sense::empty(),
-                                            );
-                                            let painter = ui.painter_at(rect);
-                                            let rect = egui::vec2(
-                                                shared.ui.anim.lines_x[shared
-                                                    .last_keyframe()
-                                                    .unwrap()
-                                                    .frame
-                                                    as usize],
-                                                0.,
-                                            );
-
-                                            let rect_to_fill = egui::Rect::from_min_size(
-                                                ui.min_rect().left_top() + rect,
-                                                ui.min_rect().size(),
-                                            );
-
-                                            let gray = 50;
-                                            painter.rect_filled(
-                                                rect_to_fill,
-                                                0.0, // corner rounding radius
-                                                egui::Color32::from_rgb(gray, gray, gray),
-                                            );
-                                        }
-
-                                        draw_frame_lines(egui_ctx, ui, shared, bone_tops);
-                                    });
-                                });
-                        shared.ui.anim.timeline_offset = response.state.offset.x;
-                    });
+                    draw_bottom_bar(ui, shared);
+                    draw_timeline_graph(egui_ctx, ui, shared, width, bone_tops);
                 });
             });
         });
+}
+
+pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut Vec<BoneTops>) {
+    ui.vertical(|ui| {
+        ui.add_space(30.);
+        for i in 0..shared.selected_animation().keyframes.len() {
+            for j in 0..shared.selected_animation().keyframes[i].bones.len() {
+                let bone = &shared.selected_animation().keyframes[i].bones[j];
+                let mut bt = bone_tops.iter().position(|b| b.id == bone.id);
+
+                // skip if bone was already added
+                if bt == None {
+                    bone_tops.push(BoneTops {
+                        id: bone.id,
+                        pos_top: -1.,
+                        rot_top: -1.,
+                    });
+                    ui.label(shared.find_bone(bone.id).unwrap().name.clone());
+                    bt = Some(bone_tops.len() - 1);
+                }
+
+                // add changes to the list
+                if bone.pos != Vec2::ZERO && bone_tops[bt.unwrap()].pos_top == -1. {
+                    ui.horizontal(|ui| {
+                        ui.add_space(20.);
+                        let text = ui.label("Pos");
+                        bone_tops[bt.unwrap()].pos_top = text.rect.top();
+                    });
+                }
+                if bone.rot != 0. && bone_tops[bt.unwrap()].rot_top == -1. {
+                    ui.horizontal(|ui| {
+                        ui.add_space(20.);
+                        let text = ui.label("Rot");
+                        bone_tops[bt.unwrap()].rot_top = text.rect.top();
+                    });
+                }
+            }
+        }
+    });
+}
+
+pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32) {
+    egui::ScrollArea::horizontal()
+        .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
+        .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset, 0.))
+        .show(ui, |ui| {
+            egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
+                let painter = ui.painter_at(ui.min_rect());
+                ui.set_width(width);
+                ui.set_height(20.);
+                for (i, x) in shared.ui.anim.lines_x.iter().enumerate() {
+                    if i as i32 % (shared.selected_animation().fps - 1) != 0 {
+                        continue;
+                    }
+                    let checkpoint_frame = i as i32 / (shared.selected_animation().fps - 1);
+                    painter.text(
+                        egui::Pos2::new(ui.min_rect().left() + x, ui.min_rect().top() + 10.),
+                        egui::Align2::LEFT_TOP,
+                        "test",
+                        egui::FontId::new(20., egui::FontFamily::default()),
+                        egui::Color32::WHITE,
+                    );
+                }
+                let mut i = 0;
+                return while i < shared.selected_animation().keyframes.len() {
+                    let kf = &shared.selected_animation().keyframes[i];
+                    let pos = Vec2::new(
+                        ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
+                        ui.min_rect().top() + 10.,
+                    );
+                    draw_diamond(ui, pos);
+
+                    // create dragging area for diamond
+                    let rect =
+                        egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5. * 2.0))
+                            .with_min_x(ui.min_rect().left());
+
+                    let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
+
+                    if response.hovered() {
+                        shared.cursor_icon = egui::CursorIcon::Grab;
+                    }
+
+                    if response.dragged() {}
+                    i += 1
+                };
+            });
+        });
+}
+
+pub fn draw_timeline_graph(
+    egui_ctx: &egui::Context,
+    ui: &mut egui::Ui,
+    shared: &mut Shared,
+    width: f32,
+    bone_tops: Vec<BoneTops>,
+) {
+    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+        let response = egui::ScrollArea::horizontal()
+            .id_salt("test")
+            .show(ui, |ui| {
+                egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
+                    ui.set_width(width);
+                    ui.set_height(ui.available_height());
+
+                    // render darkened background after last keyframe
+                    if shared.last_keyframe() != None {
+                        let (rect, _) = ui.allocate_exact_size(
+                            egui::vec2(ui.available_width(), ui.available_height()),
+                            egui::Sense::empty(),
+                        );
+                        let painter = ui.painter_at(rect);
+                        let rect = egui::vec2(
+                            shared.ui.anim.lines_x[shared.last_keyframe().unwrap().frame as usize],
+                            0.,
+                        );
+
+                        let rect_to_fill = egui::Rect::from_min_size(
+                            ui.min_rect().left_top() + rect,
+                            ui.min_rect().size(),
+                        );
+
+                        let gray = 50;
+                        painter.rect_filled(
+                            rect_to_fill,
+                            0.0, // corner rounding radius
+                            egui::Color32::from_rgb(gray, gray, gray),
+                        );
+                    }
+
+                    draw_frame_lines(egui_ctx, ui, shared, bone_tops);
+                });
+            });
+        shared.ui.anim.timeline_offset = response.state.offset.x;
+    });
+}
+
+pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
+    egui::Frame::new().show(ui, |ui| {
+        ui.set_width(ui.available_width());
+        ui.set_height(20.);
+        ui.horizontal(|ui| {
+            if ui.button("Play").clicked() {
+                shared.ui.anim.playing = true;
+            }
+
+            if ui.button("Pause").clicked() {
+                shared.ui.anim.playing = false;
+            }
+            if ui.button("+").clicked() {
+                shared.ui.anim.timeline_zoom -= 0.1;
+            }
+            if ui.button("-").clicked() {
+                shared.ui.anim.timeline_zoom += 0.1;
+            }
+
+            ui.add_sized(
+                [ui.available_width(), 20.0],
+                egui::TextEdit::singleline(&mut "test"),
+            );
+        });
+    });
 }
 
 /// Draw all lines representing frames in the timeline.
