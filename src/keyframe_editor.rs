@@ -34,7 +34,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                 draw_animations_list(ui, shared);
 
                 if shared.ui.anim.selected != usize::MAX {
-                    timeline_editor(egui_ctx, ui, shared);
+                    timeline_editor(ui, shared);
                 }
             });
         });
@@ -103,7 +103,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
         });
 }
 
-fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Shared) {
+fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
     egui::Frame::new()
         .outer_margin(egui::Margin {
             left: 0,
@@ -146,7 +146,7 @@ fn timeline_editor(egui_ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut Sha
                 // so that the remaining height can be taken up by timeline graph.
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                     draw_bottom_bar(ui, shared);
-                    draw_timeline_graph(egui_ctx, ui, shared, width, bone_tops, hitbox);
+                    draw_timeline_graph(ui, shared, width, bone_tops, hitbox);
                 });
             });
         });
@@ -238,7 +238,6 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
 }
 
 pub fn draw_timeline_graph(
-    egui_ctx: &egui::Context,
     ui: &mut egui::Ui,
     shared: &mut Shared,
     width: f32,
@@ -278,7 +277,7 @@ pub fn draw_timeline_graph(
                         );
                     }
 
-                    draw_frame_lines(egui_ctx, ui, shared, bone_tops, hitbox);
+                    draw_frame_lines(ui, shared, bone_tops, hitbox);
                 });
             });
         shared.ui.anim.timeline_offset = response.state.offset.x;
@@ -318,17 +317,11 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 }
 
 /// Draw all lines representing frames in the timeline.
-fn draw_frame_lines(
-    egui_ctx: &egui::Context,
-    ui: &egui::Ui,
-    shared: &mut Shared,
-    bone_tops: Vec<BoneTops>,
-    hitbox: f32
-) {
+fn draw_frame_lines(ui: &egui::Ui, shared: &mut Shared, bone_tops: Vec<BoneTops>, hitbox: f32) {
     // get cursor pos on the graph (or 0, 0 if can't)
     let cursor: Vec2;
     if ui.ui_contains_pointer() {
-        cursor = shared.ui.get_cursor(egui_ctx, ui);
+        cursor = shared.ui.get_cursor(ui);
     } else {
         cursor = Vec2::default();
     }
