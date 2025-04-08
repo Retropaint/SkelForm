@@ -198,24 +198,11 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32) {
         .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset, 0.))
         .show(ui, |ui| {
             egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
-                let painter = ui.painter_at(ui.min_rect());
                 ui.set_width(width);
                 ui.set_height(20.);
-                for (i, x) in shared.ui.anim.lines_x.iter().enumerate() {
-                    if i as i32 % (shared.selected_animation().fps - 1) != 0 {
-                        continue;
-                    }
-                    let checkpoint_frame = i as i32 / (shared.selected_animation().fps - 1);
-                    painter.text(
-                        egui::Pos2::new(ui.min_rect().left() + x, ui.min_rect().top() + 10.),
-                        egui::Align2::LEFT_TOP,
-                        "test",
-                        egui::FontId::new(20., egui::FontFamily::default()),
-                        egui::Color32::WHITE,
-                    );
-                }
+
                 let mut i = 0;
-                return while i < shared.selected_animation().keyframes.len() {
+                while i < shared.selected_animation().keyframes.len() {
                     let kf = &shared.selected_animation().keyframes[i];
                     let pos = Vec2::new(
                         ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
