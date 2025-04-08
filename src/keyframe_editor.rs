@@ -314,9 +314,11 @@ fn draw_frame_lines(
     bone_tops: Vec<BoneTops>,
 ) {
     // get cursor pos on the graph (or 0, 0 if can't)
-    let mut cursor = Vec2::default();
+    let cursor: Vec2;
     if ui.ui_contains_pointer() {
         cursor = shared.ui.get_cursor(egui_ctx, ui);
+    } else {
+        cursor = Vec2::default();
     }
 
     let gap = 400.;
@@ -338,9 +340,14 @@ fn draw_frame_lines(
             color = egui::Color32::from_rgb(gray, gray, gray);
         }
 
+        // check if pointing at a clickable area of this line
+        let above_scrollbar = cursor.y < ui.min_rect().height() - 13.;
         if shared.ui.anim.selected_frame == i {
             color = egui::Color32::WHITE;
-        } else if cursor.x < x + hitbox && cursor.x > x - hitbox {
+        } else if cursor.x < x + hitbox
+            && cursor.x > x - hitbox
+            && above_scrollbar
+        {
             shared.cursor_icon = egui::CursorIcon::PointingHand;
             color = egui::Color32::GRAY;
 
