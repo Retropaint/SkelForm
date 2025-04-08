@@ -203,6 +203,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                 let mut i = 0;
                 while i < shared.selected_animation().keyframes.len() {
                     let kf = &shared.selected_animation().keyframes[i];
+
                     let pos = Vec2::new(
                         ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
                         ui.min_rect().top() + 10.,
@@ -213,12 +214,13 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     let rect =
                         egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5. * 2.0))
                             .with_min_x(ui.min_rect().left());
-
                     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
                     if response.hovered() {
                         shared.cursor_icon = egui::CursorIcon::Grab;
-                    } else if response.dragged() {
+                    }
+
+                    if response.dragged() {
                         shared.cursor_icon = egui::CursorIcon::Grabbing;
                         let cursor = shared.ui.get_cursor(ui);
 
@@ -317,7 +319,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 }
 
 /// Draw all lines representing frames in the timeline.
-fn draw_frame_lines(ui: &egui::Ui, shared: &mut Shared, bone_tops: Vec<BoneTops>, hitbox: f32) {
+fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: Vec<BoneTops>, hitbox: f32) {
     // get cursor pos on the graph (or 0, 0 if can't)
     let cursor: Vec2;
     if ui.ui_contains_pointer() {
@@ -372,24 +374,79 @@ fn draw_frame_lines(ui: &egui::Ui, shared: &mut Shared, bone_tops: Vec<BoneTops>
     }
 
     // draw per-change diamonds
-    for kf in &shared.armature.animations[shared.ui.anim.selected].keyframes {
-        for b in &kf.bones {
-            let x = ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize];
+    for i in 0..shared.selected_animation().keyframes.len() {
+        for b in 0..shared.selected_animation().keyframes[i].bones.len() {
+            let bone = &shared.selected_animation().keyframes[i].bones[b];
+            let x = ui.min_rect().left()
+                + shared.ui.anim.lines_x[shared.selected_animation().keyframes[i].frame as usize];
             let mut pos_top = 0.;
             let mut rot_top = 0.;
             for bt in &bone_tops {
-                if bt.id == b.id {
+                if bt.id == bone.id {
                     pos_top = bt.pos_top;
                     rot_top = bt.rot_top;
                 }
             }
-            if b.pos != Vec2::ZERO {
-                let pos = Vec2::new(x, pos_top + 10.);
+            let mut pos = Vec2::default();
+            if bone.pos != Vec2::ZERO {
+                pos = Vec2::new(x, pos_top + 10.);
                 draw_diamond(ui, pos);
             }
-            if b.rot != 0. {
-                let pos = Vec2::new(x, rot_top + 10.);
+            if bone.rot != 0. {
+                pos = Vec2::new(x, rot_top + 10.);
                 draw_diamond(ui, pos);
+            }
+
+            if pos == Vec2::ZERO {
+                return;
+            }
+            let rect = egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(10.));
+            let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
+
+            if response.hovered() {
+                shared.cursor_icon = egui::CursorIcon::Grab;
+            }
+
+            if response.dragged() {
+                shared.cursor_icon = egui::CursorIcon::Grabbing;
+                let cursor = shared.ui.get_cursor(ui);
+
+                let mut j = 0;
+                for x in shared.ui.anim.lines_x.clone() {
+                    if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
+                        j += 1;
+                        continue;
+                    }
+
+                    if shared.keyframe_at(j) == None {
+                        let dupe_bone = shared.selected_animation().keyframes
+                            [shared.ui.anim.dragged_keyframe]
+                            .bones[b]
+                            .clone();
+
+                        shared.selected_animation_mut().keyframes.push(Keyframe {
+                            frame: j,
+                            bones: vec![dupe_bone],
+                        });
+
+                        // delete previous keyframe if this was the only change prior
+                        let mut changes = 0;
+                        for b in &shared.selected_animation().keyframes[i].bones {
+                            if b.pos != Vec2::ZERO {
+                                changes += 1;
+                            }
+                            if b.rot != 0. {
+                                changes += 1;
+                            }
+                        }
+                        if changes == 1 {
+                            shared.selected_animation_mut().keyframes.remove(i);
+                        }
+
+                        shared.sort_keyframes();
+                    }
+                    j += 1;
+                }
             }
         }
     }
