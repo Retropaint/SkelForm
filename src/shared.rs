@@ -243,6 +243,7 @@ pub struct UiAnim {
     pub playing: bool,
     pub elapsed: i32,
     pub timeline_offset: f32,
+    pub dragged_keyframe: usize
 }
 
 #[derive(serde::Serialize, Clone, Default)]
@@ -383,6 +384,26 @@ impl Shared {
         None
     }
 
+    pub fn sort_keyframes(&mut self) {
+        self.selected_animation_mut()
+            .keyframes
+            .sort_by(|a, b| a.frame.cmp(&b.frame));
+    }
+
+    pub fn last_keyframe(&self) -> Option<&Keyframe> {
+        self.selected_animation().keyframes.last()
+    }
+
+    pub fn keyframe_at(&self, frame: i32) -> Option<&Keyframe>{
+        for kf in &self.selected_animation().keyframes {
+            if kf.frame == frame {
+                return Some(&kf);
+            }
+        }
+
+        None
+    }
+
     pub fn selected_bone(&self) -> &Bone {
         &self.armature.bones[self.selected_bone_idx]
     }
@@ -497,16 +518,6 @@ impl Shared {
         }
 
         (mouse * self.camera.zoom) + self.input.initial_points[0]
-    }
-
-    pub fn sort_keyframes(&mut self) {
-        self.selected_animation_mut()
-            .keyframes
-            .sort_by(|a, b| a.frame.cmp(&b.frame));
-    }
-
-    pub fn last_keyframe(&self) -> Option<&Keyframe> {
-        self.selected_animation().keyframes.last()
     }
 }
 
