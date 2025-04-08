@@ -499,8 +499,7 @@ impl Shared {
         (mouse * self.camera.zoom) + self.input.initial_points[0]
     }
 
-    pub fn create_keyframe(&mut self, kf: Keyframe) {
-        self.selected_animation_mut().keyframes.push(kf);
+    pub fn sort_keyframes(&mut self) {
         self.selected_animation_mut()
             .keyframes
             .sort_by(|a, b| a.frame.cmp(&b.frame));
