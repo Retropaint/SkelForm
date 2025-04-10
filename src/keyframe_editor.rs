@@ -376,77 +376,34 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: Vec<BoneT
     // draw per-change diamonds
     for i in 0..shared.selected_animation().keyframes.len() {
         for b in 0..shared.selected_animation().keyframes[i].bones.len() {
-            let bone = &shared.selected_animation().keyframes[i].bones[b];
             let x = ui.min_rect().left()
                 + shared.ui.anim.lines_x[shared.selected_animation().keyframes[i].frame as usize];
             let mut pos_top = 0.;
             let mut rot_top = 0.;
             for bt in &bone_tops {
-                if bt.id == bone.id {
+                if bt.id == shared.selected_animation().keyframes[i].bones[b].id {
                     pos_top = bt.pos_top;
                     rot_top = bt.rot_top;
                 }
             }
             let mut pos = Vec2::default();
-            if bone.pos != Vec2::ZERO {
+            if shared.selected_animation().keyframes[i].bones[b].pos != Vec2::ZERO {
                 pos = Vec2::new(x, pos_top + 10.);
                 draw_diamond(ui, pos);
+                let frame = check_change_diamond_drag(ui, shared, pos, hitbox, i, b);
+                if frame != usize::MAX {
+                    shared.keyframe_at_mut(frame as i32).unwrap().bones[0].pos =
+                        shared.selected_animation().keyframes[i].bones[b].pos;
+                }
             }
-            if bone.rot != 0. {
+            if shared.selected_animation().keyframes[i].bones[b].rot != 0. {
                 pos = Vec2::new(x, rot_top + 10.);
                 draw_diamond(ui, pos);
+                check_change_diamond_drag(ui, shared, pos, hitbox, i, b);
             }
 
             if pos == Vec2::ZERO {
                 return;
-            }
-            let rect = egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(10.));
-            let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
-
-            if response.hovered() {
-                shared.cursor_icon = egui::CursorIcon::Grab;
-            }
-
-            if response.dragged() {
-                shared.cursor_icon = egui::CursorIcon::Grabbing;
-                let cursor = shared.ui.get_cursor(ui);
-
-                let mut j = 0;
-                for x in shared.ui.anim.lines_x.clone() {
-                    if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
-                        j += 1;
-                        continue;
-                    }
-
-                    if shared.keyframe_at(j) == None {
-                        let dupe_bone = shared.selected_animation().keyframes
-                            [shared.ui.anim.dragged_keyframe]
-                            .bones[b]
-                            .clone();
-
-                        shared.selected_animation_mut().keyframes.push(Keyframe {
-                            frame: j,
-                            bones: vec![dupe_bone],
-                        });
-
-                        // delete previous keyframe if this was the only change prior
-                        let mut changes = 0;
-                        for b in &shared.selected_animation().keyframes[i].bones {
-                            if b.pos != Vec2::ZERO {
-                                changes += 1;
-                            }
-                            if b.rot != 0. {
-                                changes += 1;
-                            }
-                        }
-                        if changes == 1 {
-                            shared.selected_animation_mut().keyframes.remove(i);
-                        }
-
-                        shared.sort_keyframes();
-                    }
-                    j += 1;
-                }
             }
         }
     }
@@ -471,4 +428,68 @@ fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
         egui::Color32::TRANSPARENT, // Fill color (transparent)
         egui::Stroke::new(2.0, egui::Color32::WHITE), // Stroke width & color
     ));
+}
+
+fn check_change_diamond_drag(
+    ui: &mut egui::Ui,
+    shared: &mut Shared,
+    pos: Vec2,
+    hitbox: f32,
+    kf_idx: usize,
+    bone_idx: usize,
+) -> usize {
+    let rect = egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(10.));
+    let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
+
+    let mut kf_to_change = usize::MAX;
+
+    if response.hovered() {
+        shared.cursor_icon = egui::CursorIcon::Grab;
+    }
+
+    if response.dragged() {
+        shared.cursor_icon = egui::CursorIcon::Grabbing;
+        let cursor = shared.ui.get_cursor(ui);
+
+        let mut j = 0;
+        for x in shared.ui.anim.lines_x.clone() {
+            if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
+                j += 1;
+                continue;
+            }
+
+            if shared.keyframe_at(j) == None {
+                let mut dupe_bone =
+                    shared.selected_animation().keyframes[kf_idx].bones[bone_idx].clone();
+                dupe_bone.pos = Vec2::ZERO;
+                dupe_bone.rot = 0.;
+
+                shared.selected_animation_mut().keyframes.push(Keyframe {
+                    frame: j,
+                    bones: vec![dupe_bone],
+                });
+
+                kf_to_change = j as usize;
+
+                // delete previous keyframe if this was the only change prior
+                let mut changes = 0;
+                for b in &shared.selected_animation().keyframes[kf_idx].bones {
+                    if b.pos != Vec2::ZERO {
+                        changes += 1;
+                    }
+                    if b.rot != 0. {
+                        changes += 1;
+                    }
+                }
+                if changes == 1 {
+                    shared.selected_animation_mut().keyframes.remove(kf_idx);
+                }
+
+                shared.sort_keyframes();
+            }
+            j += 1;
+        }
+    }
+
+    kf_to_change
 }
