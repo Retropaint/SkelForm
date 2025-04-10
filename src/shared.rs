@@ -171,6 +171,13 @@ impl fmt::Display for Vec2 {
     }
 }
 
+#[derive(PartialEq)]
+pub enum Animating {
+    BonePos,
+    RotPos,
+    ScalePos
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {

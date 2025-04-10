@@ -375,6 +375,9 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: Vec<BoneT
 
     // draw per-change diamonds
     for i in 0..shared.selected_animation().keyframes.len() {
+        if i > shared.selected_animation().keyframes.len()-1 {
+            break
+        }
         for b in 0..shared.selected_animation().keyframes[i].bones.len() {
             let x = ui.min_rect().left()
                 + shared.ui.anim.lines_x[shared.selected_animation().keyframes[i].frame as usize];
@@ -386,20 +389,24 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: Vec<BoneT
                     rot_top = bt.rot_top;
                 }
             }
+
             let mut pos = Vec2::default();
             if shared.selected_animation().keyframes[i].bones[b].pos != Vec2::ZERO {
                 pos = Vec2::new(x, pos_top + 10.);
                 draw_diamond(ui, pos);
-                let frame = check_change_diamond_drag(ui, shared, pos, hitbox, i, b);
-                if frame != usize::MAX {
-                    shared.keyframe_at_mut(frame as i32).unwrap().bones[0].pos =
-                        shared.selected_animation().keyframes[i].bones[b].pos;
+
+                // if a keyframe was edited instead of added, break the loop to prevent OOB issues
+                // caused by a keyframe potentially being deleted
+                if check_change_diamond_drag(Animating::BonePos, ui, shared, pos, hitbox, i, b) {
+                    break;
                 }
             }
             if shared.selected_animation().keyframes[i].bones[b].rot != 0. {
                 pos = Vec2::new(x, rot_top + 10.);
                 draw_diamond(ui, pos);
-                check_change_diamond_drag(ui, shared, pos, hitbox, i, b);
+                if check_change_diamond_drag(Animating::RotPos, ui, shared, pos, hitbox, i, b) {
+                    break;
+                }
             }
 
             if pos == Vec2::ZERO {
@@ -431,23 +438,24 @@ fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
 }
 
 fn check_change_diamond_drag(
+    animating: shared::Animating,
     ui: &mut egui::Ui,
     shared: &mut Shared,
     pos: Vec2,
     hitbox: f32,
     kf_idx: usize,
     bone_idx: usize,
-) -> usize {
+) -> bool {
     let rect = egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(10.));
     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
-    let mut kf_to_change = usize::MAX;
+    let mut changed = false;
 
     if response.hovered() {
         shared.cursor_icon = egui::CursorIcon::Grab;
     }
 
-    if response.dragged() {
+    if response.drag_stopped() {
         shared.cursor_icon = egui::CursorIcon::Grabbing;
         let cursor = shared.ui.get_cursor(ui);
 
@@ -458,38 +466,76 @@ fn check_change_diamond_drag(
                 continue;
             }
 
-            if shared.keyframe_at(j) == None {
-                let mut dupe_bone =
-                    shared.selected_animation().keyframes[kf_idx].bones[bone_idx].clone();
-                dupe_bone.pos = Vec2::ZERO;
-                dupe_bone.rot = 0.;
+            macro_rules! bone {
+                () => {
+                    shared.selected_animation().keyframes[kf_idx].bones[bone_idx]
+                };
+            }
+            let mut dupe_bone = bone!().clone();
+            let mut changes = 1;
 
+            // reset all of the duped bone's fields and then add back the one that's being moved
+            dupe_bone.pos = Vec2::ZERO;
+            dupe_bone.rot = 0.;
+            match animating {
+                Animating::BonePos => {
+                    dupe_bone.pos = bone!().pos;
+                    shared.selected_animation_mut().keyframes[kf_idx].bones[bone_idx].pos =
+                        Vec2::ZERO;
+                }
+                Animating::RotPos => {
+                    dupe_bone.rot = bone!().rot;
+                    shared.selected_animation_mut().keyframes[kf_idx].bones[bone_idx].rot = 0.;
+                }
+                _ => {}
+            }
+
+            if shared.keyframe_at(j) == None {
                 shared.selected_animation_mut().keyframes.push(Keyframe {
                     frame: j,
                     bones: vec![dupe_bone],
                 });
-
-                kf_to_change = j as usize;
-
-                // delete previous keyframe if this was the only change prior
-                let mut changes = 0;
-                for b in &shared.selected_animation().keyframes[kf_idx].bones {
-                    if b.pos != Vec2::ZERO {
-                        changes += 1;
+            } else {
+                changed = true;
+                let mut i = 0;
+                while i < shared.keyframe_at(j).unwrap().bones.len() {
+                    if shared.keyframe_at(j).unwrap().bones[i].id != bone!().id {
+                        i += 1;
+                        continue;
                     }
-                    if b.rot != 0. {
-                        changes += 1;
-                    }
-                }
-                if changes == 1 {
-                    shared.selected_animation_mut().keyframes.remove(kf_idx);
-                }
 
-                shared.sort_keyframes();
+                    match animating {
+                        Animating::BonePos => {
+                            shared.keyframe_at_mut(j).unwrap().bones[i].pos = dupe_bone.pos
+                        }
+                        Animating::RotPos => {
+                            shared.keyframe_at_mut(j).unwrap().bones[i].rot = dupe_bone.rot
+                        }
+                        _ => {}
+                    }
+
+                    break;
+                }
             }
+
+            // delete previous keyframe if this was the only change prior
+            for b in &shared.selected_animation().keyframes[kf_idx].bones {
+                if b.pos != Vec2::ZERO {
+                    changes += 1;
+                }
+                if b.rot != 0. {
+                    changes += 1;
+                }
+            }
+            if changes < 2 {
+                shared.selected_animation_mut().keyframes.remove(kf_idx);
+            }
+
+            shared.sort_keyframes();
+
             j += 1;
         }
     }
 
-    kf_to_change
+    changed
 }
