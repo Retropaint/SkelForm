@@ -243,7 +243,7 @@ pub struct UiAnim {
     pub playing: bool,
     pub elapsed: i32,
     pub timeline_offset: f32,
-    pub dragged_keyframe: usize
+    pub dragged_keyframe: usize,
 }
 
 #[derive(serde::Serialize, Clone, Default)]
@@ -394,10 +394,20 @@ impl Shared {
         self.selected_animation().keyframes.last()
     }
 
-    pub fn keyframe_at(&self, frame: i32) -> Option<&Keyframe>{
+    pub fn keyframe_at(&self, frame: i32) -> Option<&Keyframe> {
         for kf in &self.selected_animation().keyframes {
             if kf.frame == frame {
                 return Some(&kf);
+            }
+        }
+
+        None
+    }
+
+    pub fn keyframe_at_mut(&mut self, frame: i32) -> Option<&mut Keyframe> {
+        for kf in &mut self.selected_animation_mut().keyframes {
+            if kf.frame == frame {
+                return Some(kf);
             }
         }
 
