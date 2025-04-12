@@ -114,10 +114,9 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
             ui.set_height(ui.available_height());
 
             // track the Y of bone change labels for their diamonds
-            let mut bone_tops: Vec<BoneTops> = vec![];
-            let mut new_tops = BoneTops::default();
+            let mut bone_tops = BoneTops::default();
 
-            draw_bones_list(ui, shared, &mut new_tops);
+            draw_bones_list(ui, shared, &mut bone_tops);
 
             // calculate how far apart each keyframe should visually be
             let gap = 400.;
@@ -147,13 +146,13 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
                 // so that the remaining height can be taken up by timeline graph.
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                     draw_bottom_bar(ui, shared);
-                    draw_timeline_graph(ui, shared, width, bone_tops, new_tops, hitbox);
+                    draw_timeline_graph(ui, shared, width, bone_tops, hitbox);
                 });
             });
         });
 }
 
-pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, new_tops: &mut BoneTops) {
+pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut BoneTops) {
     ui.vertical(|ui| {
         ui.add_space(30.);
         for i in 0..shared.selected_animation().keyframes.len() {
@@ -162,19 +161,19 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, new_tops: &mut Bo
 
                 // add bone's fields
                 for af in &bone.fields {
-                    let top = new_tops.find(bone.id, &af.element);
+                    let top = bone_tops.find(bone.id, &af.element);
                     if top != None {
                         continue;
                     }
 
                     // add bone name if it was newly added
-                    if !new_tops.find_bone(bone.id) {
+                    if !bone_tops.find_bone(bone.id) {
                         ui.label("b");
                     }
 
                     // add the label and record it's top value
                     let label = ui.label(af.element.to_string());
-                    new_tops.tops.push(BoneTop {
+                    bone_tops.tops.push(BoneTop {
                         id: bone.id,
                         element: af.element.clone(),
                         height: label.rect.top(),
@@ -234,8 +233,7 @@ pub fn draw_timeline_graph(
     ui: &mut egui::Ui,
     shared: &mut Shared,
     width: f32,
-    bone_tops: Vec<BoneTops>,
-    new_tops: BoneTops,
+    bone_tops: BoneTops,
     hitbox: f32,
 ) {
     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
@@ -271,7 +269,7 @@ pub fn draw_timeline_graph(
                         );
                     }
 
-                    draw_frame_lines(ui, shared, bone_tops, new_tops, hitbox);
+                    draw_frame_lines(ui, shared, bone_tops, hitbox);
                 });
             });
         shared.ui.anim.timeline_offset = response.state.offset.x;
@@ -314,8 +312,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 fn draw_frame_lines(
     ui: &mut egui::Ui,
     shared: &mut Shared,
-    bone_tops: Vec<BoneTops>,
-    new_tops: BoneTops,
+    bone_tops: BoneTops,
     hitbox: f32,
 ) {
     // get cursor pos on the graph (or 0, 0 if can't)
@@ -391,7 +388,7 @@ fn draw_frame_lines(
                     .clone();
 
                 // the Y position is based on this diamond's respective label
-                let top = new_tops.find(id, &element).unwrap().height;
+                let top = bone_tops.find(id, &element).unwrap().height;
                 let pos = Vec2::new(x, top + 10.);
 
                 draw_diamond(ui, pos);
