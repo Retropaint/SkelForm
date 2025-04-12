@@ -368,6 +368,12 @@ pub enum AnimElement {
     Scale,
 }
 
+// this allows getting the element name as a string
+impl fmt::Display for AnimElement {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
 #[derive(Default, Debug)]
 pub struct BoneTops {
     pub tops: Vec<BoneTop>,
@@ -386,6 +392,15 @@ impl BoneTops {
             }
         }
         None
+    }
+
+    pub fn find_bone(&self, id: i32) -> bool {
+        for bt in &self.tops {
+            if bt.id == id {
+                return true;
+            }
+        }
+        false
     }
 }
 
@@ -581,8 +596,6 @@ impl Shared {
 
             let current_frame = frame - start_kf.unwrap().frame;
 
-            println!("{}", start_bone.unwrap().find_field(AnimElement::Position));
-            
             // interpolate!
             b.pos = Tweener::linear(
                 start_bone.unwrap().find_field(AnimElement::Position),

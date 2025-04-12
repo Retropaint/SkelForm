@@ -147,7 +147,7 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
                 // so that the remaining height can be taken up by timeline graph.
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                     draw_bottom_bar(ui, shared);
-                    draw_timeline_graph(ui, shared, width, bone_tops, hitbox);
+                    draw_timeline_graph(ui, shared, width, bone_tops, new_tops, hitbox);
                 });
             });
         });
@@ -158,18 +158,27 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, new_tops: &mut Bo
         ui.add_space(30.);
         for i in 0..shared.selected_animation().keyframes.len() {
             for b in 0..shared.selected_animation().keyframes[i].bones.len() {
-                let bone = &shared.selected_animation().keyframes[i].bones[b]; 
+                let bone = &shared.selected_animation().keyframes[i].bones[b];
+
+                // add bone's fields
                 for af in &bone.fields {
                     let top = new_tops.find(bone.id, &af.element);
-                    if top == None {
-                        new_tops.tops.push(BoneTop{
-                            id: bone.id,
-                            element: af.element.clone(),
-                            height: 0.
-                        })
-                    } else {
-                        println!("{}", top.unwrap().height);
+                    if top != None {
+                        continue;
                     }
+
+                    // add bone name if it was newly added
+                    if !new_tops.find_bone(bone.id) {
+                        ui.label("b");
+                    }
+
+                    // add the label and record it's top value
+                    let label = ui.label(af.element.to_string());
+                    new_tops.tops.push(BoneTop {
+                        id: bone.id,
+                        element: af.element.clone(),
+                        height: label.rect.top(),
+                    })
                 }
             }
         }
@@ -226,6 +235,7 @@ pub fn draw_timeline_graph(
     shared: &mut Shared,
     width: f32,
     bone_tops: Vec<BoneTops>,
+    new_tops: BoneTops,
     hitbox: f32,
 ) {
     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
@@ -261,7 +271,7 @@ pub fn draw_timeline_graph(
                         );
                     }
 
-                    draw_frame_lines(ui, shared, bone_tops, hitbox);
+                    draw_frame_lines(ui, shared, bone_tops, new_tops, hitbox);
                 });
             });
         shared.ui.anim.timeline_offset = response.state.offset.x;
@@ -301,7 +311,13 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 }
 
 /// Draw all lines representing frames in the timeline.
-fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: Vec<BoneTops>, hitbox: f32) {
+fn draw_frame_lines(
+    ui: &mut egui::Ui,
+    shared: &mut Shared,
+    bone_tops: Vec<BoneTops>,
+    new_tops: BoneTops,
+    hitbox: f32,
+) {
     // get cursor pos on the graph (or 0, 0 if can't)
     let cursor: Vec2;
     if ui.ui_contains_pointer() {
@@ -357,42 +373,17 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: Vec<BoneT
 
     // draw per-change diamonds
     for i in 0..shared.selected_animation().keyframes.len() {
-        if i > shared.selected_animation().keyframes.len()-1 {
-            break
+        if i > shared.selected_animation().keyframes.len() - 1 {
+            break;
         }
         for b in 0..shared.selected_animation().keyframes[i].bones.len() {
+            let id = shared.selected_animation().keyframes[i].bones[b].id;
             let x = ui.min_rect().left()
                 + shared.ui.anim.lines_x[shared.selected_animation().keyframes[i].frame as usize];
-            let mut pos_top = 0.;
-            let mut rot_top = 0.;
-            for bt in &bone_tops {
-                if bt.id == shared.selected_animation().keyframes[i].bones[b].id {
-                    pos_top = bt.pos_top;
-                    rot_top = bt.rot_top;
-                }
-            }
-
-            let mut pos = Vec2::default();
-            if shared.selected_animation().keyframes[i].bones[b].pos != Vec2::ZERO {
-                pos = Vec2::new(x, pos_top + 10.);
+            for af in &shared.selected_animation().keyframes[i].bones[b].fields {
+                let top = new_tops.find(id, &af.element).unwrap().height;
+                let pos = Vec2::new(x, top + 10.);
                 draw_diamond(ui, pos);
-
-                // if a keyframe was edited instead of added, break the loop to prevent OOB issues
-                // caused by a keyframe potentially being deleted
-                if check_change_diamond_drag(Animating::BonePos, ui, shared, pos, hitbox, i, b) {
-                    break;
-                }
-            }
-            if shared.selected_animation().keyframes[i].bones[b].rot != 0. {
-                pos = Vec2::new(x, rot_top + 10.);
-                draw_diamond(ui, pos);
-                if check_change_diamond_drag(Animating::RotPos, ui, shared, pos, hitbox, i, b) {
-                    break;
-                }
-            }
-
-            if pos == Vec2::ZERO {
-                return;
             }
         }
     }
