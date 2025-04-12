@@ -381,7 +381,7 @@ fn draw_frame_lines(
             let x = ui.min_rect().left()
                 + shared.ui.anim.lines_x[shared.selected_animation().keyframes[i].frame as usize];
 
-            // go thrur anim fields and draw their diamonds
+            // go thru anim fields and draw their diamonds
             for af in 0..shared.selected_animation().keyframes[i].bones[b]
                 .fields
                 .len()
