@@ -156,7 +156,8 @@ pub fn edit_bone_with_mouse(shared: &mut Shared, bones: Vec<Bone>) {
         if shared.animating && shared.ui.anim.selected != usize::MAX {
             check_if_in_keyframe(shared.selected_bone().id, shared);
             let pos = bones[shared.selected_bone_idx].pos;
-            shared.selected_anim_bone_mut().unwrap().pos = shared.move_with_mouse(&pos, true);
+            let result = shared.move_with_mouse(&pos, true);
+            shared.selected_anim_bone_mut().unwrap().set_field(crate::AnimElement::Position, result);
         } else {
             let pos = shared.selected_bone().pos;
             shared.selected_bone_mut().pos = shared.move_with_mouse(&pos, true);
@@ -166,7 +167,7 @@ pub fn edit_bone_with_mouse(shared: &mut Shared, bones: Vec<Bone>) {
         let rot = (shared.input.mouse.x / shared.window.x) * PI * 2.;
         if shared.animating && shared.ui.anim.selected != usize::MAX {
             check_if_in_keyframe(shared.selected_bone().id, shared);
-            shared.selected_anim_bone_mut().unwrap().rot = rot;
+            shared.selected_anim_bone_mut().unwrap().set_field(crate::AnimElement::Rotation, Vec2::new(rot, 0.));
         } else {
             shared.selected_bone_mut().rot = rot;
         }

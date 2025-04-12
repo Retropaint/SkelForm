@@ -115,8 +115,9 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
 
             // track the Y of bone change labels for their diamonds
             let mut bone_tops: Vec<BoneTops> = vec![];
+            let mut new_tops = BoneTops::default();
 
-            draw_bones_list(ui, shared, &mut bone_tops);
+            draw_bones_list(ui, shared, &mut new_tops);
 
             // calculate how far apart each keyframe should visually be
             let gap = 400.;
@@ -152,39 +153,23 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
         });
 }
 
-pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut Vec<BoneTops>) {
+pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, new_tops: &mut BoneTops) {
     ui.vertical(|ui| {
         ui.add_space(30.);
         for i in 0..shared.selected_animation().keyframes.len() {
-            for j in 0..shared.selected_animation().keyframes[i].bones.len() {
-                let bone = &shared.selected_animation().keyframes[i].bones[j];
-                let mut bt = bone_tops.iter().position(|b| b.id == bone.id);
-
-                // skip if bone was already added
-                if bt == None {
-                    bone_tops.push(BoneTops {
-                        id: bone.id,
-                        pos_top: -1.,
-                        rot_top: -1.,
-                    });
-                    ui.label(shared.find_bone(bone.id).unwrap().name.clone());
-                    bt = Some(bone_tops.len() - 1);
-                }
-
-                // add changes to the list
-                if bone.pos != Vec2::ZERO && bone_tops[bt.unwrap()].pos_top == -1. {
-                    ui.horizontal(|ui| {
-                        ui.add_space(20.);
-                        let text = ui.label("Pos");
-                        bone_tops[bt.unwrap()].pos_top = text.rect.top();
-                    });
-                }
-                if bone.rot != 0. && bone_tops[bt.unwrap()].rot_top == -1. {
-                    ui.horizontal(|ui| {
-                        ui.add_space(20.);
-                        let text = ui.label("Rot");
-                        bone_tops[bt.unwrap()].rot_top = text.rect.top();
-                    });
+            for b in 0..shared.selected_animation().keyframes[i].bones.len() {
+                let bone = &shared.selected_animation().keyframes[i].bones[b]; 
+                for af in &bone.fields {
+                    let top = new_tops.find(bone.id, &af.element);
+                    if top == None {
+                        new_tops.tops.push(BoneTop{
+                            id: bone.id,
+                            element: af.element.clone(),
+                            height: 0.
+                        })
+                    } else {
+                        println!("{}", top.unwrap().height);
+                    }
                 }
             }
         }
@@ -200,8 +185,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                 ui.set_width(width);
                 ui.set_height(20.);
 
-                let mut i = 0;
-                while i < shared.selected_animation().keyframes.len() {
+                for i in 0..shared.selected_animation().keyframes.len() {
                     let kf = &shared.selected_animation().keyframes[i];
 
                     let pos = Vec2::new(
@@ -224,16 +208,14 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         shared.cursor_icon = egui::CursorIcon::Grabbing;
                         let cursor = shared.ui.get_cursor(ui);
 
-                        let mut j = 0;
-                        for x in shared.ui.anim.lines_x.clone() {
+                        for j in 0..shared.ui.anim.lines_x.len() {
+                            let x = shared.ui.anim.lines_x[j];
                             if cursor.x < x + hitbox && cursor.x > x - hitbox {
                                 shared.selected_animation_mut().keyframes[i].frame = j as i32;
                                 shared.sort_keyframes();
                             }
-                            j += 1;
                         }
                     }
-                    i += 1
                 }
             });
         });
@@ -497,10 +479,8 @@ fn check_change_diamond_drag(
                 });
             } else {
                 changed = true;
-                let mut i = 0;
-                while i < shared.keyframe_at(j).unwrap().bones.len() {
+                for i in 0..shared.keyframe_at(j).unwrap().bones.len() {
                     if shared.keyframe_at(j).unwrap().bones[i].id != bone!().id {
-                        i += 1;
                         continue;
                     }
 

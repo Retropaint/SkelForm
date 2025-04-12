@@ -175,7 +175,7 @@ impl fmt::Display for Vec2 {
 pub enum Animating {
     BonePos,
     RotPos,
-    ScalePos
+    ScalePos,
 }
 
 #[repr(C)]
@@ -303,15 +303,97 @@ pub struct AnimBone {
     pub pos: Vec2,
     pub scale: Vec2,
 
+    pub fields: Vec<AnimField>,
+
     #[serde(skip)]
     pub pos_top: f32,
     #[serde(skip)]
     pub rot_top: f32,
 }
+
+impl AnimBone {
+    pub fn set_field(&mut self, element: AnimElement, value: Vec2) {
+        let mut create = true;
+        for af in &mut self.fields {
+            if af.element == element {
+                create = false;
+                af.value = value;
+                break;
+            }
+        }
+
+        if create {
+            self.fields.push(AnimField {
+                element,
+                value,
+                ..Default::default()
+            });
+        }
+    }
+
+    pub fn find_field(&self, element: AnimElement) -> Vec2 {
+        for af in &self.fields {
+            if af.element == element {
+                return af.value;
+            }
+        }
+        Vec2::ZERO
+    }
+}
+
+#[derive(PartialEq, serde::Serialize, Clone, Default)]
+pub struct AnimField {
+    pub element: AnimElement,
+
+    // If this field relates to the previous one, it's inheriting.
+    //
+    // Example: Color is a vec4 value (RGBA), so the first field
+    // is for RG while the one after is BA, so the second one inherits.
+    //
+    // Inherited fields should be skipped when iterating.
+    pub inherit: bool,
+
+    pub value: Vec2,
+
+    #[serde(skip)]
+    pub label_top: f32,
+}
+
+#[derive(PartialEq, serde::Serialize, Clone, Default, Debug)]
+pub enum AnimElement {
+    #[default]
+    Position,
+
+    Rotation,
+    Scale,
+}
+
+#[derive(Default, Debug)]
 pub struct BoneTops {
-    pub id: i32,
+    pub tops: Vec<BoneTop>,
+
+    // temporary
     pub pos_top: f32,
     pub rot_top: f32,
+    pub id: i32,
+}
+
+impl BoneTops {
+    pub fn find(&self, id: i32, element: &AnimElement) -> Option<&BoneTop> {
+        for bt in &self.tops {
+            if bt.id == id && bt.element == *element {
+                return Some(bt);
+            }
+        }
+        None
+    }
+}
+
+#[derive(Default, PartialEq, Debug)]
+pub struct BoneTop {
+    pub id: i32,
+    pub element: AnimElement,
+    pub height: f32,
 }
 #[derive(Default)]
 pub struct Shared {
@@ -499,11 +581,21 @@ impl Shared {
 
             let current_frame = frame - start_kf.unwrap().frame;
 
+            println!("{}", start_bone.unwrap().find_field(AnimElement::Position));
+            
             // interpolate!
-            b.pos = Tweener::linear(start_bone.unwrap().pos, end_bone.unwrap().pos, total_frames)
-                .move_to(current_frame);
-            b.rot = Tweener::linear(start_bone.unwrap().rot, end_bone.unwrap().rot, total_frames)
-                .move_to(current_frame);
+            b.pos = Tweener::linear(
+                start_bone.unwrap().find_field(AnimElement::Position),
+                end_bone.unwrap().find_field(AnimElement::Position),
+                total_frames,
+            )
+            .move_to(current_frame);
+            b.rot = Tweener::linear(
+                start_bone.unwrap().find_field(AnimElement::Rotation).x,
+                end_bone.unwrap().find_field(AnimElement::Rotation).x,
+                total_frames,
+            )
+            .move_to(current_frame);
         }
 
         bones
