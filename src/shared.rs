@@ -312,10 +312,10 @@ pub struct AnimBone {
 }
 
 impl AnimBone {
-    pub fn set_field(&mut self, element: AnimElement, value: Vec2) {
+    pub fn set_field(&mut self, element: &AnimElement, value: Vec2) {
         let mut create = true;
         for af in &mut self.fields {
-            if af.element == element {
+            if af.element == *element {
                 create = false;
                 af.value = value;
                 break;
@@ -324,20 +324,31 @@ impl AnimBone {
 
         if create {
             self.fields.push(AnimField {
-                element,
+                element: element.clone(),
                 value,
                 ..Default::default()
             });
         }
     }
 
-    pub fn find_field(&self, element: AnimElement) -> Vec2 {
+    pub fn find_field(&self, element: &AnimElement) -> Vec2 {
         for af in &self.fields {
-            if af.element == element {
+            if af.element == *element {
                 return af.value;
             }
         }
-        Vec2::ZERO
+
+        AnimElement::default_of(element)
+    }
+
+    pub fn remove_field(&mut self, element: &AnimElement) {
+        for i in 0..self.fields.len() {
+            let af = &self.fields[i];
+            if af.element == *element {
+                self.fields.remove(i);
+                break
+            }
+        }
     }
 }
 
@@ -345,13 +356,15 @@ impl AnimBone {
 pub struct AnimField {
     pub element: AnimElement,
 
-    // If this field relates to the previous one, it's inheriting.
+    // If the next field is related to this, connect is true.
     //
     // Example: Color is a vec4 value (RGBA), so the first field
-    // is for RG while the one after is BA, so the second one inherits.
+    // is for RG, while second is for BA. The first field's
+    // connect is true, while the second one's is false as it does not connect
+    // to the field after it.
     //
-    // Inherited fields should be skipped when iterating.
-    pub inherit: bool,
+    // This can be chained to have as many even-numbered vecs as possible.
+    pub connect: bool,
 
     pub value: Vec2,
 
@@ -366,6 +379,17 @@ pub enum AnimElement {
 
     Rotation,
     Scale,
+}
+
+impl AnimElement {
+    pub fn default_of(element: &AnimElement) -> Vec2 {
+        match *element {
+            AnimElement::Scale => {
+                return Vec2::new(1., 1.);
+            }
+            _ => Vec2::ZERO,
+        }
+    }
 }
 
 // this allows getting the element name as a string
@@ -596,19 +620,21 @@ impl Shared {
 
             let current_frame = frame - start_kf.unwrap().frame;
 
+            macro_rules! interpolate {
+                ($element:expr) => {
+                    Tweener::linear(
+                        start_bone.unwrap().find_field(&$element),
+                        end_bone.unwrap().find_field(&$element),
+                        total_frames,
+                    )
+                    .move_to(current_frame)
+                };
+            }
+
             // interpolate!
-            b.pos = Tweener::linear(
-                start_bone.unwrap().find_field(AnimElement::Position),
-                end_bone.unwrap().find_field(AnimElement::Position),
-                total_frames,
-            )
-            .move_to(current_frame);
-            b.rot = Tweener::linear(
-                start_bone.unwrap().find_field(AnimElement::Rotation).x,
-                end_bone.unwrap().find_field(AnimElement::Rotation).x,
-                total_frames,
-            )
-            .move_to(current_frame);
+            b.pos = interpolate!(AnimElement::Position);
+            b.rot = interpolate!(AnimElement::Rotation).x;
+            b.scale = interpolate!(AnimElement::Scale);
         }
 
         bones

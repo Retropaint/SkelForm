@@ -157,7 +157,10 @@ pub fn edit_bone_with_mouse(shared: &mut Shared, bones: Vec<Bone>) {
             check_if_in_keyframe(shared.selected_bone().id, shared);
             let pos = bones[shared.selected_bone_idx].pos;
             let result = shared.move_with_mouse(&pos, true);
-            shared.selected_anim_bone_mut().unwrap().set_field(crate::AnimElement::Position, result);
+            shared
+                .selected_anim_bone_mut()
+                .unwrap()
+                .set_field(&crate::AnimElement::Position, result);
         } else {
             let pos = shared.selected_bone().pos;
             shared.selected_bone_mut().pos = shared.move_with_mouse(&pos, true);
@@ -167,13 +170,25 @@ pub fn edit_bone_with_mouse(shared: &mut Shared, bones: Vec<Bone>) {
         let rot = (shared.input.mouse.x / shared.window.x) * PI * 2.;
         if shared.animating && shared.ui.anim.selected != usize::MAX {
             check_if_in_keyframe(shared.selected_bone().id, shared);
-            shared.selected_anim_bone_mut().unwrap().set_field(crate::AnimElement::Rotation, Vec2::new(rot, 0.));
+            shared
+                .selected_anim_bone_mut()
+                .unwrap()
+                .set_field(&crate::AnimElement::Rotation, Vec2::new(rot, 0.));
         } else {
             shared.selected_bone_mut().rot = rot;
         }
     // scale
     } else if shared.edit_mode == 2 {
-        shared.selected_bone_mut().scale = (shared.input.mouse / shared.window) * 2.;
+        let scale = (shared.input.mouse / shared.window) * 2.;
+        if shared.animating && shared.ui.anim.selected != usize::MAX {
+            check_if_in_keyframe(shared.selected_bone().id, shared);
+            shared
+                .selected_anim_bone_mut()
+                .unwrap()
+                .set_field(&crate::AnimElement::Scale, scale);
+        } else {
+            shared.selected_bone_mut().scale = scale;
+        }
     }
 }
 
@@ -339,14 +354,17 @@ fn check_if_in_keyframe(id: i32, shared: &mut Shared) {
 
     if kf == None {
         // create new keyframe
-        shared.selected_animation_mut().keyframes.push(crate::Keyframe {
-            frame,
-            bones: vec![AnimBone {
-                id,
+        shared
+            .selected_animation_mut()
+            .keyframes
+            .push(crate::Keyframe {
+                frame,
+                bones: vec![AnimBone {
+                    id,
+                    ..Default::default()
+                }],
                 ..Default::default()
-            }],
-            ..Default::default()
-        });
+            });
         shared.sort_keyframes();
     } else {
         // check if this bone is in keyframe
