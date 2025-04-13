@@ -40,6 +40,12 @@ impl Into<egui::Pos2> for Vec2 {
     }
 }
 
+impl Into<egui::Vec2> for Vec2 {
+    fn into(self) -> egui::Vec2 {
+        egui::Vec2::new(self.x, self.y)
+    }
+}
+
 impl Vec2 {
     pub const ZERO: Self = Self::new(0., 0.);
 
@@ -223,6 +229,8 @@ pub struct Ui {
 
     pub anim: UiAnim,
 
+    pub images: Vec<egui::TextureHandle>,
+
     // the initial value of what is being edited via input
     edit_value: Option<String>,
 }
@@ -346,7 +354,7 @@ impl AnimBone {
             let af = &self.fields[i];
             if af.element == *element {
                 self.fields.remove(i);
-                break
+                break;
             }
         }
     }
