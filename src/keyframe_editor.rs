@@ -155,6 +155,19 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
 pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut BoneTops) {
     ui.vertical(|ui| {
         ui.add_space(30.);
+        let mut labels: Vec<&AnimElement> = vec![];
+        for i in 0..shared.selected_animation().keyframes.len() {
+            for b in 0..shared.selected_animation().keyframes[i].bones.len() {
+                let bone = &shared.selected_animation().keyframes[i].bones[b];
+                for af in &bone.fields {
+                    let mut idx = af.element.clone() as usize;
+                    if idx > labels.len() {
+                        idx = labels.len();
+                    }
+                    labels.insert(idx, &af.element);
+                }
+            }
+        }
         for i in 0..shared.selected_animation().keyframes.len() {
             for b in 0..shared.selected_animation().keyframes[i].bones.len() {
                 let bone = &shared.selected_animation().keyframes[i].bones[b];
@@ -171,7 +184,6 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                         ui.label("b");
                     }
 
-                    // add the label and record it's top value
                     let label = ui.label(af.element.to_string());
                     bone_tops.tops.push(BoneTop {
                         id: bone.id,
@@ -309,12 +321,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 }
 
 /// Draw all lines representing frames in the timeline.
-fn draw_frame_lines(
-    ui: &mut egui::Ui,
-    shared: &mut Shared,
-    bone_tops: BoneTops,
-    hitbox: f32,
-) {
+fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: BoneTops, hitbox: f32) {
     // get cursor pos on the graph (or 0, 0 if can't)
     let cursor: Vec2;
     if ui.ui_contains_pointer() {
@@ -368,7 +375,7 @@ fn draw_frame_lines(
         i += 1;
     }
 
-    // draw per-change diamonds
+    // draw per-change icons
     for i in 0..shared.selected_animation().keyframes.len() {
         if i > shared.selected_animation().keyframes.len() - 1 {
             break;
@@ -383,18 +390,44 @@ fn draw_frame_lines(
                 .fields
                 .len()
             {
-                let element = shared.selected_animation().keyframes[i].bones[b].fields[af]
-                    .element
-                    .clone();
+                if shared.ui.images.len() == 0 {
+                    let img = image::load_from_memory(include_bytes!("../icon_move.png"))
+                        .unwrap()
+                        .into_rgba8();
+                    let color_image = egui::ColorImage::from_rgba_unmultiplied(
+                        [img.width() as usize, img.height() as usize],
+                        img.as_flat_samples().as_slice(),
+                    );
+                    let tex = ui
+                        .ctx()
+                        .load_texture("icon_move", color_image, Default::default());
+                    shared.ui.images.push(tex);
+                } else {
+                    let size = Vec2::new(
+                        (shared.ui.images[0].size()[0]) as f32,
+                        (shared.ui.images[0].size()[1]) as f32,
+                    );
 
-                // the Y position is based on this diamond's respective label
-                let top = bone_tops.find(id, &element).unwrap().height;
-                let pos = Vec2::new(x, top + 10.);
+                    let element = shared.selected_animation().keyframes[i].bones[b].fields[af]
+                        .element
+                        .clone();
 
-                draw_diamond(ui, pos);
-                let changed = check_change_diamond_drag(&element, ui, shared, pos, hitbox, i, b);
-                if changed {
-                    return;
+                    // the Y position is based on this diamond's respective label
+                    let top = bone_tops.find(id, &element).unwrap().height;
+                    let mut pos = Vec2::new(x, top + size.y / 2.);
+                    pos -= (size / 2.).into();
+
+                    let rect = egui::Rect::from_min_size(pos.into(), size.into());
+                    egui::Image::new(&shared.ui.images[0]).paint_at(ui, rect);
+
+                    let changed =
+                        check_change_diamond_drag(&element, ui, shared, pos, size, hitbox, i, b);
+
+                    // stop rendering for this frame if a change occured, as elements might be out of order
+                    // and cause indexing issues
+                    if changed {
+                        return;
+                    }
                 }
             }
         }
@@ -427,11 +460,12 @@ fn check_change_diamond_drag(
     ui: &mut egui::Ui,
     shared: &mut Shared,
     pos: Vec2,
+    size: Vec2,
     hitbox: f32,
     kf_idx: usize,
     bone_idx: usize,
 ) -> bool {
-    let rect = egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(10.));
+    let rect = egui::Rect::from_center_size(pos.into(), size.into());
     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
     let mut changed = false;
