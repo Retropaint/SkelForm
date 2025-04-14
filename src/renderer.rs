@@ -148,10 +148,10 @@ pub fn edit_bone_with_mouse(shared: &mut Shared, bones: Vec<Bone>) {
         return;
     }
 
+    shared.cursor_icon = egui::CursorIcon::Crosshair;
+
     // translation
     if shared.edit_mode == 0 {
-        shared.cursor_icon = egui::CursorIcon::Move;
-
         // modify either the armature's, or animation keyframe's bone
         if shared.animating && shared.ui.anim.selected != usize::MAX {
             check_if_in_keyframe(shared.selected_bone().id, shared);
