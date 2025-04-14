@@ -24,7 +24,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     // load anim change icons
     let size = 18;
     if shared.ui.anim.images.len() == 0 {
-        let mut full_img = image::load_from_memory(include_bytes!("../icon_move.png")).unwrap();
+        let mut full_img = image::load_from_memory(include_bytes!("../anim_icons.png")).unwrap();
         let mut x = 0;
         while x < full_img.width()-1  {
             let img = full_img.crop(x, 0, 18, 18).into_rgba8();
@@ -33,7 +33,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
                 [img.width() as usize, img.height() as usize],
                 img.as_flat_samples().as_slice(),
             );
-            let tex = context.load_texture("icon_move", color_image, Default::default());
+            let tex = context.load_texture("anim_icons", color_image, Default::default());
             shared.ui.anim.images.push(tex);
         }
     }
