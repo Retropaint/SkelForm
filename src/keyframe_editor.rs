@@ -189,7 +189,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                     for el in &tops_init[idx as usize].elements {
                         if *el == af.element {
                             add = false;
-                            break
+                            break;
                         }
                     }
                     if add {
@@ -208,10 +208,10 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
 
             for e in &ti.elements {
                 let label = ui.label(e.to_string());
-                bone_tops.tops.push(BoneTop{
+                bone_tops.tops.push(BoneTop {
                     id: ti.id,
                     element: e.clone(),
-                    height: label.rect.top()
+                    height: label.rect.top(),
                 })
             }
         }
@@ -238,15 +238,14 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
 
                     // create dragging area for diamond
                     let rect =
-                        egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5. * 2.0))
-                            .with_min_x(ui.min_rect().left());
+                        egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5. * 2.0));
                     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
                     if response.hovered() {
                         shared.cursor_icon = egui::CursorIcon::Grab;
                     }
 
-                    if response.dragged() {
+                    if response.drag_stopped() {
                         shared.cursor_icon = egui::CursorIcon::Grabbing;
                         let cursor = shared.ui.get_cursor(ui);
 
