@@ -32,7 +32,7 @@ use winit::{
 
 pub mod armature_window;
 pub mod bone_window;
-pub mod image_reader;
+pub mod file_reader;
 pub mod input;
 pub mod keyframe_editor;
 pub mod renderer;
@@ -174,13 +174,13 @@ impl ApplicationHandler for App {
 
         // Check if an image is uploaded (to be turned into a texture)
         if let Some(_) = self.renderer.as_ref() {
-            image_reader::read_image_loaders(
+            file_reader::read_image_loaders(
                 &mut self.shared,
                 &self.renderer.as_ref().unwrap().gpu.queue,
                 &self.renderer.as_ref().unwrap().gpu.device,
                 &self.renderer.as_ref().unwrap().bind_group_layout,
             );
-            image_reader::read_export(&self.shared);
+            file_reader::read_export(&self.shared);
         }
 
         let (Some(gui_state), Some(renderer), Some(window), Some(last_render_time)) = (
