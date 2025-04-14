@@ -21,6 +21,23 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         };
     }
 
+    // load anim change icons
+    let size = 18;
+    if shared.ui.anim.images.len() == 0 {
+        let mut full_img = image::load_from_memory(include_bytes!("../icon_move.png")).unwrap();
+        let mut x = 0;
+        while x < full_img.width()-1  {
+            let img = full_img.crop(x, 0, 18, 18).into_rgba8();
+            x += size;
+            let color_image = egui::ColorImage::from_rgba_unmultiplied(
+                [img.width() as usize, img.height() as usize],
+                img.as_flat_samples().as_slice(),
+            );
+            let tex = context.load_texture("icon_move", color_image, Default::default());
+            shared.ui.anim.images.push(tex);
+        }
+    }
+
     // Although counter-intuitive, mouse inputs are recorded here.
     // This is because egui can detect all of them even if they were not on the UI itself.
     // To determine if the mouse is on the UI, winit's mouse input is used instead (see input.rs).
