@@ -111,13 +111,12 @@ fn open_file_dialog(bone_idx: usize) {
         let task = rfd::FileDialog::new()
             .add_filter("image", &["png", "jpg"])
             .pick_file();
+        if task == None {
+            return
+        }
         let mut img_path = File::create(".skelform_img_path").unwrap();
         img_path
             .write_all(task.unwrap().as_path().to_str().unwrap().as_bytes())
-            .unwrap();
-        let mut bone_idx_file = File::create(".skelform_bone_idx").unwrap();
-        bone_idx_file
-            .write_all(bone_idx.to_string().as_bytes())
             .unwrap();
     });
 }

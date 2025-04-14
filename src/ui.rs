@@ -26,7 +26,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     if shared.ui.anim.images.len() == 0 {
         let mut full_img = image::load_from_memory(include_bytes!("../anim_icons.png")).unwrap();
         let mut x = 0;
-        while x < full_img.width()-1  {
+        while x < full_img.width() - 1 {
             let img = full_img.crop(x, 0, 18, 18).into_rgba8();
             x += size;
             let color_image = egui::ColorImage::from_rgba_unmultiplied(
@@ -83,10 +83,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     ui.horizontal(|ui| {
                         ui.set_max_width(80.);
                         if ui.button("Export").clicked() {
-                            crate::utils::export_textures(
-                                &shared.armature.textures,
-                                &shared.armature,
-                            );
+                            crate::utils::open_export();
                             ui.close_menu();
                         }
 
@@ -95,10 +92,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         });
 
                         if input::is_pressing(winit::keyboard::KeyCode::KeyE, &shared) {
-                            crate::utils::export_textures(
-                                &shared.armature.textures,
-                                &shared.armature,
-                            );
+                            crate::utils::open_export();
                             ui.close_menu();
                         }
                     });

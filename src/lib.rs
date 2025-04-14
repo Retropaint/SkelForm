@@ -180,6 +180,7 @@ impl ApplicationHandler for App {
                 &self.renderer.as_ref().unwrap().gpu.device,
                 &self.renderer.as_ref().unwrap().bind_group_layout,
             );
+            image_reader::read_export(&self.shared);
         }
 
         let (Some(gui_state), Some(renderer), Some(window), Some(last_render_time)) = (

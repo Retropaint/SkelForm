@@ -82,7 +82,24 @@ pub fn to_vec2(f: f32) -> Vec2 {
     Vec2::new(f, f)
 }
 
-pub fn export_textures(textures: &Vec<crate::Texture>, armature: &crate::Armature) {
+pub fn open_export() {
+    std::thread::spawn(move || {
+        let task = rfd::FileDialog::new().save_file();
+        if task == None {
+            return
+        }
+        let mut img_path = std::fs::File::create(".skelform_export_path").unwrap();
+        img_path
+            .write_all(task.unwrap().as_path().to_str().unwrap().as_bytes())
+            .unwrap();
+    });
+}
+
+pub fn export_textures(
+    mut path: String,
+    textures: &Vec<crate::Texture>,
+    armature: &crate::Armature,
+) {
     // get the image size in advance
     let mut size = Vec2::default();
     for tex in textures {
@@ -116,7 +133,7 @@ pub fn export_textures(textures: &Vec<crate::Texture>, armature: &crate::Armatur
         offset += img_buf.width();
     }
 
-    // finally, the final buffer as an image
+    // finally, save the final buffer as an image
     image::save_buffer(
         "temp.png",
         &final_buf.to_vec(),
@@ -125,7 +142,6 @@ pub fn export_textures(textures: &Vec<crate::Texture>, armature: &crate::Armatur
         image::ExtendedColorType::Rgba8,
     )
     .unwrap();
-
     let img_data = std::fs::read("./temp.png").unwrap();
 
     // clone armature and make some edits, then serialize it
@@ -134,7 +150,7 @@ pub fn export_textures(textures: &Vec<crate::Texture>, armature: &crate::Armatur
     let armature_json = serde_json::to_string(&armature_copy).unwrap();
 
     // create zip file
-    let mut zip = zip::ZipWriter::new(std::fs::File::create("armature.zip").unwrap());
+    let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
     let options =
         zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
