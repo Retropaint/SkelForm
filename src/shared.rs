@@ -229,8 +229,6 @@ pub struct Ui {
 
     pub anim: UiAnim,
 
-    pub images: Vec<egui::TextureHandle>,
-
     // the initial value of what is being edited via input
     edit_value: Option<String>,
 }
@@ -259,6 +257,7 @@ pub struct UiAnim {
     pub elapsed: i32,
     pub timeline_offset: f32,
     pub dragged_keyframe: usize,
+    pub images: Vec<egui::TextureHandle>,
 }
 
 #[derive(serde::Serialize, Clone, Default)]
@@ -380,7 +379,7 @@ pub struct AnimField {
     pub label_top: f32,
 }
 
-#[derive(PartialEq, serde::Serialize, Clone, Default, Debug)]
+#[derive(Eq, Ord, PartialEq, PartialOrd, serde::Serialize, Clone, Default, Debug)]
 pub enum AnimElement {
     #[default]
     Position,
@@ -409,16 +408,20 @@ impl fmt::Display for AnimElement {
 #[derive(Default, Debug)]
 pub struct BoneTops {
     pub tops: Vec<BoneTop>,
-
-    // temporary
-    pub pos_top: f32,
-    pub rot_top: f32,
-    pub id: i32,
 }
 
 impl BoneTops {
     pub fn find(&self, id: i32, element: &AnimElement) -> Option<&BoneTop> {
         for bt in &self.tops {
+            if bt.id == id && bt.element == *element {
+                return Some(bt);
+            }
+        }
+        None
+    }
+
+    pub fn find_mut(&mut self, id: i32, element: &AnimElement) -> Option<&mut BoneTop> {
+        for bt in &mut self.tops {
             if bt.id == id && bt.element == *element {
                 return Some(bt);
             }

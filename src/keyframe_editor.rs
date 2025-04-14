@@ -152,45 +152,67 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
         });
 }
 
+struct AnimTopInit {
+    pub id: i32,
+    pub elements: Vec<AnimElement>,
+}
+
 pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut BoneTops) {
     ui.vertical(|ui| {
         ui.add_space(30.);
-        let mut labels: Vec<&AnimElement> = vec![];
+        let mut tops_init: Vec<AnimTopInit> = vec![];
         for i in 0..shared.selected_animation().keyframes.len() {
             for b in 0..shared.selected_animation().keyframes[i].bones.len() {
                 let bone = &shared.selected_animation().keyframes[i].bones[b];
-                for af in &bone.fields {
-                    let mut idx = af.element.clone() as usize;
-                    if idx > labels.len() {
-                        idx = labels.len();
+
+                // find the bone in the list
+                let mut idx: i32 = -1;
+                for (i, ti) in tops_init.iter().enumerate() {
+                    if ti.id == bone.id {
+                        idx = i as i32;
+                        break;
                     }
-                    labels.insert(idx, &af.element);
+                }
+
+                // add init if the bone can't be found
+                if idx == -1 {
+                    tops_init.push(AnimTopInit {
+                        id: bone.id,
+                        elements: vec![],
+                    });
+                    idx = tops_init.len() as i32 - 1;
+                }
+
+                // add all elements
+                for af in &bone.fields {
+                    let mut add = true;
+                    for el in &tops_init[idx as usize].elements {
+                        if *el == af.element {
+                            add = false;
+                            break
+                        }
+                    }
+                    if add {
+                        tops_init[idx as usize].elements.push(af.element.clone());
+                    }
                 }
             }
         }
-        for i in 0..shared.selected_animation().keyframes.len() {
-            for b in 0..shared.selected_animation().keyframes[i].bones.len() {
-                let bone = &shared.selected_animation().keyframes[i].bones[b];
 
-                // add bone's fields
-                for af in &bone.fields {
-                    let top = bone_tops.find(bone.id, &af.element);
-                    if top != None {
-                        continue;
-                    }
+        // render the labels!
+        for ti in &mut tops_init {
+            ui.label(ti.id.to_string());
 
-                    // add bone name if it was newly added
-                    if !bone_tops.find_bone(bone.id) {
-                        ui.label("b");
-                    }
+            // sort the elements by enum index
+            ti.elements.sort_by(|a, b| a.cmp(b));
 
-                    let label = ui.label(af.element.to_string());
-                    bone_tops.tops.push(BoneTop {
-                        id: bone.id,
-                        element: af.element.clone(),
-                        height: label.rect.top(),
-                    });
-                }
+            for e in &ti.elements {
+                let label = ui.label(e.to_string());
+                bone_tops.tops.push(BoneTop{
+                    id: ti.id,
+                    element: e.clone(),
+                    height: label.rect.top()
+                })
             }
         }
     });
@@ -390,44 +412,31 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: BoneTops,
                 .fields
                 .len()
             {
-                if shared.ui.images.len() == 0 {
-                    let img = image::load_from_memory(include_bytes!("../icon_move.png"))
-                        .unwrap()
-                        .into_rgba8();
-                    let color_image = egui::ColorImage::from_rgba_unmultiplied(
-                        [img.width() as usize, img.height() as usize],
-                        img.as_flat_samples().as_slice(),
-                    );
-                    let tex = ui
-                        .ctx()
-                        .load_texture("icon_move", color_image, Default::default());
-                    shared.ui.images.push(tex);
-                } else {
-                    let size = Vec2::new(
-                        (shared.ui.images[0].size()[0]) as f32,
-                        (shared.ui.images[0].size()[1]) as f32,
-                    );
+                let size = Vec2::new(17., 17.);
 
-                    let element = shared.selected_animation().keyframes[i].bones[b].fields[af]
-                        .element
-                        .clone();
+                let element = shared.selected_animation().keyframes[i].bones[b].fields[af]
+                    .element
+                    .clone();
 
-                    // the Y position is based on this diamond's respective label
-                    let top = bone_tops.find(id, &element).unwrap().height;
-                    let mut pos = Vec2::new(x, top + size.y / 2.);
-                    pos -= (size / 2.).into();
+                // the Y position is based on this diamond's respective label
+                let top = bone_tops.find(id, &element).unwrap().height;
+                let mut pos = Vec2::new(x, top + size.y / 2.);
+                pos -= (size / 2.).into();
 
-                    let rect = egui::Rect::from_min_size(pos.into(), size.into());
-                    egui::Image::new(&shared.ui.images[0]).paint_at(ui, rect);
+                let rect = egui::Rect::from_min_size(pos.into(), size.into());
+                let mut idx = element.clone() as usize;
+                if idx > shared.ui.anim.images.len() - 1 {
+                    idx = shared.ui.anim.images.len() - 1;
+                }
+                egui::Image::new(&shared.ui.anim.images[idx]).paint_at(ui, rect);
 
-                    let changed =
-                        check_change_diamond_drag(&element, ui, shared, pos, size, hitbox, i, b);
+                let changed =
+                    check_change_diamond_drag(&element, ui, shared, pos, size, hitbox, i, b);
 
-                    // stop rendering for this frame if a change occured, as elements might be out of order
-                    // and cause indexing issues
-                    if changed {
-                        return;
-                    }
+                // stop rendering for this frame if a change occured, as elements might be out of order
+                // and cause indexing issues
+                if changed {
+                    return;
                 }
             }
         }
