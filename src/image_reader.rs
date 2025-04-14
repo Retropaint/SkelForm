@@ -95,12 +95,23 @@ pub fn read_image_loaders(
     shared.armature.bones[shared.selected_bone_idx].tex_idx = shared.armature.textures.len() - 1;
 }
 
+pub fn read_export(shared: &Shared) {
+    if !fs::exists(".skelform_export_path").unwrap() {
+        return;
+    }
+
+    let path = fs::read_to_string(".skelform_export_path").unwrap();
+
+    utils::export_textures(path, &shared.armature.textures, &shared.armature);
+}
+
 #[cfg(not(target_arch = "wasm32"))]
-fn del_temp_files() {
+pub fn del_temp_files() {
     #[rustfmt::skip]
     let files = [
         ".skelform_img_path", 
-        ".skelform_bone_idx"
+        ".skelform_bone_idx",
+        ".skelform_export_path"
     ];
     for f in files {
         if fs::exists(f).unwrap() {

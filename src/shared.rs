@@ -699,6 +699,9 @@ impl Ui {
         if self.original_name == "" {
             just_made = true;
             self.original_name = str.clone();
+            if self.original_name == "".to_string() {
+                self.original_name = default_name.to_string();
+            }
         }
 
         let input = ui.add(egui::TextEdit::singleline(str).hint_text(default_name));
@@ -754,7 +757,6 @@ impl Ui {
                 }
             } else {
                 let mut string = value.to_string();
-                println!("{}", string);
                 let input = ui.add_sized([40., 20.], egui::TextEdit::singleline(&mut string));
                 if input.has_focus() {
                     self.edit_value = Some(value.to_string());
