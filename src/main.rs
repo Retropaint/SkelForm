@@ -6,7 +6,10 @@ use skellar::shared::*;
 fn main() -> Result<(), winit::error::EventLoopError> {
     let event_loop = winit::event_loop::EventLoop::builder().build()?;
     event_loop.set_control_flow(winit::event_loop::ControlFlow::Poll);
-    image_reader::del_temp_files();
+
+    // delete any leftover temporary files
+    file_reader::del_temp_files();
+
     let mut app = skellar::App::default();
     init_shared(&mut app.shared);
     event_loop.run_app(&mut app)?;

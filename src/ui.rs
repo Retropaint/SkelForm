@@ -83,7 +83,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     ui.horizontal(|ui| {
                         ui.set_max_width(80.);
                         if ui.button("Export").clicked() {
-                            crate::utils::open_export();
+                            crate::utils::open_export_dialog();
                             ui.close_menu();
                         }
 
@@ -92,7 +92,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         });
 
                         if input::is_pressing(winit::keyboard::KeyCode::KeyE, &shared) {
-                            crate::utils::open_export();
+                            crate::utils::open_export_dialog();
                             ui.close_menu();
                         }
                     });

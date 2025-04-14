@@ -82,7 +82,7 @@ pub fn to_vec2(f: f32) -> Vec2 {
     Vec2::new(f, f)
 }
 
-pub fn open_export() {
+pub fn open_export_dialog() {
     std::thread::spawn(move || {
         let task = rfd::FileDialog::new().save_file();
         if task == None {
