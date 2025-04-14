@@ -201,7 +201,8 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
 
         // render the labels!
         for ti in &mut tops_init {
-            ui.label(ti.id.to_string());
+            let bone = shared.find_bone(ti.id).unwrap();
+            ui.label(bone.name.to_string());
 
             // sort the elements by enum index
             ti.elements.sort_by(|a, b| a.cmp(b));
@@ -330,13 +331,17 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
             ui.add_space(20.);
 
-            //shared.ui.anim.selected_frame = shared
-            //    .ui
-            //    .singleline_input(shared.ui.anim.selected_frame as f32, ui)
-            //    as i32;
-
-            ui.label("frame:");
+            ui.label("Frame:");
             ui.add(egui::DragValue::new(&mut shared.ui.anim.selected_frame).speed(0.1));
+            if shared.ui.anim.selected_frame < 0 {
+                shared.ui.anim.selected_frame = 0;
+            }
+
+            ui.label("FPS:").on_hover_text("Frames Per Second");
+            shared.selected_animation_mut().fps = shared
+                .ui
+                .singleline_input(shared.selected_animation().fps as f32, ui)
+                as i32;
         });
     });
 }
