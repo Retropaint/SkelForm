@@ -228,13 +228,5 @@ pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::
         .fill(bg_col)
         .corner_radius(egui::CornerRadius::ZERO);
 
-    let response = ui
-        .add(if selected {
-            button.sense(egui::Sense::empty())
-        } else {
-            button
-        })
-        .on_hover_cursor(cursor);
-
-    response
+    ui.add(button).on_hover_cursor(cursor)
 }

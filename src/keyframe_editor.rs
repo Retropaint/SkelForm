@@ -90,11 +90,12 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                             let button =
                                 ui_mod::selection_button(&name, i == shared.ui.anim.selected, ui);
                             if button.clicked() {
-                                shared.ui.anim.selected = i;
-                                shared.ui.anim.selected_frame = 0;
-                            }
-                            if button.double_clicked() {
-                                shared.ui.rename_id = rename_id;
+                                if shared.ui.anim.selected != i {
+                                    shared.ui.anim.selected = i;
+                                    shared.ui.anim.selected_frame = 0;
+                                } else {
+                                    shared.ui.rename_id = rename_id;
+                                }
                             }
                         }
                     });
