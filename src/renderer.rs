@@ -123,7 +123,23 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // mouse inputs
     if !shared.input.on_ui {
         if !input::is_pressing(KeyCode::SuperLeft, &shared) {
-            edit_bone_with_mouse(shared, bones);
+            shared.cursor_icon = egui::CursorIcon::Crosshair;
+            let value: Vec2;
+            value = match shared.edit_mode {
+                // translation
+                0 => shared.move_with_mouse(&bones[shared.selected_bone_idx].pos, true),
+
+                // rotation
+                1 => Vec2::single(
+                    (shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.,
+                ),
+
+                // scale
+                2 => (shared.input.mouse / shared.window) * 2.,
+
+                _ => Vec2::default(),
+            };
+            shared.edit_bone(bones, shared.edit_mode, value);
         } else if shared.input.mouse_left != -1 && shared.selected_bone_idx != usize::MAX {
             if shared.input.mouse_left == -1 {
                 shared.input.initial_points = vec![];
@@ -140,55 +156,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.camera.pos =
                     shared.camera.initial_pos - (mouse_world - initial_world) * shared.camera.zoom;
             }
-        }
-    }
-}
-
-pub fn edit_bone_with_mouse(shared: &mut Shared, bones: Vec<Bone>) {
-    if shared.armature.bones[shared.selected_bone_idx].tex_idx == usize::MAX {
-        return;
-    }
-
-    shared.cursor_icon = egui::CursorIcon::Crosshair;
-
-    // translation
-    if shared.edit_mode == 0 {
-        // modify either the armature's, or animation keyframe's bone
-        if shared.animating && shared.ui.anim.selected != usize::MAX {
-            check_if_in_keyframe(shared.selected_bone().id, shared);
-            let pos = bones[shared.selected_bone_idx].pos;
-            let result = shared.move_with_mouse(&pos, true);
-            shared
-                .selected_anim_bone_mut()
-                .unwrap()
-                .set_field(&crate::AnimElement::Position, result);
-        } else {
-            let pos = shared.selected_bone().pos;
-            shared.selected_bone_mut().pos = shared.move_with_mouse(&pos, true);
-        }
-    // rotation
-    } else if shared.edit_mode == 1 {
-        let rot = (shared.input.mouse.x / shared.window.x) * PI * 2.;
-        if shared.animating && shared.ui.anim.selected != usize::MAX {
-            check_if_in_keyframe(shared.selected_bone().id, shared);
-            shared
-                .selected_anim_bone_mut()
-                .unwrap()
-                .set_field(&crate::AnimElement::Rotation, Vec2::new(rot, 0.));
-        } else {
-            shared.selected_bone_mut().rot = rot;
-        }
-    // scale
-    } else if shared.edit_mode == 2 {
-        let scale = (shared.input.mouse / shared.window) * 2.;
-        if shared.animating && shared.ui.anim.selected != usize::MAX {
-            check_if_in_keyframe(shared.selected_bone().id, shared);
-            shared
-                .selected_anim_bone_mut()
-                .unwrap()
-                .set_field(&crate::AnimElement::Scale, scale);
-        } else {
-            shared.selected_bone_mut().scale = scale;
         }
     }
 }
@@ -342,46 +309,4 @@ fn rect_verts(
     }
 
     vertices
-}
-
-fn check_if_in_keyframe(id: i32, shared: &mut Shared) {
-    let frame = shared.ui.anim.selected_frame;
-    // check if this keyframe exists
-    let kf = shared
-        .selected_animation()
-        .keyframes
-        .iter()
-        .position(|k| k.frame == frame);
-
-    if kf == None {
-        // create new keyframe
-        shared
-            .selected_animation_mut()
-            .keyframes
-            .push(crate::Keyframe {
-                frame,
-                bones: vec![AnimBone {
-                    id,
-                    ..Default::default()
-                }],
-                ..Default::default()
-            });
-        shared.sort_keyframes();
-    } else {
-        // check if this bone is in keyframe
-        let idx = shared.selected_animation().keyframes[kf.unwrap()]
-            .bones
-            .iter()
-            .position(|bone| bone.id == id);
-
-        if idx == None {
-            // create anim bone
-            shared.selected_animation_mut().keyframes[kf.unwrap()]
-                .bones
-                .push(AnimBone {
-                    id,
-                    ..Default::default()
-                });
-        }
-    }
 }
