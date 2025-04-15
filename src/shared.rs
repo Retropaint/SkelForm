@@ -56,6 +56,11 @@ impl Vec2 {
     pub fn equal_to(self: &Self, other: Vec2) -> bool {
         return self.x != other.x || self.y != other.y;
     }
+
+    /// For f32 values that need to be passed as Vec2.
+    pub fn single(value: f32) -> Vec2 {
+        return Vec2::new(value, 0.);
+    }
 }
 
 impl MulAssign for Vec2 {
@@ -677,6 +682,90 @@ impl Shared {
         }
 
         (mouse * self.camera.zoom) + self.input.initial_points[0]
+    }
+
+    pub fn edit_bone(&mut self, bones: Vec<Bone>, edit_mode: i32, value: Vec2) {
+        if self.armature.bones[self.selected_bone_idx].tex_idx == usize::MAX {
+            return;
+        }
+
+        self.cursor_icon = egui::CursorIcon::Crosshair;
+
+        // translation
+        if edit_mode == 0 {
+            // modify either the armature's, or animation keyframe's bone
+            if self.animating && self.ui.anim.selected != usize::MAX {
+                self.check_if_in_keyframe(self.selected_bone().id);
+                self.selected_anim_bone_mut()
+                    .unwrap()
+                    .set_field(&crate::AnimElement::Position, value);
+            } else {
+                self.selected_bone_mut().pos = value;
+            }
+        // rotation
+        } else if edit_mode == 1 {
+            if self.animating && self.ui.anim.selected != usize::MAX {
+                self.check_if_in_keyframe(self.selected_bone().id);
+                self.selected_anim_bone_mut()
+                    .unwrap()
+                    .set_field(&crate::AnimElement::Rotation, value);
+            } else {
+                self.selected_bone_mut().rot = value.x;
+            }
+        // scale
+        } else if edit_mode == 2 {
+            let scale = (self.input.mouse / self.window) * 2.;
+            if self.animating && self.ui.anim.selected != usize::MAX {
+                self.check_if_in_keyframe(self.selected_bone().id);
+                self.selected_anim_bone_mut()
+                    .unwrap()
+                    .set_field(&crate::AnimElement::Scale, scale);
+            } else {
+                self.selected_bone_mut().scale = scale;
+            }
+        }
+    }
+
+    fn check_if_in_keyframe(&mut self, id: i32) {
+        let frame = self.ui.anim.selected_frame;
+        // check if this keyframe exists
+        let kf = self
+            .selected_animation()
+            .keyframes
+            .iter()
+            .position(|k| k.frame == frame);
+
+        if kf == None {
+            // create new keyframe
+            self
+                .selected_animation_mut()
+                .keyframes
+                .push(crate::Keyframe {
+                    frame,
+                    bones: vec![AnimBone {
+                        id,
+                        ..Default::default()
+                    }],
+                    ..Default::default()
+                });
+            self.sort_keyframes();
+        } else {
+            // check if this bone is in keyframe
+            let idx = self.selected_animation().keyframes[kf.unwrap()]
+                .bones
+                .iter()
+                .position(|bone| bone.id == id);
+
+            if idx == None {
+                // create anim bone
+                self.selected_animation_mut().keyframes[kf.unwrap()]
+                    .bones
+                    .push(AnimBone {
+                        id,
+                        ..Default::default()
+                    });
+            }
+        }
     }
 }
 
