@@ -96,7 +96,7 @@ pub fn open_export_dialog() {
 }
 
 pub fn export_textures(
-    mut path: String,
+    path: String,
     textures: &Vec<crate::Texture>,
     armature: &crate::Armature,
 ) {

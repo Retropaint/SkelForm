@@ -139,7 +139,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
                 _ => Vec2::default(),
             };
-            shared.edit_bone(bones, shared.edit_mode, value);
+            shared.edit_bone(shared.edit_mode, value);
         } else if shared.input.mouse_left != -1 && shared.selected_bone_idx != usize::MAX {
             if shared.input.mouse_left == -1 {
                 shared.input.initial_points = vec![];

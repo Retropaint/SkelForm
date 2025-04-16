@@ -209,12 +209,15 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
             ti.elements.sort_by(|a, b| a.cmp(b));
 
             for e in &ti.elements {
-                let label = ui.label(e.to_string());
-                bone_tops.tops.push(BoneTop {
-                    id: ti.id,
-                    element: e.clone(),
-                    height: label.rect.top(),
-                })
+                ui.horizontal(|ui| {
+                    ui.add_space(20.);
+                    let label = ui.label(e.to_string());
+                    bone_tops.tops.push(BoneTop {
+                        id: ti.id,
+                        element: e.clone(),
+                        height: label.rect.top(),
+                    })
+                });
             }
         }
     });
@@ -341,7 +344,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             ui.label("FPS:").on_hover_text("Frames Per Second");
             shared.selected_animation_mut().fps = shared
                 .ui
-                .singleline_input(shared.selected_animation().fps as f32, ui)
+                .singleline_input("fps".to_string(), shared.selected_animation().fps as f32, ui)
                 as i32;
         });
     });

@@ -55,7 +55,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 let l = ui.label("Name:");
-                ui.text_edit_singleline(&mut shared.selected_bone_mut().name).labelled_by(l.id);
+                ui.text_edit_singleline(&mut shared.selected_bone_mut().name)
+                    .labelled_by(l.id);
             });
             ui.horizontal(|ui| {
                 ui.label("Texture:");
@@ -73,32 +74,47 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             if shared.selected_bone_idx == usize::MAX {
                 return;
             }
+
+            let mut bone = shared.selected_bone().clone();
+            if shared.animating && shared.ui.anim.selected != usize::MAX {
+                bone = shared.animate(shared.ui.anim.selected, shared.ui.anim.selected_frame)
+                    [shared.selected_bone_idx]
+                    .clone();
+            }
+            let mut edited = false;
             ui.label("Position:");
             ui.horizontal(|ui| {
                 ui.label("X");
-                float_input(ui, &mut shared.selected_bone_mut().pos.x);
+                (edited, bone.pos.x) = float_input("pos_x".to_string(), shared, ui, bone.pos.x);
+                if edited {
+                    shared.edit_bone(0, bone.pos);
+                }
                 ui.label("Y");
-                float_input(ui, &mut shared.selected_bone_mut().pos.y);
+                (edited, bone.pos.y) = float_input("pos_y".to_string(), shared, ui, bone.pos.y);
+                if edited {
+                    shared.edit_bone(0, bone.pos);
+                }
             });
             ui.label("Scale:");
             ui.horizontal(|ui| {
                 ui.label("X");
-                float_input(ui, &mut shared.selected_bone_mut().scale.x);
+                (edited, bone.scale.x) =
+                    float_input("scale_x".to_string(), shared, ui, bone.scale.x);
+                if edited {
+                    shared.edit_bone(2, bone.scale);
+                }
                 ui.label("Y");
-                float_input(ui, &mut shared.selected_bone_mut().scale.y);
+                (edited, bone.scale.y) =
+                    float_input("scale_y".to_string(), shared, ui, bone.scale.y);
+                if edited {
+                    shared.edit_bone(2, bone.scale);
+                }
             });
             ui.horizontal(|ui| {
                 ui.label("Rotation");
-                let deg = shared.selected_bone().rot / PI * 180.;
-                let mut str = deg.round().to_string();
-                if !str.contains(".") {
-                    str.push('.');
-                }
-                ui.add_sized([30., 20.], egui::TextEdit::singleline(&mut str));
-                if let Ok(f) = str.parse::<f32>() {
-                    shared.selected_bone_mut().rot = f * PI / 180.;
-                } else {
-                    shared.selected_bone_mut().rot = 0.;
+                (edited, bone.rot) = float_input("rot".to_string(), shared, ui, bone.rot);
+                if edited {
+                    shared.edit_bone(1, crate::shared::Vec2::single(bone.rot));
                 }
             });
         });
@@ -112,7 +128,7 @@ fn open_file_dialog(bone_idx: usize) {
             .add_filter("image", &["png", "jpg"])
             .pick_file();
         if task == None {
-            return
+            return;
         }
         let mut img_path = File::create(".skelform_img_path").unwrap();
         img_path
@@ -122,16 +138,37 @@ fn open_file_dialog(bone_idx: usize) {
 }
 
 // helper for editable float inputs
-fn float_input(ui: &mut egui::Ui, float: &mut f32) {
-    let truncated = (*float * 100.).trunc() / 100.;
-    let mut str = truncated.to_string();
-    if !str.contains(".") {
-        str.push('.');
-    }
-    ui.add_sized([40., 20.], egui::TextEdit::singleline(&mut str));
-    if let Ok(f) = str.parse::<f32>() {
-        *float = f;
+fn float_input(id: String, shared: &mut Shared, ui: &mut egui::Ui, value: f32) -> (bool, f32) {
+    if shared.ui.rename_id != id {
+        let input = ui.add_sized(
+            [40., 20.],
+            egui::TextEdit::singleline(&mut value.to_string()),
+        );
+        if input.has_focus() {
+            shared.ui.edit_value = Some(value.to_string());
+            shared.ui.rename_id = id.to_string();
+        }
     } else {
-        *float = 0.;
+        let input = ui.add_sized(
+            [40., 20.],
+            egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap()),
+        );
+        if input.lost_focus() {
+            shared.ui.rename_id = "".to_string();
+            if shared.ui.edit_value.as_mut().unwrap() == "" {
+                shared.ui.edit_value = Some("0".to_string());
+            }
+            return (
+                true,
+                shared
+                    .ui
+                    .edit_value
+                    .as_mut()
+                    .unwrap()
+                    .parse::<f32>()
+                    .unwrap(),
+            );
+        }
     }
+    (false, value)
 }
