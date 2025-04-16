@@ -585,75 +585,101 @@ impl Shared {
         }
 
         for b in &mut bones {
-            let mut start_kf: Option<&Keyframe> = None;
-            let mut end_kf: Option<&Keyframe> = None;
-            let mut start_bone: Option<&AnimBone> = None;
-            let mut end_bone: Option<&AnimBone> = None;
-
-            // get the frames to interpolate (or otherwise)
-            for kf in &self.selected_animation().keyframes {
-                for ab in &kf.bones {
-                    if ab.id != b.id {
-                        continue;
-                    }
-                    if kf.frame == frame {
-                        start_kf = Some(&kf);
-                        start_bone = Some(&ab);
-                        end_kf = Some(&kf);
-                        end_bone = Some(&ab);
-                        break;
-                    }
-                    if kf.frame <= frame
-                        || frame < self.selected_animation().keyframes[0].frame && start_kf == None
-                    {
-                        start_kf = Some(&kf);
-                        start_bone = Some(&ab);
-                    } else if kf.frame > frame && end_kf == None {
-                        end_kf = Some(&kf);
-                        end_bone = Some(&ab);
-                    }
-                }
-            }
-
-            // ensure start and end are always pointing somewhere
-            if start_kf == None {
-                start_kf = end_kf;
-                start_bone = end_bone;
-            } else if end_kf == None {
-                end_kf = start_kf;
-                end_bone = start_bone;
-            }
-
-            if start_bone == None && end_bone == None {
-                return bones;
-            }
-
-            let mut total_frames = end_kf.unwrap().frame - start_kf.unwrap().frame;
-            // Tweener can't have 0 duration
-            if total_frames == 0 {
-                total_frames = 1;
-            }
-
-            let current_frame = frame - start_kf.unwrap().frame;
-
             macro_rules! interpolate {
-                ($element:expr) => {
-                    Tweener::linear(
-                        start_bone.unwrap().find_field(&$element),
-                        end_bone.unwrap().find_field(&$element),
-                        total_frames,
-                    )
-                    .move_to(current_frame)
-                };
+                ($element:expr, $default:expr) => {{
+                    let (prev, next, total_frames, current_frame) = self.find_connecting_frames(
+                        b.id,
+                        $element,
+                        $default,
+                        self.ui.anim.selected_frame,
+                    );
+                    Tweener::linear(prev, next, total_frames).move_to(current_frame)
+                }};
             }
 
             // interpolate!
-            b.pos = interpolate!(AnimElement::Position);
-            b.rot = interpolate!(AnimElement::Rotation).x;
-            b.scale = interpolate!(AnimElement::Scale);
+            b.pos = interpolate!(AnimElement::Position, Vec2::ZERO);
+            b.rot = interpolate!(AnimElement::Rotation, Vec2::ZERO).x;
+            b.scale = interpolate!(AnimElement::Scale, Vec2::new(1., 1.));
         }
 
         bones
+    }
+
+    pub fn find_connecting_frames(
+        &self,
+        bone_id: i32,
+        element: AnimElement,
+        default: Vec2,
+        frame: i32,
+    ) -> (Vec2, Vec2, i32, i32) {
+        let mut prev: Option<Vec2> = None;
+        let mut next: Option<Vec2> = None;
+        let mut start_frame = 0;
+        let mut end_frame = 0;
+
+        for (i, kf) in self.selected_animation().keyframes.iter().enumerate() {
+            if self.selected_animation().keyframes[i].frame > frame {
+                break;
+            }
+            for bone in &self.selected_animation().keyframes[i].bones {
+                if bone.id != bone_id {
+                    continue;
+                }
+
+                for f in &bone.fields {
+                    if f.element != element {
+                        continue;
+                    }
+
+                    prev = Some(f.value);
+                    start_frame = kf.frame;
+                }
+            }
+        }
+
+        for (i, kf) in self.selected_animation().keyframes.iter().enumerate().rev() {
+            if self.selected_animation().keyframes[i].frame < frame {
+                break;
+            }
+            for bone in &self.selected_animation().keyframes[i].bones {
+                if bone.id != bone_id {
+                    continue;
+                }
+
+                for f in &bone.fields {
+                    if f.element != element {
+                        continue;
+                    }
+
+                    next = Some(f.value);
+                    end_frame = kf.frame;
+                }
+            }
+        }
+
+        if prev == None {
+            if next != None {
+                prev = next
+            } else {
+                prev = Some(default)
+            }
+        }
+        if next == None {
+            if prev != None {
+                next = prev;
+            } else {
+                next = Some(default);
+            }
+        }
+
+        let mut total_frames = end_frame - start_frame;
+        if total_frames == 0 {
+            total_frames = 1;
+        }
+        let current_frame = frame - start_frame;
+
+        (prev.unwrap(), next.unwrap(), total_frames, current_frame)
     }
 
     pub fn get_mouse_world(&mut self) -> Vec2 {
