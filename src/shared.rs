@@ -235,7 +235,7 @@ pub struct Ui {
     pub anim: UiAnim,
 
     // the initial value of what is being edited via input
-    edit_value: Option<String>,
+    pub edit_value: Option<String>,
 }
 
 impl Ui {
@@ -684,12 +684,10 @@ impl Shared {
         (mouse * self.camera.zoom) + self.input.initial_points[0]
     }
 
-    pub fn edit_bone(&mut self, bones: Vec<Bone>, edit_mode: i32, value: Vec2) {
+    pub fn edit_bone(&mut self, edit_mode: i32, value: Vec2) {
         if self.armature.bones[self.selected_bone_idx].tex_idx == usize::MAX {
             return;
         }
-
-        self.cursor_icon = egui::CursorIcon::Crosshair;
 
         // translation
         if edit_mode == 0 {
@@ -714,14 +712,13 @@ impl Shared {
             }
         // scale
         } else if edit_mode == 2 {
-            let scale = (self.input.mouse / self.window) * 2.;
             if self.animating && self.ui.anim.selected != usize::MAX {
                 self.check_if_in_keyframe(self.selected_bone().id);
                 self.selected_anim_bone_mut()
                     .unwrap()
-                    .set_field(&crate::AnimElement::Scale, scale);
+                    .set_field(&crate::AnimElement::Scale, value);
             } else {
-                self.selected_bone_mut().scale = scale;
+                self.selected_bone_mut().scale = value;
             }
         }
     }
@@ -737,8 +734,7 @@ impl Shared {
 
         if kf == None {
             // create new keyframe
-            self
-                .selected_animation_mut()
+            self.selected_animation_mut()
                 .keyframes
                 .push(crate::Keyframe {
                     frame,
@@ -828,12 +824,11 @@ impl Ui {
         self.anim.selected_frame = 0;
     }
 
-    pub fn singleline_input(&mut self, mut value: f32, ui: &mut egui::Ui) -> f32 {
+    pub fn singleline_input(&mut self, id: String, mut value: f32, ui: &mut egui::Ui) -> f32 {
         ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
-            if self.edit_value != None {
+            if self.edit_value != None && self.rename_id == id {
                 let mut string = self.edit_value.clone().unwrap();
                 let input = ui.add_sized([40., 20.], egui::TextEdit::singleline(&mut string));
-                input.request_focus();
                 self.edit_value = Some(string);
                 if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                     input.surrender_focus();
@@ -847,12 +842,12 @@ impl Ui {
             } else {
                 let mut string = value.to_string();
                 let input = ui.add_sized([40., 20.], egui::TextEdit::singleline(&mut string));
-                if input.has_focus() {
+                if input.gained_focus() {
+                    self.rename_id = id;
                     self.edit_value = Some(value.to_string());
                 }
             }
         });
-
         value
     }
 }
