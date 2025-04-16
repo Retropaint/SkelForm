@@ -85,12 +85,12 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.label("Position:");
             ui.horizontal(|ui| {
                 ui.label("X");
-                (edited, bone.pos.x) = float_input("pos_x".to_string(), shared, ui, bone.pos.x);
+                (edited, bone.pos.x) = float_input("pos_x".to_string(), shared, ui, bone.pos.x, None);
                 if edited {
                     shared.edit_bone(0, bone.pos);
                 }
                 ui.label("Y");
-                (edited, bone.pos.y) = float_input("pos_y".to_string(), shared, ui, bone.pos.y);
+                (edited, bone.pos.y) = float_input("pos_y".to_string(), shared, ui, bone.pos.y, None);
                 if edited {
                     shared.edit_bone(0, bone.pos);
                 }
@@ -99,20 +99,20 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.horizontal(|ui| {
                 ui.label("X");
                 (edited, bone.scale.x) =
-                    float_input("scale_x".to_string(), shared, ui, bone.scale.x);
+                    float_input("scale_x".to_string(), shared, ui, bone.scale.x, None);
                 if edited {
                     shared.edit_bone(2, bone.scale);
                 }
                 ui.label("Y");
                 (edited, bone.scale.y) =
-                    float_input("scale_y".to_string(), shared, ui, bone.scale.y);
+                    float_input("scale_y".to_string(), shared, ui, bone.scale.y, None);
                 if edited {
                     shared.edit_bone(2, bone.scale);
                 }
             });
             ui.horizontal(|ui| {
                 ui.label("Rotation");
-                (edited, bone.rot) = float_input("rot".to_string(), shared, ui, bone.rot);
+                (edited, bone.rot) = float_input("rot".to_string(), shared, ui, bone.rot, Some(180. / std::f32::consts::PI));
                 if edited {
                     shared.edit_bone(1, crate::shared::Vec2::single(bone.rot));
                 }
@@ -138,14 +138,27 @@ fn open_file_dialog(bone_idx: usize) {
 }
 
 // helper for editable float inputs
-fn float_input(id: String, shared: &mut Shared, ui: &mut egui::Ui, value: f32) -> (bool, f32) {
+fn float_input(
+    id: String,
+    shared: &mut Shared,
+    ui: &mut egui::Ui,
+    value: f32,
+    mut modifier: Option<f32>,
+) -> (bool, f32) {
+    let displayed_value;
+    if modifier != None {
+        displayed_value = value * modifier.unwrap();
+    } else {
+        displayed_value = value * 1.;
+        modifier = Some(1.);
+    }
     if shared.ui.rename_id != id {
         let input = ui.add_sized(
             [40., 20.],
-            egui::TextEdit::singleline(&mut value.to_string()),
+            egui::TextEdit::singleline(&mut displayed_value.to_string()),
         );
         if input.has_focus() {
-            shared.ui.edit_value = Some(value.to_string());
+            shared.ui.edit_value = Some(displayed_value.to_string());
             shared.ui.rename_id = id.to_string();
         }
     } else {
@@ -166,7 +179,7 @@ fn float_input(id: String, shared: &mut Shared, ui: &mut egui::Ui, value: f32) -
                     .as_mut()
                     .unwrap()
                     .parse::<f32>()
-                    .unwrap(),
+                    .unwrap() / modifier.unwrap(),
             );
         }
     }
