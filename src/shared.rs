@@ -232,6 +232,10 @@ pub struct Ui {
     pub rename_id: String,
     pub original_name: String,
 
+    // id to identify actions for polar (yes-no) dialog
+    pub polar_id: String,
+    pub polar_headline: String,
+
     pub anim: UiAnim,
 
     // the initial value of what is being edited via input
