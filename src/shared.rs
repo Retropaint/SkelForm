@@ -259,7 +259,11 @@ pub struct UiAnim {
     pub timeline_zoom: f32,
     pub lines_x: Vec<f32>,
     pub playing: bool,
-    pub elapsed: i32,
+    pub elapsed: Option<std::time::Instant>,
+
+    // the frame at which playing started
+    pub played_frame: i32,
+
     pub timeline_offset: f32,
     pub dragged_keyframe: usize,
     pub images: Vec<egui::TextureHandle>,
@@ -469,9 +473,11 @@ pub struct Shared {
     pub cursor_icon: egui::CursorIcon,
     pub ui: Ui,
     pub rendered_frames: Vec<RenderedFrame>,
+    pub start_time: Option<std::time::Instant>,
+    pub frametime: std::time::Duration,
+    pub frametime_start: Option<std::time::Instant>,
 
     pub frame: i32,
-    pub buffer_idx: usize,
 
     // tracking zoom every frame for smooth effect
     pub current_zoom: f32,
