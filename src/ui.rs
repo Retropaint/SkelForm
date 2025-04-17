@@ -22,19 +22,23 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     }
 
     // load anim change icons
-    let size = 18;
-    if shared.ui.anim.images.len() == 0 {
-        let mut full_img = image::load_from_memory(include_bytes!("../anim_icons.png")).unwrap();
-        let mut x = 0;
-        while x < full_img.width() - 1 {
-            let img = full_img.crop(x, 0, 18, 18).into_rgba8();
-            x += size;
-            let color_image = egui::ColorImage::from_rgba_unmultiplied(
-                [img.width() as usize, img.height() as usize],
-                img.as_flat_samples().as_slice(),
-            );
-            let tex = context.load_texture("anim_icons", color_image, Default::default());
-            shared.ui.anim.images.push(tex);
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let size = 18;
+        if shared.ui.anim.images.len() == 0 {
+            let mut full_img =
+                image::load_from_memory(include_bytes!("../anim_icons.png")).unwrap();
+            let mut x = 0;
+            while x < full_img.width() - 1 {
+                let img = full_img.crop(x, 0, 18, 18).into_rgba8();
+                x += size;
+                let color_image = egui::ColorImage::from_rgba_unmultiplied(
+                    [img.width() as usize, img.height() as usize],
+                    img.as_flat_samples().as_slice(),
+                );
+                let tex = context.load_texture("anim_icons", color_image, Default::default());
+                shared.ui.anim.images.push(tex);
+            }
         }
     }
 
@@ -83,6 +87,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     ui.horizontal(|ui| {
                         ui.set_max_width(80.);
                         if ui.button("Export").clicked() {
+                            #[cfg(not(target_arch = "wasm32"))]
                             crate::utils::open_export_dialog();
                             ui.close_menu();
                         }
@@ -92,6 +97,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         });
 
                         if input::is_pressing(winit::keyboard::KeyCode::KeyE, &shared) {
+                            #[cfg(not(target_arch = "wasm32"))]
                             crate::utils::open_export_dialog();
                             ui.close_menu();
                         }
@@ -208,7 +214,7 @@ pub fn button(text: &str, ui: &mut egui::Ui) -> egui::Response {
     ui.add(
         egui::Button::new(text)
             .fill(COLOR_ACCENT)
-            .corner_radius(egui::CornerRadius::ZERO)
+            .corner_radius(egui::CornerRadius::ZERO),
     )
     .on_hover_cursor(egui::CursorIcon::PointingHand)
 }

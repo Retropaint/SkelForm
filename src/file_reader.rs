@@ -95,6 +95,7 @@ pub fn read_image_loaders(
     shared.armature.bones[shared.selected_bone_idx].tex_idx = shared.armature.textures.len() - 1;
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn read_export(shared: &Shared) {
     if !fs::exists(".skelform_export_path").unwrap() {
         return;

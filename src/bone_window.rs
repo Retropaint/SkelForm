@@ -46,13 +46,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 return;
             }
 
-            // shorthand
-            if ui_mod::button("Delete Bone", ui).clicked() {
-                shared.armature.bones.remove(shared.selected_bone_idx);
-                shared.selected_bone_idx = usize::MAX;
-                return;
-            };
-
             ui.horizontal(|ui| {
                 let l = ui.label("Name:");
                 ui.text_edit_singleline(&mut shared.selected_bone_mut().name)
@@ -125,6 +118,11 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     shared.edit_bone(1, crate::shared::Vec2::single(bone.rot));
                 }
             });
+
+            if ui_mod::button("Delete Bone", ui).clicked() {
+                //shared.armature.bones.remove(shared.selected_bone_idx);
+                //shared.selected_bone_idx = usize::MAX;
+            };
         });
 }
 

@@ -47,7 +47,7 @@ pub struct App {
     gui_state: Option<egui_winit::State>,
     last_render_time: Option<Instant>,
     #[cfg(target_arch = "wasm32")]
-    renderer_receiver: Option<futures::channel::oneshot::Receiver<Renderer>>,
+    pub renderer_receiver: Option<futures::channel::oneshot::Receiver<Renderer>>,
     last_size: (u32, u32),
     pub shared: shared::Shared,
 }
@@ -135,7 +135,6 @@ impl ApplicationHandler for App {
                     self.renderer_receiver = Some(receiver);
                     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
                     console_log::init().expect("Failed to initialize logger!");
-                    #[cfg(target_arch = "wasm32")]
                     log::info!("Canvas dimensions: ({canvas_width} x {canvas_height})");
                     wasm_bindgen_futures::spawn_local(async move {
                         let renderer =
@@ -180,6 +179,8 @@ impl ApplicationHandler for App {
                 &self.renderer.as_ref().unwrap().gpu.device,
                 &self.renderer.as_ref().unwrap().bind_group_layout,
             );
+
+            #[cfg(not(target_arch = "wasm32"))]
             file_reader::read_export(&self.shared);
         }
 
@@ -479,8 +480,14 @@ impl Renderer {
         );
         self.gpu.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();
+
+        //if shared.frametime_start != None {
+        //    shared.frametime = shared.frametime_start.unwrap().elapsed();
+        //}
+        //shared.frametime_start = Some(std::time::Instant::now());
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     fn take_screenshot(
         &mut self,
         screen_descriptor: egui_wgpu::ScreenDescriptor,
@@ -596,6 +603,7 @@ impl Renderer {
     }
 
     // unfinished
+    #[cfg(not(target_arch = "wasm32"))]
     fn export_video(shared: &Shared) {
         let mut child = std::process::Command::new("ffmpeg")
             .args([
