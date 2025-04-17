@@ -14,10 +14,13 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         let mut elapsed = shared.ui.anim.elapsed.unwrap().elapsed().as_millis() as f32 / 1e3 as f32;
         let frametime = 1. / shared.selected_animation().fps as f32;
 
+        // offset elapsed time with the selected frame
+        //
+        // this only applies for the first play cycle, since selected frame
+        // is reset on the next one
         elapsed += shared.ui.anim.played_frame as f32 * frametime;
 
         shared.ui.anim.selected_frame = (elapsed / frametime) as i32;
-
         if shared.ui.anim.selected_frame >= shared.last_keyframe().unwrap().frame {
             shared.ui.anim.elapsed = Some(std::time::Instant::now());
             shared.ui.anim.played_frame = 0;
