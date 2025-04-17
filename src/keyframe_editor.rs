@@ -10,16 +10,17 @@ const LINE_OFFSET: f32 = 30.;
 
 pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
     if !shared.ui.anim.playing {
-        shared.ui.anim.elapsed = 0;
     } else {
-        shared.ui.anim.elapsed += 1;
-        let fps = shared.selected_animation().fps;
-        if shared.ui.anim.elapsed > 60 / fps {
-            shared.ui.anim.selected_frame += 1;
-            shared.ui.anim.elapsed = 0;
-            if shared.ui.anim.selected_frame > shared.last_keyframe().unwrap().frame {
-                shared.ui.anim.selected_frame = 0;
-            }
+        let mut elapsed = shared.ui.anim.elapsed.unwrap().elapsed().as_millis() as f32 / 1e3 as f32;
+        let frametime = 1. / shared.selected_animation().fps as f32;
+
+        elapsed += shared.ui.anim.played_frame as f32 * frametime;
+
+        shared.ui.anim.selected_frame = (elapsed / frametime) as i32;
+
+        if shared.ui.anim.selected_frame >= shared.last_keyframe().unwrap().frame {
+            shared.ui.anim.elapsed = Some(std::time::Instant::now());
+            shared.ui.anim.played_frame = 0;
         }
     }
 
@@ -331,6 +332,8 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
                 if button.clicked() && shared.selected_animation().keyframes.len() != 0 {
                     shared.ui.anim.playing = !shared.ui.anim.playing;
+                    shared.ui.anim.elapsed = Some(std::time::Instant::now());
+                    shared.ui.anim.played_frame = shared.ui.anim.selected_frame;
                 }
             });
 
