@@ -477,9 +477,141 @@ impl Renderer {
             &paint_jobs,
             &screen_descriptor,
         );
-
         self.gpu.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();
+
+        shared.frame += 1;
+
+        if shared.frame == 60 {
+            self.take_screenshot(screen_descriptor, paint_jobs, textures_delta, shared);
+        }
+    }
+
+    fn take_screenshot(
+        &mut self,
+        screen_descriptor: egui_wgpu::ScreenDescriptor,
+        paint_jobs: Vec<egui::epaint::ClippedPrimitive>,
+        textures_delta: egui::TexturesDelta,
+        shared: &mut shared::Shared,
+    ) {
+        let width = 1600;
+        let height = 1200;
+
+        let capture_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
+            size: wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Bgra8Unorm,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
+            label: Some("Capture Texture"),
+            view_formats: &[],
+        });
+
+        let capture_view = capture_texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        let mut encoder = self
+            .gpu
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("Copy to Buffer Encoder"),
+            });
+
+        {
+            let mut capture_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Capture Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &capture_view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_texture_view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+
+            capture_pass.set_pipeline(&self.scene.pipeline);
+
+            // core rendering logic handled in renderer.rs
+            renderer::render(&mut capture_pass, &self.gpu.device, shared);
+
+            self.egui_renderer.render(
+                &mut capture_pass.forget_lifetime(),
+                &paint_jobs,
+                &screen_descriptor,
+            );
+        }
+
+        let buffer_size = (width * height * 4) as u64; // RGBA8 (4 bytes per pixel)
+        let output_buffer = self.gpu.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Readback Buffer"),
+            size: buffer_size,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            mapped_at_creation: false,
+        });
+
+        encoder.copy_texture_to_buffer(
+            wgpu::TexelCopyTextureInfo {
+                texture: &capture_texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            wgpu::TexelCopyBufferInfo {
+                buffer: &output_buffer,
+                layout: wgpu::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(4 * width), // RGBA (4 bytes per pixel)
+                    rows_per_image: Some(height),
+                },
+            },
+            wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
+        );
+
+        self.gpu.queue.submit(std::iter::once(encoder.finish()));
+        let buffer_slice = output_buffer.slice(..);
+        buffer_slice.map_async(wgpu::MapMode::Read, |result| {
+            if result.is_err() {
+                panic!("Failed to map buffer for read.");
+            }
+        });
+
+        self.gpu.device.poll(wgpu::Maintain::Wait); //
+
+        let view = buffer_slice.get_mapped_range();
+
+        // Convert RGBA to RGB
+        let rgba: Vec<u8> = view.to_vec();
+        let rgb: Vec<u8> = rgba
+            .chunks(4)
+            .flat_map(|px| vec![px[2], px[1], px[0]]) // R, G, B
+            .collect();
+
+        let _ = image::save_buffer(
+            "test.png",
+            &rgb,
+            width,
+            height,
+            image::ExtendedColorType::Rgb8,
+        );
     }
 }
 
