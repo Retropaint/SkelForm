@@ -595,6 +595,15 @@ impl Shared {
         None
     }
 
+    pub fn find_bone_mut(&mut self, id: i32) -> Option<&mut Bone> {
+        for b in &mut self.armature.bones {
+            if b.id == id {
+                return Some(b);
+            }
+        }
+        None
+    }
+
     pub fn animate(&self, _anim_idx: usize, frame: i32) -> Vec<Bone> {
         let mut bones = self.armature.bones.clone();
 
