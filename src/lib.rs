@@ -479,32 +479,6 @@ impl Renderer {
         );
         self.gpu.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();
-
-        shared.frame += 1;
-        if shared.frame % 60 == 0 {
-            self.take_screenshot(screen_descriptor, paint_jobs, shared);
-        }
-        if shared.frame % 120 == 0 {
-            let frames = shared.rendered_frames.clone();
-            let buffer_slice = frames[shared.buffer_idx].buffer.slice(..);
-            let view = buffer_slice.get_mapped_range();
-
-            let rgba: Vec<u8> = view.to_vec();
-            let rgb: Vec<u8> = rgba
-                .chunks(4)
-                .flat_map(|px| vec![px[2], px[1], px[0]])
-                .collect();
-
-            let _ = image::save_buffer(
-                shared.rendered_frames.len().to_string() + ".png",
-                &rgb,
-                1600,
-                1200,
-                image::ExtendedColorType::Rgb8,
-            );
-
-            shared.buffer_idx += 1;
-        }
     }
 
     fn take_screenshot(
@@ -619,6 +593,66 @@ impl Renderer {
                 panic!("Failed to map buffer for read.");
             }
         });
+    }
+
+    // unfinished
+    fn export_video(shared: &Shared) {
+        let mut child = std::process::Command::new("ffmpeg")
+            .args([
+                "-f",
+                "rawvideo",
+                "-pixel_format",
+                "rgb24",
+                "-video_size",
+                "800x600",
+                "-r",
+                "15",
+                "-i",
+                "-",
+                "-c:v",
+                "libx264",
+                "-pix_fmt",
+                "yuv420p",
+                "-preset",
+                "ultrafast",
+                "-y",
+                "output.mp4",
+                "-loglevel",
+                "verbose",
+            ])
+            .stdin(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::inherit())
+            .spawn()
+            .unwrap();
+
+        let mut stdin = child.stdin.take().unwrap();
+
+        for i in 0..45 {
+            let frames = shared.rendered_frames.clone();
+            let buffer_slice = frames[i].buffer.slice(..);
+            let view = buffer_slice.get_mapped_range();
+
+            let rgba: Vec<u8> = view.to_vec();
+            let rgb: Vec<u8> = rgba
+                .chunks(4)
+                .flat_map(|px| vec![px[2], px[1], px[0]])
+                .collect();
+
+            let _ = image::save_buffer(
+                shared.rendered_frames.len().to_string() + ".png",
+                &rgb,
+                1600,
+                1200,
+                image::ExtendedColorType::Rgb8,
+            );
+
+            stdin.write_all(&rgb).unwrap();
+        }
+
+        stdin.flush().unwrap();
+        drop(stdin);
+
+        child.wait().unwrap();
     }
 }
 
