@@ -323,9 +323,16 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             } else {
                 "Play"
             };
-            if ui::button(str, ui).clicked() {
-                shared.ui.anim.playing = true;
-            }
+
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
+                let button = ui
+                    .add_sized([50., 20.], egui::Button::new(str).corner_radius(0.))
+                    .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+                if button.clicked() && shared.selected_animation().keyframes.len() != 0 {
+                    shared.ui.anim.playing = !shared.ui.anim.playing;
+                }
+            });
 
             if ui::button("+", ui).clicked() {
                 shared.ui.anim.timeline_zoom -= 0.1;
@@ -343,10 +350,11 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             ui.label("FPS:").on_hover_text("Frames Per Second");
-            shared.selected_animation_mut().fps = shared
-                .ui
-                .singleline_input("fps".to_string(), shared.selected_animation().fps as f32, ui)
-                as i32;
+            shared.selected_animation_mut().fps = shared.ui.singleline_input(
+                "fps".to_string(),
+                shared.selected_animation().fps as f32,
+                ui,
+            ) as i32;
         });
     });
 }
