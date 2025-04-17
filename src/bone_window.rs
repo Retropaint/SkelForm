@@ -137,7 +137,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             if ui_mod::button("Delete Bone", ui).clicked() {
                 shared.ui.polar_id = "delete_bone".to_string();
-                shared.ui.polar_headline = "Are you sure want to delete this bone?".to_string();
+                shared.ui.polar_headline = "Are you sure to delete this bone?".to_string();
             };
         });
 }
