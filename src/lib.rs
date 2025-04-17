@@ -481,9 +481,29 @@ impl Renderer {
         surface_texture.present();
 
         shared.frame += 1;
+        if shared.frame % 60 == 0 {
+            self.take_screenshot(screen_descriptor, paint_jobs, shared);
+        }
+        if shared.frame % 120 == 0 {
+            let frames = shared.rendered_frames.clone();
+            let buffer_slice = frames[shared.buffer_idx].buffer.slice(..);
+            let view = buffer_slice.get_mapped_range();
 
-        if shared.frame == 60 {
-            self.take_screenshot(screen_descriptor, paint_jobs, textures_delta, shared);
+            let rgba: Vec<u8> = view.to_vec();
+            let rgb: Vec<u8> = rgba
+                .chunks(4)
+                .flat_map(|px| vec![px[2], px[1], px[0]])
+                .collect();
+
+            let _ = image::save_buffer(
+                shared.rendered_frames.len().to_string() + ".png",
+                &rgb,
+                1600,
+                1200,
+                image::ExtendedColorType::Rgb8,
+            );
+
+            shared.buffer_idx += 1;
         }
     }
 
@@ -491,7 +511,6 @@ impl Renderer {
         &mut self,
         screen_descriptor: egui_wgpu::ScreenDescriptor,
         paint_jobs: Vec<egui::epaint::ClippedPrimitive>,
-        textures_delta: egui::TexturesDelta,
         shared: &mut shared::Shared,
     ) {
         let width = 1600;
@@ -556,7 +575,7 @@ impl Renderer {
             );
         }
 
-        let buffer_size = (width * height * 4) as u64; // RGBA8 (4 bytes per pixel)
+        let buffer_size = (width * height * 4) as u64;
         let output_buffer = self.gpu.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Readback Buffer"),
             size: buffer_size,
@@ -575,7 +594,7 @@ impl Renderer {
                 buffer: &output_buffer,
                 layout: wgpu::TexelCopyBufferLayout {
                     offset: 0,
-                    bytes_per_row: Some(4 * width), // RGBA (4 bytes per pixel)
+                    bytes_per_row: Some(4 * width),
                     rows_per_image: Some(height),
                 },
             },
@@ -586,32 +605,20 @@ impl Renderer {
             },
         );
 
+        shared.rendered_frames.push(RenderedFrame {
+            buffer: output_buffer.clone(),
+            width,
+            height,
+        });
+
         self.gpu.queue.submit(std::iter::once(encoder.finish()));
         let buffer_slice = output_buffer.slice(..);
         buffer_slice.map_async(wgpu::MapMode::Read, |result| {
-            if result.is_err() {
+            if let Ok(()) = result {
+            } else {
                 panic!("Failed to map buffer for read.");
             }
         });
-
-        self.gpu.device.poll(wgpu::Maintain::Wait); //
-
-        let view = buffer_slice.get_mapped_range();
-
-        // Convert RGBA to RGB
-        let rgba: Vec<u8> = view.to_vec();
-        let rgb: Vec<u8> = rgba
-            .chunks(4)
-            .flat_map(|px| vec![px[2], px[1], px[0]]) // R, G, B
-            .collect();
-
-        let _ = image::save_buffer(
-            "test.png",
-            &rgb,
-            width,
-            height,
-            image::ExtendedColorType::Rgb8,
-        );
     }
 }
 
