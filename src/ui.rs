@@ -208,7 +208,7 @@ pub fn button(text: &str, ui: &mut egui::Ui) -> egui::Response {
     ui.add(
         egui::Button::new(text)
             .fill(COLOR_ACCENT)
-            .corner_radius(egui::CornerRadius::ZERO),
+            .corner_radius(egui::CornerRadius::ZERO)
     )
     .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
