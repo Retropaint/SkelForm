@@ -647,6 +647,7 @@ impl Shared {
         let mut start_frame = 0;
         let mut end_frame = 0;
 
+        // get most previous frame with this element
         for (i, kf) in self.selected_animation().keyframes.iter().enumerate() {
             if self.selected_animation().keyframes[i].frame > frame {
                 break;
@@ -667,6 +668,7 @@ impl Shared {
             }
         }
 
+        // get first next frame with this element
         for (i, kf) in self.selected_animation().keyframes.iter().enumerate().rev() {
             if self.selected_animation().keyframes[i].frame < frame {
                 break;
@@ -687,6 +689,7 @@ impl Shared {
             }
         }
 
+        // ensure prev and next are pointing somewhere
         if prev == None {
             if next != None {
                 prev = next
@@ -703,9 +706,11 @@ impl Shared {
         }
 
         let mut total_frames = end_frame - start_frame;
+        // Tweener doesn't accept 0 duration
         if total_frames == 0 {
             total_frames = 1;
         }
+
         let current_frame = frame - start_frame;
 
         (prev.unwrap(), next.unwrap(), total_frames, current_frame)
