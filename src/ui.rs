@@ -278,6 +278,18 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                             }
                         }
 
+                        // remove all references to this bone from all animations
+                        for anim in &mut shared.armature.animations {
+                            for kf in &mut anim.keyframes {
+                                for i in 0..kf.bones.len() {
+                                    if kf.bones[i].id == id {
+                                        kf.bones.remove(i);
+                                        break
+                                    }
+                                }
+                            }
+                        }
+
                         shared.armature.bones.remove(shared.selected_bone_idx);
                         shared.selected_bone_idx = usize::MAX;
                     }
