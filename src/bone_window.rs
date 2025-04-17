@@ -174,11 +174,14 @@ fn float_input(
         displayed_value = value * 1.;
         modifier = Some(1.);
     }
+
     if shared.ui.rename_id != id {
         let input = ui.add_sized(
             [40., 20.],
             egui::TextEdit::singleline(&mut displayed_value.to_string()),
         );
+
+        // extract value as a string and store it with edit_value
         if input.has_focus() {
             shared.ui.edit_value = Some(displayed_value.to_string());
             shared.ui.rename_id = id.to_string();
@@ -188,6 +191,8 @@ fn float_input(
             [40., 20.],
             egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap()),
         );
+
+        // when done, parse and return edit_value
         if input.lost_focus() {
             shared.ui.rename_id = "".to_string();
             if shared.ui.edit_value.as_mut().unwrap() == "" {
