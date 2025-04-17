@@ -53,16 +53,18 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             });
             ui.horizontal(|ui| {
                 ui.label("Texture:");
-                if ui_mod::button("Get Image", ui).clicked() {
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
-                        let bone_idx = shared.selected_bone_idx;
-                        open_file_dialog(bone_idx);
-                    }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                    if ui_mod::button("Get Image", ui).clicked() {
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            let bone_idx = shared.selected_bone_idx;
+                            open_file_dialog(bone_idx);
+                        }
 
-                    #[cfg(target_arch = "wasm32")]
-                    toggleFileDialog(true);
-                };
+                        #[cfg(target_arch = "wasm32")]
+                        toggleFileDialog(true);
+                    };
+                })
             });
             ui.add_space(3.5);
             if shared.selected_bone_idx == usize::MAX {
