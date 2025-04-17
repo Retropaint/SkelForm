@@ -450,6 +450,12 @@ pub struct BoneTop {
     pub element: AnimElement,
     pub height: f32,
 }
+#[derive(Clone)]
+pub struct RenderedFrame {
+    pub buffer: wgpu::Buffer,
+    pub width: u32,
+    pub height: u32,
+}
 #[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
@@ -462,6 +468,10 @@ pub struct Shared {
     pub egui_ctx: egui::Context,
     pub cursor_icon: egui::CursorIcon,
     pub ui: Ui,
+    pub rendered_frames: Vec<RenderedFrame>,
+
+    pub frame: i32,
+    pub buffer_idx: usize,
 
     // tracking zoom every frame for smooth effect
     pub current_zoom: f32,

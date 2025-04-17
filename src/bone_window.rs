@@ -85,12 +85,14 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.label("Position:");
             ui.horizontal(|ui| {
                 ui.label("X");
-                (edited, bone.pos.x) = float_input("pos_x".to_string(), shared, ui, bone.pos.x, None);
+                (edited, bone.pos.x) =
+                    float_input("pos_x".to_string(), shared, ui, bone.pos.x, None);
                 if edited {
                     shared.edit_bone(0, bone.pos);
                 }
                 ui.label("Y");
-                (edited, bone.pos.y) = float_input("pos_y".to_string(), shared, ui, bone.pos.y, None);
+                (edited, bone.pos.y) =
+                    float_input("pos_y".to_string(), shared, ui, bone.pos.y, None);
                 if edited {
                     shared.edit_bone(0, bone.pos);
                 }
@@ -111,8 +113,14 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 }
             });
             ui.horizontal(|ui| {
-                ui.label("Rotation");
-                (edited, bone.rot) = float_input("rot".to_string(), shared, ui, bone.rot, Some(180. / std::f32::consts::PI));
+                ui.label("Rotation:");
+                (edited, bone.rot) = float_input(
+                    "rot".to_string(),
+                    shared,
+                    ui,
+                    bone.rot,
+                    Some(180. / std::f32::consts::PI),
+                );
                 if edited {
                     shared.edit_bone(1, crate::shared::Vec2::single(bone.rot));
                 }
@@ -179,7 +187,8 @@ fn float_input(
                     .as_mut()
                     .unwrap()
                     .parse::<f32>()
-                    .unwrap() / modifier.unwrap(),
+                    .unwrap()
+                    / modifier.unwrap(),
             );
         }
     }
