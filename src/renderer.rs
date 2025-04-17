@@ -100,7 +100,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         // draw the hovering highlight section
-        if hovered_bone as usize == i && shared.ui.polar_id == ""{
+        if hovered_bone as usize == i && shared.ui.polar_id == "" {
             render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
             render_pass.set_vertex_buffer(0, vertex_buffer(&hovered_bone_verts, device).slice(..));
             render_pass.set_index_buffer(
@@ -121,7 +121,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // mouse inputs
-    if !shared.input.on_ui && shared.ui.polar_id == ""{
+    if !shared.input.on_ui && shared.ui.polar_id == "" {
         if !input::is_pressing(KeyCode::SuperLeft, &shared) {
             shared.cursor_icon = egui::CursorIcon::Crosshair;
             let value: Vec2;
@@ -299,6 +299,15 @@ fn rect_verts(
     ];
 
     for v in &mut vertices {
+        let pivot_offset = tex.size * (bone.pivot - 0.5) * hard_scale;
+        v.pos.x -= pivot_offset.x;
+        v.pos.y += pivot_offset.y;
+
+        let rev_scale = Vec2::new(1. - bone.scale.x, 1. - bone.scale.y);
+        let scale_offset = tex.size * rev_scale * (bone.pivot - 0.5) * hard_scale;
+        v.pos.x += scale_offset.x;
+        v.pos.y -= scale_offset.y;
+
         // rotate verts
         v.pos = utils::rotate(&v.pos, bone.rot);
 

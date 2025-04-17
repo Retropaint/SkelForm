@@ -118,6 +118,21 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     shared.edit_bone(1, crate::shared::Vec2::single(bone.rot));
                 }
             });
+            ui.label("Pivot:");
+            ui.horizontal(|ui| {
+                ui.label("X");
+                (edited, bone.pivot.x) =
+                    float_input("pivot_x".to_string(), shared, ui, bone.pivot.x, None);
+                if edited {
+                    shared.edit_bone(3, bone.pivot);
+                }
+                ui.label("Y");
+                (edited, bone.pivot.y) =
+                    float_input("pivot_y".to_string(), shared, ui, bone.pivot.y, None);
+                if edited {
+                    shared.edit_bone(3, bone.pivot);
+                }
+            });
 
             if ui_mod::button("Delete Bone", ui).clicked() {
                 shared.ui.polar_id = "delete_bone".to_string();

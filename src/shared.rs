@@ -157,6 +157,17 @@ impl Sub for Vec2 {
     }
 }
 
+impl Sub<f32> for Vec2 {
+    type Output = Self;
+    #[inline(always)]
+    fn sub(self, rhs: f32) -> Self {
+        Self {
+            x: self.x - rhs,
+            y: self.y - rhs,
+        }
+    }
+}
+
 impl PartialEq for Vec2 {
     fn eq(&self, other: &Vec2) -> bool {
         return self.x == other.x && self.y == other.y;
@@ -180,13 +191,6 @@ impl fmt::Display for Vec2 {
             (self.y * dp).trunc() / dp
         )
     }
-}
-
-#[derive(PartialEq)]
-pub enum Animating {
-    BonePos,
-    RotPos,
-    ScalePos,
 }
 
 #[repr(C)]
@@ -279,6 +283,8 @@ pub struct Bone {
     pub name: String,
     pub parent_id: i32,
     pub tex_idx: usize,
+
+    pub pivot: Vec2,
 
     /// used to properly offset bone's movement to counteract it's parent
     pub parent_rot: f32,
@@ -399,6 +405,7 @@ pub enum AnimElement {
 
     Rotation,
     Scale,
+    Pivot,
 }
 
 impl AnimElement {
@@ -630,6 +637,7 @@ impl Shared {
             b.pos += interpolate!(AnimElement::Position, Vec2::ZERO);
             b.rot += interpolate!(AnimElement::Rotation, Vec2::ZERO).x;
             b.scale *= interpolate!(AnimElement::Scale, Vec2::new(1., 1.));
+            b.pivot *= interpolate!(AnimElement::Pivot, Vec2::new(1., 1.));
         }
 
         bones
@@ -749,37 +757,41 @@ impl Shared {
             return;
         }
 
-        // translation
-        if edit_mode == 0 {
-            // modify either the armature's, or animation keyframe's bone
-            if self.animating && self.ui.anim.selected != usize::MAX {
-                self.check_if_in_keyframe(self.selected_bone().id);
-                self.selected_anim_bone_mut()
-                    .unwrap()
-                    .set_field(&crate::AnimElement::Position, value);
-            } else {
-                self.selected_bone_mut().pos = value;
+        let mut element = crate::AnimElement::Position;
+
+        match edit_mode {
+            0 => {
+                element = crate::AnimElement::Position;
+                if !self.is_animating() {
+                    self.selected_bone_mut().pos = value;
+                }
             }
-        // rotation
-        } else if edit_mode == 1 {
-            if self.animating && self.ui.anim.selected != usize::MAX {
-                self.check_if_in_keyframe(self.selected_bone().id);
-                self.selected_anim_bone_mut()
-                    .unwrap()
-                    .set_field(&crate::AnimElement::Rotation, value);
-            } else {
-                self.selected_bone_mut().rot = value.x;
+            1 => {
+                element = crate::AnimElement::Rotation;
+                if !self.is_animating() {
+                    self.selected_bone_mut().rot = value.x;
+                }
             }
-        // scale
-        } else if edit_mode == 2 {
-            if self.animating && self.ui.anim.selected != usize::MAX {
-                self.check_if_in_keyframe(self.selected_bone().id);
-                self.selected_anim_bone_mut()
-                    .unwrap()
-                    .set_field(&crate::AnimElement::Scale, value);
-            } else {
-                self.selected_bone_mut().scale = value;
+            2 => {
+                element = crate::AnimElement::Scale;
+                if !self.is_animating() {
+                    self.selected_bone_mut().scale = value;
+                }
             }
+            3 => {
+                element = crate::AnimElement::Pivot;
+                if !self.is_animating() {
+                    self.selected_bone_mut().pivot = value;
+                }
+            }
+            _ => {}
+        }
+
+        if self.is_animating() {
+            self.check_if_in_keyframe(self.selected_bone().id);
+            self.selected_anim_bone_mut()
+                .unwrap()
+                .set_field(&element, value);
         }
     }
 
