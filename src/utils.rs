@@ -82,11 +82,13 @@ pub fn to_vec2(f: f32) -> Vec2 {
     Vec2::new(f, f)
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn open_export_dialog() {
+    #[cfg(target_arch = "wasm32")]
     std::thread::spawn(move || {
         let task = rfd::FileDialog::new().save_file();
         if task == None {
-            return
+            return;
         }
         let mut img_path = std::fs::File::create(".skelform_export_path").unwrap();
         img_path
@@ -95,11 +97,8 @@ pub fn open_export_dialog() {
     });
 }
 
-pub fn export_textures(
-    path: String,
-    textures: &Vec<crate::Texture>,
-    armature: &crate::Armature,
-) {
+#[cfg(not(target_arch = "wasm32"))]
+pub fn export_textures(path: String, textures: &Vec<crate::Texture>, armature: &crate::Armature) {
     // get the image size in advance
     let mut size = Vec2::default();
     for tex in textures {
