@@ -42,6 +42,10 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         }
     }
 
+    if shared.ui.polar_id != "" {
+        polar_dialog(shared, context);
+    }
+
     // Although counter-intuitive, mouse inputs are recorded here.
     // This is because egui can detect all of them even if they were not on the UI itself.
     // To determine if the mouse is on the UI, winit's mouse input is used instead (see input.rs).
@@ -235,4 +239,32 @@ pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::
         .corner_radius(egui::CornerRadius::ZERO);
 
     ui.add(button).on_hover_cursor(cursor)
+}
+
+pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
+    egui::Modal::new(shared.ui.polar_id.clone().into())
+        .frame(egui::Frame {
+            corner_radius: 0.into(),
+            fill: COLOR_MAIN,
+            inner_margin: egui::Margin::same(5),
+            stroke: egui::Stroke::new(1., COLOR_ACCENT),
+            ..Default::default()
+        })
+        .show(ctx, |ui| {
+            ui.set_width(250.);
+            ui.label(shared.ui.polar_headline.to_string());
+            ui.add_space(20.);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                if button("No", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                    shared.ui.polar_id = "".to_string();
+                }
+                if button("Yes", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    if shared.ui.polar_id == "delete_bone" {
+                        shared.armature.bones.remove(shared.selected_bone_idx);
+                        shared.selected_bone_idx = usize::MAX;
+                    }
+                    shared.ui.polar_id = "".to_string();
+                }
+            });
+        });
 }

@@ -100,7 +100,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         // draw the hovering highlight section
-        if hovered_bone as usize == i {
+        if hovered_bone as usize == i && shared.ui.polar_id == ""{
             render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
             render_pass.set_vertex_buffer(0, vertex_buffer(&hovered_bone_verts, device).slice(..));
             render_pass.set_index_buffer(
@@ -121,7 +121,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // mouse inputs
-    if !shared.input.on_ui {
+    if !shared.input.on_ui && shared.ui.polar_id == ""{
         if !input::is_pressing(KeyCode::SuperLeft, &shared) {
             shared.cursor_icon = egui::CursorIcon::Crosshair;
             let value: Vec2;
