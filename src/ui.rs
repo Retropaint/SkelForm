@@ -192,6 +192,10 @@ pub fn default_styling(context: &Context) {
 
     // remove rounded corners on windows
     visuals.window_corner_radius = egui::CornerRadius::ZERO;
+    visuals.widgets.inactive.corner_radius = egui::CornerRadius::ZERO;
+    visuals.widgets.hovered.corner_radius = egui::CornerRadius::ZERO;
+    visuals.widgets.active.corner_radius = egui::CornerRadius::ZERO;
+    visuals.widgets.open.corner_radius = egui::CornerRadius::ZERO;
 
     visuals.window_shadow = Shadow::NONE;
     visuals.window_fill = COLOR_MAIN;
