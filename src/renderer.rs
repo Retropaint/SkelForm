@@ -13,7 +13,7 @@ use winit::keyboard::KeyCode;
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
     let mut bones = shared.armature.bones.clone();
-    if shared.animating && shared.ui.anim.selected != usize::MAX {
+    if shared.is_animating() {
         bones = shared.animate(shared.ui.anim.selected, shared.ui.anim.selected_frame);
     }
 
@@ -127,7 +127,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             let value: Vec2;
             value = match shared.edit_mode {
                 // translation
-                0 => shared.move_with_mouse(&bones[shared.selected_bone_idx].pos, true),
+                0 => {
+                    let mut pos = bones[shared.selected_bone_idx].pos;
+                    if shared.is_animating() {
+                        pos = bones[shared.selected_bone_idx].pos
+                            - shared.armature.bones[shared.selected_bone_idx].pos;
+                    }
+                    shared.move_with_mouse(&pos, true)
+                }
 
                 // rotation
                 1 => Vec2::single(

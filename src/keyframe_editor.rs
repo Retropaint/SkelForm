@@ -1,7 +1,6 @@
 //! Animation keyframe editor. Very early and only proof-of-concept.
 
 use egui::Stroke;
-use ui as ui_mod;
 
 use ui::COLOR_ACCENT;
 
@@ -88,7 +87,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                             }
 
                             let button =
-                                ui_mod::selection_button(&name, i == shared.ui.anim.selected, ui);
+                                ui::selection_button(&name, i == shared.ui.anim.selected, ui);
                             if button.clicked() {
                                 if shared.ui.anim.selected != i {
                                     shared.ui.anim.selected = i;
@@ -319,17 +318,19 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.set_width(ui.available_width());
         ui.set_height(20.);
         ui.horizontal(|ui| {
-            if ui.button("Play").clicked() {
+            let str = if shared.ui.anim.playing {
+                "Pause"
+            } else {
+                "Play"
+            };
+            if ui::button(str, ui).clicked() {
                 shared.ui.anim.playing = true;
             }
 
-            if ui.button("Pause").clicked() {
-                shared.ui.anim.playing = false;
-            }
-            if ui.button("+").clicked() {
+            if ui::button("+", ui).clicked() {
                 shared.ui.anim.timeline_zoom -= 0.1;
             }
-            if ui.button("-").clicked() {
+            if ui::button("-", ui).clicked() {
                 shared.ui.anim.timeline_zoom += 0.1;
             }
 
