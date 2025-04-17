@@ -799,6 +799,10 @@ impl Shared {
             }
         }
     }
+
+    pub fn is_animating(&self) -> bool {
+        self.animating && self.ui.anim.selected != usize::MAX
+    }
 }
 
 impl Ui {
