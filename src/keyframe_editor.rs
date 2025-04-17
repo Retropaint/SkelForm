@@ -513,6 +513,23 @@ fn check_change_diamond_drag(
     shared.cursor_icon = egui::CursorIcon::Grabbing;
     let cursor = shared.ui.get_cursor(ui);
 
+    // delete element if it was dragged out of the graph
+    if cursor.y < 0. {
+        shared.selected_animation_mut().keyframes[kf_idx].bones[bone_idx].remove_field(element);
+
+        let mut delete_keyframe = true;
+        for bone in &shared.selected_animation().keyframes[kf_idx].bones {
+            if bone.fields.len() > 0 {
+                delete_keyframe = false;
+                break;
+            }
+        }
+        if delete_keyframe {
+            shared.selected_animation_mut().keyframes.remove(kf_idx);
+        }
+        return true
+    }
+
     for j in 0..shared.ui.anim.lines_x.len() {
         if shared.keyframe_at(j as i32) != None
             && shared.keyframe_at(j as i32).unwrap().frame
