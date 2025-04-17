@@ -260,6 +260,13 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                 }
                 if button("Yes", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                     if shared.ui.polar_id == "delete_bone" {
+                        // detach this bone's children, before deleting it
+                        let mut children = vec![];
+                        armature_window::get_all_children(&shared.armature.bones, &mut children, &shared.armature.bones[shared.selected_bone_idx]);
+                        for bone in children {
+                            shared.find_bone_mut(bone.id).unwrap().parent_id = -1;
+                        }
+
                         shared.armature.bones.remove(shared.selected_bone_idx);
                         shared.selected_bone_idx = usize::MAX;
                     }
