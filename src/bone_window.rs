@@ -32,9 +32,9 @@ extern "C" {
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     egui::SidePanel::right("Bone")
         .resizable(true)
-        .default_width(150.)
-        .max_width(200.)
+        .max_width(250.)
         .show(egui_ctx, |ui| {
+            ui.set_min_width(175.);
             ui.heading("Bone");
             ui.separator();
             ui.add_space(3.);
@@ -64,6 +64,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     toggleFileDialog(true);
                 };
             });
+            ui.add_space(3.5);
             if shared.selected_bone_idx == usize::MAX {
                 return;
             }
@@ -75,63 +76,63 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     .clone();
             }
             let mut edited = false;
-            ui.label("Position:");
+
+            macro_rules! input {
+                ($element:expr, $float:expr, $id:expr, $edit_id:expr, $modifier:expr, $ui:expr) => {
+                    (edited, $float) = float_input($id.to_string(), shared, $ui, $float, $modifier);
+                    if edited {
+                        shared.edit_bone($edit_id, $element);
+                    }
+                };
+            }
+
             ui.horizontal(|ui| {
-                ui.label("X");
-                (edited, bone.pos.x) =
-                    float_input("pos_x".to_string(), shared, ui, bone.pos.x, None);
-                if edited {
-                    shared.edit_bone(0, bone.pos);
-                }
-                ui.label("Y");
-                (edited, bone.pos.y) =
-                    float_input("pos_y".to_string(), shared, ui, bone.pos.y, None);
-                if edited {
-                    shared.edit_bone(0, bone.pos);
-                }
-            });
-            ui.label("Scale:");
-            ui.horizontal(|ui| {
-                ui.label("X");
-                (edited, bone.scale.x) =
-                    float_input("scale_x".to_string(), shared, ui, bone.scale.x, None);
-                if edited {
-                    shared.edit_bone(2, bone.scale);
-                }
-                ui.label("Y");
-                (edited, bone.scale.y) =
-                    float_input("scale_y".to_string(), shared, ui, bone.scale.y, None);
-                if edited {
-                    shared.edit_bone(2, bone.scale);
-                }
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
+                    ui.label("Position:");
+                });
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                    input!(bone.pos, bone.pos.y, "pos_y", 0, None, ui);
+                    ui.label("Y");
+                    input!(bone.pos, bone.pos.x, "pos_x", 0, None, ui);
+                    ui.label("X");
+                })
             });
             ui.horizontal(|ui| {
-                ui.label("Rotation:");
-                (edited, bone.rot) = float_input(
-                    "rot".to_string(),
-                    shared,
-                    ui,
-                    bone.rot,
-                    Some(180. / std::f32::consts::PI),
-                );
-                if edited {
-                    shared.edit_bone(1, crate::shared::Vec2::single(bone.rot));
-                }
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
+                    ui.label("Scale:");
+                });
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                    input!(bone.scale, bone.scale.y, "scale_y", 2, None, ui);
+                    ui.label("Y");
+                    input!(bone.scale, bone.scale.x, "scale_x", 2, None, ui);
+                    ui.label("X");
+                });
             });
-            ui.label("Pivot:");
             ui.horizontal(|ui| {
-                ui.label("X");
-                (edited, bone.pivot.x) =
-                    float_input("pivot_x".to_string(), shared, ui, bone.pivot.x, None);
-                if edited {
-                    shared.edit_bone(3, bone.pivot);
-                }
-                ui.label("Y");
-                (edited, bone.pivot.y) =
-                    float_input("pivot_y".to_string(), shared, ui, bone.pivot.y, None);
-                if edited {
-                    shared.edit_bone(3, bone.pivot);
-                }
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
+                    ui.label("Pivot:");
+                });
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                    input!(bone.pivot, bone.pivot.y, "pivot_y", 3, None, ui);
+                    ui.label("Y");
+                    input!(bone.pivot, bone.pivot.x, "pivot_x", 3, None, ui);
+                    ui.label("X");
+                });
+            });
+            ui.horizontal(|ui| {
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
+                    ui.label("Rotation:");
+                });
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                    input!(
+                        crate::Vec2::single(bone.rot),
+                        bone.rot,
+                        "rot",
+                        1,
+                        Some(180. / std::f32::consts::PI),
+                        ui
+                    );
+                });
             });
 
             if ui_mod::button("Delete Bone", ui).clicked() {
