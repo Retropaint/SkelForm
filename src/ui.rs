@@ -287,9 +287,13 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                                         }
                                     }
                                 }
+                                for i in 0..anim.keyframes.len() {
+                                    if anim.keyframes[i].bones.len() == 0 {
+                                        anim.keyframes.remove(i);
+                                    }
+                                }
                             }
                         }
-
                         shared.selected_bone_idx = usize::MAX;
                     }
                     shared.ui.polar_id = "".to_string();
