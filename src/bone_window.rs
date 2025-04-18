@@ -3,7 +3,6 @@
 use egui::*;
 
 use crate::{shared::*, ui as ui_mod};
-use std::f32::consts::PI;
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
@@ -57,8 +56,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     if ui_mod::button("Get Image", ui).clicked() {
                         #[cfg(not(target_arch = "wasm32"))]
                         {
-                            let bone_idx = shared.selected_bone_idx;
-                            open_file_dialog(bone_idx);
+                            open_file_dialog();
                         }
 
                         #[cfg(target_arch = "wasm32")]
@@ -73,7 +71,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             let mut bone = shared.selected_bone().clone();
             if shared.animating && shared.ui.anim.selected != usize::MAX {
-                bone = shared.animate(shared.ui.anim.selected, shared.ui.anim.selected_frame)
+                bone = shared.animate(shared.ui.anim.selected)
                     [shared.selected_bone_idx]
                     .clone();
             }
@@ -145,7 +143,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn open_file_dialog(bone_idx: usize) {
+fn open_file_dialog() {
     #[cfg(not(target_arch = "wasm32"))]
     thread::spawn(move || {
         let task = rfd::FileDialog::new()
