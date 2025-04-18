@@ -183,7 +183,7 @@ impl ApplicationHandler for App {
             #[cfg(not(target_arch = "wasm32"))]
             {
                 file_reader::read_export(&self.shared);
-                file_reader::read_import(&self.shared);
+                file_reader::read_import(&mut self.shared);
             }
         }
 

@@ -61,6 +61,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             &shared.armature.textures[temp_bones[i].tex_idx],
             shared.window.x / shared.window.y,
         );
+        
         verts.push(this_verts);
     }
 

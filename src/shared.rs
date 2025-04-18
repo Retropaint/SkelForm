@@ -10,7 +10,16 @@ use wgpu::BindGroup;
 use winit::keyboard::KeyCode;
 
 #[repr(C)]
-#[derive(Debug, serde::Serialize, Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(
+    Debug,
+    serde::Serialize,
+    serde::Deserialize,
+    Default,
+    Copy,
+    Clone,
+    bytemuck::Pod,
+    bytemuck::Zeroable,
+)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
@@ -277,7 +286,7 @@ pub struct UiAnim {
     pub images: Vec<egui::TextureHandle>,
 }
 
-#[derive(serde::Serialize, Clone, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Bone {
     pub id: i32,
     pub name: String,
@@ -294,35 +303,36 @@ pub struct Bone {
     pub pos: Vec2,
 }
 
-#[derive(serde::Serialize, Clone, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Armature {
     pub bones: Vec<Bone>,
     pub animations: Vec<Animation>,
 
-    #[serde(skip)]
     pub textures: Vec<Texture>,
 }
 
-#[derive(serde::Serialize, Clone, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Texture {
     pub size: Vec2,
+
+    #[serde(skip)]
     pub pixels: Vec<u8>,
 }
 
-#[derive(serde::Serialize, Clone, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Animation {
     pub name: String,
     pub fps: i32,
     pub keyframes: Vec<Keyframe>,
 }
 
-#[derive(PartialEq, serde::Serialize, Clone, Default)]
+#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Keyframe {
     pub frame: i32,
     pub bones: Vec<AnimBone>,
 }
 
-#[derive(PartialEq, serde::Serialize, Clone, Default)]
+#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct AnimBone {
     pub id: i32,
     pub fields: Vec<AnimField>,
@@ -369,7 +379,7 @@ impl AnimBone {
     }
 }
 
-#[derive(PartialEq, serde::Serialize, Clone, Default)]
+#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct AnimField {
     pub element: AnimElement,
 
@@ -389,7 +399,7 @@ pub struct AnimField {
     pub label_top: f32,
 }
 
-#[derive(Eq, Ord, PartialEq, PartialOrd, serde::Serialize, Clone, Default, Debug)]
+#[derive(Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
 pub enum AnimElement {
     #[default]
     Position,
