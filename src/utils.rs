@@ -84,7 +84,7 @@ pub fn to_vec2(f: f32) -> Vec2 {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn open_export_dialog() {
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(not(target_arch = "wasm32"))]
     std::thread::spawn(move || {
         let task = rfd::FileDialog::new().save_file();
         if task == None {
@@ -98,7 +98,22 @@ pub fn open_export_dialog() {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn export_textures(path: String, textures: &Vec<crate::Texture>, armature: &crate::Armature) {
+pub fn open_import_dialog() {
+    #[cfg(not(target_arch = "wasm32"))]
+    std::thread::spawn(move || {
+        let task = rfd::FileDialog::new().pick_file();
+        if task == None {
+            return;
+        }
+        let mut img_path = std::fs::File::create(".skelform_import_path").unwrap();
+        img_path
+            .write_all(task.unwrap().as_path().to_str().unwrap().as_bytes())
+            .unwrap();
+    });
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn export(path: String, textures: &Vec<crate::Texture>, armature: &crate::Armature) {
     // get the image size in advance
     let mut size = Vec2::default();
     for tex in textures {
@@ -164,4 +179,9 @@ pub fn export_textures(path: String, textures: &Vec<crate::Texture>, armature: &
     zip.finish().unwrap();
 
     std::fs::remove_file("temp.png").unwrap();
+}
+
+pub fn import(path: String) {
+    let file = std::fs::File::open(path);
+    let mut zip = zip::ZipArchive::new(file.unwrap());
 }

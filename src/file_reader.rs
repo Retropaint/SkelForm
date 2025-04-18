@@ -97,13 +97,26 @@ pub fn read_image_loaders(
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn read_export(shared: &Shared) {
-    if !fs::exists(".skelform_export_path").unwrap() {
+    let file = ".skelform_export_path";
+    if !fs::exists(file).unwrap() {
         return;
     }
 
-    let path = fs::read_to_string(".skelform_export_path").unwrap();
+    let path = fs::read_to_string(file).unwrap();
 
-    utils::export_textures(path, &shared.armature.textures, &shared.armature);
+    utils::export(path, &shared.armature.textures, &shared.armature);
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn read_import(shared: &Shared) {
+    let file = ".skelform_import_path";
+    if !fs::exists(file).unwrap() {
+        return;
+    }
+
+    let path = fs::read_to_string(file).unwrap();
+
+    utils::import(path);
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -112,7 +125,8 @@ pub fn del_temp_files() {
     let files = [
         ".skelform_img_path", 
         ".skelform_bone_idx",
-        ".skelform_export_path"
+        ".skelform_export_path",
+        ".skelform_import_path"
     ];
     for f in files {
         if fs::exists(f).unwrap() {

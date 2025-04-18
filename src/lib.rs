@@ -171,7 +171,7 @@ impl ApplicationHandler for App {
             }
         }
 
-        // Check if an image is uploaded (to be turned into a texture)
+        // temp file reading stuff
         if let Some(_) = self.renderer.as_ref() {
             file_reader::read_image_loaders(
                 &mut self.shared,
@@ -181,7 +181,10 @@ impl ApplicationHandler for App {
             );
 
             #[cfg(not(target_arch = "wasm32"))]
-            file_reader::read_export(&self.shared);
+            {
+                file_reader::read_export(&self.shared);
+                file_reader::read_import(&self.shared);
+            }
         }
 
         let (Some(gui_state), Some(renderer), Some(window), Some(last_render_time)) = (
