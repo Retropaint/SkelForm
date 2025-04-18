@@ -1,6 +1,5 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
-
 use crate::{
     input,
     shared::{Bone, Shared, Texture, Vec2, Vertex},

@@ -90,6 +90,24 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 ui.menu_button("File", |ui| {
                     ui.horizontal(|ui| {
                         ui.set_max_width(80.);
+                        if ui.button("Import").clicked() {
+                            #[cfg(not(target_arch = "wasm32"))]
+                            crate::utils::open_import_dialog();
+                            ui.close_menu();
+                        }
+
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            ui.label("I");
+                        });
+
+                        if input::is_pressing(winit::keyboard::KeyCode::KeyI, &shared) {
+                            #[cfg(not(target_arch = "wasm32"))]
+                            crate::utils::open_import_dialog();
+                            ui.close_menu();
+                        }
+                    });
+                    ui.horizontal(|ui| {
+                        ui.set_max_width(80.);
                         if ui.button("Export").clicked() {
                             #[cfg(not(target_arch = "wasm32"))]
                             crate::utils::open_export_dialog();
