@@ -325,16 +325,7 @@ pub struct Keyframe {
 #[derive(PartialEq, serde::Serialize, Clone, Default)]
 pub struct AnimBone {
     pub id: i32,
-    pub rot: f32,
-    pub pos: Vec2,
-    pub scale: Vec2,
-
     pub fields: Vec<AnimField>,
-
-    #[serde(skip)]
-    pub pos_top: f32,
-    #[serde(skip)]
-    pub rot_top: f32,
 }
 
 impl AnimBone {
@@ -600,6 +591,16 @@ impl Shared {
             }
         }
         None
+    }
+
+    pub fn delete_bone(&mut self, id: i32) {
+        for i in 0..self.armature.bones.len() {
+            let bone_id = self.armature.bones[i].id;
+            if bone_id == id {
+                self.armature.bones.remove(i);
+                break;
+            }
+        }
     }
 
     pub fn find_bone_mut(&mut self, id: i32) -> Option<&mut Bone> {
