@@ -108,7 +108,7 @@ pub fn read_export(shared: &Shared) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn read_import(shared: &Shared) {
+pub fn read_import(shared: &mut Shared) {
     let file = ".skelform_import_path";
     if !fs::exists(file).unwrap() {
         return;
@@ -116,7 +116,9 @@ pub fn read_import(shared: &Shared) {
 
     let path = fs::read_to_string(file).unwrap();
 
-    utils::import(path);
+    utils::import(path, shared);
+
+    del_temp_files();
 }
 
 #[cfg(not(target_arch = "wasm32"))]

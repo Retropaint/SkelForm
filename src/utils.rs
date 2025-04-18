@@ -2,7 +2,7 @@
 
 use crate::shared::{Vec2, Vertex};
 
-use std::io::Write;
+use std::io::{Read, Write};
 /// Convert a point from screen to world space.
 pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
     Vec2 {
@@ -159,8 +159,7 @@ pub fn export(path: String, textures: &Vec<crate::Texture>, armature: &crate::Ar
     let img_data = std::fs::read("./temp.png").unwrap();
 
     // clone armature and make some edits, then serialize it
-    let mut armature_copy = armature.clone();
-    armature_copy.textures = vec![];
+    let armature_copy = armature.clone();
     let armature_json = serde_json::to_string(&armature_copy).unwrap();
 
     // create zip file
@@ -174,14 +173,34 @@ pub fn export(path: String, textures: &Vec<crate::Texture>, armature: &crate::Ar
     zip.start_file("textures.png", options).unwrap();
     zip.write(&img_data.to_vec()).unwrap();
 
-    // Apply the changes you've made.
-    // Dropping the `ZipWriter` will have the same effect, but may silently fail
     zip.finish().unwrap();
 
     std::fs::remove_file("temp.png").unwrap();
 }
 
-pub fn import(path: String) {
+pub fn import(path: String, shared: &mut crate::Shared) {
     let file = std::fs::File::open(path);
-    let mut zip = zip::ZipArchive::new(file.unwrap());
+    let mut zip = zip::ZipArchive::new(file.unwrap()).unwrap();
+
+    // load armature
+    let armature_file = zip.by_name("armature.json").unwrap();
+    let mut armature: crate::Armature = serde_json::from_reader(armature_file).unwrap();
+
+    // load texture
+
+    let texture_file = zip.by_name("textures.png").unwrap();
+
+    let mut bytes = vec![];
+    for byte in texture_file.bytes() {
+        bytes.push(byte.unwrap());
+    }
+    let mut img = image::load_from_memory(&bytes).unwrap();
+
+    let mut offset = 0;
+    for texture in &mut armature.textures {
+        texture.pixels = img.crop(offset, 0, texture.size.x as u32, texture.size.y as u32).into_rgba8().to_vec();
+        offset += texture.size.x as u32;
+    }
+
+    shared.armature = armature;
 }
