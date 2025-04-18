@@ -488,7 +488,7 @@ impl Renderer {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    fn take_screenshot(
+    fn _take_screenshot(
         &mut self,
         screen_descriptor: egui_wgpu::ScreenDescriptor,
         paint_jobs: Vec<egui::epaint::ClippedPrimitive>,
@@ -604,7 +604,7 @@ impl Renderer {
 
     // unfinished
     #[cfg(not(target_arch = "wasm32"))]
-    fn export_video(shared: &Shared) {
+    fn _export_video(shared: &Shared) {
         let mut child = std::process::Command::new("ffmpeg")
             .args([
                 "-f",

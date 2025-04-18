@@ -1,11 +1,10 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
-use std::f32::consts::PI;
 
 use crate::{
     input,
     shared::{Bone, Shared, Texture, Vec2, Vertex},
-    utils, AnimBone,
+    utils,
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
@@ -14,7 +13,7 @@ use winit::keyboard::KeyCode;
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
     let mut bones = shared.armature.bones.clone();
     if shared.is_animating() {
-        bones = shared.animate(shared.ui.anim.selected, shared.ui.anim.selected_frame);
+        bones = shared.animate(shared.ui.anim.selected);
     }
 
     let mut verts = vec![];

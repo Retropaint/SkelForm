@@ -612,7 +612,7 @@ impl Shared {
         None
     }
 
-    pub fn animate(&self, _anim_idx: usize, frame: i32) -> Vec<Bone> {
+    pub fn animate(&self, _anim_idx: usize) -> Vec<Bone> {
         let mut bones = self.armature.bones.clone();
 
         // ignore if this animation has no keyframes
