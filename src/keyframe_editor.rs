@@ -143,7 +143,9 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             ui.vertical(|ui| {
-                draw_top_bar(ui, shared, width, hitbox);
+                if shared.ui.anim.lines_x.len() > 0 {
+                    draw_top_bar(ui, shared, width, hitbox);
+                }
 
                 // The options bar has to be at the bottom, but it needs to be created first
                 // so that the remaining height can be taken up by timeline graph.
@@ -285,7 +287,7 @@ pub fn draw_timeline_graph(
                     ui.set_height(ui.available_height());
 
                     // render darkened background after last keyframe
-                    if shared.last_keyframe() != None {
+                    if shared.last_keyframe() != None && shared.ui.anim.lines_x.len() > 0 {
                         let (rect, _) = ui.allocate_exact_size(
                             egui::vec2(ui.available_width(), ui.available_height()),
                             egui::Sense::empty(),
@@ -526,7 +528,7 @@ fn check_change_diamond_drag(
         if delete_keyframe {
             shared.selected_animation_mut().keyframes.remove(kf_idx);
         }
-        return true
+        return true;
     }
 
     for j in 0..shared.ui.anim.lines_x.len() {

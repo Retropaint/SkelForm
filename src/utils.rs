@@ -187,7 +187,6 @@ pub fn import(path: String, shared: &mut crate::Shared) {
     let mut armature: crate::Armature = serde_json::from_reader(armature_file).unwrap();
 
     // load texture
-
     let texture_file = zip.by_name("textures.png").unwrap();
 
     let mut bytes = vec![];

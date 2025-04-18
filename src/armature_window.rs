@@ -90,7 +90,7 @@ pub fn new_bone(bones: &mut Vec<Bone>) {
         parent_id: -1,
         id: generate_id(&bones),
         scale: Vec2 { x: 1., y: 1. },
-        tex_idx: usize::MAX,
+        tex_idx: -1,
         pivot: Vec2::new(0.5, 0.5),
         ..Default::default()
     });
