@@ -291,7 +291,7 @@ pub struct Bone {
     pub id: i32,
     pub name: String,
     pub parent_id: i32,
-    pub tex_idx: usize,
+    pub tex_idx: i32,
 
     pub pivot: Vec2,
 
@@ -764,7 +764,7 @@ impl Shared {
     }
 
     pub fn edit_bone(&mut self, edit_mode: i32, value: Vec2) {
-        if self.armature.bones[self.selected_bone_idx].tex_idx == usize::MAX {
+        if self.armature.bones[self.selected_bone_idx].tex_idx == -1 {
             return;
         }
 

@@ -26,7 +26,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // using while loop to prevent borrow issues
     for i in 0..temp_bones.len() {
-        if temp_bones[i].tex_idx == usize::MAX {
+        if temp_bones[i].tex_idx == -1 {
             verts.push(vec![]);
             continue;
         }
@@ -58,7 +58,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             &temp_bones[i],
             &shared.camera.pos,
             shared.camera.zoom,
-            &shared.armature.textures[temp_bones[i].tex_idx],
+            &shared.armature.textures[temp_bones[i].tex_idx as usize],
             shared.window.x / shared.window.y,
         );
         
@@ -72,7 +72,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // This has to be in reverse (for now) since bones are rendered in ascending order of the array,
     // so it visually makes sense to click the one that shows in front.
     for i in (0..temp_bones.len()).rev() {
-        if shared.armature.bones[i].tex_idx == usize::MAX || verts[i].len() == 0 {
+        if shared.armature.bones[i].tex_idx == -1 || verts[i].len() == 0 {
             continue;
         }
         let is_in_box: bool;
@@ -94,7 +94,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // finally, draw the bones
     for (i, b) in temp_bones.iter().enumerate() {
-        if b.tex_idx == usize::MAX || verts[i].len() == 0 {
+        if b.tex_idx == -1 || verts[i].len() == 0 {
             continue;
         }
 
@@ -110,7 +110,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         // draw bone
-        render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx], &[]);
+        render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx as usize], &[]);
         render_pass.set_vertex_buffer(0, vertex_buffer(&verts[i], device).slice(..));
         render_pass.set_index_buffer(
             index_buffer([0, 1, 2, 0, 1, 3].to_vec(), &device).slice(..),

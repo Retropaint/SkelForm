@@ -92,7 +92,8 @@ pub fn read_image_loaders(
     });
 
     // assign this texture to the selected bone
-    shared.armature.bones[shared.selected_bone_idx].tex_idx = shared.armature.textures.len() - 1;
+    shared.armature.bones[shared.selected_bone_idx].tex_idx =
+        shared.armature.textures.len() as i32 - 1;
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -105,6 +106,8 @@ pub fn read_export(shared: &Shared) {
     let path = fs::read_to_string(file).unwrap();
 
     utils::export(path, &shared.armature.textures, &shared.armature);
+
+    del_temp_files();
 }
 
 #[cfg(not(target_arch = "wasm32"))]
