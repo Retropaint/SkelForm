@@ -264,33 +264,32 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                 }
                 if button("Yes", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                     if shared.ui.polar_id == "delete_bone" {
-                        // detach this bone's children, before deleting it
-                        let mut children = vec![];
+                        // remove all children of this bone as well
+                        let mut children =
+                            vec![shared.armature.bones[shared.selected_bone_idx].clone()];
                         armature_window::get_all_children(
                             &shared.armature.bones,
                             &mut children,
                             &shared.armature.bones[shared.selected_bone_idx],
                         );
-                        let id = shared.armature.bones[shared.selected_bone_idx].id;
-                        for bone in children {
-                            if bone.parent_id == id {
-                                shared.find_bone_mut(bone.id).unwrap().parent_id = -1;
-                            }
+                        children.reverse();
+                        for bone in &children {
+                            shared.delete_bone(bone.id);
                         }
 
-                        // remove all references to this bone from all animations
-                        for anim in &mut shared.armature.animations {
-                            for kf in &mut anim.keyframes {
-                                for i in 0..kf.bones.len() {
-                                    if kf.bones[i].id == id {
-                                        kf.bones.remove(i);
-                                        break
+                        // remove all references to this bone and it's children from all animations
+                        for bone in &children {
+                            for anim in &mut shared.armature.animations {
+                                for kf in &mut anim.keyframes {
+                                    for i in 0..kf.bones.len() {
+                                        if bone.id == kf.bones[i].id {
+                                            kf.bones.remove(i);
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        shared.armature.bones.remove(shared.selected_bone_idx);
                         shared.selected_bone_idx = usize::MAX;
                     }
                     shared.ui.polar_id = "".to_string();
