@@ -25,7 +25,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.horizontal(|ui| {
                 if ui_mod::button("New Bone", ui).clicked() {
                     let bone = new_bone(&mut shared.armature.bones);
-                    shared.actions.push(Action{
+                    shared.undo_actions.push(Action{
                         action: ActionEnum::Bone,
                         action_type: ActionType::Created,
                         id: bone.id,

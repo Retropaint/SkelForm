@@ -52,19 +52,18 @@ pub fn keyboard_input(
 
     let mut undo = false;
     let mut redo = false;
-    if is_pressing(KeyCode::KeyZ, &shared)
-        && shared.input.modifier == 1
-        && shared.actions.len() != 0
-    {
-        undo = true;
-    } else if is_pressing(KeyCode::KeyY, &shared) {
-        redo = true;
+    if shared.input.modifier == 1 {
+        if is_pressing(KeyCode::KeyZ, &shared) && shared.undo_actions.len() != 0 {
+            undo = true;
+        } else if is_pressing(KeyCode::KeyY, &shared) && shared.redo_actions.len() != 0 {
+            redo = true;
+        }
     }
 
     if undo || redo {
         let action: Action;
         if undo {
-            action = shared.actions.last().unwrap().clone();
+            action = shared.undo_actions.last().unwrap().clone();
         } else {
             action = shared.redo_actions.last().unwrap().clone();
         }
@@ -94,9 +93,9 @@ pub fn keyboard_input(
 
         if undo {
             shared.redo_actions.push(new_action);
-            shared.actions.pop();
+            shared.undo_actions.pop();
         } else {
-            shared.actions.push(new_action);
+            shared.undo_actions.push(new_action);
             shared.redo_actions.pop();
         }
     }

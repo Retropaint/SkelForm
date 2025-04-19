@@ -125,7 +125,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     } else {
         if !shared.editing_bone {
             if shared.is_animating() {
-                shared.actions.push(crate::Action {
+                shared.undo_actions.push(crate::Action {
                     action: crate::ActionEnum::Animation,
                     action_type: crate::ActionType::Edited,
                     id: shared.ui.anim.selected as i32,
