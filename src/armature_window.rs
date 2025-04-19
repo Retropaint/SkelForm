@@ -24,7 +24,13 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 if ui_mod::button("New Bone", ui).clicked() {
-                    new_bone(&mut shared.armature.bones);
+                    let bone = new_bone(&mut shared.armature.bones);
+                    shared.actions.push(Action{
+                        action: ActionEnum::Bone,
+                        action_type: ActionType::Created,
+                        ints: vec![bone.id],
+                        ..Default::default()
+                    })
                 }
                 let drag_name = if shared.dragging { "Edit" } else { "Drag" };
                 if ui_mod::button(drag_name, ui).clicked() {
@@ -84,8 +90,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         });
 }
 
-pub fn new_bone(bones: &mut Vec<Bone>) {
-    bones.push(Bone {
+pub fn new_bone(bones: &mut Vec<Bone>) -> Bone {
+    let new_bone = Bone {
         name: "bone".to_string() + &bones.len().to_string(),
         parent_id: -1,
         id: generate_id(&bones),
@@ -93,7 +99,9 @@ pub fn new_bone(bones: &mut Vec<Bone>) {
         tex_idx: -1,
         pivot: Vec2::new(0.5, 0.5),
         ..Default::default()
-    });
+    };
+    bones.push(new_bone.clone());
+    new_bone
 }
 
 fn check_bone_dragging(bones: &mut Vec<Bone>, ui: &mut egui::Ui, drag: Response, idx: i32) {

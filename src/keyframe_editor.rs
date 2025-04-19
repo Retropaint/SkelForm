@@ -249,9 +249,12 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     draw_diamond(ui, pos);
 
                     // create dragging area for diamond
-                    let rect =
-                        egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5.));
+                    let rect = egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5.));
                     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
+
+                    if response.drag_started() {
+                        shared.ui.anim.selected_frame = kf.frame as i32;
+                    }
 
                     if response.hovered() {
                         shared.cursor_icon = egui::CursorIcon::Grab;
@@ -451,7 +454,7 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: BoneTops,
                 // the Y position is based on this diamond's respective label
                 let top = bone_tops.find(id, &element).unwrap().height;
                 let pos = Vec2::new(x, top + size.y / 2.);
-                let offset = size/2.;
+                let offset = size / 2.;
 
                 let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
                 let mut idx = element.clone() as usize;
