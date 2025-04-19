@@ -60,7 +60,12 @@ pub fn keyboard_input(
         if action.action_type == ActionType::Created {
             match &action.action {
                 ActionEnum::Bone => {
+                    shared.selected_bone_idx = usize::MAX;
                     shared.armature.bones.pop();
+                },
+                ActionEnum::Animation => {
+                    shared.ui.anim.selected = usize::MAX;
+                    shared.armature.animations.pop();
                 }
                 _ => {}
             }

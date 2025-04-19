@@ -424,6 +424,7 @@ pub enum AnimElement {
 pub enum ActionEnum {
     #[default]
     Bone,
+    Animation,
     Keyframe,
 }
 #[derive(Default, PartialEq, Clone)]
