@@ -50,12 +50,25 @@ pub fn keyboard_input(
         }
     }
 
-    // undo/redo
+    let mut undo = false;
+    let mut redo = false;
     if is_pressing(KeyCode::KeyZ, &shared)
         && shared.input.modifier == 1
         && shared.actions.len() != 0
     {
-        let action = shared.actions.last().unwrap().clone();
+        undo = true;
+    } else if is_pressing(KeyCode::KeyY, &shared) {
+        redo = true;
+    }
+
+    if undo || redo {
+        let action: Action;
+        if undo {
+            action = shared.actions.last().unwrap().clone();
+        } else {
+            action = shared.redo_actions.last().unwrap().clone();
+        }
+        let mut new_action = action.clone();
 
         if action.action_type == ActionType::Created {
             match &action.action {
@@ -72,17 +85,24 @@ pub fn keyboard_input(
         } else {
             match &action.action {
                 ActionEnum::Bone => {
+                    new_action.bone = shared.armature.bones[action.id as usize].clone();
                     shared.armature.bones[action.id as usize] = action.bone.clone();
                 }
                 ActionEnum::Animation => {
-                    shared.armature.animations[action.id as usize] =
-                        action.animation.clone();
+                    new_action.animation = shared.armature.animations[action.id as usize].clone();
+                    shared.armature.animations[action.id as usize] = action.animation.clone();
                 }
                 _ => {}
             }
         }
 
-        shared.actions.pop();
+        if undo {
+            shared.redo_actions.push(new_action);
+            shared.actions.pop();
+        } else {
+            shared.actions.push(new_action);
+            shared.redo_actions.pop();
+        }
     }
 }
 
