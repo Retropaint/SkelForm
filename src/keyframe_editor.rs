@@ -250,7 +250,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
 
                     // create dragging area for diamond
                     let rect =
-                        egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5. * 2.0));
+                        egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5.));
                     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
                     if response.hovered() {
@@ -290,8 +290,10 @@ pub fn draw_timeline_graph(
                     ui.set_height(ui.available_height());
 
                     // render darkened background after last keyframe
-                    if shared.last_keyframe() != None && (shared.last_keyframe().unwrap().frame as usize)
-                        < shared.ui.anim.lines_x.len() {
+                    if shared.last_keyframe() != None
+                        && (shared.last_keyframe().unwrap().frame as usize)
+                            < shared.ui.anim.lines_x.len()
+                    {
                         let (rect, _) = ui.allocate_exact_size(
                             egui::vec2(ui.available_width(), ui.available_height()),
                             egui::Sense::empty(),
@@ -448,10 +450,10 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: BoneTops,
 
                 // the Y position is based on this diamond's respective label
                 let top = bone_tops.find(id, &element).unwrap().height;
-                let mut pos = Vec2::new(x, top + size.y / 2.);
-                pos -= (size / 2.).into();
+                let pos = Vec2::new(x, top + size.y / 2.);
+                let offset = size/2.;
 
-                let rect = egui::Rect::from_min_size(pos.into(), size.into());
+                let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
                 let mut idx = element.clone() as usize;
                 if idx > shared.ui.anim.images.len() - 1 {
                     idx = shared.ui.anim.images.len() - 1;
@@ -502,7 +504,7 @@ fn check_change_diamond_drag(
     kf_idx: usize,
     bone_idx: usize,
 ) -> bool {
-    let rect = egui::Rect::from_center_size(pos.into(), size.into());
+    let rect = egui::Rect::from_center_size(pos.into(), (size * 0.5).into());
     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
     let mut changed = false;

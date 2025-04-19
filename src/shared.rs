@@ -266,6 +266,16 @@ impl Ui {
         });
         (cursor_pos - ui.min_rect().left_top()).into()
     }
+
+    pub fn draw_rect(&self, rect: egui::Rect, ui: &egui::Ui) {
+        let painter = ui.painter();
+        painter.rect_stroke(
+            rect,
+            egui::CornerRadius::ZERO,
+            egui::Stroke::new(1., egui::Color32::WHITE),
+            egui::StrokeKind::Outside,
+        );
+    }
 }
 
 #[derive(Clone, Default)]
@@ -399,7 +409,9 @@ pub struct AnimField {
     pub label_top: f32,
 }
 
-#[derive(Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
+#[derive(
+    Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, Clone, Default, Debug,
+)]
 pub enum AnimElement {
     #[default]
     Position,
