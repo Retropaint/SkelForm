@@ -525,7 +525,7 @@ pub struct Shared {
     pub frametime_start: Option<std::time::Instant>,
     pub editing_bone: bool,
 
-    pub actions: Vec<Action>,
+    pub undo_actions: Vec<Action>,
     pub redo_actions: Vec<Action>,
 
     // tracking zoom every frame for smooth effect
@@ -801,7 +801,7 @@ impl Shared {
     }
 
     pub fn save_edited_bone(&mut self) {
-        self.actions.push(Action {
+        self.undo_actions.push(Action {
             action: ActionEnum::Bone,
             action_type: ActionType::Edited,
             bone: self.selected_bone().clone(),
