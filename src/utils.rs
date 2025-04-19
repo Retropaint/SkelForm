@@ -202,4 +202,6 @@ pub fn import(path: String, shared: &mut crate::Shared) {
     }
 
     shared.armature = armature;
+
+    shared.animating = false;
 }
