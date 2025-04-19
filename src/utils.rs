@@ -203,5 +203,6 @@ pub fn import(path: String, shared: &mut crate::Shared) {
 
     shared.armature = armature;
 
+    shared.ui.anim.selected = usize::MAX;
     shared.animating = false;
 }
