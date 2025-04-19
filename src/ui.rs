@@ -1,8 +1,9 @@
 //! Core UI (user interface) logic.
 
+use egui::menu::menu_button;
 use egui::{Context, Shadow, Stroke};
 
-use crate::{armature_window, bone_window, keyframe_editor};
+use crate::{armature_window, bone_window, keyframe_editor, utils};
 use crate::{input, shared::*};
 
 // UI colors
@@ -87,67 +88,32 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
         })
         .show(egui_ctx, |ui| {
             egui::menu::bar(ui, |ui| {
+                let mut offset = 0.;
+                macro_rules! str {
+                    ($string:expr) => {
+                        $string.to_string()
+                    };
+                }
                 ui.menu_button("File", |ui| {
-                    ui.horizontal(|ui| {
-                        ui.set_max_width(80.);
-                        if ui.button("Import").clicked() {
-                            #[cfg(not(target_arch = "wasm32"))]
-                            crate::utils::open_import_dialog();
-                            ui.close_menu();
-                        }
-
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            ui.label("I");
-                        });
-
-                        if input::is_pressing(winit::keyboard::KeyCode::KeyI, &shared) {
-                            #[cfg(not(target_arch = "wasm32"))]
-                            crate::utils::open_import_dialog();
-                            ui.close_menu();
-                        }
-                    });
-                    ui.horizontal(|ui| {
-                        ui.set_max_width(80.);
-                        if ui.button("Export").clicked() {
-                            #[cfg(not(target_arch = "wasm32"))]
-                            crate::utils::open_export_dialog();
-                            ui.close_menu();
-                        }
-
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            ui.label("E");
-                        });
-
-                        if input::is_pressing(winit::keyboard::KeyCode::KeyE, &shared) {
-                            #[cfg(not(target_arch = "wasm32"))]
-                            crate::utils::open_export_dialog();
-                            ui.close_menu();
-                        }
-                    });
+                    if top_bar_button(ui, str!("Import"), str!("I"), &mut offset).clicked() {
+                        utils::open_import_dialog();
+                        ui.close_menu();
+                    }
+                    if top_bar_button(ui, str!("Export"), str!("E"), &mut offset).clicked() {
+                        utils::open_export_dialog();
+                        ui.close_menu();
+                    }
                 });
+                offset = 0.;
                 ui.menu_button("View", |ui| {
-                    ui.horizontal(|ui| {
-                        ui.set_max_width(80.);
-                        if ui.button("Zoom in").clicked() {
-                            set_zoom(shared.camera.zoom - 0.1, shared);
-                            ui.close_menu();
-                        }
-
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            ui.label("=");
-                        });
-                    });
-                    ui.horizontal(|ui| {
-                        ui.set_max_width(80.);
-                        if ui.button("Zoom out").clicked() {
-                            set_zoom(shared.camera.zoom + 0.1, shared);
-                            ui.close_menu();
-                        }
-
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            ui.label("-");
-                        });
-                    })
+                    if top_bar_button(ui, str!("Zoom In"), str!("="), &mut offset).clicked() {
+                        set_zoom(shared.camera.zoom - 0.1, shared);
+                        ui.close_menu();
+                    }
+                    if top_bar_button(ui, str!("Zoom Out"), str!("-"), &mut offset).clicked() {
+                        set_zoom(shared.camera.zoom + 0.1, shared);
+                        ui.close_menu();
+                    }
                 });
                 shared.ui.edit_bar_pos.y = ui.min_rect().bottom();
                 shared.ui.animate_mode_bar_pos.y = ui.min_rect().bottom();
@@ -318,4 +284,47 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                 }
             });
         });
+}
+
+pub fn top_bar_button(
+    ui: &mut egui::Ui,
+    text: String,
+    kb_key: String,
+    offset: &mut f32,
+) -> egui::Response {
+    let height = 20.;
+    let rect = egui::Rect::from_min_size(
+        egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() + *offset),
+        egui::Vec2::new(100., height),
+    );
+    let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
+    let painter = ui.painter_at(ui.min_rect());
+    if response.hovered() {
+        painter.rect_filled(rect, egui::CornerRadius::ZERO, egui::Color32::DARK_GRAY);
+    } else {
+        painter.rect_filled(rect, egui::CornerRadius::ZERO, egui::Color32::TRANSPARENT);
+    }
+
+    // text
+    painter.text(
+        egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() + *offset) + egui::vec2(5., 2.),
+        egui::Align2::LEFT_TOP,
+        text,
+        egui::FontId::default(),
+        egui::Color32::GRAY,
+    );
+
+    // kb key text
+    painter.text(
+        egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset) + egui::vec2(-5., 2.),
+        egui::Align2::RIGHT_TOP,
+        kb_key,
+        egui::FontId::default(),
+        egui::Color32::GRAY,
+    );
+
+    // set next button's Y to below this one
+    *offset += height + 2.;
+
+    response
 }
