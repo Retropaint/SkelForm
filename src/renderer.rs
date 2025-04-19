@@ -128,8 +128,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.actions.push(crate::Action {
                     action: crate::ActionEnum::Animation,
                     action_type: crate::ActionType::Edited,
-                    ints: vec![shared.ui.anim.selected as i32],
-                    animations: vec![shared.armature.animations[shared.ui.anim.selected].clone()],
+                    id: shared.ui.anim.selected as i32,
+                    animation: shared.armature.animations[shared.ui.anim.selected].clone(),
                     ..Default::default()
                 });
             } else {

@@ -62,7 +62,7 @@ pub fn keyboard_input(
                 ActionEnum::Bone => {
                     shared.selected_bone_idx = usize::MAX;
                     shared.armature.bones.pop();
-                },
+                }
                 ActionEnum::Animation => {
                     shared.ui.anim.selected = usize::MAX;
                     shared.armature.animations.pop();
@@ -72,10 +72,11 @@ pub fn keyboard_input(
         } else {
             match &action.action {
                 ActionEnum::Bone => {
-                    shared.armature.bones[action.ints[0] as usize] = action.bones[0].clone();
-                },
+                    shared.armature.bones[action.id as usize] = action.bone.clone();
+                }
                 ActionEnum::Animation => {
-                    shared.armature.animations[action.ints[0] as usize] = action.animations[0].clone(); 
+                    shared.armature.animations[action.id as usize] =
+                        action.animation.clone();
                 }
                 _ => {}
             }
