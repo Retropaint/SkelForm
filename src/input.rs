@@ -73,7 +73,11 @@ pub fn keyboard_input(
             ActionEnum::Bone => {
                 if action.action_type == ActionType::Created {
                     shared.selected_bone_idx = usize::MAX;
-                    shared.armature.bones.pop();
+                    if undo {
+                        shared.armature.bones.pop();
+                    } else {
+                        armature_window::new_bone(&mut shared.armature.bones);
+                    }
                 } else {
                     new_action.bone = shared.armature.bones[action.id as usize].clone();
                     shared.armature.bones[action.id as usize] = action.bone.clone();
@@ -82,7 +86,11 @@ pub fn keyboard_input(
             ActionEnum::Animation => {
                 if action.action_type == ActionType::Created {
                     shared.ui.anim.selected = usize::MAX;
-                    shared.armature.animations.pop();
+                    if undo {
+                        shared.armature.animations.pop();
+                    } else {
+                        keyframe_editor::new_animation(shared);
+                    }
                 } else {
                     new_action.animation = shared.armature.animations[action.id as usize].clone();
                     shared.armature.animations[action.id as usize] = action.animation.clone();
