@@ -70,16 +70,12 @@ pub fn keyboard_input(
                 _ => {}
             }
         } else {
-            println!("{}", shared.actions.len());
             match &action.action {
                 ActionEnum::Bone => {
-                    let bone = shared
-                        .find_bone_mut(shared.actions.last().unwrap().ints[0])
-                        .unwrap();
-                    bone.pos = action.vec2[0];
-                    bone.rot = action.vec2[1].x;
-                    bone.scale = action.vec2[2];
-                    bone.pivot = action.vec2[3];
+                    shared.armature.bones[action.ints[0] as usize] = action.bones[0].clone();
+                },
+                ActionEnum::Animation => {
+                    shared.armature.animations[action.ints[0] as usize] = action.animations[0].clone(); 
                 }
                 _ => {}
             }
