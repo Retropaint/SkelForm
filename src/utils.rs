@@ -1,6 +1,6 @@
 //! Isolated set of helper functions.
 
-use crate::shared::{Vec2, Vertex};
+use crate::*;
 
 use std::io::{Read, Write};
 /// Convert a point from screen to world space.
@@ -159,7 +159,29 @@ pub fn export(path: String, textures: &Vec<crate::Texture>, armature: &crate::Ar
     let img_data = std::fs::read("./temp.png").unwrap();
 
     // clone armature and make some edits, then serialize it
-    let armature_copy = armature.clone();
+    let mut armature_copy = armature.clone();
+
+    for anim in &mut armature_copy.animations {
+        for kf in &mut anim.keyframes {
+            for bone in &mut kf.bones {
+                for field in &mut bone.fields {
+                    match field.element {
+                        AnimElement::Position => {
+                            bone.pos = field.value;
+                        }
+                        AnimElement::Scale => {
+                            bone.scale = field.value;
+                        }
+                        AnimElement::Rotation => {
+                            bone.rot = field.value.x;
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+    }
+
     let armature_json = serde_json::to_string(&armature_copy).unwrap();
 
     // create zip file
@@ -197,12 +219,36 @@ pub fn import(path: String, shared: &mut crate::Shared) {
 
     let mut offset = 0;
     for texture in &mut armature.textures {
-        texture.pixels = img.crop(offset, 0, texture.size.x as u32, texture.size.y as u32).into_rgba8().to_vec();
+        texture.pixels = img
+            .crop(offset, 0, texture.size.x as u32, texture.size.y as u32)
+            .into_rgba8()
+            .to_vec();
         offset += texture.size.x as u32;
+    }
+
+    for anim in &mut armature.animations {
+        for kf in &mut anim.keyframes {
+            for bone in &mut kf.bones {
+                bone.fields = vec![];
+                set_bone_field(bone.pos, AnimElement::Position, bone);
+                set_bone_field(bone.scale, AnimElement::Scale, bone);
+                set_bone_field(Vec2::single(bone.rot), AnimElement::Rotation, bone);
+            }
+        }
     }
 
     shared.armature = armature;
 
     shared.ui.anim.selected = usize::MAX;
     shared.animating = false;
+}
+
+pub fn set_bone_field(value: Vec2, element: AnimElement, bone: &mut AnimBone) {
+    if value != Vec2::ZERO {
+        bone.fields.push(AnimField {
+            element,
+            value,
+            ..Default::default()
+        })
+    }
 }

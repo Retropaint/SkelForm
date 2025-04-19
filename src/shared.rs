@@ -345,6 +345,11 @@ pub struct Keyframe {
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct AnimBone {
     pub id: i32,
+    pub pos: Vec2,
+    pub scale: Vec2,
+    pub rot: f32,
+
+    #[serde(skip)]
     pub fields: Vec<AnimField>,
 }
 
