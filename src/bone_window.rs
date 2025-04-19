@@ -29,7 +29,7 @@ extern "C" {
 }
 
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
-    egui::SidePanel::right("Bone")
+    let response = egui::SidePanel::right("Bone")
         .resizable(true)
         .max_width(250.)
         .show(egui_ctx, |ui| {
@@ -140,7 +140,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 shared.ui.polar_id = "delete_bone".to_string();
                 shared.ui.polar_headline = "Are you sure to delete this bone?".to_string();
             };
-        });
+        }).response;
+    if response.hovered() {
+        shared.input.on_ui = true;
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]

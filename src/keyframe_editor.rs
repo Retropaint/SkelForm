@@ -45,7 +45,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         }
     }
 
-    egui::TopBottomPanel::bottom("Keyframe")
+    let response = egui::TopBottomPanel::bottom("Keyframe")
         .min_height(150.)
         .resizable(true)
         .show(egui_ctx, |ui| {
@@ -58,7 +58,10 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                     timeline_editor(ui, shared);
                 }
             });
-        });
+        }).response;
+    if response.hovered() {
+        shared.input.on_ui = true;
+    }
 }
 
 fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
