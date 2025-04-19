@@ -26,6 +26,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         }
     }
 
+    // navigating frames with kb input
     let right = egui_ctx.input(|i| i.key_pressed(egui::Key::ArrowRight));
     let left = egui_ctx.input(|i| i.key_pressed(egui::Key::ArrowLeft));
     if right {
@@ -39,6 +40,8 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         let last_frame = shared.last_keyframe();
         if last_frame != None && shared.ui.anim.selected_frame < 0 {
             shared.ui.anim.selected_frame = last_frame.unwrap().frame;
+        } else if last_frame == None && shared.ui.anim.selected_frame < 0 {
+            shared.ui.anim.selected_frame = 0;
         }
     }
 
