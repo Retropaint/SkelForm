@@ -70,30 +70,26 @@ pub fn keyboard_input(
         }
         let mut new_action = action.clone();
 
-        if action.action_type == ActionType::Created {
-            match &action.action {
-                ActionEnum::Bone => {
+        match &action.action {
+            ActionEnum::Bone => {
+                if action.action_type == ActionType::Created {
                     shared.selected_bone_idx = usize::MAX;
                     shared.armature.bones.pop();
-                }
-                ActionEnum::Animation => {
-                    shared.ui.anim.selected = usize::MAX;
-                    shared.armature.animations.pop();
-                }
-                _ => {}
-            }
-        } else {
-            match &action.action {
-                ActionEnum::Bone => {
+                } else {
                     new_action.bone = shared.armature.bones[action.id as usize].clone();
                     shared.armature.bones[action.id as usize] = action.bone.clone();
                 }
-                ActionEnum::Animation => {
+            }
+            ActionEnum::Animation => {
+                if action.action_type == ActionType::Created {
+                    shared.ui.anim.selected = usize::MAX;
+                    shared.armature.animations.pop();
+                } else {
                     new_action.animation = shared.armature.animations[action.id as usize].clone();
                     shared.armature.animations[action.id as usize] = action.animation.clone();
                 }
-                _ => {}
             }
+            _ => {}
         }
 
         if undo {
