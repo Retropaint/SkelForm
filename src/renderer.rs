@@ -124,7 +124,17 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.editing_bone = false;
     } else {
         if !shared.editing_bone {
-            shared.save_edited_bone();
+            if shared.is_animating() {
+                shared.actions.push(crate::Action {
+                    action: crate::ActionEnum::Animation,
+                    action_type: crate::ActionType::Edited,
+                    ints: vec![shared.ui.anim.selected as i32],
+                    animations: vec![shared.armature.animations[shared.ui.anim.selected].clone()],
+                    ..Default::default()
+                });
+            } else {
+                shared.save_edited_bone();
+            }
         }
         if !input::is_pressing(KeyCode::SuperLeft, &shared) {
             shared.editing_bone = true;
