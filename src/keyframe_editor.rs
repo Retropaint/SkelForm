@@ -26,6 +26,22 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         }
     }
 
+    let right = egui_ctx.input(|i| i.key_pressed(egui::Key::ArrowRight));
+    let left = egui_ctx.input(|i| i.key_pressed(egui::Key::ArrowLeft));
+    if right {
+        shared.ui.anim.selected_frame += 1;
+        let last_frame = shared.last_keyframe();
+        if last_frame != None && shared.ui.anim.selected_frame > last_frame.unwrap().frame {
+            shared.ui.anim.selected_frame = 0;
+        }
+    } else if left {
+        shared.ui.anim.selected_frame -= 1;
+        let last_frame = shared.last_keyframe();
+        if last_frame != None && shared.ui.anim.selected_frame < 0 {
+            shared.ui.anim.selected_frame = last_frame.unwrap().frame;
+        }
+    }
+
     egui::TopBottomPanel::bottom("Keyframe")
         .min_height(150.)
         .resizable(true)
@@ -343,7 +359,9 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     .add_sized([50., 20.], egui::Button::new(str).corner_radius(0.))
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
 
-                if button.clicked() && shared.selected_animation().keyframes.len() != 0 {
+                let pressed = ui.input(|i| i.key_pressed(egui::Key::Space));
+                if (button.clicked() || pressed) && shared.selected_animation().keyframes.len() != 0
+                {
                     shared.ui.anim.playing = !shared.ui.anim.playing;
                     shared.ui.anim.elapsed = Some(std::time::Instant::now());
                     shared.ui.anim.played_frame = shared.ui.anim.selected_frame;
