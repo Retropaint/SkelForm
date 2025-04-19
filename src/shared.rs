@@ -526,6 +526,7 @@ pub struct Shared {
     pub editing_bone: bool,
 
     pub actions: Vec<Action>,
+    pub redo_actions: Vec<Action>,
 
     // tracking zoom every frame for smooth effect
     pub current_zoom: f32,

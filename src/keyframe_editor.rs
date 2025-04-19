@@ -64,12 +64,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                     action_type: ActionType::Created,
                                     ..Default::default()
                                 });
-                                shared.armature.animations.push(Animation {
-                                    name: "".to_string(),
-                                    keyframes: vec![],
-                                    fps: 60,
-                                    ..Default::default()
-                                });
+                                new_animation(shared);
                                 let idx = shared.armature.animations.len() - 1;
                                 shared.ui.original_name = "".to_string();
                                 shared.ui.rename_id = "animation ".to_owned() + &idx.to_string();
@@ -603,4 +598,13 @@ fn check_change_diamond_drag(
     }
 
     changed
+}
+
+pub fn new_animation(shared: &mut Shared) {
+    shared.armature.animations.push(Animation {
+        name: "".to_string(),
+        keyframes: vec![],
+        fps: 60,
+        ..Default::default()
+    });
 }
