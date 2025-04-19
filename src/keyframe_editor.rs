@@ -59,6 +59,11 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             ui.add_space(5.);
                             if ui::button("New", ui).clicked() {
+                                shared.actions.push(Action {
+                                    action: ActionEnum::Animation,
+                                    action_type: ActionType::Created,
+                                    ..Default::default()
+                                });
                                 shared.armature.animations.push(Animation {
                                     name: "".to_string(),
                                     keyframes: vec![],
