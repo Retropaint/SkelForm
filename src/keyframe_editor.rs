@@ -238,6 +238,9 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
 
                 for i in 0..shared.selected_animation().keyframes.len() {
                     let kf = &shared.selected_animation().keyframes[i];
+                    if shared.ui.anim.lines_x.len() - 1 < kf.frame as usize {
+                        break;
+                    }
 
                     let pos = Vec2::new(
                         ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
@@ -287,7 +290,8 @@ pub fn draw_timeline_graph(
                     ui.set_height(ui.available_height());
 
                     // render darkened background after last keyframe
-                    if shared.last_keyframe() != None && shared.ui.anim.lines_x.len() > 0 {
+                    if shared.last_keyframe() != None && (shared.last_keyframe().unwrap().frame as usize)
+                        < shared.ui.anim.lines_x.len() {
                         let (rect, _) = ui.allocate_exact_size(
                             egui::vec2(ui.available_width(), ui.available_height()),
                             egui::Sense::empty(),
