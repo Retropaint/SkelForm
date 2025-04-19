@@ -28,7 +28,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     shared.actions.push(Action{
                         action: ActionEnum::Bone,
                         action_type: ActionType::Created,
-                        ints: vec![bone.id],
+                        id: bone.id,
                         ..Default::default()
                     })
                 }

@@ -439,9 +439,9 @@ pub struct Action {
     pub action: ActionEnum,
     pub action_type: ActionType,
 
-    pub ints: Vec<i32>,
-    pub animations: Vec<Animation>,
-    pub bones: Vec<Bone>
+    pub id: i32,
+    pub animation: Animation,
+    pub bone: Bone
 }
 
 impl AnimElement {
@@ -803,8 +803,8 @@ impl Shared {
         self.actions.push(Action {
             action: ActionEnum::Bone,
             action_type: ActionType::Edited,
-            bones: vec![self.selected_bone().clone()],
-            ints: vec![self.selected_bone().id],
+            bone: self.selected_bone().clone(),
+            id: self.selected_bone().id,
             ..Default::default()
         });
     }
