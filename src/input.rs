@@ -49,6 +49,39 @@ pub fn keyboard_input(
             shared.input.modifier = -1;
         }
     }
+
+    // undo/redo
+    if is_pressing(KeyCode::KeyZ, &shared)
+        && shared.input.modifier == 1
+        && shared.actions.len() != 0
+    {
+        let action = shared.actions.last().unwrap().clone();
+
+        if action.action_type == ActionType::Created {
+            match &action.action {
+                ActionEnum::Bone => {
+                    shared.armature.bones.pop();
+                }
+                _ => {}
+            }
+        } else {
+            println!("{}", shared.actions.len());
+            match &action.action {
+                ActionEnum::Bone => {
+                    let bone = shared
+                        .find_bone_mut(shared.actions.last().unwrap().ints[0])
+                        .unwrap();
+                    bone.pos = action.vec2[0];
+                    bone.rot = action.vec2[1].x;
+                    bone.scale = action.vec2[2];
+                    bone.pivot = action.vec2[3];
+                }
+                _ => {}
+            }
+        }
+
+        shared.actions.pop();
+    }
 }
 
 pub fn mouse_input(

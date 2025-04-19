@@ -61,7 +61,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             &shared.armature.textures[temp_bones[i].tex_idx as usize],
             shared.window.x / shared.window.y,
         );
-        
+
         verts.push(this_verts);
     }
 
@@ -120,8 +120,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // mouse inputs
-    if !shared.input.on_ui && shared.ui.polar_id == "" {
+    if shared.input.on_ui || shared.ui.polar_id != "" {
+        shared.editing_bone = false;
+    } else {
+        if !shared.editing_bone {
+            shared.save_edited_bone();
+        }
         if !input::is_pressing(KeyCode::SuperLeft, &shared) {
+            shared.editing_bone = true;
             shared.cursor_icon = egui::CursorIcon::Crosshair;
             let value: Vec2;
             value = match shared.edit_mode {
@@ -147,21 +153,17 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             };
             shared.edit_bone(shared.edit_mode, value);
         } else if shared.input.mouse_left != -1 && shared.selected_bone_idx != usize::MAX {
-            if shared.input.mouse_left == -1 {
-                shared.input.initial_points = vec![];
-            } else {
-                // move camera if holding mod key
-                if shared.input.initial_points.len() == 0 {
-                    shared.camera.initial_pos = shared.camera.pos;
-                    shared.input.initial_points.push(shared.input.mouse);
-                }
-
-                let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-                let initial_world =
-                    utils::screen_to_world_space(shared.input.initial_points[0], shared.window);
-                shared.camera.pos =
-                    shared.camera.initial_pos - (mouse_world - initial_world) * shared.camera.zoom;
+            // move camera if holding mod key
+            if shared.input.initial_points.len() == 0 {
+                shared.camera.initial_pos = shared.camera.pos;
+                shared.input.initial_points.push(shared.input.mouse);
             }
+
+            let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+            let initial_world =
+                utils::screen_to_world_space(shared.input.initial_points[0], shared.window);
+            shared.camera.pos =
+                shared.camera.initial_pos - (mouse_world - initial_world) * shared.camera.zoom;
         }
     }
 }

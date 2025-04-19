@@ -81,6 +81,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 ($element:expr, $float:expr, $id:expr, $edit_id:expr, $modifier:expr, $ui:expr) => {
                     (edited, $float) = float_input($id.to_string(), shared, $ui, $float, $modifier);
                     if edited {
+                        shared.save_edited_bone();
                         shared.edit_bone($edit_id, $element);
                     }
                 };

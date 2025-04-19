@@ -415,10 +415,31 @@ pub struct AnimField {
 pub enum AnimElement {
     #[default]
     Position,
-
     Rotation,
     Scale,
     Pivot,
+}
+
+#[derive(Default, Clone)]
+pub enum ActionEnum {
+    #[default]
+    Bone,
+    Keyframe,
+}
+#[derive(Default, PartialEq, Clone)]
+pub enum ActionType {
+    #[default]
+    Created,
+    Edited,
+}
+
+#[derive(Default, Clone)]
+pub struct Action {
+    pub action: ActionEnum,
+    pub action_type: ActionType,
+    pub ints: Vec<i32>,
+    pub vec2: Vec<Vec2>,
+    pub strings: Vec<String>,
 }
 
 impl AnimElement {
@@ -500,8 +521,9 @@ pub struct Shared {
     pub start_time: Option<std::time::Instant>,
     pub frametime: std::time::Duration,
     pub frametime_start: Option<std::time::Instant>,
+    pub editing_bone: bool,
 
-    pub frame: i32,
+    pub actions: Vec<Action>,
 
     // tracking zoom every frame for smooth effect
     pub current_zoom: f32,
@@ -773,6 +795,21 @@ impl Shared {
         }
 
         (mouse * self.camera.zoom) + self.input.initial_points[0]
+    }
+
+    pub fn save_edited_bone(&mut self) {
+        self.actions.push(Action {
+            action: ActionEnum::Bone,
+            action_type: ActionType::Edited,
+            vec2: vec![
+                self.selected_bone().pos,
+                Vec2::single(self.selected_bone().rot),
+                self.selected_bone().scale,
+                self.selected_bone().pivot,
+            ],
+            ints: vec![self.selected_bone().id],
+            strings: vec![self.selected_bone().name.to_string()],
+        });
     }
 
     pub fn edit_bone(&mut self, edit_mode: i32, value: Vec2) {
