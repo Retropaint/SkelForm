@@ -1,10 +1,9 @@
 //! Core UI (user interface) logic.
 
-use egui::menu::menu_button;
 use egui::{Context, Shadow, Stroke};
 
 use crate::{armature_window, bone_window, keyframe_editor, utils};
-use crate::{input, shared::*};
+use crate::shared::*;
 
 // UI colors
 pub const COLOR_ACCENT: egui::Color32 = egui::Color32::from_rgb(60, 60, 60);
@@ -80,7 +79,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
     let mut visuals = egui::Visuals::dark();
     visuals.panel_fill = COLOR_MAIN;
     egui_ctx.set_visuals(visuals);
-    egui::TopBottomPanel::top("test")
+    let response = egui::TopBottomPanel::top("test")
         .frame(egui::Frame {
             fill: COLOR_MAIN,
             stroke: Stroke::new(0., COLOR_ACCENT),
@@ -118,7 +117,10 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 shared.ui.edit_bar_pos.y = ui.min_rect().bottom();
                 shared.ui.animate_mode_bar_pos.y = ui.min_rect().bottom();
             });
-        });
+        }).response;
+    if response.hovered() {
+        shared.input.on_ui = true;
+    }
 }
 
 fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {

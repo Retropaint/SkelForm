@@ -10,7 +10,7 @@ use crate::{
 use crate::shared::*;
 
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
-    egui::SidePanel::left("Armature")
+    let response = egui::SidePanel::left("Armature")
         .default_width(125.)
         .min_width(125.)
         .resizable(true)
@@ -87,7 +87,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     });
                 }
             });
-        });
+        }).response;
+    if response.hovered() {
+        shared.input.on_ui = true;
+    }
 }
 
 pub fn new_bone(bones: &mut Vec<Bone>) -> Bone {
