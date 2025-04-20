@@ -722,8 +722,22 @@ impl Gpu {
         width: u32,
         height: u32,
     ) -> Self {
-        let instance = wgpu::Instance::new(&InstanceDescriptor::default());
-        let surface = instance.create_surface(window).unwrap();
+        let mut surface: wgpu::Surface;
+        let mut instance: wgpu::Instance;
+
+        // force DX12 on Windows
+        #[cfg(target_os = "windows")]
+        {
+            let backends = wgpu::Backend::DX12;
+            instance = wgpu::Instance::new(&wgpu::InstanceDescriptor{backends, ..Default::default()});
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        {
+            instance = wgpu::Instance::new(&InstanceDescriptor::default());
+        }
+
+        surface = instance.create_surface(window).unwrap();
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
