@@ -446,7 +446,7 @@ pub struct Action {
 
     pub id: i32,
     pub animation: Animation,
-    pub bone: Bone
+    pub bone: Bone,
 }
 
 impl AnimElement {
@@ -676,12 +676,13 @@ impl Shared {
         for b in &mut bones {
             macro_rules! interpolate {
                 ($element:expr, $default:expr) => {{
-                    let (prev, next, total_frames, current_frame) = self.find_connecting_frames(
-                        b.id,
-                        $element,
-                        $default,
-                        self.ui.anim.selected_frame,
-                    );
+                    let (prev, next, total_frames, current_frame, _, _) = self
+                        .find_connecting_frames(
+                            b.id,
+                            $element,
+                            $default,
+                            self.ui.anim.selected_frame,
+                        );
                     Tweener::linear(prev, next, total_frames).move_to(current_frame)
                 }};
             }
@@ -702,7 +703,7 @@ impl Shared {
         element: AnimElement,
         default: Vec2,
         frame: i32,
-    ) -> (Vec2, Vec2, i32, i32) {
+    ) -> (Vec2, Vec2, i32, i32, i32, i32) {
         let mut prev: Option<Vec2> = None;
         let mut next: Option<Vec2> = None;
         let mut start_frame = 0;
@@ -774,7 +775,14 @@ impl Shared {
 
         let current_frame = frame - start_frame;
 
-        (prev.unwrap(), next.unwrap(), total_frames, current_frame)
+        (
+            prev.unwrap(),
+            next.unwrap(),
+            total_frames,
+            current_frame,
+            start_frame,
+            end_frame,
+        )
     }
 
     pub fn get_mouse_world(&mut self) -> Vec2 {

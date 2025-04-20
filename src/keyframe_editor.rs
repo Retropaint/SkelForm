@@ -58,7 +58,8 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                     timeline_editor(ui, shared);
                 }
             });
-        }).response;
+        })
+        .response;
     if response.hovered() {
         shared.input.on_ui = true;
     }
@@ -342,7 +343,9 @@ pub fn draw_timeline_graph(
                         );
                     }
 
-                    draw_frame_lines(ui, shared, bone_tops, hitbox);
+                    draw_connecting_lines(shared, ui, &bone_tops);
+
+                    draw_frame_lines(ui, shared, &bone_tops, hitbox);
                 });
             });
         shared.ui.anim.timeline_offset = response.state.offset.x;
@@ -400,7 +403,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 }
 
 /// Draw all lines representing frames in the timeline.
-fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: BoneTops, hitbox: f32) {
+fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &BoneTops, hitbox: f32) {
     // get cursor pos on the graph (or 0, 0 if can't)
     let cursor: Vec2;
     if ui.ui_contains_pointer() {
@@ -498,6 +501,48 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: BoneTops,
             }
         }
     }
+}
+
+fn draw_connecting_lines(shared: &Shared, ui: &egui::Ui, bone_tops: &BoneTops) {
+    for kf in &shared.selected_animation().keyframes {
+        for bone in &kf.bones {
+            for field in &bone.fields {
+                let connecting_frame = get_first_element(kf.frame, &field.element, shared);
+                if connecting_frame == -1 {
+                    continue;
+                }
+                let painter = ui.painter_at(ui.min_rect());
+                let initial = Vec2::new(
+                    ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
+                    bone_tops.find(bone.id, &field.element).unwrap().height,
+                );
+                painter.hline(
+                    egui::Rangef::new(
+                        initial.x,
+                        ui.min_rect().left() + shared.ui.anim.lines_x[connecting_frame as usize],
+                    ),
+                    bone_tops.find(bone.id, &field.element).unwrap().height + 9.,
+                    egui::Stroke::new(2., egui::Color32::WHITE),
+                );
+            }
+        }
+    }
+}
+
+fn get_first_element(start_frame: i32, element: &AnimElement, shared: &Shared) -> i32 {
+    for kf in &shared.selected_animation().keyframes {
+        if kf.frame <= start_frame {
+            continue;
+        }
+        for bone in &kf.bones {
+            for field in &bone.fields {
+                if field.element == *element {
+                    return kf.frame;
+                }
+            }
+        }
+    }
+    -1
 }
 
 fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
