@@ -733,7 +733,7 @@ impl Gpu {
         // force DX12 on Windows
         #[cfg(target_os = "windows")]
         {
-            let backends = wgpu::Backend::DX12;
+            let backends = wgpu::Backend::Dx12;
             instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
                 backends,
                 ..Default::default()
