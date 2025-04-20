@@ -25,12 +25,16 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.horizontal(|ui| {
                 if ui_mod::button("New Bone", ui).clicked() {
                     let bone = new_bone(&mut shared.armature.bones);
-                    shared.undo_actions.push(Action{
+
+                    // immediately select new bone upon creating it
+                    shared.selected_bone_idx = shared.armature.bones.len() - 1;
+
+                    shared.undo_actions.push(Action {
                         action: ActionEnum::Bone,
                         action_type: ActionType::Created,
                         id: bone.id,
                         ..Default::default()
-                    })
+                    });
                 }
                 let drag_name = if shared.dragging { "Edit" } else { "Drag" };
                 if ui_mod::button(drag_name, ui).clicked() {
@@ -79,7 +83,13 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         } else {
                             // regular, boring buttons
 
-                            if ui_mod::selection_button(&s.name.to_string(), idx as usize == shared.selected_bone_idx, ui).clicked() {
+                            if ui_mod::selection_button(
+                                &s.name.to_string(),
+                                idx as usize == shared.selected_bone_idx,
+                                ui,
+                            )
+                            .clicked()
+                            {
                                 shared.selected_bone_idx = idx as usize;
                             };
                         }
@@ -87,7 +97,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     });
                 }
             });
-        }).response;
+        })
+        .response;
     if response.hovered() {
         shared.input.on_ui = true;
     }
