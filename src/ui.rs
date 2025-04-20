@@ -2,8 +2,8 @@
 
 use egui::{Context, Shadow, Stroke};
 
-use crate::{armature_window, bone_window, keyframe_editor, utils};
 use crate::shared::*;
+use crate::{armature_window, bone_window, keyframe_editor, utils};
 
 // UI colors
 pub const COLOR_ACCENT: egui::Color32 = egui::Color32::from_rgb(60, 60, 60);
@@ -45,6 +45,18 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     if shared.ui.polar_id != "" {
         polar_dialog(shared, context);
     }
+
+    //  // visualizing vertices
+    // let painter = context.debug_painter();
+    // for bone in &shared.armature.bones {
+    //     for vert in &bone.vertices {
+    //         painter.circle_filled(
+    //             utils::world_to_screen_space(vert.pos, shared.window).into(),
+    //             10.,
+    //             egui::Color32::GREEN,
+    //         );
+    //     }
+    // }
 
     // Although counter-intuitive, mouse inputs are recorded here.
     // This is because egui can detect all of them even if they were not on the UI itself.
@@ -117,7 +129,8 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 shared.ui.edit_bar_pos.y = ui.min_rect().bottom();
                 shared.ui.animate_mode_bar_pos.y = ui.min_rect().bottom();
             });
-        }).response;
+        })
+        .response;
     if response.hovered() {
         shared.input.on_ui = true;
     }

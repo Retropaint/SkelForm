@@ -203,7 +203,7 @@ impl fmt::Display for Vec2 {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(serde::Serialize, serde::Deserialize, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
     pub pos: Vec2,
     pub uv: Vec2,
@@ -302,6 +302,8 @@ pub struct Bone {
     pub name: String,
     pub parent_id: i32,
     pub tex_idx: i32,
+
+    pub vertices: Vec<Vertex>,
 
     pub pivot: Vec2,
 

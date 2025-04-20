@@ -62,7 +62,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             shared.window.x / shared.window.y,
         );
 
-        verts.push(this_verts);
+        verts.push(this_verts.clone());
+        shared.armature.bones[i].vertices = this_verts;
     }
 
     let mut hovered_bone = -1;
