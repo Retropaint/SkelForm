@@ -266,11 +266,13 @@ pub fn import(
 }
 
 pub fn set_bone_field(value: Vec2, element: AnimElement, bone: &mut AnimBone) {
-    if value != Vec2::ZERO {
-        bone.fields.push(AnimField {
-            element,
-            value,
-            ..Default::default()
-        })
+    if value == Vec2::ZERO {
+        return;
     }
+
+    bone.fields.push(AnimField {
+        element,
+        value,
+        ..Default::default()
+    })
 }
