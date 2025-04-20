@@ -207,7 +207,14 @@ pub fn export(path: String, textures: &Vec<crate::Texture>, armature: &crate::Ar
     std::fs::remove_file("temp.png").unwrap();
 }
 
-pub fn import(path: String, shared: &mut crate::Shared) {
+#[cfg(not(target_arch = "wasm32"))]
+pub fn import(
+    path: String,
+    shared: &mut crate::Shared,
+    queue: &wgpu::Queue,
+    device: &wgpu::Device,
+    bind_group_layout: &BindGroupLayout,
+) {
     let file = std::fs::File::open(path);
     let mut zip = zip::ZipArchive::new(file.unwrap()).unwrap();
 
@@ -231,6 +238,14 @@ pub fn import(path: String, shared: &mut crate::Shared) {
             .into_rgba8()
             .to_vec();
         offset += texture.size.x as u32;
+
+        shared.bind_groups.push(renderer::create_texture_bind_group(
+            texture.pixels.to_vec(),
+            texture.size,
+            queue,
+            device,
+            bind_group_layout,
+        ));
     }
 
     for anim in &mut armature.animations {

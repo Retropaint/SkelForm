@@ -78,7 +78,7 @@ pub fn read_image_loaders(
     }
 
     // add this texture to bind_groups array
-    shared.bind_groups.push(renderer::create_texture(
+    shared.bind_groups.push(renderer::create_texture_bind_group(
         pixels.to_vec(),
         dimensions,
         queue,
@@ -111,7 +111,12 @@ pub fn read_export(shared: &Shared) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn read_import(shared: &mut Shared) {
+pub fn read_import(
+    shared: &mut Shared,
+    queue: &Queue,
+    device: &Device,
+    bind_group_layout: &BindGroupLayout,
+) {
     let file = ".skelform_import_path";
     if !fs::exists(file).unwrap() {
         return;
@@ -119,7 +124,7 @@ pub fn read_import(shared: &mut Shared) {
 
     let path = fs::read_to_string(file).unwrap();
 
-    utils::import(path, shared);
+    utils::import(path, shared, queue, device, bind_group_layout);
 
     del_temp_files();
 }
