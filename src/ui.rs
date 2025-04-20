@@ -107,10 +107,12 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 }
                 ui.menu_button("File", |ui| {
                     if top_bar_button(ui, str!("Import"), str!("I"), &mut offset).clicked() {
+                        #[cfg(not(target_arch = "wasm32"))]
                         utils::open_import_dialog();
                         ui.close_menu();
                     }
                     if top_bar_button(ui, str!("Export"), str!("E"), &mut offset).clicked() {
+                        #[cfg(not(target_arch = "wasm32"))]
                         utils::open_export_dialog();
                         ui.close_menu();
                     }
