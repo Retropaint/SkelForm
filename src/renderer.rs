@@ -180,7 +180,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 }
 
 /// Get bind group of a texture.
-pub fn create_texture(
+pub fn create_texture_bind_group(
     pixels: Vec<u8>,
     dimensions: Vec2,
     queue: &Queue,

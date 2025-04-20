@@ -183,7 +183,12 @@ impl ApplicationHandler for App {
             #[cfg(not(target_arch = "wasm32"))]
             {
                 file_reader::read_export(&self.shared);
-                file_reader::read_import(&mut self.shared);
+                file_reader::read_import(
+                    &mut self.shared,
+                    &self.renderer.as_ref().unwrap().gpu.queue,
+                    &self.renderer.as_ref().unwrap().gpu.device,
+                    &self.renderer.as_ref().unwrap().bind_group_layout,
+                );
             }
         }
 
@@ -307,7 +312,7 @@ impl ApplicationHandler for App {
                 ..Default::default()
             });
 
-            self.shared.highlight_bindgroup = Some(renderer::create_texture(
+            self.shared.highlight_bindgroup = Some(renderer::create_texture_bind_group(
                 vec![255, 255, 255, 100],
                 Vec2::new(1., 1.),
                 &self.renderer.as_ref().unwrap().gpu.queue,
@@ -729,7 +734,10 @@ impl Gpu {
         #[cfg(target_os = "windows")]
         {
             let backends = wgpu::Backend::DX12;
-            instance = wgpu::Instance::new(&wgpu::InstanceDescriptor{backends, ..Default::default()});
+            instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+                backends,
+                ..Default::default()
+            });
         }
 
         #[cfg(not(target_os = "windows"))]
