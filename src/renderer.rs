@@ -123,7 +123,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // mouse inputs
     if shared.input.on_ui || shared.ui.polar_id != "" {
         shared.editing_bone = false;
-    } else {
+    } else if shared.selected_bone_idx != usize::MAX {
         if !shared.editing_bone {
             if shared.is_animating() {
                 shared.undo_actions.push(crate::Action {
