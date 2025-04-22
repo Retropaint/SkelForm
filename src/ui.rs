@@ -46,7 +46,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         polar_dialog(shared, context);
     }
 
-    //  // visualizing vertices
+    // // visualizing vertices
     // let painter = context.debug_painter();
     // for bone in &shared.armature.bones {
     //     for vert in &bone.vertices {
@@ -55,6 +55,10 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     //             10.,
     //             egui::Color32::GREEN,
     //         );
+    //         painter.line_segment([
+    //             utils::world_to_screen_space(vert.pos, shared.window).into(),
+    //             egui::pos2(0., 0.),
+    //         ], egui::Stroke::new(2., egui::Color32::GREEN));
     //     }
     // }
 
@@ -114,6 +118,14 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     if top_bar_button(ui, str!("Export"), str!("E"), &mut offset).clicked() {
                         #[cfg(not(target_arch = "wasm32"))]
                         utils::open_export_dialog();
+                        ui.close_menu();
+                    }
+                    if top_bar_button(ui, str!("Export Video"), str!("E"), &mut offset).clicked() {
+                        shared.recording = true;
+                        shared.done_recording = true;
+                        shared.ui.anim.playing = true;
+                        shared.ui.anim.selected_frame = 0;
+                        shared.ui.anim.elapsed = Some(std::time::Instant::now());
                         ui.close_menu();
                     }
                 });
