@@ -491,21 +491,23 @@ impl Renderer {
         self.gpu.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();
 
-        //if shared.frametime_start != None {
-        //    shared.frametime = shared.frametime_start.unwrap().elapsed();
-        //}
-        //shared.frametime_start = Some(std::time::Instant::now());
+        if shared.recording {
+            self.take_screenshot(screen_descriptor, paint_jobs, shared);
+        } else if shared.done_recording {
+            Self::export_video(shared);
+            shared.done_recording = false;
+        }
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    fn _take_screenshot(
+    fn take_screenshot(
         &mut self,
         screen_descriptor: egui_wgpu::ScreenDescriptor,
         paint_jobs: Vec<egui::epaint::ClippedPrimitive>,
         shared: &mut shared::Shared,
     ) {
-        let width = 1600;
-        let height = 1200;
+        let width = shared.window.x as u32;
+        let height = shared.window.y as u32;
 
         let capture_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
@@ -558,12 +560,6 @@ impl Renderer {
 
             // core rendering logic handled in renderer.rs
             renderer::render(&mut capture_pass, &self.gpu.device, shared);
-
-            self.egui_renderer.render(
-                &mut capture_pass.forget_lifetime(),
-                &paint_jobs,
-                &screen_descriptor,
-            );
         }
 
         let buffer_size = (width * height * 4) as u64;
@@ -612,27 +608,38 @@ impl Renderer {
         });
     }
 
-    // unfinished
     #[cfg(not(target_arch = "wasm32"))]
-    fn _export_video(shared: &Shared) {
-        let mut child = std::process::Command::new("ffmpeg")
+    fn export_video(shared: &Shared) {
+        let width = shared.rendered_frames[0].width.to_string();
+        let height = shared.rendered_frames[0].height.to_string();
+
+        if !std::fs::exists("./ffmpeg").unwrap() {
+            return
+        }
+
+        let mut child = std::process::Command::new("./ffmpeg")
             .args([
                 "-f",
                 "rawvideo",
+                // input resolution
+                "-video_size",
+                &(width + "x" + &height),
+                // fps
+                "-r",
+                "60",
                 "-pixel_format",
                 "rgb24",
-                "-video_size",
-                "800x600",
-                "-r",
-                "15",
                 "-i",
                 "-",
-                "-c:v",
-                "libx264",
-                "-pix_fmt",
-                "yuv420p",
+                // output resolution
+                "-s",
+                "800:600",
+                // fast preset
                 "-preset",
-                "ultrafast",
+                "veryfast",
+                // don't encode audio
+                "-c:a",
+                "copy",
                 "-y",
                 "output.mp4",
                 "-loglevel",
@@ -645,7 +652,7 @@ impl Renderer {
 
         let mut stdin = child.stdin.take().unwrap();
 
-        for i in 0..45 {
+        for i in 0..shared.rendered_frames.len() {
             let frames = shared.rendered_frames.clone();
             let buffer_slice = frames[i].buffer.slice(..);
             let view = buffer_slice.get_mapped_range();
@@ -656,20 +663,23 @@ impl Renderer {
                 .flat_map(|px| vec![px[2], px[1], px[0]])
                 .collect();
 
-            let _ = image::save_buffer(
-                shared.rendered_frames.len().to_string() + ".png",
-                &rgb,
-                1600,
-                1200,
-                image::ExtendedColorType::Rgb8,
+            let img = <image::ImageBuffer<image::Rgb<u8>, _>>::from_raw(
+                shared.window.x as u32,
+                shared.window.y as u32,
+                rgb.clone(),
+            );
+            let _ = image::imageops::resize(
+                img.as_ref().unwrap(),
+                800,
+                600,
+                image::imageops::FilterType::Nearest,
             );
 
-            stdin.write_all(&rgb).unwrap();
+            stdin.write_all(img.as_ref().unwrap()).unwrap();
         }
 
         stdin.flush().unwrap();
         drop(stdin);
-
         child.wait().unwrap();
     }
 }

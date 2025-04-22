@@ -528,9 +528,11 @@ pub struct Shared {
     pub ui: Ui,
     pub rendered_frames: Vec<RenderedFrame>,
     pub start_time: Option<std::time::Instant>,
-    pub frametime: std::time::Duration,
-    pub frametime_start: Option<std::time::Instant>,
     pub editing_bone: bool,
+
+    pub frame: i32,
+    pub recording: bool,
+    pub done_recording: bool,
 
     pub undo_actions: Vec<Action>,
     pub redo_actions: Vec<Action>,
