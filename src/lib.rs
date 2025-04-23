@@ -609,7 +609,7 @@ impl Renderer {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    fn export_video(shared: &Shared) {
+    fn export_video(shared: &mut Shared) {
         let width = shared.rendered_frames[0].width.to_string();
         let height = shared.rendered_frames[0].height.to_string();
 

@@ -45,6 +45,9 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     if shared.ui.polar_id != "" {
         polar_dialog(shared, context);
     }
+    if shared.ui.modal_headline != "" {
+        modal_dialog(shared, context);
+    }
 
     // // visualizing vertices
     // let painter = context.debug_painter();
@@ -121,6 +124,19 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         ui.close_menu();
                     }
                     if top_bar_button(ui, str!("Export Video"), str!("E"), &mut offset).clicked() {
+                        if !std::fs::exists("./ffmpeg").unwrap() {
+                            let headline = "ffmpeg is not available.\n\nPlease place the ffmpeg binary file in the same directory as Skellar."; 
+                            shared.ui.modal_headline = headline.to_string();
+                            return
+                        }
+                        if shared.ui.anim.selected == usize::MAX {
+                            if shared.armature.animations.len() == 0 || shared.armature.animations[0].keyframes.len() == 0{
+                                shared.ui.modal_headline = "No animation available.".to_string();
+                                return
+                            } else {
+                                shared.ui.anim.selected = 0;
+                            }
+                        }
                         shared.recording = true;
                         shared.done_recording = true;
                         shared.ui.anim.playing = true;
@@ -310,6 +326,27 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                         shared.selected_bone_idx = usize::MAX;
                     }
                     shared.ui.polar_id = "".to_string();
+                }
+            });
+        });
+}
+
+pub fn modal_dialog(shared: &mut Shared, ctx: &egui::Context) {
+    egui::Modal::new(shared.ui.polar_id.clone().into())
+        .frame(egui::Frame {
+            corner_radius: 0.into(),
+            fill: COLOR_MAIN,
+            inner_margin: egui::Margin::same(5),
+            stroke: egui::Stroke::new(1., COLOR_ACCENT),
+            ..Default::default()
+        })
+        .show(ctx, |ui| {
+            ui.set_width(250.);
+            ui.label(shared.ui.modal_headline.to_string());
+            ui.add_space(20.);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                if ui.button("OK").clicked() {
+                    shared.ui.modal_headline = "".to_string();
                 }
             });
         });
