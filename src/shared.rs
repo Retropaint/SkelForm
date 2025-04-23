@@ -249,6 +249,8 @@ pub struct Ui {
     pub polar_id: String,
     pub polar_headline: String,
 
+    pub modal_headline: String,
+
     pub anim: UiAnim,
 
     // the initial value of what is being edited via input

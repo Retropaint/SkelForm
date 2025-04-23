@@ -660,11 +660,11 @@ pub fn new_animation(shared: &mut Shared) {
     });
 }
 
-fn draw_per_change_connecting_lines(shared: &Shared, ui: &egui::Ui, bone_tops: &BoneTops) {
+fn _draw_per_change_connecting_lines(shared: &Shared, ui: &egui::Ui, bone_tops: &BoneTops) {
     for kf in &shared.selected_animation().keyframes {
         for bone in &kf.bones {
             for field in &bone.fields {
-                let connecting_frame = get_first_element(kf.frame, &field.element, shared);
+                let connecting_frame = _get_first_element(kf.frame, &field.element, shared);
                 if connecting_frame == -1 {
                     continue;
                 }
@@ -699,7 +699,7 @@ fn draw_per_change_connecting_lines(shared: &Shared, ui: &egui::Ui, bone_tops: &
     }
 }
 
-fn get_first_element(start_frame: i32, element: &AnimElement, shared: &Shared) -> i32 {
+fn _get_first_element(start_frame: i32, element: &AnimElement, shared: &Shared) -> i32 {
     for kf in &shared.selected_animation().keyframes {
         if kf.frame <= start_frame {
             continue;
