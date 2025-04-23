@@ -492,9 +492,13 @@ impl Renderer {
         surface_texture.present();
 
         if shared.recording {
-            self.take_screenshot(screen_descriptor, paint_jobs, shared);
+            self.take_screenshot(shared);
         } else if shared.done_recording {
-            Self::export_video(shared);
+            let frames = shared.rendered_frames.clone();
+            let window = shared.window.clone();
+            std::thread::spawn(move || {
+                Self::export_video(frames, window);
+            });
             shared.done_recording = false;
         }
     }
@@ -502,8 +506,6 @@ impl Renderer {
     #[cfg(not(target_arch = "wasm32"))]
     fn take_screenshot(
         &mut self,
-        screen_descriptor: egui_wgpu::ScreenDescriptor,
-        paint_jobs: Vec<egui::epaint::ClippedPrimitive>,
         shared: &mut shared::Shared,
     ) {
         let width = shared.window.x as u32;
@@ -609,12 +611,12 @@ impl Renderer {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    fn export_video(shared: &mut Shared) {
-        let width = shared.rendered_frames[0].width.to_string();
-        let height = shared.rendered_frames[0].height.to_string();
+    fn export_video(rendered_frames: Vec<RenderedFrame>, window: Vec2) {
+        let width = rendered_frames[0].width.to_string();
+        let height = rendered_frames[0].height.to_string();
 
         if !std::fs::exists("./ffmpeg").unwrap() {
-            return
+            return;
         }
 
         let mut child = std::process::Command::new("./ffmpeg")
@@ -652,8 +654,8 @@ impl Renderer {
 
         let mut stdin = child.stdin.take().unwrap();
 
-        for i in 0..shared.rendered_frames.len() {
-            let frames = shared.rendered_frames.clone();
+        for i in 0..rendered_frames.len() {
+            let frames = rendered_frames.clone();
             let buffer_slice = frames[i].buffer.slice(..);
             let view = buffer_slice.get_mapped_range();
 
@@ -664,8 +666,8 @@ impl Renderer {
                 .collect();
 
             let img = <image::ImageBuffer<image::Rgb<u8>, _>>::from_raw(
-                shared.window.x as u32,
-                shared.window.y as u32,
+                window.x as u32,
+                window.y as u32,
                 rgb.clone(),
             );
             let _ = image::imageops::resize(
