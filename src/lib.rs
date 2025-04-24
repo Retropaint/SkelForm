@@ -12,6 +12,7 @@ mod native {
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
 
+use std::io::BufRead;
 // native-only imports
 #[cfg(target_arch = "wasm32")]
 mod web {
@@ -189,6 +190,7 @@ impl ApplicationHandler for App {
                     &self.renderer.as_ref().unwrap().gpu.device,
                     &self.renderer.as_ref().unwrap().bind_group_layout,
                 );
+                file_reader::read_exported_video_frame(&mut self.shared);
             }
         }
 
@@ -501,13 +503,14 @@ impl Renderer {
             });
             shared.done_recording = false;
         }
+
+        if shared.ui.anim.exported_frame != "" {
+            shared.ui.modal_headline = shared.ui.anim.exported_frame.to_string();
+        }
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    fn take_screenshot(
-        &mut self,
-        shared: &mut shared::Shared,
-    ) {
+    fn take_screenshot(&mut self, shared: &mut shared::Shared) {
         let width = shared.window.x as u32;
         let height = shared.window.y as u32;
 
@@ -615,11 +618,10 @@ impl Renderer {
         let width = rendered_frames[0].width.to_string();
         let height = rendered_frames[0].height.to_string();
 
-        if !std::fs::exists("./ffmpeg").unwrap() {
-            return;
-        }
+        let output_width = 800;
+        let output_height = 600;
 
-        let mut child = std::process::Command::new("./ffmpeg")
+        let mut child = std::process::Command::new("ffmpeg")
             .args([
                 "-f",
                 "rawvideo",
@@ -635,7 +637,7 @@ impl Renderer {
                 "-",
                 // output resolution
                 "-s",
-                "800:600",
+                &("".to_owned() + &output_width.to_string() + ":" + &output_height.to_string()),
                 // fast preset
                 "-preset",
                 "veryfast",
@@ -654,35 +656,52 @@ impl Renderer {
 
         let mut stdin = child.stdin.take().unwrap();
 
-        for i in 0..rendered_frames.len() {
+        for ref mut i in 0..rendered_frames.len() {
             let frames = rendered_frames.clone();
-            let buffer_slice = frames[i].buffer.slice(..);
+            let buffer_slice = frames[*i].buffer.slice(..);
             let view = buffer_slice.get_mapped_range();
 
-            let rgba: Vec<u8> = view.to_vec();
-            let rgb: Vec<u8> = rgba
-                .chunks(4)
-                .flat_map(|px| vec![px[2], px[1], px[0]])
-                .collect();
+            let mut rgb = vec![0u8; (window.x * window.y * 3.) as usize];
+            for (i, chunk) in view.as_ref().chunks_exact(4).enumerate() {
+                let offset = i * 3;
+                rgb[offset] = chunk[2];
+                rgb[offset + 1] = chunk[1];
+                rgb[offset + 2] = chunk[0];
+            }
 
             let img = <image::ImageBuffer<image::Rgb<u8>, _>>::from_raw(
                 window.x as u32,
                 window.y as u32,
-                rgb.clone(),
+                rgb,
             );
             let _ = image::imageops::resize(
                 img.as_ref().unwrap(),
-                800,
-                600,
+                output_width,
+                output_height,
                 image::imageops::FilterType::Nearest,
             );
 
             stdin.write_all(img.as_ref().unwrap()).unwrap();
+
+            let mut img_path = std::fs::File::create(".skelform_exported_video_frame").unwrap();
+            let frame = i.to_string();
+            let headline = "Exporting... ".to_owned()
+                + &frame.to_owned()
+                + " out of "
+                + &(rendered_frames.len() - 1).to_string()
+                + " frames";
+            img_path.write_all(headline.as_bytes()).unwrap();
+
+            *i += 5;
         }
 
         stdin.flush().unwrap();
         drop(stdin);
         child.wait().unwrap();
+
+        let mut img_path = std::fs::File::create(".skelform_exported_video_frame").unwrap();
+        let headline = "";
+        img_path.write_all(headline.as_bytes()).unwrap();
     }
 }
 
