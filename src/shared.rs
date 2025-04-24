@@ -293,9 +293,12 @@ pub struct UiAnim {
     // the frame at which playing started
     pub played_frame: i32,
 
+    pub exported_frame: String,
+
     pub timeline_offset: f32,
     pub dragged_keyframe: usize,
     pub images: Vec<egui::TextureHandle>,
+    pub loops: i32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]

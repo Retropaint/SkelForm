@@ -129,6 +129,15 @@ pub fn read_import(
     del_temp_files();
 }
 
+pub fn read_exported_video_frame(shared: &mut Shared) {
+    let file = ".skelform_exported_video_frame";
+    if !fs::exists(file).unwrap() {
+        return;
+    }
+    let frame = fs::read_to_string(file).unwrap();
+    shared.ui.anim.exported_frame = frame;
+}
+
 #[cfg(not(target_arch = "wasm32"))]
 pub fn del_temp_files() {
     #[rustfmt::skip]
@@ -136,7 +145,8 @@ pub fn del_temp_files() {
         ".skelform_img_path", 
         ".skelform_bone_idx",
         ".skelform_export_path",
-        ".skelform_import_path"
+        ".skelform_import_path",
+        ".skelform_exported_video_frame"
     ];
     for f in files {
         if fs::exists(f).unwrap() {

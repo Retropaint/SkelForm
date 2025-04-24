@@ -124,15 +124,35 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         ui.close_menu();
                     }
                     if top_bar_button(ui, str!("Export Video"), str!("E"), &mut offset).clicked() {
-                        if !std::fs::exists("./ffmpeg").unwrap() {
-                            let headline = "ffmpeg is not available.\n\nPlease place the ffmpeg binary file in the same directory as Skellar."; 
+
+                        // check if ffmpeg exists and complain if it doesn't
+                        let mut ffmpeg = false;
+                        match std::process::Command::new("ffmpeg").arg("-version").output() {
+                            Ok(output) => {
+                                if output.status.success() {
+                                    ffmpeg = true;
+                                } else {
+                                    println!("⚠️ ffmpeg command ran but returned an error:");
+                                }
+                            }
+                            Err(e) => {
+                                println!("❌ Failed to run ffmpeg: {}", e);
+                                println!("Make sure ffmpeg is installed and in your $PATH.");
+                            }
+                        }
+                        if !ffmpeg {
+                            let headline = "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH or environment variables";
                             shared.ui.modal_headline = headline.to_string();
                             return
                         }
+
+                        // complain if there's no proper animation to export
                         if shared.ui.anim.selected == usize::MAX {
-                            if shared.armature.animations.len() == 0 || shared.armature.animations[0].keyframes.len() == 0{
+                            if shared.armature.animations.len() == 0
+                                || shared.armature.animations[0].keyframes.len() == 0
+                            {
                                 shared.ui.modal_headline = "No animation available.".to_string();
-                                return
+                                return;
                             } else {
                                 shared.ui.anim.selected = 0;
                             }
@@ -141,6 +161,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         shared.done_recording = true;
                         shared.ui.anim.playing = true;
                         shared.ui.anim.selected_frame = 0;
+                        shared.ui.anim.loops = 1;
                         shared.ui.anim.elapsed = Some(std::time::Instant::now());
                         ui.close_menu();
                     }
