@@ -656,9 +656,9 @@ impl Renderer {
 
         let mut stdin = child.stdin.take().unwrap();
 
-        for ref mut i in 0..rendered_frames.len() {
+        for i in 0..rendered_frames.len() {
             let frames = rendered_frames.clone();
-            let buffer_slice = frames[*i].buffer.slice(..);
+            let buffer_slice = frames[i].buffer.slice(..);
             let view = buffer_slice.get_mapped_range();
 
             let mut rgb = vec![0u8; (window.x * window.y * 3.) as usize];
@@ -691,8 +691,6 @@ impl Renderer {
                 + &(rendered_frames.len() - 1).to_string()
                 + " frames";
             img_path.write_all(headline.as_bytes()).unwrap();
-
-            *i += 5;
         }
 
         stdin.flush().unwrap();
