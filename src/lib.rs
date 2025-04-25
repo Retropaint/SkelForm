@@ -545,7 +545,12 @@ impl Renderer {
                     view: &capture_view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.8,
+                            g: 0.8,
+                            b: 0.8,
+                            a: 1.0,
+                        }),
                         store: wgpu::StoreOp::Store,
                     },
                 })],
@@ -618,8 +623,8 @@ impl Renderer {
         let width = rendered_frames[0].width.to_string();
         let height = rendered_frames[0].height.to_string();
 
-        let output_width = 800;
-        let output_height = 600;
+        let output_width = width.clone();
+        let output_height = height.clone();
 
         let mut child = std::process::Command::new("ffmpeg")
             .args([
@@ -657,14 +662,13 @@ impl Renderer {
         let mut stdin = child.stdin.take().unwrap();
 
         for i in 0..rendered_frames.len() {
-            let frames = rendered_frames.clone();
-            let buffer_slice = frames[i].buffer.slice(..);
+            let buffer_slice = rendered_frames[i].buffer.slice(..);
             let view = buffer_slice.get_mapped_range();
 
             let mut rgb = vec![0u8; (window.x * window.y * 3.) as usize];
-            for (i, chunk) in view.as_ref().chunks_exact(4).enumerate() {
-                let offset = i * 3;
-                rgb[offset] = chunk[2];
+            for (j, chunk) in view.as_ref().chunks_exact(4).enumerate() {
+                let offset = j * 3;
+                rgb[offset + 0] = chunk[2];
                 rgb[offset + 1] = chunk[1];
                 rgb[offset + 2] = chunk[0];
             }
@@ -673,12 +677,6 @@ impl Renderer {
                 window.x as u32,
                 window.y as u32,
                 rgb,
-            );
-            let _ = image::imageops::resize(
-                img.as_ref().unwrap(),
-                output_width,
-                output_height,
-                image::imageops::FilterType::Nearest,
             );
 
             stdin.write_all(img.as_ref().unwrap()).unwrap();
