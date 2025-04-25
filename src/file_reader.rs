@@ -21,6 +21,13 @@ extern "C" {
     fn removeImage();
 }
 
+pub const FILES: [&str; 4] = [
+    ".skelform_img_path",
+    ".skelform_export_path",
+    ".skelform_import_path",
+    ".skelform_exported_video_frame",
+];
+
 /// read temporary files created from file dialogs (native & WASM)
 pub fn read_image_loaders(
     shared: &mut Shared,
@@ -140,15 +147,7 @@ pub fn read_exported_video_frame(shared: &mut Shared) {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn del_temp_files() {
-    #[rustfmt::skip]
-    let files = [
-        ".skelform_img_path", 
-        ".skelform_bone_idx",
-        ".skelform_export_path",
-        ".skelform_import_path",
-        ".skelform_exported_video_frame"
-    ];
-    for f in files {
+    for f in FILES {
         if fs::exists(f).unwrap() {
             fs::remove_file(f).unwrap();
         }
@@ -208,4 +207,11 @@ pub fn load_image_wasm() -> Option<(Vec<u8>, Vec2)> {
     }
 
     return Some((result, dimensions));
+}
+
+pub fn create_temp_file(name: &str, content: &str) {
+    let mut img_path = std::fs::File::create(name).unwrap();
+    img_path
+        .write_all(content.as_bytes())
+        .unwrap();
 }

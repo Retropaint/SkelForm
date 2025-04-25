@@ -97,10 +97,10 @@ pub fn open_export_dialog() {
         if task == None {
             return;
         }
-        let mut img_path = std::fs::File::create(".skelform_export_path").unwrap();
-        img_path
-            .write_all(task.unwrap().as_path().to_str().unwrap().as_bytes())
-            .unwrap();
+        file_reader::create_temp_file(
+            ".skelform_export_path",
+            task.unwrap().as_path().to_str().unwrap(),
+        );
     });
 }
 
@@ -112,10 +112,10 @@ pub fn open_import_dialog() {
         if task == None {
             return;
         }
-        let mut img_path = std::fs::File::create(".skelform_import_path").unwrap();
-        img_path
-            .write_all(task.unwrap().as_path().to_str().unwrap().as_bytes())
-            .unwrap();
+        file_reader::create_temp_file(
+            ".skelform_import_path",
+            task.unwrap().as_path().to_str().unwrap(),
+        );
     });
 }
 
