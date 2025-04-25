@@ -4,6 +4,7 @@ use crate::{
     input,
     shared::{Bone, Shared, Texture, Vec2, Vertex},
     utils,
+    RECT_VERT_INDICES
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
@@ -104,7 +105,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
             render_pass.set_vertex_buffer(0, vertex_buffer(&hovered_bone_verts, device).slice(..));
             render_pass.set_index_buffer(
-                index_buffer([0, 1, 2, 3, 0, 1].to_vec(), &device).slice(..),
+                index_buffer(RECT_VERT_INDICES.to_vec(), &device).slice(..),
                 wgpu::IndexFormat::Uint32,
             );
             render_pass.draw_indexed(0..6, 0, 0..1);
@@ -114,7 +115,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx as usize], &[]);
         render_pass.set_vertex_buffer(0, vertex_buffer(&verts[i], device).slice(..));
         render_pass.set_index_buffer(
-            index_buffer([0, 1, 2, 0, 1, 3].to_vec(), &device).slice(..),
+            index_buffer(RECT_VERT_INDICES.to_vec(), &device).slice(..),
             wgpu::IndexFormat::Uint32,
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
