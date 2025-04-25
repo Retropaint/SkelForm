@@ -49,21 +49,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         modal_dialog(shared, context);
     }
 
-    // // visualizing vertices
-    // let painter = context.debug_painter();
-    // for bone in &shared.armature.bones {
-    //     for vert in &bone.vertices {
-    //         painter.circle_filled(
-    //             utils::world_to_screen_space(vert.pos, shared.window).into(),
-    //             10.,
-    //             egui::Color32::GREEN,
-    //         );
-    //         painter.line_segment([
-    //             utils::world_to_screen_space(vert.pos, shared.window).into(),
-    //             egui::pos2(0., 0.),
-    //         ], egui::Stroke::new(2., egui::Color32::GREEN));
-    //     }
-    // }
+    //visualize_vertices(context, shared);
 
     // Although counter-intuitive, mouse inputs are recorded here.
     // This is because egui can detect all of them even if they were not on the UI itself.
@@ -156,6 +142,9 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                             } else {
                                 shared.ui.anim.selected = 0;
                             }
+                        } else if shared.last_keyframe() == None {
+                            shared.ui.modal_headline = "No animation available.".to_string();
+                            return;
                         }
                         shared.recording = true;
                         shared.done_recording = true;
@@ -414,4 +403,40 @@ pub fn top_bar_button(
     *offset += height + 2.;
 
     response
+}
+
+pub fn visualize_vertices(context: &Context, shared: &Shared) {
+    let painter = context.debug_painter();
+    for bone in &shared.armature.bones {
+        if bone.vertices.len() == 0 {
+            continue;
+        }
+        for vert in &bone.vertices {
+            painter.circle_filled(
+                utils::world_to_screen_space(vert.pos, shared.window).into(),
+                10.,
+                egui::Color32::GREEN,
+            );
+        }
+
+        if !bone.is_mesh {
+            for i in 0..RECT_VERT_INDICES.len() {
+                if i == 0 {
+                    continue;
+                }
+                let p1 = utils::world_to_screen_space(
+                    bone.vertices[RECT_VERT_INDICES[i - 1] as usize].pos,
+                    shared.window,
+                );
+                let p2 = utils::world_to_screen_space(
+                    bone.vertices[RECT_VERT_INDICES[i] as usize].pos,
+                    shared.window,
+                );
+                painter.line_segment(
+                    [p1.into(), p2.into()],
+                    egui::Stroke::new(2., egui::Color32::GREEN),
+                );
+            }
+        }
+    }
 }

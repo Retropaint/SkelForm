@@ -5,6 +5,8 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
+pub const RECT_VERT_INDICES: [u32; 6] = [0, 1, 2, 0, 3, 1];
+
 use tween::Tweener;
 use wgpu::BindGroup;
 use winit::keyboard::KeyCode;
@@ -203,7 +205,7 @@ impl fmt::Display for Vec2 {
 }
 
 #[repr(C)]
-#[derive(serde::Serialize, serde::Deserialize, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(PartialEq, serde::Serialize, serde::Deserialize, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
     pub pos: Vec2,
     pub uv: Vec2,
@@ -311,6 +313,8 @@ pub struct Bone {
     pub vertices: Vec<Vertex>,
 
     pub pivot: Vec2,
+
+    pub is_mesh: bool,
 
     /// used to properly offset bone's movement to counteract it's parent
     pub parent_rot: f32,
