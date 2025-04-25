@@ -324,8 +324,10 @@ impl ApplicationHandler for App {
                 ..Default::default()
             });
 
-            let mut img_path = std::fs::File::create(".skelform_img_path").unwrap();
-            let _ = img_path.write_all(b"/Users/o/projects/code/rust/skelform_wgpu/gopher.png");
+            file_reader::create_temp_file(
+                ".skelform_img_path",
+                "/Users/o/projects/code/rust/skelform_wgpu/gopher.png",
+            );
         }
 
         window.request_redraw();
@@ -681,14 +683,13 @@ impl Renderer {
 
             stdin.write_all(img.as_ref().unwrap()).unwrap();
 
-            let mut img_path = std::fs::File::create(".skelform_exported_video_frame").unwrap();
             let frame = i.to_string();
             let headline = "Exporting... ".to_owned()
                 + &frame.to_owned()
                 + " out of "
                 + &(rendered_frames.len() - 1).to_string()
                 + " frames";
-            img_path.write_all(headline.as_bytes()).unwrap();
+            file_reader::create_temp_file(".skelform_exported_video_frame", &headline);
         }
 
         stdin.flush().unwrap();
