@@ -118,16 +118,16 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                                 if output.status.success() {
                                     ffmpeg = true;
                                 } else {
-                                    println!("⚠️ ffmpeg command ran but returned an error:");
+                                    println!("ffmpeg command ran but returned an error:");
                                 }
                             }
                             Err(e) => {
-                                println!("❌ Failed to run ffmpeg: {}", e);
+                                println!("Failed to run ffmpeg: {}", e);
                                 println!("Make sure ffmpeg is installed and in your $PATH.");
                             }
                         }
                         if !ffmpeg {
-                            let headline = "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH or environment variables";
+                            let headline = "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.";
                             shared.ui.modal_headline = headline.to_string();
                             return
                         }

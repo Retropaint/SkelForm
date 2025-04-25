@@ -71,9 +71,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             let mut bone = shared.selected_bone().clone();
             if shared.animating && shared.ui.anim.selected != usize::MAX {
-                bone = shared.animate(shared.ui.anim.selected)
-                    [shared.selected_bone_idx]
-                    .clone();
+                bone = shared.animate(shared.ui.anim.selected)[shared.selected_bone_idx].clone();
             }
             let mut edited = false;
 
@@ -140,7 +138,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 shared.ui.polar_id = "delete_bone".to_string();
                 shared.ui.polar_headline = "Are you sure to delete this bone?".to_string();
             };
-        }).response;
+        })
+        .response;
     if response.hovered() {
         shared.input.on_ui = true;
     }
