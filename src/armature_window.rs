@@ -111,7 +111,7 @@ pub fn new_bone(bones: &mut Vec<Bone>) -> Bone {
         id: generate_id(&bones),
         scale: Vec2 { x: 1., y: 1. },
         tex_idx: -1,
-        pivot: Vec2::new(0.5, 0.5),
+        pivot: Vec2::new(0., 0.),
         ..Default::default()
     };
     bones.push(new_bone.clone());

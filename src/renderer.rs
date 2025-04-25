@@ -311,12 +311,12 @@ fn rect_verts(
     ];
 
     for v in &mut vertices {
-        let pivot_offset = tex.size * (bone.pivot - 0.5) * hard_scale;
+        let pivot_offset = tex.size * bone.pivot * hard_scale;
         v.pos.x -= pivot_offset.x;
         v.pos.y += pivot_offset.y;
 
         let rev_scale = Vec2::new(1. - bone.scale.x, 1. - bone.scale.y);
-        let scale_offset = tex.size * rev_scale * (bone.pivot - 0.5) * hard_scale;
+        let scale_offset = tex.size * rev_scale * bone.pivot * hard_scale;
         v.pos.x += scale_offset.x;
         v.pos.y -= scale_offset.y;
 
