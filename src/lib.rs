@@ -173,27 +173,7 @@ impl ApplicationHandler for App {
             }
         }
 
-        // temp file reading stuff
-        if let Some(_) = self.renderer.as_ref() {
-            file_reader::read_image_loaders(
-                &mut self.shared,
-                &self.renderer.as_ref().unwrap().gpu.queue,
-                &self.renderer.as_ref().unwrap().gpu.device,
-                &self.renderer.as_ref().unwrap().bind_group_layout,
-            );
-
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                file_reader::read_export(&self.shared);
-                file_reader::read_import(
-                    &mut self.shared,
-                    &self.renderer.as_ref().unwrap().gpu.queue,
-                    &self.renderer.as_ref().unwrap().gpu.device,
-                    &self.renderer.as_ref().unwrap().bind_group_layout,
-                );
-                file_reader::read_exported_video_frame(&mut self.shared);
-            }
-        }
+        file_reader::read(&mut self.shared, &self.renderer);
 
         let (Some(gui_state), Some(renderer), Some(window), Some(last_render_time)) = (
             self.gui_state.as_mut(),
