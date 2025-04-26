@@ -205,7 +205,9 @@ impl fmt::Display for Vec2 {
 }
 
 #[repr(C)]
-#[derive(PartialEq, serde::Serialize, serde::Deserialize, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(
+    PartialEq, serde::Serialize, serde::Deserialize, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable,
+)]
 pub struct Vertex {
     pub pos: Vec2,
     pub uv: Vec2,
@@ -314,8 +316,6 @@ pub struct Bone {
 
     pub vertices: Vec<Vertex>,
 
-    pub pivot: Vec2,
-
     pub is_mesh: bool,
 
     /// used to properly offset bone's movement to counteract it's parent
@@ -324,6 +324,7 @@ pub struct Bone {
     pub rot: f32,
     pub scale: Vec2,
     pub pos: Vec2,
+    pub pivot: Vec2,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -358,11 +359,6 @@ pub struct Keyframe {
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct AnimBone {
     pub id: i32,
-    pub pos: Vec2,
-    pub scale: Vec2,
-    pub rot: f32,
-
-    #[serde(skip)]
     pub fields: Vec<AnimField>,
 }
 
