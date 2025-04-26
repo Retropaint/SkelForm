@@ -35,6 +35,28 @@ pub const FILES: [&str; 4] = [
 
 pub const EXPORT_VID_DONE: &str = "Done!";
 
+pub fn read(shared: &mut Shared, renderer: &Option<Renderer>) {
+    if let Some(_) = renderer.as_ref() {
+        file_reader::read_image_loaders(
+            shared,
+            &renderer.as_ref().unwrap().gpu.queue,
+            &renderer.as_ref().unwrap().gpu.device,
+            &renderer.as_ref().unwrap().bind_group_layout,
+        );
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            file_reader::read_export(&shared);
+            file_reader::read_import(
+                shared,
+                &renderer.as_ref().unwrap().gpu.queue,
+                &renderer.as_ref().unwrap().gpu.device,
+                &renderer.as_ref().unwrap().bind_group_layout,
+            );
+            file_reader::read_exported_video_frame(shared);
+        }
+    }
+}
 /// read temporary files created from file dialogs (native & WASM)
 pub fn read_image_loaders(
     shared: &mut Shared,
