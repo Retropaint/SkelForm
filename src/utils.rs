@@ -162,24 +162,10 @@ pub fn export(path: String, textures: &Vec<crate::Texture>, armature: &crate::Ar
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
-    for anim in &mut armature_copy.animations {
-        for kf in &mut anim.keyframes {
-            for bone in &mut kf.bones {
-                for field in &mut bone.fields {
-                    match field.element {
-                        AnimElement::Position => {
-                            bone.pos = field.value;
-                        }
-                        AnimElement::Scale => {
-                            bone.scale = field.value;
-                        }
-                        AnimElement::Rotation => {
-                            bone.rot = field.value.x;
-                        }
-                        _ => {}
-                    }
-                }
-            }
+    // if bone isn't a mesh (ie is a simple rect), then empty the vertices
+    for bone in &mut armature_copy.bones {
+        if !bone.is_mesh {
+            bone.vertices = vec![];
         }
     }
 
@@ -240,17 +226,6 @@ pub fn import(
             device,
             bind_group_layout,
         ));
-    }
-
-    for anim in &mut armature.animations {
-        for kf in &mut anim.keyframes {
-            for bone in &mut kf.bones {
-                bone.fields = vec![];
-                set_bone_field(bone.pos, AnimElement::Position, bone);
-                set_bone_field(bone.scale, AnimElement::Scale, bone);
-                set_bone_field(Vec2::single(bone.rot), AnimElement::Rotation, bone);
-            }
-        }
     }
 
     shared.armature = armature;
