@@ -97,10 +97,7 @@ pub fn open_export_dialog() {
         if task == None {
             return;
         }
-        file_reader::create_temp_file(
-            ".skelform_export_path",
-            task.unwrap().as_path().to_str().unwrap(),
-        );
+        file_reader::create_temp_file(TEMP_EXPORT_PATH, task.unwrap().as_path().to_str().unwrap());
     });
 }
 
@@ -112,10 +109,7 @@ pub fn open_import_dialog() {
         if task == None {
             return;
         }
-        file_reader::create_temp_file(
-            ".skelform_import_path",
-            task.unwrap().as_path().to_str().unwrap(),
-        );
+        file_reader::create_temp_file(TEMP_IMG_PATH, task.unwrap().as_path().to_str().unwrap());
     });
 }
 

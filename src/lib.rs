@@ -8,6 +8,7 @@ mod native {
     pub use std::fs;
     pub use std::io::Write;
     pub use std::time::Instant;
+    pub use crate::file_reader::*;
 }
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
@@ -325,7 +326,7 @@ impl ApplicationHandler for App {
             });
 
             file_reader::create_temp_file(
-                ".skelform_img_path",
+                TEMP_IMG_PATH,
                 "/Users/o/projects/code/rust/skelform_wgpu/gopher.png",
             );
         }
@@ -689,14 +690,14 @@ impl Renderer {
                 + " out of "
                 + &(rendered_frames.len() - 1).to_string()
                 + " frames";
-            file_reader::create_temp_file(".skelform_exported_video_frame", &headline);
+            file_reader::create_temp_file(TEMP_EXPORT_VID_TEXT, &headline);
         }
 
         stdin.flush().unwrap();
         drop(stdin);
         child.wait().unwrap();
 
-        let mut img_path = std::fs::File::create(".skelform_exported_video_frame").unwrap();
+        let mut img_path = std::fs::File::create(TEMP_EXPORT_VID_TEXT).unwrap();
         let headline = "";
         img_path.write_all(headline.as_bytes()).unwrap();
     }

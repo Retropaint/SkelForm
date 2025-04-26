@@ -21,11 +21,16 @@ extern "C" {
     fn removeImage();
 }
 
+pub const TEMP_IMG_PATH: &str = ".skelform_img_path";
+pub const TEMP_EXPORT_PATH: &str = ".skelform_export_path";
+pub const TEMP_IMPORT_PATH: &str = ".skelform_import_path";
+pub const TEMP_EXPORT_VID_TEXT: &str = ".skelform_export_video_text";
+
 pub const FILES: [&str; 4] = [
-    ".skelform_img_path",
-    ".skelform_export_path",
-    ".skelform_import_path",
-    ".skelform_exported_video_frame",
+    TEMP_IMG_PATH,  
+    TEMP_EXPORT_PATH,
+    TEMP_IMPORT_PATH,
+    TEMP_EXPORT_VID_TEXT
 ];
 
 /// read temporary files created from file dialogs (native & WASM)
@@ -42,7 +47,7 @@ pub fn read_image_loaders(
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if !fs::exists(".skelform_img_path").unwrap() {
+        if !fs::exists(TEMP_IMG_PATH).unwrap() {
             return;
         }
 
@@ -54,7 +59,7 @@ pub fn read_image_loaders(
             return;
         }
 
-        let img_path = fs::read_to_string(".skelform_img_path").unwrap();
+        let img_path = fs::read_to_string(TEMP_IMG_PATH).unwrap();
         if img_path == "" {
             del_temp_files();
             return;
@@ -105,12 +110,11 @@ pub fn read_image_loaders(
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn read_export(shared: &Shared) {
-    let file = ".skelform_export_path";
-    if !fs::exists(file).unwrap() {
+    if !fs::exists(TEMP_EXPORT_PATH).unwrap() {
         return;
     }
 
-    let path = fs::read_to_string(file).unwrap();
+    let path = fs::read_to_string(TEMP_EXPORT_PATH).unwrap();
 
     utils::export(path, &shared.armature.textures, &shared.armature);
 
@@ -124,12 +128,11 @@ pub fn read_import(
     device: &Device,
     bind_group_layout: &BindGroupLayout,
 ) {
-    let file = ".skelform_import_path";
-    if !fs::exists(file).unwrap() {
+    if !fs::exists(TEMP_IMPORT_PATH).unwrap() {
         return;
     }
 
-    let path = fs::read_to_string(file).unwrap();
+    let path = fs::read_to_string(TEMP_IMPORT_PATH).unwrap();
 
     utils::import(path, shared, queue, device, bind_group_layout);
 
@@ -137,11 +140,10 @@ pub fn read_import(
 }
 
 pub fn read_exported_video_frame(shared: &mut Shared) {
-    let file = ".skelform_exported_video_frame";
-    if !fs::exists(file).unwrap() {
+    if !fs::exists(TEMP_EXPORT_VID_TEXT).unwrap() {
         return;
     }
-    let frame = fs::read_to_string(file).unwrap();
+    let frame = fs::read_to_string(TEMP_EXPORT_VID_TEXT).unwrap();
     shared.ui.anim.exported_frame = frame;
 }
 
@@ -211,7 +213,5 @@ pub fn load_image_wasm() -> Option<(Vec<u8>, Vec2)> {
 
 pub fn create_temp_file(name: &str, content: &str) {
     let mut img_path = std::fs::File::create(name).unwrap();
-    img_path
-        .write_all(content.as_bytes())
-        .unwrap();
+    img_path.write_all(content.as_bytes()).unwrap();
 }

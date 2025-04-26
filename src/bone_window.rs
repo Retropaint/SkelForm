@@ -2,7 +2,7 @@
 
 use egui::*;
 
-use crate::{shared::*, ui as ui_mod};
+use crate::{file_reader::*, shared::*, ui as ui_mod};
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
@@ -155,10 +155,7 @@ fn open_file_dialog() {
         if task == None {
             return;
         }
-        let mut img_path = File::create(".skelform_img_path").unwrap();
-        img_path
-            .write_all(task.unwrap().as_path().to_str().unwrap().as_bytes())
-            .unwrap();
+        create_temp_file(TEMP_IMG_PATH, task.unwrap().as_path().to_str().unwrap());
     });
 }
 
