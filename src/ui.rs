@@ -355,8 +355,11 @@ pub fn modal_dialog(shared: &mut Shared, ctx: &egui::Context) {
             ui.label(shared.ui.modal_headline.to_string());
             ui.add_space(20.);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                if ui.button("OK").clicked() {
-                    shared.ui.modal_headline = "".to_string();
+                if !shared.ui.forced_modal {
+                    if ui.button("OK").clicked() {
+                        shared.ui.modal_headline = "".to_string();
+                        shared.ui.forced_modal = true;
+                    }
                 }
             });
         });

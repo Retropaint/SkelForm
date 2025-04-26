@@ -240,6 +240,8 @@ pub struct InputStates {
 
 #[derive(Clone, Default)]
 pub struct Ui {
+    pub anim: UiAnim,
+
     pub edit_bar_pos: Vec2,
     pub animate_mode_bar_pos: Vec2,
     pub animate_mode_bar_scale: Vec2,
@@ -252,8 +254,8 @@ pub struct Ui {
     pub polar_headline: String,
 
     pub modal_headline: String,
-
-    pub anim: UiAnim,
+    // if true, the modal can't be closed
+    pub forced_modal: bool,
 
     // the initial value of what is being edited via input
     pub edit_value: Option<String>,

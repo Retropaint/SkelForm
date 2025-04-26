@@ -4,11 +4,11 @@ use wgpu::{BindGroupLayout, InstanceDescriptor};
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
+    pub use crate::file_reader::*;
     pub use image::*;
     pub use std::fs;
     pub use std::io::Write;
     pub use std::time::Instant;
-    pub use crate::file_reader::*;
 }
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
@@ -506,10 +506,6 @@ impl Renderer {
             });
             shared.done_recording = false;
         }
-
-        if shared.ui.anim.exported_frame != "" {
-            shared.ui.modal_headline = shared.ui.anim.exported_frame.to_string();
-        }
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -690,16 +686,16 @@ impl Renderer {
                 + " out of "
                 + &(rendered_frames.len() - 1).to_string()
                 + " frames";
-            file_reader::create_temp_file(TEMP_EXPORT_VID_TEXT, &headline);
+            if i != rendered_frames.len() - 1 {
+                file_reader::create_temp_file(TEMP_EXPORT_VID_TEXT, &headline);
+            }
         }
+
+        file_reader::create_temp_file(TEMP_EXPORT_VID_TEXT, EXPORT_VID_DONE);
 
         stdin.flush().unwrap();
         drop(stdin);
         child.wait().unwrap();
-
-        let mut img_path = std::fs::File::create(TEMP_EXPORT_VID_TEXT).unwrap();
-        let headline = "";
-        img_path.write_all(headline.as_bytes()).unwrap();
     }
 }
 
