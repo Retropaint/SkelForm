@@ -285,7 +285,7 @@ impl ApplicationHandler for App {
 
         if self.shared.highlight_bindgroup == None {
             self.shared.highlight_bindgroup = Some(renderer::create_texture_bind_group(
-                vec![255, 255, 255, 100],
+                vec![255, 255, 255, 70],
                 Vec2::new(1., 1.),
                 &self.renderer.as_ref().unwrap().gpu.queue,
                 &self.renderer.as_ref().unwrap().gpu.device,
@@ -295,7 +295,7 @@ impl ApplicationHandler for App {
 
         if self.shared.gridline_bindgroup == None {
             self.shared.gridline_bindgroup = Some(renderer::create_texture_bind_group(
-                vec![255, 255, 255, 50],
+                vec![255, 255, 255, 20],
                 Vec2::new(1., 1.),
                 &self.renderer.as_ref().unwrap().gpu.queue,
                 &self.renderer.as_ref().unwrap().gpu.device,
