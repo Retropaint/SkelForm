@@ -37,7 +37,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     });
                 }
                 let drag_name = if shared.dragging { "Edit" } else { "Drag" };
-                if ui_mod::button(drag_name, ui).clicked() {
+                if shared.armature.bones.len() > 1 && ui_mod::button(drag_name, ui).clicked() {
                     shared.dragging = !shared.dragging;
                 }
             });
