@@ -194,6 +194,7 @@ pub fn import(
     queue: &wgpu::Queue,
     device: &wgpu::Device,
     bind_group_layout: &BindGroupLayout,
+    context: &egui::Context
 ) {
     let file = std::fs::File::open(path);
     let mut zip = zip::ZipArchive::new(file.unwrap()).unwrap();
@@ -226,6 +227,13 @@ pub fn import(
             device,
             bind_group_layout,
         ));
+
+        let color_image = egui::ColorImage::from_rgba_unmultiplied(
+            [texture.size.x as usize, texture.size.y as usize],
+            &texture.pixels,
+        );
+        let tex = context.load_texture("anim_icons", color_image, Default::default());
+        shared.ui.texture_images.push(tex);
     }
 
     shared.armature = armature;
