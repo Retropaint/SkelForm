@@ -39,6 +39,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.add_space(3.);
 
             shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
+            shared.ui.camera_bar_pos.x = ui.min_rect().left();
 
             if shared.selected_bone_idx == usize::MAX || shared.dragging {
                 ui.disable();
@@ -160,7 +161,7 @@ pub fn open_file_dialog() {
 }
 
 // helper for editable float inputs
-fn float_input(
+pub fn float_input(
     id: String,
     shared: &mut Shared,
     ui: &mut egui::Ui,

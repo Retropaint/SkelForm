@@ -89,12 +89,15 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     style_once!(top_panel(context, shared));
     if shared.animating {
         style_once!(keyframe_editor::draw(context, shared));
+    } else {
+        shared.ui.camera_bar_pos.y = shared.window.y;
     }
     style_once!(armature_window::draw(context, shared));
     style_once!(bone_window::draw(context, shared));
 
     edit_mode_bar(context, shared);
     animate_bar(context, shared);
+    camera_bar(context, shared);
 }
 
 fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
@@ -235,6 +238,44 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
                 }
                 shared.ui.animate_mode_bar_scale = ui.min_rect().size().into();
             });
+        });
+}
+
+fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
+    egui::Window::new("Camera")
+        .resizable(false)
+        .title_bar(false)
+        .max_width(100.)
+        .movable(false)
+        .current_pos(egui::Pos2::new(
+            shared.ui.camera_bar_pos.x - shared.ui.camera_bar_scale.x - 21.,
+            shared.ui.camera_bar_pos.y - shared.ui.camera_bar_scale.y - 15.,
+        ))
+        .show(egui_ctx, |ui| {
+            macro_rules! input {
+                ($element:expr, $float:expr, $id:expr, $edit_id:expr, $modifier:expr, $ui:expr, $label:expr) => {
+                    if $label != "" {
+                        $ui.label($label);
+                    }
+                    (_, $float) = bone_window::float_input($id.to_string(), shared, $ui, $float, $modifier);
+                };
+            }
+
+            ui.horizontal(|ui| {
+                ui.label("Camera:");
+                input!(shared.camera.pos, shared.camera.pos.x, "cam_pos_y", 0, None, ui, "X");                
+                input!(shared.camera.pos, shared.camera.pos.y, "cam_pos_x", 0, None, ui, "Y");
+            });            
+
+            ui.horizontal(|ui| {
+                ui.label("Zoom:");
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                    input!(shared.camera.zoom, shared.camera.zoom, "cam_zoom", 0, None, ui, "");
+                });
+            });
+            
+
+            shared.ui.camera_bar_scale = ui.min_rect().size().into();
         });
 }
 

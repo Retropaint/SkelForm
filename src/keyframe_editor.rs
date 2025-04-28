@@ -58,6 +58,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         .min_height(150.)
         .resizable(true)
         .show(egui_ctx, |ui| {
+            shared.ui.camera_bar_pos.y = ui.min_rect().top();
             let full_height = ui.available_height();
             ui.horizontal(|ui| {
                 ui.set_height(full_height);

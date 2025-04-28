@@ -279,6 +279,10 @@ pub struct Ui {
     pub texture_images: Vec<egui::TextureHandle>,
 
     pub is_removing_textures: bool,
+
+    // camera bar stuff
+    pub camera_bar_pos: Vec2,
+    pub camera_bar_scale: Vec2,
 }
 
 impl Ui {
