@@ -12,11 +12,12 @@ macro_rules! const_color {
 }
 
 // UI colors
-#[rustfmt::skip] const_color!(COLOR_ACCENT,     65, 46, 105);
-#[rustfmt::skip] const_color!(COLOR_BORDER,     44, 36, 64);
-#[rustfmt::skip] const_color!(COLOR_MAIN,       32, 25, 46);
-#[rustfmt::skip] const_color!(COLOR_TEXT,       180, 180, 180);
-#[rustfmt::skip] const_color!(COLOR_FRAME_LINE, 80, 60, 130);
+#[rustfmt::skip] const_color!(COLOR_ACCENT,        65, 46, 105);
+#[rustfmt::skip] const_color!(COLOR_BORDER,        44, 36, 64);
+#[rustfmt::skip] const_color!(COLOR_MAIN,          32, 25, 46);
+#[rustfmt::skip] const_color!(COLOR_TEXT,          180, 180, 180);
+#[rustfmt::skip] const_color!(COLOR_TEXT_SELECTED, 210, 210, 210);
+#[rustfmt::skip] const_color!(COLOR_FRAME_LINE,    80, 60, 130);
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
@@ -326,12 +327,12 @@ pub fn button(text: &str, ui: &mut egui::Ui) -> egui::Response {
 pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::Response {
     let mut bg_col = COLOR_ACCENT;
     let mut cursor = egui::CursorIcon::PointingHand;
-    let mut text_col = egui::Color32::from_rgb(170, 170, 170);
+    let mut text_col = COLOR_TEXT;
 
     if selected {
         bg_col = bg_col + egui::Color32::from_rgb(20, 20, 20);
         cursor = egui::CursorIcon::Default;
-        text_col = egui::Color32::from_rgb(200, 200, 200);
+        text_col = COLOR_TEXT_SELECTED;
     }
 
     let button = egui::Button::new(egui::RichText::new(text).color(text_col))
@@ -441,7 +442,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
             });
 
             ui.horizontal(|ui| {
-                if button("Import", ui).clicked() {
+                if selection_button("Import", shared.ui.is_removing_textures, ui).clicked() {
                     #[cfg(not(target_arch = "wasm32"))]
                     bone_window::open_file_dialog();
 
