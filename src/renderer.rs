@@ -147,7 +147,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // move camera
-    if input::is_pressing(KeyCode::SuperLeft, &shared) && shared.input.mouse_left != -1 {
+    if (input::is_pressing(KeyCode::SuperLeft, &shared) || shared.selected_bone_idx == usize::MAX)
+        && shared.input.mouse_left != -1
+    {
         if shared.input.initial_points.len() == 0 {
             shared.camera.initial_pos = shared.camera.pos;
             shared.input.initial_points.push(shared.input.mouse);
