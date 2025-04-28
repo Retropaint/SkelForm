@@ -52,6 +52,11 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         modal_image(shared, context);
     }
 
+    // close modals on pressing escape
+    if shared.input.is_pressing(winit::keyboard::KeyCode::Escape) {
+        shared.ui.image_modal = false;
+    }
+
     //visualize_vertices(context, shared);
 
     // Although counter-intuitive, mouse inputs are recorded here.

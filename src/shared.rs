@@ -240,6 +240,18 @@ pub struct InputStates {
     pub pressed: Vec<KeyCode>,
 }
 
+impl InputStates {
+    pub fn is_pressing(&self, key: KeyCode) -> bool {
+        for k in &self.pressed {
+            if *k == key {
+                return true;
+            }
+        }
+
+        false
+    }
+}
+
 #[derive(Clone, Default)]
 pub struct Ui {
     pub anim: UiAnim,
