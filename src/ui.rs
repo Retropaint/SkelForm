@@ -270,9 +270,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 ui.label("Zoom:");
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                    input!(shared.camera.zoom, shared.camera.zoom, "cam_zoom", 0, None, ui, "");
-                });
+                input!(shared.camera.zoom, shared.camera.zoom, "cam_zoom", 0, None, ui, "");
             });
             
 
