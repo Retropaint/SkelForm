@@ -412,12 +412,25 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
 
                 let pos = egui::pos2(
                     ui.min_rect().left() + offset,
-                    ui.min_rect().top() + 40. + current_height,
+                    ui.min_rect().top() + 50. + current_height,
                 );
 
                 let rect = egui::Rect::from_min_size(pos, size.into());
-                egui::Image::new(&shared.ui.texture_images[i]).paint_at(ui, rect);
                 let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
+
+                // show highlight on hover
+                if response.hovered() {
+                    let painter = ui.painter_at(ui.min_rect());
+                    painter.rect_filled(
+                        rect,
+                        egui::CornerRadius::ZERO,
+                        egui::Color32::from_rgba_unmultiplied(255, 255, 255, 60),
+                    );
+                }
+
+                // draw image
+                egui::Image::new(&shared.ui.texture_images[i]).paint_at(ui, rect);
+
                 if response.clicked() {
                     shared.selected_bone_mut().tex_idx = i as i32;
                     shared.ui.image_modal = false;
