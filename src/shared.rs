@@ -573,6 +573,7 @@ pub struct Shared {
 
     /// useful if you don't want to provide an actual bind group during testing
     pub highlight_bindgroup: Option<BindGroup>,
+    pub gridline_bindgroup: Option<BindGroup>,
 
     /// triggers debug stuff
     pub debug: bool,

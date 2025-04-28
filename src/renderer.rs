@@ -3,8 +3,7 @@
 use crate::{
     input,
     shared::{Bone, Shared, Texture, Vec2, Vertex},
-    utils,
-    RECT_VERT_INDICES
+    utils, RECT_VERT_INDICES,
 };
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
@@ -23,6 +22,30 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     let mut temp_bones: Vec<Bone> = vec![];
     for b in &mut bones {
         temp_bones.push(b.clone());
+    }
+
+    if shared.gridline_bindgroup != None {
+        render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
+        render_pass.set_index_buffer(
+            index_buffer([0, 1, 2].to_vec(), &device).slice(..),
+            wgpu::IndexFormat::Uint32,
+        );
+        let gap = 1.;
+        let lines = 50;
+        for i in 0..lines {
+            if i as f32 / gap > shared.camera.zoom {
+                continue;
+            }
+            draw_vertical_line(i as f32 / gap, render_pass, device, shared);
+            draw_horizontal_line(i as f32 / gap, render_pass, device, shared);
+        }
+        for i in 0..lines {
+            if i as f32 / gap > shared.camera.zoom {
+                continue;
+            }
+            draw_vertical_line(i as f32 / -gap, render_pass, device, shared);
+            draw_horizontal_line(i as f32 / -gap, render_pass, device, shared);
+        }
     }
 
     // using while loop to prevent borrow issues
