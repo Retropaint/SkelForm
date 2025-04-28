@@ -26,7 +26,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // drawing gridlines
     if shared.gridline_bindgroup != None {
-        render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
+        render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
         render_pass.set_index_buffer(
             index_buffer([0, 1, 2].to_vec(), &device).slice(..),
             wgpu::IndexFormat::Uint32,
@@ -34,11 +34,20 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let gap = 1.;
         let lines = 100;
         for i in 0..lines {
-            let width = 0.005 * shared.camera.zoom;
-            let mut pos = i as f32 / gap;
-            if i > lines/2 {
-                pos = (i - lines/2) as f32 / -gap;
+            // after the first set of lines (which denote the center),
+            // set all other lines to use the more subtle bindgroup
+            if i == 1 {
+                render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
             }
+
+            let mut pos = i as f32 / -gap;
+            // 2nd half of lines are on the positive axis side
+            if i > lines / 2 {
+                pos = (i - lines / 2) as f32 / gap;
+            }
+
+            let width = 0.005 * shared.camera.zoom;
+
             if pos - shared.camera.pos.x < shared.camera.zoom {
                 draw_vertical_line(pos, width, render_pass, device, shared);
             }
