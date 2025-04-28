@@ -13,8 +13,9 @@ macro_rules! const_color {
 
 // UI colors
 #[rustfmt::skip] const_color!(COLOR_ACCENT, 65, 46, 105);
-#[rustfmt::skip] const_color!(COLOR_BORDER, 41, 31, 64);
+#[rustfmt::skip] const_color!(COLOR_BORDER, 59, 46, 89);
 #[rustfmt::skip] const_color!(COLOR_MAIN,   32, 25, 46);
+#[rustfmt::skip] const_color!(COLOR_TEXT,   180, 180, 180);
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
@@ -96,9 +97,6 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 }
 
 fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
-    let mut visuals = egui::Visuals::dark();
-    visuals.panel_fill = COLOR_MAIN;
-    egui_ctx.set_visuals(visuals);
     let response = egui::TopBottomPanel::top("top_bar")
         .frame(egui::Frame {
             fill: COLOR_MAIN,
@@ -255,7 +253,11 @@ pub fn default_styling(context: &Context) {
     visuals.panel_fill = COLOR_MAIN;
     visuals.window_stroke = egui::Stroke::new(1., COLOR_BORDER);
 
-    visuals.widgets.inactive.bg_fill = COLOR_BORDER;
+    visuals.widgets.inactive.bg_fill = COLOR_ACCENT;
+
+    visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1., COLOR_BORDER);
+
+    visuals.override_text_color = Some(COLOR_TEXT);
 
     context.set_visuals(visuals);
 }
