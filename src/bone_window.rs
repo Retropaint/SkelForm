@@ -54,13 +54,17 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 ui.label("Texture:");
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                     if ui_mod::button("Get Image", ui).clicked() {
-                        #[cfg(not(target_arch = "wasm32"))]
-                        {
-                            open_file_dialog();
-                        }
+                        if shared.bind_groups.len() == 0 {
+                            #[cfg(not(target_arch = "wasm32"))]
+                            {
+                                open_file_dialog();
+                            }
 
-                        #[cfg(target_arch = "wasm32")]
-                        toggleFileDialog(true);
+                            #[cfg(target_arch = "wasm32")]
+                            toggleFileDialog(true);
+                        } else {
+                            shared.ui.image_modal = true;
+                        }
                     };
                 })
             });
@@ -146,7 +150,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn open_file_dialog() {
+pub fn open_file_dialog() {
     #[cfg(not(target_arch = "wasm32"))]
     thread::spawn(move || {
         let task = rfd::FileDialog::new()

@@ -25,7 +25,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     #[cfg(not(target_arch = "wasm32"))]
     {
         let size = 18;
-        if shared.ui.anim.images.len() == 0 {
+        if shared.ui.anim.icon_images.len() == 0 {
             let mut full_img =
                 image::load_from_memory(include_bytes!("../anim_icons.png")).unwrap();
             let mut x = 0;
@@ -37,7 +37,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
                     img.as_flat_samples().as_slice(),
                 );
                 let tex = context.load_texture("anim_icons", color_image, Default::default());
-                shared.ui.anim.images.push(tex);
+                shared.ui.anim.icon_images.push(tex);
             }
         }
     }
@@ -47,6 +47,9 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     }
     if shared.ui.modal_headline != "" {
         modal_dialog(shared, context);
+    }
+    if shared.ui.image_modal {
+        modal_image(shared, context);
     }
 
     //visualize_vertices(context, shared);
@@ -84,7 +87,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
     let mut visuals = egui::Visuals::dark();
     visuals.panel_fill = COLOR_MAIN;
     egui_ctx.set_visuals(visuals);
-    let response = egui::TopBottomPanel::top("test")
+    let response = egui::TopBottomPanel::top("top_bar")
         .frame(egui::Frame {
             fill: COLOR_MAIN,
             stroke: Stroke::new(0., COLOR_ACCENT),
@@ -362,6 +365,49 @@ pub fn modal_dialog(shared: &mut Shared, ctx: &egui::Context) {
                     }
                 }
             });
+        });
+}
+
+pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
+    egui::Modal::new("test".into())
+        .frame(egui::Frame {
+            corner_radius: 0.into(),
+            fill: COLOR_MAIN,
+            inner_margin: egui::Margin::same(5),
+            stroke: egui::Stroke::new(1., COLOR_ACCENT),
+            ..Default::default()
+        })
+        .show(ctx, |ui| {
+            ui.set_width(250.);
+            ui.set_height(250.);
+            ui.heading("Select Image");
+            if ui.button("Import").clicked() {
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    bone_window::open_file_dialog();
+                }
+
+                #[cfg(target_arch = "wasm32")]
+                toggleFileDialog(true);
+            }
+            let mut offset = 0.;
+            for i in 0..shared.ui.texture_images.len() {
+                let mut size = shared.armature.textures[i].size;
+                let aspect_ratio = size.y / size.x;
+                if size.x > 40. {
+                    size.x = 40.;
+                    size.y = 40. * aspect_ratio;
+                }
+                let pos = egui::pos2(ui.cursor().left(), ui.cursor().top());
+                let rect = egui::Rect::from_min_size(pos, size.into());
+                egui::Image::new(&shared.ui.texture_images[i]).paint_at(ui, rect);
+                let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
+                if response.clicked() {
+                    shared.selected_bone_mut().tex_idx = i as i32;
+                    shared.ui.image_modal = false;
+                }
+                offset += size.x;
+            }
         });
 }
 

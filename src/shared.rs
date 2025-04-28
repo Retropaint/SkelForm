@@ -261,6 +261,10 @@ pub struct Ui {
 
     // the initial value of what is being edited via input
     pub edit_value: Option<String>,
+
+    pub image_modal: bool,
+
+    pub texture_images: Vec<egui::TextureHandle>
 }
 
 impl Ui {
@@ -303,7 +307,7 @@ pub struct UiAnim {
 
     pub timeline_offset: f32,
     pub dragged_keyframe: usize,
-    pub images: Vec<egui::TextureHandle>,
+    pub icon_images: Vec<egui::TextureHandle>,
     pub loops: i32,
 }
 
@@ -319,6 +323,7 @@ pub struct Bone {
     pub is_mesh: bool,
 
     /// used to properly offset bone's movement to counteract it's parent
+    #[serde(skip)]
     pub parent_rot: f32,
 
     pub rot: f32,
