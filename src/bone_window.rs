@@ -78,11 +78,14 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             let mut edited = false;
 
             macro_rules! input {
-                ($element:expr, $float:expr, $id:expr, $edit_id:expr, $modifier:expr, $ui:expr) => {
+                ($element:expr, $float:expr, $id:expr, $edit_id:expr, $modifier:expr, $ui:expr, $label:expr) => {
                     (edited, $float) = float_input($id.to_string(), shared, $ui, $float, $modifier);
                     if edited {
                         shared.save_edited_bone();
                         shared.edit_bone($edit_id, $element);
+                    }
+                    if $label != "" {
+                        $ui.label($label);
                     }
                 };
             }
@@ -92,10 +95,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     ui.label("Position:");
                 });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                    input!(bone.pos, bone.pos.y, "pos_y", 0, None, ui);
-                    ui.label("Y");
-                    input!(bone.pos, bone.pos.x, "pos_x", 0, None, ui);
-                    ui.label("X");
+                    input!(bone.pos, bone.pos.y, "pos_y", 0, None, ui, "Y");
+                    input!(bone.pos, bone.pos.x, "pos_x", 0, None, ui, "X");
                 })
             });
             ui.horizontal(|ui| {
@@ -103,10 +104,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     ui.label("Scale:");
                 });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                    input!(bone.scale, bone.scale.y, "scale_y", 2, None, ui);
-                    ui.label("Y");
-                    input!(bone.scale, bone.scale.x, "scale_x", 2, None, ui);
-                    ui.label("X");
+                    input!(bone.scale, bone.scale.y, "scale_y", 2, None, ui, "Y");
+                    input!(bone.scale, bone.scale.x, "scale_x", 2, None, ui, "X");
                 });
             });
             ui.horizontal(|ui| {
@@ -114,10 +113,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     ui.label("Pivot:");
                 });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                    input!(bone.pivot, bone.pivot.y, "pivot_y", 3, None, ui);
-                    ui.label("Y");
-                    input!(bone.pivot, bone.pivot.x, "pivot_x", 3, None, ui);
-                    ui.label("X");
+                    input!(bone.pivot, bone.pivot.y, "pivot_y", 3, None, ui, "Y");
+                    input!(bone.pivot, bone.pivot.x, "pivot_x", 3, None, ui, "X");
                 });
             });
             ui.horizontal(|ui| {
@@ -131,7 +128,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         "rot",
                         1,
                         Some(180. / std::f32::consts::PI),
-                        ui
+                        ui,
+                        ""
                     );
                 });
             });
