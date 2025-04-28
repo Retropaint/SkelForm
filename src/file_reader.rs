@@ -53,6 +53,7 @@ pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Co
                 &renderer.as_ref().unwrap().gpu.queue,
                 &renderer.as_ref().unwrap().gpu.device,
                 &renderer.as_ref().unwrap().bind_group_layout,
+                context
             );
             file_reader::read_exported_video_frame(shared);
         }
@@ -170,6 +171,7 @@ pub fn read_import(
     queue: &Queue,
     device: &Device,
     bind_group_layout: &BindGroupLayout,
+    context: &egui::Context
 ) {
     if !fs::exists(TEMP_IMPORT_PATH).unwrap() {
         return;
@@ -177,7 +179,7 @@ pub fn read_import(
 
     let path = fs::read_to_string(TEMP_IMPORT_PATH).unwrap();
 
-    utils::import(path, shared, queue, device, bind_group_layout);
+    utils::import(path, shared, queue, device, bind_group_layout, context);
 
     del_temp_files();
 }
