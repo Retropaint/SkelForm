@@ -41,7 +41,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
             shared.ui.camera_bar_pos.x = ui.min_rect().left();
 
-            if shared.selected_bone_idx == usize::MAX || shared.dragging {
+            if shared.dragging {
                 ui.disable();
                 return;
             }
@@ -67,10 +67,12 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     };
                 })
             });
-            ui.add_space(3.5);
-            if shared.selected_bone_idx == usize::MAX {
+
+            if shared.selected_bone().tex_idx == -1 {
                 return;
             }
+            
+            ui.add_space(3.5);
 
             let mut bone = shared.selected_bone().clone();
             if shared.animating && shared.ui.anim.selected != usize::MAX {
