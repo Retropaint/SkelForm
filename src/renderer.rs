@@ -31,7 +31,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             index_buffer([0, 1, 2].to_vec(), &device).slice(..),
             wgpu::IndexFormat::Uint32,
         );
-        let gap = 1.;
+        let gap = 0.5;
         let lines = 100;
         for i in 0..lines {
             // after the first set of lines (which denote the center),
@@ -40,10 +40,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
             }
 
-            let mut pos = i as f32 / -gap;
+            let mut pos = i as f32 * -gap;
             // 2nd half of lines are on the positive axis side
             if i > lines / 2 {
-                pos = (i - lines / 2) as f32 / gap;
+                pos = (i - lines / 2) as f32 * gap;
             }
 
             let width = 0.005 * shared.camera.zoom;
