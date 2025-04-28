@@ -293,6 +293,16 @@ impl ApplicationHandler for App {
             ));
         }
 
+        if self.shared.gridline_bindgroup == None {
+            self.shared.gridline_bindgroup = Some(renderer::create_texture_bind_group(
+                vec![255, 255, 255, 50],
+                Vec2::new(1., 1.),
+                &self.renderer.as_ref().unwrap().gpu.queue,
+                &self.renderer.as_ref().unwrap().gpu.device,
+                &self.renderer.as_ref().unwrap().bind_group_layout,
+            ));
+        }
+
         #[cfg(not(target_arch = "wasm32"))]
         if self.shared.debug {
             self.shared.debug = false;
