@@ -146,6 +146,22 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         render_pass.draw_indexed(0..6, 0, 0..1);
     }
 
+    // move camera
+    if input::is_pressing(KeyCode::SuperLeft, &shared) && shared.input.mouse_left != -1 {
+        if shared.input.initial_points.len() == 0 {
+            shared.camera.initial_pos = shared.camera.pos;
+            shared.input.initial_points.push(shared.input.mouse);
+        }
+
+        let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+        let initial_world =
+            utils::screen_to_world_space(shared.input.initial_points[0], shared.window);
+        shared.camera.pos =
+            shared.camera.initial_pos - (mouse_world - initial_world) * shared.camera.zoom;
+
+        return;
+    }
+
     // mouse inputs
     if shared.input.on_ui || shared.ui.polar_id != "" {
         shared.editing_bone = false;
@@ -163,45 +179,30 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.save_edited_bone();
             }
         }
-        if !input::is_pressing(KeyCode::SuperLeft, &shared) {
-            shared.editing_bone = true;
-            shared.cursor_icon = egui::CursorIcon::Crosshair;
-            let value: Vec2;
-            value = match shared.edit_mode {
-                // translation
-                0 => {
-                    let mut pos = bones[shared.selected_bone_idx].pos;
-                    if shared.is_animating() {
-                        pos = bones[shared.selected_bone_idx].pos
-                            - shared.armature.bones[shared.selected_bone_idx].pos;
-                    }
-                    shared.move_with_mouse(&pos, true)
+
+        shared.editing_bone = true;
+        shared.cursor_icon = egui::CursorIcon::Crosshair;
+        let value: Vec2;
+        value = match shared.edit_mode {
+            // translation
+            0 => {
+                let mut pos = bones[shared.selected_bone_idx].pos;
+                if shared.is_animating() {
+                    pos = bones[shared.selected_bone_idx].pos
+                        - shared.armature.bones[shared.selected_bone_idx].pos;
                 }
-
-                // rotation
-                1 => Vec2::single(
-                    (shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.,
-                ),
-
-                // scale
-                2 => (shared.input.mouse / shared.window) * 2.,
-
-                _ => Vec2::default(),
-            };
-            shared.edit_bone(shared.edit_mode, value);
-        } else if shared.input.mouse_left != -1 && shared.selected_bone_idx != usize::MAX {
-            // move camera if holding mod key
-            if shared.input.initial_points.len() == 0 {
-                shared.camera.initial_pos = shared.camera.pos;
-                shared.input.initial_points.push(shared.input.mouse);
+                shared.move_with_mouse(&pos, true)
             }
 
-            let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-            let initial_world =
-                utils::screen_to_world_space(shared.input.initial_points[0], shared.window);
-            shared.camera.pos =
-                shared.camera.initial_pos - (mouse_world - initial_world) * shared.camera.zoom;
-        }
+            // rotation
+            1 => Vec2::single((shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.),
+
+            // scale
+            2 => (shared.input.mouse / shared.window) * 2.,
+
+            _ => Vec2::default(),
+        };
+        shared.edit_bone(shared.edit_mode, value);
     }
 }
 
@@ -363,4 +364,47 @@ fn rect_verts(
     }
 
     vertices
+}
+
+pub fn draw_horizontal_line(
+    y: f32,
+    render_pass: &mut RenderPass,
+    device: &Device,
+    shared: &Shared,
+) {
+    let vertices: Vec<Vertex> = vec![
+        Vertex {
+            pos: (Vec2::new(-200., y) - shared.camera.pos) / shared.camera.zoom,
+            uv: Vec2::ZERO,
+        },
+        Vertex {
+            pos: (Vec2::new(0., 0.005 + y) - shared.camera.pos) / shared.camera.zoom,
+            uv: Vec2::ZERO,
+        },
+        Vertex {
+            pos: (Vec2::new(200., y) - shared.camera.pos) / shared.camera.zoom,
+            uv: Vec2::ZERO,
+        },
+    ];
+    render_pass.set_vertex_buffer(0, vertex_buffer(&vertices, device).slice(..));
+    render_pass.draw_indexed(0..3, 0, 0..1);
+}
+
+pub fn draw_vertical_line(x: f32, render_pass: &mut RenderPass, device: &Device, shared: &Shared) {
+    let vertices: Vec<Vertex> = vec![
+        Vertex {
+            pos: (Vec2::new(x, -200.) - shared.camera.pos) / shared.camera.zoom,
+            uv: Vec2::ZERO,
+        },
+        Vertex {
+            pos: (Vec2::new(0.005 + x, 0.) - shared.camera.pos) / shared.camera.zoom,
+            uv: Vec2::ZERO,
+        },
+        Vertex {
+            pos: (Vec2::new(x, 200.) - shared.camera.pos) / shared.camera.zoom,
+            uv: Vec2::ZERO,
+        },
+    ];
+    render_pass.set_vertex_buffer(0, vertex_buffer(&vertices, device).slice(..));
+    render_pass.draw_indexed(0..3, 0, 0..1);
 }
