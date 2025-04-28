@@ -12,10 +12,11 @@ macro_rules! const_color {
 }
 
 // UI colors
-#[rustfmt::skip] const_color!(COLOR_ACCENT, 65, 46, 105);
-#[rustfmt::skip] const_color!(COLOR_BORDER, 44, 36, 64);
-#[rustfmt::skip] const_color!(COLOR_MAIN,   32, 25, 46);
-#[rustfmt::skip] const_color!(COLOR_TEXT,   180, 180, 180);
+#[rustfmt::skip] const_color!(COLOR_ACCENT,     65, 46, 105);
+#[rustfmt::skip] const_color!(COLOR_BORDER,     44, 36, 64);
+#[rustfmt::skip] const_color!(COLOR_MAIN,       32, 25, 46);
+#[rustfmt::skip] const_color!(COLOR_TEXT,       180, 180, 180);
+#[rustfmt::skip] const_color!(COLOR_FRAME_LINE, 80, 60, 130);
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
@@ -255,6 +256,8 @@ pub fn default_styling(context: &Context) {
 
     visuals.widgets.inactive.bg_fill = COLOR_BORDER;
     visuals.widgets.active.bg_fill = COLOR_BORDER;
+
+    visuals.widgets.active.weak_bg_fill = COLOR_BORDER;
 
     visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1., COLOR_BORDER);
 
