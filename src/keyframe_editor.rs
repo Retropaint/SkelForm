@@ -514,13 +514,13 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &BoneTops
 
                 let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
                 let mut idx = element.clone() as usize;
-                if idx > shared.ui.anim.images.len() - 1 {
-                    idx = shared.ui.anim.images.len() - 1;
+                if idx > shared.ui.anim.icon_images.len() - 1 {
+                    idx = shared.ui.anim.icon_images.len() - 1;
                 }
-                egui::Image::new(&shared.ui.anim.images[idx]).paint_at(ui, rect);
+                egui::Image::new(&shared.ui.anim.icon_images[idx]).paint_at(ui, rect);
 
                 let changed =
-                    check_change_diamond_drag(&element, ui, shared, pos, size, hitbox, i, b);
+                    check_change_icon_drag(&element, ui, shared, pos, size, hitbox, i, b);
 
                 // stop rendering for this frame if a change occured, as elements might be out of order
                 // and cause indexing issues
@@ -553,7 +553,7 @@ fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
     ));
 }
 
-fn check_change_diamond_drag(
+fn check_change_icon_drag(
     element: &AnimElement,
     ui: &mut egui::Ui,
     shared: &mut Shared,
