@@ -115,6 +115,13 @@ pub fn read_image_loaders(
         return;
     }
 
+    // check if this texture already exists
+    for tex in &shared.armature.textures {
+        if pixels == tex.pixels {
+            return;
+        }
+    }
+
     // add this texture to bind_groups array
     shared.bind_groups.push(renderer::create_texture_bind_group(
         pixels.to_vec(),
