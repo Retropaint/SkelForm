@@ -212,6 +212,9 @@ pub fn import(
     }
     let mut img = image::load_from_memory(&bytes).unwrap();
 
+    shared.bind_groups = vec![];
+    shared.ui.texture_images = vec![];
+
     let mut offset = 0;
     for texture in &mut armature.textures {
         texture.pixels = img
