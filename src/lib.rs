@@ -173,7 +173,7 @@ impl ApplicationHandler for App {
             }
         }
 
-        file_reader::read(&mut self.shared, &self.renderer);
+        file_reader::read(&mut self.shared, &self.renderer, self.gui_state.as_ref().unwrap().egui_ctx());
 
         let (Some(gui_state), Some(renderer), Some(window), Some(last_render_time)) = (
             self.gui_state.as_mut(),
@@ -477,11 +477,13 @@ impl Renderer {
         surface_texture.present();
 
         if shared.recording {
+            #[cfg(not(target_arch = "wasm32"))]
             self.take_screenshot(shared);
         } else if shared.done_recording {
             let frames = shared.rendered_frames.clone();
             let window = shared.window.clone();
             std::thread::spawn(move || {
+                #[cfg(not(target_arch = "wasm32"))]
                 Self::export_video(frames, window);
             });
             shared.done_recording = false;

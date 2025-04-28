@@ -35,13 +35,14 @@ pub const FILES: [&str; 4] = [
 
 pub const EXPORT_VID_DONE: &str = "Done!";
 
-pub fn read(shared: &mut Shared, renderer: &Option<Renderer>) {
+pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Context) {
     if let Some(_) = renderer.as_ref() {
         file_reader::read_image_loaders(
             shared,
             &renderer.as_ref().unwrap().gpu.queue,
             &renderer.as_ref().unwrap().gpu.device,
             &renderer.as_ref().unwrap().bind_group_layout,
+            context,
         );
 
         #[cfg(not(target_arch = "wasm32"))]
@@ -63,6 +64,7 @@ pub fn read_image_loaders(
     queue: &Queue,
     device: &Device,
     bind_group_layout: &BindGroupLayout,
+    ctx: &egui::Context
 ) {
     #[allow(unused_assignments)]
     let mut pixels: Vec<u8> = vec![];
@@ -122,6 +124,16 @@ pub fn read_image_loaders(
         bind_group_layout,
     ));
 
+    let color_image = egui::ColorImage::from_rgba_unmultiplied(
+        [
+            dimensions.x as usize,
+            dimensions.y as usize,
+        ],
+        &pixels,
+    );
+    let tex = ctx.load_texture("anim_icons", color_image, Default::default());
+    shared.ui.texture_images.push(tex);
+
     shared.armature.textures.push(crate::Texture {
         size: dimensions,
         pixels,
@@ -163,6 +175,7 @@ pub fn read_import(
     del_temp_files();
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn read_exported_video_frame(shared: &mut Shared) {
     if !fs::exists(TEMP_EXPORT_VID_TEXT).unwrap() {
         return;
@@ -237,6 +250,7 @@ pub fn load_image_wasm() -> Option<(Vec<u8>, Vec2)> {
     return Some((result, dimensions));
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn create_temp_file(name: &str, content: &str) {
     let mut img_path = std::fs::File::create(name).unwrap();
     img_path.write_all(content.as_bytes()).unwrap();
