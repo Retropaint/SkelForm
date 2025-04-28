@@ -247,12 +247,6 @@ pub fn default_styling(context: &Context) {
     context.set_visuals(visuals);
 }
 
-pub fn styling_once<T: FnOnce(&mut egui::Visuals)>(context: &Context, changes: T) {
-    let mut visuals = egui::Visuals::dark();
-    changes(&mut visuals);
-    context.set_visuals(visuals);
-}
-
 pub fn set_zoom(zoom: f32, shared: &mut Shared) {
     shared.camera.zoom = zoom;
     if shared.camera.zoom < 0.1 {
@@ -381,24 +375,46 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
             ui.set_width(250.);
             ui.set_height(250.);
             ui.heading("Select Image");
+
+            modal_x(ui, || {
+                shared.ui.image_modal = false;
+            });
+
             if ui.button("Import").clicked() {
                 #[cfg(not(target_arch = "wasm32"))]
-                {
-                    bone_window::open_file_dialog();
-                }
+                bone_window::open_file_dialog();
 
                 #[cfg(target_arch = "wasm32")]
                 toggleFileDialog(true);
             }
+
             let mut offset = 0.;
+            let mut height = 0.;
+            let mut current_height = 0.;
             for i in 0..shared.ui.texture_images.len() {
+                // limit size
                 let mut size = shared.armature.textures[i].size;
-                let aspect_ratio = size.y / size.x;
-                if size.x > 40. {
-                    size.x = 40.;
-                    size.y = 40. * aspect_ratio;
+                let max = 50.;
+                if size.x > max {
+                    let aspect_ratio = size.y / size.x;
+                    size.x = max;
+                    size.y = max * aspect_ratio;
+                } else if size.y > max {
+                    let aspect_ratio = size.x / size.y;
+                    size.y = max;
+                    size.x = max * aspect_ratio;
                 }
-                let pos = egui::pos2(ui.cursor().left(), ui.cursor().top());
+
+                // record tallest texture of this row
+                if height > size.y {
+                    height = size.y;
+                }
+
+                let pos = egui::pos2(
+                    ui.min_rect().left() + offset,
+                    ui.min_rect().top() + 40. + current_height,
+                );
+
                 let rect = egui::Rect::from_min_size(pos, size.into());
                 egui::Image::new(&shared.ui.texture_images[i]).paint_at(ui, rect);
                 let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
@@ -406,7 +422,14 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                     shared.selected_bone_mut().tex_idx = i as i32;
                     shared.ui.image_modal = false;
                 }
+
                 offset += size.x;
+                // go to next row if there's no space
+                if offset > ui.available_width() {
+                    offset = 0.;
+                    current_height += height;
+                    height = 0.;
+                }
             }
         });
 }
@@ -487,5 +510,16 @@ pub fn visualize_vertices(context: &Context, shared: &Shared) {
                 );
             }
         }
+    }
+}
+
+// top-right X label for modals
+pub fn modal_x<T: FnOnce()>(ui: &mut egui::Ui, after_close: T) {
+    let x_rect = egui::Rect::from_min_size(ui.min_rect().right_top(), egui::Vec2::ZERO);
+    if ui
+        .put(x_rect, egui::Label::new(egui::RichText::new("X").size(18.)))
+        .clicked()
+    {
+        after_close();
     }
 }

@@ -56,9 +56,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     if ui_mod::button("Get Image", ui).clicked() {
                         if shared.bind_groups.len() == 0 {
                             #[cfg(not(target_arch = "wasm32"))]
-                            {
-                                open_file_dialog();
-                            }
+                            open_file_dialog();
 
                             #[cfg(target_arch = "wasm32")]
                             toggleFileDialog(true);
