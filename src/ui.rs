@@ -1,13 +1,20 @@
 //! Core UI (user interface) logic.
 
-use egui::{Context, Shadow, Stroke};
+use egui::{Color32, Context, Shadow, Stroke};
 
 use crate::shared::*;
 use crate::{armature_window, bone_window, keyframe_editor, utils};
 
+macro_rules! const_color {
+    ($name:ident, $r:expr, $g:expr, $b:expr) => {
+        pub const $name: Color32 = Color32::from_rgb($r, $g, $b);
+    };
+}
+
 // UI colors
-pub const COLOR_ACCENT: egui::Color32 = egui::Color32::from_rgb(60, 60, 60);
-pub const COLOR_MAIN: egui::Color32 = egui::Color32::from_rgb(30, 30, 30);
+#[rustfmt::skip] const_color!(COLOR_ACCENT, 65, 46, 105);
+#[rustfmt::skip] const_color!(COLOR_BORDER, 41, 31, 64);
+#[rustfmt::skip] const_color!(COLOR_MAIN,   32, 25, 46);
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
@@ -246,7 +253,9 @@ pub fn default_styling(context: &Context) {
     visuals.window_shadow = Shadow::NONE;
     visuals.window_fill = COLOR_MAIN;
     visuals.panel_fill = COLOR_MAIN;
-    visuals.window_stroke = egui::Stroke::new(1., COLOR_ACCENT);
+    visuals.window_stroke = egui::Stroke::new(1., COLOR_BORDER);
+
+    visuals.widgets.inactive.bg_fill = COLOR_BORDER;
 
     context.set_visuals(visuals);
 }
@@ -385,10 +394,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
             });
 
             ui.horizontal(|ui| {
-                if ui
-                    .add_enabled(!shared.ui.is_removing_textures, egui::Button::new("Import"))
-                    .clicked()
-                {
+                if button("Import", ui).clicked() {
                     #[cfg(not(target_arch = "wasm32"))]
                     bone_window::open_file_dialog();
 
@@ -401,7 +407,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                 } else {
                     "Remove"
                 };
-                if ui.button(label).clicked() {
+                if button(label, ui).clicked() {
                     shared.ui.is_removing_textures = !shared.ui.is_removing_textures
                 }
             });
@@ -454,7 +460,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                         shared.remove_texture(i as i32);
                         shared.ui.is_removing_textures = false;
                         // stop the loop to prevent index errors
-                        break
+                        break;
                     } else {
                         shared.selected_bone_mut().tex_idx = i as i32;
                         shared.ui.image_modal = false;
