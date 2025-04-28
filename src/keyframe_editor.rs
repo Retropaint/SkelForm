@@ -450,11 +450,10 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &BoneTops
 
         shared.ui.anim.lines_x.push(x);
 
-        let mut color = egui::Color32::DARK_GRAY;
+        let mut color = ui::COLOR_FRAME_LINE;
         let last_keyframe = shared.selected_animation().keyframes.last();
         if last_keyframe != None && last_keyframe.unwrap().frame < i {
-            let gray = 60;
-            color = egui::Color32::from_rgb(gray, gray, gray);
+            color = ui::COLOR_BORDER;
         }
 
         // check if pointing at a clickable area of this line
