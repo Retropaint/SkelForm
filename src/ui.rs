@@ -88,16 +88,29 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     shared.cursor_icon = egui::CursorIcon::Default;
 
     style_once!(top_panel(context, shared));
+
     if shared.animating {
         style_once!(keyframe_editor::draw(context, shared));
     } else {
         shared.ui.camera_bar_pos.y = shared.window.y;
     }
-    style_once!(armature_window::draw(context, shared));
-    style_once!(bone_window::draw(context, shared));
 
-    edit_mode_bar(context, shared);
-    animate_bar(context, shared);
+    style_once!(armature_window::draw(context, shared));
+
+    if shared.selected_bone_idx != usize::MAX {
+        style_once!(bone_window::draw(context, shared));
+        if shared.selected_bone().tex_idx != -1 {
+            edit_mode_bar(context, shared);
+        }
+    } else {
+        shared.ui.animate_mode_bar_pos.x = shared.window.x;
+        shared.ui.camera_bar_pos.x = shared.window.x;
+    }
+
+    if shared.armature.bones.len() > 0 {
+        animate_bar(context, shared);
+    }
+
     camera_bar(context, shared);
 }
 
