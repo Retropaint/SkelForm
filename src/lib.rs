@@ -173,7 +173,11 @@ impl ApplicationHandler for App {
             }
         }
 
-        file_reader::read(&mut self.shared, &self.renderer, self.gui_state.as_ref().unwrap().egui_ctx());
+        file_reader::read(
+            &mut self.shared,
+            &self.renderer,
+            self.gui_state.as_ref().unwrap().egui_ctx(),
+        );
 
         let (Some(gui_state), Some(renderer), Some(window), Some(last_render_time)) = (
             self.gui_state.as_mut(),
@@ -435,6 +439,7 @@ impl Renderer {
                 });
 
         encoder.insert_debug_marker("Render scene");
+        let clear_color = (50, 50, 50);
 
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
@@ -443,9 +448,9 @@ impl Renderer {
                 resolve_target: None,
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(wgpu::Color {
-                        r: 0.2,
-                        g: 0.2,
-                        b: 0.2,
+                        r: clear_color.0 as f64 / 255.,
+                        g: clear_color.1 as f64 / 255.,
+                        b: clear_color.2 as f64 / 255.,
                         a: 1.0,
                     }),
                     store: wgpu::StoreOp::Store,
