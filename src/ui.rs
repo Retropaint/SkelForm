@@ -118,7 +118,6 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         ui.close_menu();
                     }
                     if top_bar_button(ui, str!("Export Video"), str!("E"), &mut offset).clicked() {
-
                         // check if ffmpeg exists and complain if it doesn't
                         let mut ffmpeg = false;
                         match std::process::Command::new("ffmpeg").arg("-version").output() {
@@ -385,13 +384,27 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                 shared.ui.image_modal = false;
             });
 
-            if ui.button("Import").clicked() {
-                #[cfg(not(target_arch = "wasm32"))]
-                bone_window::open_file_dialog();
+            ui.horizontal(|ui| {
+                if ui
+                    .add_enabled(!shared.ui.is_removing_textures, egui::Button::new("Import"))
+                    .clicked()
+                {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    bone_window::open_file_dialog();
 
-                #[cfg(target_arch = "wasm32")]
-                toggleFileDialog(true);
-            }
+                    #[cfg(target_arch = "wasm32")]
+                    toggleFileDialog(true);
+                }
+
+                let label = if shared.ui.is_removing_textures {
+                    "Pick"
+                } else {
+                    "Remove"
+                };
+                if ui.button(label).clicked() {
+                    shared.ui.is_removing_textures = !shared.ui.is_removing_textures
+                }
+            });
 
             let mut offset = 0.;
             let mut height = 0.;
@@ -437,8 +450,15 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                 egui::Image::new(&shared.ui.texture_images[i]).paint_at(ui, rect);
 
                 if response.clicked() {
-                    shared.selected_bone_mut().tex_idx = i as i32;
-                    shared.ui.image_modal = false;
+                    if shared.ui.is_removing_textures {
+                        shared.remove_texture(i as i32);
+                        shared.ui.is_removing_textures = false;
+                        // stop the loop to prevent index errors
+                        break
+                    } else {
+                        shared.selected_bone_mut().tex_idx = i as i32;
+                        shared.ui.image_modal = false;
+                    }
                 }
 
                 offset += size.x;

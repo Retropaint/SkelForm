@@ -276,7 +276,9 @@ pub struct Ui {
 
     pub image_modal: bool,
 
-    pub texture_images: Vec<egui::TextureHandle>
+    pub texture_images: Vec<egui::TextureHandle>,
+
+    pub is_removing_textures: bool,
 }
 
 impl Ui {
@@ -937,6 +939,17 @@ impl Shared {
 
     pub fn is_animating(&self) -> bool {
         self.animating && self.ui.anim.selected != usize::MAX
+    }
+
+    pub fn remove_texture(&mut self, tex_idx: i32) {
+        self.armature.textures.remove(tex_idx as usize);
+        self.bind_groups.remove(tex_idx as usize);
+        self.ui.texture_images.remove(tex_idx as usize);
+        for bone in &mut self.armature.bones {
+            if bone.tex_idx == tex_idx {
+                bone.tex_idx = -1;
+            }
+        }
     }
 }
 
