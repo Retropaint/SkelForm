@@ -24,6 +24,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         temp_bones.push(b.clone());
     }
 
+    // drawing gridlines
     if shared.gridline_bindgroup != None {
         render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
         render_pass.set_index_buffer(
@@ -31,20 +32,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             wgpu::IndexFormat::Uint32,
         );
         let gap = 1.;
-        let lines = 50;
+        let lines = 100;
         for i in 0..lines {
-            if i as f32 / gap > shared.camera.zoom {
-                continue;
+            let width = 0.005 * shared.camera.zoom;
+            let mut pos = i as f32 / gap;
+            if i > lines/2 {
+                pos = (i - lines/2) as f32 / -gap;
             }
-            draw_vertical_line(i as f32 / gap, render_pass, device, shared);
-            draw_horizontal_line(i as f32 / gap, render_pass, device, shared);
-        }
-        for i in 0..lines {
-            if i as f32 / gap > shared.camera.zoom {
-                continue;
+            if pos - shared.camera.pos.x < shared.camera.zoom {
+                draw_vertical_line(pos, width, render_pass, device, shared);
             }
-            draw_vertical_line(i as f32 / -gap, render_pass, device, shared);
-            draw_horizontal_line(i as f32 / -gap, render_pass, device, shared);
+            if pos - shared.camera.pos.y < shared.camera.zoom {
+                draw_horizontal_line(pos, width, render_pass, device, shared);
+            }
         }
     }
 
@@ -368,6 +368,7 @@ fn rect_verts(
 
 pub fn draw_horizontal_line(
     y: f32,
+    width: f32,
     render_pass: &mut RenderPass,
     device: &Device,
     shared: &Shared,
@@ -378,7 +379,7 @@ pub fn draw_horizontal_line(
             uv: Vec2::ZERO,
         },
         Vertex {
-            pos: (Vec2::new(0., 0.005 + y) - shared.camera.pos) / shared.camera.zoom,
+            pos: (Vec2::new(0., width + y) - shared.camera.pos) / shared.camera.zoom,
             uv: Vec2::ZERO,
         },
         Vertex {
@@ -390,14 +391,20 @@ pub fn draw_horizontal_line(
     render_pass.draw_indexed(0..3, 0, 0..1);
 }
 
-pub fn draw_vertical_line(x: f32, render_pass: &mut RenderPass, device: &Device, shared: &Shared) {
+pub fn draw_vertical_line(
+    x: f32,
+    width: f32,
+    render_pass: &mut RenderPass,
+    device: &Device,
+    shared: &Shared,
+) {
     let vertices: Vec<Vertex> = vec![
         Vertex {
             pos: (Vec2::new(x, -200.) - shared.camera.pos) / shared.camera.zoom,
             uv: Vec2::ZERO,
         },
         Vertex {
-            pos: (Vec2::new(0.005 + x, 0.) - shared.camera.pos) / shared.camera.zoom,
+            pos: (Vec2::new(width + x, 0.) - shared.camera.pos) / shared.camera.zoom,
             uv: Vec2::ZERO,
         },
         Vertex {
