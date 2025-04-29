@@ -32,7 +32,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         );
         render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
 
-        let gap = 5.;
+        let gap = 2.;
 
         // Used to highlight center horizontal and vertical lines,
         // but also to prevent bind group from being set for every line
