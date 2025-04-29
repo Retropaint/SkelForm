@@ -2,7 +2,7 @@
 
 use egui::*;
 
-use crate::{file_reader::*, shared::*, ui as ui_mod};
+use crate::{shared::*, ui as ui_mod};
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
