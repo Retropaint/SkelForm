@@ -320,6 +320,10 @@ pub fn default_styling(context: &Context) {
 
     visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
     visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
+    visuals.widgets.active.fg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
+    visuals.widgets.active.bg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
+    visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1., COLOR_BORDER);
+    visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1., COLOR_BORDER);
 
     visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1., COLOR_BORDER);
 
