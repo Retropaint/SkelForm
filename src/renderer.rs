@@ -30,42 +30,40 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             index_buffer([0, 1, 2].to_vec(), &device).slice(..),
             wgpu::IndexFormat::Uint32,
         );
-
-        let gap = 1.;
-        let aspect_ratio = shared.window.y / shared.window.x;
         render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
 
-        let mut first_line = false;
+        let gap = 1.;
+
+        // Used to highlight center horizontal and vertical lines,
+        // but also to prevent bind group from being set for every line
+        // (causes slowdown)
+        let mut center_line = false;
+
+        let aspect_ratio = shared.window.y / shared.window.x;
         let mut x = shared.camera.pos.x - shared.camera.zoom / aspect_ratio;
         x = x.round();
         while x < shared.camera.pos.x + shared.camera.zoom / aspect_ratio {
-            if x < shared.camera.pos.x - shared.camera.zoom / aspect_ratio {
-                x += gap;
-                continue;
-            }
-            if x == 0. && !first_line {
+            if x == 0. && !center_line {
                 render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
-                first_line = true;
-            } else if x != 0. && first_line {
+                center_line = true;
+            } else if x != 0. && center_line{
                 render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
+                center_line = false;
             }
             draw_vertical_line(x, 0.005 * shared.camera.zoom, render_pass, device, shared);
             x += gap;
         }
 
-        first_line = false;
+        center_line = false;
         let mut y = shared.camera.pos.y - shared.camera.zoom;
         y = y.round();
         while y < shared.camera.pos.y + shared.camera.zoom {
-            if y < shared.camera.pos.y - shared.camera.zoom {
-                y += gap;
-                continue;
-            }
-            if y == 0. && !first_line {
+            if y == 0. && !center_line {
                 render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
-                first_line = true;
-            } else if y != 0. && first_line {
+                center_line = true;
+            } else if y != 0. && center_line {
                 render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
+                center_line = false;
             }
             draw_horizontal_line(y, 0.005 * shared.camera.zoom, render_pass, device, shared);
             y += gap;
