@@ -202,17 +202,19 @@ pub fn float_input(
             if shared.ui.edit_value.as_mut().unwrap() == "" {
                 shared.ui.edit_value = Some("0".to_string());
             }
-            return (
-                true,
-                shared
-                    .ui
-                    .edit_value
-                    .as_mut()
-                    .unwrap()
-                    .parse::<f32>()
-                    .unwrap()
-                    / modifier.unwrap(),
-            );
+            match shared
+                .ui
+                .edit_value
+                .as_mut()
+                .unwrap()
+                .parse::<f32>() {
+                Ok(output) => {
+                    return (true, output);
+                }
+                Err(e) => {
+                    return (false, value);    
+                }
+            }
         }
     }
     (false, value)
