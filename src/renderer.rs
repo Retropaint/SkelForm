@@ -32,7 +32,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         );
         render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
 
-        let gap = 1.;
+        let gap = 5.;
 
         // Used to highlight center horizontal and vertical lines,
         // but also to prevent bind group from being set for every line
@@ -43,6 +43,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let mut x = shared.camera.pos.x - shared.camera.zoom / aspect_ratio;
         x = x.round();
         while x < shared.camera.pos.x + shared.camera.zoom / aspect_ratio {
+            if x % gap != 0. {
+                x += 1.;
+                continue;
+            }
             if x == 0. && !center_line {
                 render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
                 center_line = true;
@@ -51,13 +55,17 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 center_line = false;
             }
             draw_vertical_line(x, 0.005 * shared.camera.zoom, render_pass, device, shared);
-            x += gap;
+            x += 1.;
         }
 
         center_line = false;
         let mut y = shared.camera.pos.y - shared.camera.zoom;
         y = y.round();
         while y < shared.camera.pos.y + shared.camera.zoom {
+            if y % gap != 0. {
+                y += 1.;
+                continue;
+            }
             if y == 0. && !center_line {
                 render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
                 center_line = true;
@@ -66,7 +74,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 center_line = false;
             }
             draw_horizontal_line(y, 0.005 * shared.camera.zoom, render_pass, device, shared);
-            y += gap;
+            y += 1.;
         }
     }
 
@@ -132,12 +140,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             while parent != None {
                 if parent.unwrap().id == shared.selected_bone().id {
                     ignore = true;
-                    break
+                    break;
                 }
                 parent = shared.find_bone(parent.unwrap().parent_id);
             }
             if ignore {
-                continue
+                continue;
             }
 
             let is_in_box: bool;
