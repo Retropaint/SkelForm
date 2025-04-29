@@ -12,14 +12,15 @@ macro_rules! const_color {
 }
 
 // UI colors
-#[rustfmt::skip] const_color!(COLOR_ACCENT,            65, 46, 105);
-#[rustfmt::skip] const_color!(COLOR_BORDER,            44, 36, 64);
-#[rustfmt::skip] const_color!(COLOR_BORDER_HOVERED,    84, 59, 138);
-#[rustfmt::skip] const_color!(COLOR_MAIN,              32, 25, 46);
-#[rustfmt::skip] const_color!(COLOR_TEXT,              180, 180, 180);
-#[rustfmt::skip] const_color!(COLOR_TEXT_SELECTED,     210, 210, 210);
-#[rustfmt::skip] const_color!(COLOR_FRAMELINE,         80, 60, 130);
-#[rustfmt::skip] const_color!(COLOR_FRAMELINE_HOVERED, 108, 80, 179);
+#[rustfmt::skip] const_color!(COLOR_ACCENT,             65, 46, 105);
+#[rustfmt::skip] const_color!(COLOR_BORDER,             44, 36, 64);
+#[rustfmt::skip] const_color!(COLOR_BORDER_HOVERED,     84, 59, 138);
+#[rustfmt::skip] const_color!(COLOR_MAIN,               32, 25, 46);
+#[rustfmt::skip] const_color!(COLOR_TEXT,               180, 180, 180);
+#[rustfmt::skip] const_color!(COLOR_TEXT_SELECTED,      210, 210, 210);
+#[rustfmt::skip] const_color!(COLOR_FRAMELINE,          80, 60, 130);
+#[rustfmt::skip] const_color!(COLOR_FRAMELINE_HOVERED,  108, 80, 179);
+#[rustfmt::skip] const_color!(COLOR_FRAMELINE_PASTLAST, 50, 41, 74);
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
