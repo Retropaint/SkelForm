@@ -12,12 +12,14 @@ macro_rules! const_color {
 }
 
 // UI colors
-#[rustfmt::skip] const_color!(COLOR_ACCENT,        65, 46, 105);
-#[rustfmt::skip] const_color!(COLOR_BORDER,        44, 36, 64);
-#[rustfmt::skip] const_color!(COLOR_MAIN,          32, 25, 46);
-#[rustfmt::skip] const_color!(COLOR_TEXT,          180, 180, 180);
-#[rustfmt::skip] const_color!(COLOR_TEXT_SELECTED, 210, 210, 210);
-#[rustfmt::skip] const_color!(COLOR_FRAME_LINE,    80, 60, 130);
+#[rustfmt::skip] const_color!(COLOR_ACCENT,            65, 46, 105);
+#[rustfmt::skip] const_color!(COLOR_BORDER,            44, 36, 64);
+#[rustfmt::skip] const_color!(COLOR_BORDER_HOVERED,    84, 59, 138);
+#[rustfmt::skip] const_color!(COLOR_MAIN,              32, 25, 46);
+#[rustfmt::skip] const_color!(COLOR_TEXT,              180, 180, 180);
+#[rustfmt::skip] const_color!(COLOR_TEXT_SELECTED,     210, 210, 210);
+#[rustfmt::skip] const_color!(COLOR_FRAMELINE,         80, 60, 130);
+#[rustfmt::skip] const_color!(COLOR_FRAMELINE_HOVERED, 108, 80, 179);
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
@@ -307,10 +309,16 @@ pub fn default_styling(context: &Context) {
     visuals.panel_fill = COLOR_MAIN;
     visuals.window_stroke = egui::Stroke::new(1., COLOR_BORDER);
 
-    visuals.widgets.inactive.bg_fill = COLOR_BORDER;
     visuals.widgets.active.bg_fill = COLOR_BORDER;
+    visuals.widgets.hovered.bg_fill = COLOR_BORDER;
+    visuals.widgets.inactive.bg_fill = COLOR_BORDER;
 
-    visuals.widgets.active.weak_bg_fill = COLOR_BORDER;
+    visuals.widgets.active.weak_bg_fill = COLOR_ACCENT;
+    visuals.widgets.hovered.weak_bg_fill = COLOR_ACCENT;
+    visuals.widgets.inactive.weak_bg_fill = COLOR_ACCENT;
+
+    visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
+    visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
 
     visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1., COLOR_BORDER);
 
