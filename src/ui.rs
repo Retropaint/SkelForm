@@ -467,7 +467,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                     bone_window::open_file_dialog();
 
                     #[cfg(target_arch = "wasm32")]
-                    toggleFileDialog(true);
+                    bone_window::toggleFileDialog(true);
                 }
 
                 let label = if shared.ui.is_removing_textures {
