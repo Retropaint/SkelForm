@@ -371,7 +371,7 @@ pub fn draw_timeline_graph(
                         painter.rect_filled(
                             rect_to_fill,
                             0.0, // corner rounding radius
-                            egui::Color32::from_rgb(gray, gray, gray),
+                            ui::COLOR_BORDER
                         );
                     }
 
@@ -457,7 +457,7 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &BoneTops
         let mut color = ui::COLOR_FRAMELINE;
         let last_keyframe = shared.selected_animation().keyframes.last();
         if last_keyframe != None && i > last_keyframe.unwrap().frame {
-            color = ui::COLOR_BORDER;
+            color = ui::COLOR_FRAMELINE_PASTLAST;
         }
 
         // check if pointing at a clickable area of this line
