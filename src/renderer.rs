@@ -31,7 +31,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             index_buffer([0, 1, 2].to_vec(), &device).slice(..),
             wgpu::IndexFormat::Uint32,
         );
-        let gap = 0.5;
+        let gap = 1.;
         let lines = 100;
         for i in 0..lines {
             // after the first set of lines (which denote the center),
@@ -46,10 +46,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 pos = (i - lines / 2) as f32 * gap;
             }
 
-            let width = 0.005 * shared.camera.zoom;
+            let width = 0.001 * shared.camera.zoom;
 
             if pos - shared.camera.pos.x < shared.camera.zoom {
-                draw_vertical_line(pos, width, render_pass, device, shared);
+                draw_vertical_line(
+                    pos * (shared.window.y / shared.window.x),
+                    width,
+                    render_pass,
+                    device,
+                    shared,
+                );
             }
             if pos - shared.camera.pos.y < shared.camera.zoom {
                 draw_horizontal_line(pos, width, render_pass, device, shared);
