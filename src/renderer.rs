@@ -328,7 +328,7 @@ fn rect_verts(
     tex: &Texture,
     aspect_ratio: f32,
 ) -> Vec<Vertex> {
-    let hard_scale = 0.001;
+    let hard_scale = 0.005;
     let mut vertices: Vec<Vertex> = vec![
         Vertex {
             pos: tex.size * bone.scale * hard_scale,
