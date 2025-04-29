@@ -864,27 +864,32 @@ impl Shared {
         }
 
         let mut element = crate::AnimElement::Position;
+        let mut og_value = value;
 
         match edit_mode {
             0 => {
+                og_value = self.selected_bone_mut().pos;
                 element = crate::AnimElement::Position;
                 if !self.is_animating() {
                     self.selected_bone_mut().pos = value;
                 }
             }
             1 => {
+                og_value = Vec2::single(self.selected_bone_mut().rot);
                 element = crate::AnimElement::Rotation;
                 if !self.is_animating() {
                     self.selected_bone_mut().rot = value.x;
                 }
             }
             2 => {
+                og_value = self.selected_bone_mut().scale;
                 element = crate::AnimElement::Scale;
                 if !self.is_animating() {
                     self.selected_bone_mut().scale = value;
                 }
             }
             3 => {
+                og_value = self.selected_bone_mut().pivot;
                 element = crate::AnimElement::Pivot;
                 if !self.is_animating() {
                     self.selected_bone_mut().pivot = value;
@@ -925,7 +930,7 @@ impl Shared {
                             fields: vec![AnimField {
                                 element: element.clone(),
                                 connect: false,
-                                value,
+                                value: og_value,
                                 label_top: 0.,
                             }],
                         }],
@@ -939,7 +944,7 @@ impl Shared {
                             b.fields.push(AnimField {
                                 element: element.clone(),
                                 connect: false,
-                                value,
+                                value: og_value,
                                 label_top: 0.,
                             });
                             has_bone = true;
@@ -953,7 +958,7 @@ impl Shared {
                                 fields: vec![AnimField {
                                     element: element.clone(),
                                     connect: false,
-                                    value,
+                                    value: og_value,
                                     label_top: 0.,
                                 }],
                             })
@@ -1017,7 +1022,7 @@ impl Shared {
     pub fn remove_texture(&mut self, tex_idx: i32) {
         self.armature.textures.remove(tex_idx as usize);
         self.bind_groups.remove(tex_idx as usize);
-        let _ =self.ui.texture_images.remove(tex_idx as usize);
+        let _ = self.ui.texture_images.remove(tex_idx as usize);
         for bone in &mut self.armature.bones {
             if bone.tex_idx == tex_idx {
                 bone.tex_idx = -1;
