@@ -2,6 +2,9 @@
 
 use crate::*;
 
+#[cfg(not(target_arch = "wasm32"))]
+use std::io::Read;
+
 /// Convert a point from screen to world space.
 pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
     Vec2 {

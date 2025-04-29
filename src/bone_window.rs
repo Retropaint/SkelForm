@@ -8,6 +8,7 @@ use crate::{shared::*, ui as ui_mod};
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
     pub use std::{fs::File, io::Write, thread};
+    pub use crate::file_reader::*;
 }
 #[cfg(not(target_arch = "wasm32"))]
 pub use native::*;
