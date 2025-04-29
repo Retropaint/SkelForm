@@ -25,7 +25,7 @@ pub use web::*;
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 extern "C" {
-    fn toggleFileDialog(open: bool);
+    pub fn toggleFileDialog(open: bool);
 }
 
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {

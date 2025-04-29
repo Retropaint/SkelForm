@@ -80,6 +80,7 @@ impl ApplicationHandler for App {
                 .unwrap();
             canvas_width = canvas.width();
             canvas_height = canvas.height();
+            self.shared.window = Vec2::new(canvas_width as f32, canvas_height as f32);
             self.last_size = (canvas_width, canvas_height);
             attributes = attributes.with_canvas(Some(canvas));
         }

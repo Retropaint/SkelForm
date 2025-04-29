@@ -116,6 +116,8 @@ pub fn read_image_loaders(
         return;
     }
 
+    shared.ui.image_modal = false;
+
     // check if this texture already exists
     for tex in &shared.armature.textures {
         if pixels == tex.pixels {
@@ -235,8 +237,6 @@ pub fn load_image_wasm() -> Option<(Vec<u8>, Vec2)> {
         if img.width() == 0 && img.height() == 0 {
             return None;
         }
-
-        log::info!("image!");
 
         // draw image onto canvas
         context
