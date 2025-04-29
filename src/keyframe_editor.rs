@@ -367,7 +367,6 @@ pub fn draw_timeline_graph(
                             ui.min_rect().size(),
                         );
 
-                        let gray = 50;
                         painter.rect_filled(
                             rect_to_fill,
                             0.0, // corner rounding radius
