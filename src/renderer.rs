@@ -26,40 +26,49 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // drawing gridlines
     if shared.gridline_bindgroup != None {
-        render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
         render_pass.set_index_buffer(
             index_buffer([0, 1, 2].to_vec(), &device).slice(..),
             wgpu::IndexFormat::Uint32,
         );
+
         let gap = 1.;
-        let lines = 100;
-        for i in 0..lines {
-            // after the first set of lines (which denote the center),
-            // set all other lines to use the more subtle bindgroup
-            if i == 1 {
+        let aspect_ratio = shared.window.y / shared.window.x;
+        render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
+
+        let mut first_line = false;
+        let mut x = shared.camera.pos.x - shared.camera.zoom / aspect_ratio;
+        x = x.round();
+        while x < shared.camera.pos.x + shared.camera.zoom / aspect_ratio {
+            if x < shared.camera.pos.x - shared.camera.zoom / aspect_ratio {
+                x += gap;
+                continue;
+            }
+            if x == 0. && !first_line {
+                render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
+                first_line = true;
+            } else if x != 0. && first_line {
                 render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
             }
+            draw_vertical_line(x, 0.005 * shared.camera.zoom, render_pass, device, shared);
+            x += gap;
+        }
 
-            let mut pos = i as f32 * -gap;
-            // 2nd half of lines are on the positive axis side
-            if i > lines / 2 {
-                pos = (i - lines / 2) as f32 * gap;
+        first_line = false;
+        let mut y = shared.camera.pos.y - shared.camera.zoom;
+        y = y.round();
+        while y < shared.camera.pos.y + shared.camera.zoom {
+            if y < shared.camera.pos.y - shared.camera.zoom {
+                y += gap;
+                continue;
             }
-
-            let width = 0.001 * shared.camera.zoom;
-
-            if pos - shared.camera.pos.x < shared.camera.zoom {
-                draw_vertical_line(
-                    pos * (shared.window.y / shared.window.x),
-                    width,
-                    render_pass,
-                    device,
-                    shared,
-                );
+            if y == 0. && !first_line {
+                render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
+                first_line = true;
+            } else if y != 0. && first_line {
+                render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
             }
-            if pos - shared.camera.pos.y < shared.camera.zoom {
-                draw_horizontal_line(pos, width, render_pass, device, shared);
-            }
+            draw_horizontal_line(y, 0.005 * shared.camera.zoom, render_pass, device, shared);
+            y += gap;
         }
     }
 
@@ -415,17 +424,18 @@ pub fn draw_vertical_line(
     device: &Device,
     shared: &Shared,
 ) {
+    let aspect_ratio = shared.window.y / shared.window.x;
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: (Vec2::new(x, -200.) - shared.camera.pos) / shared.camera.zoom,
+            pos: (Vec2::new(x, -200.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
             uv: Vec2::ZERO,
         },
         Vertex {
-            pos: (Vec2::new(width + x, 0.) - shared.camera.pos) / shared.camera.zoom,
+            pos: (Vec2::new(width + x, 0.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
             uv: Vec2::ZERO,
         },
         Vertex {
-            pos: (Vec2::new(x, 200.) - shared.camera.pos) / shared.camera.zoom,
+            pos: (Vec2::new(x, 200.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
             uv: Vec2::ZERO,
         },
     ];
