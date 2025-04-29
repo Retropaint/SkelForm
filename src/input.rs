@@ -114,15 +114,6 @@ pub fn mouse_input(
     state: &ElementState,
     shared: &mut crate::shared::Shared,
 ) {
-    // mouse inputs coming from winit only do so if it's not on egui
-    if *button == MouseButton::Left {
-        if *state == ElementState::Pressed {
-            shared.input.on_ui = false;
-        } else {
-            shared.input.on_ui = true;
-        }
-    }
-
     // increase mouse_left if it's being held down
     if shared.input.mouse_left >= 0 {
         shared.input.mouse_left += 1;
