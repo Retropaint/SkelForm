@@ -211,7 +211,7 @@ pub fn float_input(
                 Ok(output) => {
                     return (true, output);
                 }
-                Err(e) => {
+                Err(_) => {
                     return (false, value);    
                 }
             }
