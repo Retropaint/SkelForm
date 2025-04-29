@@ -46,7 +46,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             if x == 0. && !center_line {
                 render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
                 center_line = true;
-            } else if x != 0. && center_line{
+            } else if x != 0. && center_line {
                 render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
                 center_line = false;
             }
@@ -114,32 +114,49 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut hovered_bone = -1;
     let mut hovered_bone_verts: Vec<Vertex> = vec![];
+    let can_hover = shared.ui.polar_id == "" && !shared.ui.image_modal && !shared.editing_bone;
 
     // Check for the bone being hovered on.
     // This has to be in reverse (for now) since bones are rendered in ascending order of the array,
     // so it visually makes sense to click the one that shows in front.
-    for i in (0..temp_bones.len()).rev() {
-        if shared.armature.bones[i].tex_idx == -1 || verts[i].len() == 0 {
-            continue;
-        }
-        let is_in_box: bool;
-        (hovered_bone_verts, is_in_box) =
-            utils::in_bounding_box(&shared.input.mouse, &verts[i], &shared.window);
-        if is_in_box {
-            // highlight bone for selection if not already selected
-            if shared.selected_bone_idx != i {
-                hovered_bone = i as i32;
-
-                // select if left clicked
-                if shared.input.mouse_left == 0 {
-                    shared.selected_bone_idx = i;
-                }
+    if can_hover {
+        for i in (0..temp_bones.len()).rev() {
+            if shared.armature.bones[i].tex_idx == -1 || verts[i].len() == 0 {
+                continue;
             }
-            break;
+
+            // Check if this bone is a child of the selected bone.
+            // If so, ignore.
+            let mut ignore = false;
+            let mut parent = shared.find_bone(temp_bones[i].parent_id);
+            while parent != None {
+                if parent.unwrap().id == shared.selected_bone().id {
+                    ignore = true;
+                    break
+                }
+                parent = shared.find_bone(parent.unwrap().parent_id);
+            }
+            if ignore {
+                continue
+            }
+
+            let is_in_box: bool;
+            (hovered_bone_verts, is_in_box) =
+                utils::in_bounding_box(&shared.input.mouse, &verts[i], &shared.window);
+            if is_in_box {
+                // highlight bone for selection if not already selected
+                if shared.selected_bone_idx != i {
+                    hovered_bone = i as i32;
+
+                    // select if left clicked
+                    if shared.input.mouse_left == 0 {
+                        shared.selected_bone_idx = i;
+                    }
+                }
+                break;
+            }
         }
     }
-
-    let can_hover = shared.ui.polar_id == "" && !shared.ui.image_modal;
 
     // finally, draw the bones
     for (i, b) in temp_bones.iter().enumerate() {

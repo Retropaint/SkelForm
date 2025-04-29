@@ -329,7 +329,7 @@ pub struct UiAnim {
     pub loops: i32,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default)]
 pub struct Bone {
     pub id: i32,
     pub name: String,
