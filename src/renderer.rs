@@ -17,6 +17,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut verts = vec![];
 
+    println!("{}", shared.input.on_ui);
+
     // For rendering purposes, bones need to have many of their attributes manipulated.
     // This is easier to do with a separate copy of them.
     let mut temp_bones: Vec<Bone> = vec![];
@@ -122,7 +124,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut hovered_bone = -1;
     let mut hovered_bone_verts: Vec<Vertex> = vec![];
-    let can_hover = shared.ui.polar_id == "" && !shared.ui.image_modal && !shared.editing_bone;
+    let can_hover = !shared.input.on_ui
+        && shared.ui.polar_id == ""
+        && !shared.ui.image_modal
+        && !shared.editing_bone;
 
     // Check for the bone being hovered on.
     // This has to be in reverse (for now) since bones are rendered in ascending order of the array,
@@ -193,10 +198,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         render_pass.draw_indexed(0..6, 0, 0..1);
     }
 
+    if shared.input.mouse_left == -1 {
+        return;
+    }
+
+    // mouse related stuff
+
     // move camera
-    if (input::is_pressing(KeyCode::SuperLeft, &shared) || shared.selected_bone_idx == usize::MAX)
-        && shared.input.mouse_left != -1
-    {
+    if input::is_pressing(KeyCode::SuperLeft, &shared) || shared.selected_bone_idx == usize::MAX {
         if shared.input.initial_points.len() == 0 {
             shared.camera.initial_pos = shared.camera.pos;
             shared.input.initial_points.push(shared.input.mouse);
@@ -211,7 +220,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         return;
     }
 
-    // mouse inputs
+    // editing bone
     if shared.input.on_ui || shared.ui.polar_id != "" {
         shared.editing_bone = false;
     } else if shared.selected_bone_idx != usize::MAX {

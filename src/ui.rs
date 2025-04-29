@@ -87,6 +87,8 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         shared.input.scroll = Vec2::new(i.raw_scroll_delta.x, i.raw_scroll_delta.y);
     });
 
+     shared.input.on_ui = context.is_pointer_over_area(); 
+
     context.set_cursor_icon(shared.cursor_icon);
     shared.cursor_icon = egui::CursorIcon::Default;
 
@@ -118,7 +120,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 }
 
 fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
-    let response = egui::TopBottomPanel::top("top_bar")
+    egui::TopBottomPanel::top("top_bar")
         .frame(egui::Frame {
             fill: COLOR_MAIN,
             stroke: Stroke::new(0., COLOR_ACCENT),
@@ -202,11 +204,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 shared.ui.edit_bar_pos.y = ui.min_rect().bottom();
                 shared.ui.animate_mode_bar_pos.y = ui.min_rect().bottom();
             });
-        })
-        .response;
-    if response.hovered() {
-        shared.input.on_ui = true;
-    }
+        });
 }
 
 fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
@@ -291,7 +289,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
             
 
             shared.ui.camera_bar_scale = ui.min_rect().size().into();
-        });
+        }).unwrap().response;
 }
 
 /// Default styling to apply across all UI.
