@@ -894,6 +894,73 @@ impl Shared {
         }
 
         if self.is_animating() {
+            // Add this field to first keyframe if it doesn't exist
+            let mut first_field_missing = true;
+            for i in (0..self.ui.anim.selected_frame).rev() {
+                let kf = self.keyframe_at(i);
+                if kf != None {
+                    for b in &kf.unwrap().bones {
+                        if b.id == self.selected_bone().id {
+                            for f in &b.fields {
+                                if f.element == element {
+                                    first_field_missing = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if first_field_missing {
+                let id = self.selected_bone().id;
+                // add keyframe if it doesn't exist
+                if self.selected_animation_mut().keyframes.len() == 0
+                    || self.selected_animation_mut().keyframes[0].frame != 0
+                {
+                    self.selected_animation_mut().keyframes.push(Keyframe {
+                        frame: 0,
+                        bones: vec![AnimBone {
+                            id: id,
+                            fields: vec![AnimField {
+                                element: element.clone(),
+                                connect: false,
+                                value,
+                                label_top: 0.,
+                            }],
+                        }],
+                    })
+
+                // else just add the field
+                } else if self.selected_animation_mut().keyframes[0].frame == 0 {
+                    let mut has_bone = false;
+                    for b in &mut self.selected_animation_mut().keyframes[0].bones {
+                        if b.id == id {
+                            b.fields.push(AnimField {
+                                element: element.clone(),
+                                connect: false,
+                                value,
+                                label_top: 0.,
+                            });
+                            has_bone = true;
+                        }
+                    }
+                    if !has_bone {
+                        self.selected_animation_mut().keyframes[0]
+                            .bones
+                            .push(AnimBone {
+                                id,
+                                fields: vec![AnimField {
+                                    element: element.clone(),
+                                    connect: false,
+                                    value,
+                                    label_top: 0.,
+                                }],
+                            })
+                    }
+                }
+            }
+
             self.check_if_in_keyframe(self.selected_bone().id);
             self.selected_anim_bone_mut()
                 .unwrap()
