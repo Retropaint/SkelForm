@@ -1,17 +1,6 @@
 // #![windows_subsystem = "windows"] // uncomment this to suppress terminal on windows
 
 use skellar::shared::*;
-use skellar::*;
-
-// native-only imports
-#[cfg(target_arch = "wasm32")]
-mod web {
-    pub use wasm_bindgen::*;
-    pub use web_sys::*;
-    pub use web_time::Instant;
-}
-#[cfg(target_arch = "wasm32")]
-use web::*;
 
 fn main() -> Result<(), winit::error::EventLoopError> {
     // uncomment below to get console panic hook as early as possible for debugging

@@ -495,13 +495,15 @@ impl Renderer {
             #[cfg(not(target_arch = "wasm32"))]
             self.take_screenshot(shared);
         } else if shared.done_recording {
-            let frames = shared.rendered_frames.clone();
-            let window = shared.window.clone();
-            std::thread::spawn(move || {
-                #[cfg(not(target_arch = "wasm32"))]
-                Self::export_video(frames, window);
-            });
-            shared.done_recording = false;
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let frames = shared.rendered_frames.clone();
+                let window = shared.window.clone();
+                std::thread::spawn(move || {
+                    Self::export_video(frames, window);
+                });
+                shared.done_recording = false;
+            }
         }
     }
 
