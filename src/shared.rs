@@ -929,7 +929,7 @@ impl Shared {
                                 label_top: 0.,
                             }],
                         }],
-                    })
+                    });
 
                 // else just add the field
                 } else if self.selected_animation_mut().keyframes[0].frame == 0 {
@@ -965,6 +965,7 @@ impl Shared {
             self.selected_anim_bone_mut()
                 .unwrap()
                 .set_field(&element, value);
+            self.sort_keyframes();
         }
     }
 
