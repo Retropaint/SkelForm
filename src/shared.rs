@@ -1016,7 +1016,7 @@ impl Shared {
     pub fn remove_texture(&mut self, tex_idx: i32) {
         self.armature.textures.remove(tex_idx as usize);
         self.bind_groups.remove(tex_idx as usize);
-        self.ui.texture_images.remove(tex_idx as usize);
+        let _ =self.ui.texture_images.remove(tex_idx as usize);
         for bone in &mut self.armature.bones {
             if bone.tex_idx == tex_idx {
                 bone.tex_idx = -1;

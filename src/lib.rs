@@ -13,7 +13,6 @@ mod native {
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
 
-use std::io::BufRead;
 // native-only imports
 #[cfg(target_arch = "wasm32")]
 mod web {
@@ -752,8 +751,8 @@ impl Gpu {
         width: u32,
         height: u32,
     ) -> Self {
-        let mut surface: wgpu::Surface;
-        let mut instance: wgpu::Instance;
+        let surface: wgpu::Surface;
+        let instance: wgpu::Instance;
 
         // force DX12 on Windows
         #[cfg(target_os = "windows")]
