@@ -2,11 +2,14 @@
 
 use skellar::shared::*;
 
+#[cfg(not(target_arch = "wasm32"))]
+use skellar::file_reader;
+
 fn main() -> Result<(), winit::error::EventLoopError> {
     // uncomment below to get console panic hook as early as possible for debugging
     //
     // otherwise, it's activated in lib.rs
-    
+
     //#[cfg(target_arch = "wasm32")]
     //{
     //    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
