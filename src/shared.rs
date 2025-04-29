@@ -898,11 +898,10 @@ impl Shared {
             _ => {}
         }
 
-        if self.ui.anim.selected_frame != 0 {
-            self.check_first_keyframe(element.clone(), og_value);
-        }
-
         if self.is_animating() {
+            if self.ui.anim.selected_frame != 0 {
+                self.check_first_keyframe(element.clone(), og_value);
+            }
             self.check_if_in_keyframe(self.selected_bone().id);
             self.selected_anim_bone_mut()
                 .unwrap()
@@ -913,7 +912,7 @@ impl Shared {
 
     // If editing a keyframe that isn't the first, the original value should be
     // immediately added to the first keyframe if there isn't a previous keyframe
-    // from the selected frame. 
+    // from the selected frame.
     fn check_first_keyframe(&mut self, element: AnimElement, value: Vec2) {
         // Add this field to first keyframe if it doesn't exist
         let mut first_field_missing = true;
