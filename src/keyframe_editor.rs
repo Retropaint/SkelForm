@@ -395,7 +395,10 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
                 let button = ui
-                    .add_sized([50., 20.], egui::Button::new(str).corner_radius(0.))
+                    .add_sized(
+                        [50., 20.],
+                        egui::Button::new(str).fill(COLOR_ACCENT).corner_radius(0.),
+                    )
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
 
                 let pressed = ui.input(|i| i.key_pressed(egui::Key::Space));
@@ -451,9 +454,9 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &BoneTops
 
         shared.ui.anim.lines_x.push(x);
 
-        let mut color = ui::COLOR_FRAME_LINE;
+        let mut color = ui::COLOR_FRAMELINE;
         let last_keyframe = shared.selected_animation().keyframes.last();
-        if last_keyframe != None && last_keyframe.unwrap().frame < i {
+        if last_keyframe != None && i > last_keyframe.unwrap().frame {
             color = ui::COLOR_BORDER;
         }
 
@@ -463,7 +466,7 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &BoneTops
             color = egui::Color32::WHITE;
         } else if cursor.x < x + hitbox && cursor.x > x - hitbox && above_scrollbar {
             shared.cursor_icon = egui::CursorIcon::PointingHand;
-            color = egui::Color32::GRAY;
+            color = ui::COLOR_FRAMELINE_HOVERED;
 
             // select this frame if clicked
             if shared.input.mouse_left == 0 {
@@ -519,8 +522,7 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &BoneTops
                 }
                 egui::Image::new(&shared.ui.anim.icon_images[idx]).paint_at(ui, rect);
 
-                let changed =
-                    check_change_icon_drag(&element, ui, shared, pos, size, hitbox, i, b);
+                let changed = check_change_icon_drag(&element, ui, shared, pos, size, hitbox, i, b);
 
                 // stop rendering for this frame if a change occured, as elements might be out of order
                 // and cause indexing issues
