@@ -152,7 +152,9 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
             // track the Y of bone change labels for their diamonds
             let mut bone_tops = BoneTops::default();
 
-            draw_bones_list(ui, shared, &mut bone_tops);
+            if shared.selected_animation().keyframes.len() > 0 {
+                draw_bones_list(ui, shared, &mut bone_tops);
+            }
 
             // calculate how far apart each keyframe should visually be
             let gap = 400.;
@@ -176,6 +178,14 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             ui.vertical(|ui| {
+                // render top bar background
+                let rect = egui::Rect::from_min_size(
+                    ui.cursor().left_top(),
+                    egui::vec2(ui.available_width(), 20.),
+                );
+                ui.painter()
+                    .rect_filled(rect, egui::CornerRadius::ZERO, COLOR_ACCENT);
+
                 if shared.ui.anim.lines_x.len() > 0 {
                     draw_top_bar(ui, shared, width, hitbox);
                 }
@@ -263,14 +273,14 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                     }
                 }
 
-                // Render a rect underneath the list (matching the bottom bar's height)
-                // to mask the labels.
-                let painter = ui.painter();
-                let rect = egui::Rect::from_min_size(
-                    egui::pos2(ui.min_rect().left(), shared.ui.anim.bottom_bar_top),
-                    egui::vec2(ui.min_rect().right(), ui.min_rect().bottom()),
-                );
-                painter.rect_filled(rect, egui::CornerRadius::ZERO, ui::COLOR_MAIN);
+                //// Render a rect underneath the list (matching the bottom bar's height)
+                //// to mask the labels.
+                //let painter = ui.painter();
+                //let rect = egui::Rect::from_min_size(
+                //    egui::pos2(ui.min_rect().left(), shared.ui.anim.bottom_bar_top),
+                //    egui::vec2(ui.min_rect().right(), ui.min_rect().bottom()),
+                //);
+                //painter.rect_filled(rect, egui::CornerRadius::ZERO, ui::COLOR_MAIN);
             })
     });
 }
@@ -280,7 +290,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
         .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset.x, 0.))
         .show(ui, |ui| {
-            egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
+            egui::Frame::new().show(ui, |ui| {
                 ui.set_width(width);
                 ui.set_height(20.);
 
@@ -293,7 +303,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     }
 
                     let pos = Vec2::new(
-                        ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize],
+                        ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize] + 3.,
                         ui.min_rect().top() + 10.,
                     );
                     draw_diamond(ui, pos);
@@ -357,9 +367,14 @@ pub fn draw_timeline_graph(
     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
         egui::Frame::new()
             .fill(COLOR_ACCENT)
-            .inner_margin(3.)
+            .inner_margin(3)
             .show(ui, |ui| {
                 let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
+                    let mut cursor = Vec2::default();
+                    if ui.ui_contains_pointer() {
+                        cursor = shared.ui.get_cursor(ui);
+                        println!("test")
+                    }
                     ui.set_width(width);
                     ui.set_height(ui.available_height());
 
@@ -387,7 +402,7 @@ pub fn draw_timeline_graph(
                         );
                     }
 
-                    draw_frame_lines(ui, shared, &bone_tops, hitbox);
+                    draw_frame_lines(ui, shared, &bone_tops, hitbox, cursor);
                 });
                 shared.ui.anim.timeline_offset = response.state.offset.into();
                 shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
@@ -453,15 +468,13 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 }
 
 /// Draw all lines representing frames in the timeline.
-fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &BoneTops, hitbox: f32) {
-    // get cursor pos on the graph (or 0, 0 if can't)
-    let cursor: Vec2;
-    if ui.ui_contains_pointer() {
-        cursor = shared.ui.get_cursor(ui);
-    } else {
-        cursor = Vec2::default();
-    }
-
+fn draw_frame_lines(
+    ui: &mut egui::Ui,
+    shared: &mut Shared,
+    bone_tops: &BoneTops,
+    hitbox: f32,
+    cursor: Vec2,
+) {
     shared.ui.anim.lines_x = vec![];
 
     let mut x = 0.;
@@ -502,6 +515,8 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &BoneTops
         i += 1;
     }
 
+    let mut height = 0.;
+
     // draw per-change icons
     for i in 0..shared.selected_animation().keyframes.len() {
         if i > shared.selected_animation().keyframes.len() - 1 {
@@ -528,6 +543,10 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &BoneTops
                 let pos = Vec2::new(x, top + size.y / 2.);
                 let offset = size / 2.;
 
+                if top > height {
+                    height = top;
+                }
+
                 let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
                 let mut idx = element.clone() as usize;
                 if idx > shared.ui.anim.icon_images.len() - 1 {
@@ -545,6 +564,9 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &BoneTops
             }
         }
     }
+
+    let rect = egui::Rect::from_min_size(egui::pos2(0., height), egui::Vec2::new(1., 20.));
+    ui.allocate_rect(rect, egui::Sense::empty());
 }
 
 fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
