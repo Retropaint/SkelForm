@@ -17,8 +17,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut verts = vec![];
 
-    println!("{}", shared.input.on_ui);
-
     // For rendering purposes, bones need to have many of their attributes manipulated.
     // This is easier to do with a separate copy of them.
     let mut temp_bones: Vec<Bone> = vec![];
@@ -199,6 +197,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     if shared.input.mouse_left == -1 {
+        shared.editing_bone = false;
         return;
     }
 
