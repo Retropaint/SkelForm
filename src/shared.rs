@@ -666,14 +666,14 @@ impl Shared {
 
     pub fn selected_bone(&self) -> Option<&Bone> {
         if self.selected_bone_idx != usize::MAX {
-            return Some(&self.armature.bones[self.selected_bone_idx])
+            return Some(&self.armature.bones[self.selected_bone_idx]);
         }
         None
     }
 
     pub fn selected_bone_mut(&mut self) -> Option<&mut Bone> {
         if self.selected_bone_idx != usize::MAX {
-            return Some(&mut self.armature.bones[self.selected_bone_idx])
+            return Some(&mut self.armature.bones[self.selected_bone_idx]);
         }
         None
     }
@@ -865,7 +865,7 @@ impl Shared {
         });
     }
 
-    pub fn edit_bone(&mut self, edit_mode: i32, value: Vec2) {
+    pub fn edit_bone(&mut self, edit_mode: i32, mut value: Vec2, overwrite: bool) {
         if self.armature.bones[self.selected_bone_idx].tex_idx == -1 {
             return;
         }
@@ -873,34 +873,54 @@ impl Shared {
         let mut element = crate::AnimElement::Position;
         let mut og_value = value;
 
+        macro_rules! edit {
+            ($element:expr, $field:expr) => {
+                element = $element;
+                og_value = $field;
+                if !self.is_animating() {
+                    $field = value;
+                } else if overwrite {
+                    value -= $field;
+                }
+            };
+        }
+
+        macro_rules! edit_f32 {
+            ($element:expr, $field:expr) => {
+                element = $element;
+                og_value = Vec2::single($field);
+                if !self.is_animating() {
+                    $field = value.x;
+                } else if overwrite {
+                    value.x -= $field;
+                }
+            };
+        }
+
         match edit_mode {
             0 => {
-                og_value = self.selected_bone_mut().unwrap().pos;
-                element = crate::AnimElement::Position;
-                if !self.is_animating() {
-                    self.selected_bone_mut().unwrap().pos = value;
-                }
+                edit!(
+                    crate::AnimElement::Position,
+                    self.selected_bone_mut().unwrap().pos
+                );
             }
             1 => {
-                og_value = Vec2::single(self.selected_bone_mut().unwrap().rot);
-                element = crate::AnimElement::Rotation;
-                if !self.is_animating() {
-                    self.selected_bone_mut().unwrap().rot = value.x;
-                }
+                edit_f32!(
+                    crate::AnimElement::Position,
+                    self.selected_bone_mut().unwrap().rot
+                );
             }
             2 => {
-                og_value = self.selected_bone_mut().unwrap().scale;
-                element = crate::AnimElement::Scale;
-                if !self.is_animating() {
-                    self.selected_bone_mut().unwrap().scale = value;
-                }
+                edit!(
+                    crate::AnimElement::Scale,
+                    self.selected_bone_mut().unwrap().scale
+                );
             }
             3 => {
-                og_value = self.selected_bone_mut().unwrap().pivot;
-                element = crate::AnimElement::Pivot;
-                if !self.is_animating() {
-                    self.selected_bone_mut().unwrap().pivot = value;
-                }
+                edit!(
+                    crate::AnimElement::Pivot,
+                    self.selected_bone_mut().unwrap().pivot
+                );
             }
             _ => {}
         }
