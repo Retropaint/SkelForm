@@ -141,7 +141,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             let mut ignore = false;
             let mut parent = shared.find_bone(temp_bones[i].parent_id);
             while parent != None {
-                if parent.unwrap().id == shared.selected_bone().id {
+                if parent.unwrap().id == shared.selected_bone().unwrap().id {
                     ignore = true;
                     break;
                 }
