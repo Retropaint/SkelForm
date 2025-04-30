@@ -327,6 +327,8 @@ pub struct UiAnim {
     pub dragged_keyframe: usize,
     pub icon_images: Vec<egui::TextureHandle>,
     pub loops: i32,
+
+    pub bottom_bar_top: f32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default)]
