@@ -123,8 +123,6 @@ pub fn keyboard_input(
 }
 
 pub fn mouse_input(
-    button: &crate::MouseButton,
-    state: &ElementState,
     shared: &mut crate::shared::Shared,
 ) {
     // increase mouse_left if it's being held down
