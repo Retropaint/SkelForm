@@ -321,6 +321,13 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     }
 
                     if response.drag_stopped() {
+                        shared.undo_actions.push(shared::Action {
+                            action: ActionEnum::Animation,
+                            action_type: ActionType::Edited,
+                            id: shared.ui.anim.selected as i32,
+                            animation: shared.selected_animation().clone(),
+                            ..Default::default()
+                        });
                         shared.cursor_icon = egui::CursorIcon::Grabbing;
                         let cursor = shared.ui.get_cursor(ui);
 
@@ -613,6 +620,14 @@ fn check_change_icon_drag(
     if !response.drag_stopped() {
         return false;
     }
+
+    shared.undo_actions.push(shared::Action {
+        action: ActionEnum::Animation,
+        action_type: ActionType::Edited,
+        id: shared.ui.anim.selected as i32,
+        animation: shared.selected_animation().clone(),
+        ..Default::default()
+    });
 
     shared.cursor_icon = egui::CursorIcon::Grabbing;
     let cursor = shared.ui.get_cursor(ui);
