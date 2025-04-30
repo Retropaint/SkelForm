@@ -523,6 +523,7 @@ fn draw_frame_lines(
         i += 1;
     }
 
+    // used to determine lowest rendered icon, to add extra space at the bottom
     let mut height = 0.;
 
     // draw per-change icons
@@ -573,6 +574,7 @@ fn draw_frame_lines(
         }
     }
 
+    // create extra space at the bottom
     let rect = egui::Rect::from_min_size(egui::pos2(0., height), egui::Vec2::new(1., 40.));
     ui.allocate_rect(rect, egui::Sense::empty());
 }
