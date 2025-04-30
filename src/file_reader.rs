@@ -162,7 +162,7 @@ pub fn read_export(shared: &Shared) {
 
     let path = fs::read_to_string(TEMP_EXPORT_PATH).unwrap();
 
-    utils::export(path, &shared.armature.textures, &shared.armature);
+    utils::save(path, &shared.armature.textures, &shared.armature);
 
     del_temp_files();
 }

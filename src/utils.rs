@@ -92,7 +92,7 @@ pub fn to_vec2(f: f32) -> Vec2 {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_export_dialog() {
+pub fn open_save_dialog() {
     #[cfg(not(target_arch = "wasm32"))]
     std::thread::spawn(move || {
         let task = rfd::FileDialog::new().save_file();
@@ -116,7 +116,7 @@ pub fn open_import_dialog() {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn export(path: String, textures: &Vec<crate::Texture>, armature: &crate::Armature) {
+pub fn save(path: String, textures: &Vec<crate::Texture>, armature: &crate::Armature) {
     // get the image size in advance
     let mut size = Vec2::default();
     for tex in textures {
