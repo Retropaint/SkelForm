@@ -379,7 +379,10 @@ pub fn draw_timeline_graph(
                 let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
                     ui.set_width(width);
                     ui.set_height(ui.available_height());
-                    let cursor = shared.ui.get_cursor(ui);
+
+                    let mut cursor = shared.ui.get_cursor(ui);
+                    // keep cursor on the frame
+                    cursor.y -= shared.ui.anim.timeline_offset.y;
 
                     // render darkened background after last keyframe
                     if shared.last_keyframe() != None
@@ -570,7 +573,7 @@ fn draw_frame_lines(
         }
     }
 
-    let rect = egui::Rect::from_min_size(egui::pos2(0., height), egui::Vec2::new(1., 20.));
+    let rect = egui::Rect::from_min_size(egui::pos2(0., height), egui::Vec2::new(1., 40.));
     ui.allocate_rect(rect, egui::Sense::empty());
 }
 
