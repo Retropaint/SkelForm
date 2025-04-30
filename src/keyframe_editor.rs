@@ -370,13 +370,9 @@ pub fn draw_timeline_graph(
             .inner_margin(3)
             .show(ui, |ui| {
                 let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
-                    let mut cursor = Vec2::default();
-                    if ui.ui_contains_pointer() {
-                        cursor = shared.ui.get_cursor(ui);
-                        println!("test")
-                    }
                     ui.set_width(width);
                     ui.set_height(ui.available_height());
+                    let cursor = shared.ui.get_cursor(ui);
 
                     // render darkened background after last keyframe
                     if shared.last_keyframe() != None
@@ -490,11 +486,12 @@ fn draw_frame_lines(
             color = ui::COLOR_FRAMELINE_PASTLAST;
         }
 
-        // check if pointing at a clickable area of this line
         let above_scrollbar = cursor.y < ui.min_rect().height() - 13.;
+        let in_ui = cursor.y > 0.;
+
         if shared.ui.anim.selected_frame == i {
             color = egui::Color32::WHITE;
-        } else if cursor.x < x + hitbox && cursor.x > x - hitbox && above_scrollbar {
+        } else if in_ui && cursor.x < x + hitbox && cursor.x > x - hitbox && above_scrollbar {
             shared.cursor_icon = egui::CursorIcon::PointingHand;
             color = ui::COLOR_FRAMELINE_HOVERED;
 
