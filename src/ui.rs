@@ -5,22 +5,22 @@ use egui::{Color32, Context, Shadow, Stroke};
 use crate::shared::*;
 use crate::{armature_window, bone_window, keyframe_editor, utils};
 
-macro_rules! const_color {
+macro_rules! ui_color {
     ($name:ident, $r:expr, $g:expr, $b:expr) => {
         pub const $name: Color32 = Color32::from_rgb($r, $g, $b);
     };
 }
 
 // UI colors
-#[rustfmt::skip] const_color!(COLOR_ACCENT,             65, 46, 105);
-#[rustfmt::skip] const_color!(COLOR_BORDER,             44, 36, 64);
-#[rustfmt::skip] const_color!(COLOR_BORDER_HOVERED,     84, 59, 138);
-#[rustfmt::skip] const_color!(COLOR_MAIN,               32, 25, 46);
-#[rustfmt::skip] const_color!(COLOR_TEXT,               180, 180, 180);
-#[rustfmt::skip] const_color!(COLOR_TEXT_SELECTED,      210, 210, 210);
-#[rustfmt::skip] const_color!(COLOR_FRAMELINE,          80, 60, 130);
-#[rustfmt::skip] const_color!(COLOR_FRAMELINE_HOVERED,  108, 80, 179);
-#[rustfmt::skip] const_color!(COLOR_FRAMELINE_PASTLAST, 50, 41, 74);
+#[rustfmt::skip] ui_color!(COLOR_ACCENT,             65, 46, 105);
+#[rustfmt::skip] ui_color!(COLOR_BORDER,             44, 36, 64);
+#[rustfmt::skip] ui_color!(COLOR_BORDER_HOVERED,     84, 59, 138);
+#[rustfmt::skip] ui_color!(COLOR_MAIN,               32, 25, 46);
+#[rustfmt::skip] ui_color!(COLOR_TEXT,               180, 180, 180);
+#[rustfmt::skip] ui_color!(COLOR_TEXT_SELECTED,      210, 210, 210);
+#[rustfmt::skip] ui_color!(COLOR_FRAMELINE,          80, 60, 130);
+#[rustfmt::skip] ui_color!(COLOR_FRAMELINE_HOVERED,  108, 80, 179);
+#[rustfmt::skip] ui_color!(COLOR_FRAMELINE_PASTLAST, 50, 41, 74);
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
