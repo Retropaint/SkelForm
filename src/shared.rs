@@ -580,6 +580,8 @@ pub struct Shared {
     pub highlight_bindgroup: Option<BindGroup>,
     pub gridline_bindgroup: Option<BindGroup>,
 
+    pub save_path: String,
+
     /// triggers debug stuff
     pub debug: bool,
 }

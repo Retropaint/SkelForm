@@ -116,10 +116,10 @@ pub fn open_import_dialog() {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn save(path: String, textures: &Vec<crate::Texture>, armature: &crate::Armature) {
+pub fn save(path: String, shared: &Shared) {
     // get the image size in advance
     let mut size = Vec2::default();
-    for tex in textures {
+    for tex in &shared.armature.textures {
         size.x += tex.size.x;
         if tex.size.y > size.y {
             size.y = tex.size.y;
@@ -130,7 +130,7 @@ pub fn save(path: String, textures: &Vec<crate::Texture>, armature: &crate::Arma
     let mut final_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size.x as u32, size.y as u32);
 
     let mut offset: u32 = 0;
-    for tex in textures {
+    for tex in &shared.armature.textures {
         // get current texture as a buffer
         let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
             tex.size.x as u32,
@@ -162,7 +162,7 @@ pub fn save(path: String, textures: &Vec<crate::Texture>, armature: &crate::Arma
     let img_data = std::fs::read("./temp.png").unwrap();
 
     // clone armature and make some edits, then serialize it
-    let mut armature_copy = armature.clone();
+    let mut armature_copy = shared.armature.clone();
 
     // if bone isn't a mesh (ie is a simple rect), then empty the vertices
     for bone in &mut armature_copy.bones {
