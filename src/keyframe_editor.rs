@@ -681,7 +681,13 @@ fn check_change_icon_drag(
         }
 
         // delete previous keyframe if this was the only change prior
-        if bone!().fields.len() == 1 {
+        let mut fields = 0;
+        for bone in &shared.keyframe_at(j as i32).unwrap().bones {
+            for _ in &bone.fields {
+                fields += 1;
+            }
+        }
+        if fields == 0 {
             shared.selected_animation_mut().keyframes.remove(kf_idx);
         } else {
             changed = true;
