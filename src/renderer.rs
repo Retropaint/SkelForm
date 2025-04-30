@@ -138,17 +138,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
             // Check if this bone is a child of the selected bone.
             // If so, ignore.
-            let mut ignore = false;
-            let mut parent = shared.find_bone(temp_bones[i].parent_id);
-            while parent != None {
-                if parent.unwrap().id == shared.selected_bone().unwrap().id {
-                    ignore = true;
-                    break;
+            if shared.selected_bone() != None {
+                let mut ignore = false;
+                let mut parent = shared.find_bone(temp_bones[i].parent_id);
+                while parent != None {
+                    if parent.unwrap().id == shared.selected_bone().unwrap().id {
+                        ignore = true;
+                        break;
+                    }
+                    parent = shared.find_bone(parent.unwrap().parent_id);
                 }
-                parent = shared.find_bone(parent.unwrap().parent_id);
-            }
-            if ignore {
-                continue;
+                if ignore {
+                    continue;
+                }
             }
 
             let is_in_box: bool;
