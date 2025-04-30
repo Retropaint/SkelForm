@@ -145,9 +145,9 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         utils::open_import_dialog();
                         ui.close_menu();
                     }
-                    if top_bar_button(ui, str!("Export"), str!("E"), &mut offset).clicked() {
+                    if top_bar_button(ui, str!("Save"), str!("S"), &mut offset).clicked() {
                         #[cfg(not(target_arch = "wasm32"))]
-                        utils::open_export_dialog();
+                        utils::open_save_dialog();
                         ui.close_menu();
                     }
                     if top_bar_button(ui, str!("Export Video"), str!("E"), &mut offset).clicked() {
