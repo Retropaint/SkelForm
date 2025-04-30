@@ -21,10 +21,16 @@ extern "C" {
     fn removeImage();
 }
 
-pub const TEMP_IMG_PATH: &str = ".skelform_img_path";
-pub const TEMP_SAVE_PATH: &str = ".skelform_save_path";
-pub const TEMP_IMPORT_PATH: &str = ".skelform_import_path";
-pub const TEMP_EXPORT_VID_TEXT: &str = ".skelform_export_video_text";
+macro_rules! temp_file {
+    ($name:ident, $path:expr) => {
+        pub const $name: &str = $path;
+    };
+}
+
+#[rustfmt::skip] temp_file!(TEMP_IMG_PATH,        ".skelform_img_path");
+#[rustfmt::skip] temp_file!(TEMP_SAVE_PATH,       ".skelform_img_path");
+#[rustfmt::skip] temp_file!(TEMP_EXPORT_VID_TEXT, ".skelform_export_vid_text");
+#[rustfmt::skip] temp_file!(TEMP_IMPORT_PATH,     ".skelform_import_path");
 
 pub const FILES: [&str; 4] = [
     TEMP_IMG_PATH,
@@ -53,7 +59,7 @@ pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Co
                 &renderer.as_ref().unwrap().gpu.queue,
                 &renderer.as_ref().unwrap().gpu.device,
                 &renderer.as_ref().unwrap().bind_group_layout,
-                context
+                context,
             );
             file_reader::read_exported_video_frame(shared);
         }
@@ -65,7 +71,7 @@ pub fn read_image_loaders(
     queue: &Queue,
     device: &Device,
     bind_group_layout: &BindGroupLayout,
-    ctx: &egui::Context
+    ctx: &egui::Context,
 ) {
     #[allow(unused_assignments)]
     let mut pixels: Vec<u8> = vec![];
@@ -135,10 +141,7 @@ pub fn read_image_loaders(
     ));
 
     let color_image = egui::ColorImage::from_rgba_unmultiplied(
-        [
-            dimensions.x as usize,
-            dimensions.y as usize,
-        ],
+        [dimensions.x as usize, dimensions.y as usize],
         &pixels,
     );
     let tex = ctx.load_texture("anim_icons", color_image, Default::default());
@@ -173,7 +176,7 @@ pub fn read_import(
     queue: &Queue,
     device: &Device,
     bind_group_layout: &BindGroupLayout,
-    context: &egui::Context
+    context: &egui::Context,
 ) {
     if !fs::exists(TEMP_IMPORT_PATH).unwrap() {
         return;
