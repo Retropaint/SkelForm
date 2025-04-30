@@ -220,7 +220,6 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                     .vertical_scroll_offset(shared.ui.anim.timeline_offset.y)
                     .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
                     .show(ui, |ui| {
-                        ui.add_space(30.);
                         let mut tops_init: Vec<AnimTopInit> = vec![];
                         for i in 0..shared.selected_animation().keyframes.len() {
                             for b in 0..shared.selected_animation().keyframes[i].bones.len() {
