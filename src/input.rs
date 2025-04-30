@@ -36,9 +36,9 @@ pub fn keyboard_input(
         }
     }
 
-    if is_pressing(KeyCode::Equal, &shared) {
+    if shared.input.is_pressing(KeyCode::Equal) {
         ui::set_zoom(shared.camera.zoom - 0.1, shared)
-    } else if is_pressing(KeyCode::Minus, &shared) {
+    } else if shared.input.is_pressing(KeyCode::Minus) {
         ui::set_zoom(shared.camera.zoom + 0.1, shared);
     }
 
@@ -53,9 +53,9 @@ pub fn keyboard_input(
     let mut undo = false;
     let mut redo = false;
     if shared.input.modifier == 1 {
-        if is_pressing(KeyCode::KeyZ, &shared) && shared.undo_actions.len() != 0 {
+        if shared.input.is_pressing(KeyCode::KeyZ) && shared.undo_actions.len() != 0 {
             undo = true;
-        } else if is_pressing(KeyCode::KeyY, &shared) && shared.redo_actions.len() != 0 {
+        } else if shared.input.is_pressing(KeyCode::KeyY) && shared.redo_actions.len() != 0 {
             redo = true;
         }
     }
@@ -107,6 +107,19 @@ pub fn keyboard_input(
             shared.redo_actions.pop();
         }
     }
+
+    if shared
+        .input
+        .is_pressing(winit::keyboard::KeyCode::SuperLeft)
+    {
+        if shared.input.is_pressing(winit::keyboard::KeyCode::KeyS) {
+            if shared.save_path == "" {
+                utils::open_save_dialog();
+            } else {
+                utils::save(shared.save_path.clone(), shared);
+            }
+        }
+    }
 }
 
 pub fn mouse_input(
@@ -130,13 +143,4 @@ pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
             ui::set_zoom(shared.camera.zoom + (pos.y as f32 / sens_reducer), shared);
         }
     }
-}
-
-pub fn is_pressing(key: KeyCode, shared: &Shared) -> bool {
-    for k in &shared.input.pressed {
-        if *k == key {
-            return true;
-        }
-    }
-    false
 }

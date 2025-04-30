@@ -53,7 +53,7 @@ pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Co
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            file_reader::read_export(&shared);
+            file_reader::read_save(shared);
             file_reader::read_import(
                 shared,
                 &renderer.as_ref().unwrap().gpu.queue,
@@ -158,14 +158,16 @@ pub fn read_image_loaders(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn read_export(shared: &Shared) {
+pub fn read_save(shared: &mut Shared) {
     if !fs::exists(TEMP_SAVE_PATH).unwrap() {
         return;
     }
 
     let path = fs::read_to_string(TEMP_SAVE_PATH).unwrap();
 
-    utils::save(path, &shared.armature.textures, &shared.armature);
+    shared.save_path = path.clone();
+
+    utils::save(path, shared);
 
     del_temp_files();
 }
@@ -183,6 +185,8 @@ pub fn read_import(
     }
 
     let path = fs::read_to_string(TEMP_IMPORT_PATH).unwrap();
+
+    shared.save_path = path.clone();
 
     utils::import(path, shared, queue, device, bind_group_layout, context);
 
