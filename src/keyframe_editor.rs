@@ -207,89 +207,81 @@ struct AnimTopInit {
 
 pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut BoneTops) {
     ui.vertical(|ui| {
-        egui::ScrollArea::vertical()
-            .id_salt("bones_list")
-            .vertical_scroll_offset(shared.ui.anim.timeline_offset.y)
-            .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
+        egui::Frame::new()
+            .inner_margin(egui::Margin {
+                top: 20,
+                bottom: 20,
+                left: 0,
+                right: 0,
+            })
             .show(ui, |ui| {
-                ui.add_space(30.);
-                let mut tops_init: Vec<AnimTopInit> = vec![];
-                for i in 0..shared.selected_animation().keyframes.len() {
-                    for b in 0..shared.selected_animation().keyframes[i].bones.len() {
-                        let bone = &shared.selected_animation().keyframes[i].bones[b];
+                egui::ScrollArea::vertical()
+                    .id_salt("bones_list")
+                    .vertical_scroll_offset(shared.ui.anim.timeline_offset.y)
+                    .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
+                    .show(ui, |ui| {
+                        ui.add_space(30.);
+                        let mut tops_init: Vec<AnimTopInit> = vec![];
+                        for i in 0..shared.selected_animation().keyframes.len() {
+                            for b in 0..shared.selected_animation().keyframes[i].bones.len() {
+                                let bone = &shared.selected_animation().keyframes[i].bones[b];
 
-                        // find the bone in the list
-                        let mut idx: i32 = -1;
-                        for (i, ti) in tops_init.iter().enumerate() {
-                            if ti.id == bone.id {
-                                idx = i as i32;
-                                break;
-                            }
-                        }
+                                // find the bone in the list
+                                let mut idx: i32 = -1;
+                                for (i, ti) in tops_init.iter().enumerate() {
+                                    if ti.id == bone.id {
+                                        idx = i as i32;
+                                        break;
+                                    }
+                                }
 
-                        // add init if the bone can't be found
-                        if idx == -1 {
-                            tops_init.push(AnimTopInit {
-                                id: bone.id,
-                                elements: vec![],
-                            });
-                            idx = tops_init.len() as i32 - 1;
-                        }
+                                // add init if the bone can't be found
+                                if idx == -1 {
+                                    tops_init.push(AnimTopInit {
+                                        id: bone.id,
+                                        elements: vec![],
+                                    });
+                                    idx = tops_init.len() as i32 - 1;
+                                }
 
-                        // add all elements
-                        for af in &bone.fields {
-                            let mut add = true;
-                            for el in &tops_init[idx as usize].elements {
-                                if *el == af.element {
-                                    add = false;
-                                    break;
+                                // add all elements
+                                for af in &bone.fields {
+                                    let mut add = true;
+                                    for el in &tops_init[idx as usize].elements {
+                                        if *el == af.element {
+                                            add = false;
+                                            break;
+                                        }
+                                    }
+                                    if add {
+                                        tops_init[idx as usize].elements.push(af.element.clone());
+                                    }
                                 }
                             }
-                            if add {
-                                tops_init[idx as usize].elements.push(af.element.clone());
+                        }
+
+                        // render the labels!
+                        for ti in &mut tops_init {
+                            let bone = shared.find_bone(ti.id).unwrap();
+                            ui.label(bone.name.to_string());
+
+                            // sort the elements by enum index
+                            ti.elements.sort_by(|a, b| a.cmp(b));
+
+                            for e in &ti.elements {
+                                ui.horizontal(|ui| {
+                                    ui.add_space(20.);
+                                    let label = ui.label(e.to_string());
+                                    bone_tops.tops.push(BoneTop {
+                                        id: ti.id,
+                                        element: e.clone(),
+                                        height: label.rect.top(),
+                                    })
+                                });
                             }
                         }
-                    }
-                }
-
-                // render the labels!
-                for ti in &mut tops_init {
-                    let bone = shared.find_bone(ti.id).unwrap();
-                    ui.label(bone.name.to_string());
-
-                    // sort the elements by enum index
-                    ti.elements.sort_by(|a, b| a.cmp(b));
-
-                    for e in &ti.elements {
-                        ui.horizontal(|ui| {
-                            ui.add_space(20.);
-                            let label = ui.label(e.to_string());
-                            bone_tops.tops.push(BoneTop {
-                                id: ti.id,
-                                element: e.clone(),
-                                height: label.rect.top(),
-                            })
-                        });
-                    }
-                }
+                    });
             });
-
-        // Render a rect underneath and above the list
-        // to mask the labels with the top and bottom bars.
-
-        let bottom_rect = egui::Rect::from_min_size(
-            egui::pos2(ui.min_rect().left(), shared.ui.anim.bottom_bar_top),
-            egui::vec2(ui.min_rect().right(), ui.min_rect().bottom()),
-        );
-        ui.painter()
-            .rect_filled(bottom_rect, egui::CornerRadius::ZERO, ui::COLOR_MAIN);
-
-        let top_rect = egui::Rect::from_min_size(
-            egui::pos2(ui.min_rect().left(), ui.min_rect().top()),
-            egui::vec2(ui.min_rect().right(), 20.),
-        );
-        ui.painter()
-            .rect_filled(top_rect, egui::CornerRadius::ZERO, ui::COLOR_MAIN);
     });
 }
 
