@@ -298,8 +298,7 @@ impl Ui {
     }
 
     pub fn draw_rect(&self, rect: egui::Rect, ui: &egui::Ui) {
-        let painter = ui.painter();
-        painter.rect_stroke(
+        ui.painter().rect_stroke(
             rect,
             egui::CornerRadius::ZERO,
             egui::Stroke::new(1., egui::Color32::WHITE),

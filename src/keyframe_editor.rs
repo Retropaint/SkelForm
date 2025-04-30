@@ -275,12 +275,12 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
 
                 // Render a rect underneath the list (matching the bottom bar's height)
                 // to mask the labels.
-                let painter = ui.painter();
                 let rect = egui::Rect::from_min_size(
                     egui::pos2(ui.min_rect().left(), shared.ui.anim.bottom_bar_top),
                     egui::vec2(ui.min_rect().right(), ui.min_rect().bottom()),
                 );
-                painter.rect_filled(rect, egui::CornerRadius::ZERO, ui::COLOR_MAIN);
+                ui.painter()
+                    .rect_filled(rect, egui::CornerRadius::ZERO, ui::COLOR_MAIN);
             })
     });
 }
@@ -348,8 +348,7 @@ pub fn draw_connecting_lines(shared: &Shared, ui: &egui::Ui) {
         let left = ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize];
         let right = ui.min_rect().left() + shared.ui.anim.lines_x[prev_frame as usize];
         let y = ui.min_rect().top() + 10.;
-        let painter = ui.painter_at(ui.min_rect());
-        painter.hline(
+        ui.painter_at(ui.min_rect()).hline(
             egui::Rangef::new(left, right),
             y,
             egui::Stroke::new(2., egui::Color32::WHITE),
@@ -379,7 +378,6 @@ pub fn draw_timeline_graph(
                         && (shared.last_keyframe().unwrap().frame as usize)
                             < shared.ui.anim.lines_x.len()
                     {
-                        let painter = ui.painter();
                         let left_top_rect = egui::vec2(
                             shared.ui.anim.lines_x[shared.last_keyframe().unwrap().frame as usize],
                             -3.,
@@ -391,7 +389,7 @@ pub fn draw_timeline_graph(
                             ui.min_rect().size() + right_bottom_rect,
                         );
 
-                        painter.rect_filled(
+                        ui.painter().rect_filled(
                             rect_to_fill,
                             0.0, // corner rounding radius
                             ui::COLOR_BORDER,
@@ -411,8 +409,11 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.set_width(ui.available_width());
         ui.set_height(20.);
         ui.horizontal(|ui| {
-            let painter = ui.painter_at(ui.min_rect());
-            painter.rect_filled(ui.min_rect(), egui::CornerRadius::ZERO, ui::COLOR_MAIN);
+            ui.painter_at(ui.min_rect()).rect_filled(
+                ui.min_rect(),
+                egui::CornerRadius::ZERO,
+                ui::COLOR_MAIN,
+            );
 
             let str = if shared.ui.anim.playing {
                 "Pause"
@@ -502,8 +503,7 @@ fn draw_frame_lines(
         }
 
         // draw the line!
-        let painter = ui.painter();
-        painter.vline(
+        ui.painter().vline(
             ui.min_rect().left() + x,
             egui::Rangef { min: 0., max: 999. },
             Stroke { width: 2., color },
@@ -567,8 +567,6 @@ fn draw_frame_lines(
 }
 
 fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
-    let painter = ui.painter_at(ui.min_rect());
-
     let size = 5.0;
 
     // Define the four points of the diamond
@@ -580,11 +578,12 @@ fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
     ];
 
     // Draw the diamond
-    painter.add(egui::Shape::convex_polygon(
-        points,
-        egui::Color32::TRANSPARENT, // Fill color (transparent)
-        egui::Stroke::new(2.0, egui::Color32::WHITE), // Stroke width & color
-    ));
+    ui.painter_at(ui.min_rect())
+        .add(egui::Shape::convex_polygon(
+            points,
+            egui::Color32::TRANSPARENT, // Fill color (transparent)
+            egui::Stroke::new(2.0, egui::Color32::WHITE), // Stroke width & color
+        ));
 }
 
 fn check_change_icon_drag(
@@ -707,12 +706,11 @@ fn _draw_per_change_connecting_lines(shared: &Shared, ui: &egui::Ui, bone_tops: 
                 if connecting_frame == -1 {
                     continue;
                 }
-                let painter = ui.painter_at(ui.min_rect());
                 let left = ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize];
                 let right =
                     ui.min_rect().left() + shared.ui.anim.lines_x[connecting_frame as usize];
                 let y = bone_tops.find(bone.id, &field.element).unwrap().height + 9.;
-                painter.hline(
+                ui.painter_at(ui.min_rect()).hline(
                     egui::Rangef::new(left, right),
                     y,
                     egui::Stroke::new(2., egui::Color32::WHITE),
@@ -725,7 +723,7 @@ fn _draw_per_change_connecting_lines(shared: &Shared, ui: &egui::Ui, bone_tops: 
                     && cursor.y < y + hitbox
                     && cursor.y > y - hitbox
                 {
-                    painter.hline(
+                    ui.painter_at(ui.min_rect()).hline(
                         egui::Rangef::new(left, right),
                         y,
                         egui::Stroke::new(2., egui::Color32::RED),
