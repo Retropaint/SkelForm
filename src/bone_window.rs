@@ -37,6 +37,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.set_min_width(175.);
             ui.heading("Bone");
 
+            // delete label
             let delete_rect = egui::Rect::from_min_size(ui.min_rect().right_top(), egui::Vec2::ZERO);
             if ui
                 .put(delete_rect, egui::Label::new(
