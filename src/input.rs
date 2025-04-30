@@ -80,7 +80,7 @@ pub fn keyboard_input(
                     }
                 } else {
                     new_action.bone = shared.armature.bones[action.id as usize].clone();
-                    shared.armature.bones[action.id as usize] = action.bone.clone();
+                    *shared.find_bone_mut(action.id).unwrap() = action.bone.clone();
                 }
             }
             ActionEnum::Animation => {
