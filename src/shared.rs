@@ -323,7 +323,7 @@ pub struct UiAnim {
 
     pub exported_frame: String,
 
-    pub timeline_offset: f32,
+    pub timeline_offset: Vec2,
     pub dragged_keyframe: usize,
     pub icon_images: Vec<egui::TextureHandle>,
     pub loops: i32,

@@ -197,73 +197,79 @@ struct AnimTopInit {
 
 pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut BoneTops) {
     ui.vertical(|ui| {
-        ui.add_space(30.);
-        let mut tops_init: Vec<AnimTopInit> = vec![];
-        for i in 0..shared.selected_animation().keyframes.len() {
-            for b in 0..shared.selected_animation().keyframes[i].bones.len() {
-                let bone = &shared.selected_animation().keyframes[i].bones[b];
+        egui::ScrollArea::vertical()
+            .id_salt("bones_list")
+            .vertical_scroll_offset(shared.ui.anim.timeline_offset.y)
+            .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
+            .show(ui, |ui| {
+                ui.add_space(30.);
+                let mut tops_init: Vec<AnimTopInit> = vec![];
+                for i in 0..shared.selected_animation().keyframes.len() {
+                    for b in 0..shared.selected_animation().keyframes[i].bones.len() {
+                        let bone = &shared.selected_animation().keyframes[i].bones[b];
 
-                // find the bone in the list
-                let mut idx: i32 = -1;
-                for (i, ti) in tops_init.iter().enumerate() {
-                    if ti.id == bone.id {
-                        idx = i as i32;
-                        break;
-                    }
-                }
+                        // find the bone in the list
+                        let mut idx: i32 = -1;
+                        for (i, ti) in tops_init.iter().enumerate() {
+                            if ti.id == bone.id {
+                                idx = i as i32;
+                                break;
+                            }
+                        }
 
-                // add init if the bone can't be found
-                if idx == -1 {
-                    tops_init.push(AnimTopInit {
-                        id: bone.id,
-                        elements: vec![],
-                    });
-                    idx = tops_init.len() as i32 - 1;
-                }
+                        // add init if the bone can't be found
+                        if idx == -1 {
+                            tops_init.push(AnimTopInit {
+                                id: bone.id,
+                                elements: vec![],
+                            });
+                            idx = tops_init.len() as i32 - 1;
+                        }
 
-                // add all elements
-                for af in &bone.fields {
-                    let mut add = true;
-                    for el in &tops_init[idx as usize].elements {
-                        if *el == af.element {
-                            add = false;
-                            break;
+                        // add all elements
+                        for af in &bone.fields {
+                            let mut add = true;
+                            for el in &tops_init[idx as usize].elements {
+                                if *el == af.element {
+                                    add = false;
+                                    break;
+                                }
+                            }
+                            if add {
+                                tops_init[idx as usize].elements.push(af.element.clone());
+                            }
                         }
                     }
-                    if add {
-                        tops_init[idx as usize].elements.push(af.element.clone());
+                }
+
+                // render the labels!
+                for ti in &mut tops_init {
+                    let bone = shared.find_bone(ti.id).unwrap();
+                    ui.label(bone.name.to_string());
+
+                    // sort the elements by enum index
+                    ti.elements.sort_by(|a, b| a.cmp(b));
+
+                    for e in &ti.elements {
+                        ui.horizontal(|ui| {
+                            ui.add_space(20.);
+                            let label = ui.label(e.to_string());
+                            bone_tops.tops.push(BoneTop {
+                                id: ti.id,
+                                element: e.clone(),
+                                height: label.rect.top(),
+                            })
+                        });
                     }
                 }
-            }
-        }
-
-        // render the labels!
-        for ti in &mut tops_init {
-            let bone = shared.find_bone(ti.id).unwrap();
-            ui.label(bone.name.to_string());
-
-            // sort the elements by enum index
-            ti.elements.sort_by(|a, b| a.cmp(b));
-
-            for e in &ti.elements {
-                ui.horizontal(|ui| {
-                    ui.add_space(20.);
-                    let label = ui.label(e.to_string());
-                    bone_tops.tops.push(BoneTop {
-                        id: ti.id,
-                        element: e.clone(),
-                        height: label.rect.top(),
-                    })
-                });
-            }
-        }
+            })
     });
 }
 
 pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: f32) {
     egui::ScrollArea::horizontal()
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
-        .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset, 0.))
+        .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset.x, 0.))
         .show(ui, |ui| {
             egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
                 ui.set_width(width);
@@ -340,10 +346,11 @@ pub fn draw_timeline_graph(
     hitbox: f32,
 ) {
     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-        let response = egui::ScrollArea::horizontal()
-            .id_salt("test")
+        egui::Frame::new()
+            .fill(COLOR_ACCENT)
+            .inner_margin(3.)
             .show(ui, |ui| {
-                egui::Frame::new().fill(COLOR_ACCENT).show(ui, |ui| {
+                let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
                     ui.set_width(width);
                     ui.set_height(ui.available_height());
 
@@ -352,32 +359,32 @@ pub fn draw_timeline_graph(
                         && (shared.last_keyframe().unwrap().frame as usize)
                             < shared.ui.anim.lines_x.len()
                     {
-                        let (rect, _) = ui.allocate_exact_size(
-                            egui::vec2(ui.available_width(), ui.available_height()),
-                            egui::Sense::empty(),
-                        );
-                        let painter = ui.painter_at(rect);
-                        let rect = egui::vec2(
+                        let painter = ui.painter();
+                        let left_top_rect = egui::vec2(
                             shared.ui.anim.lines_x[shared.last_keyframe().unwrap().frame as usize],
+                            -3.,
+                        );
+                        let right_bottom_rect = egui::vec2(
                             0.,
+                            999.
                         );
 
                         let rect_to_fill = egui::Rect::from_min_size(
-                            ui.min_rect().left_top() + rect,
-                            ui.min_rect().size(),
+                            ui.min_rect().left_top() + left_top_rect,
+                            ui.min_rect().size() + right_bottom_rect,  
                         );
 
                         painter.rect_filled(
                             rect_to_fill,
                             0.0, // corner rounding radius
-                            ui::COLOR_BORDER
+                            ui::COLOR_BORDER,
                         );
                     }
 
                     draw_frame_lines(ui, shared, &bone_tops, hitbox);
                 });
+                shared.ui.anim.timeline_offset = response.state.offset.into();
             });
-        shared.ui.anim.timeline_offset = response.state.offset.x;
     });
 }
 
@@ -386,6 +393,9 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.set_width(ui.available_width());
         ui.set_height(20.);
         ui.horizontal(|ui| {
+            let painter = ui.painter_at(ui.min_rect());
+            painter.rect_filled(ui.min_rect(), egui::CornerRadius::ZERO, ui::COLOR_MAIN);
+
             let str = if shared.ui.anim.playing {
                 "Pause"
             } else {
@@ -474,14 +484,10 @@ fn draw_frame_lines(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &BoneTops
         }
 
         // draw the line!
-        let painter = ui.painter_at(ui.min_rect());
-
+        let painter = ui.painter();
         painter.vline(
             ui.min_rect().left() + x,
-            egui::Rangef {
-                min: ui.min_rect().top(),
-                max: ui.min_rect().bottom(),
-            },
+            egui::Rangef { min: 0., max: 999. },
             Stroke { width: 2., color },
         );
 
