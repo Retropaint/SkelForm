@@ -262,6 +262,15 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                         });
                     }
                 }
+
+                // Render a rect underneath the list (matching the bottom bar's height)
+                // to mask the labels.
+                let painter = ui.painter();
+                let rect = egui::Rect::from_min_size(
+                    egui::pos2(ui.min_rect().left(), shared.ui.anim.bottom_bar_top),
+                    egui::vec2(ui.min_rect().right(), ui.min_rect().bottom()),
+                );
+                painter.rect_filled(rect, egui::CornerRadius::ZERO, ui::COLOR_MAIN);
             })
     });
 }
@@ -364,14 +373,11 @@ pub fn draw_timeline_graph(
                             shared.ui.anim.lines_x[shared.last_keyframe().unwrap().frame as usize],
                             -3.,
                         );
-                        let right_bottom_rect = egui::vec2(
-                            0.,
-                            999.
-                        );
+                        let right_bottom_rect = egui::vec2(0., 999.);
 
                         let rect_to_fill = egui::Rect::from_min_size(
                             ui.min_rect().left_top() + left_top_rect,
-                            ui.min_rect().size() + right_bottom_rect,  
+                            ui.min_rect().size() + right_bottom_rect,
                         );
 
                         painter.rect_filled(
@@ -384,6 +390,7 @@ pub fn draw_timeline_graph(
                     draw_frame_lines(ui, shared, &bone_tops, hitbox);
                 });
                 shared.ui.anim.timeline_offset = response.state.offset.into();
+                shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
             });
     });
 }
@@ -440,6 +447,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 shared.selected_animation().fps as f32,
                 ui,
             ) as i32;
+            shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
         });
     });
 }
