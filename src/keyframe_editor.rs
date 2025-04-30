@@ -209,8 +209,8 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
     ui.vertical(|ui| {
         egui::Frame::new()
             .inner_margin(egui::Margin {
-                top: 20,
-                bottom: 20,
+                top: 27,
+                bottom: 27,
                 left: 0,
                 right: 0,
             })
