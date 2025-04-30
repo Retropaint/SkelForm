@@ -182,14 +182,13 @@ pub fn float_input(
     shared: &mut Shared,
     ui: &mut egui::Ui,
     value: f32,
-    mut modifier: Option<f32>,
+    modifier: Option<f32>,
 ) -> (bool, f32) {
     let displayed_value;
     if modifier != None {
         displayed_value = value * modifier.unwrap();
     } else {
         displayed_value = value * 1.;
-        modifier = Some(1.);
     }
 
     if shared.ui.rename_id != id {

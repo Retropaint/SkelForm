@@ -27,7 +27,7 @@ use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
-    event::{MouseButton, MouseScrollDelta, WindowEvent},
+    event::{MouseScrollDelta, WindowEvent},
     window::{Theme, Window},
 };
 
@@ -231,10 +231,10 @@ impl ApplicationHandler for App {
             }
             WindowEvent::MouseInput {
                 device_id: _,
-                state,
-                button,
+                state: _,
+                button: _,
             } => {
-                input::mouse_input(&button, &state, &mut self.shared);
+                input::mouse_input(&mut self.shared);
             }
             WindowEvent::MouseWheel {
                 device_id: _,
