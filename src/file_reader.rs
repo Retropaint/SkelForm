@@ -28,7 +28,7 @@ macro_rules! temp_file {
 }
 
 #[rustfmt::skip] temp_file!(TEMP_IMG_PATH,        ".skelform_img_path");
-#[rustfmt::skip] temp_file!(TEMP_SAVE_PATH,       ".skelform_img_path");
+#[rustfmt::skip] temp_file!(TEMP_SAVE_PATH,       ".skelform_save_path");
 #[rustfmt::skip] temp_file!(TEMP_EXPORT_VID_TEXT, ".skelform_export_vid_text");
 #[rustfmt::skip] temp_file!(TEMP_IMPORT_PATH,     ".skelform_import_path");
 
