@@ -99,7 +99,7 @@ pub fn open_save_dialog() {
         if task == None {
             return;
         }
-        file_reader::create_temp_file(TEMP_EXPORT_PATH, task.unwrap().as_path().to_str().unwrap());
+        file_reader::create_temp_file(TEMP_SAVE_PATH, task.unwrap().as_path().to_str().unwrap());
     });
 }
 

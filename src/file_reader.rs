@@ -22,13 +22,13 @@ extern "C" {
 }
 
 pub const TEMP_IMG_PATH: &str = ".skelform_img_path";
-pub const TEMP_EXPORT_PATH: &str = ".skelform_export_path";
+pub const TEMP_SAVE_PATH: &str = ".skelform_save_path";
 pub const TEMP_IMPORT_PATH: &str = ".skelform_import_path";
 pub const TEMP_EXPORT_VID_TEXT: &str = ".skelform_export_video_text";
 
 pub const FILES: [&str; 4] = [
     TEMP_IMG_PATH,
-    TEMP_EXPORT_PATH,
+    TEMP_SAVE_PATH,
     TEMP_IMPORT_PATH,
     TEMP_EXPORT_VID_TEXT,
 ];
@@ -156,11 +156,11 @@ pub fn read_image_loaders(
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn read_export(shared: &Shared) {
-    if !fs::exists(TEMP_EXPORT_PATH).unwrap() {
+    if !fs::exists(TEMP_SAVE_PATH).unwrap() {
         return;
     }
 
-    let path = fs::read_to_string(TEMP_EXPORT_PATH).unwrap();
+    let path = fs::read_to_string(TEMP_SAVE_PATH).unwrap();
 
     utils::save(path, &shared.armature.textures, &shared.armature);
 
