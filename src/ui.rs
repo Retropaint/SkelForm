@@ -519,8 +519,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
 
                 // show highlight on hover
                 if response.hovered() {
-                    let painter = ui.painter_at(ui.min_rect());
-                    painter.rect_filled(
+                    ui.painter_at(ui.min_rect()).rect_filled(
                         rect,
                         egui::CornerRadius::ZERO,
                         egui::Color32::from_rgba_unmultiplied(255, 255, 255, 60),
