@@ -261,7 +261,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
             _ => Vec2::default(),
         };
-        shared.edit_bone(shared.edit_mode, value);
+        shared.edit_bone(shared.edit_mode, value, false);
     }
 }
 
