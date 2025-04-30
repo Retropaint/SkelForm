@@ -273,14 +273,14 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                     }
                 }
 
-                //// Render a rect underneath the list (matching the bottom bar's height)
-                //// to mask the labels.
-                //let painter = ui.painter();
-                //let rect = egui::Rect::from_min_size(
-                //    egui::pos2(ui.min_rect().left(), shared.ui.anim.bottom_bar_top),
-                //    egui::vec2(ui.min_rect().right(), ui.min_rect().bottom()),
-                //);
-                //painter.rect_filled(rect, egui::CornerRadius::ZERO, ui::COLOR_MAIN);
+                // Render a rect underneath the list (matching the bottom bar's height)
+                // to mask the labels.
+                let painter = ui.painter();
+                let rect = egui::Rect::from_min_size(
+                    egui::pos2(ui.min_rect().left(), shared.ui.anim.bottom_bar_top),
+                    egui::vec2(ui.min_rect().right(), ui.min_rect().bottom()),
+                );
+                painter.rect_filled(rect, egui::CornerRadius::ZERO, ui::COLOR_MAIN);
             })
     });
 }
