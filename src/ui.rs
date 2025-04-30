@@ -109,7 +109,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     if shared.selected_bone_idx != usize::MAX {
         style_once!(bone_window::draw(context, shared));
-        if shared.selected_bone().tex_idx != -1 {
+        if shared.selected_bone().unwrap().tex_idx != -1 {
             edit_mode_bar(context, shared);
         }
     } else {
@@ -537,7 +537,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                         // stop the loop to prevent index errors
                         break;
                     } else {
-                        shared.selected_bone_mut().tex_idx = i as i32;
+                        shared.selected_bone_mut().unwrap().tex_idx = i as i32;
                         shared.ui.image_modal = false;
                     }
                 }

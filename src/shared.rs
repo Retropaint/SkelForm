@@ -614,7 +614,7 @@ impl Shared {
     }
 
     pub fn selected_anim_bone_mut(&mut self) -> Option<&mut AnimBone> {
-        let id = self.selected_bone().id;
+        let id = self.selected_bone().unwrap().id;
         for b in &mut self.selected_keyframe_mut().unwrap().bones {
             if b.id == id {
                 return Some(b);
@@ -624,7 +624,7 @@ impl Shared {
     }
 
     pub fn selected_anim_bone(&self) -> Option<&AnimBone> {
-        let id = self.selected_bone().id;
+        let id = self.selected_bone().unwrap().id;
         for b in &self.selected_keyframe().unwrap().bones {
             if b.id == id {
                 return Some(b);
@@ -663,12 +663,18 @@ impl Shared {
         None
     }
 
-    pub fn selected_bone(&self) -> &Bone {
-        &self.armature.bones[self.selected_bone_idx]
+    pub fn selected_bone(&self) -> Option<&Bone> {
+        if self.selected_bone_idx != usize::MAX {
+            return Some(&self.armature.bones[self.selected_bone_idx])
+        }
+        None
     }
 
-    pub fn selected_bone_mut(&mut self) -> &mut Bone {
-        &mut self.armature.bones[self.selected_bone_idx]
+    pub fn selected_bone_mut(&mut self) -> Option<&mut Bone> {
+        if self.selected_bone_idx != usize::MAX {
+            return Some(&mut self.armature.bones[self.selected_bone_idx])
+        }
+        None
     }
 
     pub fn find_bone(&self, id: i32) -> Option<&Bone> {
@@ -833,7 +839,7 @@ impl Shared {
         // Counter-act parent's rotation so that translation is global.
         // Only used in bone translation.
         if counter_parent {
-            let parent_id = self.selected_bone().parent_id;
+            let parent_id = self.selected_bone().unwrap().parent_id;
             if let Some(parent) = self.find_bone(parent_id) {
                 mouse = crate::utils::rotate(&mouse, -parent.rot);
             }
@@ -852,8 +858,8 @@ impl Shared {
         self.undo_actions.push(Action {
             action: ActionEnum::Bone,
             action_type: ActionType::Edited,
-            bone: self.selected_bone().clone(),
-            id: self.selected_bone().id,
+            bone: self.selected_bone().unwrap().clone(),
+            id: self.selected_bone().unwrap().id,
             ..Default::default()
         });
     }
@@ -868,31 +874,31 @@ impl Shared {
 
         match edit_mode {
             0 => {
-                og_value = self.selected_bone_mut().pos;
+                og_value = self.selected_bone_mut().unwrap().pos;
                 element = crate::AnimElement::Position;
                 if !self.is_animating() {
-                    self.selected_bone_mut().pos = value;
+                    self.selected_bone_mut().unwrap().pos = value;
                 }
             }
             1 => {
-                og_value = Vec2::single(self.selected_bone_mut().rot);
+                og_value = Vec2::single(self.selected_bone_mut().unwrap().rot);
                 element = crate::AnimElement::Rotation;
                 if !self.is_animating() {
-                    self.selected_bone_mut().rot = value.x;
+                    self.selected_bone_mut().unwrap().rot = value.x;
                 }
             }
             2 => {
-                og_value = self.selected_bone_mut().scale;
+                og_value = self.selected_bone_mut().unwrap().scale;
                 element = crate::AnimElement::Scale;
                 if !self.is_animating() {
-                    self.selected_bone_mut().scale = value;
+                    self.selected_bone_mut().unwrap().scale = value;
                 }
             }
             3 => {
-                og_value = self.selected_bone_mut().pivot;
+                og_value = self.selected_bone_mut().unwrap().pivot;
                 element = crate::AnimElement::Pivot;
                 if !self.is_animating() {
-                    self.selected_bone_mut().pivot = value;
+                    self.selected_bone_mut().unwrap().pivot = value;
                 }
             }
             _ => {}
@@ -902,7 +908,7 @@ impl Shared {
             if self.ui.anim.selected_frame != 0 {
                 self.check_first_keyframe(element.clone(), og_value);
             }
-            self.check_if_in_keyframe(self.selected_bone().id);
+            self.check_if_in_keyframe(self.selected_bone().unwrap().id);
             self.selected_anim_bone_mut()
                 .unwrap()
                 .set_field(&element, value);
@@ -920,7 +926,7 @@ impl Shared {
             let kf = self.keyframe_at(i);
             if kf != None {
                 for b in &kf.unwrap().bones {
-                    if b.id == self.selected_bone().id {
+                    if b.id == self.selected_bone().unwrap().id {
                         for f in &b.fields {
                             if f.element == element {
                                 first_field_missing = false;
@@ -933,7 +939,7 @@ impl Shared {
         }
 
         if first_field_missing {
-            let id = self.selected_bone().id;
+            let id = self.selected_bone().unwrap().id;
             // add keyframe if it doesn't exist
             if self.selected_animation_mut().keyframes.len() == 0
                 || self.selected_animation_mut().keyframes[0].frame != 0

@@ -49,7 +49,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 let l = ui.label("Name:");
-                ui.text_edit_singleline(&mut shared.selected_bone_mut().name)
+                ui.text_edit_singleline(&mut shared.selected_bone_mut().unwrap().name)
                     .labelled_by(l.id);
             });
             ui.horizontal(|ui| {
@@ -69,13 +69,13 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 })
             });
 
-            if shared.selected_bone().tex_idx == -1 {
+            if shared.selected_bone().unwrap().tex_idx == -1 {
                 return;
             }
             
             ui.add_space(3.5);
 
-            let mut bone = shared.selected_bone().clone();
+            let mut bone = shared.selected_bone().unwrap().clone();
             if shared.animating && shared.ui.anim.selected != usize::MAX {
                 bone = shared.animate(shared.ui.anim.selected)[shared.selected_bone_idx].clone();
             }
