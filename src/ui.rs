@@ -87,7 +87,12 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         shared.input.scroll = Vec2::new(i.raw_scroll_delta.x, i.raw_scroll_delta.y);
     });
 
-     shared.input.on_ui = context.is_pointer_over_area(); 
+    // check if mouse is on ui
+    //
+    // this check always returns false on mouse click, so it's only checked when the mouse isn't clicked
+    if shared.input.mouse_left == -1 {
+        shared.input.on_ui = context.is_pointer_over_area(); 
+    }    
 
     context.set_cursor_icon(shared.cursor_icon);
     shared.cursor_icon = egui::CursorIcon::Default;
