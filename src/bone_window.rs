@@ -36,6 +36,21 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         .show(egui_ctx, |ui| {
             ui.set_min_width(175.);
             ui.heading("Bone");
+
+            let delete_rect = egui::Rect::from_min_size(ui.min_rect().right_top(), egui::Vec2::ZERO);
+            if ui
+                .put(delete_rect, egui::Label::new(
+                    egui::RichText::new("X")
+                        .size(18.)
+                        .color(egui::Color32::DARK_RED)
+                    ))
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .clicked()
+            {
+                shared.ui.polar_id = "delete_bone".to_string();
+                shared.ui.polar_headline = "Are you sure to delete this bone?".to_string();
+            }
+    
             ui.separator();
             ui.add_space(3.);
 
@@ -48,9 +63,11 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             }
 
             ui.horizontal(|ui| {
+
                 let l = ui.label("Name:");
                 ui.text_edit_singleline(&mut shared.selected_bone_mut().unwrap().name)
                     .labelled_by(l.id);
+
             });
             ui.horizontal(|ui| {
                 ui.label("Texture:");
@@ -137,11 +154,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     );
                 });
             });
-
-            if ui_mod::button("Delete Bone", ui).clicked() {
-                shared.ui.polar_id = "delete_bone".to_string();
-                shared.ui.polar_headline = "Are you sure to delete this bone?".to_string();
-            };
         })
         .response;
     if response.hovered() {
