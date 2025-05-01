@@ -330,6 +330,11 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         shared.cursor_icon = egui::CursorIcon::Grabbing;
                         let cursor = shared.ui.get_cursor(ui);
 
+                        if cursor.y < 0. {
+                            shared.selected_animation_mut().keyframes.remove(i);
+                            break;
+                        }
+
                         for j in 0..shared.ui.anim.lines_x.len() {
                             let x = shared.ui.anim.lines_x[j];
                             if cursor.x < x + hitbox && cursor.x > x - hitbox {
