@@ -868,10 +868,6 @@ impl Shared {
     }
 
     pub fn edit_bone(&mut self, edit_mode: i32, mut value: Vec2, overwrite: bool) {
-        if self.armature.bones[self.selected_bone_idx].tex_idx == -1 {
-            return;
-        }
-
         let mut element = crate::AnimElement::Position;
         let mut og_value = value;
 

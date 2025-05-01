@@ -109,9 +109,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     if shared.selected_bone_idx != usize::MAX {
         style_once!(bone_window::draw(context, shared));
-        if shared.selected_bone().unwrap().tex_idx != -1 {
-            edit_mode_bar(context, shared);
-        }
+        edit_mode_bar(context, shared);
     } else {
         shared.ui.animate_mode_bar_pos.x = shared.window.x;
         shared.ui.camera_bar_pos.x = shared.window.x;
