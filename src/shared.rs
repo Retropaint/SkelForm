@@ -428,6 +428,13 @@ impl AnimBone {
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
+pub enum Transition {
+    #[default]
+    Linear,
+    Sine,
+}
+
+#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct AnimField {
     pub element: AnimElement,
 
@@ -442,6 +449,8 @@ pub struct AnimField {
     pub connect: bool,
 
     pub value: Vec2,
+
+    pub transition: Transition,
 
     #[serde(skip)]
     pub label_top: f32,
@@ -720,14 +729,19 @@ impl Shared {
         for b in &mut bones {
             macro_rules! interpolate {
                 ($element:expr, $default:expr) => {{
-                    let (prev, next, total_frames, current_frame, _, _) = self
+                    let (prev, next, total_frames, current_frame, transition) = self
                         .find_connecting_frames(
                             b.id,
                             $element,
                             $default,
                             self.ui.anim.selected_frame,
                         );
-                    Tweener::linear(prev, next, total_frames).move_to(current_frame)
+                    match (transition) {
+                        Transition::Sine => {
+                            Tweener::linear(prev, next, total_frames).move_to(current_frame)
+                        }
+                        _ => Tweener::linear(prev, next, total_frames).move_to(current_frame),
+                    }
                 }};
             }
 
@@ -747,11 +761,12 @@ impl Shared {
         element: AnimElement,
         default: Vec2,
         frame: i32,
-    ) -> (Vec2, Vec2, i32, i32, i32, i32) {
+    ) -> (Vec2, Vec2, i32, i32, Transition) {
         let mut prev: Option<Vec2> = None;
         let mut next: Option<Vec2> = None;
         let mut start_frame = 0;
         let mut end_frame = 0;
+        let mut transition: Transition = Transition::Linear;
 
         // get most previous frame with this element
         for (i, kf) in self.selected_animation().keyframes.iter().enumerate() {
@@ -789,6 +804,8 @@ impl Shared {
                         continue;
                     }
 
+                    transition = f.transition.clone();
+
                     next = Some(f.value);
                     end_frame = kf.frame;
                 }
@@ -824,8 +841,7 @@ impl Shared {
             next.unwrap(),
             total_frames,
             current_frame,
-            start_frame,
-            end_frame,
+            transition,
         )
     }
 
@@ -972,6 +988,7 @@ impl Shared {
                             connect: false,
                             value,
                             label_top: 0.,
+                            transition: Transition::Linear
                         }],
                     }],
                 });
@@ -986,6 +1003,7 @@ impl Shared {
                             connect: false,
                             value,
                             label_top: 0.,
+                            transition: Transition::Linear
                         });
                         has_bone = true;
                     }
@@ -1000,6 +1018,7 @@ impl Shared {
                                 connect: false,
                                 value,
                                 label_top: 0.,
+                                transition: Transition::Linear
                             }],
                         })
                 }
