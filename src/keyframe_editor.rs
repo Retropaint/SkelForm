@@ -330,6 +330,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         shared.cursor_icon = egui::CursorIcon::Grabbing;
                         let cursor = shared.ui.get_cursor(ui);
 
+                        // remove keyframe if dragged out
                         if cursor.y < 0. {
                             shared.selected_animation_mut().keyframes.remove(i);
                             break;

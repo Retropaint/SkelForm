@@ -32,7 +32,8 @@ use winit::{
 };
 
 pub mod armature_window;
-pub mod bone_window;
+pub mod bone_panel;
+pub mod keyframe_panel;
 pub mod file_reader;
 pub mod input;
 pub mod keyframe_editor;
