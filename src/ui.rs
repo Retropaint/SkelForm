@@ -3,7 +3,7 @@
 use egui::{Color32, Context, Shadow, Stroke};
 
 use crate::shared::*;
-use crate::{armature_window, bone_window, keyframe_editor, utils};
+use crate::{armature_window, bone_panel, keyframe_editor, utils};
 
 macro_rules! ui_color {
     ($name:ident, $r:expr, $g:expr, $b:expr) => {
@@ -107,12 +107,27 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     style_once!(armature_window::draw(context, shared));
 
+    // right side panel
+    let response = egui::SidePanel::right("Bone")
+        .resizable(true)
+        .max_width(250.)
+        .show(context, |ui| {
+            ui.set_min_width(175.);
+            if shared.selected_bone_idx != usize::MAX {
+                bone_panel::draw(ui, shared);
+            }
+
+            shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
+            shared.ui.camera_bar_pos.x = ui.min_rect().left();
+        })
+        .response;
+    if response.hovered() {
+        shared.input.on_ui = true;
+    }
+    
+
     if shared.selected_bone_idx != usize::MAX {
-        style_once!(bone_window::draw(context, shared));
         edit_mode_bar(context, shared);
-    } else {
-        shared.ui.animate_mode_bar_pos.x = shared.window.x;
-        shared.ui.camera_bar_pos.x = shared.window.x;
     }
 
     if shared.armature.bones.len() > 0 {
@@ -275,7 +290,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
                     if $label != "" {
                         $ui.label($label);
                     }
-                    (_, $float) = bone_window::float_input($id.to_string(), shared, $ui, $float, $modifier);
+                    (_, $float) = bone_panel::float_input($id.to_string(), shared, $ui, $float, $modifier);
                 };
             }
 
@@ -469,10 +484,10 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
             ui.horizontal(|ui| {
                 if selection_button("Import", shared.ui.is_removing_textures, ui).clicked() {
                     #[cfg(not(target_arch = "wasm32"))]
-                    bone_window::open_file_dialog();
+                    bone_panel::open_file_dialog();
 
                     #[cfg(target_arch = "wasm32")]
-                    bone_window::toggleFileDialog(true);
+                    bone_panel::toggleFileDialog(true);
                 }
 
                 let label = if shared.ui.is_removing_textures {
