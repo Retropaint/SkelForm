@@ -27,7 +27,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     let bone = new_bone(&mut shared.armature.bones);
 
                     // immediately select new bone upon creating it
-                    shared.selected_bone_idx = shared.armature.bones.len() - 1;
+                    shared.select_bone(shared.armature.bones.len() - 1);
 
                     shared.undo_actions.push(Action {
                         action: ActionEnum::Bone,
@@ -90,7 +90,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                             )
                             .clicked()
                             {
-                                shared.selected_bone_idx = idx as usize;
+                                shared.select_bone(idx as usize);
                             };
                         }
                         idx += 1;

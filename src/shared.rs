@@ -645,6 +645,20 @@ impl Shared {
         None
     }
 
+    pub fn unselect_everything(&mut self) {
+        self.selected_bone_idx = usize::MAX;
+    }
+
+    pub fn select_bone(&mut self, idx: usize) {
+        self.unselect_everything();
+        self.selected_bone_idx = idx;
+    }
+
+    pub fn select_frame(&mut self, idx: i32) {
+        self.unselect_everything();
+        self.ui.anim.selected_frame = idx;
+    }
+
     pub fn sort_keyframes(&mut self) {
         self.selected_animation_mut()
             .keyframes
@@ -988,7 +1002,7 @@ impl Shared {
                             connect: false,
                             value,
                             label_top: 0.,
-                            transition: Transition::Linear
+                            transition: Transition::Linear,
                         }],
                     }],
                 });
@@ -1003,7 +1017,7 @@ impl Shared {
                             connect: false,
                             value,
                             label_top: 0.,
-                            transition: Transition::Linear
+                            transition: Transition::Linear,
                         });
                         has_bone = true;
                     }
@@ -1018,7 +1032,7 @@ impl Shared {
                                 connect: false,
                                 value,
                                 label_top: 0.,
-                                transition: Transition::Linear
+                                transition: Transition::Linear,
                             }],
                         })
                 }
@@ -1135,11 +1149,6 @@ impl Ui {
         }
 
         true
-    }
-
-    pub fn select_anim(&mut self, idx: usize) {
-        self.anim.selected = idx;
-        self.anim.selected_frame = 0;
     }
 
     pub fn singleline_input(&mut self, id: String, mut value: f32, ui: &mut egui::Ui) -> f32 {

@@ -2,8 +2,7 @@
 
 use egui::{Color32, Context, Shadow, Stroke};
 
-use crate::shared::*;
-use crate::{armature_window, bone_panel, keyframe_editor, utils};
+use crate::*;
 
 macro_rules! ui_color {
     ($name:ident, $r:expr, $g:expr, $b:expr) => {
@@ -113,8 +112,11 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         .max_width(250.)
         .show(context, |ui| {
             ui.set_min_width(175.);
+
             if shared.selected_bone_idx != usize::MAX {
                 bone_panel::draw(ui, shared);
+            } else if shared.ui.anim.selected_frame != -1 {
+                keyframe_panel::draw(ui, shared);
             }
 
             shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
@@ -202,7 +204,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         shared.recording = true;
                         shared.done_recording = true;
                         shared.ui.anim.playing = true;
-                        shared.ui.anim.selected_frame = 0;
+                        shared.select_frame(0);
                         shared.ui.anim.loops = 1;
                         shared.ui.anim.elapsed = Some(std::time::Instant::now());
                         ui.close_menu();

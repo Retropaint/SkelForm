@@ -30,7 +30,6 @@ extern "C" {
 }
 
 pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
-    ui.set_min_width(175.);
     ui.heading("Bone");
 
     // delete label

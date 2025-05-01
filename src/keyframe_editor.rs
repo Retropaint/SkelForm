@@ -42,15 +42,15 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         shared.ui.anim.selected_frame += 1;
         let last_frame = shared.last_keyframe();
         if last_frame != None && shared.ui.anim.selected_frame > last_frame.unwrap().frame {
-            shared.ui.anim.selected_frame = 0;
+            shared.select_frame(0);
         }
     } else if left {
         shared.ui.anim.selected_frame -= 1;
         let last_frame = shared.last_keyframe();
         if last_frame != None && shared.ui.anim.selected_frame < 0 {
-            shared.ui.anim.selected_frame = last_frame.unwrap().frame;
+            shared.select_frame(last_frame.unwrap().frame);
         } else if last_frame == None && shared.ui.anim.selected_frame < 0 {
-            shared.ui.anim.selected_frame = 0;
+            shared.select_frame(0);
         }
     }
 
@@ -117,7 +117,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                             {
                                 if just_made {
                                     shared.ui.anim.selected = i;
-                                    shared.ui.anim.selected_frame = 0;
+                                    shared.select_frame(0);
                                 }
                                 continue;
                             }
@@ -127,7 +127,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                             if button.clicked() {
                                 if shared.ui.anim.selected != i {
                                     shared.ui.anim.selected = i;
-                                    shared.ui.anim.selected_frame = 0;
+                                    shared.select_frame(0);
                                 } else {
                                     shared.ui.rename_id = rename_id;
                                 }
@@ -312,7 +312,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
                     if response.drag_started() {
-                        shared.ui.anim.selected_frame = kf.frame as i32;
+                        shared.select_frame(kf.frame as i32);
                     }
 
                     if response.hovered() {
@@ -464,9 +464,6 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
             ui.label("Frame:");
             ui.add(egui::DragValue::new(&mut shared.ui.anim.selected_frame).speed(0.1));
-            if shared.ui.anim.selected_frame < 0 {
-                shared.ui.anim.selected_frame = 0;
-            }
 
             ui.label("FPS:").on_hover_text("Frames Per Second");
             shared.selected_animation_mut().fps = shared.ui.singleline_input(
@@ -513,7 +510,7 @@ fn draw_frame_lines(
 
             // select this frame if clicked
             if shared.input.mouse_left == 0 {
-                shared.ui.anim.selected_frame = i;
+                shared.select_frame(i);
             }
         }
 

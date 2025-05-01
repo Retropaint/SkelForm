@@ -162,7 +162,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
                     // select if left clicked
                     if shared.input.mouse_left == 0 {
-                        shared.selected_bone_idx = i;
+                        shared.select_bone(i as usize);
                     }
                 }
                 break;
