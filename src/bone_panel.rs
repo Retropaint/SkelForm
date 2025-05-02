@@ -103,37 +103,37 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         };
     }
 
+    macro_rules! label {
+        ($name:expr, $ui:expr) => {
+            $ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
+                ui.label($name);
+            });
+        };
+    }
+
     ui.horizontal(|ui| {
-        ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
-            ui.label("Position:");
-        });
+        label!("Position:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             input!(bone.pos, bone.pos.y, "pos_y", 0, None, ui, "Y");
             input!(bone.pos, bone.pos.x, "pos_x", 0, None, ui, "X");
         })
     });
     ui.horizontal(|ui| {
-        ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
-            ui.label("Scale:");
-        });
+        label!("Scale:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             input!(bone.scale, bone.scale.y, "scale_y", 2, None, ui, "Y");
             input!(bone.scale, bone.scale.x, "scale_x", 2, None, ui, "X");
         });
     });
     ui.horizontal(|ui| {
-        ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
-            ui.label("Pivot:");
-        });
+        label!("Pivot:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             input!(bone.pivot, bone.pivot.y, "pivot_y", 3, None, ui, "Y");
             input!(bone.pivot, bone.pivot.x, "pivot_x", 3, None, ui, "X");
         });
     });
     ui.horizontal(|ui| {
-        ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
-            ui.label("Rotation:");
-        });
+        label!("Rotation:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             input!(
                 crate::Vec2::single(bone.rot),
@@ -147,9 +147,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
     ui.horizontal(|ui| {
-        ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
-            ui.label("Z-Index:");
-        });
+        label!("Z-Index:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             input!(
                 crate::Vec2::single(bone.zindex),
