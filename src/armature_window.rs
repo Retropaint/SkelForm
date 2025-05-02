@@ -87,6 +87,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 })
                                 .response;
                             check_bone_dragging(&mut shared.armature.bones, ui, d, idx as i32);
+                            shared.sort_bones_zindex();
                         } else {
                             // regular, boring buttons
 
@@ -119,6 +120,7 @@ pub fn new_bone(bones: &mut Vec<Bone>, parent_id: i32) -> (Bone, usize) {
         scale: Vec2 { x: 1., y: 1. },
         tex_idx: -1,
         pivot: Vec2::new(0., 0.),
+        zindex: bones.len() as i32,
         ..Default::default()
     };
     if parent_id == -1 {
