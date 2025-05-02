@@ -106,8 +106,36 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         // inherit position from parent
         temp_bones[i].pos += p.pos;
 
+        let tex = &shared.armature.textures[temp_bones[i].tex_idx as usize];
+
+        let temp_verts: [Vertex; 4] = [
+            Vertex {
+                pos: tex.size * temp_bones[i].scale,
+                uv: Vec2::new(1., 0.),
+            },
+            Vertex {
+                pos: tex.size * temp_bones[i].scale * -1.,
+                uv: Vec2::new(0., 1.),
+            },
+            Vertex {
+                pos: Vec2::new(
+                    tex.size.x * temp_bones[i].scale.x * -1.,
+                    tex.size.y * temp_bones[i].scale.y,
+                ),
+                uv: Vec2::new(0., 0.),
+            },
+            Vertex {
+                pos: Vec2::new(
+                    tex.size.x * temp_bones[i].scale.x,
+                    tex.size.y * temp_bones[i].scale.y * -1.,
+                ),
+                uv: Vec2::new(1., 1.),
+            },
+        ];
+
         // generate the vertices to be used later
-        let this_verts = rect_verts(
+        let final_verts = rect_verts(
+            temp_verts,
             &temp_bones[i],
             &shared.camera.pos,
             shared.camera.zoom,
@@ -115,8 +143,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             shared.window.x / shared.window.y,
         );
 
-        verts.push(this_verts.clone());
-        shared.armature.bones[i].vertices = this_verts;
+        verts.push(final_verts.clone());
+        shared.armature.bones[i].vertices = final_verts;
     }
 
     let mut hovered_bone = -1;
@@ -195,13 +223,22 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             wgpu::IndexFormat::Uint32,
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
+
+        if shared.point_bindgroup != None {
+            render_pass.set_bind_group(0, &shared.point_bindgroup, &[]);
+            render_pass.set_vertex_buffer(0, vertex_buffer(&verts[i], device).slice(..));
+            render_pass.set_index_buffer(
+                index_buffer(RECT_VERT_INDICES.to_vec(), &device).slice(..),
+                wgpu::IndexFormat::Uint32,
+            );
+            render_pass.draw_indexed(0..6, 0, 0..1);
+        }
     }
 
     // if mouse_left is lower than this, it's considered a click
     let click_threshold = 10;
 
     if shared.input.mouse_left == -1 {
-
         // deselect bone if clicking outside
         if hovered_bone == -1
             && shared.input.mouse_left_prev <= click_threshold
@@ -376,6 +413,7 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
 ///
 /// Accounts for texture size and aspect ratio
 fn rect_verts(
+    mut verts: [Vertex; 4],
     bone: &Bone,
     camera: &Vec2,
     zoom: f32,
@@ -383,32 +421,9 @@ fn rect_verts(
     aspect_ratio: f32,
 ) -> Vec<Vertex> {
     let hard_scale = 0.005;
-    let mut vertices: Vec<Vertex> = vec![
-        Vertex {
-            pos: tex.size * bone.scale * hard_scale,
-            uv: Vec2::new(1., 0.),
-        },
-        Vertex {
-            pos: tex.size * bone.scale * -hard_scale,
-            uv: Vec2::new(0., 1.),
-        },
-        Vertex {
-            pos: Vec2::new(
-                -hard_scale * tex.size.x * bone.scale.x,
-                hard_scale * tex.size.y * bone.scale.y,
-            ),
-            uv: Vec2::new(0., 0.),
-        },
-        Vertex {
-            pos: Vec2::new(
-                hard_scale * tex.size.x * bone.scale.x,
-                -hard_scale * tex.size.y * bone.scale.y,
-            ),
-            uv: Vec2::new(1., 1.),
-        },
-    ];
+    for v in &mut verts {
+        v.pos = v.pos * hard_scale;
 
-    for v in &mut vertices {
         let pivot_offset = tex.size * bone.pivot * hard_scale;
         v.pos.x -= pivot_offset.x;
         v.pos.y += pivot_offset.y;
@@ -434,7 +449,7 @@ fn rect_verts(
         v.pos.x /= aspect_ratio;
     }
 
-    vertices
+    verts.to_vec()
 }
 
 pub fn draw_horizontal_line(

@@ -284,6 +284,8 @@ pub struct Ui {
     // camera bar stuff
     pub camera_bar_pos: Vec2,
     pub camera_bar_scale: Vec2,
+
+    pub bone_panel: Option<egui::Rect>,
 }
 
 impl Ui {
@@ -589,6 +591,7 @@ pub struct Shared {
     /// useful if you don't want to provide an actual bind group during testing
     pub highlight_bindgroup: Option<BindGroup>,
     pub gridline_bindgroup: Option<BindGroup>,
+    pub point_bindgroup: Option<BindGroup>,
 
     pub save_path: String,
 

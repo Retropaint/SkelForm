@@ -33,10 +33,10 @@ use winit::{
 
 pub mod armature_window;
 pub mod bone_panel;
-pub mod keyframe_panel;
 pub mod file_reader;
 pub mod input;
 pub mod keyframe_editor;
+pub mod keyframe_panel;
 pub mod renderer;
 pub mod shared;
 pub mod ui;
@@ -297,6 +297,16 @@ impl ApplicationHandler for App {
         if self.shared.gridline_bindgroup == None {
             self.shared.gridline_bindgroup = Some(renderer::create_texture_bind_group(
                 vec![255, 255, 255, 20],
+                Vec2::new(1., 1.),
+                &self.renderer.as_ref().unwrap().gpu.queue,
+                &self.renderer.as_ref().unwrap().gpu.device,
+                &self.renderer.as_ref().unwrap().bind_group_layout,
+            ));
+        }
+
+        if self.shared.point_bindgroup == None {
+            self.shared.point_bindgroup = Some(renderer::create_texture_bind_group(
+                vec![0, 255, 0, 20],
                 Vec2::new(1., 1.),
                 &self.renderer.as_ref().unwrap().gpu.queue,
                 &self.renderer.as_ref().unwrap().gpu.device,
