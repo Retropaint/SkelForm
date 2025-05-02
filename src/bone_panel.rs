@@ -146,6 +146,22 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             );
         });
     });
+    ui.horizontal(|ui| {
+        ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
+            ui.label("Z-Index:");
+        });
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+            input!(
+                crate::Vec2::single(bone.zindex),
+                bone.zindex,
+                "zindex",
+                4,
+                None,
+                ui,
+                ""
+            );
+        });
+    });
 }
 
 #[cfg(not(target_arch = "wasm32"))]

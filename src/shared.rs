@@ -352,8 +352,7 @@ pub struct Bone {
     pub scale: Vec2,
     pub pos: Vec2,
     pub pivot: Vec2,
-
-    pub zindex: i32,
+    pub zindex: f32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -470,6 +469,7 @@ pub enum AnimElement {
     Rotation,
     Scale,
     Pivot,
+    Zindex,
 }
 
 #[derive(Default, Clone)]
@@ -770,6 +770,7 @@ impl Shared {
             b.rot += interpolate!(AnimElement::Rotation, Vec2::ZERO).x;
             b.scale *= interpolate!(AnimElement::Scale, Vec2::new(1., 1.));
             b.pivot *= interpolate!(AnimElement::Pivot, Vec2::new(1., 1.));
+            b.zindex += interpolate!(AnimElement::Zindex, Vec2::ZERO).x;
         }
 
         bones
@@ -956,6 +957,12 @@ impl Shared {
                     self.selected_bone_mut().unwrap().pivot
                 );
             }
+            4 => {
+                edit_f32!(
+                    crate::AnimElement::Zindex,
+                    self.selected_bone_mut().unwrap().zindex
+                );
+            }
             _ => {}
         }
 
@@ -1107,7 +1114,7 @@ impl Shared {
 
     pub fn sort_bones_zindex(&mut self) {
         for i in 0..self.armature.bones.len() {
-            self.armature.bones[i].zindex = i as i32;
+            self.armature.bones[i].zindex = i as f32;
         }
     }
 }

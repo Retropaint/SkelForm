@@ -77,7 +77,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    temp_bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
+    temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
 
     // using while loop to prevent borrow issues
     for i in 0..temp_bones.len() {
