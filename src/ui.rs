@@ -301,13 +301,13 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 ui.label("Camera:");
-                input!(shared.camera.pos, shared.camera.pos.x, "cam_pos_y", 0, -1., ui, "X");                
-                input!(shared.camera.pos, shared.camera.pos.y, "cam_pos_x", 0, -1., ui, "Y");
+                input!(shared.camera.pos, shared.camera.pos.x, "cam_pos_y", 0, 1., ui, "X");                
+                input!(shared.camera.pos, shared.camera.pos.y, "cam_pos_x", 0, 1., ui, "Y");
             });            
 
             ui.horizontal(|ui| {
                 ui.label("Zoom:");
-                input!(shared.camera.zoom, shared.camera.zoom, "cam_zoom", 0, -1., ui, "");
+                input!(shared.camera.zoom, shared.camera.zoom, "cam_zoom", 0, 1., ui, "");
             });
             
 
