@@ -202,7 +202,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // finally, draw the bones
     for (i, b) in temp_bones.iter().enumerate() {
         if b.tex_idx == -1 || verts[i].len() == 0 {
-            draw_point(shared, render_pass, device, b);
+            if shared.selected_bone_idx == i {
+                draw_point(shared, render_pass, device, b);
+            }
             continue;
         }
 
@@ -226,7 +228,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
 
-        draw_point(shared, render_pass, device, b);
+        if shared.selected_bone_idx == i {
+            draw_point(shared, render_pass, device, b);
+        }
     }
 
     // if mouse_left is lower than this, it's considered a click
