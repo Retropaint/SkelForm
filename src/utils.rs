@@ -13,11 +13,20 @@ pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
     }
 }
 
-pub fn world_to_screen_space(pos: Vec2, window: Vec2) -> Vec2 {
-    Vec2 {
-        x: ((pos.x + 1.) * window.x as f32 / 4.),
-        y: -((pos.y - 1.) * window.y as f32 / 4.),
+pub fn world_to_screen_space(pos: Vec2, window: Vec2, zoom: f32, use_aspect_ratio: bool) -> Vec2 {
+    let mut aspect_ratio = window.y / window.x;
+    if !use_aspect_ratio {
+        aspect_ratio = 1.;
     }
+
+    let mut vec2 = Vec2::new(
+        (pos.x * window.x as f32 / 4.) * aspect_ratio,
+        -(pos.y * window.y as f32 / 4.),
+    );
+    vec2 /= zoom;
+    vec2 += window / 4.;
+
+    vec2
 }
 
 /// Rotate a point via rotation matrix.
@@ -196,7 +205,7 @@ pub fn import(
     queue: &wgpu::Queue,
     device: &wgpu::Device,
     bind_group_layout: &BindGroupLayout,
-    context: &egui::Context
+    context: &egui::Context,
 ) {
     let file = std::fs::File::open(path);
     let mut zip = zip::ZipArchive::new(file.unwrap()).unwrap();
