@@ -352,6 +352,8 @@ pub struct Bone {
     pub scale: Vec2,
     pub pos: Vec2,
     pub pivot: Vec2,
+
+    pub zindex: i32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -1097,6 +1099,15 @@ impl Shared {
             if bone.tex_idx == tex_idx {
                 bone.tex_idx = -1;
             }
+            if bone.tex_idx > tex_idx {
+                bone.tex_idx -= 1;
+            }
+        }
+    }
+
+    pub fn sort_bones_zindex(&mut self) {
+        for i in 0..self.armature.bones.len() {
+            self.armature.bones[i].zindex = i as i32;
         }
     }
 }

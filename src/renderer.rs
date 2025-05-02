@@ -77,6 +77,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
+    temp_bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
+
     // using while loop to prevent borrow issues
     for i in 0..temp_bones.len() {
         if temp_bones[i].tex_idx == -1 {
