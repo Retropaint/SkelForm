@@ -228,6 +228,7 @@ pub struct InputStates {
     // mouse stuff
     pub initial_points: Vec<Vec2>,
     pub mouse_left: i32,
+    pub mouse_left_prev: i32,
     pub mouse: Vec2,
 
     pub scroll: Vec2,
