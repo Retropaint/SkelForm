@@ -75,6 +75,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     // This is because egui can detect all of them even if they were not on the UI itself.
     // To determine if the mouse is on the UI, winit's mouse input is used instead (see input.rs).
     context.input(|i| {
+        shared.input.mouse_left_prev = shared.input.mouse_left;
         if i.pointer.primary_down() {
             if shared.input.mouse_left == -1 {
                 shared.input.mouse_left = 0;
@@ -137,6 +138,13 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     }
 
     camera_bar(context, shared);
+
+    // check if mouse is on ui
+    //
+    // this check always returns false on mouse click, so it's only checked when the mouse isn't clicked
+    if shared.input.mouse_left == -1 {
+        shared.input.on_ui = context.is_pointer_over_area(); 
+    }
 }
 
 fn top_panel(egui_ctx: &Context, shared: &mut Shared) {

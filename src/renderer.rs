@@ -197,7 +197,20 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         render_pass.draw_indexed(0..6, 0, 0..1);
     }
 
+    // if mouse_left is lower than this, it's considered a click
+    let click_threshold = 10;
+
     if shared.input.mouse_left == -1 {
+
+        // deselect bone if clicking outside
+        if hovered_bone == -1
+            && shared.input.mouse_left_prev <= click_threshold
+            && shared.input.mouse_left_prev != -1
+            && can_hover
+        {
+            shared.selected_bone_idx = usize::MAX;
+        }
+
         shared.editing_bone = false;
         return;
     }
@@ -223,7 +236,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // editing bone
     if shared.input.on_ui || shared.ui.polar_id != "" {
         shared.editing_bone = false;
-    } else if shared.selected_bone_idx != usize::MAX {
+    } else if shared.selected_bone_idx != usize::MAX && shared.input.mouse_left > click_threshold {
         if !shared.editing_bone {
             if shared.is_animating() {
                 shared.undo_actions.push(crate::Action {
