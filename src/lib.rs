@@ -308,9 +308,9 @@ impl ApplicationHandler for App {
         if self.shared.debug {
             self.shared.debug = false;
             self.shared.selected_bone_idx = 0;
-            armature_window::new_bone(&mut self.shared.armature.bones);
-            armature_window::new_bone(&mut self.shared.armature.bones);
-            armature_window::new_bone(&mut self.shared.armature.bones);
+            armature_window::new_bone(&mut self.shared.armature.bones, -1);
+            armature_window::new_bone(&mut self.shared.armature.bones, -1);
+            armature_window::new_bone(&mut self.shared.armature.bones, -1);
             self.shared.armature.bones[2].parent_id = 1;
             self.shared.armature.bones[1].parent_id = 0;
             self.shared.armature.animations.push(Animation {

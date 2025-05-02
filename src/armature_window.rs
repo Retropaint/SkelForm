@@ -24,10 +24,17 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 if ui_mod::button("New Bone", ui).clicked() {
-                    let bone = new_bone(&mut shared.armature.bones);
+                    let idx: usize;
+                    let bone: Bone;
+                    if shared.selected_bone() != None {
+                        let id = shared.selected_bone().unwrap().id;
+                        (bone, idx) = new_bone(&mut shared.armature.bones, id);
+                    } else {
+                        (bone, idx) = new_bone(&mut shared.armature.bones, -1);
+                    }
 
                     // immediately select new bone upon creating it
-                    shared.select_bone(shared.armature.bones.len() - 1);
+                    shared.select_bone(idx);
 
                     shared.undo_actions.push(Action {
                         action: ActionEnum::Bone,
@@ -104,18 +111,29 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     }
 }
 
-pub fn new_bone(bones: &mut Vec<Bone>) -> Bone {
+pub fn new_bone(bones: &mut Vec<Bone>, parent_id: i32) -> (Bone, usize) {
     let new_bone = Bone {
         name: "bone".to_string() + &bones.len().to_string(),
-        parent_id: -1,
+        parent_id,
         id: generate_id(&bones),
         scale: Vec2 { x: 1., y: 1. },
         tex_idx: -1,
         pivot: Vec2::new(0., 0.),
         ..Default::default()
     };
-    bones.push(new_bone.clone());
-    new_bone
+    if parent_id == -1 {
+        bones.push(new_bone.clone());
+    } else {
+        let mut idx = 0;
+        for (i, bone) in bones.iter().enumerate() {
+            if bone.id == parent_id {
+                idx = i+1;
+            }
+        }
+        bones.insert(idx, new_bone.clone());
+        return (new_bone, idx);
+    }
+    (new_bone, bones.len()-1)
 }
 
 fn check_bone_dragging(bones: &mut Vec<Bone>, ui: &mut egui::Ui, drag: Response, idx: i32) {

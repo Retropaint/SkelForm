@@ -76,7 +76,7 @@ pub fn keyboard_input(
                     if undo {
                         shared.armature.bones.pop();
                     } else {
-                        armature_window::new_bone(&mut shared.armature.bones);
+                        armature_window::new_bone(&mut shared.armature.bones, -1);
                     }
                 } else {
                     new_action.bone = shared.armature.bones[action.id as usize].clone();
