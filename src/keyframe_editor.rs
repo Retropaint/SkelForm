@@ -117,7 +117,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                             {
                                 if just_made {
                                     shared.ui.anim.selected = i;
-                                    shared.select_frame(0);
+                                    shared.ui.anim.selected_frame = 0;
                                 }
                                 continue;
                             }
@@ -510,7 +510,7 @@ fn draw_frame_lines(
 
             // select this frame if clicked
             if shared.input.mouse_left == 0 {
-                shared.select_frame(i);
+                shared.ui.anim.selected_frame = i;
             }
         }
 
