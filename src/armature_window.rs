@@ -87,7 +87,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 })
                                 .response;
                             check_bone_dragging(&mut shared.armature.bones, ui, d, idx as i32);
-                            shared.sort_bones_zindex();
                         } else {
                             // regular, boring buttons
 

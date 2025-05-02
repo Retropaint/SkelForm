@@ -1112,10 +1112,8 @@ impl Shared {
         }
     }
 
-    pub fn sort_bones_zindex(&mut self) {
-        for i in 0..self.armature.bones.len() {
-            self.armature.bones[i].zindex = i as f32;
-        }
+    pub fn sort_bone_zindex(&mut self, bone_idx: i32) {
+        self.armature.bones[bone_idx as usize].zindex = bone_idx as f32 + 1.;
     }
 }
 
