@@ -306,7 +306,7 @@ impl ApplicationHandler for App {
 
         if self.shared.point_bindgroup == None {
             self.shared.point_bindgroup = Some(renderer::create_texture_bind_group(
-                vec![0, 255, 0, 20],
+                vec![0, 255, 0, 255],
                 Vec2::new(1., 1.),
                 &self.renderer.as_ref().unwrap().gpu.queue,
                 &self.renderer.as_ref().unwrap().gpu.device,

@@ -136,11 +136,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         // generate the vertices to be used later
         let final_verts = rect_verts(
             temp_verts,
-            &temp_bones[i],
+            Some(&temp_bones[i]),
             &shared.camera.pos,
             shared.camera.zoom,
-            &shared.armature.textures[temp_bones[i].tex_idx as usize],
+            Some(&shared.armature.textures[temp_bones[i].tex_idx as usize]),
             shared.window.x / shared.window.y,
+            0.005,
         );
 
         verts.push(final_verts.clone());
@@ -201,6 +202,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // finally, draw the bones
     for (i, b) in temp_bones.iter().enumerate() {
         if b.tex_idx == -1 || verts[i].len() == 0 {
+            draw_point(shared, render_pass, device, b);
             continue;
         }
 
@@ -224,15 +226,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
 
-        if shared.point_bindgroup != None {
-            render_pass.set_bind_group(0, &shared.point_bindgroup, &[]);
-            render_pass.set_vertex_buffer(0, vertex_buffer(&verts[i], device).slice(..));
-            render_pass.set_index_buffer(
-                index_buffer(RECT_VERT_INDICES.to_vec(), &device).slice(..),
-                wgpu::IndexFormat::Uint32,
-            );
-            render_pass.draw_indexed(0..6, 0, 0..1);
-        }
+        draw_point(shared, render_pass, device, b);
     }
 
     // if mouse_left is lower than this, it's considered a click
@@ -311,6 +305,48 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             _ => Vec2::default(),
         };
         shared.edit_bone(shared.edit_mode, value, false);
+    }
+}
+
+fn draw_point(shared: &Shared, render_pass: &mut RenderPass, device: &Device, bone: &Bone) {
+    if shared.point_bindgroup != None {
+        render_pass.set_bind_group(0, &shared.point_bindgroup, &[]);
+        let point_size = 0.1;
+        let temp_point_verts: [Vertex; 4] = [
+            Vertex {
+                pos: Vec2::new(-point_size, point_size) + bone.pos,
+                uv: Vec2::new(1., 0.),
+            },
+            Vertex {
+                pos: Vec2::new(point_size, point_size) + bone.pos,
+                uv: Vec2::new(0., 1.),
+            },
+            Vertex {
+                pos: Vec2::new(-point_size, -point_size) + bone.pos,
+                uv: Vec2::new(0., 0.),
+            },
+            Vertex {
+                pos: Vec2::new(point_size, -point_size) + bone.pos,
+                uv: Vec2::new(1., 1.),
+            },
+        ];
+
+        let point_verts = rect_verts(
+            temp_point_verts,
+            None,
+            &shared.camera.pos,
+            shared.camera.zoom,
+            None,
+            shared.window.x / shared.window.y,
+            1.,
+        );
+
+        render_pass.set_vertex_buffer(0, vertex_buffer(&point_verts.to_vec(), device).slice(..));
+        render_pass.set_index_buffer(
+            index_buffer(RECT_VERT_INDICES.to_vec(), &device).slice(..),
+            wgpu::IndexFormat::Uint32,
+        );
+        render_pass.draw_indexed(0..6, 0, 0..1);
     }
 }
 
@@ -414,30 +450,32 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
 /// Accounts for texture size and aspect ratio
 fn rect_verts(
     mut verts: [Vertex; 4],
-    bone: &Bone,
+    bone: Option<&Bone>,
     camera: &Vec2,
     zoom: f32,
-    tex: &Texture,
+    tex: Option<&Texture>,
     aspect_ratio: f32,
+    hard_scale: f32,
 ) -> Vec<Vertex> {
-    let hard_scale = 0.005;
     for v in &mut verts {
         v.pos = v.pos * hard_scale;
 
-        let pivot_offset = tex.size * bone.pivot * hard_scale;
-        v.pos.x -= pivot_offset.x;
-        v.pos.y += pivot_offset.y;
+        if let Some(bone) = bone {
+            let pivot_offset = tex.unwrap().size * bone.pivot * hard_scale;
+            v.pos.x -= pivot_offset.x;
+            v.pos.y += pivot_offset.y;
 
-        let rev_scale = Vec2::new(1. - bone.scale.x, 1. - bone.scale.y);
-        let scale_offset = tex.size * rev_scale * bone.pivot * hard_scale;
-        v.pos.x += scale_offset.x;
-        v.pos.y -= scale_offset.y;
+            let rev_scale = Vec2::new(1. - bone.scale.x, 1. - bone.scale.y);
+            let scale_offset = tex.unwrap().size * rev_scale * bone.pivot * hard_scale;
+            v.pos.x += scale_offset.x;
+            v.pos.y -= scale_offset.y;
 
-        // rotate verts
-        v.pos = utils::rotate(&v.pos, bone.rot);
+            // rotate verts
+            v.pos = utils::rotate(&v.pos, bone.rot);
 
-        // move verts with bone
-        v.pos += bone.pos;
+            // move verts with bone
+            v.pos += bone.pos;
+        }
 
         // offset bone with camera
         v.pos -= *camera;
@@ -445,7 +483,7 @@ fn rect_verts(
         // adjust for zoom level
         v.pos /= zoom;
 
-        // adjust verts according to aspect ratio
+        // adjust verts for aspect ratio
         v.pos.x /= aspect_ratio;
     }
 
