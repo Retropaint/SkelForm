@@ -1,7 +1,5 @@
 //! UI Bone window.
 
-use egui::*;
-
 use crate::{shared::*, ui as ui_mod};
 
 // native-only imports
@@ -114,22 +112,22 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         label!("Position:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-            input!(bone.pos, bone.pos.y, "pos_y", 0, None, ui, "Y");
-            input!(bone.pos, bone.pos.x, "pos_x", 0, None, ui, "X");
+            input!(bone.pos, bone.pos.y, "pos_y", 0, 1., ui, "Y");
+            input!(bone.pos, bone.pos.x, "pos_x", 0, 1., ui, "X");
         })
     });
     ui.horizontal(|ui| {
         label!("Scale:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-            input!(bone.scale, bone.scale.y, "scale_y", 2, None, ui, "Y");
-            input!(bone.scale, bone.scale.x, "scale_x", 2, None, ui, "X");
+            input!(bone.scale, bone.scale.y, "scale_y", 2, 1., ui, "Y");
+            input!(bone.scale, bone.scale.x, "scale_x", 2, 1., ui, "X");
         });
     });
     ui.horizontal(|ui| {
         label!("Pivot:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-            input!(bone.pivot, bone.pivot.y, "pivot_y", 3, None, ui, "Y");
-            input!(bone.pivot, bone.pivot.x, "pivot_x", 3, None, ui, "X");
+            input!(bone.pivot, bone.pivot.y, "pivot_y", 3, 1., ui, "Y");
+            input!(bone.pivot, bone.pivot.x, "pivot_x", 3, 1., ui, "X");
         });
     });
     ui.horizontal(|ui| {
@@ -140,7 +138,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 bone.rot,
                 "rot",
                 1,
-                Some(180. / std::f32::consts::PI),
+                180. / std::f32::consts::PI,
                 ui,
                 ""
             );
@@ -154,7 +152,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 bone.zindex,
                 "zindex",
                 4,
-                None,
+                1.,
                 ui,
                 ""
             );
@@ -182,14 +180,9 @@ pub fn float_input(
     shared: &mut Shared,
     ui: &mut egui::Ui,
     value: f32,
-    modifier: Option<f32>,
+    modifier: f32,
 ) -> (bool, f32) {
-    let displayed_value;
-    if modifier != None {
-        displayed_value = value * modifier.unwrap();
-    } else {
-        displayed_value = value * 1.;
-    }
+    let displayed_value = value * modifier;
 
     if shared.ui.rename_id != id {
         let input = ui.add_sized(
@@ -216,7 +209,7 @@ pub fn float_input(
             }
             match shared.ui.edit_value.as_mut().unwrap().parse::<f32>() {
                 Ok(output) => {
-                    return (true, output);
+                    return (true, output / modifier);
                 }
                 Err(_) => {
                     return (false, value);
