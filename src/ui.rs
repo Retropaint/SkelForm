@@ -69,7 +69,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         shared.ui.image_modal = false;
     }
 
-    //visualize_vertices(context, shared);
+    visualize_vertices(context, shared);
 
     // Although counter-intuitive, mouse inputs are recorded here.
     // This is because egui can detect all of them even if they were not on the UI itself.
@@ -86,13 +86,6 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         }
         shared.input.scroll = Vec2::new(i.raw_scroll_delta.x, i.raw_scroll_delta.y);
     });
-
-    // check if mouse is on ui
-    //
-    // this check always returns false on mouse click, so it's only checked when the mouse isn't clicked
-    if shared.input.mouse_left == -1 {
-        shared.input.on_ui = context.is_pointer_over_area(); 
-    }    
 
     context.set_cursor_icon(shared.cursor_icon);
     shared.cursor_icon = egui::CursorIcon::Default;
@@ -122,6 +115,8 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
             shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
             shared.ui.camera_bar_pos.x = ui.min_rect().left();
+
+            shared.ui.bone_panel = Some(ui.min_rect());
         })
         .response;
     if response.hovered() {
@@ -619,37 +614,54 @@ pub fn top_bar_button(
 }
 
 pub fn visualize_vertices(context: &Context, shared: &Shared) {
-    let painter = context.debug_painter();
     for bone in &shared.armature.bones {
-        if !bone.is_mesh || bone.vertices.len() == 0 {
+        if bone.is_mesh || bone.vertices.len() == 0 {
             continue;
         }
         for vert in &bone.vertices {
-            painter.circle_filled(
-                utils::world_to_screen_space(vert.pos, shared.window).into(),
+            let mut pos = vert.pos.clone();
+            context.debug_painter().circle_filled(
+                utils::world_to_screen_space(pos, shared.window, 1., false).into(),
                 10.,
                 egui::Color32::GREEN,
             );
         }
 
-        for i in 0..RECT_VERT_INDICES.len() {
-            if i == 0 {
-                continue;
-            }
-            let p1 = utils::world_to_screen_space(
-                bone.vertices[RECT_VERT_INDICES[i - 1] as usize].pos,
-                shared.window,
-            );
-            let p2 = utils::world_to_screen_space(
-                bone.vertices[RECT_VERT_INDICES[i] as usize].pos,
-                shared.window,
-            );
-            painter.line_segment(
-                [p1.into(), p2.into()],
-                egui::Stroke::new(2., egui::Color32::GREEN),
-            );
-        }
+        //for i in 0..RECT_VERT_INDICES.len() {
+        //    if i == 0 {
+        //        continue;
+        //    }
+        //    let p1 = utils::world_to_screen_space(
+        //        bone.vertices[RECT_VERT_INDICES[i - 1] as usize].pos,
+        //        shared.window,
+        //        shared.camera.zoom,
+        //    );
+        //    let p2 = utils::world_to_screen_space(
+        //        bone.vertices[RECT_VERT_INDICES[i] as usize].pos,
+        //        shared.window,
+        //        shared.camera.zoom,
+        //    );
+        //    context.debug_painter().line_segment(
+        //        [p1.into(), p2.into()],
+        //        egui::Stroke::new(2., egui::Color32::GREEN),
+        //    );
+        //}
     }
+}
+
+
+pub fn visualize_bone_point(context: &Context, shared: &Shared) {
+    egui::Area::new("background_area".into())
+        .order(egui::Order::Foreground) // Very back
+        .show(context, |ui| {
+            for bone in &shared.armature.bones {
+        ui.painter().circle_filled(
+            utils::world_to_screen_space(bone.pos, shared.window, shared.camera.zoom, true).into(),
+            10.,
+            egui::Color32::GREEN,
+        );
+    }
+    });
 }
 
 // top-right X label for modals
