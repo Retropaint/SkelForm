@@ -186,15 +186,23 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             }
 
             let is_in_box: bool;
-            (hovered_bone_verts, is_in_box) =
-                utils::in_bounding_box(&shared.input.mouse, &shared.find_bone(temp_bones[i].id).unwrap().vertices, &shared.window);
+            (hovered_bone_verts, is_in_box) = utils::in_bounding_box(
+                &shared.input.mouse,
+                &shared.find_bone(temp_bones[i].id).unwrap().vertices,
+                &shared.window,
+            );
             if is_in_box {
                 // highlight bone for selection if not already selected
                 hovered_bone = i as i32;
 
                 // select if left clicked
                 if selected_id != temp_bones[i].id && shared.input.mouse_left == 0 {
-                    shared.select_bone(i as usize);
+                    for (bi, bone) in shared.armature.bones.iter().enumerate() {
+                        if bone.id == temp_bones[i].id {
+                            shared.select_bone(bi);
+                            break;
+                        }
+                    }
                 }
                 break;
             }
@@ -227,7 +235,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // draw bone
         render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx as usize], &[]);
-        render_pass.set_vertex_buffer(0, vertex_buffer(&shared.find_bone(temp_bones[i].id).unwrap().vertices, device).slice(..));
+        render_pass.set_vertex_buffer(
+            0,
+            vertex_buffer(
+                &shared.find_bone(temp_bones[i].id).unwrap().vertices,
+                device,
+            )
+            .slice(..),
+        );
         render_pass.set_index_buffer(
             index_buffer(RECT_VERT_INDICES.to_vec(), &device).slice(..),
             wgpu::IndexFormat::Uint32,
@@ -249,7 +264,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             && shared.input.mouse_left_prev != -1
             && can_hover
         {
-            println!("test");
             shared.selected_bone_idx = usize::MAX;
         }
 
