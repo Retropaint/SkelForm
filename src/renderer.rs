@@ -14,6 +14,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         bones = shared.animate(shared.ui.anim.selected);
     }
 
+    let mut selected_id = -1;
+    if shared.selected_bone() != None {
+        selected_id = shared.selected_bone().unwrap().id;
+    }
+
     let mut verts = vec![];
 
     // For rendering purposes, bones need to have many of their attributes manipulated.
@@ -155,12 +160,15 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         && !shared.ui.image_modal
         && !shared.editing_bone;
 
+    // sort bones by z-index for drawing
+    temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
+
     // Check for the bone being hovered on.
     // This has to be in reverse (for now) since bones are rendered in ascending order of the array,
     // so it visually makes sense to click the one that shows in front.
     if can_hover {
-        for i in (0..temp_bones.len()).rev() {
-            if shared.armature.bones[i].tex_idx == -1 || verts[i].len() == 0 {
+        for i in 0..temp_bones.len() {
+            if verts[i].len() == 0 {
                 continue;
             }
 
@@ -186,24 +194,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 utils::in_bounding_box(&shared.input.mouse, &verts[i], &shared.window);
             if is_in_box {
                 // highlight bone for selection if not already selected
-                if shared.selected_bone_idx != i {
-                    hovered_bone = i as i32;
+                hovered_bone = i as i32;
 
-                    // select if left clicked
-                    if shared.input.mouse_left == 0 {
-                        shared.select_bone(i as usize);
-                    }
+                // select if left clicked
+                if selected_id != temp_bones[i].id && shared.input.mouse_left == 0 {
+                    shared.select_bone(i as usize);
                 }
                 break;
             }
         }
     }
-
-    let mut selected_id = -1;
-    if shared.selected_bone() != None {
-        selected_id = shared.selected_bone().unwrap().id;
-    }
-    temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
 
     // finally, draw the bones
     for (i, b) in temp_bones.iter().enumerate() {
@@ -215,7 +215,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         // draw the hovering highlight section
-        if hovered_bone as usize == i && can_hover {
+        if selected_id != b.id
+            && hovered_bone as usize == i
+            && can_hover
+            && shared.selected_bone_idx != i
+        {
             render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
             render_pass.set_vertex_buffer(0, vertex_buffer(&hovered_bone_verts, device).slice(..));
             render_pass.set_index_buffer(
@@ -249,6 +253,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             && shared.input.mouse_left_prev != -1
             && can_hover
         {
+            println!("test");
             shared.selected_bone_idx = usize::MAX;
         }
 
