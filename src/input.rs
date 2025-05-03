@@ -81,7 +81,7 @@ pub fn keyboard_input(
                             }
                         }
                     } else {
-                        armature_window::new_bone(&mut shared.armature.bones, -1);
+                        armature_window::new_bone(shared, -1);
                     }
                 } else {
                     new_action.bone = shared.armature.bones[action.id as usize].clone();

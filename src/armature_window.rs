@@ -26,11 +26,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 if ui_mod::button("New Bone", ui).clicked() {
                     let idx: usize;
                     let bone: Bone;
-                    if shared.selected_bone() != None {
-                        let id = shared.selected_bone().unwrap().id;
-                        (bone, idx) = new_bone(&mut shared.armature.bones, id);
+                    if shared.selected_bone() == None {
+                        (bone, idx) = new_bone(shared, -1);
                     } else {
-                        (bone, idx) = new_bone(&mut shared.armature.bones, -1);
+                        (bone, idx) = new_bone(shared, shared.selected_bone().unwrap().id);
                     }
 
                     // immediately select new bone upon creating it
@@ -111,30 +110,42 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     }
 }
 
-pub fn new_bone(bones: &mut Vec<Bone>, parent_id: i32) -> (Bone, usize) {
+pub fn new_bone(shared: &mut Shared, id: i32) -> (Bone, usize) {
+    let mut parent_id = -1;
+    if shared.find_bone(id) != None {
+        parent_id = shared.find_bone(id).unwrap().parent_id;
+    }
     let new_bone = Bone {
-        name: "bone".to_string() + &bones.len().to_string(),
+        name: "bone".to_string() + &shared.armature.bones.len().to_string(),
         parent_id,
-        id: generate_id(&bones),
+        id: generate_id(&shared.armature.bones),
         scale: Vec2 { x: 1., y: 1. },
         tex_idx: -1,
         pivot: Vec2::new(0., 0.),
-        zindex: bones.len() as f32,
+        zindex: shared.armature.bones.len() as f32,
         ..Default::default()
     };
-    if parent_id == -1 {
-        bones.push(new_bone.clone());
+    if id == -1 {
+        shared.armature.bones.push(new_bone.clone());
     } else {
-        let mut idx = 0;
-        for (i, bone) in bones.iter().enumerate() {
-            if bone.id == parent_id {
-                idx = i+1;
+        // add new bone below targeted one, keeping in mind its children
+        for i in 0..shared.armature.bones.len() {
+            if shared.armature.bones[i].id != id {
+                continue
             }
+
+            let mut children = vec![];
+            crate::armature_window::get_all_children(
+                &shared.armature.bones,
+                &mut children,
+                &shared.armature.bones[i],
+            );
+            let idx = i + children.len() + 1;
+            shared.armature.bones.insert(idx, new_bone.clone());
+            return (new_bone, idx);
         }
-        bones.insert(idx, new_bone.clone());
-        return (new_bone, idx);
     }
-    (new_bone, bones.len()-1)
+    (new_bone, shared.armature.bones.len() - 1)
 }
 
 fn check_bone_dragging(bones: &mut Vec<Bone>, ui: &mut egui::Ui, drag: Response, idx: i32) {
@@ -224,9 +235,13 @@ pub fn get_all_children(bones: &Vec<Bone>, children_vec: &mut Vec<Bone>, parent:
     check_bounds!();
 
     while bones[idx as usize + i].parent_id == parent.id {
+        let prev_len = children_vec.len();
         children_vec.push(bones[idx as usize + i].clone());
         get_all_children(bones, children_vec, &bones[idx as usize + i]);
-        i += 1;
+
+        // move to the next bone that is not a child of this one
+        i += children_vec.len() - prev_len;
+
         check_bounds!();
     }
 }
