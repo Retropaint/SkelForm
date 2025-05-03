@@ -77,8 +77,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
-
     // using while loop to prevent borrow issues
     for i in 0..temp_bones.len() {
         if temp_bones[i].tex_idx == -1 {
@@ -201,10 +199,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
+    let mut selected_id = -1;
+    if shared.selected_bone() != None {
+        selected_id = shared.selected_bone().unwrap().id;
+    }
+    temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
+
     // finally, draw the bones
     for (i, b) in temp_bones.iter().enumerate() {
         if b.tex_idx == -1 || verts[i].len() == 0 {
-            if shared.selected_bone_idx == i {
+            if b.id == selected_id {
                 draw_point(shared, render_pass, device, b);
             }
             continue;
@@ -230,7 +234,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
 
-        if shared.selected_bone_idx == i {
+        if b.id == selected_id {
             draw_point(shared, render_pass, device, b);
         }
     }
