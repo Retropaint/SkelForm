@@ -19,8 +19,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         selected_id = shared.selected_bone().unwrap().id;
     }
 
-    let mut verts = vec![];
-
     // For rendering purposes, bones need to have many of their attributes manipulated.
     // This is easier to do with a separate copy of them.
     let mut temp_bones: Vec<Bone> = vec![];
@@ -107,7 +105,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         temp_bones[i].pos += p.pos;
 
         if temp_bones[i].tex_idx == -1 {
-            verts.push(vec![]);
             continue;
         }
 
@@ -149,7 +146,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             0.005,
         );
 
-        verts.push(final_verts.clone());
         shared.armature.bones[i].vertices = final_verts;
     }
 
@@ -168,7 +164,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // so it visually makes sense to click the one that shows in front.
     if can_hover {
         for i in 0..temp_bones.len() {
-            if verts[i].len() == 0 {
+            if shared.find_bone(temp_bones[i].id).unwrap().vertices.len() == 0 {
                 continue;
             }
 
@@ -191,7 +187,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
             let is_in_box: bool;
             (hovered_bone_verts, is_in_box) =
-                utils::in_bounding_box(&shared.input.mouse, &verts[i], &shared.window);
+                utils::in_bounding_box(&shared.input.mouse, &shared.find_bone(temp_bones[i].id).unwrap().vertices, &shared.window);
             if is_in_box {
                 // highlight bone for selection if not already selected
                 hovered_bone = i as i32;
@@ -207,7 +203,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // finally, draw the bones
     for (i, b) in temp_bones.iter().enumerate() {
-        if b.tex_idx == -1 || verts[i].len() == 0 {
+        if b.tex_idx == -1 || shared.find_bone(temp_bones[i].id).unwrap().vertices.len() == 0 {
             if b.id == selected_id {
                 draw_point(shared, render_pass, device, b);
             }
@@ -231,7 +227,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // draw bone
         render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx as usize], &[]);
-        render_pass.set_vertex_buffer(0, vertex_buffer(&verts[i], device).slice(..));
+        render_pass.set_vertex_buffer(0, vertex_buffer(&shared.find_bone(temp_bones[i].id).unwrap().vertices, device).slice(..));
         render_pass.set_index_buffer(
             index_buffer(RECT_VERT_INDICES.to_vec(), &device).slice(..),
             wgpu::IndexFormat::Uint32,
