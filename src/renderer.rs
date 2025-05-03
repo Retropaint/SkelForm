@@ -79,11 +79,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // using while loop to prevent borrow issues
     for i in 0..temp_bones.len() {
-        if temp_bones[i].tex_idx == -1 {
-            verts.push(vec![]);
-            continue;
-        }
-
         // get parent bone
         let mut p = Bone::default();
         p.scale.x = 1.;
@@ -105,6 +100,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // inherit position from parent
         temp_bones[i].pos += p.pos;
+
+        if temp_bones[i].tex_idx == -1 {
+            verts.push(vec![]);
+            continue;
+        }
 
         let tex = &shared.armature.textures[temp_bones[i].tex_idx as usize];
 
