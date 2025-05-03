@@ -74,7 +74,12 @@ pub fn keyboard_input(
                 if action.action_type == ActionType::Created {
                     shared.selected_bone_idx = usize::MAX;
                     if undo {
-                        shared.armature.bones.pop();
+                        for (i, bone) in shared.armature.bones.iter().enumerate() {
+                            if bone.id == action.id {
+                                shared.armature.bones.remove(i);
+                                break;
+                            }
+                        }
                     } else {
                         armature_window::new_bone(&mut shared.armature.bones, -1);
                     }
@@ -122,9 +127,7 @@ pub fn keyboard_input(
     }
 }
 
-pub fn mouse_input(
-    shared: &mut crate::shared::Shared,
-) {
+pub fn mouse_input(shared: &mut crate::shared::Shared) {
     // increase mouse_left if it's being held down
     if shared.input.mouse_left >= 0 {
         shared.input.mouse_left += 1;
