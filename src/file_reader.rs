@@ -119,6 +119,7 @@ pub fn read_image_loaders(
     }
 
     if pixels.len() == 0 {
+        shared.ui.modal_headline = "Could not extract image data.".to_string();
         return;
     }
 
