@@ -471,7 +471,8 @@ impl AnimBone {
 pub enum Transition {
     #[default]
     Linear,
-    Sine,
+    SineIn,
+    SineOut,
 }
 
 // this allows getting the element name as a string
@@ -804,8 +805,11 @@ impl Shared {
                             self.ui.anim.selected_frame,
                         );
                     match (transition) {
-                        Transition::Sine => {
+                        Transition::SineIn => {
                             Tweener::sine_in(prev, next, total_frames).move_to(current_frame)
+                        }
+                        Transition::SineOut => {
+                            Tweener::sine_out(prev, next, total_frames).move_to(current_frame)
                         }
                         _ => Tweener::linear(prev, next, total_frames).move_to(current_frame),
                     }
