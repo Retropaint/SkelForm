@@ -2,6 +2,9 @@
 
 use crate::*;
 
+use zip::ZipArchive;
+use std::fs::File;
+
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Read;
 
@@ -219,15 +222,21 @@ pub fn import(
     context: &egui::Context,
 ) {
     let file = std::fs::File::open(path);
-    let mut zip = zip::ZipArchive::new(file.unwrap()).unwrap();
+    let mut zip = zip::ZipArchive::new(file.unwrap());
+
+    if let Ok(_) = zip {
+    } else {
+        shared.ui.modal_headline = "That's not a SkelForm armature!".to_string();
+        return
+    }
 
     // load armature
-    let armature_file = zip.by_name("armature.json").unwrap();
+    let armature_file = zip.as_mut().unwrap().by_name("armature.json").unwrap();
     let mut armature: crate::Armature = serde_json::from_reader(armature_file).unwrap();
 
     // load texture
     if armature.textures.len() > 0 {
-        let texture_file = zip.by_name("textures.png").unwrap();
+        let texture_file = zip.as_mut().unwrap().by_name("textures.png").unwrap();
 
         let mut bytes = vec![];
         for byte in texture_file.bytes() {
