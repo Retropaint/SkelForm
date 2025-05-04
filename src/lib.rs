@@ -247,7 +247,7 @@ impl ApplicationHandler for App {
             WindowEvent::PinchGesture {
                 device_id: _,
                 delta,
-                phase
+                phase: _phase
             } => {
                 input::pinch(delta, &mut self.shared);
             }
