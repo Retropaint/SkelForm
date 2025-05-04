@@ -244,6 +244,13 @@ impl ApplicationHandler for App {
             } => {
                 input::mouse_wheel_input(delta, &mut self.shared);
             }
+            WindowEvent::PinchGesture {
+                device_id: _,
+                delta,
+                phase
+            } => {
+                input::pinch(delta, &mut self.shared);
+            }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
                 *last_render_time = now;
