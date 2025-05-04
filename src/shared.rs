@@ -947,12 +947,13 @@ impl Shared {
     pub fn edit_bone(&mut self, edit_mode: i32, mut value: Vec2, overwrite: bool) {
         let mut element = crate::AnimElement::Position;
         let mut og_value = value;
+        let is_animating = self.is_animating();
 
         macro_rules! edit {
             ($element:expr, $field:expr) => {
                 element = $element;
                 og_value = $field;
-                if !self.is_animating() {
+                if !is_animating {
                     $field = value;
                 } else if overwrite {
                     match ($element) {
@@ -967,11 +968,13 @@ impl Shared {
             };
         }
 
+        let is_animating = self.is_animating();
+
         macro_rules! edit_f32 {
             ($element:expr, $field:expr) => {
                 element = $element;
                 og_value = Vec2::single($field);
-                if !self.is_animating() {
+                if !is_animating {
                     $field = value.x;
                 } else if overwrite {
                     value.x -= $field;
@@ -979,39 +982,17 @@ impl Shared {
             };
         }
 
+        let bone_mut = self.selected_bone_mut().unwrap();
+
+        #[rustfmt::skip]
         match edit_mode {
-            0 => {
-                edit!(
-                    crate::AnimElement::Position,
-                    self.selected_bone_mut().unwrap().pos
-                );
-            }
-            1 => {
-                edit_f32!(
-                    crate::AnimElement::Rotation,
-                    self.selected_bone_mut().unwrap().rot
-                );
-            }
-            2 => {
-                edit!(
-                    crate::AnimElement::Scale,
-                    self.selected_bone_mut().unwrap().scale
-                );
-            }
-            3 => {
-                edit!(
-                    crate::AnimElement::Pivot,
-                    self.selected_bone_mut().unwrap().pivot
-                );
-            }
-            4 => {
-                edit_f32!(
-                    crate::AnimElement::Zindex,
-                    self.selected_bone_mut().unwrap().zindex
-                );
-            }
+            0 => { edit!(AnimElement::Position, bone_mut.pos); },
+            1 => { edit_f32!(AnimElement::Rotation, bone_mut.rot); }
+            2 => { edit!(AnimElement::Scale, bone_mut.scale); }
+            3 => { edit!(AnimElement::Pivot, bone_mut.pivot); }
+            4 => { edit_f32!(AnimElement::Zindex, bone_mut.zindex); }
             _ => {}
-        }
+        };
 
         if !self.is_animating() {
             return;
