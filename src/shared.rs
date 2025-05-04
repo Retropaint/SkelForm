@@ -1002,15 +1002,21 @@ impl Shared {
             self.check_if_in_keyframe(
                 self.selected_bone().unwrap().id,
                 0,
-                Some(&element),
-                Some(&og_value),
             );
+
+            // find this bone in first keyframe and set the field
+            let selected_id = self.selected_bone().unwrap().id;
+            let first_kf = &mut self.selected_animation_mut().keyframes[0];
+            for i in 0..first_kf.bones.len() {
+                if selected_id == first_kf.bones[i].id {
+                    first_kf.bones[i].set_field(&element.clone(), og_value);
+                    break;
+                }
+            }
         }
         self.check_if_in_keyframe(
             self.selected_bone().unwrap().id,
             self.ui.anim.selected_frame,
-            None,
-            None,
         );
         self.selected_anim_bone_mut()
             .unwrap()
@@ -1022,21 +1028,7 @@ impl Shared {
         &mut self,
         id: i32,
         frame: i32,
-        element: Option<&AnimElement>,
-        value: Option<&Vec2>,
     ) {
-        // pre-add field if element and value are provided
-        let mut fields = vec![];
-        if element != None && value != None {
-            fields.push(AnimField {
-                element: element.unwrap().clone(),
-                connect: false,
-                value: *value.unwrap(),
-                transition: Transition::Linear,
-                label_top: 0.,
-            });
-        }
-
         // check if this keyframe exists
         let kf = self
             .selected_animation()
@@ -1052,7 +1044,6 @@ impl Shared {
                     frame,
                     bones: vec![AnimBone {
                         id,
-                        fields,
                         ..Default::default()
                     }],
                     ..Default::default()
@@ -1071,7 +1062,6 @@ impl Shared {
                     .bones
                     .push(AnimBone {
                         id,
-                        fields,
                         ..Default::default()
                     });
             }
