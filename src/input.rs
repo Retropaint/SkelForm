@@ -140,8 +140,15 @@ pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
         MouseScrollDelta::LineDelta(_x, y) => {
             ui::set_zoom(shared.camera.zoom + (y as f32 / sens_reducer), shared);
         }
+
+        // this is actually the touch pad
         MouseScrollDelta::PixelDelta(pos) => {
-            ui::set_zoom(shared.camera.zoom + (pos.y as f32 / sens_reducer), shared);
+            shared.camera.pos += Vec2::new(pos.x as f32, pos.y as f32) / sens_reducer;
         }
     }
+}
+
+pub fn pinch(delta: f64, shared: &mut Shared) {
+    let sens_amp = 4.;
+    shared.camera.zoom -= delta as f32 * sens_amp;
 }
