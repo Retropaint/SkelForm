@@ -321,7 +321,8 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         shared.cursor_icon = egui::CursorIcon::Grab;
                     }
 
-                    if !response.drag_stopped() {
+                    let just_clicked = shared.input.mouse_left_prev < 10;
+                    if !response.drag_stopped() || just_clicked {
                         continue;
                     }
 
