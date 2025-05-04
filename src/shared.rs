@@ -1013,26 +1013,28 @@ impl Shared {
             _ => {}
         }
 
-        if self.is_animating() {
-            if self.ui.anim.selected_frame != 0 {
-                self.check_if_in_keyframe(
-                    self.selected_bone().unwrap().id,
-                    0,
-                    Some(&element),
-                    Some(&og_value),
-                );
-            }
+        if !self.is_animating() {
+            return;
+        }
+
+        if self.ui.anim.selected_frame != 0 {
             self.check_if_in_keyframe(
                 self.selected_bone().unwrap().id,
-                self.ui.anim.selected_frame,
-                None,
-                None,
+                0,
+                Some(&element),
+                Some(&og_value),
             );
-            self.selected_anim_bone_mut()
-                .unwrap()
-                .set_field(&element, value);
-            self.sort_keyframes();
         }
+        self.check_if_in_keyframe(
+            self.selected_bone().unwrap().id,
+            self.ui.anim.selected_frame,
+            None,
+            None,
+        );
+        self.selected_anim_bone_mut()
+            .unwrap()
+            .set_field(&element, value);
+        self.sort_keyframes();
     }
 
     fn check_if_in_keyframe(
