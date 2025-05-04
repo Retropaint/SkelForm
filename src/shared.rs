@@ -994,9 +994,14 @@ impl Shared {
 
         if self.is_animating() {
             if self.ui.anim.selected_frame != 0 {
-                self.check_first_keyframe(element.clone(), og_value);
+                self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, &element, og_value);
             }
-            self.check_if_in_keyframe(self.selected_bone().unwrap().id);
+            self.check_if_in_keyframe(
+                self.selected_bone().unwrap().id,
+                self.ui.anim.selected_frame,
+                &element,
+                value,
+            );
             self.selected_anim_bone_mut()
                 .unwrap()
                 .set_field(&element, value);
@@ -1004,83 +1009,7 @@ impl Shared {
         }
     }
 
-    // If editing a keyframe that isn't the first, the original value should be
-    // immediately added to the first keyframe if there isn't a previous keyframe
-    // from the selected frame.
-    fn check_first_keyframe(&mut self, element: AnimElement, value: Vec2) {
-        // Add this field to first keyframe if it doesn't exist
-        let mut first_field_missing = true;
-        for i in (0..self.ui.anim.selected_frame).rev() {
-            let kf = self.keyframe_at(i);
-            if kf != None {
-                for b in &kf.unwrap().bones {
-                    if b.id == self.selected_bone().unwrap().id {
-                        for f in &b.fields {
-                            if f.element == element {
-                                first_field_missing = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if first_field_missing {
-            let id = self.selected_bone().unwrap().id;
-            // add keyframe if it doesn't exist
-            if self.selected_animation_mut().keyframes.len() == 0
-                || self.selected_animation_mut().keyframes[0].frame != 0
-            {
-                self.selected_animation_mut().keyframes.push(Keyframe {
-                    frame: 0,
-                    bones: vec![AnimBone {
-                        id: id,
-                        fields: vec![AnimField {
-                            element: element.clone(),
-                            connect: false,
-                            value,
-                            label_top: 0.,
-                            transition: Transition::Linear,
-                        }],
-                    }],
-                });
-
-            // else just add the field
-            } else if self.selected_animation_mut().keyframes[0].frame == 0 {
-                let mut has_bone = false;
-                for b in &mut self.selected_animation_mut().keyframes[0].bones {
-                    if b.id == id {
-                        b.fields.push(AnimField {
-                            element: element.clone(),
-                            connect: false,
-                            value,
-                            label_top: 0.,
-                            transition: Transition::Linear,
-                        });
-                        has_bone = true;
-                    }
-                }
-                if !has_bone {
-                    self.selected_animation_mut().keyframes[0]
-                        .bones
-                        .push(AnimBone {
-                            id,
-                            fields: vec![AnimField {
-                                element: element.clone(),
-                                connect: false,
-                                value,
-                                label_top: 0.,
-                                transition: Transition::Linear,
-                            }],
-                        })
-                }
-            }
-        }
-    }
-
-    fn check_if_in_keyframe(&mut self, id: i32) {
-        let frame = self.ui.anim.selected_frame;
+    fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: &AnimElement, value: Vec2) {
         // check if this keyframe exists
         let kf = self
             .selected_animation()
@@ -1096,6 +1025,13 @@ impl Shared {
                     frame,
                     bones: vec![AnimBone {
                         id,
+                        fields: vec![AnimField {
+                            element: element.clone(),
+                            connect: false,
+                            value,
+                            transition: Transition::Linear,
+                            label_top: 0.,
+                        }],
                         ..Default::default()
                     }],
                     ..Default::default()
@@ -1114,6 +1050,13 @@ impl Shared {
                     .bones
                     .push(AnimBone {
                         id,
+                        fields: vec![AnimField {
+                            element: element.clone(),
+                            connect: false,
+                            value,
+                            transition: Transition::Linear,
+                            label_top: 0.,
+                        }],
                         ..Default::default()
                     });
             }
