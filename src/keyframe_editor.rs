@@ -297,6 +297,8 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
 
                 for i in 0..shared.selected_animation().keyframes.len() {
                     let kf = &shared.selected_animation().keyframes[i];
+
+                    // don't draw diamond if it's beyond the recorded lines
                     if shared.ui.anim.lines_x.len() - 1 < kf.frame as usize {
                         break;
                     }
@@ -319,29 +321,31 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         shared.cursor_icon = egui::CursorIcon::Grab;
                     }
 
-                    if response.drag_stopped() {
-                        shared.undo_actions.push(shared::Action {
-                            action: ActionEnum::Animation,
-                            action_type: ActionType::Edited,
-                            id: shared.ui.anim.selected as i32,
-                            animation: shared.selected_animation().clone(),
-                            ..Default::default()
-                        });
-                        shared.cursor_icon = egui::CursorIcon::Grabbing;
-                        let cursor = shared.ui.get_cursor(ui);
+                    if !response.drag_stopped() {
+                        continue;
+                    }
 
-                        // remove keyframe if dragged out
-                        if cursor.y < 0. {
-                            shared.selected_animation_mut().keyframes.remove(i);
-                            break;
-                        }
+                    shared.undo_actions.push(shared::Action {
+                        action: ActionEnum::Animation,
+                        action_type: ActionType::Edited,
+                        id: shared.ui.anim.selected as i32,
+                        animation: shared.selected_animation().clone(),
+                        ..Default::default()
+                    });
+                    shared.cursor_icon = egui::CursorIcon::Grabbing;
+                    let cursor = shared.ui.get_cursor(ui);
 
-                        for j in 0..shared.ui.anim.lines_x.len() {
-                            let x = shared.ui.anim.lines_x[j];
-                            if cursor.x < x + hitbox && cursor.x > x - hitbox {
-                                shared.selected_animation_mut().keyframes[i].frame = j as i32;
-                                shared.sort_keyframes();
-                            }
+                    // remove keyframe if dragged out
+                    if cursor.y < 0. {
+                        shared.selected_animation_mut().keyframes.remove(i);
+                        break;
+                    }
+
+                    for j in 0..shared.ui.anim.lines_x.len() {
+                        let x = shared.ui.anim.lines_x[j];
+                        if cursor.x < x + hitbox && cursor.x > x - hitbox {
+                            shared.selected_animation_mut().keyframes[i].frame = j as i32;
+                            shared.sort_keyframes();
                         }
                     }
                 }
