@@ -483,7 +483,7 @@ fn rect_verts(
     hard_scale: f32,
 ) -> Vec<Vertex> {
     for v in &mut verts {
-        v.pos = v.pos * hard_scale;
+        v.pos *= hard_scale;
 
         if let Some(bone) = bone {
             let pivot_offset = tex.unwrap().size * bone.pivot * hard_scale;
