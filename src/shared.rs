@@ -335,36 +335,51 @@ pub struct UiAnim {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default)]
 pub struct Bone {
+    #[serde(default)]
     pub id: i32,
+    #[serde(default)]
     pub name: String,
+    #[serde(default = "default_neg_one")]
     pub parent_id: i32,
+    #[serde(default = "default_neg_one")]
     pub tex_idx: i32,
 
+    #[serde(default)]
     pub vertices: Vec<Vertex>,
 
+    #[serde(default)]
     pub is_mesh: bool,
 
     /// used to properly offset bone's movement to counteract it's parent
     #[serde(skip)]
     pub parent_rot: f32,
 
+    #[serde(default)]
     pub rot: f32,
+    #[serde(default)]
     pub scale: Vec2,
+    #[serde(default)]
     pub pos: Vec2,
+    #[serde(default)]
     pub pivot: Vec2,
+    #[serde(default)]
     pub zindex: f32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Armature {
+    #[serde(default)]
     pub bones: Vec<Bone>,
+    #[serde(default)]
     pub animations: Vec<Animation>,
 
+    #[serde(default)]
     pub textures: Vec<Texture>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Texture {
+    #[serde(default)]
     pub size: Vec2,
 
     #[serde(skip)]
@@ -373,20 +388,27 @@ pub struct Texture {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Animation {
+    #[serde(default)]
     pub name: String,
+    #[serde(default)]
     pub fps: i32,
+    #[serde(default)]
     pub keyframes: Vec<Keyframe>,
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Keyframe {
+    #[serde(default)]
     pub frame: i32,
+    #[serde(default)]
     pub bones: Vec<AnimBone>,
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct AnimBone {
+    #[serde(default)]
     pub id: i32,
+    #[serde(default)]
     pub fields: Vec<AnimField>,
 }
 
@@ -440,6 +462,7 @@ pub enum Transition {
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct AnimField {
+    #[serde(default)]
     pub element: AnimElement,
 
     // If the next field is related to this, connect is true.
@@ -450,10 +473,13 @@ pub struct AnimField {
     // to the field after it.
     //
     // This can be chained to have as many even-numbered vecs as possible.
+    #[serde(default)]
     pub connect: bool,
 
+    #[serde(default)]
     pub value: Vec2,
 
+    #[serde(default)]
     pub transition: Transition,
 
     #[serde(skip)]
@@ -1197,4 +1223,8 @@ impl Ui {
         });
         value
     }
+}
+
+fn default_neg_one() -> i32 {
+    -1
 }
