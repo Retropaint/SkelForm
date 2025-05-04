@@ -17,11 +17,18 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             .clone();
         let og_transition = transition.clone();
 
+        macro_rules! transition {
+            ($transition:expr, $ui:expr) => {
+                $ui.selectable_value(&mut transition, $transition, $transition.to_string());
+            };
+        }
+
         egui::ComboBox::new("transition_dropdown".to_string(), "")
             .selected_text(transition.to_string())
             .show_ui(ui, |ui| {
-                ui.selectable_value(&mut transition, Transition::Linear, "Linear");
-                ui.selectable_value(&mut transition, Transition::Sine, "Sine");
+                transition!(Transition::Linear, ui);
+                transition!(Transition::SineIn, ui);
+                transition!(Transition::SineOut, ui);
             })
             .response;
 
