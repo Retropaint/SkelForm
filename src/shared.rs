@@ -994,13 +994,18 @@ impl Shared {
 
         if self.is_animating() {
             if self.ui.anim.selected_frame != 0 {
-                self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, &element, og_value);
+                self.check_if_in_keyframe(
+                    self.selected_bone().unwrap().id,
+                    0,
+                    Some(&element),
+                    Some(&og_value),
+                );
             }
             self.check_if_in_keyframe(
                 self.selected_bone().unwrap().id,
                 self.ui.anim.selected_frame,
-                &element,
-                value,
+                None,
+                None,
             );
             self.selected_anim_bone_mut()
                 .unwrap()
@@ -1009,7 +1014,25 @@ impl Shared {
         }
     }
 
-    fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: &AnimElement, value: Vec2) {
+    fn check_if_in_keyframe(
+        &mut self,
+        id: i32,
+        frame: i32,
+        element: Option<&AnimElement>,
+        value: Option<&Vec2>,
+    ) {
+        // pre-add field if element and value are provided
+        let mut fields = vec![];
+        if element != None && value != None {
+            fields.push(AnimField {
+                element: element.unwrap().clone(),
+                connect: false,
+                value: *value.unwrap(),
+                transition: Transition::Linear,
+                label_top: 0.,
+            });
+        }
+
         // check if this keyframe exists
         let kf = self
             .selected_animation()
@@ -1025,13 +1048,7 @@ impl Shared {
                     frame,
                     bones: vec![AnimBone {
                         id,
-                        fields: vec![AnimField {
-                            element: element.clone(),
-                            connect: false,
-                            value,
-                            transition: Transition::Linear,
-                            label_top: 0.,
-                        }],
+                        fields,
                         ..Default::default()
                     }],
                     ..Default::default()
@@ -1050,13 +1067,7 @@ impl Shared {
                     .bones
                     .push(AnimBone {
                         id,
-                        fields: vec![AnimField {
-                            element: element.clone(),
-                            connect: false,
-                            value,
-                            transition: Transition::Linear,
-                            label_top: 0.,
-                        }],
+                        fields,
                         ..Default::default()
                     });
             }
