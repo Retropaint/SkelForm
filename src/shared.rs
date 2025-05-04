@@ -467,11 +467,18 @@ impl AnimBone {
     }
 }
 
-#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
+#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
 pub enum Transition {
     #[default]
     Linear,
     Sine,
+}
+
+// this allows getting the element name as a string
+impl fmt::Display for Transition {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -798,7 +805,7 @@ impl Shared {
                         );
                     match (transition) {
                         Transition::Sine => {
-                            Tweener::linear(prev, next, total_frames).move_to(current_frame)
+                            Tweener::sine_in(prev, next, total_frames).move_to(current_frame)
                         }
                         _ => Tweener::linear(prev, next, total_frames).move_to(current_frame),
                     }
@@ -809,7 +816,7 @@ impl Shared {
             b.pos += interpolate!(AnimElement::Position, Vec2::ZERO);
             b.rot += interpolate!(AnimElement::Rotation, Vec2::ZERO).x;
             b.scale *= interpolate!(AnimElement::Scale, Vec2::new(1., 1.));
-            b.pivot += interpolate!(AnimElement::Pivot, Vec2::new(1., 1.));
+            b.pivot += interpolate!(AnimElement::Pivot, Vec2::new(0., 0.));
             b.zindex += interpolate!(AnimElement::Zindex, Vec2::ZERO).x;
         }
 
@@ -999,10 +1006,7 @@ impl Shared {
         }
 
         if self.ui.anim.selected_frame != 0 {
-            self.check_if_in_keyframe(
-                self.selected_bone().unwrap().id,
-                0,
-            );
+            self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0);
 
             // find this bone in first keyframe and set the field
             let selected_id = self.selected_bone().unwrap().id;
@@ -1024,11 +1028,7 @@ impl Shared {
         self.sort_keyframes();
     }
 
-    fn check_if_in_keyframe(
-        &mut self,
-        id: i32,
-        frame: i32,
-    ) {
+    fn check_if_in_keyframe(&mut self, id: i32, frame: i32) {
         // check if this keyframe exists
         let kf = self
             .selected_animation()
