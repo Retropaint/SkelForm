@@ -81,6 +81,20 @@ impl MulAssign for Vec2 {
     }
 }
 
+impl MulAssign<f32> for Vec2 {
+    fn mul_assign(&mut self, other: f32) {
+        self.x *= other;
+        self.y *= other;
+    }
+}
+
+impl DivAssign for Vec2 {
+    fn div_assign(&mut self, other: Vec2) {
+        self.x /= other.x;
+        self.y /= other.y;
+    }
+}
+
 impl DivAssign<f32> for Vec2 {
     fn div_assign(&mut self, other: f32) {
         self.x /= other;
@@ -941,7 +955,14 @@ impl Shared {
                 if !self.is_animating() {
                     $field = value;
                 } else if overwrite {
-                    value -= $field;
+                    match ($element) {
+                        AnimElement::Scale => {
+                            value /= $field;
+                        }
+                        _ => {
+                            value -= $field;
+                        }
+                    }
                 }
             };
         }
