@@ -619,7 +619,7 @@ pub fn visualize_vertices(context: &Context, shared: &Shared) {
             continue;
         }
         for vert in &bone.vertices {
-            let mut pos = vert.pos.clone();
+            let pos = vert.pos.clone();
             context.debug_painter().circle_filled(
                 utils::world_to_screen_space(pos, shared.window, 1., false).into(),
                 10.,
