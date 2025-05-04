@@ -988,7 +988,7 @@ impl Shared {
             }
             1 => {
                 edit_f32!(
-                    crate::AnimElement::Position,
+                    crate::AnimElement::Rotation,
                     self.selected_bone_mut().unwrap().rot
                 );
             }
