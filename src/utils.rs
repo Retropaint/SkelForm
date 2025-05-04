@@ -139,7 +139,7 @@ pub fn save(path: String, shared: &Shared) {
         create_temp_tex_sheet(shared, &size);
     }
 
-    let img_data = std::fs::read("./temp.png").unwrap();
+    let img_data = std::fs::read("./temp.png");
 
     // clone armature and make some edits, then serialize it
     let mut armature_copy = shared.armature.clone();
@@ -162,13 +162,15 @@ pub fn save(path: String, shared: &Shared) {
     zip.start_file("armature.json", options).unwrap();
     zip.write(armature_json.as_bytes()).unwrap();
     zip.start_file("textures.png", options).unwrap();
-    if img_data.to_vec().len() != 0 {
-        zip.write(&img_data.to_vec()).unwrap();
+    if let Ok(ref img) = img_data {
+        zip.write(&img.to_vec()).unwrap();
     }
 
     zip.finish().unwrap();
 
-    std::fs::remove_file("temp.png").unwrap();
+    if let Ok(_) = img_data {
+        std::fs::remove_file("temp.png").unwrap();
+    }
 }
 
 fn create_temp_tex_sheet(shared: &Shared, size: &Vec2) {
