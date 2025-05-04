@@ -809,7 +809,7 @@ impl Shared {
             b.pos += interpolate!(AnimElement::Position, Vec2::ZERO);
             b.rot += interpolate!(AnimElement::Rotation, Vec2::ZERO).x;
             b.scale *= interpolate!(AnimElement::Scale, Vec2::new(1., 1.));
-            b.pivot *= interpolate!(AnimElement::Pivot, Vec2::new(1., 1.));
+            b.pivot += interpolate!(AnimElement::Pivot, Vec2::new(1., 1.));
             b.zindex += interpolate!(AnimElement::Zindex, Vec2::ZERO).x;
         }
 
