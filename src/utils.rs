@@ -135,6 +135,43 @@ pub fn save(path: String, shared: &Shared) {
         }
     }
 
+    if size != Vec2::ZERO {
+        create_temp_tex_sheet(shared, &size);
+    }
+
+    let img_data = std::fs::read("./temp.png").unwrap();
+
+    // clone armature and make some edits, then serialize it
+    let mut armature_copy = shared.armature.clone();
+
+    // if bone isn't a mesh (ie is a simple rect), then empty the vertices
+    for bone in &mut armature_copy.bones {
+        if !bone.is_mesh {
+            bone.vertices = vec![];
+        }
+    }
+
+    let armature_json = serde_json::to_string(&armature_copy).unwrap();
+
+    // create zip file
+    let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
+    let options =
+        zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+
+    // save armature json and texture image
+    zip.start_file("armature.json", options).unwrap();
+    zip.write(armature_json.as_bytes()).unwrap();
+    zip.start_file("textures.png", options).unwrap();
+    if img_data.to_vec().len() != 0 {
+        zip.write(&img_data.to_vec()).unwrap();
+    }
+
+    zip.finish().unwrap();
+
+    std::fs::remove_file("temp.png").unwrap();
+}
+
+fn create_temp_tex_sheet(shared: &Shared, size: &Vec2) {
     // this is the buffer that will be saved as an image
     let mut final_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size.x as u32, size.y as u32);
 
@@ -168,34 +205,6 @@ pub fn save(path: String, shared: &Shared) {
         image::ExtendedColorType::Rgba8,
     )
     .unwrap();
-    let img_data = std::fs::read("./temp.png").unwrap();
-
-    // clone armature and make some edits, then serialize it
-    let mut armature_copy = shared.armature.clone();
-
-    // if bone isn't a mesh (ie is a simple rect), then empty the vertices
-    for bone in &mut armature_copy.bones {
-        if !bone.is_mesh {
-            bone.vertices = vec![];
-        }
-    }
-
-    let armature_json = serde_json::to_string(&armature_copy).unwrap();
-
-    // create zip file
-    let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
-    let options =
-        zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
-
-    // save armature json and texture image
-    zip.start_file("armature.json", options).unwrap();
-    zip.write(armature_json.as_bytes()).unwrap();
-    zip.start_file("textures.png", options).unwrap();
-    zip.write(&img_data.to_vec()).unwrap();
-
-    zip.finish().unwrap();
-
-    std::fs::remove_file("temp.png").unwrap();
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -215,45 +224,46 @@ pub fn import(
     let mut armature: crate::Armature = serde_json::from_reader(armature_file).unwrap();
 
     // load texture
-    let texture_file = zip.by_name("textures.png").unwrap();
+    if armature.textures.len() > 0 {
+        let texture_file = zip.by_name("textures.png").unwrap();
 
-    let mut bytes = vec![];
-    for byte in texture_file.bytes() {
-        bytes.push(byte.unwrap());
-    }
-    let mut img = image::load_from_memory(&bytes).unwrap();
+        let mut bytes = vec![];
+        for byte in texture_file.bytes() {
+            bytes.push(byte.unwrap());
+        }
+        let mut img = image::load_from_memory(&bytes).unwrap();
 
-    shared.bind_groups = vec![];
-    shared.ui.texture_images = vec![];
+        shared.bind_groups = vec![];
+        shared.ui.texture_images = vec![];
 
-    let mut offset = 0;
-    for texture in &mut armature.textures {
-        texture.pixels = img
-            .crop(offset, 0, texture.size.x as u32, texture.size.y as u32)
-            .into_rgba8()
-            .to_vec();
-        offset += texture.size.x as u32;
+        let mut offset = 0;
+        for texture in &mut armature.textures {
+            texture.pixels = img
+                .crop(offset, 0, texture.size.x as u32, texture.size.y as u32)
+                .into_rgba8()
+                .to_vec();
+            offset += texture.size.x as u32;
 
-        shared.bind_groups.push(renderer::create_texture_bind_group(
-            texture.pixels.to_vec(),
-            texture.size,
-            queue,
-            device,
-            bind_group_layout,
-        ));
+            shared.bind_groups.push(renderer::create_texture_bind_group(
+                texture.pixels.to_vec(),
+                texture.size,
+                queue,
+                device,
+                bind_group_layout,
+            ));
 
-        let color_image = egui::ColorImage::from_rgba_unmultiplied(
-            [texture.size.x as usize, texture.size.y as usize],
-            &texture.pixels,
-        );
-        let tex = context.load_texture("anim_icons", color_image, Default::default());
-        shared.ui.texture_images.push(tex);
+            let color_image = egui::ColorImage::from_rgba_unmultiplied(
+                [texture.size.x as usize, texture.size.y as usize],
+                &texture.pixels,
+            );
+            let tex = context.load_texture("anim_icons", color_image, Default::default());
+            shared.ui.texture_images.push(tex);
+        }
     }
 
     shared.armature = armature;
 
-    shared.ui.anim.selected = usize::MAX;
-    shared.animating = false;
+    shared.unselect_everything();
 }
 
 pub fn set_bone_field(value: Vec2, element: AnimElement, bone: &mut AnimBone) {
