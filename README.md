@@ -2,6 +2,8 @@
 
 SkelForm is a 2D animator, architecturally inspired by DragonBones and made in response to a lack of other free alternatives.
 
+![example](example.png)
+
 # Usage
 
 Install Rust v1.85.0 or above.
