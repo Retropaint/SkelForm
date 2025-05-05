@@ -392,6 +392,7 @@ pub struct Armature {
 // used for the json
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Root {
+    pub texture_size: Vec2,
     pub armatures: Vec<Armature>
 }
 
