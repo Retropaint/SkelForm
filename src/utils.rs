@@ -2,8 +2,8 @@
 
 use crate::*;
 
-use zip::ZipArchive;
 use std::fs::File;
+use zip::ZipArchive;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Read;
@@ -154,10 +154,12 @@ pub fn save(path: String, shared: &Shared) {
         }
     }
 
-    // save armature in an array, to allow multiple armatures in the future
-    let armatures = Root { armatures: vec![armature_copy] };
+    let root = Root {
+        armatures: vec![armature_copy],
+        texture_size: size,
+    };
 
-    let armatures_json = serde_json::to_string(&armatures).unwrap();
+    let armatures_json = serde_json::to_string(&root).unwrap();
 
     // create zip file
     let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
@@ -230,7 +232,7 @@ pub fn import(
     if let Ok(_) = zip {
     } else {
         shared.ui.modal_headline = "That's not a SkelForm armature!".to_string();
-        return
+        return;
     }
 
     // load armature
