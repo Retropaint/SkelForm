@@ -155,7 +155,7 @@ pub fn save(path: String, shared: &Shared) {
     }
 
     // save armature in an array, to allow multiple armatures in the future
-    let armatures = vec![armature_copy];
+    let armatures = Armatures { armatures: vec![armature_copy] };
 
     let armatures_json = serde_json::to_string(&armatures).unwrap();
 
@@ -235,10 +235,10 @@ pub fn import(
 
     // load armature
     let armature_file = zip.as_mut().unwrap().by_name("armature.json").unwrap();
-    let mut armature: crate::Armature = serde_json::from_reader(armature_file).unwrap();
+    let mut root: crate::Armatures = serde_json::from_reader(armature_file).unwrap();
 
     // load texture
-    if armature.textures.len() > 0 {
+    if root.armatures[0].textures.len() > 0 {
         let texture_file = zip.as_mut().unwrap().by_name("textures.png").unwrap();
 
         let mut bytes = vec![];
@@ -251,7 +251,7 @@ pub fn import(
         shared.ui.texture_images = vec![];
 
         let mut offset = 0;
-        for texture in &mut armature.textures {
+        for texture in &mut root.armatures[0].textures {
             texture.pixels = img
                 .crop(offset, 0, texture.size.x as u32, texture.size.y as u32)
                 .into_rgba8()
@@ -275,7 +275,7 @@ pub fn import(
         }
     }
 
-    shared.armature = armature;
+    shared.armature = root.armatures[0].clone();
 
     shared.unselect_everything();
 }
