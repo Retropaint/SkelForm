@@ -391,7 +391,7 @@ pub struct Armature {
 
 // used for the json
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
-pub struct Armatures {
+pub struct Root {
     pub armatures: Vec<Armature>
 }
 
