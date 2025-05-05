@@ -60,7 +60,7 @@ impl ApplicationHandler for App {
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            attributes = attributes.with_title("Skellar");
+            attributes = attributes.with_title("SkelForm");
         }
 
         #[allow(unused_assignments)]

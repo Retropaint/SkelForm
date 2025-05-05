@@ -1,9 +1,9 @@
 // #![windows_subsystem = "windows"] // uncomment this to suppress terminal on windows
 
-use skellar::shared::*;
+use skelform_lib::shared::*;
 
 #[cfg(not(target_arch = "wasm32"))]
-use skellar::file_reader;
+use skelform_lib::file_reader;
 
 fn main() -> Result<(), winit::error::EventLoopError> {
     // uncomment below to get console panic hook as early as possible for debugging
@@ -17,7 +17,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     //    log::info!("test");
     //}
 
-    let mut app = skellar::App::default();
+    let mut app = skelform_lib::App::default();
     init_shared(&mut app.shared);
 
     let event_loop = winit::event_loop::EventLoop::builder().build()?;

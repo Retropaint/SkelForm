@@ -1,12 +1,12 @@
 [package]
-name = "skellar_app"
+name = "SkelForm"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 path = "src/lib.rs"
-name = "skellar"
+name = "skelform_lib"
 
 [dependencies]
 bytemuck = { version = "1.21.0", features = ["derive"] }
