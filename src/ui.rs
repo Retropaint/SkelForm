@@ -115,14 +115,11 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
             shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
             shared.ui.camera_bar_pos.x = ui.min_rect().left();
-
-            shared.ui.bone_panel = Some(ui.min_rect());
         })
         .response;
     if response.hovered() {
         shared.input.on_ui = true;
     }
-    
 
     if shared.selected_bone_idx != usize::MAX {
         edit_mode_bar(context, shared);

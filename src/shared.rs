@@ -298,8 +298,6 @@ pub struct Ui {
     // camera bar stuff
     pub camera_bar_pos: Vec2,
     pub camera_bar_scale: Vec2,
-
-    pub bone_panel: Option<egui::Rect>,
 }
 
 impl Ui {

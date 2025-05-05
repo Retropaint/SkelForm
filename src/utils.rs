@@ -154,7 +154,10 @@ pub fn save(path: String, shared: &Shared) {
         }
     }
 
-    let armature_json = serde_json::to_string(&armature_copy).unwrap();
+    // save armature in an array, to allow multiple armatures in the future
+    let armatures = vec![armature_copy];
+
+    let armatures_json = serde_json::to_string(&armatures).unwrap();
 
     // create zip file
     let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
@@ -163,7 +166,7 @@ pub fn save(path: String, shared: &Shared) {
 
     // save armature json and texture image
     zip.start_file("armature.json", options).unwrap();
-    zip.write(armature_json.as_bytes()).unwrap();
+    zip.write(armatures_json.as_bytes()).unwrap();
     zip.start_file("textures.png", options).unwrap();
     if let Ok(ref img) = img_data {
         zip.write(&img.to_vec()).unwrap();
