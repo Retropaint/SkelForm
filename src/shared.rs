@@ -389,6 +389,12 @@ pub struct Armature {
     pub textures: Vec<Texture>,
 }
 
+// used for the json
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+pub struct Armatures {
+    pub armatures: Vec<Armature>
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Texture {
     #[serde(default)]
