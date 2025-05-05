@@ -20,4 +20,4 @@ As of 05/05/2025, proper documentation is still sparse. Until then, enjoy commen
 
 ## Acknowledgements
 
-This project uses the matthewjberger/wgpu-example repo as the starting template for egui integration.
+This project uses the [matthewjberger/wgpu-example](https://github.com/matthewjberger/wgpu-example) repo as the starting template for egui integration.
