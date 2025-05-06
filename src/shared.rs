@@ -629,26 +629,6 @@ impl Shared {
         None
     }
 
-    // pub fn selected_anim_bone_mut(&mut self) -> Option<&mut AnimBone> {
-    //     let id = self.selected_bone().unwrap().id;
-    //     for b in &mut self.selected_keyframe_mut().unwrap().bones {
-    //         if b.id == id {
-    //             return Some(b);
-    //         }
-    //     }
-    //     None
-    // }
-
-    // pub fn selected_anim_bone(&self) -> Option<&AnimBone> {
-    //     let id = self.selected_bone().unwrap().id;
-    //     for b in &self.selected_keyframe().unwrap().bones {
-    //         if b.id == id {
-    //             return Some(b);
-    //         }
-    //     }
-    //     None
-    // }
-
     pub fn unselect_everything(&mut self) {
         self.selected_bone_idx = usize::MAX;
     }
