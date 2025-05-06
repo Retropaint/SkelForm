@@ -202,7 +202,7 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
 
 struct AnimTopInit {
     pub id: i32,
-    pub elements: Vec<AnimElement>,
+    pub element: AnimElement,
 }
 
 pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut BoneTops) {
@@ -222,62 +222,27 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                     .show(ui, |ui| {
                         let mut tops_init: Vec<AnimTopInit> = vec![];
                         for i in 0..shared.selected_animation().keyframes.len() {
-                            for b in 0..shared.selected_animation().keyframes[i].bones.len() {
-                                let bone = &shared.selected_animation().keyframes[i].bones[b];
+                            let kf = &shared.selected_animation().keyframes[i];
 
-                                // find the bone in the list
-                                let mut idx: i32 = -1;
-                                for (i, ti) in tops_init.iter().enumerate() {
-                                    if ti.id == bone.id {
-                                        idx = i as i32;
-                                        break;
-                                    }
+                            // find bone in list
+                            let mut add = true;
+                            for (i, ti) in tops_init.iter().enumerate() {
+                                if ti.id == kf.bone_id && ti.element == kf.element {
+                                    add = false;
+                                    break;
                                 }
+                            }
 
-                                // add init if the bone can't be found
-                                if idx == -1 {
-                                    tops_init.push(AnimTopInit {
-                                        id: bone.id,
-                                        elements: vec![],
-                                    });
-                                    idx = tops_init.len() as i32 - 1;
-                                }
-
-                                // add all elements
-                                for af in &bone.fields {
-                                    let mut add = true;
-                                    for el in &tops_init[idx as usize].elements {
-                                        if *el == af.element {
-                                            add = false;
-                                            break;
-                                        }
-                                    }
-                                    if add {
-                                        tops_init[idx as usize].elements.push(af.element.clone());
-                                    }
-                                }
+                            if add {
+                                tops_init.push(AnimTopInit {
+                                    id: kf.bone_id,
+                                    element: kf.element.clone(),
+                                })
                             }
                         }
 
-                        // render the labels!
-                        for ti in &mut tops_init {
-                            let bone = shared.find_bone(ti.id).unwrap();
-                            ui.label(bone.name.to_string());
-
-                            // sort the elements by enum index
-                            ti.elements.sort_by(|a, b| a.cmp(b));
-
-                            for e in &ti.elements {
-                                ui.horizontal(|ui| {
-                                    ui.add_space(20.);
-                                    let label = ui.label(e.to_string());
-                                    bone_tops.tops.push(BoneTop {
-                                        id: ti.id,
-                                        element: e.clone(),
-                                        height: label.rect.top(),
-                                    })
-                                });
-                            }
+                        for ti in tops_init {
+                            ui.label(ti.element.to_string());                                                        
                         }
                     });
             });
@@ -688,6 +653,7 @@ fn check_change_icon_drag(
             shared.selected_animation_mut().keyframes.push(Keyframe {
                 frame: j as i32,
                 bones: vec![dupe_bone],
+                ..Default::default()
             });
         } else {
             for i in 0..shared.keyframe_at(j as i32).unwrap().bones.len() {
