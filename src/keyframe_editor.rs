@@ -322,7 +322,12 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
 
                     // remove keyframe if dragged out
                     if cursor.y < 0. {
-                        shared.selected_animation_mut().keyframes.remove(i);
+                        let frame = shared.selected_animation_mut().keyframes[i].frame;
+                        shared.selected_animation_mut().keyframes.retain(|kf| {
+                            kf.frame != frame
+                        });
+
+                        // break loop to prevent OOB errors
                         break;
                     }
 
@@ -523,7 +528,10 @@ fn draw_frame_lines(
         let size = Vec2::new(17., 17.);
 
         // the Y position is based on this diamond's respective label
-        let top = bone_tops.find(kf.bone_id, &kf.element.clone()).unwrap().height;
+        let top = bone_tops
+            .find(kf.bone_id, &kf.element.clone())
+            .unwrap()
+            .height;
         let x = shared.ui.anim.lines_x[kf.frame as usize] + ui.min_rect().left();
         let pos = Vec2::new(x, top + size.y / 2.);
         let offset = size / 2.;
@@ -548,6 +556,13 @@ fn draw_frame_lines(
 
         if !response.drag_stopped() {
             continue;
+        }
+
+        if cursor.y < 0. {
+            shared.selected_animation_mut().keyframes.remove(i);
+
+            // break the loop to prevent OOB errors
+            break;
         }
 
         for j in 0..shared.ui.anim.lines_x.len() {
