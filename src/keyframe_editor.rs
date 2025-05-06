@@ -329,7 +329,12 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     for j in 0..shared.ui.anim.lines_x.len() {
                         let x = shared.ui.anim.lines_x[j];
                         if cursor.x < x + hitbox && cursor.x > x - hitbox {
-                            shared.selected_animation_mut().keyframes[i].frame = j as i32;
+                            let frame = shared.selected_animation_mut().keyframes[i].frame;
+                            for kf in &mut shared.selected_animation_mut().keyframes {
+                                if kf.frame == frame {
+                                    kf.frame = j as i32;
+                                }
+                            }
                             shared.sort_keyframes();
                         }
                     }
@@ -518,38 +523,45 @@ fn draw_frame_lines(
 
     // draw per-change icons
     for i in 0..shared.selected_animation().keyframes.len() {
-        if i > shared.selected_animation().keyframes.len() - 1 {
-            break;
+        let kf = &shared.selected_animation().keyframes[i];
+        let size = Vec2::new(17., 17.);
+
+        let element = kf.element.clone();
+
+        // the Y position is based on this diamond's respective label
+        let top = bone_tops.find(kf.bone_id, &element).unwrap().height;
+        let x = shared.ui.anim.lines_x[kf.frame as usize] + ui.min_rect().left();
+        let pos = Vec2::new(x, top + size.y / 2.);
+        let offset = size / 2.;
+
+        if top > height {
+            height = top;
         }
-        for (i, kf) in shared.selected_animation().keyframes.iter().enumerate() {
-            let size = Vec2::new(17., 17.);
 
-            let element = kf.element.clone();
+        let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
+        let mut idx = element.clone() as usize;
+        if idx > shared.ui.anim.icon_images.len() - 1 {
+            idx = shared.ui.anim.icon_images.len() - 1;
+        }
+        egui::Image::new(&shared.ui.anim.icon_images[idx]).paint_at(ui, rect);
 
-            // the Y position is based on this diamond's respective label
-            let top = bone_tops.find(kf.bone_id, &element).unwrap().height;
-            let x = shared.ui.anim.lines_x[kf.frame as usize] + ui.min_rect().left();
-            let pos = Vec2::new(x, top + size.y / 2.);
-            let offset = size / 2.;
+        let rect = egui::Rect::from_center_size(pos.into(), (size * 0.5).into());
+        let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
-            if top > height {
-                height = top;
+        if response.hovered() {
+            shared.cursor_icon = egui::CursorIcon::Grab;
+        }
+
+        if !response.drag_stopped() {
+            continue;
+        }
+
+        for j in 0..shared.ui.anim.lines_x.len() {
+            let x = shared.ui.anim.lines_x[j];
+            if cursor.x < x + hitbox && cursor.x > x - hitbox {
+                shared.selected_animation_mut().keyframes[i].frame = j as i32;
+                break;
             }
-
-            let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
-            let mut idx = element.clone() as usize;
-            if idx > shared.ui.anim.icon_images.len() - 1 {
-                idx = shared.ui.anim.icon_images.len() - 1;
-            }
-            egui::Image::new(&shared.ui.anim.icon_images[idx]).paint_at(ui, rect);
-
-            //let changed = check_change_icon_drag(&element, ui, shared, pos, size, hitbox, i, i);
-
-            //// stop rendering for this frame if a change occured, as elements might be out of order
-            //// and cause indexing issues
-            //if changed {
-            //    return;
-            //}
         }
     }
 
@@ -577,124 +589,6 @@ fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
             egui::Stroke::new(2.0, egui::Color32::WHITE), // Stroke width & color
         ));
 }
-
-// fn check_change_icon_drag(
-//     element: &AnimElement,
-//     ui: &mut egui::Ui,
-//     shared: &mut Shared,
-//     pos: Vec2,
-//     size: Vec2,
-//     hitbox: f32,
-//     kf_idx: usize,
-//     bone_idx: usize,
-// ) -> bool {
-//     let rect = egui::Rect::from_center_size(pos.into(), (size * 0.5).into());
-//     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
-
-//     let mut changed = false;
-
-//     if response.hovered() {
-//         shared.cursor_icon = egui::CursorIcon::Grab;
-//     }
-
-//     if !response.drag_stopped() {
-//         return false;
-//     }
-
-//     shared.undo_actions.push(shared::Action {
-//         action: ActionEnum::Animation,
-//         action_type: ActionType::Edited,
-//         id: shared.ui.anim.selected as i32,
-//         animation: shared.selected_animation().clone(),
-//         ..Default::default()
-//     });
-
-//     shared.cursor_icon = egui::CursorIcon::Grabbing;
-//     let cursor = shared.ui.get_cursor(ui);
-
-//     // delete element if it was dragged out of the graph
-//     if cursor.y < 0. {
-//         shared.selected_animation_mut().keyframes[kf_idx].bones[bone_idx].remove_field(element);
-
-//         let mut delete_keyframe = true;
-//         for bone in &shared.selected_animation().keyframes[kf_idx].bones {
-//             if bone.fields.len() > 0 {
-//                 delete_keyframe = false;
-//                 break;
-//             }
-//         }
-//         if delete_keyframe {
-//             shared.selected_animation_mut().keyframes.remove(kf_idx);
-//         }
-//         return true;
-//     }
-
-//     for j in 0..shared.ui.anim.lines_x.len() {
-//         if shared.keyframe_at(j as i32) != None
-//             && shared.keyframe_at(j as i32).unwrap().frame
-//                 == shared.selected_animation().keyframes[kf_idx].frame
-//         {
-//             continue;
-//         }
-
-//         let x = shared.ui.anim.lines_x[j];
-
-//         let pointing_here = cursor.x < x + hitbox && cursor.x > x - hitbox;
-//         if !(pointing_here) {
-//             continue;
-//         }
-
-//         macro_rules! bone {
-//             () => {
-//                 shared.selected_animation().keyframes[kf_idx].bones[bone_idx]
-//             };
-//         }
-
-//         let mut dupe_bone = AnimBone {
-//             id: bone!().id,
-//             ..Default::default()
-//         };
-
-//         dupe_bone.set_field(element, bone!().find_field(element));
-
-//         if shared.keyframe_at(j as i32) == None {
-//             shared.selected_animation_mut().keyframes.push(Keyframe {
-//                 frame: j as i32,
-//                 bones: vec![dupe_bone],
-//                 ..Default::default()
-//             });
-//         } else {
-//             for i in 0..shared.keyframe_at(j as i32).unwrap().bones.len() {
-//                 if shared.keyframe_at(j as i32).unwrap().bones[i].id != bone!().id {
-//                     continue;
-//                 }
-
-//                 shared.keyframe_at_mut(j as i32).unwrap().bones[i]
-//                     .set_field(element, dupe_bone.find_field(element));
-
-//                 break;
-//             }
-//         }
-
-//         // delete previous keyframe if this was the only change prior
-//         let mut fields = 0;
-//         for bone in &shared.keyframe_at(j as i32).unwrap().bones {
-//             for _ in &bone.fields {
-//                 fields += 1;
-//             }
-//         }
-//         if fields == 0 {
-//             shared.selected_animation_mut().keyframes.remove(kf_idx);
-//         } else {
-//             changed = true;
-//             shared.selected_animation_mut().keyframes[kf_idx].bones[bone_idx].remove_field(element);
-//         }
-
-//         shared.sort_keyframes();
-//     }
-
-//     changed
-// }
 
 pub fn new_animation(shared: &mut Shared) {
     shared.armature.animations.push(Animation {
