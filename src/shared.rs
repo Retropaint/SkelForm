@@ -430,17 +430,6 @@ pub struct Keyframe {
     #[serde(default)]
     pub element_id: i32,
 
-    // If the next field is related to this, connect is true.
-    //
-    // Example: Color is a vec4 value (RGBA), so the first field
-    // is for RG, while second is for BA. The first field's
-    // connect is true, while the second one's is false as it does not connect
-    // to the field after it.
-    //
-    // This can be chained to have as many even-numbered vecs as possible.
-    #[serde(default)]
-    pub connect: bool,
-
     #[serde(default)]
     pub value: f32,
 
@@ -464,25 +453,6 @@ impl fmt::Display for Transition {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self)
     }
-}
-
-#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
-pub struct AnimField {
-    #[serde(default)]
-    pub element: AnimElement,
-
-    // Only used in runtimes. Represents the element's index in the enum.
-    #[serde(default)]
-    pub id: i32,
-
-    #[serde(default)]
-    pub value: Vec2,
-
-    #[serde(default)]
-    pub transition: Transition,
-
-    #[serde(skip)]
-    pub label_top: f32,
 }
 
 #[derive(
