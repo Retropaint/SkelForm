@@ -393,7 +393,7 @@ pub struct Armature {
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Root {
     pub texture_size: Vec2,
-    pub armatures: Vec<Armature>
+    pub armatures: Vec<Armature>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -421,6 +421,34 @@ pub struct Keyframe {
     pub frame: i32,
     #[serde(default)]
     pub bones: Vec<AnimBone>,
+    #[serde(default)]
+    pub bone_id: i32,
+    #[serde(default)]
+    pub element: AnimElement,
+
+    // Only used in runtimes. Represents the element's index in the enum.
+    #[serde(default)]
+    pub element_id: i32,
+
+    // If the next field is related to this, connect is true.
+    //
+    // Example: Color is a vec4 value (RGBA), so the first field
+    // is for RG, while second is for BA. The first field's
+    // connect is true, while the second one's is false as it does not connect
+    // to the field after it.
+    //
+    // This can be chained to have as many even-numbered vecs as possible.
+    #[serde(default)]
+    pub connect: bool,
+
+    #[serde(default)]
+    pub value: Vec2,
+
+    #[serde(default)]
+    pub transition: Transition,
+
+    #[serde(skip)]
+    pub label_top: f32,
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -445,6 +473,7 @@ impl AnimBone {
         if create {
             self.fields.push(AnimField {
                 element: element.clone(),
+                id: element.clone() as i32,
                 value,
                 ..Default::default()
             });
@@ -491,6 +520,10 @@ impl fmt::Display for Transition {
 pub struct AnimField {
     #[serde(default)]
     pub element: AnimElement,
+
+    // Only used in runtimes. Represents the element's index in the enum.
+    #[serde(default)]
+    pub id: i32,
 
     // If the next field is related to this, connect is true.
     //
@@ -1027,54 +1060,46 @@ impl Shared {
                 }
             }
         }
+
         self.check_if_in_keyframe(
             self.selected_bone().unwrap().id,
             self.ui.anim.selected_frame,
         );
-        self.selected_anim_bone_mut()
-            .unwrap()
-            .set_field(&element, value);
+
+        let selected_frame = self.ui.anim.selected_frame;
+        let selected_id = self.selected_bone().unwrap().id;
+        for kf in &mut self.selected_animation_mut().keyframes {
+            if kf.frame != selected_frame || kf.bone_id != selected_id {
+                continue;
+            }
+
+            kf.element = element.clone();
+            kf.value = value;
+        }
+
         self.sort_keyframes();
     }
 
     fn check_if_in_keyframe(&mut self, id: i32, frame: i32) {
         // check if this keyframe exists
-        let kf = self
-            .selected_animation()
-            .keyframes
-            .iter()
-            .position(|k| k.frame == frame);
-
-        if kf == None {
-            // create new keyframe
-            self.selected_animation_mut()
-                .keyframes
-                .push(crate::Keyframe {
-                    frame,
-                    bones: vec![AnimBone {
-                        id,
-                        ..Default::default()
-                    }],
-                    ..Default::default()
-                });
-            self.sort_keyframes();
-        } else {
-            // check if this bone is in keyframe
-            let idx = self.selected_animation().keyframes[kf.unwrap()]
-                .bones
-                .iter()
-                .position(|bone| bone.id == id);
-
-            if idx == None {
-                // create anim bone
-                self.selected_animation_mut().keyframes[kf.unwrap()]
-                    .bones
-                    .push(AnimBone {
-                        id,
-                        ..Default::default()
-                    });
+        let mut add = true;
+        for kf in &self.selected_animation().keyframes {
+            if kf.frame == frame && kf.bone_id == id {
+                add = false;
+                break;
             }
         }
+
+        if !add {
+            return;
+        }
+
+        self.selected_animation_mut().keyframes.push(Keyframe {
+            frame,
+            bones: vec![],
+            bone_id: id,
+            ..Default::default()
+        })
     }
 
     pub fn is_animating(&self) -> bool {

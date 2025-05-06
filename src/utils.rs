@@ -288,7 +288,8 @@ pub fn set_bone_field(value: Vec2, element: AnimElement, bone: &mut AnimBone) {
     }
 
     bone.fields.push(AnimField {
-        element,
+        element: element.clone(),
+        id: element.clone() as i32,
         value,
         ..Default::default()
     })
