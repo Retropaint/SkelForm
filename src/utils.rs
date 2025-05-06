@@ -151,6 +151,13 @@ pub fn save(path: String, shared: &Shared) {
         }
     }
 
+    // assign element_id to armature
+    for anim in &mut armature_copy.animations {
+        for kf in &mut anim.keyframes {
+            kf.element_id = kf.element.clone() as i32;
+        }
+    }
+
     let root = Root {
         armatures: vec![armature_copy],
         texture_size: size,
@@ -277,17 +284,4 @@ pub fn import(
     shared.armature = root.armatures[0].clone();
 
     shared.unselect_everything();
-}
-
-pub fn set_bone_field(value: Vec2, element: AnimElement, bone: &mut AnimBone) {
-    if value == Vec2::ZERO {
-        return;
-    }
-
-    bone.fields.push(AnimField {
-        element: element.clone(),
-        id: element.clone() as i32,
-        value,
-        ..Default::default()
-    })
 }
