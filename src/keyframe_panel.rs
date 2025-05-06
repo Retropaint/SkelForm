@@ -6,15 +6,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label("Transition:");
 
-        if shared.selected_keyframe() == None
-            || shared.selected_keyframe().unwrap().bones.len() == 0
-        {
+        if shared.selected_keyframe() == None || shared.selected_animation().keyframes.len() == 0 {
             return;
         }
 
-        let mut transition = shared.selected_keyframe_mut().unwrap().bones[0].fields[0]
-            .transition
-            .clone();
+        let mut transition = shared.selected_keyframe_mut().unwrap().transition.clone();
         let og_transition = transition.clone();
 
         macro_rules! transition {
@@ -34,10 +30,8 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
         // change all fields to use new transition
         if og_transition != transition {
-            for bone in &mut shared.selected_keyframe_mut().unwrap().bones {
-                for field in &mut bone.fields {
-                    field.transition = transition.clone();
-                }
+            for kf in &mut shared.selected_animation_mut().keyframes {
+                kf.transition = transition.clone();
             }
         }
     });

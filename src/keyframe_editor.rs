@@ -226,7 +226,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
 
                             // find bone in list
                             let mut add = true;
-                            for (i, ti) in tops_init.iter().enumerate() {
+                            for ti in &tops_init {
                                 if ti.id == kf.bone_id && ti.element == kf.element {
                                     add = false;
                                     break;
@@ -241,8 +241,27 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                             }
                         }
 
+                        let mut last_id = -1;
                         for ti in tops_init {
-                            ui.label(ti.element.to_string());                                                        
+                            if last_id != ti.id {
+                                ui.label(shared.find_bone(ti.id).unwrap().name.clone());
+                            }
+                            let mut top = 0.;
+                            ui.horizontal(|ui| {
+                                ui.add_space(30.);
+                                let label = ui.label(ti.element.to_string());
+                                top = label.rect.top();
+                            });
+                            for kf in &mut shared.selected_animation_mut().keyframes {
+                                if kf.bone_id == ti.id && kf.element == ti.element {
+                                    bone_tops.tops.push(BoneTop {
+                                        id: kf.bone_id,
+                                        element: kf.element.clone(),
+                                        height: top,
+                                    })
+                                }
+                            }
+                            last_id = ti.id;
                         }
                     });
             });
@@ -502,46 +521,35 @@ fn draw_frame_lines(
         if i > shared.selected_animation().keyframes.len() - 1 {
             break;
         }
-        for b in 0..shared.selected_animation().keyframes[i].bones.len() {
-            let id = shared.selected_animation().keyframes[i].bones[b].id;
-            let x = ui.min_rect().left()
-                + shared.ui.anim.lines_x[shared.selected_animation().keyframes[i].frame as usize];
+        for (i, kf) in shared.selected_animation().keyframes.iter().enumerate() {
+            let size = Vec2::new(17., 17.);
 
-            // go thru anim fields and draw their diamonds
-            for af in 0..shared.selected_animation().keyframes[i].bones[b]
-                .fields
-                .len()
-            {
-                let size = Vec2::new(17., 17.);
+            let element = kf.element.clone();
 
-                let element = shared.selected_animation().keyframes[i].bones[b].fields[af]
-                    .element
-                    .clone();
+            // the Y position is based on this diamond's respective label
+            let top = bone_tops.find(kf.bone_id, &element).unwrap().height;
+            let x = shared.ui.anim.lines_x[kf.frame as usize] + ui.min_rect().left();
+            let pos = Vec2::new(x, top + size.y / 2.);
+            let offset = size / 2.;
 
-                // the Y position is based on this diamond's respective label
-                let top = bone_tops.find(id, &element).unwrap().height;
-                let pos = Vec2::new(x, top + size.y / 2.);
-                let offset = size / 2.;
-
-                if top > height {
-                    height = top;
-                }
-
-                let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
-                let mut idx = element.clone() as usize;
-                if idx > shared.ui.anim.icon_images.len() - 1 {
-                    idx = shared.ui.anim.icon_images.len() - 1;
-                }
-                egui::Image::new(&shared.ui.anim.icon_images[idx]).paint_at(ui, rect);
-
-                let changed = check_change_icon_drag(&element, ui, shared, pos, size, hitbox, i, b);
-
-                // stop rendering for this frame if a change occured, as elements might be out of order
-                // and cause indexing issues
-                if changed {
-                    return;
-                }
+            if top > height {
+                height = top;
             }
+
+            let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
+            let mut idx = element.clone() as usize;
+            if idx > shared.ui.anim.icon_images.len() - 1 {
+                idx = shared.ui.anim.icon_images.len() - 1;
+            }
+            egui::Image::new(&shared.ui.anim.icon_images[idx]).paint_at(ui, rect);
+
+            //let changed = check_change_icon_drag(&element, ui, shared, pos, size, hitbox, i, i);
+
+            //// stop rendering for this frame if a change occured, as elements might be out of order
+            //// and cause indexing issues
+            //if changed {
+            //    return;
+            //}
         }
     }
 
@@ -570,123 +578,123 @@ fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
         ));
 }
 
-fn check_change_icon_drag(
-    element: &AnimElement,
-    ui: &mut egui::Ui,
-    shared: &mut Shared,
-    pos: Vec2,
-    size: Vec2,
-    hitbox: f32,
-    kf_idx: usize,
-    bone_idx: usize,
-) -> bool {
-    let rect = egui::Rect::from_center_size(pos.into(), (size * 0.5).into());
-    let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
+// fn check_change_icon_drag(
+//     element: &AnimElement,
+//     ui: &mut egui::Ui,
+//     shared: &mut Shared,
+//     pos: Vec2,
+//     size: Vec2,
+//     hitbox: f32,
+//     kf_idx: usize,
+//     bone_idx: usize,
+// ) -> bool {
+//     let rect = egui::Rect::from_center_size(pos.into(), (size * 0.5).into());
+//     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
-    let mut changed = false;
+//     let mut changed = false;
 
-    if response.hovered() {
-        shared.cursor_icon = egui::CursorIcon::Grab;
-    }
+//     if response.hovered() {
+//         shared.cursor_icon = egui::CursorIcon::Grab;
+//     }
 
-    if !response.drag_stopped() {
-        return false;
-    }
+//     if !response.drag_stopped() {
+//         return false;
+//     }
 
-    shared.undo_actions.push(shared::Action {
-        action: ActionEnum::Animation,
-        action_type: ActionType::Edited,
-        id: shared.ui.anim.selected as i32,
-        animation: shared.selected_animation().clone(),
-        ..Default::default()
-    });
+//     shared.undo_actions.push(shared::Action {
+//         action: ActionEnum::Animation,
+//         action_type: ActionType::Edited,
+//         id: shared.ui.anim.selected as i32,
+//         animation: shared.selected_animation().clone(),
+//         ..Default::default()
+//     });
 
-    shared.cursor_icon = egui::CursorIcon::Grabbing;
-    let cursor = shared.ui.get_cursor(ui);
+//     shared.cursor_icon = egui::CursorIcon::Grabbing;
+//     let cursor = shared.ui.get_cursor(ui);
 
-    // delete element if it was dragged out of the graph
-    if cursor.y < 0. {
-        shared.selected_animation_mut().keyframes[kf_idx].bones[bone_idx].remove_field(element);
+//     // delete element if it was dragged out of the graph
+//     if cursor.y < 0. {
+//         shared.selected_animation_mut().keyframes[kf_idx].bones[bone_idx].remove_field(element);
 
-        let mut delete_keyframe = true;
-        for bone in &shared.selected_animation().keyframes[kf_idx].bones {
-            if bone.fields.len() > 0 {
-                delete_keyframe = false;
-                break;
-            }
-        }
-        if delete_keyframe {
-            shared.selected_animation_mut().keyframes.remove(kf_idx);
-        }
-        return true;
-    }
+//         let mut delete_keyframe = true;
+//         for bone in &shared.selected_animation().keyframes[kf_idx].bones {
+//             if bone.fields.len() > 0 {
+//                 delete_keyframe = false;
+//                 break;
+//             }
+//         }
+//         if delete_keyframe {
+//             shared.selected_animation_mut().keyframes.remove(kf_idx);
+//         }
+//         return true;
+//     }
 
-    for j in 0..shared.ui.anim.lines_x.len() {
-        if shared.keyframe_at(j as i32) != None
-            && shared.keyframe_at(j as i32).unwrap().frame
-                == shared.selected_animation().keyframes[kf_idx].frame
-        {
-            continue;
-        }
+//     for j in 0..shared.ui.anim.lines_x.len() {
+//         if shared.keyframe_at(j as i32) != None
+//             && shared.keyframe_at(j as i32).unwrap().frame
+//                 == shared.selected_animation().keyframes[kf_idx].frame
+//         {
+//             continue;
+//         }
 
-        let x = shared.ui.anim.lines_x[j];
+//         let x = shared.ui.anim.lines_x[j];
 
-        let pointing_here = cursor.x < x + hitbox && cursor.x > x - hitbox;
-        if !(pointing_here) {
-            continue;
-        }
+//         let pointing_here = cursor.x < x + hitbox && cursor.x > x - hitbox;
+//         if !(pointing_here) {
+//             continue;
+//         }
 
-        macro_rules! bone {
-            () => {
-                shared.selected_animation().keyframes[kf_idx].bones[bone_idx]
-            };
-        }
+//         macro_rules! bone {
+//             () => {
+//                 shared.selected_animation().keyframes[kf_idx].bones[bone_idx]
+//             };
+//         }
 
-        let mut dupe_bone = AnimBone {
-            id: bone!().id,
-            ..Default::default()
-        };
+//         let mut dupe_bone = AnimBone {
+//             id: bone!().id,
+//             ..Default::default()
+//         };
 
-        dupe_bone.set_field(element, bone!().find_field(element));
+//         dupe_bone.set_field(element, bone!().find_field(element));
 
-        if shared.keyframe_at(j as i32) == None {
-            shared.selected_animation_mut().keyframes.push(Keyframe {
-                frame: j as i32,
-                bones: vec![dupe_bone],
-                ..Default::default()
-            });
-        } else {
-            for i in 0..shared.keyframe_at(j as i32).unwrap().bones.len() {
-                if shared.keyframe_at(j as i32).unwrap().bones[i].id != bone!().id {
-                    continue;
-                }
+//         if shared.keyframe_at(j as i32) == None {
+//             shared.selected_animation_mut().keyframes.push(Keyframe {
+//                 frame: j as i32,
+//                 bones: vec![dupe_bone],
+//                 ..Default::default()
+//             });
+//         } else {
+//             for i in 0..shared.keyframe_at(j as i32).unwrap().bones.len() {
+//                 if shared.keyframe_at(j as i32).unwrap().bones[i].id != bone!().id {
+//                     continue;
+//                 }
 
-                shared.keyframe_at_mut(j as i32).unwrap().bones[i]
-                    .set_field(element, dupe_bone.find_field(element));
+//                 shared.keyframe_at_mut(j as i32).unwrap().bones[i]
+//                     .set_field(element, dupe_bone.find_field(element));
 
-                break;
-            }
-        }
+//                 break;
+//             }
+//         }
 
-        // delete previous keyframe if this was the only change prior
-        let mut fields = 0;
-        for bone in &shared.keyframe_at(j as i32).unwrap().bones {
-            for _ in &bone.fields {
-                fields += 1;
-            }
-        }
-        if fields == 0 {
-            shared.selected_animation_mut().keyframes.remove(kf_idx);
-        } else {
-            changed = true;
-            shared.selected_animation_mut().keyframes[kf_idx].bones[bone_idx].remove_field(element);
-        }
+//         // delete previous keyframe if this was the only change prior
+//         let mut fields = 0;
+//         for bone in &shared.keyframe_at(j as i32).unwrap().bones {
+//             for _ in &bone.fields {
+//                 fields += 1;
+//             }
+//         }
+//         if fields == 0 {
+//             shared.selected_animation_mut().keyframes.remove(kf_idx);
+//         } else {
+//             changed = true;
+//             shared.selected_animation_mut().keyframes[kf_idx].bones[bone_idx].remove_field(element);
+//         }
 
-        shared.sort_keyframes();
-    }
+//         shared.sort_keyframes();
+//     }
 
-    changed
-}
+//     changed
+// }
 
 pub fn new_animation(shared: &mut Shared) {
     shared.armature.animations.push(Animation {
@@ -697,56 +705,56 @@ pub fn new_animation(shared: &mut Shared) {
     });
 }
 
-fn _draw_per_change_connecting_lines(shared: &Shared, ui: &egui::Ui, bone_tops: &BoneTops) {
-    for kf in &shared.selected_animation().keyframes {
-        for bone in &kf.bones {
-            for field in &bone.fields {
-                let connecting_frame = _get_first_element(kf.frame, &field.element, shared);
-                if connecting_frame == -1 {
-                    continue;
-                }
-                let left = ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize];
-                let right =
-                    ui.min_rect().left() + shared.ui.anim.lines_x[connecting_frame as usize];
-                let y = bone_tops.find(bone.id, &field.element).unwrap().height + 9.;
-                ui.painter_at(ui.min_rect()).hline(
-                    egui::Rangef::new(left, right),
-                    y,
-                    egui::Stroke::new(2., egui::Color32::WHITE),
-                );
+// fn _draw_per_change_connecting_lines(shared: &Shared, ui: &egui::Ui, bone_tops: &BoneTops) {
+//     for kf in &shared.selected_animation().keyframes {
+//         for bone in &kf.bones {
+//             for field in &bone.fields {
+//                 let connecting_frame = _get_first_element(kf.frame, &field.element, shared);
+//                 if connecting_frame == -1 {
+//                     continue;
+//                 }
+//                 let left = ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize];
+//                 let right =
+//                     ui.min_rect().left() + shared.ui.anim.lines_x[connecting_frame as usize];
+//                 let y = bone_tops.find(bone.id, &field.element).unwrap().height + 9.;
+//                 ui.painter_at(ui.min_rect()).hline(
+//                     egui::Rangef::new(left, right),
+//                     y,
+//                     egui::Stroke::new(2., egui::Color32::WHITE),
+//                 );
 
-                let cursor = shared.ui.get_cursor(ui) + ui.min_rect().left_top().into();
-                let hitbox = 5.;
-                if cursor.x > left
-                    && cursor.x < right
-                    && cursor.y < y + hitbox
-                    && cursor.y > y - hitbox
-                {
-                    ui.painter_at(ui.min_rect()).hline(
-                        egui::Rangef::new(left, right),
-                        y,
-                        egui::Stroke::new(2., egui::Color32::RED),
-                    );
+//                 let cursor = shared.ui.get_cursor(ui) + ui.min_rect().left_top().into();
+//                 let hitbox = 5.;
+//                 if cursor.x > left
+//                     && cursor.x < right
+//                     && cursor.y < y + hitbox
+//                     && cursor.y > y - hitbox
+//                 {
+//                     ui.painter_at(ui.min_rect()).hline(
+//                         egui::Rangef::new(left, right),
+//                         y,
+//                         egui::Stroke::new(2., egui::Color32::RED),
+//                     );
 
-                    if shared.input.mouse_left != -1 {}
-                }
-            }
-        }
-    }
-}
+//                     if shared.input.mouse_left != -1 {}
+//                 }
+//             }
+//         }
+//     }
+// }
 
-fn _get_first_element(start_frame: i32, element: &AnimElement, shared: &Shared) -> i32 {
-    for kf in &shared.selected_animation().keyframes {
-        if kf.frame <= start_frame {
-            continue;
-        }
-        for bone in &kf.bones {
-            for field in &bone.fields {
-                if field.element == *element {
-                    return kf.frame;
-                }
-            }
-        }
-    }
-    -1
-}
+// fn _get_first_element(start_frame: i32, element: &AnimElement, shared: &Shared) -> i32 {
+//     for kf in &shared.selected_animation().keyframes {
+//         if kf.frame <= start_frame {
+//             continue;
+//         }
+//         for bone in &kf.bones {
+//             for field in &bone.fields {
+//                 if field.element == *element {
+//                     return kf.frame;
+//                 }
+//             }
+//         }
+//     }
+//     -1
+// }

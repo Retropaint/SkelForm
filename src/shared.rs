@@ -419,8 +419,8 @@ pub struct Animation {
 pub struct Keyframe {
     #[serde(default)]
     pub frame: i32,
-    #[serde(default)]
-    pub bones: Vec<AnimBone>,
+    //#[serde(default)]
+    //pub bones: Vec<AnimBone>,
     #[serde(default)]
     pub bone_id: i32,
     #[serde(default)]
@@ -717,25 +717,25 @@ impl Shared {
         None
     }
 
-    pub fn selected_anim_bone_mut(&mut self) -> Option<&mut AnimBone> {
-        let id = self.selected_bone().unwrap().id;
-        for b in &mut self.selected_keyframe_mut().unwrap().bones {
-            if b.id == id {
-                return Some(b);
-            }
-        }
-        None
-    }
+    // pub fn selected_anim_bone_mut(&mut self) -> Option<&mut AnimBone> {
+    //     let id = self.selected_bone().unwrap().id;
+    //     for b in &mut self.selected_keyframe_mut().unwrap().bones {
+    //         if b.id == id {
+    //             return Some(b);
+    //         }
+    //     }
+    //     None
+    // }
 
-    pub fn selected_anim_bone(&self) -> Option<&AnimBone> {
-        let id = self.selected_bone().unwrap().id;
-        for b in &self.selected_keyframe().unwrap().bones {
-            if b.id == id {
-                return Some(b);
-            }
-        }
-        None
-    }
+    // pub fn selected_anim_bone(&self) -> Option<&AnimBone> {
+    //     let id = self.selected_bone().unwrap().id;
+    //     for b in &self.selected_keyframe().unwrap().bones {
+    //         if b.id == id {
+    //             return Some(b);
+    //         }
+    //     }
+    //     None
+    // }
 
     pub fn unselect_everything(&mut self) {
         self.selected_bone_idx = usize::MAX;
@@ -883,20 +883,13 @@ impl Shared {
             if self.selected_animation().keyframes[i].frame > frame {
                 break;
             }
-            for bone in &self.selected_animation().keyframes[i].bones {
-                if bone.id != bone_id {
-                    continue;
-                }
 
-                for f in &bone.fields {
-                    if f.element != element {
-                        continue;
-                    }
-
-                    prev = Some(f.value);
-                    start_frame = kf.frame;
-                }
+            if kf.bone_id != bone_id || kf.element != element{
+                continue;
             }
+
+            prev = Some(kf.value);
+            start_frame = kf.frame;
         }
 
         // get first next frame with this element
@@ -904,22 +897,14 @@ impl Shared {
             if self.selected_animation().keyframes[i].frame < frame {
                 break;
             }
-            for bone in &self.selected_animation().keyframes[i].bones {
-                if bone.id != bone_id {
-                    continue;
-                }
 
-                for f in &bone.fields {
-                    if f.element != element {
-                        continue;
-                    }
-
-                    transition = f.transition.clone();
-
-                    next = Some(f.value);
-                    end_frame = kf.frame;
-                }
+            if kf.bone_id != bone_id || kf.element != element{
+                continue;
             }
+
+            next = Some(kf.value);
+            end_frame = kf.frame;
+            transition = kf.transition.clone();
         }
 
         // ensure prev and next are pointing somewhere
@@ -1048,28 +1033,24 @@ impl Shared {
         }
 
         if self.ui.anim.selected_frame != 0 {
-            self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0);
+            self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
 
             // find this bone in first keyframe and set the field
-            let selected_id = self.selected_bone().unwrap().id;
             let first_kf = &mut self.selected_animation_mut().keyframes[0];
-            for i in 0..first_kf.bones.len() {
-                if selected_id == first_kf.bones[i].id {
-                    first_kf.bones[i].set_field(&element.clone(), og_value);
-                    break;
-                }
-            }
+
+            first_kf.value = og_value;
         }
 
         self.check_if_in_keyframe(
             self.selected_bone().unwrap().id,
             self.ui.anim.selected_frame,
+            element.clone(),
         );
 
         let selected_frame = self.ui.anim.selected_frame;
         let selected_id = self.selected_bone().unwrap().id;
         for kf in &mut self.selected_animation_mut().keyframes {
-            if kf.frame != selected_frame || kf.bone_id != selected_id {
+            if kf.frame != selected_frame || kf.bone_id != selected_id || kf.element != element {
                 continue;
             }
 
@@ -1080,11 +1061,11 @@ impl Shared {
         self.sort_keyframes();
     }
 
-    fn check_if_in_keyframe(&mut self, id: i32, frame: i32) {
+    fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: AnimElement) {
         // check if this keyframe exists
         let mut add = true;
         for kf in &self.selected_animation().keyframes {
-            if kf.frame == frame && kf.bone_id == id {
+            if kf.frame == frame && kf.bone_id == id && kf.element == element {
                 add = false;
                 break;
             }
@@ -1096,8 +1077,9 @@ impl Shared {
 
         self.selected_animation_mut().keyframes.push(Keyframe {
             frame,
-            bones: vec![],
+            //bones: vec![],
             bone_id: id,
+            element,
             ..Default::default()
         })
     }
