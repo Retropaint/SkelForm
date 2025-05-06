@@ -329,13 +329,9 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     for j in 0..shared.ui.anim.lines_x.len() {
                         let x = shared.ui.anim.lines_x[j];
                         if cursor.x < x + hitbox && cursor.x > x - hitbox {
-                            let frame = shared.selected_animation_mut().keyframes[i].frame;
-                            for kf in &mut shared.selected_animation_mut().keyframes {
-                                if kf.frame == frame {
-                                    kf.frame = j as i32;
-                                }
-                            }
+                            shared.selected_animation_mut().keyframes[i].frame = j as i32;
                             shared.sort_keyframes();
+                            break;
                         }
                     }
                 }
@@ -526,10 +522,8 @@ fn draw_frame_lines(
         let kf = &shared.selected_animation().keyframes[i];
         let size = Vec2::new(17., 17.);
 
-        let element = kf.element.clone();
-
         // the Y position is based on this diamond's respective label
-        let top = bone_tops.find(kf.bone_id, &element).unwrap().height;
+        let top = bone_tops.find(kf.bone_id, &kf.element.clone()).unwrap().height;
         let x = shared.ui.anim.lines_x[kf.frame as usize] + ui.min_rect().left();
         let pos = Vec2::new(x, top + size.y / 2.);
         let offset = size / 2.;
@@ -539,7 +533,7 @@ fn draw_frame_lines(
         }
 
         let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
-        let mut idx = element.clone() as usize;
+        let mut idx = kf.element.clone().clone() as usize;
         if idx > shared.ui.anim.icon_images.len() - 1 {
             idx = shared.ui.anim.icon_images.len() - 1;
         }
