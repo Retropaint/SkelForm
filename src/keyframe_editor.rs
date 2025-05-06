@@ -323,9 +323,10 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     // remove keyframe if dragged out
                     if cursor.y < 0. {
                         let frame = shared.selected_animation_mut().keyframes[i].frame;
-                        shared.selected_animation_mut().keyframes.retain(|kf| {
-                            kf.frame != frame
-                        });
+                        shared
+                            .selected_animation_mut()
+                            .keyframes
+                            .retain(|kf| kf.frame != frame);
 
                         // break loop to prevent OOB errors
                         break;
@@ -399,11 +400,7 @@ pub fn draw_timeline_graph(
                             ui.min_rect().size() + right_bottom_rect,
                         );
 
-                        ui.painter().rect_filled(
-                            rect_to_fill,
-                            0.0, // corner rounding radius
-                            ui::COLOR_BORDER,
-                        );
+                        ui.painter().rect_filled(rect_to_fill, 0., ui::COLOR_BORDER);
                     }
 
                     draw_frame_lines(ui, shared, &bone_tops, hitbox, cursor);

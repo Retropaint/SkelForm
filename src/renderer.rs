@@ -309,8 +309,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         shared.editing_bone = true;
         shared.cursor_icon = egui::CursorIcon::Crosshair;
-        let value: Vec2;
-        value = match shared.edit_mode {
+        match shared.edit_mode {
             // translation
             0 => {
                 let mut pos = bones[shared.selected_bone_idx].pos;
@@ -318,18 +317,26 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     pos = bones[shared.selected_bone_idx].pos
                         - shared.armature.bones[shared.selected_bone_idx].pos;
                 }
-                shared.move_with_mouse(&pos, true)
+                let pos = shared.move_with_mouse(&pos, true);
+
+                shared.edit_bone(&crate::AnimElement::PositionX, pos.x, false);
+                shared.edit_bone(&crate::AnimElement::PositionY, pos.y, false);
             }
 
             // rotation
-            1 => Vec2::single((shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.),
+            1 => {
+                let rot = (shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.;
+                shared.edit_bone(&crate::AnimElement::Rotation, rot, false);
+            }
 
             // scale
-            2 => (shared.input.mouse / shared.window) * 2.,
-
-            _ => Vec2::default(),
+            2 => {
+                let scale = (shared.input.mouse / shared.window) * 2.;
+                shared.edit_bone(&crate::AnimElement::ScaleX, scale.x, false);
+                shared.edit_bone(&crate::AnimElement::ScaleY, scale.y, false);
+            }
+            _ => {}
         };
-        shared.edit_bone(shared.edit_mode, value, false);
     }
 }
 
