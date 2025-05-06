@@ -442,63 +442,13 @@ pub struct Keyframe {
     pub connect: bool,
 
     #[serde(default)]
-    pub value: Vec2,
+    pub value: f32,
 
     #[serde(default)]
     pub transition: Transition,
 
     #[serde(skip)]
     pub label_top: f32,
-}
-
-#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
-pub struct AnimBone {
-    #[serde(default)]
-    pub id: i32,
-    #[serde(default)]
-    pub fields: Vec<AnimField>,
-}
-
-impl AnimBone {
-    pub fn set_field(&mut self, element: &AnimElement, value: Vec2) {
-        let mut create = true;
-        for af in &mut self.fields {
-            if af.element == *element {
-                create = false;
-                af.value = value;
-                break;
-            }
-        }
-
-        if create {
-            self.fields.push(AnimField {
-                element: element.clone(),
-                id: element.clone() as i32,
-                value,
-                ..Default::default()
-            });
-        }
-    }
-
-    pub fn find_field(&self, element: &AnimElement) -> Vec2 {
-        for af in &self.fields {
-            if af.element == *element {
-                return af.value;
-            }
-        }
-
-        AnimElement::default_of(element)
-    }
-
-    pub fn remove_field(&mut self, element: &AnimElement) {
-        for i in 0..self.fields.len() {
-            let af = &self.fields[i];
-            if af.element == *element {
-                self.fields.remove(i);
-                break;
-            }
-        }
-    }
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
@@ -551,10 +501,13 @@ pub struct AnimField {
 )]
 pub enum AnimElement {
     #[default]
-    Position,
+    PositionX,
+    PositionY,
     Rotation,
-    Scale,
-    Pivot,
+    ScaleX,
+    ScaleY,
+    PivotX,
+    PivotY,
     Zindex,
 }
 
@@ -583,12 +536,12 @@ pub struct Action {
 }
 
 impl AnimElement {
-    pub fn default_of(element: &AnimElement) -> Vec2 {
+    pub fn default_of(element: &AnimElement) -> f32 {
         match *element {
-            AnimElement::Scale => {
-                return Vec2::new(1., 1.);
+            AnimElement::ScaleX => {
+                return 1.;
             }
-            _ => Vec2::ZERO,
+            _ => 0.,
         }
     }
 }
@@ -855,11 +808,14 @@ impl Shared {
             }
 
             // interpolate!
-            b.pos += interpolate!(AnimElement::Position, Vec2::ZERO);
-            b.rot += interpolate!(AnimElement::Rotation, Vec2::ZERO).x;
-            b.scale *= interpolate!(AnimElement::Scale, Vec2::new(1., 1.));
-            b.pivot += interpolate!(AnimElement::Pivot, Vec2::new(0., 0.));
-            b.zindex += interpolate!(AnimElement::Zindex, Vec2::ZERO).x;
+            b.pos.x += interpolate!(AnimElement::PositionX, 0.);
+            b.pos.y += interpolate!(AnimElement::PositionY, 0.);
+            b.rot += interpolate!(AnimElement::Rotation, 0.);
+            b.scale.x *= interpolate!(AnimElement::ScaleX, 1.);
+            b.scale.y *= interpolate!(AnimElement::ScaleY, 1.);
+            b.pivot.x += interpolate!(AnimElement::PivotX, 0.);
+            b.pivot.y += interpolate!(AnimElement::PivotY, 0.);
+            b.zindex += interpolate!(AnimElement::Zindex, 0.);
         }
 
         bones
@@ -869,11 +825,11 @@ impl Shared {
         &self,
         bone_id: i32,
         element: AnimElement,
-        default: Vec2,
+        default: f32,
         frame: i32,
-    ) -> (Vec2, Vec2, i32, i32, Transition) {
-        let mut prev: Option<Vec2> = None;
-        let mut next: Option<Vec2> = None;
+    ) -> (f32, f32, i32, i32, Transition) {
+        let mut prev: Option<f32> = None;
+        let mut next: Option<f32> = None;
         let mut start_frame = 0;
         let mut end_frame = 0;
         let mut transition: Transition = Transition::Linear;
@@ -884,7 +840,7 @@ impl Shared {
                 break;
             }
 
-            if kf.bone_id != bone_id || kf.element != element{
+            if kf.bone_id != bone_id || kf.element != element {
                 continue;
             }
 
@@ -898,7 +854,7 @@ impl Shared {
                 break;
             }
 
-            if kf.bone_id != bone_id || kf.element != element{
+            if kf.bone_id != bone_id || kf.element != element {
                 continue;
             }
 
@@ -978,40 +934,18 @@ impl Shared {
         });
     }
 
-    pub fn edit_bone(&mut self, edit_mode: i32, mut value: Vec2, overwrite: bool) {
-        let mut element = crate::AnimElement::Position;
+    pub fn edit_bone(&mut self, element: &AnimElement, mut value: f32, overwrite: bool) {
         let mut og_value = value;
+
         let is_animating = self.is_animating();
 
         macro_rules! edit {
-            ($element:expr, $field:expr) => {
-                element = $element;
+            ($field:expr) => {
                 og_value = $field;
                 if !is_animating {
                     $field = value;
                 } else if overwrite {
-                    match ($element) {
-                        AnimElement::Scale => {
-                            value /= $field;
-                        }
-                        _ => {
-                            value -= $field;
-                        }
-                    }
-                }
-            };
-        }
-
-        let is_animating = self.is_animating();
-
-        macro_rules! edit_f32 {
-            ($element:expr, $field:expr) => {
-                element = $element;
-                og_value = Vec2::single($field);
-                if !is_animating {
-                    $field = value.x;
-                } else if overwrite {
-                    value.x -= $field;
+                    value -= $field;
                 }
             };
         }
@@ -1019,12 +953,14 @@ impl Shared {
         let bone_mut = self.selected_bone_mut().unwrap();
 
         #[rustfmt::skip]
-        match edit_mode {
-            0 => { edit!(AnimElement::Position, bone_mut.pos); },
-            1 => { edit_f32!(AnimElement::Rotation, bone_mut.rot); }
-            2 => { edit!(AnimElement::Scale, bone_mut.scale); }
-            3 => { edit!(AnimElement::Pivot, bone_mut.pivot); }
-            4 => { edit_f32!(AnimElement::Zindex, bone_mut.zindex); }
+        match element {
+            AnimElement::PositionX => { edit!(bone_mut.pos.x); },
+            AnimElement::PositionY => { edit!(bone_mut.pos.y); },
+            AnimElement::Rotation => { edit!(bone_mut.rot); },
+            AnimElement::ScaleX => { edit!(bone_mut.scale.x); },
+            AnimElement::ScaleY => { edit!(bone_mut.scale.y); },
+            AnimElement::PivotX => { edit!(bone_mut.pivot.x); },
+            AnimElement::PivotY => { edit!(bone_mut.pivot.y); },
             _ => {}
         };
 
@@ -1046,11 +982,12 @@ impl Shared {
         let selected_frame = self.ui.anim.selected_frame;
         let selected_id = self.selected_bone().unwrap().id;
         for kf in &mut self.selected_animation_mut().keyframes {
-            if kf.frame != selected_frame || kf.bone_id != selected_id || kf.element != element {
+            if kf.frame != selected_frame || kf.bone_id != selected_id || kf.element != *element {
                 continue;
             }
 
             kf.value = value;
+            break;
         }
 
         self.sort_keyframes();

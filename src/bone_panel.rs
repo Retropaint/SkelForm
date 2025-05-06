@@ -89,11 +89,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut edited = false;
 
     macro_rules! input {
-        ($element:expr, $float:expr, $id:expr, $edit_id:expr, $modifier:expr, $ui:expr, $label:expr) => {
+        ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr) => {
             (edited, $float) = float_input($id.to_string(), shared, $ui, $float, $modifier);
             if edited {
                 shared.save_edited_bone();
-                shared.edit_bone($edit_id, $element, true);
+                shared.edit_bone($element, $float, true);
             }
             if $label != "" {
                 $ui.label($label);
@@ -112,50 +112,34 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         label!("Position:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-            input!(bone.pos, bone.pos.y, "pos_y", 0, 1., ui, "Y");
-            input!(bone.pos, bone.pos.x, "pos_x", 0, 1., ui, "X");
+            input!(bone.pos.y, "pos_y", &AnimElement::PositionY, 1., ui, "Y");
+            input!(bone.pos.x, "pos_x", &AnimElement::PositionX, 1., ui, "X");
         })
     });
     ui.horizontal(|ui| {
         label!("Scale:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-            input!(bone.scale, bone.scale.y, "scale_y", 2, 1., ui, "Y");
-            input!(bone.scale, bone.scale.x, "scale_x", 2, 1., ui, "X");
+            input!(bone.scale.y, "scale_y", &AnimElement::ScaleY, 1., ui, "Y");
+            input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "X");
         });
     });
     ui.horizontal(|ui| {
         label!("Pivot:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-            input!(bone.pivot, bone.pivot.y, "pivot_y", 3, 1., ui, "Y");
-            input!(bone.pivot, bone.pivot.x, "pivot_x", 3, 1., ui, "X");
+            input!(bone.pivot.y, "pivot_y", &AnimElement::PivotY, 1., ui, "Y");
+            input!(bone.pivot.x, "pivot_x", &AnimElement::PivotX, 1., ui, "X");
         });
     });
     ui.horizontal(|ui| {
         label!("Rotation:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-            input!(
-                crate::Vec2::single(bone.rot),
-                bone.rot,
-                "rot",
-                1,
-                180. / std::f32::consts::PI,
-                ui,
-                ""
-            );
+            input!(bone.rot, "rot", &AnimElement::Rotation, 180. / std::f32::consts::PI, ui, "");
         });
     });
     ui.horizontal(|ui| {
         label!("Z-Index:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-            input!(
-                crate::Vec2::single(bone.zindex),
-                bone.zindex,
-                "zindex",
-                4,
-                1.,
-                ui,
-                ""
-            );
+            input!(bone.zindex, "zindex", &AnimElement::Zindex, 1., ui, "");
         });
     });
 }
