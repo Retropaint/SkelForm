@@ -475,17 +475,6 @@ pub struct AnimField {
     #[serde(default)]
     pub id: i32,
 
-    // If the next field is related to this, connect is true.
-    //
-    // Example: Color is a vec4 value (RGBA), so the first field
-    // is for RG, while second is for BA. The first field's
-    // connect is true, while the second one's is false as it does not connect
-    // to the field after it.
-    //
-    // This can be chained to have as many even-numbered vecs as possible.
-    #[serde(default)]
-    pub connect: bool,
-
     #[serde(default)]
     pub value: Vec2,
 
