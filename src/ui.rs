@@ -419,15 +419,8 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                         // remove all references to this bone and it's children from all animations
                         for bone in &children {
                             for anim in &mut shared.armature.animations {
-                                for kf in &mut anim.keyframes {
-                                    for i in 0..kf.bones.len() {
-                                        if bone.id == kf.bones[i].id {
-                                            kf.bones.remove(i);
-                                        }
-                                    }
-                                }
                                 for i in 0..anim.keyframes.len() {
-                                    if anim.keyframes[i].bones.len() == 0 {
+                                    if anim.keyframes[i].bone_id == bone.id {
                                         anim.keyframes.remove(i);
                                     }
                                 }
