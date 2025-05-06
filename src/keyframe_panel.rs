@@ -30,8 +30,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
         // change all fields to use new transition
         if og_transition != transition {
+            let selected_frame = shared.ui.anim.selected_frame;
             for kf in &mut shared.selected_animation_mut().keyframes {
-                kf.transition = transition.clone();
+                if kf.frame == selected_frame {
+                    kf.transition = transition.clone();
+                }
             }
         }
     });
