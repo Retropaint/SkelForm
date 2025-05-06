@@ -1034,11 +1034,7 @@ impl Shared {
 
         if self.ui.anim.selected_frame != 0 {
             self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
-
-            // find this bone in first keyframe and set the field
-            let first_kf = &mut self.selected_animation_mut().keyframes[0];
-
-            first_kf.value = og_value;
+            self.selected_animation_mut().keyframes[0].value = og_value;
         }
 
         self.check_if_in_keyframe(
@@ -1054,7 +1050,6 @@ impl Shared {
                 continue;
             }
 
-            kf.element = element.clone();
             kf.value = value;
         }
 
