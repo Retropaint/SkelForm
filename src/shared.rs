@@ -400,7 +400,8 @@ pub struct Root {
 pub struct Texture {
     #[serde(default)]
     pub size: Vec2,
-
+    #[serde(default)]
+    pub name: String,    
     #[serde(skip)]
     pub pixels: Vec<u8>,
 }
