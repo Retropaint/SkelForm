@@ -173,9 +173,11 @@ pub fn save(path: String, shared: &Shared) {
     // save armature json and texture image
     zip.start_file("armature.json", options).unwrap();
     zip.write(armatures_json.as_bytes()).unwrap();
-    zip.start_file("textures.png", options).unwrap();
-    if let Ok(ref img) = img_data {
-        zip.write(&img.to_vec()).unwrap();
+    if size != Vec2::ZERO {
+        zip.start_file("textures.png", options).unwrap();
+        if let Ok(ref img) = img_data {
+            zip.write(&img.to_vec()).unwrap();
+        }
     }
 
     zip.finish().unwrap();
