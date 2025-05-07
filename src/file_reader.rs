@@ -73,10 +73,9 @@ pub fn read_image_loaders(
     bind_group_layout: &BindGroupLayout,
     ctx: &egui::Context,
 ) {
-    #[allow(unused_assignments)]
-    let mut pixels: Vec<u8> = vec![];
-    #[allow(unused_assignments)]
-    let mut dimensions: Vec2 = Vec2::new(0., 0.);
+    let pixels: Vec<u8>;
+    let dimensions: Vec2;
+    let name: String;
 
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -97,6 +96,10 @@ pub fn read_image_loaders(
             del_temp_files();
             return;
         }
+
+        // extract name
+        let filename = img_path.split('/').last().unwrap().to_string();
+        name = filename.split('.').collect::<Vec<_>>()[0].to_string();
 
         // read image pixels and dimensions
         let file_bytes = fs::read(img_path);
@@ -151,6 +154,7 @@ pub fn read_image_loaders(
     shared.armature.textures.push(crate::Texture {
         size: dimensions,
         pixels,
+        name,
     });
 
     // assign this texture to the selected bone

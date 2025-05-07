@@ -76,6 +76,12 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                     shared.ui.image_modal = true;
                 }
             };
+            let mut tex_name = "None";
+            if shared.selected_bone().unwrap().tex_idx != -1 {
+                tex_name =
+                    &shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize].name
+            }
+            ui.label(tex_name);
         })
     });
 
@@ -133,7 +139,14 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         label!("Rotation:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-            input!(bone.rot, "rot", &AnimElement::Rotation, 180. / std::f32::consts::PI, ui, "");
+            input!(
+                bone.rot,
+                "rot",
+                &AnimElement::Rotation,
+                180. / std::f32::consts::PI,
+                ui,
+                ""
+            );
         });
     });
     ui.horizontal(|ui| {
