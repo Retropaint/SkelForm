@@ -895,13 +895,13 @@ impl Shared {
 
         #[rustfmt::skip]
         match element {
-            AnimElement::PositionX => { edit!(bone_mut.pos.x); },
-            AnimElement::PositionY => { edit!(bone_mut.pos.y); },
-            AnimElement::Rotation => { edit!(bone_mut.rot); },
-            AnimElement::ScaleX => { edit!(bone_mut.scale.x); },
-            AnimElement::ScaleY => { edit!(bone_mut.scale.y); },
-            AnimElement::PivotX => { edit!(bone_mut.pivot.x); },
-            AnimElement::PivotY => { edit!(bone_mut.pivot.y); },
+            AnimElement::PositionX => { edit!(bone_mut.pos.x);   },
+            AnimElement::PositionY => { edit!(bone_mut.pos.y);   },
+            AnimElement::Rotation =>  { edit!(bone_mut.rot);     },
+            AnimElement::ScaleX =>    { edit!(bone_mut.scale.x); },
+            AnimElement::ScaleY =>    { edit!(bone_mut.scale.y); },
+            AnimElement::PivotX =>    { edit!(bone_mut.pivot.x); },
+            AnimElement::PivotY =>    { edit!(bone_mut.pivot.y); },
             _ => {}
         };
 

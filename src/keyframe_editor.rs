@@ -566,6 +566,7 @@ fn draw_frame_lines(
             let x = shared.ui.anim.lines_x[j];
             if cursor.x < x + hitbox && cursor.x > x - hitbox {
                 shared.selected_animation_mut().keyframes[i].frame = j as i32;
+                shared.sort_keyframes();
                 break;
             }
         }
