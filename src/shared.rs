@@ -470,6 +470,8 @@ pub enum AnimElement {
     Zindex,
 }
 
+pub const ANIM_ICON_ID: [usize; 7] = [0, 0, 1, 2, 2, 3, 3];
+
 #[derive(Default, Clone)]
 pub enum ActionEnum {
     #[default]

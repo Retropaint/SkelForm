@@ -542,7 +542,7 @@ fn draw_frame_lines(
         if idx > shared.ui.anim.icon_images.len() - 1 {
             idx = shared.ui.anim.icon_images.len() - 1;
         }
-        egui::Image::new(&shared.ui.anim.icon_images[idx]).paint_at(ui, rect);
+        egui::Image::new(&shared.ui.anim.icon_images[shared::ANIM_ICON_ID[idx]]).paint_at(ui, rect);
 
         let rect = egui::Rect::from_center_size(pos.into(), (size * 0.5).into());
         let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
