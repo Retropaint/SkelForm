@@ -116,7 +116,7 @@ pub fn new_bone(shared: &mut Shared, id: i32) -> (Bone, usize) {
         parent_id = shared.find_bone(id).unwrap().parent_id;
     }
     let new_bone = Bone {
-        name: "bone".to_string() + &shared.armature.bones.len().to_string(),
+        name: NEW_BONE_NAME.to_string(),
         parent_id,
         id: generate_id(&shared.armature.bones),
         scale: Vec2 { x: 1., y: 1. },

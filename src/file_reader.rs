@@ -154,12 +154,17 @@ pub fn read_image_loaders(
     shared.armature.textures.push(crate::Texture {
         size: dimensions,
         pixels,
-        name,
+        name: name.clone(),
     });
 
     // assign this texture to the selected bone
-    shared.armature.bones[shared.selected_bone_idx].tex_idx =
+    shared.selected_bone_mut().unwrap().tex_idx =
         shared.armature.textures.len() as i32 - 1;
+
+    // assign texture mame to bone if it's using new bone name
+    if shared.selected_bone_mut().unwrap().name == NEW_BONE_NAME {
+        shared.selected_bone_mut().unwrap().name = name;
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]

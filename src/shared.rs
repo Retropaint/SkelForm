@@ -6,6 +6,7 @@ use std::{
 };
 
 pub const RECT_VERT_INDICES: [u32; 6] = [0, 1, 2, 0, 3, 1];
+pub const NEW_BONE_NAME: &str = "New Bone";
 
 use tween::Tweener;
 use wgpu::BindGroup;
