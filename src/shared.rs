@@ -749,14 +749,17 @@ impl Shared {
             }
 
             // interpolate!
-            b.pos.x += interpolate!(AnimElement::PositionX, 0.);
-            b.pos.y += interpolate!(AnimElement::PositionY, 0.);
-            b.rot += interpolate!(AnimElement::Rotation, 0.);
-            b.scale.x *= interpolate!(AnimElement::ScaleX, 1.);
-            b.scale.y *= interpolate!(AnimElement::ScaleY, 1.);
-            b.pivot.x += interpolate!(AnimElement::PivotX, 0.);
-            b.pivot.y += interpolate!(AnimElement::PivotY, 0.);
-            b.zindex += interpolate!(AnimElement::Zindex, 0.);
+            #[rustfmt::skip] 
+            {
+                b.pos.x   += interpolate!(AnimElement::PositionX, 0.);
+                b.pos.y   += interpolate!(AnimElement::PositionY, 0.);
+                b.rot     += interpolate!(AnimElement::Rotation, 0.);
+                b.scale.x *= interpolate!(AnimElement::ScaleX, 1.);
+                b.scale.y *= interpolate!(AnimElement::ScaleY, 1.);
+                b.pivot.x += interpolate!(AnimElement::PivotX, 0.);
+                b.pivot.y += interpolate!(AnimElement::PivotY, 0.);
+                b.zindex  += interpolate!(AnimElement::Zindex, 0.);
+            };
         }
 
         bones
