@@ -955,8 +955,10 @@ impl Shared {
         }
 
         if self.ui.anim.selected_frame != 0 {
-            self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
-            self.selected_animation_mut().unwrap().keyframes[0].value = og_value;
+            let added = self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
+            if added {
+                self.last_keyframe_mut().unwrap().value = og_value;
+            }
         }
 
         self.check_if_in_keyframe(
