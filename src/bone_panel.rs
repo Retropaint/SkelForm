@@ -64,7 +64,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     ui.horizontal(|ui| {
         ui.label("Texture:");
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if ui_mod::button("Get Image", ui).clicked() {
                 if shared.bind_groups.len() == 0 {
                     #[cfg(not(target_arch = "wasm32"))]
@@ -109,7 +109,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     macro_rules! label {
         ($name:expr, $ui:expr) => {
-            $ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
+            $ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                 ui.label($name);
             });
         };
@@ -117,28 +117,28 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     ui.horizontal(|ui| {
         label!("Position:", ui);
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             input!(bone.pos.y, "pos_y", &AnimElement::PositionY, 1., ui, "Y");
             input!(bone.pos.x, "pos_x", &AnimElement::PositionX, 1., ui, "X");
         })
     });
     ui.horizontal(|ui| {
         label!("Scale:", ui);
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             input!(bone.scale.y, "scale_y", &AnimElement::ScaleY, 1., ui, "Y");
             input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "X");
         });
     });
     ui.horizontal(|ui| {
         label!("Pivot:", ui);
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             input!(bone.pivot.y, "pivot_y", &AnimElement::PivotY, 1., ui, "Y");
             input!(bone.pivot.x, "pivot_x", &AnimElement::PivotX, 1., ui, "X");
         });
     });
     ui.horizontal(|ui| {
         label!("Rotation:", ui);
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             input!(
                 bone.rot,
                 "rot",
@@ -151,7 +151,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     });
     ui.horizontal(|ui| {
         label!("Z-Index:", ui);
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             input!(bone.zindex, "zindex", &AnimElement::Zindex, 1., ui, "");
         });
     });
