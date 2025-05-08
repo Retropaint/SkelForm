@@ -220,9 +220,13 @@ impl ApplicationHandler for App {
                 self.shared.window = Vec2::new(self.last_size.0 as f32, self.last_size.1 as f32);
             }
             WindowEvent::CloseRequested => {
-                #[cfg(target_arch = "wasm32")]
-                log::info!("Close requested. Exiting...");
-                event_loop.exit();
+                if self.shared.undo_actions.len() > 0 {
+                    self.shared.ui.polar_id = "exiting".to_string();
+                    self.shared.ui.polar_headline =
+                        "Are you sure you want to quit and discard unsaved changes?".to_string();
+                } else {
+                    event_loop.exit();
+                }
             }
             WindowEvent::CursorMoved {
                 device_id: _,
@@ -247,7 +251,7 @@ impl ApplicationHandler for App {
             WindowEvent::PinchGesture {
                 device_id: _,
                 delta,
-                phase: _phase
+                phase: _phase,
             } => {
                 input::pinch(delta, &mut self.shared);
             }
@@ -291,35 +295,27 @@ impl ApplicationHandler for App {
             _ => (),
         }
 
-        if self.shared.highlight_bindgroup == None {
-            self.shared.highlight_bindgroup = Some(renderer::create_texture_bind_group(
-                vec![255, 255, 255, 70],
-                Vec2::new(1., 1.),
-                &self.renderer.as_ref().unwrap().gpu.queue,
-                &self.renderer.as_ref().unwrap().gpu.device,
-                &self.renderer.as_ref().unwrap().bind_group_layout,
-            ));
+        if self.shared.ui.exiting {
+            event_loop.exit();
         }
 
-        if self.shared.gridline_bindgroup == None {
-            self.shared.gridline_bindgroup = Some(renderer::create_texture_bind_group(
-                vec![255, 255, 255, 20],
-                Vec2::new(1., 1.),
-                &self.renderer.as_ref().unwrap().gpu.queue,
-                &self.renderer.as_ref().unwrap().gpu.device,
-                &self.renderer.as_ref().unwrap().bind_group_layout,
-            ));
+        macro_rules! generic_bindgroup {
+            ($bindgroup:expr, $color:expr) => {
+                if $bindgroup == None {
+                    $bindgroup = Some(renderer::create_texture_bind_group(
+                        $color,
+                        Vec2::new(1., 1.),
+                        &self.renderer.as_ref().unwrap().gpu.queue,
+                        &self.renderer.as_ref().unwrap().gpu.device,
+                        &self.renderer.as_ref().unwrap().bind_group_layout,
+                    ));
+                }
+            };
         }
 
-        if self.shared.point_bindgroup == None {
-            self.shared.point_bindgroup = Some(renderer::create_texture_bind_group(
-                vec![0, 255, 0, 255],
-                Vec2::new(1., 1.),
-                &self.renderer.as_ref().unwrap().gpu.queue,
-                &self.renderer.as_ref().unwrap().gpu.device,
-                &self.renderer.as_ref().unwrap().bind_group_layout,
-            ));
-        }
+        generic_bindgroup!(self.shared.highlight_bindgroup, vec![255, 255, 255, 70]);
+        generic_bindgroup!(self.shared.gridline_bindgroup, vec![255, 255, 255, 20]);
+        generic_bindgroup!(self.shared.point_bindgroup, vec![0, 255, 0, 255]);
 
         #[cfg(not(target_arch = "wasm32"))]
         if self.shared.debug {

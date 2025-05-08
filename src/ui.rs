@@ -427,6 +427,8 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                             }
                         }
                         shared.selected_bone_idx = usize::MAX;
+                    } else if shared.ui.polar_id == "exiting" {
+                        shared.ui.exiting = true;
                     }
                     shared.ui.polar_id = "".to_string();
                 }
