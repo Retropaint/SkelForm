@@ -6,7 +6,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label("Transition:");
 
-        if shared.selected_keyframe() == None || shared.selected_animation().keyframes.len() == 0 {
+        if shared.selected_keyframe() == None || shared.selected_animation().unwrap().keyframes.len() == 0 {
             return;
         }
 
@@ -31,7 +31,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         // change all fields to use new transition
         if og_transition != transition {
             let selected_frame = shared.ui.anim.selected_frame;
-            for kf in &mut shared.selected_animation_mut().keyframes {
+            for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
                 if kf.frame == selected_frame {
                     kf.transition = transition.clone();
                 }
