@@ -409,7 +409,7 @@ pub struct Texture {
     pub pixels: Vec<u8>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Animation {
     #[serde(default)]
     pub name: String,
@@ -608,14 +608,23 @@ pub struct Shared {
 // mostly for shorthands for cleaner code
 impl Shared {
     pub fn selected_animation(&self) -> Option<&Animation> {
+        if self.ui.anim.selected > self.armature.animations.len() {
+            return None
+        }
         Some(&self.armature.animations[self.ui.anim.selected])
     }
 
     pub fn selected_animation_mut(&mut self) -> Option<&mut Animation> {
+        if self.ui.anim.selected > self.armature.animations.len() {
+            return None
+        }
         Some(&mut self.armature.animations[self.ui.anim.selected])
     }
 
     pub fn selected_keyframe(&self) -> Option<&Keyframe> {
+        if self.selected_animation() == None {
+            return None
+        }
         let frame = self.ui.anim.selected_frame;
         for kf in &self.selected_animation().unwrap().keyframes {
             if kf.frame == frame {
