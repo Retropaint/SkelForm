@@ -283,15 +283,15 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                 //draw_connecting_lines(shared, ui);
 
                 for i in 0..shared.selected_animation().unwrap().keyframes.len() {
-                    let kf = &shared.selected_animation().unwrap().keyframes[i];
+                    let frame = shared.keyframe(i).unwrap().frame;
 
                     // don't draw diamond if it's beyond the recorded lines
-                    if shared.ui.anim.lines_x.len() - 1 < kf.frame as usize {
+                    if shared.ui.anim.lines_x.len() - 1 < frame as usize {
                         break;
                     }
 
                     let pos = Vec2::new(
-                        ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize] + 3.,
+                        ui.min_rect().left() + shared.ui.anim.lines_x[frame as usize] + 3.,
                         ui.min_rect().top() + 10.,
                     );
                     draw_diamond(ui, pos);
@@ -301,7 +301,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
                     if response.drag_started() {
-                        shared.select_frame(kf.frame as i32);
+                        shared.select_frame(frame);
                     }
 
                     if response.hovered() {
@@ -336,10 +336,15 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         break;
                     }
 
+                    // move all keyframes under this one over
                     for j in 0..shared.ui.anim.lines_x.len() {
                         let x = shared.ui.anim.lines_x[j];
                         if cursor.x < x + hitbox && cursor.x > x - hitbox {
-                            shared.selected_animation_mut().unwrap().keyframes[i].frame = j as i32;
+                            for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
+                                if kf.frame == frame as i32 {
+                                    kf.frame = j as i32;
+                                }
+                            }
                             shared.sort_keyframes();
                             break;
                         }

@@ -668,6 +668,20 @@ impl Shared {
         self.selected_animation().unwrap().keyframes.last()
     }
 
+    pub fn keyframe(&self, idx: usize) -> Option<&Keyframe> {
+        if idx > self.selected_animation().unwrap().keyframes.len()-1 {
+            return None
+        }
+        Some(&self.selected_animation().unwrap().keyframes[idx])
+    }    
+
+    pub fn keyframe_mut(&mut self, idx: usize) -> Option<&mut Keyframe> {
+        if idx > self.selected_animation().unwrap().keyframes.len()-1 {
+            return None
+        }
+        Some(&mut self.selected_animation_mut().unwrap().keyframes[idx])
+    }    
+
     pub fn keyframe_at(&self, frame: i32) -> Option<&Keyframe> {
         for kf in &self.selected_animation().unwrap().keyframes {
             if kf.frame == frame {
@@ -999,6 +1013,7 @@ impl Shared {
         self.armature.bones[bone_idx as usize].zindex = bone_idx as f32 + 1.;
     }
 
+    /// place child bone underneath its parent
     pub fn organize_bone(&mut self, bone_idx: usize) {
         let parent_id = self.armature.bones[bone_idx].parent_id;
         let bone = self.armature.bones[bone_idx].clone();
