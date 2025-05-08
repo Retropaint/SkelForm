@@ -92,7 +92,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     style_once!(top_panel(context, shared));
 
-    if shared.animating {
+    if shared.ui.anim.open {
         style_once!(keyframe_editor::draw(context, shared));
     } else {
         shared.ui.camera_bar_pos.y = shared.window.y;
@@ -265,11 +265,11 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
         ))
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
-                if selection_button("Armature", !shared.animating, ui).clicked() {
-                    shared.animating = false;
+                if selection_button("Armature", !shared.ui.anim.open, ui).clicked() {
+                    shared.ui.anim.open = false;
                 }
-                if selection_button("Animation", shared.animating, ui).clicked() {
-                    shared.animating = true;
+                if selection_button("Animation", shared.ui.anim.open, ui).clicked() {
+                    shared.ui.anim.open = true;
                 }
                 shared.ui.animate_mode_bar_scale = ui.min_rect().size().into();
             });
