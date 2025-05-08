@@ -402,6 +402,8 @@ pub struct Root {
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Texture {
     #[serde(default)]
+    pub offset: Vec2,
+    #[serde(default)]
     pub size: Vec2,
     #[serde(default)]
     pub name: String,    
@@ -903,6 +905,16 @@ impl Shared {
             id: self.selected_bone().unwrap().id,
             ..Default::default()
         });
+
+        if self.animating {
+            self.undo_actions.push(Action {
+                action: ActionEnum::Animation,
+                action_type: ActionType::Edited,
+                id: self.ui.anim.selected as i32,
+                animation: self.selected_animation().unwrap().clone(),
+                ..Default::default()
+            });                   
+        }
     }
 
     pub fn edit_bone(&mut self, element: &AnimElement, mut value: f32, overwrite: bool) {

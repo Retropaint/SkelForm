@@ -152,6 +152,7 @@ pub fn read_image_loaders(
     shared.ui.texture_images.push(tex);
 
     shared.armature.textures.push(crate::Texture {
+        offset: Vec2::ZERO,
         size: dimensions,
         pixels,
         name: name.clone(),

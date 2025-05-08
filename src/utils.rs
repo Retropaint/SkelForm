@@ -125,7 +125,7 @@ pub fn open_import_dialog() {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn save(path: String, shared: &Shared) {
+pub fn save(path: String, shared: &mut Shared) {
     // get the image size in advance
     let mut size = Vec2::default();
     for tex in &shared.armature.textures {
@@ -187,12 +187,12 @@ pub fn save(path: String, shared: &Shared) {
     }
 }
 
-fn create_temp_tex_sheet(shared: &Shared, size: &Vec2) {
+fn create_temp_tex_sheet(shared: &mut Shared, size: &Vec2) {
     // this is the buffer that will be saved as an image
     let mut final_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size.x as u32, size.y as u32);
 
     let mut offset: u32 = 0;
-    for tex in &shared.armature.textures {
+    for tex in &mut shared.armature.textures {
         // get current texture as a buffer
         let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
             tex.size.x as u32,
@@ -207,6 +207,8 @@ fn create_temp_tex_sheet(shared: &Shared, size: &Vec2) {
                 final_buf.put_pixel(x + offset, y, *img_buf.get_pixel(x, y));
             }
         }
+
+        tex.offset.x = offset as f32;
 
         // make sure the next texture will be added beside this one, instead of overwriting
         offset += img_buf.width();
@@ -258,13 +260,11 @@ pub fn import(
         shared.bind_groups = vec![];
         shared.ui.texture_images = vec![];
 
-        let mut offset = 0;
         for texture in &mut root.armatures[0].textures {
             texture.pixels = img
-                .crop(offset, 0, texture.size.x as u32, texture.size.y as u32)
+                .crop(texture.offset.x as u32, 0, texture.size.x as u32, texture.size.y as u32)
                 .into_rgba8()
                 .to_vec();
-            offset += texture.size.x as u32;
 
             shared.bind_groups.push(renderer::create_texture_bind_group(
                 texture.pixels.to_vec(),
