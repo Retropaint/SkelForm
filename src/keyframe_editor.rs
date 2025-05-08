@@ -496,8 +496,7 @@ fn draw_frame_lines(
         shared.ui.anim.lines_x.push(x);
 
         let mut color = ui::COLOR_FRAMELINE;
-        let last_keyframe = shared.selected_animation().unwrap().keyframes.last();
-        if last_keyframe != None && i > last_keyframe.unwrap().frame {
+        if shared.last_keyframe() != None && i > shared.last_keyframe().unwrap().frame {
             color = ui::COLOR_FRAMELINE_PASTLAST;
         }
 

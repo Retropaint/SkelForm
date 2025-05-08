@@ -669,6 +669,10 @@ impl Shared {
         self.selected_animation().unwrap().keyframes.last()
     }
 
+    pub fn last_keyframe_mut(&mut self) -> Option<&mut Keyframe> {
+        self.selected_animation_mut().unwrap().keyframes.last_mut()
+    }
+
     pub fn keyframe(&self, idx: usize) -> Option<&Keyframe> {
         if idx > self.selected_animation().unwrap().keyframes.len()-1 {
             return None
@@ -918,7 +922,6 @@ impl Shared {
 
     pub fn edit_bone(&mut self, element: &AnimElement, mut value: f32, overwrite: bool) {
         let mut og_value = value;
-
         let is_animating = self.is_animating();
 
         macro_rules! edit {
@@ -981,7 +984,7 @@ impl Shared {
         self.sort_keyframes();
     }
 
-    fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: AnimElement) {
+    fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: AnimElement) -> bool {
         // check if this keyframe exists
         let mut add = true;
         for kf in &self.selected_animation().unwrap().keyframes {
@@ -992,7 +995,7 @@ impl Shared {
         }
 
         if !add {
-            return;
+            return false;
         }
 
         self.selected_animation_mut().unwrap().keyframes.push(Keyframe {
@@ -1001,7 +1004,9 @@ impl Shared {
             bone_id: id,
             element,
             ..Default::default()
-        })
+        });
+
+        true
     }
 
     pub fn is_animating(&self) -> bool {
