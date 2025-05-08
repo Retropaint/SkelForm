@@ -85,7 +85,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                     ui.label(RichText::new(&s.name.to_string()));
                                 })
                                 .response;
-                            check_bone_dragging(&mut shared.armature.bones, ui, d, idx as i32);
+                            check_bone_dragging(shared, ui, d, idx as i32);
                         } else {
                             // regular, boring buttons
 
@@ -148,7 +148,7 @@ pub fn new_bone(shared: &mut Shared, id: i32) -> (Bone, usize) {
     (new_bone, shared.armature.bones.len() - 1)
 }
 
-fn check_bone_dragging(bones: &mut Vec<Bone>, ui: &mut egui::Ui, drag: Response, idx: i32) {
+fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, idx: i32) {
     if let (Some(pointer), Some(hovered_payload)) = (
         ui.input(|i| i.pointer.interact_pos()),
         drag.dnd_hover_payload::<i32>(),
@@ -175,21 +175,29 @@ fn check_bone_dragging(bones: &mut Vec<Bone>, ui: &mut egui::Ui, drag: Response,
         if let Some(dragged_payload) = drag.dnd_release_payload::<i32>() {
             // ignore if target bone is a child of this
             let mut children: Vec<Bone> = vec![];
-            get_all_children(bones, &mut children, &bones[*dragged_payload as usize]);
+            get_all_children(&shared.armature.bones, &mut children, &shared.armature.bones[*dragged_payload as usize]);
             for c in children {
-                if bones[idx as usize].id == c.id {
+                if shared.armature.bones[idx as usize].id == c.id {
                     return;
                 }
             }
 
+            shared.undo_actions.push(Action{
+                action: ActionEnum::Bone,
+                action_type: ActionType::Edited,
+                id: shared.armature.bones[*dragged_payload as usize].id,
+                bone: shared.armature.bones[*dragged_payload as usize].clone(),
+                ..Default::default()
+            });
+
             if move_type == 0 {
                 // set dragged bone's parent as target
-                bones[*dragged_payload as usize].parent_id = bones[idx as usize].parent_id;
-                move_bone(bones, *dragged_payload, idx, false);
+                shared.armature.bones[*dragged_payload as usize].parent_id = shared.armature.bones[idx as usize].parent_id;
+                move_bone(&mut shared.armature.bones, *dragged_payload, idx, false);
             } else if move_type == 1 {
                 // move dragged bone above target
-                bones[*dragged_payload as usize].parent_id = bones[idx as usize].id;
-                move_bone(bones, *dragged_payload, idx, true);
+                shared.armature.bones[*dragged_payload as usize].parent_id = shared.armature.bones[idx as usize].id;
+                move_bone(&mut shared.armature.bones, *dragged_payload, idx, true);
             }
         }
     }
