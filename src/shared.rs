@@ -607,17 +607,17 @@ pub struct Shared {
 
 // mostly for shorthands for cleaner code
 impl Shared {
-    pub fn selected_animation(&self) -> &Animation {
-        &self.armature.animations[self.ui.anim.selected]
+    pub fn selected_animation(&self) -> Option<&Animation> {
+        Some(&self.armature.animations[self.ui.anim.selected])
     }
 
-    pub fn selected_animation_mut(&mut self) -> &mut Animation {
-        &mut self.armature.animations[self.ui.anim.selected]
+    pub fn selected_animation_mut(&mut self) -> Option<&mut Animation> {
+        Some(&mut self.armature.animations[self.ui.anim.selected])
     }
 
     pub fn selected_keyframe(&self) -> Option<&Keyframe> {
         let frame = self.ui.anim.selected_frame;
-        for kf in &self.selected_animation().keyframes {
+        for kf in &self.selected_animation().unwrap().keyframes {
             if kf.frame == frame {
                 return Some(kf);
             }
@@ -627,7 +627,7 @@ impl Shared {
 
     pub fn selected_keyframe_mut(&mut self) -> Option<&mut Keyframe> {
         let frame = self.ui.anim.selected_frame;
-        for kf in &mut self.selected_animation_mut().keyframes {
+        for kf in &mut self.selected_animation_mut().unwrap().keyframes {
             if kf.frame == frame {
                 return Some(kf);
             }
@@ -650,17 +650,17 @@ impl Shared {
     }
 
     pub fn sort_keyframes(&mut self) {
-        self.selected_animation_mut()
+        self.selected_animation_mut().unwrap()
             .keyframes
             .sort_by(|a, b| a.frame.cmp(&b.frame));
     }
 
     pub fn last_keyframe(&self) -> Option<&Keyframe> {
-        self.selected_animation().keyframes.last()
+        self.selected_animation().unwrap().keyframes.last()
     }
 
     pub fn keyframe_at(&self, frame: i32) -> Option<&Keyframe> {
-        for kf in &self.selected_animation().keyframes {
+        for kf in &self.selected_animation().unwrap().keyframes {
             if kf.frame == frame {
                 return Some(&kf);
             }
@@ -670,7 +670,7 @@ impl Shared {
     }
 
     pub fn keyframe_at_mut(&mut self, frame: i32) -> Option<&mut Keyframe> {
-        for kf in &mut self.selected_animation_mut().keyframes {
+        for kf in &mut self.selected_animation_mut().unwrap().keyframes {
             if kf.frame == frame {
                 return Some(kf);
             }
@@ -725,7 +725,7 @@ impl Shared {
         let mut bones = self.armature.bones.clone();
 
         // ignore if this animation has no keyframes
-        let kf_len = self.selected_animation().keyframes.len();
+        let kf_len = self.selected_animation().unwrap().keyframes.len();
         if kf_len == 0 {
             return bones;
         }
@@ -757,12 +757,12 @@ impl Shared {
             {
                 b.pos.x   += interpolate!(AnimElement::PositionX, 0.);
                 b.pos.y   += interpolate!(AnimElement::PositionY, 0.);
-                b.rot     += interpolate!(AnimElement::Rotation, 0.);
-                b.scale.x *= interpolate!(AnimElement::ScaleX, 1.);
-                b.scale.y *= interpolate!(AnimElement::ScaleY, 1.);
-                b.pivot.x += interpolate!(AnimElement::PivotX, 0.);
-                b.pivot.y += interpolate!(AnimElement::PivotY, 0.);
-                b.zindex  += interpolate!(AnimElement::Zindex, 0.);
+                b.rot     += interpolate!(AnimElement::Rotation,  0.);
+                b.scale.x *= interpolate!(AnimElement::ScaleX,    1.);
+                b.scale.y *= interpolate!(AnimElement::ScaleY,    1.);
+                b.pivot.x += interpolate!(AnimElement::PivotX,    0.);
+                b.pivot.y += interpolate!(AnimElement::PivotY,    0.);
+                b.zindex  += interpolate!(AnimElement::Zindex,    0.);
             };
         }
 
@@ -783,8 +783,8 @@ impl Shared {
         let mut transition: Transition = Transition::Linear;
 
         // get most previous frame with this element
-        for (i, kf) in self.selected_animation().keyframes.iter().enumerate() {
-            if self.selected_animation().keyframes[i].frame > frame {
+        for (i, kf) in self.selected_animation().unwrap().keyframes.iter().enumerate() {
+            if self.selected_animation().unwrap().keyframes[i].frame > frame {
                 break;
             }
 
@@ -797,8 +797,8 @@ impl Shared {
         }
 
         // get first next frame with this element
-        for (i, kf) in self.selected_animation().keyframes.iter().enumerate().rev() {
-            if self.selected_animation().keyframes[i].frame < frame {
+        for (i, kf) in self.selected_animation().unwrap().keyframes.iter().enumerate().rev() {
+            if self.selected_animation().unwrap().keyframes[i].frame < frame {
                 break;
             }
 
@@ -922,7 +922,7 @@ impl Shared {
 
         if self.ui.anim.selected_frame != 0 {
             self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
-            self.selected_animation_mut().keyframes[0].value = og_value;
+            self.selected_animation_mut().unwrap().keyframes[0].value = og_value;
         }
 
         self.check_if_in_keyframe(
@@ -933,7 +933,7 @@ impl Shared {
 
         let selected_frame = self.ui.anim.selected_frame;
         let selected_id = self.selected_bone().unwrap().id;
-        for kf in &mut self.selected_animation_mut().keyframes {
+        for kf in &mut self.selected_animation_mut().unwrap().keyframes {
             if kf.frame != selected_frame || kf.bone_id != selected_id || kf.element != *element {
                 continue;
             }
@@ -948,7 +948,7 @@ impl Shared {
     fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: AnimElement) {
         // check if this keyframe exists
         let mut add = true;
-        for kf in &self.selected_animation().keyframes {
+        for kf in &self.selected_animation().unwrap().keyframes {
             if kf.frame == frame && kf.bone_id == id && kf.element == element {
                 add = false;
                 break;
@@ -959,7 +959,7 @@ impl Shared {
             return;
         }
 
-        self.selected_animation_mut().keyframes.push(Keyframe {
+        self.selected_animation_mut().unwrap().keyframes.push(Keyframe {
             frame,
             //bones: vec![],
             bone_id: id,
