@@ -10,11 +10,6 @@ pub fn keyboard_input(
     state: &winit::event::ElementState,
     shared: &mut crate::shared::Shared,
 ) {
-    if *key == KeyCode::KeyW {
-        shared.armature.bones[1].tex_idx = 0;
-        shared.armature.bones[2].tex_idx = 0;
-    }
-
     // record all pressed keys (and remove released ones)
     if *state == ElementState::Pressed {
         let mut add = true;
