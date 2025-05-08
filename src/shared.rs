@@ -296,6 +296,8 @@ pub struct Ui {
 
     pub is_removing_textures: bool,
 
+    pub exiting: bool,
+
     // camera bar stuff
     pub camera_bar_pos: Vec2,
     pub camera_bar_scale: Vec2,
