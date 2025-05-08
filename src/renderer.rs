@@ -112,24 +112,21 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         let temp_verts: [Vertex; 4] = [
             Vertex {
-                pos: tex.size * temp_bones[i].scale,
+                pos: Vec2::new(tex.size.x * temp_bones[i].scale.x, 0.),
                 uv: Vec2::new(1., 0.),
             },
             Vertex {
-                pos: tex.size * temp_bones[i].scale * -1.,
+                pos: Vec2::new(0., tex.size.y * -temp_bones[i].scale.y),
                 uv: Vec2::new(0., 1.),
             },
             Vertex {
-                pos: Vec2::new(
-                    tex.size.x * temp_bones[i].scale.x * -1.,
-                    tex.size.y * temp_bones[i].scale.y,
-                ),
+                pos: Vec2::ZERO,
                 uv: Vec2::new(0., 0.),
             },
             Vertex {
                 pos: Vec2::new(
                     tex.size.x * temp_bones[i].scale.x,
-                    tex.size.y * temp_bones[i].scale.y * -1.,
+                    tex.size.y * -temp_bones[i].scale.y,
                 ),
                 uv: Vec2::new(1., 1.),
             },

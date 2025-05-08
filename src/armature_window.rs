@@ -121,7 +121,7 @@ pub fn new_bone(shared: &mut Shared, id: i32) -> (Bone, usize) {
         id: generate_id(&shared.armature.bones),
         scale: Vec2 { x: 1., y: 1. },
         tex_idx: -1,
-        pivot: Vec2::new(0., 0.),
+        pivot: Vec2::new(0.5, 0.5),
         zindex: shared.armature.bones.len() as f32,
         ..Default::default()
     };
