@@ -998,6 +998,23 @@ impl Shared {
     pub fn sort_bone_zindex(&mut self, bone_idx: i32) {
         self.armature.bones[bone_idx as usize].zindex = bone_idx as f32 + 1.;
     }
+
+    pub fn organize_bone(&mut self, bone_idx: usize) {
+        let parent_id = self.armature.bones[bone_idx].parent_id;
+        let bone = self.armature.bones[bone_idx].clone();
+        let mut new_idx = 0;
+        for (i, bone) in self.armature.bones.iter().enumerate() {
+            if parent_id == bone.id {
+                new_idx = i; 
+                break;
+            }
+        }
+
+        if new_idx != bone_idx {
+            self.armature.bones.remove(bone_idx);
+            self.armature.bones.insert(new_idx, bone);
+        }
+    }
 }
 
 impl Ui {
