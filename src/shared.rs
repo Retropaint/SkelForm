@@ -327,6 +327,7 @@ impl Ui {
 
 #[derive(Clone, Default)]
 pub struct UiAnim {
+    pub open: bool,
     pub selected: usize,
     pub hovering_frame: i32,
     pub selected_frame: i32,
@@ -593,8 +594,6 @@ pub struct Shared {
 
     // should be enum but too lazy atm
     pub edit_mode: i32,
-
-    pub animating: bool,
 
     /// useful if you don't want to provide an actual bind group during testing
     pub highlight_bindgroup: Option<BindGroup>,
@@ -906,7 +905,7 @@ impl Shared {
             ..Default::default()
         });
 
-        if self.animating {
+        if self.is_animating() {
             self.undo_actions.push(Action {
                 action: ActionEnum::Animation,
                 action_type: ActionType::Edited,
@@ -1004,7 +1003,7 @@ impl Shared {
     }
 
     pub fn is_animating(&self) -> bool {
-        self.animating && self.ui.anim.selected != usize::MAX
+        self.ui.anim.open && self.ui.anim.selected != usize::MAX
     }
 
     pub fn remove_texture(&mut self, tex_idx: i32) {
