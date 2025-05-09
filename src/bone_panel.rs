@@ -198,8 +198,7 @@ pub fn float_input(
             egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap()),
         );
 
-        // when done, parse and return edit_value
-        if input.lost_focus() {
+        if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
             shared.ui.rename_id = "".to_string();
             if shared.ui.edit_value.as_mut().unwrap() == "" {
                 shared.ui.edit_value = Some("0".to_string());
@@ -212,6 +211,10 @@ pub fn float_input(
                     return (false, value);
                 }
             }
+        }
+
+        if input.lost_focus() {
+            shared.ui.rename_id = "".to_string();
         }
     }
     (false, value)
