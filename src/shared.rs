@@ -950,6 +950,7 @@ impl Shared {
             AnimElement::ScaleY =>    { edit!(bone_mut.scale.y); },
             AnimElement::PivotX =>    { edit!(bone_mut.pivot.x); },
             AnimElement::PivotY =>    { edit!(bone_mut.pivot.y); },
+            AnimElement::Zindex =>    { edit!(bone_mut.zindex); },
             _ => {}
         };
 
