@@ -60,7 +60,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             x += 1.;
         }
 
+        // reset bind group to regular, non-highlighted one
         center_line = false;
+        render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
+
         let mut y = shared.camera.pos.y - shared.camera.zoom;
         y = y.round();
         while y < shared.camera.pos.y + shared.camera.zoom {
