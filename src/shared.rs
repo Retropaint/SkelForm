@@ -298,6 +298,8 @@ pub struct Ui {
 
     pub exiting: bool,
 
+    pub dragging: bool,
+
     // camera bar stuff
     pub camera_bar_pos: Vec2,
     pub camera_bar_scale: Vec2,
@@ -569,7 +571,6 @@ pub struct RenderedFrame {
 #[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
-    pub dragging: bool,
     pub selected_bone_idx: usize,
     pub armature: Armature,
     pub bind_groups: Vec<BindGroup>,
@@ -578,31 +579,27 @@ pub struct Shared {
     pub egui_ctx: egui::Context,
     pub cursor_icon: egui::CursorIcon,
     pub ui: Ui,
-    pub rendered_frames: Vec<RenderedFrame>,
-    pub start_time: Option<std::time::Instant>,
     pub editing_bone: bool,
 
     pub frame: i32,
     pub recording: bool,
     pub done_recording: bool,
+    // mainly used for video, but can also be used for screenshots
+    pub rendered_frames: Vec<RenderedFrame>,
 
     pub undo_actions: Vec<Action>,
     pub redo_actions: Vec<Action>,
 
-    // tracking zoom every frame for smooth effect
-    pub current_zoom: f32,
-
     // should be enum but too lazy atm
     pub edit_mode: i32,
 
-    /// useful if you don't want to provide an actual bind group during testing
     pub highlight_bindgroup: Option<BindGroup>,
     pub gridline_bindgroup: Option<BindGroup>,
     pub point_bindgroup: Option<BindGroup>,
 
     pub save_path: String,
 
-    /// triggers debug stuff
+    /// triggers debug stuff. Set in main.rs
     pub debug: bool,
 }
 
