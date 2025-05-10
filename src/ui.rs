@@ -240,15 +240,16 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
         ))
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
-                if selection_button("Move", shared.edit_mode == 0, ui).clicked() {
-                    shared.edit_mode = 0;
-                };
-                if selection_button("Rotate", shared.edit_mode == 1, ui).clicked() {
-                    shared.edit_mode = 1;
-                };
-                if selection_button("Scale", shared.edit_mode == 2, ui).clicked() {
-                    shared.edit_mode = 2;
-                };
+                macro_rules! edit_mode_button {
+                    ($label:expr, $edit_mode:expr) => {
+                        if selection_button($label, shared.edit_mode == $edit_mode, ui).clicked() {
+                            shared.edit_mode = $edit_mode; 
+                        };       
+                    };
+                }
+                edit_mode_button!("Move", EditMode::Move);
+                edit_mode_button!("Rotate", EditMode::Rotate);
+                edit_mode_button!("Scale", EditMode::Scale);
             });
         });
 }

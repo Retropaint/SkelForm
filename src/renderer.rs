@@ -1,9 +1,6 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
-use crate::{
-    shared::{Bone, Shared, Texture, Vec2, Vertex},
-    utils, RECT_VERT_INDICES,
-};
+use crate::*;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
@@ -310,32 +307,25 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.editing_bone = true;
         shared.cursor_icon = egui::CursorIcon::Crosshair;
         match shared.edit_mode {
-            // translation
-            0 => {
+            shared::EditMode::Move => {
                 let mut pos = bones[shared.selected_bone_idx].pos;
                 if shared.is_animating() {
                     pos = bones[shared.selected_bone_idx].pos
                         - shared.armature.bones[shared.selected_bone_idx].pos;
                 }
                 let pos = shared.move_with_mouse(&pos, true);
-
                 shared.edit_bone(&crate::AnimElement::PositionX, pos.x, false);
                 shared.edit_bone(&crate::AnimElement::PositionY, pos.y, false);
             }
-
-            // rotation
-            1 => {
+            shared::EditMode::Rotate => {
                 let rot = (shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.;
                 shared.edit_bone(&crate::AnimElement::Rotation, rot, false);
             }
-
-            // scale
-            2 => {
+            shared::EditMode::Scale => {
                 let scale = (shared.input.mouse / shared.window) * 2.;
                 shared.edit_bone(&crate::AnimElement::ScaleX, scale.x, false);
                 shared.edit_bone(&crate::AnimElement::ScaleY, scale.y, false);
             }
-            _ => {}
         };
     }
 }

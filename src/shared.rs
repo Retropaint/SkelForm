@@ -556,6 +556,14 @@ impl BoneTops {
     }
 }
 
+#[derive(Default, PartialEq)]
+pub enum EditMode {
+    #[default]
+    Move,
+    Rotate,
+    Scale
+}
+
 #[derive(Default, PartialEq, Debug)]
 pub struct BoneTop {
     pub id: i32,
@@ -591,7 +599,7 @@ pub struct Shared {
     pub redo_actions: Vec<Action>,
 
     // should be enum but too lazy atm
-    pub edit_mode: i32,
+    pub edit_mode: EditMode,
 
     pub highlight_bindgroup: Option<BindGroup>,
     pub gridline_bindgroup: Option<BindGroup>,
