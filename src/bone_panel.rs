@@ -51,7 +51,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.separator();
     ui.add_space(3.);
 
-    if shared.dragging {
+    if shared.ui.dragging {
         ui.disable();
         return;
     }

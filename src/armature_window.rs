@@ -41,9 +41,9 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         ..Default::default()
                     });
                 }
-                let drag_name = if shared.dragging { "Edit" } else { "Drag" };
+                let drag_name = if shared.ui.dragging { "Edit" } else { "Drag" };
                 if shared.armature.bones.len() > 1 && ui_mod::button(drag_name, ui).clicked() {
-                    shared.dragging = !shared.dragging;
+                    shared.ui.dragging = !shared.ui.dragging;
                 }
             });
 
@@ -76,7 +76,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                             draggable
                         */
 
-                        if shared.dragging {
+                        if shared.ui.dragging {
                             // add draggable labels
                             ui.add_space(4.);
                             let id = Id::new(("bone", idx, 0));
