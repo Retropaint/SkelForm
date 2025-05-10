@@ -20,7 +20,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             });
 
             ui.separator();
-            ui.add_space(3.);
 
             ui.horizontal(|ui| {
                 if ui_mod::button("New Bone", ui).clicked() {
@@ -53,7 +52,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             if shared.armature.bones.len() == 0 {
                 return;
             }
-            ui.separator();
+
+            ui.add_space(3.);
 
             // hierarchy
             let frame = Frame::default().inner_margin(5.);
