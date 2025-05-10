@@ -292,9 +292,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     } else if shared.selected_bone_idx != usize::MAX && shared.input.mouse_left > click_threshold {
         if !shared.editing_bone {
             if shared.is_animating() {
-                shared.undo_actions.push(crate::Action {
-                    action: crate::ActionEnum::Animation,
-                    action_type: crate::ActionType::Edited,
+                shared.undo_actions.push(Action {
+                    action: ActionEnum::Animation,
+                    action_type: ActionType::Edited,
                     id: shared.ui.anim.selected as i32,
                     animation: shared.armature.animations[shared.ui.anim.selected].clone(),
                     ..Default::default()
@@ -314,17 +314,17 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                         - shared.armature.bones[shared.selected_bone_idx].pos;
                 }
                 let pos = shared.move_with_mouse(&pos, true);
-                shared.edit_bone(&crate::AnimElement::PositionX, pos.x, false);
-                shared.edit_bone(&crate::AnimElement::PositionY, pos.y, false);
+                shared.edit_bone(&AnimElement::PositionX, pos.x, false);
+                shared.edit_bone(&AnimElement::PositionY, pos.y, false);
             }
             shared::EditMode::Rotate => {
                 let rot = (shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.;
-                shared.edit_bone(&crate::AnimElement::Rotation, rot, false);
+                shared.edit_bone(&AnimElement::Rotation, rot, false);
             }
             shared::EditMode::Scale => {
                 let scale = (shared.input.mouse / shared.window) * 2.;
-                shared.edit_bone(&crate::AnimElement::ScaleX, scale.x, false);
-                shared.edit_bone(&crate::AnimElement::ScaleY, scale.y, false);
+                shared.edit_bone(&AnimElement::ScaleX, scale.x, false);
+                shared.edit_bone(&AnimElement::ScaleY, scale.y, false);
             }
         };
     }
