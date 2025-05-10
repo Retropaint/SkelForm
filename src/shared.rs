@@ -921,7 +921,7 @@ impl Shared {
     }
 
     pub fn edit_bone(&mut self, element: &AnimElement, mut value: f32, overwrite: bool) {
-        let mut og_value = value;
+        let og_value: f32;
         let is_animating = self.is_animating();
 
         macro_rules! edit {
@@ -951,7 +951,6 @@ impl Shared {
             AnimElement::PivotX =>    { edit!(bone_mut.pivot.x); },
             AnimElement::PivotY =>    { edit!(bone_mut.pivot.y); },
             AnimElement::Zindex =>    { edit!(bone_mut.zindex); },
-            _ => {}
         };
 
         if !self.is_animating() {
