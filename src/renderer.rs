@@ -110,7 +110,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         let tex = &shared.armature.textures[temp_bones[i].tex_idx as usize];
 
-        let temp_verts: [Vertex; 4] = [
+        let temp_verts = vec![
             Vertex {
                 pos: Vec2::new(tex.size.x * temp_bones[i].scale.x, 0.),
                 uv: Vec2::new(1., 0.),
@@ -132,6 +132,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             },
         ];
 
+        shared.armature.bones[i].vertices = temp_verts.clone();
+        temp_bones[i].vertices = temp_verts.clone();
+
         let final_verts = rect_verts(
             temp_verts,
             Vec2::ZERO,
@@ -142,9 +145,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             shared.window.x / shared.window.y,
             0.005,
         );
-
-        shared.armature.bones[i].vertices = final_verts.clone();
-        temp_bones[i].vertices = final_verts;
     }
 
     let mut hovered_bone = -1;
@@ -232,11 +232,21 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         // draw bone
+        let final_verts = rect_verts(
+            shared.find_bone(temp_bones[i].id).unwrap().vertices.clone(),
+            Vec2::ZERO,
+            Some(&temp_bones[i]),
+            &shared.camera.pos,
+            shared.camera.zoom,
+            Some(&shared.armature.textures[temp_bones[i].tex_idx as usize]),
+            shared.window.x / shared.window.y,
+            0.005,
+        );
         render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx as usize], &[]);
         render_pass.set_vertex_buffer(
             0,
             vertex_buffer(
-                &shared.find_bone(temp_bones[i].id).unwrap().vertices,
+                &final_verts,
                 device,
             )
             .slice(..),
@@ -355,25 +365,25 @@ fn draw_point(
     let point_size = 0.1;
     let temp_point_verts: [Vertex; 4] = [
         Vertex {
-            pos: Vec2::new(-point_size, point_size) + bone.pos,
+            pos: Vec2::new(-point_size, point_size) + bone.pos + shared.camera.pos,
             uv: Vec2::new(1., 0.),
         },
         Vertex {
-            pos: Vec2::new(point_size, point_size) + bone.pos,
+            pos: Vec2::new(point_size, point_size) + bone.pos + shared.camera.pos,
             uv: Vec2::new(0., 1.),
         },
         Vertex {
-            pos: Vec2::new(-point_size, -point_size) + bone.pos,
+            pos: Vec2::new(-point_size, -point_size) + bone.pos + shared.camera.pos,
             uv: Vec2::new(0., 0.),
         },
         Vertex {
-            pos: Vec2::new(point_size, -point_size) + bone.pos,
+            pos: Vec2::new(point_size, -point_size) + bone.pos + shared.camera.pos,
             uv: Vec2::new(1., 1.),
         },
     ];
 
     let mut point_verts = rect_verts(
-        temp_point_verts,
+        temp_point_verts.to_vec(),
         *offset,
         None,
         &shared.camera.pos,
@@ -496,7 +506,7 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
 ///
 /// Accounts for texture size and aspect ratio
 fn rect_verts(
-    mut verts: [Vertex; 4],
+    mut verts: Vec<Vertex>,
     offset: Vec2,
     bone: Option<&Bone>,
     camera: &Vec2,
