@@ -79,8 +79,22 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             },
         ];
 
-        shared.armature.bones[i].vertices = temp_verts.clone();
-        temp_bones[i].vertices = temp_verts.clone();
+        let clone_bone = Bone {
+            pos: Vec2::ZERO,
+            ..temp_bones[i].clone()
+        };
+        let final_verts = rect_verts(
+            temp_verts,
+            Some(&clone_bone),
+            &shared.camera.pos,
+            shared.camera.zoom,
+            Some(&tex),
+            1.,
+            0.005,
+        );
+
+        shared.armature.bones[i].vertices = final_verts.clone();
+        temp_bones[i].vertices = final_verts.clone();
     }
 
     let mut hovered_bone = -1;
@@ -174,15 +188,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         // draw bone
-        let final_verts = rect_verts(
-            shared.find_bone(temp_bones[i].id).unwrap().vertices.clone(),
-            Some(&temp_bones[i]),
-            &shared.camera.pos,
-            shared.camera.zoom,
-            Some(&shared.armature.textures[temp_bones[i].tex_idx as usize]),
-            shared.window.x / shared.window.y,
-            0.005,
-        );
+        let mut final_verts = temp_bones[i].vertices.clone();
+        for vert in &mut final_verts {
+            vert.pos += temp_bones[i].pos / shared.camera.zoom;
+            vert.pos.x /= shared.window.x / shared.window.y;
+        }
         render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx as usize], &[]);
         render_pass.set_vertex_buffer(0, vertex_buffer(&final_verts, device).slice(..));
         render_pass.set_index_buffer(
