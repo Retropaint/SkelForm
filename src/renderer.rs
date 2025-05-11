@@ -196,7 +196,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if b.id == selected_id {
             render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
             draw_point(&Vec2::ZERO, shared, render_pass, device, b, Color::GREEN);
-        } 
+        }
 
         if b.id != selected_id || !b.is_mesh {
             continue;
@@ -297,11 +297,15 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         match shared.edit_mode {
             shared::EditMode::Move => {
                 let mut pos = bones[shared.selected_bone_idx].pos;
-                if shared.is_animating() {
-                    pos = bones[shared.selected_bone_idx].pos
-                        - shared.armature.bones[shared.selected_bone_idx].pos;
-                }
-                let pos = shared.move_with_mouse(&pos, true);
+
+                // get mouse velocity in world space
+                let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+                let mouse_prev_world =
+                    utils::screen_to_world_space(shared.input.mouse_prev, shared.window);
+
+                // offset position by said velocity
+                pos += (mouse_world - mouse_prev_world) * shared.camera.zoom;
+
                 shared.edit_bone(&AnimElement::PositionX, pos.x, false);
                 shared.edit_bone(&AnimElement::PositionY, pos.y, false);
             }
@@ -316,6 +320,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             }
         };
     }
+
+    shared.input.mouse_prev = shared.input.mouse;
 }
 
 fn draw_point(
