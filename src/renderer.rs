@@ -173,11 +173,17 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             }
 
             let is_in_box: bool;
-            (hovered_bone_verts, is_in_box) = utils::in_bounding_box(
-                &shared.input.mouse,
-                &shared.find_bone(temp_bones[i].id).unwrap().vertices,
-                &shared.window,
+            let verts = rect_verts(
+                shared.find_bone(temp_bones[i].id).unwrap().vertices.clone(),
+                Some(&temp_bones[i]),
+                &shared.camera.pos,
+                shared.camera.zoom,
+                Some(&shared.armature.textures[temp_bones[i].tex_idx as usize]),
+                shared.window.x / shared.window.y,
+                0.005,
             );
+            (hovered_bone_verts, is_in_box) =
+                utils::in_bounding_box(&shared.input.mouse, &verts, &shared.window);
             if is_in_box {
                 // highlight bone for selection if not already selected
                 hovered_bone = i as i32;
@@ -238,29 +244,27 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
 
-        if b.id != selected_id {
+        if b.id == selected_id {
+            draw_point(&Vec2::ZERO, shared, render_pass, device, b, true);
+        } else if !b.is_mesh {
             continue;
         }
 
-        draw_point(&Vec2::ZERO, shared, render_pass, device, b, true);
-
-        if b.is_mesh {
-            for vert in b.vertices.clone() {
-                let clone_bone = Bone {
-                    pos: Vec2::ZERO,
-                    ..b.clone()
-                };
-                let final_vert = raw_to_world_vert(
-                    vert,
-                    Some(&clone_bone),
-                    &Vec2::ZERO,
-                    shared.camera.zoom,
-                    Some(&shared.armature.textures[temp_bones[i].tex_idx as usize]),
-                    shared.window.x / shared.window.y,
-                    0.005,
-                );
-                draw_point(&final_vert.pos, shared, render_pass, device, b, false);
-            }
+        for vert in b.vertices.clone() {
+            let clone_bone = Bone {
+                pos: Vec2::ZERO,
+                ..b.clone()
+            };
+            let final_vert = raw_to_world_vert(
+                vert,
+                Some(&clone_bone),
+                &Vec2::ZERO,
+                shared.camera.zoom,
+                Some(&shared.armature.textures[temp_bones[i].tex_idx as usize]),
+                shared.window.x / shared.window.y,
+                0.005,
+            );
+            draw_point(&final_vert.pos, shared, render_pass, device, b, false);
         }
     }
 
