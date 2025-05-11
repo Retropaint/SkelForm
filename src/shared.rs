@@ -903,34 +903,6 @@ impl Shared {
         )
     }
 
-    pub fn get_mouse_world(&mut self) -> Vec2 {
-        // get mouse in world space
-        let mut mouse_world = crate::utils::screen_to_world_space(self.input.mouse, self.window);
-        mouse_world.x *= self.window.x / self.window.y;
-        mouse_world
-    }
-
-    pub fn move_with_mouse(&mut self, value: &Vec2, counter_parent: bool) -> Vec2 {
-        let mut mouse = self.get_mouse_world();
-
-        // Counter-act parent's rotation so that translation is global.
-        // Only used in bone translation.
-        if counter_parent {
-            let parent_id = self.selected_bone().unwrap().parent_id;
-            if let Some(parent) = self.find_bone(parent_id) {
-                mouse = crate::utils::rotate(&mouse, -parent.rot);
-            }
-        }
-
-        // Upon immediately clicking, track initial values to allow 'dragging'
-        if self.input.initial_points.len() == 0 {
-            let initial = mouse * self.camera.zoom;
-            self.input.initial_points.push(*value - initial);
-        }
-
-        (mouse * self.camera.zoom) + self.input.initial_points[0]
-    }
-
     pub fn save_edited_bone(&mut self) {
         self.undo_actions.push(Action {
             action: ActionEnum::Bone,
