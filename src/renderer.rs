@@ -1,8 +1,7 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
 use crate::*;
-use utils::in_bounding_box;
-use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
+use wgpu::{util::RenderEncoder, BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
 /// The `main` of this module.
@@ -25,60 +24,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // drawing gridlines
-    if shared.gridline_bindgroup != None {
-        render_pass.set_index_buffer(
-            index_buffer([0, 1, 2].to_vec(), &device).slice(..),
-            wgpu::IndexFormat::Uint32,
-        );
-        render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
-
-        let gap = 2.;
-
-        // Used to highlight center horizontal and vertical lines,
-        // but also to prevent bind group from being set for every line
-        // (causes slowdown)
-        let mut center_line = false;
-
-        let aspect_ratio = shared.window.y / shared.window.x;
-        let mut x = shared.camera.pos.x - shared.camera.zoom / aspect_ratio;
-        x = x.round();
-        while x < shared.camera.pos.x + shared.camera.zoom / aspect_ratio {
-            if x % gap != 0. {
-                x += 1.;
-                continue;
-            }
-            if x == 0. && !center_line {
-                render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
-                center_line = true;
-            } else if x != 0. && center_line {
-                render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
-                center_line = false;
-            }
-            draw_vertical_line(x, 0.005 * shared.camera.zoom, render_pass, device, shared);
-            x += 1.;
-        }
-
-        // reset bind group to regular, non-highlighted one
-        center_line = false;
-        render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
-
-        let mut y = shared.camera.pos.y - shared.camera.zoom;
-        y = y.round();
-        while y < shared.camera.pos.y + shared.camera.zoom {
-            if y % gap != 0. {
-                y += 1.;
-                continue;
-            }
-            if y == 0. && !center_line {
-                render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
-                center_line = true;
-            } else if y != 0. && center_line {
-                render_pass.set_bind_group(0, &shared.gridline_bindgroup, &[]);
-                center_line = false;
-            }
-            draw_horizontal_line(y, 0.005 * shared.camera.zoom, render_pass, device, shared);
-            y += 1.;
-        }
+    if shared.generic_bindgroup != None {
+        draw_gridline(render_pass, device, shared);
     }
 
     for i in 0..temp_bones.len() {
@@ -114,21 +61,21 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             Vertex {
                 pos: Vec2::new(tex.size.x * temp_bones[i].scale.x, 0.),
                 uv: Vec2::new(1., 0.),
+                color: Color::default(),
             },
             Vertex {
                 pos: Vec2::new(0., tex.size.y * -temp_bones[i].scale.y),
                 uv: Vec2::new(0., 1.),
+                color: Color::default(),
             },
-            Vertex {
-                pos: Vec2::ZERO,
-                uv: Vec2::new(0., 0.),
-            },
+            Vertex::default(),
             Vertex {
                 pos: Vec2::new(
                     tex.size.x * temp_bones[i].scale.x,
                     tex.size.y * -temp_bones[i].scale.y,
                 ),
                 uv: Vec2::new(1., 1.),
+                color: Color::default(),
             },
         ];
 
@@ -206,7 +153,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     for (i, b) in temp_bones.iter().enumerate() {
         if b.tex_idx == -1 || shared.find_bone(temp_bones[i].id).unwrap().vertices.len() == 0 {
             if b.id == selected_id {
-                draw_point(&Vec2::ZERO, shared, render_pass, device, b, true);
+                draw_point(&Vec2::ZERO, shared, render_pass, device, b);
             }
             continue;
         }
@@ -217,7 +164,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             && can_hover
             && shared.selected_bone_idx != i
         {
-            render_pass.set_bind_group(0, &shared.highlight_bindgroup, &[]);
+            render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
             render_pass.set_vertex_buffer(0, vertex_buffer(&hovered_bone_verts, device).slice(..));
             render_pass.set_index_buffer(
                 index_buffer([0, 1, 2, 3, 0, 1].to_vec(), &device).slice(..),
@@ -244,9 +191,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
 
+        render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+
         if b.id == selected_id {
-            draw_point(&Vec2::ZERO, shared, render_pass, device, b, true);
-        } else if !b.is_mesh {
+            render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+            draw_point(&Vec2::ZERO, shared, render_pass, device, b);
+        }
+
+        if b.id != selected_id || !b.is_mesh {
             continue;
         }
 
@@ -264,7 +216,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.window.x / shared.window.y,
                 0.005,
             );
-            draw_point(&final_vert.pos, shared, render_pass, device, b, false);
+            let verts = draw_point(&final_vert.pos, shared, render_pass, device, b);
+            if utils::in_bounding_box(&shared.input.mouse, &verts, &shared.window).1 {
+                draw_point(&final_vert.pos, shared, render_pass, device, b);
+            }
         }
     }
 
@@ -353,32 +308,32 @@ fn draw_point(
     render_pass: &mut RenderPass,
     device: &Device,
     bone: &Bone,
-    set_bindgroup: bool,
 ) -> Vec<Vertex> {
-    if shared.point_bindgroup == None {
+    if shared.generic_bindgroup == None {
         return vec![];
     }
 
-    if set_bindgroup {
-        render_pass.set_bind_group(0, &shared.point_bindgroup, &[]);
-    }
     let point_size = 0.1;
     let temp_point_verts: [Vertex; 4] = [
         Vertex {
             pos: Vec2::new(-point_size, point_size) + bone.pos,
             uv: Vec2::new(1., 0.),
+            color: Color::new(0., 1., 0., 10.),
         },
         Vertex {
             pos: Vec2::new(point_size, point_size) + bone.pos,
             uv: Vec2::new(0., 1.),
+            color: Color::new(0., 1., 0., 10.),
         },
         Vertex {
             pos: Vec2::new(-point_size, -point_size) + bone.pos,
             uv: Vec2::new(0., 0.),
+            color: Color::new(0., 1., 0., 10.),
         },
         Vertex {
             pos: Vec2::new(point_size, -point_size) + bone.pos,
             uv: Vec2::new(1., 1.),
+            color: Color::new(0., 1., 0., 10.),
         },
     ];
 
@@ -560,25 +515,91 @@ fn raw_to_world_vert(
     vert
 }
 
+fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared) {
+    render_pass.set_index_buffer(
+        index_buffer([0, 1, 2].to_vec(), &device).slice(..),
+        wgpu::IndexFormat::Uint32,
+    );
+
+    render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+
+    let gap = 2.;
+    let width = 0.005 * shared.camera.zoom;
+    let regular_color = Color::new(0.5, 0.5, 0.5, 0.25);
+    let highlight_color = Color::new(0.7, 0.7, 0.7, 1.);
+    let mut color = Color::new(0.5, 0.5, 0.5, 0.25);
+
+    // Used to highlight center horizontal and vertical lines,
+    // but also to prevent bind group from being set for every line
+    // (causes slowdown)
+    let mut center_line = false;
+
+    let aspect_ratio = shared.window.y / shared.window.x;
+    let mut x = shared.camera.pos.x - shared.camera.zoom / aspect_ratio;
+    x = x.round();
+    while x < shared.camera.pos.x + shared.camera.zoom / aspect_ratio {
+        if x % gap != 0. {
+            x += 1.;
+            continue;
+        }
+        if x == 0. && !center_line {
+            color = highlight_color;
+            center_line = true;
+        } else if x != 0. && center_line {
+            color = regular_color;
+            center_line = false;
+        }
+        draw_vertical_line(x, width, render_pass, device, shared, color);
+        x += 1.;
+    }
+
+    color = Color::new(0.5, 0.5, 0.5, 0.5);
+
+    // reset bind group to regular, non-highlighted one
+    center_line = false;
+
+    let mut y = shared.camera.pos.y - shared.camera.zoom;
+    y = y.round();
+    while y < shared.camera.pos.y + shared.camera.zoom {
+        if y % gap != 0. {
+            y += 1.;
+            continue;
+        }
+        if y == 0. && !center_line {
+            color = highlight_color;
+            center_line = true;
+        } else if y != 0. && center_line {
+            color = regular_color;
+            center_line = false;
+        }
+        draw_horizontal_line(y, width, render_pass, device, shared, color);
+        y += 1.;
+    }
+}
+
 pub fn draw_horizontal_line(
     y: f32,
     width: f32,
     render_pass: &mut RenderPass,
     device: &Device,
     shared: &Shared,
+    color: Color,
 ) {
     let vertices: Vec<Vertex> = vec![
         Vertex {
             pos: (Vec2::new(-200., y) - shared.camera.pos) / shared.camera.zoom,
-            uv: Vec2::ZERO,
+            color,
+            ..Default::default()
         },
         Vertex {
             pos: (Vec2::new(0., width + y) - shared.camera.pos) / shared.camera.zoom,
-            uv: Vec2::ZERO,
+            color,
+            ..Default::default()
         },
         Vertex {
             pos: (Vec2::new(200., y) - shared.camera.pos) / shared.camera.zoom,
-            uv: Vec2::ZERO,
+            color,
+            ..Default::default()
         },
     ];
     render_pass.set_vertex_buffer(0, vertex_buffer(&vertices, device).slice(..));
@@ -591,20 +612,24 @@ pub fn draw_vertical_line(
     render_pass: &mut RenderPass,
     device: &Device,
     shared: &Shared,
+    color: Color,
 ) {
     let aspect_ratio = shared.window.y / shared.window.x;
     let vertices: Vec<Vertex> = vec![
         Vertex {
             pos: (Vec2::new(x, -200.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
-            uv: Vec2::ZERO,
+            color,
+            ..Default::default()
         },
         Vertex {
             pos: (Vec2::new(width + x, 0.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
-            uv: Vec2::ZERO,
+            color,
+            ..Default::default()
         },
         Vertex {
             pos: (Vec2::new(x, 200.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
-            uv: Vec2::ZERO,
+            color,
+            ..Default::default()
         },
     ];
     render_pass.set_vertex_buffer(0, vertex_buffer(&vertices, device).slice(..));
