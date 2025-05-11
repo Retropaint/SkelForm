@@ -246,6 +246,7 @@ impl Color {
     }
 
     pub const GREEN: Color = Color::new(0., 1., 0., 1.);
+    pub const WHITE: Color = Color::new(1., 1., 1., 1.);
 }
 
 #[rustfmt::skip]

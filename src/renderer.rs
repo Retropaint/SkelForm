@@ -149,7 +149,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    // finally, draw the bones
+    // drawing stuff
     for (i, b) in temp_bones.iter().enumerate() {
         if b.tex_idx == -1 || shared.find_bone(temp_bones[i].id).unwrap().vertices.len() == 0 {
             if b.id == selected_id {
@@ -231,7 +231,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     render_pass,
                     device,
                     b,
-                    Color::GREEN,
+                    Color::WHITE,
                 );
             }
         }
