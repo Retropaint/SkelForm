@@ -241,9 +241,11 @@ pub struct Color {
 }
 
 impl Color {
-    pub fn new(r: f32, g: f32, b: f32, a: f32) -> Color {
+    pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Color {
         Color{r, g, b, a}
     }
+
+    pub const GREEN: Color = Color::new(0., 1., 0., 1.);
 }
 
 #[rustfmt::skip]
