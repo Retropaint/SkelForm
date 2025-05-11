@@ -167,7 +167,15 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     for (i, b) in temp_bones.iter().enumerate() {
         if b.tex_idx == -1 || shared.find_bone(temp_bones[i].id).unwrap().vertices.len() == 0 {
             if b.id == selected_id {
-                draw_point(&Vec2::ZERO, shared, render_pass, device, b, Color::GREEN);
+                draw_point(
+                    &Vec2::ZERO,
+                    shared,
+                    render_pass,
+                    device,
+                    b,
+                    Color::GREEN,
+                    shared.camera.pos,
+                );
             }
             continue;
         }
@@ -205,7 +213,15 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         if b.id == selected_id {
             render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-            draw_point(&Vec2::ZERO, shared, render_pass, device, b, Color::GREEN);
+            draw_point(
+                &Vec2::ZERO,
+                shared,
+                render_pass,
+                device,
+                b,
+                Color::GREEN,
+                shared.camera.pos,
+            );
         }
 
         if b.id != selected_id || !b.is_mesh {
@@ -215,35 +231,26 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
         for vert in b.vertices.clone() {
-            let clone_bone = Bone {
-                pos: Vec2::ZERO,
-                ..b.clone()
-            };
-            let final_vert = raw_to_world_vert(
-                vert,
-                Some(&clone_bone),
-                &Vec2::ZERO,
-                shared.camera.zoom,
-                Some(&shared.armature.textures[temp_bones[i].tex_idx as usize]),
-                shared.window.x / shared.window.y,
-                0.005,
-            );
+            let mut pos = vert.pos;
+            pos.x /= shared.window.x / shared.window.y;
             let verts = draw_point(
-                &final_vert.pos,
+                &pos,
                 shared,
                 render_pass,
                 device,
                 b,
                 Color::GREEN,
+                Vec2::ZERO,
             );
             if utils::in_bounding_box(&shared.input.mouse, &verts, &shared.window).1 {
                 draw_point(
-                    &final_vert.pos,
+                    &pos,
                     shared,
                     render_pass,
                     device,
                     b,
                     Color::WHITE,
+                    Vec2::ZERO,
                 );
             }
         }
@@ -341,6 +348,7 @@ fn draw_point(
     device: &Device,
     bone: &Bone,
     color: Color,
+    camera: Vec2,
 ) -> Vec<Vertex> {
     if shared.generic_bindgroup == None {
         return vec![];
@@ -373,7 +381,7 @@ fn draw_point(
     let mut point_verts = rect_verts(
         temp_point_verts.to_vec(),
         None,
-        &shared.camera.pos,
+        &camera,
         shared.camera.zoom,
         None,
         shared.window.x / shared.window.y,
