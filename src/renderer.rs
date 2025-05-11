@@ -196,7 +196,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if b.id == selected_id {
             render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
             draw_point(&Vec2::ZERO, shared, render_pass, device, b, Color::GREEN);
-        } else if !b.is_mesh {
+        } 
+
+        if b.id != selected_id || !b.is_mesh {
             continue;
         }
 
