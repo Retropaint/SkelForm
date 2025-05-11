@@ -117,6 +117,7 @@ pub fn keyboard_input(
         .is_pressing(winit::keyboard::KeyCode::SuperLeft)
     {
         if shared.input.is_pressing(winit::keyboard::KeyCode::KeyS) {
+            shared.input.pressed = vec![];
             if shared.save_path == "" {
                 utils::open_save_dialog();
             } else {
