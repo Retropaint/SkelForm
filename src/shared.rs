@@ -221,7 +221,7 @@ impl fmt::Display for Vec2 {
 
 #[repr(C)]
 #[derive(
-    PartialEq, serde::Serialize, serde::Deserialize, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable,
+    PartialEq, serde::Serialize, serde::Deserialize, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default,
 )]
 pub struct Vertex {
     pub pos: Vec2,

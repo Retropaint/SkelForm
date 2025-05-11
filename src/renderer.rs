@@ -1,6 +1,7 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
 use crate::*;
+use utils::in_bounding_box;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
@@ -80,7 +81,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    // using while loop to prevent borrow issues
     for i in 0..temp_bones.len() {
         // get parent bone
         let mut p = Bone::default();
@@ -132,9 +132,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             },
         ];
 
-        // generate the vertices to be used later
         let final_verts = rect_verts(
             temp_verts,
+            Vec2::ZERO,
             Some(&temp_bones[i]),
             &shared.camera.pos,
             shared.camera.zoom,
@@ -143,7 +143,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             0.005,
         );
 
-        shared.armature.bones[i].vertices = final_verts;
+        shared.armature.bones[i].vertices = final_verts.clone();
+        temp_bones[i].vertices = final_verts;
     }
 
     let mut hovered_bone = -1;
@@ -210,7 +211,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     for (i, b) in temp_bones.iter().enumerate() {
         if b.tex_idx == -1 || shared.find_bone(temp_bones[i].id).unwrap().vertices.len() == 0 {
             if b.id == selected_id {
-                draw_point(shared, render_pass, device, b);
+                draw_point(&Vec2::ZERO, shared, render_pass, device, b);
             }
             continue;
         }
@@ -246,8 +247,17 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
 
-        if b.id == selected_id {
-            draw_point(shared, render_pass, device, b);
+        if b.id != selected_id {
+            continue;
+        }
+
+        draw_point(&Vec2::ZERO, shared, render_pass, device, b);
+
+        if b.is_mesh {
+            for vert in &b.vertices {
+                let verts = draw_point(&vert.pos, shared, render_pass, device, &Bone::default());
+                if in_bounding_box(&shared.input.mouse, &verts, &shared.window).1 {}
+            }
         }
     }
 
@@ -330,46 +340,61 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 }
 
-fn draw_point(shared: &Shared, render_pass: &mut RenderPass, device: &Device, bone: &Bone) {
-    if shared.point_bindgroup != None {
-        render_pass.set_bind_group(0, &shared.point_bindgroup, &[]);
-        let point_size = 0.1;
-        let temp_point_verts: [Vertex; 4] = [
-            Vertex {
-                pos: Vec2::new(-point_size, point_size) + bone.pos,
-                uv: Vec2::new(1., 0.),
-            },
-            Vertex {
-                pos: Vec2::new(point_size, point_size) + bone.pos,
-                uv: Vec2::new(0., 1.),
-            },
-            Vertex {
-                pos: Vec2::new(-point_size, -point_size) + bone.pos,
-                uv: Vec2::new(0., 0.),
-            },
-            Vertex {
-                pos: Vec2::new(point_size, -point_size) + bone.pos,
-                uv: Vec2::new(1., 1.),
-            },
-        ];
-
-        let point_verts = rect_verts(
-            temp_point_verts,
-            None,
-            &shared.camera.pos,
-            shared.camera.zoom,
-            None,
-            shared.window.x / shared.window.y,
-            1.,
-        );
-
-        render_pass.set_vertex_buffer(0, vertex_buffer(&point_verts.to_vec(), device).slice(..));
-        render_pass.set_index_buffer(
-            index_buffer(RECT_VERT_INDICES.to_vec(), &device).slice(..),
-            wgpu::IndexFormat::Uint32,
-        );
-        render_pass.draw_indexed(0..6, 0, 0..1);
+fn draw_point(
+    offset: &Vec2,
+    shared: &Shared,
+    render_pass: &mut RenderPass,
+    device: &Device,
+    bone: &Bone,
+) -> Vec<Vertex> {
+    if shared.point_bindgroup == None {
+        return vec![];
     }
+
+    render_pass.set_bind_group(0, &shared.point_bindgroup, &[]);
+    let point_size = 0.1;
+    let temp_point_verts: [Vertex; 4] = [
+        Vertex {
+            pos: Vec2::new(-point_size, point_size) + bone.pos,
+            uv: Vec2::new(1., 0.),
+        },
+        Vertex {
+            pos: Vec2::new(point_size, point_size) + bone.pos,
+            uv: Vec2::new(0., 1.),
+        },
+        Vertex {
+            pos: Vec2::new(-point_size, -point_size) + bone.pos,
+            uv: Vec2::new(0., 0.),
+        },
+        Vertex {
+            pos: Vec2::new(point_size, -point_size) + bone.pos,
+            uv: Vec2::new(1., 1.),
+        },
+    ];
+
+    let mut point_verts = rect_verts(
+        temp_point_verts,
+        *offset,
+        None,
+        &shared.camera.pos,
+        shared.camera.zoom,
+        None,
+        shared.window.x / shared.window.y,
+        1.,
+    );
+
+    for vert in &mut point_verts {
+        vert.pos += *offset;
+    }
+
+    render_pass.set_vertex_buffer(0, vertex_buffer(&point_verts.to_vec(), device).slice(..));
+    render_pass.set_index_buffer(
+        index_buffer(RECT_VERT_INDICES.to_vec(), &device).slice(..),
+        wgpu::IndexFormat::Uint32,
+    );
+    render_pass.draw_indexed(0..6, 0, 0..1);
+
+    point_verts
 }
 
 /// Get bind group of a texture.
@@ -472,6 +497,7 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
 /// Accounts for texture size and aspect ratio
 fn rect_verts(
     mut verts: [Vertex; 4],
+    offset: Vec2,
     bone: Option<&Bone>,
     camera: &Vec2,
     zoom: f32,
@@ -479,7 +505,9 @@ fn rect_verts(
     aspect_ratio: f32,
     hard_scale: f32,
 ) -> Vec<Vertex> {
-    for v in &mut verts {
+    for i in 0..verts.len() {
+        let v = &mut verts[i];
+
         v.pos *= hard_scale;
 
         if let Some(bone) = bone {
