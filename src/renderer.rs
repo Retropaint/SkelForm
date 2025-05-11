@@ -153,7 +153,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     for (i, b) in temp_bones.iter().enumerate() {
         if b.tex_idx == -1 || shared.find_bone(temp_bones[i].id).unwrap().vertices.len() == 0 {
             if b.id == selected_id {
-                draw_point(&Vec2::ZERO, shared, render_pass, device, b);
+                draw_point(&Vec2::ZERO, shared, render_pass, device, b, Color::GREEN);
             }
             continue;
         }
@@ -191,16 +191,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         );
         render_pass.draw_indexed(0..6, 0, 0..1);
 
-        render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+        // point stuff
 
         if b.id == selected_id {
             render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-            draw_point(&Vec2::ZERO, shared, render_pass, device, b);
-        }
-
-        if b.id != selected_id || !b.is_mesh {
+            draw_point(&Vec2::ZERO, shared, render_pass, device, b, Color::GREEN);
+        } else if !b.is_mesh {
             continue;
         }
+
+        render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
         for vert in b.vertices.clone() {
             let clone_bone = Bone {
@@ -216,9 +216,23 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.window.x / shared.window.y,
                 0.005,
             );
-            let verts = draw_point(&final_vert.pos, shared, render_pass, device, b);
+            let verts = draw_point(
+                &final_vert.pos,
+                shared,
+                render_pass,
+                device,
+                b,
+                Color::GREEN,
+            );
             if utils::in_bounding_box(&shared.input.mouse, &verts, &shared.window).1 {
-                draw_point(&final_vert.pos, shared, render_pass, device, b);
+                draw_point(
+                    &final_vert.pos,
+                    shared,
+                    render_pass,
+                    device,
+                    b,
+                    Color::GREEN,
+                );
             }
         }
     }
@@ -308,6 +322,7 @@ fn draw_point(
     render_pass: &mut RenderPass,
     device: &Device,
     bone: &Bone,
+    color: Color,
 ) -> Vec<Vertex> {
     if shared.generic_bindgroup == None {
         return vec![];
@@ -318,22 +333,22 @@ fn draw_point(
         Vertex {
             pos: Vec2::new(-point_size, point_size) + bone.pos,
             uv: Vec2::new(1., 0.),
-            color: Color::new(0., 1., 0., 10.),
+            color,
         },
         Vertex {
             pos: Vec2::new(point_size, point_size) + bone.pos,
             uv: Vec2::new(0., 1.),
-            color: Color::new(0., 1., 0., 10.),
+            color,
         },
         Vertex {
             pos: Vec2::new(-point_size, -point_size) + bone.pos,
             uv: Vec2::new(0., 0.),
-            color: Color::new(0., 1., 0., 10.),
+            color,
         },
         Vertex {
             pos: Vec2::new(point_size, -point_size) + bone.pos,
             uv: Vec2::new(1., 1.),
-            color: Color::new(0., 1., 0., 10.),
+            color,
         },
     ];
 
