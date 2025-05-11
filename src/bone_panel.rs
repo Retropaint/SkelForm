@@ -1,6 +1,6 @@
 //! UI Bone window.
 
-use crate::{shared::*, ui as ui_mod};
+use crate::{shared::*, ui};
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
@@ -65,7 +65,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label("Texture:");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui_mod::button("Get Image", ui).clicked() {
+            if ui::button("Get Image", ui).clicked() {
                 if shared.bind_groups.len() == 0 {
                     #[cfg(not(target_arch = "wasm32"))]
                     open_file_dialog();
@@ -155,6 +155,15 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             input!(bone.zindex, "zindex", &AnimElement::Zindex, 1., ui, "");
         });
     });
+
+    let mut mesh_label = "Turn to Mesh";
+    if shared.selected_bone_mut().unwrap().is_mesh {
+        mesh_label = "Turn to Rect";
+    }
+
+    if ui::button(mesh_label, ui).clicked() {
+        shared.selected_bone_mut().unwrap().is_mesh = !shared.selected_bone_mut().unwrap().is_mesh;
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
