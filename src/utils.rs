@@ -64,18 +64,22 @@ pub fn in_bounding_box(
         Vertex {
             pos: Vec2::new(right, top),
             uv: Vec2::new(1., 0.),
+            color: Color::default(),
         },
         Vertex {
             pos: Vec2::new(left, top),
             uv: Vec2::new(0., 1.),
+            color: Color::default(),
         },
         Vertex {
             pos: Vec2::new(left, bot),
             uv: Vec2::new(0., 0.),
+            color: Color::default(),
         },
         Vertex {
             pos: Vec2::new(right, bot),
             uv: Vec2::new(1., 1.),
+            color: Color::default(),
         },
     ];
 
@@ -262,7 +266,12 @@ pub fn import(
 
         for texture in &mut root.armatures[0].textures {
             texture.pixels = img
-                .crop(texture.offset.x as u32, 0, texture.size.x as u32, texture.size.y as u32)
+                .crop(
+                    texture.offset.x as u32,
+                    0,
+                    texture.size.x as u32,
+                    texture.size.y as u32,
+                )
                 .into_rgba8()
                 .to_vec();
 

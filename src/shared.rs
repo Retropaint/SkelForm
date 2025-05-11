@@ -226,6 +226,31 @@ impl fmt::Display for Vec2 {
 pub struct Vertex {
     pub pos: Vec2,
     pub uv: Vec2,
+    pub color: Color
+}
+
+#[repr(C)]
+#[derive(
+    PartialEq, serde::Serialize, serde::Deserialize, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable,
+)]
+pub struct Color {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub a: f32,
+}
+
+impl Color {
+    pub fn new(r: f32, g: f32, b: f32, a: f32) -> Color {
+        Color{r, g, b, a}
+    }
+}
+
+#[rustfmt::skip]
+impl Default for Color {
+    fn default() -> Self {
+        Color {  r: 1., g: 1., b: 1., a: 1. }
+    }
 }
 
 #[derive(Clone, Default)]
@@ -601,9 +626,7 @@ pub struct Shared {
     // should be enum but too lazy atm
     pub edit_mode: EditMode,
 
-    pub highlight_bindgroup: Option<BindGroup>,
-    pub gridline_bindgroup: Option<BindGroup>,
-    pub point_bindgroup: Option<BindGroup>,
+    pub generic_bindgroup: Option<BindGroup>,
 
     pub save_path: String,
 

@@ -299,23 +299,15 @@ impl ApplicationHandler for App {
             event_loop.exit();
         }
 
-        macro_rules! generic_bindgroup {
-            ($bindgroup:expr, $color:expr) => {
-                if $bindgroup == None {
-                    $bindgroup = Some(renderer::create_texture_bind_group(
-                        $color,
-                        Vec2::new(1., 1.),
-                        &self.renderer.as_ref().unwrap().gpu.queue,
-                        &self.renderer.as_ref().unwrap().gpu.device,
-                        &self.renderer.as_ref().unwrap().bind_group_layout,
-                    ));
-                }
-            };
+        if self.shared.generic_bindgroup == None {
+            self.shared.generic_bindgroup = Some(renderer::create_texture_bind_group(
+                vec![255, 255, 255, 255],
+                Vec2::new(1., 1.),
+                &self.renderer.as_ref().unwrap().gpu.queue,
+                &self.renderer.as_ref().unwrap().gpu.device,
+                &self.renderer.as_ref().unwrap().bind_group_layout,
+            ));
         }
-
-        generic_bindgroup!(self.shared.highlight_bindgroup, vec![255, 255, 255, 70]);
-        generic_bindgroup!(self.shared.gridline_bindgroup, vec![255, 255, 255, 20]);
-        generic_bindgroup!(self.shared.point_bindgroup, vec![0, 255, 0, 255]);
 
         #[cfg(not(target_arch = "wasm32"))]
         if self.shared.debug {
@@ -878,7 +870,8 @@ impl Scene {
             source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(shader_str)),
         });
 
-        let attributes = wgpu::vertex_attr_array![0 => Float32x2, 1 => Float32x2].to_vec();
+        let attributes =
+            wgpu::vertex_attr_array![0 => Float32x2, 1 => Float32x2, 2 => Float32x4].to_vec();
         let vertex_layout = wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
