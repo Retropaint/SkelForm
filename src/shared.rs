@@ -219,6 +219,16 @@ impl fmt::Display for Vec2 {
     }
 }
 
+macro_rules! enum_string {
+    ($type:ty) => {
+        impl fmt::Display for $type {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f, "{:?}", self)
+            }
+        }       
+    };
+}
+
 #[repr(C)]
 #[derive(
     PartialEq, serde::Serialize, serde::Deserialize, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default,
@@ -298,7 +308,18 @@ pub enum UiState {
     Dragging,
     RemovingTexture,
     ForcedModal,
+    Modal,
+    PolarModal,
 }
+
+#[derive(Clone, Default, PartialEq, Debug)]
+pub enum PolarId {
+    #[default]
+    DeleteBone,
+    Exiting
+}
+
+enum_string!(PolarId);
 
 #[derive(Clone, Default)]
 pub struct Ui {
@@ -312,10 +333,9 @@ pub struct Ui {
     pub original_name: String,
 
     // id to identify actions for polar (yes-no) dialog
-    pub polar_id: String,
-    pub polar_headline: String,
+    pub polar_id: PolarId,
 
-    pub modal_headline: String,
+    pub headline: String,
 
     // the initial value of what is being edited via input
     pub edit_value: Option<String>,
@@ -379,6 +399,17 @@ impl Ui {
         }    
         false
     }
+
+    pub fn open_modal(&mut self, headline: String) {
+        self.add_state(UiState::Modal);
+        self.headline = headline;
+    }
+
+    pub fn open_polar_modal(&mut self, id: PolarId, headline: String) {
+        self.add_state(UiState::PolarModal);
+        self.polar_id = id;
+        self.headline = headline;
+    }    
 }
 
 #[derive(Clone, Default)]
@@ -512,11 +543,7 @@ pub enum Transition {
 }
 
 // this allows getting the element name as a string
-impl fmt::Display for Transition {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
+enum_string!(Transition);
 
 #[derive(
     Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, Clone, Default, Debug,
@@ -571,11 +598,8 @@ impl AnimElement {
 }
 
 // this allows getting the element name as a string
-impl fmt::Display for AnimElement {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
+enum_string!(AnimElement);
+
 #[derive(Default, Debug)]
 pub struct BoneTops {
     pub tops: Vec<BoneTop>,

@@ -89,7 +89,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // editing bone
-    if shared.input.on_ui || shared.ui.polar_id != "" {
+    if shared.input.on_ui || !shared.ui.has_state(UiState::PolarModal) {
         shared.editing_bone = false;
     } else if shared.selected_bone_idx != usize::MAX && shared.input.mouse_left > click_threshold {
         // save animation for undo
