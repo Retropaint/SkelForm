@@ -318,7 +318,6 @@ pub enum PolarId {
     DeleteBone,
     Exiting
 }
-
 enum_string!(PolarId);
 
 #[derive(Clone, Default)]
