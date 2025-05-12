@@ -488,6 +488,7 @@ impl Renderer {
 
         // core rendering logic handled in renderer.rs
         renderer::render(&mut render_pass, &self.gpu.device, shared);
+        shared.input.mouse_prev = shared.input.mouse;
 
         self.egui_renderer.render(
             &mut render_pass.forget_lifetime(),

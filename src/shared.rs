@@ -226,7 +226,7 @@ impl fmt::Display for Vec2 {
 pub struct Vertex {
     pub pos: Vec2,
     pub uv: Vec2,
-    pub color: Color
+    pub color: Color,
 }
 
 #[repr(C)]
