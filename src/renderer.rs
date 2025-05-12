@@ -4,16 +4,10 @@ use crate::*;
 use wgpu::{util::RenderEncoder, BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
-/// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
     let mut bones = shared.armature.bones.clone();
     if shared.is_animating() {
         bones = shared.animate(shared.ui.anim.selected);
-    }
-
-    let mut selected_id = -1;
-    if shared.selected_bone() != None {
-        selected_id = shared.selected_bone().unwrap().id;
     }
 
     // For rendering purposes, bones need to have many of their attributes manipulated.
@@ -39,236 +33,32 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             }
         }
 
-        temp_bones[i].rot += p.rot;
-        temp_bones[i].scale *= p.scale;
-
-        // adjust bone's position based on parent's scale
-        temp_bones[i].pos *= p.scale;
-
-        // rotate such that it will orbit the parent once it's position is inherited
-        temp_bones[i].pos = utils::rotate(&temp_bones[i].pos, p.rot);
-
-        // inherit position from parent
-        temp_bones[i].pos += p.pos;
+        inherit_parent(&mut temp_bones[i], &p);
 
         if temp_bones[i].tex_idx == -1 {
             continue;
         }
 
-        let tex = &shared.armature.textures[temp_bones[i].tex_idx as usize];
-
-        let temp_verts = vec![
-            Vertex {
-                pos: Vec2::new(tex.size.x * temp_bones[i].scale.x, 0.),
-                uv: Vec2::new(1., 0.),
-                color: Color::default(),
-            },
-            Vertex {
-                pos: Vec2::new(0., tex.size.y * -temp_bones[i].scale.y),
-                uv: Vec2::new(0., 1.),
-                color: Color::default(),
-            },
-            Vertex::default(),
-            Vertex {
-                pos: Vec2::new(
-                    tex.size.x * temp_bones[i].scale.x,
-                    tex.size.y * -temp_bones[i].scale.y,
-                ),
-                uv: Vec2::new(1., 1.),
-                color: Color::default(),
-            },
-        ];
-
-        let clone_bone = Bone {
-            pos: Vec2::ZERO,
-            ..temp_bones[i].clone()
-        };
-        let final_verts = rect_verts(
-            temp_verts,
-            Some(&clone_bone),
-            &shared.camera.pos,
-            shared.camera.zoom,
-            Some(&tex),
-            1.,
-            0.005,
-        );
-
-        shared.armature.bones[i].vertices = final_verts.clone();
-        temp_bones[i].vertices = final_verts.clone();
+        if temp_bones[i].vertices.len() == 0 {
+            let tex = &shared.armature.textures[temp_bones[i].tex_idx as usize];
+            let temp_verts = create_tex_rect(tex, temp_bones[i].scale);
+            shared.armature.bones[i].vertices = temp_verts.clone();
+            temp_bones[i].vertices = temp_verts.clone();
+        }
     }
-
-    let mut hovered_bone = -1;
-    let mut hovered_bone_verts: Vec<Vertex> = vec![];
-    let can_hover = !shared.input.on_ui
-        && shared.ui.polar_id == ""
-        && !shared.ui.image_modal
-        && !shared.editing_bone;
 
     // sort bones by z-index for drawing
     temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
 
-    // Check for the bone being hovered on.
-    // This has to be in reverse (for now) since bones are rendered in ascending order of the array,
-    // so it visually makes sense to click the one that shows in front.
-    if can_hover {
-        for i in 0..temp_bones.len() {
-            if shared.find_bone(temp_bones[i].id).unwrap().vertices.len() == 0 {
-                continue;
-            }
-
-            // Check if this bone is a child of the selected bone.
-            // If so, ignore.
-            if shared.selected_bone() != None {
-                let mut ignore = false;
-                let mut parent = shared.find_bone(temp_bones[i].parent_id);
-                while parent != None {
-                    if parent.unwrap().id == shared.selected_bone().unwrap().id {
-                        ignore = true;
-                        break;
-                    }
-                    parent = shared.find_bone(parent.unwrap().parent_id);
-                }
-                if ignore {
-                    continue;
-                }
-            }
-
-            let is_in_box: bool;
-            let verts = rect_verts(
-                shared.find_bone(temp_bones[i].id).unwrap().vertices.clone(),
-                Some(&temp_bones[i]),
-                &shared.camera.pos,
-                shared.camera.zoom,
-                Some(&shared.armature.textures[temp_bones[i].tex_idx as usize]),
-                shared.window.x / shared.window.y,
-                0.005,
-            );
-            (hovered_bone_verts, is_in_box) =
-                utils::in_bounding_box(&shared.input.mouse, &verts, &shared.window);
-            if is_in_box {
-                // highlight bone for selection if not already selected
-                hovered_bone = i as i32;
-
-                // select if left clicked
-                if selected_id != temp_bones[i].id && shared.input.mouse_left == 0 {
-                    for (bi, bone) in shared.armature.bones.iter().enumerate() {
-                        if bone.id == temp_bones[i].id {
-                            shared.select_bone(bi);
-                            break;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-    }
-
-    // drawing stuff
-    for (i, b) in temp_bones.iter().enumerate() {
-        if b.tex_idx == -1 || shared.find_bone(temp_bones[i].id).unwrap().vertices.len() == 0 {
-            if b.id == selected_id {
-                draw_point(
-                    &Vec2::ZERO,
-                    shared,
-                    render_pass,
-                    device,
-                    b,
-                    Color::GREEN,
-                    shared.camera.pos,
-                );
-            }
-            continue;
-        }
-
-        // draw the hovering highlight section
-        if selected_id != b.id
-            && hovered_bone as usize == i
-            && can_hover
-            && shared.selected_bone_idx != i
-        {
-            render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-            render_pass.set_vertex_buffer(0, vertex_buffer(&hovered_bone_verts, device).slice(..));
-            render_pass.set_index_buffer(
-                index_buffer([0, 1, 2, 3, 0, 1].to_vec(), &device).slice(..),
-                wgpu::IndexFormat::Uint32,
-            );
-            render_pass.draw_indexed(0..6, 0, 0..1);
-        }
-
-        // draw bone
-        let mut final_verts = temp_bones[i].vertices.clone();
-        for vert in &mut final_verts {
-            vert.pos += temp_bones[i].pos / shared.camera.zoom;
-            vert.pos.x /= shared.window.x / shared.window.y;
-        }
-        render_pass.set_bind_group(0, &shared.bind_groups[b.tex_idx as usize], &[]);
-        render_pass.set_vertex_buffer(0, vertex_buffer(&final_verts, device).slice(..));
-        render_pass.set_index_buffer(
-            index_buffer(RECT_VERT_INDICES.to_vec(), &device).slice(..),
-            wgpu::IndexFormat::Uint32,
-        );
-        render_pass.draw_indexed(0..6, 0, 0..1);
-
-        // point stuff
-
-        if b.id == selected_id {
-            render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-            draw_point(
-                &Vec2::ZERO,
-                shared,
-                render_pass,
-                device,
-                b,
-                Color::GREEN,
-                shared.camera.pos,
-            );
-        }
-
-        if b.id != selected_id || !b.is_mesh {
-            continue;
-        }
-
-        render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-
-        for vert in b.vertices.clone() {
-            let mut pos = vert.pos;
-            pos.x /= shared.window.x / shared.window.y;
-            let verts = draw_point(
-                &pos,
-                shared,
-                render_pass,
-                device,
-                b,
-                Color::GREEN,
-                Vec2::ZERO,
-            );
-            if utils::in_bounding_box(&shared.input.mouse, &verts, &shared.window).1 {
-                draw_point(
-                    &pos,
-                    shared,
-                    render_pass,
-                    device,
-                    b,
-                    Color::WHITE,
-                    Vec2::ZERO,
-                );
-            }
-        }
+    // draw bone
+    for b in 0..temp_bones.len() {
+        draw_bone(&temp_bones[b], shared, render_pass, device);
     }
 
     // if mouse_left is lower than this, it's considered a click
     let click_threshold = 10;
 
     if shared.input.mouse_left == -1 {
-        // deselect bone if clicking outside
-        if hovered_bone == -1
-            && shared.input.mouse_left_prev <= click_threshold
-            && shared.input.mouse_left_prev != -1
-            && can_hover
-        {
-            shared.selected_bone_idx = usize::MAX;
-        }
-
         shared.editing_bone = false;
         return;
     }
@@ -277,17 +67,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // move camera
     if shared.input.is_pressing(KeyCode::SuperLeft) || shared.selected_bone_idx == usize::MAX {
-        if shared.input.initial_points.len() == 0 {
-            shared.camera.initial_pos = shared.camera.pos;
-            shared.input.initial_points.push(shared.input.mouse);
-        }
-
         let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-        let initial_world =
-            utils::screen_to_world_space(shared.input.initial_points[0], shared.window);
-        shared.camera.pos =
-            shared.camera.initial_pos - (mouse_world - initial_world) * shared.camera.zoom;
-
+        let mouse_prev_world = utils::screen_to_world_space(shared.input.mouse_prev, shared.window);
+        shared.camera.pos -= (mouse_world - mouse_prev_world) * shared.camera.zoom;
         return;
     }
 
@@ -295,50 +77,115 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     if shared.input.on_ui || shared.ui.polar_id != "" {
         shared.editing_bone = false;
     } else if shared.selected_bone_idx != usize::MAX && shared.input.mouse_left > click_threshold {
+        // save animation for undo
         if !shared.editing_bone {
-            if shared.is_animating() {
-                shared.undo_actions.push(Action {
-                    action: ActionEnum::Animation,
-                    action_type: ActionType::Edited,
-                    id: shared.ui.anim.selected as i32,
-                    animation: shared.armature.animations[shared.ui.anim.selected].clone(),
-                    ..Default::default()
-                });
-            } else {
-                shared.save_edited_bone();
-            }
+            shared.save_edited_bone();
+            shared.editing_bone = true;
         }
 
-        shared.editing_bone = true;
         shared.cursor_icon = egui::CursorIcon::Crosshair;
-        match shared.edit_mode {
-            shared::EditMode::Move => {
-                let mut pos = bones[shared.selected_bone_idx].pos;
+        edit_bone(shared);
+    }
+}
 
-                // get mouse velocity in world space
-                let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-                let mouse_prev_world =
-                    utils::screen_to_world_space(shared.input.mouse_prev, shared.window);
+pub fn edit_bone(shared: &mut Shared) {
+    match shared.edit_mode {
+        shared::EditMode::Move => {
+            let mut pos = shared.selected_bone().unwrap().pos;
 
-                // offset position by said velocity
-                pos += (mouse_world - mouse_prev_world) * shared.camera.zoom;
+            // get mouse velocity in world space
+            let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+            let mouse_prev_world =
+                utils::screen_to_world_space(shared.input.mouse_prev, shared.window);
 
-                shared.edit_bone(&AnimElement::PositionX, pos.x, false);
-                shared.edit_bone(&AnimElement::PositionY, pos.y, false);
-            }
-            shared::EditMode::Rotate => {
-                let rot = (shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.;
-                shared.edit_bone(&AnimElement::Rotation, rot, false);
-            }
-            shared::EditMode::Scale => {
-                let scale = (shared.input.mouse / shared.window) * 2.;
-                shared.edit_bone(&AnimElement::ScaleX, scale.x, false);
-                shared.edit_bone(&AnimElement::ScaleY, scale.y, false);
-            }
-        };
+            // offset position by said velocity
+            pos += (mouse_world - mouse_prev_world) * shared.camera.zoom;
+
+            shared.edit_bone(&AnimElement::PositionX, pos.x, false);
+            shared.edit_bone(&AnimElement::PositionY, pos.y, false);
+        }
+        shared::EditMode::Rotate => {
+            let rot = (shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.;
+            shared.edit_bone(&AnimElement::Rotation, rot, false);
+        }
+        shared::EditMode::Scale => {
+            let scale = (shared.input.mouse / shared.window) * 2.;
+            shared.edit_bone(&AnimElement::ScaleX, scale.x, false);
+            shared.edit_bone(&AnimElement::ScaleY, scale.y, false);
+        }
+    };
+}
+
+pub fn inherit_parent(child: &mut Bone, parent: &Bone) {
+    child.rot += parent.rot;
+    child.scale *= parent.scale;
+
+    // adjust bone's position based on parent's scale
+    child.pos *= parent.scale;
+
+    // rotate such that it will orbit the parent once it's position is inherited
+    child.pos = utils::rotate(&child.pos, parent.rot);
+
+    // inherit position from parent
+    child.pos += parent.pos;
+}
+
+pub fn draw_bone(bone: &Bone, shared: &Shared, render_pass: &mut RenderPass, device: &Device) {
+    if bone.tex_idx == -1 {
+        return;
     }
 
-    shared.input.mouse_prev = shared.input.mouse;
+    render_pass.set_bind_group(0, &shared.bind_groups[bone.tex_idx as usize], &[]);
+
+    for v in 0..bone.vertices.len() {
+        if v > bone.vertices.len() - 3 {
+            break;
+        }
+
+        macro_rules! world_vert {
+            ($idx:expr) => {
+                raw_to_world_vert(
+                    bone.vertices[$idx],
+                    Some(&bone),
+                    &shared.camera.pos,
+                    shared.camera.zoom,
+                    Some(&shared.armature.textures[bone.tex_idx as usize]),
+                    shared.window.x / shared.window.y,
+                    0.005,
+                )
+            };
+        }
+
+        let verts = vec![world_vert!(v), world_vert!(v + 1), world_vert!(v + 2)];
+        render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
+
+        render_pass.set_index_buffer(
+            index_buffer(vec![0, 1, 2], &device).slice(..),
+            wgpu::IndexFormat::Uint32,
+        );
+        render_pass.draw_indexed(0..3, 0, 0..1);
+    }
+}
+
+pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> Vec<Vertex> {
+    vec![
+        Vertex::default(),
+        Vertex {
+            pos: Vec2::new(tex.size.x * scale.x, 0.),
+            uv: Vec2::new(1., 0.),
+            color: Color::default(),
+        },
+        Vertex {
+            pos: Vec2::new(0., tex.size.y * -scale.y),
+            uv: Vec2::new(0., 1.),
+            color: Color::default(),
+        },
+        Vertex {
+            pos: Vec2::new(tex.size.x * scale.x, tex.size.y * -scale.y),
+            uv: Vec2::new(1., 1.),
+            color: Color::default(),
+        },
+    ]
 }
 
 fn draw_point(
@@ -497,9 +344,6 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
     )
 }
 
-/// Generate and return the vertices of a bone
-///
-/// Accounts for texture size and aspect ratio
 fn rect_verts(
     mut verts: Vec<Vertex>,
     bone: Option<&Bone>,
@@ -532,10 +376,7 @@ fn raw_to_world_vert(
         vert.pos.x -= pivot_offset.x;
         vert.pos.y += pivot_offset.y;
 
-        let rev_scale = Vec2::new(1. - bone.scale.x, 1. - bone.scale.y);
-        let scale_offset = tex.unwrap().size * rev_scale * bone.pivot * hard_scale;
-        vert.pos.x += scale_offset.x;
-        vert.pos.y -= scale_offset.y;
+        vert.pos *= bone.scale;
 
         // rotate verts
         vert.pos = utils::rotate(&vert.pos, bone.rot);
