@@ -37,17 +37,9 @@ pub fn keyboard_input(
         ui::set_zoom(shared.camera.zoom + 0.1, shared);
     }
 
-    if *key == KeyCode::SuperLeft {
-        if *state == ElementState::Pressed {
-            shared.input.modifier = 1;
-        } else {
-            shared.input.modifier = -1;
-        }
-    }
-
     let mut undo = false;
     let mut redo = false;
-    if shared.input.modifier == 1 {
+    if shared.input.is_pressing(KeyCode::SuperLeft) {
         if shared.input.is_pressing(KeyCode::KeyZ) && shared.undo_actions.len() != 0 {
             undo = true;
         } else if shared.input.is_pressing(KeyCode::KeyY) && shared.redo_actions.len() != 0 {

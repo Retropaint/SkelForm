@@ -266,16 +266,10 @@ pub struct Camera {
 /// Input-related fields.
 #[derive(Clone, Default)]
 pub struct InputStates {
-    pub modifier: i32,
-
     // mouse stuff
-    pub initial_points: Vec<Vec2>,
     pub mouse_left: i32,
     pub mouse_left_prev: i32,
     pub mouse: Vec2,
-
-    pub scroll: Vec2,
-
     pub mouse_prev: Vec2,
 
     // is mouse on UI?
