@@ -305,7 +305,7 @@ pub enum UiState {
     #[default]
     ImageModal,
     Exiting,
-    Dragging,
+    DraggingBone,
     RemovingTexture,
     ForcedModal,
     Modal,
@@ -658,6 +658,8 @@ pub struct Shared {
     pub cursor_icon: egui::CursorIcon,
     pub ui: Ui,
     pub editing_bone: bool,
+
+    pub dragging_vert: usize,
 
     pub frame: i32,
     pub recording: bool,

@@ -53,7 +53,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.separator();
     ui.add_space(3.);
 
-    if shared.ui.has_state(UiState::Dragging) {
+    if shared.ui.has_state(UiState::DraggingBone) {
         ui.disable();
         return;
     }

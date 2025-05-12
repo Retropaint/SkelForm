@@ -41,13 +41,13 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         ..Default::default()
                     });
                 }
-                let drag_name = if shared.ui.has_state(UiState::Dragging) {
+                let drag_name = if shared.ui.has_state(UiState::DraggingBone) {
                     "Edit"
                 } else {
                     "Drag"
                 };
                 if shared.armature.bones.len() > 1 && ui_mod::button(drag_name, ui).clicked() {
-                    shared.ui.set_state(UiState::Dragging, shared.ui.has_state(UiState::Dragging));
+                    shared.ui.set_state(UiState::DraggingBone, shared.ui.has_state(UiState::DraggingBone));
                 }
             });
 
@@ -80,7 +80,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                             draggable
                         */
 
-                        if shared.ui.has_state(UiState::Dragging) {
+                        if shared.ui.has_state(UiState::DraggingBone) {
                             // add draggable labels
                             ui.add_space(4.);
                             let id = Id::new(("bone", idx, 0));
