@@ -84,14 +84,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         shared.cursor_icon = egui::CursorIcon::Crosshair;
-        edit_bone(shared);
+
+        let bone = &bones[shared.selected_bone_idx];
+        edit_bone(shared, bone);
     }
 }
 
-pub fn edit_bone(shared: &mut Shared) {
+pub fn edit_bone(shared: &mut Shared, bone: &Bone) {
     match shared.edit_mode {
         shared::EditMode::Move => {
-            let mut pos = shared.selected_bone().unwrap().pos;
+            let mut pos = bone.pos;
 
             // get mouse velocity in world space
             let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
