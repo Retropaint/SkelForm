@@ -10,8 +10,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         bones = shared.animate(shared.ui.anim.selected);
     }
 
-    let mut editing_verts = false;
-
     // For rendering purposes, bones need to have many of their attributes manipulated.
     // This is easier to do with a separate copy of them.
     let mut temp_bones: Vec<Bone> = vec![];
@@ -62,12 +60,18 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             shared.camera.pos,
         );
         if temp_bones[b].is_mesh {
-            editing_verts = bone_vertices(&temp_bones[b], shared, render_pass, device);
+            bone_vertices(&temp_bones[b], shared, render_pass, device);
         }
     }
 
-    if editing_verts {
-        return;
+    if shared.input.mouse_left == -1 {
+        shared.dragging_vert = usize::MAX;
+    }
+
+    if shared.dragging_vert != usize::MAX {
+        let vert = shared.dragging_vert;
+        drag_vertex(shared, vert);
+        return
     }
 
     // if mouse_left is lower than this, it's considered a click
@@ -191,8 +195,7 @@ pub fn bone_vertices(
     shared: &mut Shared,
     render_pass: &mut RenderPass,
     device: &Device,
-) -> bool {
-    let mut editing_verts = false;
+) {
     for v in 0..bone.vertices.len() {
         if v > bone.vertices.len() - 3 {
             break;
@@ -232,44 +235,46 @@ pub fn bone_vertices(
 
         for wv in 0..verts.len() {
             let point = point!(wv, Color::GREEN);
-            if utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1 {
+            let clicking_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
+            if clicking_on_it && shared.dragging_vert == usize::MAX {
                 point!(wv, Color::WHITE);
 
-                if shared.input.mouse_left == -1 {
+                if shared.input.mouse_left != -1 {
+                    shared.dragging_vert = v + wv;
                     continue;
                 }
-
-                editing_verts = true;
-
-                let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-                let mouse_prev_world =
-                    utils::screen_to_world_space(shared.input.mouse_prev, shared.window);
-
-                macro_rules! con_vert {
-                    ($func:expr, $vert:expr) => {
-                        $func(
-                            $vert,
-                            Some(&bone),
-                            &shared.camera.pos,
-                            shared.camera.zoom,
-                            Some(&shared.armature.textures[bone.tex_idx as usize]),
-                            1.,
-                            0.005,
-                        )
-                    };
-                }
-
-                let mut world_vert = con_vert!(raw_to_world_vert, bone.vertices[v + wv]);
-
-                world_vert.pos.x += (mouse_world - mouse_prev_world).x;
-                world_vert.pos.y += (mouse_world - mouse_prev_world).y;
-
-                shared.selected_bone_mut().unwrap().vertices[v + wv].pos =
-                    con_vert!(world_to_raw_vert, world_vert).pos;
             }
         }
     }
-    editing_verts
+}
+
+pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
+    let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+    let mouse_prev_world = utils::screen_to_world_space(shared.input.mouse_prev, shared.window);
+
+    let bone = shared.selected_bone().unwrap();
+
+    macro_rules! con_vert {
+        ($func:expr, $vert:expr) => {
+            $func(
+                $vert,
+                Some(&bone),
+                &shared.camera.pos,
+                shared.camera.zoom,
+                Some(&shared.armature.textures[bone.tex_idx as usize]),
+                1.,
+                0.005,
+            )
+        };
+    }
+
+    let mut world_vert = con_vert!(raw_to_world_vert, bone.vertices[vert_idx]);
+
+    world_vert.pos.x += (mouse_world - mouse_prev_world).x;
+    world_vert.pos.y += (mouse_world - mouse_prev_world).y;
+
+    shared.selected_bone_mut().unwrap().vertices[vert_idx].pos =
+        con_vert!(world_to_raw_vert, world_vert).pos;
 }
 
 pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> Vec<Vertex> {
