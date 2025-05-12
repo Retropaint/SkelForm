@@ -44,8 +44,10 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         .on_hover_cursor(egui::CursorIcon::PointingHand)
         .clicked()
     {
-        shared.ui.polar_id = "delete_bone".to_string();
-        shared.ui.polar_headline = "Are you sure to delete this bone?".to_string();
+        shared.ui.open_polar_modal(
+            PolarId::DeleteBone,
+            "Are you sure to delete this bone?".to_string(),
+        );
     }
 
     ui.separator();

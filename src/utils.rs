@@ -244,7 +244,7 @@ pub fn import(
 
     if let Ok(_) = zip {
     } else {
-        shared.ui.modal_headline = "That's not a SkelForm armature!".to_string();
+        shared.ui.open_modal("That's not a SkelForm armature!".to_string());
         return;
     }
 

@@ -54,10 +54,10 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         }
     }
 
-    if shared.ui.polar_id != "" {
+    if shared.ui.has_state(UiState::PolarModal) {
         polar_dialog(shared, context);
     }
-    if shared.ui.modal_headline != "" {
+    if shared.ui.has_state(UiState::Modal) {
         modal_dialog(shared, context);
     }
     if shared.ui.has_state(UiState::ImageModal) {
@@ -181,7 +181,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         }
                         if !ffmpeg {
                             let headline = "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.";
-                            shared.ui.modal_headline = headline.to_string();
+                            shared.ui.open_modal(headline.to_string());
                             return
                         }
 
@@ -190,13 +190,13 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                             if shared.armature.animations.len() == 0
                                 || shared.armature.animations[0].keyframes.len() == 0
                             {
-                                shared.ui.modal_headline = "No animation available.".to_string();
+                                shared.ui.open_modal("No animation available.".to_string());
                                 return;
                             } else {
                                 shared.ui.anim.selected = 0;
                             }
                         } else if shared.last_keyframe() == None {
-                            shared.ui.modal_headline = "No animation available.".to_string();
+                            shared.ui.open_modal("No animation available.".to_string());
                             return;
                         }
                         shared.recording = true;
@@ -384,7 +384,7 @@ pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::
 }
 
 pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
-    egui::Modal::new(shared.ui.polar_id.clone().into())
+    egui::Modal::new(shared.ui.polar_id.clone().to_string().into())
         .frame(egui::Frame {
             corner_radius: 0.into(),
             fill: COLOR_MAIN,
@@ -394,14 +394,14 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
         })
         .show(ctx, |ui| {
             ui.set_width(250.);
-            ui.label(shared.ui.polar_headline.to_string());
+            ui.label(shared.ui.headline.to_string());
             ui.add_space(20.);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                 if button("No", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                    shared.ui.polar_id = "".to_string();
+                    shared.ui.remove_state(UiState::PolarModal);
                 }
                 if button("Yes", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                    if shared.ui.polar_id == "delete_bone" {
+                    if shared.ui.polar_id == PolarId::DeleteBone {
                         // remove all children of this bone as well
                         let mut children =
                             vec![shared.armature.bones[shared.selected_bone_idx].clone()];
@@ -426,17 +426,17 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                             }
                         }
                         shared.selected_bone_idx = usize::MAX;
-                    } else if shared.ui.polar_id == "exiting" {
+                    } else if shared.ui.polar_id == PolarId::Exiting {
                         shared.ui.add_state(UiState::Exiting);
                     }
-                    shared.ui.polar_id = "".to_string();
+                    shared.ui.remove_state(UiState::PolarModal);
                 }
             });
         });
 }
 
 pub fn modal_dialog(shared: &mut Shared, ctx: &egui::Context) {
-    egui::Modal::new(shared.ui.polar_id.clone().into())
+    egui::Modal::new(shared.ui.polar_id.to_string().into())
         .frame(egui::Frame {
             corner_radius: 0.into(),
             fill: COLOR_MAIN,
@@ -446,12 +446,13 @@ pub fn modal_dialog(shared: &mut Shared, ctx: &egui::Context) {
         })
         .show(ctx, |ui| {
             ui.set_width(250.);
-            ui.label(shared.ui.modal_headline.to_string());
+            ui.label(shared.ui.headline.to_string());
             ui.add_space(20.);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                 if !shared.ui.has_state(UiState::ForcedModal) {
                     if ui.button("OK").clicked() {
-                        shared.ui.modal_headline = "".to_string();
+                        shared.ui.remove_state(UiState::Modal);
+                        shared.ui.headline = "".to_string();
                     }
                 }
             });
