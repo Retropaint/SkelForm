@@ -181,7 +181,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         }
                         if !ffmpeg {
                             let headline = "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.";
-                            shared.ui.open_modal(headline.to_string());
+                            shared.ui.open_modal(headline.to_string(), false);
                             return
                         }
 
@@ -190,13 +190,13 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                             if shared.armature.animations.len() == 0
                                 || shared.armature.animations[0].keyframes.len() == 0
                             {
-                                shared.ui.open_modal("No animation available.".to_string());
+                                shared.ui.open_modal("No animation available.".to_string(), false);
                                 return;
                             } else {
                                 shared.ui.anim.selected = 0;
                             }
                         } else if shared.last_keyframe() == None {
-                            shared.ui.open_modal("No animation available.".to_string());
+                            shared.ui.open_modal("No animation available.".to_string(), false);
                             return;
                         }
                         shared.recording = true;

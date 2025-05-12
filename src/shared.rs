@@ -391,8 +391,9 @@ impl Ui {
         false
     }
 
-    pub fn open_modal(&mut self, headline: String) {
+    pub fn open_modal(&mut self, headline: String, forced: bool) {
         self.set_state(UiState::Modal, true);
+        self.set_state(UiState::ForcedModal, forced);
         self.headline = headline;
     }
 
@@ -400,7 +401,7 @@ impl Ui {
         self.set_state(UiState::PolarModal, true);
         self.polar_id = id;
         self.headline = headline;
-    }    
+    }
 }
 
 #[derive(Clone, Default)]
