@@ -37,11 +37,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             temp_bones[i] = inherit_from_parent(temp_bones[i].clone(), parent.as_ref().unwrap());
         }
 
-        if temp_bones[i].tex_idx == -1 {
-            continue;
-        }
-
-        if temp_bones[i].vertices.len() == 0 {
+        if temp_bones[i].tex_idx != -1 && temp_bones[i].vertices.len() == 0 {
             let tex = &shared.armature.textures[temp_bones[i].tex_idx as usize];
             let temp_verts = create_tex_rect(tex, temp_bones[i].scale);
             shared.armature.bones[i].vertices = temp_verts.clone();
@@ -65,7 +61,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             Color::GREEN,
             shared.camera.pos,
         );
-        editing_verts = bone_vertices(&temp_bones[b], shared, render_pass, device);
+        if temp_bones[b].is_mesh {
+            editing_verts = bone_vertices(&temp_bones[b], shared, render_pass, device);
+        }
     }
 
     if editing_verts {
@@ -235,12 +233,13 @@ pub fn bone_vertices(
         for wv in 0..verts.len() {
             let point = point!(wv, Color::GREEN);
             if utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1 {
-                editing_verts = true;
                 point!(wv, Color::WHITE);
 
                 if shared.input.mouse_left == -1 {
                     continue;
                 }
+
+                editing_verts = true;
 
                 let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
                 let mouse_prev_world =
