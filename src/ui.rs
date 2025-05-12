@@ -401,35 +401,36 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                     shared.ui.remove_state(UiState::PolarModal);
                 }
                 if button("Yes", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                    if shared.ui.polar_id == PolarId::DeleteBone {
-                        // remove all children of this bone as well
-                        let mut children =
-                            vec![shared.armature.bones[shared.selected_bone_idx].clone()];
-                        armature_window::get_all_children(
-                            &shared.armature.bones,
-                            &mut children,
-                            &shared.armature.bones[shared.selected_bone_idx],
-                        );
-                        children.reverse();
-                        for bone in &children {
-                            shared.delete_bone(bone.id);
-                        }
+                    shared.ui.remove_state(UiState::PolarModal);
+                    match shared.ui.polar_id {
+                        PolarId::DeleteBone => {
+                            // remove all children of this bone as well
+                            let mut children =
+                                vec![shared.armature.bones[shared.selected_bone_idx].clone()];
+                            armature_window::get_all_children(
+                                &shared.armature.bones,
+                                &mut children,
+                                &shared.armature.bones[shared.selected_bone_idx],
+                            );
+                            children.reverse();
+                            for bone in &children {
+                                shared.delete_bone(bone.id);
+                            }
 
-                        // remove all references to this bone and it's children from all animations
-                        for bone in &children {
-                            for anim in &mut shared.armature.animations {
-                                for i in 0..anim.keyframes.len() {
-                                    if anim.keyframes[i].bone_id == bone.id {
-                                        anim.keyframes.remove(i);
+                            // remove all references to this bone and it's children from all animations
+                            for bone in &children {
+                                for anim in &mut shared.armature.animations {
+                                    for i in 0..anim.keyframes.len() {
+                                        if anim.keyframes[i].bone_id == bone.id {
+                                            anim.keyframes.remove(i);
+                                        }
                                     }
                                 }
                             }
+                            shared.selected_bone_idx = usize::MAX;
                         }
-                        shared.selected_bone_idx = usize::MAX;
-                    } else if shared.ui.polar_id == PolarId::Exiting {
-                        shared.ui.add_state(UiState::Exiting);
+                        PolarId::Exiting => shared.ui.add_state(UiState::Exiting)
                     }
-                    shared.ui.remove_state(UiState::PolarModal);
                 }
             });
         });
