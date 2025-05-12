@@ -10,6 +10,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         bones = shared.animate(shared.ui.anim.selected);
     }
 
+    let mut editing_verts = false;
+
     // For rendering purposes, bones need to have many of their attributes manipulated.
     // This is easier to do with a separate copy of them.
     let mut temp_bones: Vec<Bone> = vec![];
@@ -53,6 +55,21 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // draw bone
     for b in 0..temp_bones.len() {
         draw_bone(&temp_bones[b], shared, render_pass, device);
+        render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+        draw_point(
+            &Vec2::ZERO,
+            &shared,
+            render_pass,
+            device,
+            &temp_bones[b],
+            Color::GREEN,
+            shared.camera.pos,
+        );
+        editing_verts = bone_vertices(&temp_bones[b], shared, render_pass, device);
+    }
+
+    if editing_verts {
+        return;
     }
 
     // if mouse_left is lower than this, it's considered a click
@@ -169,6 +186,93 @@ pub fn draw_bone(bone: &Bone, shared: &Shared, render_pass: &mut RenderPass, dev
     }
 }
 
+pub fn bone_vertices(
+    bone: &Bone,
+    shared: &mut Shared,
+    render_pass: &mut RenderPass,
+    device: &Device,
+) -> bool {
+    let mut editing_verts = false;
+    for v in 0..bone.vertices.len() {
+        if v > bone.vertices.len() - 3 {
+            break;
+        }
+
+        macro_rules! world_vert {
+            ($idx:expr) => {
+                raw_to_world_vert(
+                    bone.vertices[$idx],
+                    Some(&bone),
+                    &shared.camera.pos,
+                    shared.camera.zoom,
+                    Some(&shared.armature.textures[bone.tex_idx as usize]),
+                    shared.window.x / shared.window.y,
+                    0.005,
+                )
+            };
+        }
+
+        let verts = vec![world_vert!(v), world_vert!(v + 1), world_vert!(v + 2)];
+        macro_rules! point {
+            ($idx:expr, $color:expr) => {
+                draw_point(
+                    &verts[$idx].pos,
+                    &shared,
+                    render_pass,
+                    device,
+                    &Bone {
+                        pos: Vec2::ZERO,
+                        ..bone.clone()
+                    },
+                    $color,
+                    Vec2::ZERO,
+                )
+            };
+        }
+
+        for wv in 0..verts.len() {
+            let point = point!(wv, Color::GREEN);
+            if utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1 {
+                editing_verts = true;
+                point!(wv, Color::WHITE);
+
+                if shared.input.mouse_left == -1 {
+                    continue;
+                }
+
+                let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+                let mouse_prev_world =
+                    utils::screen_to_world_space(shared.input.mouse_prev, shared.window);
+
+                let mut world_vert = raw_to_world_vert(
+                    bone.vertices[v + wv],
+                    Some(&bone),
+                    &shared.camera.pos,
+                    shared.camera.zoom,
+                    Some(&shared.armature.textures[bone.tex_idx as usize]),
+                    1.,
+                    0.005,
+                );
+
+                world_vert.pos.x += (mouse_world - mouse_prev_world).x;
+                world_vert.pos.y += (mouse_world - mouse_prev_world).y;
+
+                shared.selected_bone_mut().unwrap().vertices[v + wv].pos = world_to_raw_vert(
+                    world_vert,
+                    Some(&bone),
+                    &shared.camera.pos,
+                    shared.camera.zoom,
+                    Some(&shared.armature.textures[bone.tex_idx as usize]),
+                    1.,
+                    0.005,
+                )
+                .pos;
+            }
+        }
+    }
+    editing_verts
+}
+
 pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> Vec<Vertex> {
     vec![
         Vertex::default(),
@@ -192,7 +296,7 @@ pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> Vec<Vertex> {
 
 fn draw_point(
     offset: &Vec2,
-    shared: &mut Shared,
+    shared: &Shared,
     render_pass: &mut RenderPass,
     device: &Device,
     bone: &Bone,
