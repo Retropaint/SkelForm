@@ -126,7 +126,7 @@ pub fn read_image_loaders(
         return;
     }
 
-    shared.ui.remove_state(UiState::ImageModal);
+    shared.ui.set_state(UiState::ImageModal, false);
 
     // check if this texture already exists
     for tex in &shared.armature.textures {
@@ -210,11 +210,9 @@ pub fn read_exported_video_frame(shared: &mut Shared) {
     }
     let frame = fs::read_to_string(TEMP_EXPORT_VID_TEXT).unwrap();
     shared.ui.headline = frame;
-    if shared.ui.headline != EXPORT_VID_DONE {
-        shared.ui.add_state(UiState::ForcedModal);
-    } else {
-        shared.ui.remove_state(UiState::ForcedModal);
-    }
+    shared
+        .ui
+        .set_state(UiState::ForcedModal, shared.ui.headline != EXPORT_VID_DONE);
     fs::remove_file(TEMP_EXPORT_VID_TEXT).unwrap();
 }
 
