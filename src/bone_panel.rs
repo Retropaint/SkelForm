@@ -75,7 +75,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                     #[cfg(target_arch = "wasm32")]
                     toggleFileDialog(true);
                 } else {
-                    shared.ui.add_state(UiState::ImageModal);
+                    shared.ui.set_state(UiState::ImageModal, true);
                 }
             };
             let mut tex_name = "None";

@@ -66,7 +66,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     // close modals on pressing escape
     if shared.input.is_pressing(winit::keyboard::KeyCode::Escape) {
-        shared.ui.remove_state(UiState::ImageModal);
+        shared.ui.set_state(UiState::ImageModal, false);
     }
 
     //visualize_vertices(context, shared);
@@ -398,10 +398,10 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
             ui.add_space(20.);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                 if button("No", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                    shared.ui.remove_state(UiState::PolarModal);
+                    shared.ui.set_state(UiState::PolarModal, false);
                 }
                 if button("Yes", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                    shared.ui.remove_state(UiState::PolarModal);
+                    shared.ui.set_state(UiState::PolarModal, false);
                     match shared.ui.polar_id {
                         PolarId::DeleteBone => {
                             // remove all children of this bone as well
@@ -429,7 +429,7 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                             }
                             shared.selected_bone_idx = usize::MAX;
                         }
-                        PolarId::Exiting => shared.ui.add_state(UiState::Exiting)
+                        PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true)
                     }
                 }
             });
@@ -452,7 +452,7 @@ pub fn modal_dialog(shared: &mut Shared, ctx: &egui::Context) {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                 if !shared.ui.has_state(UiState::ForcedModal) {
                     if ui.button("OK").clicked() {
-                        shared.ui.remove_state(UiState::Modal);
+                        shared.ui.set_state(UiState::Modal, false);
                         shared.ui.headline = "".to_string();
                     }
                 }
@@ -475,7 +475,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
             ui.heading("Select Image");
 
             modal_x(ui, || {
-                shared.ui.remove_state(UiState::ImageModal);
+                shared.ui.set_state(UiState::ImageModal, false);
             });
 
             ui.horizontal(|ui| {
@@ -493,7 +493,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                     "Remove"
                 };
                 if button(label, ui).clicked() {
-                    shared.ui.toggle_state(UiState::RemovingTexture);
+                    shared.ui.set_state(UiState::RemovingTexture, shared.ui.has_state(UiState::RemovingTexture));
                 }
             });
 
@@ -542,12 +542,12 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                 if response.clicked() {
                     if shared.ui.has_state(UiState::RemovingTexture) {
                         shared.remove_texture(i as i32);
-                         shared.ui.remove_state(UiState::RemovingTexture);
+                         shared.ui.set_state(UiState::RemovingTexture, false);
                         // stop the loop to prevent index errors
                         break;
                     } else {
                         shared.selected_bone_mut().unwrap().tex_idx = i as i32;
-                        shared.ui.remove_state(UiState::ImageModal);
+                        shared.ui.set_state(UiState::ImageModal, false);
                     }
                 }
 

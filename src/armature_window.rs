@@ -47,7 +47,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     "Drag"
                 };
                 if shared.armature.bones.len() > 1 && ui_mod::button(drag_name, ui).clicked() {
-                    shared.ui.toggle_state(UiState::Dragging)
+                    shared.ui.set_state(UiState::Dragging, shared.ui.has_state(UiState::Dragging));
                 }
             });
 

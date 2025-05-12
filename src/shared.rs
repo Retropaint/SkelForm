@@ -360,34 +360,26 @@ impl Ui {
         (cursor_pos - ui.min_rect().left_top()).into()
     }
 
-    pub fn add_state(&mut self, state: UiState) {
-        let mut already_added = false;
-        for s in 0..self.states.len() {
-            if self.states[s] == state {
-                already_added = true;
-                break;
+    pub fn set_state(&mut self, state: UiState, add: bool) {
+        if add {
+            let mut already_added = false;
+            for s in 0..self.states.len() {
+                if self.states[s] == state {
+                    already_added = true;
+                    break;
+                }
             }
-        }
-        if !already_added {
-            self.states.push(state);
-        }
-    }
-
-    pub fn remove_state(&mut self, state: UiState) {
-        for s in 0..self.states.len() {
-            if self.states[s] == state {
-                self.states.remove(s);
-                break;
-            }
-        }
-    }
-
-    pub fn toggle_state(&mut self, state: UiState) {
-        if self.has_state(state.clone()) {
-            self.remove_state(state);
+            if !already_added {
+                self.states.push(state);
+            }   
         } else {
-            self.add_state(state.clone());
-        } 
+            for s in 0..self.states.len() {
+                if self.states[s] == state {
+                    self.states.remove(s);
+                    break;
+                }
+            }   
+        }
     }
 
     pub fn has_state(&self, state: UiState) -> bool {
@@ -400,12 +392,12 @@ impl Ui {
     }
 
     pub fn open_modal(&mut self, headline: String) {
-        self.add_state(UiState::Modal);
+        self.set_state(UiState::Modal, true);
         self.headline = headline;
     }
 
     pub fn open_polar_modal(&mut self, id: PolarId, headline: String) {
-        self.add_state(UiState::PolarModal);
+        self.set_state(UiState::PolarModal, true);
         self.polar_id = id;
         self.headline = headline;
     }    
