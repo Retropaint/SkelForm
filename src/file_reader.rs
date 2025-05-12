@@ -122,7 +122,9 @@ pub fn read_image_loaders(
     }
 
     if pixels.len() == 0 {
-        shared.ui.headline = "Could not extract image data.".to_string();
+        shared
+            .ui
+            .open_modal("Could not extract image data.".to_string(), false);
         return;
     }
 
@@ -209,10 +211,7 @@ pub fn read_exported_video_frame(shared: &mut Shared) {
         return;
     }
     let frame = fs::read_to_string(TEMP_EXPORT_VID_TEXT).unwrap();
-    shared.ui.headline = frame;
-    shared
-        .ui
-        .set_state(UiState::ForcedModal, shared.ui.headline != EXPORT_VID_DONE);
+    shared.ui.open_modal(frame, false);
     fs::remove_file(TEMP_EXPORT_VID_TEXT).unwrap();
 }
 
