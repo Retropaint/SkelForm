@@ -295,7 +295,7 @@ impl ApplicationHandler for App {
             _ => (),
         }
 
-        if self.shared.ui.exiting {
+        if self.shared.ui.has_state(UiState::Exiting) {
             event_loop.exit();
         }
 

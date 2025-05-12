@@ -51,7 +51,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.separator();
     ui.add_space(3.);
 
-    if shared.ui.dragging {
+    if shared.ui.has_state(UiState::Dragging) {
         ui.disable();
         return;
     }
@@ -73,7 +73,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                     #[cfg(target_arch = "wasm32")]
                     toggleFileDialog(true);
                 } else {
-                    shared.ui.image_modal = true;
+                    shared.ui.add_state(UiState::ImageModal);
                 }
             };
             let mut tex_name = "None";

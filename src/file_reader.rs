@@ -126,7 +126,7 @@ pub fn read_image_loaders(
         return;
     }
 
-    shared.ui.image_modal = false;
+    shared.ui.remove_state(UiState::ImageModal);
 
     // check if this texture already exists
     for tex in &shared.armature.textures {
@@ -159,8 +159,7 @@ pub fn read_image_loaders(
     });
 
     // assign this texture to the selected bone
-    shared.selected_bone_mut().unwrap().tex_idx =
-        shared.armature.textures.len() as i32 - 1;
+    shared.selected_bone_mut().unwrap().tex_idx = shared.armature.textures.len() as i32 - 1;
 
     // assign texture mame to bone if it's using new bone name
     if shared.selected_bone_mut().unwrap().name == NEW_BONE_NAME {
@@ -211,7 +210,11 @@ pub fn read_exported_video_frame(shared: &mut Shared) {
     }
     let frame = fs::read_to_string(TEMP_EXPORT_VID_TEXT).unwrap();
     shared.ui.modal_headline = frame;
-    shared.ui.forced_modal = shared.ui.modal_headline != EXPORT_VID_DONE;
+    if shared.ui.modal_headline != EXPORT_VID_DONE {
+        shared.ui.add_state(UiState::ForcedModal);
+    } else {
+        shared.ui.remove_state(UiState::ForcedModal);
+    }
     fs::remove_file(TEMP_EXPORT_VID_TEXT).unwrap();
 }
 

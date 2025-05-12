@@ -290,6 +290,16 @@ impl InputStates {
     }
 }
 
+#[derive(Clone, Default, PartialEq)]
+pub enum UiState {
+    #[default]
+    ImageModal,
+    Exiting,
+    Dragging,
+    RemovingTexture,
+    ForcedModal,
+}
+
 #[derive(Clone, Default)]
 pub struct Ui {
     pub anim: UiAnim,
@@ -306,21 +316,13 @@ pub struct Ui {
     pub polar_headline: String,
 
     pub modal_headline: String,
-    // if true, the modal can't be closed
-    pub forced_modal: bool,
 
     // the initial value of what is being edited via input
     pub edit_value: Option<String>,
 
-    pub image_modal: bool,
-
     pub texture_images: Vec<egui::TextureHandle>,
 
-    pub is_removing_textures: bool,
-
-    pub exiting: bool,
-
-    pub dragging: bool,
+    pub states: Vec<UiState>,
 
     // camera bar stuff
     pub camera_bar_pos: Vec2,
@@ -339,13 +341,43 @@ impl Ui {
         (cursor_pos - ui.min_rect().left_top()).into()
     }
 
-    pub fn draw_rect(&self, rect: egui::Rect, ui: &egui::Ui) {
-        ui.painter().rect_stroke(
-            rect,
-            egui::CornerRadius::ZERO,
-            egui::Stroke::new(1., egui::Color32::WHITE),
-            egui::StrokeKind::Outside,
-        );
+    pub fn add_state(&mut self, state: UiState) {
+        let mut already_added = false;
+        for s in 0..self.states.len() {
+            if self.states[s] == state {
+                already_added = true;
+                break;
+            }
+        }
+        if !already_added {
+            self.states.push(state);
+        }
+    }
+
+    pub fn remove_state(&mut self, state: UiState) {
+        for s in 0..self.states.len() {
+            if self.states[s] == state {
+                self.states.remove(s);
+                break;
+            }
+        }
+    }
+
+    pub fn toggle_state(&mut self, state: UiState) {
+        if self.has_state(state.clone()) {
+            self.remove_state(state);
+        } else {
+            self.add_state(state.clone());
+        } 
+    }
+
+    pub fn has_state(&self, state: UiState) -> bool {
+        for s in 0..self.states.len() {
+            if self.states[s] == state {
+                return true;
+            }
+        }    
+        false
     }
 }
 
