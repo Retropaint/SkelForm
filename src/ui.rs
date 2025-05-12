@@ -60,13 +60,13 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     if shared.ui.modal_headline != "" {
         modal_dialog(shared, context);
     }
-    if shared.ui.image_modal {
+    if shared.ui.has_state(UiState::ImageModal) {
         modal_image(shared, context);
     }
 
     // close modals on pressing escape
     if shared.input.is_pressing(winit::keyboard::KeyCode::Escape) {
-        shared.ui.image_modal = false;
+        shared.ui.remove_state(UiState::ImageModal);
     }
 
     //visualize_vertices(context, shared);
@@ -427,7 +427,7 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                         }
                         shared.selected_bone_idx = usize::MAX;
                     } else if shared.ui.polar_id == "exiting" {
-                        shared.ui.exiting = true;
+                        shared.ui.add_state(UiState::Exiting);
                     }
                     shared.ui.polar_id = "".to_string();
                 }
@@ -449,10 +449,9 @@ pub fn modal_dialog(shared: &mut Shared, ctx: &egui::Context) {
             ui.label(shared.ui.modal_headline.to_string());
             ui.add_space(20.);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                if !shared.ui.forced_modal {
+                if !shared.ui.has_state(UiState::ForcedModal) {
                     if ui.button("OK").clicked() {
                         shared.ui.modal_headline = "".to_string();
-                        shared.ui.forced_modal = true;
                     }
                 }
             });
@@ -474,11 +473,11 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
             ui.heading("Select Image");
 
             modal_x(ui, || {
-                shared.ui.image_modal = false;
+                shared.ui.remove_state(UiState::ImageModal);
             });
 
             ui.horizontal(|ui| {
-                if selection_button("Import", shared.ui.is_removing_textures, ui).clicked() {
+                if selection_button("Import", shared.ui.has_state(UiState::RemovingTexture), ui).clicked() {
                     #[cfg(not(target_arch = "wasm32"))]
                     bone_panel::open_file_dialog();
 
@@ -486,13 +485,13 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                     bone_panel::toggleFileDialog(true);
                 }
 
-                let label = if shared.ui.is_removing_textures {
+                let label = if shared.ui.has_state(UiState::RemovingTexture) {
                     "Pick"
                 } else {
                     "Remove"
                 };
                 if button(label, ui).clicked() {
-                    shared.ui.is_removing_textures = !shared.ui.is_removing_textures
+                    shared.ui.toggle_state(UiState::RemovingTexture);
                 }
             });
 
@@ -539,14 +538,14 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                 egui::Image::new(&shared.ui.texture_images[i]).paint_at(ui, rect);
 
                 if response.clicked() {
-                    if shared.ui.is_removing_textures {
+                    if shared.ui.has_state(UiState::RemovingTexture) {
                         shared.remove_texture(i as i32);
-                        shared.ui.is_removing_textures = false;
+                         shared.ui.remove_state(UiState::RemovingTexture);
                         // stop the loop to prevent index errors
                         break;
                     } else {
                         shared.selected_bone_mut().unwrap().tex_idx = i as i32;
-                        shared.ui.image_modal = false;
+                        shared.ui.remove_state(UiState::ImageModal);
                     }
                 }
 

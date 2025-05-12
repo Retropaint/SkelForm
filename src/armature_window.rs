@@ -41,9 +41,13 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         ..Default::default()
                     });
                 }
-                let drag_name = if shared.ui.dragging { "Edit" } else { "Drag" };
+                let drag_name = if shared.ui.has_state(UiState::Dragging) {
+                    "Edit"
+                } else {
+                    "Drag"
+                };
                 if shared.armature.bones.len() > 1 && ui_mod::button(drag_name, ui).clicked() {
-                    shared.ui.dragging = !shared.ui.dragging;
+                    shared.ui.toggle_state(UiState::Dragging)
                 }
             });
 
@@ -76,7 +80,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                             draggable
                         */
 
-                        if shared.ui.dragging {
+                        if shared.ui.has_state(UiState::Dragging) {
                             // add draggable labels
                             ui.add_space(4.);
                             let id = Id::new(("bone", idx, 0));
@@ -131,7 +135,7 @@ pub fn new_bone(shared: &mut Shared, id: i32) -> (Bone, usize) {
         // add new bone below targeted one, keeping in mind its children
         for i in 0..shared.armature.bones.len() {
             if shared.armature.bones[i].id != id {
-                continue
+                continue;
             }
 
             let mut children = vec![];
@@ -175,14 +179,18 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         if let Some(dragged_payload) = drag.dnd_release_payload::<i32>() {
             // ignore if target bone is a child of this
             let mut children: Vec<Bone> = vec![];
-            get_all_children(&shared.armature.bones, &mut children, &shared.armature.bones[*dragged_payload as usize]);
+            get_all_children(
+                &shared.armature.bones,
+                &mut children,
+                &shared.armature.bones[*dragged_payload as usize],
+            );
             for c in children {
                 if shared.armature.bones[idx as usize].id == c.id {
                     return;
                 }
             }
 
-            shared.undo_actions.push(Action{
+            shared.undo_actions.push(Action {
                 action: ActionEnum::Bone,
                 action_type: ActionType::Edited,
                 id: shared.armature.bones[*dragged_payload as usize].id,
@@ -192,11 +200,13 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
 
             if move_type == 0 {
                 // set dragged bone's parent as target
-                shared.armature.bones[*dragged_payload as usize].parent_id = shared.armature.bones[idx as usize].parent_id;
+                shared.armature.bones[*dragged_payload as usize].parent_id =
+                    shared.armature.bones[idx as usize].parent_id;
                 move_bone(&mut shared.armature.bones, *dragged_payload, idx, false);
             } else if move_type == 1 {
                 // move dragged bone above target
-                shared.armature.bones[*dragged_payload as usize].parent_id = shared.armature.bones[idx as usize].id;
+                shared.armature.bones[*dragged_payload as usize].parent_id =
+                    shared.armature.bones[idx as usize].id;
                 move_bone(&mut shared.armature.bones, *dragged_payload, idx, true);
             }
         }
