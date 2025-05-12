@@ -25,17 +25,17 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     for i in 0..temp_bones.len() {
-        // get parent bone
-        let mut p = Bone::default();
-        p.scale.x = 1.;
-        p.scale.y = 1.;
-        for b in &temp_bones {
+        let mut parent: Option<Bone> = None;
+        for b in &bones {
             if b.id == temp_bones[i].parent_id {
-                p = b.clone();
+                parent = Some(b.clone());
+                break;
             }
         }
 
-        inherit_parent(&mut temp_bones[i], &p);
+        if parent != None {
+            temp_bones[i] = inherit_from_parent(temp_bones[i].clone(), parent.as_ref().unwrap());
+        }
 
         if temp_bones[i].tex_idx == -1 {
             continue;
@@ -135,7 +135,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone) {
     };
 }
 
-pub fn inherit_parent(child: &mut Bone, parent: &Bone) {
+pub fn inherit_from_parent(mut child: Bone, parent: &Bone) -> Bone {
     child.rot += parent.rot;
     child.scale *= parent.scale;
 
@@ -147,6 +147,8 @@ pub fn inherit_parent(child: &mut Bone, parent: &Bone) {
 
     // inherit position from parent
     child.pos += parent.pos;
+
+    child
 }
 
 pub fn draw_bone(bone: &Bone, shared: &Shared, render_pass: &mut RenderPass, device: &Device) {
@@ -244,29 +246,27 @@ pub fn bone_vertices(
                 let mouse_prev_world =
                     utils::screen_to_world_space(shared.input.mouse_prev, shared.window);
 
-                let mut world_vert = raw_to_world_vert(
-                    bone.vertices[v + wv],
-                    Some(&bone),
-                    &shared.camera.pos,
-                    shared.camera.zoom,
-                    Some(&shared.armature.textures[bone.tex_idx as usize]),
-                    1.,
-                    0.005,
-                );
+                macro_rules! con_vert {
+                    ($func:expr, $vert:expr) => {
+                        $func(
+                            $vert,
+                            Some(&bone),
+                            &shared.camera.pos,
+                            shared.camera.zoom,
+                            Some(&shared.armature.textures[bone.tex_idx as usize]),
+                            1.,
+                            0.005,
+                        )
+                    };
+                }
+
+                let mut world_vert = con_vert!(raw_to_world_vert, bone.vertices[v + wv]);
 
                 world_vert.pos.x += (mouse_world - mouse_prev_world).x;
                 world_vert.pos.y += (mouse_world - mouse_prev_world).y;
 
-                shared.selected_bone_mut().unwrap().vertices[v + wv].pos = world_to_raw_vert(
-                    world_vert,
-                    Some(&bone),
-                    &shared.camera.pos,
-                    shared.camera.zoom,
-                    Some(&shared.armature.textures[bone.tex_idx as usize]),
-                    1.,
-                    0.005,
-                )
-                .pos;
+                shared.selected_bone_mut().unwrap().vertices[v + wv].pos =
+                    con_vert!(world_to_raw_vert, world_vert).pos;
             }
         }
     }
