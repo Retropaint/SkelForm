@@ -397,6 +397,38 @@ fn raw_to_world_vert(
     vert
 }
 
+fn world_to_raw_vert(
+    mut vert: Vertex,
+    bone: Option<&Bone>,
+    camera: &Vec2,
+    zoom: f32,
+    tex: Option<&Texture>,
+    aspect_ratio: f32,
+    hard_scale: f32,
+) -> Vertex {
+    vert.pos.x *= aspect_ratio;
+
+    vert.pos *= zoom;
+
+    vert.pos += *camera;
+
+    if let Some(bone) = bone {
+        vert.pos -= bone.pos;
+
+        vert.pos = utils::rotate(&vert.pos, -bone.rot);
+
+        vert.pos /= bone.scale;
+
+        let pivot_offset = tex.unwrap().size * bone.pivot * hard_scale;
+        vert.pos.x += pivot_offset.x;
+        vert.pos.y -= pivot_offset.y;
+    }
+
+    vert.pos /= hard_scale;
+
+    vert
+}
+
 fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared) {
     render_pass.set_index_buffer(
         index_buffer([0, 1, 2].to_vec(), &device).slice(..),
