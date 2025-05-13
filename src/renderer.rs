@@ -66,12 +66,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     if shared.input.mouse_left == -1 {
         shared.dragging_vert = usize::MAX;
-    }
-
-    if shared.dragging_vert != usize::MAX {
-        let vert = shared.dragging_vert;
-        drag_vertex(shared, vert);
-        return
+    } else if shared.dragging_vert != usize::MAX {
+        drag_vertex(shared, shared.dragging_vert);
+        return;
     }
 
     // if mouse_left is lower than this, it's considered a click
@@ -235,7 +232,8 @@ pub fn bone_vertices(
 
         for wv in 0..verts.len() {
             let point = point!(wv, Color::GREEN);
-            let clicking_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
+            let clicking_on_it =
+                utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
             if clicking_on_it && shared.dragging_vert == usize::MAX {
                 point!(wv, Color::WHITE);
 
@@ -249,9 +247,6 @@ pub fn bone_vertices(
 }
 
 pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
-    let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-    let mouse_prev_world = utils::screen_to_world_space(shared.input.mouse_prev, shared.window);
-
     let bone = shared.selected_bone().unwrap();
 
     macro_rules! con_vert {
@@ -270,8 +265,7 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
 
     let mut world_vert = con_vert!(raw_to_world_vert, bone.vertices[vert_idx]);
 
-    world_vert.pos.x += (mouse_world - mouse_prev_world).x;
-    world_vert.pos.y += (mouse_world - mouse_prev_world).y;
+    world_vert.pos = utils::screen_to_world_space(shared.input.mouse, shared.window);
 
     shared.selected_bone_mut().unwrap().vertices[vert_idx].pos =
         con_vert!(world_to_raw_vert, world_vert).pos;
