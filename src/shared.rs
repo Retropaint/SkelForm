@@ -64,15 +64,6 @@ impl Vec2 {
     pub const fn new(x: f32, y: f32) -> Vec2 {
         Vec2 { x, y }
     }
-
-    pub fn equal_to(self: &Self, other: Vec2) -> bool {
-        return self.x != other.x || self.y != other.y;
-    }
-
-    /// For f32 values that need to be passed as Vec2.
-    pub fn single(value: f32) -> Vec2 {
-        return Vec2::new(value, 0.);
-    }
 }
 
 impl MulAssign for Vec2 {
