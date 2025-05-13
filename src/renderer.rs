@@ -76,6 +76,43 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     if shared.input.mouse_left == -1 {
         shared.editing_bone = false;
+
+        if shared.selected_bone() != None
+            && shared.input.mouse_left_prev != -1
+            && shared.input.mouse_left_prev < click_threshold
+            && shared.selected_bone().unwrap().is_mesh
+        {
+            let mouse = shared.input.mouse;
+            let window = shared.window;
+            let vert = Vertex {
+                pos: utils::screen_to_world_space(mouse, window),
+                uv: Vec2::ZERO,
+                color: Color::default(),
+            };
+            let bone = shared.selected_bone().unwrap();
+            let tex_size = shared.armature.textures[bone.tex_idx as usize].size;
+            let mut raw_vert = world_to_raw_vert(
+                vert,
+                Some(&bone),
+                &shared.camera.pos,
+                shared.camera.zoom,
+                Some(&shared.armature.textures[bone.tex_idx as usize]),
+                1.,
+                0.005,
+            );
+            raw_vert.uv = raw_vert.pos / tex_size;
+            if raw_vert.uv.x > 1. {
+                raw_vert.uv.x = 1.;
+            } else if raw_vert.uv.x < 0. {
+                raw_vert.uv.x = 0.;
+            }
+            if raw_vert.uv.y > 1. {
+                raw_vert.uv.y = 1.;
+            } else if raw_vert.uv.y < 0. {
+                raw_vert.uv.y = 0.;
+            }
+            shared.selected_bone_mut().unwrap().vertices.push(raw_vert);
+        }
         return;
     }
 
