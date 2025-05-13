@@ -48,6 +48,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // draw bone
     for b in 0..temp_bones.len() {
+        create_polygon(&temp_bones[b], shared);
         draw_bone(&temp_bones[b], shared, render_pass, device);
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
         draw_point(
@@ -141,6 +142,24 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let bone = &bones[shared.selected_bone_idx];
         edit_bone(shared, bone);
     }
+}
+
+fn is_ccw(a: Vec2, b: Vec2, c: Vec2) -> bool {
+    (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x)
+}
+
+fn is_intersecting(a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> bool {
+    is_ccw(a, c, d) != is_ccw(b, c, d) && is_ccw(a, b, c) != is_ccw(a, b, d)
+}
+
+pub struct Triangle {
+    pub verts: [Vertex; 3],
+    pub idx: [usize; 3],
+}
+
+pub fn create_polygon(bone: &Bone, shared: &mut Shared) {
+    let tris: Vec<Triangle> = vec![];
+    for vert in &bone.vertices {}
 }
 
 pub fn edit_bone(shared: &mut Shared, bone: &Bone) {
