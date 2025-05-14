@@ -126,7 +126,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // move camera
     if shared.input.is_pressing(KeyCode::SuperLeft) || shared.selected_bone_idx == usize::MAX {
-        shared.camera.pos -= shared.mouse_vel() * shared.camera.zoom;
+        shared.camera.pos += shared.mouse_vel() * shared.camera.zoom;
         return;
     }
 
@@ -171,7 +171,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone) {
             }
 
             // offset position by said velocity
-            pos += shared.mouse_vel() * shared.camera.zoom;
+            pos -= shared.mouse_vel() * shared.camera.zoom;
 
             shared.edit_bone(&AnimElement::PositionX, pos.x, false);
             shared.edit_bone(&AnimElement::PositionY, pos.y, false);
