@@ -121,9 +121,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // move camera
     if shared.input.is_pressing(KeyCode::SuperLeft) || shared.selected_bone_idx == usize::MAX {
-        let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-        let mouse_prev_world = utils::screen_to_world_space(shared.input.mouse_prev, shared.window);
-        shared.camera.pos -= (mouse_world - mouse_prev_world) * shared.camera.zoom;
+        shared.camera.pos -= shared.mouse_vel() * shared.camera.zoom;
         return;
     }
 
@@ -144,36 +142,31 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 }
 
-fn is_ccw(a: Vec2, b: Vec2, c: Vec2) -> bool {
-    (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x)
-}
-
-fn is_intersecting(a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> bool {
-    is_ccw(a, c, d) != is_ccw(b, c, d) && is_ccw(a, b, c) != is_ccw(a, b, d)
-}
-
 pub struct Triangle {
     pub verts: [Vertex; 3],
     pub idx: [usize; 3],
 }
 
-pub fn create_polygon(bone: &Bone, shared: &mut Shared) {
-    let tris: Vec<Triangle> = vec![];
-    for vert in &bone.vertices {}
-}
-
 pub fn edit_bone(shared: &mut Shared, bone: &Bone) {
     match shared.edit_mode {
         shared::EditMode::Move => {
-            let mut pos = bone.pos;
-
-            // get mouse velocity in world space
-            let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-            let mouse_prev_world =
-                utils::screen_to_world_space(shared.input.mouse_prev, shared.window);
+            let mut pos = Vec2::default();
+            if !shared.is_animating() {
+                pos = bone.pos;
+            } else {
+                // get animated position
+                for kf in &shared.selected_animation().unwrap().keyframes {
+                    if kf.bone_id == bone.id && kf.element == AnimElement::PositionX {
+                        pos.x = kf.value;
+                    }
+                    if kf.bone_id == bone.id && kf.element == AnimElement::PositionY {
+                        pos.y = kf.value;
+                    }
+                }
+            }
 
             // offset position by said velocity
-            pos += (mouse_world - mouse_prev_world) * shared.camera.zoom;
+            pos += shared.mouse_vel() * shared.camera.zoom;
 
             shared.edit_bone(&AnimElement::PositionX, pos.x, false);
             shared.edit_bone(&AnimElement::PositionY, pos.y, false);

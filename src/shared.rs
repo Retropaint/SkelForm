@@ -1,5 +1,7 @@
 //! Easily-accessible and frequently-shared data.
 
+use crate::*;
+
 use std::{
     fmt,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
@@ -1085,6 +1087,13 @@ impl Shared {
             self.armature.bones.remove(bone_idx);
             self.armature.bones.insert(new_idx, bone);
         }
+    }
+
+    pub fn mouse_vel(&self) -> Vec2 {
+        let mouse_world = utils::screen_to_world_space(self.input.mouse, self.window);
+        let mouse_prev_world =
+            utils::screen_to_world_space(self.input.mouse_prev, self.window);
+        mouse_prev_world - mouse_world
     }
 }
 
