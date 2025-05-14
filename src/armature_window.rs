@@ -55,7 +55,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 if shared.armature.bones.len() > 1 && ui_mod::button(drag_name, ui).clicked() {
                     shared.ui.set_state(
                         UiState::DraggingBone,
-                        shared.ui.has_state(UiState::DraggingBone),
+                        !shared.ui.has_state(UiState::DraggingBone),
                     );
                 }
             });
