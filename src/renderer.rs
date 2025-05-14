@@ -1,8 +1,22 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
 use crate::*;
-use wgpu::{util::RenderEncoder, BindGroup, BindGroupLayout, Device, Queue, RenderPass};
+use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
+
+macro_rules! con_vert {
+    ($func:expr, $vert:expr, $bone:expr, $tex:expr, $shared:expr) => {
+        $func(
+            $vert,
+            Some(&$bone),
+            &$shared.camera.pos,
+            $shared.camera.zoom,
+            Some(&$tex),
+            1.,
+            0.005,
+        )
+    };
+}
 
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
     let mut bones = shared.armature.bones.clone();
@@ -48,7 +62,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // draw bone
     for b in 0..temp_bones.len() {
-        create_polygon(&temp_bones[b], shared);
         draw_bone(&temp_bones[b], shared, render_pass, device);
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
         draw_point(
@@ -83,36 +96,28 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             && shared.input.mouse_left_prev < click_threshold
             && shared.selected_bone().unwrap().is_mesh
         {
-            let mouse = shared.input.mouse;
-            let window = shared.window;
-            let vert = Vertex {
-                pos: utils::screen_to_world_space(mouse, window),
-                uv: Vec2::ZERO,
-                color: Color::default(),
-            };
-            let bone = shared.selected_bone().unwrap();
-            let tex_size = shared.armature.textures[bone.tex_idx as usize].size;
-            let mut raw_vert = world_to_raw_vert(
-                vert,
+            let bone = &shared.selected_bone().unwrap();
+            let tex = &shared.armature.textures[bone.tex_idx as usize];
+
+            // create vert on cursor
+            let vert = world_to_raw_vert(
+                Vertex {
+                    pos: utils::screen_to_world_space(shared.input.mouse, shared.window),
+                    ..Default::default()
+                },
                 Some(&bone),
                 &shared.camera.pos,
                 shared.camera.zoom,
-                Some(&shared.armature.textures[bone.tex_idx as usize]),
+                Some(&tex),
                 1.,
                 0.005,
             );
-            raw_vert.uv = raw_vert.pos / tex_size;
-            if raw_vert.uv.x > 1. {
-                raw_vert.uv.x = 1.;
-            } else if raw_vert.uv.x < 0. {
-                raw_vert.uv.x = 0.;
-            }
-            if raw_vert.uv.y > 1. {
-                raw_vert.uv.y = 1.;
-            } else if raw_vert.uv.y < 0. {
-                raw_vert.uv.y = 0.;
-            }
-            shared.selected_bone_mut().unwrap().vertices.push(raw_vert);
+
+            let world_verts: Vec<Vertex> = vec![];
+            for vert in &bone.vertices {}
+
+            // find nearest 2 verts to connect to
+            shared.selected_bone_mut().unwrap().vertices.push(vert);
         }
         return;
     }
@@ -297,27 +302,18 @@ pub fn bone_vertices(
 
 pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
     let bone = shared.selected_bone().unwrap();
+    let tex = &shared.armature.textures[bone.tex_idx as usize];
 
-    macro_rules! con_vert {
-        ($func:expr, $vert:expr) => {
-            $func(
-                $vert,
-                Some(&bone),
-                &shared.camera.pos,
-                shared.camera.zoom,
-                Some(&shared.armature.textures[bone.tex_idx as usize]),
-                1.,
-                0.005,
-            )
-        };
-    }
-
-    let mut world_vert = con_vert!(raw_to_world_vert, bone.vertices[vert_idx]);
-
+    let mut world_vert = con_vert!(
+        raw_to_world_vert,
+        bone.vertices[vert_idx],
+        bone,
+        tex,
+        shared
+    );
     world_vert.pos = utils::screen_to_world_space(shared.input.mouse, shared.window);
-
     shared.selected_bone_mut().unwrap().vertices[vert_idx].pos =
-        con_vert!(world_to_raw_vert, world_vert).pos;
+        con_vert!(world_to_raw_vert, world_vert, bone, tex, shared).pos;
 }
 
 pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> Vec<Vertex> {
