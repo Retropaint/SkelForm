@@ -15,6 +15,7 @@ macro_rules! ui_color {
 #[rustfmt::skip] ui_color!(COLOR_BORDER,             44, 36, 64);
 #[rustfmt::skip] ui_color!(COLOR_BORDER_HOVERED,     84, 59, 138);
 #[rustfmt::skip] ui_color!(COLOR_MAIN,               32, 25, 46);
+#[rustfmt::skip] ui_color!(COLOR_MAIN_DARK,          28, 20, 42);
 #[rustfmt::skip] ui_color!(COLOR_TEXT,               180, 180, 180);
 #[rustfmt::skip] ui_color!(COLOR_TEXT_SELECTED,      210, 210, 210);
 #[rustfmt::skip] ui_color!(COLOR_FRAMELINE,          80, 60, 130);
@@ -90,6 +91,8 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     style_once!(top_panel(context, shared));
 
+    camera_bar(context, shared);
+
     if shared.ui.anim.open {
         style_once!(keyframe_editor::draw(context, shared));
     } else {
@@ -103,6 +106,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         .resizable(true)
         .max_width(250.)
         .show(context, |ui| {
+            draw_gradient_rect(ui, ui.ctx().screen_rect(), Color32::TRANSPARENT, COLOR_MAIN_DARK);
             ui.set_min_width(175.);
 
             if shared.selected_bone_idx != usize::MAX {
@@ -113,6 +117,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
             shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
             shared.ui.camera_bar_pos.x = ui.min_rect().left();
+
         })
         .response;
     if response.hovered() {
@@ -126,8 +131,6 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     if shared.armature.bones.len() > 0 {
         animate_bar(context, shared);
     }
-
-    camera_bar(context, shared);
 
     // check if mouse is on ui
     //
@@ -281,6 +284,12 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
         .title_bar(false)
         .max_width(100.)
         .movable(false)
+        .frame(egui::Frame{
+            fill: COLOR_MAIN_DARK,
+            inner_margin: 6.into(),
+            stroke: Stroke{ width: 1., color: COLOR_BORDER},
+            ..Default::default()
+        })
         .current_pos(egui::Pos2::new(
             shared.ui.camera_bar_pos.x - shared.ui.camera_bar_scale.x - 21.,
             shared.ui.camera_bar_pos.y - shared.ui.camera_bar_scale.y - 15.,
@@ -665,4 +674,19 @@ pub fn modal_x<T: FnOnce()>(ui: &mut egui::Ui, after_close: T) {
     {
         after_close();
     }
+}
+
+
+pub fn draw_gradient_rect(ui: &mut egui::Ui, rect: egui::Rect, top: Color32, bottom: Color32) {
+    let mut mesh = egui::Mesh::default();
+
+    mesh.colored_vertex(rect.left_top(), top);
+    mesh.colored_vertex(rect.right_top(), top);
+    mesh.colored_vertex(rect.left_bottom(), bottom);
+    mesh.colored_vertex(rect.right_bottom(), bottom);
+
+    mesh.add_triangle(0, 2, 3);
+    mesh.add_triangle(0, 3, 1);
+
+    ui.painter().add(egui::Shape::mesh(mesh));
 }

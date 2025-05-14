@@ -60,6 +60,12 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         .min_height(150.)
         .resizable(true)
         .show(egui_ctx, |ui| {
+            ui::draw_gradient_rect(
+                ui,
+                ui.ctx().screen_rect(),
+                egui::Color32::TRANSPARENT,
+                ui::COLOR_MAIN_DARK,
+            );
             shared.ui.camera_bar_pos.y = ui.min_rect().top();
             let full_height = ui.available_height();
             ui.horizontal(|ui| {
