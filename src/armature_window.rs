@@ -15,7 +15,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         .min_width(125.)
         .resizable(true)
         .show(egui_ctx, |ui| {
-            ui_mod::draw_gradient_rect(
+            ui_mod::draw_gradient(
                 ui,
                 ui.ctx().screen_rect(),
                 Color32::TRANSPARENT,
