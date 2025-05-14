@@ -15,6 +15,12 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         .min_width(125.)
         .resizable(true)
         .show(egui_ctx, |ui| {
+            ui_mod::draw_gradient_rect(
+                ui,
+                ui.ctx().screen_rect(),
+                Color32::TRANSPARENT,
+                ui_mod::COLOR_MAIN_DARK,
+            );
             ui.horizontal(|ui| {
                 ui.heading("Armature");
             });
@@ -47,7 +53,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     "Drag"
                 };
                 if shared.armature.bones.len() > 1 && ui_mod::button(drag_name, ui).clicked() {
-                    shared.ui.set_state(UiState::DraggingBone, shared.ui.has_state(UiState::DraggingBone));
+                    shared.ui.set_state(
+                        UiState::DraggingBone,
+                        shared.ui.has_state(UiState::DraggingBone),
+                    );
                 }
             });
 
