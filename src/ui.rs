@@ -106,7 +106,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         .resizable(true)
         .max_width(250.)
         .show(context, |ui| {
-            draw_gradient_rect(ui, ui.ctx().screen_rect(), Color32::TRANSPARENT, COLOR_MAIN_DARK);
+            draw_gradient(ui, ui.ctx().screen_rect(), Color32::TRANSPARENT, COLOR_MAIN_DARK);
             ui.set_min_width(175.);
 
             if shared.selected_bone_idx != usize::MAX {
@@ -677,7 +677,7 @@ pub fn modal_x<T: FnOnce()>(ui: &mut egui::Ui, after_close: T) {
 }
 
 
-pub fn draw_gradient_rect(ui: &mut egui::Ui, rect: egui::Rect, top: Color32, bottom: Color32) {
+pub fn draw_gradient(ui: &mut egui::Ui, rect: egui::Rect, top: Color32, bottom: Color32) {
     let mut mesh = egui::Mesh::default();
 
     mesh.colored_vertex(rect.left_top(), top);
