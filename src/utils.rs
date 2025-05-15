@@ -153,6 +153,7 @@ pub fn save(path: String, shared: &mut Shared) {
     for bone in &mut armature_copy.bones {
         if !bone.is_mesh {
             bone.vertices = vec![];
+            bone.indices = vec![];
         }
     }
 
