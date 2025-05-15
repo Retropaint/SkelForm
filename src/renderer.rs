@@ -19,6 +19,13 @@ macro_rules! con_vert {
 }
 
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
+    for bone in &mut shared.armature.bones {
+        if bone.tex_idx != -1 && bone.vertices.len() == 0 {
+            let tex = &shared.armature.textures[bone.tex_idx as usize];
+            (bone.vertices, bone.indices) = create_tex_rect(tex, bone.scale);
+        }
+    }
+
     let mut bones = shared.armature.bones.clone();
     if shared.is_animating() {
         bones = shared.animate(shared.ui.anim.selected);
@@ -47,13 +54,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         if parent != None {
             temp_bones[i] = inherit_from_parent(temp_bones[i].clone(), parent.as_ref().unwrap());
-        }
-
-        if temp_bones[i].tex_idx != -1 && temp_bones[i].vertices.len() == 0 {
-            let tex = &shared.armature.textures[temp_bones[i].tex_idx as usize];
-            let temp_verts = create_tex_rect(tex, temp_bones[i].scale);
-            shared.armature.bones[i].vertices = temp_verts.clone();
-            temp_bones[i].vertices = temp_verts.clone();
         }
     }
 
@@ -316,8 +316,8 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
         con_vert!(world_to_raw_vert, world_vert, bone, tex, shared).pos;
 }
 
-pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> Vec<Vertex> {
-    vec![
+pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> (Vec<Vertex>, Vec<u32>) {
+    let verts = vec![
         Vertex::default(),
         Vertex {
             pos: Vec2::new(tex.size.x * scale.x, 0.),
@@ -334,7 +334,8 @@ pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> Vec<Vertex> {
             uv: Vec2::new(1., 1.),
             color: Color::default(),
         },
-    ]
+    ];
+    (verts, RECT_VERT_INDICES.to_vec())
 }
 
 fn draw_point(

@@ -229,6 +229,7 @@ macro_rules! enum_string {
 pub struct Vertex {
     pub pos: Vec2,
     pub uv: Vec2,
+    #[serde(skip)]
     pub color: Color,
 }
 
@@ -436,6 +437,9 @@ pub struct Bone {
     pub vertices: Vec<Vertex>,
 
     #[serde(default)]
+    pub indices: Vec<u32>,
+
+    #[serde(default)]
     pub is_mesh: bool,
 
     /// used to properly offset bone's movement to counteract it's parent
@@ -460,7 +464,6 @@ pub struct Armature {
     pub bones: Vec<Bone>,
     #[serde(default)]
     pub animations: Vec<Animation>,
-
     #[serde(default)]
     pub textures: Vec<Texture>,
 }
