@@ -60,9 +60,24 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // sort bones by z-index for drawing
     temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
 
+    let mut world_verts: Vec<Vertex> = vec![];
+    if shared.selected_bone() != None {
+        for vert in &shared.selected_bone().unwrap().vertices {
+            let mut new_vert = con_vert!(
+                raw_to_world_vert,
+                *vert,
+                shared.selected_bone().unwrap(),
+                shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize],
+                shared
+            );
+            new_vert.pos.x /= shared.window.x / shared.window.y;
+            world_verts.push(new_vert);
+        }
+    }
+
     // draw bone
     for b in 0..temp_bones.len() {
-        draw_bone(&temp_bones[b], shared, render_pass, device);
+        draw_bone(&temp_bones[b], render_pass, device, &world_verts, shared);
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
         draw_point(
             &Vec2::ZERO,
@@ -74,7 +89,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             shared.camera.pos,
         );
         if temp_bones[b].is_mesh {
-            bone_vertices(&temp_bones[b], shared, render_pass, device);
+            bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
         }
     }
 
@@ -88,37 +103,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // if mouse_left is lower than this, it's considered a click
     let click_threshold = 10;
 
+    if shared.selected_bone() != None && shared.selected_bone().unwrap().vertices.len() > 0 {
+        draw_hover_triangle(shared, render_pass, device, &world_verts);
+    }
+
     if shared.input.mouse_left == -1 {
         shared.editing_bone = false;
-
-        if shared.selected_bone() != None
-            && shared.input.mouse_left_prev != -1
-            && shared.input.mouse_left_prev < click_threshold
-            && shared.selected_bone().unwrap().is_mesh
-        {
-            let bone = &shared.selected_bone().unwrap();
-            let tex = &shared.armature.textures[bone.tex_idx as usize];
-
-            // create vert on cursor
-            let vert = world_to_raw_vert(
-                Vertex {
-                    pos: utils::screen_to_world_space(shared.input.mouse, shared.window),
-                    ..Default::default()
-                },
-                Some(&bone),
-                &shared.camera.pos,
-                shared.camera.zoom,
-                Some(&tex),
-                1.,
-                0.005,
-            );
-
-            let world_verts: Vec<Vertex> = vec![];
-            for vert in &bone.vertices {}
-
-            // find nearest 2 verts to connect to
-            shared.selected_bone_mut().unwrap().vertices.push(vert);
-        }
         return;
     }
 
@@ -144,6 +134,91 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         let bone = &bones[shared.selected_bone_idx];
         edit_bone(shared, bone);
+    }
+}
+
+fn get_distance(a: Vec2, b: Vec2) -> f32 {
+    let dx = b.x - a.x;
+    let dy = b.y - a.y;
+    (dx * dx + dy * dy).sqrt()
+}
+
+fn find_closest_vert(point_vert: Vertex, verts: &Vec<Vertex>, exception: usize) -> usize {
+    let mut closest = 0;
+    let mut distance = std::f32::INFINITY;
+    for i in 0..verts.len() {
+        let current_distance = get_distance(point_vert.pos, verts[i].pos);
+        if current_distance < distance && i != exception {
+            distance = current_distance;
+            closest = i;
+        }
+    }
+    closest
+}
+
+fn draw_hover_triangle(
+    shared: &mut Shared,
+    render_pass: &mut RenderPass,
+    device: &Device,
+    world_verts: &Vec<Vertex>,
+) {
+    let tex = &shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize];
+
+    // create vert on cursor
+    let mut mouse_world_vert = Vertex {
+        pos: utils::screen_to_world_space(shared.input.mouse, shared.window),
+        ..Default::default()
+    };
+    let mut mouse_vert = con_vert!(
+        world_to_raw_vert,
+        mouse_world_vert,
+        shared.selected_bone().unwrap(),
+        tex,
+        shared
+    );
+    mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
+
+    let closest_vert1 = find_closest_vert(mouse_world_vert, world_verts, usize::MAX);
+    let closest_vert2 = find_closest_vert(mouse_world_vert, world_verts, closest_vert1);
+
+    render_pass.set_vertex_buffer(
+        0,
+        vertex_buffer(
+            &vec![
+                world_verts[closest_vert1],
+                world_verts[closest_vert2],
+                mouse_world_vert,
+            ],
+            device,
+        )
+        .slice(..),
+    );
+    render_pass.set_index_buffer(
+        index_buffer(vec![0, 1, 2], &device).slice(..),
+        wgpu::IndexFormat::Uint32,
+    );
+    render_pass.draw_indexed(0..3, 0, 0..1);
+
+    if shared.selected_bone() != None
+        && shared.input.mouse_left == -1
+        && shared.input.mouse_left_prev < 10
+        && shared.input.mouse_left_prev != -1
+        && shared.selected_bone().unwrap().is_mesh
+    {
+        mouse_vert.uv = (world_verts[closest_vert1].uv + world_verts[closest_vert2].uv) / 2.;
+
+        shared
+            .selected_bone_mut()
+            .unwrap()
+            .vertices
+            .push(mouse_vert);
+
+        let len = shared.selected_bone_mut().unwrap().vertices.len();
+        let indices = &mut shared.selected_bone_mut().unwrap().indices;
+
+        indices.push(closest_vert1 as u32);
+        indices.push(closest_vert2 as u32);
+        indices.push(len as u32 - 1);
     }
 }
 
@@ -204,41 +279,25 @@ pub fn inherit_from_parent(mut child: Bone, parent: &Bone) -> Bone {
     child
 }
 
-pub fn draw_bone(bone: &Bone, shared: &Shared, render_pass: &mut RenderPass, device: &Device) {
-    if bone.tex_idx == -1 {
+pub fn draw_bone(
+    bone: &Bone,
+    render_pass: &mut RenderPass,
+    device: &Device,
+    world_verts: &Vec<Vertex>,
+    shared: &Shared,
+) {
+    if bone.tex_idx == -1 || world_verts.len() == 0 {
         return;
     }
 
     render_pass.set_bind_group(0, &shared.bind_groups[bone.tex_idx as usize], &[]);
-
-    for v in 0..bone.vertices.len() {
-        if v > bone.vertices.len() - 3 {
-            break;
-        }
-
-        macro_rules! world_vert {
-            ($idx:expr) => {
-                raw_to_world_vert(
-                    bone.vertices[$idx],
-                    Some(&bone),
-                    &shared.camera.pos,
-                    shared.camera.zoom,
-                    Some(&shared.armature.textures[bone.tex_idx as usize]),
-                    shared.window.x / shared.window.y,
-                    0.005,
-                )
-            };
-        }
-
-        let verts = vec![world_vert!(v), world_vert!(v + 1), world_vert!(v + 2)];
-        render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
-
-        render_pass.set_index_buffer(
-            index_buffer(vec![0, 1, 2], &device).slice(..),
-            wgpu::IndexFormat::Uint32,
-        );
-        render_pass.draw_indexed(0..3, 0, 0..1);
-    }
+    //render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+    render_pass.set_vertex_buffer(0, vertex_buffer(&world_verts, device).slice(..));
+    render_pass.set_index_buffer(
+        index_buffer(bone.indices.to_vec(), &device).slice(..),
+        wgpu::IndexFormat::Uint32,
+    );
+    render_pass.draw_indexed(0..bone.indices.len() as u32, 0, 0..1);
 }
 
 pub fn bone_vertices(
@@ -246,31 +305,16 @@ pub fn bone_vertices(
     shared: &mut Shared,
     render_pass: &mut RenderPass,
     device: &Device,
+    world_verts: &Vec<Vertex>,
 ) {
-    for v in 0..bone.vertices.len() {
-        if v > bone.vertices.len() - 3 {
+    for i in 0..bone.indices.len() {
+        if i > bone.indices.len() - 3 {
             break;
         }
-
-        macro_rules! world_vert {
-            ($idx:expr) => {
-                raw_to_world_vert(
-                    bone.vertices[$idx],
-                    Some(&bone),
-                    &shared.camera.pos,
-                    shared.camera.zoom,
-                    Some(&shared.armature.textures[bone.tex_idx as usize]),
-                    shared.window.x / shared.window.y,
-                    0.005,
-                )
-            };
-        }
-
-        let verts = vec![world_vert!(v), world_vert!(v + 1), world_vert!(v + 2)];
         macro_rules! point {
             ($idx:expr, $color:expr) => {
                 draw_point(
-                    &verts[$idx].pos,
+                    &world_verts[$idx].pos,
                     &shared,
                     render_pass,
                     device,
@@ -284,7 +328,7 @@ pub fn bone_vertices(
             };
         }
 
-        for wv in 0..verts.len() {
+        for wv in 0..world_verts.len() {
             let point = point!(wv, Color::GREEN);
             let clicking_on_it =
                 utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
@@ -292,7 +336,8 @@ pub fn bone_vertices(
                 point!(wv, Color::WHITE);
 
                 if shared.input.mouse_left != -1 {
-                    shared.dragging_vert = v + wv;
+                    shared.dragging_vert = i;
+                    println!("{}", shared.dragging_vert);
                     continue;
                 }
             }
