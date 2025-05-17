@@ -213,12 +213,21 @@ fn draw_hover_triangle(
             .vertices
             .push(mouse_vert);
 
-        let len = shared.selected_bone_mut().unwrap().vertices.len();
-        let indices = &mut shared.selected_bone_mut().unwrap().indices;
+        let mut center = Vec2::default();
+        for v in &shared.selected_bone().unwrap().vertices {
+            center += v.pos;
+        }
+        center /= shared.selected_bone().unwrap().vertices.len() as f32;
 
-        indices.push(closest_vert1 as u32);
-        indices.push(closest_vert2 as u32);
-        indices.push(len as u32 - 1);
+        shared
+            .selected_bone_mut()
+            .unwrap()
+            .vertices
+            .sort_by(|a, b| {
+                let angle_a = (a.pos.y - center.y).atan2(a.pos.x - center.x);
+                let angle_b = (b.pos.y - center.y).atan2(b.pos.x - center.x);
+                angle_a.partial_cmp(&angle_b).unwrap()
+            });
     }
 }
 
@@ -290,14 +299,29 @@ pub fn draw_bone(
         return;
     }
 
-    render_pass.set_bind_group(0, &shared.bind_groups[bone.tex_idx as usize], &[]);
     //render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+    render_pass.set_bind_group(0, &shared.bind_groups[bone.tex_idx as usize], &[]);
     render_pass.set_vertex_buffer(0, vertex_buffer(&world_verts, device).slice(..));
-    render_pass.set_index_buffer(
-        index_buffer(bone.indices.to_vec(), &device).slice(..),
-        wgpu::IndexFormat::Uint32,
-    );
-    render_pass.draw_indexed(0..bone.indices.len() as u32, 0, 0..1);
+
+    for v in 0..world_verts.len() {
+        if v > world_verts.len() - 3 {
+            break;
+        }
+        let indices = [world_verts.len() as u32 - 1, v as u32, v as u32 + 1];
+        render_pass.set_index_buffer(
+            index_buffer(indices.to_vec(), &device).slice(..),
+            wgpu::IndexFormat::Uint32,
+        );
+        render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
+
+        println!("{} {} {}", indices[0], indices[1], indices[2]);
+    }
+
+    //render_pass.set_index_buffer(
+    //    index_buffer(bone.indices.to_vec(), &device).slice(..),
+    //    wgpu::IndexFormat::Uint32,
+    //);
+    //render_pass.draw_indexed(0..bone.indices.len() as u32, 0, 0..1)
 }
 
 pub fn bone_vertices(
@@ -307,10 +331,7 @@ pub fn bone_vertices(
     device: &Device,
     world_verts: &Vec<Vertex>,
 ) {
-    for i in 0..bone.indices.len() {
-        if i > bone.indices.len() - 3 {
-            break;
-        }
+    for i in (0..bone.indices.len()).step_by(3) {
         macro_rules! point {
             ($idx:expr, $color:expr) => {
                 draw_point(
@@ -336,7 +357,7 @@ pub fn bone_vertices(
                 point!(wv, Color::WHITE);
 
                 if shared.input.mouse_left != -1 {
-                    shared.dragging_vert = i;
+                    shared.dragging_vert = wv;
                     println!("{}", shared.dragging_vert);
                     continue;
                 }
@@ -346,19 +367,29 @@ pub fn bone_vertices(
 }
 
 pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
-    let bone = shared.selected_bone().unwrap();
-    let tex = &shared.armature.textures[bone.tex_idx as usize];
-
     let mut world_vert = con_vert!(
         raw_to_world_vert,
-        bone.vertices[vert_idx],
-        bone,
-        tex,
+        shared.selected_bone().unwrap().vertices[vert_idx],
+        shared.selected_bone().unwrap(),
+        shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize],
         shared
     );
     world_vert.pos = utils::screen_to_world_space(shared.input.mouse, shared.window);
-    shared.selected_bone_mut().unwrap().vertices[vert_idx].pos =
-        con_vert!(world_to_raw_vert, world_vert, bone, tex, shared).pos;
+    shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = con_vert!(
+        world_to_raw_vert,
+        world_vert,
+        shared.selected_bone().unwrap(),
+        shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize],
+        shared
+    )
+    .pos;
+
+    let size = shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize].size;
+
+    // re-map UVs
+    for vert in &mut shared.selected_bone_mut().unwrap().vertices {
+        //vert.uv = vert.pos / size;
+    }
 }
 
 pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> (Vec<Vertex>, Vec<u32>) {
@@ -370,13 +401,13 @@ pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> (Vec<Vertex>, Vec<u32>) {
             color: Color::default(),
         },
         Vertex {
-            pos: Vec2::new(0., tex.size.y * -scale.y),
-            uv: Vec2::new(0., 1.),
+            pos: Vec2::new(tex.size.x * scale.x, tex.size.y * -scale.y),
+            uv: Vec2::new(1., 1.),
             color: Color::default(),
         },
         Vertex {
-            pos: Vec2::new(tex.size.x * scale.x, tex.size.y * -scale.y),
-            uv: Vec2::new(1., 1.),
+            pos: Vec2::new(0., tex.size.y * -scale.y),
+            uv: Vec2::new(0., 1.),
             color: Color::default(),
         },
     ];
