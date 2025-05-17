@@ -233,7 +233,13 @@ impl ApplicationHandler for App {
                 device_id: _,
                 position,
             } => {
-                self.shared.input.mouse = Vec2::new(position.x as f32, position.y as f32);
+                #[cfg(target_arch = "wasm32")] {
+                    let pos = position.to_logical::<f64>(window.scale_factor());
+                    self.shared.input.mouse = Vec2::new(pos.x as f32, pos.y as f32);
+                };
+                #[cfg(not(target_arch = "wasm32"))] {
+                    self.shared.input.mouse = Vec2::new(position.x as f32, position.y as f32);
+                };
             }
             WindowEvent::MouseInput {
                 device_id: _,

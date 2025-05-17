@@ -111,8 +111,10 @@ pub fn keyboard_input(
         if shared.input.is_pressing(winit::keyboard::KeyCode::KeyS) {
             shared.input.pressed = vec![];
             if shared.save_path == "" {
+                #[cfg(not(target_arch = "wasm32"))]
                 utils::open_save_dialog();
             } else {
+                #[cfg(not(target_arch = "wasm32"))]
                 utils::save(shared.save_path.clone(), shared);
             }
         }
