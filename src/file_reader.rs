@@ -40,6 +40,7 @@ pub const FILES: [&str; 4] = [
 ];
 
 pub const EXPORT_VID_DONE: &str = "Done!";
+pub const IMPORT_IMG_ERR: &str = "Could not extract image data.";
 
 pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Context) {
     if let Some(_) = renderer.as_ref() {
@@ -73,9 +74,9 @@ pub fn read_image_loaders(
     bind_group_layout: &BindGroupLayout,
     ctx: &egui::Context,
 ) {
-    let pixels: Vec<u8>;
-    let dimensions: Vec2;
-    let name: String;
+    let mut pixels: Vec<u8> = vec![];
+    let mut dimensions = Vec2::default();
+    let mut name = "".to_string();
 
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -116,6 +117,8 @@ pub fn read_image_loaders(
         if let Some((wasm_pixels, dims)) = load_image_wasm() {
             dimensions = Vec2::new(dims.x as f32, dims.y as f32);
             pixels = wasm_pixels;
+        } else {
+            return;
         }
 
         removeImage();
@@ -124,7 +127,7 @@ pub fn read_image_loaders(
     if pixels.len() == 0 {
         shared
             .ui
-            .open_modal("Could not extract image data.".to_string(), false);
+            .open_modal(IMPORT_IMG_ERR.to_string(), false);
         return;
     }
 

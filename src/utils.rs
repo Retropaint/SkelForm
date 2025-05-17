@@ -193,6 +193,7 @@ pub fn save(path: String, shared: &mut Shared) {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn create_temp_tex_sheet(shared: &mut Shared, size: &Vec2) {
     // this is the buffer that will be saved as an image
     let mut final_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size.x as u32, size.y as u32);
