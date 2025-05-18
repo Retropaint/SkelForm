@@ -213,6 +213,7 @@ impl fmt::Display for Vec2 {
     }
 }
 
+/// enable enum names to be cast to string
 macro_rules! enum_string {
     ($type:ty) => {
         impl fmt::Display for $type {
@@ -560,7 +561,6 @@ pub enum Transition {
     SineOut,
 }
 
-// this allows getting the element name as a string
 enum_string!(Transition);
 
 #[derive(
@@ -615,7 +615,6 @@ impl AnimElement {
     }
 }
 
-// this allows getting the element name as a string
 enum_string!(AnimElement);
 
 #[derive(Default, Debug)]
