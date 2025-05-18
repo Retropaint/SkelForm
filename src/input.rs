@@ -121,13 +121,6 @@ pub fn keyboard_input(
     }
 }
 
-pub fn mouse_input(shared: &mut crate::shared::Shared) {
-    // increase mouse_left if it's being held down
-    if shared.input.mouse_left >= 0 {
-        shared.input.mouse_left += 1;
-    }
-}
-
 pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
     let sens_reducer = 100.;
     match delta {

@@ -194,11 +194,6 @@ impl ApplicationHandler for App {
             return;
         }
 
-        // increase mouse_left if it's being held down
-        if self.shared.input.mouse_left >= 0 {
-            self.shared.input.mouse_left += 1;
-        }
-
         // If the gui didn't consume the event, handle it
         match event {
             WindowEvent::KeyboardInput {
@@ -233,20 +228,15 @@ impl ApplicationHandler for App {
                 device_id: _,
                 position,
             } => {
-                #[cfg(target_arch = "wasm32")] {
+                #[cfg(target_arch = "wasm32")]
+                {
                     let pos = position.to_logical::<f64>(window.scale_factor());
                     self.shared.input.mouse = Vec2::new(pos.x as f32, pos.y as f32);
                 };
-                #[cfg(not(target_arch = "wasm32"))] {
+                #[cfg(not(target_arch = "wasm32"))]
+                {
                     self.shared.input.mouse = Vec2::new(position.x as f32, position.y as f32);
                 };
-            }
-            WindowEvent::MouseInput {
-                device_id: _,
-                state: _,
-                button: _,
-            } => {
-                input::mouse_input(&mut self.shared);
             }
             WindowEvent::MouseWheel {
                 device_id: _,
