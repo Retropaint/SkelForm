@@ -273,6 +273,8 @@ pub struct InputStates {
     // mouse stuff
     pub mouse_left: i32,
     pub mouse_left_prev: i32,
+    pub mouse_right: i32,
+    pub mouse_right_prev: i32,
     pub mouse: Vec2,
     pub mouse_prev: Vec2,
 
@@ -291,6 +293,18 @@ impl InputStates {
         }
 
         false
+    }
+
+    pub fn clicked(&self) -> bool {
+        self.mouse_left == -1 && self.mouse_left_prev != -1 && self.mouse_left_prev < 10
+    }
+
+    pub fn right_clicked(&self) -> bool {
+        self.mouse_right == -1 && self.mouse_right_prev != -1 && self.mouse_right_prev < 10
+    }
+
+    pub fn is_clicking(&self) -> bool {
+        self.mouse_left > 0
     }
 }
 

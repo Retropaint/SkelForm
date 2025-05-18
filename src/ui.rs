@@ -77,12 +77,17 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     // To determine if the mouse is on the UI, winit's mouse input is used instead (see input.rs).
     context.input(|i| {
         shared.input.mouse_left_prev = shared.input.mouse_left;
+        shared.input.mouse_right_prev = shared.input.mouse_right;
         if i.pointer.primary_down() {
-            if shared.input.mouse_left == -1 {
-                shared.input.mouse_left = 0;
-            }
+            shared.input.mouse_left += 1;
         } else {
             shared.input.mouse_left = -1;
+        }
+
+        if i.pointer.secondary_down() {
+            shared.input.mouse_right += 1;
+        } else {
+            shared.input.mouse_right = -1;
         }
     });
 
