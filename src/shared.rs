@@ -686,7 +686,6 @@ pub struct Shared {
     pub editing_bone: bool,
 
     pub dragging_vert: usize,
-    pub hovering_vert: usize,
 
     pub frame: i32,
     pub recording: bool,
