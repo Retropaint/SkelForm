@@ -60,25 +60,31 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // sort bones by z-index for drawing
     temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
 
-    let mut world_verts: Vec<Vertex> = vec![];
-    if shared.selected_bone() != None {
-        for vert in &shared.selected_bone().unwrap().vertices {
-            let mut new_vert = con_vert!(
-                raw_to_world_vert,
-                *vert,
-                shared.selected_bone().unwrap(),
-                shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize],
-                shared
-            );
-            new_vert.pos.x /= shared.window.x / shared.window.y;
-            world_verts.push(new_vert);
-        }
-    }
-
     let mut hovering_vert = usize::MAX;
+
+    let mut selected_bone_world_verts: Vec<Vertex> = vec![];
 
     // draw bone
     for b in 0..temp_bones.len() {
+        let mut world_verts: Vec<Vertex> = vec![];
+        if shared.selected_bone() != None {
+            for vert in &temp_bones[b].vertices {
+                let mut new_vert = con_vert!(
+                    raw_to_world_vert,
+                    *vert,
+                    shared.selected_bone().unwrap(),
+                    shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize],
+                    shared
+                );
+                new_vert.pos.x /= shared.window.x / shared.window.y;
+                world_verts.push(new_vert);
+            }
+        }
+
+        if temp_bones[b].id == shared.selected_bone().unwrap().id {
+            selected_bone_world_verts = world_verts.clone();
+        }
+
         draw_bone(&temp_bones[b], render_pass, device, &world_verts, shared);
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
         draw_point(
@@ -92,7 +98,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             0.,
         );
         if temp_bones[b].is_mesh {
-            hovering_vert = bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
+            hovering_vert =
+                bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
         }
     }
 
@@ -110,7 +117,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         && !shared.input.on_ui
         && shared.dragging_vert == usize::MAX
     {
-        draw_hover_triangle(shared, render_pass, device, &world_verts);
+        draw_hover_triangle(shared, render_pass, device, &selected_bone_world_verts);
     }
 
     if shared.input.mouse_left == -1 {
@@ -344,7 +351,7 @@ pub fn bone_vertices(
                 },
                 $color,
                 Vec2::ZERO,
-                45. * 3.14 / 180.
+                45. * 3.14 / 180.,
             )
         };
     }
@@ -425,7 +432,7 @@ fn draw_point(
     bone: &Bone,
     color: Color,
     camera: Vec2,
-    rotation: f32
+    rotation: f32,
 ) -> Vec<Vertex> {
     if shared.generic_bindgroup == None {
         return vec![];
