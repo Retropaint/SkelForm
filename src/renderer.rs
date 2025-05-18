@@ -191,9 +191,11 @@ fn draw_hover_triangle(
     );
     mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
+    // get the 2 closest verts to the mouse
     let closest_vert1 = find_closest_vert(mouse_world_vert, world_verts, usize::MAX);
     let closest_vert2 = find_closest_vert(mouse_world_vert, world_verts, closest_vert1);
 
+    // draw hover triangle
     render_pass.set_vertex_buffer(
         0,
         vertex_buffer(
