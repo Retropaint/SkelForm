@@ -227,14 +227,17 @@ fn draw_hover_triangle(
             ..Default::default()
         });
 
+        // add new vertex
         mouse_vert.uv = (world_verts[closest_vert1].uv + world_verts[closest_vert2].uv) / 2.;
-
         shared
             .selected_bone_mut()
             .unwrap()
             .vertices
             .push(mouse_vert);
 
+        // sort vertices in cw (or ccw?) order
+
+        // get center point
         let mut center = Vec2::default();
         for v in &shared.selected_bone().unwrap().vertices {
             center += v.pos;
