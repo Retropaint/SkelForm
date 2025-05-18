@@ -7,7 +7,7 @@ use std::io::Read;
 
 /// Convert a point from screen to world space.
 pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
-    let aspect_ratio = window.x/window.y;
+    let aspect_ratio = window.x / window.y;
     Vec2 {
         x: (-1. + (pos.x / window.x as f32 * 2.)) * aspect_ratio,
         y: -(-1. + (pos.y / window.y as f32 * 2.)),
@@ -246,7 +246,9 @@ pub fn import(
 
     if let Ok(_) = zip {
     } else {
-        shared.ui.open_modal("That's not a SkelForm armature!".to_string(), false);
+        shared
+            .ui
+            .open_modal("That's not a SkelForm armature!".to_string(), false);
         return;
     }
 

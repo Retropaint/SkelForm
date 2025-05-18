@@ -74,8 +74,11 @@ pub fn read_image_loaders(
     bind_group_layout: &BindGroupLayout,
     ctx: &egui::Context,
 ) {
+    #[allow(unused_assignments)]
     let mut pixels: Vec<u8> = vec![];
+    #[allow(unused_assignments)]
     let mut dimensions = Vec2::default();
+    #[allow(unused_assignments)]
     let mut name = "".to_string();
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -125,9 +128,7 @@ pub fn read_image_loaders(
     }
 
     if pixels.len() == 0 {
-        shared
-            .ui
-            .open_modal(IMPORT_IMG_ERR.to_string(), false);
+        shared.ui.open_modal(IMPORT_IMG_ERR.to_string(), false);
         return;
     }
 

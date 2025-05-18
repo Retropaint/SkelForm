@@ -111,7 +111,12 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         .resizable(true)
         .max_width(250.)
         .show(context, |ui| {
-            draw_gradient(ui, ui.ctx().screen_rect(), Color32::TRANSPARENT, COLOR_MAIN_DARK);
+            draw_gradient(
+                ui,
+                ui.ctx().screen_rect(),
+                Color32::TRANSPARENT,
+                COLOR_MAIN_DARK,
+            );
             ui.set_min_width(175.);
 
             if shared.selected_bone_idx != usize::MAX {
@@ -122,7 +127,6 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
             shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
             shared.ui.camera_bar_pos.x = ui.min_rect().left();
-
         })
         .response;
     if response.hovered() {
@@ -141,7 +145,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     //
     // this check always returns false on mouse click, so it's only checked when the mouse isn't clicked
     if shared.input.mouse_left == -1 {
-        shared.input.on_ui = context.is_pointer_over_area(); 
+        shared.input.on_ui = context.is_pointer_over_area();
     }
 }
 
@@ -249,8 +253,8 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
                 macro_rules! edit_mode_button {
                     ($label:expr, $edit_mode:expr) => {
                         if selection_button($label, shared.edit_mode == $edit_mode, ui).clicked() {
-                            shared.edit_mode = $edit_mode; 
-                        };       
+                            shared.edit_mode = $edit_mode;
+                        };
                     };
                 }
                 edit_mode_button!("Move", EditMode::Move);
@@ -313,13 +317,12 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
                 ui.label("Camera:");
                 input!(shared.camera.pos, shared.camera.pos.x, "cam_pos_y", 0, 1., ui, "X");                
                 input!(shared.camera.pos, shared.camera.pos.y, "cam_pos_x", 0, 1., ui, "Y");
-            });            
+            });
 
             ui.horizontal(|ui| {
                 ui.label("Zoom:");
                 input!(shared.camera.zoom, shared.camera.zoom, "cam_zoom", 0, 1., ui, "");
             });
-            
 
             shared.ui.camera_bar_scale = ui.min_rect().size().into();
         }).unwrap().response;
@@ -443,7 +446,7 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                             }
                             shared.selected_bone_idx = usize::MAX;
                         }
-                        PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true)
+                        PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
                     }
                 }
             });
@@ -493,7 +496,9 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
             });
 
             ui.horizontal(|ui| {
-                if selection_button("Import", shared.ui.has_state(UiState::RemovingTexture), ui).clicked() {
+                if selection_button("Import", shared.ui.has_state(UiState::RemovingTexture), ui)
+                    .clicked()
+                {
                     #[cfg(not(target_arch = "wasm32"))]
                     bone_panel::open_file_dialog();
 
@@ -507,7 +512,10 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                     "Remove"
                 };
                 if button(label, ui).clicked() {
-                    shared.ui.set_state(UiState::RemovingTexture, shared.ui.has_state(UiState::RemovingTexture));
+                    shared.ui.set_state(
+                        UiState::RemovingTexture,
+                        shared.ui.has_state(UiState::RemovingTexture),
+                    );
                 }
             });
 
@@ -556,7 +564,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                 if response.clicked() {
                     if shared.ui.has_state(UiState::RemovingTexture) {
                         shared.remove_texture(i as i32);
-                         shared.ui.set_state(UiState::RemovingTexture, false);
+                        shared.ui.set_state(UiState::RemovingTexture, false);
                         // stop the loop to prevent index errors
                         break;
                     } else {
@@ -655,19 +663,19 @@ pub fn visualize_vertices(context: &Context, shared: &Shared) {
     }
 }
 
-
 pub fn visualize_bone_point(context: &Context, shared: &Shared) {
     egui::Area::new("background_area".into())
         .order(egui::Order::Foreground) // Very back
         .show(context, |ui| {
             for bone in &shared.armature.bones {
-        ui.painter().circle_filled(
-            utils::world_to_screen_space(bone.pos, shared.window, shared.camera.zoom, true).into(),
-            10.,
-            egui::Color32::GREEN,
-        );
-    }
-    });
+                ui.painter().circle_filled(
+                    utils::world_to_screen_space(bone.pos, shared.window, shared.camera.zoom, true)
+                        .into(),
+                    10.,
+                    egui::Color32::GREEN,
+                );
+            }
+        });
 }
 
 // top-right X label for modals
@@ -680,7 +688,6 @@ pub fn modal_x<T: FnOnce()>(ui: &mut egui::Ui, after_close: T) {
         after_close();
     }
 }
-
 
 pub fn draw_gradient(ui: &mut egui::Ui, rect: egui::Rect, top: Color32, bottom: Color32) {
     let mut mesh = egui::Mesh::default();

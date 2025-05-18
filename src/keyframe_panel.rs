@@ -6,7 +6,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label("Transition:");
 
-        if shared.selected_keyframe() == None || shared.selected_animation().unwrap().keyframes.len() == 0 {
+        if shared.selected_keyframe() == None
+            || shared.selected_animation().unwrap().keyframes.len() == 0
+        {
             return;
         }
 
