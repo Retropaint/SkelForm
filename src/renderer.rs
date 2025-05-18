@@ -87,8 +87,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             render_pass,
             device,
             &temp_bones[b],
-            Color::GREEN,
+            Color::new(0., 255., 0., 0.5),
             shared.camera.pos,
+            0.,
         );
         if temp_bones[b].is_mesh {
             hovering_vert = bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
@@ -103,8 +104,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     if shared.selected_bone() != None
+        && shared.selected_bone().unwrap().is_mesh
         && shared.selected_bone().unwrap().vertices.len() > 0
         && hovering_vert == usize::MAX
+        && !shared.input.on_ui
         && shared.dragging_vert == usize::MAX
     {
         draw_hover_triangle(shared, render_pass, device, &world_verts);
@@ -341,6 +344,7 @@ pub fn bone_vertices(
                 },
                 $color,
                 Vec2::ZERO,
+                45. * 3.14 / 180.
             )
         };
     }
@@ -421,13 +425,14 @@ fn draw_point(
     bone: &Bone,
     color: Color,
     camera: Vec2,
+    rotation: f32
 ) -> Vec<Vertex> {
     if shared.generic_bindgroup == None {
         return vec![];
     }
 
     let point_size = 0.1;
-    let temp_point_verts: [Vertex; 4] = [
+    let mut temp_point_verts: [Vertex; 4] = [
         Vertex {
             pos: Vec2::new(-point_size, point_size) + bone.pos,
             uv: Vec2::new(1., 0.),
@@ -449,6 +454,10 @@ fn draw_point(
             color,
         },
     ];
+
+    for v in &mut temp_point_verts {
+        v.pos = utils::rotate(&v.pos, rotation);
+    }
 
     let mut point_verts = rect_verts(
         temp_point_verts.to_vec(),
