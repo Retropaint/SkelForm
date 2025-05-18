@@ -359,6 +359,7 @@ pub fn bone_vertices(
 }
 
 pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
+    // when moving a vertex, it must be interpreted in world coords first to align the with the mouse
     let mut world_vert = con_vert!(
         raw_to_world_vert,
         shared.selected_bone().unwrap().vertices[vert_idx],
@@ -366,7 +367,11 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
         shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize],
         shared
     );
+
+    // now that it's in world coords, it can follow the mouse
     world_vert.pos = utils::screen_to_world_space(shared.input.mouse, shared.window);
+
+    // after following the mouse, it needs to convert its world coords back to normal
     shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = con_vert!(
         world_to_raw_vert,
         world_vert,
