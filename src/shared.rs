@@ -218,13 +218,20 @@ macro_rules! enum_string {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 write!(f, "{:?}", self)
             }
-        }       
+        }
     };
 }
 
 #[repr(C)]
 #[derive(
-    PartialEq, serde::Serialize, serde::Deserialize, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+    Copy,
+    Clone,
+    bytemuck::Pod,
+    bytemuck::Zeroable,
+    Default,
 )]
 pub struct Vertex {
     pub pos: Vec2,
@@ -246,14 +253,14 @@ pub struct Color {
 
 impl Color {
     pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Color {
-        Color{r, g, b, a}
+        Color { r, g, b, a }
     }
 
     pub const GREEN: Color = Color::new(0., 1., 0., 1.);
     pub const WHITE: Color = Color::new(1., 1., 1., 1.);
 }
 
-#[rustfmt::skip]
+#[rustfmt::skip] 
 impl Default for Color {
     fn default() -> Self {
         Color {  r: 1., g: 1., b: 1., a: 1. }
@@ -324,7 +331,7 @@ pub enum UiState {
 pub enum PolarId {
     #[default]
     DeleteBone,
-    Exiting
+    Exiting,
 }
 enum_string!(PolarId);
 
@@ -379,14 +386,14 @@ impl Ui {
             }
             if !already_added {
                 self.states.push(state);
-            }   
+            }
         } else {
             for s in 0..self.states.len() {
                 if self.states[s] == state {
                     self.states.remove(s);
                     break;
                 }
-            }   
+            }
         }
     }
 
@@ -395,7 +402,7 @@ impl Ui {
             if self.states[s] == state {
                 return true;
             }
-        }    
+        }
         false
     }
 
@@ -496,7 +503,7 @@ pub struct Texture {
     #[serde(default)]
     pub size: Vec2,
     #[serde(default)]
-    pub name: String,    
+    pub name: String,
     #[serde(skip)]
     pub pixels: Vec<u8>,
 }
@@ -641,7 +648,7 @@ pub enum EditMode {
     #[default]
     Move,
     Rotate,
-    Scale
+    Scale,
 }
 
 #[derive(Default, PartialEq, Debug)]
@@ -695,21 +702,21 @@ pub struct Shared {
 impl Shared {
     pub fn selected_animation(&self) -> Option<&Animation> {
         if self.ui.anim.selected > self.armature.animations.len() {
-            return None
+            return None;
         }
         Some(&self.armature.animations[self.ui.anim.selected])
     }
 
     pub fn selected_animation_mut(&mut self) -> Option<&mut Animation> {
         if self.ui.anim.selected > self.armature.animations.len() {
-            return None
+            return None;
         }
         Some(&mut self.armature.animations[self.ui.anim.selected])
     }
 
     pub fn selected_keyframe(&self) -> Option<&Keyframe> {
         if self.selected_animation() == None {
-            return None
+            return None;
         }
         let frame = self.ui.anim.selected_frame;
         for kf in &self.selected_animation().unwrap().keyframes {
@@ -745,7 +752,8 @@ impl Shared {
     }
 
     pub fn sort_keyframes(&mut self) {
-        self.selected_animation_mut().unwrap()
+        self.selected_animation_mut()
+            .unwrap()
             .keyframes
             .sort_by(|a, b| a.frame.cmp(&b.frame));
     }
@@ -759,18 +767,18 @@ impl Shared {
     }
 
     pub fn keyframe(&self, idx: usize) -> Option<&Keyframe> {
-        if idx > self.selected_animation().unwrap().keyframes.len()-1 {
-            return None
+        if idx > self.selected_animation().unwrap().keyframes.len() - 1 {
+            return None;
         }
         Some(&self.selected_animation().unwrap().keyframes[idx])
-    }    
+    }
 
     pub fn keyframe_mut(&mut self, idx: usize) -> Option<&mut Keyframe> {
-        if idx > self.selected_animation().unwrap().keyframes.len()-1 {
-            return None
+        if idx > self.selected_animation().unwrap().keyframes.len() - 1 {
+            return None;
         }
         Some(&mut self.selected_animation_mut().unwrap().keyframes[idx])
-    }    
+    }
 
     pub fn keyframe_at(&self, frame: i32) -> Option<&Keyframe> {
         for kf in &self.selected_animation().unwrap().keyframes {
@@ -866,7 +874,7 @@ impl Shared {
             }
 
             // interpolate!
-            #[rustfmt::skip] 
+            #[rustfmt::skip]
             {
                 b.pos.x   += interpolate!(AnimElement::PositionX, 0.);
                 b.pos.y   += interpolate!(AnimElement::PositionY, 0.);
@@ -896,7 +904,13 @@ impl Shared {
         let mut transition: Transition = Transition::Linear;
 
         // get most previous frame with this element
-        for (i, kf) in self.selected_animation().unwrap().keyframes.iter().enumerate() {
+        for (i, kf) in self
+            .selected_animation()
+            .unwrap()
+            .keyframes
+            .iter()
+            .enumerate()
+        {
             if self.selected_animation().unwrap().keyframes[i].frame > frame {
                 break;
             }
@@ -910,7 +924,14 @@ impl Shared {
         }
 
         // get first next frame with this element
-        for (i, kf) in self.selected_animation().unwrap().keyframes.iter().enumerate().rev() {
+        for (i, kf) in self
+            .selected_animation()
+            .unwrap()
+            .keyframes
+            .iter()
+            .enumerate()
+            .rev()
+        {
             if self.selected_animation().unwrap().keyframes[i].frame < frame {
                 break;
             }
@@ -973,7 +994,7 @@ impl Shared {
                 id: self.ui.anim.selected as i32,
                 animation: self.selected_animation().unwrap().clone(),
                 ..Default::default()
-            });                   
+            });
         }
     }
 
@@ -1015,7 +1036,8 @@ impl Shared {
         }
 
         if self.ui.anim.selected_frame != 0 {
-            let added = self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
+            let added =
+                self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
             if added {
                 self.last_keyframe_mut().unwrap().value = og_value;
             }
@@ -1055,13 +1077,16 @@ impl Shared {
             return false;
         }
 
-        self.selected_animation_mut().unwrap().keyframes.push(Keyframe {
-            frame,
-            //bones: vec![],
-            bone_id: id,
-            element,
-            ..Default::default()
-        });
+        self.selected_animation_mut()
+            .unwrap()
+            .keyframes
+            .push(Keyframe {
+                frame,
+                //bones: vec![],
+                bone_id: id,
+                element,
+                ..Default::default()
+            });
 
         true
     }
@@ -1095,7 +1120,7 @@ impl Shared {
         let mut new_idx = 0;
         for (i, bone) in self.armature.bones.iter().enumerate() {
             if parent_id == bone.id {
-                new_idx = i; 
+                new_idx = i;
                 break;
             }
         }
@@ -1108,8 +1133,7 @@ impl Shared {
 
     pub fn mouse_vel(&self) -> Vec2 {
         let mouse_world = utils::screen_to_world_space(self.input.mouse, self.window);
-        let mouse_prev_world =
-            utils::screen_to_world_space(self.input.mouse_prev, self.window);
+        let mouse_prev_world = utils::screen_to_world_space(self.input.mouse_prev, self.window);
         mouse_prev_world - mouse_world
     }
 }

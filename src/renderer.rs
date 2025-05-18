@@ -200,9 +200,7 @@ fn draw_hover_triangle(
     render_pass.draw_indexed(0..3, 0, 0..1);
 
     if shared.selected_bone() != None
-        && shared.input.mouse_left == -1
-        && shared.input.mouse_left_prev < 10
-        && shared.input.mouse_left_prev != -1
+        && shared.input.clicked()
         && shared.selected_bone().unwrap().is_mesh
     {
         mouse_vert.uv = (world_verts[closest_vert1].uv + world_verts[closest_vert2].uv) / 2.;
@@ -299,29 +297,24 @@ pub fn draw_bone(
         return;
     }
 
-    //render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-    render_pass.set_bind_group(0, &shared.bind_groups[bone.tex_idx as usize], &[]);
-    render_pass.set_vertex_buffer(0, vertex_buffer(&world_verts, device).slice(..));
-
+    let mut indices: Vec<u32> = vec![];
     for v in 0..world_verts.len() {
         if v > world_verts.len() - 3 {
             break;
         }
-        let indices = [world_verts.len() as u32 - 1, v as u32, v as u32 + 1];
-        render_pass.set_index_buffer(
-            index_buffer(indices.to_vec(), &device).slice(..),
-            wgpu::IndexFormat::Uint32,
-        );
-        render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
-
-        println!("{} {} {}", indices[0], indices[1], indices[2]);
+        indices.push(world_verts.len() as u32 - 1);
+        indices.push(v as u32);
+        indices.push(v as u32 + 1);
     }
 
-    //render_pass.set_index_buffer(
-    //    index_buffer(bone.indices.to_vec(), &device).slice(..),
-    //    wgpu::IndexFormat::Uint32,
-    //);
-    //render_pass.draw_indexed(0..bone.indices.len() as u32, 0, 0..1)
+    //render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+    render_pass.set_bind_group(0, &shared.bind_groups[bone.tex_idx as usize], &[]);
+    render_pass.set_vertex_buffer(0, vertex_buffer(&world_verts, device).slice(..));
+    render_pass.set_index_buffer(
+        index_buffer(indices.to_vec(), &device).slice(..),
+        wgpu::IndexFormat::Uint32,
+    );
+    render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
 }
 
 pub fn bone_vertices(
@@ -331,36 +324,35 @@ pub fn bone_vertices(
     device: &Device,
     world_verts: &Vec<Vertex>,
 ) {
-    for i in (0..bone.indices.len()).step_by(3) {
-        macro_rules! point {
-            ($idx:expr, $color:expr) => {
-                draw_point(
-                    &world_verts[$idx].pos,
-                    &shared,
-                    render_pass,
-                    device,
-                    &Bone {
-                        pos: Vec2::ZERO,
-                        ..bone.clone()
-                    },
-                    $color,
-                    Vec2::ZERO,
-                )
-            };
-        }
+    macro_rules! point {
+        ($idx:expr, $color:expr) => {
+            draw_point(
+                &world_verts[$idx].pos,
+                &shared,
+                render_pass,
+                device,
+                &Bone {
+                    pos: Vec2::ZERO,
+                    ..bone.clone()
+                },
+                $color,
+                Vec2::ZERO,
+            )
+        };
+    }
 
-        for wv in 0..world_verts.len() {
-            let point = point!(wv, Color::GREEN);
-            let clicking_on_it =
-                utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
-            if clicking_on_it && shared.dragging_vert == usize::MAX {
-                point!(wv, Color::WHITE);
-
-                if shared.input.mouse_left != -1 {
-                    shared.dragging_vert = wv;
-                    println!("{}", shared.dragging_vert);
-                    continue;
-                }
+    for wv in 0..world_verts.len() {
+        let point = point!(wv, Color::GREEN);
+        let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
+        if mouse_on_it && shared.dragging_vert == usize::MAX {
+            point!(wv, Color::WHITE);
+            if shared.input.right_clicked() && world_verts.len() > 3 {
+                shared.selected_bone_mut().unwrap().vertices.remove(wv);
+                break;
+            }
+            if shared.input.is_clicking() {
+                shared.dragging_vert = wv;
+                break;
             }
         }
     }
@@ -383,13 +375,6 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
         shared
     )
     .pos;
-
-    let size = shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize].size;
-
-    // re-map UVs
-    for vert in &mut shared.selected_bone_mut().unwrap().vertices {
-        //vert.uv = vert.pos / size;
-    }
 }
 
 pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> (Vec<Vertex>, Vec<u32>) {
