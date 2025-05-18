@@ -217,6 +217,14 @@ fn draw_hover_triangle(
         && !shared.input.on_ui
         && shared.selected_bone().unwrap().is_mesh
     {
+        shared.undo_actions.push(Action {
+            action: ActionEnum::Bone,
+            action_type: ActionType::Edited,
+            bone: shared.selected_bone().unwrap().clone(),
+            id: shared.selected_bone().unwrap().id,
+            ..Default::default()
+        });
+
         mouse_vert.uv = (world_verts[closest_vert1].uv + world_verts[closest_vert2].uv) / 2.;
 
         shared
@@ -369,6 +377,13 @@ pub fn bone_vertices(
                 break;
             }
             if shared.input.is_clicking() {
+                shared.undo_actions.push(Action {
+                    action: ActionEnum::Bone,
+                    action_type: ActionType::Edited,
+                    bone: shared.selected_bone().unwrap().clone(),
+                    id: shared.selected_bone().unwrap().id,
+                    ..Default::default()
+                });
                 shared.dragging_vert = wv;
                 break;
             }
