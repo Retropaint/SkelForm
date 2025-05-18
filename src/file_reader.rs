@@ -167,9 +167,10 @@ pub fn read_image_loaders(
     // assign this texture to the selected bone
     shared.selected_bone_mut().unwrap().tex_idx = shared.armature.textures.len() as i32 - 1;
 
-    // assign texture mame to bone if it's using new bone name
-    if shared.selected_bone_mut().unwrap().name == NEW_BONE_NAME {
-        shared.selected_bone_mut().unwrap().name = name;
+    // assign texture mame to bone if appropriate
+    let bone_name = &mut shared.selected_bone_mut().unwrap().name;
+    if bone_name == NEW_BONE_NAME || bone_name == "" {
+        *bone_name = name;
     }
 }
 
