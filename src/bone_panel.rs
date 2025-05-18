@@ -157,14 +157,16 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             input!(bone.zindex, "zindex", &AnimElement::Zindex, 1., ui, "");
         });
     });
+    if shared.selected_bone().unwrap().vertices.len() > 0 {
+        let mut mesh_label = "Edit Mesh";
+        if shared.selected_bone_mut().unwrap().is_mesh {
+            mesh_label = "Finish Edit";
+        }
 
-    let mut mesh_label = "Turn to Mesh";
-    if shared.selected_bone_mut().unwrap().is_mesh {
-        mesh_label = "Turn to Rect";
-    }
-
-    if ui::button(mesh_label, ui).clicked() {
-        shared.selected_bone_mut().unwrap().is_mesh = !shared.selected_bone_mut().unwrap().is_mesh;
+        if ui::button(mesh_label, ui).clicked() {
+            shared.selected_bone_mut().unwrap().is_mesh =
+                !shared.selected_bone_mut().unwrap().is_mesh;
+        }
     }
 }
 
