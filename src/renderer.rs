@@ -75,6 +75,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
+    let mut hovering_vert = usize::MAX;
+
     // draw bone
     for b in 0..temp_bones.len() {
         draw_bone(&temp_bones[b], render_pass, device, &world_verts, shared);
@@ -89,7 +91,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             shared.camera.pos,
         );
         if temp_bones[b].is_mesh {
-            bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
+            hovering_vert = bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
         }
     }
 
@@ -102,6 +104,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     if shared.selected_bone() != None
         && shared.selected_bone().unwrap().vertices.len() > 0
+        && hovering_vert == usize::MAX
         && shared.dragging_vert == usize::MAX
     {
         draw_hover_triangle(shared, render_pass, device, &world_verts);
@@ -324,7 +327,7 @@ pub fn bone_vertices(
     render_pass: &mut RenderPass,
     device: &Device,
     world_verts: &Vec<Vertex>,
-) {
+) -> usize {
     macro_rules! point {
         ($idx:expr, $color:expr) => {
             draw_point(
@@ -342,10 +345,13 @@ pub fn bone_vertices(
         };
     }
 
+    let mut hovering_vert = usize::MAX;
+
     for wv in 0..world_verts.len() {
         let point = point!(wv, Color::GREEN);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
         if !shared.input.on_ui && mouse_on_it && shared.dragging_vert == usize::MAX {
+            hovering_vert = wv;
             point!(wv, Color::WHITE);
             if shared.input.right_clicked() && world_verts.len() > 4 {
                 shared.selected_bone_mut().unwrap().vertices.remove(wv);
@@ -357,6 +363,8 @@ pub fn bone_vertices(
             }
         }
     }
+
+    hovering_vert
 }
 
 pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
