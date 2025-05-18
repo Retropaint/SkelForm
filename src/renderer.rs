@@ -72,8 +72,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 let mut new_vert = con_vert!(
                     raw_to_world_vert,
                     *vert,
-                    shared.selected_bone().unwrap(),
-                    shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize],
+                    temp_bones[b],
+                    shared.armature.textures[temp_bones[b].tex_idx as usize],
                     shared
                 );
                 new_vert.pos.x /= shared.window.x / shared.window.y;
