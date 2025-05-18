@@ -9,6 +9,7 @@ use std::{
 
 pub const RECT_VERT_INDICES: [u32; 6] = [0, 1, 2, 1, 2, 3];
 pub const NEW_BONE_NAME: &str = "New Bone";
+pub const CLICK_THRESHOLD: i32 = 15;
 
 use tween::Tweener;
 use wgpu::BindGroup;
@@ -303,15 +304,23 @@ impl InputStates {
     }
 
     pub fn clicked(&self) -> bool {
-        self.mouse_left == -1 && self.mouse_left_prev != -1 && self.mouse_left_prev < 10
+        self.mouse_left == -1
+            && self.mouse_left_prev != -1
+            && self.mouse_left_prev < CLICK_THRESHOLD
     }
 
     pub fn right_clicked(&self) -> bool {
-        self.mouse_right == -1 && self.mouse_right_prev != -1 && self.mouse_right_prev < 10
+        self.mouse_right == -1
+            && self.mouse_right_prev != -1
+            && self.mouse_right_prev < CLICK_THRESHOLD
     }
 
     pub fn is_clicking(&self) -> bool {
         self.mouse_left > 0
+    }
+
+    pub fn is_holding_click(&self) -> bool {
+        self.mouse_left > CLICK_THRESHOLD
     }
 }
 
@@ -677,6 +686,7 @@ pub struct Shared {
     pub editing_bone: bool,
 
     pub dragging_vert: usize,
+    pub hovering_vert: usize,
 
     pub frame: i32,
     pub recording: bool,

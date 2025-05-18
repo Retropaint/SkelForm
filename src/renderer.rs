@@ -100,10 +100,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         return;
     }
 
-    // if mouse_left is lower than this, it's considered a click
-    let click_threshold = 10;
-
-    if shared.selected_bone() != None && shared.selected_bone().unwrap().vertices.len() > 0 {
+    if shared.selected_bone() != None
+        && shared.selected_bone().unwrap().vertices.len() > 0
+        && shared.dragging_vert == usize::MAX
+    {
         draw_hover_triangle(shared, render_pass, device, &world_verts);
     }
 
@@ -123,7 +123,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // editing bone
     if shared.input.on_ui || shared.ui.has_state(UiState::PolarModal) {
         shared.editing_bone = false;
-    } else if shared.selected_bone_idx != usize::MAX && shared.input.mouse_left > click_threshold {
+    } else if shared.selected_bone_idx != usize::MAX && shared.input.is_holding_click() {
         // save animation for undo
         if !shared.editing_bone {
             shared.save_edited_bone();
@@ -201,6 +201,7 @@ fn draw_hover_triangle(
 
     if shared.selected_bone() != None
         && shared.input.clicked()
+        && !shared.input.on_ui
         && shared.selected_bone().unwrap().is_mesh
     {
         mouse_vert.uv = (world_verts[closest_vert1].uv + world_verts[closest_vert2].uv) / 2.;
@@ -344,9 +345,9 @@ pub fn bone_vertices(
     for wv in 0..world_verts.len() {
         let point = point!(wv, Color::GREEN);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
-        if mouse_on_it && shared.dragging_vert == usize::MAX {
+        if !shared.input.on_ui && mouse_on_it && shared.dragging_vert == usize::MAX {
             point!(wv, Color::WHITE);
-            if shared.input.right_clicked() && world_verts.len() > 3 {
+            if shared.input.right_clicked() && world_verts.len() > 4 {
                 shared.selected_bone_mut().unwrap().vertices.remove(wv);
                 break;
             }
