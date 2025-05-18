@@ -9,7 +9,7 @@ use std::{
 
 pub const RECT_VERT_INDICES: [u32; 6] = [0, 1, 2, 1, 2, 3];
 pub const NEW_BONE_NAME: &str = "New Bone";
-pub const CLICK_THRESHOLD: i32 = 8;
+pub const CLICK_THRESHOLD: i32 = 5;
 
 use tween::Tweener;
 use wgpu::BindGroup;
