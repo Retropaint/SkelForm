@@ -149,6 +149,28 @@ pub fn save(path: String, shared: &mut Shared) {
     // clone armature and make some edits, then serialize it
     let mut armature_copy = shared.armature.clone();
 
+    for bone in &mut armature_copy.bones {
+        // check if this bone is a regular rect
+        let mut is_rect = true;
+        let tex_size = armature_copy.textures[bone.tex_idx as usize].size;
+        for vert in &bone.vertices {
+            if vert.pos.x != 0. && vert.pos.x.abs() != tex_size.x.abs() {
+                is_rect = false;
+                break;
+            }
+            if vert.pos.y != 0. && vert.pos.y.abs() != tex_size.y.abs() {
+                is_rect = false;
+                break;
+            }
+        }
+
+        // if it is a regular rect, empty verts and indices
+        if is_rect {
+            bone.vertices = vec![];
+            bone.indices = vec![];
+        }
+    }
+
     // assign element_id to armature
     for anim in &mut armature_copy.animations {
         for kf in &mut anim.keyframes {
