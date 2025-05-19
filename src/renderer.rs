@@ -79,8 +79,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             world_verts.push(new_vert);
         }
 
-        if shared.selected_bone() != None && temp_bones[b].id == shared.selected_bone().unwrap().id
-        {
+        let selected = shared.selected_bone() != None
+            && temp_bones[b].id == shared.selected_bone().unwrap().id;
+
+        if selected {
             selected_bone_world_verts = world_verts.clone();
         }
 
@@ -90,19 +92,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             hovering_vert =
                 bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
         }
-    }
 
-    if shared.selected_bone() != None {
-        draw_point(
-            &Vec2::ZERO,
-            &shared,
-            render_pass,
-            device,
-            &shared.selected_bone().unwrap(),
-            Color::new(0., 255., 0., 0.5),
-            shared.camera.pos,
-            0.,
-        );
+        if selected {
+            draw_point(
+                &Vec2::ZERO,
+                &shared,
+                render_pass,
+                device,
+                &temp_bones[b],
+                Color::new(0., 255., 0., 0.5),
+                shared.camera.pos,
+                0.,
+            );
+        }
     }
 
     if shared.input.mouse_left == -1 {
