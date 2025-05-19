@@ -1046,38 +1046,30 @@ impl Shared {
             self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
         }
 
-        // create keyframe at this frame if it doesn't exist
-        self.check_if_in_keyframe(
+        let frame = self.check_if_in_keyframe(
             self.selected_bone().unwrap().id,
             self.ui.anim.selected_frame,
             element.clone(),
         );
-        let selected_frame = self.ui.anim.selected_frame;
-        let selected_id = self.selected_bone().unwrap().id;
-        for kf in &mut self.selected_animation_mut().unwrap().keyframes {
-            if kf.frame != selected_frame || kf.bone_id != selected_id || kf.element != *element {
-                continue;
-            }
-
-            kf.value = value;
-            break;
-        }
+        self.selected_animation_mut().unwrap().keyframes[frame].value = value;
 
         self.sort_keyframes();
     }
 
-    fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: AnimElement) -> bool {
+    /// Return which frame has these attributes, or create a new one
+    fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: AnimElement) -> usize {
         // check if this keyframe exists
-        let mut add = true;
-        for kf in &self.selected_animation().unwrap().keyframes {
+        let mut exists_at = usize::MAX;
+        for i in 0..self.selected_animation().unwrap().keyframes.len() {
+            let kf = &self.selected_animation().unwrap().keyframes[i];
             if kf.frame == frame && kf.bone_id == id && kf.element == element {
-                add = false;
+                exists_at = i;
                 break;
             }
         }
 
-        if !add {
-            return false;
+        if exists_at != usize::MAX {
+            return exists_at;
         }
 
         self.selected_animation_mut()
@@ -1090,7 +1082,7 @@ impl Shared {
                 ..Default::default()
             });
 
-        true
+        self.selected_animation().unwrap().keyframes.len() - 1
     }
 
     pub fn is_animating(&self) -> bool {
