@@ -67,21 +67,20 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // draw bone
     for b in 0..temp_bones.len() {
         let mut world_verts: Vec<Vertex> = vec![];
-        if shared.selected_bone() != None {
-            for vert in &temp_bones[b].vertices {
-                let mut new_vert = con_vert!(
-                    raw_to_world_vert,
-                    *vert,
-                    temp_bones[b],
-                    shared.armature.textures[temp_bones[b].tex_idx as usize],
-                    shared
-                );
-                new_vert.pos.x /= shared.window.x / shared.window.y;
-                world_verts.push(new_vert);
-            }
+        for vert in &temp_bones[b].vertices {
+            let mut new_vert = con_vert!(
+                raw_to_world_vert,
+                *vert,
+                temp_bones[b],
+                shared.armature.textures[temp_bones[b].tex_idx as usize],
+                shared
+            );
+            new_vert.pos.x /= shared.window.x / shared.window.y;
+            world_verts.push(new_vert);
         }
 
-        if temp_bones[b].id == shared.selected_bone().unwrap().id {
+        if shared.selected_bone() != None && temp_bones[b].id == shared.selected_bone().unwrap().id
+        {
             selected_bone_world_verts = world_verts.clone();
         }
 
