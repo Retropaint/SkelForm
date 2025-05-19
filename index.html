@@ -39,10 +39,10 @@
             }
 
             .file-dialog {
-                position: absolute; 
-                width: 100%; 
-                height: 100%; 
-                background: rgb(0, 0, 0, 0.25); 
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                background: rgb(0, 0, 0, 0.25);
                 visibility: hidden;
                 z-index: 2;
             }
@@ -52,39 +52,60 @@
     <body>
         <div id="file-dialog" class="file-dialog">
             <div style="position: absolute; top: 50%; left: 50%">
-                <input type="file" accept="image/jpeg, image/png" onchange="toggleFileDialog(false); loadImage(event)"/>
+                <input
+                    type="file"
+                    onchange="toggleFileDialog(false); loadImage(event)"
+                />
             </div>
         </div>
 
-        <p class="resolution-message">If you see this message, please refresh this page. <br> If it persists, please adjust the browser zoom level or adjust your desktop resolution.</p>
-        <link data-trunk rel="rust" href="Cargo.toml" data-target-name="SkelForm" />
+        <p class="resolution-message">
+            If you see this message, please refresh this page. <br />
+            If it persists, please adjust the browser zoom level or adjust your
+            desktop resolution.
+        </p>
+        <link
+            data-trunk
+            rel="rust"
+            href="Cargo.toml"
+            data-target-name="SkelForm"
+        />
         <div class="root">
             <canvas class="main-canvas" id="canvas"></canvas>
         </div>
 
         <img src="" id="last-image" />
 
-        <img src="anim_icons.png" id="img-anim-icons"/>
+        <img src="anim_icons.png" id="img-anim-icons" />
 
-        <script>
+        <script type="module">
+            import * as wasmModule from "./pkg/your_project.js";
             var img = document.getElementById("last-image");
             function toggleFileDialog(open) {
                 let str = open ? "visible" : "hidden";
                 document.getElementById("file-dialog").style.visibility = str;
             }
 
+            await wasmModule.default();
+            wasmModule.import_zip_file();
+
+            function toggleImageDialog(open) {
+                let str = open ? "visible" : "hidden";
+                document.getElementById("file-dialog").style.visibility = str;
+            }
+
             function loadImage(event) {
                 var reader = new FileReader();
-                reader.onload = function(event) {
+                reader.onload = function (event) {
                     img.src = event.target.result;
                 };
                 reader.readAsDataURL(event.target.files[0]);
             }
 
             function removeImage() {
-                img.src = "";               
+                img.src = "";
             }
-        
+
             function resizeCanvas() {
                 const canvas = document.getElementById("canvas");
                 canvas.width = window.innerWidth;
