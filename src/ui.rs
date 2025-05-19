@@ -70,8 +70,6 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         shared.ui.set_state(UiState::ImageModal, false);
     }
 
-    //visualize_vertices(context, shared);
-
     // Although counter-intuitive, mouse inputs are recorded here.
     // This is because egui can detect all of them even if they were not on the UI itself.
     // To determine if the mouse is on the UI, winit's mouse input is used instead (see input.rs).
@@ -625,42 +623,6 @@ pub fn top_bar_button(
     *offset += height + 2.;
 
     response
-}
-
-pub fn visualize_vertices(context: &Context, shared: &Shared) {
-    for bone in &shared.armature.bones {
-        if bone.is_mesh || bone.vertices.len() == 0 {
-            continue;
-        }
-        for vert in &bone.vertices {
-            let pos = vert.pos.clone();
-            context.debug_painter().circle_filled(
-                utils::world_to_screen_space(pos, shared.window, 1., false).into(),
-                10.,
-                egui::Color32::GREEN,
-            );
-        }
-
-        //for i in 0..RECT_VERT_INDICES.len() {
-        //    if i == 0 {
-        //        continue;
-        //    }
-        //    let p1 = utils::world_to_screen_space(
-        //        bone.vertices[RECT_VERT_INDICES[i - 1] as usize].pos,
-        //        shared.window,
-        //        shared.camera.zoom,
-        //    );
-        //    let p2 = utils::world_to_screen_space(
-        //        bone.vertices[RECT_VERT_INDICES[i] as usize].pos,
-        //        shared.window,
-        //        shared.camera.zoom,
-        //    );
-        //    context.debug_painter().line_segment(
-        //        [p1.into(), p2.into()],
-        //        egui::Stroke::new(2., egui::Color32::GREEN),
-        //    );
-        //}
-    }
 }
 
 pub fn visualize_bone_point(context: &Context, shared: &Shared) {

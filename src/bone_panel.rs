@@ -159,13 +159,12 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     });
     if shared.selected_bone().unwrap().vertices.len() > 0 {
         let mut mesh_label = "Edit Mesh";
-        if shared.selected_bone_mut().unwrap().is_mesh {
+        if shared.editing_mesh {
             mesh_label = "Finish Edit";
         }
 
         if ui::button(mesh_label, ui).clicked() {
-            shared.selected_bone_mut().unwrap().is_mesh =
-                !shared.selected_bone_mut().unwrap().is_mesh;
+            shared.editing_mesh = !shared.editing_mesh;
         }
     }
 }
