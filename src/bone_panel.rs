@@ -24,7 +24,7 @@ pub use web::*;
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 extern "C" {
-    pub fn toggleFileDialog(open: bool);
+    pub fn toggleFileDialog(open: bool, id: String);
 }
 
 pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
@@ -73,7 +73,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                     open_file_dialog();
 
                     #[cfg(target_arch = "wasm32")]
-                    toggleFileDialog(true);
+                    toggleFileDialog(true, "image-dialog".to_string());
                 } else {
                     shared.ui.set_state(UiState::ImageModal, true);
                 }
