@@ -1,5 +1,7 @@
 //! Core UI (user interface) logic.
 
+use std::io::Read;
+
 use egui::{Color32, Context, Shadow, Stroke};
 
 use crate::*;
@@ -34,15 +36,31 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         };
     }
 
-    // load anim change icons
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let size = 18;
-        if shared.ui.anim.icon_images.len() == 0 {
-            let mut full_img =
-                image::load_from_memory(include_bytes!("../anim_icons.png")).unwrap();
+    let size = 18;
+    #[allow(unused_assignments)]
+    let mut full_img = image::DynamicImage::default();
+    if shared.ui.anim.icon_images.len() == 0 {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            full_img = image::load_from_memory(include_bytes!("../anim_icons.png")).unwrap();
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some((pixels, dims)) = file_reader::load_image_wasm("img-anim-icons".to_string())
+            {
+                let buffer = image::ImageBuffer::<image::Rgba<u8>, Vec<u8>>::from_vec(
+                    dims.x as u32,
+                    dims.y as u32,
+                    pixels,
+                )
+                .unwrap();
+                let mut full_img = image::DynamicImage::ImageRgba8(buffer);
+            }
+        }
+
+        if full_img.width() > 0 {
             let mut x = 0;
-            while x < full_img.width() - 1 {
+            while full_img.width() > 0 && x < full_img.width() - 1 {
                 let img = full_img.crop(x, 0, 18, 18).into_rgba8();
                 x += size;
                 let color_image = egui::ColorImage::from_rgba_unmultiplied(
@@ -336,6 +354,7 @@ pub fn default_styling(context: &Context) {
     visuals.widgets.hovered.corner_radius = egui::CornerRadius::ZERO;
     visuals.widgets.active.corner_radius = egui::CornerRadius::ZERO;
     visuals.widgets.open.corner_radius = egui::CornerRadius::ZERO;
+    visuals.widgets.noninteractive.corner_radius = egui::CornerRadius::ZERO;
 
     visuals.window_shadow = Shadow::NONE;
     visuals.window_fill = COLOR_MAIN;
@@ -596,7 +615,7 @@ pub fn top_bar_button(
     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
     let painter = ui.painter_at(ui.min_rect());
     if response.hovered() {
-        painter.rect_filled(rect, egui::CornerRadius::ZERO, egui::Color32::DARK_GRAY);
+        painter.rect_filled(rect, egui::CornerRadius::ZERO, COLOR_ACCENT);
     } else {
         painter.rect_filled(rect, egui::CornerRadius::ZERO, egui::Color32::TRANSPARENT);
     }
