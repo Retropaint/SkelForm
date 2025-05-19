@@ -87,8 +87,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         draw_bone(&temp_bones[b], render_pass, device, &world_verts, shared);
+
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-        if temp_bones[b].is_mesh {
+        if shared.editing_mesh {
             hovering_vert =
                 bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
         }
@@ -115,7 +116,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     if shared.selected_bone() != None
-        && shared.selected_bone().unwrap().is_mesh
+        && shared.editing_mesh
         && shared.selected_bone().unwrap().vertices.len() > 0
         && hovering_vert == usize::MAX
         && !shared.input.on_ui
@@ -221,7 +222,7 @@ fn draw_hover_triangle(
     if shared.selected_bone() != None
         && shared.input.clicked()
         && !shared.input.on_ui
-        && shared.selected_bone().unwrap().is_mesh
+        && shared.editing_mesh
     {
         shared.undo_actions.push(Action {
             action: ActionEnum::Bone,

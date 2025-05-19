@@ -149,14 +149,6 @@ pub fn save(path: String, shared: &mut Shared) {
     // clone armature and make some edits, then serialize it
     let mut armature_copy = shared.armature.clone();
 
-    // if bone isn't a mesh, then empty the vertices
-    for bone in &mut armature_copy.bones {
-        if !bone.is_mesh {
-            //bone.vertices = vec![];
-            //bone.indices = vec![];
-        }
-    }
-
     // assign element_id to armature
     for anim in &mut armature_copy.animations {
         for kf in &mut anim.keyframes {

@@ -685,6 +685,7 @@ pub struct Shared {
     pub editing_bone: bool,
 
     pub dragging_vert: usize,
+    pub editing_mesh: bool,
 
     pub frame: i32,
     pub recording: bool,
@@ -747,6 +748,8 @@ impl Shared {
 
     pub fn unselect_everything(&mut self) {
         self.selected_bone_idx = usize::MAX;
+        self.ui.anim.selected_frame = -1;
+        self.editing_mesh = false;
     }
 
     pub fn select_bone(&mut self, idx: usize) {
