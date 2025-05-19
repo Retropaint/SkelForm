@@ -1007,12 +1007,10 @@ impl Shared {
     }
 
     pub fn edit_bone(&mut self, element: &AnimElement, mut value: f32, overwrite: bool) {
-        let og_value: f32;
         let is_animating = self.is_animating();
 
         macro_rules! edit {
             ($field:expr) => {
-                og_value = $field;
                 if !is_animating {
                     $field = value;
                 } else if overwrite {
@@ -1036,27 +1034,24 @@ impl Shared {
             AnimElement::ScaleY =>    { edit!(bone_mut.scale.y); },
             AnimElement::PivotX =>    { edit!(bone_mut.pivot.x); },
             AnimElement::PivotY =>    { edit!(bone_mut.pivot.y); },
-            AnimElement::Zindex =>    { edit!(bone_mut.zindex); },
+            AnimElement::Zindex =>    { edit!(bone_mut.zindex);  },
         };
 
         if !self.is_animating() {
             return;
         }
 
+        // create keyframe at 0th frame for this element if it doesn't exist
         if self.ui.anim.selected_frame != 0 {
-            let added =
-                self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
-            if added {
-                self.last_keyframe_mut().unwrap().value = og_value;
-            }
+            self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
         }
 
+        // create keyframe at this frame if it doesn't exist
         self.check_if_in_keyframe(
             self.selected_bone().unwrap().id,
             self.ui.anim.selected_frame,
             element.clone(),
         );
-
         let selected_frame = self.ui.anim.selected_frame;
         let selected_id = self.selected_bone().unwrap().id;
         for kf in &mut self.selected_animation_mut().unwrap().keyframes {
@@ -1090,7 +1085,6 @@ impl Shared {
             .keyframes
             .push(Keyframe {
                 frame,
-                //bones: vec![],
                 bone_id: id,
                 element,
                 ..Default::default()
