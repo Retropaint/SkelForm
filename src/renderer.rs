@@ -235,25 +235,46 @@ fn draw_hover_triangle(
             .vertices
             .push(mouse_vert);
 
-        // sort vertices in cw (or ccw?) order
+        shared.selected_bone_mut().unwrap().vertices =
+            sort_vertices(shared.selected_bone().unwrap().vertices.clone());
 
-        // get center point
-        let mut center = Vec2::default();
-        for v in &shared.selected_bone().unwrap().vertices {
-            center += v.pos;
-        }
-        center /= shared.selected_bone().unwrap().vertices.len() as f32;
-
-        shared
-            .selected_bone_mut()
-            .unwrap()
-            .vertices
-            .sort_by(|a, b| {
-                let angle_a = (a.pos.y - center.y).atan2(a.pos.x - center.x);
-                let angle_b = (b.pos.y - center.y).atan2(b.pos.x - center.x);
-                angle_a.partial_cmp(&angle_b).unwrap()
-            });
+        shared.selected_bone_mut().unwrap().indices =
+            setup_indices(&shared.selected_bone().unwrap().vertices);
     }
+}
+
+/// sort vertices in cw (or ccw?) order
+fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
+    // get center point
+    let mut center = Vec2::default();
+    for v in &verts {
+        center += v.pos;
+    }
+    center /= verts.len() as f32;
+
+    verts.sort_by(|a, b| {
+        let angle_a = (a.pos.y - center.y).atan2(a.pos.x - center.x);
+        let angle_b = (b.pos.y - center.y).atan2(b.pos.x - center.x);
+        angle_a.partial_cmp(&angle_b).unwrap()
+    });
+
+    verts
+}
+
+/// generate a usable index array for the supplied vertices
+///
+/// don't forget to use sort_vertices() first!
+fn setup_indices(verts: &Vec<Vertex>) -> Vec<u32> {
+    let mut indices: Vec<u32> = vec![];
+    for v in 0..verts.len() {
+        if v > verts.len() - 3 {
+            break;
+        }
+        indices.push(verts.len() as u32 - 1);
+        indices.push(v as u32);
+        indices.push(v as u32 + 1);
+    }
+    indices
 }
 
 pub struct Triangle {
@@ -324,24 +345,14 @@ pub fn draw_bone(
         return;
     }
 
-    let mut indices: Vec<u32> = vec![];
-    for v in 0..world_verts.len() {
-        if v > world_verts.len() - 3 {
-            break;
-        }
-        indices.push(world_verts.len() as u32 - 1);
-        indices.push(v as u32);
-        indices.push(v as u32 + 1);
-    }
-
     //render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
     render_pass.set_bind_group(0, &shared.bind_groups[bone.tex_idx as usize], &[]);
     render_pass.set_vertex_buffer(0, vertex_buffer(&world_verts, device).slice(..));
     render_pass.set_index_buffer(
-        index_buffer(indices.to_vec(), &device).slice(..),
+        index_buffer(bone.indices.to_vec(), &device).slice(..),
         wgpu::IndexFormat::Uint32,
     );
-    render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
+    render_pass.draw_indexed(0..bone.indices.len() as u32, 0, 0..1);
 }
 
 pub fn bone_vertices(
@@ -423,7 +434,7 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
 }
 
 pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> (Vec<Vertex>, Vec<u32>) {
-    let verts = vec![
+    let mut verts = vec![
         Vertex::default(),
         Vertex {
             pos: Vec2::new(tex.size.x * scale.x, 0.),
@@ -441,7 +452,9 @@ pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> (Vec<Vertex>, Vec<u32>) {
             color: Color::default(),
         },
     ];
-    (verts, RECT_VERT_INDICES.to_vec())
+    verts = sort_vertices(verts.clone());
+    let indices = setup_indices(&verts);
+    (verts, indices)
 }
 
 fn draw_point(
