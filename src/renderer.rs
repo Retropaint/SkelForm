@@ -473,28 +473,29 @@ fn draw_point(
     let point_size = 0.1;
     let mut temp_point_verts: [Vertex; 4] = [
         Vertex {
-            pos: Vec2::new(-point_size, point_size) + bone.pos,
+            pos: Vec2::new(-point_size, point_size),
             uv: Vec2::new(1., 0.),
             color,
         },
         Vertex {
-            pos: Vec2::new(point_size, point_size) + bone.pos,
+            pos: Vec2::new(point_size, point_size),
             uv: Vec2::new(0., 1.),
             color,
         },
         Vertex {
-            pos: Vec2::new(-point_size, -point_size) + bone.pos,
+            pos: Vec2::new(-point_size, -point_size),
             uv: Vec2::new(0., 0.),
             color,
         },
         Vertex {
-            pos: Vec2::new(point_size, -point_size) + bone.pos,
+            pos: Vec2::new(point_size, -point_size),
             uv: Vec2::new(1., 1.),
             color,
         },
     ];
 
     for v in &mut temp_point_verts {
+        v.pos += bone.pos;
         v.pos = utils::rotate(&v.pos, rotation);
     }
 
