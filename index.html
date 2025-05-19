@@ -50,11 +50,11 @@
     </head>
 
     <body>
-        <div id="file-dialog" class="file-dialog">
+        <div id="image-dialog" class="file-dialog">
             <div style="position: absolute; top: 50%; left: 50%">
                 <input
                     type="file"
-                    onchange="toggleFileDialog(false); loadImage(event)"
+                    onchange="toggleFileDialog(false, 'image-dialog'); loadFile(event, 'last-image')"
                 />
             </div>
         </div>
@@ -78,32 +78,22 @@
 
         <img src="anim_icons.png" id="img-anim-icons" />
 
-        <script type="module">
-            import * as wasmModule from "./pkg/your_project.js";
-            var img = document.getElementById("last-image");
-            function toggleFileDialog(open) {
+        <script>
+            function toggleFileDialog(open, id) {
                 let str = open ? "visible" : "hidden";
-                document.getElementById("file-dialog").style.visibility = str;
+                document.getElementById(id).style.visibility = str;
             }
 
-            await wasmModule.default();
-            wasmModule.import_zip_file();
-
-            function toggleImageDialog(open) {
-                let str = open ? "visible" : "hidden";
-                document.getElementById("file-dialog").style.visibility = str;
-            }
-
-            function loadImage(event) {
+            function loadFile(event, id) {
                 var reader = new FileReader();
                 reader.onload = function (event) {
-                    img.src = event.target.result;
+                    document.getElementById(id).src = event.target.result;
                 };
                 reader.readAsDataURL(event.target.files[0]);
             }
 
             function removeImage() {
-                img.src = "";
+                document.getElementById("last-image").src = "";
             }
 
             function resizeCanvas() {
