@@ -78,6 +78,11 @@
 
         <img src="anim_icons.png" id="img-anim-icons" />
 
+        <script type="module">
+            import * as bindings from "/SkelForm.js";
+            window.wasmBindings = bindings;
+        </script>
+
         <script>
             function toggleFileDialog(open, id) {
                 let str = open ? "visible" : "hidden";
