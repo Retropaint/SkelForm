@@ -442,17 +442,17 @@ pub fn create_tex_rect(tex: &Texture, scale: Vec2) -> (Vec<Vertex>, Vec<u32>) {
     let mut verts = vec![
         Vertex::default(),
         Vertex {
-            pos: Vec2::new(tex.size.x * scale.x, 0.),
+            pos: Vec2::new(tex.size.x, 0.),
             uv: Vec2::new(1., 0.),
             color: Color::default(),
         },
         Vertex {
-            pos: Vec2::new(tex.size.x * scale.x, tex.size.y * -scale.y),
+            pos: Vec2::new(tex.size.x, -tex.size.y),
             uv: Vec2::new(1., 1.),
             color: Color::default(),
         },
         Vertex {
-            pos: Vec2::new(0., tex.size.y * -scale.y),
+            pos: Vec2::new(0., -tex.size.y),
             uv: Vec2::new(0., 1.),
             color: Color::default(),
         },

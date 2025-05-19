@@ -470,9 +470,6 @@ pub struct Bone {
     #[serde(default)]
     pub indices: Vec<u32>,
 
-    #[serde(default)]
-    pub is_mesh: bool,
-
     /// used to properly offset bone's movement to counteract it's parent
     #[serde(skip)]
     pub parent_rot: f32,
