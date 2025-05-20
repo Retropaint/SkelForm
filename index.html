@@ -25,6 +25,7 @@
                 display: flex;
                 justify-content: center;
                 align-items: center;
+                background: #2d2c2c;
             }
 
             .main-canvas {
@@ -33,9 +34,16 @@
             }
 
             .resolution-message {
+                display: flex;
+                justify-content: center;
+                height: 100%;
+                align-items: center;
                 position: absolute;
+                width: 100%;
                 z-index: 0;
-                margin-left: 20px;
+                color: #d6d6d6;
+                font-family: Arial;
+                text-align: center;
             }
 
             .file-dialog {
@@ -69,11 +77,19 @@
             </div>
         </div>
 
-        <p class="resolution-message">
-            If you see this message, please refresh this page. <br />
-            If it persists, please adjust the browser zoom level or adjust your
-            desktop resolution.
-        </p>
+        <div class="resolution-message">
+            <p>
+                If you see this message, SkelForm has not loaded properly.
+                <br />
+                <br />
+                <b>Please refresh the page.</b>
+                <br />
+                <br />
+                If this persists, please adjust the browser zoom level or
+                desktop resolution.
+            </p>
+        </div>
+
         <link
             data-trunk
             rel="rust"
@@ -106,7 +122,8 @@
                 var reader = new FileReader();
                 reader.readAsDataURL(event.target.files[0]);
                 reader.onload = function (event) {
-                    document.getElementById('last-image').src = event.target.result;
+                    document.getElementById("last-image").src =
+                        event.target.result;
                 };
             }
 
