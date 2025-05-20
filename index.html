@@ -54,7 +54,7 @@
             <div style="position: absolute; top: 50%; left: 50%">
                 <input
                     type="file"
-                    onchange="toggleFileDialog(false, 'image-dialog'); loadFile(event, 'last-image')"
+                    onchange="toggleFileDialog(false, 'image-dialog'); loadImage(event)"
                 />
             </div>
         </div>
@@ -89,34 +89,39 @@
         <img src="anim_icons.png" id="img-anim-icons" />
 
         <script type="module">
+            // unused for now
             import * as bindings from "/SkelForm.js";
             window.wasmBindings = bindings;
         </script>
 
         <script>
+            let fileData = [];
+
             function toggleFileDialog(open, id) {
                 let str = open ? "visible" : "hidden";
                 document.getElementById(id).style.visibility = str;
             }
 
-            function loadFile(event, id) {
+            function loadImage(event) {
                 var reader = new FileReader();
                 reader.readAsDataURL(event.target.files[0]);
                 reader.onload = function (event) {
-                    if (id == "last-image") {
-                        document.getElementById(id).src = event.target.result;
-                    }
+                    document.getElementById('last-image').src = event.target.result;
                 };
-
-                if (id == "file") {
-                    window.wasmBindings.read_file();
-                }
             }
 
             async function loadZip(event) {
                 const file = event.target.files[0];
                 const arrayBuffer = await file.arrayBuffer();
-                window.wasmBindings.read_file(new Uint8Array(arrayBuffer));
+                fileData = new Uint8Array(arrayBuffer);
+            }
+
+            function getZip() {
+                return fileData;
+            }
+
+            function removeZip() {
+                fileData = [];
             }
 
             function removeImage() {

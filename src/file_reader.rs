@@ -19,6 +19,8 @@ pub use web::*;
 #[wasm_bindgen]
 extern "C" {
     fn removeImage();
+    fn getZip() -> Vec<u8>;
+    fn removeZip();
 }
 
 macro_rules! temp_file {
@@ -45,6 +47,15 @@ pub const IMPORT_IMG_ERR: &str = "Could not extract image data.";
 pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Context) {
     if let Some(_) = renderer.as_ref() {
         file_reader::read_image_loaders(
+            shared,
+            &renderer.as_ref().unwrap().gpu.queue,
+            &renderer.as_ref().unwrap().gpu.device,
+            &renderer.as_ref().unwrap().bind_group_layout,
+            context,
+        );
+
+        #[cfg(target_arch = "wasm32")]
+        load_file(
             shared,
             &renderer.as_ref().unwrap().gpu.queue,
             &renderer.as_ref().unwrap().gpu.device,
@@ -205,7 +216,9 @@ pub fn read_import(
 
     shared.save_path = path.clone();
 
-    utils::import(path, shared, queue, device, bind_group_layout, context);
+    let file = std::fs::File::open(path).unwrap();
+
+    utils::import(file, shared, queue, device, bind_group_layout, context);
 
     del_temp_files();
 }
@@ -286,4 +299,20 @@ pub fn load_image_wasm(id: String) -> Option<(Vec<u8>, Vec2)> {
 pub fn create_temp_file(name: &str, content: &str) {
     let mut img_path = std::fs::File::create(name).unwrap();
     img_path.write_all(content.as_bytes()).unwrap();
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn load_file(
+    shared: &mut crate::Shared,
+    queue: &wgpu::Queue,
+    device: &wgpu::Device,
+    bind_group_layout: &BindGroupLayout,
+    context: &egui::Context,
+) {
+    if getZip().len() == 0 {
+        return;
+    }
+    let cursor = std::io::Cursor::new(getZip());
+    utils::import(cursor, shared, queue, device, bind_group_layout, context);
+    removeZip();
 }
