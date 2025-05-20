@@ -59,6 +59,16 @@
             </div>
         </div>
 
+        <div id="file-dialog" class="file-dialog">
+            <div style="position: absolute; top: 50%; left: 50%">
+                <input
+                    type="file"
+                    id="file-input"
+                    onchange="toggleFileDialog(false, 'file-dialog'); loadZip(event)"
+                />
+            </div>
+        </div>
+
         <p class="resolution-message">
             If you see this message, please refresh this page. <br />
             If it persists, please adjust the browser zoom level or adjust your
@@ -91,10 +101,22 @@
 
             function loadFile(event, id) {
                 var reader = new FileReader();
-                reader.onload = function (event) {
-                    document.getElementById(id).src = event.target.result;
-                };
                 reader.readAsDataURL(event.target.files[0]);
+                reader.onload = function (event) {
+                    if (id == "last-image") {
+                        document.getElementById(id).src = event.target.result;
+                    }
+                };
+
+                if (id == "file") {
+                    window.wasmBindings.read_file();
+                }
+            }
+
+            async function loadZip(event) {
+                const file = event.target.files[0];
+                const arrayBuffer = await file.arrayBuffer();
+                window.wasmBindings.read_file(new Uint8Array(arrayBuffer));
             }
 
             function removeImage() {

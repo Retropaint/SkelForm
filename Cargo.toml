@@ -27,7 +27,7 @@ rfd = { version = "0.15.3",  features = ["gtk3"], default-features = false}
 zip = "2.5.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-web-sys = { version = "0.3.77", features = ["Window", "Document", "HtmlImageElement", "CanvasRenderingContext2d", "HtmlCanvasElement", "ImageData"] }
+web-sys = { version = "0.3.77", features = ["Window", "Document", "HtmlImageElement", "CanvasRenderingContext2d", "HtmlCanvasElement", "ImageData", "HtmlInputElement"] }
 futures = "0.3.31"
 log = "0.4.26"
 web-time = "1.1.0"
@@ -36,6 +36,8 @@ console_log = "1.0.0"
 egui-winit = { version = "0.31.0", default-features = false }
 wasm-bindgen = "0.2.100"
 wasm-bindgen-futures = "0.4.50"
+zip = { version = "0.6", default-features = false }
+flate2 = { version = "1.0", default-features = false, features = ["rust_backend"] }
 
 [features]
 default = ["wgpu/default"]

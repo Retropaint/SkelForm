@@ -16,6 +16,7 @@ use native::*;
 // native-only imports
 #[cfg(target_arch = "wasm32")]
 mod web {
+    pub use wasm_bindgen::prelude::*;
     pub use wasm_bindgen::*;
     pub use web_sys::*;
     pub use web_time::Instant;
@@ -924,5 +925,16 @@ impl Scene {
             multiview: None,
             cache: None,
         })
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn read_file(data: &[u8]) {
+    let cursor = std::io::Cursor::new(data);
+    let mut zip = zip::ZipArchive::new(cursor);
+
+    for f in zip.as_mut().unwrap().file_names()  {
+        log::info!("{}", f);
     }
 }

@@ -184,6 +184,8 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     if top_bar_button(ui, str!("Import"), str!("I"), &mut offset).clicked() {
                         #[cfg(not(target_arch = "wasm32"))]
                         utils::open_import_dialog();
+                        #[cfg(target_arch = "wasm32")]
+                        bone_panel::toggleFileDialog(true, "file-dialog".to_string());
                         ui.close_menu();
                     }
                     if top_bar_button(ui, str!("Save"), str!("S"), &mut offset).clicked() {
