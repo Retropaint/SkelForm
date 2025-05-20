@@ -2,7 +2,6 @@
 
 use crate::*;
 
-#[cfg(not(target_arch = "wasm32"))]
 use std::io::Read;
 
 /// Convert a point from screen to world space.
@@ -246,18 +245,15 @@ fn create_temp_tex_sheet(shared: &mut Shared, size: &Vec2) {
     .unwrap();
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-pub fn import(
-    path: String,
+pub fn import<R: Read + std::io::Seek>(
+    data: R,
     shared: &mut crate::Shared,
     queue: &wgpu::Queue,
     device: &wgpu::Device,
     bind_group_layout: &BindGroupLayout,
     context: &egui::Context,
 ) {
-    let file = std::fs::File::open(path);
-    let mut zip = zip::ZipArchive::new(file.unwrap());
-
+    let mut zip = zip::ZipArchive::new(data);
     if let Ok(_) = zip {
     } else {
         shared

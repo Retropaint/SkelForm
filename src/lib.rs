@@ -927,14 +927,3 @@ impl Scene {
         })
     }
 }
-
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
-pub fn read_file(data: &[u8]) {
-    let cursor = std::io::Cursor::new(data);
-    let mut zip = zip::ZipArchive::new(cursor);
-
-    for f in zip.as_mut().unwrap().file_names()  {
-        log::info!("{}", f);
-    }
-}
