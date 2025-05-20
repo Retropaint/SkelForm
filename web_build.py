@@ -4,15 +4,19 @@ import sys
 import argparse
 
 parser = argparse.ArgumentParser(prog='SkelForm Web Builder', description='Build script for SkelForm\'s web (WASM) version.')
-parser.add_argument('-s', '--serve', action='store_true')
-parser.add_argument('-r', '--release', action='store_true')
+
+# arguments
+parser.add_argument('-s', '--serve', action='store_true', help="(bool) Automatically run localhost:8000 after build.")
+parser.add_argument('-e', '--extra', default="", help="(string) Will be appended to trunk build. Must be enclosed in \"\".")
+
 args = parser.parse_args()
 
+# use a default config if no extras were provided
+if args.extra == "":
+    args.extra = "--features webgpu --filehash false" 
+
 # build /dist via trunk
-extra = ""
-if args.release:
-    extra = "--public-url /skelform_web"
-subprocess.run(("trunk build --features webgl --filehash false " + extra).split()) 
+subprocess.run(("trunk build " + args.extra).split()) 
 
 # copy assets over to /dist
 shutil.copy("anim_icons.png", "dist/anim_icons.png")
