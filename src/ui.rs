@@ -1,7 +1,5 @@
 //! Core UI (user interface) logic.
 
-use std::io::Read;
-
 use egui::{Color32, Context, Shadow, Stroke};
 
 use crate::*;
@@ -54,7 +52,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
                     pixels,
                 )
                 .unwrap();
-                let mut full_img = image::DynamicImage::ImageRgba8(buffer);
+                full_img = image::DynamicImage::ImageRgba8(buffer);
             }
         }
 

@@ -17,7 +17,6 @@ use native::*;
 #[cfg(target_arch = "wasm32")]
 mod web {
     pub use wasm_bindgen::prelude::*;
-    pub use wasm_bindgen::*;
     pub use web_sys::*;
     pub use web_time::Instant;
 }

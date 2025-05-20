@@ -89,7 +89,7 @@ pub fn read_image_loaders(
     let mut pixels: Vec<u8> = vec![];
     #[allow(unused_assignments)]
     let mut dimensions = Vec2::default();
-    #[allow(unused_assignments)]
+    #[allow(unused_assignments, unused_mut)]
     let mut name = "".to_string();
 
     #[cfg(not(target_arch = "wasm32"))]
