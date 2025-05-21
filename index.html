@@ -87,11 +87,11 @@
         <div id="image-dialog" class="file-dialog">
             <div class="container">
                 <input
-                    type="file"
                     onchange="toggleFileDialog(false, 'image-dialog'); loadImage(event)"
-                    id="input"
+                    type="image"
+                    id="img-input"
                 />
-                <label class="button" for="input">Upload Image</label>
+                <label class="button" for="img-input">Upload Image</label>
                 <label class="button" onclick="toggleFileDialog(false, 'image-dialog')" title="test"
                     >Cancel</label
                 >
@@ -102,10 +102,10 @@
             <div class="container">
                 <input
                     type="file"
-                    onchange="toggleFileDialog(false, 'image-dialog'); loadImage(event)"
-                    for="input"
+                    onchange="toggleFileDialog(false, 'file-dialog'); loadFile(event)"
+                    id="file-input"
                 />
-                <label class="button" for="input">Upload File</label>
+                <label class="button" for="file-input">Upload File</label>
                 <label class="button" onclick="toggleFileDialog(false, 'file-dialog')"
                     >Cancel</label
                 >
@@ -169,15 +169,16 @@
                     let img = document.getElementById("last-image");
                     img.src = event.target.result;
                 };
+                console.log("test")
             }
 
-            async function loadZip(event) {
+            async function loadFile(event) {
                 const file = event.target.files[0];
                 const arrayBuffer = await file.arrayBuffer();
                 fileData = new Uint8Array(arrayBuffer);
             }
 
-            function getZip() {
+            function getFile() {
                 return fileData;
             }
 
@@ -185,7 +186,7 @@
                 return imgName;
             }
 
-            function removeZip() {
+            function removeFile() {
                 fileData = [];
             }
 
