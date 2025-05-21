@@ -438,7 +438,7 @@ pub struct UiAnim {
     pub timeline_zoom: f32,
     pub lines_x: Vec<f32>,
     pub playing: bool,
-    pub elapsed: Option<std::time::Instant>,
+    pub started: Option<chrono::DateTime<chrono::Utc>>,
 
     // the frame at which playing started
     pub played_frame: i32,

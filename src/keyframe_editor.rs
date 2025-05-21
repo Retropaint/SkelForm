@@ -1,5 +1,8 @@
 //! Animation keyframe editor. Very early and only proof-of-concept.
 
+use std::fmt::Display;
+
+use chrono::Timelike;
 use egui::Stroke;
 
 use ui::COLOR_ACCENT;
@@ -11,7 +14,7 @@ const LINE_OFFSET: f32 = 30.;
 pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
     if !shared.ui.anim.playing {
     } else {
-        let mut elapsed = shared.ui.anim.elapsed.unwrap().elapsed().as_millis() as f32 / 1e3 as f32;
+        let mut elapsed = (chrono::Utc::now() - shared.ui.anim.started.unwrap()).as_seconds_f32();
         let frametime = 1. / shared.selected_animation().unwrap().fps as f32;
 
         // Offset elapsed time with the selected frame.
@@ -29,7 +32,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                     shared.recording = false;
                 }
             } else {
-                shared.ui.anim.elapsed = Some(std::time::Instant::now());
+                shared.ui.anim.started = Some(chrono::Utc::now());
                 shared.ui.anim.played_frame = 0;
             }
         }
@@ -458,7 +461,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     && shared.selected_animation().unwrap().keyframes.len() != 0
                 {
                     shared.ui.anim.playing = !shared.ui.anim.playing;
-                    shared.ui.anim.elapsed = Some(std::time::Instant::now());
+                    shared.ui.anim.started = Some(chrono::Utc::now());
                     shared.ui.anim.played_frame = shared.ui.anim.selected_frame;
                 }
             });
