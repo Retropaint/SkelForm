@@ -112,7 +112,11 @@
             </div>
         </div>
 
-        <div class="resolution-message">
+        <div
+            id="resolution-message"
+            class="resolution-message"
+            style="visibility: hidden"
+        >
             <p>
                 If you see this message, SkelForm has not loaded properly.
                 <br />
@@ -135,6 +139,8 @@
             <canvas class="main-canvas" id="canvas"></canvas>
         </div>
 
+        <form></form>
+
         <img src="" id="last-image" />
 
         <img src="anim_icons.png" id="img-anim-icons" />
@@ -148,6 +154,7 @@
         <script>
             let fileData = [];
             let imgName = "";
+            let hasLoaded = false;
 
             function toggleFileDialog(open, id) {
                 let str = open ? "visible" : "hidden";
@@ -175,7 +182,7 @@
             }
 
             function getImgName() {
-                return imgName
+                return imgName;
             }
 
             function removeZip() {
@@ -191,8 +198,22 @@
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
             }
+
+            function loaded() {
+                if (!hasLoaded) {
+                    document.getElementById(
+                        "resolution-message",
+                    ).style.visibility = "visible";
+                    hasLoaded = true;
+                }
+            }
+
             window.addEventListener("resize", resizeCanvas);
             window.addEventListener("load", resizeCanvas);
+
+            window.onbeforeunload = function () {
+                return "";
+            };
         </script>
     </body>
 </html>
