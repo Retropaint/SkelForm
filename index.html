@@ -68,7 +68,7 @@
                     flex-direction: column;
                 }
 
-                label {
+                .button {
                     color: #d6d6d6;
                     background: var(--color-accent);
                     padding: 5px;
@@ -91,9 +91,9 @@
                     onchange="toggleFileDialog(false, 'image-dialog'); loadImage(event)"
                     id="input"
                 />
-                <label for="input">Upload Image</label>
-                <label onclick="toggleFileDialog(false, 'image-dialog')"
-                    >Cancel</label
+                <div class="button" for="input">Upload Image</div>
+                <div class="button" onclick="toggleFileDialog(false, 'image-dialog')" title="test"
+                    >Cancel</div
                 >
             </div>
         </div>
@@ -106,7 +106,7 @@
                     for="input"
                 />
                 <label for="input">Upload File</label>
-                <label onclick="toggleFileDialog(false, 'file-dialog')"
+                <label onclick="toggleFileDialog(false, 'file-dialog')" title="test"
                     >Cancel</label
                 >
             </div>
