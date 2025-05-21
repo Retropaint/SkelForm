@@ -232,7 +232,6 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         shared.ui.anim.playing = true;
                         shared.select_frame(0);
                         shared.ui.anim.loops = 1;
-                        shared.ui.anim.elapsed = Some(std::time::Instant::now());
                         ui.close_menu();
                     }
                 });
