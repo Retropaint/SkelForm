@@ -4,6 +4,12 @@ use crate::*;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+extern "C" {
+    fn loaded();
+}
+
 macro_rules! con_vert {
     ($func:expr, $vert:expr, $bone:expr, $tex:expr, $shared:expr) => {
         $func(
@@ -19,6 +25,9 @@ macro_rules! con_vert {
 }
 
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
+    #[cfg(target_arch = "wasm32")]
+    loaded();
+
     for bone in &mut shared.armature.bones {
         if bone.tex_idx != -1 && bone.vertices.len() == 0 {
             let tex = &shared.armature.textures[bone.tex_idx as usize];
