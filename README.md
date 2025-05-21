@@ -12,12 +12,12 @@ Then, run `cargo run` in the terminal.
 
 ## Web
 
-Install Trunk v0.21.7 or above.
+Install [Trunk](https://trunkrs.dev) v0.21.7 or above.
 
 Then, run the `web_build.py` script to build the `dist` folder with the necessary files for web distribution.
 
 Notable argument(s):
-* `--serve` - Immediately run localhost:8000 after build.
+* `--serve` - Immediately run `localhost:8000` after build.
 
 # Documentation
 
