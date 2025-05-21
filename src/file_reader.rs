@@ -19,8 +19,8 @@ pub use web::*;
 #[wasm_bindgen]
 extern "C" {
     fn removeImage();
-    fn getZip() -> Vec<u8>;
-    fn removeZip();
+    fn getFile() -> Vec<u8>;
+    fn removeFile();
     fn getImgName() -> String;
 }
 
@@ -312,10 +312,10 @@ pub fn load_file(
     bind_group_layout: &BindGroupLayout,
     context: &egui::Context,
 ) {
-    if getZip().len() == 0 {
+    if getFile().len() == 0 {
         return;
     }
-    let cursor = std::io::Cursor::new(getZip());
+    let cursor = std::io::Cursor::new(getFile());
     utils::import(cursor, shared, queue, device, bind_group_layout, context);
-    removeZip();
+    removeFile();
 }
