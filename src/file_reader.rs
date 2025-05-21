@@ -21,6 +21,7 @@ extern "C" {
     fn removeImage();
     fn getZip() -> Vec<u8>;
     fn removeZip();
+    fn getImgName() -> String;
 }
 
 macro_rules! temp_file {
@@ -134,6 +135,8 @@ pub fn read_image_loaders(
         } else {
             return;
         }
+
+        name = getImgName().split('.').collect::<Vec<_>>()[0].to_string();
 
         removeImage();
     }

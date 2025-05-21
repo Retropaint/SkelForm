@@ -147,6 +147,7 @@
 
         <script>
             let fileData = [];
+            let imgName = "";
 
             function toggleFileDialog(open, id) {
                 let str = open ? "visible" : "hidden";
@@ -156,9 +157,10 @@
             function loadImage(event) {
                 var reader = new FileReader();
                 reader.readAsDataURL(event.target.files[0]);
+                imgName = event.target.files[0].name;
                 reader.onload = function (event) {
-                    document.getElementById("last-image").src =
-                        event.target.result;
+                    let img = document.getElementById("last-image");
+                    img.src = event.target.result;
                 };
             }
 
@@ -170,6 +172,10 @@
 
             function getZip() {
                 return fileData;
+            }
+
+            function getImgName() {
+                return imgName
             }
 
             function removeZip() {
