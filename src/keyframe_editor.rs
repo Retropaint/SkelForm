@@ -1,8 +1,5 @@
 //! Animation keyframe editor. Very early and only proof-of-concept.
 
-use std::fmt::Display;
-
-use chrono::Timelike;
 use egui::Stroke;
 
 use ui::COLOR_ACCENT;
