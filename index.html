@@ -6,6 +6,11 @@
         <title>Rust/Wgpu</title>
         <base data-trunk-public-url />
         <style type="text/css">
+            :root {
+                --color-accent: rgb(65, 46, 105);
+                --color-border: rgb(44, 36, 64);
+                font-family: Arial;
+            }
             :focus {
                 outline: none;
             }
@@ -42,7 +47,6 @@
                 width: 100%;
                 z-index: 0;
                 color: #d6d6d6;
-                font-family: Arial;
                 text-align: center;
             }
 
@@ -53,27 +57,58 @@
                 background: rgb(0, 0, 0, 0.25);
                 visibility: hidden;
                 z-index: 2;
+
+                .container {
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    flex-direction: column;
+                }
+
+                label {
+                    color: #d6d6d6;
+                    background: var(--color-accent);
+                    padding: 5px;
+                    border: 2px solid var(--color-border);
+                    cursor: pointer;
+                }
+
+                input {
+                    display: none;
+                }
             }
         </style>
     </head>
 
     <body>
         <div id="image-dialog" class="file-dialog">
-            <div style="position: absolute; top: 50%; left: 50%">
+            <div class="container">
                 <input
                     type="file"
                     onchange="toggleFileDialog(false, 'image-dialog'); loadImage(event)"
+                    id="input"
                 />
+                <label for="input">Upload Image</label>
+                <label onclick="toggleFileDialog(false, 'image-dialog')"
+                    >Cancel</label
+                >
             </div>
         </div>
 
         <div id="file-dialog" class="file-dialog">
-            <div style="position: absolute; top: 50%; left: 50%">
+            <div class="container">
                 <input
                     type="file"
-                    id="file-input"
-                    onchange="toggleFileDialog(false, 'file-dialog'); loadZip(event)"
+                    onchange="toggleFileDialog(false, 'image-dialog'); loadImage(event)"
+                    for="input"
                 />
+                <label for="input">Upload File</label>
+                <label onclick="toggleFileDialog(false, 'file-dialog')"
+                    >Cancel</label
+                >
             </div>
         </div>
 
