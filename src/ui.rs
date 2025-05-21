@@ -191,6 +191,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         utils::open_save_dialog();
                         ui.close_menu();
                     }
+                    #[cfg(not(target_arch="wasm32"))]
                     if top_bar_button(ui, str!("Export Video"), str!("E"), &mut offset).clicked() {
                         // check if ffmpeg exists and complain if it doesn't
                         let mut ffmpeg = false;
