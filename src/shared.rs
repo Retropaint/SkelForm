@@ -1111,7 +1111,7 @@ impl Shared {
     pub fn organize_bone(&mut self, bone_idx: usize) {
         let parent_id = self.armature.bones[bone_idx].parent_id;
         let bone = self.armature.bones[bone_idx].clone();
-        let mut new_idx = 0;
+        let mut new_idx = bone_idx;
         for (i, bone) in self.armature.bones.iter().enumerate() {
             if parent_id == bone.id {
                 new_idx = i;
