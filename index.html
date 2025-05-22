@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Rust/Wgpu</title>
+        <title>SkelForm Editor</title>
         <base data-trunk-public-url />
         <style type="text/css">
             :root {
@@ -217,7 +217,7 @@
             function downloadZip(binary) {
                 var link = document.createElement("a");
                 link.href = window.URL.createObjectURL(
-                    new Blob([binary], { type: "zip;charset=utf-8;" }),
+                    new Blob([binary], { type: "zip" }),
                 );
                 link.setAttribute("test", "sk_a");
                 link.setAttribute("download", "SkelForm_armature.zip");
