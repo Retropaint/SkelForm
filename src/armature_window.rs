@@ -30,9 +30,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 let button = ui_mod::button("New Bone", ui);
-                if shared.tutorial_step == TutorialStep::NewBone {
-                    ui_mod::draw_fading_rect(ui, button.rect, Color32::GOLD, 60., 1.);
-                }
+                ui_mod::draw_tutorial_rect(TutorialStep::NewBone, button.rect, shared, ui);
                 if button.clicked() {
                     let idx: usize;
                     let bone: Bone;
@@ -52,7 +50,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         ..Default::default()
                     });
 
-                    shared.next_tutorial_step();
+                    shared.start_next_tutorial_step(TutorialStep::GetImage);
                 }
                 let drag_name = if shared.ui.has_state(UiState::DraggingBone) {
                     "Edit"

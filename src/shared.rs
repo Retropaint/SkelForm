@@ -671,7 +671,7 @@ pub struct RenderedFrame {
     pub height: u32,
 }
 
-#[derive(Default,PartialEq)]
+#[derive(Default, PartialEq, Clone)]
 pub enum TutorialStep {
     #[default]
     NewBone,
@@ -1150,16 +1150,30 @@ impl Shared {
         mouse_prev_world - mouse_world
     }
 
-    pub fn next_tutorial_step(&mut self) {
-        self.tutorial_step = match self.tutorial_step {
-            TutorialStep::NewBone => TutorialStep::GetImage,
-            TutorialStep::GetImage => if self.ui.anim.open {
-                TutorialStep::CreateAnim
-            } else {
-                TutorialStep::OpenAnim
-            }
-            _ => TutorialStep::GetImage,
+    pub fn start_next_tutorial_step(&mut self, next: TutorialStep) {
+        if next as usize == self.tutorial_step.clone() as usize + 1 {
+            self.tutorial_step = self.next_tutorial_step(self.tutorial_step.clone());
         }
+    }
+
+    /// Recursively check which tutorial step is next to show
+    pub fn next_tutorial_step(&mut self, step: TutorialStep) -> TutorialStep {
+        #[rustfmt::skip]
+        let final_step = match step {
+            TutorialStep::NewBone => TutorialStep::GetImage,
+            TutorialStep::GetImage => self.next_tutorial_step(TutorialStep::EditBoneX),
+            TutorialStep::EditBoneX => if self.armature.bones[0].pos.x != 0. {
+                self.next_tutorial_step(TutorialStep::EditBoneY)
+            } else { TutorialStep::EditBoneX },
+            TutorialStep::EditBoneY => if self.armature.bones[0].pos.y != 0. {
+                self.next_tutorial_step(TutorialStep::OpenAnim)
+            } else { TutorialStep::EditBoneY },
+            TutorialStep::OpenAnim => if self.ui.anim.open {
+                self.next_tutorial_step(TutorialStep::CreateAnim)
+            } else { TutorialStep::OpenAnim },
+            _ => step
+        };
+        final_step
     }
 }
 
