@@ -747,6 +747,7 @@ impl Shared {
         self.selected_bone_idx = usize::MAX;
         self.ui.anim.selected_frame = -1;
         self.editing_mesh = false;
+        self.ui.anim.selected = usize::MAX;
     }
 
     pub fn select_bone(&mut self, idx: usize) {
