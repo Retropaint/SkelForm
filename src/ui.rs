@@ -22,7 +22,7 @@ macro_rules! ui_color {
 #[rustfmt::skip] ui_color!(COLOR_FRAMELINE_HOVERED,  108, 80, 179);
 #[rustfmt::skip] ui_color!(COLOR_FRAMELINE_PASTLAST, 50, 41, 74);
 
-pub const FONT_SIZE: f32 = 0.75;
+pub const FONT_SCALE: f32 = 1.;
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
@@ -122,7 +122,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     style_once!(armature_window::draw(context, shared));
 
-    let min_default_size = 190. * FONT_SIZE;
+    let min_default_size = 190. * FONT_SCALE;
 
     // right side panel
     let response = egui::SidePanel::right("Bone")
@@ -177,7 +177,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
         })
         .show(egui_ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                ui.set_max_height(shared.ui.default_font_size * FONT_SIZE);
+                ui.set_max_height(shared.ui.default_font_size * FONT_SCALE);
                 let mut offset = 0.;
                 macro_rules! str {
                     ($string:expr) => {
@@ -358,7 +358,7 @@ pub fn default_styling(context: &Context, shared: &Shared) {
 
     context.style_mut(|style| {
         for (_text_style, font) in style.text_styles.iter_mut() {
-            font.size = shared.ui.default_font_size * FONT_SIZE;
+            font.size = shared.ui.default_font_size * FONT_SCALE;
         }
     });
 

@@ -10,7 +10,7 @@ use crate::{
 use crate::shared::*;
 
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
-    let min_default_size = 135. * ui_mod::FONT_SIZE;
+    let min_default_size = 135. * ui_mod::FONT_SCALE;
     let response = egui::SidePanel::left("Armature")
         .default_width(min_default_size)
         .min_width(min_default_size)
