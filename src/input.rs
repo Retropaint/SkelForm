@@ -121,12 +121,10 @@ pub fn keyboard_input(
             utils::save_web(shared);
 
             #[cfg(not(target_arch = "wasm32"))]
-            {
-                if shared.save_path == "" {
-                    utils::open_save_dialog();
-                } else {
-                    utils::save(shared.save_path.clone(), shared);
-                }
+            if shared.save_path == "" {
+                utils::open_save_dialog();
+            } else {
+                utils::save(shared.save_path.clone(), shared);
             }
         }
     }
