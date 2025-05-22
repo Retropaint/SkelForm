@@ -682,6 +682,10 @@ pub enum TutorialStep {
     CreateAnim,
     SelectKeyframe,
     EditBone,
+
+    // tutorial is meant to work with first bone only,
+    // so it must be reselected to proceed
+    ReselectBone,
 }
 
 #[derive(Default)]
@@ -771,6 +775,13 @@ impl Shared {
     pub fn select_bone(&mut self, idx: usize) {
         self.unselect_everything();
         self.selected_bone_idx = idx;
+
+        // guide user to select first bone again in tutorial
+        if idx != 0 {
+            self.tutorial_step = TutorialStep::ReselectBone;
+        } else {
+            self.tutorial_step = self.next_tutorial_step(TutorialStep::NewBone);
+        }
     }
 
     pub fn select_frame(&mut self, idx: i32) {
@@ -1170,7 +1181,7 @@ impl Shared {
 
         #[rustfmt::skip]
         let final_step = match step {
-            TutorialStep::NewBone    =>     TutorialStep::GetImage,
+            TutorialStep::NewBone    =>     self.next_tutorial_step(TutorialStep::GetImage),
             TutorialStep::GetImage   =>     check!(self.armature.bones[0].tex_idx != -1, TutorialStep::EditBoneX),
             TutorialStep::EditBoneX  =>     check!(self.armature.bones[0].pos.x != 0.,   TutorialStep::EditBoneY),
             TutorialStep::EditBoneY  =>     check!(self.armature.bones[0].pos.y != 0.,   TutorialStep::OpenAnim),

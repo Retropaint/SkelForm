@@ -50,7 +50,11 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         ..Default::default()
                     });
 
-                    shared.start_next_tutorial_step(TutorialStep::GetImage);
+                    if shared.armature.bones.len() > 1 {
+                        shared.tutorial_step = TutorialStep::ReselectBone;
+                    } else {
+                        shared.start_next_tutorial_step(TutorialStep::GetImage);
+                    }
                 }
                 let drag_name = if shared.ui.has_state(UiState::DraggingBone) {
                     "Edit"
@@ -106,14 +110,17 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                             check_bone_dragging(shared, ui, d, idx as i32);
                         } else {
                             // regular, boring buttons
-
-                            if ui_mod::selection_button(
+                            let button = ui_mod::selection_button(
                                 &s.name.to_string(),
                                 idx as usize == shared.selected_bone_idx,
                                 ui,
-                            )
-                            .clicked()
-                            {
+                            );
+
+                            if idx == 0 {
+                                ui_mod::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
+                            }
+
+                            if button.clicked() {
                                 shared.select_bone(idx as usize);
                             };
                         }
