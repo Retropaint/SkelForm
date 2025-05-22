@@ -335,6 +335,7 @@ pub enum UiState {
     ForcedModal,
     Modal,
     PolarModal,
+    FirstTimeModal,
 }
 
 #[derive(Clone, Default, PartialEq, Debug)]
@@ -342,6 +343,7 @@ pub enum PolarId {
     #[default]
     DeleteBone,
     Exiting,
+    FirstTime,
 }
 enum_string!(PolarId);
 
@@ -429,6 +431,12 @@ impl Ui {
         self.polar_id = id;
         self.headline = headline;
     }
+}
+
+#[derive(Default, serde::Deserialize, serde::Serialize)]
+pub struct Config {
+    #[serde(skip)]
+    pub first_launch: bool,
 }
 
 #[derive(Clone, Default)]
@@ -673,7 +681,6 @@ pub struct RenderedFrame {
 
 #[derive(Default, PartialEq, Clone)]
 pub enum TutorialStep {
-    #[default]
     NewBone,
     GetImage,
     EditBoneX,
@@ -686,6 +693,9 @@ pub enum TutorialStep {
     // tutorial is meant to work with first bone only,
     // so it must be reselected to proceed
     ReselectBone,
+
+    #[default]
+    None,
 }
 
 #[derive(Default)]
@@ -721,6 +731,8 @@ pub struct Shared {
     pub generic_bindgroup: Option<BindGroup>,
 
     pub save_path: String,
+
+    pub config: Config,
 
     /// triggers debug stuff. Set in main.rs
     pub debug: bool,
@@ -1169,6 +1181,10 @@ impl Shared {
 
     /// Recursively check which tutorial step is next to show
     pub fn next_tutorial_step(&mut self, step: TutorialStep) -> TutorialStep {
+        if self.tutorial_step == TutorialStep::None {
+            return TutorialStep::None
+        }
+
         macro_rules! check {
             ($bool:expr, $next:expr) => {
                 if $bool {

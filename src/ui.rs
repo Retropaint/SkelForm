@@ -36,7 +36,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         };
     }
 
-    let size = 18;
+    let anim_icon_size = 18;
     #[allow(unused_assignments)]
     let mut full_img = image::DynamicImage::default();
     if shared.ui.anim.icon_images.len() == 0 {
@@ -62,7 +62,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             let mut x = 0;
             while full_img.width() > 0 && x < full_img.width() - 1 {
                 let img = full_img.crop(x, 0, 18, 18).into_rgba8();
-                x += size;
+                x += anim_icon_size;
                 let color_image = egui::ColorImage::from_rgba_unmultiplied(
                     [img.width() as usize, img.height() as usize],
                     img.as_flat_samples().as_slice(),
@@ -481,6 +481,8 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                             shared.selected_bone_idx = usize::MAX;
                         }
                         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
+                        PolarId::FirstTime => shared.tutorial_step = TutorialStep::NewBone,
+                        _ => shared.ui.set_state(UiState::PolarModal, false),
                     }
                 }
             });
