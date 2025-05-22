@@ -99,7 +99,14 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                         ui.heading("Animation");
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             ui.add_space(5.);
-                            if ui::button("New", ui).clicked() {
+                            let button = ui::button("New", ui);
+                            ui::draw_tutorial_rect(
+                                TutorialStep::CreateAnim,
+                                button.rect,
+                                shared,
+                                ui,
+                            );
+                            if button.clicked() {
                                 shared.undo_actions.push(Action {
                                     action: ActionEnum::Animation,
                                     action_type: ActionType::Created,
@@ -126,6 +133,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                 if just_made {
                                     shared.ui.anim.selected = i;
                                     shared.ui.anim.selected_frame = 0;
+                                    shared.start_next_tutorial_step(TutorialStep::SelectKeyframe);
                                 }
                                 continue;
                             }
