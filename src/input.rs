@@ -117,7 +117,7 @@ pub fn keyboard_input(
         if shared.input.is_pressing(winit::keyboard::KeyCode::KeyS) {
             shared.input.pressed = vec![];
 
-            #[cfg(target_arch="wasm32")]
+            #[cfg(target_arch = "wasm32")]
             utils::save_web(shared);
 
             #[cfg(not(target_arch = "wasm32"))]
