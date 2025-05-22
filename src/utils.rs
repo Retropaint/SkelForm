@@ -151,6 +151,7 @@ pub fn save(path: String, shared: &mut Shared) {
 
     // create zip file
     let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
+
     let options =
         zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
@@ -174,7 +175,9 @@ pub fn save_web(shared: &mut Shared) {
     let cursor = std::io::Cursor::new(&mut buf);
     let mut zip = zip::ZipWriter::new(cursor);
 
-    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
+
+    // save armature json and texture image
     zip.start_file("armature.json", options).unwrap();
     zip.write(armatures_json.as_bytes()).unwrap();
     if size != Vec2::ZERO {
@@ -223,7 +226,7 @@ fn create_tex_sheet(shared: &mut Shared, size: &Vec2) -> std::vec::Vec<u8> {
             raw_buf.height(),
             image::ColorType::Rgba8.into(),
         )
-        .expect("Failed to encode PNG");
+        .unwrap();
 
     png_buf
 }
