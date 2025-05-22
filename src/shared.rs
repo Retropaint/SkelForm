@@ -670,6 +670,20 @@ pub struct RenderedFrame {
     pub width: u32,
     pub height: u32,
 }
+
+#[derive(Default,PartialEq)]
+pub enum TutorialStep {
+    #[default]
+    NewBone,
+    GetImage,
+    EditBoneX,
+    EditBoneY,
+    OpenAnim,
+    CreateAnim,
+    SelectKeyframe,
+    EditBone,
+}
+
 #[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
@@ -685,6 +699,8 @@ pub struct Shared {
 
     pub dragging_vert: usize,
     pub editing_mesh: bool,
+
+    pub tutorial_step: TutorialStep,
 
     pub frame: i32,
     pub recording: bool,
@@ -1132,6 +1148,18 @@ impl Shared {
         let mouse_world = utils::screen_to_world_space(self.input.mouse, self.window);
         let mouse_prev_world = utils::screen_to_world_space(self.input.mouse_prev, self.window);
         mouse_prev_world - mouse_world
+    }
+
+    pub fn next_tutorial_step(&mut self) {
+        self.tutorial_step = match self.tutorial_step {
+            TutorialStep::NewBone => TutorialStep::GetImage,
+            TutorialStep::GetImage => if self.ui.anim.open {
+                TutorialStep::CreateAnim
+            } else {
+                TutorialStep::OpenAnim
+            }
+            _ => TutorialStep::GetImage,
+        }
     }
 }
 
