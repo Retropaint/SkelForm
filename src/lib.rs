@@ -42,6 +42,8 @@ pub mod shared;
 pub mod ui;
 pub mod utils;
 
+const MAX_SCALE_FACTOR: f64 = 2.;
+
 #[derive(Default)]
 pub struct App {
     window: Option<Arc<Window>>,
@@ -105,7 +107,7 @@ impl ApplicationHandler for App {
 
                 #[cfg(target_arch = "wasm32")]
                 {
-                    gui_context.set_pixels_per_point(window_handle.scale_factor() as f32);
+                    gui_context.set_pixels_per_point(window_handle.scale_factor().min(MAX_SCALE_FACTOR) as f32);
                 }
 
                 let viewport_id = gui_context.viewport_id();
@@ -113,7 +115,7 @@ impl ApplicationHandler for App {
                     gui_context,
                     viewport_id,
                     &window_handle,
-                    Some(window_handle.scale_factor() as _),
+                    Some(window_handle.scale_factor().min(MAX_SCALE_FACTOR) as _),
                     Some(Theme::Dark),
                     None,
                 );
@@ -230,7 +232,7 @@ impl ApplicationHandler for App {
             } => {
                 #[cfg(target_arch = "wasm32")]
                 {
-                    let pos = position.to_logical::<f64>(window.scale_factor());
+                    let pos = position.to_logical::<f64>(window.scale_factor().min(MAX_SCALE_FACTOR));
                     self.shared.input.mouse = Vec2::new(pos.x as f32, pos.y as f32);
                 };
                 #[cfg(not(target_arch = "wasm32"))]
@@ -278,7 +280,7 @@ impl ApplicationHandler for App {
                     let (width, height) = self.last_size;
                     egui_wgpu::ScreenDescriptor {
                         size_in_pixels: [width, height],
-                        pixels_per_point: window.scale_factor() as f32,
+                        pixels_per_point: window.scale_factor().min(MAX_SCALE_FACTOR) as f32,
                     }
                 };
 
