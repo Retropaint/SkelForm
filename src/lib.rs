@@ -104,6 +104,10 @@ impl ApplicationHandler for App {
                     op.zoom_with_keyboard = false;
                 });
 
+                let style = gui_context.style();
+                let font_id = style.text_styles.get(&egui::TextStyle::Body).unwrap();
+                self.shared.ui.default_font_size = font_id.size;
+
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     let inner_size = window_handle.inner_size();
