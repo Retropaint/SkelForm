@@ -107,7 +107,9 @@ impl ApplicationHandler for App {
 
                 #[cfg(target_arch = "wasm32")]
                 {
-                    gui_context.set_pixels_per_point(window_handle.scale_factor().min(MAX_SCALE_FACTOR) as f32);
+                    gui_context.set_pixels_per_point(
+                        window_handle.scale_factor().min(MAX_SCALE_FACTOR) as f32,
+                    );
                 }
 
                 let viewport_id = gui_context.viewport_id();
@@ -232,7 +234,8 @@ impl ApplicationHandler for App {
             } => {
                 #[cfg(target_arch = "wasm32")]
                 {
-                    let pos = position.to_logical::<f64>(window.scale_factor().min(MAX_SCALE_FACTOR));
+                    let pos =
+                        position.to_logical::<f64>(window.scale_factor().min(MAX_SCALE_FACTOR));
                     self.shared.input.mouse = Vec2::new(pos.x as f32, pos.y as f32);
                 };
                 #[cfg(not(target_arch = "wasm32"))]

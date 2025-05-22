@@ -249,7 +249,7 @@ pub fn prepare_files(shared: &mut Shared) -> (Vec2, String, Vec<u8>) {
 
     for bone in &mut armature_copy.bones {
         if bone.tex_idx == -1 {
-            continue
+            continue;
         }
 
         // check if this bone is a regular rect
