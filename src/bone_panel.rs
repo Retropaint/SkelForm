@@ -37,7 +37,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             delete_rect,
             egui::Label::new(
                 egui::RichText::new("X")
-                    .size(12. * ui::FONT_SIZE)
+                    .size(12. * ui::FONT_SCALE)
                     .color(egui::Color32::DARK_RED),
             ),
         )
@@ -195,7 +195,7 @@ pub fn float_input(
 
     if shared.ui.rename_id != id {
         let input = ui.add_sized(
-            [40. * ui::FONT_SIZE, 20. * ui::FONT_SIZE],
+            [40. * ui::FONT_SCALE, 20. * ui::FONT_SCALE],
             egui::TextEdit::singleline(&mut displayed_value.to_string()),
         );
         // extract value as a string and store it with edit_value
