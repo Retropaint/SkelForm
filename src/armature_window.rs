@@ -116,8 +116,14 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 ui,
                             );
 
+                            // highlight this bone if it's the first and is not selected during the tutorial
                             if idx == 0 {
-                                ui_mod::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
+                                ui_mod::draw_tutorial_rect(
+                                    TutorialStep::ReselectBone,
+                                    button.rect,
+                                    shared,
+                                    ui,
+                                );
                             }
 
                             if button.clicked() {
