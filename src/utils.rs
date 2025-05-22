@@ -2,7 +2,23 @@
 
 use crate::*;
 
-use std::io::Read;
+#[cfg(target_arch = "wasm32")]
+mod web {
+    pub use wasm_bindgen::prelude::wasm_bindgen;
+    pub use web_sys::*;
+}
+#[cfg(target_arch = "wasm32")]
+pub use web::*;
+
+use std::io::{Read, Write};
+
+use zip::write::FileOptions;
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+extern "C" {
+    fn downloadZip(zip: Vec<u8>);
+}
 
 /// Convert a point from screen to world space.
 pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
@@ -139,11 +155,11 @@ pub fn save(path: String, shared: &mut Shared) {
         }
     }
 
-    if size != Vec2::ZERO {
-        create_temp_tex_sheet(shared, &size);
-    }
+    let mut png_buf = vec![];
 
-    let img_data = std::fs::read("./temp.png");
+    if size != Vec2::ZERO {
+        png_buf = create_temp_tex_sheet(shared, &size);
+    }
 
     // clone armature and make some edits, then serialize it
     let mut armature_copy = shared.armature.clone();
@@ -194,20 +210,50 @@ pub fn save(path: String, shared: &mut Shared) {
     zip.write(armatures_json.as_bytes()).unwrap();
     if size != Vec2::ZERO {
         zip.start_file("textures.png", options).unwrap();
-        if let Ok(ref img) = img_data {
-            zip.write(&img.to_vec()).unwrap();
-        }
+        zip.write(&png_buf).unwrap();
     }
 
     zip.finish().unwrap();
+}
 
-    if let Ok(_) = img_data {
-        std::fs::remove_file("temp.png").unwrap();
+#[cfg(target_arch = "wasm32")]
+pub fn save_web(shared: &mut Shared) {
+    let mut size = Vec2::default();
+    for tex in &shared.armature.textures {
+        size.x += tex.size.x;
+        if tex.size.y > size.y {
+            size.y = tex.size.y;
+        }
     }
+
+    // create zip file
+    let mut buf: Vec<u8> = Vec::new();
+    let cursor = std::io::Cursor::new(&mut buf);
+    let mut zip = zip::ZipWriter::new(cursor);
+
+    let armature_copy = shared.armature.clone();
+
+    let root = Root {
+        armatures: vec![armature_copy],
+        texture_size: size,
+    };
+
+    let armatures_json = serde_json::to_string(&root).unwrap();
+
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    zip.start_file("armature.json", options).unwrap();
+    zip.write(armatures_json.as_bytes()).unwrap();
+
+    let bytes = zip.finish().unwrap().into_inner().to_vec();
+
+    downloadZip(bytes);
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn create_temp_tex_sheet(shared: &mut Shared, size: &Vec2) {
+fn create_temp_tex_sheet(
+    shared: &mut Shared,
+    size: &Vec2,
+) -> std::vec::Vec<u8> {
     // this is the buffer that will be saved as an image
     let mut final_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size.x as u32, size.y as u32);
 
@@ -234,15 +280,14 @@ fn create_temp_tex_sheet(shared: &mut Shared, size: &Vec2) {
         offset += img_buf.width();
     }
 
+    let mut png_buf: Vec<u8> = vec![];
+    let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
+    encoder
+        .write_image(&final_buf, final_buf.width(), final_buf.height(), image::ColorType::Rgba8.into())
+        .expect("Failed to encode PNG");
+
     // finally, save the final buffer as an image
-    image::save_buffer(
-        "temp.png",
-        &final_buf.to_vec(),
-        final_buf.width() as u32,
-        final_buf.height() as u32,
-        image::ExtendedColorType::Rgba8,
-    )
-    .unwrap();
+    png_buf
 }
 
 pub fn import<R: Read + std::io::Seek>(
