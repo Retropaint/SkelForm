@@ -92,9 +92,13 @@
                     id="img-input"
                 />
                 <label class="button" for="img-input">Upload Image</label>
-                <label class="button" onclick="toggleFileDialog(false, 'image-dialog')" title="test"
+                <label
+                    class="button"
+                    onclick="toggleFileDialog(false, 'image-dialog')"
+                    title="test"
                     >Cancel</label
                 >
+                <button onclick="download()">export</button>
             </div>
         </div>
 
@@ -106,7 +110,9 @@
                     id="file-input"
                 />
                 <label class="button" for="file-input">Upload File</label>
-                <label class="button" onclick="toggleFileDialog(false, 'file-dialog')"
+                <label
+                    class="button"
+                    onclick="toggleFileDialog(false, 'file-dialog')"
                     >Cancel</label
                 >
             </div>
@@ -169,7 +175,6 @@
                     let img = document.getElementById("last-image");
                     img.src = event.target.result;
                 };
-                console.log("test")
             }
 
             async function loadFile(event) {
@@ -207,6 +212,18 @@
                     ).style.visibility = "visible";
                     hasLoaded = true;
                 }
+            }
+
+            function downloadZip(binary) {
+                console.log(binary);
+                var link = document.createElement("a");
+                link.href = window.URL.createObjectURL(
+                    new Blob([binary], { type: "zip;charset=utf-8;" }),
+                );
+                link.setAttribute("test", "sk_a");
+                link.setAttribute("download", "SkelForm_armature.zip");
+                link.click();
+                link.remove();
             }
 
             window.addEventListener("resize", resizeCanvas);

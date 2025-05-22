@@ -37,7 +37,7 @@ console_log = "1.0.0"
 egui-winit = { version = "0.31.0", default-features = false }
 wasm-bindgen = "0.2.100"
 wasm-bindgen-futures = "0.4.50"
-zip = { version = "0.6", default-features = false }
+zip = { version = "0.6", default-features = false, features = ["deflate"] }
 flate2 = { version = "1.0", default-features = false, features = ["rust_backend"] }
 
 [features]
