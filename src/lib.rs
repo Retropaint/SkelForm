@@ -23,7 +23,7 @@ mod web {
 #[cfg(target_arch = "wasm32")]
 use web::*;
 
-use std::sync::Arc;
+use std::{io::Read, sync::Arc};
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
@@ -96,6 +96,8 @@ impl ApplicationHandler for App {
             let first_window_handle = self.window.is_none();
             let window_handle = Arc::new(window);
             self.window = Some(window_handle.clone());
+
+            // initial launch
             if first_window_handle {
                 let gui_context = egui::Context::default();
 
@@ -118,6 +120,34 @@ impl ApplicationHandler for App {
                 {
                     gui_context.set_pixels_per_point(window_handle.scale_factor() as f32);
                 }
+
+                // import config
+                let config_path =
+                    directories_next::ProjectDirs::from("com", "retropaint", "skelform")
+                        .map(|proj_dirs| proj_dirs.data_dir().join("config.json"))
+                        .unwrap();
+                if config_path.exists() {
+                    let mut file = fs::File::open(&config_path).unwrap();
+                    let mut contents = String::new();
+                    file.read_to_string(&mut contents).unwrap();
+                    self.shared.config = serde_json::from_str(&contents).unwrap()
+                } else {
+                    self.shared.ui.open_polar_modal(
+                    PolarId::FirstTime,
+                    "Hello!\n\nSeems like this is your first time with SkelForm.\n\nWould you like to be quickly guided to making your first animation?"
+                        .to_string(),
+                );
+                }
+
+                // save config
+                fs::create_dir_all(config_path.parent().unwrap()).unwrap();
+                let mut file = fs::File::create(&config_path).unwrap();
+                file.write_all(
+                    serde_json::to_string(&self.shared.config)
+                        .unwrap()
+                        .as_bytes(),
+                )
+                .unwrap();
 
                 let viewport_id = gui_context.viewport_id();
                 let gui_state = egui_winit::State::new(
