@@ -42,7 +42,12 @@ pub mod shared;
 pub mod ui;
 pub mod utils;
 
-const MAX_SCALE_FACTOR: f64 = 2.;
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+extern "C" {
+    fn getCanvasWidth() -> u32;
+    fn getCanvasHeight() -> u32;
+}
 
 #[derive(Default)]
 pub struct App {
@@ -107,9 +112,7 @@ impl ApplicationHandler for App {
 
                 #[cfg(target_arch = "wasm32")]
                 {
-                    gui_context.set_pixels_per_point(
-                        window_handle.scale_factor().min(MAX_SCALE_FACTOR) as f32,
-                    );
+                    gui_context.set_pixels_per_point(window_handle.scale_factor() as f32);
                 }
 
                 let viewport_id = gui_context.viewport_id();
@@ -117,7 +120,7 @@ impl ApplicationHandler for App {
                     gui_context,
                     viewport_id,
                     &window_handle,
-                    Some(window_handle.scale_factor().min(MAX_SCALE_FACTOR) as _),
+                    Some(window_handle.scale_factor() as _),
                     Some(Theme::Dark),
                     None,
                 );
@@ -211,9 +214,19 @@ impl ApplicationHandler for App {
             } => {
                 input::keyboard_input(&key_code, &state, &mut self.shared);
             }
-            WindowEvent::Resized(PhysicalSize { width, height }) => {
+            #[allow(unused_mut)]
+            WindowEvent::Resized(PhysicalSize {
+                mut width,
+                mut height,
+            }) => {
+                // Force window to be the properly reported canvas size,
+                // otherwise it expands itself to infinity... and beyond!
                 #[cfg(target_arch = "wasm32")]
-                log::info!("Resizing renderer surface to: ({width}, {height})");
+                {
+                    width = getCanvasWidth();
+                    height = getCanvasHeight();
+                    log::info!("Resizing renderer surface to: ({width}, {height})");
+                }
                 renderer.resize(width, height);
                 self.last_size = (width, height);
                 self.shared.window = Vec2::new(self.last_size.0 as f32, self.last_size.1 as f32);
@@ -234,8 +247,7 @@ impl ApplicationHandler for App {
             } => {
                 #[cfg(target_arch = "wasm32")]
                 {
-                    let pos =
-                        position.to_logical::<f64>(window.scale_factor().min(MAX_SCALE_FACTOR));
+                    let pos = position.to_logical::<f64>(window.scale_factor());
                     self.shared.input.mouse = Vec2::new(pos.x as f32, pos.y as f32);
                 };
                 #[cfg(not(target_arch = "wasm32"))]
@@ -283,7 +295,7 @@ impl ApplicationHandler for App {
                     let (width, height) = self.last_size;
                     egui_wgpu::ScreenDescriptor {
                         size_in_pixels: [width, height],
-                        pixels_per_point: window.scale_factor().min(MAX_SCALE_FACTOR) as f32,
+                        pixels_per_point: window.scale_factor() as f32,
                     }
                 };
 
