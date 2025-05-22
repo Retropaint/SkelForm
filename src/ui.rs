@@ -303,7 +303,9 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
                 if selection_button("Armature", !shared.ui.anim.open, ui).clicked() {
                     shared.ui.anim.open = false;
                 }
-                if selection_button("Animation", shared.ui.anim.open, ui).clicked() {
+                let button = selection_button("Animation", shared.ui.anim.open, ui);
+                draw_tutorial_rect(TutorialStep::OpenAnim, button.rect, shared, ui);
+                if button.clicked() {
                     shared.ui.anim.open = true;
                 }
                 shared.ui.animate_mode_bar_scale = ui.min_rect().size().into();
@@ -333,7 +335,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
                     if $label != "" {
                         $ui.label($label);
                     }
-                    (_, $float) = bone_panel::float_input($id.to_string(), shared, $ui, $float, $modifier);
+                    (_, $float, _) = bone_panel::float_input($id.to_string(), shared, $ui, $float, $modifier);
                 };
             }
 
@@ -711,4 +713,15 @@ pub fn draw_fading_rect(
     let fade_color =
         Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), (fade * max_alpha) as u8);
     ui.painter().rect_filled(rect, 0., fade_color);
+}
+
+pub fn draw_tutorial_rect(
+    step: TutorialStep,
+    rect: egui::Rect,
+    shared: &mut Shared,
+    ui: &mut egui::Ui,
+) {
+    if shared.tutorial_step == step {
+        ui::draw_fading_rect(ui, rect, Color32::GOLD, 60., 1.);
+    }
 }

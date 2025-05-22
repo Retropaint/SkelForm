@@ -1,6 +1,9 @@
 //! UI Bone window.
 
-use crate::{shared::*, ui};
+use crate::{
+    shared::*,
+    ui::{self, draw_tutorial_rect},
+};
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
@@ -67,7 +70,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label("Texture:");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui::button("Get Image", ui).clicked() {
+            let button = ui::button("Get Image", ui);
+            ui::draw_tutorial_rect(TutorialStep::GetImage, button.rect, shared, ui);
+            if button.clicked() {
                 if shared.bind_groups.len() == 0 {
                     #[cfg(not(target_arch = "wasm32"))]
                     open_file_dialog();
@@ -77,6 +82,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 } else {
                     shared.ui.set_state(UiState::ImageModal, true);
                 }
+                shared.start_next_tutorial_step(TutorialStep::EditBoneX);
             };
             let mut tex_name = "None";
             if shared.selected_bone().unwrap().tex_idx != -1 {
@@ -98,7 +104,20 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     macro_rules! input {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr) => {
-            (edited, $float) = float_input($id.to_string(), shared, $ui, $float, $modifier);
+            (edited, $float, _) = float_input($id.to_string(), shared, $ui, $float, $modifier);
+            if edited {
+                shared.save_edited_bone();
+                shared.edit_bone($element, $float, true);
+            }
+            if $label != "" {
+                $ui.label($label);
+            }
+        };
+    }
+
+    macro_rules! input_response {
+        ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr, $input:expr) => {
+            (edited, $float, $input) = float_input($id.to_string(), shared, $ui, $float, $modifier);
             if edited {
                 shared.save_edited_bone();
                 shared.edit_bone($element, $float, true);
@@ -120,8 +139,35 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         label!("Position:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            input!(bone.pos.y, "pos_y", &AnimElement::PositionY, 1., ui, "Y");
-            input!(bone.pos.x, "pos_x", &AnimElement::PositionX, 1., ui, "X");
+            let input: egui::Response;
+            input_response!(
+                bone.pos.y,
+                "pos_y",
+                &AnimElement::PositionY,
+                1.,
+                ui,
+                "Y",
+                input
+            );
+            draw_tutorial_rect(TutorialStep::EditBoneY, input.rect, shared, ui);
+            if edited {
+                shared.start_next_tutorial_step(TutorialStep::OpenAnim);
+            }
+
+            let input: egui::Response;
+            input_response!(
+                bone.pos.x,
+                "pos_x",
+                &AnimElement::PositionX,
+                1.,
+                ui,
+                "X",
+                input
+            );
+            draw_tutorial_rect(TutorialStep::EditBoneX, input.rect, shared, ui);
+            if edited {
+                shared.start_next_tutorial_step(TutorialStep::EditBoneY);
+            }
         })
     });
     ui.horizontal(|ui| {
@@ -190,12 +236,16 @@ pub fn float_input(
     ui: &mut egui::Ui,
     value: f32,
     modifier: f32,
-) -> (bool, f32) {
+) -> (bool, f32, egui::Response) {
     let displayed_value = value * modifier;
 
+    let input: egui::Response;
+
+    let input_size = [40. * ui::FONT_SCALE, 20. * ui::FONT_SCALE];
+
     if shared.ui.rename_id != id {
-        let input = ui.add_sized(
-            [40. * ui::FONT_SCALE, 20. * ui::FONT_SCALE],
+        input = ui.add_sized(
+            input_size,
             egui::TextEdit::singleline(&mut displayed_value.to_string()),
         );
         // extract value as a string and store it with edit_value
@@ -204,8 +254,8 @@ pub fn float_input(
             shared.ui.rename_id = id.to_string();
         }
     } else {
-        let input = ui.add_sized(
-            [40., 20.],
+        input = ui.add_sized(
+            input_size,
             egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap()),
         );
 
@@ -216,10 +266,10 @@ pub fn float_input(
             }
             match shared.ui.edit_value.as_mut().unwrap().parse::<f32>() {
                 Ok(output) => {
-                    return (true, output / modifier);
+                    return (true, output / modifier, input);
                 }
                 Err(_) => {
-                    return (false, value);
+                    return (false, value, input);
                 }
             }
         }
@@ -228,5 +278,5 @@ pub fn float_input(
             shared.ui.rename_id = "".to_string();
         }
     }
-    (false, value)
+    (false, value, input)
 }
