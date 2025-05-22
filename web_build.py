@@ -8,10 +8,10 @@ default_build = "--features webgpu --filehash false";
 parser = argparse.ArgumentParser(prog='SkelForm Web Builder', description='Build script for SkelForm\'s web (WASM) version.', epilog="Default build command:\ntrunk build " + default_build)
 
 # arguments
-parser.add_argument('-s', '--serve', action='store_true', help="(bool) Automatically run localhost:8000 after build.")
-parser.add_argument('-b', '--build', default="", help="(string) Will be appended to trunk build. ex: --build \" --release\"")
-parser.add_argument('-nd', '--no-default', action='store_true', help="(string) Don't use default config. Can be combined with --build for fully custom builds.")
-parser.add_argument('-r', '--release', action='store_true', help="(bool) Use default release config.")
+parser.add_argument('-s', '--serve', action='store_true', help="Automatically run localhost:8000 after build.")
+parser.add_argument('-r', '--release', action='store_true', help="Use default release config.")
+parser.add_argument('-b', '--build', default="", help="Will be appended to trunk build. ex: --build \" --release\"")
+parser.add_argument('-nd', '--no-default', action='store_true', help="Ignore default config. Combine with --build for fully custom builds.")
 
 args = parser.parse_args()
 
