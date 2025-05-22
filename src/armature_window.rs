@@ -29,7 +29,9 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.separator();
 
             ui.horizontal(|ui| {
-                if ui_mod::button("New Bone", ui).clicked() {
+                let button = ui_mod::button("New Bone", ui);
+                ui_mod::draw_fading_rect(ui, button.rect, Color32::GOLD, 60., 1.);
+                if button.clicked() {
                     let idx: usize;
                     let bone: Bone;
                     if shared.selected_bone() == None {

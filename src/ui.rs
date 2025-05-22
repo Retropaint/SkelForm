@@ -697,3 +697,18 @@ pub fn draw_gradient(ui: &mut egui::Ui, rect: egui::Rect, top: Color32, bottom: 
 
     ui.painter().add(egui::Shape::mesh(mesh));
 }
+
+pub fn draw_fading_rect(
+    ui: &mut egui::Ui,
+    rect: egui::Rect,
+    color: Color32,
+    max_alpha: f32,
+    time: f64,
+) {
+    let time = ui.ctx().input(|i| i.time / time);
+    let fade = ((time * 3.14).sin() * 0.5 + 0.5) as f32;
+
+    let fade_color =
+        Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), (fade * max_alpha) as u8);
+    ui.painter().rect_filled(rect, 0., fade_color);
+}
