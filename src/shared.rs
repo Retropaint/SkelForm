@@ -1179,14 +1179,17 @@ impl Shared {
             };
         }
 
+        let first_bone = &self.armature.bones[0];
+        let anim_selected = self.ui.anim.selected != usize::MAX;
+
         #[rustfmt::skip]
         let final_step = match step {
-            TutorialStep::NewBone    =>     self.next_tutorial_step(TutorialStep::GetImage),
-            TutorialStep::GetImage   =>     check!(self.armature.bones[0].tex_idx != -1, TutorialStep::EditBoneX),
-            TutorialStep::EditBoneX  =>     check!(self.armature.bones[0].pos.x != 0.,   TutorialStep::EditBoneY),
-            TutorialStep::EditBoneY  =>     check!(self.armature.bones[0].pos.y != 0.,   TutorialStep::OpenAnim),
-            TutorialStep::OpenAnim   =>     check!(self.ui.anim.open,                    TutorialStep::CreateAnim),
-            TutorialStep::CreateAnim =>     check!(self.ui.anim.selected != usize::MAX,  TutorialStep::SelectKeyframe),
+            TutorialStep::NewBone        => self.next_tutorial_step(TutorialStep::GetImage),
+            TutorialStep::GetImage       => check!(first_bone.tex_idx != -1, TutorialStep::EditBoneX),
+            TutorialStep::EditBoneX      => check!(first_bone.pos.x != 0.,   TutorialStep::EditBoneY),
+            TutorialStep::EditBoneY      => check!(first_bone.pos.y != 0.,   TutorialStep::OpenAnim),
+            TutorialStep::OpenAnim       => check!(self.ui.anim.open,        TutorialStep::CreateAnim),
+            TutorialStep::CreateAnim     => check!(anim_selected,            TutorialStep::SelectKeyframe),
             TutorialStep::SelectKeyframe => step,
             _ => step
         };
