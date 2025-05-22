@@ -6,13 +6,14 @@ use crate::*;
 mod web {
     pub use wasm_bindgen::prelude::wasm_bindgen;
     pub use web_sys::*;
+    pub use zip::write::FileOptions;
 }
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
-use std::io::{Read, Write};
+use image::ImageEncoder;
 
-use zip::write::FileOptions;
+use std::io::{Read, Write};
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
@@ -146,6 +147,88 @@ pub fn open_import_dialog() {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn save(path: String, shared: &mut Shared) {
+    let (size, armatures_json, png_buf) = prepare_files(shared);
+
+    // create zip file
+    let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
+    let options =
+        zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+
+    // save armature json and texture image
+    zip.start_file("armature.json", options).unwrap();
+    zip.write(armatures_json.as_bytes()).unwrap();
+    if size != Vec2::ZERO {
+        zip.start_file("textures.png", options).unwrap();
+        zip.write(&png_buf).unwrap();
+    }
+
+    zip.finish().unwrap();
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn save_web(shared: &mut Shared) {
+    let (size, armatures_json, png_buf) = prepare_files(shared);
+
+    // create zip file
+    let mut buf: Vec<u8> = Vec::new();
+    let cursor = std::io::Cursor::new(&mut buf);
+    let mut zip = zip::ZipWriter::new(cursor);
+
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    zip.start_file("armature.json", options).unwrap();
+    zip.write(armatures_json.as_bytes()).unwrap();
+    if size != Vec2::ZERO {
+        zip.start_file("textures.png", options).unwrap();
+        zip.write(&png_buf).unwrap();
+    }
+
+    let bytes = zip.finish().unwrap().into_inner().to_vec();
+    downloadZip(bytes);
+}
+
+fn create_tex_sheet(shared: &mut Shared, size: &Vec2) -> std::vec::Vec<u8> {
+    // set up the buffer, to save pixels in
+    let mut raw_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size.x as u32, size.y as u32);
+
+    let mut offset: u32 = 0;
+    for tex in &mut shared.armature.textures {
+        // get current texture as a buffer
+        let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
+            tex.size.x as u32,
+            tex.size.y as u32,
+            tex.pixels.clone(),
+        )
+        .unwrap();
+
+        // add it to the final buffer
+        for x in 0..img_buf.width() {
+            for y in 0..img_buf.height() {
+                raw_buf.put_pixel(x + offset, y, *img_buf.get_pixel(x, y));
+            }
+        }
+
+        tex.offset.x = offset as f32;
+
+        // make sure the next texture will be added beside this one, instead of overwriting
+        offset += img_buf.width();
+    }
+
+    // encode buffer to png, to allow saving it as a png file
+    let mut png_buf: Vec<u8> = vec![];
+    let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
+    encoder
+        .write_image(
+            &raw_buf,
+            raw_buf.width(),
+            raw_buf.height(),
+            image::ColorType::Rgba8.into(),
+        )
+        .expect("Failed to encode PNG");
+
+    png_buf
+}
+
+pub fn prepare_files(shared: &mut Shared) -> (Vec2, String, Vec<u8>) {
     // get the image size in advance
     let mut size = Vec2::default();
     for tex in &shared.armature.textures {
@@ -158,7 +241,7 @@ pub fn save(path: String, shared: &mut Shared) {
     let mut png_buf = vec![];
 
     if size != Vec2::ZERO {
-        png_buf = create_temp_tex_sheet(shared, &size);
+        png_buf = create_tex_sheet(shared, &size);
     }
 
     // clone armature and make some edits, then serialize it
@@ -200,94 +283,7 @@ pub fn save(path: String, shared: &mut Shared) {
 
     let armatures_json = serde_json::to_string(&root).unwrap();
 
-    // create zip file
-    let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
-    let options =
-        zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
-
-    // save armature json and texture image
-    zip.start_file("armature.json", options).unwrap();
-    zip.write(armatures_json.as_bytes()).unwrap();
-    if size != Vec2::ZERO {
-        zip.start_file("textures.png", options).unwrap();
-        zip.write(&png_buf).unwrap();
-    }
-
-    zip.finish().unwrap();
-}
-
-#[cfg(target_arch = "wasm32")]
-pub fn save_web(shared: &mut Shared) {
-    let mut size = Vec2::default();
-    for tex in &shared.armature.textures {
-        size.x += tex.size.x;
-        if tex.size.y > size.y {
-            size.y = tex.size.y;
-        }
-    }
-
-    // create zip file
-    let mut buf: Vec<u8> = Vec::new();
-    let cursor = std::io::Cursor::new(&mut buf);
-    let mut zip = zip::ZipWriter::new(cursor);
-
-    let armature_copy = shared.armature.clone();
-
-    let root = Root {
-        armatures: vec![armature_copy],
-        texture_size: size,
-    };
-
-    let armatures_json = serde_json::to_string(&root).unwrap();
-
-    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
-    zip.start_file("armature.json", options).unwrap();
-    zip.write(armatures_json.as_bytes()).unwrap();
-
-    let bytes = zip.finish().unwrap().into_inner().to_vec();
-
-    downloadZip(bytes);
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn create_temp_tex_sheet(
-    shared: &mut Shared,
-    size: &Vec2,
-) -> std::vec::Vec<u8> {
-    // this is the buffer that will be saved as an image
-    let mut final_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size.x as u32, size.y as u32);
-
-    let mut offset: u32 = 0;
-    for tex in &mut shared.armature.textures {
-        // get current texture as a buffer
-        let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
-            tex.size.x as u32,
-            tex.size.y as u32,
-            tex.pixels.clone(),
-        )
-        .unwrap();
-
-        // add it to the final buffer
-        for x in 0..img_buf.width() {
-            for y in 0..img_buf.height() {
-                final_buf.put_pixel(x + offset, y, *img_buf.get_pixel(x, y));
-            }
-        }
-
-        tex.offset.x = offset as f32;
-
-        // make sure the next texture will be added beside this one, instead of overwriting
-        offset += img_buf.width();
-    }
-
-    let mut png_buf: Vec<u8> = vec![];
-    let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
-    encoder
-        .write_image(&final_buf, final_buf.width(), final_buf.height(), image::ColorType::Rgba8.into())
-        .expect("Failed to encode PNG");
-
-    // finally, save the final buffer as an image
-    png_buf
+    (size, armatures_json, png_buf)
 }
 
 pub fn import<R: Read + std::io::Seek>(
