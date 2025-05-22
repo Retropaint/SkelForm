@@ -186,6 +186,8 @@ pub fn read_image_loaders(
     if bone_name == NEW_BONE_NAME || bone_name == "" {
         *bone_name = name;
     }
+
+    shared.start_next_tutorial_step(TutorialStep::EditBoneX);
 }
 
 #[cfg(not(target_arch = "wasm32"))]

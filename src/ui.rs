@@ -307,6 +307,7 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
                 draw_tutorial_rect(TutorialStep::OpenAnim, button.rect, shared, ui);
                 if button.clicked() {
                     shared.ui.anim.open = true;
+                    shared.start_next_tutorial_step(TutorialStep::CreateAnim);
                 }
                 shared.ui.animate_mode_bar_scale = ui.min_rect().size().into();
             });

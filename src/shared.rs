@@ -1158,19 +1158,25 @@ impl Shared {
 
     /// Recursively check which tutorial step is next to show
     pub fn next_tutorial_step(&mut self, step: TutorialStep) -> TutorialStep {
+        macro_rules! check {
+            ($bool:expr, $next:expr) => {
+                if $bool {
+                    self.next_tutorial_step($next)
+                } else {
+                    step
+                }
+            };
+        }
+
         #[rustfmt::skip]
         let final_step = match step {
-            TutorialStep::NewBone => TutorialStep::GetImage,
-            TutorialStep::GetImage => self.next_tutorial_step(TutorialStep::EditBoneX),
-            TutorialStep::EditBoneX => if self.armature.bones[0].pos.x != 0. {
-                self.next_tutorial_step(TutorialStep::EditBoneY)
-            } else { TutorialStep::EditBoneX },
-            TutorialStep::EditBoneY => if self.armature.bones[0].pos.y != 0. {
-                self.next_tutorial_step(TutorialStep::OpenAnim)
-            } else { TutorialStep::EditBoneY },
-            TutorialStep::OpenAnim => if self.ui.anim.open {
-                self.next_tutorial_step(TutorialStep::CreateAnim)
-            } else { TutorialStep::OpenAnim },
+            TutorialStep::NewBone    =>     TutorialStep::GetImage,
+            TutorialStep::GetImage   =>     check!(self.armature.bones[0].tex_idx != -1, TutorialStep::EditBoneX),
+            TutorialStep::EditBoneX  =>     check!(self.armature.bones[0].pos.x != 0.,   TutorialStep::EditBoneY),
+            TutorialStep::EditBoneY  =>     check!(self.armature.bones[0].pos.y != 0.,   TutorialStep::OpenAnim),
+            TutorialStep::OpenAnim   =>     check!(self.ui.anim.open,                    TutorialStep::CreateAnim),
+            TutorialStep::CreateAnim =>     check!(self.ui.anim.selected != usize::MAX,  TutorialStep::SelectKeyframe),
+            TutorialStep::SelectKeyframe => step,
             _ => step
         };
         final_step
