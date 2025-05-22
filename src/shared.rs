@@ -368,6 +368,8 @@ pub struct Ui {
 
     pub states: Vec<UiState>,
 
+    pub default_font_size: f32,
+
     // camera bar stuff
     pub camera_bar_pos: Vec2,
     pub camera_bar_scale: Vec2,

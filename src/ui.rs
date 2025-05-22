@@ -22,15 +22,17 @@ macro_rules! ui_color {
 #[rustfmt::skip] ui_color!(COLOR_FRAMELINE_HOVERED,  108, 80, 179);
 #[rustfmt::skip] ui_color!(COLOR_FRAMELINE_PASTLAST, 50, 41, 74);
 
+pub const FONT_SIZE: f32 = 0.75;
+
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
-    default_styling(context);
+    default_styling(context, shared);
 
     // apply individual element styling once, then immediately go back to default
     macro_rules! style_once {
         ($func:expr) => {
             $func;
-            default_styling(context);
+            default_styling(context, shared);
         };
     }
 
@@ -120,10 +122,14 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     style_once!(armature_window::draw(context, shared));
 
+    let min_default_size = 190. * FONT_SIZE;
+
     // right side panel
     let response = egui::SidePanel::right("Bone")
         .resizable(true)
         .max_width(250.)
+        .min_width(min_default_size)
+        .default_width(min_default_size)
         .show(context, |ui| {
             draw_gradient(
                 ui,
@@ -131,7 +137,6 @@ pub fn draw(context: &Context, shared: &mut Shared) {
                 Color32::TRANSPARENT,
                 COLOR_MAIN_DARK,
             );
-            ui.set_min_width(175.);
 
             if shared.selected_bone_idx != usize::MAX {
                 bone_panel::draw(ui, shared);
@@ -172,6 +177,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
         })
         .show(egui_ctx, |ui| {
             egui::menu::bar(ui, |ui| {
+                ui.set_max_height(shared.ui.default_font_size * FONT_SIZE);
                 let mut offset = 0.;
                 macro_rules! str {
                     ($string:expr) => {
@@ -347,8 +353,14 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
 }
 
 /// Default styling to apply across all UI.
-pub fn default_styling(context: &Context) {
+pub fn default_styling(context: &Context, shared: &Shared) {
     let mut visuals = egui::Visuals::dark();
+
+    context.style_mut(|style| {
+        for (_text_style, font) in style.text_styles.iter_mut() {
+            font.size = shared.ui.default_font_size * FONT_SIZE;
+        }
+    });
 
     // remove rounded corners on windows
     visuals.window_corner_radius = egui::CornerRadius::ZERO;
