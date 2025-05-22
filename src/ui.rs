@@ -189,6 +189,8 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     if top_bar_button(ui, str!("Save"), str!("S"), &mut offset).clicked() {
                         #[cfg(not(target_arch = "wasm32"))]
                         utils::open_save_dialog();
+                        #[cfg(target_arch = "wasm32")]
+                        utils::save_web(shared);
                         ui.close_menu();
                     }
                     #[cfg(not(target_arch="wasm32"))]

@@ -89,6 +89,7 @@
                 <input
                     onchange="toggleFileDialog(false, 'image-dialog'); loadImage(event)"
                     type="file"
+                    accept=".png"
                     id="img-input"
                 />
                 <label class="button" for="img-input">Upload Image</label>
@@ -214,7 +215,6 @@
             }
 
             function downloadZip(binary) {
-                console.log(binary);
                 var link = document.createElement("a");
                 link.href = window.URL.createObjectURL(
                     new Blob([binary], { type: "zip;charset=utf-8;" }),

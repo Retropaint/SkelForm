@@ -251,6 +251,7 @@ pub fn prepare_files(shared: &mut Shared) -> (Vec2, String, Vec<u8>) {
         if bone.tex_idx == -1 {
             continue
         }
+
         // check if this bone is a regular rect
         let mut is_rect = true;
         let tex_size = armature_copy.textures[bone.tex_idx as usize].size;
