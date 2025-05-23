@@ -160,6 +160,15 @@
             let fileData = [];
             let imgName = "";
             let hasLoaded = false;
+            let config = "";
+            loadConfig();
+
+            async function loadConfig() {
+                let data = await localStorage.getItem("skelform_config");
+                if (data !== undefined) {
+                    config = data;
+                }
+            }
 
             function toggleFileDialog(open, id) {
                 let str = open ? "visible" : "hidden";
@@ -211,6 +220,8 @@
                 return canvas.height;
             }
 
+            saveConfig();
+
             function loaded() {
                 if (!hasLoaded) {
                     document.getElementById(
@@ -218,6 +229,17 @@
                     ).style.visibility = "visible";
                     hasLoaded = true;
                 }
+            }
+
+            function getConfig() {
+                if (!config) {
+                    return "dummy";
+                }
+                return config;
+            }
+
+            function saveConfig(data) {
+                localStorage.setItem("skelform_config", data);
             }
 
             function downloadZip(binary) {
