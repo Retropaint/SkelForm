@@ -42,8 +42,7 @@ pub mod shared;
 pub mod ui;
 pub mod utils;
 
-const FIRST_LAUNCH: &str = 
-    "Hello!\n\nSeems like this is your first time with SkelForm.\n\nWould you like to be quickly guided to making your first animation?";
+const FIRST_LAUNCH: &str = "Hello!\n\nSeems like this is your first time with SkelForm.\n\nWould you like to be quickly guided to making your first animation?";
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
@@ -165,7 +164,9 @@ impl ApplicationHandler for App {
                     }
                 }
                 if first_time {
-                    self.shared.ui.open_polar_modal(PolarId::FirstTime, FIRST_LAUNCH.to_string());
+                    self.shared
+                        .ui
+                        .open_polar_modal(PolarId::FirstTime, FIRST_LAUNCH.to_string());
                 }
 
                 #[cfg(target_arch = "wasm32")]
@@ -289,6 +290,7 @@ impl ApplicationHandler for App {
                 renderer.resize(width, height);
                 self.last_size = (width, height);
                 self.shared.window = Vec2::new(self.last_size.0 as f32, self.last_size.1 as f32);
+                renderer.resize(self.shared.window.x as u32, self.shared.window.y as u32);
             }
             WindowEvent::CloseRequested => {
                 if self.shared.undo_actions.len() > 0 {
