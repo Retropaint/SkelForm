@@ -495,7 +495,7 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                             shared.selected_bone_idx = usize::MAX;
                         }
                         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
-                        PolarId::FirstTime => shared.set_tutorial_step(TutorialStep::NewBone),
+                        PolarId::FirstTime => shared.start_tutorial(),
                         _ => shared.ui.set_state(UiState::PolarModal, false),
                     }
                 }
