@@ -1182,7 +1182,7 @@ impl Shared {
     }
 
     pub fn start_tutorial(&mut self) {
-        if self.selected_bone_idx != 0 {
+        if self.selected_bone_idx != 0 && self.selected_bone_idx != usize::MAX {
             self.tutorial_step = TutorialStep::ReselectBone;
         } else {
             self.tutorial_step = TutorialStep::NewBone;
@@ -1212,13 +1212,16 @@ impl Shared {
             };
         }
 
-        let first_bone = &self.armature.bones[0];
-        let bones_len = self.armature.bones.len() > 0;
+        let mut first_bone = &Bone::default();
+        let bones_len = self.armature.bones.len();
+        if bones_len > 0 {
+            first_bone = &self.armature.bones[0];
+        }
         let anim_selected = self.ui.anim.selected != usize::MAX;
 
         #[rustfmt::skip]
         let final_step = match step {
-            TutorialStep::NewBone        => check!(bones_len,                TutorialStep::GetImage),
+            TutorialStep::NewBone        => check!(bones_len > 0,            TutorialStep::GetImage),
             TutorialStep::GetImage       => check!(first_bone.tex_idx != -1, TutorialStep::EditBoneX),
             TutorialStep::EditBoneX      => check!(first_bone.pos.x != 0.,   TutorialStep::EditBoneY),
             TutorialStep::EditBoneY      => check!(first_bone.pos.y != 0.,   TutorialStep::OpenAnim),
