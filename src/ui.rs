@@ -188,21 +188,21 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     };
                 }
                 ui.menu_button("File", |ui| {
-                    if top_bar_button(ui, str!("Import"), str!("I"), &mut offset).clicked() {
+                    if top_bar_button(ui, str!("Import"), str!("I"), &mut offset, shared.ui.font_scale).clicked() {
                         #[cfg(not(target_arch = "wasm32"))]
                         utils::open_import_dialog();
                         #[cfg(target_arch = "wasm32")]
                         bone_panel::toggleFileDialog(true, "file-dialog".to_string());
                         ui.close_menu();
                     }
-                    if top_bar_button(ui, str!("Save"), str!("S"), &mut offset).clicked() {
+                    if top_bar_button(ui, str!("Save"), str!("S"), &mut offset, shared.ui.font_scale).clicked() {
                         #[cfg(not(target_arch = "wasm32"))]
                         utils::open_save_dialog();
                         #[cfg(target_arch = "wasm32")]
                         utils::save_web(shared);
                         ui.close_menu();
                     }
-                    if top_bar_button(ui, str!("Export Video"), str!("E"), &mut offset).clicked() {
+                    if top_bar_button(ui, str!("Export Video"), str!("E"), &mut offset, shared.ui.font_scale).clicked() {
                         // check if ffmpeg exists and complain if it doesn't
                         let mut ffmpeg = false;
                         match std::process::Command::new("ffmpeg").arg("-version").output() {
@@ -251,20 +251,20 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 });
                 offset = 0.;
                 ui.menu_button("View", |ui| {
-                    if top_bar_button(ui, str!("Zoom In"), str!("="), &mut offset).clicked() {
+                    if top_bar_button(ui, str!("Zoom In"), str!("="), &mut offset, shared.ui.font_scale).clicked() {
                         set_zoom(shared.camera.zoom - 0.1, shared);
                         ui.close_menu();
                     }
-                    if top_bar_button(ui, str!("Zoom Out"), str!("-"), &mut offset).clicked() {
+                    if top_bar_button(ui, str!("Zoom Out"), str!("-"), &mut offset, shared.ui.font_scale).clicked() {
                         set_zoom(shared.camera.zoom + 0.1, shared);
                         ui.close_menu();
                     }
 
-                    if top_bar_button(ui, str!("Zoom In UI"), str!(""), &mut offset).clicked() {
+                    if top_bar_button(ui, str!("Zoom In UI"), str!(""), &mut offset, shared.ui.font_scale).clicked() {
                         shared.ui.font_scale += 0.1;
                         ui.close_menu();
                     }
-                    if top_bar_button(ui, str!("Zoom Out UI"), str!(""), &mut offset).clicked() {
+                    if top_bar_button(ui, str!("Zoom Out UI"), str!(""), &mut offset, shared.ui.font_scale).clicked() {
                         shared.ui.font_scale -= 0.1;
                         ui.close_menu();
                     }
@@ -275,7 +275,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     } else {
                         "Help Light" 
                     };
-                    if top_bar_button(ui, str!(str), str!(""), &mut offset).clicked() {
+                    if top_bar_button(ui, str!(str), str!(""), &mut offset, shared.ui.font_scale).clicked() {
                         if shared.armature.animations.len() > 0 {
                             shared.ui.open_modal(HELP_LIGHT_CANT.to_string(), false);
                         } else {
@@ -328,7 +328,9 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
         .max_width(100.)
         .movable(false)
         .current_pos(egui::Pos2::new(
-            shared.ui.animate_mode_bar_pos.x - shared.ui.animate_mode_bar_scale.x - (21. * shared.ui.font_scale),
+            shared.ui.animate_mode_bar_pos.x
+                - shared.ui.animate_mode_bar_scale.x
+                - (21. * shared.ui.font_scale),
             shared.ui.animate_mode_bar_pos.y + 1.,
         ))
         .show(egui_ctx, |ui| {
@@ -676,11 +678,12 @@ pub fn top_bar_button(
     text: String,
     kb_key: String,
     offset: &mut f32,
+    scale: f32,
 ) -> egui::Response {
-    let height = 20.;
+    let height = 20. * scale;
     let rect = egui::Rect::from_min_size(
         egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() + *offset),
-        egui::Vec2::new(100., height),
+        egui::Vec2::new(100. * scale, height),
     );
     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
     let painter = ui.painter_at(ui.min_rect());
@@ -690,12 +693,14 @@ pub fn top_bar_button(
         painter.rect_filled(rect, egui::CornerRadius::ZERO, egui::Color32::TRANSPARENT);
     }
 
+    let font = egui::FontId::new(scale * ui.ctx().pixels_per_point() * 6., egui::FontFamily::Proportional);
+
     // text
     painter.text(
         egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() + *offset) + egui::vec2(5., 2.),
         egui::Align2::LEFT_TOP,
         text,
-        egui::FontId::default(),
+        font.clone(),
         egui::Color32::GRAY,
     );
 
@@ -704,7 +709,7 @@ pub fn top_bar_button(
         egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset) + egui::vec2(-5., 2.),
         egui::Align2::RIGHT_TOP,
         kb_key,
-        egui::FontId::default(),
+        font,
         egui::Color32::GRAY,
     );
 
