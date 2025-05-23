@@ -42,11 +42,16 @@ pub mod shared;
 pub mod ui;
 pub mod utils;
 
+const FIRST_LAUNCH: &str = 
+    "Hello!\n\nSeems like this is your first time with SkelForm.\n\nWould you like to be quickly guided to making your first animation?";
+
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 extern "C" {
     fn getCanvasWidth() -> u32;
     fn getCanvasHeight() -> u32;
+    fn getConfig() -> String;
+    fn saveConfig(str: String);
 }
 
 #[derive(Default)]
@@ -121,6 +126,8 @@ impl ApplicationHandler for App {
                     gui_context.set_pixels_per_point(window_handle.scale_factor() as f32);
                 }
 
+                let mut first_time = true;
+
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     // import config
@@ -129,16 +136,13 @@ impl ApplicationHandler for App {
                             .map(|proj_dirs| proj_dirs.data_dir().join("config.json"))
                             .unwrap();
                     if config_path.exists() {
-                        let mut file = fs::File::open(&config_path).unwrap();
-                        let mut contents = String::new();
-                        file.read_to_string(&mut contents).unwrap();
-                        self.shared.config = serde_json::from_str(&contents).unwrap()
-                    } else {
-                        self.shared.ui.open_polar_modal(
-                        PolarId::FirstTime,
-                        "Hello!\n\nSeems like this is your first time with SkelForm.\n\nWould you like to be quickly guided to making your first animation?"
-                            .to_string(),
-                        );
+                        let mut str = String::new();
+                        fs::File::open(&config_path)
+                            .unwrap()
+                            .read_to_string(&mut str)
+                            .unwrap();
+                        self.shared.config = serde_json::from_str(&str).unwrap();
+                        first_time = false;
                     }
 
                     // save config
@@ -150,6 +154,24 @@ impl ApplicationHandler for App {
                             .as_bytes(),
                     )
                     .unwrap();
+                }
+
+                #[cfg(target_arch = "wasm32")]
+                {
+                    // import config (web)
+                    if let Ok(data) = serde_json::from_str(&getConfig()) {
+                        self.shared.config = data;
+                        first_time = false;
+                    }
+                }
+                if first_time {
+                    self.shared.ui.open_polar_modal(PolarId::FirstTime, FIRST_LAUNCH.to_string());
+                }
+
+                #[cfg(target_arch = "wasm32")]
+                {
+                    // save config (web)
+                    saveConfig(serde_json::to_string(&self.shared.config).unwrap());
                 }
 
                 let viewport_id = gui_context.viewport_id();
