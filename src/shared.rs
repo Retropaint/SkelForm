@@ -714,7 +714,7 @@ pub struct Shared {
     pub dragging_vert: usize,
     pub editing_mesh: bool,
 
-    pub tutorial_step: TutorialStep,
+    tutorial_step: TutorialStep,
 
     pub frame: i32,
     pub recording: bool,
@@ -787,6 +787,10 @@ impl Shared {
     pub fn select_bone(&mut self, idx: usize) {
         self.unselect_everything();
         self.selected_bone_idx = idx;
+
+        if self.tutorial_step == TutorialStep::None {
+            return;
+        }
 
         // guide user to select first bone again in tutorial
         if idx != 0 {
@@ -1173,6 +1177,10 @@ impl Shared {
         mouse_prev_world - mouse_world
     }
 
+    pub fn start_tutorial(&mut self) {
+        self.tutorial_step = TutorialStep::NewBone;
+    }
+
     pub fn start_next_tutorial_step(&mut self, next: TutorialStep) {
         if next as usize == self.tutorial_step.clone() as usize + 1 {
             self.tutorial_step = self.next_tutorial_step(self.tutorial_step.clone());
@@ -1182,7 +1190,7 @@ impl Shared {
     /// Recursively check which tutorial step is next to show
     pub fn next_tutorial_step(&mut self, step: TutorialStep) -> TutorialStep {
         if self.tutorial_step == TutorialStep::None {
-            return TutorialStep::None
+            return TutorialStep::None;
         }
 
         macro_rules! check {
@@ -1210,6 +1218,16 @@ impl Shared {
             _ => step
         };
         final_step
+    }
+
+    pub fn set_tutorial_step(&mut self, step: TutorialStep) {
+        if !self.tutorial_step_is(TutorialStep::None) {
+            self.tutorial_step = step;
+        }
+    }
+
+    pub fn tutorial_step_is(&self, step: TutorialStep) -> bool {
+        self.tutorial_step == step
     }
 }
 
