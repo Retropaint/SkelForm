@@ -693,7 +693,10 @@ pub fn top_bar_button(
         painter.rect_filled(rect, egui::CornerRadius::ZERO, egui::Color32::TRANSPARENT);
     }
 
-    let font = egui::FontId::new(scale * ui.ctx().pixels_per_point() * 6., egui::FontFamily::Proportional);
+    let font = egui::FontId::new(
+        scale * 13.,
+        egui::FontFamily::Proportional,
+    );
 
     // text
     painter.text(
