@@ -10,10 +10,10 @@ use crate::{
 use crate::shared::*;
 
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
-    let min_default_size = 135. * ui_mod::FONT_SCALE;
+    let min_default_size = 135. * shared.ui.font_scale;
     let response = egui::SidePanel::left("Armature")
         .default_width(min_default_size)
-        .min_width(min_default_size)
+        .max_width(min_default_size)
         .resizable(true)
         .show(egui_ctx, |ui| {
             ui_mod::draw_gradient(

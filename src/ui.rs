@@ -22,8 +22,6 @@ macro_rules! ui_color {
 #[rustfmt::skip] ui_color!(COLOR_FRAMELINE_HOVERED,  108, 80, 179);
 #[rustfmt::skip] ui_color!(COLOR_FRAMELINE_PASTLAST, 50, 41, 74);
 
-pub const FONT_SCALE: f32 = 1.;
-
 const HELP_LIGHT_CANT: &str = "There is already an animation! Looks like you've figured it out.\n\nTo activate the help light, please start a new project.";
 
 /// The `main` of this module.
@@ -124,7 +122,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     style_once!(armature_window::draw(context, shared));
 
-    let min_default_size = 190. * FONT_SCALE;
+    let min_default_size = 190. * shared.ui.font_scale;
 
     // right side panel
     let response = egui::SidePanel::right("Bone")
@@ -175,11 +173,14 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
         .frame(egui::Frame {
             fill: COLOR_MAIN,
             stroke: Stroke::new(0., COLOR_ACCENT),
+            inner_margin: egui::Margin{left: 0, right: 0, top: 0, bottom: 0},
+            outer_margin: egui::Margin{left: 0, right: 0, top: 0, bottom: 0},
             ..Default::default()
         })
         .show(egui_ctx, |ui| {
+            ui.set_min_height(1.);
             egui::menu::bar(ui, |ui| {
-                ui.set_max_height(shared.ui.default_font_size * FONT_SCALE);
+                ui.set_min_height(1.);
                 let mut offset = 0.;
                 macro_rules! str {
                     ($string:expr) => {
@@ -258,13 +259,31 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         set_zoom(shared.camera.zoom + 0.1, shared);
                         ui.close_menu();
                     }
-                });
+
+                    if top_bar_button(ui, str!("Zoom In UI"), str!(""), &mut offset).clicked() {
+                        shared.ui.font_scale += 0.1;
+                        ui.close_menu();
+                    }
+                    if top_bar_button(ui, str!("Zoom Out UI"), str!(""), &mut offset).clicked() {
+                        shared.ui.font_scale -= 0.1;
+                        ui.close_menu();
+                    }
+                    });
                 ui.menu_button("Help", |ui| {
-                    if top_bar_button(ui, str!("Help Light"), str!(""), &mut offset).clicked() {
+                    let str = if !shared.tutorial_step_is(TutorialStep::None) {
+                        "Stop Help Light"
+                    } else {
+                        "Help Light" 
+                    };
+                    if top_bar_button(ui, str!(str), str!(""), &mut offset).clicked() {
                         if shared.armature.animations.len() > 0 {
                             shared.ui.open_modal(HELP_LIGHT_CANT.to_string(), false);
                         } else {
-                            shared.start_tutorial();
+                            if !shared.tutorial_step_is(TutorialStep::None) {
+                                shared.set_tutorial_step(TutorialStep::None);
+                            } else {
+                                shared.start_tutorial();
+                            }
                         }
                         ui.close_menu();
                     }
@@ -332,7 +351,8 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
     egui::Window::new("Camera")
         .resizable(false)
         .title_bar(false)
-        .max_width(100.)
+        .default_width(100. * shared.ui.font_scale)
+        .default_height(25. * shared.ui.font_scale)
         .movable(false)
         .frame(egui::Frame{
             fill: COLOR_MAIN_DARK,
@@ -375,7 +395,7 @@ pub fn default_styling(context: &Context, shared: &Shared) {
 
     context.style_mut(|style| {
         for (_text_style, font) in style.text_styles.iter_mut() {
-            font.size = shared.ui.default_font_size * FONT_SCALE;
+            font.size = shared.ui.default_font_size * shared.ui.font_scale;
         }
     });
 
