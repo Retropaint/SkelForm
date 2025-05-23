@@ -283,8 +283,8 @@ impl ApplicationHandler for App {
                 // otherwise it expands itself to infinity... and beyond!
                 #[cfg(target_arch = "wasm32")]
                 {
-                    width = getCanvasWidth() * 3;
-                    height = getCanvasHeight() * 3;
+                    width = getCanvasWidth();
+                    height = getCanvasHeight();
                     log::info!("Resizing renderer surface to: ({width}, {height})");
                 }
                 self.last_size = (width, height);
