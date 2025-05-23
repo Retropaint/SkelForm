@@ -24,7 +24,7 @@ macro_rules! ui_color {
 
 pub const FONT_SCALE: f32 = 1.;
 
-const HELP_LIGHT_CANT: &str = "There is already an animation! Looks like you've figured it out.\nTo activate the help light, please start a new project.";
+const HELP_LIGHT_CANT: &str = "There is already an animation! Looks like you've figured it out.\n\nTo activate the help light, please start a new project.";
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
@@ -237,9 +237,12 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                             shared.ui.open_modal("No animation available.".to_string(), false);
                             return;
                         }
+
+                        return;
                         shared.recording = true;
                         shared.done_recording = true;
                         shared.ui.anim.playing = true;
+                        shared.ui.anim.started = Some(chrono::Utc::now());
                         shared.select_frame(0);
                         shared.ui.anim.loops = 1;
                         ui.close_menu();

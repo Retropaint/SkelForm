@@ -779,13 +779,15 @@ impl Shared {
 
     pub fn unselect_everything(&mut self) {
         self.selected_bone_idx = usize::MAX;
-        self.ui.anim.selected_frame = -1;
+        self.ui.anim.selected_frame = 0;
         self.editing_mesh = false;
         self.ui.anim.selected = usize::MAX;
     }
 
     pub fn select_bone(&mut self, idx: usize) {
+        let selected_anim = self.ui.anim.selected;
         self.unselect_everything();
+        self.ui.anim.selected = selected_anim;
         self.selected_bone_idx = idx;
 
         if self.tutorial_step == TutorialStep::None {
@@ -801,7 +803,9 @@ impl Shared {
     }
 
     pub fn select_frame(&mut self, idx: i32) {
+        let selected_anim = self.ui.anim.selected;
         self.unselect_everything();
+        self.ui.anim.selected = selected_anim;
         self.ui.anim.selected_frame = idx;
     }
 
@@ -1178,7 +1182,12 @@ impl Shared {
     }
 
     pub fn start_tutorial(&mut self) {
-        self.tutorial_step = TutorialStep::NewBone;
+        if self.selected_bone_idx != 0 {
+            self.tutorial_step = TutorialStep::ReselectBone;
+        } else {
+            self.tutorial_step = TutorialStep::NewBone;
+            self.tutorial_step = self.next_tutorial_step(self.tutorial_step.clone());
+        }
     }
 
     pub fn start_next_tutorial_step(&mut self, next: TutorialStep) {
@@ -1204,11 +1213,12 @@ impl Shared {
         }
 
         let first_bone = &self.armature.bones[0];
+        let bones_len = self.armature.bones.len() > 0;
         let anim_selected = self.ui.anim.selected != usize::MAX;
 
         #[rustfmt::skip]
         let final_step = match step {
-            TutorialStep::NewBone        => self.next_tutorial_step(TutorialStep::GetImage),
+            TutorialStep::NewBone        => check!(bones_len,                TutorialStep::GetImage),
             TutorialStep::GetImage       => check!(first_bone.tex_idx != -1, TutorialStep::EditBoneX),
             TutorialStep::EditBoneX      => check!(first_bone.pos.x != 0.,   TutorialStep::EditBoneY),
             TutorialStep::EditBoneY      => check!(first_bone.pos.y != 0.,   TutorialStep::OpenAnim),
