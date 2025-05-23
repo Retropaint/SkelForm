@@ -135,10 +135,10 @@ impl ApplicationHandler for App {
                         self.shared.config = serde_json::from_str(&contents).unwrap()
                     } else {
                         self.shared.ui.open_polar_modal(
-                    PolarId::FirstTime,
-                    "Hello!\n\nSeems like this is your first time with SkelForm.\n\nWould you like to be quickly guided to making your first animation?"
-                        .to_string(),
-                    );
+                        PolarId::FirstTime,
+                        "Hello!\n\nSeems like this is your first time with SkelForm.\n\nWould you like to be quickly guided to making your first animation?"
+                            .to_string(),
+                        );
                     }
 
                     // save config

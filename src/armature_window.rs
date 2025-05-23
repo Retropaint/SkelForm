@@ -51,7 +51,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     });
 
                     if shared.armature.bones.len() > 1 {
-                        shared.tutorial_step = TutorialStep::ReselectBone;
+                        shared.set_tutorial_step(TutorialStep::ReselectBone);
                     } else {
                         shared.start_next_tutorial_step(TutorialStep::GetImage);
                     }

@@ -24,6 +24,8 @@ macro_rules! ui_color {
 
 pub const FONT_SCALE: f32 = 1.;
 
+const HELP_LIGHT_CANT: &str = "There is already an animation! Looks like you've figured it out.\nTo activate the help light, please start a new project.";
+
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
     default_styling(context, shared);
@@ -199,7 +201,6 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         utils::save_web(shared);
                         ui.close_menu();
                     }
-                    #[cfg(not(target_arch="wasm32"))]
                     if top_bar_button(ui, str!("Export Video"), str!("E"), &mut offset).clicked() {
                         // check if ffmpeg exists and complain if it doesn't
                         let mut ffmpeg = false;
@@ -252,6 +253,16 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     }
                     if top_bar_button(ui, str!("Zoom Out"), str!("-"), &mut offset).clicked() {
                         set_zoom(shared.camera.zoom + 0.1, shared);
+                        ui.close_menu();
+                    }
+                });
+                ui.menu_button("Help", |ui| {
+                    if top_bar_button(ui, str!("Help Light"), str!(""), &mut offset).clicked() {
+                        if shared.armature.animations.len() > 0 {
+                            shared.ui.open_modal(HELP_LIGHT_CANT.to_string(), false);
+                        } else {
+                            shared.start_tutorial();
+                        }
                         ui.close_menu();
                     }
                 });
@@ -481,7 +492,7 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                             shared.selected_bone_idx = usize::MAX;
                         }
                         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
-                        PolarId::FirstTime => shared.tutorial_step = TutorialStep::NewBone,
+                        PolarId::FirstTime => shared.set_tutorial_step(TutorialStep::NewBone),
                         _ => shared.ui.set_state(UiState::PolarModal, false),
                     }
                 }
@@ -724,7 +735,7 @@ pub fn draw_tutorial_rect(
     shared: &mut Shared,
     ui: &mut egui::Ui,
 ) {
-    if shared.tutorial_step == step {
+    if shared.tutorial_step_is(step) {
         ui::draw_fading_rect(ui, rect, Color32::GOLD, 60., 2.);
     }
 }
