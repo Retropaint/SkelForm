@@ -127,7 +127,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     // right side panel
     let response = egui::SidePanel::right("Bone")
         .resizable(true)
-        .max_width(250.)
+        .max_width(250. * shared.ui.font_scale)
         .min_width(min_default_size)
         .default_width(min_default_size)
         .show(context, |ui| {
@@ -328,7 +328,7 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
         .max_width(100.)
         .movable(false)
         .current_pos(egui::Pos2::new(
-            shared.ui.animate_mode_bar_pos.x - shared.ui.animate_mode_bar_scale.x - 21.,
+            shared.ui.animate_mode_bar_pos.x - shared.ui.animate_mode_bar_scale.x - (21. * shared.ui.font_scale),
             shared.ui.animate_mode_bar_pos.y + 1.,
         ))
         .show(egui_ctx, |ui| {
@@ -351,8 +351,8 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
     egui::Window::new("Camera")
         .resizable(false)
         .title_bar(false)
-        .default_width(100. * shared.ui.font_scale)
-        .default_height(25. * shared.ui.font_scale)
+        .max_width(100. * shared.ui.font_scale)
+        .max_height(25. * shared.ui.font_scale)
         .movable(false)
         .frame(egui::Frame{
             fill: COLOR_MAIN_DARK,
@@ -376,7 +376,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 ui.label("Camera:");
-                input!(shared.camera.pos, shared.camera.pos.x, "cam_pos_y", 0, 1., ui, "X");                
+                input!(shared.camera.pos, shared.camera.pos.x, "cam_pos_y", 0, 1., ui, "X"); 
                 input!(shared.camera.pos, shared.camera.pos.y, "cam_pos_x", 0, 1., ui, "Y");
             });
 
@@ -397,6 +397,23 @@ pub fn default_styling(context: &Context, shared: &Shared) {
         for (_text_style, font) in style.text_styles.iter_mut() {
             font.size = shared.ui.default_font_size * shared.ui.font_scale;
         }
+
+        let margin_value = 6. * shared.ui.font_scale;
+        let margin = egui::epaint::Marginf {
+            left: margin_value,
+            right: margin_value,
+            top: margin_value,
+            bottom: margin_value,
+        }
+        .into();
+
+        style.spacing.window_margin = margin;
+        style.spacing.menu_margin = margin;
+        style.spacing.button_padding = egui::Vec2::new(4. * shared.ui.font_scale, 0.);
+        style.spacing.menu_margin = margin;
+        style.spacing.menu_spacing = 0.;
+        style.spacing.item_spacing =
+            egui::Vec2::new(7. * shared.ui.font_scale, 2. * shared.ui.font_scale);
     });
 
     // remove rounded corners on windows
