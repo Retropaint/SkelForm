@@ -505,7 +505,7 @@ pub fn modal_dialog(shared: &mut Shared, ctx: &egui::Context) {
         .frame(egui::Frame {
             corner_radius: 0.into(),
             fill: COLOR_MAIN,
-            inner_margin: egui::Margin::same(5),
+            inner_margin: egui::Margin::same(8),
             stroke: egui::Stroke::new(1., COLOR_ACCENT),
             ..Default::default()
         })
