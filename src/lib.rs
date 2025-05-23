@@ -180,7 +180,7 @@ impl ApplicationHandler for App {
                     gui_context,
                     viewport_id,
                     &window_handle,
-                    Some(window_handle.scale_factor() as _),
+                    Some(window_handle.scale_factor() as f32),
                     Some(Theme::Dark),
                     None,
                 );
@@ -283,11 +283,10 @@ impl ApplicationHandler for App {
                 // otherwise it expands itself to infinity... and beyond!
                 #[cfg(target_arch = "wasm32")]
                 {
-                    width = getCanvasWidth();
-                    height = getCanvasHeight();
+                    width = getCanvasWidth() * 3;
+                    height = getCanvasHeight() * 3;
                     log::info!("Resizing renderer surface to: ({width}, {height})");
                 }
-                renderer.resize(width, height);
                 self.last_size = (width, height);
                 self.shared.window = Vec2::new(self.last_size.0 as f32, self.last_size.1 as f32);
                 renderer.resize(self.shared.window.x as u32, self.shared.window.y as u32);
