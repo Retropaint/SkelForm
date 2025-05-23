@@ -20,6 +20,7 @@ wgpu = { version = "24.0.1", default-features = false }
 winit = "0.30.9"
 image = "0.25.5"
 chrono = "0.4.41"
+directories-next = "2.0.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 egui-winit = "0.31.0"
@@ -28,7 +29,7 @@ rfd = { version = "0.15.3",  features = ["gtk3"], default-features = false}
 zip = "2.5.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-web-sys = { version = "0.3.77", features = ["Window", "Document", "HtmlImageElement", "CanvasRenderingContext2d", "HtmlCanvasElement", "ImageData", "HtmlInputElement"] }
+web-sys = { version = "0.3.77", features = ["Window", "Document", "HtmlImageElement", "CanvasRenderingContext2d", "HtmlCanvasElement", "ImageData", "Storage"] }
 futures = "0.3.31"
 log = "0.4.26"
 web-time = "1.1.0"
