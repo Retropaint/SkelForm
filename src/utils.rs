@@ -175,7 +175,7 @@ pub fn save_web(shared: &mut Shared) {
     let cursor = std::io::Cursor::new(&mut buf);
     let mut zip = zip::ZipWriter::new(cursor);
 
-    let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
+    let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
     // save armature json and texture image
     zip.start_file("armature.json", options).unwrap();
