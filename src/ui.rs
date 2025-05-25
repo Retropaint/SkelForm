@@ -424,7 +424,6 @@ pub fn default_styling(context: &Context, shared: &Shared) {
         style.spacing.menu_spacing = 0.;
         style.spacing.item_spacing =
             egui::Vec2::new(7. * shared.ui.font_scale, 3. * shared.ui.font_scale);
-        style.spacing.text_edit_width = 0.;
     });
 
     // remove rounded corners on windows
