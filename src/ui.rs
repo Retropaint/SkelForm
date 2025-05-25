@@ -24,6 +24,9 @@ macro_rules! ui_color {
 
 const HELP_LIGHT_CANT: &str = "There is already an animation! Looks like you've figured it out.\n\nTo activate the help light, please start a new project.";
 
+const FFMPEG_ERR: &str =
+    "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.";
+
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
     default_styling(context, shared);
@@ -173,39 +176,75 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
         .frame(egui::Frame {
             fill: COLOR_MAIN,
             stroke: Stroke::new(0., COLOR_ACCENT),
-            inner_margin: egui::Margin{left: 0, right: 0, top: 0, bottom: 0},
-            outer_margin: egui::Margin{left: 0, right: 0, top: 0, bottom: 0},
+            inner_margin: egui::Margin {
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 0,
+            },
+            outer_margin: egui::Margin {
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 0,
+            },
             ..Default::default()
         })
         .show(egui_ctx, |ui| {
-            ui.set_min_height(1.);
-            egui::menu::bar(ui, |ui| {
-                ui.set_min_height(1.);
-                let mut offset = 0.;
-                macro_rules! str {
-                    ($string:expr) => {
-                        $string.to_string()
-                    };
-                }
+            ui.set_max_height(20. * shared.ui.font_scale);
+            let mut offset = 0.;
+            macro_rules! str {
+                ($string:expr) => {
+                    $string.to_string()
+                };
+            }
+            ui.horizontal(|ui| {
                 ui.menu_button("File", |ui| {
-                    if top_bar_button(ui, str!("Import"), str!("I"), &mut offset, shared.ui.font_scale).clicked() {
+                    if top_bar_button(
+                        ui,
+                        str!("Import"),
+                        str!("I"),
+                        &mut offset,
+                        shared.ui.font_scale,
+                    )
+                    .clicked()
+                    {
                         #[cfg(not(target_arch = "wasm32"))]
                         utils::open_import_dialog();
                         #[cfg(target_arch = "wasm32")]
                         bone_panel::toggleFileDialog(true, "file-dialog".to_string());
                         ui.close_menu();
                     }
-                    if top_bar_button(ui, str!("Save"), str!("S"), &mut offset, shared.ui.font_scale).clicked() {
+                    if top_bar_button(
+                        ui,
+                        str!("Save"),
+                        str!("S"),
+                        &mut offset,
+                        shared.ui.font_scale,
+                    )
+                    .clicked()
+                    {
                         #[cfg(not(target_arch = "wasm32"))]
                         utils::open_save_dialog();
                         #[cfg(target_arch = "wasm32")]
                         utils::save_web(shared);
                         ui.close_menu();
                     }
-                    if top_bar_button(ui, str!("Export Video"), str!("E"), &mut offset, shared.ui.font_scale).clicked() {
+                    if top_bar_button(
+                        ui,
+                        str!("Export Video"),
+                        str!("E"),
+                        &mut offset,
+                        shared.ui.font_scale,
+                    )
+                    .clicked()
+                    {
                         // check if ffmpeg exists and complain if it doesn't
                         let mut ffmpeg = false;
-                        match std::process::Command::new("ffmpeg").arg("-version").output() {
+                        match std::process::Command::new("ffmpeg")
+                            .arg("-version")
+                            .output()
+                        {
                             Ok(output) => {
                                 if output.status.success() {
                                     ffmpeg = true;
@@ -219,9 +258,9 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                             }
                         }
                         if !ffmpeg {
-                            let headline = "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.";
+                            let headline = FFMPEG_ERR;
                             shared.ui.open_modal(headline.to_string(), false);
-                            return
+                            return;
                         }
 
                         // complain if there's no proper animation to export
@@ -229,13 +268,17 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                             if shared.armature.animations.len() == 0
                                 || shared.armature.animations[0].keyframes.len() == 0
                             {
-                                shared.ui.open_modal("No animation available.".to_string(), false);
+                                shared
+                                    .ui
+                                    .open_modal("No animation available.".to_string(), false);
                                 return;
                             } else {
                                 shared.ui.anim.selected = 0;
                             }
                         } else if shared.last_keyframe() == None {
-                            shared.ui.open_modal("No animation available.".to_string(), false);
+                            shared
+                                .ui
+                                .open_modal("No animation available.".to_string(), false);
                             return;
                         }
 
@@ -251,31 +294,65 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 });
                 offset = 0.;
                 ui.menu_button("View", |ui| {
-                    if top_bar_button(ui, str!("Zoom In"), str!("="), &mut offset, shared.ui.font_scale).clicked() {
+                    if top_bar_button(
+                        ui,
+                        str!("Zoom In"),
+                        str!("="),
+                        &mut offset,
+                        shared.ui.font_scale,
+                    )
+                    .clicked()
+                    {
                         set_zoom(shared.camera.zoom - 0.1, shared);
                         ui.close_menu();
                     }
-                    if top_bar_button(ui, str!("Zoom Out"), str!("-"), &mut offset, shared.ui.font_scale).clicked() {
+                    if top_bar_button(
+                        ui,
+                        str!("Zoom Out"),
+                        str!("-"),
+                        &mut offset,
+                        shared.ui.font_scale,
+                    )
+                    .clicked()
+                    {
                         set_zoom(shared.camera.zoom + 0.1, shared);
                         ui.close_menu();
                     }
 
-                    if top_bar_button(ui, str!("Zoom In UI"), str!(""), &mut offset, shared.ui.font_scale).clicked() {
+                    if top_bar_button(
+                        ui,
+                        str!("Zoom In UI"),
+                        str!(""),
+                        &mut offset,
+                        shared.ui.font_scale,
+                    )
+                    .clicked()
+                    {
                         shared.ui.font_scale += 0.1;
                         ui.close_menu();
                     }
-                    if top_bar_button(ui, str!("Zoom Out UI"), str!(""), &mut offset, shared.ui.font_scale).clicked() {
+                    if top_bar_button(
+                        ui,
+                        str!("Zoom Out UI"),
+                        str!(""),
+                        &mut offset,
+                        shared.ui.font_scale,
+                    )
+                    .clicked()
+                    {
                         shared.ui.font_scale -= 0.1;
                         ui.close_menu();
                     }
-                    });
+                });
                 ui.menu_button("Help", |ui| {
                     let str = if !shared.tutorial_step_is(TutorialStep::None) {
                         "Stop Help Light"
                     } else {
-                        "Help Light" 
+                        "Help Light"
                     };
-                    if top_bar_button(ui, str!(str), str!(""), &mut offset, shared.ui.font_scale).clicked() {
+                    if top_bar_button(ui, str!(str), str!(""), &mut offset, shared.ui.font_scale)
+                        .clicked()
+                    {
                         if shared.armature.animations.len() > 0 {
                             shared.ui.open_modal(HELP_LIGHT_CANT.to_string(), false);
                         } else {
@@ -288,11 +365,13 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         ui.close_menu();
                     }
                 });
-                shared.ui.edit_bar_pos.y = ui.min_rect().bottom();
-                shared.ui.animate_mode_bar_pos.y = ui.min_rect().bottom();
             });
+            shared.ui.edit_bar_pos.y = ui.min_rect().bottom();
+            shared.ui.animate_mode_bar_pos.y = ui.min_rect().bottom();
         });
 }
+
+fn menu_file_button(ui: &mut egui::Ui) {}
 
 fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
     // edit mode window
@@ -711,10 +790,7 @@ pub fn top_bar_button(
         painter.rect_filled(rect, egui::CornerRadius::ZERO, egui::Color32::TRANSPARENT);
     }
 
-    let font = egui::FontId::new(
-        scale * 13.,
-        egui::FontFamily::Proportional,
-    );
+    let font = egui::FontId::new(scale * 13., egui::FontFamily::Proportional);
 
     // text
     painter.text(
