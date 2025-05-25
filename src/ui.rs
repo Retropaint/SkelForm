@@ -354,31 +354,35 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
             ui.close_menu();
         }
 
-        if top_bar_button(
-            ui,
-            "Zoom In UI".to_string(),
-            "".to_string(),
-            &mut offset,
-            shared.ui.font_scale,
-        )
-        .clicked()
-        {
-            shared.ui.font_scale += 0.1;
-            ui.close_menu();
-        }
-        if top_bar_button(
-            ui,
-            "Zoom Out UI".to_string(),
-            "".to_string(),
-            &mut offset,
-            shared.ui.font_scale,
-        )
-        .clicked()
-        {
-            shared.ui.font_scale -= 0.1;
-            ui.close_menu();
-        }
+        //zoom_ui_buttons(ui, shared, &mut offset);
     });
+}
+
+pub fn zoom_ui_buttons(ui: &mut egui::Ui, shared: &mut Shared, offset: &mut f32) {
+    if top_bar_button(
+        ui,
+        "Zoom In UI".to_string(),
+        "".to_string(),
+        offset,
+        shared.ui.font_scale,
+    )
+    .clicked()
+    {
+        shared.ui.font_scale += 0.1;
+        ui.close_menu();
+    }
+    if top_bar_button(
+        ui,
+        "Zoom Out UI".to_string(),
+        "".to_string(),
+        offset,
+        shared.ui.font_scale,
+    )
+    .clicked()
+    {
+        shared.ui.font_scale -= 0.1;
+        ui.close_menu();
+    }
 }
 
 fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
