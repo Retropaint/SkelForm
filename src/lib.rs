@@ -164,10 +164,14 @@ impl ApplicationHandler for App {
                         first_time = false;
                     }
                 }
+                self.shared.ui.font_scale = self.shared.config.font_scale;
                 if first_time {
-                    self.shared
-                        .ui
-                        .open_polar_modal(PolarId::FirstTime, FIRST_LAUNCH.to_string());
+                    self.shared.start_tutorial();
+
+                    //// ask user if they want tutorial
+                    //self.shared
+                    //    .ui
+                    //    .open_polar_modal(PolarId::FirstTime, FIRST_LAUNCH.to_string());
                 }
 
                 #[cfg(target_arch = "wasm32")]
