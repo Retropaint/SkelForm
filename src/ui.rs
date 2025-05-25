@@ -356,39 +356,49 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
         .max_width(100. * shared.ui.font_scale)
         .max_height(25. * shared.ui.font_scale)
         .movable(false)
-        .frame(egui::Frame{
+        .frame(egui::Frame {
             fill: COLOR_MAIN_DARK,
             inner_margin: (6. * shared.ui.font_scale).into(),
-            stroke: Stroke{ width: 1., color: COLOR_BORDER},
+            stroke: Stroke {
+                width: 1.,
+                color: COLOR_BORDER,
+            },
             ..Default::default()
         })
         .current_pos(egui::Pos2::new(
-            shared.ui.camera_bar_pos.x - shared.ui.camera_bar_scale.x - (21. * shared.ui.font_scale),
-            shared.ui.camera_bar_pos.y - shared.ui.camera_bar_scale.y - (15. * shared.ui.font_scale),
+            shared.ui.camera_bar_pos.x
+                - shared.ui.camera_bar_scale.x
+                - (21. * shared.ui.font_scale),
+            shared.ui.camera_bar_pos.y
+                - shared.ui.camera_bar_scale.y
+                - (15. * shared.ui.font_scale),
         ))
         .show(egui_ctx, |ui| {
             macro_rules! input {
-                ($element:expr, $float:expr, $id:expr, $edit_id:expr, $modifier:expr, $ui:expr, $label:expr) => {
+                ($element:expr, $float:expr, $id:expr, $ui:expr, $label:expr) => {
                     if $label != "" {
                         $ui.label($label);
                     }
-                    (_, $float, _) = bone_panel::float_input($id.to_string(), shared, $ui, $float, $modifier);
+                    (_, $float, _) =
+                        bone_panel::float_input($id.to_string(), shared, $ui, $float, 1.);
                 };
             }
 
             ui.horizontal(|ui| {
                 ui.label("Camera:");
-                input!(shared.camera.pos, shared.camera.pos.x, "cam_pos_y", 0, 1., ui, "X"); 
-                input!(shared.camera.pos, shared.camera.pos.y, "cam_pos_x", 0, 1., ui, "Y");
+                input!(shared.camera.pos, shared.camera.pos.x, "cam_pos_y", ui, "X");
+                input!(shared.camera.pos, shared.camera.pos.y, "cam_pos_x", ui, "Y");
             });
 
             ui.horizontal(|ui| {
                 ui.label("Zoom:");
-                input!(shared.camera.zoom, shared.camera.zoom, "cam_zoom", 0, 1., ui, "");
+                input!(shared.camera.zoom, shared.camera.zoom, "cam_zoom", ui, "");
             });
 
             shared.ui.camera_bar_scale = ui.min_rect().size().into();
-        }).unwrap().response;
+        })
+        .unwrap()
+        .response;
 }
 
 /// Default styling to apply across all UI.
