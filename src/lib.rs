@@ -50,7 +50,8 @@ extern "C" {
     fn getCanvasWidth() -> u32;
     fn getCanvasHeight() -> u32;
     fn getConfig() -> String;
-    fn saveConfig(str: String);
+    fn saveConfig(data_str: String);
+    fn getUiSliderValue() -> f32;
 }
 
 #[derive(Default)]
@@ -246,6 +247,11 @@ impl ApplicationHandler for App {
             &self.renderer,
             self.gui_state.as_ref().unwrap().egui_ctx(),
         );
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            self.shared.ui.font_scale = getUiSliderValue();
+        }
 
         let (Some(gui_state), Some(renderer), Some(window), Some(last_render_time)) = (
             self.gui_state.as_mut(),
