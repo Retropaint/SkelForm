@@ -148,7 +148,7 @@
             </div>
         </div>
 
-        <div class="ui-slider" id="ui-slider"
+        <div class="ui-slider" id="ui-slider" style="visibility: hidden;"
         >
             <div class="container">
                 <div class="box">
@@ -199,12 +199,6 @@
         <img src="" id="last-image" />
 
         <img src="anim_icons.png" id="img-anim-icons" />
-
-        <script type="module">
-            // unused for now
-            import * as bindings from "/SkelForm.js";
-            window.wasmBindings = bindings;
-        </script>
 
         <script>
             let fileData = [];
@@ -267,8 +261,18 @@
 
             function resizeCanvas() {
                 const canvas = document.getElementById("canvas");
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
+
+                if(window.innerWidth < 1920) {
+                    canvas.width = window.innerWidth * 1.5;
+                    canvas.height = window.innerHeight * 1.5;
+                    canvas.style.transform = "scale(" + 
+                        (window.innerWidth / canvas.width) + ", " + 
+                        (window.innerHeight / canvas.height) + ")";
+                } else {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                    canvas.style.transform = "scale(1, 1)";
+                }
             }
 
             function getCanvasWidth() {
@@ -317,10 +321,6 @@
 
             window.addEventListener("resize", resizeCanvas);
             window.addEventListener("load", resizeCanvas);
-
-            window.onbeforeunload = function () {
-                return "";
-            };
         </script>
     </body>
 </html>
