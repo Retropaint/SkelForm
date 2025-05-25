@@ -363,8 +363,8 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
             ..Default::default()
         })
         .current_pos(egui::Pos2::new(
-            shared.ui.camera_bar_pos.x - shared.ui.camera_bar_scale.x - 21.,
-            shared.ui.camera_bar_pos.y - shared.ui.camera_bar_scale.y - 15.,
+            shared.ui.camera_bar_pos.x - shared.ui.camera_bar_scale.x - (21. * shared.ui.font_scale),
+            shared.ui.camera_bar_pos.y - shared.ui.camera_bar_scale.y - (15. * shared.ui.font_scale),
         ))
         .show(egui_ctx, |ui| {
             macro_rules! input {
