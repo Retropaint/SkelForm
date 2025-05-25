@@ -529,6 +529,7 @@ pub fn default_styling(context: &Context, shared: &Shared) {
     visuals.widgets.active.corner_radius = egui::CornerRadius::ZERO;
     visuals.widgets.open.corner_radius = egui::CornerRadius::ZERO;
     visuals.widgets.noninteractive.corner_radius = egui::CornerRadius::ZERO;
+    visuals.menu_corner_radius = egui::CornerRadius::ZERO;
 
     visuals.window_shadow = Shadow::NONE;
     visuals.window_fill = COLOR_MAIN;
