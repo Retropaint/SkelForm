@@ -396,6 +396,7 @@ pub fn default_styling(context: &Context, shared: &Shared) {
     let mut visuals = egui::Visuals::dark();
 
     context.style_mut(|style| {
+        // adjust text sizes
         for (text_style, font) in style.text_styles.iter_mut() {
             let mut modifier = 1.;
             if *text_style == egui::TextStyle::Heading {
@@ -404,6 +405,8 @@ pub fn default_styling(context: &Context, shared: &Shared) {
 
             font.size = shared.ui.default_font_size * shared.ui.font_scale * modifier;
         }
+
+        // adjust margins, paddings, and spacings
 
         let margin_value = 6. * shared.ui.font_scale;
         let margin = egui::epaint::Marginf {
