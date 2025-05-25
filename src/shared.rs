@@ -440,6 +440,7 @@ pub struct Config {
     #[serde(skip)]
     pub first_launch: bool,
 
+    #[serde(default = "default_one")]
     pub font_scale: f32,
 }
 
@@ -1332,4 +1333,8 @@ impl Ui {
 
 fn default_neg_one() -> i32 {
     -1
+}
+
+fn default_one() -> f32 {
+    1.
 }
