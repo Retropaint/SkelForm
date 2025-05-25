@@ -358,7 +358,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
         .movable(false)
         .frame(egui::Frame{
             fill: COLOR_MAIN_DARK,
-            inner_margin: 6.into(),
+            inner_margin: (6. * shared.ui.font_scale).into(),
             stroke: Stroke{ width: 1., color: COLOR_BORDER},
             ..Default::default()
         })
@@ -424,6 +424,7 @@ pub fn default_styling(context: &Context, shared: &Shared) {
         style.spacing.menu_spacing = 0.;
         style.spacing.item_spacing =
             egui::Vec2::new(7. * shared.ui.font_scale, 3. * shared.ui.font_scale);
+        style.spacing.text_edit_width = 0.;
     });
 
     // remove rounded corners on windows

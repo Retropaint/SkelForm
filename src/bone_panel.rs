@@ -246,7 +246,9 @@ pub fn float_input(
     if shared.ui.rename_id != id {
         input = ui.add_sized(
             input_size,
-            egui::TextEdit::singleline(&mut displayed_value.to_string()),
+            egui::TextEdit::singleline(&mut displayed_value.to_string())
+                .desired_width(0.)
+                .min_size(egui::Vec2::ZERO),
         );
         // extract value as a string and store it with edit_value
         if input.has_focus() {
@@ -256,7 +258,7 @@ pub fn float_input(
     } else {
         input = ui.add_sized(
             input_size,
-            egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap()),
+            egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap())
         );
 
         if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
