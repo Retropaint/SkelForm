@@ -358,4 +358,5 @@ pub fn import<R: Read + std::io::Seek>(
     shared.armature = root.armatures[0].clone();
 
     shared.unselect_everything();
+    shared.set_tutorial_step(TutorialStep::None);
 }
