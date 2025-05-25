@@ -144,14 +144,14 @@
             </div>
         </div>
 
-        <div class="ui-slider" style="visibility: visible">
+        <div class="ui-slider" id="ui-slider">
             <div class="container">
                 <div class="box">
                     <p>
                         Please adjust this slider until the UI is sufficiently
                         sized.
                     </p>
-                    <input type="range"></input>
+                    <input id="ui-slider-input" type="range" min="0" max="2" step="0.01"></input>
                 </div>
             </div>
         </div>
@@ -268,6 +268,10 @@
                     ).style.visibility = "visible";
                     hasLoaded = true;
                 }
+            }
+
+            function getUiSliderValue() {
+                return document.getElementById("ui-slider-input").value;
             }
 
             function getConfig() {
