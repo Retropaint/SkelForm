@@ -245,7 +245,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog();
             #[cfg(target_arch = "wasm32")]
-            bone_panel::toggleFileDialog(true, "file-dialog".to_string());
+            bone_panel::toggleElement(true, "file-dialog".to_string());
             ui.close_menu();
         }
         if top_bar_button(
@@ -391,7 +391,7 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
         .movable(false)
         .current_pos(egui::Pos2::new(
             shared.ui.edit_bar_pos.x + 7.5,
-            shared.ui.edit_bar_pos.y + 1.,
+            shared.ui.edit_bar_pos.y - 1.,
         ))
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
@@ -419,7 +419,7 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
             shared.ui.animate_mode_bar_pos.x
                 - shared.ui.animate_mode_bar_scale.x
                 - (21. * shared.ui.font_scale),
-            shared.ui.animate_mode_bar_pos.y + 1.,
+            shared.ui.animate_mode_bar_pos.y - 1.,
         ))
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
@@ -438,6 +438,7 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
 }
 
 fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
+    let margin = 6. * shared.ui.font_scale;
     egui::Window::new("Camera")
         .resizable(false)
         .title_bar(false)
@@ -446,7 +447,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
         .movable(false)
         .frame(egui::Frame {
             fill: COLOR_MAIN_DARK,
-            inner_margin: (6. * shared.ui.font_scale).into(),
+            inner_margin: margin.into(),
             stroke: Stroke {
                 width: 1.,
                 color: COLOR_BORDER,
@@ -454,9 +455,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
             ..Default::default()
         })
         .current_pos(egui::Pos2::new(
-            shared.ui.camera_bar_pos.x
-                - shared.ui.camera_bar_scale.x
-                - (21. * shared.ui.font_scale),
+            shared.ui.camera_bar_pos.x - shared.ui.camera_bar_scale.x - (margin * 3.3).ceil(),
             shared.ui.camera_bar_pos.y
                 - shared.ui.camera_bar_scale.y
                 - (15. * shared.ui.font_scale),
@@ -698,7 +697,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                     bone_panel::open_file_dialog();
 
                     #[cfg(target_arch = "wasm32")]
-                    bone_panel::toggleFileDialog(true, "image-dialog".to_string());
+                    bone_panel::toggleElement(true, "image-dialog".to_string());
                 }
 
                 let label = if shared.ui.has_state(UiState::RemovingTexture) {

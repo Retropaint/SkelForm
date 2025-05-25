@@ -106,8 +106,8 @@ pub fn keyboard_input(
 
     #[cfg(target_arch = "wasm32")]
     if shared.input.is_pressing(winit::keyboard::KeyCode::Escape) {
-        bone_panel::toggleFileDialog(false, "image-dialog".to_string());
-        bone_panel::toggleFileDialog(false, "file-dialog".to_string());
+        bone_panel::toggleElement(false, "image-dialog".to_string());
+        bone_panel::toggleElement(false, "file-dialog".to_string());
     }
 
     if shared
