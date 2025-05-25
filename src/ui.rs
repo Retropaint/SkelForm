@@ -315,7 +315,6 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
                 return;
             }
 
-            return;
             shared.recording = true;
             shared.done_recording = true;
             shared.ui.anim.playing = true;
@@ -640,7 +639,6 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                         }
                         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
                         PolarId::FirstTime => shared.start_tutorial(),
-                        _ => shared.ui.set_state(UiState::PolarModal, false),
                     }
                 }
             });
