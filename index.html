@@ -7,6 +7,7 @@
         <base data-trunk-public-url />
         <style type="text/css">
             :root {
+                --color-main: rgb(32, 25, 46);
                 --color-accent: rgb(65, 46, 105);
                 --color-border: rgb(44, 36, 64);
                 font-family: Arial;
@@ -79,6 +80,32 @@
                     display: none;
                 }
             }
+
+            .ui-slider {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                background: rgb(0, 0, 0, 0.1);
+                z-index: 2;
+
+                .container {
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    flex-direction: column;
+                }                
+
+                .box{
+                    color: #d6d6d6;
+                    background: var(--color-main);
+                    padding: 5px;
+                    border: 2px solid var(--color-border);
+                    cursor: pointer;
+                }
+            }
         </style>
     </head>
 
@@ -114,6 +141,18 @@
                     onclick="toggleFileDialog(false, 'file-dialog')"
                     >Cancel</label
                 >
+            </div>
+        </div>
+
+        <div class="ui-slider" style="visibility: visible">
+            <div class="container">
+                <div class="box">
+                    <p>
+                        Please adjust this slider until the UI is sufficiently
+                        sized.
+                    </p>
+                    <input type="range"></input>
+                </div>
             </div>
         </div>
 
