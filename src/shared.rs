@@ -439,6 +439,8 @@ impl Ui {
 pub struct Config {
     #[serde(skip)]
     pub first_launch: bool,
+
+    pub font_scale: f32,
 }
 
 #[derive(Clone, Default)]
