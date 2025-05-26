@@ -34,6 +34,7 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
         {
             bone_panel::toggleElement(false, "image-dialog".to_string());
             bone_panel::toggleElement(false, "file-dialog".to_string());
+            bone_panel::toggleElement(false, "ui-slider".to_string());
         }
 
         shared.ui.set_state(UiState::ImageModal, false);
