@@ -365,8 +365,14 @@ pub fn import<R: Read + std::io::Seek>(
 pub fn undo_redo(undo: bool, shared: &mut Shared) {
     let action: Action;
     if undo {
+        if shared.undo_actions.last() == None {
+            return;
+        }
         action = shared.undo_actions.last().unwrap().clone();
     } else {
+        if shared.redo_actions.last() == None {
+            return;
+        }
         action = shared.redo_actions.last().unwrap().clone();
     }
     let mut new_action = action.clone();

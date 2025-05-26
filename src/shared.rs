@@ -626,7 +626,7 @@ pub enum AnimElement {
 
 pub const ANIM_ICON_ID: [usize; 7] = [0, 0, 1, 2, 2, 3, 3];
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, PartialEq)]
 pub enum ActionEnum {
     #[default]
     Bone,
@@ -640,7 +640,7 @@ pub enum ActionType {
     Edited,
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, PartialEq)]
 pub struct Action {
     pub action: ActionEnum,
     pub action_type: ActionType,
