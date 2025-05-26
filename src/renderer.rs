@@ -162,6 +162,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let bone = &bones[shared.selected_bone_idx];
         edit_bone(shared, bone);
     }
+
 }
 
 fn get_distance(a: Vec2, b: Vec2) -> f32 {

@@ -45,3 +45,4 @@ flate2 = { version = "1.0", default-features = false, features = ["rust_backend"
 default = ["wgpu/default"]
 webgl = ["wgpu/webgl"]
 webgpu = ["wgpu/webgpu"]
+mobile = []

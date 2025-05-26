@@ -31,10 +31,20 @@ const FFMPEG_ERR: &str =
 pub fn draw(context: &Context, shared: &mut Shared) {
     default_styling(context);
 
+    #[allow(unused_mut)]
+    let mut scale_mod = 1.;
+
     #[cfg(target_arch = "wasm32")]
-    context.set_zoom_factor(shared.ui.scale * 2.);
-    #[cfg(not(target_arch = "wasm32"))]
-    context.set_zoom_factor(shared.ui.scale);
+    {
+        scale_mod = 2.;
+    }
+
+    #[cfg(feature = "mobile")]
+    {
+        scale_mod = 2.8;
+    }
+
+    context.set_zoom_factor(shared.ui.scale * scale_mod);
 
     // apply individual element styling once, then immediately go back to default
     macro_rules! style_once {
@@ -125,7 +135,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     if shared.ui.anim.open {
         style_once!(keyframe_editor::draw(context, shared));
     } else {
-        shared.ui.camera_bar_pos.y = shared.window.y;
+        shared.ui.camera_bar_pos.y = context.screen_rect().bottom();
     }
 
     style_once!(armature_window::draw(context, shared));

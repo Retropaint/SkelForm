@@ -254,7 +254,7 @@ impl ApplicationHandler for App {
 
         #[cfg(target_arch = "wasm32")]
         {
-            //self.shared.ui.scale = getUiSliderValue();
+            self.shared.ui.scale = getUiSliderValue();
         }
 
         if self.shared.ui.scale <= 0. {

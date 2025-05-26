@@ -45,6 +45,7 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
             redo = true;
         }
 
+        #[cfg(not(target_arch = "wasm32"))]
         if shared.input.is_pressing(KeyCode::Equal) {
             shared.ui.scale += ui_zoom_speed;
         } else if shared.input.is_pressing(KeyCode::Minus) {
