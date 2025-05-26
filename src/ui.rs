@@ -748,13 +748,15 @@ pub fn top_bar_button(
         egui::Color32::GRAY,
     );
 
+    let kb_font = egui::FontId::new(9., egui::FontFamily::Proportional);
+
     // kb key text
     painter.text(
-        egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset) + egui::vec2(-5., 2.),
+        egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset) + egui::vec2(-5., 5.),
         egui::Align2::RIGHT_TOP,
         kb_key,
-        font,
-        egui::Color32::GRAY,
+        kb_font,
+        egui::Color32::DARK_GRAY,
     );
 
     // set next button's Y to below this one
