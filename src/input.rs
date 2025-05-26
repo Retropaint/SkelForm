@@ -39,22 +39,22 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
     let mut undo = false;
     let mut redo = false;
     if shared.input.is_pressing(KeyCode::SuperLeft) {
-        if shared.input.is_pressing(KeyCode::KeyZ) && shared.undo_actions.len() != 0 {
+        if shared.input.pressed(KeyCode::KeyZ) && shared.undo_actions.len() != 0 {
             undo = true;
-        } else if shared.input.is_pressing(KeyCode::KeyY) && shared.redo_actions.len() != 0 {
+        } else if shared.input.pressed(KeyCode::KeyY) && shared.redo_actions.len() != 0 {
             redo = true;
         }
 
         #[cfg(not(target_arch = "wasm32"))]
-        if shared.input.is_pressing(KeyCode::Equal) {
+        if shared.input.pressed(KeyCode::Equal) {
             shared.ui.scale += ui_zoom_speed;
-        } else if shared.input.is_pressing(KeyCode::Minus) {
+        } else if shared.input.pressed(KeyCode::Minus) {
             shared.ui.scale -= ui_zoom_speed;
         }
     } else {
-        if shared.input.is_pressing(KeyCode::Equal) {
+        if shared.input.pressed(KeyCode::Equal) {
             ui::set_zoom(shared.camera.zoom - camera_zoom_speed, shared);
-        } else if shared.input.is_pressing(KeyCode::Minus) {
+        } else if shared.input.pressed(KeyCode::Minus) {
             ui::set_zoom(shared.camera.zoom + camera_zoom_speed, shared);
         }
     }
