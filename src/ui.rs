@@ -215,6 +215,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
             }
             egui::menu::bar(ui, |ui| {
                 menu_file_button(ui, shared);
+                menu_edit_button(ui, shared);
                 menu_view_button(ui, shared);
 
                 ui.menu_button("Help", |ui| {
@@ -223,7 +224,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     } else {
                         "Help Light"
                     };
-                    if top_bar_button(ui, str!(str), str!(""), &mut offset).clicked() {
+                    if top_bar_button(ui, str, "", &mut offset).clicked() {
                         if shared.armature.animations.len() > 0 {
                             shared.ui.open_modal(HELP_LIGHT_CANT.to_string(), false);
                         } else {
@@ -246,21 +247,21 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
 fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("File", |ui| {
-        if top_bar_button(ui, "Import".to_string(), "I".to_string(), &mut offset).clicked() {
+        if top_bar_button(ui, "Import", "I", &mut offset).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog();
             #[cfg(target_arch = "wasm32")]
             bone_panel::toggleElement(true, "file-dialog".to_string());
             ui.close_menu();
         }
-        if top_bar_button(ui, "Save".to_string(), "S".to_string(), &mut offset).clicked() {
+        if top_bar_button(ui, "Save", "S", &mut offset).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog();
             #[cfg(target_arch = "wasm32")]
             utils::save_web(shared);
             ui.close_menu();
         }
-        if top_bar_button(ui, "Export Video".to_string(), "E".to_string(), &mut offset).clicked() {
+        if top_bar_button(ui, "Export Video", "E", &mut offset).clicked() {
             // check if ffmpeg exists and complain if it doesn't
             let mut ffmpeg = false;
             match std::process::Command::new("ffmpeg")
@@ -318,18 +319,18 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
 fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("View", |ui| {
-        if top_bar_button(ui, "Zoom In".to_string(), "=".to_string(), &mut offset).clicked() {
+        if top_bar_button(ui, "Zoom In", "=", &mut offset).clicked() {
             set_zoom(shared.camera.zoom - 0.1, shared);
         }
-        if top_bar_button(ui, "Zoom Out".to_string(), "-".to_string(), &mut offset).clicked() {
+        if top_bar_button(ui, "Zoom Out", "-", &mut offset).clicked() {
             set_zoom(shared.camera.zoom + 0.1, shared);
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            if top_bar_button(ui, "Zoom In UI".to_string(), "".to_string(), &mut offset).clicked() {
+            if top_bar_button(ui, "Zoom In UI", "", &mut offset).clicked() {
                 shared.ui.scale += 0.1;
             }
-            if top_bar_button(ui, "Zoom Out UI".to_string(), "".to_string(), &mut offset).clicked()
+            if top_bar_button(ui, "Zoom Out UI", "", &mut offset).clicked()
             {
                 shared.ui.scale -= 0.1;
             }
@@ -339,6 +340,15 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
         if top_bar_button(ui, "Adjust UI".to_string(), "".to_string(), &mut offset).clicked() {
             bone_panel::toggleElement(true, "ui-slider".to_string());
             ui.close_menu();
+        }
+    });
+}
+
+fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
+    let mut offset = 0.;
+    ui.menu_button("Edit", |ui| {
+        if top_bar_button(ui, "Zoom In", "=", &mut offset).clicked() {
+            set_zoom(shared.camera.zoom - 0.1, shared);
         }
     });
 }
@@ -706,8 +716,8 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
 
 pub fn top_bar_button(
     ui: &mut egui::Ui,
-    text: String,
-    kb_key: String,
+    text: &str,
+    kb_key: &str,
     offset: &mut f32,
 ) -> egui::Response {
     let height = 20.;
