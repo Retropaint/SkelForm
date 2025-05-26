@@ -19,6 +19,14 @@ Then, run the `web_build.py` script to build the `dist` folder with the necessar
 Notable argument(s):
 * `--serve` - Immediately run `localhost:8000` after build.
 
+## Mobile
+
+As of 26/05/25, mobile is not actively developed and does not have a direct build process.
+
+However, it can be easily done with the web version in a simple WebView wrapper (eg [Capacitor](https://capacitorjs.com/)).
+
+The web build script provides a `--mobile` parameter for a typical mobile dist config.
+
 # Documentation
 
 Run `cargo doc --no-deps --open`
