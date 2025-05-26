@@ -247,7 +247,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
 fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("File", |ui| {
-        if top_bar_button(ui, "Import", "I", &mut offset).clicked() {
+        if top_bar_button(ui, "Open", "O", &mut offset).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog();
             #[cfg(target_arch = "wasm32")]
