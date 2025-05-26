@@ -31,12 +31,6 @@ pub fn keyboard_input(
         }
     }
 
-    if shared.input.is_pressing(KeyCode::Equal) {
-        ui::set_zoom(shared.camera.zoom - 0.1, shared)
-    } else if shared.input.is_pressing(KeyCode::Minus) {
-        ui::set_zoom(shared.camera.zoom + 0.1, shared);
-    }
-
     let mut undo = false;
     let mut redo = false;
     if shared.input.is_pressing(KeyCode::SuperLeft) {
@@ -44,6 +38,18 @@ pub fn keyboard_input(
             undo = true;
         } else if shared.input.is_pressing(KeyCode::KeyY) && shared.redo_actions.len() != 0 {
             redo = true;
+        }
+
+        if shared.input.is_pressing(KeyCode::Equal) {
+            shared.ui.scale += 0.1;
+        } else if shared.input.is_pressing(KeyCode::Minus) {
+            shared.ui.scale -= 0.1;
+        }
+    } else {
+        if shared.input.is_pressing(KeyCode::Equal) {
+            ui::set_zoom(shared.camera.zoom - 0.1, shared)
+        } else if shared.input.is_pressing(KeyCode::Minus) {
+            ui::set_zoom(shared.camera.zoom + 0.1, shared);
         }
     }
 
