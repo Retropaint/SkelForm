@@ -30,6 +30,11 @@ pub fn keyboard_input(
             }
         }
     }
+}
+
+pub fn keyboard_shortcuts(shared: &mut Shared) {
+    let camera_zoom_speed = 0.05;
+    let ui_zoom_speed = 0.01;
 
     let mut undo = false;
     let mut redo = false;
@@ -41,15 +46,15 @@ pub fn keyboard_input(
         }
 
         if shared.input.is_pressing(KeyCode::Equal) {
-            shared.ui.scale += 0.1;
+            shared.ui.scale += ui_zoom_speed;
         } else if shared.input.is_pressing(KeyCode::Minus) {
-            shared.ui.scale -= 0.1;
+            shared.ui.scale -= ui_zoom_speed;
         }
     } else {
         if shared.input.is_pressing(KeyCode::Equal) {
-            ui::set_zoom(shared.camera.zoom - 0.1, shared)
+            ui::set_zoom(shared.camera.zoom - camera_zoom_speed, shared);
         } else if shared.input.is_pressing(KeyCode::Minus) {
-            ui::set_zoom(shared.camera.zoom + 0.1, shared);
+            ui::set_zoom(shared.camera.zoom + camera_zoom_speed, shared);
         }
     }
 
