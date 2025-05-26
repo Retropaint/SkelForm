@@ -101,11 +101,6 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         modal_image(shared, context);
     }
 
-    // close modals on pressing escape
-    if shared.input.is_pressing(winit::keyboard::KeyCode::Escape) {
-        shared.ui.set_state(UiState::ImageModal, false);
-    }
-
     // Although counter-intuitive, mouse inputs are recorded here.
     // This is because egui can detect all of them even if they were not on the UI itself.
     // To determine if the mouse is on the UI, winit's mouse input is used instead (see input.rs).
