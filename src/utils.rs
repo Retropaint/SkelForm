@@ -175,7 +175,8 @@ pub fn save_web(shared: &mut Shared) {
     let cursor = std::io::Cursor::new(&mut buf);
     let mut zip = zip::ZipWriter::new(cursor);
 
-    let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+    let options =
+        zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
     // save armature json and texture image
     zip.start_file("armature.json", options).unwrap();
@@ -359,4 +360,61 @@ pub fn import<R: Read + std::io::Seek>(
 
     shared.unselect_everything();
     shared.set_tutorial_step(TutorialStep::None);
+}
+
+pub fn undo_redo(undo: bool, shared: &mut Shared) {
+    let action: Action;
+    if undo {
+        action = shared.undo_actions.last().unwrap().clone();
+    } else {
+        action = shared.redo_actions.last().unwrap().clone();
+    }
+    let mut new_action = action.clone();
+
+    match &action.action {
+        ActionEnum::Bone => {
+            if action.action_type == ActionType::Created {
+                shared.selected_bone_idx = usize::MAX;
+                if undo {
+                    for (i, bone) in shared.armature.bones.iter().enumerate() {
+                        if bone.id == action.id {
+                            shared.armature.bones.remove(i);
+                            break;
+                        }
+                    }
+                } else {
+                    armature_window::new_bone(shared, -1);
+                }
+            } else {
+                new_action.bone = shared.armature.bones[action.id as usize].clone();
+                *shared.find_bone_mut(action.id).unwrap() = action.bone.clone();
+
+                for i in 0..shared.armature.bones.len() {
+                    shared.organize_bone(i);
+                }
+            }
+        }
+        ActionEnum::Animation => {
+            if action.action_type == ActionType::Created {
+                shared.ui.anim.selected = usize::MAX;
+                if undo {
+                    shared.armature.animations.pop();
+                } else {
+                    keyframe_editor::new_animation(shared);
+                }
+            } else {
+                new_action.animation = shared.armature.animations[action.id as usize].clone();
+                shared.armature.animations[action.id as usize] = action.animation.clone();
+            }
+        }
+        _ => {}
+    }
+
+    if undo {
+        shared.redo_actions.push(new_action);
+        shared.undo_actions.pop();
+    } else {
+        shared.undo_actions.push(new_action);
+        shared.redo_actions.pop();
+    }
 }

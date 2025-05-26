@@ -330,8 +330,7 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
             if top_bar_button(ui, "Zoom In UI", "", &mut offset).clicked() {
                 shared.ui.scale += 0.1;
             }
-            if top_bar_button(ui, "Zoom Out UI", "", &mut offset).clicked()
-            {
+            if top_bar_button(ui, "Zoom Out UI", "", &mut offset).clicked() {
                 shared.ui.scale -= 0.1;
             }
         }
@@ -347,8 +346,13 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
 fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("Edit", |ui| {
-        if top_bar_button(ui, "Zoom In", "=", &mut offset).clicked() {
-            set_zoom(shared.camera.zoom - 0.1, shared);
+        if top_bar_button(ui, "Undo", "Mod + Z", &mut offset).clicked() {
+            utils::undo_redo(true, shared);
+            ui.close_menu();
+        }
+        if top_bar_button(ui, "Redo", "Mod + Y", &mut offset).clicked() {
+            utils::undo_redo(false, shared);
+            ui.close_menu();
         }
     });
 }
