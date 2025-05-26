@@ -29,16 +29,24 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
         }
     }
 
-    #[cfg(target_arch = "wasm32")]
     if shared.input.pressed(winit::keyboard::KeyCode::Escape) {
-        bone_panel::toggleElement(false, "image-dialog".to_string());
-        bone_panel::toggleElement(false, "file-dialog".to_string());
+        #[cfg(target_arch = "wasm32")]
+        {
+            bone_panel::toggleElement(false, "image-dialog".to_string());
+            bone_panel::toggleElement(false, "file-dialog".to_string());
+        }
+
+        shared.ui.set_state(UiState::ImageModal, false);
+        shared.ui.set_state(UiState::Modal, false);
+        shared.ui.set_state(UiState::PolarModal, false);
+        shared.ui.set_state(UiState::ForcedModal, false);
     }
 
     if shared
         .input
         .is_pressing(winit::keyboard::KeyCode::SuperLeft)
     {
+        // save
         if shared.input.pressed(winit::keyboard::KeyCode::KeyS) {
             #[cfg(target_arch = "wasm32")]
             utils::save_web(shared);
@@ -50,6 +58,8 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
                 utils::save(shared.save_path.clone(), shared);
             }
         }
+
+        // open
         if shared.input.pressed(winit::keyboard::KeyCode::KeyO) {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog();
