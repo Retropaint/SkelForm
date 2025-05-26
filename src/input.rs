@@ -117,7 +117,7 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
     }
 
     #[cfg(target_arch = "wasm32")]
-    if shared.input.is_pressing(winit::keyboard::KeyCode::Escape) {
+    if shared.input.pressed(winit::keyboard::KeyCode::Escape) {
         bone_panel::toggleElement(false, "image-dialog".to_string());
         bone_panel::toggleElement(false, "file-dialog".to_string());
     }
@@ -126,8 +126,7 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
         .input
         .is_pressing(winit::keyboard::KeyCode::SuperLeft)
     {
-        if shared.input.is_pressing(winit::keyboard::KeyCode::KeyS) {
-            shared.input.pressed = vec![];
+        if shared.input.pressed(winit::keyboard::KeyCode::KeyS) {
 
             #[cfg(target_arch = "wasm32")]
             utils::save_web(shared);
