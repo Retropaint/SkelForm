@@ -257,8 +257,8 @@ impl ApplicationHandler for App {
             //self.shared.ui.scale = getUiSliderValue();
         }
 
-        if self.shared.ui.scale == 0. {
-            self.shared.ui.scale = 0.1;
+        if self.shared.ui.scale <= 0. {
+            self.shared.ui.scale = 1.;
         }
 
         let (Some(gui_state), Some(renderer), Some(window), Some(last_render_time)) = (
@@ -364,6 +364,10 @@ impl ApplicationHandler for App {
                 gui_state.handle_platform_output(window, platform_output);
 
                 let paint_jobs = gui_state.egui_ctx().tessellate(shapes, pixels_per_point);
+
+                if self.shared.ui.scale <= 0. {
+                    self.shared.ui.scale = 1.;
+                }
 
                 let screen_descriptor = {
                     let (width, height) = self.last_size;
