@@ -9,12 +9,14 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
     let ui_zoom_speed = 0.01;
 
     if shared.input.is_pressing(KeyCode::SuperLeft) {
+        // undo / redo
         if shared.input.pressed(KeyCode::KeyZ) && shared.undo_actions.len() != 0 {
             utils::undo_redo(true, shared);
         } else if shared.input.pressed(KeyCode::KeyY) && shared.redo_actions.len() != 0 {
             utils::undo_redo(false, shared);
         }
 
+        // UI zooming
         #[cfg(not(target_arch = "wasm32"))]
         if shared.input.pressed(KeyCode::Equal) {
             shared.ui.scale += ui_zoom_speed;
@@ -22,6 +24,7 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
             shared.ui.scale -= ui_zoom_speed;
         }
     } else {
+        // camera zooming
         if shared.input.pressed(KeyCode::Equal) {
             ui::set_zoom(shared.camera.zoom - camera_zoom_speed, shared);
         } else if shared.input.pressed(KeyCode::Minus) {
@@ -29,6 +32,7 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
         }
     }
 
+    // close all modals on esc
     if shared.input.pressed(winit::keyboard::KeyCode::Escape) {
         #[cfg(target_arch = "wasm32")]
         {
