@@ -290,10 +290,31 @@ pub struct InputStates {
     // is mouse on UI?
     pub on_ui: bool,
 
-    pub pressed: Vec<KeyCode>,
+    pressed: Vec<KeyCode>,
 }
 
 impl InputStates {
+    pub fn add_key(&mut self, key: &KeyCode) {
+        let mut add = true;
+        for pressed_key in &mut self.pressed {
+            if key == pressed_key {
+                add = false;
+                break;
+            }
+        }
+        if add {
+            self.pressed.push(*key);
+        }
+    }
+
+    pub fn remove_key(&mut self, key: &KeyCode) {
+        for i in 0..self.pressed.len() {
+            if *key == self.pressed[i] {
+                self.pressed.remove(i);
+                break;
+            }
+        }
+    }
     /// Check if this key is being held down.
     pub fn is_pressing(&self, key: KeyCode) -> bool {
         for k in &self.pressed {
