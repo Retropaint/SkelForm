@@ -50,6 +50,12 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
                 utils::save(shared.save_path.clone(), shared);
             }
         }
+        if shared.input.pressed(winit::keyboard::KeyCode::KeyO) {
+            #[cfg(not(target_arch = "wasm32"))]
+            utils::open_import_dialog();
+            #[cfg(target_arch = "wasm32")]
+            bone_panel::toggleElement(true, "file-dialog".to_string());
+        }
     }
 }
 
