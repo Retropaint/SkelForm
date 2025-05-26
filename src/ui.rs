@@ -337,7 +337,7 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
         }
 
         #[cfg(target_arch = "wasm32")]
-        if top_bar_button(ui, "Adjust UI".to_string(), "".to_string(), &mut offset).clicked() {
+        if top_bar_button(ui, "Adjust UI", "", &mut offset).clicked() {
             bone_panel::toggleElement(true, "ui-slider".to_string());
             ui.close_menu();
         }
