@@ -45,6 +45,4 @@ fn init_shared(shared: &mut Shared) {
     // if this were false, the first click would always
     // be considered non-UI
     shared.input.on_ui = true;
-
-    //shared.start_time = Some(std::time::Instant::now());
 }
