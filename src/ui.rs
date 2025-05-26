@@ -320,26 +320,27 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.menu_button("View", |ui| {
         if top_bar_button(ui, "Zoom In".to_string(), "=".to_string(), &mut offset).clicked() {
             set_zoom(shared.camera.zoom - 0.1, shared);
-            ui.close_menu();
         }
         if top_bar_button(ui, "Zoom Out".to_string(), "-".to_string(), &mut offset).clicked() {
             set_zoom(shared.camera.zoom + 0.1, shared);
-            ui.close_menu();
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            if top_bar_button(ui, "Zoom In UI".to_string(), "".to_string(), &mut offset).clicked() {
+                shared.ui.scale += 0.1;
+            }
+            if top_bar_button(ui, "Zoom Out UI".to_string(), "".to_string(), &mut offset).clicked()
+            {
+                shared.ui.scale -= 0.1;
+            }
         }
 
-        zoom_ui_buttons(ui, shared, &mut offset);
+        #[cfg(target_arch = "wasm32")]
+        if top_bar_button(ui, "Adjust UI".to_string(), "".to_string(), &mut offset).clicked() {
+            bone_panel::toggleElement(true, "ui-slider".to_string());
+            ui.close_menu();
+        }
     });
-}
-
-pub fn zoom_ui_buttons(ui: &mut egui::Ui, shared: &mut Shared, offset: &mut f32) {
-    if top_bar_button(ui, "Zoom In UI".to_string(), "".to_string(), offset).clicked() {
-        shared.ui.scale += 0.1;
-        ui.close_menu();
-    }
-    if top_bar_button(ui, "Zoom Out UI".to_string(), "".to_string(), offset).clicked() {
-        shared.ui.scale -= 0.1;
-        ui.close_menu();
-    }
 }
 
 fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
