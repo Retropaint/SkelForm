@@ -223,7 +223,7 @@
 
             function saveFontScale() {
                 let configObj = JSON.parse(config);
-                configObj.font_scale = getUiSliderValue();
+                configObj.ui_scale = getUiSliderValue();
                 saveConfig(JSON.stringify(configObj));
             }
 
@@ -261,11 +261,7 @@
 
             function resizeCanvas() {
                 const canvas = document.getElementById("canvas");
-
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                return;
-                
+               
                 if(window.innerWidth < 1920) {
                     canvas.width = window.innerWidth * 1.5;
                     canvas.height = window.innerHeight * 1.5;
