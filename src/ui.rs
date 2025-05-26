@@ -254,7 +254,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             bone_panel::toggleElement(true, "file-dialog".to_string());
             ui.close_menu();
         }
-        if top_bar_button(ui, "Save", "S", &mut offset).clicked() {
+        if top_bar_button(ui, "Save", "Mod + S", &mut offset).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog();
             #[cfg(target_arch = "wasm32")]
@@ -327,10 +327,10 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            if top_bar_button(ui, "Zoom In UI", "", &mut offset).clicked() {
+            if top_bar_button(ui, "Zoom In UI", "Mod + =", &mut offset).clicked() {
                 shared.ui.scale += 0.1;
             }
-            if top_bar_button(ui, "Zoom Out UI", "", &mut offset).clicked() {
+            if top_bar_button(ui, "Zoom Out UI", "Mod + -", &mut offset).clicked() {
                 shared.ui.scale -= 0.1;
             }
         }
@@ -725,9 +725,16 @@ pub fn top_bar_button(
     offset: &mut f32,
 ) -> egui::Response {
     let height = 20.;
+    let mut width = 100.;
+
+    #[cfg(feature = "mobile")]
+    {
+        width *= 0.8;
+    }
+
     let rect = egui::Rect::from_min_size(
         egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() + *offset),
-        egui::Vec2::new(100., height),
+        egui::Vec2::new(width, height),
     );
     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
     let painter = ui.painter_at(ui.min_rect());
@@ -751,6 +758,7 @@ pub fn top_bar_button(
     let kb_font = egui::FontId::new(9., egui::FontFamily::Proportional);
 
     // kb key text
+    #[cfg(not(feature = "mobile"))]
     painter.text(
         egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset) + egui::vec2(-5., 5.),
         egui::Align2::RIGHT_TOP,
