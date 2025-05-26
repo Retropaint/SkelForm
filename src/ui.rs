@@ -37,7 +37,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     macro_rules! style_once {
         ($func:expr) => {
             $func;
-            default_styling(context, shared);
+            default_styling(context);
         };
     }
 
