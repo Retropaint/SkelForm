@@ -372,7 +372,7 @@ pub struct Ui {
 
     pub default_font_size: f32,
 
-    pub font_scale: f32,
+    pub scale: f32,
 
     // camera bar stuff
     pub camera_bar_pos: Vec2,
@@ -441,7 +441,7 @@ pub struct Config {
     pub first_launch: bool,
 
     #[serde(default = "default_one")]
-    pub font_scale: f32,
+    pub ui_scale: f32,
 }
 
 #[derive(Clone, Default)]

@@ -29,7 +29,9 @@ const FFMPEG_ERR: &str =
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
-    default_styling(context, shared);
+    default_styling(context);
+
+    context.set_zoom_factor(shared.ui.scale);
 
     // apply individual element styling once, then immediately go back to default
     macro_rules! style_once {
@@ -125,12 +127,12 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     style_once!(armature_window::draw(context, shared));
 
-    let min_default_size = 190. * shared.ui.font_scale;
+    let min_default_size = 190.;
 
     // right side panel
     let response = egui::SidePanel::right("Bone")
         .resizable(true)
-        .max_width(250. * shared.ui.font_scale)
+        .max_width(250.)
         .min_width(min_default_size)
         .default_width(min_default_size)
         .show(context, |ui| {
@@ -191,7 +193,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
             ..Default::default()
         })
         .show(egui_ctx, |ui| {
-            ui.set_max_height(20. * shared.ui.font_scale);
+            ui.set_max_height(20.);
             let mut offset = 0.;
             macro_rules! str {
                 ($string:expr) => {
@@ -208,9 +210,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     } else {
                         "Help Light"
                     };
-                    if top_bar_button(ui, str!(str), str!(""), &mut offset, shared.ui.font_scale)
-                        .clicked()
-                    {
+                    if top_bar_button(ui, str!(str), str!(""), &mut offset).clicked() {
                         if shared.armature.animations.len() > 0 {
                             shared.ui.open_modal(HELP_LIGHT_CANT.to_string(), false);
                         } else {
@@ -233,45 +233,21 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
 fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("File", |ui| {
-        if top_bar_button(
-            ui,
-            "Import".to_string(),
-            "I".to_string(),
-            &mut offset,
-            shared.ui.font_scale,
-        )
-        .clicked()
-        {
+        if top_bar_button(ui, "Import".to_string(), "I".to_string(), &mut offset).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog();
             #[cfg(target_arch = "wasm32")]
             bone_panel::toggleElement(true, "file-dialog".to_string());
             ui.close_menu();
         }
-        if top_bar_button(
-            ui,
-            "Save".to_string(),
-            "S".to_string(),
-            &mut offset,
-            shared.ui.font_scale,
-        )
-        .clicked()
-        {
+        if top_bar_button(ui, "Save".to_string(), "S".to_string(), &mut offset).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog();
             #[cfg(target_arch = "wasm32")]
             utils::save_web(shared);
             ui.close_menu();
         }
-        if top_bar_button(
-            ui,
-            "Export Video".to_string(),
-            "E".to_string(),
-            &mut offset,
-            shared.ui.font_scale,
-        )
-        .clicked()
-        {
+        if top_bar_button(ui, "Export Video".to_string(), "E".to_string(), &mut offset).clicked() {
             // check if ffmpeg exists and complain if it doesn't
             let mut ffmpeg = false;
             match std::process::Command::new("ffmpeg")
@@ -329,27 +305,11 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
 fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("View", |ui| {
-        if top_bar_button(
-            ui,
-            "Zoom In".to_string(),
-            "=".to_string(),
-            &mut offset,
-            shared.ui.font_scale,
-        )
-        .clicked()
-        {
+        if top_bar_button(ui, "Zoom In".to_string(), "=".to_string(), &mut offset).clicked() {
             set_zoom(shared.camera.zoom - 0.1, shared);
             ui.close_menu();
         }
-        if top_bar_button(
-            ui,
-            "Zoom Out".to_string(),
-            "-".to_string(),
-            &mut offset,
-            shared.ui.font_scale,
-        )
-        .clicked()
-        {
+        if top_bar_button(ui, "Zoom Out".to_string(), "-".to_string(), &mut offset).clicked() {
             set_zoom(shared.camera.zoom + 0.1, shared);
             ui.close_menu();
         }
@@ -359,28 +319,10 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
 }
 
 pub fn zoom_ui_buttons(ui: &mut egui::Ui, shared: &mut Shared, offset: &mut f32) {
-    if top_bar_button(
-        ui,
-        "Zoom In UI".to_string(),
-        "".to_string(),
-        offset,
-        shared.ui.font_scale,
-    )
-    .clicked()
-    {
-        shared.ui.font_scale += 0.1;
+    if top_bar_button(ui, "Zoom In UI".to_string(), "".to_string(), offset).clicked() {
         ui.close_menu();
     }
-    if top_bar_button(
-        ui,
-        "Zoom Out UI".to_string(),
-        "".to_string(),
-        offset,
-        shared.ui.font_scale,
-    )
-    .clicked()
-    {
-        shared.ui.font_scale -= 0.1;
+    if top_bar_button(ui, "Zoom Out UI".to_string(), "".to_string(), offset).clicked() {
         ui.close_menu();
     }
 }
@@ -419,9 +361,7 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
         .max_width(100.)
         .movable(false)
         .current_pos(egui::Pos2::new(
-            shared.ui.animate_mode_bar_pos.x
-                - shared.ui.animate_mode_bar_scale.x
-                - (21. * shared.ui.font_scale),
+            shared.ui.animate_mode_bar_pos.x - shared.ui.animate_mode_bar_scale.x - 21.,
             shared.ui.animate_mode_bar_pos.y - 1.,
         ))
         .show(egui_ctx, |ui| {
@@ -441,12 +381,12 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
 }
 
 fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
-    let margin = 6. * shared.ui.font_scale;
+    let margin = 6.;
     egui::Window::new("Camera")
         .resizable(false)
         .title_bar(false)
-        .max_width(100. * shared.ui.font_scale)
-        .max_height(25. * shared.ui.font_scale)
+        .max_width(100.)
+        .max_height(25.)
         .movable(false)
         .frame(egui::Frame {
             fill: COLOR_MAIN_DARK,
@@ -461,7 +401,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
             shared.ui.camera_bar_pos.x - shared.ui.camera_bar_scale.x - (margin * 3.3).ceil(),
             shared.ui.camera_bar_pos.y
                 - shared.ui.camera_bar_scale.y
-                - (15. * shared.ui.font_scale),
+                - 15.,
         ))
         .show(egui_ctx, |ui| {
             macro_rules! input {
@@ -492,39 +432,8 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
 }
 
 /// Default styling to apply across all UI.
-pub fn default_styling(context: &Context, shared: &Shared) {
+pub fn default_styling(context: &Context) {
     let mut visuals = egui::Visuals::dark();
-
-    context.style_mut(|style| {
-        // adjust text sizes
-        for (text_style, font) in style.text_styles.iter_mut() {
-            let mut modifier = 1.;
-            if *text_style == egui::TextStyle::Heading {
-                modifier = 1.3;
-            }
-
-            font.size = shared.ui.default_font_size * shared.ui.font_scale * modifier;
-        }
-
-        // adjust margins, paddings, and spacings
-
-        let margin_value = 6. * shared.ui.font_scale;
-        let margin = egui::epaint::Marginf {
-            left: margin_value,
-            right: margin_value,
-            top: margin_value,
-            bottom: margin_value,
-        }
-        .into();
-
-        style.spacing.window_margin = margin;
-        style.spacing.menu_margin = margin;
-        style.spacing.button_padding = egui::Vec2::new(4. * shared.ui.font_scale, 0.);
-        style.spacing.menu_margin = margin;
-        style.spacing.menu_spacing = 0.;
-        style.spacing.item_spacing =
-            egui::Vec2::new(7. * shared.ui.font_scale, 3. * shared.ui.font_scale);
-    });
 
     // remove rounded corners on windows
     visuals.window_corner_radius = egui::CornerRadius::ZERO;
@@ -786,12 +695,11 @@ pub fn top_bar_button(
     text: String,
     kb_key: String,
     offset: &mut f32,
-    scale: f32,
 ) -> egui::Response {
-    let height = 20. * scale;
+    let height = 20.;
     let rect = egui::Rect::from_min_size(
         egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() + *offset),
-        egui::Vec2::new(100. * scale, height),
+        egui::Vec2::new(100., height),
     );
     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
     let painter = ui.painter_at(ui.min_rect());
@@ -801,7 +709,7 @@ pub fn top_bar_button(
         painter.rect_filled(rect, egui::CornerRadius::ZERO, egui::Color32::TRANSPARENT);
     }
 
-    let font = egui::FontId::new(scale * 13., egui::FontFamily::Proportional);
+    let font = egui::FontId::new(13., egui::FontFamily::Proportional);
 
     // text
     painter.text(
