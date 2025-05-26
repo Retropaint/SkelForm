@@ -40,7 +40,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             delete_rect,
             egui::Label::new(
                 egui::RichText::new("X")
-                    .size(12. * shared.ui.font_scale)
+                    .size(12.)
                     .color(egui::Color32::DARK_RED),
             ),
         )
@@ -241,7 +241,7 @@ pub fn float_input(
 
     let input: egui::Response;
 
-    let input_size = [40. * shared.ui.font_scale, 20. * shared.ui.font_scale];
+    let input_size = [40., 20.];
 
     if shared.ui.rename_id != id {
         input = ui.add_sized(

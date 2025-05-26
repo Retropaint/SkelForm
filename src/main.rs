@@ -40,7 +40,7 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.anim.exported_frame = "".to_string();
     shared.ui.anim.selected_frame = -1;
     shared.dragging_vert = usize::MAX;
-    shared.ui.font_scale = 1.;
+    shared.ui.scale = 1.;
 
     // if this were false, the first click would always
     // be considered non-UI

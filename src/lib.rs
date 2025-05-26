@@ -164,7 +164,7 @@ impl ApplicationHandler for App {
                         first_time = false;
                     }
                 }
-                self.shared.ui.font_scale = self.shared.config.font_scale;
+                self.shared.ui.scale = self.shared.config.ui_scale;
                 if first_time {
                     self.shared.start_tutorial();
 
@@ -254,7 +254,7 @@ impl ApplicationHandler for App {
 
         #[cfg(target_arch = "wasm32")]
         {
-            self.shared.ui.font_scale = getUiSliderValue();
+            self.shared.ui.scale = getUiSliderValue();
         }
 
         let (Some(gui_state), Some(renderer), Some(window), Some(last_render_time)) = (
@@ -343,7 +343,7 @@ impl ApplicationHandler for App {
                 let now = Instant::now();
                 *last_render_time = now;
 
-                let input = gui_state.take_egui_input(window);
+                let input = gui_state.take_egui_input(&window);
                 gui_state.egui_ctx().begin_pass(input);
 
                 // ui logic handled in ui.rs
@@ -365,7 +365,7 @@ impl ApplicationHandler for App {
                     let (width, height) = self.last_size;
                     egui_wgpu::ScreenDescriptor {
                         size_in_pixels: [width, height],
-                        pixels_per_point: window.scale_factor() as f32,
+                        pixels_per_point: window.scale_factor() as f32 * self.shared.ui.scale,
                     }
                 };
 
