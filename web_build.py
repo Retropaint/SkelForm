@@ -19,8 +19,8 @@ parser.add_argument('-nd', '--no-default', action='store_true', help="Ignore def
 
 args = parser.parse_args()
 
-# use default config if appropriate
-if args.release:
+# add default release config, but only if not building for mobile
+if args.release and not args.mobile:
     generic += " --release --public-url=/skelform_web"
 
 if args.mobile:
