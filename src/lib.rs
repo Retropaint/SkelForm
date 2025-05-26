@@ -254,7 +254,11 @@ impl ApplicationHandler for App {
 
         #[cfg(target_arch = "wasm32")]
         {
-            self.shared.ui.scale = getUiSliderValue();
+            //self.shared.ui.scale = getUiSliderValue();
+        }
+
+        if self.shared.ui.scale == 0. {
+            self.shared.ui.scale = 0.1;
         }
 
         let (Some(gui_state), Some(renderer), Some(window), Some(last_render_time)) = (
