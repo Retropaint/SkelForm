@@ -294,9 +294,22 @@ pub struct InputStates {
 }
 
 impl InputStates {
+    /// Check if this key is being held down.
     pub fn is_pressing(&self, key: KeyCode) -> bool {
         for k in &self.pressed {
             if *k == key {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// Check if this key was pressed.
+    pub fn pressed(&mut self, key: KeyCode) -> bool {
+        for i in 0..self.pressed.len() {
+            if self.pressed[i] == key {
+                self.pressed.remove(i);
                 return true;
             }
         }
