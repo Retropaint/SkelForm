@@ -31,6 +31,9 @@ const FFMPEG_ERR: &str =
 pub fn draw(context: &Context, shared: &mut Shared) {
     default_styling(context);
 
+    #[cfg(target_arch = "wasm32")]
+    context.set_zoom_factor(shared.ui.scale * 2.);
+    #[cfg(not(target_arch = "wasm32"))]
     context.set_zoom_factor(shared.ui.scale);
 
     // apply individual element styling once, then immediately go back to default
@@ -399,9 +402,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
         })
         .current_pos(egui::Pos2::new(
             shared.ui.camera_bar_pos.x - shared.ui.camera_bar_scale.x - (margin * 3.3).ceil(),
-            shared.ui.camera_bar_pos.y
-                - shared.ui.camera_bar_scale.y
-                - 15.,
+            shared.ui.camera_bar_pos.y - shared.ui.camera_bar_scale.y - 15.,
         ))
         .show(egui_ctx, |ui| {
             macro_rules! input {
