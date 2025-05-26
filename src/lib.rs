@@ -286,7 +286,11 @@ impl ApplicationHandler for App {
                     },
                 ..
             } => {
-                input::keyboard_input(&key_code, &state, &mut self.shared);
+                if state == winit::event::ElementState::Pressed {
+                    self.shared.input.add_key(&key_code);
+                } else {
+                    self.shared.input.remove_key(&key_code);
+                }
             }
             #[allow(unused_mut)]
             WindowEvent::Resized(PhysicalSize {

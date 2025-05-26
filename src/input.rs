@@ -5,33 +5,6 @@ use crate::*;
 use winit::event::ElementState;
 use winit::keyboard::*;
 
-pub fn keyboard_input(
-    key: &winit::keyboard::KeyCode,
-    state: &winit::event::ElementState,
-    shared: &mut crate::shared::Shared,
-) {
-    // record all pressed keys (and remove released ones)
-    if *state == ElementState::Pressed {
-        let mut add = true;
-        for pressed_key in &mut shared.input.pressed {
-            if key == pressed_key {
-                add = false;
-                break;
-            }
-        }
-        if add {
-            shared.input.pressed.push(*key);
-        }
-    } else {
-        for (i, pressed_key) in &mut shared.input.pressed.iter().enumerate() {
-            if pressed_key == key {
-                shared.input.pressed.remove(i);
-                break;
-            }
-        }
-    }
-}
-
 pub fn keyboard_shortcuts(shared: &mut Shared) {
     let camera_zoom_speed = 0.05;
     let ui_zoom_speed = 0.01;
@@ -127,7 +100,6 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
         .is_pressing(winit::keyboard::KeyCode::SuperLeft)
     {
         if shared.input.pressed(winit::keyboard::KeyCode::KeyS) {
-
             #[cfg(target_arch = "wasm32")]
             utils::save_web(shared);
 
