@@ -281,12 +281,12 @@ fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
 ///
 /// don't forget to use sort_vertices() first!
 pub fn setup_indices(verts: &Vec<Vertex>, base: i32) -> Vec<u32> {
+    let len = verts.len();
     let mut indices: Vec<u32> = vec![];
     for v in 0..verts.len() {
         if v > verts.len() - 1 {
             break;
         }
-        let len = verts.len();
         let mut v1 = v + base as usize;
         if v1 > len - 1 {
             v1 -= len;
@@ -296,6 +296,12 @@ pub fn setup_indices(verts: &Vec<Vertex>, base: i32) -> Vec<u32> {
         if v2 > len - 1 {
             v2 -= len;
         }
+
+        // remove redundant verts
+        if base as usize == v1 || v1 == v2 || v2 == base as usize {
+            continue;
+        }
+
         indices.push(base as u32);
         indices.push(v1 as u32);
         indices.push(v2 as u32);
