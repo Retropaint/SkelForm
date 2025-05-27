@@ -321,11 +321,11 @@ impl ApplicationHandler for App {
                 renderer.resize(self.shared.window.x as u32, self.shared.window.y as u32);
             }
             WindowEvent::Touch(winit::event::Touch {
-                device_id,
+                device_id: _,
                 phase,
                 location,
-                force,
-                id,
+                force: _,
+                id: _,
             }) => {
                 let pos = location.to_logical::<f64>(window.scale_factor());
                 self.shared.input.mouse = Vec2::new(pos.x as f32, pos.y as f32);
