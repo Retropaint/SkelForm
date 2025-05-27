@@ -31,7 +31,8 @@ const FFMPEG_ERR: &str =
 pub fn draw(context: &Context, shared: &mut Shared) {
     default_styling(context);
 
-    let scale_mod: f32;
+    #[allow(unused_mut)]
+    let mut scale_mod: f32;
 
     #[cfg(not(target_arch = "wasm32"))]
     {
