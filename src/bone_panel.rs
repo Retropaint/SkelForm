@@ -212,6 +212,18 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         if ui::button(mesh_label, ui).clicked() {
             shared.editing_mesh = !shared.editing_mesh;
         }
+
+        if shared.editing_mesh {
+            ui.label("Base Index:");
+            let base = shared.selected_bone().unwrap().indices[0] as f32;
+            let (edited, base, _) = float_input("base_index".to_string(), shared, ui, base, 1.);
+            if edited {
+                shared.selected_bone_mut().unwrap().indices = crate::renderer::setup_indices(
+                    &shared.selected_bone_mut().unwrap().vertices,
+                    base as i32,
+                );
+            }
+        }
     }
 }
 
@@ -258,7 +270,7 @@ pub fn float_input(
     } else {
         input = ui.add_sized(
             input_size,
-            egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap())
+            egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap()),
         );
 
         if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
