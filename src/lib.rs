@@ -9,6 +9,7 @@ mod native {
     pub use std::fs;
     pub use std::io::Write;
     pub use std::time::Instant;
+    pub use std::io::Read;
 }
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
@@ -22,8 +23,8 @@ mod web {
 }
 #[cfg(target_arch = "wasm32")]
 use web::*;
+use std::sync::Arc;
 
-use std::{io::Read, sync::Arc};
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,

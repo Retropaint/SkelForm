@@ -6,6 +6,7 @@ use winit::keyboard::*;
 
 pub fn keyboard_shortcuts(shared: &mut Shared) {
     let camera_zoom_speed = 0.05;
+    #[cfg(not(target_arch = "wasm32"))]
     let ui_zoom_speed = 0.01;
 
     if shared.input.is_pressing(KeyCode::SuperLeft) {

@@ -31,8 +31,12 @@ const FFMPEG_ERR: &str =
 pub fn draw(context: &Context, shared: &mut Shared) {
     default_styling(context);
 
-    #[allow(unused_mut)]
-    let mut scale_mod = 1.;
+    let scale_mod: f32;
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        scale_mod = 1.;
+    }
 
     #[cfg(target_arch = "wasm32")]
     {
@@ -203,11 +207,6 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
         .show(egui_ctx, |ui| {
             ui.set_max_height(20.);
             let mut offset = 0.;
-            macro_rules! str {
-                ($string:expr) => {
-                    $string.to_string()
-                };
-            }
             egui::menu::bar(ui, |ui| {
                 menu_file_button(ui, shared);
                 menu_edit_button(ui, shared);
@@ -720,6 +719,7 @@ pub fn top_bar_button(
     offset: &mut f32,
 ) -> egui::Response {
     let height = 20.;
+    #[allow(unused_mut)]
     let mut width = 100.;
 
     #[cfg(feature = "mobile")]
