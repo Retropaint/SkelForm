@@ -25,7 +25,9 @@ As of 26/05/25, mobile is not actively developed and does not have a direct buil
 
 However, it can be easily done with the web version in a simple WebView wrapper (eg [Capacitor](https://capacitorjs.com/)).
 
-The web build script provides a `--mobile` parameter for a typical mobile dist config.
+Check out the [example repo](https://github.com/Retropaint/skelform_mobile).
+
+The web build script provides a `--mobile` flag for a typical mobile dist config.
 
 # Documentation
 
