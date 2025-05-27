@@ -7,9 +7,9 @@ mod native {
     pub use crate::file_reader::*;
     pub use image::*;
     pub use std::fs;
+    pub use std::io::Read;
     pub use std::io::Write;
     pub use std::time::Instant;
-    pub use std::io::Read;
 }
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
@@ -21,9 +21,9 @@ mod web {
     pub use web_sys::*;
     pub use web_time::Instant;
 }
+use std::sync::Arc;
 #[cfg(target_arch = "wasm32")]
 use web::*;
-use std::sync::Arc;
 
 use winit::{
     application::ApplicationHandler,
@@ -273,7 +273,7 @@ impl ApplicationHandler for App {
 
         // Receive gui window event
         if gui_state.on_window_event(window, &event).consumed {
-            return;
+            //return;
         }
 
         // If the gui didn't consume the event, handle it
@@ -293,6 +293,16 @@ impl ApplicationHandler for App {
                     self.shared.input.remove_key(&key_code);
                 }
             }
+            WindowEvent::CloseRequested => {
+                if self.shared.undo_actions.len() > 0 {
+                    self.shared.ui.open_polar_modal(
+                        PolarId::Exiting,
+                        "Are you sure you want to quit and discard unsaved changes?".to_string(),
+                    );
+                } else {
+                    event_loop.exit();
+                }
+            }
             #[allow(unused_mut)]
             WindowEvent::Resized(PhysicalSize {
                 mut width,
@@ -310,14 +320,19 @@ impl ApplicationHandler for App {
                 self.shared.window = Vec2::new(self.last_size.0 as f32, self.last_size.1 as f32);
                 renderer.resize(self.shared.window.x as u32, self.shared.window.y as u32);
             }
-            WindowEvent::CloseRequested => {
-                if self.shared.undo_actions.len() > 0 {
-                    self.shared.ui.open_polar_modal(
-                        PolarId::Exiting,
-                        "Are you sure you want to quit and discard unsaved changes?".to_string(),
-                    );
-                } else {
-                    event_loop.exit();
+            WindowEvent::Touch(winit::event::Touch {
+                device_id,
+                phase,
+                location,
+                force,
+                id,
+            }) => {
+                let pos = location.to_logical::<f64>(window.scale_factor());
+                self.shared.input.mouse = Vec2::new(pos.x as f32, pos.y as f32);
+
+                // don't track velocity on first touch frame
+                if phase == winit::event::TouchPhase::Started {
+                    self.shared.input.mouse_prev = self.shared.input.mouse;
                 }
             }
             WindowEvent::CursorMoved {
