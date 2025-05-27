@@ -221,15 +221,17 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         return;
     }
 
-    ui.label("Base Index:");
-    let base = shared.selected_bone().unwrap().indices[0] as f32;
-    let (edited, base, _) = float_input("base_index".to_string(), shared, ui, base, 1.);
-    if edited {
-        shared.selected_bone_mut().unwrap().indices = crate::renderer::setup_indices(
-            &shared.selected_bone_mut().unwrap().vertices,
-            base as i32,
-        );
-    }
+    ui.horizontal(|ui| {
+        ui.label("Base Index:");
+        let base = shared.selected_bone().unwrap().indices[0] as f32;
+        let (edited, base, _) = float_input("base_index".to_string(), shared, ui, base, 1.);
+        if edited {
+            shared.selected_bone_mut().unwrap().indices = crate::renderer::setup_indices(
+                &shared.selected_bone_mut().unwrap().vertices,
+                base as i32,
+            );
+        }
+    });
 }
 
 #[cfg(not(target_arch = "wasm32"))]
