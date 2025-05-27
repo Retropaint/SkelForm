@@ -162,7 +162,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let bone = &bones[shared.selected_bone_idx];
         edit_bone(shared, bone);
     }
-
 }
 
 fn get_distance(a: Vec2, b: Vec2) -> f32 {
@@ -253,8 +252,10 @@ fn draw_hover_triangle(
         shared.selected_bone_mut().unwrap().vertices =
             sort_vertices(shared.selected_bone().unwrap().vertices.clone());
 
-        shared.selected_bone_mut().unwrap().indices =
-            setup_indices(&shared.selected_bone().unwrap().vertices);
+        shared.selected_bone_mut().unwrap().indices = setup_indices(
+            &shared.selected_bone().unwrap().vertices,
+            shared.selected_bone().unwrap().vertices.len() as i32 - 1,
+        );
     }
 }
 
@@ -279,15 +280,25 @@ fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
 /// generate a usable index array for the supplied vertices
 ///
 /// don't forget to use sort_vertices() first!
-fn setup_indices(verts: &Vec<Vertex>) -> Vec<u32> {
+pub fn setup_indices(verts: &Vec<Vertex>, base: i32) -> Vec<u32> {
     let mut indices: Vec<u32> = vec![];
     for v in 0..verts.len() {
-        if v > verts.len() - 3 {
+        if v > verts.len() - 1 {
             break;
         }
-        indices.push(verts.len() as u32 - 1);
-        indices.push(v as u32);
-        indices.push(v as u32 + 1);
+        let len = verts.len();
+        let mut v1 = v + base as usize;
+        if v1 > len - 1 {
+            v1 -= len;
+        }
+
+        let mut v2 = v + base as usize + 1;
+        if v2 > len - 1 {
+            v2 -= len;
+        }
+        indices.push(base as u32);
+        indices.push(v1 as u32);
+        indices.push(v2 as u32);
     }
     indices
 }
@@ -468,7 +479,7 @@ pub fn create_tex_rect(tex: &Texture) -> (Vec<Vertex>, Vec<u32>) {
         },
     ];
     verts = sort_vertices(verts.clone());
-    let indices = setup_indices(&verts);
+    let indices = setup_indices(&verts, verts.len() as i32 - 1);
     (verts, indices)
 }
 
