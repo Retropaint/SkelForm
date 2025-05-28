@@ -116,6 +116,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                 let idx = shared.armature.animations.len() - 1;
                                 shared.ui.original_name = "".to_string();
                                 shared.ui.rename_id = "animation ".to_owned() + &idx.to_string();
+                                shared.ui.edit_value = Some("New Animation".to_string());
                             }
                         });
                     });
@@ -123,19 +124,20 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                         ui.set_width(ui.available_width());
                         for i in 0..shared.armature.animations.len() {
                             // initialize renaming
-                            let rename_id = "animation ".to_owned() + &i.to_string();
-                            let name = &mut shared.armature.animations[i].name;
-                            let mut just_made = false;
-                            if shared
-                                .ui
-                                .check_renaming(&rename_id, name, ui, |_| just_made = true)
-                            {
-                                if just_made {
-                                    shared.ui.anim.selected = i;
-                                    shared.ui.anim.selected_frame = 0;
-                                    shared.start_next_tutorial_step(TutorialStep::SelectKeyframe);
+                            let name = &mut shared.armature.animations[i].name.clone();
+
+                            if shared.ui.rename_id == "animation ".to_string() + &i.to_string() {
+                                let (edited, value, _) = ui::text_input(
+                                    "animation ".to_string() + &i.to_string(),
+                                    shared,
+                                    ui,
+                                    name.to_string(),
+                                    None,
+                                );
+                                if edited {
+                                    shared.armature.animations[i].name = value;
                                 }
-                                continue;
+                                return;
                             }
 
                             let button =
@@ -144,8 +146,6 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                 if shared.ui.anim.selected != i {
                                     shared.ui.anim.selected = i;
                                     shared.select_frame(0);
-                                } else {
-                                    shared.ui.rename_id = rename_id;
                                 }
                             }
                         }

@@ -433,7 +433,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
                         $ui.label($label);
                     }
                     (_, $float, _) =
-                        bone_panel::float_input($id.to_string(), shared, $ui, $float, 1.);
+                        ui::float_input($id.to_string(), shared, $ui, $float, 1.);
                 };
             }
 
@@ -833,4 +833,112 @@ pub fn draw_tutorial_rect(
     if shared.tutorial_step_is(step) {
         ui::draw_fading_rect(ui, rect, Color32::GOLD, 60., 2.);
     }
+}
+
+#[derive(PartialEq)]
+pub struct TextInputOptions {
+    size: Vec2,
+    focus: bool,
+}
+
+impl Default for TextInputOptions {
+    fn default() -> Self {
+        TextInputOptions {
+            size: Vec2::new(40., 20.),
+            focus: false,
+        }
+    }
+}
+
+pub fn text_input(
+    id: String,
+    shared: &mut Shared,
+    ui: &mut egui::Ui,
+    mut value: String,
+    mut options: Option<TextInputOptions>,
+) -> (bool, String, egui::Response) {
+    let input: egui::Response;
+
+    if options == None {
+        options = Some(TextInputOptions::default());
+    }
+
+    if shared.ui.rename_id != id {
+        input = ui.add_sized(
+            options.unwrap().size,
+            egui::TextEdit::singleline(&mut value)
+                .desired_width(0.)
+                .min_size(egui::Vec2::ZERO),
+        );
+        // extract value as a string and store it with edit_value
+        if input.has_focus() {
+            shared.ui.edit_value = Some(value.clone());
+            shared.ui.rename_id = id.to_string();
+            #[cfg(feature = "mobile")]
+            {
+                setEditInput(shared.ui.edit_value.clone().unwrap());
+                toggleElement(true, "edit-input-modal".to_string());
+            }
+        }
+    } else {
+        input = ui.add_sized(
+            options.unwrap().size,
+            egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap()),
+        );
+
+        let mut entered = false;
+
+        // if input modal is closed, consider the value entered
+        #[cfg(feature = "mobile")]
+        {
+            shared.ui.edit_value = Some(getEditInput());
+            if !isModalActive("edit-input-modal".to_string()) {
+                entered = true;
+            }
+        }
+
+        if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+            entered = true;
+        }
+
+        value = shared.ui.edit_value.clone().unwrap();
+
+        if entered {
+            shared.ui.rename_id = "".to_string();
+            return (true, value, input);
+        }
+
+        if input.lost_focus() {
+            shared.ui.rename_id = "".to_string();
+        }
+    }
+    (false, value, input)
+}
+
+// helper for editable float inputs
+pub fn float_input(
+    id: String,
+    shared: &mut Shared,
+    ui: &mut egui::Ui,
+    value: f32,
+    modifier: f32,
+) -> (bool, f32, egui::Response) {
+    let (edited, _, input) = text_input(id, shared, ui, (value * modifier).to_string(), None);
+
+    if edited {
+        shared.ui.rename_id = "".to_string();
+        if shared.ui.edit_value.as_mut().unwrap() == "" {
+            shared.ui.edit_value = Some("0".to_string());
+        }
+        match shared.ui.edit_value.as_mut().unwrap().parse::<f32>() {
+            Ok(output) => {
+                return (true, output / modifier, input);
+            }
+            Err(_) => {
+                return (false, value, input);
+            }
+        }
+    }
+
+    (false, value, input)
 }
