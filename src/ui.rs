@@ -432,8 +432,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
                     if $label != "" {
                         $ui.label($label);
                     }
-                    (_, $float, _) =
-                        ui::float_input($id.to_string(), shared, $ui, $float, 1.);
+                    (_, $float, _) = ui::float_input($id.to_string(), shared, $ui, $float, 1.);
                 };
             }
 
@@ -844,7 +843,7 @@ pub struct TextInputOptions {
 impl Default for TextInputOptions {
     fn default() -> Self {
         TextInputOptions {
-            size: Vec2::new(40., 20.),
+            size: Vec2::new(0., 0.),
             focus: false,
         }
     }
@@ -861,6 +860,10 @@ pub fn text_input(
 
     if options == None {
         options = Some(TextInputOptions::default());
+    }
+
+    if options.as_ref().unwrap().size == Vec2::ZERO {
+        options.as_mut().unwrap().size = Vec2::new(ui.available_width(), 20.);
     }
 
     if shared.ui.rename_id != id {
@@ -923,7 +926,16 @@ pub fn float_input(
     value: f32,
     modifier: f32,
 ) -> (bool, f32, egui::Response) {
-    let (edited, _, input) = text_input(id, shared, ui, (value * modifier).to_string(), None);
+    let (edited, _, input) = text_input(
+        id,
+        shared,
+        ui,
+        (value * modifier).to_string(),
+        Some(TextInputOptions {
+            size: Vec2::new(40., 20.),
+            ..Default::default()
+        }),
+    );
 
     if edited {
         shared.ui.rename_id = "".to_string();
