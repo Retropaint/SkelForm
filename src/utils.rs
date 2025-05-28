@@ -391,7 +391,7 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
                 } else {
                     armature_window::new_bone(shared, -1);
                 }
-            } else if (action.id as usize) < shared.armature.bones.len() - 1 {
+            } else if (action.id as usize) <= shared.armature.bones.len() - 1 {
                 new_action.bone = shared.armature.bones[action.id as usize].clone();
                 *shared.find_bone_mut(action.id).unwrap() = action.bone.clone();
 
@@ -408,7 +408,7 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
                 } else {
                     keyframe_editor::new_animation(shared);
                 }
-            } else if (action.id as usize) < shared.armature.animations.len() - 1 {
+            } else if (action.id as usize) <= shared.armature.animations.len() - 1 {
                 new_action.animation = shared.armature.animations[action.id as usize].clone();
                 shared.armature.animations[action.id as usize] = action.animation.clone();
             }
