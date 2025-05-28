@@ -838,6 +838,8 @@ pub fn draw_tutorial_rect(
 pub struct TextInputOptions {
     pub size: Vec2,
     pub focus: bool,
+    pub placeholder: String,
+    pub default: String,
 }
 
 impl Default for TextInputOptions {
@@ -845,6 +847,8 @@ impl Default for TextInputOptions {
         TextInputOptions {
             size: Vec2::new(0., 0.),
             focus: false,
+            placeholder: "".to_string(),
+            default: "".to_string()
         }
     }
 }
@@ -878,8 +882,7 @@ pub fn text_input(
         input = ui.add_sized(
             options.as_ref().unwrap().size,
             egui::TextEdit::singleline(&mut value)
-                .desired_width(0.)
-                .min_size(egui::Vec2::ZERO),
+                .hint_text(options.as_ref().unwrap().placeholder.clone()),
         );
         // extract value as a string and store it with edit_value
         if input.has_focus() {
@@ -894,7 +897,8 @@ pub fn text_input(
     } else {
         input = ui.add_sized(
             options.as_ref().unwrap().size,
-            egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap()),
+            egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap())
+                .hint_text(options.as_ref().unwrap().placeholder.clone()),
         );
 
         let mut entered = false;
@@ -912,11 +916,14 @@ pub fn text_input(
             entered = true;
         }
 
-        value = shared.ui.edit_value.clone().unwrap();
+        let mut final_value = shared.ui.edit_value.as_ref().unwrap();
+        if final_value == "" {
+            final_value = &options.as_ref().unwrap().default;
+        }
 
         if entered {
             shared.ui.rename_id = "".to_string();
-            return (true, value, input);
+            return (true, final_value.clone(), input);
         }
 
         if input.lost_focus() {
