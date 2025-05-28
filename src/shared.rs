@@ -7,7 +7,6 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
-pub const RECT_VERT_INDICES: [u32; 6] = [0, 1, 2, 1, 2, 3];
 pub const NEW_BONE_NAME: &str = "New Bone";
 pub const CLICK_THRESHOLD: i32 = 5;
 

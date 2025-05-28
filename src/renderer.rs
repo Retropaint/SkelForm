@@ -542,7 +542,7 @@ fn draw_point(
 
     render_pass.set_vertex_buffer(0, vertex_buffer(&point_verts.to_vec(), device).slice(..));
     render_pass.set_index_buffer(
-        index_buffer(RECT_VERT_INDICES.to_vec(), &device).slice(..),
+        index_buffer(vec![0, 1, 2, 1, 2, 3], &device).slice(..),
         wgpu::IndexFormat::Uint32,
     );
     render_pass.draw_indexed(0..6, 0, 0..1);
