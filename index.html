@@ -134,6 +134,12 @@
             </div>
         </div>
 
+        <div id="edit-input-modal" class="modal" style="visibility: hidden" keypress="onEditInputPress($event)">
+            <form>
+                <input id="edit-input"></input>
+            </form>
+        </div>
+
         <div
             id="resolution-message"
             class="resolution-message"
@@ -187,6 +193,10 @@
                 let str = open ? "visible" : "hidden";
                 document.getElementById(id).style.visibility = str;
             }
+
+            function isModalActive(id) {
+                return document.getElementById(id).style.visibility == "visible";
+            } 
 
             function saveFontScale() {
                 let configObj = JSON.parse(config);
@@ -284,6 +294,19 @@
                 link.setAttribute("download", "SkelForm_armature.zip");
                 link.click();
                 link.remove();
+            }
+
+            document.getElementById("edit-input-modal").addEventListener("submit", function(event) {
+                event.preventDefault();
+                toggleElement(false, "edit-input-modal")
+            });
+
+            function getEditInput() {
+                return document.getElementById("edit-input").value;
+            }
+
+            function setEditInput(value) {
+                document.getElementById("edit-input").value = value;
             }
 
             window.addEventListener("resize", resizeCanvas);
