@@ -15,15 +15,6 @@ mod web {
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
-extern "C" {
-    fn removeImage();
-    fn getFile() -> Vec<u8>;
-    fn removeFile();
-    fn getImgName() -> String;
-}
-
 macro_rules! temp_file {
     ($name:ident, $path:expr) => {
         pub const $name: &str = $path;
