@@ -116,7 +116,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                 let idx = shared.armature.animations.len() - 1;
                                 shared.ui.original_name = "".to_string();
                                 shared.ui.rename_id = "animation ".to_owned() + &idx.to_string();
-                                shared.ui.edit_value = Some("New Animation".to_string());
+                                shared.ui.edit_value = Some("".to_string());
                             }
                         });
                     });
@@ -134,11 +134,14 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                     name.to_string(),
                                     Some(TextInputOptions {
                                         focus: true,
+                                        placeholder: "New Animation".to_string(),
+                                        default: "New Animation".to_string(),
                                         ..Default::default()
                                     }),
                                 );
                                 if edited {
                                     shared.armature.animations[i].name = value;
+                                    shared.ui.anim.selected = i;
                                 }
                                 return;
                             }
@@ -487,11 +490,16 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             ui.add(egui::DragValue::new(&mut shared.ui.anim.selected_frame).speed(0.1));
 
             ui.label("FPS:").on_hover_text("Frames Per Second");
-            shared.selected_animation_mut().unwrap().fps = shared.ui.singleline_input(
+            let (edited, value, _) = ui::float_input(
                 "fps".to_string(),
-                shared.selected_animation().unwrap().fps as f32,
+                shared,
                 ui,
-            ) as i32;
+                shared.selected_animation().unwrap().fps as f32,
+                1.,
+            );
+            if edited {
+                shared.selected_animation_mut().unwrap().fps = value as i32;
+            }
             shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
         });
     });
