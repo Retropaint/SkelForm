@@ -236,7 +236,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     }
 
     ui.horizontal(|ui| {
-        ui.label("Base Index:");
+        ui.label("Base Index:").on_hover_text("The vertex that all triangles point to");
         let base = shared.selected_bone().unwrap().indices[0] as f32;
         let (edited, base, _) = ui::float_input("base_index".to_string(), shared, ui, base, 1.);
         if edited {
