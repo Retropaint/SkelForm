@@ -66,12 +66,12 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     ui.horizontal(|ui| {
         ui.label("Name:");
-        let (edited, value, _) = text_input(
+        let (edited, value, _) = ui::text_input(
             "Name".to_string(),
             shared,
             ui,
             shared.selected_bone().unwrap().name.clone(),
-            Vec2::new(ui.available_width(), 20.)
+            None,
         );
         if edited {
             shared.selected_bone_mut().unwrap().name = value;
@@ -117,7 +117,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     macro_rules! input {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr) => {
-            (edited, $float, _) = float_input($id.to_string(), shared, $ui, $float, $modifier);
+            (edited, $float, _) = ui::float_input($id.to_string(), shared, $ui, $float, $modifier);
             if edited {
                 shared.save_edited_bone();
                 shared.edit_bone($element, $float, true);
@@ -130,7 +130,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     macro_rules! input_response {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr, $input:expr) => {
-            (edited, $float, $input) = float_input($id.to_string(), shared, $ui, $float, $modifier);
+            (edited, $float, $input) = ui::float_input($id.to_string(), shared, $ui, $float, $modifier);
             if edited {
                 shared.save_edited_bone();
                 shared.edit_bone($element, $float, true);
@@ -237,7 +237,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label("Base Index:");
         let base = shared.selected_bone().unwrap().indices[0] as f32;
-        let (edited, base, _) = float_input("base_index".to_string(), shared, ui, base, 1.);
+        let (edited, base, _) = ui::float_input("base_index".to_string(), shared, ui, base, 1.);
         if edited {
             shared.selected_bone_mut().unwrap().indices = crate::renderer::setup_indices(
                 &shared.selected_bone_mut().unwrap().vertices,
@@ -259,94 +259,4 @@ pub fn open_file_dialog() {
         }
         create_temp_file(TEMP_IMG_PATH, task.unwrap().as_path().to_str().unwrap());
     });
-}
-
-// helper for editable float inputs
-pub fn float_input(
-    id: String,
-    shared: &mut Shared,
-    ui: &mut egui::Ui,
-    value: f32,
-    modifier: f32,
-) -> (bool, f32, egui::Response) {
-    let (edited, _, input) = text_input(id, shared, ui, (value * modifier).to_string(), Vec2::new(40., 20.));
-
-    if edited {
-        shared.ui.rename_id = "".to_string();
-        if shared.ui.edit_value.as_mut().unwrap() == "" {
-            shared.ui.edit_value = Some("0".to_string());
-        }
-        match shared.ui.edit_value.as_mut().unwrap().parse::<f32>() {
-            Ok(output) => {
-                return (true, output / modifier, input);
-            }
-            Err(_) => {
-                return (false, value, input);
-            }
-        }
-    }
-
-    (false, value, input)
-}
-
-pub fn text_input(
-    id: String,
-    shared: &mut Shared,
-    ui: &mut egui::Ui,
-    mut value: String,
-    input_size: Vec2,
-) -> (bool, String, egui::Response) {
-    let input: egui::Response;
-
-    if shared.ui.rename_id != id {
-        input = ui.add_sized(
-            input_size,
-            egui::TextEdit::singleline(&mut value)
-                .desired_width(0.)
-                .min_size(egui::Vec2::ZERO),
-        );
-        // extract value as a string and store it with edit_value
-        if input.has_focus() {
-            shared.ui.edit_value = Some(value.clone());
-            shared.ui.rename_id = id.to_string();
-            #[cfg(feature = "mobile")]
-            {
-                setEditInput(shared.ui.edit_value.clone().unwrap());
-                toggleElement(true, "edit-input-modal".to_string());
-            }
-        }
-    } else {
-        input = ui.add_sized(
-            input_size,
-            egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap()),
-        );
-
-        #[cfg(feature = "mobile")]
-        {
-            shared.ui.edit_value = Some(getEditInput());
-        }
-
-        let mut entered = false;
-
-        // if input modal is closed, consider the value entered
-        #[cfg(feature = "mobile")]
-        if !isModalActive("edit-input-modal".to_string()) {
-            entered = true;
-        }
-
-        if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-            entered = true;
-        }
-
-        value = shared.ui.edit_value.clone().unwrap();
-
-        if entered {
-            return (true, value, input);
-        }
-
-        if input.lost_focus() {
-            shared.ui.rename_id = "".to_string();
-        }
-    }
-    (false, value, input)
 }
