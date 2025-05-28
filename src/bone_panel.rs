@@ -28,6 +28,9 @@ pub use web::*;
 #[wasm_bindgen]
 extern "C" {
     pub fn toggleElement(open: bool, id: String);
+    pub fn isModalActive(id: String) -> bool;
+    pub fn getEditInput() -> String;
+    pub fn setEditInput(value: String);
 }
 
 pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
@@ -273,6 +276,11 @@ pub fn float_input(
         if input.has_focus() {
             shared.ui.edit_value = Some(displayed_value.to_string());
             shared.ui.rename_id = id.to_string();
+            #[cfg(feature = "mobile")]
+            {
+                setEditInput(shared.ui.edit_value.clone().unwrap());
+                toggleElement(true, "edit-input-modal".to_string());
+            }
         }
     } else {
         input = ui.add_sized(
@@ -280,7 +288,24 @@ pub fn float_input(
             egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap()),
         );
 
+        #[cfg(feature = "mobile")]
+        {
+            shared.ui.edit_value = Some(getEditInput());
+        }
+
+        let mut entered = false;
+
+        // if input modal is closed, consider the value entered
+        #[cfg(feature="mobile")]
+        if !isModalActive("edit-input-modal".to_string()) {
+            entered = true;
+        }
+
         if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+            entered = true;
+        }
+
+        if entered {
             shared.ui.rename_id = "".to_string();
             if shared.ui.edit_value.as_mut().unwrap() == "" {
                 shared.ui.edit_value = Some("0".to_string());
