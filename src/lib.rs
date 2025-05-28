@@ -48,11 +48,20 @@ pub mod utils;
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 extern "C" {
-    fn getCanvasWidth() -> u32;
-    fn getCanvasHeight() -> u32;
-    fn getConfig() -> String;
-    fn saveConfig(data_str: String);
-    fn getUiSliderValue() -> f32;
+    pub fn getCanvasWidth() -> u32;
+    pub fn getCanvasHeight() -> u32;
+    pub fn getConfig() -> String;
+    pub fn saveConfig(data_str: String);
+    pub fn getUiSliderValue() -> f32;
+    pub fn toggleElement(open: bool, id: String);
+    pub fn isModalActive(id: String) -> bool;
+    pub fn getEditInput() -> String;
+    pub fn setEditInput(value: String);
+    pub fn removeImage();
+    pub fn getFile() -> Vec<u8>;
+    pub fn removeFile();
+    pub fn getImgName() -> String;
+    pub fn loaded();
 }
 
 #[derive(Default)]

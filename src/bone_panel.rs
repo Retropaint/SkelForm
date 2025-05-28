@@ -1,9 +1,6 @@
 //! UI Bone window.
 
-use crate::{
-    shared::*,
-    ui::{self, draw_tutorial_rect},
-};
+use crate::*;
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
@@ -23,15 +20,6 @@ mod web {
 }
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
-
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
-extern "C" {
-    pub fn toggleElement(open: bool, id: String);
-    pub fn isModalActive(id: String) -> bool;
-    pub fn getEditInput() -> String;
-    pub fn setEditInput(value: String);
-}
 
 pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.heading("Bone");
@@ -162,7 +150,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 "Y",
                 input
             );
-            draw_tutorial_rect(TutorialStep::EditBoneY, input.rect, shared, ui);
+            ui::draw_tutorial_rect(TutorialStep::EditBoneY, input.rect, shared, ui);
             if edited {
                 shared.start_next_tutorial_step(TutorialStep::OpenAnim);
             }
@@ -177,7 +165,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 "X",
                 input
             );
-            draw_tutorial_rect(TutorialStep::EditBoneX, input.rect, shared, ui);
+            ui::draw_tutorial_rect(TutorialStep::EditBoneX, input.rect, shared, ui);
             if edited {
                 shared.start_next_tutorial_step(TutorialStep::EditBoneY);
             }

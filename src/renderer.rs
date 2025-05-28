@@ -4,12 +4,6 @@ use crate::*;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
-extern "C" {
-    fn loaded();
-}
-
 macro_rules! con_vert {
     ($func:expr, $vert:expr, $bone:expr, $tex:expr, $shared:expr) => {
         $func(
