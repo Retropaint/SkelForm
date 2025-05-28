@@ -118,7 +118,8 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     macro_rules! input_response {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr, $input:expr) => {
-            (edited, $float, $input) = ui::float_input($id.to_string(), shared, $ui, $float, $modifier);
+            (edited, $float, $input) =
+                ui::float_input($id.to_string(), shared, $ui, $float, $modifier);
             if edited {
                 shared.save_edited_bone();
                 shared.edit_bone($element, $float, true);
@@ -214,9 +215,21 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         mesh_label = "Finish Edit";
     }
 
-    if ui::button(mesh_label, ui).clicked() {
-        shared.editing_mesh = !shared.editing_mesh;
-    }
+    ui.horizontal(|ui| {
+        if ui::button(mesh_label, ui).clicked() {
+            shared.editing_mesh = !shared.editing_mesh;
+        }
+
+        if shared.editing_mesh {
+            if ui::button("Reset", ui).clicked() {
+                let tex = &shared.armature.textures[bone.tex_idx as usize];
+                (
+                    shared.selected_bone_mut().unwrap().vertices,
+                    shared.selected_bone_mut().unwrap().indices,
+                ) = renderer::create_tex_rect(tex);
+            }
+        }
+    });
 
     if !shared.editing_mesh {
         return;
