@@ -2,7 +2,7 @@
 
 use egui::Stroke;
 
-use ui::COLOR_ACCENT;
+use ui::{TextInputOptions, COLOR_ACCENT};
 
 use crate::*;
 
@@ -132,7 +132,10 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                     shared,
                                     ui,
                                     name.to_string(),
-                                    None,
+                                    Some(TextInputOptions {
+                                        focus: true,
+                                        ..Default::default()
+                                    }),
                                 );
                                 if edited {
                                     shared.armature.animations[i].name = value;

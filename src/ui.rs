@@ -836,8 +836,8 @@ pub fn draw_tutorial_rect(
 
 #[derive(PartialEq)]
 pub struct TextInputOptions {
-    size: Vec2,
-    focus: bool,
+    pub size: Vec2,
+    pub focus: bool,
 }
 
 impl Default for TextInputOptions {
@@ -866,9 +866,17 @@ pub fn text_input(
         options.as_mut().unwrap().size = Vec2::new(ui.available_width(), 20.);
     }
 
+    if options.as_ref().unwrap().focus {
+        #[cfg(feature = "mobile")]
+        {
+            setEditInput(shared.ui.edit_value.clone().unwrap());
+            toggleElement(true, "edit-input-modal".to_string());
+        }
+    }
+
     if shared.ui.rename_id != id {
         input = ui.add_sized(
-            options.unwrap().size,
+            options.as_ref().unwrap().size,
             egui::TextEdit::singleline(&mut value)
                 .desired_width(0.)
                 .min_size(egui::Vec2::ZERO),
@@ -885,7 +893,7 @@ pub fn text_input(
         }
     } else {
         input = ui.add_sized(
-            options.unwrap().size,
+            options.as_ref().unwrap().size,
             egui::TextEdit::singleline(shared.ui.edit_value.as_mut().unwrap()),
         );
 
@@ -915,6 +923,11 @@ pub fn text_input(
             shared.ui.rename_id = "".to_string();
         }
     }
+
+    if options.as_ref().unwrap().focus {
+        input.request_focus();
+    }
+
     (false, value, input)
 }
 
