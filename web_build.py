@@ -12,11 +12,9 @@ parser = argparse.ArgumentParser(prog='SkelForm Web Builder', description='Build
 
 # arguments
 parser.add_argument('-s', '--serve', action='store_true', help="Automatically run localhost:8000 after build.")
-parser.add_argument('-r', '--release', action='store_true', help="Use default release config.")
-parser.add_argument('-m', '--mobile', action='store_true', help="Use default mobile config.")
-parser.add_argument('-d', '--debug', action='store_true', help="Add debug feature flag.")
-parser.add_argument('-b', '--build', default="", help="Will be appended to trunk build. ex: --build \" --release\"")
-parser.add_argument('-nd', '--no-default', action='store_true', help="Ignore default config. Combine with --build for fully custom builds.")
+parser.add_argument('-r', '--release', action='store_true', help="Build for release/production.")
+parser.add_argument('-m', '--mobile', action='store_true', help="Build for mobile.")
+parser.add_argument('-d', '--debug', action='store_true', help="Build with debug flag. Ignored if --release is present.")
 
 args = parser.parse_args()
 
@@ -26,7 +24,7 @@ if args.release and not args.mobile:
 
 if args.mobile:
     features += " mobile"
-if args.debug:
+if args.debug and not args.release:
     features += " debug"
 
 features += "\""
