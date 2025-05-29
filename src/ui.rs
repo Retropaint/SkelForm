@@ -870,12 +870,13 @@ pub fn text_input(
         options.as_mut().unwrap().size = Vec2::new(ui.available_width(), 20.);
     }
 
-    if options.as_ref().unwrap().focus {
+    if options.as_ref().unwrap().focus && !shared.ui.input_focused {
         #[cfg(feature = "mobile")]
         {
             setEditInput(shared.ui.edit_value.clone().unwrap());
             toggleElement(true, "edit-input-modal".to_string());
         }
+        shared.ui.input_focused = true;
     }
 
     if shared.ui.rename_id != id {
@@ -922,6 +923,7 @@ pub fn text_input(
         }
 
         if entered {
+            shared.ui.input_focused = false;
             shared.ui.rename_id = "".to_string();
             return (true, final_value.clone(), input);
         }
