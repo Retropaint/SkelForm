@@ -489,14 +489,10 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             ui.label("Frame:");
             ui.add(egui::DragValue::new(&mut shared.ui.anim.selected_frame).speed(0.1));
 
+            let fps = shared.selected_animation().unwrap().fps;
+
             ui.label("FPS:").on_hover_text("Frames Per Second");
-            let (edited, value, _) = ui::float_input(
-                "fps".to_string(),
-                shared,
-                ui,
-                shared.selected_animation().unwrap().fps as f32,
-                1.,
-            );
+            let (edited, value, _) = ui::float_input("fps".to_string(), shared, ui, fps as f32, 1.);
             if edited {
                 shared.selected_animation_mut().unwrap().fps = value as i32;
             }

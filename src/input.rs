@@ -37,9 +37,9 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
     if shared.input.pressed(winit::keyboard::KeyCode::Escape) {
         #[cfg(target_arch = "wasm32")]
         {
-            bone_panel::toggleElement(false, "image-dialog".to_string());
-            bone_panel::toggleElement(false, "file-dialog".to_string());
-            bone_panel::toggleElement(false, "ui-slider".to_string());
+            toggleElement(false, "image-dialog".to_string());
+            toggleElement(false, "file-dialog".to_string());
+            toggleElement(false, "ui-slider".to_string());
         }
 
         shared.ui.set_state(UiState::ImageModal, false);
@@ -70,7 +70,7 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog();
             #[cfg(target_arch = "wasm32")]
-            bone_panel::toggleElement(true, "file-dialog".to_string());
+            toggleElement(true, "file-dialog".to_string());
         }
     }
 }

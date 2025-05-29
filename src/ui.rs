@@ -246,7 +246,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog();
             #[cfg(target_arch = "wasm32")]
-            bone_panel::toggleElement(true, "file-dialog".to_string());
+            toggleElement(true, "file-dialog".to_string());
             ui.close_menu();
         }
         if top_bar_button(ui, "Save", "Mod + S", &mut offset).clicked() {
@@ -332,7 +332,7 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
 
         #[cfg(target_arch = "wasm32")]
         if top_bar_button(ui, "Adjust UI", "", &mut offset).clicked() {
-            bone_panel::toggleElement(true, "ui-slider".to_string());
+            toggleElement(true, "ui-slider".to_string());
             ui.close_menu();
         }
     });
@@ -631,7 +631,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                     bone_panel::open_file_dialog();
 
                     #[cfg(target_arch = "wasm32")]
-                    bone_panel::toggleElement(true, "image-dialog".to_string());
+                    toggleElement(true, "image-dialog".to_string());
                 }
 
                 let label = if shared.ui.has_state(UiState::RemovingTexture) {
@@ -848,7 +848,7 @@ impl Default for TextInputOptions {
             size: Vec2::new(0., 0.),
             focus: false,
             placeholder: "".to_string(),
-            default: "".to_string()
+            default: "".to_string(),
         }
     }
 }
