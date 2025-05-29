@@ -59,6 +59,14 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         };
     }
 
+    #[cfg(feature="mobile")]
+    #[cfg(feature="debug")]
+    if let Some(pos) = context.pointer_latest_pos() {
+        context
+            .debug_painter()
+            .circle_filled(pos, 2., egui::Color32::GREEN);
+    }
+
     let anim_icon_size = 18;
     #[allow(unused_assignments)]
     let mut full_img = image::DynamicImage::default();
