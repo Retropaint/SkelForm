@@ -71,7 +71,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label("Texture:");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let button = ui::button("Get Image", ui);
+            let button = ui::button("Select", ui);
             ui::draw_tutorial_rect(TutorialStep::GetImage, button.rect, shared, ui);
             if button.clicked() {
                 if shared.bind_groups.len() == 0 {
