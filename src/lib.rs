@@ -62,6 +62,7 @@ extern "C" {
     pub fn removeFile();
     pub fn getImgName() -> String;
     pub fn loaded();
+    pub fn focusEditInput();
 }
 
 #[derive(Default)]

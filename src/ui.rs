@@ -59,8 +59,9 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         };
     }
 
-    #[cfg(feature="mobile")]
-    #[cfg(feature="debug")]
+    #[cfg(feature = "mobile")]
+    #[cfg(feature = "debug")]
+    // visually track UI cursor, since it differs from real
     if let Some(pos) = context.pointer_latest_pos() {
         context
             .debug_painter()
@@ -861,6 +862,13 @@ impl Default for TextInputOptions {
     }
 }
 
+#[cfg(feature = "mobile")]
+fn open_mobile_input(value: String) {
+    setEditInput(value);
+    toggleElement(true, "edit-input-modal".to_string());
+    focusEditInput();
+}
+
 pub fn text_input(
     id: String,
     shared: &mut Shared,
@@ -880,10 +888,7 @@ pub fn text_input(
 
     if options.as_ref().unwrap().focus && !shared.ui.input_focused {
         #[cfg(feature = "mobile")]
-        {
-            setEditInput(shared.ui.edit_value.clone().unwrap());
-            toggleElement(true, "edit-input-modal".to_string());
-        }
+        open_mobile_input(shared.ui.edit_value.clone().unwrap());
         shared.ui.input_focused = true;
     }
 
@@ -898,10 +903,7 @@ pub fn text_input(
             shared.ui.edit_value = Some(value.clone());
             shared.ui.rename_id = id.to_string();
             #[cfg(feature = "mobile")]
-            {
-                setEditInput(shared.ui.edit_value.clone().unwrap());
-                toggleElement(true, "edit-input-modal".to_string());
-            }
+            open_mobile_input(shared.ui.edit_value.clone().unwrap());
         }
     } else {
         input = ui.add_sized(
