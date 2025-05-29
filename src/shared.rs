@@ -407,6 +407,9 @@ pub struct Ui {
 
     pub scale: f32,
 
+    /// Ensures that auto-focused behaviour only runs once
+    pub input_focused: bool,
+
     // camera bar stuff
     pub camera_bar_pos: Vec2,
     pub camera_bar_scale: Vec2,
