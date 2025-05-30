@@ -155,7 +155,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         shared.cursor_icon = egui::CursorIcon::Crosshair;
 
-        let bone = &bones[shared.selected_bone_idx];
+        let bone = &temp_bones[shared.selected_bone_idx];
         edit_bone(shared, bone);
     }
 }
@@ -313,20 +313,7 @@ pub struct Triangle {
 pub fn edit_bone(shared: &mut Shared, bone: &Bone) {
     match shared.edit_mode {
         shared::EditMode::Move => {
-            let mut pos = Vec2::default();
-            if !shared.is_animating() {
-                pos = bone.pos;
-            } else {
-                // get animated position
-                for kf in &shared.selected_animation().unwrap().keyframes {
-                    if kf.bone_id == bone.id && kf.element == AnimElement::PositionX {
-                        pos.x = kf.value;
-                    }
-                    if kf.bone_id == bone.id && kf.element == AnimElement::PositionY {
-                        pos.y = kf.value;
-                    }
-                }
-            }
+            let mut pos = bone.pos;
 
             // offset position by said velocity
             pos -= shared.mouse_vel() * shared.camera.zoom;
