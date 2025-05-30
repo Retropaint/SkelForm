@@ -318,8 +318,8 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone) {
             // offset position by said velocity
             pos -= shared.mouse_vel() * shared.camera.zoom;
 
-            shared.edit_bone(&AnimElement::PositionX, pos.x, false);
-            shared.edit_bone(&AnimElement::PositionY, pos.y, false);
+            shared.edit_bone(&AnimElement::PositionX, pos.x, true);
+            shared.edit_bone(&AnimElement::PositionY, pos.y, true);
         }
         shared::EditMode::Rotate => {
             let rot = (shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.;
