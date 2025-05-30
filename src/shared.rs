@@ -1098,12 +1098,10 @@ impl Shared {
     }
 
     pub fn edit_bone(&mut self, element: &AnimElement, mut value: f32, overwrite: bool) {
-        let og_value: f32;
         let is_animating = self.is_animating();
 
         macro_rules! edit {
             ($field:expr) => {
-                og_value = $field;
                 if !is_animating {
                     $field = value;
                 } else if overwrite {
@@ -1136,18 +1134,15 @@ impl Shared {
 
         // create keyframe at 0th frame for this element if it doesn't exist
         if self.ui.anim.selected_frame != 0 {
-            self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
-            self.selected_animation_mut().unwrap().keyframes[0].value = og_value;
+            let frame =
+                self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
         }
-
         let frame = self.check_if_in_keyframe(
             self.selected_bone().unwrap().id,
             self.ui.anim.selected_frame,
             element.clone(),
         );
         self.selected_animation_mut().unwrap().keyframes[frame].value = value;
-
-        self.sort_keyframes();
     }
 
     /// Return which frame has these attributes, or create a new one
@@ -1172,11 +1167,20 @@ impl Shared {
             .push(Keyframe {
                 frame,
                 bone_id: id,
-                element,
+                element: element.clone(),
                 ..Default::default()
             });
 
-        self.selected_animation().unwrap().keyframes.len() - 1
+        self.sort_keyframes();
+
+        for i in 0..self.selected_animation().unwrap().keyframes.len() {
+            let kf = &self.selected_animation().unwrap().keyframes[i];
+            if kf.frame == frame && kf.bone_id == id && kf.element == element {
+                return i;
+            }
+        }
+
+        usize::MAX
     }
 
     pub fn is_animating(&self) -> bool {
