@@ -1098,10 +1098,12 @@ impl Shared {
     }
 
     pub fn edit_bone(&mut self, element: &AnimElement, mut value: f32, overwrite: bool) {
+        let og_value: f32;
         let is_animating = self.is_animating();
 
         macro_rules! edit {
             ($field:expr) => {
+                og_value = $field;
                 if !is_animating {
                     $field = value;
                 } else if overwrite {
@@ -1135,6 +1137,7 @@ impl Shared {
         // create keyframe at 0th frame for this element if it doesn't exist
         if self.ui.anim.selected_frame != 0 {
             self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
+            self.selected_animation_mut().unwrap().keyframes[0].value = og_value;
         }
 
         let frame = self.check_if_in_keyframe(
