@@ -28,11 +28,11 @@ const FFMPEG_ERR: &str =
     "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.";
 
 /// The `main` of this module.
-pub fn draw(context: &Context, shared: &mut Shared) {
+#[allow(unused_variables)]
+pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
     default_styling(context);
 
-    #[allow(unused_mut)]
-    let mut scale_mod: f32;
+    let scale_mod: f32;
 
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -41,12 +41,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     #[cfg(target_arch = "wasm32")]
     {
-        scale_mod = 2.;
-    }
-
-    #[cfg(feature = "mobile")]
-    {
-        scale_mod = 2.8;
+        scale_mod = window_factor;
     }
 
     context.set_zoom_factor(shared.ui.scale * scale_mod);

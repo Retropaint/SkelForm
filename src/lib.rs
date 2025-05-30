@@ -381,7 +381,7 @@ impl ApplicationHandler for App {
                 gui_state.egui_ctx().begin_pass(input);
 
                 // ui logic handled in ui.rs
-                ui::draw(gui_state.egui_ctx(), &mut self.shared);
+                ui::draw(gui_state.egui_ctx(), &mut self.shared, window.scale_factor() as f32);
 
                 let egui_winit::egui::FullOutput {
                     textures_delta,
