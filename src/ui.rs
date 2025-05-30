@@ -705,8 +705,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                         // stop the loop to prevent index errors
                         break;
                     } else {
-                        shared.reset_bone_verts_to_tex(i);
-                        shared.selected_bone_mut().unwrap().tex_idx = i as i32;
+                        shared.set_bone_tex(i);
                         shared.ui.set_state(UiState::ImageModal, false);
                     }
                 }

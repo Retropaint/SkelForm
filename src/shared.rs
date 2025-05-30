@@ -1302,6 +1302,41 @@ impl Shared {
             ) = renderer::create_tex_rect(&self.armature.textures[new_tex_idx]);
         }
     }
+
+    pub fn set_bone_name_to_tex(&mut self) {
+        let name = self.armature.textures[self.selected_bone().unwrap().tex_idx as usize]
+            .name
+            .clone();
+        let bone_name = &mut self.selected_bone_mut().unwrap().name;
+        if bone_name == NEW_BONE_NAME || bone_name == "" {
+            *bone_name = name;
+        }
+    }
+
+    pub fn set_bone_tex(&mut self, new_tex_idx: usize) {
+        let tex_idx = self.selected_bone_mut().unwrap().tex_idx;
+
+        if tex_idx != -1 {
+            let verts_edited = utils::bone_meshes_edited(
+                self.armature.textures[tex_idx as usize].size,
+                &self.selected_bone().unwrap().vertices,
+            );
+            if !verts_edited {
+                (
+                    self.selected_bone_mut().unwrap().vertices,
+                    self.selected_bone_mut().unwrap().indices,
+                ) = renderer::create_tex_rect(&self.armature.textures[new_tex_idx]);
+            }
+        }
+
+        let name = self.armature.textures[new_tex_idx].name.clone();
+        let bone_name = &mut self.selected_bone_mut().unwrap().name;
+        if bone_name == NEW_BONE_NAME || bone_name == "" {
+            *bone_name = name;
+        }
+
+        self.selected_bone_mut().unwrap().tex_idx = new_tex_idx as i32;
+    }
 }
 
 fn default_neg_one() -> i32 {
