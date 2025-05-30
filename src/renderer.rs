@@ -48,7 +48,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     for i in 0..temp_bones.len() {
         let mut parent: Option<Bone> = None;
-        for b in &bones {
+        for b in &temp_bones {
             if b.id == temp_bones[i].parent_id {
                 parent = Some(b.clone());
                 break;
