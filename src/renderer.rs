@@ -92,7 +92,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         draw_bone(&temp_bones[b], render_pass, device, &world_verts, shared);
 
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-        if shared.editing_mesh {
+        if shared.editing_mesh && b == shared.selected_bone_idx {
             hovering_vert =
                 bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
         }
