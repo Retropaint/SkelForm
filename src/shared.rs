@@ -1283,6 +1283,25 @@ impl Shared {
     pub fn tutorial_step_is(&self, step: TutorialStep) -> bool {
         self.tutorial_step == step
     }
+
+    pub fn reset_bone_verts_to_tex(&mut self, new_tex_idx: usize) {
+        let tex_idx = self.selected_bone_mut().unwrap().tex_idx;
+
+        if tex_idx == -1 {
+            return;
+        }
+
+        let verts_edited = utils::bone_meshes_edited(
+            self.armature.textures[tex_idx as usize].size,
+            &self.selected_bone().unwrap().vertices,
+        );
+        if !verts_edited {
+            (
+                self.selected_bone_mut().unwrap().vertices,
+                self.selected_bone_mut().unwrap().indices,
+            ) = renderer::create_tex_rect(&self.armature.textures[new_tex_idx]);
+        }
+    }
 }
 
 fn default_neg_one() -> i32 {

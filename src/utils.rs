@@ -256,22 +256,11 @@ pub fn prepare_files(shared: &mut Shared) -> (Vec2, String, Vec<u8>) {
             continue;
         }
 
-        // check if this bone is a regular rect
-        let mut is_rect = true;
-        let tex_size = armature_copy.textures[bone.tex_idx as usize].size;
-        for vert in &bone.vertices {
-            if vert.pos.x != 0. && vert.pos.x.abs() != tex_size.x.abs() {
-                is_rect = false;
-                break;
-            }
-            if vert.pos.y != 0. && vert.pos.y.abs() != tex_size.y.abs() {
-                is_rect = false;
-                break;
-            }
-        }
-
         // if it is a regular rect, empty verts and indices
-        if is_rect {
+        if !bone_meshes_edited(
+            armature_copy.textures[bone.tex_idx as usize].size,
+            &bone.vertices,
+        ) {
             bone.vertices = vec![];
             bone.indices = vec![];
         }
@@ -423,4 +412,19 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
         shared.undo_actions.push(new_action);
         shared.redo_actions.pop();
     }
+}
+
+pub fn bone_meshes_edited(tex_size: Vec2, verts: &Vec<Vertex>) -> bool {
+    let mut is_rect = true;
+    for vert in verts {
+        if vert.pos.x != 0. && vert.pos.x.abs() != tex_size.x.abs() {
+            is_rect = false;
+            break;
+        }
+        if vert.pos.y != 0. && vert.pos.y.abs() != tex_size.y.abs() {
+            is_rect = false;
+            break;
+        }
+    }
+    !is_rect
 }

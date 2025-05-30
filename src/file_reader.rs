@@ -169,8 +169,12 @@ pub fn read_image_loaders(
         name: name.clone(),
     });
 
+    let tex_idx = shared.armature.textures.len() - 1;
+
+    shared.reset_bone_verts_to_tex(tex_idx);
+
     // assign this texture to the selected bone
-    shared.selected_bone_mut().unwrap().tex_idx = shared.armature.textures.len() as i32 - 1;
+    shared.selected_bone_mut().unwrap().tex_idx = tex_idx as i32;
 
     // assign texture mame to bone if appropriate
     let bone_name = &mut shared.selected_bone_mut().unwrap().name;
