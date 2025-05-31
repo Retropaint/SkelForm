@@ -952,10 +952,11 @@ impl Shared {
 
         for b in &mut bones {
             macro_rules! interpolate {
-                ($element:expr, $default:expr) => {{
+                ($element:expr, $default:expr, $vert_id:expr) => {{
                     let (prev, next, total_frames, current_frame, transition) = self
                         .find_connecting_frames(
                             b.id,
+                            $vert_id,
                             $element,
                             $default,
                             self.ui.anim.selected_frame,
@@ -975,15 +976,20 @@ impl Shared {
             // interpolate!
             #[rustfmt::skip]
             {
-                b.pos.x   += interpolate!(AnimElement::PositionX, 0.);
-                b.pos.y   += interpolate!(AnimElement::PositionY, 0.);
-                b.rot     += interpolate!(AnimElement::Rotation,  0.);
-                b.scale.x *= interpolate!(AnimElement::ScaleX,    1.);
-                b.scale.y *= interpolate!(AnimElement::ScaleY,    1.);
-                b.pivot.x += interpolate!(AnimElement::PivotX,    0.);
-                b.pivot.y += interpolate!(AnimElement::PivotY,    0.);
-                b.zindex  += interpolate!(AnimElement::Zindex,    0.);
+                b.pos.x   += interpolate!(AnimElement::PositionX, 0., -1);
+                b.pos.y   += interpolate!(AnimElement::PositionY, 0., -1);
+                b.rot     += interpolate!(AnimElement::Rotation,  0., -1);
+                b.scale.x *= interpolate!(AnimElement::ScaleX,    1., -1);
+                b.scale.y *= interpolate!(AnimElement::ScaleY,    1., -1);
+                b.pivot.x += interpolate!(AnimElement::PivotX,    0., -1);
+                b.pivot.y += interpolate!(AnimElement::PivotY,    0., -1);
+                b.zindex  += interpolate!(AnimElement::Zindex,    0., -1);
             };
+
+            for v in 0..b.vertices.len() {
+                b.vertices[v].pos.x += interpolate!(AnimElement::VertPositionX, 0., v as i32);
+                b.vertices[v].pos.y += interpolate!(AnimElement::VertPositionY, 0., v as i32);
+            }
         }
 
         bones
@@ -992,6 +998,7 @@ impl Shared {
     pub fn find_connecting_frames(
         &self,
         bone_id: i32,
+        vert_id: i32,
         element: AnimElement,
         default: f32,
         frame: i32,
@@ -1014,7 +1021,7 @@ impl Shared {
                 break;
             }
 
-            if kf.bone_id != bone_id || kf.element != element {
+            if kf.bone_id != bone_id || kf.element != element || kf.vert_id != vert_id {
                 continue;
             }
 
@@ -1035,7 +1042,7 @@ impl Shared {
                 break;
             }
 
-            if kf.bone_id != bone_id || kf.element != element {
+            if kf.bone_id != bone_id || kf.element != element || kf.vert_id != vert_id {
                 continue;
             }
 
@@ -1135,36 +1142,37 @@ impl Shared {
 
         // create keyframe at 0th frame for this element if it doesn't exist
         if self.ui.anim.selected_frame != 0 {
-            self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
+            self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone(), -1);
         }
         let frame = self.check_if_in_keyframe(
             self.selected_bone().unwrap().id,
             self.ui.anim.selected_frame,
             element.clone(),
+            -1,
         );
         self.selected_animation_mut().unwrap().keyframes[frame].value = value;
     }
 
-    pub fn edit_vert(&mut self, vert_id: usize, pos: &Vec2) {
+    pub fn edit_vert(&mut self, vert_id: i32, pos: &Vec2) {
         let bone_id = self.selected_bone().unwrap().id;
         let frame = self.ui.anim.selected_frame;
 
-        let frame_x = self.check_if_in_keyframe(bone_id, frame, AnimElement::VertPositionX);
-        self.keyframe_at_mut(frame).unwrap().value = pos.x;
-        self.keyframe_at_mut(frame).unwrap().vert_id = vert_id as i32;
+        let frame_x = self.check_if_in_keyframe(bone_id, frame, AnimElement::VertPositionX, vert_id);
+        self.selected_animation_mut().unwrap().keyframes[frame_x].value = pos.x;
+        self.selected_animation_mut().unwrap().keyframes[frame_x].vert_id = vert_id as i32;
 
-        let frame_y = self.check_if_in_keyframe(bone_id, frame, AnimElement::VertPositionY);
-        self.keyframe_at_mut(frame).unwrap().value = pos.y;
-        self.keyframe_at_mut(frame).unwrap().vert_id = vert_id as i32;
+        let frame_y = self.check_if_in_keyframe(bone_id, frame, AnimElement::VertPositionY, vert_id);
+        self.selected_animation_mut().unwrap().keyframes[frame_y].value = pos.y;
+        self.selected_animation_mut().unwrap().keyframes[frame_y].vert_id = vert_id as i32;
     }
 
     /// Return which frame has these attributes, or create a new one
-    fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: AnimElement) -> usize {
+    fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: AnimElement, vert_id: i32) -> usize {
         // check if this keyframe exists
         let mut exists_at = usize::MAX;
         for i in 0..self.selected_animation().unwrap().keyframes.len() {
             let kf = &self.selected_animation().unwrap().keyframes[i];
-            if kf.frame == frame && kf.bone_id == id && kf.element == element {
+            if kf.frame == frame && kf.bone_id == id && kf.element == element && kf.vert_id == vert_id {
                 exists_at = i;
                 break;
             }
@@ -1182,7 +1190,7 @@ impl Shared {
                 bone_id: id,
                 element: element.clone(),
                 element_id: element.clone() as i32,
-                vert_id: -1,
+                vert_id,
                 ..Default::default()
             });
 
@@ -1190,7 +1198,7 @@ impl Shared {
 
         for i in 0..self.selected_animation().unwrap().keyframes.len() {
             let kf = &self.selected_animation().unwrap().keyframes[i];
-            if kf.frame == frame && kf.bone_id == id && kf.element == element {
+            if kf.frame == frame && kf.bone_id == id && kf.element == element && kf.vert_id == vert_id {
                 return i;
             }
         }
