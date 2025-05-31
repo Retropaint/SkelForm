@@ -1134,8 +1134,7 @@ impl Shared {
 
         // create keyframe at 0th frame for this element if it doesn't exist
         if self.ui.anim.selected_frame != 0 {
-            let frame =
-                self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
+            self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone());
         }
         let frame = self.check_if_in_keyframe(
             self.selected_bone().unwrap().id,
