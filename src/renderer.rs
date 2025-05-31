@@ -441,8 +441,7 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
     // now that it's in world coords, it can follow the mouse
     world_vert.pos = utils::screen_to_world_space(shared.input.mouse, shared.window);
 
-    // after following the mouse, it needs to convert its world coords back to normal
-    shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = con_vert!(
+    let vert_pos = con_vert!(
         world_to_raw_vert,
         world_vert,
         shared.selected_bone().unwrap(),
@@ -450,6 +449,13 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
         shared
     )
     .pos;
+
+    if shared.is_animating() {
+        shared.edit_vert(shared.dragging_vert, &vert_pos);
+    } else {
+        // after following the mouse, it needs to convert its world coords back to normal
+        shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = vert_pos;
+    }
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
