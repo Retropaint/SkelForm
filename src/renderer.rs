@@ -451,7 +451,8 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
     .pos;
 
     if shared.is_animating() {
-        shared.edit_vert(shared.dragging_vert as i32, &vert_pos);
+        let pos = shared.selected_bone_mut().unwrap().vertices[vert_idx].pos;
+        shared.edit_vert(shared.dragging_vert as i32, &(vert_pos - pos));
     } else {
         // after following the mouse, it needs to convert its world coords back to normal
         shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = vert_pos;
