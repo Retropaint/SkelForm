@@ -266,13 +266,6 @@ pub fn prepare_files(shared: &mut Shared) -> (Vec2, String, Vec<u8>) {
         }
     }
 
-    // assign element_id to armature
-    for anim in &mut armature_copy.animations {
-        for kf in &mut anim.keyframes {
-            kf.element_id = kf.element.clone() as i32;
-        }
-    }
-
     let root = Root {
         armatures: vec![armature_copy],
         texture_size: size,

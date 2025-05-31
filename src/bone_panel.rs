@@ -219,10 +219,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         if ui::button(mesh_label, ui).clicked() {
             shared.editing_mesh = !shared.editing_mesh;
         }
-
-        if !shared.editing_mesh {
-            return;
-        }
     });
 
     if !shared.editing_mesh {
