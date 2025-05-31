@@ -227,6 +227,7 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
 
 struct AnimTopInit {
     pub id: i32,
+    pub vert_id: i32,
     pub element: AnimElement,
 }
 
@@ -252,7 +253,10 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                             // find bone in list
                             let mut add = true;
                             for ti in &tops_init {
-                                if ti.id == kf.bone_id && ti.element == kf.element {
+                                if ti.id == kf.bone_id
+                                    && ti.element == kf.element
+                                    && ti.vert_id == kf.vert_id
+                                {
                                     add = false;
                                     break;
                                 }
@@ -262,6 +266,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                                 tops_init.push(AnimTopInit {
                                     id: kf.bone_id,
                                     element: kf.element.clone(),
+                                    vert_id: kf.vert_id,
                                 })
                             }
                         }
