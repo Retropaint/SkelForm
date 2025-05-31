@@ -1157,22 +1157,34 @@ impl Shared {
         let bone_id = self.selected_bone().unwrap().id;
         let frame = self.ui.anim.selected_frame;
 
-        let frame_x = self.check_if_in_keyframe(bone_id, frame, AnimElement::VertPositionX, vert_id);
+        let frame_x =
+            self.check_if_in_keyframe(bone_id, frame, AnimElement::VertPositionX, vert_id);
         self.selected_animation_mut().unwrap().keyframes[frame_x].value = pos.x;
         self.selected_animation_mut().unwrap().keyframes[frame_x].vert_id = vert_id as i32;
 
-        let frame_y = self.check_if_in_keyframe(bone_id, frame, AnimElement::VertPositionY, vert_id);
+        let frame_y =
+            self.check_if_in_keyframe(bone_id, frame, AnimElement::VertPositionY, vert_id);
         self.selected_animation_mut().unwrap().keyframes[frame_y].value = pos.y;
         self.selected_animation_mut().unwrap().keyframes[frame_y].vert_id = vert_id as i32;
     }
 
     /// Return which frame has these attributes, or create a new one
-    fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: AnimElement, vert_id: i32) -> usize {
+    fn check_if_in_keyframe(
+        &mut self,
+        id: i32,
+        frame: i32,
+        element: AnimElement,
+        vert_id: i32,
+    ) -> usize {
         // check if this keyframe exists
         let mut exists_at = usize::MAX;
         for i in 0..self.selected_animation().unwrap().keyframes.len() {
             let kf = &self.selected_animation().unwrap().keyframes[i];
-            if kf.frame == frame && kf.bone_id == id && kf.element == element && kf.vert_id == vert_id {
+            if kf.frame == frame
+                && kf.bone_id == id
+                && kf.element == element
+                && kf.vert_id == vert_id
+            {
                 exists_at = i;
                 break;
             }
@@ -1198,7 +1210,11 @@ impl Shared {
 
         for i in 0..self.selected_animation().unwrap().keyframes.len() {
             let kf = &self.selected_animation().unwrap().keyframes[i];
-            if kf.frame == frame && kf.bone_id == id && kf.element == element && kf.vert_id == vert_id {
+            if kf.frame == frame
+                && kf.bone_id == id
+                && kf.element == element
+                && kf.vert_id == vert_id
+            {
                 return i;
             }
         }
