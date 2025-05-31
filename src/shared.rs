@@ -622,6 +622,8 @@ pub enum AnimElement {
     PivotX,
     PivotY,
     Zindex,
+    VertPositionX,
+    VertPositionY,
 }
 
 pub const ANIM_ICON_ID: [usize; 7] = [0, 0, 1, 2, 2, 3, 3];
@@ -1118,12 +1120,13 @@ impl Shared {
         match element {
             AnimElement::PositionX => { edit!(bone_mut.pos.x);   },
             AnimElement::PositionY => { edit!(bone_mut.pos.y);   },
-            AnimElement::Rotation =>  { edit!(bone_mut.rot);     },
-            AnimElement::ScaleX =>    { edit!(bone_mut.scale.x); },
-            AnimElement::ScaleY =>    { edit!(bone_mut.scale.y); },
-            AnimElement::PivotX =>    { edit!(bone_mut.pivot.x); },
-            AnimElement::PivotY =>    { edit!(bone_mut.pivot.y); },
-            AnimElement::Zindex =>    { edit!(bone_mut.zindex);  },
+            AnimElement::Rotation  => { edit!(bone_mut.rot);     },
+            AnimElement::ScaleX    => { edit!(bone_mut.scale.x); },
+            AnimElement::ScaleY    => { edit!(bone_mut.scale.y); },
+            AnimElement::PivotX    => { edit!(bone_mut.pivot.x); },
+            AnimElement::PivotY    => { edit!(bone_mut.pivot.y); },
+            AnimElement::Zindex    => { edit!(bone_mut.zindex);  },
+            _ => {}
         };
 
         if !self.is_animating() {
@@ -1140,6 +1143,19 @@ impl Shared {
             element.clone(),
         );
         self.selected_animation_mut().unwrap().keyframes[frame].value = value;
+    }
+
+    pub fn edit_vert(&mut self, vert_id: usize, pos: &Vec2) {
+        let bone_id = self.selected_bone().unwrap().id;
+        let frame = self.ui.anim.selected_frame;
+
+        let frame_x = self.check_if_in_keyframe(bone_id, frame, AnimElement::VertPositionX);
+        self.keyframe_at_mut(frame).unwrap().value = pos.x;
+        self.keyframe_at_mut(frame).unwrap().vert_id = vert_id as i32;
+
+        let frame_y = self.check_if_in_keyframe(bone_id, frame, AnimElement::VertPositionY);
+        self.keyframe_at_mut(frame).unwrap().value = pos.y;
+        self.keyframe_at_mut(frame).unwrap().vert_id = vert_id as i32;
     }
 
     /// Return which frame has these attributes, or create a new one
