@@ -580,16 +580,14 @@ pub struct Animation {
 pub struct Keyframe {
     #[serde(default)]
     pub frame: i32,
-    //#[serde(default)]
-    //pub bones: Vec<AnimBone>,
     #[serde(default)]
     pub bone_id: i32,
     #[serde(default)]
-    pub element: AnimElement,
-
-    // Only used in runtimes. Represents the element's index in the enum.
-    #[serde(default)]
     pub element_id: i32,
+    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
+    pub vert_id: i32,
+    #[serde(default)]
+    pub element: AnimElement,
 
     #[serde(default)]
     pub value: f32,
@@ -1167,6 +1165,8 @@ impl Shared {
                 frame,
                 bone_id: id,
                 element: element.clone(),
+                element_id: element.clone() as i32,
+                vert_id: -1,
                 ..Default::default()
             });
 
@@ -1351,4 +1351,8 @@ fn default_neg_one() -> i32 {
 
 fn default_one() -> f32 {
     1.
+}
+
+fn is_neg_one<T: std::cmp::PartialEq<i32>>(value: &T) -> bool {
+    *value == -1
 }
