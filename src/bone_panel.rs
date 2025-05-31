@@ -220,14 +220,19 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             shared.editing_mesh = !shared.editing_mesh;
         }
 
-        if shared.editing_mesh {
-            if ui::button("Reset", ui).clicked() {
-                let tex = &shared.armature.textures[bone.tex_idx as usize];
-                (
-                    shared.selected_bone_mut().unwrap().vertices,
-                    shared.selected_bone_mut().unwrap().indices,
-                ) = renderer::create_tex_rect(tex);
-            }
+        if !shared.editing_mesh {
+            return;
+        }
+
+        let tex_size = shared.armature.textures[bone.tex_idx as usize].size;
+        if ui::button("Center", ui).clicked() {
+            center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
+        }
+        if ui::button("Reset", ui).clicked() {
+            (
+                shared.selected_bone_mut().unwrap().vertices,
+                shared.selected_bone_mut().unwrap().indices,
+            ) = renderer::create_tex_rect(&tex_size);
         }
     });
 
@@ -236,7 +241,8 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     }
 
     ui.horizontal(|ui| {
-        ui.label("Base Index:").on_hover_text("The vertex that all triangles point to");
+        ui.label("Base Index:")
+            .on_hover_text("The vertex that all triangles point to");
         let base = shared.selected_bone().unwrap().indices[0] as f32;
         let (edited, base, _) = ui::float_input("base_index".to_string(), shared, ui, base, 1.);
         if edited {
@@ -246,6 +252,20 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             );
         }
     });
+}
+
+pub fn center_verts(verts: &mut Vec<Vertex>, tex_size: &Vec2) {
+    let mut max = Vec2::default();
+    for v in &mut *verts {
+        max += v.pos;
+    }
+
+    let avg = max / verts.len() as f32;
+    for v in verts {
+        v.pos -= avg;
+        v.pos.x += tex_size.x / 2.;
+        v.pos.y -= tex_size.y / 2.;
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]

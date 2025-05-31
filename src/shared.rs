@@ -1305,7 +1305,7 @@ impl Shared {
             (
                 self.selected_bone_mut().unwrap().vertices,
                 self.selected_bone_mut().unwrap().indices,
-            ) = renderer::create_tex_rect(&self.armature.textures[new_tex_idx]);
+            ) = renderer::create_tex_rect(&self.armature.textures[new_tex_idx].size);
         }
     }
 
@@ -1331,7 +1331,7 @@ impl Shared {
                 (
                     self.selected_bone_mut().unwrap().vertices,
                     self.selected_bone_mut().unwrap().indices,
-                ) = renderer::create_tex_rect(&self.armature.textures[new_tex_idx]);
+                ) = renderer::create_tex_rect(&self.armature.textures[new_tex_idx].size);
             }
         }
 

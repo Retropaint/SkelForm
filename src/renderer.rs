@@ -24,8 +24,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     for bone in &mut shared.armature.bones {
         if bone.tex_idx != -1 && bone.vertices.len() == 0 {
-            let tex = &shared.armature.textures[bone.tex_idx as usize];
-            (bone.vertices, bone.indices) = create_tex_rect(tex);
+            let tex_size = shared.armature.textures[bone.tex_idx as usize].size;
+            (bone.vertices, bone.indices) = create_tex_rect(&tex_size);
         }
     }
 
@@ -452,21 +452,21 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
     .pos;
 }
 
-pub fn create_tex_rect(tex: &Texture) -> (Vec<Vertex>, Vec<u32>) {
+pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
     let mut verts = vec![
         Vertex::default(),
         Vertex {
-            pos: Vec2::new(tex.size.x, 0.),
+            pos: Vec2::new(tex_size.x, 0.),
             uv: Vec2::new(1., 0.),
             color: Color::default(),
         },
         Vertex {
-            pos: Vec2::new(tex.size.x, -tex.size.y),
+            pos: Vec2::new(tex_size.x, -tex_size.y),
             uv: Vec2::new(1., 1.),
             color: Color::default(),
         },
         Vertex {
-            pos: Vec2::new(0., -tex.size.y),
+            pos: Vec2::new(0., -tex_size.y),
             uv: Vec2::new(0., 1.),
             color: Color::default(),
         },
