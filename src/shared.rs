@@ -626,7 +626,16 @@ pub enum AnimElement {
     VertPositionY,
 }
 
-pub const ANIM_ICON_ID: [usize; 7] = [0, 0, 1, 2, 2, 3, 3];
+#[rustfmt::skip]
+pub const ANIM_ICON_ID: [usize; 7] = [
+    0, 
+    0, 
+    1,
+    2, 
+    2, 
+    3,
+    3,
+];
 
 #[derive(Default, Clone, PartialEq)]
 pub enum ActionEnum {
@@ -671,9 +680,9 @@ pub struct BoneTops {
 }
 
 impl BoneTops {
-    pub fn find(&self, id: i32, element: &AnimElement) -> Option<&BoneTop> {
+    pub fn find(&self, id: i32, element: &AnimElement, vert_id: i32) -> Option<&BoneTop> {
         for bt in &self.tops {
-            if bt.id == id && bt.element == *element {
+            if bt.id == id && bt.element == *element && bt.vert_id == vert_id {
                 return Some(bt);
             }
         }
@@ -710,6 +719,7 @@ pub enum EditMode {
 #[derive(Default, PartialEq, Debug)]
 pub struct BoneTop {
     pub id: i32,
+    pub vert_id: i32,
     pub element: AnimElement,
     pub height: f32,
 }

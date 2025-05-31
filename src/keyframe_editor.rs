@@ -272,8 +272,9 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                         }
 
                         let mut last_id = -1;
+                        let mut last_vert_id = -1;
                         for ti in tops_init {
-                            if last_id != ti.id {
+                            if last_id != ti.id || last_vert_id != ti.vert_id {
                                 ui.label(shared.find_bone(ti.id).unwrap().name.clone());
                             }
                             let mut top = 0.;
@@ -283,15 +284,20 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                                 top = label.rect.top();
                             });
                             for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
-                                if kf.bone_id == ti.id && kf.element == ti.element {
+                                if kf.bone_id == ti.id
+                                    && kf.element == ti.element
+                                    && kf.vert_id == ti.vert_id
+                                {
                                     bone_tops.tops.push(BoneTop {
                                         id: kf.bone_id,
                                         element: kf.element.clone(),
                                         height: top,
+                                        vert_id: kf.vert_id,
                                     })
                                 }
                             }
                             last_id = ti.id;
+                            last_vert_id = ti.vert_id;
                         }
                     });
             });
@@ -563,7 +569,7 @@ fn draw_frame_lines(
 
         // the Y position is based on this diamond's respective label
         let top = bone_tops
-            .find(kf.bone_id, &kf.element.clone())
+            .find(kf.bone_id, &kf.element.clone(), kf.vert_id)
             .unwrap()
             .height;
         let x = shared.ui.anim.lines_x[kf.frame as usize] + ui.min_rect().left();
