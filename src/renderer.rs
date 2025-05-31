@@ -404,7 +404,11 @@ pub fn bone_vertices(
             hovering_vert = wv;
             point!(wv, Color::WHITE);
             if shared.input.right_clicked() && world_verts.len() > 4 {
-                shared.selected_bone_mut().unwrap().vertices.remove(wv);
+                let verts = &mut shared.selected_bone_mut().unwrap().vertices;
+                verts.remove(wv);
+                *verts = sort_vertices(verts.clone());
+                shared.selected_bone_mut().unwrap().indices =
+                    setup_indices(&verts, verts.len() as i32 - 1);
                 break;
             }
             if shared.input.is_clicking() {
