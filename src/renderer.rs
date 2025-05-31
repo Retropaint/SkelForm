@@ -114,7 +114,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     if shared.input.mouse_left == -1 {
         shared.dragging_vert = usize::MAX;
     } else if shared.dragging_vert != usize::MAX {
-        drag_vertex(shared, shared.dragging_vert, &temp_bones[shared.selected_bone_idx].pos);
+        drag_vertex(
+            shared,
+            shared.dragging_vert,
+            &temp_bones[shared.selected_bone_idx].pos,
+        );
         return;
     }
 
@@ -429,11 +433,18 @@ pub fn bone_vertices(
 }
 
 pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
+    let mut bone = shared.selected_bone().unwrap().clone();
+
+    // vertex conversion should consider the animated bone position 
+    if shared.is_animating() {
+        bone.pos = *bone_pos;
+    }
+
     // when moving a vertex, it must be interpreted in world coords first to align the with the mouse
     let mut world_vert = con_vert!(
         raw_to_world_vert,
         shared.selected_bone().unwrap().vertices[vert_idx],
-        shared.selected_bone().unwrap(),
+        bone,
         shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize],
         shared
     );
@@ -444,7 +455,7 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
     let vert_pos = con_vert!(
         world_to_raw_vert,
         world_vert,
-        shared.selected_bone().unwrap(),
+        bone,
         shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize],
         shared
     )
@@ -452,10 +463,9 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
 
     if shared.is_animating() {
         let og_vert_pos = shared.selected_bone().unwrap().vertices[vert_idx].pos;
-        shared.edit_vert(
-            shared.dragging_vert as i32,
-            &(vert_pos - og_vert_pos + *bone_pos),
-        );
+        let final_pos = vert_pos - og_vert_pos;
+
+        shared.edit_vert(shared.dragging_vert as i32, &(final_pos));
     } else {
         // after following the mouse, it needs to convert its world coords back to normal
         shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = vert_pos;
