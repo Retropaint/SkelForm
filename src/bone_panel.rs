@@ -223,7 +223,13 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         if !shared.editing_mesh {
             return;
         }
+    });
 
+    if !shared.editing_mesh {
+        return;
+    }
+
+    ui.horizontal(|ui| {
         let tex_size = shared.armature.textures[bone.tex_idx as usize].size;
         if ui::button("Center", ui).clicked() {
             center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
@@ -235,10 +241,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             ) = renderer::create_tex_rect(&tex_size);
         }
     });
-
-    if !shared.editing_mesh {
-        return;
-    }
 
     ui.horizontal(|ui| {
         ui.label("Base Index:")
@@ -255,12 +257,24 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 }
 
 pub fn center_verts(verts: &mut Vec<Vertex>, tex_size: &Vec2) {
+    let mut min = Vec2::default();
     let mut max = Vec2::default();
     for v in &mut *verts {
-        max += v.pos;
+        if v.pos.x < min.x {
+            min.x = v.pos.x;
+        }
+        if v.pos.y < min.y {
+            min.y = v.pos.y
+        }
+        if v.pos.x > max.x {
+            max.x = v.pos.x;
+        }
+        if v.pos.y > max.y {
+            max.y = v.pos.y;
+        }
     }
 
-    let avg = max / verts.len() as f32;
+    let avg = (min + max) / 2.;
     for v in verts {
         v.pos -= avg;
         v.pos.x += tex_size.x / 2.;
