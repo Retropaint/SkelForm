@@ -1157,15 +1157,21 @@ impl Shared {
         let bone_id = self.selected_bone().unwrap().id;
         let frame = self.ui.anim.selected_frame;
 
-        let frame_x =
-            self.check_if_in_keyframe(bone_id, frame, AnimElement::VertPositionX, vert_id);
-        self.selected_animation_mut().unwrap().keyframes[frame_x].value = pos.x;
-        self.selected_animation_mut().unwrap().keyframes[frame_x].vert_id = vert_id as i32;
+        macro_rules! animate {
+            ($element:expr, $value:expr) => {
+                // create 0th frame
+                let first_frame = self.check_if_in_keyframe(bone_id, 0, $element, vert_id);
+                self.selected_animation_mut().unwrap().keyframes[first_frame].vert_id =
+                    vert_id as i32;
 
-        let frame_y =
-            self.check_if_in_keyframe(bone_id, frame, AnimElement::VertPositionY, vert_id);
-        self.selected_animation_mut().unwrap().keyframes[frame_y].value = pos.y;
-        self.selected_animation_mut().unwrap().keyframes[frame_y].vert_id = vert_id as i32;
+                let frame = self.check_if_in_keyframe(bone_id, frame, $element, vert_id);
+                self.selected_animation_mut().unwrap().keyframes[frame].value = $value;
+                self.selected_animation_mut().unwrap().keyframes[frame].vert_id = vert_id as i32;
+            };
+        }
+
+        animate!(AnimElement::VertPositionX, pos.x);
+        animate!(AnimElement::VertPositionY, pos.y);
     }
 
     /// Return which frame has these attributes, or create a new one
