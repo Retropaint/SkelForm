@@ -114,7 +114,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     if shared.input.mouse_left == -1 {
         shared.dragging_vert = usize::MAX;
     } else if shared.dragging_vert != usize::MAX {
-        drag_vertex(shared, shared.dragging_vert);
+        drag_vertex(shared, shared.dragging_vert, &temp_bones[shared.selected_bone_idx].pos);
         return;
     }
 
@@ -428,7 +428,7 @@ pub fn bone_vertices(
     hovering_vert
 }
 
-pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
+pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
     // when moving a vertex, it must be interpreted in world coords first to align the with the mouse
     let mut world_vert = con_vert!(
         raw_to_world_vert,
@@ -452,8 +452,10 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize) {
 
     if shared.is_animating() {
         let og_vert_pos = shared.selected_bone().unwrap().vertices[vert_idx].pos;
-        let pos = shared.selected_bone().unwrap().pos;
-        shared.edit_vert(shared.dragging_vert as i32, &(vert_pos - og_vert_pos + pos));
+        shared.edit_vert(
+            shared.dragging_vert as i32,
+            &(vert_pos - og_vert_pos + *bone_pos),
+        );
     } else {
         // after following the mouse, it needs to convert its world coords back to normal
         shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = vert_pos;
