@@ -252,10 +252,23 @@ fn draw_hover_triangle(
         shared.selected_bone_mut().unwrap().vertices =
             sort_vertices(shared.selected_bone().unwrap().vertices.clone());
 
-        shared.selected_bone_mut().unwrap().indices = setup_indices(
-            &shared.selected_bone().unwrap().vertices,
-            shared.selected_bone().unwrap().vertices.len() as i32 - 1,
-        );
+        // get the new vert's index, then use it as the base
+        let mut vert_idx = 0;
+        for (i, v) in shared
+            .selected_bone_mut()
+            .unwrap()
+            .vertices
+            .iter()
+            .enumerate()
+        {
+            if v.pos == mouse_vert.pos {
+                vert_idx = i;
+                break;
+            }
+        }
+
+        shared.selected_bone_mut().unwrap().indices =
+            setup_indices(&shared.selected_bone().unwrap().vertices, vert_idx as i32);
     }
 }
 
@@ -306,6 +319,7 @@ pub fn setup_indices(verts: &Vec<Vertex>, base: i32) -> Vec<u32> {
         indices.push(v1 as u32);
         indices.push(v2 as u32);
     }
+
     indices
 }
 
@@ -435,7 +449,7 @@ pub fn bone_vertices(
 pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
     let mut bone = shared.selected_bone().unwrap().clone();
 
-    // vertex conversion should consider the animated bone position 
+    // vertex conversion should consider the animated bone position
     if shared.is_animating() {
         bone.pos = *bone_pos;
     }
