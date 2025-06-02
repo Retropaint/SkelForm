@@ -1,6 +1,7 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
 use crate::*;
+use armature_window::find_bone;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
@@ -160,7 +161,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.cursor_icon = egui::CursorIcon::Crosshair;
 
         let bone = &temp_bones[shared.selected_bone_idx];
-        edit_bone(shared, bone);
+        edit_bone(shared, bone, &temp_bones);
     }
 }
 
@@ -328,13 +329,18 @@ pub struct Triangle {
     pub idx: [usize; 3],
 }
 
-pub fn edit_bone(shared: &mut Shared, bone: &Bone) {
+pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
     match shared.edit_mode {
         shared::EditMode::Move => {
             let mut pos = bone.pos;
 
             // offset position by said velocity
             pos -= shared.mouse_vel() * shared.camera.zoom;
+
+            // offset position against parent's 
+            if bone.parent_id != -1 {
+                pos -= find_bone(bones, bone.parent_id).unwrap().pos;
+            }
 
             shared.edit_bone(&AnimElement::PositionX, pos.x, true);
             shared.edit_bone(&AnimElement::PositionY, pos.y, true);
