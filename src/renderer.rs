@@ -859,7 +859,7 @@ pub fn draw_horizontal_line(
 ) {
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: (Vec2::new(-1000., y) - shared.camera.pos) / shared.camera.zoom,
+            pos: (Vec2::new(-5000., y) - shared.camera.pos) / shared.camera.zoom,
             color,
             ..Default::default()
         },
@@ -869,7 +869,7 @@ pub fn draw_horizontal_line(
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(1000., y) - shared.camera.pos) / shared.camera.zoom,
+            pos: (Vec2::new(5000., y) - shared.camera.pos) / shared.camera.zoom,
             color,
             ..Default::default()
         },
@@ -889,7 +889,7 @@ pub fn draw_vertical_line(
     let aspect_ratio = shared.window.y / shared.window.x;
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: (Vec2::new(x, -1000.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
+            pos: (Vec2::new(x, -5000.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
             color,
             ..Default::default()
         },
@@ -899,7 +899,7 @@ pub fn draw_vertical_line(
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(x, 1000.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
+            pos: (Vec2::new(x, 5000.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
             color,
             ..Default::default()
         },
