@@ -14,7 +14,7 @@ macro_rules! con_vert {
             $shared.camera.zoom,
             Some(&$tex),
             1.,
-            0.005,
+            1.,
         )
     };
 }
@@ -70,6 +70,24 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // draw bone
     for b in 0..temp_bones.len() {
+        let vert = Vertex {
+            pos: temp_bones[b].pos,
+            ..Default::default()
+        };
+        if false {
+            println!(
+                "{}",
+                con_vert!(
+                    world_to_raw_vert,
+                    vert,
+                    temp_bones[b],
+                    shared.armature.textures[temp_bones[b].tex_idx as usize],
+                    shared
+                )
+                .pos / 800.,
+            );
+        }
+
         let mut world_verts: Vec<Vertex> = vec![];
         for vert in &temp_bones[b].vertices {
             let mut new_vert = con_vert!(
@@ -90,7 +108,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             selected_bone_world_verts = world_verts.clone();
         }
 
-        draw_bone(&temp_bones[b], render_pass, device, &world_verts, shared);
+        draw_bone(
+            &temp_bones[b],
+            render_pass,
+            device,
+            &world_verts,
+            shared,
+        );
 
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
         if shared.editing_mesh && b == shared.selected_bone_idx {
@@ -337,7 +361,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             // offset position by said velocity
             pos -= shared.mouse_vel() * shared.camera.zoom;
 
-            // offset position against parent's 
+            // offset position against parent's
             if bone.parent_id != -1 {
                 pos -= find_bone(bones, bone.parent_id).unwrap().pos;
             }
@@ -530,7 +554,7 @@ fn draw_point(
         return vec![];
     }
 
-    let point_size = 0.1;
+    let point_size = 10.;
     let mut temp_point_verts: [Vertex; 4] = [
         Vertex {
             pos: Vec2::new(-point_size, point_size),
@@ -771,7 +795,7 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
 
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
-    let gap = 2.;
+    let gap = 100.;
     let width = 0.005 * shared.camera.zoom;
     let regular_color = Color::new(0.5, 0.5, 0.5, 0.25);
     let highlight_color = Color::new(0.7, 0.7, 0.7, 1.);
@@ -835,7 +859,7 @@ pub fn draw_horizontal_line(
 ) {
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: (Vec2::new(-200., y) - shared.camera.pos) / shared.camera.zoom,
+            pos: (Vec2::new(-1000., y) - shared.camera.pos) / shared.camera.zoom,
             color,
             ..Default::default()
         },
@@ -845,7 +869,7 @@ pub fn draw_horizontal_line(
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(200., y) - shared.camera.pos) / shared.camera.zoom,
+            pos: (Vec2::new(1000., y) - shared.camera.pos) / shared.camera.zoom,
             color,
             ..Default::default()
         },
@@ -865,7 +889,7 @@ pub fn draw_vertical_line(
     let aspect_ratio = shared.window.y / shared.window.x;
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: (Vec2::new(x, -200.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
+            pos: (Vec2::new(x, -1000.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
             color,
             ..Default::default()
         },
@@ -875,7 +899,7 @@ pub fn draw_vertical_line(
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(x, 200.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
+            pos: (Vec2::new(x, 1000.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
             color,
             ..Default::default()
         },

@@ -34,7 +34,7 @@ fn init_shared(shared: &mut Shared) {
     shared.selected_bone_idx = usize::MAX;
     shared.input.mouse_left = -1;
     shared.debug = false;
-    shared.camera.zoom = 5.;
+    shared.camera.zoom = 500.;
     shared.ui.anim.selected = usize::MAX;
     shared.ui.anim.timeline_zoom = 1.;
     shared.ui.anim.exported_frame = "".to_string();
