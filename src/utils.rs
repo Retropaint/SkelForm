@@ -378,7 +378,7 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
                 *shared.find_bone_mut(action.id).unwrap() = action.bone.clone();
 
                 for i in 0..shared.armature.bones.len() {
-                    shared.organize_bone(i);
+                    //shared.organize_bone(i);
                 }
             }
         }
