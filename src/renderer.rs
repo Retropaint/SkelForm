@@ -330,13 +330,12 @@ pub fn setup_indices(verts: &Vec<Vertex>, base: i32) -> Vec<u32> {
         }
 
         // remove redundant verts
-        if base as usize == v1 || v1 == v2 || v2 == base as usize {
+        if base as usize != v1 && v1 != v2 && v2 != base as usize {
+            indices.push(base as u32);
+            indices.push(v1 as u32);
+            indices.push(v2 as u32);
             continue;
         }
-
-        indices.push(base as u32);
-        indices.push(v1 as u32);
-        indices.push(v2 as u32);
     }
 
     indices
@@ -352,10 +351,10 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
         shared::EditMode::Move => {
             let mut pos = bone.pos;
 
-            // offset position by said velocity
+            // move position with mouse velocity
             pos -= shared.mouse_vel() * shared.camera.zoom;
 
-            // offset position against parent
+            // restore universal position, by offsetting against parents' attributes
             if bone.parent_id != -1 {
                 pos -= find_bone(bones, bone.parent_id).unwrap().pos;
                 pos = utils::rotate(&pos, -find_bone(bones, bone.parent_id).unwrap().rot);
