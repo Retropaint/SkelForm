@@ -5,7 +5,7 @@ use crate::*;
 use winit::keyboard::*;
 
 pub fn keyboard_shortcuts(shared: &mut Shared) {
-    let camera_zoom_speed = 0.05;
+    let camera_zoom_speed = 10.;
     #[cfg(not(target_arch = "wasm32"))]
     let ui_zoom_speed = 0.01;
 
