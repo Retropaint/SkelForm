@@ -316,7 +316,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                 //draw_connecting_lines(shared, ui);
 
                 for i in 0..shared.selected_animation().unwrap().keyframes.len() {
-                    let frame = shared.keyframe(i).unwrap().frame;
+                    let frame = shared.selected_animation().unwrap().keyframes[i].frame;
 
                     // don't draw diamond if it's beyond the recorded lines
                     if shared.ui.anim.lines_x.len() - 1 < frame as usize {
