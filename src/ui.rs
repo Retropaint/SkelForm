@@ -654,6 +654,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
             let mut offset = 0.;
             let mut height = 0.;
             let mut current_height = 0.;
+            let mut tex_idx = -1;
             for i in 0..shared.ui.texture_images.len() {
                 // limit size
                 let mut size = shared.armature.textures[i].size;
@@ -683,6 +684,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
 
                 // show highlight on hover
                 if response.hovered() {
+                    tex_idx = i as i32;
                     ui.painter_at(ui.min_rect()).rect_filled(
                         rect,
                         egui::CornerRadius::ZERO,
@@ -712,6 +714,19 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                     current_height += height;
                     height = 0.;
                 }
+            }
+
+            ui.add_space(ui.available_height() - 15.);
+
+            if tex_idx != -1 {
+                let tex = &shared.armature.textures[tex_idx as usize];
+                let name = tex.name.to_string();
+                let size = "(".to_string()
+                    + &tex.size.x.to_string()
+                    + ", "
+                    + &tex.size.y.to_string()
+                    + ")";
+                ui.label(name + ", " + &size);
             }
         });
 }
