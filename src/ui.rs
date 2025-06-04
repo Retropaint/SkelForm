@@ -716,19 +716,40 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                 }
             }
 
-            ui.add_space(ui.available_height() - 15.);
-
-            if tex_idx != -1 {
-                let tex = &shared.armature.textures[tex_idx as usize];
-                let name = tex.name.to_string();
-                let size = "(".to_string()
-                    + &tex.size.x.to_string()
-                    + ", "
-                    + &tex.size.y.to_string()
-                    + ")";
-                ui.label(name + ", " + &size);
+            if tex_idx == -1 {
+                return;
             }
+
+            // show image info at bottom left of modal
+
+            let labels = 2;
+            let label_heights = (15 * labels) as f32;
+            let label_gaps = (2 * labels) as f32;
+            ui.add_space(ui.available_height() - (label_heights + label_gaps));
+
+            let tex = &shared.armature.textures[tex_idx as usize];
+
+            let mut name = egui::text::LayoutJob::default();
+            job_text("Name: ", Some(Color32::WHITE), &mut name);
+            job_text(&tex.name, None, &mut name);
+            let mut size = egui::text::LayoutJob::default();
+            job_text("Size: ", Some(Color32::WHITE), &mut size);
+            job_text(
+                &(tex.size.x.to_string() + " x " + &tex.size.y.to_string()),
+                None,
+                &mut size,
+            );
+            ui.label(name);
+            ui.label(size);
         });
+}
+
+pub fn job_text(str: &str, color: Option<Color32>, job: &mut egui::text::LayoutJob) {
+    let mut format = egui::TextFormat::default();
+    if color != None {
+        format.color = color.unwrap();
+    }
+    job.append(&str.to_string(), 0.0, format)
 }
 
 pub fn top_bar_button(
