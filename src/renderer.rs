@@ -355,9 +355,10 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             // offset position by said velocity
             pos -= shared.mouse_vel() * shared.camera.zoom;
 
-            // offset position against parent's
+            // offset position against parent
             if bone.parent_id != -1 {
                 pos -= find_bone(bones, bone.parent_id).unwrap().pos;
+                pos = utils::rotate(&pos, -find_bone(bones, bone.parent_id).unwrap().rot);
             }
 
             shared.edit_bone(&AnimElement::PositionX, pos.x, true);
