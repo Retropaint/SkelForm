@@ -108,13 +108,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             selected_bone_world_verts = world_verts.clone();
         }
 
-        draw_bone(
-            &temp_bones[b],
-            render_pass,
-            device,
-            &world_verts,
-            shared,
-        );
+        draw_bone(&temp_bones[b], render_pass, device, &world_verts, shared);
 
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
         if shared.editing_mesh && b == shared.selected_bone_idx {
@@ -184,7 +178,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         shared.cursor_icon = egui::CursorIcon::Crosshair;
 
-        let bone = &temp_bones[shared.selected_bone_idx];
+        let bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap();
         edit_bone(shared, bone, &temp_bones);
     }
 }
