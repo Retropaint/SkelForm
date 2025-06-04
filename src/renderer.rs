@@ -247,48 +247,50 @@ fn draw_hover_triangle(
     );
     render_pass.draw_indexed(0..3, 0, 0..1);
 
-    if shared.selected_bone() != None
-        && shared.input.clicked()
-        && !shared.input.on_ui
-        && shared.editing_mesh
+    if shared.selected_bone() == None
+        || !shared.input.clicked()
+        || shared.input.on_ui
+        || !shared.editing_mesh
     {
-        shared.undo_actions.push(Action {
-            action: ActionEnum::Bone,
-            action_type: ActionType::Edited,
-            bone: shared.selected_bone().unwrap().clone(),
-            id: shared.selected_bone().unwrap().id,
-            ..Default::default()
-        });
-
-        // add new vertex
-        mouse_vert.uv = (world_verts[closest_vert1].uv + world_verts[closest_vert2].uv) / 2.;
-        shared
-            .selected_bone_mut()
-            .unwrap()
-            .vertices
-            .push(mouse_vert);
-
-        shared.selected_bone_mut().unwrap().vertices =
-            sort_vertices(shared.selected_bone().unwrap().vertices.clone());
-
-        // get the new vert's index, then use it as the base
-        let mut vert_idx = 0;
-        for (i, v) in shared
-            .selected_bone_mut()
-            .unwrap()
-            .vertices
-            .iter()
-            .enumerate()
-        {
-            if v.pos == mouse_vert.pos {
-                vert_idx = i;
-                break;
-            }
-        }
-
-        shared.selected_bone_mut().unwrap().indices =
-            setup_indices(&shared.selected_bone().unwrap().vertices, vert_idx as i32);
+        return;
     }
+
+    shared.undo_actions.push(Action {
+        action: ActionEnum::Bone,
+        action_type: ActionType::Edited,
+        bone: shared.selected_bone().unwrap().clone(),
+        id: shared.selected_bone().unwrap().id,
+        ..Default::default()
+    });
+
+    // add new vertex
+    mouse_vert.uv = (world_verts[closest_vert1].uv + world_verts[closest_vert2].uv) / 2.;
+    shared
+        .selected_bone_mut()
+        .unwrap()
+        .vertices
+        .push(mouse_vert);
+
+    shared.selected_bone_mut().unwrap().vertices =
+        sort_vertices(shared.selected_bone().unwrap().vertices.clone());
+
+    // get the new vert's index, then use it as the base
+    let mut vert_idx = 0;
+    for (i, v) in shared
+        .selected_bone_mut()
+        .unwrap()
+        .vertices
+        .iter()
+        .enumerate()
+    {
+        if v.pos == mouse_vert.pos {
+            vert_idx = i;
+            break;
+        }
+    }
+
+    shared.selected_bone_mut().unwrap().indices =
+        setup_indices(&shared.selected_bone().unwrap().vertices, vert_idx as i32);
 }
 
 /// sort vertices in cw (or ccw?) order
@@ -382,7 +384,7 @@ pub fn inherit_from_parent(mut child: Bone, parent: &Bone) -> Bone {
     // adjust bone's position based on parent's scale
     child.pos *= parent.scale;
 
-    // rotate such that it will orbit the parent once it's position is inherited
+    // rotate such that it will orbit the parent
     child.pos = utils::rotate(&child.pos, parent.rot);
 
     // inherit position from parent
@@ -442,28 +444,30 @@ pub fn bone_vertices(
     for wv in 0..world_verts.len() {
         let point = point!(wv, Color::GREEN);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
-        if !shared.input.on_ui && mouse_on_it && shared.dragging_vert == usize::MAX {
-            hovering_vert = wv;
-            point!(wv, Color::WHITE);
-            if shared.input.right_clicked() && world_verts.len() > 4 {
-                let verts = &mut shared.selected_bone_mut().unwrap().vertices;
-                verts.remove(wv);
-                *verts = sort_vertices(verts.clone());
-                shared.selected_bone_mut().unwrap().indices =
-                    setup_indices(&verts, verts.len() as i32 - 1);
-                break;
-            }
-            if shared.input.is_clicking() {
-                shared.undo_actions.push(Action {
-                    action: ActionEnum::Bone,
-                    action_type: ActionType::Edited,
-                    bone: shared.selected_bone().unwrap().clone(),
-                    id: shared.selected_bone().unwrap().id,
-                    ..Default::default()
-                });
-                shared.dragging_vert = wv;
-                break;
-            }
+        if shared.input.on_ui || !mouse_on_it || shared.dragging_vert != usize::MAX {
+            continue;
+        }
+
+        hovering_vert = wv;
+        point!(wv, Color::WHITE);
+        if shared.input.right_clicked() && world_verts.len() > 4 {
+            let verts = &mut shared.selected_bone_mut().unwrap().vertices;
+            verts.remove(wv);
+            *verts = sort_vertices(verts.clone());
+            shared.selected_bone_mut().unwrap().indices =
+                setup_indices(&verts, verts.len() as i32 - 1);
+            break;
+        }
+        if shared.input.is_clicking() {
+            shared.undo_actions.push(Action {
+                action: ActionEnum::Bone,
+                action_type: ActionType::Edited,
+                bone: shared.selected_bone().unwrap().clone(),
+                id: shared.selected_bone().unwrap().id,
+                ..Default::default()
+            });
+            shared.dragging_vert = wv;
+            break;
         }
     }
 
