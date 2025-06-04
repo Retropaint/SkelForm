@@ -966,13 +966,8 @@ impl Shared {
         let mut transition: Transition = Transition::Linear;
 
         // get most previous frame with this element
-        for (i, kf) in self
-            .selected_animation()
-            .unwrap()
-            .keyframes
-            .iter()
-            .enumerate()
-        {
+        let keyframes = &self.selected_animation().unwrap().keyframes;
+        for (i, kf) in keyframes.iter().enumerate() {
             if self.selected_animation().unwrap().keyframes[i].frame > frame {
                 break;
             }
@@ -986,14 +981,7 @@ impl Shared {
         }
 
         // get first next frame with this element
-        for (i, kf) in self
-            .selected_animation()
-            .unwrap()
-            .keyframes
-            .iter()
-            .enumerate()
-            .rev()
-        {
+        for (i, kf) in keyframes.iter().enumerate().rev() {
             if self.selected_animation().unwrap().keyframes[i].frame < frame {
                 break;
             }
@@ -1138,15 +1126,20 @@ impl Shared {
         element: AnimElement,
         vert_id: i32,
     ) -> usize {
+        macro_rules! is_same_frame {
+            ($kf:expr) => {
+                $kf.frame == frame
+                    && $kf.bone_id == id
+                    && $kf.element == element
+                    && $kf.vert_id == vert_id
+            };
+        }
+
         // check if this keyframe exists
         let mut exists_at = usize::MAX;
         for i in 0..self.selected_animation().unwrap().keyframes.len() {
             let kf = &self.selected_animation().unwrap().keyframes[i];
-            if kf.frame == frame
-                && kf.bone_id == id
-                && kf.element == element
-                && kf.vert_id == vert_id
-            {
+            if is_same_frame!(kf) {
                 exists_at = i;
                 break;
             }
@@ -1172,11 +1165,7 @@ impl Shared {
 
         for i in 0..self.selected_animation().unwrap().keyframes.len() {
             let kf = &self.selected_animation().unwrap().keyframes[i];
-            if kf.frame == frame
-                && kf.bone_id == id
-                && kf.element == element
-                && kf.vert_id == vert_id
-            {
+            if is_same_frame!(kf) {
                 return i;
             }
         }
