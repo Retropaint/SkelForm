@@ -85,7 +85,7 @@ pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
 
         // this is actually the touch pad
         MouseScrollDelta::PixelDelta(pos) => {
-            shared.camera.pos += Vec2::new(-pos.x as f32, pos.y as f32) / sens_reducer;
+            shared.camera.pos += Vec2::new(-pos.x as f32, pos.y as f32);
         }
     }
 }
