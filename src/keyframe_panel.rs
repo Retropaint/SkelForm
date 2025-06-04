@@ -12,8 +12,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             return;
         }
 
-        println!("test");
-
         let mut transition = Transition::default();
         let frame = shared.ui.anim.selected_frame;
         for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
