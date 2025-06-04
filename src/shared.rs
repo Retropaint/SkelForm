@@ -1122,7 +1122,7 @@ impl Shared {
                 if !is_animating {
                     $field = value;
                 } else if overwrite {
-                    // if overwriting, modify the value such that it will return to the current field's value on animating
+                    // offset value by its field, so it's effectively overwritten
                     match(element) {
                         AnimElement::ScaleX | AnimElement::ScaleY=> value /= $field,
                         _ => value -= $field
