@@ -805,29 +805,6 @@ impl Shared {
         Some(&mut self.armature.animations[self.ui.anim.selected])
     }
 
-    pub fn selected_keyframe(&self) -> Option<&Keyframe> {
-        if self.selected_animation() == None {
-            return None;
-        }
-        let frame = self.ui.anim.selected_frame;
-        for kf in &self.selected_animation().unwrap().keyframes {
-            if kf.frame == frame {
-                return Some(kf);
-            }
-        }
-        None
-    }
-
-    pub fn selected_keyframe_mut(&mut self) -> Option<&mut Keyframe> {
-        let frame = self.ui.anim.selected_frame;
-        for kf in &mut self.selected_animation_mut().unwrap().keyframes {
-            if kf.frame == frame {
-                return Some(kf);
-            }
-        }
-        None
-    }
-
     pub fn unselect_everything(&mut self) {
         self.selected_bone_idx = usize::MAX;
         self.ui.anim.selected_frame = 0;
@@ -871,42 +848,11 @@ impl Shared {
         self.selected_animation().unwrap().keyframes.last()
     }
 
-    pub fn last_keyframe_mut(&mut self) -> Option<&mut Keyframe> {
-        self.selected_animation_mut().unwrap().keyframes.last_mut()
-    }
-
-    pub fn keyframe(&self, idx: usize) -> Option<&Keyframe> {
-        if idx > self.selected_animation().unwrap().keyframes.len() - 1 {
-            return None;
-        }
-        Some(&self.selected_animation().unwrap().keyframes[idx])
-    }
-
     pub fn keyframe_mut(&mut self, idx: usize) -> Option<&mut Keyframe> {
         if idx > self.selected_animation().unwrap().keyframes.len() - 1 {
             return None;
         }
         Some(&mut self.selected_animation_mut().unwrap().keyframes[idx])
-    }
-
-    pub fn keyframe_at(&self, frame: i32) -> Option<&Keyframe> {
-        for kf in &self.selected_animation().unwrap().keyframes {
-            if kf.frame == frame {
-                return Some(&kf);
-            }
-        }
-
-        None
-    }
-
-    pub fn keyframe_at_mut(&mut self, frame: i32) -> Option<&mut Keyframe> {
-        for kf in &mut self.selected_animation_mut().unwrap().keyframes {
-            if kf.frame == frame {
-                return Some(kf);
-            }
-        }
-
-        None
     }
 
     pub fn selected_bone(&self) -> Option<&Bone> {
@@ -1123,9 +1069,9 @@ impl Shared {
                     $field = value;
                 } else if overwrite {
                     // offset value by its field, so it's effectively overwritten
-                    match(element) {
-                        AnimElement::ScaleX | AnimElement::ScaleY=> value /= $field,
-                        _ => value -= $field
+                    match (element) {
+                        AnimElement::ScaleX | AnimElement::ScaleY => value /= $field,
+                        _ => value -= $field,
                     }
                 }
             };

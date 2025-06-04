@@ -6,13 +6,22 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label("Transition:");
 
-        if shared.selected_keyframe() == None
+        if shared.ui.anim.selected_frame == -1
             || shared.selected_animation().unwrap().keyframes.len() == 0
         {
             return;
         }
 
-        let mut transition = shared.selected_keyframe_mut().unwrap().transition.clone();
+        println!("test");
+
+        let mut transition = Transition::default();
+        let frame = shared.ui.anim.selected_frame;
+        for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
+            if kf.frame == frame {
+                kf.transition = transition.clone();
+            }
+        }
+
         let og_transition = transition.clone();
 
         macro_rules! transition {
