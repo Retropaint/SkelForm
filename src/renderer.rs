@@ -855,19 +855,22 @@ pub fn draw_horizontal_line(
     shared: &Shared,
     color: Color,
 ) {
+    let edge = shared.camera.zoom * 5.;
+    let camera_pos = shared.camera.pos;
+    let camera_zoom = shared.camera.zoom;
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: (Vec2::new(-5000., y) - shared.camera.pos) / shared.camera.zoom,
+            pos: (Vec2::new(camera_pos.x - edge, y) - camera_pos) / camera_zoom,
             color,
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(0., width + y) - shared.camera.pos) / shared.camera.zoom,
+            pos: (Vec2::new(camera_pos.x, width + y) - camera_pos) / camera_zoom,
             color,
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(5000., y) - shared.camera.pos) / shared.camera.zoom,
+            pos: (Vec2::new(camera_pos.x + edge, y) - camera_pos) / camera_zoom,
             color,
             ..Default::default()
         },
@@ -885,19 +888,22 @@ pub fn draw_vertical_line(
     color: Color,
 ) {
     let aspect_ratio = shared.window.y / shared.window.x;
+    let edge = shared.camera.zoom * 5.;
+    let camera_pos = shared.camera.pos;
+    let camera_zoom = shared.camera.zoom;
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: (Vec2::new(x, -5000.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
+            pos: (Vec2::new(x, camera_pos.y - edge) - camera_pos) / camera_zoom * aspect_ratio,
             color,
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(width + x, 0.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
+            pos: (Vec2::new(width + x, camera_pos.y) - camera_pos) / camera_zoom * aspect_ratio,
             color,
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(x, 5000.) - shared.camera.pos) / shared.camera.zoom * aspect_ratio,
+            pos: (Vec2::new(x, camera_pos.y + edge) - camera_pos) / camera_zoom * aspect_ratio,
             color,
             ..Default::default()
         },
