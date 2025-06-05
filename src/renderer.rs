@@ -793,7 +793,7 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
 
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
-    let gap = 100.;
+    let gap = 250.;
     let width = 0.005 * shared.camera.zoom;
     let regular_color = Color::new(0.5, 0.5, 0.5, 0.25);
     let highlight_color = Color::new(0.7, 0.7, 0.7, 1.);
