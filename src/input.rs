@@ -64,6 +64,7 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
             //} else {
             //    utils::save(shared.save_path.clone(), shared);
             //}
+            shared.input.remove_key(&KeyCode::SuperLeft);
         }
 
         // open
@@ -72,7 +73,9 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
             utils::open_import_dialog();
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
+            shared.input.remove_key(&KeyCode::SuperLeft);
         }
+
     }
 }
 
