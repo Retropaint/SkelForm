@@ -159,7 +159,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // mouse related stuff
 
     // move camera
-    if shared.input.is_pressing(KeyCode::SuperLeft)
+    if shared.input.is_pressing(KeyCode::SuperLeft) && !shared.input.on_ui
         || shared.selected_bone_idx == usize::MAX && !shared.input.on_ui
     {
         shared.camera.pos += shared.mouse_vel() * shared.camera.zoom;
