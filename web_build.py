@@ -11,10 +11,10 @@ default_build = features + generic
 parser = argparse.ArgumentParser(prog='SkelForm Web Builder', description='Build script for SkelForm\'s web (WASM) version.', epilog="Default build command:\ntrunk build " + default_build)
 
 # arguments
-parser.add_argument('-s', '--serve', action='store_true', help="Automatically run localhost:8000 after build.")
-parser.add_argument('-r', '--release', action='store_true', help="Build for release/production.")
-parser.add_argument('-m', '--mobile', action='store_true', help="Build for mobile.")
-parser.add_argument('-d', '--debug', action='store_true', help="Build with debug flag. Ignored if --release is present.")
+parser.add_argument('-s', '--serve', action='store_true', help="automatically run localhost:8000 after build")
+parser.add_argument('-r', '--release', action='store_true', help="build for release/production")
+parser.add_argument('-m', '--mobile', action='store_true', help="build for mobile")
+parser.add_argument('-d', '--debug', action='store_true', help="build with debug flag. Ignored if --release is present")
 
 args = parser.parse_args()
 
