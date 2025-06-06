@@ -515,10 +515,10 @@ pub struct Bone {
     #[serde(default = "default_neg_one")]
     pub tex_idx: i32,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "are_verts_empty")]
     pub vertices: Vec<Vertex>,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "are_indices_empty")]
     pub indices: Vec<u32>,
 
     /// used to properly offset bone's movement to counteract it's parent
@@ -1336,6 +1336,8 @@ impl Shared {
     }
 }
 
+// serde stuff
+
 fn default_neg_one() -> i32 {
     -1
 }
@@ -1346,4 +1348,12 @@ fn default_one() -> f32 {
 
 fn is_neg_one<T: std::cmp::PartialEq<i32>>(value: &T) -> bool {
     *value == -1
+}
+
+fn are_verts_empty<T: std::cmp::PartialEq<Vec<Vertex>>>(value: &T) -> bool {
+    *value == vec![]
+}
+
+fn are_indices_empty<T: std::cmp::PartialEq<Vec<u32>>>(value: &T) -> bool {
+    *value == vec![]
 }
