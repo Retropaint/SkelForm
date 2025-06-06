@@ -37,35 +37,29 @@ pub const EXPORT_VID_DONE: &str = "Done!";
 pub const IMPORT_IMG_ERR: &str = "Could not extract image data.";
 
 pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Context) {
-    if let Some(_) = renderer.as_ref() {
-        file_reader::read_image_loaders(
-            shared,
-            &renderer.as_ref().unwrap().gpu.queue,
-            &renderer.as_ref().unwrap().gpu.device,
-            &renderer.as_ref().unwrap().bind_group_layout,
-            context,
-        );
-
-        #[cfg(target_arch = "wasm32")]
-        load_file(
-            shared,
-            &renderer.as_ref().unwrap().gpu.queue,
-            &renderer.as_ref().unwrap().gpu.device,
-            &renderer.as_ref().unwrap().bind_group_layout,
-            context,
-        );
-
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            file_reader::read_save(shared);
-            file_reader::read_import(
+    macro_rules! func {
+        ($func:expr) => {
+            $func(
                 shared,
                 &renderer.as_ref().unwrap().gpu.queue,
                 &renderer.as_ref().unwrap().gpu.device,
                 &renderer.as_ref().unwrap().bind_group_layout,
                 context,
-            );
-            file_reader::read_exported_video_frame(shared);
+            )
+        };
+    }
+
+    if let Some(_) = renderer.as_ref() {
+        func!(read_image_loaders);
+
+        #[cfg(target_arch = "wasm32")]
+        func!(load_file);
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            read_save(shared);
+            func!(read_import);
+            read_exported_video_frame(shared);
         }
     }
 }
