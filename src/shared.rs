@@ -541,7 +541,7 @@ pub struct Bone {
 pub struct Armature {
     #[serde(default)]
     pub bones: Vec<Bone>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
     #[serde(default)]
     pub textures: Vec<Texture>,
@@ -1355,5 +1355,9 @@ fn are_verts_empty<T: std::cmp::PartialEq<Vec<Vertex>>>(value: &T) -> bool {
 }
 
 fn are_indices_empty<T: std::cmp::PartialEq<Vec<u32>>>(value: &T) -> bool {
+    *value == vec![]
+}
+
+fn are_anims_empty<T: std::cmp::PartialEq<Vec<Animation>>>(value: &T) -> bool {
     *value == vec![]
 }
