@@ -248,7 +248,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.menu_button("File", |ui| {
         if top_bar_button(ui, "Open", "O", &mut offset).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_import_dialog();
+            utils::open_import_dialog(TEMP_IMPORT_PATH.to_string());
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
             ui.close_menu();

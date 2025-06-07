@@ -283,7 +283,7 @@ pub fn open_file_dialog() {
     #[cfg(not(target_arch = "wasm32"))]
     thread::spawn(move || {
         let task = rfd::FileDialog::new()
-            .add_filter("image", &["png", "jpg"])
+            .add_filter("image", &["png", "jpg", "tif"])
             .pick_file();
         if task == None {
             return;

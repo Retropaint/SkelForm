@@ -123,9 +123,10 @@ pub fn to_vec2(f: f32) -> Vec2 {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn open_save_dialog() {
-    #[cfg(not(target_arch = "wasm32"))]
     std::thread::spawn(move || {
-        let task = rfd::FileDialog::new().save_file();
+        let task = rfd::FileDialog::new()
+            .add_filter("SkelForm Armature", &["skf"])
+            .save_file();
         if task == None {
             return;
         }
@@ -134,14 +135,16 @@ pub fn open_save_dialog() {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_import_dialog() {
-    #[cfg(not(target_arch = "wasm32"))]
+pub fn open_import_dialog(temp_file_to_write: String) {
     std::thread::spawn(move || {
         let task = rfd::FileDialog::new().pick_file();
         if task == None {
             return;
         }
-        file_reader::create_temp_file(TEMP_IMPORT_PATH, task.unwrap().as_path().to_str().unwrap());
+        file_reader::create_temp_file(
+            &temp_file_to_write,
+            task.unwrap().as_path().to_str().unwrap(),
+        );
     });
 }
 
@@ -153,10 +156,10 @@ pub fn save(path: String, shared: &mut Shared) {
     let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
 
     let options =
-        zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+        zip::write::FullFileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
     // save armature json and texture image
-    zip.start_file("armature.json", options).unwrap();
+    zip.start_file("armature.json", options.clone()).unwrap();
     zip.write(armatures_json.as_bytes()).unwrap();
     if size != Vec2::ZERO {
         zip.start_file("textures.png", options).unwrap();
@@ -277,6 +280,7 @@ pub fn prepare_files(shared: &mut Shared) -> (Vec2, String, Vec<u8>) {
 }
 
 pub fn import<R: Read + std::io::Seek>(
+    path: &str,
     data: R,
     shared: &mut crate::Shared,
     queue: &wgpu::Queue,
@@ -285,8 +289,20 @@ pub fn import<R: Read + std::io::Seek>(
     context: &egui::Context,
 ) {
     let mut zip = zip::ZipArchive::new(data);
+    let mut ok = false;
     if let Ok(_) = zip {
-    } else {
+        ok = true;
+    }
+    let ext = path.split('.').last().unwrap();
+    if ext != "skf" {
+        ok = false;
+        if ext == "psd" {
+            file_reader::create_temp_file(&TEMP_IMPORT_TIFF_PATH, path);
+            return;
+        }
+    }
+
+    if !ok {
         shared
             .ui
             .open_modal("That's not a SkelForm armature!".to_string(), false);

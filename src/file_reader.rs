@@ -1,6 +1,8 @@
 //! Reading uploaded images to turn into textures.
 // test
 
+use std::any::Any;
+
 use wgpu::*;
 
 use crate::*;
@@ -21,15 +23,17 @@ macro_rules! temp_file {
     };
 }
 
-#[rustfmt::skip] temp_file!(TEMP_IMG_PATH,        ".skelform_img_path");
-#[rustfmt::skip] temp_file!(TEMP_SAVE_PATH,       ".skelform_save_path");
-#[rustfmt::skip] temp_file!(TEMP_EXPORT_VID_TEXT, ".skelform_export_vid_text");
-#[rustfmt::skip] temp_file!(TEMP_IMPORT_PATH,     ".skelform_import_path");
+#[rustfmt::skip] temp_file!(TEMP_IMG_PATH,         ".skelform_img_path");
+#[rustfmt::skip] temp_file!(TEMP_SAVE_PATH,        ".skelform_save_path");
+#[rustfmt::skip] temp_file!(TEMP_EXPORT_VID_TEXT,  ".skelform_export_vid_text");
+#[rustfmt::skip] temp_file!(TEMP_IMPORT_PATH,      ".skelform_import_path");
+#[rustfmt::skip] temp_file!(TEMP_IMPORT_TIFF_PATH, ".skelform_import_tiff_path");
 
-pub const FILES: [&str; 4] = [
+pub const FILES: [&str; 5] = [
     TEMP_IMG_PATH,
     TEMP_SAVE_PATH,
     TEMP_IMPORT_PATH,
+    TEMP_IMPORT_TIFF_PATH,
     TEMP_EXPORT_VID_TEXT,
 ];
 
@@ -51,6 +55,7 @@ pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Co
 
     if let Some(_) = renderer.as_ref() {
         func!(read_image_loaders);
+        func!(read_psd);
 
         #[cfg(target_arch = "wasm32")]
         func!(load_file);
@@ -140,34 +145,124 @@ pub fn read_image_loaders(
         }
     }
 
-    // add this texture to bind_groups array
+    add_texture(
+        pixels,
+        dimensions,
+        &name,
+        shared,
+        queue,
+        device,
+        bind_group_layout,
+        ctx,
+    );
+
+    let tex_idx = shared.armature.textures.len() - 1;
+    shared.set_bone_tex(tex_idx);
+
+    shared.start_next_tutorial_step(TutorialStep::EditBoneX);
+}
+
+pub fn read_psd(
+    shared: &mut Shared,
+    queue: &Queue,
+    device: &Device,
+    bind_group_layout: &BindGroupLayout,
+    ctx: &egui::Context,
+) {
+    if !fs::exists(TEMP_IMPORT_TIFF_PATH).unwrap() {
+        return;
+    }
+
+    shared.unselect_everything();
+    shared.armature = Armature::default();
+
+    let psd_file_path = fs::read_to_string(TEMP_IMPORT_TIFF_PATH).unwrap();
+
+    let psd_file = std::fs::read(psd_file_path).unwrap();
+    let psd = psd::Psd::from_bytes(&psd_file).unwrap();
+
+    let mut group_ids: Vec<u32> = vec![];
+    for l in 0..psd.layers().len() {
+        let layer = &psd.layers()[l];
+        if layer.visible() || layer.parent_id() == None {
+            continue;
+        }
+        if !group_ids.contains(&layer.parent_id().unwrap()) {
+            group_ids.push(layer.parent_id().unwrap());
+        }
+    }
+
+    let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
+    group_ids.reverse();
+    for g in 0..group_ids.len() {
+        let pixels = psd
+            .flatten_layers_rgba(&|(_d, layer)| {
+                if layer.parent_id() != None {
+                    return psd.groups()[&layer.parent_id().unwrap()]
+                        .name()
+                        .contains(psd.groups()[&group_ids[g]].name());
+                }
+                false
+            })
+            .unwrap();
+
+        add_texture(
+            pixels,
+            dimensions,
+            psd.groups()[&group_ids[g]].name(),
+            shared,
+            queue,
+            device,
+            bind_group_layout,
+            ctx,
+        );
+
+        armature_window::new_bone(shared, -1);
+        let tex_idx = shared.armature.textures.len() - 1;
+        if shared.selected_bone_idx == usize::MAX {
+            shared.selected_bone_idx = 0;
+        } else {
+            shared.selected_bone_idx += 1;
+        }
+        shared.set_bone_tex(tex_idx);
+    }
+
+    shared.ui.set_state(UiState::Modal, false);
+
+    del_temp_files();
+}
+
+pub fn add_texture(
+    pixels: Vec<u8>,
+    dimensions: Vec2,
+    tex_name: &str,
+    shared: &mut Shared,
+    queue: &Queue,
+    device: &Device,
+    bind_group_layout: &BindGroupLayout,
+    ctx: &egui::Context,
+) {
     shared.bind_groups.push(renderer::create_texture_bind_group(
-        pixels.to_vec(),
+        pixels.clone(),
         dimensions,
         queue,
         device,
         bind_group_layout,
     ));
 
-    let color_image = egui::ColorImage::from_rgba_unmultiplied(
-        [dimensions.x as usize, dimensions.y as usize],
-        &pixels,
-    );
-    let tex = ctx.load_texture("anim_icons", color_image, Default::default());
-    shared.ui.texture_images.push(tex);
+    //let color_image = egui::ColorImage::from_rgba_unmultiplied(
+    //    [dimensions.x as usize, dimensions.y as usize],
+    //    &pixels,
+    //);
+    //let tex = ctx.load_texture("anim_icons", color_image, Default::default());
+    //shared.ui.texture_images.push(tex);
 
     shared.armature.textures.push(crate::Texture {
         offset: Vec2::ZERO,
         size: dimensions,
         pixels,
-        name: name.clone(),
+        name: tex_name.to_string(),
     });
-
-    let tex_idx = shared.armature.textures.len() - 1;
-
-    shared.set_bone_tex(tex_idx);
-
-    shared.start_next_tutorial_step(TutorialStep::EditBoneX);
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -201,11 +296,17 @@ pub fn read_import(
 
     shared.save_path = path.clone();
 
-    let file = std::fs::File::open(path).unwrap();
+    let file = std::fs::File::open(&path).unwrap();
 
-    utils::import(file, shared, queue, device, bind_group_layout, context);
-
-    del_temp_files();
+    utils::import(
+        &path,
+        file,
+        shared,
+        queue,
+        device,
+        bind_group_layout,
+        context,
+    );
 }
 
 #[cfg(not(target_arch = "wasm32"))]

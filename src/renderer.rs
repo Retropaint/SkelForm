@@ -74,19 +74,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             pos: temp_bones[b].pos,
             ..Default::default()
         };
-        if false {
-            println!(
-                "{}",
-                con_vert!(
-                    world_to_raw_vert,
-                    vert,
-                    temp_bones[b],
-                    shared.armature.textures[temp_bones[b].tex_idx as usize],
-                    shared
-                )
-                .pos / 800.,
-            );
-        }
 
         let mut world_verts: Vec<Vertex> = vec![];
         for vert in &temp_bones[b].vertices {
