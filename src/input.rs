@@ -70,7 +70,7 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
         // open
         if shared.input.pressed(winit::keyboard::KeyCode::KeyO) {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_import_dialog();
+            utils::open_import_dialog(TEMP_IMPORT_PATH.to_string());
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
             shared.input.remove_key(&KeyCode::SuperLeft);
