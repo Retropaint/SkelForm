@@ -670,7 +670,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                 }
 
                 // record tallest texture of this row
-                if height > size.y {
+                if height < size.y {
                     height = size.y;
                 }
 
@@ -682,7 +682,10 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                 let rect = egui::Rect::from_min_size(pos, size.into());
                 let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
 
-                // show highlight on hover
+                // draw image
+                ui.painter()
+                    .rect_filled(rect, egui::CornerRadius::ZERO, COLOR_BORDER);
+
                 if response.hovered() {
                     tex_idx = i as i32;
                     ui.painter_at(ui.min_rect()).rect_filled(
@@ -692,7 +695,6 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                     );
                 }
 
-                // draw image
                 egui::Image::new(&shared.ui.texture_images[i]).paint_at(ui, rect);
 
                 if response.clicked() {
@@ -707,25 +709,27 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                     }
                 }
 
-                offset += size.x;
+                offset += size.x + 2.;
                 // go to next row if there's no space
-                if offset > ui.available_width() {
+                if offset > 250. {
                     offset = 0.;
-                    current_height += height;
+                    current_height += height + 2.;
                     height = 0.;
                 }
             }
+
+            ui.add_space(50.);
+
+            let labels = 2;
+            let label_heights = (20 * labels) as f32;
+            let label_gaps = (2 * labels) as f32;
+            ui.add_space(ui.available_height() - label_heights + label_gaps);
 
             if tex_idx == -1 {
                 return;
             }
 
             // show image info at bottom left of modal
-
-            let labels = 2;
-            let label_heights = (15 * labels) as f32;
-            let label_gaps = (2 * labels) as f32;
-            ui.add_space(ui.available_height() - (label_heights + label_gaps));
 
             let tex = &shared.armature.textures[tex_idx as usize];
 
