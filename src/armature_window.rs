@@ -124,10 +124,9 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     draggable
                 */
 
-                let bone = &shared.armature.bones[b];
                 if shared.ui.has_state(UiState::DraggingBone) {
                     // add draggable labels
-                    ui.add_space(4.);
+                    ui.add_space(19.5);
                     let id = Id::new(("bone", idx, 0));
                     let d = ui
                         .dnd_drag_source(id, idx, |ui| {
@@ -136,22 +135,36 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         .response;
                     check_bone_dragging(shared, ui, d, idx as i32);
                 } else {
+                    // show folding button, if this bone has children
+                    let mut children = vec![];
+                    get_all_children(
+                        &shared.armature.bones,
+                        &mut children,
+                        &shared.armature.bones[b],
+                    );
+                    if children.len() > 0 {
+                        let fold_icon = if shared.armature.bones[b].folded {
+                            "v"
+                        } else {
+                            "^"
+                        };
+                        if ui
+                            .label(egui::RichText::new(fold_icon).monospace())
+                            .on_hover_cursor(egui::CursorIcon::PointingHand)
+                            .clicked()
+                        {
+                            shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
+                        }
+                    } else {
+                        ui.add_space(15.5);
+                    }
+
                     // regular, boring buttons
                     let button = ui_mod::selection_button(
-                        &bone.name.to_string(),
+                        &shared.armature.bones[b].name.to_string(),
                         idx as usize == shared.selected_bone_idx,
                         ui,
                     );
-
-                    // show folding button, if this bone has children
-                    let mut children = vec![];
-                    get_all_children(&shared.armature.bones, &mut children, &bone);
-                    if children.len() > 0 {
-                        let fold_icon = if bone.folded { "v" } else { "^" };
-                        if ui_mod::button(fold_icon, ui).clicked() {
-                            shared.armature.bones[b].folded = !bone.folded;
-                        }
-                    }
 
                     // highlight this bone if it's the first and is not selected during the tutorial
                     if idx == 0 {
