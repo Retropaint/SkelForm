@@ -102,19 +102,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             hovering_vert =
                 bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
         }
+    }
 
-        if selected {
-            draw_point(
-                &Vec2::ZERO,
-                &shared,
-                render_pass,
-                device,
-                &temp_bones[b],
-                Color::new(0., 255., 0., 0.5),
-                shared.camera.pos,
-                0.,
-            );
-        }
+    if shared.selected_bone() != None {
+        draw_point(
+            &Vec2::ZERO,
+            &shared,
+            render_pass,
+            device,
+            &temp_bones[shared.selected_bone_idx],
+            Color::new(0., 255., 0., 0.5),
+            shared.camera.pos,
+            0.,
+        );
     }
 
     if shared.input.mouse_left == -1 {
