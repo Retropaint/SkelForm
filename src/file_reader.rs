@@ -198,12 +198,11 @@ pub fn read_psd(
         let group_name = psd.groups()[&group_ids[g]].name();
         let pixels = psd
             .flatten_layers_rgba(&|(_d, layer)| {
-                if layer.parent_id() != None && !layer.name().contains("$pivot") {
-                    return psd.groups()[&layer.parent_id().unwrap()]
-                        .name()
-                        .contains(psd.groups()[&group_ids[g]].name());
+                if layer.parent_id() == None || layer.name().contains("$pivot") {
+                    return false;
                 }
-                false
+                let group = &psd.groups()[&layer.parent_id().unwrap()];
+                group.name().contains(group_name)
             })
             .unwrap();
 
