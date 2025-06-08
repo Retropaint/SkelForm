@@ -297,7 +297,7 @@ pub fn import<R: Read + std::io::Seek>(
     if ext != "skf" {
         ok = false;
         if ext == "psd" {
-            file_reader::create_temp_file(&TEMP_IMPORT_TIFF_PATH, path);
+            file_reader::create_temp_file(&TEMP_IMPORT_PSD_PATH, path);
             return;
         }
     }

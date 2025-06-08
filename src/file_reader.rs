@@ -28,13 +28,13 @@ macro_rules! temp_file {
 #[rustfmt::skip] temp_file!(TEMP_SAVE_PATH,        ".skelform_save_path");
 #[rustfmt::skip] temp_file!(TEMP_EXPORT_VID_TEXT,  ".skelform_export_vid_text");
 #[rustfmt::skip] temp_file!(TEMP_IMPORT_PATH,      ".skelform_import_path");
-#[rustfmt::skip] temp_file!(TEMP_IMPORT_TIFF_PATH, ".skelform_import_tiff_path");
+#[rustfmt::skip] temp_file!(TEMP_IMPORT_PSD_PATH, ".skelform_import_tiff_path");
 
 pub const FILES: [&str; 5] = [
     TEMP_IMG_PATH,
     TEMP_SAVE_PATH,
     TEMP_IMPORT_PATH,
-    TEMP_IMPORT_TIFF_PATH,
+    TEMP_IMPORT_PSD_PATH,
     TEMP_EXPORT_VID_TEXT,
 ];
 
@@ -170,14 +170,14 @@ pub fn read_psd(
     bind_group_layout: &BindGroupLayout,
     ctx: &egui::Context,
 ) {
-    if !fs::exists(TEMP_IMPORT_TIFF_PATH).unwrap() {
+    if !fs::exists(TEMP_IMPORT_PSD_PATH).unwrap() {
         return;
     }
 
     shared.unselect_everything();
     shared.armature = Armature::default();
 
-    let psd_file_path = fs::read_to_string(TEMP_IMPORT_TIFF_PATH).unwrap();
+    let psd_file_path = fs::read_to_string(TEMP_IMPORT_PSD_PATH).unwrap();
 
     let psd_file = std::fs::read(psd_file_path).unwrap();
     let psd = psd::Psd::from_bytes(&psd_file).unwrap();
