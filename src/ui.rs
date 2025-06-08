@@ -702,7 +702,7 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                         // stop the loop to prevent index errors
                         break;
                     } else {
-                        shared.set_bone_tex(i);
+                        shared.set_bone_tex(shared.selected_bone().unwrap().id, i);
                         shared.ui.set_state(UiState::ImageModal, false);
                     }
                 }
