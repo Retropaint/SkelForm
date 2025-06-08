@@ -363,6 +363,15 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     shared.armature = root.armatures[0].clone();
+    for b in 0..shared.armature.bones.len() {
+        let mut children = vec![];
+        armature_window::get_all_children(
+            &shared.armature.bones,
+            &mut children,
+            &shared.armature.bones[b],
+        );
+        shared.armature.bones[b].folded = children.len() > 0;
+    }
 
     shared.unselect_everything();
     shared.set_tutorial_step(TutorialStep::None);
