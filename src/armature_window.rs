@@ -81,14 +81,31 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             let frame = Frame::default().inner_margin(5.);
             ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                 ui.set_min_width(ui.available_width());
-                let mut idx = 0;
-                for s in shared.armature.bones.clone() {
+                let mut idx = -1;
+                for b in 0..shared.armature.bones.len() {
+                    idx += 1;
+                    // if this bone's parent is folded, skip drawing
+                    let mut visible = true;
+                    let mut nb = &shared.armature.bones[b];
+                    while nb.parent_id != -1 {
+                        nb = shared.find_bone(nb.parent_id).unwrap();
+                        if nb.folded {
+                            visible = false;
+                            continue;
+                        }
+                    }
+                    if !visible {
+                        continue;
+                    }
+
                     ui.horizontal(|ui| {
                         // add space to the left if this is a child
-                        let mut nb: &Bone = &s;
-                        while nb.parent_id != -1 {
-                            nb = find_bone(&shared.armature.bones, nb.parent_id).unwrap();
-                            ui.add_space(20.);
+                        {
+                            let mut nb = &shared.armature.bones[b];
+                            while nb.parent_id != -1 {
+                                nb = shared.find_bone(nb.parent_id).unwrap();
+                                ui.add_space(20.);
+                            }
                         }
 
                         /*
@@ -98,23 +115,39 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                             draggable
                         */
 
+                        let bone = &shared.armature.bones[b];
                         if shared.ui.has_state(UiState::DraggingBone) {
                             // add draggable labels
                             ui.add_space(4.);
                             let id = Id::new(("bone", idx, 0));
                             let d = ui
                                 .dnd_drag_source(id, idx, |ui| {
-                                    ui.label(RichText::new(&s.name.to_string()));
+                                    ui.label(RichText::new(
+                                        &shared.armature.bones[b].name.to_string(),
+                                    ));
                                 })
                                 .response;
                             check_bone_dragging(shared, ui, d, idx as i32);
                         } else {
                             // regular, boring buttons
                             let button = ui_mod::selection_button(
-                                &s.name.to_string(),
+                                &bone.name.to_string(),
                                 idx as usize == shared.selected_bone_idx,
                                 ui,
                             );
+                            let mut children = vec![];
+                            get_all_children(&shared.armature.bones, &mut children, &bone);
+                            if children.len() > 0 {
+                                let fold_icon = if shared.armature.bones[b].folded {
+                                    "v"
+                                } else {
+                                    "^"
+                                };
+                                if ui_mod::button(fold_icon, ui).clicked() {
+                                    shared.armature.bones[b].folded =
+                                        !shared.armature.bones[b].folded;
+                                }
+                            }
 
                             // highlight this bone if it's the first and is not selected during the tutorial
                             if idx == 0 {
@@ -130,7 +163,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 shared.select_bone(idx as usize);
                             };
                         }
-                        idx += 1;
                     });
                 }
             });
