@@ -345,10 +345,18 @@ pub fn import<R: Read + std::io::Seek>(
                 bind_group_layout,
             ));
 
-            let color_image = egui::ColorImage::from_rgba_unmultiplied(
-                [texture.size.x as usize, texture.size.y as usize],
-                &texture.pixels,
-            );
+            let pixels = img
+                .crop(
+                    texture.offset.x as u32,
+                    0,
+                    texture.size.x as u32,
+                    texture.size.y as u32,
+                )
+                .resize_exact(300, 300, imageops::FilterType::Nearest)
+                .into_rgba8()
+                .to_vec();
+
+            let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &pixels);
             let tex = context.load_texture("anim_icons", color_image, Default::default());
             shared.ui.texture_images.push(tex);
         }
@@ -358,6 +366,8 @@ pub fn import<R: Read + std::io::Seek>(
 
     shared.unselect_everything();
     shared.set_tutorial_step(TutorialStep::None);
+
+    del_temp_files();
 }
 
 pub fn undo_redo(undo: bool, shared: &mut Shared) {

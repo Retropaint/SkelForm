@@ -3,6 +3,7 @@
 
 use std::any::Any;
 
+use image::buffer::ConvertBuffer;
 use wgpu::*;
 
 use crate::*;
@@ -275,12 +276,17 @@ pub fn add_texture(
         bind_group_layout,
     ));
 
-    //let color_image = egui::ColorImage::from_rgba_unmultiplied(
-    //    [dimensions.x as usize, dimensions.y as usize],
-    //    &pixels,
-    //);
-    //let tex = ctx.load_texture("anim_icons", color_image, Default::default());
-    //shared.ui.texture_images.push(tex);
+    let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
+        dimensions.x as u32,
+        dimensions.y as u32,
+        pixels.clone(),
+    )
+    .unwrap();
+    let resized = image::imageops::resize(&img_buf, 300, 300, imageops::FilterType::Nearest);
+
+    let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &resized);
+    let tex = ctx.load_texture("anim_icons", color_image, Default::default());
+    shared.ui.texture_images.push(tex);
 
     shared.armature.textures.push(crate::Texture {
         offset: Vec2::ZERO,
