@@ -157,7 +157,7 @@ pub fn read_image_loaders(
     );
 
     let tex_idx = shared.armature.textures.len() - 1;
-    shared.set_bone_tex(tex_idx);
+    shared.set_bone_tex(shared.selected_bone().unwrap().id, tex_idx);
 
     shared.start_next_tutorial_step(TutorialStep::EditBoneX);
 }

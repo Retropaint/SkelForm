@@ -1310,8 +1310,8 @@ impl Shared {
         }
     }
 
-    pub fn set_bone_tex(&mut self, new_tex_idx: usize) {
-        let tex_idx = self.selected_bone_mut().unwrap().tex_idx;
+    pub fn set_bone_tex(&mut self, bone_id: i32, new_tex_idx: usize) {
+        let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
 
         if tex_idx != -1 {
             let verts_edited = utils::bone_meshes_edited(
@@ -1320,14 +1320,14 @@ impl Shared {
             );
             if !verts_edited {
                 (
-                    self.selected_bone_mut().unwrap().vertices,
-                    self.selected_bone_mut().unwrap().indices,
+                    self.find_bone_mut(bone_id).unwrap().vertices,
+                    self.find_bone_mut(bone_id).unwrap().indices,
                 ) = renderer::create_tex_rect(&self.armature.textures[new_tex_idx].size);
             }
         }
 
         let name = self.armature.textures[new_tex_idx].name.clone();
-        let bone_name = &mut self.selected_bone_mut().unwrap().name;
+        let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
         if bone_name == NEW_BONE_NAME || bone_name == "" {
             *bone_name = name;
         }
