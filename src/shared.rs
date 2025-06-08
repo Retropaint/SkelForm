@@ -1332,7 +1332,7 @@ impl Shared {
             *bone_name = name;
         }
 
-        self.selected_bone_mut().unwrap().tex_idx = new_tex_idx as i32;
+        self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
     }
 }
 
