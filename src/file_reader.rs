@@ -265,10 +265,11 @@ pub fn read_psd(
             }
 
             pivot_id = armature_window::new_bone(shared, -1).0.id;
+            let pivot_bone = shared.find_bone_mut(pivot_id).unwrap();
             pivot_pos = Vec2::new(layer.layer_left() as f32, -layer.layer_top() as f32);
-            shared.find_bone_mut(pivot_id).unwrap().pos = pivot_pos;
-            shared.find_bone_mut(pivot_id).unwrap().name = group.name().to_string();
-            shared.find_bone_mut(pivot_id).unwrap().folded = true;
+            pivot_bone.pos = pivot_pos - Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
+            pivot_bone.name = group.name().to_string();
+            pivot_bone.folded = true;
         }
 
         // create texture bone
@@ -291,6 +292,8 @@ pub fn read_psd(
 
             new_bone.pos.x -= pivot_pos.x;
             new_bone.pos.y -= pivot_pos.y;
+        } else {
+            new_bone.pos -= Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
         }
     }
 
