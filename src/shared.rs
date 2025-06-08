@@ -535,6 +535,9 @@ pub struct Bone {
     pub pivot: Vec2,
     #[serde(default)]
     pub zindex: f32,
+
+    #[serde(skip)]
+    pub folded: bool
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]

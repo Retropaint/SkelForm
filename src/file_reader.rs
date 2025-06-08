@@ -234,6 +234,7 @@ pub fn read_psd(
             );
             shared.find_bone_mut(pivot_id).unwrap().pos = pivot_pos;
             shared.find_bone_mut(pivot_id).unwrap().name = group_name.to_string();
+            shared.find_bone_mut(pivot_id).unwrap().folded = true;
         }
 
         // create texture bone
