@@ -196,21 +196,53 @@ pub fn read_psd(
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
     group_ids.reverse();
     for g in 0..group_ids.len() {
-        let group_name = psd.groups()[&group_ids[g]].name();
+        let group = &psd.groups()[&group_ids[g]];
         let pixels = psd
             .flatten_layers_rgba(&|(_d, layer)| {
                 if layer.parent_id() == None || layer.name().contains("$pivot") {
                     return false;
                 }
-                let group = &psd.groups()[&layer.parent_id().unwrap()];
-                group.name().contains(group_name)
+                let parent_group = &psd.groups()[&layer.parent_id().unwrap()];
+                parent_group.name().contains(group.name())
             })
             .unwrap();
 
+        let mut dims = Vec2::default();
+        let mut pos_tl = Vec2::new(f32::INFINITY, f32::INFINITY);
+        for layer in psd.get_group_sub_layers(&group.id()).unwrap() {
+            if layer.width() as f32 > dims.x {
+                dims.x = layer.width() as f32;
+            }
+            if layer.height() as f32 > dims.y {
+                dims.y = layer.height() as f32;
+            }
+            if (layer.layer_top() as f32) < pos_tl.y {
+                pos_tl.y = layer.layer_top() as f32;
+            }
+            if (layer.layer_left() as f32) < pos_tl.x {
+                pos_tl.x = layer.layer_left() as f32;
+            }
+        }
+
+        let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
+            dimensions.x as u32,
+            dimensions.y as u32,
+            pixels.clone(),
+        )
+        .unwrap();
+        let crop = image::imageops::crop_imm(
+            &img_buf,
+            pos_tl.x as u32,
+            pos_tl.y as u32,
+            dims.x as u32,
+            dims.y as u32,
+        )
+        .to_image();
+
         add_texture(
-            pixels,
-            dimensions,
-            group_name,
+            crop.to_vec(),
+            dims,
+            group.name(),
             shared,
             queue,
             device,
@@ -228,13 +260,9 @@ pub fn read_psd(
             }
 
             pivot_id = armature_window::new_bone(shared, -1).0.id;
-            let center = dimensions / 2.;
-            pivot_pos = Vec2::new(
-                layer.layer_left() as f32 - center.x,
-                -(layer.layer_top() as f32 - center.y),
-            );
+            pivot_pos = Vec2::new(layer.layer_left() as f32, -layer.layer_top() as f32);
             shared.find_bone_mut(pivot_id).unwrap().pos = pivot_pos;
-            shared.find_bone_mut(pivot_id).unwrap().name = group_name.to_string();
+            shared.find_bone_mut(pivot_id).unwrap().name = group.name().to_string();
             shared.find_bone_mut(pivot_id).unwrap().folded = true;
         }
 
@@ -242,14 +270,14 @@ pub fn read_psd(
         let new_bone_id = armature_window::new_bone(shared, -1).0.id;
         let tex_idx = shared.armature.textures.len() - 1;
         shared.set_bone_tex(new_bone_id, tex_idx);
+        shared.find_bone_mut(new_bone_id).unwrap().pos = Vec2::new(dims.x / 2., -dims.y / 2.);
+        shared.find_bone_mut(new_bone_id).unwrap().pos.x += pos_tl.x - pivot_pos.x;
+        shared.find_bone_mut(new_bone_id).unwrap().pos.y -= pos_tl.y + pivot_pos.y;
 
         // set up texture to be part of it's pivot, if it exists
         if pivot_id != -1 {
             shared.find_bone_mut(new_bone_id).unwrap().parent_id = pivot_id;
             shared.find_bone_mut(new_bone_id).unwrap().name = "Texture".to_string();
-
-            // offset texture against pivot, so it ends back at origin of it's canvas
-            shared.find_bone_mut(new_bone_id).unwrap().pos -= pivot_pos;
         }
     }
 
