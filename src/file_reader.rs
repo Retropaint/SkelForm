@@ -195,9 +195,10 @@ pub fn read_psd(
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
     group_ids.reverse();
     for g in 0..group_ids.len() {
+        let group_name = psd.groups()[&group_ids[g]].name();
         let pixels = psd
             .flatten_layers_rgba(&|(_d, layer)| {
-                if layer.parent_id() != None {
+                if layer.parent_id() != None && !layer.name().contains("$pivot") {
                     return psd.groups()[&layer.parent_id().unwrap()]
                         .name()
                         .contains(psd.groups()[&group_ids[g]].name());
@@ -209,7 +210,7 @@ pub fn read_psd(
         add_texture(
             pixels,
             dimensions,
-            psd.groups()[&group_ids[g]].name(),
+            group_name,
             shared,
             queue,
             device,
@@ -217,14 +218,38 @@ pub fn read_psd(
             ctx,
         );
 
-        armature_window::new_bone(shared, -1);
-        let tex_idx = shared.armature.textures.len() - 1;
-        if shared.selected_bone_idx == usize::MAX {
-            shared.selected_bone_idx = 0;
-        } else {
-            shared.selected_bone_idx += 1;
+        // check if this group has a pivot, and create it if so
+        let mut pivot_id = -1;
+        let mut pivot_pos = Vec2::default();
+        for l in 0..psd.layers().len() {
+            let layer = &psd.layers()[l];
+            if layer.parent_id() != Some(group_ids[g]) || !layer.name().contains("$pivot") {
+                continue;
+            }
+
+            pivot_id = armature_window::new_bone(shared, -1).0.id;
+            let center = dimensions / 2.;
+            pivot_pos = Vec2::new(
+                layer.layer_left() as f32 - center.x,
+                -(layer.layer_top() as f32 - center.y),
+            );
+            shared.find_bone_mut(pivot_id).unwrap().pos = pivot_pos;
+            shared.find_bone_mut(pivot_id).unwrap().name = group_name.to_string();
         }
-        shared.set_bone_tex(tex_idx);
+
+        // create texture bone
+        let new_bone_id = armature_window::new_bone(shared, -1).0.id;
+        let tex_idx = shared.armature.textures.len() - 1;
+        shared.set_bone_tex(new_bone_id, tex_idx);
+
+        // set up texture to be part of it's pivot, if it exists
+        if pivot_id != -1 {
+            shared.find_bone_mut(new_bone_id).unwrap().parent_id = pivot_id;
+            shared.find_bone_mut(new_bone_id).unwrap().name = "Texture".to_string();
+
+            // offset texture against pivot, so it ends back at origin of it's canvas
+            shared.find_bone_mut(new_bone_id).unwrap().pos -= pivot_pos;
+        }
     }
 
     shared.ui.set_state(UiState::Modal, false);
