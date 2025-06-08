@@ -182,6 +182,7 @@ pub fn read_psd(
     let psd_file = std::fs::read(psd_file_path).unwrap();
     let psd = psd::Psd::from_bytes(&psd_file).unwrap();
 
+    // collect group ids, to be used later
     let mut group_ids: Vec<u32> = vec![];
     for l in 0..psd.layers().len() {
         let layer = &psd.layers()[l];
@@ -197,6 +198,8 @@ pub fn read_psd(
     group_ids.reverse();
     for g in 0..group_ids.len() {
         let group = &psd.groups()[&group_ids[g]];
+
+        // flatten this group's layers, to form the final texture
         let pixels = psd
             .flatten_layers_rgba(&|(_d, layer)| {
                 if layer.parent_id() == None || layer.name().contains("$pivot") {
@@ -207,6 +210,7 @@ pub fn read_psd(
             })
             .unwrap();
 
+        // get dimension and top left position of this group
         let mut dims = Vec2::default();
         let mut pos_tl = Vec2::new(f32::INFINITY, f32::INFINITY);
         for layer in psd.get_group_sub_layers(&group.id()).unwrap() {
@@ -224,6 +228,7 @@ pub fn read_psd(
             }
         }
 
+        // all layers use the full canvas size, so crop them
         let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
             dimensions.x as u32,
             dimensions.y as u32,
@@ -270,14 +275,22 @@ pub fn read_psd(
         let new_bone_id = armature_window::new_bone(shared, -1).0.id;
         let tex_idx = shared.armature.textures.len() - 1;
         shared.set_bone_tex(new_bone_id, tex_idx);
-        shared.find_bone_mut(new_bone_id).unwrap().pos = Vec2::new(dims.x / 2., -dims.y / 2.);
-        shared.find_bone_mut(new_bone_id).unwrap().pos.x += pos_tl.x - pivot_pos.x;
-        shared.find_bone_mut(new_bone_id).unwrap().pos.y -= pos_tl.y + pivot_pos.y;
+        let new_bone = shared.find_bone_mut(new_bone_id).unwrap();
+
+        // layers start from top-left, so push bone down and right to reflect that
+        new_bone.pos = Vec2::new(dims.x / 2., -dims.y / 2.);
+
+        // push bone to wherever it would have been on the canvas
+        new_bone.pos.x += pos_tl.x;
+        new_bone.pos.y -= pos_tl.y;
 
         // set up texture to be part of it's pivot, if it exists
         if pivot_id != -1 {
-            shared.find_bone_mut(new_bone_id).unwrap().parent_id = pivot_id;
-            shared.find_bone_mut(new_bone_id).unwrap().name = "Texture".to_string();
+            new_bone.parent_id = pivot_id;
+            new_bone.name = "Texture".to_string();
+
+            new_bone.pos.x -= pivot_pos.x;
+            new_bone.pos.y -= pivot_pos.y;
         }
     }
 
