@@ -135,58 +135,54 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         })
                         .response;
                     check_bone_dragging(shared, ui, d, idx as i32);
-                } else {
-                    // show folding button, if this bone has children
-                    let mut children = vec![];
-                    get_all_children(
-                        &shared.armature.bones,
-                        &mut children,
-                        &shared.armature.bones[b],
-                    );
-                    if children.len() > 0 {
-                        let fold_icon = if shared.armature.bones[b].folded {
-                            "⏵"
-                        } else {
-                            "⏷"
-                        };
-                        let rect = ui.painter().text(
-                            ui.cursor().min + Vec2::new(-2., 17.).into(),
-                            egui::Align2::LEFT_BOTTOM,
-                            fold_icon,
-                            egui::FontId::default(),
-                            ui_mod::COLOR_TEXT,
-                        );
-                        let id = "fold".to_owned() + &shared.armature.bones[b].id.to_string();
-                        let click_rect = ui
-                            .interact(rect, id.into(), egui::Sense::CLICK)
-                            .on_hover_cursor(egui::CursorIcon::PointingHand);
-                        if click_rect.clicked() {
-                            shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
-                        }
-                    }
-                    ui.add_space(13.);
-
-                    // regular, boring buttons
-                    let button = ui_mod::selection_button(
-                        &shared.armature.bones[b].name.to_string(),
-                        idx as usize == shared.selected_bone_idx,
-                        ui,
-                    );
-
-                    // highlight this bone if it's the first and is not selected during the tutorial
-                    if idx == 0 {
-                        ui_mod::draw_tutorial_rect(
-                            TutorialStep::ReselectBone,
-                            button.rect,
-                            shared,
-                            ui,
-                        );
-                    }
-
-                    if button.clicked() {
-                        shared.select_bone(idx as usize);
-                    };
+                    return;
                 }
+
+                // show folding button, if this bone has children
+                let mut children = vec![];
+                get_all_children(
+                    &shared.armature.bones,
+                    &mut children,
+                    &shared.armature.bones[b],
+                );
+                if children.len() > 0 {
+                    let fold_icon = if shared.armature.bones[b].folded {
+                        "⏵"
+                    } else {
+                        "⏷"
+                    };
+                    let rect = ui.painter().text(
+                        ui.cursor().min + Vec2::new(-2., 17.).into(),
+                        egui::Align2::LEFT_BOTTOM,
+                        fold_icon,
+                        egui::FontId::default(),
+                        ui_mod::COLOR_TEXT,
+                    );
+                    let id = "fold".to_owned() + &shared.armature.bones[b].id.to_string();
+                    let click_rect = ui
+                        .interact(rect, id.into(), egui::Sense::CLICK)
+                        .on_hover_cursor(egui::CursorIcon::PointingHand);
+                    if click_rect.clicked() {
+                        shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
+                    }
+                }
+                ui.add_space(13.);
+
+                // regular, boring buttons
+                let button = ui_mod::selection_button(
+                    &shared.armature.bones[b].name.to_string(),
+                    idx as usize == shared.selected_bone_idx,
+                    ui,
+                );
+
+                // highlight this bone if it's the first and is not selected during the tutorial
+                if idx == 0 {
+                    ui_mod::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
+                }
+
+                if button.clicked() {
+                    shared.select_bone(idx as usize);
+                };
             });
         }
     });
