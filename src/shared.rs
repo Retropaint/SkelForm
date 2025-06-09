@@ -1067,7 +1067,7 @@ impl Shared {
                     $field = value;
                 } else if overwrite {
                     // offset value by its field, so it's effectively overwritten
-                    match (element) {
+                    match element {
                         AnimElement::ScaleX | AnimElement::ScaleY => value /= $field,
                         _ => value -= $field,
                     }
@@ -1097,6 +1097,10 @@ impl Shared {
         // create keyframe at 0th frame for this element if it doesn't exist
         if self.ui.anim.selected_frame != 0 {
             self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone(), -1);
+            self.selected_animation_mut().unwrap().keyframes[0].value = match element {
+                AnimElement::ScaleX | AnimElement::ScaleY => 1.,
+                _ => 0.,
+            }
         }
         let frame = self.check_if_in_keyframe(
             self.selected_bone().unwrap().id,
