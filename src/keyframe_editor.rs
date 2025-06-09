@@ -524,6 +524,15 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
             if ui::button("Paste", ui).clicked() {
                 let frame = shared.ui.anim.selected_frame;
+
+                // remove current keyframes on this frame
+                let _ = shared
+                    .selected_animation()
+                    .unwrap()
+                    .keyframes
+                    .iter()
+                    .filter(|kf| kf.frame != shared.ui.anim.selected_frame);
+
                 for kf in 0..shared.copy_buffer.keyframes.len() {
                     let keyframe = shared.copy_buffer.keyframes[kf].clone();
                     shared
