@@ -127,7 +127,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 if shared.ui.has_state(UiState::DraggingBone) {
                     // add draggable labels
-                    ui.add_space(19.5);
+                    ui.add_space(17.);
                     let id = Id::new(("bone", idx, 0));
                     let d = ui
                         .dnd_drag_source(id, idx, |ui| {
@@ -145,20 +145,26 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     );
                     if children.len() > 0 {
                         let fold_icon = if shared.armature.bones[b].folded {
-                            "v"
+                            "⏵"
                         } else {
-                            "^"
+                            "⏷"
                         };
-                        if ui
-                            .label(egui::RichText::new(fold_icon).monospace())
-                            .on_hover_cursor(egui::CursorIcon::PointingHand)
-                            .clicked()
-                        {
+                        let rect = ui.painter().text(
+                            ui.cursor().min + Vec2::new(-2., 17.).into(),
+                            egui::Align2::LEFT_BOTTOM,
+                            fold_icon,
+                            egui::FontId::default(),
+                            ui_mod::COLOR_TEXT,
+                        );
+                        let id = "fold".to_owned() + &shared.armature.bones[b].id.to_string();
+                        let click_rect = ui
+                            .interact(rect, id.into(), egui::Sense::CLICK)
+                            .on_hover_cursor(egui::CursorIcon::PointingHand);
+                        if click_rect.clicked() {
                             shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
                         }
-                    } else {
-                        ui.add_space(15.5);
                     }
+                    ui.add_space(13.);
 
                     // regular, boring buttons
                     let button = ui_mod::selection_button(
