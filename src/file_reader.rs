@@ -170,17 +170,30 @@ pub fn read_psd(
     bind_group_layout: &BindGroupLayout,
     ctx: &egui::Context,
 ) {
-    if !fs::exists(TEMP_IMPORT_PSD_PATH).unwrap() {
-        return;
+    let psd: psd::Psd;
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        if !fs::exists(TEMP_IMPORT_PSD_PATH).unwrap() {
+            return;
+        }
+
+        let psd_file_path = fs::read_to_string(TEMP_IMPORT_PSD_PATH).unwrap();
+        let psd_file = std::fs::read(psd_file_path).unwrap();
+        psd = psd::Psd::from_bytes(&psd_file).unwrap();
+        del_temp_files();
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        if getFile().len() == 0 || !getFileName().contains(".psd") {
+            return;
+        }
+        psd = psd::Psd::from_bytes(&getFile()).unwrap();
+        removeFile();
     }
 
     shared.unselect_everything();
     shared.armature = Armature::default();
-
-    let psd_file_path = fs::read_to_string(TEMP_IMPORT_PSD_PATH).unwrap();
-
-    let psd_file = std::fs::read(psd_file_path).unwrap();
-    let psd = psd::Psd::from_bytes(&psd_file).unwrap();
 
     // collect group ids, to be used later
     let mut group_ids: Vec<u32> = vec![];
@@ -298,8 +311,6 @@ pub fn read_psd(
     }
 
     shared.ui.set_state(UiState::Modal, false);
-
-    del_temp_files();
 }
 
 pub fn add_texture(
@@ -326,7 +337,7 @@ pub fn add_texture(
         pixels.clone(),
     )
     .unwrap();
-    let resized = image::imageops::resize(&img_buf, 300, 300, imageops::FilterType::Nearest);
+    let resized = image::imageops::resize(&img_buf, 300, 300, image::imageops::FilterType::Nearest);
 
     let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &resized);
     let tex = ctx.load_texture("anim_icons", color_image, Default::default());
@@ -470,10 +481,18 @@ pub fn load_file(
     bind_group_layout: &BindGroupLayout,
     context: &egui::Context,
 ) {
-    if getFile().len() == 0 {
+    if getFile().len() == 0 || !getFileName().contains(".skf") {
         return;
     }
     let cursor = std::io::Cursor::new(getFile());
-    utils::import(cursor, shared, queue, device, bind_group_layout, context);
+    utils::import(
+        "test.skf",
+        cursor,
+        shared,
+        queue,
+        device,
+        bind_group_layout,
+        context,
+    );
     removeFile();
 }
