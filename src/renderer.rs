@@ -901,6 +901,7 @@ pub fn draw_vertical_line(
     render_pass.draw_indexed(0..3, 0, 0..1);
 }
 
+#[cfg(unused)]
 pub fn lyon_poly(verts: &Vec<Vertex>) -> Vec<u32> {
     let mut raw_points: Vec<[f32; 2]> = vec![];
     for vert in verts {

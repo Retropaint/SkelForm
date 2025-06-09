@@ -20,7 +20,7 @@ wgpu = { version = "24.0.1", default-features = false }
 winit = "0.30.9"
 chrono = "0.4.41"
 image = "0.25.5"
-lyon = "1.0.1"
+#lyon = "1.0.1"
 psd = "0.3.5"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
