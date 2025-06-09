@@ -127,7 +127,7 @@
                     Use the slider below to adjust the UI scale.
                 </p>
                 <div class="horizontal">
-                    <input id="ui-slider-input" type="range" min="0" max="2" step="0.01"></input>
+                    <input id="ui-slider-input" type="range" min="0" max="5" step="0.01"></input>
                     <label class="button" onclick="toggleElement(false, 'ui-slider'); saveFontScale()">Done</label>
                 </div>
             </div>
@@ -179,6 +179,7 @@
 
         <script>
             let fileData = [];
+            let fileName = "";
             let imgName = "";
             let hasLoaded = false;
             let config = "";
@@ -221,11 +222,17 @@
             async function loadFile(event) {
                 const file = event.target.files[0];
                 const arrayBuffer = await file.arrayBuffer();
+                console.log(file.name, file);
+                fileName = file.name;
                 fileData = new Uint8Array(arrayBuffer);
             }
 
             function getFile() {
                 return fileData;
+            }
+
+            function getFileName() {
+                return fileName;
             }
 
             function getImgName() {
@@ -234,6 +241,7 @@
 
             function removeFile() {
                 fileData = [];
+                fileName = "";
             }
 
             function removeImage() {

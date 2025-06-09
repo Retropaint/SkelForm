@@ -297,7 +297,9 @@ pub fn import<R: Read + std::io::Seek>(
     if ext != "skf" {
         ok = false;
         if ext == "psd" {
+            #[cfg(not(target_arch = "wasm32"))]
             file_reader::create_temp_file(&TEMP_IMPORT_PSD_PATH, path);
+
             return;
         }
     }
@@ -352,7 +354,7 @@ pub fn import<R: Read + std::io::Seek>(
                     texture.size.x as u32,
                     texture.size.y as u32,
                 )
-                .resize_exact(300, 300, imageops::FilterType::Nearest)
+                .resize_exact(300, 300, image::imageops::FilterType::Nearest)
                 .into_rgba8()
                 .to_vec();
 
@@ -376,6 +378,7 @@ pub fn import<R: Read + std::io::Seek>(
     shared.unselect_everything();
     shared.set_tutorial_step(TutorialStep::None);
 
+    #[cfg(not(target_arch = "wasm32"))]
     del_temp_files();
 }
 

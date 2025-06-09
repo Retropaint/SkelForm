@@ -59,6 +59,7 @@ extern "C" {
     pub fn setEditInput(value: String);
     pub fn removeImage();
     pub fn getFile() -> Vec<u8>;
+    pub fn getFileName() -> String;
     pub fn removeFile();
     pub fn getImgName() -> String;
     pub fn loaded();

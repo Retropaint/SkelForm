@@ -91,6 +91,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
         ui.set_min_width(ui.available_width());
         let mut idx = -1;
+
         for b in 0..shared.armature.bones.len() {
             idx += 1;
             // if this bone's parent is folded, skip drawing
