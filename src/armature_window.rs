@@ -114,7 +114,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     let mut nb = &shared.armature.bones[b];
                     while nb.parent_id != -1 {
                         nb = shared.find_bone(nb.parent_id).unwrap();
-                        ui.add_space(20.);
+                        ui.add_space(15.);
                     }
                 }
 
