@@ -17,7 +17,8 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         let frame = shared.ui.anim.selected_frame;
         for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
             if kf.frame == frame {
-                kf.transition = transition.clone();
+                transition = kf.transition.clone();
+                break;
             }
         }
 
