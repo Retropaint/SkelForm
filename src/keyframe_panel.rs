@@ -1,7 +1,7 @@
 use crate::*;
 
 pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
-    ui.heading("Keyframe");
+    ui.heading("Keyframe (".to_owned() + &shared.ui.anim.selected_frame.to_string() + ")");
 
     ui.horizontal(|ui| {
         ui.label("Transition:");
