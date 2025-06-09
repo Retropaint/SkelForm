@@ -537,7 +537,7 @@ pub struct Bone {
     pub zindex: f32,
 
     #[serde(skip)]
-    pub folded: bool
+    pub folded: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -753,6 +753,11 @@ pub enum TutorialStep {
 }
 
 #[derive(Default)]
+pub struct CopyBuffer {
+    pub keyframes: Vec<Keyframe>,
+}
+
+#[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
     pub selected_bone_idx: usize,
@@ -787,6 +792,8 @@ pub struct Shared {
     pub save_path: String,
 
     pub config: Config,
+
+    pub copy_buffer: CopyBuffer,
 
     /// triggers debug stuff. Set in main.rs
     pub debug: bool,

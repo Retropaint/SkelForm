@@ -508,6 +508,31 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 shared.selected_animation_mut().unwrap().fps = value as i32;
             }
             shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
+
+            if ui::button("Copy", ui).clicked() {
+                macro_rules! keyframes {
+                    () => {
+                        shared.selected_animation().unwrap().keyframes
+                    };
+                }
+                for kf in 0..keyframes!().len() {
+                    if keyframes!()[kf].frame == shared.ui.anim.selected_frame {
+                        shared.copy_buffer.keyframes.push(keyframes!()[kf].clone())
+                    }
+                }
+            }
+
+            if ui::button("Paste", ui).clicked() {
+                let frame = shared.ui.anim.selected_frame;
+                for kf in 0..shared.copy_buffer.keyframes.len() {
+                    let keyframe = shared.copy_buffer.keyframes[kf].clone();
+                    shared
+                        .selected_animation_mut()
+                        .unwrap()
+                        .keyframes
+                        .push(Keyframe { frame, ..keyframe })
+                }
+            }
         });
     });
 }

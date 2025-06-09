@@ -181,7 +181,9 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 }
 
                 if button.clicked() {
+                    let anim_frame = shared.ui.anim.selected_frame;
                     shared.select_bone(idx as usize);
+                    shared.ui.anim.selected_frame = anim_frame;
                 };
             });
         }
