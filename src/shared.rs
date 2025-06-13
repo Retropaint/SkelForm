@@ -560,6 +560,35 @@ impl Ui {
         self.editing_mesh = false;
         self.anim.selected = usize::MAX;
     }
+
+    pub fn is_animating(&self) -> bool {
+        self.anim.open && self.anim.selected != usize::MAX
+    }
+
+    pub fn select_anim_frame(&mut self, idx: i32) {
+        let selected_anim = self.anim.selected;
+        self.unselect_everything();
+        self.anim.selected = selected_anim;
+        self.anim.selected_frame = idx;
+    }
+
+    pub fn select_bone(&mut self, idx: usize, armature: &Armature) {
+        let selected_anim = self.anim.selected;
+        self.unselect_everything();
+        self.anim.selected = selected_anim;
+        self.selected_bone_idx = idx;
+
+        if self.tutorial_step == TutorialStep::None {
+            return;
+        }
+
+        // guide user to select first bone again in tutorial
+        if idx != 0 {
+            self.tutorial_step = TutorialStep::ReselectBone;
+        } else {
+            self.tutorial_step = self.next_tutorial_step(TutorialStep::NewBone, &armature);
+        }
+    }
 }
 
 #[derive(Default, serde::Deserialize, serde::Serialize)]
@@ -1292,33 +1321,6 @@ impl Shared {
         Some(&mut self.armature.animations[self.ui.anim.selected])
     }
 
-    pub fn select_bone(&mut self, idx: usize) {
-        let selected_anim = self.ui.anim.selected;
-        self.ui.unselect_everything();
-        self.ui.anim.selected = selected_anim;
-        self.ui.selected_bone_idx = idx;
-
-        if self.ui.tutorial_step == TutorialStep::None {
-            return;
-        }
-
-        // guide user to select first bone again in tutorial
-        if idx != 0 {
-            self.ui.tutorial_step = TutorialStep::ReselectBone;
-        } else {
-            self.ui.tutorial_step = self
-                .ui
-                .next_tutorial_step(TutorialStep::NewBone, &self.armature);
-        }
-    }
-
-    pub fn select_frame(&mut self, idx: i32) {
-        let selected_anim = self.ui.anim.selected;
-        self.ui.unselect_everything();
-        self.ui.anim.selected = selected_anim;
-        self.ui.anim.selected_frame = idx;
-    }
-
     pub fn sort_keyframes(&mut self) {
         self.selected_animation_mut()
             .unwrap()
@@ -1353,7 +1355,7 @@ impl Shared {
             ..Default::default()
         });
 
-        if self.is_animating() {
+        if self.ui.is_animating() {
             self.undo_actions.push(Action {
                 action: ActionEnum::Animation,
                 action_type: ActionType::Edited,
@@ -1362,10 +1364,6 @@ impl Shared {
                 ..Default::default()
             });
         }
-    }
-
-    pub fn is_animating(&self) -> bool {
-        self.ui.anim.open && self.ui.anim.selected != usize::MAX
     }
 
     pub fn remove_texture(&mut self, tex_idx: i32) {
