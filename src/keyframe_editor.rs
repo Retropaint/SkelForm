@@ -275,7 +275,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                         let mut last_vert_id = -1;
                         for ti in tops_init {
                             if last_id != ti.id || last_vert_id != ti.vert_id {
-                                ui.label(shared.find_bone(ti.id).unwrap().name.clone());
+                                ui.label(shared.armature.find_bone(ti.id).unwrap().name.clone());
                             }
                             let mut top = 0.;
                             ui.horizontal(|ui| {

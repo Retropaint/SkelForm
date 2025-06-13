@@ -35,9 +35,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     let idx: usize;
                     let bone: Bone;
                     if shared.selected_bone() == None {
-                        (bone, idx) = new_bone(shared, -1);
+                        (bone, idx) = new_bone(&mut shared.armature, -1);
                     } else {
-                        (bone, idx) = new_bone(shared, shared.selected_bone().unwrap().id);
+                        let id = shared.selected_bone().unwrap().id;
+                        (bone, idx) = new_bone(&mut shared.armature, id);
                     }
 
                     // immediately select new bone upon creating it
@@ -98,7 +99,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             let mut visible = true;
             let mut nb = &shared.armature.bones[b];
             while nb.parent_id != -1 {
-                nb = shared.find_bone(nb.parent_id).unwrap();
+                nb = shared.armature.find_bone(nb.parent_id).unwrap();
                 if nb.folded {
                     visible = false;
                     continue;
@@ -113,7 +114,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 {
                     let mut nb = &shared.armature.bones[b];
                     while nb.parent_id != -1 {
-                        nb = shared.find_bone(nb.parent_id).unwrap();
+                        nb = shared.armature.find_bone(nb.parent_id).unwrap();
                         ui.add_space(15.);
                     }
                 }
@@ -190,42 +191,42 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
     });
 }
 
-pub fn new_bone(shared: &mut Shared, id: i32) -> (Bone, usize) {
+pub fn new_bone(armature: &mut Armature, id: i32) -> (Bone, usize) {
     let mut parent_id = -1;
-    if shared.find_bone(id) != None {
-        parent_id = shared.find_bone(id).unwrap().parent_id;
+    if armature.find_bone(id) != None {
+        parent_id = armature.find_bone(id).unwrap().parent_id;
     }
     let new_bone = Bone {
         name: NEW_BONE_NAME.to_string(),
         parent_id,
-        id: generate_id(&shared.armature.bones),
+        id: generate_id(&armature.bones),
         scale: Vec2 { x: 1., y: 1. },
         tex_idx: -1,
         pivot: Vec2::new(0.5, 0.5),
-        zindex: shared.armature.bones.len() as f32,
+        zindex: armature.bones.len() as f32,
         ..Default::default()
     };
     if id == -1 {
-        shared.armature.bones.push(new_bone.clone());
+        armature.bones.push(new_bone.clone());
     } else {
         // add new bone below targeted one, keeping in mind its children
-        for i in 0..shared.armature.bones.len() {
-            if shared.armature.bones[i].id != id {
+        for i in 0..armature.bones.len() {
+            if armature.bones[i].id != id {
                 continue;
             }
 
             let mut children = vec![];
             crate::armature_window::get_all_children(
-                &shared.armature.bones,
+                &armature.bones,
                 &mut children,
-                &shared.armature.bones[i],
+                &armature.bones[i],
             );
             let idx = i + children.len() + 1;
-            shared.armature.bones.insert(idx, new_bone.clone());
+            armature.bones.insert(idx, new_bone.clone());
             return (new_bone, idx);
         }
     }
-    (new_bone, shared.armature.bones.len() - 1)
+    (new_bone, armature.bones.len() - 1)
 }
 
 fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, idx: i32) {

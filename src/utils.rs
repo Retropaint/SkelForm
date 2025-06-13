@@ -409,11 +409,11 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
                         }
                     }
                 } else {
-                    armature_window::new_bone(shared, -1);
+                    armature_window::new_bone(&mut shared.armature, -1);
                 }
             } else if (action.id as usize) <= shared.armature.bones.len() - 1 {
                 new_action.bone = shared.armature.bones[action.id as usize].clone();
-                *shared.find_bone_mut(action.id).unwrap() = action.bone.clone();
+                *shared.armature.find_bone_mut(action.id).unwrap() = action.bone.clone();
 
                 for _ in 0..shared.armature.bones.len() {
                     //shared.organize_bone(i);
