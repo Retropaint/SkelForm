@@ -172,7 +172,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 // regular, boring buttons
                 let button = ui_mod::selection_button(
                     &shared.armature.bones[b].name.to_string(),
-                    idx as usize == shared.selected_bone_idx,
+                    idx as usize == shared.ui.selected_bone_idx,
                     ui,
                 );
 

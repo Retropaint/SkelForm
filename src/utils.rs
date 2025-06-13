@@ -403,7 +403,7 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
     match &action.action {
         ActionEnum::Bone => {
             if action.action_type == ActionType::Created {
-                shared.selected_bone_idx = usize::MAX;
+                shared.ui.selected_bone_idx = usize::MAX;
                 if undo {
                     for (i, bone) in shared.armature.bones.iter().enumerate() {
                         if bone.id == action.id {

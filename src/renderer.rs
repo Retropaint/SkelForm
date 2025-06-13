@@ -100,7 +100,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         draw_bone(&temp_bones[b], render_pass, device, &world_verts, shared);
 
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-        if shared.editing_mesh && b == shared.selected_bone_idx {
+        if shared.ui.editing_mesh && b == shared.ui.selected_bone_idx {
             hovering_vert =
                 bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
         }
@@ -112,7 +112,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             &shared,
             render_pass,
             device,
-            &temp_bones[shared.selected_bone_idx],
+            &temp_bones[shared.ui.selected_bone_idx],
             Color::new(0., 255., 0., 0.5),
             shared.camera.pos,
             0.,
@@ -125,13 +125,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         drag_vertex(
             shared,
             shared.dragging_vert,
-            &temp_bones[shared.selected_bone_idx].pos,
+            &temp_bones[shared.ui.selected_bone_idx].pos,
         );
         return;
     }
 
     if shared.selected_bone() != None
-        && shared.editing_mesh
+        && shared.ui.editing_mesh
         && shared.selected_bone().unwrap().vertices.len() > 0
         && hovering_vert == usize::MAX
         && !shared.input.on_ui
@@ -149,7 +149,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // move camera
     if shared.input.is_pressing(KeyCode::SuperLeft) && !shared.input.on_ui
-        || shared.selected_bone_idx == usize::MAX && !shared.input.on_ui
+        || shared.ui.selected_bone_idx == usize::MAX && !shared.input.on_ui
     {
         shared.camera.pos += shared.mouse_vel() * shared.camera.zoom;
         return;
@@ -158,7 +158,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // editing bone
     if shared.input.on_ui || shared.ui.has_state(UiState::PolarModal) {
         shared.editing_bone = false;
-    } else if shared.selected_bone_idx != usize::MAX && shared.input.is_holding_click() {
+    } else if shared.ui.selected_bone_idx != usize::MAX && shared.input.is_holding_click() {
         // save animation for undo
         if !shared.editing_bone {
             shared.save_edited_bone();
@@ -239,7 +239,7 @@ fn draw_hover_triangle(
     if shared.selected_bone() == None
         || !shared.input.clicked()
         || shared.input.on_ui
-        || !shared.editing_mesh
+        || !shared.ui.editing_mesh
     {
         return;
     }
