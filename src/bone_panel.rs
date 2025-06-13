@@ -74,7 +74,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             let button = ui::button("Select", ui);
             ui::draw_tutorial_rect(TutorialStep::GetImage, button.rect, shared, ui);
             if button.clicked() {
-                if shared.bind_groups.len() == 0 {
+                if shared.armature.bind_groups.len() == 0 {
                     #[cfg(not(target_arch = "wasm32"))]
                     open_file_dialog();
 

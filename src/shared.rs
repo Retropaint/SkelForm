@@ -469,6 +469,24 @@ impl Ui {
         self.polar_id = id;
         self.headline = headline;
     }
+
+    pub fn add_texture_img(
+        &mut self,
+        ctx: &egui::Context,
+        img_buf: image::ImageBuffer<Rgba<u8>, Vec<u8>>,
+        size: Vec2,
+    ) {
+        // force 300x300 to texture size
+        let resized = image::imageops::resize(
+            &img_buf,
+            size.x as u32,
+            size.y as u32,
+            image::imageops::FilterType::Nearest,
+        );
+        let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &resized);
+        let tex = ctx.load_texture("anim_icons", color_image, Default::default());
+        self.texture_images.push(tex);
+    }
 }
 
 #[derive(Default, serde::Deserialize, serde::Serialize)]
@@ -548,6 +566,9 @@ pub struct Armature {
     pub animations: Vec<Animation>,
     #[serde(default)]
     pub textures: Vec<Texture>,
+
+    #[serde(skip)]
+    pub bind_groups: Vec<BindGroup>,
 }
 
 impl Armature {
@@ -737,8 +758,8 @@ impl Armature {
         macro_rules! animate {
             ($element:expr, $value:expr) => {
                 // create 0th frame
-                let first_frame = self.animations[anim_id]
-                    .check_if_in_keyframe(bone_id, 0, $element, vert_id);
+                let first_frame =
+                    self.animations[anim_id].check_if_in_keyframe(bone_id, 0, $element, vert_id);
                 self.animations[anim_id].keyframes[first_frame].vert_id = vert_id as i32;
 
                 let frame = self.animations[anim_id]
@@ -1023,7 +1044,6 @@ pub struct Shared {
     pub window: Vec2,
     pub selected_bone_idx: usize,
     pub armature: Armature,
-    pub bind_groups: Vec<BindGroup>,
     pub camera: Camera,
     pub input: InputStates,
     pub egui_ctx: egui::Context,
@@ -1296,7 +1316,7 @@ impl Shared {
 
     pub fn remove_texture(&mut self, tex_idx: i32) {
         self.armature.textures.remove(tex_idx as usize);
-        self.bind_groups.remove(tex_idx as usize);
+        self.armature.bind_groups.remove(tex_idx as usize);
         let _ = self.ui.texture_images.remove(tex_idx as usize);
         for bone in &mut self.armature.bones {
             if bone.tex_idx == tex_idx {
