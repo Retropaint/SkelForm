@@ -20,7 +20,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         elapsed += shared.ui.anim.played_frame as f32 * frametime;
 
         shared.ui.anim.selected_frame = (elapsed / frametime) as i32;
-        if shared.ui.anim.selected_frame >= shared.ui.last_keyframe().unwrap().frame {
+        if shared.ui.anim.selected_frame >= shared.last_keyframe().unwrap().frame {
             if shared.recording {
                 if shared.ui.anim.loops > 0 {
                     shared.ui.anim.loops -= 1;
