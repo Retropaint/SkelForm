@@ -163,7 +163,7 @@ pub fn read_image_loaders(
         .armature
         .set_bone_tex(shared.selected_bone().unwrap().id, tex_idx);
 
-    shared.start_next_tutorial_step(TutorialStep::EditBoneX);
+    shared.ui.start_next_tutorial_step(TutorialStep::EditBoneX, &shared.armature);
 }
 
 pub fn read_psd(

@@ -178,7 +178,7 @@ impl ApplicationHandler for App {
                 }
                 self.shared.ui.scale = self.shared.config.ui_scale;
                 if first_time {
-                    self.shared.start_tutorial();
+                    self.shared.ui.start_tutorial(&self.shared.armature);
 
                     //// ask user if they want tutorial
                     //self.shared

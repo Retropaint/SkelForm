@@ -83,7 +83,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 } else {
                     shared.ui.set_state(UiState::ImageModal, true);
                 }
-                shared.start_next_tutorial_step(TutorialStep::EditBoneX);
+                shared
+                    .ui
+                    .start_next_tutorial_step(TutorialStep::EditBoneX, &shared.armature);
             };
             let mut tex_name = "None";
             if shared.selected_bone().unwrap().tex_idx != -1 {
@@ -171,7 +173,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             );
             ui::draw_tutorial_rect(TutorialStep::EditBoneY, input.rect, shared, ui);
             if edited {
-                shared.start_next_tutorial_step(TutorialStep::OpenAnim);
+                shared
+                    .ui
+                    .start_next_tutorial_step(TutorialStep::OpenAnim, &shared.armature);
             }
 
             let input: egui::Response;
@@ -186,7 +190,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             );
             ui::draw_tutorial_rect(TutorialStep::EditBoneX, input.rect, shared, ui);
             if edited {
-                shared.start_next_tutorial_step(TutorialStep::EditBoneY);
+                shared
+                    .ui
+                    .start_next_tutorial_step(TutorialStep::EditBoneY, &shared.armature);
             }
         })
     });

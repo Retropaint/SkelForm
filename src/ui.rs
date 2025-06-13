@@ -218,7 +218,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 menu_view_button(ui, shared);
 
                 ui.menu_button("Help", |ui| {
-                    let str = if !shared.tutorial_step_is(TutorialStep::None) {
+                    let str = if !shared.ui.tutorial_step_is(TutorialStep::None) {
                         "Stop Help Light"
                     } else {
                         "Help Light"
@@ -227,10 +227,10 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         if shared.armature.animations.len() > 0 {
                             shared.ui.open_modal(HELP_LIGHT_CANT.to_string(), false);
                         } else {
-                            if !shared.tutorial_step_is(TutorialStep::None) {
-                                shared.set_tutorial_step(TutorialStep::None);
+                            if !shared.ui.tutorial_step_is(TutorialStep::None) {
+                                shared.ui.set_tutorial_step(TutorialStep::None);
                             } else {
-                                shared.start_tutorial();
+                                shared.ui.start_tutorial(&shared.armature);
                             }
                         }
                         ui.close_menu();
@@ -402,7 +402,9 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
                 draw_tutorial_rect(TutorialStep::OpenAnim, button.rect, shared, ui);
                 if button.clicked() {
                     shared.ui.anim.open = true;
-                    shared.start_next_tutorial_step(TutorialStep::CreateAnim);
+                    shared
+                        .ui
+                        .start_next_tutorial_step(TutorialStep::CreateAnim, &shared.armature);
                 }
                 shared.ui.animate_mode_bar_scale = ui.min_rect().size().into();
             });
@@ -578,7 +580,7 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                             shared.ui.selected_bone_idx = usize::MAX;
                         }
                         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
-                        PolarId::FirstTime => shared.start_tutorial(),
+                        PolarId::FirstTime => shared.ui.start_tutorial(&shared.armature),
                     }
                 }
             });
@@ -704,7 +706,9 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                         // stop the loop to prevent index errors
                         break;
                     } else {
-                        shared.armature.set_bone_tex(shared.selected_bone().unwrap().id, i);
+                        shared
+                            .armature
+                            .set_bone_tex(shared.selected_bone().unwrap().id, i);
                         shared.ui.set_state(UiState::ImageModal, false);
                     }
                 }
@@ -873,7 +877,7 @@ pub fn draw_tutorial_rect(
     shared: &mut Shared,
     ui: &mut egui::Ui,
 ) {
-    if shared.tutorial_step_is(step) {
+    if shared.ui.tutorial_step_is(step) {
         ui::draw_fading_rect(ui, rect, Color32::GOLD, 60., 2.);
     }
 }
