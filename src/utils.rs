@@ -378,7 +378,7 @@ pub fn import<R: Read + std::io::Seek>(
         }
     }
 
-    shared.unselect_everything();
+    shared.ui.unselect_everything();
     shared.ui.set_tutorial_step(TutorialStep::None);
 
     #[cfg(not(target_arch = "wasm32"))]

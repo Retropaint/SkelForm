@@ -163,7 +163,9 @@ pub fn read_image_loaders(
         .armature
         .set_bone_tex(shared.selected_bone().unwrap().id, tex_idx);
 
-    shared.ui.start_next_tutorial_step(TutorialStep::EditBoneX, &shared.armature);
+    shared
+        .ui
+        .start_next_tutorial_step(TutorialStep::EditBoneX, &shared.armature);
 }
 
 pub fn read_psd(
@@ -195,7 +197,7 @@ pub fn read_psd(
         removeFile();
     }
 
-    shared.unselect_everything();
+    shared.ui.unselect_everything();
 
     // reset armature (but not all of it) to make way for the psd rig
     shared.armature.bones = vec![];
