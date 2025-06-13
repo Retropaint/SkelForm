@@ -772,6 +772,139 @@ impl Armature {
         animate!(AnimElement::VertPositionX, pos.x);
         animate!(AnimElement::VertPositionY, pos.y);
     }
+
+    pub fn animate(&self, anim_idx: usize, anim_frame: i32) -> Vec<Bone> {
+        let mut bones = self.bones.clone();
+
+        // ignore if this animation has no keyframes
+        let kf_len = self.animations[anim_idx].keyframes.len();
+        if kf_len == 0 {
+            return bones;
+        }
+
+        for b in &mut bones {
+            macro_rules! interpolate {
+                ($element:expr, $default:expr, $vert_id:expr) => {{
+                    let (prev, next, total_frames, current_frame, transition) = self
+                        .find_connecting_frames(
+                            anim_idx,
+                            b.id,
+                            $vert_id,
+                            $element,
+                            $default,
+                            anim_frame,
+                        );
+                    match (transition) {
+                        Transition::SineIn => {
+                            Tweener::sine_in(prev, next, total_frames).move_to(current_frame)
+                        }
+                        Transition::SineOut => {
+                            Tweener::sine_out(prev, next, total_frames).move_to(current_frame)
+                        }
+                        _ => Tweener::linear(prev, next, total_frames).move_to(current_frame),
+                    }
+                }};
+            }
+
+            // interpolate!
+            #[rustfmt::skip]
+            {
+                b.pos.x   += interpolate!(AnimElement::PositionX, 0., -1);
+                b.pos.y   += interpolate!(AnimElement::PositionY, 0., -1);
+                b.rot     += interpolate!(AnimElement::Rotation,  0., -1);
+                b.scale.x *= interpolate!(AnimElement::ScaleX,    1., -1);
+                b.scale.y *= interpolate!(AnimElement::ScaleY,    1., -1);
+                b.pivot.x += interpolate!(AnimElement::PivotX,    0., -1);
+                b.pivot.y += interpolate!(AnimElement::PivotY,    0., -1);
+                b.zindex  += interpolate!(AnimElement::Zindex,    0., -1);
+            };
+
+            for v in 0..b.vertices.len() {
+                b.vertices[v].pos.x += interpolate!(AnimElement::VertPositionX, 0., v as i32);
+                b.vertices[v].pos.y += interpolate!(AnimElement::VertPositionY, 0., v as i32);
+            }
+        }
+
+        bones
+    }
+
+    pub fn find_connecting_frames(
+        &self,
+        anim_id: usize,
+        bone_id: i32,
+        vert_id: i32,
+        element: AnimElement,
+        default: f32,
+        frame: i32,
+    ) -> (f32, f32, i32, i32, Transition) {
+        let mut prev: Option<f32> = None;
+        let mut next: Option<f32> = None;
+        let mut start_frame = 0;
+        let mut end_frame = 0;
+        let mut transition: Transition = Transition::Linear;
+
+        // get most previous frame with this element
+        let keyframes = &self.animations[anim_id].keyframes;
+        for (i, kf) in keyframes.iter().enumerate() {
+            if self.animations[anim_id].keyframes[i].frame > frame {
+                break;
+            }
+
+            if kf.bone_id != bone_id || kf.element != element || kf.vert_id != vert_id {
+                continue;
+            }
+
+            prev = Some(kf.value);
+            start_frame = kf.frame;
+        }
+
+        // get first next frame with this element
+        for (i, kf) in keyframes.iter().enumerate().rev() {
+            if self.animations[anim_id].keyframes[i].frame < frame {
+                break;
+            }
+
+            if kf.bone_id != bone_id || kf.element != element || kf.vert_id != vert_id {
+                continue;
+            }
+
+            next = Some(kf.value);
+            end_frame = kf.frame;
+            transition = kf.transition.clone();
+        }
+
+        // ensure prev and next are pointing somewhere
+        if prev == None {
+            if next != None {
+                prev = next
+            } else {
+                prev = Some(default)
+            }
+        }
+        if next == None {
+            if prev != None {
+                next = prev;
+            } else {
+                next = Some(default);
+            }
+        }
+
+        let mut total_frames = end_frame - start_frame;
+        // Tweener doesn't accept 0 duration
+        if total_frames == 0 {
+            total_frames = 1;
+        }
+
+        let current_frame = frame - start_frame;
+
+        (
+            prev.unwrap(),
+            next.unwrap(),
+            total_frames,
+            current_frame,
+            transition,
+        )
+    }
 }
 
 // used for the json
@@ -1157,137 +1290,6 @@ impl Shared {
             return Some(&mut self.armature.bones[self.selected_bone_idx]);
         }
         None
-    }
-
-    pub fn animate(&self, _anim_idx: usize) -> Vec<Bone> {
-        let mut bones = self.armature.bones.clone();
-
-        // ignore if this animation has no keyframes
-        let kf_len = self.selected_animation().unwrap().keyframes.len();
-        if kf_len == 0 {
-            return bones;
-        }
-
-        for b in &mut bones {
-            macro_rules! interpolate {
-                ($element:expr, $default:expr, $vert_id:expr) => {{
-                    let (prev, next, total_frames, current_frame, transition) = self
-                        .find_connecting_frames(
-                            b.id,
-                            $vert_id,
-                            $element,
-                            $default,
-                            self.ui.anim.selected_frame,
-                        );
-                    match (transition) {
-                        Transition::SineIn => {
-                            Tweener::sine_in(prev, next, total_frames).move_to(current_frame)
-                        }
-                        Transition::SineOut => {
-                            Tweener::sine_out(prev, next, total_frames).move_to(current_frame)
-                        }
-                        _ => Tweener::linear(prev, next, total_frames).move_to(current_frame),
-                    }
-                }};
-            }
-
-            // interpolate!
-            #[rustfmt::skip]
-            {
-                b.pos.x   += interpolate!(AnimElement::PositionX, 0., -1);
-                b.pos.y   += interpolate!(AnimElement::PositionY, 0., -1);
-                b.rot     += interpolate!(AnimElement::Rotation,  0., -1);
-                b.scale.x *= interpolate!(AnimElement::ScaleX,    1., -1);
-                b.scale.y *= interpolate!(AnimElement::ScaleY,    1., -1);
-                b.pivot.x += interpolate!(AnimElement::PivotX,    0., -1);
-                b.pivot.y += interpolate!(AnimElement::PivotY,    0., -1);
-                b.zindex  += interpolate!(AnimElement::Zindex,    0., -1);
-            };
-
-            for v in 0..b.vertices.len() {
-                b.vertices[v].pos.x += interpolate!(AnimElement::VertPositionX, 0., v as i32);
-                b.vertices[v].pos.y += interpolate!(AnimElement::VertPositionY, 0., v as i32);
-            }
-        }
-
-        bones
-    }
-
-    pub fn find_connecting_frames(
-        &self,
-        bone_id: i32,
-        vert_id: i32,
-        element: AnimElement,
-        default: f32,
-        frame: i32,
-    ) -> (f32, f32, i32, i32, Transition) {
-        let mut prev: Option<f32> = None;
-        let mut next: Option<f32> = None;
-        let mut start_frame = 0;
-        let mut end_frame = 0;
-        let mut transition: Transition = Transition::Linear;
-
-        // get most previous frame with this element
-        let keyframes = &self.selected_animation().unwrap().keyframes;
-        for (i, kf) in keyframes.iter().enumerate() {
-            if self.selected_animation().unwrap().keyframes[i].frame > frame {
-                break;
-            }
-
-            if kf.bone_id != bone_id || kf.element != element || kf.vert_id != vert_id {
-                continue;
-            }
-
-            prev = Some(kf.value);
-            start_frame = kf.frame;
-        }
-
-        // get first next frame with this element
-        for (i, kf) in keyframes.iter().enumerate().rev() {
-            if self.selected_animation().unwrap().keyframes[i].frame < frame {
-                break;
-            }
-
-            if kf.bone_id != bone_id || kf.element != element || kf.vert_id != vert_id {
-                continue;
-            }
-
-            next = Some(kf.value);
-            end_frame = kf.frame;
-            transition = kf.transition.clone();
-        }
-
-        // ensure prev and next are pointing somewhere
-        if prev == None {
-            if next != None {
-                prev = next
-            } else {
-                prev = Some(default)
-            }
-        }
-        if next == None {
-            if prev != None {
-                next = prev;
-            } else {
-                next = Some(default);
-            }
-        }
-
-        let mut total_frames = end_frame - start_frame;
-        // Tweener doesn't accept 0 duration
-        if total_frames == 0 {
-            total_frames = 1;
-        }
-
-        let current_frame = frame - start_frame;
-
-        (
-            prev.unwrap(),
-            next.unwrap(),
-            total_frames,
-            current_frame,
-            transition,
-        )
     }
 
     pub fn save_edited_bone(&mut self) {
