@@ -75,7 +75,6 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
             toggleElement(true, "file-dialog".to_string());
             shared.input.remove_key(&KeyCode::SuperLeft);
         }
-
     }
 }
 

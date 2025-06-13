@@ -501,9 +501,9 @@ impl Ui {
 
     pub fn tutorial_step_is(&self, step: TutorialStep) -> bool {
         self.tutorial_step == step
-    }    
+    }
 
-    pub fn start_tutorial(&mut self,armature: &Armature) {
+    pub fn start_tutorial(&mut self, armature: &Armature) {
         if self.selected_bone_idx != 0 && self.selected_bone_idx != usize::MAX {
             self.tutorial_step = TutorialStep::ReselectBone;
         } else {
@@ -512,11 +512,11 @@ impl Ui {
         }
     }
 
-    pub fn start_next_tutorial_step(&mut self, next: TutorialStep,armature: &Armature) {
+    pub fn start_next_tutorial_step(&mut self, next: TutorialStep, armature: &Armature) {
         if next as usize == self.tutorial_step.clone() as usize + 1 {
             self.tutorial_step = self.next_tutorial_step(self.tutorial_step.clone(), armature);
         }
-    }    
+    }
 
     pub fn next_tutorial_step(&mut self, step: TutorialStep, armature: &Armature) -> TutorialStep {
         if self.tutorial_step == TutorialStep::None {
@@ -552,7 +552,15 @@ impl Ui {
             _ => step
         };
         final_step
-    }}
+    }
+
+    pub fn unselect_everything(&mut self) {
+        self.selected_bone_idx = usize::MAX;
+        self.anim.selected_frame = 0;
+        self.editing_mesh = false;
+        self.anim.selected = usize::MAX;
+    }
+}
 
 #[derive(Default, serde::Deserialize, serde::Serialize)]
 pub struct Config {
@@ -852,12 +860,7 @@ impl Armature {
                 ($element:expr, $default:expr, $vert_id:expr) => {{
                     let (prev, next, total_frames, current_frame, transition) = self
                         .find_connecting_frames(
-                            anim_idx,
-                            b.id,
-                            $vert_id,
-                            $element,
-                            $default,
-                            anim_frame,
+                            anim_idx, b.id, $vert_id, $element, $default, anim_frame,
                         );
                     match (transition) {
                         Transition::SineIn => {
@@ -1111,8 +1114,8 @@ pub enum AnimElement {
 
 #[rustfmt::skip]
 pub const ANIM_ICON_ID: [usize; 7] = [
-    0, 
-    0, 
+    0,
+    0,
     1,
     2, 
     2, 
@@ -1289,16 +1292,9 @@ impl Shared {
         Some(&mut self.armature.animations[self.ui.anim.selected])
     }
 
-    pub fn unselect_everything(&mut self) {
-        self.ui.selected_bone_idx = usize::MAX;
-        self.ui.anim.selected_frame = 0;
-        self.ui.editing_mesh = false;
-        self.ui.anim.selected = usize::MAX;
-    }
-
     pub fn select_bone(&mut self, idx: usize) {
         let selected_anim = self.ui.anim.selected;
-        self.unselect_everything();
+        self.ui.unselect_everything();
         self.ui.anim.selected = selected_anim;
         self.ui.selected_bone_idx = idx;
 
@@ -1310,13 +1306,15 @@ impl Shared {
         if idx != 0 {
             self.ui.tutorial_step = TutorialStep::ReselectBone;
         } else {
-            self.ui.tutorial_step = self.ui.next_tutorial_step(TutorialStep::NewBone, &self.armature);
+            self.ui.tutorial_step = self
+                .ui
+                .next_tutorial_step(TutorialStep::NewBone, &self.armature);
         }
     }
 
     pub fn select_frame(&mut self, idx: i32) {
         let selected_anim = self.ui.anim.selected;
-        self.unselect_everything();
+        self.ui.unselect_everything();
         self.ui.anim.selected = selected_anim;
         self.ui.anim.selected_frame = idx;
     }
