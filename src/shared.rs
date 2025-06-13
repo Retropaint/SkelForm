@@ -391,6 +391,8 @@ pub struct Ui {
     pub selected_bone_idx: usize,
     pub editing_mesh: bool,
 
+    tutorial_step: TutorialStep,
+
     pub rename_id: String,
     pub original_name: String,
 
@@ -490,7 +492,67 @@ impl Ui {
         let tex = ctx.load_texture("anim_icons", color_image, Default::default());
         self.texture_images.push(tex);
     }
-}
+
+    pub fn set_tutorial_step(&mut self, step: TutorialStep) {
+        if !self.tutorial_step_is(TutorialStep::None) {
+            self.tutorial_step = step;
+        }
+    }
+
+    pub fn tutorial_step_is(&self, step: TutorialStep) -> bool {
+        self.tutorial_step == step
+    }    
+
+    pub fn start_tutorial(&mut self,armature: &Armature) {
+        if self.selected_bone_idx != 0 && self.selected_bone_idx != usize::MAX {
+            self.tutorial_step = TutorialStep::ReselectBone;
+        } else {
+            self.tutorial_step = TutorialStep::NewBone;
+            self.tutorial_step = self.next_tutorial_step(self.tutorial_step.clone(), armature);
+        }
+    }
+
+    pub fn start_next_tutorial_step(&mut self, next: TutorialStep,armature: &Armature) {
+        if next as usize == self.tutorial_step.clone() as usize + 1 {
+            self.tutorial_step = self.next_tutorial_step(self.tutorial_step.clone(), armature);
+        }
+    }    
+
+    pub fn next_tutorial_step(&mut self, step: TutorialStep, armature: &Armature) -> TutorialStep {
+        if self.tutorial_step == TutorialStep::None {
+            return TutorialStep::None;
+        }
+
+        macro_rules! check {
+            ($bool:expr, $next:expr) => {
+                if $bool {
+                    self.next_tutorial_step($next, armature)
+                } else {
+                    step
+                }
+            };
+        }
+
+        let mut first_bone = &Bone::default();
+        let bones_len = armature.bones.len();
+        if bones_len > 0 {
+            first_bone = &armature.bones[0];
+        }
+        let anim_selected = self.anim.selected != usize::MAX;
+
+        #[rustfmt::skip]
+        let final_step = match step {
+            TutorialStep::NewBone        => check!(bones_len > 0,            TutorialStep::GetImage),
+            TutorialStep::GetImage       => check!(first_bone.tex_idx != -1, TutorialStep::EditBoneX),
+            TutorialStep::EditBoneX      => check!(first_bone.pos.x != 0.,   TutorialStep::EditBoneY),
+            TutorialStep::EditBoneY      => check!(first_bone.pos.y != 0.,   TutorialStep::OpenAnim),
+            TutorialStep::OpenAnim       => check!(self.anim.open,        TutorialStep::CreateAnim),
+            TutorialStep::CreateAnim     => check!(anim_selected,            TutorialStep::SelectKeyframe),
+            TutorialStep::SelectKeyframe => step,
+            _ => step
+        };
+        final_step
+    }}
 
 #[derive(Default, serde::Deserialize, serde::Serialize)]
 pub struct Config {
@@ -1188,8 +1250,6 @@ pub struct Shared {
 
     pub dragging_vert: usize,
 
-    tutorial_step: TutorialStep,
-
     pub frame: i32,
     pub recording: bool,
     pub done_recording: bool,
@@ -1242,15 +1302,15 @@ impl Shared {
         self.ui.anim.selected = selected_anim;
         self.ui.selected_bone_idx = idx;
 
-        if self.tutorial_step == TutorialStep::None {
+        if self.ui.tutorial_step == TutorialStep::None {
             return;
         }
 
         // guide user to select first bone again in tutorial
         if idx != 0 {
-            self.tutorial_step = TutorialStep::ReselectBone;
+            self.ui.tutorial_step = TutorialStep::ReselectBone;
         } else {
-            self.tutorial_step = self.next_tutorial_step(TutorialStep::NewBone);
+            self.ui.tutorial_step = self.ui.next_tutorial_step(TutorialStep::NewBone, &self.armature);
         }
     }
 
@@ -1346,68 +1406,6 @@ impl Shared {
         let mouse_world = utils::screen_to_world_space(self.input.mouse, self.window);
         let mouse_prev_world = utils::screen_to_world_space(self.input.mouse_prev, self.window);
         mouse_prev_world - mouse_world
-    }
-
-    pub fn start_tutorial(&mut self) {
-        if self.ui.selected_bone_idx != 0 && self.ui.selected_bone_idx != usize::MAX {
-            self.tutorial_step = TutorialStep::ReselectBone;
-        } else {
-            self.tutorial_step = TutorialStep::NewBone;
-            self.tutorial_step = self.next_tutorial_step(self.tutorial_step.clone());
-        }
-    }
-
-    pub fn start_next_tutorial_step(&mut self, next: TutorialStep) {
-        if next as usize == self.tutorial_step.clone() as usize + 1 {
-            self.tutorial_step = self.next_tutorial_step(self.tutorial_step.clone());
-        }
-    }
-
-    /// Recursively check which tutorial step is next to show
-    pub fn next_tutorial_step(&mut self, step: TutorialStep) -> TutorialStep {
-        if self.tutorial_step == TutorialStep::None {
-            return TutorialStep::None;
-        }
-
-        macro_rules! check {
-            ($bool:expr, $next:expr) => {
-                if $bool {
-                    self.next_tutorial_step($next)
-                } else {
-                    step
-                }
-            };
-        }
-
-        let mut first_bone = &Bone::default();
-        let bones_len = self.armature.bones.len();
-        if bones_len > 0 {
-            first_bone = &self.armature.bones[0];
-        }
-        let anim_selected = self.ui.anim.selected != usize::MAX;
-
-        #[rustfmt::skip]
-        let final_step = match step {
-            TutorialStep::NewBone        => check!(bones_len > 0,            TutorialStep::GetImage),
-            TutorialStep::GetImage       => check!(first_bone.tex_idx != -1, TutorialStep::EditBoneX),
-            TutorialStep::EditBoneX      => check!(first_bone.pos.x != 0.,   TutorialStep::EditBoneY),
-            TutorialStep::EditBoneY      => check!(first_bone.pos.y != 0.,   TutorialStep::OpenAnim),
-            TutorialStep::OpenAnim       => check!(self.ui.anim.open,        TutorialStep::CreateAnim),
-            TutorialStep::CreateAnim     => check!(anim_selected,            TutorialStep::SelectKeyframe),
-            TutorialStep::SelectKeyframe => step,
-            _ => step
-        };
-        final_step
-    }
-
-    pub fn set_tutorial_step(&mut self, step: TutorialStep) {
-        if !self.tutorial_step_is(TutorialStep::None) {
-            self.tutorial_step = step;
-        }
-    }
-
-    pub fn tutorial_step_is(&self, step: TutorialStep) -> bool {
-        self.tutorial_step == step
     }
 }
 

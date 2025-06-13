@@ -379,7 +379,7 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     shared.unselect_everything();
-    shared.set_tutorial_step(TutorialStep::None);
+    shared.ui.set_tutorial_step(TutorialStep::None);
 
     #[cfg(not(target_arch = "wasm32"))]
     del_temp_files();
