@@ -42,7 +42,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     }
 
                     // immediately select new bone upon creating it
-                    shared.select_bone(idx);
+                    shared.ui.select_bone(idx, &shared.armature);
 
                     shared.undo_actions.push(Action {
                         action: ActionEnum::Bone,
@@ -185,7 +185,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 if button.clicked() {
                     let anim_frame = shared.ui.anim.selected_frame;
-                    shared.select_bone(idx as usize);
+                    shared.ui.select_bone(idx as usize, &shared.armature);
                     shared.ui.anim.selected_frame = anim_frame;
                 };
             });

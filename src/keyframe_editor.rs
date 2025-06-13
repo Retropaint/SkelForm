@@ -20,7 +20,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         elapsed += shared.ui.anim.played_frame as f32 * frametime;
 
         shared.ui.anim.selected_frame = (elapsed / frametime) as i32;
-        if shared.ui.anim.selected_frame >= shared.last_keyframe().unwrap().frame {
+        if shared.ui.anim.selected_frame >= shared.ui.last_keyframe().unwrap().frame {
             if shared.recording {
                 if shared.ui.anim.loops > 0 {
                     shared.ui.anim.loops -= 1;
@@ -43,15 +43,15 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
             shared.ui.anim.selected_frame += 1;
             let last_frame = shared.last_keyframe();
             if last_frame != None && shared.ui.anim.selected_frame > last_frame.unwrap().frame {
-                shared.select_frame(0);
+                shared.ui.select_anim_frame(0);
             }
         } else if left {
             shared.ui.anim.selected_frame -= 1;
             let last_frame = shared.last_keyframe();
             if last_frame != None && shared.ui.anim.selected_frame < 0 {
-                shared.select_frame(last_frame.unwrap().frame);
+                shared.ui.select_anim_frame(last_frame.unwrap().frame);
             } else if last_frame == None && shared.ui.anim.selected_frame < 0 {
-                shared.select_frame(0);
+                shared.ui.select_anim_frame(0);
             }
         }
     }
@@ -151,7 +151,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                             if button.clicked() {
                                 if shared.ui.anim.selected != i {
                                     shared.ui.anim.selected = i;
-                                    shared.select_frame(0);
+                                    shared.ui.select_anim_frame(0);
                                 }
                             }
                         }
@@ -334,7 +334,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
                     if response.drag_started() {
-                        shared.select_frame(frame);
+                        shared.ui.select_anim_frame(frame);
                     }
 
                     if response.hovered() {

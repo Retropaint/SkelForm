@@ -31,7 +31,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     let mut bones = shared.armature.bones.clone();
-    if shared.is_animating() {
+    if shared.ui.is_animating() {
         bones = shared
             .armature
             .animate(shared.ui.anim.selected, shared.ui.anim.selected_frame);
@@ -504,7 +504,7 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
     let mut bone = shared.selected_bone().unwrap().clone();
 
     // vertex conversion should consider the animated bone position
-    if shared.is_animating() {
+    if shared.ui.is_animating() {
         bone.pos = *bone_pos;
     }
 
@@ -529,7 +529,7 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
     )
     .pos;
 
-    if shared.is_animating() {
+    if shared.ui.is_animating() {
         let og_vert_pos = shared.selected_bone().unwrap().vertices[vert_idx].pos;
         let final_pos = vert_pos - og_vert_pos;
 
