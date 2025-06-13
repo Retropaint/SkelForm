@@ -315,6 +315,17 @@ pub fn import<R: Read + std::io::Seek>(
     let armature_file = zip.as_mut().unwrap().by_name("armature.json").unwrap();
     let mut root: crate::Root = serde_json::from_reader(armature_file).unwrap();
 
+    shared.armature = root.armatures[0].clone();
+    for b in 0..shared.armature.bones.len() {
+        let mut children = vec![];
+        armature_window::get_all_children(
+            &shared.armature.bones,
+            &mut children,
+            &shared.armature.bones[b],
+        );
+        shared.armature.bones[b].folded = children.len() > 0;
+    }
+
     // load texture
     if root.armatures[0].textures.len() > 0 {
         let texture_file = zip.as_mut().unwrap().by_name("textures.png").unwrap();
@@ -339,13 +350,16 @@ pub fn import<R: Read + std::io::Seek>(
                 .into_rgba8()
                 .to_vec();
 
-            shared.armature.bind_groups.push(renderer::create_texture_bind_group(
-                texture.pixels.to_vec(),
-                texture.size,
-                queue,
-                device,
-                bind_group_layout,
-            ));
+            shared
+                .armature
+                .bind_groups
+                .push(renderer::create_texture_bind_group(
+                    texture.pixels.to_vec(),
+                    texture.size,
+                    queue,
+                    device,
+                    bind_group_layout,
+                ));
 
             let pixels = img
                 .crop(
@@ -362,17 +376,6 @@ pub fn import<R: Read + std::io::Seek>(
             let tex = context.load_texture("anim_icons", color_image, Default::default());
             shared.ui.texture_images.push(tex);
         }
-    }
-
-    shared.armature = root.armatures[0].clone();
-    for b in 0..shared.armature.bones.len() {
-        let mut children = vec![];
-        armature_window::get_all_children(
-            &shared.armature.bones,
-            &mut children,
-            &shared.armature.bones[b],
-        );
-        shared.armature.bones[b].folded = children.len() > 0;
     }
 
     shared.unselect_everything();
