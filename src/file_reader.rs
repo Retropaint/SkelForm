@@ -158,7 +158,7 @@ pub fn read_image_loaders(
     );
 
     let tex_idx = shared.armature.textures.len() - 1;
-    shared.set_bone_tex(shared.selected_bone().unwrap().id, tex_idx);
+    shared.armature.set_bone_tex(shared.selected_bone().unwrap().id, tex_idx);
 
     shared.start_next_tutorial_step(TutorialStep::EditBoneX);
 }
@@ -290,7 +290,7 @@ pub fn read_psd(
         // create texture bone
         let new_bone_id = armature_window::new_bone(&mut shared.armature, -1).0.id;
         let tex_idx = shared.armature.textures.len() - 1;
-        shared.set_bone_tex(new_bone_id, tex_idx);
+        shared.armature.set_bone_tex(new_bone_id, tex_idx);
         let new_bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
 
         // layers start from top-left, so push bone down and right to reflect that
