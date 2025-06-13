@@ -351,17 +351,52 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
                 pos = utils::rotate(&pos, -find_bone(bones, bone.parent_id).unwrap().rot);
             }
 
-            shared.edit_bone(&AnimElement::PositionX, pos.x, true);
-            shared.edit_bone(&AnimElement::PositionY, pos.y, true);
+            shared.armature.edit_bone(
+                shared.selected_bone().unwrap().id,
+                &AnimElement::PositionX,
+                pos.x,
+                true,
+                shared.ui.anim.selected,
+                shared.ui.anim.selected_frame,
+            );
+            shared.armature.edit_bone(
+                shared.selected_bone().unwrap().id,
+                &AnimElement::PositionY,
+                pos.y,
+                true,
+                shared.ui.anim.selected,
+                shared.ui.anim.selected_frame,
+            );
         }
         shared::EditMode::Rotate => {
             let rot = (shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.;
-            shared.edit_bone(&AnimElement::Rotation, rot, false);
+            shared.armature.edit_bone(
+                shared.selected_bone().unwrap().id,
+                &AnimElement::Rotation,
+                rot,
+                false,
+                shared.ui.anim.selected,
+                shared.ui.anim.selected_frame,
+            );
         }
         shared::EditMode::Scale => {
             let scale = (shared.input.mouse / shared.window) * 2.;
-            shared.edit_bone(&AnimElement::ScaleX, scale.x, false);
-            shared.edit_bone(&AnimElement::ScaleY, scale.y, false);
+            shared.armature.edit_bone(
+                shared.selected_bone().unwrap().id,
+                &AnimElement::ScaleX,
+                scale.x,
+                false,
+                shared.ui.anim.selected,
+                shared.ui.anim.selected_frame,
+            );
+            shared.armature.edit_bone(
+                shared.selected_bone().unwrap().id,
+                &AnimElement::ScaleY,
+                scale.y,
+                false,
+                shared.ui.anim.selected,
+                shared.ui.anim.selected_frame,
+            );
         }
     };
 }
@@ -496,7 +531,13 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
         let og_vert_pos = shared.selected_bone().unwrap().vertices[vert_idx].pos;
         let final_pos = vert_pos - og_vert_pos;
 
-        shared.edit_vert(shared.dragging_vert as i32, &(final_pos));
+        shared.armature.edit_vert(
+            shared.selected_bone().unwrap().id,
+            shared.dragging_vert as i32,
+            &(final_pos),
+            shared.ui.anim.selected,
+            shared.ui.anim.selected_frame,
+        );
     } else {
         // after following the mouse, it needs to convert its world coords back to normal
         shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = vert_pos;
