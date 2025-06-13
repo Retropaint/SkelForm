@@ -388,6 +388,9 @@ pub struct Ui {
     pub animate_mode_bar_pos: Vec2,
     pub animate_mode_bar_scale: Vec2,
 
+    pub selected_bone_idx: usize,
+    pub editing_mesh: bool,
+
     pub rename_id: String,
     pub original_name: String,
 
@@ -1175,7 +1178,6 @@ pub struct CopyBuffer {
 #[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
-    pub selected_bone_idx: usize,
     pub armature: Armature,
     pub camera: Camera,
     pub input: InputStates,
@@ -1185,7 +1187,6 @@ pub struct Shared {
     pub editing_bone: bool,
 
     pub dragging_vert: usize,
-    pub editing_mesh: bool,
 
     tutorial_step: TutorialStep,
 
@@ -1229,9 +1230,9 @@ impl Shared {
     }
 
     pub fn unselect_everything(&mut self) {
-        self.selected_bone_idx = usize::MAX;
+        self.ui.selected_bone_idx = usize::MAX;
         self.ui.anim.selected_frame = 0;
-        self.editing_mesh = false;
+        self.ui.editing_mesh = false;
         self.ui.anim.selected = usize::MAX;
     }
 
@@ -1239,7 +1240,7 @@ impl Shared {
         let selected_anim = self.ui.anim.selected;
         self.unselect_everything();
         self.ui.anim.selected = selected_anim;
-        self.selected_bone_idx = idx;
+        self.ui.selected_bone_idx = idx;
 
         if self.tutorial_step == TutorialStep::None {
             return;
@@ -1271,23 +1272,16 @@ impl Shared {
         self.selected_animation().unwrap().keyframes.last()
     }
 
-    pub fn keyframe_mut(&mut self, idx: usize) -> Option<&mut Keyframe> {
-        if idx > self.selected_animation().unwrap().keyframes.len() - 1 {
-            return None;
-        }
-        Some(&mut self.selected_animation_mut().unwrap().keyframes[idx])
-    }
-
     pub fn selected_bone(&self) -> Option<&Bone> {
-        if self.selected_bone_idx != usize::MAX {
-            return Some(&self.armature.bones[self.selected_bone_idx]);
+        if self.ui.selected_bone_idx != usize::MAX {
+            return Some(&self.armature.bones[self.ui.selected_bone_idx]);
         }
         None
     }
 
     pub fn selected_bone_mut(&mut self) -> Option<&mut Bone> {
-        if self.selected_bone_idx != usize::MAX {
-            return Some(&mut self.armature.bones[self.selected_bone_idx]);
+        if self.ui.selected_bone_idx != usize::MAX {
+            return Some(&mut self.armature.bones[self.ui.selected_bone_idx]);
         }
         None
     }
@@ -1355,7 +1349,7 @@ impl Shared {
     }
 
     pub fn start_tutorial(&mut self) {
-        if self.selected_bone_idx != 0 && self.selected_bone_idx != usize::MAX {
+        if self.ui.selected_bone_idx != 0 && self.ui.selected_bone_idx != usize::MAX {
             self.tutorial_step = TutorialStep::ReselectBone;
         } else {
             self.tutorial_step = TutorialStep::NewBone;

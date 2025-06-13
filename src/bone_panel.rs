@@ -98,7 +98,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     let mut bone = shared.selected_bone().unwrap().clone();
     if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
-        bone = shared.armature.animate(shared.ui.anim.selected, shared.ui.anim.selected_frame)[shared.selected_bone_idx].clone();
+        bone = shared
+            .armature
+            .animate(shared.ui.anim.selected, shared.ui.anim.selected_frame)
+            [shared.ui.selected_bone_idx]
+            .clone();
     }
 
     let mut edited = false;
@@ -225,17 +229,17 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     }
 
     let mut mesh_label = "Edit Mesh";
-    if shared.editing_mesh {
+    if shared.ui.editing_mesh {
         mesh_label = "Finish Edit";
     }
 
     ui.horizontal(|ui| {
         if ui::button(mesh_label, ui).clicked() {
-            shared.editing_mesh = !shared.editing_mesh;
+            shared.ui.editing_mesh = !shared.ui.editing_mesh;
         }
     });
 
-    if !shared.editing_mesh {
+    if !shared.ui.editing_mesh {
         return;
     }
 

@@ -441,7 +441,7 @@ impl ApplicationHandler for App {
         #[cfg(not(target_arch = "wasm32"))]
         if self.shared.debug {
             self.shared.debug = false;
-            self.shared.selected_bone_idx = 0;
+            self.shared.ui.selected_bone_idx = 0;
             self.shared.armature.new_bone(-1);
             self.shared.armature.new_bone(-1);
             self.shared.armature.new_bone(-1);

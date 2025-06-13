@@ -160,7 +160,7 @@ pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
                 COLOR_MAIN_DARK,
             );
 
-            if shared.selected_bone_idx != usize::MAX {
+            if shared.ui.selected_bone_idx != usize::MAX {
                 bone_panel::draw(ui, shared);
             } else if shared.ui.anim.selected_frame != -1 {
                 keyframe_panel::draw(ui, shared);
@@ -174,7 +174,7 @@ pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
         shared.input.on_ui = true;
     }
 
-    if shared.selected_bone_idx != usize::MAX {
+    if shared.ui.selected_bone_idx != usize::MAX {
         edit_mode_bar(context, shared);
     }
 
@@ -554,11 +554,11 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                         PolarId::DeleteBone => {
                             // remove all children of this bone as well
                             let mut children =
-                                vec![shared.armature.bones[shared.selected_bone_idx].clone()];
+                                vec![shared.armature.bones[shared.ui.selected_bone_idx].clone()];
                             armature_window::get_all_children(
                                 &shared.armature.bones,
                                 &mut children,
-                                &shared.armature.bones[shared.selected_bone_idx],
+                                &shared.armature.bones[shared.ui.selected_bone_idx],
                             );
                             children.reverse();
                             for bone in &children {
@@ -575,7 +575,7 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                                     }
                                 }
                             }
-                            shared.selected_bone_idx = usize::MAX;
+                            shared.ui.selected_bone_idx = usize::MAX;
                         }
                         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
                         PolarId::FirstTime => shared.start_tutorial(),

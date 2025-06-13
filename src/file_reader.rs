@@ -92,7 +92,7 @@ pub fn read_image_loaders(
 
         // delete files if selected bone is invalid
         if shared.armature.bones.len() == 0
-            || shared.selected_bone_idx > shared.armature.bones.len() - 1
+            || shared.ui.selected_bone_idx > shared.armature.bones.len() - 1
         {
             del_temp_files();
             return;
