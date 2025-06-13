@@ -150,7 +150,8 @@ pub fn read_image_loaders(
         pixels,
         dimensions,
         &name,
-        shared,
+        &mut shared.ui,
+        &mut shared.armature,
         queue,
         device,
         bind_group_layout,
@@ -196,7 +197,10 @@ pub fn read_psd(
 
     shared.unselect_everything();
 
-    let mut temp_armature = Armature::default();
+    // reset armature (but not all of it) to make way for the psd rig
+    shared.armature.bones = vec![];
+    shared.armature.bind_groups = vec![];
+    shared.armature.textures = vec![];
 
     // collect group ids, to be used later
     let mut group_ids: Vec<u32> = vec![];
@@ -264,7 +268,8 @@ pub fn read_psd(
             crop.to_vec(),
             dims,
             group.name(),
-            shared,
+            &mut shared.ui,
+            &mut shared.armature,
             queue,
             device,
             bind_group_layout,
@@ -280,7 +285,6 @@ pub fn read_psd(
                 continue;
             }
 
-            temp_armature.bones.push(Bone::default());
             pivot_id = shared.armature.new_bone(-1).0.id;
             let pivot_bone = shared.armature.find_bone_mut(pivot_id).unwrap();
             pivot_pos = Vec2::new(layer.layer_left() as f32, -layer.layer_top() as f32);
@@ -321,14 +325,14 @@ pub fn add_texture(
     pixels: Vec<u8>,
     dimensions: Vec2,
     tex_name: &str,
-    shared: &mut Shared,
+    ui: &mut Ui,
+    armature: &mut Armature,
     queue: &Queue,
     device: &Device,
     bind_group_layout: &BindGroupLayout,
     ctx: &egui::Context,
 ) {
-    shared
-        .armature
+    armature
         .bind_groups
         .push(renderer::create_texture_bind_group(
             pixels.clone(),
@@ -345,11 +349,9 @@ pub fn add_texture(
     )
     .unwrap();
 
-    shared
-        .ui
-        .add_texture_img(&ctx, img_buf, Vec2::new(300., 300.));
+    ui.add_texture_img(&ctx, img_buf, Vec2::new(300., 300.));
 
-    shared.armature.textures.push(crate::Texture {
+    armature.textures.push(crate::Texture {
         offset: Vec2::ZERO,
         size: dimensions,
         pixels,
