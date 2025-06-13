@@ -327,13 +327,16 @@ pub fn add_texture(
     bind_group_layout: &BindGroupLayout,
     ctx: &egui::Context,
 ) {
-    shared.bind_groups.push(renderer::create_texture_bind_group(
-        pixels.clone(),
-        dimensions,
-        queue,
-        device,
-        bind_group_layout,
-    ));
+    shared
+        .armature
+        .bind_groups
+        .push(renderer::create_texture_bind_group(
+            pixels.clone(),
+            dimensions,
+            queue,
+            device,
+            bind_group_layout,
+        ));
 
     let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
         dimensions.x as u32,
@@ -341,11 +344,10 @@ pub fn add_texture(
         pixels.clone(),
     )
     .unwrap();
-    let resized = image::imageops::resize(&img_buf, 300, 300, image::imageops::FilterType::Nearest);
 
-    let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &resized);
-    let tex = ctx.load_texture("anim_icons", color_image, Default::default());
-    shared.ui.texture_images.push(tex);
+    shared
+        .ui
+        .add_texture_img(&ctx, img_buf, Vec2::new(300., 300.));
 
     shared.armature.textures.push(crate::Texture {
         offset: Vec2::ZERO,

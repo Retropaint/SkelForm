@@ -325,7 +325,7 @@ pub fn import<R: Read + std::io::Seek>(
         }
         let mut img = image::load_from_memory(&bytes).unwrap();
 
-        shared.bind_groups = vec![];
+        shared.armature.bind_groups = vec![];
         shared.ui.texture_images = vec![];
 
         for texture in &mut root.armatures[0].textures {
@@ -339,7 +339,7 @@ pub fn import<R: Read + std::io::Seek>(
                 .into_rgba8()
                 .to_vec();
 
-            shared.bind_groups.push(renderer::create_texture_bind_group(
+            shared.armature.bind_groups.push(renderer::create_texture_bind_group(
                 texture.pixels.to_vec(),
                 texture.size,
                 queue,
