@@ -35,10 +35,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     let idx: usize;
                     let bone: Bone;
                     if shared.selected_bone() == None {
-                        (bone, idx) = new_bone(&mut shared.armature, -1);
+                        (bone, idx) = shared.armature.new_bone(-1);
                     } else {
                         let id = shared.selected_bone().unwrap().id;
-                        (bone, idx) = new_bone(&mut shared.armature, id);
+                        (bone, idx) = shared.armature.new_bone(id);
                     }
 
                     // immediately select new bone upon creating it
@@ -191,44 +191,6 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
     });
 }
 
-pub fn new_bone(armature: &mut Armature, id: i32) -> (Bone, usize) {
-    let mut parent_id = -1;
-    if armature.find_bone(id) != None {
-        parent_id = armature.find_bone(id).unwrap().parent_id;
-    }
-    let new_bone = Bone {
-        name: NEW_BONE_NAME.to_string(),
-        parent_id,
-        id: generate_id(&armature.bones),
-        scale: Vec2 { x: 1., y: 1. },
-        tex_idx: -1,
-        pivot: Vec2::new(0.5, 0.5),
-        zindex: armature.bones.len() as f32,
-        ..Default::default()
-    };
-    if id == -1 {
-        armature.bones.push(new_bone.clone());
-    } else {
-        // add new bone below targeted one, keeping in mind its children
-        for i in 0..armature.bones.len() {
-            if armature.bones[i].id != id {
-                continue;
-            }
-
-            let mut children = vec![];
-            crate::armature_window::get_all_children(
-                &armature.bones,
-                &mut children,
-                &armature.bones[i],
-            );
-            let idx = i + children.len() + 1;
-            armature.bones.insert(idx, new_bone.clone());
-            return (new_bone, idx);
-        }
-    }
-    (new_bone, armature.bones.len() - 1)
-}
-
 fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, idx: i32) {
     if let (Some(pointer), Some(hovered_payload)) = (
         ui.input(|i| i.pointer.interact_pos()),
@@ -357,22 +319,4 @@ pub fn find_bone_idx(bones: &Vec<Bone>, id: i32) -> i32 {
         }
     }
     -1
-}
-
-// generate non-clashing id
-pub fn generate_id(bones: &Vec<Bone>) -> i32 {
-    let mut idx = 0;
-    while idx == does_id_exist(bones, idx) {
-        idx += 1;
-    }
-    return idx;
-}
-
-fn does_id_exist(bones: &Vec<Bone>, id: i32) -> i32 {
-    for b in bones {
-        if b.id == id {
-            return id;
-        }
-    }
-    return -1;
 }

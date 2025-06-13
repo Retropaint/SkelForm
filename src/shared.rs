@@ -603,6 +603,62 @@ impl Armature {
             }
         }
     }
+
+    pub fn new_bone(&mut self, id: i32) -> (Bone, usize) {
+        let mut parent_id = -1;
+        if self.find_bone(id) != None {
+            parent_id = self.find_bone(id).unwrap().parent_id;
+        }
+        let new_bone = Bone {
+            name: NEW_BONE_NAME.to_string(),
+            parent_id,
+            id: self.generate_id(),
+            scale: Vec2 { x: 1., y: 1. },
+            tex_idx: -1,
+            pivot: Vec2::new(0.5, 0.5),
+            zindex: self.bones.len() as f32,
+            ..Default::default()
+        };
+        if id == -1 {
+            self.bones.push(new_bone.clone());
+        } else {
+            // add new bone below targeted one, keeping in mind its children
+            for i in 0..self.bones.len() {
+                if self.bones[i].id != id {
+                    continue;
+                }
+
+                let mut children = vec![];
+                crate::armature_window::get_all_children(
+                    &self.bones,
+                    &mut children,
+                    &self.bones[i],
+                );
+                let idx = i + children.len() + 1;
+                self.bones.insert(idx, new_bone.clone());
+                return (new_bone, idx);
+            }
+        }
+        (new_bone, self.bones.len() - 1)
+    }
+
+    // generate non-clashing id
+    pub fn generate_id(&self) -> i32 {
+        let mut idx = 0;
+        while idx == self.does_id_exist(idx) {
+            idx += 1;
+        }
+        return idx;
+    }
+
+    pub fn does_id_exist(&self, id: i32) -> i32 {
+        for b in &self.bones {
+            if b.id == id {
+                return id;
+            }
+        }
+        return -1;
+    }
 }
 
 // used for the json
