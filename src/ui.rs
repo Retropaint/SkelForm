@@ -562,7 +562,7 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                             );
                             children.reverse();
                             for bone in &children {
-                                shared.delete_bone(bone.id);
+                                shared.armature.delete_bone(bone.id);
                             }
 
                             // remove all references to this bone and it's children from all animations

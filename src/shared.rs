@@ -593,6 +593,16 @@ impl Armature {
 
         self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
     }
+
+    pub fn delete_bone(&mut self, id: i32) {
+        for i in 0..self.bones.len() {
+            let bone_id = self.bones[i].id;
+            if bone_id == id {
+                self.bones.remove(i);
+                break;
+            }
+        }
+    }
 }
 
 // used for the json
@@ -844,7 +854,6 @@ pub struct Shared {
     pub debug: bool,
 }
 
-// mostly for shorthands for cleaner code
 impl Shared {
     pub fn selected_animation(&self) -> Option<&Animation> {
         if self.ui.anim.selected > self.armature.animations.len() {
@@ -922,16 +931,6 @@ impl Shared {
             return Some(&mut self.armature.bones[self.selected_bone_idx]);
         }
         None
-    }
-
-    pub fn delete_bone(&mut self, id: i32) {
-        for i in 0..self.armature.bones.len() {
-            let bone_id = self.armature.bones[i].id;
-            if bone_id == id {
-                self.armature.bones.remove(i);
-                break;
-            }
-        }
     }
 
     pub fn animate(&self, _anim_idx: usize) -> Vec<Bone> {
@@ -1231,10 +1230,6 @@ impl Shared {
                 bone.tex_idx -= 1;
             }
         }
-    }
-
-    pub fn sort_bone_zindex(&mut self, bone_idx: i32) {
-        self.armature.bones[bone_idx as usize].zindex = bone_idx as f32 + 1.;
     }
 
     /// place child bone underneath its parent
