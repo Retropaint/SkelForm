@@ -550,6 +550,26 @@ pub struct Armature {
     pub textures: Vec<Texture>,
 }
 
+impl Armature {
+    pub fn find_bone(&self, id: i32) -> Option<&Bone> {
+        for b in &self.bones {
+            if b.id == id {
+                return Some(&b);
+            }
+        }
+        None
+    }
+
+    pub fn find_bone_mut(&mut self, id: i32) -> Option<&mut Bone> {
+        for b in &mut self.bones {
+            if b.id == id {
+                return Some(b);
+            }
+        }
+        None
+    }
+}
+
 // used for the json
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Root {
@@ -879,15 +899,6 @@ impl Shared {
         None
     }
 
-    pub fn find_bone(&self, id: i32) -> Option<&Bone> {
-        for b in &self.armature.bones {
-            if b.id == id {
-                return Some(&b);
-            }
-        }
-        None
-    }
-
     pub fn delete_bone(&mut self, id: i32) {
         for i in 0..self.armature.bones.len() {
             let bone_id = self.armature.bones[i].id;
@@ -896,15 +907,6 @@ impl Shared {
                 break;
             }
         }
-    }
-
-    pub fn find_bone_mut(&mut self, id: i32) -> Option<&mut Bone> {
-        for b in &mut self.armature.bones {
-            if b.id == id {
-                return Some(b);
-            }
-        }
-        None
     }
 
     pub fn animate(&self, _anim_idx: usize) -> Vec<Bone> {
@@ -1096,7 +1098,8 @@ impl Shared {
 
         // create keyframe at 0th frame for this element if it doesn't exist
         if self.ui.anim.selected_frame != 0 {
-            let frame = self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone(), -1);
+            let frame =
+                self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone(), -1);
             self.selected_animation_mut().unwrap().keyframes[frame].value = match element {
                 AnimElement::ScaleX | AnimElement::ScaleY => 1.,
                 _ => 0.,
@@ -1325,7 +1328,7 @@ impl Shared {
     }
 
     pub fn set_bone_tex(&mut self, bone_id: i32, new_tex_idx: usize) {
-        let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
+        let tex_idx = self.armature.find_bone(bone_id).unwrap().tex_idx;
 
         if tex_idx != -1 {
             let verts_edited = utils::bone_meshes_edited(
@@ -1334,19 +1337,19 @@ impl Shared {
             );
             if !verts_edited {
                 (
-                    self.find_bone_mut(bone_id).unwrap().vertices,
-                    self.find_bone_mut(bone_id).unwrap().indices,
+                    self.armature.find_bone_mut(bone_id).unwrap().vertices,
+                    self.armature.find_bone_mut(bone_id).unwrap().indices,
                 ) = renderer::create_tex_rect(&self.armature.textures[new_tex_idx].size);
             }
         }
 
         let name = self.armature.textures[new_tex_idx].name.clone();
-        let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
+        let bone_name = &mut self.armature.find_bone_mut(bone_id).unwrap().name;
         if bone_name == NEW_BONE_NAME || bone_name == "" {
             *bone_name = name;
         }
 
-        self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
+        self.armature.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
     }
 }
 

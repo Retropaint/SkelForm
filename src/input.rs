@@ -94,6 +94,6 @@ pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
 }
 
 pub fn pinch(delta: f64, shared: &mut Shared) {
-    let sens_amp = 100.;
+    let sens_amp = 500.;
     shared.camera.zoom -= delta as f32 * sens_amp;
 }

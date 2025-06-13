@@ -193,7 +193,8 @@ pub fn read_psd(
     }
 
     shared.unselect_everything();
-    shared.armature = Armature::default();
+
+    let mut temp_armature = Armature::default();
 
     // collect group ids, to be used later
     let mut group_ids: Vec<u32> = vec![];
@@ -277,8 +278,9 @@ pub fn read_psd(
                 continue;
             }
 
-            pivot_id = armature_window::new_bone(shared, -1).0.id;
-            let pivot_bone = shared.find_bone_mut(pivot_id).unwrap();
+            temp_armature.bones.push(Bone::default());
+            pivot_id = armature_window::new_bone(&mut shared.armature, -1).0.id;
+            let pivot_bone = shared.armature.find_bone_mut(pivot_id).unwrap();
             pivot_pos = Vec2::new(layer.layer_left() as f32, -layer.layer_top() as f32);
             pivot_bone.pos = pivot_pos - Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
             pivot_bone.name = group.name().to_string();
@@ -286,10 +288,10 @@ pub fn read_psd(
         }
 
         // create texture bone
-        let new_bone_id = armature_window::new_bone(shared, -1).0.id;
+        let new_bone_id = armature_window::new_bone(&mut shared.armature, -1).0.id;
         let tex_idx = shared.armature.textures.len() - 1;
         shared.set_bone_tex(new_bone_id, tex_idx);
-        let new_bone = shared.find_bone_mut(new_bone_id).unwrap();
+        let new_bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
 
         // layers start from top-left, so push bone down and right to reflect that
         new_bone.pos = Vec2::new(dims.x / 2., -dims.y / 2.);
