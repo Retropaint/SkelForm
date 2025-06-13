@@ -659,6 +659,98 @@ impl Armature {
         }
         return -1;
     }
+
+    pub fn edit_bone(
+        &mut self,
+        bone_id: i32,
+        element: &AnimElement,
+        mut value: f32,
+        overwrite: bool,
+        anim_id: usize,
+        anim_frame: i32,
+    ) {
+        macro_rules! edit {
+            ($field:expr) => {
+                if anim_id == usize::MAX {
+                    $field = value;
+                } else if overwrite {
+                    // offset value by its field, so it's effectively overwritten
+                    match element {
+                        AnimElement::ScaleX | AnimElement::ScaleY => value /= $field,
+                        _ => value -= $field,
+                    }
+                }
+            };
+        }
+
+        let bone_mut = self.find_bone_mut(bone_id).unwrap();
+
+        #[rustfmt::skip]
+        match element {
+            AnimElement::PositionX => { edit!(bone_mut.pos.x);   },
+            AnimElement::PositionY => { edit!(bone_mut.pos.y);   },
+            AnimElement::Rotation  => { edit!(bone_mut.rot);     },
+            AnimElement::ScaleX    => { edit!(bone_mut.scale.x); },
+            AnimElement::ScaleY    => { edit!(bone_mut.scale.y); },
+            AnimElement::PivotX    => { edit!(bone_mut.pivot.x); },
+            AnimElement::PivotY    => { edit!(bone_mut.pivot.y); },
+            AnimElement::Zindex    => { edit!(bone_mut.zindex);  },
+            _ => {}
+        };
+
+        if anim_id == usize::MAX {
+            return;
+        }
+
+        // create keyframe at 0th frame for this element if it doesn't exist
+        if anim_frame != 0 {
+            let frame = self.animations[anim_id].check_if_in_keyframe(
+                self.bones[bone_id as usize].id,
+                0,
+                element.clone(),
+                -1,
+            );
+            self.animations[anim_id].keyframes[frame].value = match element {
+                AnimElement::ScaleX | AnimElement::ScaleY => 1.,
+                _ => 0.,
+            }
+        }
+        let frame = self.animations[anim_id].check_if_in_keyframe(
+            self.bones[bone_id as usize].id,
+            anim_frame,
+            element.clone(),
+            -1,
+        );
+        self.animations[anim_id].keyframes[frame].value = value;
+    }
+
+    pub fn edit_vert(
+        &mut self,
+        bone_id: i32,
+        vert_id: i32,
+        pos: &Vec2,
+        anim_id: usize,
+        anim_frame: i32,
+    ) {
+        let bone_id = self.bones[bone_id as usize].id;
+
+        macro_rules! animate {
+            ($element:expr, $value:expr) => {
+                // create 0th frame
+                let first_frame = self.animations[anim_id]
+                    .check_if_in_keyframe(bone_id, 0, $element, vert_id);
+                self.animations[anim_id].keyframes[first_frame].vert_id = vert_id as i32;
+
+                let frame = self.animations[anim_id]
+                    .check_if_in_keyframe(bone_id, anim_frame, $element, vert_id);
+                self.animations[anim_id].keyframes[frame].value = $value;
+                self.animations[anim_id].keyframes[frame].vert_id = vert_id as i32;
+            };
+        }
+
+        animate!(AnimElement::VertPositionX, pos.x);
+        animate!(AnimElement::VertPositionY, pos.y);
+    }
 }
 
 // used for the json
@@ -688,6 +780,64 @@ pub struct Animation {
     pub fps: i32,
     #[serde(default)]
     pub keyframes: Vec<Keyframe>,
+}
+
+impl Animation {
+    /// Return which frame has these attributes, or create a new one
+    fn check_if_in_keyframe(
+        &mut self,
+        id: i32,
+        frame: i32,
+        element: AnimElement,
+        vert_id: i32,
+    ) -> usize {
+        macro_rules! is_same_frame {
+            ($kf:expr) => {
+                $kf.frame == frame
+                    && $kf.bone_id == id
+                    && $kf.element == element
+                    && $kf.vert_id == vert_id
+            };
+        }
+
+        // check if this keyframe exists
+        let mut exists_at = usize::MAX;
+        for i in 0..self.keyframes.len() {
+            let kf = &self.keyframes[i];
+            if is_same_frame!(kf) {
+                exists_at = i;
+                break;
+            }
+        }
+
+        if exists_at != usize::MAX {
+            return exists_at;
+        }
+
+        self.keyframes.push(Keyframe {
+            frame,
+            bone_id: id,
+            element: element.clone(),
+            element_id: element.clone() as i32,
+            vert_id,
+            ..Default::default()
+        });
+
+        self.sort_keyframes();
+
+        for i in 0..self.keyframes.len() {
+            let kf = &self.keyframes[i];
+            if is_same_frame!(kf) {
+                return i;
+            }
+        }
+
+        usize::MAX
+    }
+
+    pub fn sort_keyframes(&mut self) {
+        self.keyframes.sort_by(|a, b| a.frame.cmp(&b.frame));
+    }
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -1138,136 +1288,6 @@ impl Shared {
                 ..Default::default()
             });
         }
-    }
-
-    pub fn edit_bone(&mut self, element: &AnimElement, mut value: f32, overwrite: bool) {
-        let is_animating = self.is_animating();
-
-        macro_rules! edit {
-            ($field:expr) => {
-                if !is_animating {
-                    $field = value;
-                } else if overwrite {
-                    // offset value by its field, so it's effectively overwritten
-                    match element {
-                        AnimElement::ScaleX | AnimElement::ScaleY => value /= $field,
-                        _ => value -= $field,
-                    }
-                }
-            };
-        }
-
-        let bone_mut = self.selected_bone_mut().unwrap();
-
-        #[rustfmt::skip]
-        match element {
-            AnimElement::PositionX => { edit!(bone_mut.pos.x);   },
-            AnimElement::PositionY => { edit!(bone_mut.pos.y);   },
-            AnimElement::Rotation  => { edit!(bone_mut.rot);     },
-            AnimElement::ScaleX    => { edit!(bone_mut.scale.x); },
-            AnimElement::ScaleY    => { edit!(bone_mut.scale.y); },
-            AnimElement::PivotX    => { edit!(bone_mut.pivot.x); },
-            AnimElement::PivotY    => { edit!(bone_mut.pivot.y); },
-            AnimElement::Zindex    => { edit!(bone_mut.zindex);  },
-            _ => {}
-        };
-
-        if !self.is_animating() {
-            return;
-        }
-
-        // create keyframe at 0th frame for this element if it doesn't exist
-        if self.ui.anim.selected_frame != 0 {
-            let frame =
-                self.check_if_in_keyframe(self.selected_bone().unwrap().id, 0, element.clone(), -1);
-            self.selected_animation_mut().unwrap().keyframes[frame].value = match element {
-                AnimElement::ScaleX | AnimElement::ScaleY => 1.,
-                _ => 0.,
-            }
-        }
-        let frame = self.check_if_in_keyframe(
-            self.selected_bone().unwrap().id,
-            self.ui.anim.selected_frame,
-            element.clone(),
-            -1,
-        );
-        self.selected_animation_mut().unwrap().keyframes[frame].value = value;
-    }
-
-    pub fn edit_vert(&mut self, vert_id: i32, pos: &Vec2) {
-        let bone_id = self.selected_bone().unwrap().id;
-        let frame = self.ui.anim.selected_frame;
-
-        macro_rules! animate {
-            ($element:expr, $value:expr) => {
-                // create 0th frame
-                let first_frame = self.check_if_in_keyframe(bone_id, 0, $element, vert_id);
-                self.selected_animation_mut().unwrap().keyframes[first_frame].vert_id =
-                    vert_id as i32;
-
-                let frame = self.check_if_in_keyframe(bone_id, frame, $element, vert_id);
-                self.selected_animation_mut().unwrap().keyframes[frame].value = $value;
-                self.selected_animation_mut().unwrap().keyframes[frame].vert_id = vert_id as i32;
-            };
-        }
-
-        animate!(AnimElement::VertPositionX, pos.x);
-        animate!(AnimElement::VertPositionY, pos.y);
-    }
-
-    /// Return which frame has these attributes, or create a new one
-    fn check_if_in_keyframe(
-        &mut self,
-        id: i32,
-        frame: i32,
-        element: AnimElement,
-        vert_id: i32,
-    ) -> usize {
-        macro_rules! is_same_frame {
-            ($kf:expr) => {
-                $kf.frame == frame
-                    && $kf.bone_id == id
-                    && $kf.element == element
-                    && $kf.vert_id == vert_id
-            };
-        }
-
-        // check if this keyframe exists
-        let mut exists_at = usize::MAX;
-        for i in 0..self.selected_animation().unwrap().keyframes.len() {
-            let kf = &self.selected_animation().unwrap().keyframes[i];
-            if is_same_frame!(kf) {
-                exists_at = i;
-                break;
-            }
-        }
-
-        if exists_at != usize::MAX {
-            return exists_at;
-        }
-
-        self.selected_animation_mut()
-            .unwrap()
-            .keyframes
-            .push(Keyframe {
-                frame,
-                bone_id: id,
-                element: element.clone(),
-                element_id: element.clone() as i32,
-                vert_id,
-                ..Default::default()
-            });
-
-        self.sort_keyframes();
-
-        for i in 0..self.selected_animation().unwrap().keyframes.len() {
-            let kf = &self.selected_animation().unwrap().keyframes[i];
-            if is_same_frame!(kf) {
-                return i;
-            }
-        }
-
-        usize::MAX
     }
 
     pub fn is_animating(&self) -> bool {

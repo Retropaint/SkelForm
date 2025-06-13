@@ -108,7 +108,14 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             (edited, $float, _) = ui::float_input($id.to_string(), shared, $ui, $float, $modifier);
             if edited {
                 shared.save_edited_bone();
-                shared.edit_bone($element, $float, true);
+                shared.armature.edit_bone(
+                    shared.selected_bone().unwrap().id,
+                    $element,
+                    $float,
+                    true,
+                    shared.ui.anim.selected,
+                    shared.ui.anim.selected_frame,
+                );
             }
             if $label != "" {
                 $ui.label($label);
@@ -122,7 +129,14 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 ui::float_input($id.to_string(), shared, $ui, $float, $modifier);
             if edited {
                 shared.save_edited_bone();
-                shared.edit_bone($element, $float, true);
+                shared.armature.edit_bone(
+                    shared.selected_bone().unwrap().id,
+                    $element,
+                    $float,
+                    true,
+                    shared.ui.anim.selected,
+                    shared.ui.anim.selected_frame,
+                );
             }
             if $label != "" {
                 $ui.label($label);
