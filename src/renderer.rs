@@ -596,15 +596,18 @@ fn draw_point(
         v.pos = utils::rotate(&v.pos, rotation);
     }
 
-    let mut point_verts = rect_verts(
-        temp_point_verts.to_vec(),
-        None,
-        &camera,
-        shared.camera.zoom,
-        None,
-        shared.window.x / shared.window.y,
-        1.,
-    );
+    let mut point_verts = vec![];
+    for i in 0..temp_point_verts.len() {
+        point_verts.push(raw_to_world_vert(
+            temp_point_verts[i],
+            None,
+            &camera,
+            shared.camera.zoom,
+            None,
+            shared.window.x / shared.window.y,
+            1.,
+        ));
+    }
 
     for vert in &mut point_verts {
         vert.pos += *offset;
@@ -713,22 +716,6 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
             usage: wgpu::BufferUsages::VERTEX,
         },
     )
-}
-
-fn rect_verts(
-    mut verts: Vec<Vertex>,
-    bone: Option<&Bone>,
-    camera: &Vec2,
-    zoom: f32,
-    tex: Option<&Texture>,
-    aspect_ratio: f32,
-    hard_scale: f32,
-) -> Vec<Vertex> {
-    for i in 0..verts.len() {
-        verts[i] = raw_to_world_vert(verts[i], bone, camera, zoom, tex, aspect_ratio, hard_scale);
-    }
-
-    verts.to_vec()
 }
 
 fn raw_to_world_vert(
