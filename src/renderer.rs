@@ -503,6 +503,7 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
     // now that it's in world coords, it can follow the mouse
     world_vert.pos = utils::screen_to_world_space(shared.input.mouse, shared.window);
 
+    // convert back to normal coords
     let vert_pos = con_vert!(
         world_to_raw_vert,
         world_vert,
@@ -524,7 +525,6 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
             shared.ui.anim.selected_frame,
         );
     } else {
-        // after following the mouse, it needs to convert its world coords back to normal
         shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = vert_pos;
     }
 }
@@ -814,11 +814,6 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
     let highlight_color = Color::new(0.7, 0.7, 0.7, 1.);
     let mut color = Color::new(0.5, 0.5, 0.5, 0.25);
 
-    // Used to highlight center horizontal and vertical lines,
-    // but also to prevent bind group from being set for every line
-    // (causes slowdown)
-    let mut center_line = false;
-
     let aspect_ratio = shared.window.y / shared.window.x;
     let mut x = shared.camera.pos.x - shared.camera.zoom / aspect_ratio;
     x = x.round();
@@ -827,21 +822,16 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
             x += 1.;
             continue;
         }
-        if x == 0. && !center_line {
+        if x == 0. {
             color = highlight_color;
-            center_line = true;
-        } else if x != 0. && center_line {
+        } else if x != 0. {
             color = regular_color;
-            center_line = false;
         }
         draw_vertical_line(x, width, render_pass, device, shared, color);
         x += 1.;
     }
 
     color = Color::new(0.5, 0.5, 0.5, 0.5);
-
-    // reset bind group to regular, non-highlighted one
-    center_line = false;
 
     let mut y = shared.camera.pos.y - shared.camera.zoom;
     y = y.round();
@@ -850,12 +840,10 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
             y += 1.;
             continue;
         }
-        if y == 0. && !center_line {
+        if y == 0. {
             color = highlight_color;
-            center_line = true;
-        } else if y != 0. && center_line {
+        } else if y != 0. {
             color = regular_color;
-            center_line = false;
         }
         draw_horizontal_line(y, width, render_pass, device, shared, color);
         y += 1.;
