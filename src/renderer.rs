@@ -340,6 +340,24 @@ pub struct Triangle {
 }
 
 pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
+    let mut anim_id = shared.ui.anim.selected;
+    if !shared.ui.is_animating() {
+        anim_id = usize::MAX;
+    }
+
+    macro_rules! edit {
+        ($element:expr, $value:expr) => {
+            shared.armature.edit_bone(
+                shared.selected_bone().unwrap().id,
+                &$element,
+                $value,
+                true,
+                anim_id,
+                shared.ui.anim.selected_frame,
+            );
+        };
+    }
+
     match shared.edit_mode {
         shared::EditMode::Move => {
             let mut pos = bone.pos;
@@ -353,52 +371,17 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
                 pos = utils::rotate(&pos, -find_bone(bones, bone.parent_id).unwrap().rot);
             }
 
-            shared.armature.edit_bone(
-                shared.selected_bone().unwrap().id,
-                &AnimElement::PositionX,
-                pos.x,
-                true,
-                shared.ui.anim.selected,
-                shared.ui.anim.selected_frame,
-            );
-            shared.armature.edit_bone(
-                shared.selected_bone().unwrap().id,
-                &AnimElement::PositionY,
-                pos.y,
-                true,
-                shared.ui.anim.selected,
-                shared.ui.anim.selected_frame,
-            );
+            edit!(AnimElement::PositionX, pos.x);
+            edit!(AnimElement::PositionY, pos.y);
         }
         shared::EditMode::Rotate => {
             let rot = (shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.;
-            shared.armature.edit_bone(
-                shared.selected_bone().unwrap().id,
-                &AnimElement::Rotation,
-                rot,
-                false,
-                shared.ui.anim.selected,
-                shared.ui.anim.selected_frame,
-            );
+            edit!(AnimElement::Rotation, rot);
         }
         shared::EditMode::Scale => {
             let scale = (shared.input.mouse / shared.window) * 2.;
-            shared.armature.edit_bone(
-                shared.selected_bone().unwrap().id,
-                &AnimElement::ScaleX,
-                scale.x,
-                false,
-                shared.ui.anim.selected,
-                shared.ui.anim.selected_frame,
-            );
-            shared.armature.edit_bone(
-                shared.selected_bone().unwrap().id,
-                &AnimElement::ScaleY,
-                scale.y,
-                false,
-                shared.ui.anim.selected,
-                shared.ui.anim.selected_frame,
-            );
+            edit!(AnimElement::ScaleX, scale.x);
+            edit!(AnimElement::ScaleY, scale.y);
         }
     };
 }
