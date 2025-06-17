@@ -812,40 +812,37 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
     let width = 0.005 * shared.camera.zoom;
     let regular_color = Color::new(0.5, 0.5, 0.5, 0.25);
     let highlight_color = Color::new(0.7, 0.7, 0.7, 1.);
-    let mut color = Color::new(0.5, 0.5, 0.5, 0.25);
 
+    // draw vertical lines
     let aspect_ratio = shared.window.y / shared.window.x;
-    let mut x = shared.camera.pos.x - shared.camera.zoom / aspect_ratio;
-    x = x.round();
-    while x < shared.camera.pos.x + shared.camera.zoom / aspect_ratio {
+    let mut x = (shared.camera.pos.x - shared.camera.zoom / aspect_ratio).round();
+    let right_side = shared.camera.pos.x + shared.camera.zoom / aspect_ratio;
+    while x < right_side {
         if x % gap != 0. {
             x += 1.;
             continue;
         }
         if x == 0. {
-            color = highlight_color;
-        } else if x != 0. {
-            color = regular_color;
+            draw_vertical_line(x, width, render_pass, device, shared, highlight_color);
+        } else {
+            draw_vertical_line(x, width, render_pass, device, shared, regular_color);
         }
-        draw_vertical_line(x, width, render_pass, device, shared, color);
         x += 1.;
     }
 
-    color = Color::new(0.5, 0.5, 0.5, 0.5);
-
-    let mut y = shared.camera.pos.y - shared.camera.zoom;
-    y = y.round();
-    while y < shared.camera.pos.y + shared.camera.zoom {
+    // draw horizontal lines
+    let mut y = (shared.camera.pos.y - shared.camera.zoom).round();
+    let top_side = shared.camera.pos.y + shared.camera.zoom;
+    while y < top_side {
         if y % gap != 0. {
             y += 1.;
             continue;
         }
         if y == 0. {
-            color = highlight_color;
-        } else if y != 0. {
-            color = regular_color;
+            draw_horizontal_line(y, width, render_pass, device, shared, highlight_color);
+        } else {
+            draw_horizontal_line(y, width, render_pass, device, shared, regular_color);
         }
-        draw_horizontal_line(y, width, render_pass, device, shared, color);
         y += 1.;
     }
 }
