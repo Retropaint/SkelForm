@@ -324,7 +324,7 @@ pub fn read_psd(
             new_bone.pos -= Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
         }
 
-        let id = if pivot_id != -1 {
+        let bone_id = if pivot_id != -1 {
             pivot_id
         } else {
             new_bone_id
@@ -341,15 +341,13 @@ pub fn read_psd(
                 continue;
             }
 
-            let bone_id = shared.armature.bones[b].id;
-
-            shared.armature.find_bone_mut(id).unwrap().parent_id = bone_id;
+            shared.armature.find_bone_mut(bone_id).unwrap().parent_id = shared.armature.bones[b].id;
 
             // since child pos is relative to parent, offset against it
-            let mut nb = shared.armature.find_bone(id).unwrap().clone();
+            let mut nb = shared.armature.find_bone(bone_id).unwrap().clone();
             while nb.parent_id != -1 {
                 nb = shared.armature.find_bone(nb.parent_id).unwrap().clone();
-                shared.armature.find_bone_mut(id).unwrap().pos -= nb.pos;
+                shared.armature.find_bone_mut(bone_id).unwrap().pos -= nb.pos;
             }
             break;
         }
