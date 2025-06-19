@@ -104,7 +104,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 nb = shared.armature.find_bone(nb.parent_id).unwrap();
                 if nb.folded {
                     visible = false;
-                    continue;
+                    break;
                 }
             }
             if !visible {
@@ -148,6 +148,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     &mut children,
                     &shared.armature.bones[b],
                 );
+                println!("{}", children.len());
                 if children.len() > 0 {
                     let fold_icon = if shared.armature.bones[b].folded {
                         "⏵"
@@ -281,27 +282,14 @@ pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_p
 
 /// Retrieve all children of this bone (recursive)
 pub fn get_all_children(bones: &Vec<Bone>, children_vec: &mut Vec<Bone>, parent: &Bone) {
-    let mut i: usize = 1;
-    let idx = find_bone_idx(bones, parent.id);
+    let idx = find_bone_idx(bones, parent.id) as usize;
 
-    #[rustfmt::skip]
-    macro_rules! check_bounds {() => {
-        if idx as usize + i > bones.len() - 1 {
-            return;
-        }};
-    }
-
-    check_bounds!();
-
-    while bones[idx as usize + i].parent_id == parent.id {
-        let prev_len = children_vec.len();
-        children_vec.push(bones[idx as usize + i].clone());
-        get_all_children(bones, children_vec, &bones[idx as usize + i]);
-
-        // move to the next bone that is not a child of this one
-        i += children_vec.len() - prev_len;
-
-        check_bounds!();
+    for j in 1..(bones.len() - idx) {
+        if bones[idx + j].parent_id != parent.id {
+            continue;
+        }
+        children_vec.push(bones[idx + j].clone());
+        get_all_children(bones, children_vec, &bones[idx + j]);
     }
 }
 
