@@ -148,7 +148,6 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     &mut children,
                     &shared.armature.bones[b],
                 );
-                println!("{}", children.len());
                 if children.len() > 0 {
                     let fold_icon = if shared.armature.bones[b].folded {
                         "⏵"
