@@ -236,6 +236,11 @@ pub fn read_psd(
         let mut dims = Vec2::default();
         let mut pos_tl = Vec2::new(f32::INFINITY, f32::INFINITY);
         for layer in psd.get_group_sub_layers(&group.id()).unwrap() {
+            // ignore layers that aren't direct children of this group
+            if layer.parent_id().unwrap() != group.id() {
+                continue;
+            }
+
             if layer.width() as f32 > dims.x {
                 dims.x = layer.width() as f32;
             }
