@@ -323,6 +323,36 @@ pub fn read_psd(
         } else {
             new_bone.pos -= Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
         }
+
+        let id = if pivot_id != -1 {
+            pivot_id
+        } else {
+            new_bone_id
+        };
+
+        if group.parent_id() == None {
+            continue;
+        }
+
+        // find parent by name
+        let parent_name = psd.groups()[&group.parent_id().unwrap()].name();
+        for b in 0..shared.armature.bones.len() {
+            if shared.armature.bones[b].name != parent_name {
+                continue;
+            }
+
+            let bone_id = shared.armature.bones[b].id;
+
+            shared.armature.find_bone_mut(id).unwrap().parent_id = bone_id;
+
+            // since child pos is relative to parent, offset against it
+            let mut nb = shared.armature.find_bone(id).unwrap().clone();
+            while nb.parent_id != -1 {
+                nb = shared.armature.find_bone(nb.parent_id).unwrap().clone();
+                shared.armature.find_bone_mut(id).unwrap().pos -= nb.pos;
+            }
+            break;
+        }
     }
 
     shared.ui.set_state(UiState::Modal, false);
