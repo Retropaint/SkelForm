@@ -123,9 +123,9 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                     egui::ScrollArea::vertical().show(ui, |ui| {
                         ui.set_width(ui.available_width());
                         for i in 0..shared.armature.animations.len() {
-                            // initialize renaming
                             let name = &mut shared.armature.animations[i].name.clone();
 
+                            // show input field if renaming
                             if shared.ui.rename_id == "animation ".to_string() + &i.to_string() {
                                 let (edited, value, _) = ui::text_input(
                                     "animation ".to_string() + &i.to_string(),
@@ -143,7 +143,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                     shared.armature.animations[i].name = value;
                                     shared.ui.anim.selected = i;
                                 }
-                                return;
+                                continue;
                             }
 
                             let button =
@@ -152,6 +152,9 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                 if shared.ui.anim.selected != i {
                                     shared.ui.anim.selected = i;
                                     shared.ui.select_anim_frame(0);
+                                } else {
+                                    shared.ui.rename_id = "animation ".to_string() + &i.to_string();
+                                    shared.ui.edit_value = Some(name.to_string());
                                 }
                             }
                         }
