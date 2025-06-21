@@ -962,7 +962,7 @@ pub fn text_input(
             }
         }
 
-        if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+        if ui.input(|i| i.key_pressed(egui::Key::Enter)) || input.lost_focus() {
             entered = true;
         }
 
