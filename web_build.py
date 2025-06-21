@@ -15,12 +15,16 @@ parser.add_argument('-s', '--serve', action='store_true', help="automatically ru
 parser.add_argument('-r', '--release', action='store_true', help="build for release/production")
 parser.add_argument('-m', '--mobile', action='store_true', help="build for mobile")
 parser.add_argument('-d', '--debug', action='store_true', help="build with debug flag. Ignored if --release is present")
+parser.add_argument('-wgl', '--webgl', action='store_true', help="use webgl instead of webgpu")
 
 args = parser.parse_args()
 
 # add default release config, but only if not building for mobile
 if args.release and not args.mobile:
     generic += " --release --public-url=/skelform_web"
+
+if args.webgl:
+    features = "\"webgl"
 
 if args.mobile:
     features += " mobile"
