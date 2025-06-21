@@ -72,11 +72,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // draw bone
     for b in 0..temp_bones.len() {
-        let vert = Vertex {
-            pos: temp_bones[b].pos,
-            ..Default::default()
-        };
-
         let mut world_verts: Vec<Vertex> = vec![];
         for vert in &temp_bones[b].vertices {
             let mut new_vert = con_vert!(

@@ -7,6 +7,9 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
+#[cfg(target_arch = "wasm32")]
+use image::Rgba;
+
 pub const NEW_BONE_NAME: &str = "New Bone";
 pub const CLICK_THRESHOLD: i32 = 5;
 
