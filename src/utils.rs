@@ -339,7 +339,7 @@ pub fn import<R: Read + std::io::Seek>(
         shared.armature.bind_groups = vec![];
         shared.ui.texture_images = vec![];
 
-        for texture in &mut root.armatures[0].textures {
+        for texture in &mut shared.armature.textures {
             texture.pixels = img
                 .crop(
                     texture.offset.x as u32,
