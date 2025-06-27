@@ -56,7 +56,11 @@ pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
 
     if let Some(pos) = context.pointer_latest_pos() {
         if shared.ui.anim.dragged_keyframe != -1 {
-            keyframe_editor::draw_diamond(&context.debug_painter(), pos.into());
+            keyframe_editor::draw_diamond(
+                &context.debug_painter(),
+                pos.into(),
+                egui::Color32::WHITE,
+            );
         }
 
         #[cfg(feature = "mobile")]

@@ -307,6 +307,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
 }
 
 pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: f32) {
+    let mut drew_drag = false;
     egui::ScrollArea::horizontal()
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
         .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset.x, 0.))
@@ -347,7 +348,14 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     }
 
                     if shared.ui.anim.dragged_keyframe != frame {
-                        draw_diamond(ui.painter(), pos);
+                        draw_diamond(ui.painter(), pos, egui::Color32::WHITE);
+                    } else if !drew_drag {
+                        draw_diamond(
+                            ui.painter(),
+                            pos,
+                            egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30),
+                        );
+                        drew_drag = true;
                     }
 
                     let just_clicked = shared.input.mouse_left_prev < 10;
@@ -665,7 +673,7 @@ fn draw_frame_lines(
     ui.allocate_rect(rect, egui::Sense::empty());
 }
 
-pub fn draw_diamond(painter: &egui::Painter, pos: Vec2) {
+pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32) {
     let size = 5.0;
 
     // Define the four points of the diamond
@@ -679,8 +687,8 @@ pub fn draw_diamond(painter: &egui::Painter, pos: Vec2) {
     // Draw the diamond
     painter.add(egui::Shape::convex_polygon(
         points,
-        egui::Color32::TRANSPARENT, // Fill color (transparent)
-        egui::Stroke::new(2.0, egui::Color32::WHITE), // Stroke width & color
+        egui::Color32::TRANSPARENT,    // Fill color (transparent)
+        egui::Stroke::new(2.0, color), // Stroke width & color
     ));
 }
 
