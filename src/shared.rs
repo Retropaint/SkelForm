@@ -740,6 +740,7 @@ impl Armature {
             );
             self.animations[selected_anim].keyframes[kf].value = new_tex_idx as f32;
 
+            // add 0th keyframe
             let first = self.animations[selected_anim].check_if_in_keyframe(
                 selected_bone as i32,
                 0,
@@ -954,14 +955,16 @@ impl Armature {
                 b.pivot.x += interpolate!(   AnimElement::PivotX,     0., -1);
                 b.pivot.y += interpolate!(   AnimElement::PivotY,     0., -1);
                 b.zindex  =  previous_frame!(AnimElement::Zindex,     0.);
-                b.tex_idx =  previous_frame!(AnimElement::Texture,    0.) as i32;
+                b.tex_idx =  previous_frame!(AnimElement::Texture,    b.tex_idx as f32) as i32;
             };
 
             // restructure bone's verts to match texture
-            (
-                self.find_bone_mut(b.id).unwrap().vertices,
-                self.find_bone_mut(b.id).unwrap().indices,
-            ) = renderer::create_tex_rect(&self.textures[b.tex_idx as usize].size);
+            if b.tex_idx != -1 {
+                (
+                    self.find_bone_mut(b.id).unwrap().vertices,
+                    self.find_bone_mut(b.id).unwrap().indices,
+                ) = renderer::create_tex_rect(&self.textures[b.tex_idx as usize].size);
+            }
 
             for v in 0..b.vertices.len() {
                 b.vertices[v].pos.x += interpolate!(AnimElement::VertPositionX, 0., v as i32);
