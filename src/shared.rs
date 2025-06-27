@@ -703,39 +703,42 @@ impl Armature {
         selected_frame: i32,
         selected_bone: usize,
     ) {
-        let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
-
-        if tex_idx != -1 {
-            let verts_edited = utils::bone_meshes_edited(
-                self.textures[tex_idx as usize].size,
-                &self.find_bone(bone_id).unwrap().vertices,
-            );
-            if !verts_edited {
-                (
-                    self.find_bone_mut(bone_id).unwrap().vertices,
-                    self.find_bone_mut(bone_id).unwrap().indices,
-                ) = renderer::create_tex_rect(&self.textures[new_tex_idx].size);
-            }
-        }
-
+        // use texture's name for bone, if the latter is unnamed
         let name = self.textures[new_tex_idx].name.clone();
         let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
         if bone_name == NEW_BONE_NAME || bone_name == "" {
             *bone_name = name;
         }
 
-        // record texture change in animation
-        if selected_anim != usize::MAX {
+        if selected_anim == usize::MAX {
+            let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
+            self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
+
+            // Set bone's verts to match texture.
+            // Original logic checks if verts were edited, but this is temporarily disabled
+            // for consistency with animations.
+            if tex_idx != -1 {
+                //let verts_edited = utils::bone_meshes_edited(
+                //    self.textures[tex_idx as usize].size,
+                //    &self.find_bone(bone_id).unwrap().vertices,
+                //);
+                //if !verts_edited {
+                (
+                    self.find_bone_mut(bone_id).unwrap().vertices,
+                    self.find_bone_mut(bone_id).unwrap().indices,
+                ) = renderer::create_tex_rect(&self.textures[new_tex_idx].size);
+                //}
+            }
+        } else {
+            // record texture change in animation
             let kf = self.animations[selected_anim].check_if_in_keyframe(
                 selected_bone as i32,
                 selected_frame,
                 AnimElement::Texture,
                 -1,
             );
-
             self.animations[selected_anim].keyframes[kf].value = new_tex_idx as f32;
         }
-        self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
     }
 
     pub fn delete_bone(&mut self, id: i32) {
@@ -896,7 +899,7 @@ impl Armature {
         animate!(AnimElement::VertPositionY, pos.y);
     }
 
-    pub fn animate(&self, anim_idx: usize, anim_frame: i32) -> Vec<Bone> {
+    pub fn animate(&mut self, anim_idx: usize, anim_frame: i32) -> Vec<Bone> {
         let mut bones = self.bones.clone();
 
         // ignore if this animation has no keyframes
@@ -944,6 +947,12 @@ impl Armature {
                 b.zindex  =  previous_frame!(AnimElement::Zindex,     0.);
                 b.tex_idx =  previous_frame!(AnimElement::Texture,    0.) as i32;
             };
+
+            // restructure bone's verts to match texture
+            (
+                self.find_bone_mut(b.id).unwrap().vertices,
+                self.find_bone_mut(b.id).unwrap().indices,
+            ) = renderer::create_tex_rect(&self.textures[b.tex_idx as usize].size);
 
             for v in 0..b.vertices.len() {
                 b.vertices[v].pos.x += interpolate!(AnimElement::VertPositionX, 0., v as i32);
