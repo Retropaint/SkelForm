@@ -703,6 +703,8 @@ impl Armature {
         selected_frame: i32,
         selected_bone: usize,
     ) {
+        let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
+
         // use texture's name for bone, if the latter is unnamed
         let name = self.textures[new_tex_idx].name.clone();
         let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
@@ -711,7 +713,6 @@ impl Armature {
         }
 
         if selected_anim == usize::MAX {
-            let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
             self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
 
             // Set bone's verts to match texture.
@@ -738,6 +739,14 @@ impl Armature {
                 -1,
             );
             self.animations[selected_anim].keyframes[kf].value = new_tex_idx as f32;
+
+            let first = self.animations[selected_anim].check_if_in_keyframe(
+                selected_bone as i32,
+                0,
+                AnimElement::Texture,
+                -1,
+            );
+            self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
         }
     }
 
