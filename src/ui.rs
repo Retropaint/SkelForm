@@ -127,6 +127,7 @@ pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
             shared.input.mouse_left += 1;
         } else {
             shared.input.mouse_left = -1;
+            shared.ui.anim.dragged_keyframe = -1;
         }
 
         if i.pointer.secondary_down() {
