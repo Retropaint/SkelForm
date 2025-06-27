@@ -73,7 +73,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // draw bone
     for b in 0..temp_bones.len() {
         if temp_bones[b].tex_idx == -1 {
-            continue
+            continue;
         }
 
         let mut world_verts: Vec<Vertex> = vec![];
@@ -510,20 +510,21 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
     )
     .pos;
 
-    if shared.ui.is_animating() {
-        let og_vert_pos = shared.selected_bone().unwrap().vertices[vert_idx].pos;
-        let final_pos = vert_pos - og_vert_pos;
-
-        shared.armature.edit_vert(
-            shared.selected_bone().unwrap().id,
-            shared.dragging_vert as i32,
-            &(final_pos),
-            shared.ui.anim.selected,
-            shared.ui.anim.selected_frame,
-        );
-    } else {
+    if !shared.ui.is_animating() {
         shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = vert_pos;
+        return;
     }
+
+    let og_vert_pos = shared.selected_bone().unwrap().vertices[vert_idx].pos;
+    let final_pos = vert_pos - og_vert_pos;
+
+    shared.armature.edit_vert(
+        shared.selected_bone().unwrap().id,
+        shared.dragging_vert as i32,
+        &(final_pos),
+        shared.ui.anim.selected,
+        shared.ui.anim.selected_frame,
+    );
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {

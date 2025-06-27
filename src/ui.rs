@@ -54,10 +54,13 @@ pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
         };
     }
 
-    #[cfg(feature = "mobile")]
-    #[cfg(feature = "debug")]
-    // visually track UI cursor, since it differs from real
     if let Some(pos) = context.pointer_latest_pos() {
+        if shared.ui.anim.dragged_keyframe != -1 {
+            keyframe_editor::draw_diamond(&context.debug_painter(), pos.into());
+        }
+
+        #[cfg(feature = "mobile")]
+        #[cfg(feature = "debug")]
         context
             .debug_painter()
             .circle_filled(pos, 2., egui::Color32::GREEN);

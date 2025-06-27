@@ -9,8 +9,7 @@ use crate::*;
 const LINE_OFFSET: f32 = 30.;
 
 pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
-    if !shared.ui.anim.playing {
-    } else {
+    if shared.ui.anim.playing {
         let mut elapsed = (chrono::Utc::now() - shared.ui.anim.started.unwrap()).as_seconds_f32();
         let frametime = 1. / shared.selected_animation().unwrap().fps as f32;
 
@@ -330,7 +329,6 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         ui.min_rect().left() + shared.ui.anim.lines_x[frame as usize] + 3.,
                         ui.min_rect().top() + 10.,
                     );
-                    draw_diamond(ui, pos);
 
                     // create dragging area for diamond
                     let rect = egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5.));
@@ -344,10 +342,20 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         shared.cursor_icon = egui::CursorIcon::Grab;
                     }
 
+                    if response.dragged() {
+                        shared.ui.anim.dragged_keyframe = frame;
+                    }
+
+                    if shared.ui.anim.dragged_keyframe != frame {
+                        draw_diamond(ui.painter(), pos);
+                    }
+
                     let just_clicked = shared.input.mouse_left_prev < 10;
                     if !response.drag_stopped() || just_clicked {
                         continue;
                     }
+
+                    shared.ui.anim.dragged_keyframe = -1;
 
                     shared.undo_actions.push(shared::Action {
                         action: ActionEnum::Animation,
@@ -357,9 +365,9 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         ..Default::default()
                     });
                     shared.cursor_icon = egui::CursorIcon::Grabbing;
-                    let cursor = shared.ui.get_cursor(ui);
 
                     // remove keyframe if dragged out
+                    let cursor = shared.ui.get_cursor(ui);
                     if cursor.y < 0. {
                         let frame = shared.selected_animation_mut().unwrap().keyframes[i].frame;
                         shared
@@ -657,7 +665,7 @@ fn draw_frame_lines(
     ui.allocate_rect(rect, egui::Sense::empty());
 }
 
-fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
+pub fn draw_diamond(painter: &egui::Painter, pos: Vec2) {
     let size = 5.0;
 
     // Define the four points of the diamond
@@ -669,12 +677,11 @@ fn draw_diamond(ui: &egui::Ui, pos: Vec2) {
     ];
 
     // Draw the diamond
-    ui.painter_at(ui.min_rect())
-        .add(egui::Shape::convex_polygon(
-            points,
-            egui::Color32::TRANSPARENT, // Fill color (transparent)
-            egui::Stroke::new(2.0, egui::Color32::WHITE), // Stroke width & color
-        ));
+    painter.add(egui::Shape::convex_polygon(
+        points,
+        egui::Color32::TRANSPARENT, // Fill color (transparent)
+        egui::Stroke::new(2.0, egui::Color32::WHITE), // Stroke width & color
+    ));
 }
 
 pub fn new_animation(shared: &mut Shared) {
