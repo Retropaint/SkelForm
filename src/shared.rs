@@ -916,27 +916,33 @@ impl Armature {
                         Transition::SineIn => {
                             Tweener::sine_in(prev, next, total_frames).move_to(current_frame)
                         }
-                        Transition::SineOut => Tweener::sine_out(prev, next, total_frames)
-                            .move_to(current_frame),
-                        _ => {
-                            Tweener::linear(prev, next, total_frames).move_to(current_frame)
+                        Transition::SineOut => {
+                            Tweener::sine_out(prev, next, total_frames).move_to(current_frame)
                         }
+                        _ => Tweener::linear(prev, next, total_frames).move_to(current_frame),
                     }
                 }};
+            }
+
+            macro_rules! previous_frame {
+                ($element:expr, $default:expr) => {
+                    self.find_connecting_frames(anim_idx, b.id, -1, $element, $default, anim_frame)
+                        .0
+                };
             }
 
             // interpolate!
             #[rustfmt::skip]
             {
-                b.pos.x   += interpolate!(AnimElement::PositionX, 0., -1);
-                b.pos.y   += interpolate!(AnimElement::PositionY, 0., -1);
-                b.rot     += interpolate!(AnimElement::Rotation,  0., -1);
-                b.scale.x *= interpolate!(AnimElement::ScaleX,    1., -1);
-                b.scale.y *= interpolate!(AnimElement::ScaleY,    1., -1);
-                b.pivot.x += interpolate!(AnimElement::PivotX,    0., -1);
-                b.pivot.y += interpolate!(AnimElement::PivotY,    0., -1);
-                b.zindex  += interpolate!(AnimElement::Zindex,    0., -1);
-                let tex_idx = interpolate!(AnimElement::Texture,  0., -1);
+                b.pos.x   += interpolate!(   AnimElement::PositionX,  0., -1);
+                b.pos.y   += interpolate!(   AnimElement::PositionY,  0., -1);
+                b.rot     += interpolate!(   AnimElement::Rotation,   0., -1);
+                b.scale.x *= interpolate!(   AnimElement::ScaleX,     1., -1);
+                b.scale.y *= interpolate!(   AnimElement::ScaleY,     1., -1);
+                b.pivot.x += interpolate!(   AnimElement::PivotX,     0., -1);
+                b.pivot.y += interpolate!(   AnimElement::PivotY,     0., -1);
+                b.zindex  =  previous_frame!(AnimElement::Zindex,     0.);
+                b.tex_idx =  previous_frame!(AnimElement::Texture,    0.) as i32;
             };
 
             for v in 0..b.vertices.len() {
