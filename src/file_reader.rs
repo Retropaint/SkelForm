@@ -156,9 +156,13 @@ pub fn read_image_loaders(
     );
 
     let tex_idx = shared.armature.textures.len() - 1;
-    shared
-        .armature
-        .set_bone_tex(shared.selected_bone().unwrap().id, tex_idx);
+    shared.armature.set_bone_tex(
+        shared.selected_bone().unwrap().id,
+        tex_idx,
+        shared.ui.anim.selected,
+        shared.ui.anim.selected_frame,
+        shared.ui.selected_bone_idx,
+    );
 
     shared
         .ui
@@ -300,7 +304,13 @@ pub fn read_psd(
         // create texture bone
         let new_bone_id = shared.armature.new_bone(-1).0.id;
         let tex_idx = shared.armature.textures.len() - 1;
-        shared.armature.set_bone_tex(new_bone_id, tex_idx);
+        shared.armature.set_bone_tex(
+            new_bone_id,
+            tex_idx,
+            shared.ui.anim.selected,
+            shared.ui.anim.selected_frame,
+            shared.ui.selected_bone_idx,
+        );
         let new_bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
 
         // layers start from top-left, so push bone down and right to reflect that

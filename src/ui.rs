@@ -706,9 +706,14 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                         // stop the loop to prevent index errors
                         break;
                     } else {
-                        shared
-                            .armature
-                            .set_bone_tex(shared.selected_bone().unwrap().id, i);
+                        // set texture
+                        shared.armature.set_bone_tex(
+                            shared.selected_bone().unwrap().id,
+                            i,
+                            shared.ui.anim.selected,
+                            shared.ui.anim.selected_frame,
+                            shared.ui.selected_bone_idx,
+                        );
                         shared.ui.set_state(UiState::ImageModal, false);
                     }
                 }
