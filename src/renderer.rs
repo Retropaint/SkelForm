@@ -366,8 +366,10 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
 
             // restore universal position, by offsetting against parents' attributes
             if bone.parent_id != -1 {
-                pos -= find_bone(bones, bone.parent_id).unwrap().pos;
-                pos = utils::rotate(&pos, -find_bone(bones, bone.parent_id).unwrap().rot);
+                let parent = find_bone(bones, bone.parent_id).unwrap();
+                pos -= parent.pos;
+                pos = utils::rotate(&pos, -parent.rot);
+                pos /= parent.scale;
             }
 
             edit!(AnimElement::PositionX, pos.x);
