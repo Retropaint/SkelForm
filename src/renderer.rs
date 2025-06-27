@@ -72,6 +72,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // draw bone
     for b in 0..temp_bones.len() {
+        if temp_bones[b].tex_idx == -1 {
+            continue
+        }
+
         let mut world_verts: Vec<Vertex> = vec![];
         for vert in &temp_bones[b].vertices {
             let mut new_vert = con_vert!(
@@ -404,10 +408,6 @@ pub fn draw_bone(
     world_verts: &Vec<Vertex>,
     shared: &Shared,
 ) {
-    if bone.tex_idx == -1 || world_verts.len() == 0 {
-        return;
-    }
-
     //render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
     render_pass.set_bind_group(0, &shared.armature.bind_groups[bone.tex_idx as usize], &[]);
     render_pass.set_vertex_buffer(0, vertex_buffer(&world_verts, device).slice(..));
