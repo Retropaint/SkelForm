@@ -695,7 +695,14 @@ impl Armature {
         None
     }
 
-    pub fn set_bone_tex(&mut self, bone_id: i32, new_tex_idx: usize) {
+    pub fn set_bone_tex(
+        &mut self,
+        bone_id: i32,
+        new_tex_idx: usize,
+        selected_anim: usize,
+        selected_frame: i32,
+        selected_bone: usize,
+    ) {
         let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
 
         if tex_idx != -1 {
@@ -717,6 +724,17 @@ impl Armature {
             *bone_name = name;
         }
 
+        // record texture change in animation
+        if selected_anim != usize::MAX {
+            let kf = self.animations[selected_anim].check_if_in_keyframe(
+                selected_bone as i32,
+                selected_frame,
+                AnimElement::Texture,
+                -1,
+            );
+
+            self.animations[selected_anim].keyframes[kf].value = new_tex_idx as f32;
+        }
         self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
     }
 
@@ -898,10 +916,11 @@ impl Armature {
                         Transition::SineIn => {
                             Tweener::sine_in(prev, next, total_frames).move_to(current_frame)
                         }
-                        Transition::SineOut => {
-                            Tweener::sine_out(prev, next, total_frames).move_to(current_frame)
+                        Transition::SineOut => Tweener::sine_out(prev, next, total_frames)
+                            .move_to(current_frame),
+                        _ => {
+                            Tweener::linear(prev, next, total_frames).move_to(current_frame)
                         }
-                        _ => Tweener::linear(prev, next, total_frames).move_to(current_frame),
                     }
                 }};
             }
@@ -917,6 +936,7 @@ impl Armature {
                 b.pivot.x += interpolate!(AnimElement::PivotX,    0., -1);
                 b.pivot.y += interpolate!(AnimElement::PivotY,    0., -1);
                 b.zindex  += interpolate!(AnimElement::Zindex,    0., -1);
+                let tex_idx = interpolate!(AnimElement::Texture,  0., -1);
             };
 
             for v in 0..b.vertices.len() {
@@ -1038,7 +1058,7 @@ pub struct Animation {
 
 impl Animation {
     /// Return which frame has these attributes, or create a new one
-    fn check_if_in_keyframe(
+    pub fn check_if_in_keyframe(
         &mut self,
         id: i32,
         frame: i32,
@@ -1142,6 +1162,7 @@ pub enum AnimElement {
     Zindex,
     VertPositionX,
     VertPositionY,
+    Texture,
 }
 
 #[rustfmt::skip]

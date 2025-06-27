@@ -64,8 +64,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         if edited {
             shared.selected_bone_mut().unwrap().name = value;
         }
-        //ui.text_edit_singleline(&mut shared.selected_bone_mut().unwrap().name)
-        //    .labelled_by(l.id);
     });
 
     ui.horizontal(|ui| {
@@ -77,7 +75,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 if shared.armature.bind_groups.len() == 0 {
                     #[cfg(not(target_arch = "wasm32"))]
                     open_file_dialog();
-
                     #[cfg(target_arch = "wasm32")]
                     toggleElement(true, "image-dialog".to_string());
                 } else {
