@@ -55,31 +55,33 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         }
     }
 
-    let response = egui::TopBottomPanel::bottom("Keyframe")
-        .min_height(150.)
-        .resizable(true)
-        .show(egui_ctx, |ui| {
-            ui::draw_gradient(
-                ui,
-                ui.ctx().screen_rect(),
-                egui::Color32::TRANSPARENT,
-                ui::COLOR_MAIN_DARK,
-            );
-            shared.ui.camera_bar_pos.y = ui.min_rect().top();
-            let full_height = ui.available_height();
-            ui.horizontal(|ui| {
-                ui.set_height(full_height);
-                draw_animations_list(ui, shared);
+    let panel_id = "Keyframe";
+    ui::draw_resizable_panel(
+        panel_id,
+        egui::TopBottomPanel::bottom(panel_id)
+            .min_height(150.)
+            .resizable(true)
+            .show(egui_ctx, |ui| {
+                ui::draw_gradient(
+                    ui,
+                    ui.ctx().screen_rect(),
+                    egui::Color32::TRANSPARENT,
+                    ui::COLOR_MAIN_DARK,
+                );
+                shared.ui.camera_bar_pos.y = ui.min_rect().top();
+                let full_height = ui.available_height();
+                ui.horizontal(|ui| {
+                    ui.set_height(full_height);
+                    draw_animations_list(ui, shared);
 
-                if shared.ui.anim.selected != usize::MAX {
-                    timeline_editor(ui, shared);
-                }
-            });
-        })
-        .response;
-    if response.hovered() {
-        shared.input.on_ui = true;
-    }
+                    if shared.ui.anim.selected != usize::MAX {
+                        timeline_editor(ui, shared);
+                    }
+                });
+            }),
+        &mut shared.input.on_ui,
+        &egui_ctx,
+    );
 }
 
 fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
