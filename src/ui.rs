@@ -154,33 +154,34 @@ pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
 
     let min_default_size = 190.;
 
-    // right side panel
-    let response = egui::SidePanel::right("Bone")
-        .resizable(true)
-        .max_width(250.)
-        .min_width(min_default_size)
-        .default_width(min_default_size)
-        .show(context, |ui| {
-            draw_gradient(
-                ui,
-                ui.ctx().screen_rect(),
-                Color32::TRANSPARENT,
-                COLOR_MAIN_DARK,
-            );
+    let bone_panel_id = "Bone";
+    draw_resizable_panel(
+        bone_panel_id,
+        egui::SidePanel::right(bone_panel_id)
+            .resizable(true)
+            .max_width(250.)
+            .min_width(min_default_size)
+            .default_width(min_default_size)
+            .show(context, |ui| {
+                draw_gradient(
+                    ui,
+                    ui.ctx().screen_rect(),
+                    Color32::TRANSPARENT,
+                    COLOR_MAIN_DARK,
+                );
 
-            if shared.ui.selected_bone_idx != usize::MAX {
-                bone_panel::draw(ui, shared);
-            } else if shared.ui.anim.selected_frame != -1 {
-                keyframe_panel::draw(ui, shared);
-            }
+                if shared.ui.selected_bone_idx != usize::MAX {
+                    bone_panel::draw(ui, shared);
+                } else if shared.ui.anim.selected_frame != -1 {
+                    keyframe_panel::draw(ui, shared);
+                }
 
-            shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
-            shared.ui.camera_bar_pos.x = ui.min_rect().left();
-        })
-        .response;
-    if response.hovered() {
-        shared.input.on_ui = true;
-    }
+                shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
+                shared.ui.camera_bar_pos.x = ui.min_rect().left();
+            }),
+        &mut shared.input.on_ui,
+        context,
+    );
 
     if shared.ui.selected_bone_idx != usize::MAX {
         edit_mode_bar(context, shared);
@@ -1037,4 +1038,19 @@ pub fn float_input(
     }
 
     (false, value, input)
+}
+
+// Wrapper for resizable panels.
+// Handles toggling on_ui if resizing the panel itself.
+pub fn draw_resizable_panel<T>(
+    id: &str,
+    panel: egui::InnerResponse<T>,
+    on_ui: &mut bool,
+    context: &egui::Context,
+) {
+    if let Some(resize) = context.read_response(egui::Id::new(id).with("__resize")) {
+        if resize.hovered() || panel.response.hovered() {
+            *on_ui = true;
+        }
+    }
 }
