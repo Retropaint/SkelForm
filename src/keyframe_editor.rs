@@ -177,7 +177,18 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
             let mut bone_tops = BoneTops::default();
 
             if shared.selected_animation().unwrap().keyframes.len() > 0 {
-                draw_bones_list(ui, shared, &mut bone_tops);
+                egui::Frame::new()
+                    .inner_margin(egui::Margin {
+                        top: 27,
+                        bottom: 27,
+                        left: 0,
+                        right: 0,
+                    })
+                    .show(ui, |ui| {
+                        ui.vertical(|ui| {
+                            draw_bones_list(ui, shared, &mut bone_tops);
+                        });
+                    });
             }
 
             // calculate how far apart each keyframe should visually be
@@ -234,86 +245,68 @@ struct AnimTopInit {
 }
 
 pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut BoneTops) {
-    ui.vertical(|ui| {
-        egui::Frame::new()
-            .inner_margin(egui::Margin {
-                top: 27,
-                bottom: 27,
-                left: 0,
-                right: 0,
-            })
-            .show(ui, |ui| {
-                egui::ScrollArea::vertical()
-                    .id_salt("bones_list")
-                    .vertical_scroll_offset(shared.ui.anim.timeline_offset.y)
-                    .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
-                    .show(ui, |ui| {
-                        let mut tops_init: Vec<AnimTopInit> = vec![];
+    egui::ScrollArea::vertical()
+        .id_salt("bones_list")
+        .vertical_scroll_offset(shared.ui.anim.timeline_offset.y)
+        .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
+        .show(ui, |ui| {
+            let mut tops_init: Vec<AnimTopInit> = vec![];
 
-                        // sort keyframes by element & bone
-                        let mut keyframes = shared.selected_animation().unwrap().keyframes.clone();
-                        keyframes.sort_by(|a, b| {
-                            (a.element.clone() as usize).cmp(&(b.element.clone() as usize))
-                        });
-                        keyframes.sort_by(|a, b| a.bone_id.cmp(&b.bone_id));
+            // sort keyframes by element & bone
+            let mut keyframes = shared.selected_animation().unwrap().keyframes.clone();
+            keyframes
+                .sort_by(|a, b| (a.element.clone() as usize).cmp(&(b.element.clone() as usize)));
+            keyframes.sort_by(|a, b| a.bone_id.cmp(&b.bone_id));
 
-                        for i in 0..keyframes.len() {
-                            let kf = &keyframes[i];
+            for i in 0..keyframes.len() {
+                let kf = &keyframes[i];
 
-                            // find bone in list
-                            let mut add = true;
-                            for ti in &tops_init {
-                                if ti.id == kf.bone_id
-                                    && ti.element == kf.element
-                                    && ti.vert_id == kf.vert_id
-                                {
-                                    add = false;
-                                    break;
-                                }
-                            }
+                // find bone in list
+                let mut add = true;
+                for ti in &tops_init {
+                    if ti.id == kf.bone_id && ti.element == kf.element && ti.vert_id == kf.vert_id {
+                        add = false;
+                        break;
+                    }
+                }
 
-                            if !add {
-                                continue;
-                            }
+                if !add {
+                    continue;
+                }
 
-                            tops_init.push(AnimTopInit {
-                                id: kf.bone_id,
-                                element: kf.element.clone(),
-                                vert_id: kf.vert_id,
-                            })
-                        }
+                tops_init.push(AnimTopInit {
+                    id: kf.bone_id,
+                    element: kf.element.clone(),
+                    vert_id: kf.vert_id,
+                })
+            }
 
-                        let mut last_id = -1;
-                        let mut last_vert_id = -1;
-                        for ti in tops_init {
-                            if last_id != ti.id || last_vert_id != ti.vert_id {
-                                ui.label(shared.armature.find_bone(ti.id).unwrap().name.clone());
-                            }
-                            let mut top = 0.;
-                            ui.horizontal(|ui| {
-                                ui.add_space(30.);
-                                let label = ui.label(ti.element.to_string());
-                                top = label.rect.top();
-                            });
-                            for kf in &keyframes {
-                                if kf.bone_id == ti.id
-                                    && kf.element == ti.element
-                                    && kf.vert_id == ti.vert_id
-                                {
-                                    bone_tops.tops.push(BoneTop {
-                                        id: kf.bone_id,
-                                        element: kf.element.clone(),
-                                        height: top,
-                                        vert_id: kf.vert_id,
-                                    })
-                                }
-                            }
-                            last_id = ti.id;
-                            last_vert_id = ti.vert_id;
-                        }
-                    });
-            });
-    });
+            let mut last_id = -1;
+            let mut last_vert_id = -1;
+            for ti in tops_init {
+                if last_id != ti.id || last_vert_id != ti.vert_id {
+                    ui.label(shared.armature.find_bone(ti.id).unwrap().name.clone());
+                }
+                let mut top = 0.;
+                ui.horizontal(|ui| {
+                    ui.add_space(30.);
+                    let label = ui.label(ti.element.to_string());
+                    top = label.rect.top();
+                });
+                for kf in &keyframes {
+                    if kf.bone_id == ti.id && kf.element == ti.element && kf.vert_id == ti.vert_id {
+                        bone_tops.tops.push(BoneTop {
+                            id: kf.bone_id,
+                            element: kf.element.clone(),
+                            height: top,
+                            vert_id: kf.vert_id,
+                        })
+                    }
+                }
+                last_id = ti.id;
+                last_vert_id = ti.vert_id;
+            }
+        });
 }
 
 pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: f32) {
