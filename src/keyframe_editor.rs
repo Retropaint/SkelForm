@@ -249,8 +249,16 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                     .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
                     .show(ui, |ui| {
                         let mut tops_init: Vec<AnimTopInit> = vec![];
-                        for i in 0..shared.selected_animation().unwrap().keyframes.len() {
-                            let kf = &shared.selected_animation().unwrap().keyframes[i];
+
+                        // sort keyframes by element & bone
+                        let mut keyframes = shared.selected_animation().unwrap().keyframes.clone();
+                        keyframes.sort_by(|a, b| {
+                            (a.element.clone() as usize).cmp(&(b.element.clone() as usize))
+                        });
+                        keyframes.sort_by(|a, b| a.bone_id.cmp(&b.bone_id));
+
+                        for i in 0..keyframes.len() {
+                            let kf = &keyframes[i];
 
                             // find bone in list
                             let mut add = true;
@@ -264,13 +272,15 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                                 }
                             }
 
-                            if add {
-                                tops_init.push(AnimTopInit {
-                                    id: kf.bone_id,
-                                    element: kf.element.clone(),
-                                    vert_id: kf.vert_id,
-                                })
+                            if !add {
+                                continue;
                             }
+
+                            tops_init.push(AnimTopInit {
+                                id: kf.bone_id,
+                                element: kf.element.clone(),
+                                vert_id: kf.vert_id,
+                            })
                         }
 
                         let mut last_id = -1;
@@ -285,7 +295,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                                 let label = ui.label(ti.element.to_string());
                                 top = label.rect.top();
                             });
-                            for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
+                            for kf in &keyframes {
                                 if kf.bone_id == ti.id
                                     && kf.element == ti.element
                                     && kf.vert_id == ti.vert_id
