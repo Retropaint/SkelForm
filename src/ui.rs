@@ -252,6 +252,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
 fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("File", |ui| {
+        ui.set_width(125.);
         if top_bar_button(ui, "Open", "O", &mut offset).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog(TEMP_IMPORT_PATH.to_string());
@@ -324,6 +325,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
 fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("View", |ui| {
+        ui.set_width(125.);
         if top_bar_button(ui, "Zoom In", "=", &mut offset).clicked() {
             set_zoom(shared.camera.zoom - 10., shared);
         }
