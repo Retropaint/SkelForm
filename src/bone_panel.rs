@@ -22,27 +22,26 @@ mod web {
 pub use web::*;
 
 pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
-    ui.heading("Bone");
+    ui.horizontal(|ui| {
+        ui.heading("Bone");
 
-    // delete label
-    let delete_rect = egui::Rect::from_min_size(ui.min_rect().right_top(), egui::Vec2::ZERO);
-    if ui
-        .put(
-            delete_rect,
-            egui::Label::new(
-                egui::RichText::new("X")
-                    .size(12.)
-                    .color(egui::Color32::DARK_RED),
-            ),
-        )
-        .on_hover_cursor(egui::CursorIcon::PointingHand)
-        .clicked()
-    {
-        shared.ui.open_polar_modal(
-            PolarId::DeleteBone,
-            "Are you sure to delete this bone?".to_string(),
-        );
-    }
+        // delete label
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let text = egui::RichText::new("X")
+                .size(12.)
+                .color(egui::Color32::DARK_RED);
+            if ui
+                .label(text)
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .clicked()
+            {
+                shared.ui.open_polar_modal(
+                    PolarId::DeleteBone,
+                    "Are you sure to delete this bone?".to_string(),
+                );
+            }
+        });
+    });
 
     ui.separator();
     ui.add_space(3.);
