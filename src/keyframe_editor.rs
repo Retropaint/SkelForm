@@ -69,10 +69,24 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                     ui::COLOR_MAIN_DARK,
                 );
                 shared.ui.camera_bar_pos.y = ui.min_rect().top();
+
                 let full_height = ui.available_height();
                 ui.horizontal(|ui| {
                     ui.set_height(full_height);
-                    draw_animations_list(ui, shared);
+
+                    // animations list
+                    egui::Resize::default()
+                        .min_height(full_height) // make height unadjustable
+                        .max_height(full_height) //
+                        .default_width(150.)
+                        .with_stroke(false)
+                        .show(ui, |ui| {
+                            egui::Frame::new().show(ui, |ui| {
+                                ui.vertical(|ui| {
+                                    draw_animations_list(ui, shared);
+                                })
+                            });
+                        });
 
                     if shared.ui.anim.selected != usize::MAX {
                         timeline_editor(ui, shared);
@@ -85,84 +99,67 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
 }
 
 fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
-    let full_height = ui.available_height();
-    // animations list
-    egui::Resize::default()
-        .min_height(full_height) // make height unadjustable
-        .max_height(full_height) //
-        .default_width(150.)
-        .with_stroke(false)
-        .show(ui, |ui| {
-            egui::Frame::new().show(ui, |ui| {
-                // use a ver and hor wrap to prevent self-resizing
-                ui.vertical(|ui| {
-                    ui.horizontal(|ui| {
-                        ui.heading("Animation");
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            ui.add_space(5.);
-                            let button = ui::button("New", ui);
-                            ui::draw_tutorial_rect(
-                                TutorialStep::CreateAnim,
-                                button.rect,
-                                shared,
-                                ui,
-                            );
-                            if button.clicked() {
-                                shared.undo_actions.push(Action {
-                                    action: ActionEnum::Animation,
-                                    action_type: ActionType::Created,
-                                    ..Default::default()
-                                });
-                                new_animation(shared);
-                                let idx = shared.armature.animations.len() - 1;
-                                shared.ui.original_name = "".to_string();
-                                shared.ui.rename_id = "animation ".to_owned() + &idx.to_string();
-                                shared.ui.edit_value = Some("".to_string());
-                            }
-                        });
-                    });
-                    egui::ScrollArea::vertical().show(ui, |ui| {
-                        ui.set_width(ui.available_width());
-                        for i in 0..shared.armature.animations.len() {
-                            let name = &mut shared.armature.animations[i].name.clone();
+    ui.horizontal(|ui| {
+        ui.heading("Animation");
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.add_space(5.);
+            let button = ui::button("New", ui);
+            ui::draw_tutorial_rect(TutorialStep::CreateAnim, button.rect, shared, ui);
 
-                            // show input field if renaming
-                            if shared.ui.rename_id == "animation ".to_string() + &i.to_string() {
-                                let (edited, value, _) = ui::text_input(
-                                    "animation ".to_string() + &i.to_string(),
-                                    shared,
-                                    ui,
-                                    name.to_string(),
-                                    Some(TextInputOptions {
-                                        focus: true,
-                                        placeholder: "New Animation".to_string(),
-                                        default: "New Animation".to_string(),
-                                        ..Default::default()
-                                    }),
-                                );
-                                if edited {
-                                    shared.armature.animations[i].name = value;
-                                    shared.ui.anim.selected = i;
-                                }
-                                continue;
-                            }
+            if !button.clicked() {
+                return;
+            }
 
-                            let button =
-                                ui::selection_button(&name, i == shared.ui.anim.selected, ui);
-                            if button.clicked() {
-                                if shared.ui.anim.selected != i {
-                                    shared.ui.anim.selected = i;
-                                    shared.ui.select_anim_frame(0);
-                                } else {
-                                    shared.ui.rename_id = "animation ".to_string() + &i.to_string();
-                                    shared.ui.edit_value = Some(name.to_string());
-                                }
-                            }
-                        }
-                    });
-                })
+            shared.undo_actions.push(Action {
+                action: ActionEnum::Animation,
+                action_type: ActionType::Created,
+                ..Default::default()
             });
+            new_animation(shared);
+            let idx = shared.armature.animations.len() - 1;
+            shared.ui.original_name = "".to_string();
+            shared.ui.rename_id = "animation ".to_owned() + &idx.to_string();
+            shared.ui.edit_value = Some("".to_string());
         });
+    });
+    egui::ScrollArea::vertical().show(ui, |ui| {
+        ui.set_width(ui.available_width());
+        for i in 0..shared.armature.animations.len() {
+            let name = &mut shared.armature.animations[i].name.clone();
+
+            // show input field if renaming
+            if shared.ui.rename_id == "animation ".to_string() + &i.to_string() {
+                let (edited, value, _) = ui::text_input(
+                    "animation ".to_string() + &i.to_string(),
+                    shared,
+                    ui,
+                    name.to_string(),
+                    Some(TextInputOptions {
+                        focus: true,
+                        placeholder: "New Animation".to_string(),
+                        default: "New Animation".to_string(),
+                        ..Default::default()
+                    }),
+                );
+                if edited {
+                    shared.armature.animations[i].name = value;
+                    shared.ui.anim.selected = i;
+                }
+                continue;
+            }
+
+            let button = ui::selection_button(&name, i == shared.ui.anim.selected, ui);
+            if button.clicked() {
+                if shared.ui.anim.selected != i {
+                    shared.ui.anim.selected = i;
+                    shared.ui.select_anim_frame(0);
+                } else {
+                    shared.ui.rename_id = "animation ".to_string() + &i.to_string();
+                    shared.ui.edit_value = Some(name.to_string());
+                }
+            }
+        }
+    });
 }
 
 fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
