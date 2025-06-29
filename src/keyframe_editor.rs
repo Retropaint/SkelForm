@@ -252,15 +252,22 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
             keyframes.sort_by(|a, b| a.bone_id.cmp(&b.bone_id));
 
             let mut last_bone_id = -1;
+            let mut added_elements: Vec<AnimElement> = vec![];
 
             for i in 0..keyframes.len() {
                 let kf = &keyframes[i];
 
                 if last_bone_id != kf.bone_id {
                     ui.label(shared.armature.find_bone(kf.bone_id).unwrap().name.clone());
-                    last_bone_id = kf.bone_id
+                    last_bone_id = kf.bone_id;
+                    added_elements = vec![];
                 }
 
+                if added_elements.contains(&kf.element) {
+                    continue;
+                }
+
+                added_elements.push(kf.element.clone());
                 ui.horizontal(|ui| {
                     ui.add_space(30.);
                     let label = ui.label(kf.element.to_string());
