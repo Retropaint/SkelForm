@@ -347,11 +347,12 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     let cursor = shared.ui.get_cursor(ui);
                     if cursor.y < 0. {
                         let frame = shared.selected_animation_mut().unwrap().keyframes[i].frame;
-                        shared
+                        let _ = shared
                             .selected_animation_mut()
                             .unwrap()
                             .keyframes
-                            .retain(|kf| kf.frame != frame);
+                            .iter()
+                            .filter(|kf| kf.frame != frame);
 
                         // break loop to prevent OOB errors
                         break;
@@ -373,25 +374,6 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                 }
             });
         });
-}
-
-pub fn draw_connecting_lines(shared: &Shared, ui: &egui::Ui) {
-    let mut prev_frame = -1;
-    for kf in &shared.selected_animation().unwrap().keyframes {
-        if prev_frame == -1 {
-            prev_frame = kf.frame;
-            continue;
-        }
-
-        let left = ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize];
-        let right = ui.min_rect().left() + shared.ui.anim.lines_x[prev_frame as usize];
-        let y = ui.min_rect().top() + 10.;
-        ui.painter_at(ui.min_rect()).hline(
-            egui::Rangef::new(left, right),
-            y,
-            egui::Stroke::new(2., egui::Color32::WHITE),
-        );
-    }
 }
 
 pub fn draw_timeline_graph(
@@ -669,6 +651,25 @@ pub fn new_animation(shared: &mut Shared) {
         ..Default::default()
     });
 }
+
+// pub fn draw_connecting_lines(shared: &Shared, ui: &egui::Ui) {
+//     let mut prev_frame = -1;
+//     for kf in &shared.selected_animation().unwrap().keyframes {
+//         if prev_frame == -1 {
+//             prev_frame = kf.frame;
+//             continue;
+//         }
+
+//         let left = ui.min_rect().left() + shared.ui.anim.lines_x[kf.frame as usize];
+//         let right = ui.min_rect().left() + shared.ui.anim.lines_x[prev_frame as usize];
+//         let y = ui.min_rect().top() + 10.;
+//         ui.painter_at(ui.min_rect()).hline(
+//             egui::Rangef::new(left, right),
+//             y,
+//             egui::Stroke::new(2., egui::Color32::WHITE),
+//         );
+//     }
+// }
 
 // fn _draw_per_change_connecting_lines(shared: &Shared, ui: &egui::Ui, bone_tops: &BoneTops) {
 //     for kf in &shared.selected_animation().unwrap().keyframes {
