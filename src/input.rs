@@ -79,6 +79,9 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
 }
 
 pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
+    if shared.input.on_ui {
+        return;
+    }
     let sens_reducer = 100.;
     match delta {
         MouseScrollDelta::LineDelta(_x, y) => {
@@ -93,6 +96,9 @@ pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
 }
 
 pub fn pinch(delta: f64, shared: &mut Shared) {
+    if shared.input.on_ui {
+        return;
+    }
     let sens_amp = 500.;
     shared.camera.zoom -= delta as f32 * sens_amp;
 }
