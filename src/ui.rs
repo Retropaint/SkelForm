@@ -55,14 +55,6 @@ pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
     }
 
     if let Some(pos) = context.pointer_latest_pos() {
-        if shared.ui.anim.dragged_keyframe != -1 {
-            keyframe_editor::draw_diamond(
-                &context.debug_painter(),
-                pos.into(),
-                egui::Color32::WHITE,
-            );
-        }
-
         #[cfg(feature = "mobile")]
         #[cfg(feature = "debug")]
         context
@@ -127,7 +119,6 @@ pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
             shared.input.mouse_left += 1;
         } else {
             shared.input.mouse_left = -1;
-            shared.ui.anim.dragged_keyframe = -1;
         }
 
         if i.pointer.secondary_down() {

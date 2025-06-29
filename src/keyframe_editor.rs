@@ -320,10 +320,22 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     }
 
                     if response.dragged() {
-                        shared.ui.anim.dragged_keyframe = frame;
+                        shared.ui.anim.dragged_keyframe = Keyframe {
+                            frame,
+                            bone_id: -1,
+                            ..Default::default()
+                        };
+                        if let Some(cursor) = ui.ctx().pointer_latest_pos() {
+                            draw_diamond(
+                                &ui.ctx().debug_painter(),
+                                cursor.into(),
+                                egui::Color32::WHITE,
+                            );
+                        }
                     }
 
-                    if shared.ui.anim.dragged_keyframe != frame {
+                    let kf = &shared.ui.anim.dragged_keyframe;
+                    if kf.frame != frame || kf.bone_id != -1 {
                         draw_diamond(ui.painter(), pos, egui::Color32::WHITE);
                     } else if !drew_drag {
                         draw_diamond(
@@ -339,7 +351,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         continue;
                     }
 
-                    shared.ui.anim.dragged_keyframe = -1;
+                    shared.ui.anim.dragged_keyframe.frame = -1;
 
                     shared.undo_actions.push(shared::Action {
                         action: ActionEnum::Animation,
@@ -575,15 +587,19 @@ fn draw_frame_lines(
 
     // draw per-change icons
     for i in 0..shared.selected_animation().unwrap().keyframes.len() {
-        let kf = &shared.selected_animation().unwrap().keyframes[i];
+        macro_rules! kf {
+            () => {
+                shared.selected_animation().unwrap().keyframes[i]
+            };
+        }
         let size = Vec2::new(17., 17.);
 
         // the Y position is based on this diamond's respective label
         let top = bone_tops
-            .find(kf.bone_id, &kf.element.clone(), kf.vert_id)
+            .find(kf!().bone_id, &kf!().element.clone(), kf!().vert_id)
             .unwrap()
             .height;
-        let x = shared.ui.anim.lines_x[kf.frame as usize] + ui.min_rect().left();
+        let x = shared.ui.anim.lines_x[kf!().frame as usize] + ui.min_rect().left();
         let pos = Vec2::new(x, top + size.y / 2.);
         let offset = size / 2.;
 
@@ -592,17 +608,36 @@ fn draw_frame_lines(
         }
 
         let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
-        let mut idx = kf.element.clone().clone() as usize;
+        let mut idx = kf!().element.clone().clone() as usize;
         if idx > shared.ui.anim.icon_images.len() - 1 {
             idx = shared.ui.anim.icon_images.len() - 1;
         }
-        egui::Image::new(&shared.ui.anim.icon_images[shared::ANIM_ICON_ID[idx]]).paint_at(ui, rect);
+
+        let dkf = &shared.ui.anim.dragged_keyframe;
+        let mut color = egui::Color32::WHITE;
+        if *dkf == kf!() {
+            color = egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30);
+        }
+
+        egui::Image::new(&shared.ui.anim.icon_images[shared::ANIM_ICON_ID[idx]])
+            .tint(color)
+            .paint_at(ui, rect);
 
         let rect = egui::Rect::from_center_size(pos.into(), (size * 0.5).into());
         let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
         if response.hovered() {
             shared.cursor_icon = egui::CursorIcon::Grab;
+        }
+
+        if response.dragged() {
+            shared.ui.anim.dragged_keyframe = kf!().clone();
+            if let Some(cursor) = ui.ctx().pointer_latest_pos() {
+                let pos = egui::Pos2::new(cursor.x - offset.x, cursor.y - offset.y);
+                let drag_rect = egui::Rect::from_min_size(pos, size.into());
+                egui::Image::new(&shared.ui.anim.icon_images[shared::ANIM_ICON_ID[idx]])
+                    .paint_at(ui, drag_rect);
+            }
         }
 
         if !response.drag_stopped() {
