@@ -144,13 +144,19 @@ pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
     style_once!(armature_window::draw(context, shared));
 
     let min_default_size = 190.;
+    let mut max_size = min_default_size;
+    if shared.ui.selected_bone_idx != usize::MAX {
+        max_size = 250.;
+    } else if shared.ui.anim.selected_frame != -1 {
+        max_size = 250.;
+    }
 
     let bone_panel_id = "Bone";
     draw_resizable_panel(
         bone_panel_id,
         egui::SidePanel::right(bone_panel_id)
             .resizable(true)
-            .max_width(250.)
+            .max_width(max_size)
             .min_width(min_default_size)
             .default_width(min_default_size)
             .show(context, |ui| {
