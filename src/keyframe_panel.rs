@@ -3,6 +3,17 @@ use crate::*;
 pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.heading("Keyframe (".to_owned() + &shared.ui.anim.selected_frame.to_string() + ")");
 
+    let keyframes_in_frame = shared
+        .selected_animation()
+        .unwrap()
+        .keyframes
+        .iter()
+        .filter(|a| a.frame == shared.ui.anim.selected_frame);
+
+    if keyframes_in_frame.count() == 0 {
+        return;
+    }
+
     ui.horizontal(|ui| {
         ui.label("Transition:");
 
