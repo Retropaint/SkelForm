@@ -240,73 +240,37 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
         });
 }
 
-struct AnimTopInit {
-    pub id: i32,
-    pub vert_id: i32,
-    pub element: AnimElement,
-}
-
 pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut BoneTops) {
     egui::ScrollArea::vertical()
         .id_salt("bones_list")
         .vertical_scroll_offset(shared.ui.anim.timeline_offset.y)
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
         .show(ui, |ui| {
-            let mut tops_init: Vec<AnimTopInit> = vec![];
-
             // sort keyframes by element & bone
             let mut keyframes = shared.selected_animation().unwrap().keyframes.clone();
-            keyframes
-                .sort_by(|a, b| (a.element.clone() as usize).cmp(&(b.element.clone() as usize)));
+            keyframes.sort_by(|a, b| (a.element.clone() as i32).cmp(&(b.element.clone() as i32)));
             keyframes.sort_by(|a, b| a.bone_id.cmp(&b.bone_id));
+
+            let mut last_bone_id = -1;
 
             for i in 0..keyframes.len() {
                 let kf = &keyframes[i];
 
-                // find bone in list
-                let mut add = true;
-                for ti in &tops_init {
-                    if ti.id == kf.bone_id && ti.element == kf.element && ti.vert_id == kf.vert_id {
-                        add = false;
-                        break;
-                    }
+                if last_bone_id != kf.bone_id {
+                    ui.label(shared.armature.find_bone(kf.bone_id).unwrap().name.clone());
+                    last_bone_id = kf.bone_id
                 }
 
-                if !add {
-                    continue;
-                }
-
-                tops_init.push(AnimTopInit {
-                    id: kf.bone_id,
-                    element: kf.element.clone(),
-                    vert_id: kf.vert_id,
-                })
-            }
-
-            let mut last_id = -1;
-            let mut last_vert_id = -1;
-            for ti in tops_init {
-                if last_id != ti.id || last_vert_id != ti.vert_id {
-                    ui.label(shared.armature.find_bone(ti.id).unwrap().name.clone());
-                }
-                let mut top = 0.;
                 ui.horizontal(|ui| {
                     ui.add_space(30.);
-                    let label = ui.label(ti.element.to_string());
-                    top = label.rect.top();
+                    let label = ui.label(kf.element.to_string());
+                    bone_tops.tops.push(BoneTop {
+                        id: kf.bone_id,
+                        element: kf.element.clone(),
+                        height: label.rect.top(),
+                        vert_id: kf.vert_id,
+                    });
                 });
-                for kf in &keyframes {
-                    if kf.bone_id == ti.id && kf.element == ti.element && kf.vert_id == ti.vert_id {
-                        bone_tops.tops.push(BoneTop {
-                            id: kf.bone_id,
-                            element: kf.element.clone(),
-                            height: top,
-                            vert_id: kf.vert_id,
-                        })
-                    }
-                }
-                last_id = ti.id;
-                last_vert_id = ti.vert_id;
             }
         });
 }
