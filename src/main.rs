@@ -39,7 +39,10 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.anim.timeline_zoom = 1.;
     shared.ui.anim.exported_frame = "".to_string();
     shared.ui.anim.selected_frame = -1;
-    shared.ui.anim.dragged_keyframe = -1;
+    shared.ui.anim.dragged_keyframe = Keyframe{
+        frame: -1,
+        ..Default::default()
+    };
     shared.dragging_vert = usize::MAX;
     shared.ui.scale = 1.;
 
