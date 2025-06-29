@@ -169,7 +169,8 @@ pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
 
                 if shared.ui.selected_bone_idx != usize::MAX {
                     bone_panel::draw(ui, shared);
-                } else if shared.ui.anim.selected_frame != -1 {
+                } else if shared.selected_animation() != None && shared.ui.anim.selected_frame != -1
+                {
                     keyframe_panel::draw(ui, shared);
                 }
 
