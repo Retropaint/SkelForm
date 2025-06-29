@@ -319,10 +319,10 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("View", |ui| {
         if top_bar_button(ui, "Zoom In", "=", &mut offset).clicked() {
-            set_zoom(shared.camera.zoom - 0.1, shared);
+            set_zoom(shared.camera.zoom - 10., shared);
         }
         if top_bar_button(ui, "Zoom Out", "-", &mut offset).clicked() {
-            set_zoom(shared.camera.zoom + 0.1, shared);
+            set_zoom(shared.camera.zoom + 10., shared);
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
