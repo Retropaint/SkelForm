@@ -158,15 +158,8 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         label!("Position:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let input: egui::Response;
-            input_response!(
-                bone.pos.y,
-                "pos_y",
-                &AnimElement::PositionY,
-                1.,
-                ui,
-                "Y",
-                input
-            );
+            let pos_y = &AnimElement::PositionY;
+            input_response!(bone.pos.y, "pos_y", pos_y, 1., ui, "Y", input);
             ui::draw_tutorial_rect(TutorialStep::EditBoneY, input.rect, shared, ui);
             if edited {
                 shared
@@ -175,15 +168,8 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             let input: egui::Response;
-            input_response!(
-                bone.pos.x,
-                "pos_x",
-                &AnimElement::PositionX,
-                1.,
-                ui,
-                "X",
-                input
-            );
+            let pos_x = &AnimElement::PositionX;
+            input_response!(bone.pos.x, "pos_x", pos_x, 1., ui, "X", input);
             ui::draw_tutorial_rect(TutorialStep::EditBoneX, input.rect, shared, ui);
             if edited {
                 shared
@@ -208,15 +194,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     //});
     ui.horizontal(|ui| {
         label!("Rotation:", ui);
+        let rot_el = &AnimElement::Rotation;
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            input!(
-                bone.rot,
-                "rot",
-                &AnimElement::Rotation,
-                180. / std::f32::consts::PI,
-                ui,
-                ""
-            );
+            input!(bone.rot, "rot", rot_el, 180. / std::f32::consts::PI, ui, "");
         });
     });
     ui.horizontal(|ui| {
