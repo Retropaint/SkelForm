@@ -1219,7 +1219,7 @@ pub enum AnimElement {
 }
 
 #[rustfmt::skip]
-pub const ANIM_ICON_ID: [usize; 7] = [
+pub const ANIM_ICON_ID: [usize; 10] = [
     0,
     0,
     1,
@@ -1227,6 +1227,9 @@ pub const ANIM_ICON_ID: [usize; 7] = [
     2, 
     3,
     3,
+    0,
+    0,
+    4,
 ];
 
 #[derive(Default, Clone, PartialEq)]
