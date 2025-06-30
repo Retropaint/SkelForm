@@ -37,6 +37,8 @@ This will open a local docs.rs page.
 
 As of 05/05/2025, proper documentation is still sparse. Until then, enjoy comment hunting!
 
+[User documentation](https://retropaint.github.io/skelform_user_docs/) is hosted separately.
+
 # Acknowledgements
 
 This project was built on top of [matthewjberger/wgpu-example](https://github.com/matthewjberger/wgpu-example).
