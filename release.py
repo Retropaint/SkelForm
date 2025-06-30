@@ -9,6 +9,13 @@ import subprocess
 import os
 import shutil
 
+# Very politely ask for the user docs distribution
+if not os.path.exists("book"):
+    print("User documentation required:")
+    print("1. Build it - https://github.com/Retropaint/skelform_user_docs")
+    print("2. Move `book` dir here")
+    exit()
+
 dirname = "SkelForm"
 
 # remove dist folder if it already exists
@@ -26,7 +33,7 @@ subprocess.run(build_command, shell=True)
 shutil.move("./target/release/SkelForm", "./" + dirname)
 
 # copy user_docs to dist
-shutil.copytree("./user_docs", "./" + dirname + "/user_docs")
+shutil.copytree("./book", "./" + dirname + "/user_docs")
 
 # Source code distribution
 
