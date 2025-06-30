@@ -425,12 +425,12 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
         }
         ActionEnum::Bones => {
             shared.ui.selected_bone_idx = usize::MAX;
+            new_action.bones = shared.armature.bones.clone();
             if undo {
                 shared.armature.bones = shared.undo_actions.last().unwrap().bones.clone();
             } else {
                 shared.armature.bones = shared.redo_actions.last().unwrap().bones.clone();
             }
-            println!("{}", shared.undo_actions.len());
         }
         ActionEnum::Animation => {
             if action.action_type == ActionType::Created {
