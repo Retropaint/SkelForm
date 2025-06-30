@@ -266,6 +266,8 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                             .iter()
                             .position(|b| b.id == kf.bone_id)
                             .unwrap();
+
+                        shared.armature.unfold_to_bone(kf.bone_id);
                     }
                     last_bone_id = kf.bone_id;
                     added_elements = vec![];
