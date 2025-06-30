@@ -9,6 +9,8 @@ import subprocess
 import os
 import shutil
 
+binExt = ".exe" if os.name == 'nt' else ""
+
 # Very politely ask for the user docs distribution
 if not os.path.exists("book"):
     print("User documentation required:")
@@ -30,7 +32,7 @@ build_command = "cargo build --release"
 subprocess.run(build_command, shell=True)
 
 # move binary to dist
-shutil.move("./target/release/SkelForm", "./" + dirname)
+shutil.move("./target/release/SkelForm" + binExt, "./" + dirname)
 
 # copy user_docs to dist
 shutil.copytree("./book", "./" + dirname + "/user_docs")
