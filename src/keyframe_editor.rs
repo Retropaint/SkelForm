@@ -9,6 +9,9 @@ use crate::*;
 const LINE_OFFSET: f32 = 30.;
 
 pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
+    if shared.input.mouse_left == -1 {
+        shared.ui.anim.dragged_keyframe.frame = -1;
+    }
     if shared.ui.anim.playing {
         let mut elapsed = (chrono::Utc::now() - shared.ui.anim.started.unwrap()).as_seconds_f32();
         let frametime = 1. / shared.selected_animation().unwrap().fps as f32;
@@ -360,8 +363,6 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     if !response.drag_stopped() || just_clicked {
                         continue;
                     }
-
-                    shared.ui.anim.dragged_keyframe.frame = -1;
 
                     shared.undo_actions.push(shared::Action {
                         action: ActionEnum::Animation,
