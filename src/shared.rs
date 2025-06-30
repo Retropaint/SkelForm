@@ -1052,6 +1052,32 @@ impl Armature {
             transition,
         )
     }
+
+    /// unfold this bone's parents so it can be seen in the armature window
+    pub fn unfold_to_bone(&mut self, bone_id: i32) {
+        let parents = self.get_all_parents(bone_id);
+        for parent in &parents {
+            self.find_bone_mut(parent.id).unwrap().folded = false;
+        }
+    }
+
+    pub fn get_all_parents(&self, bone_id: i32) -> Vec<Bone> {
+        // add own bone temporarily
+        let mut parents: Vec<Bone> = vec![self.find_bone(bone_id).unwrap().clone()];
+
+        while parents.last().unwrap().parent_id != -1 {
+            parents.push(
+                self.find_bone(parents.last().unwrap().parent_id)
+                    .unwrap()
+                    .clone(),
+            );
+        }
+
+        // remove own bone from list
+        parents.remove(0);
+
+        parents
+    }
 }
 
 // used for the json
