@@ -897,7 +897,7 @@ impl Gpu {
         {
             let backends = wgpu::Backend::Dx12;
             instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-                backends,
+                backends: backends.into(),
                 ..Default::default()
             });
         }
