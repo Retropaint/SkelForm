@@ -1235,6 +1235,7 @@ pub enum ActionEnum {
     Bone,
     Animation,
     Keyframe,
+    Bones
 }
 #[derive(Default, PartialEq, Clone)]
 pub enum ActionType {
@@ -1251,6 +1252,7 @@ pub struct Action {
     pub id: i32,
     pub animation: Animation,
     pub bone: Bone,
+    pub bones: Vec<Bone>
 }
 
 impl AnimElement {

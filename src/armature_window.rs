@@ -37,23 +37,23 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     ui_mod::draw_tutorial_rect(TutorialStep::NewBone, button.rect, shared, ui);
                     if button.clicked() {
                         let idx: usize;
-                        let bone: Bone;
+
+                        shared.undo_actions.push(Action {
+                            action: ActionEnum::Bones,
+                            action_type: ActionType::Created,
+                            bones: shared.armature.bones.clone(),
+                            ..Default::default()
+                        });
+
                         if shared.selected_bone() == None {
-                            (bone, idx) = shared.armature.new_bone(-1);
+                            (_, idx) = shared.armature.new_bone(-1);
                         } else {
                             let id = shared.selected_bone().unwrap().id;
-                            (bone, idx) = shared.armature.new_bone(id);
+                            (_, idx) = shared.armature.new_bone(id);
                         }
 
                         // immediately select new bone upon creating it
                         shared.ui.select_bone(idx, &shared.armature);
-
-                        shared.undo_actions.push(Action {
-                            action: ActionEnum::Bone,
-                            action_type: ActionType::Created,
-                            id: bone.id,
-                            ..Default::default()
-                        });
 
                         if shared.armature.bones.len() > 1 {
                             shared.ui.set_tutorial_step(TutorialStep::ReselectBone);
@@ -235,10 +235,9 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
             }
 
             shared.undo_actions.push(Action {
-                action: ActionEnum::Bone,
+                action: ActionEnum::Bones,
                 action_type: ActionType::Edited,
-                id: shared.armature.bones[*dragged_payload as usize].id,
-                bone: shared.armature.bones[*dragged_payload as usize].clone(),
+                bones: shared.armature.bones.clone(),
                 ..Default::default()
             });
 
