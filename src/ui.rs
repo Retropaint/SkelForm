@@ -225,6 +225,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 menu_view_button(ui, shared);
 
                 ui.menu_button("Help", |ui| {
+                    ui.set_width(100.);
                     let str = if !shared.ui.tutorial_step_is(TutorialStep::None) {
                         "Stop Help Light"
                     } else {
@@ -354,6 +355,7 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
 fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("Edit", |ui| {
+        ui.set_width(90.);
         if top_bar_button(ui, "Undo", "Mod + Z", &mut offset).clicked() {
             utils::undo_redo(true, shared);
             ui.close_menu();
@@ -791,7 +793,7 @@ pub fn top_bar_button(
 
     let rect = egui::Rect::from_min_size(
         egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() + *offset),
-        egui::Vec2::new(width, height),
+        egui::Vec2::new(ui.min_rect().width(), height),
     );
     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
     let painter = ui.painter_at(ui.min_rect());
