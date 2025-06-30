@@ -255,7 +255,18 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                 let kf = &keyframes[i];
 
                 if last_bone_id != kf.bone_id {
-                    ui.label(shared.armature.find_bone(kf.bone_id).unwrap().name.clone());
+                    let label = ui
+                        .label(shared.armature.find_bone(kf.bone_id).unwrap().name.clone())
+                        .on_hover_cursor(egui::CursorIcon::PointingHand)
+                        .interact(egui::Sense::click());
+                    if label.clicked() {
+                        shared.ui.selected_bone_idx = shared
+                            .armature
+                            .bones
+                            .iter()
+                            .position(|b| b.id == kf.bone_id)
+                            .unwrap();
+                    }
                     last_bone_id = kf.bone_id;
                     added_elements = vec![];
                 }
