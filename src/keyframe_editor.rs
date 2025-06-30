@@ -620,8 +620,8 @@ fn draw_frame_lines(
 
         let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
         let mut idx = kf!().element.clone().clone() as usize;
-        if idx > shared.ui.anim.icon_images.len() - 1 {
-            idx = shared.ui.anim.icon_images.len() - 1;
+        if idx > shared::ANIM_ICON_ID.len() - 1 {
+            idx = shared::ANIM_ICON_ID.len() - 1;
         }
 
         let dkf = &shared.ui.anim.dragged_keyframe;
