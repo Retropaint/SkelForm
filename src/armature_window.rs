@@ -16,6 +16,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         panel_id,
         egui::SidePanel::left(panel_id)
             .default_width(min_default_size)
+            .min_width(min_default_size)
             .max_width(min_default_size)
             .resizable(true)
             .show(egui_ctx, |ui| {
