@@ -55,7 +55,7 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
         // save
         if shared.input.pressed(winit::keyboard::KeyCode::KeyS) {
             #[cfg(target_arch = "wasm32")]
-            utils::save_web(shared);
+            utils::save_web(&shared.armature);
 
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog();

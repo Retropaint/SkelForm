@@ -21,14 +21,17 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     //    log::info!("test");
     //}
 
-    let args: Vec<String> = std::env::args().collect();
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let args: Vec<String> = std::env::args().collect();
 
-    // load .skf based on first arg
-    if args.len() > 1 {
-        file_reader::create_temp_file(
-            &skelform_lib::bone_panel::TEMP_IMPORT_PATH,
-            &args[1].to_string(),
-        );
+        // load .skf based on first arg
+        if args.len() > 1 {
+            file_reader::create_temp_file(
+                &skelform_lib::bone_panel::TEMP_IMPORT_PATH,
+                &args[1].to_string(),
+            );
+        }
     }
 
     let mut app = skelform_lib::App::default();

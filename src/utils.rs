@@ -170,8 +170,8 @@ pub fn save(path: String, armature: &Armature) {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn save_web(shared: &mut Shared) {
-    let (size, armatures_json, png_buf) = prepare_files(shared);
+pub fn save_web(armature: &Armature) {
+    let (size, armatures_json, png_buf) = prepare_files(armature);
 
     // create zip file
     let mut buf: Vec<u8> = Vec::new();
@@ -311,7 +311,7 @@ pub fn import<R: Read + std::io::Seek>(
 
     // load armature
     let armature_file = zip.as_mut().unwrap().by_name("armature.json").unwrap();
-    let mut root: crate::Root = serde_json::from_reader(armature_file).unwrap();
+    let root: crate::Root = serde_json::from_reader(armature_file).unwrap();
 
     shared.armature = root.armatures[0].clone();
     for b in 0..shared.armature.bones.len() {
@@ -387,7 +387,10 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
     // save this armature as a backup
     let armature = shared.armature.clone();
     std::thread::spawn(move || {
+        #[cfg(not(target_arch = "wasm32"))]
         utils::save("./autosave.skf".to_string(), &armature);
+        #[cfg(target_arch = "wasm32")]
+        utils::save_web(&armature);
     });
 
     let action: Action;

@@ -244,10 +244,11 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         ui.close_menu();
                     }
                     if top_bar_button(ui, "Documentation", "", &mut offset).clicked() {
+                        #[cfg(not(target_arch = "wasm32"))]
                         // open the local docs, or online if it can't be found on default path
                         match open::that("./user_docs/index.html") {
                             Err(_) => {
-                                match open::that("https://retropaint.github.io/skelform_user_docs")
+                                match open::that("https://retropaint.github.io/skelform_user_docs/")
                                 {
                                     Err(_) => println!("couldn't open"),
                                     Ok(file) => file,
@@ -279,7 +280,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog();
             #[cfg(target_arch = "wasm32")]
-            utils::save_web(shared);
+            utils::save_web(&shared.armature);
             ui.close_menu();
         }
         if top_bar_button(ui, "Export Video", "E", &mut offset).clicked() {
@@ -796,6 +797,7 @@ pub fn top_bar_button(
     offset: &mut f32,
 ) -> egui::Response {
     let height = 20.;
+    #[allow(unused_variables)]
     #[allow(unused_mut)]
     let mut width = 100.;
 
