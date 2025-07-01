@@ -18,7 +18,7 @@ if not os.path.exists("book"):
     print("2. Move `book` dir here")
     exit()
 
-dirname = "SkelForm"
+dirname = "release"
 
 # remove dist folder if it already exists
 if os.path.exists(dirname):
