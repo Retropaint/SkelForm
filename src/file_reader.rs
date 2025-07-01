@@ -432,17 +432,21 @@ pub fn read_import(
 
     shared.save_path = path.clone();
 
-    let file = std::fs::File::open(&path).unwrap();
-
-    utils::import(
-        &path,
-        file,
-        shared,
-        queue,
-        device,
-        bind_group_layout,
-        context,
-    );
+    match std::fs::File::open(&path) {
+        Err(err) => {
+            println!("{}", err);
+            del_temp_files();
+        }
+        Ok(file) => utils::import(
+            &path,
+            file,
+            shared,
+            queue,
+            device,
+            bind_group_layout,
+            context,
+        ),
+    };
 }
 
 #[cfg(not(target_arch = "wasm32"))]
