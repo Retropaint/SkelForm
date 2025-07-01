@@ -150,7 +150,7 @@ pub fn open_import_dialog(temp_file_to_write: String) {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn save(path: String, shared: &mut Shared) {
-    let (size, armatures_json, png_buf) = prepare_files(shared);
+    let (size, armatures_json, png_buf) = prepare_files(&mut shared.armature);
 
     // create zip file
     let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
@@ -193,12 +193,12 @@ pub fn save_web(shared: &mut Shared) {
     downloadZip(bytes);
 }
 
-fn create_tex_sheet(shared: &mut Shared, size: &Vec2) -> std::vec::Vec<u8> {
+fn create_tex_sheet(armature: &mut Armature, size: &Vec2) -> std::vec::Vec<u8> {
     // set up the buffer, to save pixels in
     let mut raw_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size.x as u32, size.y as u32);
 
     let mut offset: u32 = 0;
-    for tex in &mut shared.armature.textures {
+    for tex in &mut armature.textures {
         // get current texture as a buffer
         let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
             tex.size.x as u32,
@@ -235,10 +235,10 @@ fn create_tex_sheet(shared: &mut Shared, size: &Vec2) -> std::vec::Vec<u8> {
     png_buf
 }
 
-pub fn prepare_files(shared: &mut Shared) -> (Vec2, String, Vec<u8>) {
+pub fn prepare_files(armature: &mut Armature) -> (Vec2, String, Vec<u8>) {
     // get the image size in advance
     let mut size = Vec2::default();
-    for tex in &shared.armature.textures {
+    for tex in &armature.textures {
         size.x += tex.size.x;
         if tex.size.y > size.y {
             size.y = tex.size.y;
@@ -248,11 +248,11 @@ pub fn prepare_files(shared: &mut Shared) -> (Vec2, String, Vec<u8>) {
     let mut png_buf = vec![];
 
     if size != Vec2::ZERO {
-        png_buf = create_tex_sheet(shared, &size);
+        png_buf = create_tex_sheet(armature, &size);
     }
 
     // clone armature and make some edits, then serialize it
-    let mut armature_copy = shared.armature.clone();
+    let mut armature_copy = armature.clone();
 
     for bone in &mut armature_copy.bones {
         // if it is a regular rect, empty verts and indices
@@ -384,6 +384,10 @@ pub fn import<R: Read + std::io::Seek>(
 }
 
 pub fn undo_redo(undo: bool, shared: &mut Shared) {
+    std::thread::spawn(move || {
+                
+    });
+
     let action: Action;
     if undo {
         if shared.undo_actions.last() == None {
