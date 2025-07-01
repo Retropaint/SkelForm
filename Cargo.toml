@@ -22,7 +22,6 @@ chrono = "0.4.41"
 image = "0.25.5"
 #lyon = "1.0.1"
 psd = "0.3.5"
-open = "5.3.2"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 egui-winit = "0.31.0"
@@ -30,6 +29,7 @@ pollster = "0.4.0"
 rfd = { version = "0.15.3",  features = ["gtk3"], default-features = false}
 zip = "4.0.0"
 directories-next = "2.0.0"
+open = "5.3.2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3.77", features = ["Window", "Document", "HtmlImageElement", "CanvasRenderingContext2d", "HtmlCanvasElement", "ImageData"] }
