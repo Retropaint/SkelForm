@@ -255,15 +255,13 @@ pub fn prepare_files(shared: &mut Shared) -> (Vec2, String, Vec<u8>) {
     let mut armature_copy = shared.armature.clone();
 
     for bone in &mut armature_copy.bones {
-        if bone.tex_idx == -1 {
-            continue;
-        }
-
         // if it is a regular rect, empty verts and indices
-        if !bone_meshes_edited(
-            armature_copy.textures[bone.tex_idx as usize].size,
-            &bone.vertices,
-        ) {
+        if bone.tex_idx == -1
+            || !bone_meshes_edited(
+                armature_copy.textures[bone.tex_idx as usize].size,
+                &bone.vertices,
+            )
+        {
             bone.vertices = vec![];
             bone.indices = vec![];
         }
