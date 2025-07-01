@@ -22,13 +22,18 @@ mod web {
 pub use web::*;
 
 pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
+    if shared.ui.has_state(UiState::DraggingBone) {
+        ui.disable();
+        return;
+    }
+
     ui.horizontal(|ui| {
         ui.heading("Bone");
 
         // delete label
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let text = egui::RichText::new("X")
-                .size(12.)
+                .size(15.)
                 .color(egui::Color32::DARK_RED);
             if ui
                 .label(text)
@@ -45,11 +50,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     ui.separator();
     ui.add_space(3.);
-
-    if shared.ui.has_state(UiState::DraggingBone) {
-        ui.disable();
-        return;
-    }
 
     ui.horizontal(|ui| {
         ui.label("Name:");
