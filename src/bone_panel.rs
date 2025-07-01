@@ -105,17 +105,21 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     let mut edited = false;
 
-    macro_rules! input {
-        ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr) => {
-            (edited, $float, _) = ui::float_input($id.to_string(), shared, $ui, $float, $modifier);
+    macro_rules! check_input_edit {
+        ($float:expr, $element:expr, $ui:expr, $label:expr) => {
             if edited {
+                let mut anim_id = shared.ui.anim.selected;
+                if !shared.ui.is_animating() {
+                    anim_id = usize::MAX;
+                }
+
                 shared.save_edited_bone();
                 shared.armature.edit_bone(
                     shared.selected_bone().unwrap().id,
                     $element,
                     $float,
                     true,
-                    shared.ui.anim.selected,
+                    anim_id,
                     shared.ui.anim.selected_frame,
                 );
             }
@@ -125,24 +129,18 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         };
     }
 
+    macro_rules! input {
+        ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr) => {
+            (edited, $float, _) = ui::float_input($id.to_string(), shared, $ui, $float, $modifier);
+            check_input_edit!($float, $element, $ui, $label)
+        };
+    }
+
     macro_rules! input_response {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr, $input:expr) => {
             (edited, $float, $input) =
                 ui::float_input($id.to_string(), shared, $ui, $float, $modifier);
-            if edited {
-                shared.save_edited_bone();
-                shared.armature.edit_bone(
-                    shared.selected_bone().unwrap().id,
-                    $element,
-                    $float,
-                    true,
-                    shared.ui.anim.selected,
-                    shared.ui.anim.selected_frame,
-                );
-            }
-            if $label != "" {
-                $ui.label($label);
-            }
+            check_input_edit!($float, $element, $ui, $label)
         };
     }
 
