@@ -384,7 +384,11 @@ pub fn import<R: Read + std::io::Seek>(
 }
 
 pub fn undo_redo(undo: bool, shared: &mut Shared) {
-    std::thread::spawn(move || {});
+    // save this armature as a backup
+    let armature = shared.armature.clone();
+    std::thread::spawn(move || {
+        utils::save("./autosave.skf".to_string(), &armature);
+    });
 
     let action: Action;
     if undo {

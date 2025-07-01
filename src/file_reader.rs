@@ -411,7 +411,7 @@ pub fn read_save(shared: &mut Shared) {
 
     shared.save_path = path.clone();
 
-    utils::save(path, shared);
+    utils::save(path, &mut shared.armature);
 
     del_temp_files();
 }
