@@ -437,15 +437,18 @@ pub fn read_import(
             println!("{}", err);
             del_temp_files();
         }
-        Ok(file) => utils::import(
-            &path,
-            file,
-            shared,
-            queue,
-            device,
-            bind_group_layout,
-            context,
-        ),
+        Ok(file) => {
+            shared.save_path = path.clone();
+            utils::import(
+                &path,
+                file,
+                shared,
+                queue,
+                device,
+                bind_group_layout,
+                context,
+            )
+        }
     };
 }
 

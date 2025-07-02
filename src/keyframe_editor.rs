@@ -305,8 +305,6 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                 ui.set_width(width);
                 ui.set_height(20.);
 
-                //draw_connecting_lines(shared, ui);
-
                 for i in 0..shared.selected_animation().unwrap().keyframes.len() {
                     let frame = shared.selected_animation().unwrap().keyframes[i].frame;
 
@@ -680,7 +678,6 @@ fn draw_frame_lines(
 pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32) {
     let size = 5.0;
 
-    // Define the four points of the diamond
     let points = vec![
         egui::Pos2::new(pos.x, pos.y - size), // Top
         egui::Pos2::new(pos.x + size, pos.y), // Right
@@ -688,11 +685,10 @@ pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32) {
         egui::Pos2::new(pos.x - size, pos.y), // Left
     ];
 
-    // Draw the diamond
     painter.add(egui::Shape::convex_polygon(
         points,
-        egui::Color32::TRANSPARENT,    // Fill color (transparent)
-        egui::Stroke::new(2.0, color), // Stroke width & color
+        egui::Color32::TRANSPARENT,
+        egui::Stroke::new(2.0, color),
     ));
 }
 
