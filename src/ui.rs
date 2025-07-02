@@ -231,14 +231,12 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         "Help Light"
                     };
                     if top_bar_button(ui, str, "", &mut offset).clicked() {
-                        if shared.armature.animations.len() > 0 {
+                        if !shared.ui.tutorial_step_is(TutorialStep::None) {
+                            shared.ui.set_tutorial_step(TutorialStep::None);
+                        } else if shared.armature.animations.len() > 0 {
                             shared.ui.open_modal(HELP_LIGHT_CANT.to_string(), false);
                         } else {
-                            if !shared.ui.tutorial_step_is(TutorialStep::None) {
-                                shared.ui.set_tutorial_step(TutorialStep::None);
-                            } else {
-                                shared.ui.start_tutorial(&shared.armature);
-                            }
+                            shared.ui.start_tutorial(&shared.armature);
                         }
                         ui.close_menu();
                     }
