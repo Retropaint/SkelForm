@@ -1,5 +1,4 @@
 //! Core UI (user interface) logic.
-
 use egui::{Color32, Context, Shadow, Stroke};
 
 use crate::*;
@@ -244,6 +243,8 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         ui.close_menu();
                     }
                     if top_bar_button(ui, "Documentation", "", &mut offset).clicked() {
+                        #[cfg(target_arch = "wasm32")]
+                        openDocumentation();
                         #[cfg(not(target_arch = "wasm32"))]
                         // open the local docs, or online if it can't be found on default path
                         match open::that("./user_docs/index.html") {
