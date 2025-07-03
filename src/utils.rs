@@ -306,6 +306,7 @@ pub fn import<R: Read + std::io::Seek>(
         shared
             .ui
             .open_modal("That's not a SkelForm armature!".to_string(), false);
+        del_temp_files();
         return;
     }
 
@@ -379,7 +380,6 @@ pub fn import<R: Read + std::io::Seek>(
     shared.ui.unselect_everything();
     shared.ui.set_tutorial_step(TutorialStep::None);
 
-    #[cfg(not(target_arch = "wasm32"))]
     del_temp_files();
 }
 
