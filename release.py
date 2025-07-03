@@ -32,7 +32,7 @@ build_command = "cargo build --release"
 subprocess.run(build_command, shell=True)
 
 # move binary to dist
-shutil.move("./target/release/SkelForm" + binExt, "./" + dirname)
+shutil.copy("./target/release/SkelForm" + binExt, "./" + dirname)
 
 # copy user_docs to dist
 shutil.copytree("./book", "./" + dirname + "/user_docs")
