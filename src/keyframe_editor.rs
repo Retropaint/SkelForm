@@ -663,9 +663,33 @@ fn draw_frame_lines(
         for j in 0..shared.ui.anim.lines_x.len() {
             let x = shared.ui.anim.lines_x[j];
             if cursor.x < x + hitbox && cursor.x > x - hitbox {
-                shared.selected_animation_mut().unwrap().keyframes[i].frame = j as i32;
+                let curr_kf = &shared.selected_animation().unwrap().keyframes[i];
+
+                // remove keyframe that is the same as this
+                let k = shared
+                    .selected_animation()
+                    .unwrap()
+                    .keyframes
+                    .iter()
+                    .position(|kf| {
+                        kf.bone_id == curr_kf.bone_id
+                            && kf.element == curr_kf.element
+                            && kf.frame == j as i32
+                    });
+                let mut curr = i;
+                if k != None {
+                    shared
+                        .selected_animation_mut()
+                        .unwrap()
+                        .keyframes
+                        .remove(k.unwrap());
+                    curr -= 1;
+                }
+
+                shared.selected_animation_mut().unwrap().keyframes[curr].frame = j as i32;
+
                 shared.sort_keyframes();
-                break;
+                return;
             }
         }
     }
