@@ -14,7 +14,6 @@ mod native {
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
 
-// native-only imports
 #[cfg(target_arch = "wasm32")]
 mod web {
     pub use wasm_bindgen::prelude::*;
