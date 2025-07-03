@@ -462,8 +462,8 @@ pub fn read_exported_video_frame(shared: &mut Shared) {
     fs::remove_file(TEMP_EXPORT_VID_TEXT).unwrap();
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 pub fn del_temp_files() {
+    #[cfg(not(target_arch = "wasm32"))]
     for f in FILES {
         if fs::exists(f).unwrap() {
             fs::remove_file(f).unwrap();
