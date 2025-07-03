@@ -304,6 +304,7 @@ fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
 /// don't forget to use sort_vertices() first!
 pub fn setup_indices(verts: &Vec<Vertex>, base: i32) -> Vec<u32> {
     //return lyon_poly(verts);
+    //return triangulate(verts);
 
     let len = verts.len();
     let mut indices: Vec<u32> = vec![];
@@ -896,6 +897,23 @@ pub fn draw_vertical_line(
     render_pass.set_vertex_buffer(0, vertex_buffer(&vertices, device).slice(..));
     render_pass.draw_indexed(0..3, 0, 0..1);
 }
+
+// pub fn triangulate(verts: &Vec<Vertex>) -> Vec<u32> {
+//     let mut poly: Vec<geo::Coord> = vec![];
+//     for vert in verts {
+//         poly.push(geo::Coord {
+//             x: vert.pos.x as f64,
+//             y: vert.pos.y as f64,
+//         });
+//     }
+//     let square_polygon = geo::Polygon::new(geo::LineString(poly), vec![]);
+//     let indices = square_polygon.earcut_triangles_raw().triangle_indices;
+//     let mut u32_indices: Vec<u32> = vec![];
+//     for index in &indices {
+//         u32_indices.push(*index as u32);
+//     }
+//     u32_indices
+// }
 
 // pub fn lyon_poly(verts: &Vec<Vertex>) -> Vec<u32> {
 //     let mut raw_points: Vec<[f32; 2]> = vec![];
