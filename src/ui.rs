@@ -241,20 +241,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         ui.close_menu();
                     }
                     if top_bar_button(ui, "Documentation", "", &mut offset).clicked() {
-                        #[cfg(target_arch = "wasm32")]
-                        openDocumentation();
-                        #[cfg(not(target_arch = "wasm32"))]
-                        // open the local docs, or online if it can't be found on default path
-                        match open::that("./user_docs/index.html") {
-                            Err(_) => {
-                                match open::that("https://retropaint.github.io/skelform_user_docs/")
-                                {
-                                    Err(_) => println!("couldn't open"),
-                                    Ok(file) => file,
-                                }
-                            }
-                            Ok(file) => file,
-                        };
+                        utils::open_user_docs("");
                     }
                 });
             });
