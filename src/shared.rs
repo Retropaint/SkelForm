@@ -749,6 +749,8 @@ impl Armature {
             );
             self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
         }
+
+        self.autosave();
     }
 
     pub fn delete_bone(&mut self, id: i32) {
@@ -879,6 +881,7 @@ impl Armature {
             -1,
         );
         self.animations[anim_id].keyframes[frame].value = value;
+        self.autosave();
     }
 
     pub fn edit_vert(
@@ -1078,6 +1081,16 @@ impl Armature {
 
         parents
     }
+
+    pub fn autosave(&self) {
+        let armature = self.clone();
+        std::thread::spawn(move || {
+            #[cfg(not(target_arch = "wasm32"))]
+            utils::save("./autosave.skf".to_string(), &armature);
+            #[cfg(target_arch = "wasm32")]
+            utils::save_web(&armature);
+        });
+    }
 }
 
 // used for the json
@@ -1238,7 +1251,7 @@ pub enum ActionEnum {
     Bone,
     Animation,
     Keyframe,
-    Bones
+    Bones,
 }
 #[derive(Default, PartialEq, Clone)]
 pub enum ActionType {
@@ -1255,7 +1268,7 @@ pub struct Action {
     pub id: i32,
     pub animation: Animation,
     pub bone: Bone,
-    pub bones: Vec<Bone>
+    pub bones: Vec<Bone>,
 }
 
 impl AnimElement {
