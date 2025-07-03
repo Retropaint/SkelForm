@@ -1,4 +1,4 @@
-//! Core UI (user interface) logic.
+//! Core user interface (UI) logic.
 use egui::{Color32, Context, Shadow, Stroke};
 
 use crate::*;
@@ -27,8 +27,7 @@ const FFMPEG_ERR: &str =
     "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.";
 
 /// The `main` of this module.
-#[allow(unused_variables)]
-pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
+pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     default_styling(context);
 
     let scale_mod: f32;
@@ -40,7 +39,7 @@ pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
 
     #[cfg(target_arch = "wasm32")]
     {
-        scale_mod = window_factor;
+        scale_mod = _window_factor;
     }
 
     context.set_zoom_factor(shared.ui.scale * scale_mod);
@@ -53,12 +52,12 @@ pub fn draw(context: &Context, shared: &mut Shared, window_factor: f32) {
         };
     }
 
-    if let Some(pos) = context.pointer_latest_pos() {
+    if let Some(_pos) = context.pointer_latest_pos() {
         #[cfg(feature = "mobile")]
         #[cfg(feature = "debug")]
         context
             .debug_painter()
-            .circle_filled(pos, 2., egui::Color32::GREEN);
+            .circle_filled(_pos, 2., egui::Color32::GREEN);
     }
 
     let anim_icon_size = 18;
