@@ -155,11 +155,16 @@ pub fn read_image_loaders(
         ctx,
     );
 
+    let mut anim_id = shared.ui.anim.selected;
+    if !shared.ui.is_animating() {
+        anim_id = usize::MAX;
+    }
+
     let tex_idx = shared.armature.textures.len() - 1;
     shared.armature.set_bone_tex(
         shared.selected_bone().unwrap().id,
         tex_idx,
-        shared.ui.anim.selected,
+        anim_id,
         shared.ui.anim.selected_frame,
         shared.ui.selected_bone_idx,
     );
