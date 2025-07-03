@@ -303,9 +303,8 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     if !ok {
-        shared
-            .ui
-            .open_modal("That's not a SkelForm armature!".to_string(), false);
+        let text = "File could not be parsed.\n\nSupported files:\n- SkelForm armature (.skf)\n- Photoshop Document (.psd)";
+        shared.ui.open_modal(text.to_string(), false);
         del_temp_files();
         return;
     }
@@ -384,15 +383,6 @@ pub fn import<R: Read + std::io::Seek>(
 }
 
 pub fn undo_redo(undo: bool, shared: &mut Shared) {
-    // save this armature as a backup
-    let armature = shared.armature.clone();
-    std::thread::spawn(move || {
-        #[cfg(not(target_arch = "wasm32"))]
-        utils::save("./autosave.skf".to_string(), &armature);
-        #[cfg(target_arch = "wasm32")]
-        utils::save_web(&armature);
-    });
-
     let action: Action;
     if undo {
         if shared.undo_actions.last() == None {
