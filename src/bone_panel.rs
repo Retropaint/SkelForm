@@ -105,6 +105,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     let mut edited = false;
 
+    // Backbone of editable bone fields; do not use by itself. Instead refer to input!.
     macro_rules! check_input_edit {
         ($float:expr, $element:expr, $ui:expr, $label:expr) => {
             if edited {
@@ -129,6 +130,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         };
     }
 
+    // main macro to use for editable bone fields
     macro_rules! input {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr) => {
             (edited, $float, _) = ui::float_input($id.to_string(), shared, $ui, $float, $modifier);
@@ -136,6 +138,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         };
     }
 
+    // same as input!, but provides back input response
     macro_rules! input_response {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr, $input:expr) => {
             (edited, $float, $input) =
@@ -144,6 +147,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         };
     }
 
+    // for labels that are not part of any input fields (eg "Position:", "Rotation:", etc)
     macro_rules! label {
         ($name:expr, $ui:expr) => {
             $ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
