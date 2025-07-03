@@ -478,3 +478,19 @@ pub fn bone_meshes_edited(tex_size: Vec2, verts: &Vec<Vertex>) -> bool {
     }
     !is_rect
 }
+
+pub fn open_user_docs(path: &str) {
+    #[cfg(target_arch = "wasm32")]
+    openDocumentation();
+    #[cfg(not(target_arch = "wasm32"))]
+    // open the local docs, or online if it can't be found on default path
+    match open::that("./user_docs/index.html".to_string() + &path.to_string()) {
+        Err(_) => match open::that(
+            "https://retropaint.github.io/skelform_user_docs".to_string() + &path.to_string(),
+        ) {
+            Err(_) => println!("couldn't open"),
+            Ok(file) => file,
+        },
+        Ok(file) => file,
+    };
+}
