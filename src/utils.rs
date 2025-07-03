@@ -305,7 +305,7 @@ pub fn import<R: Read + std::io::Seek>(
     if !ok {
         let text = "File could not be parsed.\n\nSupported files:\n- SkelForm armature (.skf)\n- Photoshop Document (.psd)";
         shared.ui.open_modal(text.to_string(), false);
-        del_temp_files();
+        file_reader::del_temp_files();
         return;
     }
 
@@ -379,7 +379,7 @@ pub fn import<R: Read + std::io::Seek>(
     shared.ui.unselect_everything();
     shared.ui.set_tutorial_step(TutorialStep::None);
 
-    del_temp_files();
+    file_reader::del_temp_files();
 }
 
 pub fn undo_redo(undo: bool, shared: &mut Shared) {
