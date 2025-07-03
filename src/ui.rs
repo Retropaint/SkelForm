@@ -717,11 +717,16 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                         // stop the loop to prevent index errors
                         break;
                     } else {
+                        let mut anim_id = shared.ui.anim.selected;
+                        if !shared.ui.is_animating() {
+                            anim_id = usize::MAX;
+                        }
+
                         // set texture
                         shared.armature.set_bone_tex(
                             shared.selected_bone().unwrap().id,
                             i,
-                            shared.ui.anim.selected,
+                            anim_id,
                             shared.ui.anim.selected_frame,
                             shared.ui.selected_bone_idx,
                         );
