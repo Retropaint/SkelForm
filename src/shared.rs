@@ -940,7 +940,7 @@ impl Armature {
                 }};
             }
 
-            macro_rules! previous_frame {
+            macro_rules! prev_frame {
                 ($element:expr, $default:expr) => {
                     self.find_connecting_frames(anim_idx, b.id, -1, $element, $default, anim_frame)
                         .0
@@ -950,15 +950,15 @@ impl Armature {
             // interpolate!
             #[rustfmt::skip]
             {
-                b.pos.x   += interpolate!(   AnimElement::PositionX,  0., -1);
-                b.pos.y   += interpolate!(   AnimElement::PositionY,  0., -1);
-                b.rot     += interpolate!(   AnimElement::Rotation,   0., -1);
-                b.scale.x *= interpolate!(   AnimElement::ScaleX,     1., -1);
-                b.scale.y *= interpolate!(   AnimElement::ScaleY,     1., -1);
-                b.pivot.x += interpolate!(   AnimElement::PivotX,     0., -1);
-                b.pivot.y += interpolate!(   AnimElement::PivotY,     0., -1);
-                b.zindex  =  previous_frame!(AnimElement::Zindex,     0.);
-                b.tex_idx =  previous_frame!(AnimElement::Texture,    b.tex_idx as f32) as i32;
+                b.pos.x   += interpolate!(AnimElement::PositionX,  0., -1);
+                b.pos.y   += interpolate!(AnimElement::PositionY,  0., -1);
+                b.rot     += interpolate!(AnimElement::Rotation,   0., -1);
+                b.scale.x *= interpolate!(AnimElement::ScaleX,     1., -1);
+                b.scale.y *= interpolate!(AnimElement::ScaleY,     1., -1);
+                b.pivot.x += interpolate!(AnimElement::PivotX,     0., -1);
+                b.pivot.y += interpolate!(AnimElement::PivotY,     0., -1);
+                b.zindex  =  prev_frame!( AnimElement::Zindex,     0.);
+                b.tex_idx =  prev_frame!( AnimElement::Texture,    b.tex_idx as f32) as i32;
             };
 
             // restructure bone's verts to match texture
