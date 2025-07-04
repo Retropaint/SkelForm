@@ -1083,6 +1083,7 @@ impl Armature {
     }
 
     pub fn autosave(&self) {
+        return;
         let armature = self.clone();
         std::thread::spawn(move || {
             #[cfg(not(target_arch = "wasm32"))]
@@ -1414,13 +1415,6 @@ impl Shared {
             return None;
         }
         Some(&mut self.armature.animations[self.ui.anim.selected])
-    }
-
-    pub fn sort_keyframes(&mut self) {
-        self.selected_animation_mut()
-            .unwrap()
-            .keyframes
-            .sort_by(|a, b| a.frame.cmp(&b.frame));
     }
 
     pub fn last_keyframe(&self) -> Option<&Keyframe> {
