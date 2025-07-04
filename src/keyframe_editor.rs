@@ -395,7 +395,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                                     kf.frame = j as i32;
                                 }
                             }
-                            shared.sort_keyframes();
+                            shared.selected_animation_mut().unwrap().sort_keyframes();
                             break;
                         }
                     }
@@ -524,12 +524,12 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 let frame = shared.ui.anim.selected_frame;
 
                 // remove current keyframes on this frame
-                let _ = shared
-                    .selected_animation()
-                    .unwrap()
-                    .keyframes
-                    .iter()
-                    .filter(|kf| kf.frame != shared.ui.anim.selected_frame);
+                for k in (0..shared.selected_animation().unwrap().keyframes.len()).rev() {
+                    let kf = &shared.selected_animation().unwrap().keyframes[k];
+                    if kf.frame == frame {
+                        shared.selected_animation_mut().unwrap().keyframes.remove(k);
+                    }
+                }
 
                 for kf in 0..shared.copy_buffer.keyframes.len() {
                     let keyframe = shared.copy_buffer.keyframes[kf].clone();
@@ -539,6 +539,8 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                         .keyframes
                         .push(Keyframe { frame, ..keyframe })
                 }
+
+                shared.selected_animation_mut().unwrap().sort_keyframes();
             }
         });
     });
@@ -663,7 +665,7 @@ fn draw_frame_lines(
         for j in 0..shared.ui.anim.lines_x.len() {
             let x = shared.ui.anim.lines_x[j];
             if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
-                continue
+                continue;
             }
 
             let curr_kf = &shared.selected_animation().unwrap().keyframes[i];
@@ -691,7 +693,7 @@ fn draw_frame_lines(
 
             shared.selected_animation_mut().unwrap().keyframes[curr].frame = j as i32;
 
-            shared.sort_keyframes();
+            shared.selected_animation_mut().unwrap().sort_keyframes();
             return;
         }
     }
