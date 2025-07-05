@@ -372,16 +372,12 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     shared.cursor_icon = egui::CursorIcon::Grabbing;
 
                     // remove keyframe if dragged out
-                    let cursor = shared.ui.get_cursor(ui);
                     if cursor.y < 0. {
                         let frame = shared.selected_animation_mut().unwrap().keyframes[i].frame;
-                        let _ = shared
+                        shared
                             .selected_animation_mut()
                             .unwrap()
-                            .keyframes
-                            .iter()
-                            .filter(|kf| kf.frame != frame);
-
+                            .remove_all_keyframes_of_frame(frame);
                         // break loop to prevent OOB errors
                         break;
                     }
