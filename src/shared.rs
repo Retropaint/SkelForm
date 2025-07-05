@@ -1179,6 +1179,15 @@ impl Animation {
     pub fn sort_keyframes(&mut self) {
         self.keyframes.sort_by(|a, b| a.frame.cmp(&b.frame));
     }
+
+    pub fn remove_all_keyframes_of_frame(&mut self, frame: i32) {
+        for k in (0..self.keyframes.len()).rev() {
+            let kf = &self.keyframes[k];
+            if kf.frame == frame {
+                self.keyframes.remove(k);
+            }
+        }
+    }
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
