@@ -330,19 +330,24 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         shared.cursor_icon = egui::CursorIcon::Grab;
                     }
 
+                    let cursor = shared.ui.get_cursor(ui);
+
                     if response.dragged() {
                         shared.ui.anim.dragged_keyframe = Keyframe {
                             frame,
                             bone_id: -1,
                             ..Default::default()
                         };
-                        if let Some(cursor) = ui.ctx().pointer_latest_pos() {
-                            draw_diamond(
-                                &ui.ctx().debug_painter(),
-                                cursor.into(),
-                                egui::Color32::WHITE,
-                            );
-                        }
+                        let color = if cursor.y < 0. {
+                            egui::Color32::RED
+                        } else {
+                            egui::Color32::WHITE
+                        };
+                        draw_diamond(
+                            &ui.ctx().debug_painter(),
+                            cursor + ui.min_rect().left_top().into(),
+                            color,
+                        );
                     }
 
                     let kf = &shared.ui.anim.dragged_keyframe;
@@ -385,19 +390,20 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     // move all keyframes under this one over
                     for j in 0..shared.ui.anim.lines_x.len() {
                         let x = shared.ui.anim.lines_x[j];
-                        if cursor.x < x + hitbox && cursor.x > x - hitbox {
-                            shared
-                                .selected_animation_mut()
-                                .unwrap()
-                                .remove_all_keyframes_of_frame(j as i32);
-                            for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
-                                if kf.frame == frame as i32 {
-                                    kf.frame = j as i32;
-                                }
-                            }
-                            shared.selected_animation_mut().unwrap().sort_keyframes();
-                            return;
+                        if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
+                            continue;
                         }
+                        shared
+                            .selected_animation_mut()
+                            .unwrap()
+                            .remove_all_keyframes_of_frame(j as i32);
+                        for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
+                            if kf.frame == frame as i32 {
+                                kf.frame = j as i32;
+                            }
+                        }
+                        shared.selected_animation_mut().unwrap().sort_keyframes();
+                        return;
                     }
                 }
             });
