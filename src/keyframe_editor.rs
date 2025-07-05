@@ -390,13 +390,17 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     for j in 0..shared.ui.anim.lines_x.len() {
                         let x = shared.ui.anim.lines_x[j];
                         if cursor.x < x + hitbox && cursor.x > x - hitbox {
+                            shared
+                                .selected_animation_mut()
+                                .unwrap()
+                                .remove_all_keyframes_of_frame(j as i32);
                             for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
                                 if kf.frame == frame as i32 {
                                     kf.frame = j as i32;
                                 }
                             }
                             shared.selected_animation_mut().unwrap().sort_keyframes();
-                            break;
+                            return;
                         }
                     }
                 }
@@ -523,13 +527,10 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             if ui::button("Paste", ui).clicked() {
                 let frame = shared.ui.anim.selected_frame;
 
-                // remove current keyframes on this frame
-                for k in (0..shared.selected_animation().unwrap().keyframes.len()).rev() {
-                    let kf = &shared.selected_animation().unwrap().keyframes[k];
-                    if kf.frame == frame {
-                        shared.selected_animation_mut().unwrap().keyframes.remove(k);
-                    }
-                }
+                shared
+                    .selected_animation_mut()
+                    .unwrap()
+                    .remove_all_keyframes_of_frame(frame);
 
                 for kf in 0..shared.copy_buffer.keyframes.len() {
                     let keyframe = shared.copy_buffer.keyframes[kf].clone();
