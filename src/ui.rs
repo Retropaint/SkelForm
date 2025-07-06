@@ -545,6 +545,8 @@ pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::
 }
 
 pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
+    let mut yes = false;
+
     egui::Modal::new(shared.ui.polar_id.clone().to_string().into())
         .frame(egui::Frame {
             corner_radius: 0.into(),
@@ -562,55 +564,60 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                     shared.ui.set_state(UiState::PolarModal, false);
                 }
                 if button("Yes", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                    shared.ui.set_state(UiState::PolarModal, false);
-                    match shared.ui.polar_id {
-                        PolarId::DeleteBone => {
-                            // remove all children of this bone as well
-                            let mut children =
-                                vec![shared.armature.bones[shared.ui.selected_bone_idx].clone()];
-                            armature_window::get_all_children(
-                                &shared.armature.bones,
-                                &mut children,
-                                &shared.armature.bones[shared.ui.selected_bone_idx],
-                            );
-                            children.reverse();
-                            for bone in &children {
-                                shared.armature.delete_bone(bone.id);
-                            }
-
-                            // remove all references to this bone and it's children from all animations
-                            for bone in &children {
-                                for anim in &mut shared.armature.animations {
-                                    for i in 0..anim.keyframes.len() {
-                                        if anim.keyframes[i].bone_id == bone.id {
-                                            anim.keyframes.remove(i);
-                                        }
-                                    }
-                                }
-                            }
-                            shared.ui.selected_bone_idx = usize::MAX;
-                        }
-                        PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
-                        PolarId::FirstTime => shared.ui.start_tutorial(&shared.armature),
-                        PolarId::DeleteAnim => {
-                            if shared.ui.anim.selected == shared.ui.context_menu.id as usize {
-                                shared.ui.anim.selected = usize::MAX;
-                            }
-                            shared.undo_actions.push(Action {
-                                action: ActionEnum::Animations,
-                                animations: shared.armature.animations.clone(),
-                                ..Default::default()
-                            });
-                            shared
-                                .armature
-                                .animations
-                                .remove(shared.ui.context_menu.id as usize);
-                            shared.ui.context_menu.close();
-                        }
-                    }
+                    yes = true;
                 }
             });
         });
+
+    if !yes {
+        return;
+    }
+
+    shared.ui.set_state(UiState::PolarModal, false);
+    match shared.ui.polar_id {
+        PolarId::DeleteBone => {
+            // remove all children of this bone as well
+            let mut children = vec![shared.armature.bones[shared.ui.selected_bone_idx].clone()];
+            armature_window::get_all_children(
+                &shared.armature.bones,
+                &mut children,
+                &shared.armature.bones[shared.ui.selected_bone_idx],
+            );
+            children.reverse();
+            for bone in &children {
+                shared.armature.delete_bone(bone.id);
+            }
+
+            // remove all references to this bone and it's children from all animations
+            for bone in &children {
+                for anim in &mut shared.armature.animations {
+                    for i in 0..anim.keyframes.len() {
+                        if anim.keyframes[i].bone_id == bone.id {
+                            anim.keyframes.remove(i);
+                        }
+                    }
+                }
+            }
+            shared.ui.selected_bone_idx = usize::MAX;
+        }
+        PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
+        PolarId::FirstTime => shared.ui.start_tutorial(&shared.armature),
+        PolarId::DeleteAnim => {
+            if shared.ui.anim.selected == shared.ui.context_menu.id as usize {
+                shared.ui.anim.selected = usize::MAX;
+            }
+            shared.undo_actions.push(Action {
+                action: ActionEnum::Animations,
+                animations: shared.armature.animations.clone(),
+                ..Default::default()
+            });
+            shared
+                .armature
+                .animations
+                .remove(shared.ui.context_menu.id as usize);
+            shared.ui.context_menu.close();
+        }
+    }
 }
 
 pub fn modal_dialog(shared: &mut Shared, ctx: &egui::Context) {
