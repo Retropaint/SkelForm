@@ -737,6 +737,13 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                             anim_id = usize::MAX;
                         }
 
+                        shared.undo_actions.push(Action {
+                            action: ActionEnum::Bone,
+                            id: shared.selected_bone().unwrap().id,
+                            bones: vec![shared.selected_bone().unwrap().clone()],
+                            ..Default::default()
+                        });
+
                         // set texture
                         shared.armature.set_bone_tex(
                             shared.selected_bone().unwrap().id,
