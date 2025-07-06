@@ -160,6 +160,13 @@ pub fn read_image_loaders(
         anim_id = usize::MAX;
     }
 
+    shared.undo_actions.push(Action {
+        action: ActionEnum::Bone,
+        id: shared.selected_bone().unwrap().id,
+        bones: vec![shared.selected_bone().unwrap().clone()],
+        ..Default::default()
+    });
+
     let tex_idx = shared.armature.textures.len() - 1;
     shared.armature.set_bone_tex(
         shared.selected_bone().unwrap().id,
