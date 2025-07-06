@@ -161,6 +161,15 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                     shared.ui.edit_value = Some(name.to_string());
                 }
             }
+            if button.secondary_clicked() {
+                shared.ui.anim_context = i as i32;
+            }
+
+            if shared.ui.anim_context == i as i32 {
+                button.show_tooltip_ui(|ui| {
+                    ui.label("test");
+                });
+            }
         }
     });
 }

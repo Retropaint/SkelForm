@@ -28,6 +28,26 @@ const FFMPEG_ERR: &str =
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
+    context.input(|i| {
+        shared.input.mouse_left_prev = shared.input.mouse_left;
+        shared.input.mouse_right_prev = shared.input.mouse_right;
+        if i.pointer.primary_down() {
+            shared.input.mouse_left += 1;
+            shared.ui.anim_context = -1;
+        } else {
+            shared.input.mouse_left = -1;
+        }
+
+        if i.pointer.secondary_down() {
+            shared.input.mouse_right += 1;
+        } else {
+            shared.input.mouse_right = -1;
+        }
+    });
+
+    context.set_cursor_icon(shared.cursor_icon);
+    shared.cursor_icon = egui::CursorIcon::Default;
+
     default_styling(context);
 
     let scale_mod: f32;
@@ -106,28 +126,6 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.ui.has_state(UiState::ImageModal) {
         modal_image(shared, context);
     }
-
-    // Although counter-intuitive, mouse inputs are recorded here.
-    // This is because egui can detect all of them even if they were not on the UI itself.
-    // To determine if the mouse is on the UI, winit's mouse input is used instead (see input.rs).
-    context.input(|i| {
-        shared.input.mouse_left_prev = shared.input.mouse_left;
-        shared.input.mouse_right_prev = shared.input.mouse_right;
-        if i.pointer.primary_down() {
-            shared.input.mouse_left += 1;
-        } else {
-            shared.input.mouse_left = -1;
-        }
-
-        if i.pointer.secondary_down() {
-            shared.input.mouse_right += 1;
-        } else {
-            shared.input.mouse_right = -1;
-        }
-    });
-
-    context.set_cursor_icon(shared.cursor_icon);
-    shared.cursor_icon = egui::CursorIcon::Default;
 
     style_once!(top_panel(context, shared));
 

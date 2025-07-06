@@ -59,6 +59,8 @@ fn init_shared(shared: &mut Shared) {
     shared.dragging_vert = usize::MAX;
     shared.ui.scale = 1.;
 
+    shared.ui.anim_context = -1;
+
     // if this were false, the first click would always
     // be considered non-UI
     shared.input.on_ui = true;
