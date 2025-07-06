@@ -33,7 +33,10 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         shared.input.mouse_right_prev = shared.input.mouse_right;
         if i.pointer.primary_down() {
             shared.input.mouse_left += 1;
-            shared.ui.anim_context = -1;
+            if !shared.ui.keep_context {
+                shared.ui.anim_context = -1;
+            }
+            shared.ui.keep_context = false;
         } else {
             shared.input.mouse_left = -1;
         }
@@ -1058,4 +1061,17 @@ pub fn draw_resizable_panel<T>(
             *on_ui = true;
         }
     }
+}
+
+pub fn clickable_label(ui: &mut egui::Ui, text: &str) -> egui::Response {
+    let label = ui
+        .label(text)
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
+        .interact(egui::Sense::click());
+
+    if label.contains_pointer() {
+        return label.highlight();
+    }
+
+    label
 }

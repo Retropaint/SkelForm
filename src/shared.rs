@@ -423,6 +423,10 @@ pub struct Ui {
     pub camera_bar_scale: Vec2,
 
     // context menu stuff
+
+    // determines if context menu should close on next click
+    pub keep_context: bool,
+
     pub anim_context: i32,
 }
 
