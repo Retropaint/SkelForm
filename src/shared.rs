@@ -4,7 +4,7 @@ use crate::*;
 
 use std::{
     fmt,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
+    ops::{DivAssign, MulAssign},
 };
 
 #[cfg(target_arch = "wasm32")]
