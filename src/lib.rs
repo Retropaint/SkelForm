@@ -308,7 +308,7 @@ impl ApplicationHandler for App {
                 if self.shared.undo_actions.len() > 0 {
                     self.shared.ui.open_polar_modal(
                         PolarId::Exiting,
-                        "Are you sure you want to quit and discard unsaved changes?".to_string(),
+                        "Are you sure you want to quit and discard unsaved changes?",
                     );
                 } else {
                     event_loop.exit();

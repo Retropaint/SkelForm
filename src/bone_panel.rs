@@ -42,7 +42,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             {
                 shared.ui.open_polar_modal(
                     PolarId::DeleteBone,
-                    "Are you sure to delete this bone?".to_string(),
+                    "Are you sure to delete this bone?",
                 );
             }
         });

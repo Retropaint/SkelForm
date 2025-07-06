@@ -168,24 +168,27 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                 }
             }
             if button.secondary_clicked() {
-                shared.ui.anim_context = i as i32;
+                shared
+                    .ui
+                    .context_menu
+                    .show(ContextType::Animation, i as i32);
             }
 
-            if shared.ui.anim_context == i as i32 {
+            if shared.ui.context_menu.is(ContextType::Animation, i as i32) {
                 button.show_tooltip_ui(|ui| {
                     if ui::clickable_label(ui, "Rename").clicked() {
                         activate_renaming!();
-                        shared.ui.keep_context = false;
+                        shared.ui.context_menu.close();
                     };
                     if ui::clickable_label(ui, "Delete").clicked() {
-                        if shared.ui.anim.selected == i {
-                            shared.ui.anim.selected = usize::MAX;
-                        }
-                        shared.armature.animations.remove(i);
-                        shared.ui.keep_context = false;
+                        shared.ui.open_polar_modal(
+                            PolarId::DeleteAnim,
+                            "Are you sure to delete this animation?",
+                        );
+                        shared.ui.context_menu.hide= true;
                     }
                     if ui.ui_contains_pointer() {
-                        shared.ui.keep_context = true;
+                        shared.ui.context_menu.keep = true;
                     }
                 });
             }
