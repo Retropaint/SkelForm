@@ -439,25 +439,10 @@ impl ApplicationHandler for App {
         }
 
         #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(feature = "debug")]
         if self.shared.debug {
+            // macro-type debug stuff goes here
             self.shared.debug = false;
-            self.shared.ui.selected_bone_idx = 0;
-            self.shared.armature.new_bone(-1);
-            self.shared.armature.new_bone(-1);
-            self.shared.armature.new_bone(-1);
-            self.shared.armature.bones[2].parent_id = 1;
-            self.shared.armature.bones[1].parent_id = 0;
-            self.shared.armature.animations.push(Animation {
-                name: "lol".to_string(),
-                keyframes: vec![],
-                fps: 24,
-                ..Default::default()
-            });
-
-            file_reader::create_temp_file(
-                TEMP_IMG_PATH,
-                "/Users/o/projects/code/rust/skelform_wgpu/gopher.png",
-            );
         }
 
         window.request_redraw();

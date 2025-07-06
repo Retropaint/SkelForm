@@ -185,7 +185,9 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                             PolarId::DeleteAnim,
                             "Are you sure to delete this animation?",
                         );
-                        shared.ui.context_menu.hide= true;
+
+                        // only hide the menu, as anim id is still needed for modal
+                        shared.ui.context_menu.hide = true;
                     }
                     if ui.ui_contains_pointer() {
                         shared.ui.context_menu.keep = true;
