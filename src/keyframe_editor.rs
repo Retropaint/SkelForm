@@ -704,6 +704,11 @@ fn draw_frame_lines(
 
             let curr_kf = &shared.selected_animation().unwrap().keyframes[i];
 
+            // ignore if icon is dragged to the same line
+            if curr_kf.frame == j as i32 {
+                return;
+            }
+
             // remove keyframe that is the same as this
             let k = shared
                 .selected_animation()
