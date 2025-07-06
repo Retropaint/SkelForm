@@ -71,24 +71,10 @@ impl Vec2 {
     }
 }
 
-impl MulAssign for Vec2 {
-    fn mul_assign(&mut self, other: Vec2) {
-        self.x *= other.x;
-        self.y *= other.y;
-    }
-}
-
 impl MulAssign<f32> for Vec2 {
     fn mul_assign(&mut self, other: f32) {
         self.x *= other;
         self.y *= other;
-    }
-}
-
-impl DivAssign for Vec2 {
-    fn div_assign(&mut self, other: Vec2) {
-        self.x /= other.x;
-        self.y /= other.y;
     }
 }
 
@@ -99,96 +85,62 @@ impl DivAssign<f32> for Vec2 {
     }
 }
 
-impl AddAssign for Vec2 {
-    fn add_assign(&mut self, other: Vec2) {
-        self.x += other.x;
-        self.y += other.y;
-    }
-}
-
-impl SubAssign for Vec2 {
-    fn sub_assign(&mut self, other: Vec2) {
-        self.x -= other.x;
-        self.y -= other.y;
-    }
-}
-
-impl Add for Vec2 {
-    type Output = Self;
-    #[inline(always)]
-    fn add(self, rhs: Self) -> Self {
-        Self {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
+macro_rules! impl_assign_for_vec2 {
+    ($trait:ident, $method:ident, $op:tt) => {
+        impl std::ops::$trait for Vec2 {
+            fn $method(&mut self, other: Vec2) {
+                self.x $op other.x;
+                self.y $op other.y;
+            }
         }
-    }
+    };
 }
 
-impl Div for Vec2 {
-    type Output = Self;
-    #[inline(always)]
-    fn div(self, rhs: Self) -> Self {
-        Self {
-            x: self.x / rhs.x,
-            y: self.y / rhs.y,
+impl_assign_for_vec2!(AddAssign, add_assign, +=);
+impl_assign_for_vec2!(SubAssign, sub_assign, -=);
+impl_assign_for_vec2!(DivAssign, div_assign, /=);
+impl_assign_for_vec2!(MulAssign, mul_assign, *=);
+
+macro_rules! impl_for_vec2 {
+    ($trait:ident, $method:ident, $op:tt) => {
+        impl std::ops::$trait for Vec2 {
+            type Output = Self;
+
+            #[inline(always)]
+            fn $method(self, rhs: Self) -> Self {
+                Self {
+                    x: self.x $op rhs.x,
+                    y: self.y $op rhs.y,
+                }
+            }
         }
-    }
+    };
 }
 
-impl Div<f32> for Vec2 {
-    type Output = Self;
-    #[inline(always)]
-    fn div(self, rhs: f32) -> Self {
-        Self {
-            x: self.x / rhs,
-            y: self.y / rhs,
+impl_for_vec2!(Add, add, +);
+impl_for_vec2!(Sub, sub, -);
+impl_for_vec2!(Mul, mul, *);
+impl_for_vec2!(Div, div, /);
+
+macro_rules! impl_f32_for_vec2 {
+    ($trait:ident, $method:ident, $op:tt) => {
+        impl std::ops::$trait<f32> for Vec2 {
+            type Output = Self;
+
+            #[inline(always)]
+            fn $method(self, rhs: f32) -> Self {
+                Self {
+                    x: self.x $op rhs,
+                    y: self.y $op rhs,
+                }
+            }
         }
-    }
+    };
 }
 
-impl Mul<f32> for Vec2 {
-    type Output = Self;
-    #[inline(always)]
-    fn mul(self, rhs: f32) -> Self {
-        Self {
-            x: self.x * rhs,
-            y: self.y * rhs,
-        }
-    }
-}
-
-impl Mul for Vec2 {
-    type Output = Self;
-    #[inline(always)]
-    fn mul(self, rhs: Vec2) -> Self {
-        Self {
-            x: self.x * rhs.x,
-            y: self.y * rhs.y,
-        }
-    }
-}
-
-impl Sub for Vec2 {
-    type Output = Self;
-    #[inline(always)]
-    fn sub(self, rhs: Self) -> Self {
-        Self {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-        }
-    }
-}
-
-impl Sub<f32> for Vec2 {
-    type Output = Self;
-    #[inline(always)]
-    fn sub(self, rhs: f32) -> Self {
-        Self {
-            x: self.x - rhs,
-            y: self.y - rhs,
-        }
-    }
-}
+impl_f32_for_vec2!(Sub, sub, -);
+impl_f32_for_vec2!(Mul, mul, *);
+impl_f32_for_vec2!(Div, div, /);
 
 impl PartialEq for Vec2 {
     fn eq(&self, other: &Vec2) -> bool {
