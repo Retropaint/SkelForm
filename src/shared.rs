@@ -807,10 +807,11 @@ impl Armature {
         if self.find_bone(id) != None {
             parent_id = self.find_bone(id).unwrap().parent_id;
         }
+        let ids = self.bones.iter().map(|a| a.id).collect();
         let new_bone = Bone {
             name: NEW_BONE_NAME.to_string(),
             parent_id,
-            id: self.generate_id(),
+            id: generate_id(ids),
             scale: Vec2 { x: 1., y: 1. },
             tex_idx: -1,
             pivot: Vec2::new(0.5, 0.5),
@@ -1556,4 +1557,22 @@ fn are_indices_empty<T: std::cmp::PartialEq<Vec<u32>>>(value: &T) -> bool {
 
 fn are_anims_empty<T: std::cmp::PartialEq<Vec<Animation>>>(value: &T) -> bool {
     *value == vec![]
+}
+
+// generate non-clashing id
+pub fn generate_id(ids: Vec<i32>) -> i32 {
+    let mut idx = 0;
+    while idx == does_id_exist(idx, ids.clone()) {
+        idx += 1;
+    }
+    return idx;
+}
+
+pub fn does_id_exist(id: i32, ids: Vec<i32>) -> i32 {
+    for this_id in ids {
+        if this_id == id {
+            return id;
+        }
+    }
+    return -1;
 }
