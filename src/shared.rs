@@ -734,6 +734,24 @@ impl Armature {
         None
     }
 
+    pub fn find_anim(&self, id: i32) -> Option<&Animation> {
+        for a in &self.animations {
+            if a.id == id {
+                return Some(&a);
+            }
+        }
+        None
+    }
+
+    pub fn find_anim_mut(&mut self, id: i32) -> Option<&mut Animation> {
+        for a in &mut self.animations {
+            if a.id == id {
+                return Some(a);
+            }
+        }
+        None
+    }
+
     pub fn set_bone_tex(
         &mut self,
         bone_id: i32,
@@ -1158,6 +1176,8 @@ pub struct Animation {
     #[serde(default)]
     pub name: String,
     #[serde(default)]
+    pub id: i32,
+    #[serde(default)]
     pub fps: i32,
     #[serde(default)]
     pub keyframes: Vec<Keyframe>,
@@ -1480,7 +1500,7 @@ impl Shared {
         if self.ui.is_animating() {
             self.undo_actions.push(Action {
                 action: ActionEnum::Animation,
-                id: self.ui.anim.selected as i32,
+                id: self.selected_animation().unwrap().id as i32,
                 animations: vec![self.selected_animation().unwrap().clone()],
                 ..Default::default()
             });
