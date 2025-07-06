@@ -407,9 +407,13 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
             }
         }
         ActionEnum::Bones => {
-            shared.ui.selected_bone_idx = usize::MAX;
             new_action.bones = shared.armature.bones.clone();
             shared.armature.bones = action.bones.clone();
+            if shared.armature.bones.len() == 0
+                || shared.ui.selected_bone_idx > shared.armature.bones.len() - 1
+            {
+                shared.ui.selected_bone_idx = usize::MAX;
+            }
         }
         ActionEnum::Animation => {
             new_action.animations = vec![shared.armature.animations[action.id as usize].clone()];
