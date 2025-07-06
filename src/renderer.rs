@@ -334,11 +334,6 @@ pub fn setup_indices(verts: &Vec<Vertex>, base: i32) -> Vec<u32> {
     indices
 }
 
-pub struct Triangle {
-    pub verts: [Vertex; 3],
-    pub idx: [usize; 3],
-}
-
 pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
     let mut anim_id = shared.ui.anim.selected;
     if !shared.ui.is_animating() {
@@ -808,11 +803,12 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
             x += 1.;
             continue;
         }
-        if x == 0. {
-            draw_vertical_line(x, width, render_pass, device, shared, highlight_color);
+        let color = if x == 0. {
+            highlight_color
         } else {
-            draw_vertical_line(x, width, render_pass, device, shared, regular_color);
-        }
+            regular_color
+        };
+        draw_vertical_line(x, width, render_pass, device, shared, color);
         x += 1.;
     }
 
@@ -824,11 +820,12 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
             y += 1.;
             continue;
         }
-        if y == 0. {
-            draw_horizontal_line(y, width, render_pass, device, shared, highlight_color);
+        let color = if y == 0. {
+            highlight_color
         } else {
-            draw_horizontal_line(y, width, render_pass, device, shared, regular_color);
-        }
+            regular_color
+        };
+        draw_horizontal_line(y, width, render_pass, device, shared, color);
         y += 1.;
     }
 }

@@ -212,6 +212,12 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         return;
     }
 
+    // temporarily disable mesh deformation
+    // for now, runtimes need to focus on implementing basics
+    if true {
+        return
+    }
+
     let mut mesh_label = "Edit Mesh";
     if shared.ui.editing_mesh {
         mesh_label = "Finish Edit";
