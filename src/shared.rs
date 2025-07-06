@@ -1435,7 +1435,6 @@ pub struct Shared {
     pub undo_actions: Vec<Action>,
     pub redo_actions: Vec<Action>,
 
-    // should be enum but too lazy atm
     pub edit_mode: EditMode,
 
     pub generic_bindgroup: Option<BindGroup>,
