@@ -401,14 +401,8 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         continue;
                     }
 
-                    let anim_id = shared.selected_animation().unwrap().id;
+                    add_anim_action(shared);
 
-                    shared.undo_actions.push(shared::Action {
-                        action: ActionEnum::Animation,
-                        id: anim_id as i32,
-                        animations: vec![shared.selected_animation().unwrap().clone()],
-                        ..Default::default()
-                    });
                     shared.cursor_icon = egui::CursorIcon::Grabbing;
 
                     // remove keyframe if dragged out
@@ -562,6 +556,8 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             if ui::button("Paste", ui).clicked() {
+                add_anim_action(shared);
+
                 let frame = shared.ui.anim.selected_frame;
 
                 shared
@@ -765,6 +761,15 @@ pub fn new_animation(shared: &mut Shared) {
         id: generate_id(ids),
         keyframes: vec![],
         fps: 60,
+        ..Default::default()
+    });
+}
+
+pub fn add_anim_action(shared: &mut Shared) {
+    shared.undo_actions.push(shared::Action {
+        action: ActionEnum::Animation,
+        id: shared.selected_animation().unwrap().id as i32,
+        animations: vec![shared.selected_animation().unwrap().clone()],
         ..Default::default()
     });
 }
