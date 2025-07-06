@@ -413,7 +413,7 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
         }
         ActionEnum::Animation => {
             new_action.animations = vec![shared.armature.animations[action.id as usize].clone()];
-            shared.armature.animations[action.id as usize] = action.animations[0].clone();
+            *shared.armature.find_anim_mut(action.id).unwrap() = action.animations[0].clone();
         }
         ActionEnum::Animations => {
             new_action.animations = shared.armature.animations.clone();

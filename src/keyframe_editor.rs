@@ -401,9 +401,11 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                         continue;
                     }
 
+                    let anim_id = shared.selected_animation().unwrap().id;
+
                     shared.undo_actions.push(shared::Action {
                         action: ActionEnum::Animation,
-                        id: shared.ui.anim.selected as i32,
+                        id: anim_id as i32,
                         animations: vec![shared.selected_animation().unwrap().clone()],
                         ..Default::default()
                     });
@@ -757,8 +759,10 @@ pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32) {
 }
 
 pub fn new_animation(shared: &mut Shared) {
+    let ids = shared.armature.animations.iter().map(|a| a.id).collect();
     shared.armature.animations.push(Animation {
         name: "".to_string(),
+        id: generate_id(ids),
         keyframes: vec![],
         fps: 60,
         ..Default::default()
