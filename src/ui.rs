@@ -742,14 +742,20 @@ pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
                         let mut anim_id = shared.ui.anim.selected;
                         if !shared.ui.is_animating() {
                             anim_id = usize::MAX;
+                            shared.undo_actions.push(Action {
+                                action: ActionEnum::Bone,
+                                id: shared.selected_bone().unwrap().id,
+                                bones: vec![shared.selected_bone().unwrap().clone()],
+                                ..Default::default()
+                            });
+                        } else if shared.ui.is_animating() {
+                            shared.undo_actions.push(Action {
+                                action: ActionEnum::Animation,
+                                id: shared.selected_animation().unwrap().id,
+                                animations: vec![shared.selected_animation().unwrap().clone()],
+                                ..Default::default()
+                            });
                         }
-
-                        shared.undo_actions.push(Action {
-                            action: ActionEnum::Bone,
-                            id: shared.selected_bone().unwrap().id,
-                            bones: vec![shared.selected_bone().unwrap().clone()],
-                            ..Default::default()
-                        });
 
                         // set texture
                         shared.armature.set_bone_tex(
