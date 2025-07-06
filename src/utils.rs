@@ -399,47 +399,29 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
 
     match &action.action {
         ActionEnum::Bone => {
-            if action.action_type == ActionType::Created {
-                shared.ui.selected_bone_idx = usize::MAX;
-                if undo {
-                    for (i, bone) in shared.armature.bones.iter().enumerate() {
-                        if bone.id == action.id {
-                            shared.armature.bones.remove(i);
-                            break;
-                        }
-                    }
-                } else {
-                    shared.armature.new_bone(-1);
-                }
-            } else if (action.id as usize) <= shared.armature.bones.len() - 1 {
-                new_action.bone = shared.armature.bones[action.id as usize].clone();
-                *shared.armature.find_bone_mut(action.id).unwrap() = action.bone.clone();
+            new_action.bones = vec![shared.armature.bones[action.id as usize].clone()];
+            *shared.armature.find_bone_mut(action.id).unwrap() = action.bones[0].clone();
 
-                for _ in 0..shared.armature.bones.len() {
-                    //shared.organize_bone(i);
-                }
+            for _ in 0..shared.armature.bones.len() {
+                //shared.organize_bone(i);
             }
         }
         ActionEnum::Bones => {
             shared.ui.selected_bone_idx = usize::MAX;
             new_action.bones = shared.armature.bones.clone();
-            if undo {
-                shared.armature.bones = shared.undo_actions.last().unwrap().bones.clone();
-            } else {
-                shared.armature.bones = shared.redo_actions.last().unwrap().bones.clone();
-            }
+            shared.armature.bones = action.bones.clone();
         }
         ActionEnum::Animation => {
-            if action.action_type == ActionType::Created {
+            new_action.animations = vec![shared.armature.animations[action.id as usize].clone()];
+            shared.armature.animations[action.id as usize] = action.animations[0].clone();
+        }
+        ActionEnum::Animations => {
+            new_action.animations = shared.armature.animations.clone();
+            shared.armature.animations = action.animations.clone();
+            if shared.armature.animations.len() == 0
+                || shared.ui.anim.selected > shared.armature.animations.len() - 1
+            {
                 shared.ui.anim.selected = usize::MAX;
-                if undo {
-                    shared.armature.animations.pop();
-                } else {
-                    keyframe_editor::new_animation(shared);
-                }
-            } else if (action.id as usize) <= shared.armature.animations.len() - 1 {
-                new_action.animation = shared.armature.animations[action.id as usize].clone();
-                shared.armature.animations[action.id as usize] = action.animation.clone();
             }
         }
         _ => {}

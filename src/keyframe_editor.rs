@@ -114,10 +114,11 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             shared.undo_actions.push(Action {
-                action: ActionEnum::Animation,
-                action_type: ActionType::Created,
+                action: ActionEnum::Animations,
+                animations: shared.armature.animations.clone(),
                 ..Default::default()
             });
+
             new_animation(shared);
             let idx = shared.armature.animations.len() - 1;
             shared.ui.original_name = "".to_string();
@@ -402,9 +403,8 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
 
                     shared.undo_actions.push(shared::Action {
                         action: ActionEnum::Animation,
-                        action_type: ActionType::Edited,
                         id: shared.ui.anim.selected as i32,
-                        animation: shared.selected_animation().unwrap().clone(),
+                        animations: vec![shared.selected_animation().unwrap().clone()],
                         ..Default::default()
                     });
                     shared.cursor_icon = egui::CursorIcon::Grabbing;

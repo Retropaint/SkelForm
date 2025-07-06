@@ -40,7 +40,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
                         shared.undo_actions.push(Action {
                             action: ActionEnum::Bones,
-                            action_type: ActionType::Created,
                             bones: shared.armature.bones.clone(),
                             ..Default::default()
                         });
@@ -236,7 +235,6 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
 
             shared.undo_actions.push(Action {
                 action: ActionEnum::Bones,
-                action_type: ActionType::Edited,
                 bones: shared.armature.bones.clone(),
                 ..Default::default()
             });

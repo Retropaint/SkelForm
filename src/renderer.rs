@@ -245,8 +245,7 @@ fn draw_hover_triangle(
 
     shared.undo_actions.push(Action {
         action: ActionEnum::Bone,
-        action_type: ActionType::Edited,
-        bone: shared.selected_bone().unwrap().clone(),
+        bones: vec![shared.selected_bone().unwrap().clone()],
         id: shared.selected_bone().unwrap().id,
         ..Default::default()
     });
@@ -463,8 +462,7 @@ pub fn bone_vertices(
         if shared.input.is_clicking() {
             shared.undo_actions.push(Action {
                 action: ActionEnum::Bone,
-                action_type: ActionType::Edited,
-                bone: shared.selected_bone().unwrap().clone(),
+                bones: vec![shared.selected_bone().unwrap().clone()],
                 id: shared.selected_bone().unwrap().id,
                 ..Default::default()
             });

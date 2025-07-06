@@ -596,6 +596,11 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                             if shared.ui.anim.selected == shared.ui.context_menu.id as usize {
                                 shared.ui.anim.selected = usize::MAX;
                             }
+                            shared.undo_actions.push(Action {
+                                action: ActionEnum::Animations,
+                                animations: shared.armature.animations.clone(),
+                                ..Default::default()
+                            });
                             shared
                                 .armature
                                 .animations

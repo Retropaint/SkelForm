@@ -384,7 +384,7 @@ pub enum PolarId {
 }
 enum_string!(PolarId);
 
-#[derive(Clone, Default,PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub enum ContextType {
     #[default]
     None,
@@ -459,7 +459,7 @@ pub struct Ui {
     // context menu stuff
 
     // determines if context menu should close on next click
-    pub context_menu: ContextMenu
+    pub context_menu: ContextMenu,
 }
 
 impl Ui {
@@ -1301,23 +1301,16 @@ pub enum ActionEnum {
     Animation,
     Keyframe,
     Bones,
-}
-#[derive(Default, PartialEq, Clone)]
-pub enum ActionType {
-    #[default]
-    Created,
-    Edited,
+    Animations,
 }
 
 #[derive(Default, Clone, PartialEq)]
 pub struct Action {
     pub action: ActionEnum,
-    pub action_type: ActionType,
 
     pub id: i32,
-    pub animation: Animation,
-    pub bone: Bone,
     pub bones: Vec<Bone>,
+    pub animations: Vec<Animation>,
 }
 
 impl AnimElement {
@@ -1483,20 +1476,18 @@ impl Shared {
     }
 
     pub fn save_edited_bone(&mut self) {
-        self.undo_actions.push(Action {
-            action: ActionEnum::Bone,
-            action_type: ActionType::Edited,
-            bone: self.selected_bone().unwrap().clone(),
-            id: self.selected_bone().unwrap().id,
-            ..Default::default()
-        });
-
         if self.ui.is_animating() {
             self.undo_actions.push(Action {
                 action: ActionEnum::Animation,
-                action_type: ActionType::Edited,
                 id: self.ui.anim.selected as i32,
-                animation: self.selected_animation().unwrap().clone(),
+                animations: vec![self.selected_animation().unwrap().clone()],
+                ..Default::default()
+            });
+        } else {
+            self.undo_actions.push(Action {
+                action: ActionEnum::Bone,
+                id: self.selected_bone().unwrap().id,
+                bones: vec![self.selected_bone().unwrap().clone()],
                 ..Default::default()
             });
         }
