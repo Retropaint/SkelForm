@@ -151,14 +151,20 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                 continue;
             }
 
+            macro_rules! activate_renaming {
+                () => {
+                    shared.ui.rename_id = "animation ".to_string() + &i.to_string();
+                    shared.ui.edit_value = Some(name.to_string());
+                };
+            }
+
             let button = ui::selection_button(&name, i == shared.ui.anim.selected, ui);
             if button.clicked() {
                 if shared.ui.anim.selected != i {
                     shared.ui.anim.selected = i;
                     shared.ui.select_anim_frame(0);
                 } else {
-                    shared.ui.rename_id = "animation ".to_string() + &i.to_string();
-                    shared.ui.edit_value = Some(name.to_string());
+                    activate_renaming!();
                 }
             }
             if button.secondary_clicked() {
@@ -167,7 +173,20 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
 
             if shared.ui.anim_context == i as i32 {
                 button.show_tooltip_ui(|ui| {
-                    ui.label("test");
+                    if ui::clickable_label(ui, "Rename").clicked() {
+                        activate_renaming!();
+                        shared.ui.keep_context = false;
+                    };
+                    if ui::clickable_label(ui, "Delete").clicked() {
+                        if shared.ui.anim.selected == i {
+                            shared.ui.anim.selected = usize::MAX;
+                        }
+                        shared.armature.animations.remove(i);
+                        shared.ui.keep_context = false;
+                    }
+                    if ui.ui_contains_pointer() {
+                        shared.ui.keep_context = true;
+                    }
                 });
             }
         }
