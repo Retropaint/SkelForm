@@ -421,6 +421,9 @@ pub struct Ui {
     // camera bar stuff
     pub camera_bar_pos: Vec2,
     pub camera_bar_scale: Vec2,
+
+    // context menu stuff
+    pub anim_context: i32,
 }
 
 impl Ui {
