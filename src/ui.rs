@@ -33,10 +33,10 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         shared.input.mouse_right_prev = shared.input.mouse_right;
         if i.pointer.primary_down() {
             shared.input.mouse_left += 1;
-            if !shared.ui.keep_context {
-                shared.ui.anim_context = -1;
+            if !shared.ui.context_menu.keep {
+                shared.ui.context_menu.close();
             }
-            shared.ui.keep_context = false;
+            shared.ui.context_menu.keep = false;
         } else {
             shared.input.mouse_left = -1;
         }
@@ -592,6 +592,16 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
                         }
                         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
                         PolarId::FirstTime => shared.ui.start_tutorial(&shared.armature),
+                        PolarId::DeleteAnim => {
+                            if shared.ui.anim.selected == shared.ui.context_menu.id as usize {
+                                shared.ui.anim.selected = usize::MAX;
+                            }
+                            shared
+                                .armature
+                                .animations
+                                .remove(shared.ui.context_menu.id as usize);
+                            shared.ui.context_menu.close();
+                        }
                     }
                 }
             });

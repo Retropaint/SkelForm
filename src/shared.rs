@@ -380,8 +380,42 @@ pub enum PolarId {
     DeleteBone,
     Exiting,
     FirstTime,
+    DeleteAnim,
 }
 enum_string!(PolarId);
+
+#[derive(Clone, Default,PartialEq)]
+pub enum ContextType {
+    #[default]
+    None,
+    Animation,
+}
+
+#[derive(Clone, Default)]
+pub struct ContextMenu {
+    pub context_type: ContextType,
+    pub id: i32,
+    pub hide: bool,
+    pub keep: bool,
+}
+
+impl ContextMenu {
+    pub fn show(&mut self, context_type: ContextType, id: i32) {
+        self.context_type = context_type;
+        self.id = id;
+        self.hide = false;
+    }
+
+    pub fn close(&mut self) {
+        self.context_type = ContextType::None;
+        self.id = -1;
+        self.keep = false;
+    }
+
+    pub fn is(&self, context_type: ContextType, id: i32) -> bool {
+        self.context_type == context_type && self.id == id && !self.hide
+    }
+}
 
 #[derive(Clone, Default)]
 pub struct Ui {
@@ -425,9 +459,7 @@ pub struct Ui {
     // context menu stuff
 
     // determines if context menu should close on next click
-    pub keep_context: bool,
-
-    pub anim_context: i32,
+    pub context_menu: ContextMenu
 }
 
 impl Ui {
@@ -479,10 +511,10 @@ impl Ui {
         self.headline = headline;
     }
 
-    pub fn open_polar_modal(&mut self, id: PolarId, headline: String) {
+    pub fn open_polar_modal(&mut self, id: PolarId, headline: &str) {
         self.set_state(UiState::PolarModal, true);
         self.polar_id = id;
-        self.headline = headline;
+        self.headline = headline.to_string();
     }
 
     pub fn add_texture_img(
