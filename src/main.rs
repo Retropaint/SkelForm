@@ -1,5 +1,7 @@
 // #![windows_subsystem = "windows"] // uncomment this to suppress terminal on windows
 
+#![windows_subsystem = "windows"]
+
 use skelform_lib::shared::*;
 
 #[cfg(not(target_arch = "wasm32"))]
