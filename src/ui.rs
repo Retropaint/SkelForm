@@ -121,13 +121,13 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     }
 
     if shared.ui.has_state(UiState::PolarModal) {
-        polar_dialog(shared, context);
+        polar_modal(shared, context);
     }
     if shared.ui.has_state(UiState::Modal) {
-        modal_dialog(shared, context);
+        modal(shared, context);
     }
     if shared.ui.has_state(UiState::ImageModal) {
-        modal_image(shared, context);
+        image_modal(shared, context);
     }
 
     style_once!(top_panel(context, shared));
@@ -544,7 +544,7 @@ pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::
     ui.add(button).on_hover_cursor(cursor)
 }
 
-pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
+pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
     let mut yes = false;
 
     egui::Modal::new(shared.ui.polar_id.clone().to_string().into())
@@ -620,7 +620,7 @@ pub fn polar_dialog(shared: &mut Shared, ctx: &egui::Context) {
     }
 }
 
-pub fn modal_dialog(shared: &mut Shared, ctx: &egui::Context) {
+pub fn modal(shared: &mut Shared, ctx: &egui::Context) {
     egui::Modal::new(shared.ui.polar_id.to_string().into())
         .frame(egui::Frame {
             corner_radius: 0.into(),
@@ -644,7 +644,7 @@ pub fn modal_dialog(shared: &mut Shared, ctx: &egui::Context) {
         });
 }
 
-pub fn modal_image(shared: &mut Shared, ctx: &egui::Context) {
+pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
     egui::Modal::new("test".into())
         .frame(egui::Frame {
             corner_radius: 0.into(),

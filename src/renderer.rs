@@ -44,7 +44,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         temp_bones.push(b.clone());
     }
 
-    // drawing gridlines
     if shared.generic_bindgroup != None {
         draw_gridline(render_pass, device, shared);
     }
