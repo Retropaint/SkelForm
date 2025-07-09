@@ -40,10 +40,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 .on_hover_cursor(egui::CursorIcon::PointingHand)
                 .clicked()
             {
-                shared.ui.open_polar_modal(
-                    PolarId::DeleteBone,
-                    "Are you sure to delete this bone?",
-                );
+                shared
+                    .ui
+                    .open_polar_modal(PolarId::DeleteBone, "Are you sure to delete this bone?");
             }
         });
     });
@@ -215,7 +214,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     // temporarily disable mesh deformation
     // for now, runtimes need to focus on implementing basics
     if true {
-        return
+        return;
     }
 
     let mut mesh_label = "Edit Mesh";

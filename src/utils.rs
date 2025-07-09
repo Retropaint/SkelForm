@@ -268,7 +268,7 @@ pub fn prepare_files(armature: &Armature) -> (Vec2, String, Vec<u8>) {
     }
 
     let root = Root {
-        armatures: vec![armature_copy],
+        armature: armature_copy,
         texture_size: size,
     };
 
@@ -313,7 +313,7 @@ pub fn import<R: Read + std::io::Seek>(
     let armature_file = zip.as_mut().unwrap().by_name("armature.json").unwrap();
     let root: crate::Root = serde_json::from_reader(armature_file).unwrap();
 
-    shared.armature = root.armatures[0].clone();
+    shared.armature = root.armature.clone();
     for b in 0..shared.armature.bones.len() {
         let mut children = vec![];
         armature_window::get_all_children(
@@ -325,7 +325,7 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     // load texture
-    if root.armatures[0].textures.len() > 0 {
+    if root.armature.textures.len() > 0 {
         let texture_file = zip.as_mut().unwrap().by_name("textures.png").unwrap();
 
         let mut bytes = vec![];
