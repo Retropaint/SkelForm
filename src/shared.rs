@@ -540,7 +540,7 @@ impl Ui {
             TutorialStep::GetImage       => check!(first_bone.tex_idx != -1, TutorialStep::EditBoneX),
             TutorialStep::EditBoneX      => check!(first_bone.pos.x != 0.,   TutorialStep::EditBoneY),
             TutorialStep::EditBoneY      => check!(first_bone.pos.y != 0.,   TutorialStep::OpenAnim),
-            TutorialStep::OpenAnim       => check!(self.anim.open,        TutorialStep::CreateAnim),
+            TutorialStep::OpenAnim       => check!(self.anim.open,           TutorialStep::CreateAnim),
             TutorialStep::CreateAnim     => check!(anim_selected,            TutorialStep::SelectKeyframe),
             TutorialStep::SelectKeyframe => step,
             _ => step
