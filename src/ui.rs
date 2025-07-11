@@ -240,8 +240,11 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         }
                         ui.close_menu();
                     }
-                    if top_bar_button(ui, "Documentation", "", &mut offset).clicked() {
-                        utils::open_user_docs("");
+                    if top_bar_button(ui, "User Docs", "", &mut offset).clicked() {
+                        utils::open_docs(true, "");
+                    }
+                    if top_bar_button(ui, "Dev Docs", "", &mut offset).clicked() {
+                        utils::open_docs(false, "");
                     }
                 });
             });

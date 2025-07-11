@@ -48,10 +48,10 @@ subprocess.run(build_command, shell=True)
 shutil.copy("./target/release/SkelForm" + binExt, "./" + dirname)
 
 # copy user_docs to dist
-shutil.copytree("./user_docs", "./" + dirname + "/")
+shutil.copytree("./user_docs", "./" + dirname + "/user_docs")
 
 # copy dev_docs to dist
-shutil.copytree("./dev_docs", "./" + dirname + "/")
+shutil.copytree("./dev_docs", "./" + dirname + "/dev_docs")
 
 # Source code distribution
 
