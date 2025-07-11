@@ -1,6 +1,7 @@
 /target
 /dist
-/book
+/user_docs
+/dev_docs
 /release
 autosave.skf
 armature.json
