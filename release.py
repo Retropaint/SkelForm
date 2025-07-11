@@ -11,11 +11,24 @@ import shutil
 
 binExt = ".exe" if os.name == 'nt' else ""
 
+can_build = True
+
 # Very politely ask for the user docs distribution
-if not os.path.exists("book"):
-    print("User documentation required:")
+if not os.path.exists("user_docs"):
+    print("!! USER DOCUMENTATION REQUIRED !!")
     print("1. Build it - https://github.com/Retropaint/skelform_user_docs")
-    print("2. Move `book` dir here")
+    print("2. Move `book` dir here and rename to 'user_docs'")
+    print("")
+    can_build = False
+
+# Very politely ask for the dev docs distribution
+if not os.path.exists("dev_docs"):
+    print("!! DEVELOPER DOCUMENTATION REQUIRED !!")
+    print("1. Build it - https://github.com/Retropaint/skelform_dev_docs")
+    print("2. Move `book` dir here and rename to 'dev_docs'")
+    can_build = False
+
+if not can_build:
     exit()
 
 dirname = "release"
@@ -35,7 +48,10 @@ subprocess.run(build_command, shell=True)
 shutil.copy("./target/release/SkelForm" + binExt, "./" + dirname)
 
 # copy user_docs to dist
-shutil.copytree("./book", "./" + dirname + "/user_docs")
+shutil.copytree("./user_docs", "./" + dirname + "/")
+
+# copy dev_docs to dist
+shutil.copytree("./dev_docs", "./" + dirname + "/")
 
 # Source code distribution
 
