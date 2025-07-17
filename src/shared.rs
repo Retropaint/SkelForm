@@ -873,23 +873,15 @@ impl Armature {
 
         // create keyframe at 0th frame for this element if it doesn't exist
         if anim_frame != 0 {
-            let frame = self.animations[anim_id].check_if_in_keyframe(
-                self.bones[bone_id as usize].id,
-                0,
-                element.clone(),
-                -1,
-            );
+            let frame =
+                self.animations[anim_id].check_if_in_keyframe(bone_id, 0, element.clone(), -1);
             self.animations[anim_id].keyframes[frame].value = match element {
                 AnimElement::ScaleX | AnimElement::ScaleY => 1.,
                 _ => 0.,
             }
         }
-        let frame = self.animations[anim_id].check_if_in_keyframe(
-            self.bones[bone_id as usize].id,
-            anim_frame,
-            element.clone(),
-            -1,
-        );
+        let frame =
+            self.animations[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone(), -1);
         self.animations[anim_id].keyframes[frame].value = value;
         self.autosave();
     }
