@@ -60,7 +60,6 @@ subprocess.run("cargo build --release", shell=True)
 shutil.copy("../target/release/SkelForm" + binExt, "./" + dirname)
 shutil.copytree("./user_docs", "./" + dirname + "/user_docs")
 shutil.copytree("./dev_docs", "./" + dirname + "/dev_docs")
-shutil.copy("./readme.txt", "./" + dirname)
 
 # Source code distribution
 
