@@ -6,5 +6,5 @@
 autosave.skf
 armature.json
 textures.png
-/release_wrappers/skelform.app/Contents/MacOS
+/mac_wrapper/skelform.app/Contents/MacOS
 skelform_*v0*
