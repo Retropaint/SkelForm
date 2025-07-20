@@ -44,7 +44,7 @@ match platform.system():
         platform_name = "linux"
 
 version = ""
-with open("cargo.toml", "r") as file:
+with open("../cargo.toml", "r") as file:
     for line in file.readlines():
         if "version" in line.strip():
             version = line.strip().split('"')[1]
@@ -57,7 +57,7 @@ if os.path.exists(dirname):
 os.mkdir(dirname)
 
 subprocess.run("cargo build --release", shell=True)
-shutil.copy("./target/release/SkelForm" + binExt, "./" + dirname)
+shutil.copy("../target/release/SkelForm" + binExt, "./" + dirname)
 shutil.copytree("./user_docs", "./" + dirname + "/user_docs")
 shutil.copytree("./dev_docs", "./" + dirname + "/dev_docs")
 shutil.copy("./readme.txt", "./" + dirname)
@@ -66,12 +66,12 @@ shutil.copy("./readme.txt", "./" + dirname)
 
 source = dirname + "/source"
 os.mkdir("./" + source)
-shutil.copy("Cargo.toml", "./" + source)
-shutil.copy("release.py", "./" + source)
-shutil.copy("web_build.py", "./" + source)
-shutil.copy("anim_icons.png", "./" + source)
-shutil.copy("readme.md", "./" + source)
-shutil.copytree("src", "./" + source + "/src")
+shutil.copy("../Cargo.toml", "./" + source)
+shutil.copy("./release.py", "./" + source)
+shutil.copy("../web_build.py", "./" + source)
+shutil.copy("../anim_icons.png", "./" + source)
+shutil.copy("../readme.md", "./" + source)
+shutil.copytree("../src", "./" + source + "/src")
 
 # Platform-specific distribution
 
