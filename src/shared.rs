@@ -1085,7 +1085,6 @@ impl Armature {
     }
 
     pub fn autosave(&self) {
-        return;
         let armature = self.clone();
         std::thread::spawn(move || {
             #[cfg(not(target_arch = "wasm32"))]
