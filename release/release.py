@@ -29,6 +29,14 @@ if not os.path.exists("user_docs"):
 if not os.path.exists("dev_docs"):
     require_docs("DEV", "dev_docs")
     can_build = False
+
+
+# Require create-dmg on mac
+if platform.system() == "Darwin" and not shutil.which("create-dmg"):
+    print(f"{RED}!! create-dmg REQUIRED !!{RESET}")
+    print("Install create-dmg - https://github.com/create-dmg/create-dmg")
+    can_build = False
+
 if not can_build:
     exit()
 
@@ -79,3 +87,4 @@ if platform.system() == "Darwin":
     if os.path.exists(bin_path):
         shutil.rmtree(bin_path)
     shutil.copytree(dirname, bin_path)
+    subprocess.run("./create-dmg.sh", shell=True)
