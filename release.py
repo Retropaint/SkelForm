@@ -76,7 +76,7 @@ shutil.copytree("src", "./" + source + "/src")
 # Platform-specific distribution
 
 if platform.system() == "Darwin":
-    bin_path = "./mac_wrapper/skelform.app/Contents/MacOS/"
+    bin_path = "./mac_wrapper/SkelForm.app/Contents/MacOS/"
     if os.path.exists(bin_path):
         shutil.rmtree(bin_path)
     shutil.copytree(dirname, bin_path)
