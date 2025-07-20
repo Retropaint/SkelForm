@@ -2,7 +2,7 @@
 
 This folder contains all* assets and scripts for release distributions.
 
-\* Web builds are done with `web_build.py`, which is in root.
+\*Web builds are done with `web_build.py`, which is in root.
 
 ## Building
 

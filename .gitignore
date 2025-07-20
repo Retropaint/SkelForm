@@ -4,7 +4,7 @@
 /dev_docs
 /release/dev_docs
 /release/user_docs
-/release/mac_wrapper/skelform.app/Contents/MacOS
+/release/SkelForm.app/Contents/MacOS
 autosave.skf
 armature.json
 textures.png
