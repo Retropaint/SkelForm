@@ -9,15 +9,32 @@ import subprocess
 import os
 import platform
 import shutil
+import argparse
 
 RED = "\033[31m"
+BLUE = "\033[34m"
 RESET = "\033[0m"
 
 
+parser = argparse.ArgumentParser(
+    prog="SkelForm Release Builder",
+    description="Build script for SkelForm release distributions.",
+)
+
+# arguments
+parser.add_argument(
+    "-v", "--verbose", action="store_true", help="Print output of everything"
+)
+
+args = parser.parse_args()
+
+stdout = "" if args.verbose else " &> /dev/null"
+
+
 def require_docs(header, doc_name):
-    print(f"{RED}!! {header} DOCUMENTATION REQUIRED !!{RESET}")
-    print(f"1. Build it - https://github.com/retropaint/skelform_{doc_name}")
-    print(f"2. Move `book` dir here and rename to '{doc_name}'")
+    print(f">>> {RED}!! {header} DOCUMENTATION REQUIRED !!{RESET}")
+    print(f">>> 1. Build it - https://github.com/retropaint/skelform_{doc_name}")
+    print(f">>> 2. Move `book` dir here and rename to '{doc_name}'")
     print("")
 
 
@@ -33,8 +50,8 @@ if not os.path.exists("dev_docs"):
 
 # Require create-dmg on mac
 if platform.system() == "Darwin" and not shutil.which("create-dmg"):
-    print(f"{RED}!! create-dmg REQUIRED !!{RESET}")
-    print("Install create-dmg - https://github.com/create-dmg/create-dmg")
+    print(f">>> {RED}!! create-dmg REQUIRED !!{RESET}")
+    print(">>> Install create-dmg - https://github.com/create-dmg/create-dmg")
     can_build = False
 
 if not can_build:
@@ -83,8 +100,11 @@ shutil.copytree("../src", "./" + source + "/src")
 # Platform-specific distribution
 
 if platform.system() == "Darwin":
-    bin_path = "./mac_wrapper/SkelForm.app/Contents/MacOS/"
+    print(">>> Preparing Mac app...")
+    bin_path = "./SkelForm.app/Contents/MacOS/"
     if os.path.exists(bin_path):
         shutil.rmtree(bin_path)
     shutil.copytree(dirname, bin_path)
-    subprocess.run("./create-dmg.sh", shell=True)
+    print(">>> Preparing Mac dmg...\n    The dmg will instantly open, but you should still wait.")
+    subprocess.run("./create-dmg.sh" + stdout, shell=True)
+    print(f">>> Mac release complete. Please look for {BLUE}SkelForm.dmg{RESET}.")
