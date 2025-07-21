@@ -71,13 +71,13 @@ pub fn read_image_loaders(
         if shared.armature.bones.len() == 0
             || shared.ui.selected_bone_idx > shared.armature.bones.len() - 1
         {
-            del_temp_files();
+            del_temp_files(&shared.temp_path.base);
             return;
         }
 
         let img_path = fs::read_to_string(shared.temp_path.img.clone()).unwrap();
         if img_path == "" {
-            del_temp_files();
+            del_temp_files(&shared.temp_path.base);
             return;
         }
 
@@ -92,7 +92,7 @@ pub fn read_image_loaders(
         pixels = rgba.as_bytes().to_vec();
         dimensions = Vec2::new(diffuse_image.width() as f32, diffuse_image.height() as f32);
 
-        del_temp_files();
+        del_temp_files(&shared.temp_path.base);
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -184,7 +184,7 @@ pub fn read_psd(
         let psd_file_path = fs::read_to_string(shared.temp_path.import_psd.clone()).unwrap();
         let psd_file = std::fs::read(psd_file_path).unwrap();
         psd = psd::Psd::from_bytes(&psd_file).unwrap();
-        del_temp_files();
+        del_temp_files(&shared.temp_path.base);
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -412,7 +412,7 @@ pub fn read_save(shared: &mut Shared) {
 
     utils::save(path, &mut shared.armature);
 
-    del_temp_files();
+    del_temp_files(&shared.temp_path.base);
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -434,7 +434,7 @@ pub fn read_import(
     match std::fs::File::open(&path) {
         Err(err) => {
             println!("{}", err);
-            del_temp_files();
+            del_temp_files(&shared.temp_path.base);
         }
         Ok(file) => {
             shared.save_path = path.clone();
@@ -461,12 +461,19 @@ pub fn read_exported_video_frame(shared: &mut Shared) {
     fs::remove_file(shared.temp_path.export_vid_text.clone()).unwrap();
 }
 
-pub fn del_temp_files() {
+pub fn del_temp_files(base: &str) {
     #[cfg(not(target_arch = "wasm32"))]
     {
-        for file in glob::glob(".skelform_*").unwrap() {
+        for file in glob::glob(&(base.to_string() + "*")).unwrap() {
             if let Ok(path) = file {
-                fs::remove_file(path).unwrap();
+                match fs::remove_file(path) {
+                    Ok(r) => {
+                        println!("{:?}", r)
+                    }
+                    Err(e) => {
+                        println!("{}", e)
+                    }
+                }
             }
         }
     }
