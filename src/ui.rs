@@ -246,6 +246,12 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     if top_bar_button(ui, "Dev Docs", "", &mut offset).clicked() {
                         utils::open_docs(false, "");
                     }
+                    if top_bar_button(ui, "Binary Folder", "", &mut offset).clicked() {
+                        match open::that(utils::bin_path()) {
+                            Err(_) => {}
+                            Ok(file) => file,
+                        };
+                    }
                 });
             });
 
