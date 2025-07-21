@@ -5,4 +5,4 @@ create-dmg \
   --icon-size 100 \
   --icon SkelForm.app 0 125 \
   --hide-extension "SkelForm.app" \
-  --app-drop-link 350 125 \ SkelForm.dmg mac_wrapper
+  --app-drop-link 350 125 \ SkelForm.dmg SkelForm.app
