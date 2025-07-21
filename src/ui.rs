@@ -260,14 +260,14 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.set_width(125.);
         if top_bar_button(ui, "Open", "O", &mut offset).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_import_dialog(TEMP_IMPORT_PATH.to_string());
+            utils::open_import_dialog(shared.temp_path.import.clone());
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
             ui.close_menu();
         }
         if top_bar_button(ui, "Save", "Mod + S", &mut offset).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog();
+            utils::open_save_dialog(shared.temp_path.save.clone());
             #[cfg(target_arch = "wasm32")]
             utils::save_web(&shared.armature);
             ui.close_menu();
@@ -670,7 +670,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     .clicked()
                 {
                     #[cfg(not(target_arch = "wasm32"))]
-                    bone_panel::open_file_dialog();
+                    bone_panel::open_file_dialog(shared.temp_path.img.clone());
 
                     #[cfg(target_arch = "wasm32")]
                     toggleElement(true, "image-dialog".to_string());
