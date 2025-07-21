@@ -24,7 +24,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 
     // delete any leftover temporary files
     #[cfg(not(target_arch = "wasm32"))]
-    file_reader::del_temp_files();
+    file_reader::del_temp_files(&app.shared.temp_path.base);
 
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -91,8 +91,6 @@ fn init_shared(shared: &mut Shared) {
         export_vid_text: base.clone() + "export_vid_text",
         export_vid_done: base.clone() + "export_vid_done",
     };
-
-    println!("{:?}", shared.temp_path.img);
 
     // if this were false, the first click would always
     // be considered non-UI
