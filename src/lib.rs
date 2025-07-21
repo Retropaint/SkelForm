@@ -62,7 +62,7 @@ extern "C" {
     pub fn getImgName() -> String;
     pub fn loaded();
     pub fn focusEditInput();
-    pub fn openDocumentation();
+    pub fn openDocumentation(docs_name: String);
 }
 
 #[derive(Default)]

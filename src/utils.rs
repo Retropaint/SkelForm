@@ -13,7 +13,10 @@ pub use web::*;
 
 use image::ImageEncoder;
 
-use std::io::{Read, Write};
+use std::{
+    io::{Read, Write},
+    ops::Index,
+};
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
@@ -458,19 +461,28 @@ pub fn bone_meshes_edited(tex_size: Vec2, verts: &Vec<Vertex>) -> bool {
 pub fn open_docs(is_dev: bool, path: &str) {
     let docs_name = if is_dev { "user_docs" } else { "dev_docs" };
     #[cfg(target_arch = "wasm32")]
-    openDocumentation();
-    #[cfg(not(target_arch = "wasm32"))]
+    openDocumentation(docs_name.to_string());
     // open the local docs, or online if it can't be found on default path
-    match open::that("./".to_string() + docs_name + "/index.html" + &path.to_string()) {
-        Err(_) => match open::that(
-            "https://retropaint.github.io/skelform_".to_string()
-                + docs_name
-                + "/"
-                + &path.to_string(),
-        ) {
-            Err(_) => println!("couldn't open"),
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let mut bin = std::env::current_exe()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        let _ = bin.split_off(bin.find("SkelForm").unwrap());
+
+        match open::that(bin + docs_name + "/index.html" + &path.to_string()) {
+            Err(_) => match open::that(
+                "https://retropaint.github.io/skelform_".to_string()
+                    + docs_name
+                    + "/"
+                    + &path.to_string(),
+            ) {
+                Err(_) => println!("couldn't open"),
+                Ok(file) => file,
+            },
             Ok(file) => file,
-        },
-        Ok(file) => file,
-    };
+        };
+    }
 }
