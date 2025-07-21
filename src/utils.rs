@@ -122,7 +122,7 @@ pub fn to_vec2(f: f32) -> Vec2 {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_save_dialog() {
+pub fn open_save_dialog(temp_save_path: String) {
     std::thread::spawn(move || {
         let task = rfd::FileDialog::new()
             .add_filter("SkelForm Armature", &["skf"])
@@ -130,7 +130,7 @@ pub fn open_save_dialog() {
         if task == None {
             return;
         }
-        file_reader::create_temp_file(TEMP_SAVE_PATH, task.unwrap().as_path().to_str().unwrap());
+        file_reader::create_temp_file(&temp_save_path, task.unwrap().as_path().to_str().unwrap());
     });
 }
 
@@ -296,7 +296,7 @@ pub fn import<R: Read + std::io::Seek>(
         ok = false;
         if ext == "psd" {
             #[cfg(not(target_arch = "wasm32"))]
-            file_reader::create_temp_file(&TEMP_IMPORT_PSD_PATH, path);
+            file_reader::create_temp_file(&shared.temp_path.import_psd, path);
 
             return;
         }
@@ -456,11 +456,7 @@ pub fn bone_meshes_edited(tex_size: Vec2, verts: &Vec<Vertex>) -> bool {
 }
 
 pub fn open_docs(is_dev: bool, path: &str) {
-    let docs_name = if is_dev {
-        "user_docs"
-    } else {
-        "dev_docs"
-    };
+    let docs_name = if is_dev { "user_docs" } else { "dev_docs" };
     #[cfg(target_arch = "wasm32")]
     openDocumentation();
     #[cfg(not(target_arch = "wasm32"))]

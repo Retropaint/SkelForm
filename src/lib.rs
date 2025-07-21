@@ -4,7 +4,6 @@ use wgpu::{BindGroupLayout, InstanceDescriptor};
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
-    pub use crate::file_reader::*;
     pub use image::*;
     pub use std::fs;
     pub use std::io::Read;
@@ -620,8 +619,9 @@ impl Renderer {
             {
                 let frames = shared.rendered_frames.clone();
                 let window = shared.window.clone();
+                let temp = shared.temp_path.clone();
                 std::thread::spawn(move || {
-                    Self::export_video(frames, window);
+                    Self::export_video(frames, window, temp);
                 });
                 shared.done_recording = false;
             }
@@ -738,7 +738,7 @@ impl Renderer {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    fn export_video(rendered_frames: Vec<RenderedFrame>, window: Vec2) {
+    fn export_video(rendered_frames: Vec<RenderedFrame>, window: Vec2, temp: TempPath) {
         let width = rendered_frames[0].width.to_string();
         let height = rendered_frames[0].height.to_string();
 
@@ -807,11 +807,11 @@ impl Renderer {
                 + &(rendered_frames.len() - 1).to_string()
                 + " frames";
             if i != rendered_frames.len() - 1 {
-                file_reader::create_temp_file(TEMP_EXPORT_VID_TEXT, &headline);
+                file_reader::create_temp_file(&temp.export_vid_text, &headline);
             }
         }
 
-        file_reader::create_temp_file(TEMP_EXPORT_VID_TEXT, EXPORT_VID_DONE);
+        file_reader::create_temp_file(&temp.export_vid_text, &temp.export_vid_done);
 
         stdin.flush().unwrap();
         drop(stdin);

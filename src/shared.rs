@@ -1085,6 +1085,7 @@ impl Armature {
     }
 
     pub fn autosave(&self) {
+        return;
         let armature = self.clone();
         std::thread::spawn(move || {
             #[cfg(not(target_arch = "wasm32"))]
@@ -1370,6 +1371,17 @@ pub struct CopyBuffer {
     pub keyframes: Vec<Keyframe>,
 }
 
+#[derive(Default, Clone)]
+pub struct TempPath {
+    pub base: String,
+    pub img: String,
+    pub save: String,
+    pub import: String,
+    pub import_psd: String,
+    pub export_vid_text: String,
+    pub export_vid_done: String,
+}
+
 #[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
@@ -1397,6 +1409,8 @@ pub struct Shared {
     pub generic_bindgroup: Option<BindGroup>,
 
     pub save_path: String,
+
+    pub temp_path: TempPath,
 
     pub config: Config,
 

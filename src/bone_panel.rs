@@ -72,7 +72,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             if button.clicked() {
                 if shared.armature.bind_groups.len() == 0 {
                     #[cfg(not(target_arch = "wasm32"))]
-                    open_file_dialog();
+                    open_file_dialog(shared.temp_path.img.clone());
                     #[cfg(target_arch = "wasm32")]
                     toggleElement(true, "image-dialog".to_string());
                 } else {
@@ -285,8 +285,7 @@ pub fn center_verts(verts: &mut Vec<Vertex>, tex_size: &Vec2) {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-pub fn open_file_dialog() {
+pub fn open_file_dialog(temp_img_path: String) {
     #[cfg(not(target_arch = "wasm32"))]
     thread::spawn(move || {
         let task = rfd::FileDialog::new()
@@ -295,6 +294,6 @@ pub fn open_file_dialog() {
         if task == None {
             return;
         }
-        create_temp_file(TEMP_IMG_PATH, task.unwrap().as_path().to_str().unwrap());
+        create_temp_file(&temp_img_path, task.unwrap().as_path().to_str().unwrap());
     });
 }

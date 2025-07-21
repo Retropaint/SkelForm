@@ -58,7 +58,7 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
             utils::save_web(&shared.armature);
 
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog();
+            utils::open_save_dialog(shared.temp_path.save.clone());
             //if shared.save_path == "" {
             //    utils::open_save_dialog();
             //} else {
@@ -70,7 +70,7 @@ pub fn keyboard_shortcuts(shared: &mut Shared) {
         // open
         if shared.input.pressed(winit::keyboard::KeyCode::KeyO) {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_import_dialog(TEMP_IMPORT_PATH.to_string());
+            utils::open_import_dialog(shared.temp_path.import.clone());
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
             shared.input.remove_key(&KeyCode::SuperLeft);

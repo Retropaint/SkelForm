@@ -15,26 +15,6 @@ mod web {
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
-macro_rules! temp_file {
-    ($name:ident, $path:expr) => {
-        pub const $name: &str = $path;
-    };
-}
-
-#[rustfmt::skip] temp_file!(TEMP_IMG_PATH,         ".skelform_img_path");
-#[rustfmt::skip] temp_file!(TEMP_SAVE_PATH,        ".skelform_save_path");
-#[rustfmt::skip] temp_file!(TEMP_EXPORT_VID_TEXT,  ".skelform_export_vid_text");
-#[rustfmt::skip] temp_file!(TEMP_IMPORT_PATH,      ".skelform_import_path");
-#[rustfmt::skip] temp_file!(TEMP_IMPORT_PSD_PATH, ".skelform_import_tiff_path");
-
-pub const FILES: [&str; 5] = [
-    TEMP_IMG_PATH,
-    TEMP_SAVE_PATH,
-    TEMP_IMPORT_PATH,
-    TEMP_IMPORT_PSD_PATH,
-    TEMP_EXPORT_VID_TEXT,
-];
-
 pub const EXPORT_VID_DONE: &str = "Done!";
 pub const IMPORT_IMG_ERR: &str = "Could not extract image data.";
 
@@ -83,7 +63,7 @@ pub fn read_image_loaders(
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if !fs::exists(TEMP_IMG_PATH).unwrap() {
+        if !fs::exists(shared.temp_path.img.clone()).unwrap() {
             return;
         }
 
@@ -95,7 +75,7 @@ pub fn read_image_loaders(
             return;
         }
 
-        let img_path = fs::read_to_string(TEMP_IMG_PATH).unwrap();
+        let img_path = fs::read_to_string(shared.temp_path.img.clone()).unwrap();
         if img_path == "" {
             del_temp_files();
             return;
@@ -197,11 +177,11 @@ pub fn read_psd(
     let psd: psd::Psd;
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if !fs::exists(TEMP_IMPORT_PSD_PATH).unwrap() {
+        if !fs::exists(shared.temp_path.import_psd.clone()).unwrap() {
             return;
         }
 
-        let psd_file_path = fs::read_to_string(TEMP_IMPORT_PSD_PATH).unwrap();
+        let psd_file_path = fs::read_to_string(shared.temp_path.import_psd.clone()).unwrap();
         let psd_file = std::fs::read(psd_file_path).unwrap();
         psd = psd::Psd::from_bytes(&psd_file).unwrap();
         del_temp_files();
@@ -422,11 +402,11 @@ pub fn add_texture(
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn read_save(shared: &mut Shared) {
-    if !fs::exists(TEMP_SAVE_PATH).unwrap() {
+    if !fs::exists(shared.temp_path.save.clone()).unwrap() {
         return;
     }
 
-    let path = fs::read_to_string(TEMP_SAVE_PATH).unwrap();
+    let path = fs::read_to_string(shared.temp_path.save.clone()).unwrap();
 
     shared.save_path = path.clone();
 
@@ -443,11 +423,11 @@ pub fn read_import(
     bind_group_layout: &BindGroupLayout,
     context: &egui::Context,
 ) {
-    if !fs::exists(TEMP_IMPORT_PATH).unwrap() {
+    if !fs::exists(shared.temp_path.import.clone()).unwrap() {
         return;
     }
 
-    let path = fs::read_to_string(TEMP_IMPORT_PATH).unwrap();
+    let path = fs::read_to_string(shared.temp_path.import.clone()).unwrap();
 
     shared.save_path = path.clone();
 
@@ -473,19 +453,21 @@ pub fn read_import(
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn read_exported_video_frame(shared: &mut Shared) {
-    if !fs::exists(TEMP_EXPORT_VID_TEXT).unwrap() {
+    if !fs::exists(shared.temp_path.export_vid_text.clone()).unwrap() {
         return;
     }
-    let frame = fs::read_to_string(TEMP_EXPORT_VID_TEXT).unwrap();
+    let frame = fs::read_to_string(shared.temp_path.export_vid_text.clone()).unwrap();
     shared.ui.open_modal(frame, false);
-    fs::remove_file(TEMP_EXPORT_VID_TEXT).unwrap();
+    fs::remove_file(shared.temp_path.export_vid_text.clone()).unwrap();
 }
 
 pub fn del_temp_files() {
     #[cfg(not(target_arch = "wasm32"))]
-    for f in FILES {
-        if fs::exists(f).unwrap() {
-            fs::remove_file(f).unwrap();
+    {
+        for file in glob::glob(".skelform_*").unwrap() {
+            if let Ok(path) = file {
+                fs::remove_file(path).unwrap();
+            }
         }
     }
 }

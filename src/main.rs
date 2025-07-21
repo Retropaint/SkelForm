@@ -8,20 +8,23 @@ use skelform_lib::shared::*;
 use skelform_lib::file_reader;
 
 fn main() -> Result<(), winit::error::EventLoopError> {
-    // delete any leftover temporary files
-    #[cfg(not(target_arch = "wasm32"))]
-    file_reader::del_temp_files();
-
     // uncomment below to get console panic hook as early as possible for debugging
     //
     // otherwise, it's activated in lib.rs
 
-    //#[cfg(target_arch = "wasm32")]
-    //{
-    //    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-    //    console_log::init().expect("Failed to initialize logger!");
-    //    log::info!("test");
-    //}
+    // #[cfg(target_arch = "wasm32")]
+    // {
+    //     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+    //     console_log::init().expect("Failed to initialize logger!");
+    //     log::info!("test");
+    // }
+
+    let mut app = skelform_lib::App::default();
+    init_shared(&mut app.shared);
+
+    // delete any leftover temporary files
+    #[cfg(not(target_arch = "wasm32"))]
+    file_reader::del_temp_files();
 
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -29,15 +32,9 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 
         // load .skf based on first arg
         if args.len() > 1 {
-            file_reader::create_temp_file(
-                &skelform_lib::bone_panel::TEMP_IMPORT_PATH,
-                &args[1].to_string(),
-            );
+            file_reader::create_temp_file(&app.shared.temp_path.import, &args[1].to_string());
         }
     }
-
-    let mut app = skelform_lib::App::default();
-    init_shared(&mut app.shared);
 
     let event_loop = winit::event_loop::EventLoop::builder().build()?;
     event_loop.set_control_flow(winit::event_loop::ControlFlow::Poll);
@@ -66,6 +63,36 @@ fn init_shared(shared: &mut Shared) {
     {
         shared.debug = true;
     }
+
+    let base: String;
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        base = directories_next::BaseDirs::new()
+            .unwrap()
+            .cache_dir()
+            .to_str()
+            .unwrap()
+            .to_owned()
+            + "/.skelform_";
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        base = "".to_string();
+    }
+
+    shared.temp_path = TempPath {
+        base: base.clone(),
+        img: base.clone() + "img_path",
+        save: base.clone() + "save_path",
+        import: base.clone() + "import_path",
+        import_psd: base.clone() + "import_tiff_path",
+        export_vid_text: base.clone() + "export_vid_text",
+        export_vid_done: base.clone() + "export_vid_done",
+    };
+
+    println!("{:?}", shared.temp_path.img);
 
     // if this were false, the first click would always
     // be considered non-UI
