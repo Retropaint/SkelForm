@@ -465,14 +465,7 @@ pub fn open_docs(is_dev: bool, path: &str) {
     // open the local docs, or online if it can't be found on default path
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let mut bin = std::env::current_exe()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string();
-        let _ = bin.split_off(bin.find("SkelForm").unwrap());
-
-        match open::that(bin + docs_name + "/index.html" + &path.to_string()) {
+        match open::that(bin_path() + docs_name + "/index.html" + &path.to_string()) {
             Err(_) => match open::that(
                 "https://retropaint.github.io/skelform_".to_string()
                     + docs_name
@@ -485,4 +478,21 @@ pub fn open_docs(is_dev: bool, path: &str) {
             Ok(file) => file,
         };
     }
+}
+
+pub fn bin_path() -> String {
+    let mut bin = std::env::current_exe()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+
+    // remove executable from path
+    let _ = bin.split_off(bin.find("SkelForm").unwrap());
+
+    if cfg!(target_os = "macos") {
+        bin.push_str("SkelForm.app/Contents/MacOS/")
+    }
+
+    bin
 }
