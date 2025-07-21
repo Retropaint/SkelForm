@@ -15,16 +15,12 @@ RED = "\033[31m"
 BLUE = "\033[34m"
 RESET = "\033[0m"
 
-
-parser = argparse.ArgumentParser(
-    prog="SkelForm Release Builder",
-    description="Build script for SkelForm release distributions.",
-)
+# yapf: disable
+parser = argparse.ArgumentParser(prog="SkelForm Release Builder", description="Build script for SkelForm release distributions.")
 
 # arguments
-parser.add_argument(
-    "-v", "--verbose", action="store_true", help="Print output of everything"
-)
+parser.add_argument("-v", "--verbose", action="store_true", help="Print output of everything")
+parser.add_argument("-dmg", "--dmg", action="store_true", help="Attempt to create Mac dmg (requires create-dmg)")
 
 args = parser.parse_args()
 
@@ -49,7 +45,7 @@ if not os.path.exists("dev_docs"):
 
 
 # Require create-dmg on mac
-if platform.system() == "Darwin" and not shutil.which("create-dmg"):
+if platform.system() == "Darwin" and not shutil.which("create-dmg") and args.dmg:
     print(f">>> {RED}!! create-dmg REQUIRED !!{RESET}")
     print(">>> Install create-dmg - https://github.com/create-dmg/create-dmg")
     can_build = False
@@ -105,6 +101,11 @@ if platform.system() == "Darwin":
     if os.path.exists(bin_path):
         shutil.rmtree(bin_path)
     shutil.copytree(dirname, bin_path)
-    print(">>> Preparing Mac dmg...\n    The dmg will instantly open, but you should still wait.")
+    if not args.dmg:
+        print(f">>> Mac release complete. Please look for {BLUE}SkelForm.app{RESET}.")
+        exit()
+    print(
+        ">>> Preparing Mac dmg...\n    The dmg will instantly open, but you should still wait."
+    )
     subprocess.run("./create-dmg.sh" + stdout, shell=True)
     print(f">>> Mac release complete. Please look for {BLUE}SkelForm.dmg{RESET}.")
