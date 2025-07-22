@@ -18,7 +18,6 @@ RESET = "\033[0m"
 # yapf: disable
 parser = argparse.ArgumentParser(prog="SkelForm Release Builder", description="Build script for SkelForm release distributions.")
 
-# arguments
 parser.add_argument("-v", "--verbose", action="store_true", help="Print output of everything")
 parser.add_argument("-dmg", "--dmg", action="store_true", help="Attempt to create Mac dmg (requires create-dmg)")
 
@@ -53,7 +52,7 @@ if platform.system() == "Darwin" and not shutil.which("create-dmg") and args.dmg
 if not can_build:
     exit()
 
-binExt = ".exe" if platform.system == "Windows" else ""
+binExt = ".exe" if platform.system() == "Windows" else ""
 
 platform_name = ""
 match platform.system():

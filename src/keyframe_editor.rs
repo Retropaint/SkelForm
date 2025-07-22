@@ -286,6 +286,8 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
             keyframes.sort_by(|a, b| a.bone_id.cmp(&b.bone_id));
 
             let mut last_bone_id = -1;
+
+            // keep track of elements, to prevent showing multiple of the same
             let mut added_elements: Vec<AnimElement> = vec![];
 
             for i in 0..keyframes.len() {
@@ -307,6 +309,8 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                         shared.armature.unfold_to_bone(kf.bone_id);
                     }
                     last_bone_id = kf.bone_id;
+
+                    // reset element tracker, since this is a new bone
                     added_elements = vec![];
                 }
 
@@ -497,7 +501,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 ui::COLOR_MAIN,
             );
 
-            let str = if shared.ui.anim.playing {
+            let play_str = if shared.ui.anim.playing {
                 "Pause"
             } else {
                 "Play"
@@ -507,7 +511,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 let button = ui
                     .add_sized(
                         [50., 20.],
-                        egui::Button::new(str).fill(COLOR_ACCENT).corner_radius(0.),
+                        egui::Button::new(play_str).fill(COLOR_ACCENT).corner_radius(0.),
                     )
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
 

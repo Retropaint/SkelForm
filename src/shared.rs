@@ -1411,6 +1411,7 @@ pub struct Shared {
     pub save_path: String,
 
     pub temp_path: TempPath,
+    pub has_temp: bool,
 
     pub config: Config,
 
