@@ -285,8 +285,8 @@ pub fn center_verts(verts: &mut Vec<Vertex>, tex_size: &Vec2) {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn open_file_dialog(temp_img_path: String) {
-    #[cfg(not(target_arch = "wasm32"))]
     thread::spawn(move || {
         let task = rfd::FileDialog::new()
             .add_filter("image", &["png", "jpg", "tif"])

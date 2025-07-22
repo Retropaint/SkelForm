@@ -15,7 +15,6 @@ use image::ImageEncoder;
 
 use std::{
     io::{Read, Write},
-    ops::Index,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -454,19 +453,19 @@ pub fn bone_meshes_edited(tex_size: Vec2, verts: &Vec<Vertex>) -> bool {
     !is_rect
 }
 
-pub fn open_docs(is_dev: bool, path: &str) {
+pub fn open_docs(is_dev: bool, _path: &str) {
     let docs_name = if is_dev { "user_docs" } else { "dev_docs" };
     #[cfg(target_arch = "wasm32")]
     openDocumentation(docs_name.to_string());
     // open the local docs, or online if it can't be found on default path
     #[cfg(not(target_arch = "wasm32"))]
     {
-        match open::that(bin_path() + docs_name + "/index.html" + &path.to_string()) {
+        match open::that(bin_path() + docs_name + "/index.html" + &_path.to_string()) {
             Err(_) => match open::that(
                 "https://retropaint.github.io/skelform_".to_string()
                     + docs_name
                     + "/"
-                    + &path.to_string(),
+                    + &_path.to_string(),
             ) {
                 Err(_) => println!("couldn't open"),
                 Ok(file) => file,

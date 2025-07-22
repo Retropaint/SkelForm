@@ -461,13 +461,13 @@ pub fn read_exported_video_frame(shared: &mut Shared) {
     fs::remove_file(shared.temp_path.export_vid_text.clone()).unwrap();
 }
 
-pub fn del_temp_files(base: &str) {
+pub fn del_temp_files(_base: &str) {
     #[cfg(not(target_arch = "wasm32"))]
     {
-        for file in glob::glob(&(base.to_string() + "*")).unwrap() {
+        for file in glob::glob(&(_base.to_string() + "*")).unwrap() {
             if let Ok(path) = file {
                 match fs::remove_file(path) {
-                    Ok(r) => {}
+                    Ok(_) => {}
                     Err(e) => {
                         println!("{}", e)
                     }
