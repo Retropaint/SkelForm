@@ -110,7 +110,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             &shared,
             render_pass,
             device,
-            &shared.selected_bone().unwrap(),
+            &find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap(),
             Color::new(0., 255., 0., 0.5),
             shared.camera.pos,
             0.,

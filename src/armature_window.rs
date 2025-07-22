@@ -251,6 +251,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
                 move_bone(&mut shared.armature.bones, *dragged_payload, idx, true);
             }
 
+            // if turned to child, offset the bone so it remains where it is, relative to parent
             if dragged_bone!().parent_id != -1 {
                 let parent_pos = pointed_bone!().pos;
                 dragged_bone!().pos -= parent_pos;
