@@ -511,7 +511,9 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 let button = ui
                     .add_sized(
                         [50., 20.],
-                        egui::Button::new(play_str).fill(COLOR_ACCENT).corner_radius(0.),
+                        egui::Button::new(play_str)
+                            .fill(COLOR_ACCENT)
+                            .corner_radius(0.),
                     )
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
 
