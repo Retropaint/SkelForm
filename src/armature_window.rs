@@ -263,6 +263,8 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         move_bone(&mut shared.armature.bones, dragged_payload, idx, true);
     }
 
+    // offset bone by it's parents, so that it stays in place relative to them
+
     for parent in old_parents {
         let parent_pos = parent.pos;
         shared.armature.find_bone_mut(dragged_id).unwrap().pos += parent_pos;
