@@ -64,11 +64,10 @@ fn init_shared(shared: &mut Shared) {
         shared.debug = true;
     }
 
-    let base: String;
-
+    let base_path: String;
     #[cfg(not(target_arch = "wasm32"))]
     {
-        base = directories_next::BaseDirs::new()
+        base_path = directories_next::BaseDirs::new()
             .unwrap()
             .cache_dir()
             .to_str()
@@ -76,20 +75,18 @@ fn init_shared(shared: &mut Shared) {
             .to_owned()
             + "/.skelform_";
     }
-
     #[cfg(target_arch = "wasm32")]
     {
-        base = "".to_string();
+        base_path = "".to_string();
     }
-
     shared.temp_path = TempPath {
-        base: base.clone(),
-        img: base.clone() + "img_path",
-        save: base.clone() + "save_path",
-        import: base.clone() + "import_path",
-        import_psd: base.clone() + "import_tiff_path",
-        export_vid_text: base.clone() + "export_vid_text",
-        export_vid_done: base.clone() + "export_vid_done",
+        base: base_path.clone(),
+        img: base_path.clone() + "img_path",
+        save: base_path.clone() + "save_path",
+        import: base_path.clone() + "import_path",
+        import_psd: base_path.clone() + "import_tiff_path",
+        export_vid_text: base_path.clone() + "export_vid_text",
+        export_vid_done: base_path.clone() + "export_vid_done",
     };
 
     // if this were false, the first click would always
