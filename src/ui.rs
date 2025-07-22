@@ -324,6 +324,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             shared.recording = true;
+            shared.ui.anim.open = true;
             shared.done_recording = true;
             shared.ui.anim.playing = true;
             shared.ui.anim.started = Some(chrono::Utc::now());
