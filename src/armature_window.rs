@@ -200,35 +200,37 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         ui.input(|i| i.pointer.interact_pos()),
         drag.dnd_hover_payload::<i32>(),
     ) {
-        let rect = drag.rect;
+        if *hovered_payload == idx {
+            return;
+        }
 
+        let rect = drag.rect;
         let stroke = egui::Stroke::new(1.0, Color32::WHITE);
-        let move_type = if *hovered_payload == idx {
-            // not moved
-            -1
-        } else if pointer.y < rect.center().y {
+        let mut is_above = false;
+
+        if pointer.y < rect.center().y {
             // above bone (move dragged bone above it)
             ui.painter().hline(rect.x_range(), rect.top(), stroke);
-            0
+            is_above = true;
         } else {
             // in bone (turn dragged bone to child)
             ui.painter().hline(rect.x_range(), rect.top(), stroke);
             ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
             ui.painter().vline(rect.right(), rect.y_range(), stroke);
             ui.painter().vline(rect.left(), rect.y_range(), stroke);
-            1
         };
 
         if let Some(dragged_payload) = drag.dnd_release_payload::<i32>() {
+            #[rustfmt::skip]
+            macro_rules! dragged_bone {() => {shared.armature.bones[*dragged_payload as usize]}}
+            #[rustfmt::skip]
+            macro_rules! pointed_bone {() => {shared.armature.bones[idx as usize]}}
+
             // ignore if target bone is a child of this
             let mut children: Vec<Bone> = vec![];
-            get_all_children(
-                &shared.armature.bones,
-                &mut children,
-                &shared.armature.bones[*dragged_payload as usize],
-            );
+            get_all_children(&shared.armature.bones, &mut children, &dragged_bone!());
             for c in children {
-                if shared.armature.bones[idx as usize].id == c.id {
+                if pointed_bone!().id == c.id {
                     return;
                 }
             }
@@ -239,16 +241,19 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
                 ..Default::default()
             });
 
-            if move_type == 0 {
-                // set dragged bone's parent as target
-                shared.armature.bones[*dragged_payload as usize].parent_id =
-                    shared.armature.bones[idx as usize].parent_id;
+            if is_above {
+                // set pointed bone's parent as dragged bone's parent
+                dragged_bone!().parent_id = pointed_bone!().parent_id;
                 move_bone(&mut shared.armature.bones, *dragged_payload, idx, false);
-            } else if move_type == 1 {
-                // move dragged bone above target
-                shared.armature.bones[*dragged_payload as usize].parent_id =
-                    shared.armature.bones[idx as usize].id;
+            } else {
+                // set pointed bone as dragged bone's parent
+                dragged_bone!().parent_id = pointed_bone!().id;
                 move_bone(&mut shared.armature.bones, *dragged_payload, idx, true);
+            }
+
+            if dragged_bone!().parent_id != -1 {
+                let parent_pos = pointed_bone!().pos;
+                dragged_bone!().pos -= parent_pos;
             }
         }
     }
