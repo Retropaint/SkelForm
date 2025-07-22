@@ -467,9 +467,7 @@ pub fn del_temp_files(base: &str) {
         for file in glob::glob(&(base.to_string() + "*")).unwrap() {
             if let Ok(path) = file {
                 match fs::remove_file(path) {
-                    Ok(r) => {
-                        println!("{:?}", r)
-                    }
+                    Ok(r) => {}
                     Err(e) => {
                         println!("{}", e)
                     }

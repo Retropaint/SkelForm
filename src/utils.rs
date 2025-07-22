@@ -404,10 +404,6 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
         ActionEnum::Bone => {
             new_action.bones = vec![shared.armature.bones[action.id as usize].clone()];
             *shared.armature.find_bone_mut(action.id).unwrap() = action.bones[0].clone();
-
-            for _ in 0..shared.armature.bones.len() {
-                //shared.organize_bone(i);
-            }
         }
         ActionEnum::Bones => {
             new_action.bones = shared.armature.bones.clone();
