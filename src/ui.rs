@@ -906,6 +906,7 @@ pub fn modal_x<T: FnOnce()>(ui: &mut egui::Ui, after_close: T) {
     let x_rect = egui::Rect::from_min_size(ui.min_rect().right_top(), egui::Vec2::ZERO);
     if ui
         .put(x_rect, egui::Label::new(egui::RichText::new("X").size(18.)))
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
         .clicked()
     {
         after_close();
