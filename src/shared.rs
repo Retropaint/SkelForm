@@ -1092,6 +1092,7 @@ impl Armature {
         parents
     }
 
+    #[allow(unreachable_code)]
     pub fn autosave(&self) {
         return;
         let armature = self.clone();
