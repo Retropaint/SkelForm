@@ -188,6 +188,7 @@ macro_rules! enum_string {
     bytemuck::Pod,
     bytemuck::Zeroable,
     Default,
+    Debug,
 )]
 pub struct Vertex {
     pub pos: Vec2,
@@ -198,7 +199,14 @@ pub struct Vertex {
 
 #[repr(C)]
 #[derive(
-    PartialEq, serde::Serialize, serde::Deserialize, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+    Copy,
+    Clone,
+    bytemuck::Pod,
+    bytemuck::Zeroable,
+    Debug,
 )]
 pub struct Color {
     pub r: f32,
@@ -618,7 +626,7 @@ pub struct UiAnim {
     pub bottom_bar_top: f32,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 pub struct Bone {
     #[serde(default)]
     pub id: i32,
