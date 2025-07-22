@@ -441,7 +441,7 @@ impl ApplicationHandler for App {
         #[cfg(feature = "debug")]
         if self.shared.debug {
             // macro-type debug stuff goes here
-            self.shared.debug = false;
+            shared.self.shared.debug = false;
         }
 
         window.request_redraw();

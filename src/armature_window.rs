@@ -229,6 +229,8 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     }
     let dragged_payload = *dp.unwrap();
 
+    let dragged_id = shared.armature.bones[dragged_payload as usize].id;
+
     #[rustfmt::skip]
     macro_rules! dragged_bone {() => {shared.armature.bones[dragged_payload as usize]}}
     #[rustfmt::skip]
@@ -261,19 +263,20 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         move_bone(&mut shared.armature.bones, dragged_payload, idx, true);
     }
 
-    if dragged_bone!().parent_id == -1 {
+    for parent in old_parents {
+        let parent_pos = parent.pos;
+        shared.armature.find_bone_mut(dragged_id).unwrap().pos += parent_pos;
+    }
+
+    if shared.armature.find_bone_mut(dragged_id).unwrap().parent_id == -1 {
         return;
     }
 
-    let new_parents = shared.armature.get_all_parents(dragged_bone!().id);
+    let new_parents = shared.armature.get_all_parents(dragged_id);
 
-    for parent in old_parents {
-        let parent_pos = parent.pos;
-        dragged_bone!().pos += parent_pos;
-    }
     for parent in new_parents {
         let parent_pos = parent.pos;
-        dragged_bone!().pos -= parent_pos;
+        shared.armature.find_bone_mut(dragged_id).unwrap().pos -= parent_pos;
     }
 }
 
