@@ -726,7 +726,9 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 );
 
                 let rect = egui::Rect::from_min_size(pos, size.into());
-                let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
+                let response: egui::Response = ui
+                    .allocate_rect(rect, egui::Sense::click())
+                    .on_hover_cursor(egui::CursorIcon::PointingHand);
 
                 // draw image
                 ui.painter()
