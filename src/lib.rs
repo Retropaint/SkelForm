@@ -137,60 +137,6 @@ impl ApplicationHandler for App {
                     gui_context.set_pixels_per_point(window_handle.scale_factor() as f32);
                 }
 
-                let mut first_time = true;
-
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    // import config
-                    let config_path =
-                        directories_next::ProjectDirs::from("com", "retropaint", "skelform")
-                            .map(|proj_dirs| proj_dirs.data_dir().join("config.json"))
-                            .unwrap();
-                    if config_path.exists() {
-                        let mut str = String::new();
-                        fs::File::open(&config_path)
-                            .unwrap()
-                            .read_to_string(&mut str)
-                            .unwrap();
-                        self.shared.config = serde_json::from_str(&str).unwrap();
-                        first_time = false;
-                    }
-
-                    // save config
-                    fs::create_dir_all(config_path.parent().unwrap()).unwrap();
-                    let mut file = fs::File::create(&config_path).unwrap();
-                    file.write_all(
-                        serde_json::to_string(&self.shared.config)
-                            .unwrap()
-                            .as_bytes(),
-                    )
-                    .unwrap();
-                }
-
-                #[cfg(target_arch = "wasm32")]
-                {
-                    // import config (web)
-                    if let Ok(data) = serde_json::from_str(&getConfig()) {
-                        self.shared.config = data;
-                        first_time = false;
-                    }
-                }
-                self.shared.ui.scale = self.shared.config.ui_scale;
-                if first_time {
-                    self.shared.ui.start_tutorial(&self.shared.armature);
-
-                    //// ask user if they want tutorial
-                    //self.shared
-                    //    .ui
-                    //    .open_polar_modal(PolarId::FirstTime, FIRST_LAUNCH.to_string());
-                }
-
-                #[cfg(target_arch = "wasm32")]
-                {
-                    // save config (web)
-                    saveConfig(serde_json::to_string(&self.shared.config).unwrap());
-                }
-
                 let viewport_id = gui_context.viewport_id();
                 let gui_state = egui_winit::State::new(
                     gui_context,
