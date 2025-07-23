@@ -26,7 +26,6 @@ args = parser.parse_args()
 
 stdout = "" if args.verbose else " &> /dev/null"
 
-
 def require_docs(header, doc_name):
     print(f">>> {RED}!! {header} DOCUMENTATION REQUIRED !!{RESET}")
     print(f">>> 1. Build it - https://github.com/retropaint/skelform_{doc_name}")
@@ -96,7 +95,7 @@ shutil.copytree("../src", "./" + source + "/src")
 
 # make zip
 
-shutil.make_archive(dirname, 'zip', dirname)
+shutil.make_archive(dirname, 'zip', ".", dirname)
 
 # Platform-specific distribution
 
@@ -107,6 +106,7 @@ if platform.system() == "Darwin":
         shutil.rmtree(bin_path)
     shutil.copytree(dirname, bin_path)
     if not args.dmg:
+        shutil.make_archive("SkelForm.app", "zip", ".", "SkelForm.app")
         print(f">>> Mac release complete. Please look for {BLUE}SkelForm.app{RESET}.")
         exit()
     print(
