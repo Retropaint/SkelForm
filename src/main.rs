@@ -2,6 +2,11 @@
 
 #![windows_subsystem = "windows"]
 
+use std::{
+    fs,
+    io::{Read, Write},
+};
+
 use skelform_lib::shared::*;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -88,6 +93,48 @@ fn init_shared(shared: &mut Shared) {
         export_vid_text: base_path.clone() + "export_vid_text",
         export_vid_done: base_path.clone() + "export_vid_done",
     };
+
+    let mut first_time = true;
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // import config
+        let config_path = directories_next::ProjectDirs::from("com", "retropaint", "skelform")
+            .map(|proj_dirs| proj_dirs.data_dir().join("config.json"))
+            .unwrap();
+        if config_path.exists() {
+            let mut str = String::new();
+            std::fs::File::open(&config_path)
+                .unwrap()
+                .read_to_string(&mut str)
+                .unwrap();
+            shared.config = serde_json::from_str(&str).unwrap();
+            first_time = false;
+        } else {
+            // save config
+            fs::create_dir_all(config_path.parent().unwrap()).unwrap();
+            let mut file = std::fs::File::create(&config_path).unwrap();
+            file.write_all(serde_json::to_string(&shared.config).unwrap().as_bytes())
+                .unwrap();
+        }
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        // import config (web)
+        if let Ok(data) = serde_json::from_str(&getConfig()) {
+            shared.config = data;
+            first_time = false;
+        }
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        saveConfig(serde_json::to_string(&shared.config).unwrap());
+    }
+
+    if first_time {
+        shared.ui.start_tutorial(&shared.armature);
+    }
+    shared.ui.scale = shared.config.ui_scale;
 
     // if this were false, the first click would always
     // be considered non-UI
