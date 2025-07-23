@@ -81,14 +81,16 @@ impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         let mut attributes = Window::default_attributes();
 
-        let file_bytes = fs::read("skf_icon.png").unwrap();
-        let diffuse_image = image::load_from_memory(&file_bytes).unwrap();
-        let rgba = diffuse_image.to_rgba8();
-        let pixels = rgba.as_bytes().to_vec();
+        #[cfg(target_os = "windows")]
+        {
+            let file_bytes = fs::read("skf_icon.ico").unwrap();
+            let diffuse_image = image::load_from_memory(&file_bytes).unwrap();
+            let rgba = diffuse_image.to_rgba8();
+            let pixels = rgba.as_bytes().to_vec();
 
-        let icon = Icon::from_rgba(pixels, rgba.width(), rgba.height()).unwrap();
-
-        attributes.window_icon = Some(icon);
+            let icon = Icon::from_rgba(pixels, rgba.width(), rgba.height()).unwrap();
+            attributes.window_icon = Some(icon);
+        }
 
         #[cfg(not(target_arch = "wasm32"))]
         {
