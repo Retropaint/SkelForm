@@ -10,6 +10,7 @@ import os
 import platform
 import shutil
 import argparse
+import zipfile
 
 RED = "\033[31m"
 BLUE = "\033[34m"
@@ -91,6 +92,10 @@ shutil.copy("../web_build.py", "./" + source)
 shutil.copy("../anim_icons.png", "./" + source)
 shutil.copy("../readme.md", "./" + source)
 shutil.copytree("../src", "./" + source + "/src")
+
+# make zip
+
+shutil.make_archive(dirname, 'zip', dirname)
 
 # Platform-specific distribution
 
