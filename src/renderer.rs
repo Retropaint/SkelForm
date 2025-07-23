@@ -111,7 +111,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             render_pass,
             device,
             &find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap(),
-            Color::new(0., 255., 0., 0.5),
+            VertexColor::new(0., 255., 0., 0.5),
             shared.camera.pos,
             0.,
         );
@@ -442,14 +442,14 @@ pub fn bone_vertices(
     let mut hovering_vert = usize::MAX;
 
     for wv in 0..world_verts.len() {
-        let point = point!(wv, Color::GREEN);
+        let point = point!(wv, VertexColor::GREEN);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
         if shared.input.on_ui || !mouse_on_it || shared.dragging_vert != usize::MAX {
             continue;
         }
 
         hovering_vert = wv;
-        point!(wv, Color::WHITE);
+        point!(wv, VertexColor::WHITE);
         if shared.input.right_clicked() && world_verts.len() > 4 {
             let verts = &mut shared.selected_bone_mut().unwrap().vertices;
             verts.remove(wv);
@@ -526,17 +526,17 @@ pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
         Vertex {
             pos: Vec2::new(tex_size.x, 0.),
             uv: Vec2::new(1., 0.),
-            color: Color::default(),
+            color: VertexColor::default(),
         },
         Vertex {
             pos: Vec2::new(tex_size.x, -tex_size.y),
             uv: Vec2::new(1., 1.),
-            color: Color::default(),
+            color: VertexColor::default(),
         },
         Vertex {
             pos: Vec2::new(0., -tex_size.y),
             uv: Vec2::new(0., 1.),
-            color: Color::default(),
+            color: VertexColor::default(),
         },
     ];
     verts = sort_vertices(verts.clone());
@@ -550,7 +550,7 @@ fn draw_point(
     render_pass: &mut RenderPass,
     device: &Device,
     bone: &Bone,
-    color: Color,
+    color: VertexColor,
     camera: Vec2,
     rotation: f32,
 ) -> Vec<Vertex> {
@@ -788,8 +788,8 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
 
     let gap = 250.;
     let width = 0.005 * shared.camera.zoom;
-    let regular_color = Color::new(0.5, 0.5, 0.5, 0.25);
-    let highlight_color = Color::new(0.7, 0.7, 0.7, 1.);
+    let regular_color = VertexColor::new(0.5, 0.5, 0.5, 0.25);
+    let highlight_color = VertexColor::new(0.7, 0.7, 0.7, 1.);
 
     // draw vertical lines
     let aspect_ratio = shared.window.y / shared.window.x;
@@ -833,7 +833,7 @@ pub fn draw_horizontal_line(
     render_pass: &mut RenderPass,
     device: &Device,
     shared: &Shared,
-    color: Color,
+    color: VertexColor,
 ) {
     let edge = shared.camera.zoom * 5.;
     let camera_pos = shared.camera.pos;
@@ -865,7 +865,7 @@ pub fn draw_vertical_line(
     render_pass: &mut RenderPass,
     device: &Device,
     shared: &Shared,
-    color: Color,
+    color: VertexColor,
 ) {
     let aspect_ratio = shared.window.y / shared.window.x;
     let edge = shared.camera.zoom * 5.;

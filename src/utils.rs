@@ -13,9 +13,7 @@ pub use web::*;
 
 use image::ImageEncoder;
 
-use std::{
-    io::{Read, Write},
-};
+use std::io::{Read, Write};
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
@@ -83,22 +81,22 @@ pub fn in_bounding_box(
         Vertex {
             pos: Vec2::new(right, top),
             uv: Vec2::new(1., 0.),
-            color: Color::default(),
+            color: VertexColor::default(),
         },
         Vertex {
             pos: Vec2::new(left, top),
             uv: Vec2::new(0., 1.),
-            color: Color::default(),
+            color: VertexColor::default(),
         },
         Vertex {
             pos: Vec2::new(left, bot),
             uv: Vec2::new(0., 0.),
-            color: Color::default(),
+            color: VertexColor::default(),
         },
         Vertex {
             pos: Vec2::new(right, bot),
             uv: Vec2::new(1., 1.),
-            color: Color::default(),
+            color: VertexColor::default(),
         },
     ];
 

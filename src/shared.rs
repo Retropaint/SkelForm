@@ -194,40 +194,38 @@ pub struct Vertex {
     pub pos: Vec2,
     pub uv: Vec2,
     #[serde(skip)]
-    pub color: Color,
+    pub color: VertexColor,
 }
 
 #[repr(C)]
 #[derive(
     PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
     Copy,
     Clone,
     bytemuck::Pod,
     bytemuck::Zeroable,
     Debug,
 )]
-pub struct Color {
+pub struct VertexColor {
     pub r: f32,
     pub g: f32,
     pub b: f32,
     pub a: f32,
 }
 
-impl Color {
-    pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Color {
-        Color { r, g, b, a }
+impl VertexColor {
+    pub const fn new(r: f32, g: f32, b: f32, a: f32) -> VertexColor {
+        VertexColor { r, g, b, a }
     }
 
-    pub const GREEN: Color = Color::new(0., 1., 0., 1.);
-    pub const WHITE: Color = Color::new(1., 1., 1., 1.);
+    pub const GREEN: VertexColor = VertexColor::new(0., 1., 0., 1.);
+    pub const WHITE: VertexColor = VertexColor::new(1., 1., 1., 1.);
 }
 
 #[rustfmt::skip] 
-impl Default for Color {
+impl Default for VertexColor {
     fn default() -> Self {
-        Color {  r: 1., g: 1., b: 1., a: 1. }
+        VertexColor {  r: 1., g: 1., b: 1., a: 1. }
     }
 }
 
