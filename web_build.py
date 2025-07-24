@@ -41,6 +41,7 @@ subprocess.run(build_command, shell=True)
 
 # copy assets over to /dist
 shutil.copy("anim_icons.png", "dist/anim_icons.png")
+shutil.copy("skf_icon.ico", "dist/favicon.ico")
 
 if args.serve:
     # automatically serve via python http
