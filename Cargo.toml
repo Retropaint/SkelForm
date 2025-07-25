@@ -10,13 +10,13 @@ name = "skelform_lib"
 
 [dependencies]
 bytemuck = { version = "1.21.0", features = ["derive"] }
-egui = "0.31.0"
-egui-wgpu = { version = "0.31.0", features = ["winit"] }
-egui_extras = { version = "0.31.1", features = ["image"] }
+egui = "0.32.0"
+egui-wgpu = { version = "0.32.0", features = ["winit"] }
+egui_extras = { version = "0.32.0", features = ["image"] }
 serde = { version = "1.0.219", features = ["serde_derive"] } 
 serde_json = "1.0.140"
 tween = "2.0.4"
-wgpu = { version = "24.0.1", default-features = false }
+wgpu = { version = "25.0.0", default-features = false }
 winit = "0.30.9"
 chrono = "0.4.41"
 image = "0.25.5"
@@ -25,7 +25,7 @@ psd = "0.3.5"
 glob = "0.3.2"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-egui-winit = "0.31.0"
+egui-winit = "0.32.0"
 pollster = "0.4.0"
 rfd = { version = "0.15.3",  features = ["gtk3"], default-features = false}
 zip = "4.0.0"

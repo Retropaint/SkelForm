@@ -330,6 +330,7 @@ pub enum UiState {
     Modal,
     PolarModal,
     FirstTimeModal,
+    SettingsModal,
 }
 
 #[derive(Clone, Default, PartialEq, Debug)]

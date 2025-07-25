@@ -129,6 +129,9 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.ui.has_state(UiState::ImageModal) {
         image_modal(shared, context);
     }
+    if shared.ui.has_state(UiState::SettingsModal) {
+        settings_modal(shared, context);
+    }
 
     style_once!(top_panel(context, shared));
 
@@ -200,7 +203,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
     egui::TopBottomPanel::top("top_bar")
         .frame(egui::Frame {
             fill: COLOR_MAIN,
-            stroke: Stroke::new(0., COLOR_ACCENT),
+            stroke: Stroke::new(0., COLOR_TEXT),
             inner_margin: egui::Margin {
                 left: 0,
                 right: 0,
@@ -218,10 +221,17 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
         .show(egui_ctx, |ui| {
             ui.set_max_height(20.);
             let mut offset = 0.;
-            egui::menu::bar(ui, |ui| {
+            egui::MenuBar::new().ui(ui, |ui| {
                 menu_file_button(ui, shared);
                 menu_edit_button(ui, shared);
                 menu_view_button(ui, shared);
+
+                ui.menu_button("Settings", |ui| {
+                    ui.set_width(100.);
+                    if top_bar_button(ui, "Manage", "", &mut offset).clicked() {
+                        shared.ui.set_state(UiState::SettingsModal, true);
+                    }
+                });
 
                 ui.menu_button("Help", |ui| {
                     ui.set_width(100.);
@@ -238,7 +248,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         } else {
                             shared.ui.start_tutorial(&shared.armature);
                         }
-                        ui.close_menu();
+                        ui.close();
                     }
                     if top_bar_button(ui, "User Docs", "", &mut offset).clicked() {
                         utils::open_docs(true, "");
@@ -270,14 +280,14 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             utils::open_import_dialog(shared.temp_path.import.clone());
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
-            ui.close_menu();
+            ui.close();
         }
         if top_bar_button(ui, "Save", "Mod + S", &mut offset).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog(shared.temp_path.save.clone());
             #[cfg(target_arch = "wasm32")]
             utils::save_web(&shared.armature);
-            ui.close_menu();
+            ui.close();
         }
         if top_bar_button(ui, "Export Video", "E", &mut offset).clicked() {
             // check if ffmpeg exists and complain if it doesn't
@@ -330,7 +340,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             shared.ui.anim.started = Some(chrono::Utc::now());
             shared.ui.select_anim_frame(0);
             shared.ui.anim.loops = 1;
-            ui.close_menu();
+            ui.close();
         }
     });
 }
@@ -358,7 +368,7 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
         #[cfg(target_arch = "wasm32")]
         if top_bar_button(ui, "Adjust UI", "", &mut offset).clicked() {
             toggleElement(true, "ui-slider".to_string());
-            ui.close_menu();
+            ui.close();
         }
     });
 }
@@ -369,11 +379,11 @@ fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.set_width(90.);
         if top_bar_button(ui, "Undo", "Mod + Z", &mut offset).clicked() {
             utils::undo_redo(true, shared);
-            ui.close_menu();
+            ui.close();
         }
         if top_bar_button(ui, "Redo", "Mod + Y", &mut offset).clicked() {
             utils::undo_redo(false, shared);
-            ui.close_menu();
+            ui.close();
         }
     });
 }
@@ -507,16 +517,18 @@ pub fn default_styling(context: &Context) {
     visuals.widgets.hovered.weak_bg_fill = COLOR_ACCENT;
     visuals.widgets.inactive.weak_bg_fill = COLOR_ACCENT;
 
-    visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
-    visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
-    visuals.widgets.active.fg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
-    visuals.widgets.active.bg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
-    visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1., COLOR_BORDER);
-    visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1., COLOR_BORDER);
+    // visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
+    // visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
+    // visuals.widgets.active.fg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
+    // visuals.widgets.active.bg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
+    // visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1., COLOR_BORDER);
+    // visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1., COLOR_BORDER);
 
     visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1., COLOR_BORDER);
 
     visuals.override_text_color = Some(COLOR_TEXT);
+    visuals.weak_text_color = Some(COLOR_TEXT);
+    visuals.widgets.active.fg_stroke = egui::Stroke::new(1., COLOR_TEXT);
 
     context.set_visuals(visuals);
 }
@@ -530,7 +542,7 @@ pub fn set_zoom(zoom: f32, shared: &mut Shared) {
 
 pub fn button(text: &str, ui: &mut egui::Ui) -> egui::Response {
     ui.add(
-        egui::Button::new(text)
+        egui::Button::new(egui::RichText::new(text).color(COLOR_TEXT))
             .fill(COLOR_ACCENT)
             .corner_radius(egui::CornerRadius::ZERO),
     )
@@ -818,6 +830,21 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
             );
             ui.label(name);
             ui.label(size);
+        });
+}
+
+pub fn settings_modal(shared: &mut Shared, ctx: &egui::Context) {
+    egui::Modal::new("test".into())
+        .frame(egui::Frame {
+            corner_radius: 0.into(),
+            fill: COLOR_MAIN,
+            inner_margin: egui::Margin::same(5),
+            stroke: egui::Stroke::new(1., COLOR_ACCENT),
+            ..Default::default()
+        })
+        .show(ctx, |ui| {
+            ui.set_width(500.);
+            ui.set_height(500.);
         });
 }
 
