@@ -88,7 +88,7 @@ impl ApplicationHandler for App {
             let rgba = diffuse_image.to_rgba8();
             let pixels = rgba.as_bytes().to_vec();
 
-            let icon = Icon::from_rgba(pixels, rgba.width(), rgba.height()).unwrap();
+            let icon = winit::window::Icon::from_rgba(pixels, rgba.width(), rgba.height()).unwrap();
             attributes.window_icon = Some(icon);
         }
 
