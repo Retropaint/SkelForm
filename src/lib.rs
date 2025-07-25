@@ -27,7 +27,7 @@ use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
     event::{MouseScrollDelta, WindowEvent},
-    window::{Icon, Theme, Window},
+    window::{Theme, Window},
 };
 
 pub mod armature_window;
@@ -863,21 +863,19 @@ impl Gpu {
             #[cfg(target_arch = "wasm32")]
             log::info!("WGPU Adapter Features: {:#?}", adapter.features());
             adapter
-                .request_device(
-                    &wgpu::DeviceDescriptor {
-                        label: Some("WGPU Device"),
-                        memory_hints: wgpu::MemoryHints::default(),
-                        required_features: wgpu::Features::default(),
-                        #[cfg(not(target_arch = "wasm32"))]
-                        required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
-                        #[cfg(all(target_arch = "wasm32", feature = "webgpu"))]
-                        required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
-                        #[cfg(all(target_arch = "wasm32", feature = "webgl"))]
-                        required_limits: wgpu::Limits::downlevel_webgl2_defaults()
-                            .using_resolution(adapter.limits()),
-                    },
-                    None,
-                )
+                .request_device(&wgpu::DeviceDescriptor {
+                    label: Some("WGPU Device"),
+                    memory_hints: wgpu::MemoryHints::default(),
+                    required_features: wgpu::Features::default(),
+                    #[cfg(not(target_arch = "wasm32"))]
+                    required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
+                    #[cfg(all(target_arch = "wasm32", feature = "webgpu"))]
+                    required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
+                    #[cfg(all(target_arch = "wasm32", feature = "webgl"))]
+                    required_limits: wgpu::Limits::downlevel_webgl2_defaults()
+                        .using_resolution(adapter.limits()),
+                    trace: wgpu::Trace::Off
+                })
                 .await
                 .expect("Failed to request a device!")
         };
