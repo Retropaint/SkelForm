@@ -17,16 +17,27 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
             modal_ui.horizontal(|ui| {
                 egui::Frame::new()
                     .fill(shared.config.ui_colors.dark_accent.into())
+                    .inner_margin(egui::Margin::same(5))
                     .show(ui, |ui| {
                         ui.set_width(100.);
                         ui.set_height(475.);
                         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
-                            if ui.button("General").clicked() {
-                                shared.ui.settings_state = shared::SettingsState::General;
+                            macro_rules! tab {
+                                ($name:expr, $state:expr) => {
+                                    if ui::selection_button(
+                                        $name,
+                                        shared.ui.settings_state == $state,
+                                        ui,
+                                    )
+                                    .clicked()
+                                    {
+                                        shared.ui.settings_state = $state;
+                                    }
+                                };
                             }
-                            if ui.button("Keyboard").clicked() {
-                                shared.ui.settings_state = shared::SettingsState::Keyboard;
-                            }
+
+                            tab!("General", shared::SettingsState::General);
+                            tab!("Keyboard", shared::SettingsState::Keyboard);
                         });
                     });
                 egui::Frame::new().show(ui, |ui| {
@@ -96,5 +107,5 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 }
 
 fn keyboard(ui: &mut egui::Ui) {
-    ui.label("keyboard");
+    ui.heading("Keyboard");
 }

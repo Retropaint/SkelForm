@@ -105,7 +105,7 @@ fn init_shared(shared: &mut Shared) {
                 .unwrap()
                 .read_to_string(&mut str)
                 .unwrap();
-            shared.config = serde_json::from_str(&str).unwrap();
+            shared.config = serde_json::from_str(&str).unwrap_or_default();
             first_time = false;
         } else {
             // save config

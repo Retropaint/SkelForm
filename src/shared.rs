@@ -647,6 +647,7 @@ pub struct Config {
 
     #[serde(default)]
     pub ui_colors: ColorConfig,
+    pub keys: KeyboardConfig,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -665,6 +666,7 @@ impl Default for Config {
             first_launch: true,
             ui_scale: 1.,
             ui_colors: ColorConfig::default(),
+            keys: KeyboardConfig::default(),
         }
     }
 }
@@ -678,6 +680,45 @@ impl Default for ColorConfig {
             text: Color::new(180, 180, 180, 255),
             frameline: Color::new(80, 60, 130, 255),
             gradient: Color::new(28, 20, 42, 255),
+        }
+    }
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct KeyboardConfig {
+    pub next_anim_frame: egui::KeyboardShortcut,
+    pub prev_anim_frame: egui::KeyboardShortcut,
+    pub zoom_in_camera: egui::KeyboardShortcut,
+    pub zoom_out_camera: egui::KeyboardShortcut,
+    pub zoom_out_ui: egui::KeyboardShortcut,
+    pub zoom_in_ui: egui::KeyboardShortcut,
+    pub undo: egui::KeyboardShortcut,
+    pub redo: egui::KeyboardShortcut,
+    pub save: egui::KeyboardShortcut,
+    pub open: egui::KeyboardShortcut,
+    pub cancel: egui::KeyboardShortcut,
+}
+
+macro_rules! regular_key {
+    ($key:expr) => {
+        egui::KeyboardShortcut::new(egui::Modifiers::NONE, $key)
+    };
+}
+
+impl Default for KeyboardConfig {
+    fn default() -> Self {
+        KeyboardConfig {
+            next_anim_frame: regular_key!(egui::Key::ArrowRight),
+            prev_anim_frame: regular_key!(egui::Key::ArrowLeft),
+            zoom_in_camera: regular_key!(egui::Key::Minus),
+            zoom_out_camera: regular_key!(egui::Key::Equals),
+            zoom_out_ui: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Minus),
+            zoom_in_ui: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Equals),
+            undo: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Z),
+            redo: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Y),
+            save: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S),
+            open: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O),
+            cancel: regular_key!(egui::Key::Escape),
         }
     }
 }
