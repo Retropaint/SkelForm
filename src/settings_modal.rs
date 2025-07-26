@@ -122,52 +122,15 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         });
     });
 
-    macro_rules! dd_mod {
-        ($ui:expr, $modifier:expr, $field:expr) => {
-            $ui.selectable_value(&mut $field, $modifier, modifier_name($modifier));
-        };
-    }
-
     macro_rules! key {
-        ($name:expr, $field:expr) => {
-            ui.horizontal(|ui| {
-                ui.label($name);
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let button_str = if shared.ui.changing_key == $name {
-                        "..."
-                    } else {
-                        $field.logical_key.name()
-                    };
-
-                    if ui
-                        .add_sized([50., 20.], egui::Button::new(button_str))
-                        .clicked()
-                    {
-                        shared.ui.changing_key = $name.to_string();
-                    }
-
-                    egui::ComboBox::new($name.to_string() + "mod", "")
-                        .selected_text(modifier_name($field.modifiers))
-                        .show_ui(ui, |ui| {
-                            dd_mod!(ui, egui::Modifiers::COMMAND, $field.modifiers);
-                            dd_mod!(ui, egui::Modifiers::ALT, $field.modifiers);
-                            dd_mod!(ui, egui::Modifiers::SHIFT, $field.modifiers);
-                        })
-                        .response;
-
-                    // use shift-equivalent keys if the modifier is shift
-                    if $field.modifiers == egui::Modifiers::SHIFT {
-                        if $field.logical_key == egui::Key::Equals {
-                            $field.logical_key = egui::Key::Plus;
-                        }
-                    }
-                });
-            });
-
-            if shared.ui.changing_key == $name && shared.input.last_pressed != None {
-                $field.logical_key = shared.input.last_pressed.unwrap();
-                shared.ui.changing_key = "".to_string();
-            }
+        ($label:expr, $field:expr) => {
+            key(
+                $label,
+                &mut $field,
+                ui,
+                &mut shared.ui.changing_key,
+                &shared.input.last_pressed,
+            );
         };
     }
 
@@ -178,6 +141,59 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         key!("Zoom Camera In",           shared.config.keys.zoom_in_camera);
         key!("Zoom Camera Out",          shared.config.keys.zoom_out_camera);
     };
+}
+
+fn key(
+    name: &str,
+    field: &mut egui::KeyboardShortcut,
+    ui: &mut egui::Ui,
+    changing_key: &mut String,
+    last_pressed: &Option<egui::Key>,
+) {
+    macro_rules! dd_mod {
+        ($ui:expr, $modifier:expr, $field:expr) => {
+            $ui.selectable_value(&mut $field, $modifier, modifier_name($modifier));
+        };
+    }
+
+    ui.horizontal(|ui| {
+        ui.label(name);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let button_str = if changing_key == name {
+                "..."
+            } else {
+                field.logical_key.name()
+            };
+
+            if ui
+                .add_sized([50., 20.], egui::Button::new(button_str))
+                .clicked()
+            {
+                *changing_key = name.to_string();
+            }
+
+            egui::ComboBox::new(name.to_string() + "mod", "")
+                .selected_text(modifier_name(field.modifiers))
+                .show_ui(ui, |ui| {
+                    dd_mod!(ui, egui::Modifiers::COMMAND, field.modifiers);
+                    dd_mod!(ui, egui::Modifiers::ALT, field.modifiers);
+                    dd_mod!(ui, egui::Modifiers::SHIFT, field.modifiers);
+                })
+                .response;
+
+            // use shift-equivalent keys if the modifier is shift
+            if field.modifiers == egui::Modifiers::SHIFT {
+                if field.logical_key == egui::Key::Equals {
+                    field.logical_key = egui::Key::Plus;
+                }
+            }
+        });
+    });
+
+    if changing_key == name && *last_pressed != None {
+        field.logical_key = last_pressed.unwrap();
+        *changing_key = "".to_string();
+    }
 }
 
 fn modifier_name(modifier: egui::Modifiers) -> String {
