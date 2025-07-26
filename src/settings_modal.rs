@@ -110,7 +110,15 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 }
 
 fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
-    ui.heading("Keyboard");
+    ui.horizontal(|ui| {
+        ui.heading("Keyboard");
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if ui.button("Reset").clicked() {
+                shared.config.keys = crate::KeyboardConfig::default();
+                crate::utils::save_config(&shared.config);
+            }
+        });
+    });
 
     macro_rules! dd_mod {
         ($ui:expr, $modifier:expr, $field:expr) => {
@@ -123,7 +131,10 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             ui.horizontal(|ui| {
                 ui.label($name);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.button($field.logical_key.name()).clicked() {
+                    if ui
+                        .add_sized([50., 20.], egui::Button::new($field.logical_key.name()))
+                        .clicked()
+                    {
                         shared.ui.changing_key = $name.to_string();
                     }
 
@@ -162,7 +173,7 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
 fn modifier_name(modifier: egui::Modifiers) -> String {
     match modifier {
-        egui::Modifiers::COMMAND => "Ctrl/Command",
+        egui::Modifiers::COMMAND => "Ctrl/Cmd",
         egui::Modifiers::ALT => "Alt/Option",
         egui::Modifiers::SHIFT => "Shift",
         egui::Modifiers::NONE => "None",
