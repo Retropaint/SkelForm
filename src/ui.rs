@@ -263,6 +263,12 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                             Ok(file) => file,
                         };
                     }
+                    if top_bar_button(ui, "Config Folder", "", &mut offset).clicked() {
+                        match open::that(config_path().parent().unwrap()) {
+                            Err(_) => {}
+                            Ok(file) => file,
+                        };
+                    }
                 });
             });
 
