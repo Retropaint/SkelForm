@@ -57,6 +57,11 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
 
             modal_ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui::button("Apply", ui).clicked() {
+                    crate::utils::save_config(&shared.config);
+                    shared.ui.set_state(shared::UiState::SettingsModal, false);
+                }
+                if ui::button("Cancel", ui).clicked() {
+                    crate::utils::import_config(shared);
                     shared.ui.set_state(shared::UiState::SettingsModal, false);
                 }
             })
@@ -70,7 +75,6 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             // let (edited, val, _) = ui::float_input($id.to_string(), shared, $ui, $field.into(), 1.);
             // if edited {
             //     $field = val as u8;
-            //     crate::utils::save_config(&shared.config);
             // }
         };
     }
@@ -93,7 +97,6 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if ui.button("Reset").clicked() {
                 shared.config.ui_colors = crate::ColorConfig::default();
-                crate::utils::save_config(&shared.config);
             }
         });
     });
@@ -115,7 +118,6 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if ui.button("Reset").clicked() {
                 shared.config.keys = crate::KeyboardConfig::default();
-                crate::utils::save_config(&shared.config);
             }
         });
     });

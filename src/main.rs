@@ -100,19 +100,10 @@ fn init_shared(shared: &mut Shared) {
     {
         // import config
         if config_path().exists() {
-            let mut str = String::new();
-            std::fs::File::open(&config_path())
-                .unwrap()
-                .read_to_string(&mut str)
-                .unwrap();
-            shared.config = serde_json::from_str(&str).unwrap_or_default();
+            skelform_lib::utils::import_config(shared);
             first_time = false;
         } else {
-            // save config
-            fs::create_dir_all(config_path().parent().unwrap()).unwrap();
-            let mut file = std::fs::File::create(&config_path()).unwrap();
-            file.write_all(serde_json::to_string(&shared.config).unwrap().as_bytes())
-                .unwrap();
+            skelform_lib::utils::save_config(&shared.config);
         }
     }
     #[cfg(target_arch = "wasm32")]

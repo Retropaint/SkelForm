@@ -496,3 +496,12 @@ pub fn save_config(config: &Config) {
     file.write_all(serde_json::to_string(&config).unwrap().as_bytes())
         .unwrap();
 }
+
+pub fn import_config(shared: &mut Shared) {
+    let mut str = String::new();
+    std::fs::File::open(&config_path())
+        .unwrap()
+        .read_to_string(&mut str)
+        .unwrap();
+    shared.config = serde_json::from_str(&str).unwrap_or_default();
+}
