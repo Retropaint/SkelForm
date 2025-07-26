@@ -106,7 +106,6 @@ fn init_shared(shared: &mut Shared) {
                 .read_to_string(&mut str)
                 .unwrap();
             shared.config = serde_json::from_str(&str).unwrap();
-            println!("{:?}", shared.config.ui_colors.main);
             first_time = false;
         } else {
             // save config
