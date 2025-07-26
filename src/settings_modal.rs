@@ -133,8 +133,14 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             ui.horizontal(|ui| {
                 ui.label($name);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let button_str = if shared.ui.changing_key == $name {
+                        "..."
+                    } else {
+                        $field.logical_key.name()
+                    };
+
                     if ui
-                        .add_sized([50., 20.], egui::Button::new($field.logical_key.name()))
+                        .add_sized([50., 20.], egui::Button::new(button_str))
                         .clicked()
                     {
                         shared.ui.changing_key = $name.to_string();
@@ -160,6 +166,7 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
             if shared.ui.changing_key == $name && shared.input.last_pressed != None {
                 $field.logical_key = shared.input.last_pressed.unwrap();
+                shared.ui.changing_key = "".to_string();
             }
         };
     }
