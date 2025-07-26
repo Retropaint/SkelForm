@@ -1572,3 +1572,9 @@ fn are_indices_empty<T: std::cmp::PartialEq<Vec<u32>>>(value: &T) -> bool {
 fn are_anims_empty<T: std::cmp::PartialEq<Vec<Animation>>>(value: &T) -> bool {
     *value == vec![]
 }
+
+pub fn config_path() -> std::path::PathBuf {
+    directories_next::ProjectDirs::from("com", "retropaint", "skelform")
+        .map(|proj_dirs| proj_dirs.data_dir().join("config.json"))
+        .unwrap()
+}
