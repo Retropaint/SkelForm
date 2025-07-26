@@ -130,7 +130,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         image_modal(shared, context);
     }
     if shared.ui.has_state(UiState::SettingsModal) {
-        settings_modal(shared, context);
+        settings_modal::draw(shared, context);
     }
 
     style_once!(top_panel(context, shared));
@@ -830,21 +830,6 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
             );
             ui.label(name);
             ui.label(size);
-        });
-}
-
-pub fn settings_modal(shared: &mut Shared, ctx: &egui::Context) {
-    egui::Modal::new("test".into())
-        .frame(egui::Frame {
-            corner_radius: 0.into(),
-            fill: COLOR_MAIN,
-            inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., COLOR_ACCENT),
-            ..Default::default()
-        })
-        .show(ctx, |ui| {
-            ui.set_width(500.);
-            ui.set_height(500.);
         });
 }
 

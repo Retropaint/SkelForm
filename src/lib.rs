@@ -40,6 +40,7 @@ pub mod renderer;
 pub mod shared;
 pub mod ui;
 pub mod utils;
+pub mod settings_modal;
 
 //const FIRST_LAUNCH: &str = "Hello!\n\nSeems like this is your first time with SkelForm.\n\nWould you like to be quickly guided to making your first animation?";
 
