@@ -489,3 +489,10 @@ pub fn bin_path() -> String {
 
     bin
 }
+
+pub fn save_config(config: &Config) {
+    fs::create_dir_all(config_path().parent().unwrap()).unwrap();
+    let mut file = std::fs::File::create(&config_path()).unwrap();
+    file.write_all(serde_json::to_string(&config).unwrap().as_bytes())
+        .unwrap();
+}

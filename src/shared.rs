@@ -649,7 +649,7 @@ pub struct Config {
     pub ui_colors: ColorConfig,
 }
 
-#[derive(Default, serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct ColorConfig {
     pub main: Color,
     pub accent: Color,
@@ -664,14 +664,20 @@ impl Default for Config {
         Config {
             first_launch: true,
             ui_scale: 1.,
-            ui_colors: ColorConfig {
-                main: Color::new(32, 25, 46, 255),
-                accent: Color::new(65, 46, 105, 255),
-                border: Color::new(44, 36, 64, 255),
-                text: Color::new(180, 180, 180, 255),
-                frameline: Color::new(80, 60, 130, 255),
-                gradient: Color::new(28, 20, 42, 255),
-            },
+            ui_colors: ColorConfig::default(),
+        }
+    }
+}
+
+impl Default for ColorConfig {
+    fn default() -> Self {
+        ColorConfig {
+            main: Color::new(32, 25, 46, 255),
+            accent: Color::new(65, 46, 105, 255),
+            border: Color::new(44, 36, 64, 255),
+            text: Color::new(180, 180, 180, 255),
+            frameline: Color::new(80, 60, 130, 255),
+            gradient: Color::new(28, 20, 42, 255),
         }
     }
 }

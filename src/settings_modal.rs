@@ -1,4 +1,4 @@
-use crate::{shared, ui, config_path};
+use crate::{config_path, shared, ui};
 use std::{fs, io::Write};
 
 pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
@@ -57,12 +57,7 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             let (edited, val, _) = ui::float_input($id.to_string(), shared, $ui, $field.into(), 1.);
             if edited {
                 $field = val as u8;
-
-                // save config
-                fs::create_dir_all(config_path().parent().unwrap()).unwrap();
-                let mut file = std::fs::File::create(&config_path()).unwrap();
-                file.write_all(serde_json::to_string(&shared.config).unwrap().as_bytes())
-                    .unwrap();
+                crate::utils::save_config(&shared.config);
             }
         };
     }
@@ -80,7 +75,15 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         };
     }
 
-    ui.heading("Color");
+    ui.horizontal(|ui| {
+        ui.heading("Color");
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if ui.button("Reset").clicked() {
+                shared.config.ui_colors = crate::ColorConfig::default();
+                crate::utils::save_config(&shared.config);
+            }
+        });
+    });
 
     #[rustfmt::skip]
     {
