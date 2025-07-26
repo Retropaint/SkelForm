@@ -198,14 +198,7 @@ pub struct Vertex {
 }
 
 #[repr(C)]
-#[derive(
-    PartialEq,
-    Copy,
-    Clone,
-    bytemuck::Pod,
-    bytemuck::Zeroable,
-    Debug,
-)]
+#[derive(PartialEq, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Debug)]
 pub struct VertexColor {
     pub r: f32,
     pub g: f32,
@@ -222,13 +215,56 @@ impl VertexColor {
     pub const WHITE: VertexColor = VertexColor::new(1., 1., 1., 1.);
 }
 
-#[rustfmt::skip] 
+#[rustfmt::skip]
 impl Default for VertexColor {
     fn default() -> Self {
         VertexColor {  r: 1., g: 1., b: 1., a: 1. }
     }
 }
 
+#[repr(C)]
+#[derive(
+    PartialEq,
+    Copy,
+    Clone,
+    bytemuck::Pod,
+    bytemuck::Zeroable,
+    Debug,
+    serde::Deserialize,
+    serde::Serialize,
+)]
+pub struct Color {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+    #[serde(skip)]
+    pub a: u8,
+}
+
+impl Color {
+    pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
+        Color { r, g, b, a }
+    }
+}
+
+impl From<egui::Color32> for Color {
+    fn from(col: egui::Color32) -> Color {
+        Color::new(col.r(), col.g(), col.b(), col.a())
+    }
+}
+
+impl Into<egui::Color32> for Color {
+    fn into(self) -> egui::Color32 {
+        egui::Color32::from_rgb(self.r, self.g, self.b)
+    }
+}
+
+#[rustfmt::skip]
+impl Default for Color {
+    fn default() -> Self {
+        Color {  r: 0, g: 0, b: 0, a: 255 }
+    }
+}
 #[derive(Clone, Default)]
 pub struct Camera {
     pub pos: Vec2,
@@ -333,12 +369,11 @@ pub enum UiState {
     SettingsModal,
 }
 
-
 #[derive(Clone, Default, PartialEq)]
 pub enum SettingsState {
     #[default]
     General,
-    Keyboard
+    Keyboard,
 }
 
 #[derive(Clone, Default, PartialEq, Debug)]
@@ -602,13 +637,43 @@ impl Ui {
     }
 }
 
-#[derive(Default, serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
     #[serde(skip)]
     pub first_launch: bool,
 
     #[serde(default = "default_one")]
     pub ui_scale: f32,
+
+    #[serde(default)]
+    pub ui_colors: ColorConfig,
+}
+
+#[derive(Default, serde::Deserialize, serde::Serialize)]
+pub struct ColorConfig {
+    pub main: Color,
+    pub accent: Color,
+    pub border: Color,
+    pub text: Color,
+    pub frameline: Color,
+    pub gradient: Color,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            first_launch: true,
+            ui_scale: 1.,
+            ui_colors: ColorConfig {
+                main: Color::new(32, 25, 46, 255),
+                accent: Color::new(65, 46, 105, 255),
+                border: Color::new(44, 36, 64, 255),
+                text: Color::new(180, 180, 180, 255),
+                frameline: Color::new(80, 60, 130, 255),
+                gradient: Color::new(28, 20, 42, 255),
+            },
+        }
+    }
 }
 
 #[derive(Clone, Default)]
@@ -1268,8 +1333,8 @@ pub const ANIM_ICON_ID: [usize; 10] = [
     0,
     0,
     1,
-    2, 
-    2, 
+    2,
+    2,
     3,
     3,
     0,

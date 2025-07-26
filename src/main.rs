@@ -135,7 +135,7 @@ fn init_shared(shared: &mut Shared) {
     }
     shared.ui.scale = shared.config.ui_scale;
 
-    shared.ui.set_state(UiState::SettingsModal, true);
+    // shared.ui.set_state(UiState::SettingsModal, true);
 
     // if this were false, the first click would always
     // be considered non-UI

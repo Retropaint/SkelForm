@@ -9,18 +9,6 @@ macro_rules! ui_color {
     };
 }
 
-// UI colors
-#[rustfmt::skip] ui_color!(COLOR_ACCENT,             65, 46, 105);
-#[rustfmt::skip] ui_color!(COLOR_BORDER,             44, 36, 64);
-#[rustfmt::skip] ui_color!(COLOR_BORDER_HOVERED,     84, 59, 138);
-#[rustfmt::skip] ui_color!(COLOR_MAIN,               32, 25, 46);
-#[rustfmt::skip] ui_color!(COLOR_MAIN_DARK,          28, 20, 42);
-#[rustfmt::skip] ui_color!(COLOR_TEXT,               180, 180, 180);
-#[rustfmt::skip] ui_color!(COLOR_TEXT_SELECTED,      210, 210, 210);
-#[rustfmt::skip] ui_color!(COLOR_FRAMELINE,          80, 60, 130);
-#[rustfmt::skip] ui_color!(COLOR_FRAMELINE_HOVERED,  108, 80, 179);
-#[rustfmt::skip] ui_color!(COLOR_FRAMELINE_PASTLAST, 50, 41, 74);
-
 const HELP_LIGHT_CANT: &str = "There is already an animation! Looks like you've figured it out.\n\nTo activate the help light, please start a new project.";
 
 const FFMPEG_ERR: &str =
@@ -51,7 +39,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     context.set_cursor_icon(shared.cursor_icon);
     shared.cursor_icon = egui::CursorIcon::Default;
 
-    default_styling(context);
+    default_styling(context, shared);
 
     let scale_mod: f32;
 
@@ -71,7 +59,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     macro_rules! style_once {
         ($func:expr) => {
             $func;
-            default_styling(context);
+            default_styling(context, shared);
         };
     }
 
@@ -166,7 +154,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
                     ui,
                     ui.ctx().screen_rect(),
                     Color32::TRANSPARENT,
-                    COLOR_MAIN_DARK,
+                    shared.config.ui_colors.gradient.into(),
                 );
 
                 if shared.ui.selected_bone_idx != usize::MAX {
@@ -202,8 +190,8 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
 fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
     egui::TopBottomPanel::top("top_bar")
         .frame(egui::Frame {
-            fill: COLOR_MAIN,
-            stroke: Stroke::new(0., COLOR_TEXT),
+            fill: shared.config.ui_colors.main.into(),
+            stroke: Stroke::new(0., shared.config.ui_colors.main),
             inner_margin: egui::Margin {
                 left: 0,
                 right: 0,
@@ -228,7 +216,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
 
                 ui.menu_button("Settings", |ui| {
                     ui.set_width(100.);
-                    if top_bar_button(ui, "Manage", "", &mut offset).clicked() {
+                    if top_bar_button(ui, "Manage", "", &mut offset, shared).clicked() {
                         shared.ui.set_state(UiState::SettingsModal, true);
                     }
                 });
@@ -240,7 +228,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     } else {
                         "Help Light"
                     };
-                    if top_bar_button(ui, str, "", &mut offset).clicked() {
+                    if top_bar_button(ui, str, "", &mut offset, shared).clicked() {
                         if !shared.ui.tutorial_step_is(TutorialStep::None) {
                             shared.ui.set_tutorial_step(TutorialStep::None);
                         } else if shared.armature.animations.len() > 0 {
@@ -250,20 +238,20 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         }
                         ui.close();
                     }
-                    if top_bar_button(ui, "User Docs", "", &mut offset).clicked() {
+                    if top_bar_button(ui, "User Docs", "", &mut offset, shared).clicked() {
                         utils::open_docs(true, "");
                     }
-                    if top_bar_button(ui, "Dev Docs", "", &mut offset).clicked() {
+                    if top_bar_button(ui, "Dev Docs", "", &mut offset, shared).clicked() {
                         utils::open_docs(false, "");
                     }
                     #[cfg(not(target_arch = "wasm32"))]
-                    if top_bar_button(ui, "Binary Folder", "", &mut offset).clicked() {
+                    if top_bar_button(ui, "Binary Folder", "", &mut offset, shared).clicked() {
                         match open::that(utils::bin_path()) {
                             Err(_) => {}
                             Ok(file) => file,
                         };
                     }
-                    if top_bar_button(ui, "Config Folder", "", &mut offset).clicked() {
+                    if top_bar_button(ui, "Config Folder", "", &mut offset, shared).clicked() {
                         match open::that(config_path().parent().unwrap()) {
                             Err(_) => {}
                             Ok(file) => file,
@@ -281,21 +269,21 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("File", |ui| {
         ui.set_width(125.);
-        if top_bar_button(ui, "Open", "O", &mut offset).clicked() {
+        if top_bar_button(ui, "Open", "O", &mut offset, shared).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog(shared.temp_path.import.clone());
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
             ui.close();
         }
-        if top_bar_button(ui, "Save", "Mod + S", &mut offset).clicked() {
+        if top_bar_button(ui, "Save", "Mod + S", &mut offset, shared).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog(shared.temp_path.save.clone());
             #[cfg(target_arch = "wasm32")]
             utils::save_web(&shared.armature);
             ui.close();
         }
-        if top_bar_button(ui, "Export Video", "E", &mut offset).clicked() {
+        if top_bar_button(ui, "Export Video", "E", &mut offset, shared).clicked() {
             // check if ffmpeg exists and complain if it doesn't
             let mut ffmpeg = false;
             match std::process::Command::new("ffmpeg")
@@ -355,18 +343,18 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("View", |ui| {
         ui.set_width(125.);
-        if top_bar_button(ui, "Zoom In", "=", &mut offset).clicked() {
+        if top_bar_button(ui, "Zoom In", "=", &mut offset, shared).clicked() {
             set_zoom(shared.camera.zoom - 10., shared);
         }
-        if top_bar_button(ui, "Zoom Out", "-", &mut offset).clicked() {
+        if top_bar_button(ui, "Zoom Out", "-", &mut offset, shared).clicked() {
             set_zoom(shared.camera.zoom + 10., shared);
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            if top_bar_button(ui, "Zoom In UI", "Mod + =", &mut offset).clicked() {
+            if top_bar_button(ui, "Zoom In UI", "Mod + =", &mut offset, shared).clicked() {
                 shared.ui.scale += 0.1;
             }
-            if top_bar_button(ui, "Zoom Out UI", "Mod + -", &mut offset).clicked() {
+            if top_bar_button(ui, "Zoom Out UI", "Mod + -", &mut offset, shared).clicked() {
                 shared.ui.scale -= 0.1;
             }
         }
@@ -383,11 +371,11 @@ fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     ui.menu_button("Edit", |ui| {
         ui.set_width(90.);
-        if top_bar_button(ui, "Undo", "Mod + Z", &mut offset).clicked() {
+        if top_bar_button(ui, "Undo", "Mod + Z", &mut offset, shared).clicked() {
             utils::undo_redo(true, shared);
             ui.close();
         }
-        if top_bar_button(ui, "Redo", "Mod + Y", &mut offset).clicked() {
+        if top_bar_button(ui, "Redo", "Mod + Y", &mut offset, shared).clicked() {
             utils::undo_redo(false, shared);
             ui.close();
         }
@@ -458,11 +446,11 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
         .max_height(25.)
         .movable(false)
         .frame(egui::Frame {
-            fill: COLOR_MAIN_DARK,
+            fill: shared.config.ui_colors.gradient.into(),
             inner_margin: margin.into(),
             stroke: Stroke {
                 width: 1.,
-                color: COLOR_BORDER,
+                color: shared.config.ui_colors.border.into(),
             },
             ..Default::default()
         })
@@ -498,7 +486,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
 }
 
 /// Default styling to apply across all UI.
-pub fn default_styling(context: &Context) {
+pub fn default_styling(context: &Context, shared: &Shared) {
     let mut visuals = egui::Visuals::dark();
 
     // remove rounded corners on windows
@@ -511,30 +499,21 @@ pub fn default_styling(context: &Context) {
     visuals.menu_corner_radius = egui::CornerRadius::ZERO;
 
     visuals.window_shadow = Shadow::NONE;
-    visuals.window_fill = COLOR_MAIN;
-    visuals.panel_fill = COLOR_MAIN;
-    visuals.window_stroke = egui::Stroke::new(1., COLOR_BORDER);
+    visuals.window_fill = shared.config.ui_colors.main.into();
+    visuals.panel_fill = shared.config.ui_colors.main.into();
+    visuals.window_stroke = egui::Stroke::new(1., shared.config.ui_colors.border);
 
-    visuals.widgets.active.bg_fill = COLOR_BORDER;
-    visuals.widgets.hovered.bg_fill = COLOR_BORDER;
-    visuals.widgets.inactive.bg_fill = COLOR_BORDER;
+    visuals.widgets.active.bg_fill = shared.config.ui_colors.border.into();
+    visuals.widgets.hovered.bg_fill = shared.config.ui_colors.border.into();
+    visuals.widgets.inactive.bg_fill = shared.config.ui_colors.border.into();
 
-    visuals.widgets.active.weak_bg_fill = COLOR_ACCENT;
-    visuals.widgets.hovered.weak_bg_fill = COLOR_ACCENT;
-    visuals.widgets.inactive.weak_bg_fill = COLOR_ACCENT;
+    visuals.widgets.active.weak_bg_fill = shared.config.ui_colors.accent.into();
+    visuals.widgets.hovered.weak_bg_fill = shared.config.ui_colors.accent.into();
+    visuals.widgets.inactive.weak_bg_fill = shared.config.ui_colors.accent.into();
+    visuals.widgets.noninteractive.bg_stroke =
+        egui::Stroke::new(1., shared.config.ui_colors.border);
 
-    // visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
-    // visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
-    // visuals.widgets.active.fg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
-    // visuals.widgets.active.bg_stroke = egui::Stroke::new(1., COLOR_BORDER_HOVERED);
-    // visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1., COLOR_BORDER);
-    // visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1., COLOR_BORDER);
-
-    visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1., COLOR_BORDER);
-
-    visuals.override_text_color = Some(COLOR_TEXT);
-    visuals.weak_text_color = Some(COLOR_TEXT);
-    visuals.widgets.active.fg_stroke = egui::Stroke::new(1., COLOR_TEXT);
+    visuals.override_text_color = Some(shared.config.ui_colors.text.into());
 
     context.set_visuals(visuals);
 }
@@ -547,26 +526,20 @@ pub fn set_zoom(zoom: f32, shared: &mut Shared) {
 }
 
 pub fn button(text: &str, ui: &mut egui::Ui) -> egui::Response {
-    ui.add(
-        egui::Button::new(egui::RichText::new(text).color(COLOR_TEXT))
-            .fill(COLOR_ACCENT)
-            .corner_radius(egui::CornerRadius::ZERO),
-    )
-    .on_hover_cursor(egui::CursorIcon::PointingHand)
+    ui.add(egui::Button::new(egui::RichText::new(text)).corner_radius(egui::CornerRadius::ZERO))
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
 pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::Response {
-    let mut bg_col = COLOR_ACCENT;
     let mut cursor = egui::CursorIcon::PointingHand;
-    let mut text_col = COLOR_TEXT;
+    let mut bg_col = ui.visuals().widgets.active.weak_bg_fill;
 
     if selected {
-        bg_col = bg_col + egui::Color32::from_rgb(20, 20, 20);
         cursor = egui::CursorIcon::Default;
-        text_col = COLOR_TEXT_SELECTED;
+        bg_col = bg_col + egui::Color32::from_rgb(20, 20, 20);
     }
 
-    let button = egui::Button::new(egui::RichText::new(text).color(text_col))
+    let button = egui::Button::new(egui::RichText::new(text))
         .fill(bg_col)
         .corner_radius(egui::CornerRadius::ZERO);
 
@@ -579,9 +552,9 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
     egui::Modal::new(shared.ui.polar_id.clone().to_string().into())
         .frame(egui::Frame {
             corner_radius: 0.into(),
-            fill: COLOR_MAIN,
+            fill: shared.config.ui_colors.main.into(),
             inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., COLOR_ACCENT),
+            stroke: egui::Stroke::new(1., shared.config.ui_colors.accent),
             ..Default::default()
         })
         .show(ctx, |ui| {
@@ -653,9 +626,9 @@ pub fn modal(shared: &mut Shared, ctx: &egui::Context) {
     egui::Modal::new(shared.ui.polar_id.to_string().into())
         .frame(egui::Frame {
             corner_radius: 0.into(),
-            fill: COLOR_MAIN,
+            fill: shared.config.ui_colors.main.into(),
             inner_margin: egui::Margin::same(8),
-            stroke: egui::Stroke::new(1., COLOR_ACCENT),
+            stroke: egui::Stroke::new(1., shared.config.ui_colors.accent),
             ..Default::default()
         })
         .show(ctx, |ui| {
@@ -677,9 +650,9 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
     egui::Modal::new("test".into())
         .frame(egui::Frame {
             corner_radius: 0.into(),
-            fill: COLOR_MAIN,
+            fill: shared.config.ui_colors.main.into(),
             inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., COLOR_ACCENT),
+            stroke: egui::Stroke::new(1., shared.config.ui_colors.accent),
             ..Default::default()
         })
         .show(ctx, |ui| {
@@ -749,8 +722,11 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
 
                 // draw image
-                ui.painter()
-                    .rect_filled(rect, egui::CornerRadius::ZERO, COLOR_BORDER);
+                ui.painter().rect_filled(
+                    rect,
+                    egui::CornerRadius::ZERO,
+                    shared.config.ui_colors.border,
+                );
 
                 if response.hovered() {
                     tex_idx = i as i32;
@@ -852,6 +828,7 @@ pub fn top_bar_button(
     text: &str,
     kb_key: &str,
     offset: &mut f32,
+    shared: &Shared,
 ) -> egui::Response {
     let height = 20.;
     #[allow(unused_variables)]
@@ -870,7 +847,11 @@ pub fn top_bar_button(
     let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
     let painter = ui.painter_at(ui.min_rect());
     if response.hovered() {
-        painter.rect_filled(rect, egui::CornerRadius::ZERO, COLOR_ACCENT);
+        painter.rect_filled(
+            rect,
+            egui::CornerRadius::ZERO,
+            shared.config.ui_colors.accent,
+        );
     } else {
         painter.rect_filled(rect, egui::CornerRadius::ZERO, egui::Color32::TRANSPARENT);
     }
