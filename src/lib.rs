@@ -37,10 +37,10 @@ pub mod input;
 pub mod keyframe_editor;
 pub mod keyframe_panel;
 pub mod renderer;
+pub mod settings_modal;
 pub mod shared;
 pub mod ui;
 pub mod utils;
-pub mod settings_modal;
 
 //const FIRST_LAUNCH: &str = "Hello!\n\nSeems like this is your first time with SkelForm.\n\nWould you like to be quickly guided to making your first animation?";
 
@@ -875,7 +875,7 @@ impl Gpu {
                     #[cfg(all(target_arch = "wasm32", feature = "webgl"))]
                     required_limits: wgpu::Limits::downlevel_webgl2_defaults()
                         .using_resolution(adapter.limits()),
-                    trace: wgpu::Trace::Off
+                    trace: wgpu::Trace::Off,
                 })
                 .await
                 .expect("Failed to request a device!")
