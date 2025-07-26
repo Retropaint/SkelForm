@@ -369,8 +369,6 @@ impl ApplicationHandler for App {
                     }
                 };
 
-                input::keyboard_shortcuts(&mut self.shared);
-
                 renderer.render_frame(
                     screen_descriptor,
                     paint_jobs,

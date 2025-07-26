@@ -24,7 +24,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     ui,
                     ui.ctx().screen_rect(),
                     Color32::TRANSPARENT,
-                    shared.config.ui_colors.gradient.into()
+                    shared.config.ui_colors.gradient.into(),
                 );
                 ui.horizontal(|ui| {
                     ui.heading("Armature");
@@ -161,7 +161,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         egui::Align2::LEFT_BOTTOM,
                         fold_icon,
                         egui::FontId::default(),
-                        shared.config.ui_colors.text.into()
+                        shared.config.ui_colors.text.into(),
                     );
                     let id = "fold".to_owned() + &shared.armature.bones[b].id.to_string();
                     let click_rect = ui

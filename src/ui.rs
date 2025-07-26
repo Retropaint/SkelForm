@@ -10,6 +10,8 @@ const FFMPEG_ERR: &str =
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
+    kb_inputs(context, shared);
+
     context.input(|i| {
         shared.input.mouse_left_prev = shared.input.mouse_left;
         shared.input.mouse_right_prev = shared.input.mouse_right;
@@ -179,6 +181,51 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.input.mouse_left == -1 {
         shared.input.on_ui = context.is_pointer_over_area();
     }
+}
+
+pub fn kb_inputs(context: &Context, shared: &mut Shared) {
+    context.input_mut(|input| {
+        if input.consume_shortcut(&shared.config.keys.undo) {
+            utils::undo_redo(true, shared);
+        }
+        if input.consume_shortcut(&shared.config.keys.undo) {
+            utils::undo_redo(false, shared);
+        }
+
+        if input.consume_shortcut(&shared.config.keys.zoom_in_camera) {
+            ui::set_zoom(shared.camera.zoom + 10., shared);
+        }
+        if input.consume_shortcut(&shared.config.keys.zoom_out_camera) {
+            ui::set_zoom(shared.camera.zoom - 10., shared);
+        }
+
+        if input.consume_shortcut(&shared.config.keys.zoom_in_ui) {
+            shared.ui.scale += 0.01;
+        }
+        if input.consume_shortcut(&shared.config.keys.zoom_out_ui) {
+            shared.ui.scale -= 0.01;
+        }
+
+        if input.consume_shortcut(&shared.config.keys.save) {
+            #[cfg(target_arch = "wasm32")]
+            utils::save_web(&shared.armature);
+
+            #[cfg(not(target_arch = "wasm32"))]
+            utils::open_save_dialog(shared.temp_path.save.clone());
+            //if shared.save_path == "" {
+            //    utils::open_save_dialog();
+            //} else {
+            //    utils::save(shared.save_path.clone(), shared);
+            //}
+        }
+
+        if input.consume_shortcut(&shared.config.keys.open) {
+            #[cfg(not(target_arch = "wasm32"))]
+            utils::open_import_dialog(shared.temp_path.import.clone());
+            #[cfg(target_arch = "wasm32")]
+            toggleElement(true, "file-dialog".to_string());
+        }
+    });
 }
 
 fn top_panel(egui_ctx: &Context, shared: &mut Shared) {

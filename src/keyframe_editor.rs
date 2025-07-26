@@ -69,7 +69,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                     ui,
                     ui.ctx().screen_rect(),
                     egui::Color32::TRANSPARENT,
-                    shared.config.ui_colors.gradient.into()
+                    shared.config.ui_colors.gradient.into(),
                 );
                 shared.ui.camera_bar_pos.y = ui.min_rect().top();
 
@@ -482,8 +482,11 @@ pub fn draw_timeline_graph(
                             ui.min_rect().size() + right_bottom_rect,
                         );
 
-                        ui.painter()
-                            .rect_filled(rect_to_fill, 0., shared.config.ui_colors.dark_accent);
+                        ui.painter().rect_filled(
+                            rect_to_fill,
+                            0.,
+                            shared.config.ui_colors.dark_accent,
+                        );
                     }
 
                     draw_frame_lines(ui, shared, &bone_tops, hitbox, cursor);

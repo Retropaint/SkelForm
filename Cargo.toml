@@ -10,7 +10,7 @@ name = "skelform_lib"
 
 [dependencies]
 bytemuck = { version = "1.21.0", features = ["derive"] }
-egui = "0.32.0"
+egui = { version = "0.32.0", features=["serde"] }
 egui-wgpu = { version = "0.32.0", features = ["winit"] }
 egui_extras = { version = "0.32.0", features = ["image"] }
 serde = { version = "1.0.219", features = ["serde_derive"] } 
