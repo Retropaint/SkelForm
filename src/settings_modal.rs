@@ -7,7 +7,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
             corner_radius: 0.into(),
             fill: shared.config.ui_colors.main.into(),
             inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., shared.config.ui_colors.accent),
+            stroke: egui::Stroke::new(1., shared.config.ui_colors.light_accent),
             ..Default::default()
         })
         .show(ctx, |modal_ui| {
@@ -16,7 +16,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
 
             modal_ui.horizontal(|ui| {
                 egui::Frame::new()
-                    .fill(shared.config.ui_colors.accent.into())
+                    .fill(shared.config.ui_colors.dark_accent.into())
                     .show(ui, |ui| {
                         ui.set_width(100.);
                         ui.set_height(475.);
@@ -38,7 +38,6 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                     {
                         shared::SettingsState::General => general(ui, shared),
                         shared::SettingsState::Keyboard => keyboard(ui),
-                        _ => {}
                     });
                 })
             });
@@ -88,8 +87,8 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     #[rustfmt::skip]
     {
         color!("Main",      shared.config.ui_colors.main,      ui);
-        color!("Accent",    shared.config.ui_colors.accent,    ui);
-        color!("Border",    shared.config.ui_colors.border,    ui);
+        color!("Light Accent",    shared.config.ui_colors.light_accent,    ui);
+        color!("Dark Accent",    shared.config.ui_colors.dark_accent,    ui);
         color!("Text",      shared.config.ui_colors.text,      ui);
         color!("Frameline", shared.config.ui_colors.frameline, ui);
         color!("Gradient",  shared.config.ui_colors.gradient,  ui);
