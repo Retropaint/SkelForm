@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use crate::{config_path, shared, ui};
 use std::{fs, io::Write};
 
@@ -48,7 +50,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         .settings_state
                     {
                         shared::SettingsState::General => general(ui, shared),
-                        shared::SettingsState::Keyboard => keyboard(ui),
+                        shared::SettingsState::Keyboard => keyboard(ui, shared),
                     });
                 })
             });
@@ -98,15 +100,73 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
     #[rustfmt::skip]
     {
-        color!("Main",      shared.config.ui_colors.main,      ui);
-        color!("Light Accent",    shared.config.ui_colors.light_accent,    ui);
-        color!("Dark Accent",    shared.config.ui_colors.dark_accent,    ui);
-        color!("Text",      shared.config.ui_colors.text,      ui);
-        color!("Frameline", shared.config.ui_colors.frameline, ui);
-        color!("Gradient",  shared.config.ui_colors.gradient,  ui);
+        color!("Main",         shared.config.ui_colors.main,         ui);
+        color!("Light Accent", shared.config.ui_colors.light_accent, ui);
+        color!("Dark Accent",  shared.config.ui_colors.dark_accent,  ui);
+        color!("Text",         shared.config.ui_colors.text,         ui);
+        color!("Frameline",    shared.config.ui_colors.frameline,    ui);
+        color!("Gradient",     shared.config.ui_colors.gradient,     ui);
     };
 }
 
-fn keyboard(ui: &mut egui::Ui) {
+fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.heading("Keyboard");
+
+    macro_rules! dd_mod {
+        ($ui:expr, $modifier:expr, $field:expr) => {
+            $ui.selectable_value(&mut $field, $modifier, modifier_name($modifier));
+        };
+    }
+
+    macro_rules! key {
+        ($name:expr, $field:expr) => {
+            ui.horizontal(|ui| {
+                ui.label($name);
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button($field.logical_key.name()).clicked() {
+                        shared.ui.changing_key = $name.to_string();
+                    }
+
+                    egui::ComboBox::new($name.to_string() + "mod", "")
+                        .selected_text(modifier_name($field.modifiers))
+                        .show_ui(ui, |ui| {
+                            dd_mod!(ui, egui::Modifiers::COMMAND, $field.modifiers);
+                            dd_mod!(ui, egui::Modifiers::ALT, $field.modifiers);
+                            dd_mod!(ui, egui::Modifiers::SHIFT, $field.modifiers);
+                        })
+                        .response;
+
+                    // use shift-equivalent keys if the modifier is shift
+                    if $field.modifiers == egui::Modifiers::SHIFT {
+                        if $field.logical_key == egui::Key::Equals {
+                            $field.logical_key = egui::Key::Plus;
+                        }
+                    }
+                });
+            });
+
+            if shared.ui.changing_key == $name && shared.input.last_pressed != None {
+                $field.logical_key = shared.input.last_pressed.unwrap();
+            }
+        };
+    }
+
+    #[rustfmt::skip]
+    {
+        key!("Next Animation Frame",     shared.config.keys.next_anim_frame);
+        key!("Previous Animation Frame", shared.config.keys.prev_anim_frame);
+        key!("Zoom Camera In",           shared.config.keys.zoom_in_camera);
+        key!("Zoom Camera Out",          shared.config.keys.zoom_out_camera);
+    };
+}
+
+fn modifier_name(modifier: egui::Modifiers) -> String {
+    match modifier {
+        egui::Modifiers::COMMAND => "Ctrl/Command",
+        egui::Modifiers::ALT => "Alt/Option",
+        egui::Modifiers::SHIFT => "Shift",
+        egui::Modifiers::NONE => "None",
+        _ => "??",
+    }
+    .to_string()
 }
