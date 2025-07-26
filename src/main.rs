@@ -7,6 +7,7 @@ use std::{
     io::{Read, Write},
 };
 
+use skelform_lib::shared::config_path;
 use skelform_lib::shared::*;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -98,21 +99,19 @@ fn init_shared(shared: &mut Shared) {
     #[cfg(not(target_arch = "wasm32"))]
     {
         // import config
-        let config_path = directories_next::ProjectDirs::from("com", "retropaint", "skelform")
-            .map(|proj_dirs| proj_dirs.data_dir().join("config.json"))
-            .unwrap();
-        if config_path.exists() {
+        if config_path().exists() {
             let mut str = String::new();
-            std::fs::File::open(&config_path)
+            std::fs::File::open(&config_path())
                 .unwrap()
                 .read_to_string(&mut str)
                 .unwrap();
             shared.config = serde_json::from_str(&str).unwrap();
+            println!("{:?}", shared.config.ui_colors.main);
             first_time = false;
         } else {
             // save config
-            fs::create_dir_all(config_path.parent().unwrap()).unwrap();
-            let mut file = std::fs::File::create(&config_path).unwrap();
+            fs::create_dir_all(config_path().parent().unwrap()).unwrap();
+            let mut file = std::fs::File::create(&config_path()).unwrap();
             file.write_all(serde_json::to_string(&shared.config).unwrap().as_bytes())
                 .unwrap();
         }
