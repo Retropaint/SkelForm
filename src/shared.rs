@@ -333,6 +333,14 @@ pub enum UiState {
     SettingsModal,
 }
 
+
+#[derive(Clone, Default, PartialEq)]
+pub enum SettingsState {
+    #[default]
+    General,
+    Keyboard
+}
+
 #[derive(Clone, Default, PartialEq, Debug)]
 pub enum PolarId {
     #[default]
@@ -419,6 +427,8 @@ pub struct Ui {
 
     // determines if context menu should close on next click
     pub context_menu: ContextMenu,
+
+    pub settings_state: SettingsState,
 }
 
 impl Ui {
