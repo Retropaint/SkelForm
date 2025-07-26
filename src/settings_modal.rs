@@ -1,4 +1,5 @@
-use crate::{shared, ui};
+use crate::{shared, ui, config_path};
+use std::{fs, io::Write};
 
 pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
     egui::Modal::new("test".into())
@@ -56,6 +57,12 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             let (edited, val, _) = ui::float_input($id.to_string(), shared, $ui, $field.into(), 1.);
             if edited {
                 $field = val as u8;
+
+                // save config
+                fs::create_dir_all(config_path().parent().unwrap()).unwrap();
+                let mut file = std::fs::File::create(&config_path()).unwrap();
+                file.write_all(serde_json::to_string(&shared.config).unwrap().as_bytes())
+                    .unwrap();
             }
         };
     }
@@ -82,7 +89,7 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         color!("Border",    shared.config.ui_colors.border,    ui);
         color!("Text",      shared.config.ui_colors.text,      ui);
         color!("Frameline", shared.config.ui_colors.frameline, ui);
-        color!("Gradient",  shared.config.ui_colors.gradient,  ui);   
+        color!("Gradient",  shared.config.ui_colors.gradient,  ui);
     };
 }
 
