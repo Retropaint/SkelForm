@@ -64,11 +64,12 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
 fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     macro_rules! input {
         ($id:expr, $field:expr, $ui:expr) => {
-            let (edited, val, _) = ui::float_input($id.to_string(), shared, $ui, $field.into(), 1.);
-            if edited {
-                $field = val as u8;
-                crate::utils::save_config(&shared.config);
-            }
+            $ui.add(egui::DragValue::new(&mut $field).speed(0.1));
+            // let (edited, val, _) = ui::float_input($id.to_string(), shared, $ui, $field.into(), 1.);
+            // if edited {
+            //     $field = val as u8;
+            //     crate::utils::save_config(&shared.config);
+            // }
         };
     }
 
@@ -77,9 +78,9 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             $ui.horizontal(|ui| {
                 ui.label($title);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    input!($title.to_string() + "_r", $color.r, ui);
-                    input!($title.to_string() + "_g", $color.g, ui);
                     input!($title.to_string() + "_b", $color.b, ui);
+                    input!($title.to_string() + "_g", $color.g, ui);
+                    input!($title.to_string() + "_r", $color.r, ui);
                 });
             });
         };
