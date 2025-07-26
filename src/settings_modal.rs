@@ -16,7 +16,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
             modal_ui.horizontal(|ui| {
                 egui::Frame::new().fill(ui::COLOR_ACCENT).show(ui, |ui| {
                     ui.set_width(100.);
-                    ui.set_height(500.);
+                    ui.set_height(475.);
                     ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                         if ui.button("General").clicked() {
                             shared.ui.settings_state = shared::SettingsState::General;
@@ -28,7 +28,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                 });
                 egui::Frame::new().show(ui, |ui| {
                     ui.set_width(400.);
-                    ui.set_height(500.);
+                    ui.set_height(475.);
                     ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| match shared
                         .ui
                         .settings_state
@@ -38,6 +38,12 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         _ => {}
                     });
                 })
+            });
+
+            modal_ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui::button("Apply", ui).clicked() {
+                    shared.ui.set_state(shared::UiState::SettingsModal, false);
+                }
             })
         });
 }
