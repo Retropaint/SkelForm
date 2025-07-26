@@ -35,7 +35,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         .ui
                         .settings_state
                     {
-                        shared::SettingsState::General => general(ui),
+                        shared::SettingsState::General => general(ui, shared),
                         shared::SettingsState::Keyboard => keyboard(ui),
                         _ => {}
                     });
@@ -50,8 +50,40 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
         });
 }
 
-fn general(ui: &mut egui::Ui) {
-    ui.label("general");
+fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
+    macro_rules! input {
+        ($id:expr, $field:expr, $ui:expr) => {
+            let (edited, val, _) = ui::float_input($id.to_string(), shared, $ui, $field.into(), 1.);
+            if edited {
+                $field = val as u8;
+            }
+        };
+    }
+
+    macro_rules! color {
+        ($title:expr, $color:expr, $ui:expr) => {
+            $ui.horizontal(|ui| {
+                ui.label($title);
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    input!($title.to_string() + "_r", $color.r, ui);
+                    input!($title.to_string() + "_g", $color.g, ui);
+                    input!($title.to_string() + "_b", $color.b, ui);
+                });
+            });
+        };
+    }
+
+    ui.heading("Color");
+
+    #[rustfmt::skip]
+    {
+        color!("Main",      shared.config.ui_colors.main,      ui);
+        color!("Accent",    shared.config.ui_colors.accent,    ui);
+        color!("Border",    shared.config.ui_colors.border,    ui);
+        color!("Text",      shared.config.ui_colors.text,      ui);
+        color!("Frameline", shared.config.ui_colors.frameline, ui);
+        color!("Gradient",  shared.config.ui_colors.gradient,  ui);   
+    };
 }
 
 fn keyboard(ui: &mut egui::Ui) {

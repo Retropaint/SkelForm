@@ -3,12 +3,6 @@ use egui::{Color32, Context, Shadow, Stroke};
 
 use crate::*;
 
-macro_rules! ui_color {
-    ($name:ident, $r:expr, $g:expr, $b:expr) => {
-        pub const $name: Color32 = Color32::from_rgb($r, $g, $b);
-    };
-}
-
 const HELP_LIGHT_CANT: &str = "There is already an animation! Looks like you've figured it out.\n\nTo activate the help light, please start a new project.";
 
 const FFMPEG_ERR: &str =
