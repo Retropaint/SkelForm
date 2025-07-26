@@ -287,6 +287,7 @@ pub struct InputStates {
     pub on_ui: bool,
 
     pressed: Vec<KeyCode>,
+    pub last_pressed: Option<egui::Key>,
 }
 
 impl InputStates {
@@ -464,6 +465,8 @@ pub struct Ui {
     pub context_menu: ContextMenu,
 
     pub settings_state: SettingsState,
+
+    pub changing_key: String,
 }
 
 impl Ui {
@@ -710,8 +713,8 @@ impl Default for KeyboardConfig {
         KeyboardConfig {
             next_anim_frame: regular_key!(egui::Key::ArrowRight),
             prev_anim_frame: regular_key!(egui::Key::ArrowLeft),
-            zoom_in_camera: regular_key!(egui::Key::Minus),
-            zoom_out_camera: regular_key!(egui::Key::Equals),
+            zoom_in_camera: regular_key!(egui::Key::Equals),
+            zoom_out_camera: regular_key!(egui::Key::Minus),
             zoom_out_ui: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Minus),
             zoom_in_ui: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Equals),
             undo: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Z),
@@ -721,6 +724,23 @@ impl Default for KeyboardConfig {
             cancel: regular_key!(egui::Key::Escape),
         }
     }
+}
+
+#[derive(Clone, Default)]
+pub enum Keys {
+    #[default]
+    None,
+    NextAnimFrame,
+    PrevAnimFrame,
+    ZoomInCamera,
+    ZoomOutCamera,
+    ZoomOutUi,
+    ZoomInUi,
+    Undo,
+    Redo,
+    Save,
+    Open,
+    Cancel,
 }
 
 #[derive(Clone, Default)]

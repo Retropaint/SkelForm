@@ -12,6 +12,12 @@ const FFMPEG_ERR: &str =
 pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     kb_inputs(context, shared);
 
+    shared.input.last_pressed = None;
+
+    context.input(|i| {
+        shared.input.last_pressed = i.keys_down.iter().last().copied();
+    });
+
     context.input(|i| {
         shared.input.mouse_left_prev = shared.input.mouse_left;
         shared.input.mouse_right_prev = shared.input.mouse_right;
@@ -193,10 +199,10 @@ pub fn kb_inputs(context: &Context, shared: &mut Shared) {
         }
 
         if input.consume_shortcut(&shared.config.keys.zoom_in_camera) {
-            ui::set_zoom(shared.camera.zoom + 10., shared);
+            ui::set_zoom(shared.camera.zoom - 10., shared);
         }
         if input.consume_shortcut(&shared.config.keys.zoom_out_camera) {
-            ui::set_zoom(shared.camera.zoom - 10., shared);
+            ui::set_zoom(shared.camera.zoom + 10., shared);
         }
 
         if input.consume_shortcut(&shared.config.keys.zoom_in_ui) {
