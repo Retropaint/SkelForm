@@ -2,7 +2,7 @@
 
 use egui::Stroke;
 
-use ui::{TextInputOptions, COLOR_ACCENT};
+use ui::TextInputOptions;
 
 use crate::*;
 
@@ -69,7 +69,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                     ui,
                     ui.ctx().screen_rect(),
                     egui::Color32::TRANSPARENT,
-                    ui::COLOR_MAIN_DARK,
+                    shared.config.ui_colors.gradient.into()
                 );
                 shared.ui.camera_bar_pos.y = ui.min_rect().top();
 
@@ -257,8 +257,11 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
                     ui.cursor().left_top(),
                     egui::vec2(ui.available_width(), 20.),
                 );
-                ui.painter()
-                    .rect_filled(rect, egui::CornerRadius::ZERO, COLOR_ACCENT);
+                ui.painter().rect_filled(
+                    rect,
+                    egui::CornerRadius::ZERO,
+                    shared.config.ui_colors.accent,
+                );
 
                 if shared.ui.anim.lines_x.len() > 0 {
                     draw_top_bar(ui, shared, width, hitbox);
@@ -452,7 +455,7 @@ pub fn draw_timeline_graph(
 ) {
     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
         egui::Frame::new()
-            .fill(COLOR_ACCENT)
+            .fill(shared.config.ui_colors.accent.into())
             .inner_margin(3)
             .show(ui, |ui| {
                 let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
@@ -479,7 +482,8 @@ pub fn draw_timeline_graph(
                             ui.min_rect().size() + right_bottom_rect,
                         );
 
-                        ui.painter().rect_filled(rect_to_fill, 0., ui::COLOR_BORDER);
+                        ui.painter()
+                            .rect_filled(rect_to_fill, 0., shared.config.ui_colors.border);
                     }
 
                     draw_frame_lines(ui, shared, &bone_tops, hitbox, cursor);
@@ -498,7 +502,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             ui.painter_at(ui.min_rect()).rect_filled(
                 ui.min_rect(),
                 egui::CornerRadius::ZERO,
-                ui::COLOR_MAIN,
+                shared.config.ui_colors.main,
             );
 
             let play_str = if shared.ui.anim.playing {
@@ -512,7 +516,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     .add_sized(
                         [50., 20.],
                         egui::Button::new(play_str)
-                            .fill(COLOR_ACCENT)
+                            .fill(shared.config.ui_colors.accent)
                             .corner_radius(0.),
                     )
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
@@ -603,9 +607,10 @@ fn draw_frame_lines(
 
         shared.ui.anim.lines_x.push(x);
 
-        let mut color = ui::COLOR_FRAMELINE;
+        let mut color: egui::Color32 = shared.config.ui_colors.frameline.into();
         if shared.last_keyframe() != None && i > shared.last_keyframe().unwrap().frame {
-            color = ui::COLOR_FRAMELINE_PASTLAST;
+            color = shared.config.ui_colors.border.into();
+            color = color + egui::Color32::from_rgb(5, 5, 5);
         }
 
         let above_scrollbar = cursor.y < ui.min_rect().height() - 13.;
@@ -615,7 +620,7 @@ fn draw_frame_lines(
             color = egui::Color32::WHITE;
         } else if in_ui && cursor.x < x + hitbox && cursor.x > x - hitbox && above_scrollbar {
             shared.cursor_icon = egui::CursorIcon::PointingHand;
-            color = ui::COLOR_FRAMELINE_HOVERED;
+            color = egui::Color32::WHITE;
 
             // select this frame if clicked
             if shared.input.mouse_left == 0 {
