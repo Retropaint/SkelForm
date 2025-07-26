@@ -260,7 +260,7 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
                 ui.painter().rect_filled(
                     rect,
                     egui::CornerRadius::ZERO,
-                    shared.config.ui_colors.accent,
+                    shared.config.ui_colors.light_accent,
                 );
 
                 if shared.ui.anim.lines_x.len() > 0 {
@@ -455,7 +455,7 @@ pub fn draw_timeline_graph(
 ) {
     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
         egui::Frame::new()
-            .fill(shared.config.ui_colors.accent.into())
+            .fill(shared.config.ui_colors.light_accent.into())
             .inner_margin(3)
             .show(ui, |ui| {
                 let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
@@ -483,7 +483,7 @@ pub fn draw_timeline_graph(
                         );
 
                         ui.painter()
-                            .rect_filled(rect_to_fill, 0., shared.config.ui_colors.border);
+                            .rect_filled(rect_to_fill, 0., shared.config.ui_colors.dark_accent);
                     }
 
                     draw_frame_lines(ui, shared, &bone_tops, hitbox, cursor);
@@ -516,7 +516,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     .add_sized(
                         [50., 20.],
                         egui::Button::new(play_str)
-                            .fill(shared.config.ui_colors.accent)
+                            .fill(shared.config.ui_colors.light_accent)
                             .corner_radius(0.),
                     )
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
@@ -609,7 +609,7 @@ fn draw_frame_lines(
 
         let mut color: egui::Color32 = shared.config.ui_colors.frameline.into();
         if shared.last_keyframe() != None && i > shared.last_keyframe().unwrap().frame {
-            color = shared.config.ui_colors.border.into();
+            color = shared.config.ui_colors.dark_accent.into();
             color = color + egui::Color32::from_rgb(5, 5, 5);
         }
 

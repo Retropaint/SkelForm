@@ -444,7 +444,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
             inner_margin: margin.into(),
             stroke: Stroke {
                 width: 1.,
-                color: shared.config.ui_colors.border.into(),
+                color: shared.config.ui_colors.dark_accent.into(),
             },
             ..Default::default()
         })
@@ -495,17 +495,17 @@ pub fn default_styling(context: &Context, shared: &Shared) {
     visuals.window_shadow = Shadow::NONE;
     visuals.window_fill = shared.config.ui_colors.main.into();
     visuals.panel_fill = shared.config.ui_colors.main.into();
-    visuals.window_stroke = egui::Stroke::new(1., shared.config.ui_colors.border);
+    visuals.window_stroke = egui::Stroke::new(1., shared.config.ui_colors.dark_accent);
 
-    visuals.widgets.active.bg_fill = shared.config.ui_colors.border.into();
-    visuals.widgets.hovered.bg_fill = shared.config.ui_colors.border.into();
-    visuals.widgets.inactive.bg_fill = shared.config.ui_colors.border.into();
+    visuals.widgets.active.bg_fill = shared.config.ui_colors.dark_accent.into();
+    visuals.widgets.hovered.bg_fill = shared.config.ui_colors.dark_accent.into();
+    visuals.widgets.inactive.bg_fill = shared.config.ui_colors.dark_accent.into();
 
-    visuals.widgets.active.weak_bg_fill = shared.config.ui_colors.accent.into();
-    visuals.widgets.hovered.weak_bg_fill = shared.config.ui_colors.accent.into();
-    visuals.widgets.inactive.weak_bg_fill = shared.config.ui_colors.accent.into();
+    visuals.widgets.active.weak_bg_fill = shared.config.ui_colors.light_accent.into();
+    visuals.widgets.hovered.weak_bg_fill = shared.config.ui_colors.light_accent.into();
+    visuals.widgets.inactive.weak_bg_fill = shared.config.ui_colors.light_accent.into();
     visuals.widgets.noninteractive.bg_stroke =
-        egui::Stroke::new(1., shared.config.ui_colors.border);
+        egui::Stroke::new(1., shared.config.ui_colors.dark_accent);
 
     visuals.override_text_color = Some(shared.config.ui_colors.text.into());
 
@@ -548,7 +548,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             corner_radius: 0.into(),
             fill: shared.config.ui_colors.main.into(),
             inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., shared.config.ui_colors.accent),
+            stroke: egui::Stroke::new(1., shared.config.ui_colors.light_accent),
             ..Default::default()
         })
         .show(ctx, |ui| {
@@ -622,7 +622,7 @@ pub fn modal(shared: &mut Shared, ctx: &egui::Context) {
             corner_radius: 0.into(),
             fill: shared.config.ui_colors.main.into(),
             inner_margin: egui::Margin::same(8),
-            stroke: egui::Stroke::new(1., shared.config.ui_colors.accent),
+            stroke: egui::Stroke::new(1., shared.config.ui_colors.light_accent),
             ..Default::default()
         })
         .show(ctx, |ui| {
@@ -646,7 +646,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
             corner_radius: 0.into(),
             fill: shared.config.ui_colors.main.into(),
             inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., shared.config.ui_colors.accent),
+            stroke: egui::Stroke::new(1., shared.config.ui_colors.light_accent),
             ..Default::default()
         })
         .show(ctx, |ui| {
@@ -719,7 +719,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 ui.painter().rect_filled(
                     rect,
                     egui::CornerRadius::ZERO,
-                    shared.config.ui_colors.border,
+                    shared.config.ui_colors.dark_accent,
                 );
 
                 if response.hovered() {
@@ -844,7 +844,7 @@ pub fn top_bar_button(
         painter.rect_filled(
             rect,
             egui::CornerRadius::ZERO,
-            shared.config.ui_colors.accent,
+            shared.config.ui_colors.light_accent,
         );
     } else {
         painter.rect_filled(rect, egui::CornerRadius::ZERO, egui::Color32::TRANSPARENT);
