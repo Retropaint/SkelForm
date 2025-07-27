@@ -213,7 +213,7 @@ fn key(
 
                     if ui
                         .add_sized(
-                            [50., 20.],
+                            [120., 20.],
                             egui::Button::new(egui::RichText::new(button_str).color(text_color)),
                         )
                         .clicked()
