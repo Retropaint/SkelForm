@@ -159,7 +159,6 @@ pub fn read_image_loaders(
         tex_idx,
         anim_id,
         shared.ui.anim.selected_frame,
-        shared.ui.selected_bone_idx,
     );
 
     shared
@@ -307,7 +306,6 @@ pub fn read_psd(
             tex_idx,
             shared.ui.anim.selected,
             shared.ui.anim.selected_frame,
-            shared.ui.selected_bone_idx,
         );
         let new_bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
 

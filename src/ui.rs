@@ -847,7 +847,6 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                             i,
                             anim_id,
                             shared.ui.anim.selected_frame,
-                            shared.ui.selected_bone_idx,
                         );
                         shared.ui.set_state(UiState::ImageModal, false);
                     }
