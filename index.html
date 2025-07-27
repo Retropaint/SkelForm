@@ -204,7 +204,7 @@
             } 
 
             function saveFontScale() {
-                config.ui_scale = getUiSliderValue();
+                config.ui_scale = parseFloat(getUiSliderValue());
                 saveConfig(JSON.stringify(config));
             }
 
