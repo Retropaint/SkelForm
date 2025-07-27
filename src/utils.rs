@@ -13,6 +13,7 @@ pub use web::*;
 
 use image::ImageEncoder;
 
+use std::fs;
 use std::io::{Read, Write};
 
 #[cfg(target_arch = "wasm32")]
@@ -491,17 +492,35 @@ pub fn bin_path() -> String {
 }
 
 pub fn save_config(config: &Config) {
-    fs::create_dir_all(config_path().parent().unwrap()).unwrap();
-    let mut file = std::fs::File::create(&config_path()).unwrap();
-    file.write_all(serde_json::to_string(&config).unwrap().as_bytes())
-        .unwrap();
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        fs::create_dir_all(config_path().parent().unwrap()).unwrap();
+        let mut file = std::fs::File::create(&config_path()).unwrap();
+        file.write_all(serde_json::to_string(&config).unwrap().as_bytes())
+            .unwrap();
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        saveConfig(serde_json::to_string(config).unwrap());
+    }
 }
 
 pub fn import_config(shared: &mut Shared) {
-    let mut str = String::new();
-    std::fs::File::open(&config_path())
-        .unwrap()
-        .read_to_string(&mut str)
-        .unwrap();
-    shared.config = serde_json::from_str(&str).unwrap_or_default();
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let mut str = String::new();
+        std::fs::File::open(&config_path())
+            .unwrap()
+            .read_to_string(&mut str)
+            .unwrap();
+        shared.config = serde_json::from_str(&str).unwrap_or_default();
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        // import config (web)
+        if let Ok(data) = serde_json::from_str(&getConfig()) {
+            shared.config = data;
+        }
+    }
 }
