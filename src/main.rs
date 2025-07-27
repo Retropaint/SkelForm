@@ -110,16 +110,8 @@ fn init_shared(shared: &mut Shared) {
     }
     #[cfg(target_arch = "wasm32")]
     {
-        // import config (web)
-        if let Ok(data) = serde_json::from_str(&skelform_lib::getConfig()) {
-            shared.config = data;
-            first_time = false;
-        }
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        skelform_lib::saveConfig(serde_json::to_string(&shared.config).unwrap());
+        skelform_lib::utils::import_config(shared);
+        skelform_lib::utils::save_config(&shared.config);
     }
 
     if first_time {
