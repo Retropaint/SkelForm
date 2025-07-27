@@ -514,11 +514,13 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 "Play"
             };
 
+            let play_text = egui::RichText::new(play_str).color(shared.config.ui_colors.text);
+
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
                 let button = ui
                     .add_sized(
                         [50., 20.],
-                        egui::Button::new(play_str)
+                        egui::Button::new(play_text)
                             .fill(shared.config.ui_colors.light_accent)
                             .corner_radius(0.),
                     )

@@ -118,7 +118,7 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         ui.heading("Color");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.button("Reset").clicked() {
+            if ui::button("Reset", ui).clicked() {
                 shared.config.ui_colors = crate::ColorConfig::default();
             }
         });
@@ -139,7 +139,7 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         ui.heading("Keyboard");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.button("Reset").clicked() {
+            if ui::button("Reset", ui).clicked() {
                 shared.config.keys = crate::KeyboardConfig::default();
             }
         });
@@ -154,6 +154,7 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
                 &mut shared.ui.changing_key,
                 &shared.input.last_pressed,
                 $color,
+                shared.config.ui_colors.text,
             );
         };
     }
@@ -182,10 +183,15 @@ fn key(
     changing_key: &mut String,
     last_pressed: &Option<egui::Key>,
     color: shared::Color,
+    text_color: shared::Color,
 ) {
     macro_rules! dd_mod {
         ($ui:expr, $modifier:expr, $field:expr) => {
-            $ui.selectable_value(&mut $field, $modifier, modifier_name($modifier));
+            $ui.selectable_value(
+                &mut $field,
+                $modifier,
+                egui::RichText::new(modifier_name($modifier)).color(text_color),
+            );
         };
     }
 
@@ -206,14 +212,19 @@ fn key(
                     };
 
                     if ui
-                        .add_sized([50., 20.], egui::Button::new(button_str))
+                        .add_sized(
+                            [50., 20.],
+                            egui::Button::new(egui::RichText::new(button_str).color(text_color)),
+                        )
                         .clicked()
                     {
                         *changing_key = name.to_string();
                     }
 
                     egui::ComboBox::new(name.to_string() + "mod", "")
-                        .selected_text(modifier_name(field.modifiers))
+                        .selected_text(
+                            egui::RichText::new(modifier_name(field.modifiers)).color(text_color),
+                        )
                         .show_ui(ui, |ui| {
                             dd_mod!(ui, egui::Modifiers::COMMAND, field.modifiers);
                             dd_mod!(ui, egui::Modifiers::ALT, field.modifiers);
