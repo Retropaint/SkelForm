@@ -180,6 +180,26 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     ui,
                 );
 
+                if button.secondary_clicked() {
+                    shared.ui.context_menu.show(ContextType::Bone, idx as i32);
+                }
+
+                if shared.ui.context_menu.is(ContextType::Bone, idx as i32) {
+                    button.show_tooltip_ui(|ui| {
+                        if crate::ui::clickable_label(ui, "Delete").clicked() {
+                            shared.ui.open_polar_modal(
+                                PolarId::DeleteBone,
+                                "Are you sure to delete this bone?",
+                            );
+                            shared.ui.context_menu.hide = true;
+                        };
+
+                        if ui.ui_contains_pointer() {
+                            shared.ui.context_menu.keep = true;
+                        }
+                    });
+                }
+
                 // highlight this bone if it's the first and is not selected during the tutorial
                 if idx == 0 {
                     ui_mod::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
