@@ -76,32 +76,41 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     }
 
     macro_rules! color {
-        ($title:expr, $color:expr, $ui:expr) => {
+        ($title:expr, $color:expr, $bg_color:expr, $ui:expr) => {
             $ui.horizontal(|ui| {
-                ui.label($title);
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    // hex input
-                    let color32: egui::Color32 = $color.into();
-                    let (edited, val, _) = ui::text_input(
-                        $title.to_string() + "_hex",
-                        shared,
-                        ui,
-                        color32.to_hex().to_string()[..7].to_string(),
-                        Some(ui::TextInputOptions {
-                            size: shared::Vec2::new(60., 20.),
-                            ..Default::default()
-                        }),
-                    );
-                    if edited {
-                        $color = egui::Color32::from_hex(&(val + "ff"))
-                            .unwrap_or_default()
-                            .into();
-                    }
+                egui::Frame::show(
+                    egui::Frame {
+                        fill: $bg_color.into(),
+                        ..Default::default()
+                    },
+                    ui,
+                    |ui| {
+                        ui.label($title);
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            // hex input
+                            let color32: egui::Color32 = $color.into();
+                            let (edited, val, _) = ui::text_input(
+                                $title.to_string() + "_hex",
+                                shared,
+                                ui,
+                                color32.to_hex().to_string()[..7].to_string(),
+                                Some(ui::TextInputOptions {
+                                    size: shared::Vec2::new(60., 20.),
+                                    ..Default::default()
+                                }),
+                            );
+                            if edited {
+                                $color = egui::Color32::from_hex(&(val + "ff"))
+                                    .unwrap_or_default()
+                                    .into();
+                            }
 
-                    drag_value!($title.to_string() + "_b", $color.b, ui);
-                    drag_value!($title.to_string() + "_g", $color.g, ui);
-                    drag_value!($title.to_string() + "_r", $color.r, ui);
-                });
+                            drag_value!($title.to_string() + "_b", $color.b, ui);
+                            drag_value!($title.to_string() + "_g", $color.g, ui);
+                            drag_value!($title.to_string() + "_r", $color.r, ui);
+                        });
+                    },
+                );
             });
         };
     }
@@ -117,12 +126,12 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
     #[rustfmt::skip]
     {
-        color!("Main",         shared.config.ui_colors.main,         ui);
-        color!("Light Accent", shared.config.ui_colors.light_accent, ui);
-        color!("Dark Accent",  shared.config.ui_colors.dark_accent,  ui);
-        color!("Text",         shared.config.ui_colors.text,         ui);
-        color!("Frameline",    shared.config.ui_colors.frameline,    ui);
-        color!("Gradient",     shared.config.ui_colors.gradient,     ui);
+        color!("Main",         shared.config.ui_colors.main,         shared.config.ui_colors.dark_accent, ui);
+        color!("Light Accent", shared.config.ui_colors.light_accent, shared.config.ui_colors.main, ui);
+        color!("Dark Accent",  shared.config.ui_colors.dark_accent,  shared.config.ui_colors.dark_accent, ui);
+        color!("Text",         shared.config.ui_colors.text,         shared.config.ui_colors.main, ui);
+        color!("Frameline",    shared.config.ui_colors.frameline,    shared.config.ui_colors.dark_accent, ui);
+        color!("Gradient",     shared.config.ui_colors.gradient,     shared.config.ui_colors.main, ui);
     };
 }
 
@@ -137,28 +146,32 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     });
 
     macro_rules! key {
-        ($label:expr, $field:expr) => {
+        ($label:expr, $field:expr, $color:expr) => {
             key(
                 $label,
                 &mut $field,
                 ui,
                 &mut shared.ui.changing_key,
                 &shared.input.last_pressed,
+                $color,
             );
         };
     }
 
+    let keys = &mut shared.config.keys;
+    let colors = &shared.config.ui_colors;
+
     #[rustfmt::skip]
     {
-        key!("Next Animation Frame",     shared.config.keys.next_anim_frame);
-        key!("Previous Animation Frame", shared.config.keys.prev_anim_frame);
-        key!("Zoom Camera In",           shared.config.keys.zoom_in_camera);
-        key!("Zoom Camera Out",          shared.config.keys.zoom_out_camera);
-        key!("Undo",                     shared.config.keys.undo);
-        key!("Redo",                     shared.config.keys.redo);
-        key!("Save",                     shared.config.keys.save);
-        key!("Open",                     shared.config.keys.open);
-        key!("Cancel",                   shared.config.keys.cancel);
+        key!("Next Animation Frame",     keys.next_anim_frame, colors.dark_accent);
+        key!("Previous Animation Frame", keys.prev_anim_frame, colors.main);
+        key!("Zoom Camera In",           keys.zoom_in_camera,  colors.dark_accent);
+        key!("Zoom Camera Out",          keys.zoom_out_camera, colors.main);
+        key!("Undo",                     keys.undo,            colors.dark_accent);
+        key!("Redo",                     keys.redo,            colors.main);
+        key!("Save",                     keys.save,            colors.dark_accent);
+        key!("Open",                     keys.open,            colors.main);
+        key!("Cancel",                   keys.cancel,          colors.dark_accent);
     };
 }
 
@@ -168,6 +181,7 @@ fn key(
     ui: &mut egui::Ui,
     changing_key: &mut String,
     last_pressed: &Option<egui::Key>,
+    color: shared::Color,
 ) {
     macro_rules! dd_mod {
         ($ui:expr, $modifier:expr, $field:expr) => {
@@ -176,37 +190,46 @@ fn key(
     }
 
     ui.horizontal(|ui| {
-        ui.label(name);
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let button_str = if changing_key == name {
-                "..."
-            } else {
-                field.logical_key.name()
-            };
+        egui::Frame::show(
+            egui::Frame {
+                fill: color.into(),
+                ..Default::default()
+            },
+            ui,
+            |ui| {
+                ui.label(name);
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let button_str = if changing_key == name {
+                        "..."
+                    } else {
+                        field.logical_key.name()
+                    };
 
-            if ui
-                .add_sized([50., 20.], egui::Button::new(button_str))
-                .clicked()
-            {
-                *changing_key = name.to_string();
-            }
+                    if ui
+                        .add_sized([50., 20.], egui::Button::new(button_str))
+                        .clicked()
+                    {
+                        *changing_key = name.to_string();
+                    }
 
-            egui::ComboBox::new(name.to_string() + "mod", "")
-                .selected_text(modifier_name(field.modifiers))
-                .show_ui(ui, |ui| {
-                    dd_mod!(ui, egui::Modifiers::COMMAND, field.modifiers);
-                    dd_mod!(ui, egui::Modifiers::ALT, field.modifiers);
-                    dd_mod!(ui, egui::Modifiers::SHIFT, field.modifiers);
-                })
-                .response;
+                    egui::ComboBox::new(name.to_string() + "mod", "")
+                        .selected_text(modifier_name(field.modifiers))
+                        .show_ui(ui, |ui| {
+                            dd_mod!(ui, egui::Modifiers::COMMAND, field.modifiers);
+                            dd_mod!(ui, egui::Modifiers::ALT, field.modifiers);
+                            dd_mod!(ui, egui::Modifiers::SHIFT, field.modifiers);
+                        })
+                        .response;
 
-            // use shift-equivalent keys if the modifier is shift
-            if field.modifiers == egui::Modifiers::SHIFT {
-                if field.logical_key == egui::Key::Equals {
-                    field.logical_key = egui::Key::Plus;
-                }
-            }
-        });
+                    // use shift-equivalent keys if the modifier is shift
+                    if field.modifiers == egui::Modifiers::SHIFT {
+                        if field.logical_key == egui::Key::Equals {
+                            field.logical_key = egui::Key::Plus;
+                        }
+                    }
+                });
+            },
+        );
     });
 
     if changing_key == name && *last_pressed != None {
