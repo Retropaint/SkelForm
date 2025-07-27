@@ -19,7 +19,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
             #[cfg(target_arch = "wasm32")]
             {
                 scale = shared::Vec2::new(0.5 / shared.ui.scale, 0.5 / shared.ui.scale);
-                scale.x *= 2.;
+                scale.x *= 1.5;
             }
 
             modal_ui.set_width(500. * scale.x);
