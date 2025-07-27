@@ -226,6 +226,7 @@ fn key(
                             egui::RichText::new(modifier_name(field.modifiers)).color(text_color),
                         )
                         .show_ui(ui, |ui| {
+                            dd_mod!(ui, egui::Modifiers::NONE, field.modifiers);
                             dd_mod!(ui, egui::Modifiers::COMMAND, field.modifiers);
                             dd_mod!(ui, egui::Modifiers::ALT, field.modifiers);
                             dd_mod!(ui, egui::Modifiers::SHIFT, field.modifiers);
