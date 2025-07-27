@@ -1,7 +1,4 @@
-use serde::Serialize;
-
 use crate::{shared, ui};
-use std::{fs, io::Write};
 
 pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
     egui::Modal::new("test".into())
@@ -14,12 +11,16 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
         })
         .show(ctx, |modal_ui| {
             #[allow(unused_mut)]
-            let mut scale = shared::Vec2::new(1., 1.);
+            let mut scale: shared::Vec2;
 
             #[cfg(target_arch = "wasm32")]
             {
                 scale = shared::Vec2::new(0.5 / shared.ui.scale, 0.5 / shared.ui.scale);
                 scale.x *= 1.5;
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                scale = shared::Vec2::new(1., 1.);
             }
 
             modal_ui.set_width(500. * scale.x);

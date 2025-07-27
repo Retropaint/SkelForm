@@ -2,11 +2,6 @@
 
 #![windows_subsystem = "windows"]
 
-use std::{
-    fs,
-    io::{Read, Write},
-};
-
 #[cfg(not(target_arch = "wasm32"))]
 use skelform_lib::shared::config_path;
 
@@ -97,13 +92,12 @@ fn init_shared(shared: &mut Shared) {
         export_vid_done: base_path.clone() + "export_vid_done",
     };
 
-    let mut first_time = true;
+    let first_time = false;
     #[cfg(not(target_arch = "wasm32"))]
     {
         // import config
         if config_path().exists() {
             skelform_lib::utils::import_config(shared);
-            first_time = false;
         } else {
             skelform_lib::utils::save_config(&shared.config);
         }
@@ -112,7 +106,6 @@ fn init_shared(shared: &mut Shared) {
     {
         skelform_lib::utils::import_config(shared);
         skelform_lib::utils::save_config(&shared.config);
-
         skelform_lib::updateUiSlider();
 
         if shared.config.ui_scale == 1. {

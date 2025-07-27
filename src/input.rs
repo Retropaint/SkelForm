@@ -2,8 +2,6 @@
 
 use crate::*;
 
-use winit::keyboard::*;
-
 pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
     if shared.input.on_ui {
         return;

@@ -13,7 +13,6 @@ pub use web::*;
 
 use image::ImageEncoder;
 
-use std::fs;
 use std::io::{Read, Write};
 
 #[cfg(target_arch = "wasm32")]
