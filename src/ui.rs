@@ -199,7 +199,7 @@ pub fn kb_inputs(context: &Context, shared: &mut Shared) {
         }
 
         if input.consume_shortcut(&shared.config.keys.zoom_in_camera) {
-            ui::set_zoom(shared.camera.zoom - 10., shared);
+            ui::set_zoom(shared.camera.zoom + 10., shared);
         }
         if input.consume_shortcut(&shared.config.keys.zoom_out_camera) {
             ui::set_zoom(shared.camera.zoom + 10., shared);
@@ -230,6 +230,21 @@ pub fn kb_inputs(context: &Context, shared: &mut Shared) {
             utils::open_import_dialog(shared.temp_path.import.clone());
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
+        }
+
+        if input.consume_shortcut(&shared.config.keys.cancel) {
+            #[cfg(target_arch = "wasm32")]
+            {
+                toggleElement(false, "image-dialog".to_string());
+                toggleElement(false, "file-dialog".to_string());
+                toggleElement(false, "ui-slider".to_string());
+            }
+
+            shared.ui.set_state(UiState::ImageModal, false);
+            shared.ui.set_state(UiState::Modal, false);
+            shared.ui.set_state(UiState::PolarModal, false);
+            shared.ui.set_state(UiState::ForcedModal, false);
+            shared.ui.set_state(UiState::SettingsModal, false);
         }
     });
 }

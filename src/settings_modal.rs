@@ -80,7 +80,6 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             $ui.horizontal(|ui| {
                 ui.label($title);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-
                     // hex input
                     let color32: egui::Color32 = $color.into();
                     let (edited, val, _) = ui::text_input(
@@ -155,6 +154,11 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         key!("Previous Animation Frame", shared.config.keys.prev_anim_frame);
         key!("Zoom Camera In",           shared.config.keys.zoom_in_camera);
         key!("Zoom Camera Out",          shared.config.keys.zoom_out_camera);
+        key!("Undo",                     shared.config.keys.undo);
+        key!("Redo",                     shared.config.keys.redo);
+        key!("Save",                     shared.config.keys.save);
+        key!("Open",                     shared.config.keys.open);
+        key!("Cancel",                   shared.config.keys.cancel);
     };
 }
 
