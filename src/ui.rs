@@ -276,14 +276,20 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 menu_edit_button(ui, shared);
                 menu_view_button(ui, shared);
 
-                ui.menu_button("Settings", |ui| {
+                macro_rules! title {
+                    ($title:expr) => {
+                        egui::RichText::new($title).color(shared.config.ui_colors.text)
+                    };
+                }
+
+                ui.menu_button(title!("Settings"), |ui| {
                     ui.set_width(100.);
                     if top_bar_button(ui, "Manage", "", &mut offset, shared).clicked() {
                         shared.ui.set_state(UiState::SettingsModal, true);
                     }
                 });
 
-                ui.menu_button("Help", |ui| {
+                ui.menu_button(title!("Help"), |ui| {
                     ui.set_width(100.);
                     let str = if !shared.ui.tutorial_step_is(TutorialStep::None) {
                         "Stop Help Light"
@@ -329,7 +335,8 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
 
 fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
-    ui.menu_button("File", |ui| {
+    let title = egui::RichText::new("File").color(shared.config.ui_colors.text);
+    ui.menu_button(title, |ui| {
         ui.set_width(125.);
         if top_bar_button(ui, "Open", "O", &mut offset, shared).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
@@ -403,7 +410,8 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
 
 fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
-    ui.menu_button("View", |ui| {
+    let title = egui::RichText::new("View").color(shared.config.ui_colors.text);
+    ui.menu_button(title, |ui| {
         ui.set_width(125.);
         if top_bar_button(ui, "Zoom In", "=", &mut offset, shared).clicked() {
             set_zoom(shared.camera.zoom - 10., shared);
@@ -431,7 +439,8 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
 
 fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
-    ui.menu_button("Edit", |ui| {
+    let title = egui::RichText::new("Edit").color(shared.config.ui_colors.text);
+    ui.menu_button(title, |ui| {
         ui.set_width(90.);
         if top_bar_button(ui, "Undo", "Mod + Z", &mut offset, shared).clicked() {
             utils::undo_redo(true, shared);
@@ -568,6 +577,11 @@ pub fn default_styling(context: &Context, shared: &Shared) {
     visuals.widgets.active.bg_fill = shared.config.ui_colors.dark_accent.into();
     visuals.widgets.hovered.bg_fill = shared.config.ui_colors.dark_accent.into();
     visuals.widgets.inactive.bg_fill = shared.config.ui_colors.dark_accent.into();
+    visuals.widgets.noninteractive.bg_fill = shared.config.ui_colors.dark_accent.into();
+    visuals.widgets.open.bg_fill = shared.config.ui_colors.dark_accent.into();
+    visuals.widgets.open.weak_bg_fill = shared.config.ui_colors.dark_accent.into();
+    visuals.widgets.open.bg_stroke = egui::Stroke::new(1., shared.config.ui_colors.dark_accent);
+    visuals.widgets.open.fg_stroke = egui::Stroke::new(1., shared.config.ui_colors.dark_accent);
 
     visuals.widgets.active.weak_bg_fill = shared.config.ui_colors.light_accent.into();
     visuals.widgets.hovered.weak_bg_fill = shared.config.ui_colors.light_accent.into();
@@ -576,6 +590,11 @@ pub fn default_styling(context: &Context, shared: &Shared) {
         egui::Stroke::new(1., shared.config.ui_colors.dark_accent);
 
     visuals.override_text_color = Some(shared.config.ui_colors.text.into());
+    visuals.weak_text_color = Some(shared.config.ui_colors.text.into());
+
+    visuals.widgets.noninteractive.bg_fill = shared.config.ui_colors.text.into();
+    visuals.widgets.noninteractive.weak_bg_fill = shared.config.ui_colors.text.into();
+    visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(1., shared.config.ui_colors.text);
 
     context.set_visuals(visuals);
 }
@@ -926,7 +945,7 @@ pub fn top_bar_button(
         egui::Align2::LEFT_TOP,
         text,
         font.clone(),
-        egui::Color32::GRAY,
+        shared.config.ui_colors.text.into(),
     );
 
     let kb_font = egui::FontId::new(9., egui::FontFamily::Proportional);
