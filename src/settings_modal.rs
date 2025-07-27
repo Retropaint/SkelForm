@@ -85,9 +85,9 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         };
     }
 
-    macro_rules! color {
-        ($title:expr, $color:expr, $bg_color:expr, $ui:expr) => {
-            $ui.horizontal(|ui| {
+    macro_rules! color_row {
+        ($title:expr, $color:expr, $bg_color:expr) => {
+            ui.horizontal(|ui| {
                 egui::Frame::show(
                     egui::Frame {
                         fill: $bg_color.into(),
@@ -134,14 +134,20 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         });
     });
 
+    macro_rules! col {
+        () => {
+            &mut shared.config.ui_colors
+        };
+    }
+
     #[rustfmt::skip]
     {
-        color!("Main",         shared.config.ui_colors.main,         shared.config.ui_colors.dark_accent, ui);
-        color!("Light Accent", shared.config.ui_colors.light_accent, shared.config.ui_colors.main,        ui);
-        color!("Dark Accent",  shared.config.ui_colors.dark_accent,  shared.config.ui_colors.dark_accent, ui);
-        color!("Text",         shared.config.ui_colors.text,         shared.config.ui_colors.main,        ui);
-        color!("Frameline",    shared.config.ui_colors.frameline,    shared.config.ui_colors.dark_accent, ui);
-        color!("Gradient",     shared.config.ui_colors.gradient,     shared.config.ui_colors.main,        ui);
+        color_row!("Main",         col!().main,         col!().dark_accent);
+        color_row!("Light Accent", col!().light_accent, col!().main       );
+        color_row!("Dark Accent",  col!().dark_accent,  col!().dark_accent);
+        color_row!("Text",         col!().text,         col!().main       );
+        color_row!("Frameline",    col!().frameline,    col!().dark_accent);
+        color_row!("Gradient",     col!().gradient,     col!().main       );
     };
 }
 
