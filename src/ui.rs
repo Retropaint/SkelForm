@@ -199,7 +199,7 @@ pub fn kb_inputs(context: &Context, shared: &mut Shared) {
         }
 
         if input.consume_shortcut(&shared.config.keys.zoom_in_camera) {
-            ui::set_zoom(shared.camera.zoom + 10., shared);
+            ui::set_zoom(shared.camera.zoom - 10., shared);
         }
         if input.consume_shortcut(&shared.config.keys.zoom_out_camera) {
             ui::set_zoom(shared.camera.zoom + 10., shared);
