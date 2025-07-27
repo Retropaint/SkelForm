@@ -392,6 +392,7 @@ pub enum ContextType {
     #[default]
     None,
     Animation,
+    Bone,
 }
 
 #[derive(Clone, Default)]
