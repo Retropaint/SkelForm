@@ -121,14 +121,14 @@
                 >Cancel</label>
         </div>
 
-        <div id="ui-slider" class="modal ui-slider">
+        <div id="ui-slider" class="modal ui-slider"  style="visibility: hidden">
             <div class="box">
                 <p>
                     Use the slider below to adjust the UI scale.
                 </p>
                 <div class="horizontal">
-                    <input id="ui-slider-input" type="range" min="0" max="5" step="0.01"></input>
-                    <label class="button" onclick="toggleElement(false, 'ui-slider'); saveFontScale()">Done</label>
+                    <input id="ui-slider-input" type="range" min="0" max="2.5" step="0.01"></input>
+                    <label class="button" onclick="saveFontScale(); toggleElement(false, 'ui-slider');">Done</label>
                 </div>
             </div>
         </div>
@@ -197,6 +197,12 @@
             function toggleElement(open, id) {
                 let str = open ? "visible" : "hidden";
                 document.getElementById(id).style.visibility = str;
+                updateUiSlider();
+            }
+
+            async function updateUiSlider() {
+                await loadConfig();
+                document.getElementById("ui-slider-input").value = config.ui_scale;
             }
 
             function isModalActive(id) {

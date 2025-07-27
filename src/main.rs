@@ -112,6 +112,12 @@ fn init_shared(shared: &mut Shared) {
     {
         skelform_lib::utils::import_config(shared);
         skelform_lib::utils::save_config(&shared.config);
+
+        skelform_lib::updateUiSlider();
+
+        if shared.config.ui_scale == 1. {
+            skelform_lib::toggleElement(true, "ui-slider".to_string());
+        }
     }
 
     if first_time {

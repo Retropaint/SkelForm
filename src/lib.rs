@@ -64,6 +64,7 @@ extern "C" {
     pub fn loaded();
     pub fn focusEditInput();
     pub fn openDocumentation(docs_name: String);
+    pub fn updateUiSlider();
 }
 
 #[derive(Default)]
