@@ -69,13 +69,9 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
 }
 
 fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
-    macro_rules! input {
+    macro_rules! drag_value {
         ($id:expr, $field:expr, $ui:expr) => {
             $ui.add(egui::DragValue::new(&mut $field).speed(0.1));
-            // let (edited, val, _) = ui::float_input($id.to_string(), shared, $ui, $field.into(), 1.);
-            // if edited {
-            //     $field = val as u8;
-            // }
         };
     }
 
@@ -84,9 +80,28 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             $ui.horizontal(|ui| {
                 ui.label($title);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    input!($title.to_string() + "_b", $color.b, ui);
-                    input!($title.to_string() + "_g", $color.g, ui);
-                    input!($title.to_string() + "_r", $color.r, ui);
+
+                    // hex input
+                    let color32: egui::Color32 = $color.into();
+                    let (edited, val, _) = ui::text_input(
+                        $title.to_string() + "_hex",
+                        shared,
+                        ui,
+                        color32.to_hex().to_string()[..7].to_string(),
+                        Some(ui::TextInputOptions {
+                            size: shared::Vec2::new(60., 20.),
+                            ..Default::default()
+                        }),
+                    );
+                    if edited {
+                        $color = egui::Color32::from_hex(&(val + "ff"))
+                            .unwrap_or_default()
+                            .into();
+                    }
+
+                    drag_value!($title.to_string() + "_b", $color.b, ui);
+                    drag_value!($title.to_string() + "_g", $color.g, ui);
+                    drag_value!($title.to_string() + "_r", $color.r, ui);
                 });
             });
         };
