@@ -110,9 +110,9 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
                                 }),
                             );
                             if edited {
-                                $color = egui::Color32::from_hex(&(val + "ff"))
-                                    .unwrap_or_default()
-                                    .into();
+                                if let Ok(data) = egui::Color32::from_hex(&(val + "ff")) {
+                                    $color = data.into()
+                                }
                             }
 
                             drag_value!($title.to_string() + "_b", $color.b, ui);
