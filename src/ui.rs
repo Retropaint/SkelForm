@@ -10,15 +10,14 @@ const FFMPEG_ERR: &str =
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
-    kb_inputs(context, shared);
-
     shared.input.last_pressed = None;
 
-    context.input(|i| {
+    context.input_mut(|i| {
+        kb_inputs(i, shared);
         shared.input.last_pressed = i.keys_down.iter().last().copied();
-    });
 
-    context.input(|i| {
+        // process mouse inputs
+
         shared.input.mouse_left_prev = shared.input.mouse_left;
         shared.input.mouse_right_prev = shared.input.mouse_right;
         if i.pointer.primary_down() {
@@ -189,64 +188,62 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     }
 }
 
-pub fn kb_inputs(context: &Context, shared: &mut Shared) {
-    context.input_mut(|input| {
-        if input.consume_shortcut(&shared.config.keys.undo) {
-            utils::undo_redo(true, shared);
-        }
-        if input.consume_shortcut(&shared.config.keys.undo) {
-            utils::undo_redo(false, shared);
+pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
+    if input.consume_shortcut(&shared.config.keys.undo) {
+        utils::undo_redo(true, shared);
+    }
+    if input.consume_shortcut(&shared.config.keys.undo) {
+        utils::undo_redo(false, shared);
+    }
+
+    if input.consume_shortcut(&shared.config.keys.zoom_in_camera) {
+        ui::set_zoom(shared.camera.zoom - 10., shared);
+    }
+    if input.consume_shortcut(&shared.config.keys.zoom_out_camera) {
+        ui::set_zoom(shared.camera.zoom + 10., shared);
+    }
+
+    if input.consume_shortcut(&shared.config.keys.zoom_in_ui) {
+        shared.ui.scale += 0.01;
+    }
+    if input.consume_shortcut(&shared.config.keys.zoom_out_ui) {
+        shared.ui.scale -= 0.01;
+    }
+
+    if input.consume_shortcut(&shared.config.keys.save) {
+        #[cfg(target_arch = "wasm32")]
+        utils::save_web(&shared.armature);
+
+        #[cfg(not(target_arch = "wasm32"))]
+        utils::open_save_dialog(shared.temp_path.save.clone());
+        //if shared.save_path == "" {
+        //    utils::open_save_dialog();
+        //} else {
+        //    utils::save(shared.save_path.clone(), shared);
+        //}
+    }
+
+    if input.consume_shortcut(&shared.config.keys.open) {
+        #[cfg(not(target_arch = "wasm32"))]
+        utils::open_import_dialog(shared.temp_path.import.clone());
+        #[cfg(target_arch = "wasm32")]
+        toggleElement(true, "file-dialog".to_string());
+    }
+
+    if input.consume_shortcut(&shared.config.keys.cancel) {
+        #[cfg(target_arch = "wasm32")]
+        {
+            toggleElement(false, "image-dialog".to_string());
+            toggleElement(false, "file-dialog".to_string());
+            toggleElement(false, "ui-slider".to_string());
         }
 
-        if input.consume_shortcut(&shared.config.keys.zoom_in_camera) {
-            ui::set_zoom(shared.camera.zoom - 10., shared);
-        }
-        if input.consume_shortcut(&shared.config.keys.zoom_out_camera) {
-            ui::set_zoom(shared.camera.zoom + 10., shared);
-        }
-
-        if input.consume_shortcut(&shared.config.keys.zoom_in_ui) {
-            shared.ui.scale += 0.01;
-        }
-        if input.consume_shortcut(&shared.config.keys.zoom_out_ui) {
-            shared.ui.scale -= 0.01;
-        }
-
-        if input.consume_shortcut(&shared.config.keys.save) {
-            #[cfg(target_arch = "wasm32")]
-            utils::save_web(&shared.armature);
-
-            #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(shared.temp_path.save.clone());
-            //if shared.save_path == "" {
-            //    utils::open_save_dialog();
-            //} else {
-            //    utils::save(shared.save_path.clone(), shared);
-            //}
-        }
-
-        if input.consume_shortcut(&shared.config.keys.open) {
-            #[cfg(not(target_arch = "wasm32"))]
-            utils::open_import_dialog(shared.temp_path.import.clone());
-            #[cfg(target_arch = "wasm32")]
-            toggleElement(true, "file-dialog".to_string());
-        }
-
-        if input.consume_shortcut(&shared.config.keys.cancel) {
-            #[cfg(target_arch = "wasm32")]
-            {
-                toggleElement(false, "image-dialog".to_string());
-                toggleElement(false, "file-dialog".to_string());
-                toggleElement(false, "ui-slider".to_string());
-            }
-
-            shared.ui.set_state(UiState::ImageModal, false);
-            shared.ui.set_state(UiState::Modal, false);
-            shared.ui.set_state(UiState::PolarModal, false);
-            shared.ui.set_state(UiState::ForcedModal, false);
-            shared.ui.set_state(UiState::SettingsModal, false);
-        }
-    });
+        shared.ui.set_state(UiState::ImageModal, false);
+        shared.ui.set_state(UiState::Modal, false);
+        shared.ui.set_state(UiState::PolarModal, false);
+        shared.ui.set_state(UiState::ForcedModal, false);
+        shared.ui.set_state(UiState::SettingsModal, false);
+    }
 }
 
 fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
