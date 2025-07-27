@@ -859,7 +859,6 @@ impl Armature {
         new_tex_idx: usize,
         selected_anim: usize,
         selected_frame: i32,
-        selected_bone: usize,
     ) {
         let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
 
@@ -891,7 +890,7 @@ impl Armature {
         } else {
             // record texture change in animation
             let kf = self.animations[selected_anim].check_if_in_keyframe(
-                selected_bone as i32,
+                bone_id as i32,
                 selected_frame,
                 AnimElement::Texture,
                 -1,
@@ -900,7 +899,7 @@ impl Armature {
 
             // add 0th keyframe
             let first = self.animations[selected_anim].check_if_in_keyframe(
-                selected_bone as i32,
+                bone_id as i32,
                 0,
                 AnimElement::Texture,
                 -1,
