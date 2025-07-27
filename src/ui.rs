@@ -319,6 +319,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                             Ok(file) => file,
                         };
                     }
+                    #[cfg(not(target_arch = "wasm32"))]
                     if top_bar_button(ui, "Config Folder", "", &mut offset, shared).clicked() {
                         match open::that(config_path().parent().unwrap()) {
                             Err(_) => {}
@@ -430,7 +431,7 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
         }
 
         #[cfg(target_arch = "wasm32")]
-        if top_bar_button(ui, "Adjust UI", "", &mut offset).clicked() {
+        if top_bar_button(ui, "Adjust UI", "", &mut offset, shared).clicked() {
             toggleElement(true, "ui-slider".to_string());
             ui.close();
         }

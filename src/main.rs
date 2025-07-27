@@ -7,7 +7,9 @@ use std::{
     io::{Read, Write},
 };
 
+#[cfg(not(target_arch = "wasm32"))]
 use skelform_lib::shared::config_path;
+
 use skelform_lib::shared::*;
 
 #[cfg(not(target_arch = "wasm32"))]
