@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{config_path, shared, ui};
+use crate::{shared, ui};
 use std::{fs, io::Write};
 
 pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
@@ -13,16 +13,25 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
             ..Default::default()
         })
         .show(ctx, |modal_ui| {
-            modal_ui.set_width(500.);
-            modal_ui.set_height(500.);
+            #[allow(unused_mut)]
+            let mut scale = shared::Vec2::new(1., 1.);
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                scale = shared::Vec2::new(0.5 / shared.ui.scale, 0.5 / shared.ui.scale);
+                scale.x *= 2.;
+            }
+
+            modal_ui.set_width(500. * scale.x);
+            modal_ui.set_height(500. * scale.y);
 
             modal_ui.horizontal(|ui| {
                 egui::Frame::new()
                     .fill(shared.config.ui_colors.dark_accent.into())
                     .inner_margin(egui::Margin::same(5))
                     .show(ui, |ui| {
-                        ui.set_width(100.);
-                        ui.set_height(475.);
+                        ui.set_width(100. * scale.x);
+                        ui.set_height(475. * scale.y);
                         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                             macro_rules! tab {
                                 ($name:expr, $state:expr) => {
@@ -43,8 +52,8 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         });
                     });
                 egui::Frame::new().show(ui, |ui| {
-                    ui.set_width(400.);
-                    ui.set_height(475.);
+                    ui.set_width(400. * scale.x);
+                    ui.set_height(475. * scale.y);
                     ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| match shared
                         .ui
                         .settings_state
@@ -127,11 +136,11 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     #[rustfmt::skip]
     {
         color!("Main",         shared.config.ui_colors.main,         shared.config.ui_colors.dark_accent, ui);
-        color!("Light Accent", shared.config.ui_colors.light_accent, shared.config.ui_colors.main, ui);
+        color!("Light Accent", shared.config.ui_colors.light_accent, shared.config.ui_colors.main,        ui);
         color!("Dark Accent",  shared.config.ui_colors.dark_accent,  shared.config.ui_colors.dark_accent, ui);
-        color!("Text",         shared.config.ui_colors.text,         shared.config.ui_colors.main, ui);
+        color!("Text",         shared.config.ui_colors.text,         shared.config.ui_colors.main,        ui);
         color!("Frameline",    shared.config.ui_colors.frameline,    shared.config.ui_colors.dark_accent, ui);
-        color!("Gradient",     shared.config.ui_colors.gradient,     shared.config.ui_colors.main, ui);
+        color!("Gradient",     shared.config.ui_colors.gradient,     shared.config.ui_colors.main,        ui);
     };
 }
 
