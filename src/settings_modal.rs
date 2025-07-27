@@ -235,9 +235,12 @@ fn key(
 
                     // use shift-equivalent keys if the modifier is shift
                     if field.modifiers == egui::Modifiers::SHIFT {
-                        if field.logical_key == egui::Key::Equals {
-                            field.logical_key = egui::Key::Plus;
-                        }
+                        field.logical_key = match field.logical_key {
+                            egui::Key::Equals => egui::Key::Plus,
+                            egui::Key::Slash => egui::Key::Questionmark,
+                            egui::Key::Semicolon => egui::Key::Colon,
+                            _ => field.logical_key,
+                        };
                     }
                 });
             },
