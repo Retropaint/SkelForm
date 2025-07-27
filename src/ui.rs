@@ -684,9 +684,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
         PolarId::FirstTime => shared.ui.start_tutorial(&shared.armature),
         PolarId::DeleteAnim => {
-            if shared.ui.anim.selected == shared.ui.context_menu.id as usize {
-                shared.ui.anim.selected = usize::MAX;
-            }
+           shared.ui.anim.selected = usize::MAX;
             shared.undo_actions.push(Action {
                 action: ActionEnum::Animations,
                 animations: shared.armature.animations.clone(),

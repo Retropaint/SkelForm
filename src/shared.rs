@@ -411,7 +411,6 @@ impl ContextMenu {
 
     pub fn close(&mut self) {
         self.context_type = ContextType::None;
-        self.id = -1;
         self.keep = false;
     }
 
