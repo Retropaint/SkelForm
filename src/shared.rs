@@ -1635,24 +1635,6 @@ impl Shared {
         }
     }
 
-    /// place child bone underneath its parent
-    pub fn organize_bone(&mut self, bone_idx: usize) {
-        let parent_id = self.armature.bones[bone_idx].parent_id;
-        let bone = self.armature.bones[bone_idx].clone();
-        let mut new_idx = bone_idx;
-        for (i, bone) in self.armature.bones.iter().enumerate() {
-            if parent_id == bone.id {
-                new_idx = i;
-                break;
-            }
-        }
-
-        if new_idx != bone_idx {
-            self.armature.bones.remove(bone_idx);
-            self.armature.bones.insert(new_idx, bone);
-        }
-    }
-
     pub fn mouse_vel(&self) -> Vec2 {
         let mouse_world = utils::screen_to_world_space(self.input.mouse, self.window);
         let mouse_prev_world = utils::screen_to_world_space(self.input.mouse_prev, self.window);
