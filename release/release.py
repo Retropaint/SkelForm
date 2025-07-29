@@ -64,7 +64,7 @@ match platform.system():
         platform_name = "linux"
 
 version = ""
-with open("../cargo.toml", "r") as file:
+with open("../Cargo.toml", "r") as file:
     for line in file.readlines():
         if "version" in line.strip():
             version = line.strip().split('"')[1]
