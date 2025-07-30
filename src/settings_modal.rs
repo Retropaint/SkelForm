@@ -244,6 +244,7 @@ fn key(
                         .show_ui(ui, |ui| {
                             dd_mod!(ui, egui::Modifiers::NONE, field.modifiers);
                             dd_mod!(ui, egui::Modifiers::COMMAND, field.modifiers);
+                            dd_mod!(ui, egui::Modifiers::CTRL, field.modifiers);
                             dd_mod!(ui, egui::Modifiers::ALT, field.modifiers);
                             dd_mod!(ui, egui::Modifiers::SHIFT, field.modifiers);
                         })
@@ -272,6 +273,7 @@ fn key(
 fn modifier_name(modifier: egui::Modifiers) -> String {
     match modifier {
         egui::Modifiers::COMMAND => "Ctrl/Cmd",
+        egui::Modifiers::CTRL => "Ctrl/Control",
         egui::Modifiers::ALT => "Alt/Option",
         egui::Modifiers::SHIFT => "Shift",
         egui::Modifiers::NONE => "None",
