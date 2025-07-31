@@ -1261,6 +1261,24 @@ impl Armature {
             utils::save_web(&armature);
         });
     }
+
+    pub fn offset_bone_by_parent(&mut self, old_parents: Vec<Bone>, bone_id: i32) {
+        for parent in old_parents {
+            let parent_pos = parent.pos;
+            self.find_bone_mut(bone_id).unwrap().pos += parent_pos;
+        }
+
+        if self.find_bone_mut(bone_id).unwrap().parent_id == -1 {
+            return;
+        }
+
+        let new_parents = self.get_all_parents(bone_id);
+
+        for parent in new_parents {
+            let parent_pos = parent.pos;
+            self.find_bone_mut(bone_id).unwrap().pos -= parent_pos;
+        }
+    }
 }
 
 // used for the json
