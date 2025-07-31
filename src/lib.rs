@@ -1028,22 +1028,18 @@ mod tests {
     fn test_edit_bone() {
         let mut shared = init_shared();
         let armature = &mut shared.armature;
-        armature.new_bone(-1);
-        armature.new_bone(-1);
         armature.edit_bone(0, &AnimElement::PositionX, 10., usize::MAX, -1);
         armature.edit_bone(0, &AnimElement::PositionY, 20., usize::MAX, -1);
-        assert_eq!(shared.armature.bones[0].pos, Vec2::new(10., 20.));
+        assert_eq!(armature.bones[0].pos, Vec2::new(10., 20.));
     }
 
     #[test]
     fn test_edit_bone_animated() {
-        let mut shared = Shared::default();
-        shared.armature.new_animation();
+        let mut shared = init_shared();
         let armature = &mut shared.armature;
-        armature.new_bone(-1);
-        armature.new_bone(-1);
+        armature.new_animation();
         armature.edit_bone(0, &AnimElement::PositionX, 10., 0, 2);
         armature.edit_bone(0, &AnimElement::PositionY, 20., 0, 2);
-        assert_eq!(shared.armature.animations[0].keyframes[2].value, 10.);
+        assert_eq!(armature.animations[0].keyframes[2].value, 10.);
     }
 }
