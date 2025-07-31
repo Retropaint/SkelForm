@@ -100,6 +100,7 @@ fn init_shared(shared: &mut Shared) {
             skelform_lib::utils::import_config(shared);
         } else {
             skelform_lib::utils::save_config(&shared.config);
+            shared.ui.start_tutorial(&shared.armature);
         }
     }
     #[cfg(target_arch = "wasm32")]
@@ -110,6 +111,7 @@ fn init_shared(shared: &mut Shared) {
 
         if shared.config.ui_scale == 1. {
             skelform_lib::toggleElement(true, "ui-slider".to_string());
+            shared.ui.start_tutorial(&shared.armature);
         }
     }
 
@@ -117,8 +119,6 @@ fn init_shared(shared: &mut Shared) {
         shared.ui.start_tutorial(&shared.armature);
     }
     shared.ui.scale = shared.config.ui_scale;
-
-    shared.ui.start_tutorial(&shared.armature);
 
     // shared.ui.set_state(UiState::SettingsModal, true);
 
