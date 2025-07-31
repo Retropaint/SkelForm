@@ -241,7 +241,10 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     let dragged_payload = *dp.unwrap() as usize;
 
     let dragged_id = shared.armature.bones[dragged_payload as usize].id;
-    let selected_id = shared.selected_bone().unwrap().id;
+    let mut selected_id: i32 = 0;
+    if shared.selected_bone() != None {
+        selected_id = shared.selected_bone().unwrap().id;
+    }
 
     // ignore if target bone is a child of this
     let mut children: Vec<Bone> = vec![];
@@ -285,7 +288,9 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         );
     }
 
-    shared.ui.selected_bone_idx = shared.armature.find_bone_idx(selected_id).unwrap();
+    if shared.selected_bone() != None {
+        shared.ui.selected_bone_idx = shared.armature.find_bone_idx(selected_id).unwrap();
+    }
 
     // offset bone by it's parents, so that it stays in place relative to them
 
