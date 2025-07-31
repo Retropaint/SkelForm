@@ -197,7 +197,15 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         label!("Rotation:", ui);
         let rot_el = &AnimElement::Rotation;
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            input!(bone.rot, "rot", rot_el, 180. / std::f32::consts::PI, ui, "");
+            let input: egui::Response;
+            let deg_mod = 180. / std::f32::consts::PI;
+            input_response!(bone.rot, "rot", rot_el, deg_mod, ui, "", input);
+            ui::draw_tutorial_rect(TutorialStep::EditBoneAnim, input.rect, shared, ui);
+            if edited {
+                shared
+                    .ui
+                    .start_next_tutorial_step(TutorialStep::PlayAnim, &shared.armature);
+            }
         });
     });
     ui.horizontal(|ui| {
