@@ -440,7 +440,7 @@ pub struct Ui {
     pub selected_bone_idx: usize,
     pub editing_mesh: bool,
 
-    tutorial_step: TutorialStep,
+    pub tutorial_step: TutorialStep,
 
     pub rename_id: String,
     pub original_name: String,
@@ -1547,7 +1547,7 @@ pub struct RenderedFrame {
     pub height: u32,
 }
 
-#[derive(Default, PartialEq, Clone)]
+#[derive(Default, PartialEq, Clone, Debug)]
 pub enum TutorialStep {
     NewBone,
     GetImage,
@@ -1568,6 +1568,8 @@ pub enum TutorialStep {
     #[default]
     None,
 }
+
+enum_string!(TutorialStep);
 
 #[derive(Default)]
 pub struct CopyBuffer {
