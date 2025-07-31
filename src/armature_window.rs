@@ -295,23 +295,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         shared.ui.selected_bone_idx = shared.armature.find_bone_idx(selected_id).unwrap();
     }
 
-    // offset bone by it's parents, so that it stays in place relative to them
-
-    for parent in old_parents {
-        let parent_pos = parent.pos;
-        shared.armature.find_bone_mut(dragged_id).unwrap().pos += parent_pos;
-    }
-
-    if shared.armature.find_bone_mut(dragged_id).unwrap().parent_id == -1 {
-        return;
-    }
-
-    let new_parents = shared.armature.get_all_parents(dragged_id);
-
-    for parent in new_parents {
-        let parent_pos = parent.pos;
-        shared.armature.find_bone_mut(dragged_id).unwrap().pos -= parent_pos;
-    }
+    offset_bone_by_parent(old_parents, shared, dragged_id);
 }
 
 pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_parent: bool) {
@@ -336,6 +320,24 @@ pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_p
             find_bone_idx(bones, anchor.id) as usize + is_setting_parent as usize,
             b.clone(),
         );
+    }
+}
+
+pub fn offset_bone_by_parent(old_parents: Vec<Bone>, shared: &mut Shared, bone_id: i32) {
+    for parent in old_parents {
+        let parent_pos = parent.pos;
+        shared.armature.find_bone_mut(bone_id).unwrap().pos += parent_pos;
+    }
+
+    if shared.armature.find_bone_mut(bone_id).unwrap().parent_id == -1 {
+        return;
+    }
+
+    let new_parents = shared.armature.get_all_parents(bone_id);
+
+    for parent in new_parents {
+        let parent_pos = parent.pos;
+        shared.armature.find_bone_mut(bone_id).unwrap().pos -= parent_pos;
     }
 }
 
