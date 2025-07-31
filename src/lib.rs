@@ -998,3 +998,18 @@ impl Scene {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_new_bones() {
+        let mut shared = Shared::default();
+        shared.armature.new_bone(-1);
+        shared.armature.new_bone(-1);
+        shared.armature.new_bone(-1);
+        assert_eq!(shared.armature.bones.len(), 3);
+    }
+}
