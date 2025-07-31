@@ -62,17 +62,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 .start_next_tutorial_step(TutorialStep::GetImage, &shared.armature);
                         }
                     }
-                    let drag_name = if shared.ui.has_state(UiState::DraggingBone) {
-                        "Edit"
-                    } else {
-                        "Drag"
-                    };
-                    if shared.armature.bones.len() > 1 && ui_mod::button(drag_name, ui).clicked() {
-                        shared.ui.set_state(
-                            UiState::DraggingBone,
-                            !shared.ui.has_state(UiState::DraggingBone),
-                        );
-                    }
                 });
 
                 shared.ui.edit_bar_pos.x = ui.min_rect().right();
@@ -95,7 +84,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
     let frame = Frame::default().inner_margin(5.);
     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
         ui.set_min_width(ui.available_width());
-        let mut idx = -1;
+        let mut idx: i32 = -1;
 
         for b in 0..shared.armature.bones.len() {
             idx += 1;
@@ -115,32 +104,10 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
             ui.horizontal(|ui| {
                 // add space to the left if this is a child
-                {
-                    let mut nb = &shared.armature.bones[b];
-                    while nb.parent_id != -1 {
-                        nb = shared.armature.find_bone(nb.parent_id).unwrap();
-                        ui.add_space(15.);
-                    }
-                }
-
-                /*
-                    draggable buttons in egui don't seem well-supported, because
-                    dnd_drag_source seems to physically block it. When hovering on
-                    the edge of a button inside one, it will be clickable but not
-                    draggable
-                */
-
-                if shared.ui.has_state(UiState::DraggingBone) {
-                    // add draggable labels
-                    ui.add_space(17.);
-                    let id = Id::new(("bone", idx, 0));
-                    let d = ui
-                        .dnd_drag_source(id, idx, |ui| {
-                            ui.label(RichText::new(&shared.armature.bones[b].name.to_string()));
-                        })
-                        .response;
-                    check_bone_dragging(shared, ui, d, idx as i32);
-                    return;
+                let mut nb = &shared.armature.bones[b];
+                while nb.parent_id != -1 {
+                    nb = shared.armature.find_bone(nb.parent_id).unwrap();
+                    ui.add_space(15.);
                 }
 
                 // show folding button, if this bone has children
@@ -173,12 +140,31 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 }
                 ui.add_space(13.);
 
-                // regular, boring buttons
-                let button = ui_mod::selection_button(
-                    &shared.armature.bones[b].name.to_string(),
-                    idx as usize == shared.ui.selected_bone_idx,
-                    ui,
-                );
+                let mut selected_col = shared.config.ui_colors.light_accent;
+                let mut cursor = egui::CursorIcon::PointingHand;
+
+                if shared.ui.selected_bone_idx == idx as usize {
+                    selected_col += Color::new(20, 20, 20, 0);
+                    cursor = egui::CursorIcon::Default;
+                }
+
+                let id = Id::new(("bone", idx, 0));
+                let button = ui
+                    .dnd_drag_source(id, idx, |ui| {
+                        ui.add(
+                            egui::Button::new(&shared.armature.bones[b].name.to_string())
+                                .fill(selected_col),
+                        )
+                    })
+                    .response
+                    .interact(Sense::click())
+                    .on_hover_cursor(cursor);
+
+                if button.clicked() {
+                    let anim_frame = shared.ui.anim.selected_frame;
+                    shared.ui.select_bone(idx as usize, &shared.armature);
+                    shared.ui.anim.selected_frame = anim_frame;
+                };
 
                 if button.secondary_clicked() {
                     shared.ui.context_menu.show(ContextType::Bone, idx as i32);
@@ -205,11 +191,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     ui_mod::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
                 }
 
-                if button.clicked() {
-                    let anim_frame = shared.ui.anim.selected_frame;
-                    shared.ui.select_bone(idx as usize, &shared.armature);
-                    shared.ui.anim.selected_frame = anim_frame;
-                };
+                check_bone_dragging(shared, ui, button, idx as i32);
             });
         }
     });
@@ -218,17 +200,27 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, idx: i32) {
     let pointer = ui.input(|i| i.pointer.interact_pos());
     let hovered_payload = drag.dnd_hover_payload::<i32>();
+    let rect = drag.rect;
+    let stroke = egui::Stroke::new(1.0, Color32::WHITE);
+
     if pointer == None || hovered_payload == None {
+        // render hover box
+        let stroke = egui::Stroke::new(1.0, Color32::from_rgba_premultiplied(125, 125, 125, 255));
+        if drag.contains_pointer() {
+            ui.painter().hline(rect.x_range(), rect.top(), stroke);
+            ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
+            ui.painter().vline(rect.right(), rect.y_range(), stroke);
+            ui.painter().vline(rect.left(), rect.y_range(), stroke);
+        }
         return;
     }
+    let pointer_current = ui.input(|i| i.pointer.latest_pos());
 
     // prevent one from being draggable onto itself
     if *hovered_payload.unwrap() == idx {
         return;
     }
 
-    let rect = drag.rect;
-    let stroke = egui::Stroke::new(1.0, Color32::WHITE);
     let mut is_above = false;
 
     if pointer.unwrap().y < rect.center().y {
