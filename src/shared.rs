@@ -241,6 +241,15 @@ pub struct Color {
     pub a: u8,
 }
 
+impl std::ops::AddAssign for Color {
+    fn add_assign(&mut self, other: Color) {
+        self.r += other.r;
+        self.g += other.g;
+        self.b += other.b;
+        self.a += other.a;
+    }
+}
+
 impl Color {
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
         Color { r, g, b, a }
