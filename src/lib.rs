@@ -1016,18 +1016,17 @@ mod tests {
 
     #[test]
     fn test_dragging() {
-        let shared = init_shared();
+        let armature = init_shared().armature;
         assert_eq!(
-            shared.armature.find_bone(2).unwrap().parent_id == 1
-                && shared.armature.find_bone(1).unwrap().parent_id == 0,
+            armature.find_bone(2).unwrap().parent_id == 1
+                && armature.find_bone(1).unwrap().parent_id == 0,
             true
         );
     }
 
     #[test]
     fn test_edit_bone() {
-        let mut shared = init_shared();
-        let armature = &mut shared.armature;
+        let mut armature = init_shared().armature;
         armature.edit_bone(0, &AnimElement::PositionX, 10., usize::MAX, -1);
         armature.edit_bone(0, &AnimElement::PositionY, 20., usize::MAX, -1);
         assert_eq!(armature.bones[0].pos, Vec2::new(10., 20.));
@@ -1035,8 +1034,7 @@ mod tests {
 
     #[test]
     fn test_edit_bone_animated() {
-        let mut shared = init_shared();
-        let armature = &mut shared.armature;
+        let mut armature = init_shared().armature;
         armature.new_animation();
         armature.edit_bone(0, &AnimElement::PositionX, 10., 0, 2);
         armature.edit_bone(0, &AnimElement::PositionY, 20., 0, 2);
