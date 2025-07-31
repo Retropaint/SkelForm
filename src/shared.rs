@@ -835,6 +835,15 @@ impl Armature {
         None
     }
 
+    pub fn find_bone_idx(&self, id: i32) -> Option<usize> {
+        for i in 0..self.bones.len() {
+            if self.bones[i].id == id {
+                return Some(i);
+            }
+        }
+        None
+    }
+
     pub fn find_bone_mut(&mut self, id: i32) -> Option<&mut Bone> {
         for b in &mut self.bones {
             if b.id == id {
