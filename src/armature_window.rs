@@ -268,34 +268,40 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     let old_parents = shared
         .armature
         .get_all_parents(shared.armature.bones[dragged_payload].id);
-    if is_above {
-        // set pointed bone's parent as dragged bone's parent
-        shared.armature.bones[dragged_payload].parent_id = shared.armature.bones[idx].parent_id;
-        move_bone(
-            &mut shared.armature.bones,
-            dragged_payload as i32,
-            idx as i32,
-            false,
-        );
-    } else {
-        // set pointed bone as dragged bone's parent
-        let parent_id = shared.armature.bones[idx].id;
-        shared.armature.bones[dragged_payload].parent_id = parent_id;
-        move_bone(
-            &mut shared.armature.bones,
-            dragged_payload as i32,
-            idx as i32,
-            true,
-        );
 
-        shared.armature.find_bone_mut(parent_id).unwrap().folded = false;
-    }
+    drag_bone(shared, is_above, dragged_payload, idx);
 
     if shared.selected_bone() != None {
         shared.ui.selected_bone_idx = shared.armature.find_bone_idx(selected_id).unwrap();
     }
 
     offset_bone_by_parent(old_parents, shared, dragged_id);
+}
+
+pub fn drag_bone(shared: &mut Shared, is_above: bool, dragged_idx: usize, pointing_idx: usize) {
+    if is_above {
+        // set pointed bone's parent as dragged bone's parent
+        shared.armature.bones[dragged_idx].parent_id =
+            shared.armature.bones[pointing_idx].parent_id;
+        move_bone(
+            &mut shared.armature.bones,
+            dragged_idx as i32,
+            pointing_idx as i32,
+            false,
+        );
+    } else {
+        // set pointed bone as dragged bone's parent
+        let parent_id = shared.armature.bones[pointing_idx].id;
+        shared.armature.bones[dragged_idx].parent_id = parent_id;
+        move_bone(
+            &mut shared.armature.bones,
+            dragged_idx as i32,
+            pointing_idx as i32,
+            true,
+        );
+
+        shared.armature.find_bone_mut(parent_id).unwrap().folded = false;
+    }
 }
 
 pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_parent: bool) {
