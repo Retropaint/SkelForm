@@ -1004,27 +1004,29 @@ mod tests {
     use crate::armature_window;
     use crate::shared::{AnimElement, Shared, Vec2};
 
-    #[test]
-    fn test_new_bones() {
+    fn init_shared() -> Shared {
         let mut shared = Shared::default();
         shared.armature.new_bone(-1);
         shared.armature.new_bone(-1);
         shared.armature.new_bone(-1);
-        assert_eq!(shared.armature.bones.len(), 3);
+        armature_window::drag_bone(&mut shared, false, 2, 1);
+        armature_window::drag_bone(&mut shared, false, 1, 0);
+        shared
     }
 
     #[test]
     fn test_dragging() {
-        let mut shared = Shared::default();
-        shared.armature.new_bone(-1);
-        shared.armature.new_bone(-1);
-        armature_window::drag_bone(&mut shared, false, 0, 1);
-        assert_eq!(shared.armature.find_bone(0).unwrap().parent_id == 1, true);
+        let shared = init_shared();
+        assert_eq!(
+            shared.armature.find_bone(2).unwrap().parent_id == 1
+                && shared.armature.find_bone(1).unwrap().parent_id == 0,
+            true
+        );
     }
 
     #[test]
     fn test_edit_bone() {
-        let mut shared = Shared::default();
+        let mut shared = init_shared();
         let armature = &mut shared.armature;
         armature.new_bone(-1);
         armature.new_bone(-1);
