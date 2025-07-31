@@ -81,6 +81,7 @@ shutil.copy("../target/release/SkelForm" + binExt, "./" + dirname)
 shutil.copytree("./user_docs", "./" + dirname + "/user_docs")
 shutil.copytree("./dev_docs", "./" + dirname + "/dev_docs")
 shutil.copy("../skf_icon.ico", "./" + dirname + "/skf_icon.ico")
+shutil.copytree("../samples", "./" + dirname + "/samples")
 
 # Source code distribution
 
