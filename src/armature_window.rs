@@ -102,6 +102,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 continue;
             }
 
+            let mut dragged = false;
+
             ui.horizontal(|ui| {
                 // add space to the left if this is a child
                 let mut nb = &shared.armature.bones[b];
@@ -191,13 +193,19 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     ui_mod::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
                 }
 
-                check_bone_dragging(shared, ui, button, idx as usize);
+                if check_bone_dragging(shared, ui, button, idx as usize) {
+                    dragged = true;
+                }
             });
+
+            if dragged {
+                return;
+            }
         }
     });
 }
 
-fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, idx: usize) {
+fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, idx: usize) -> bool {
     let pointer = ui.input(|i| i.pointer.interact_pos());
     let hovered_payload = drag.dnd_hover_payload::<i32>();
     let rect = drag.rect;
@@ -212,12 +220,12 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
             ui.painter().vline(rect.right(), rect.y_range(), stroke);
             ui.painter().vline(rect.left(), rect.y_range(), stroke);
         }
-        return;
+        return false;
     }
 
     // prevent one from being draggable onto itself
     if *hovered_payload.unwrap() == idx as i32 {
-        return;
+        return false;
     }
 
     let mut is_above = false;
@@ -236,7 +244,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
 
     let dp = drag.dnd_release_payload::<i32>();
     if dp == None {
-        return;
+        return false;
     }
     let dragged_payload = *dp.unwrap() as usize;
 
@@ -255,7 +263,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     );
     for c in children {
         if shared.armature.bones[idx as usize].id == c.id {
-            return;
+            return false;
         }
     }
 
@@ -275,7 +283,11 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         shared.ui.selected_bone_idx = shared.armature.find_bone_idx(selected_id).unwrap();
     }
 
-    shared.armature.offset_bone_by_parent(old_parents, dragged_id);
+    shared
+        .armature
+        .offset_bone_by_parent(old_parents, dragged_id);
+
+    return true;
 }
 
 pub fn drag_bone(shared: &mut Shared, is_above: bool, dragged_idx: usize, pointing_idx: usize) {
