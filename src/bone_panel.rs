@@ -40,6 +40,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 .on_hover_cursor(egui::CursorIcon::PointingHand)
                 .clicked()
             {
+                shared.ui.context_menu.id = shared.selected_bone().unwrap().id;
                 shared
                     .ui
                     .open_polar_modal(PolarId::DeleteBone, "Are you sure to delete this bone?");
