@@ -119,7 +119,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                     shared.selected_bone().unwrap().id,
                     $element,
                     $float,
-                    true,
                     anim_id,
                     shared.ui.anim.selected_frame,
                 );

@@ -344,7 +344,6 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
                 shared.selected_bone().unwrap().id,
                 &$element,
                 $value,
-                true,
                 anim_id,
                 shared.ui.anim.selected_frame,
             );
