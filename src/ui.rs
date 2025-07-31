@@ -657,13 +657,14 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
     shared.ui.set_state(UiState::PolarModal, false);
     match shared.ui.polar_id {
         PolarId::DeleteBone => {
+            let selected_id = shared.selected_bone().unwrap().id;
+            let bone = shared
+                .armature
+                .find_bone(shared.ui.context_menu.id)
+                .unwrap();
             // remove all children of this bone as well
-            let mut children = vec![shared.armature.bones[shared.ui.selected_bone_idx].clone()];
-            armature_window::get_all_children(
-                &shared.armature.bones,
-                &mut children,
-                &shared.armature.bones[shared.ui.selected_bone_idx],
-            );
+            let mut children = vec![bone.clone()];
+            armature_window::get_all_children(&shared.armature.bones, &mut children, &bone);
             children.reverse();
             for bone in &children {
                 shared.armature.delete_bone(bone.id);
@@ -679,12 +680,16 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
                     }
                 }
             }
-            shared.ui.selected_bone_idx = usize::MAX;
+            if let Some(bone) = shared.armature.find_bone_idx(selected_id) {
+                shared.ui.selected_bone_idx = bone;
+            } else {
+                shared.ui.selected_bone_idx = usize::MAX;
+            }
         }
         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
         PolarId::FirstTime => shared.ui.start_tutorial(&shared.armature),
         PolarId::DeleteAnim => {
-           shared.ui.anim.selected = usize::MAX;
+            shared.ui.anim.selected = usize::MAX;
             shared.undo_actions.push(Action {
                 action: ActionEnum::Animations,
                 animations: shared.armature.animations.clone(),
