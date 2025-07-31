@@ -1000,7 +1000,6 @@ impl Armature {
         bone_id: i32,
         element: &AnimElement,
         mut value: f32,
-        overwrite: bool,
         anim_id: usize,
         anim_frame: i32,
     ) {
@@ -1008,7 +1007,7 @@ impl Armature {
             ($field:expr) => {
                 if anim_id == usize::MAX {
                     $field = value;
-                } else if overwrite {
+                } else {
                     // offset value by its field, so it's effectively overwritten
                     match element {
                         AnimElement::ScaleX | AnimElement::ScaleY => value /= $field,
