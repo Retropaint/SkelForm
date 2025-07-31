@@ -1001,8 +1001,8 @@ impl Scene {
 
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
-    use super::*;
+    use crate::armature_window;
+    use crate::shared::{AnimElement, Shared, Vec2};
 
     #[test]
     fn test_new_bones() {
