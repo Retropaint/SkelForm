@@ -105,8 +105,8 @@ if platform.system() == "Darwin":
     if os.path.exists(bin_path):
         shutil.rmtree(bin_path)
     shutil.copytree(dirname, bin_path)
+    shutil.make_archive("SkelForm.app", "zip", ".", "SkelForm.app")
     if not args.dmg:
-        shutil.make_archive("SkelForm.app", "zip", ".", "SkelForm.app")
         print(f">>> Mac release complete. Please look for {BLUE}SkelForm.app{RESET}.")
         exit()
     print(
