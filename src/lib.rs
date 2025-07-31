@@ -1012,4 +1012,14 @@ mod tests {
         shared.armature.new_bone(-1);
         assert_eq!(shared.armature.bones.len(), 3);
     }
+
+    #[test]
+    fn test_dragging() {
+        let mut shared = Shared::default();
+        shared.armature.new_bone(-1);
+        shared.armature.new_bone(-1);
+        shared.armature.new_bone(-1);
+        armature_window::drag_bone(&mut shared, false, 0, 1);
+        assert_eq!(shared.armature.find_bone(0).unwrap().parent_id == 1, true);
+    }
 }
