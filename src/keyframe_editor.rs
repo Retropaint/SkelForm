@@ -119,7 +119,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                 ..Default::default()
             });
 
-            new_animation(shared);
+            shared.armature.new_animation();
             let idx = shared.armature.animations.len() - 1;
             shared.ui.original_name = "".to_string();
             shared.ui.rename_id = "animation ".to_owned() + &idx.to_string();
@@ -773,17 +773,6 @@ pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32) {
         egui::Color32::TRANSPARENT,
         egui::Stroke::new(2.0, color),
     ));
-}
-
-pub fn new_animation(shared: &mut Shared) {
-    let ids = shared.armature.animations.iter().map(|a| a.id).collect();
-    shared.armature.animations.push(Animation {
-        name: "".to_string(),
-        id: generate_id(ids),
-        keyframes: vec![],
-        fps: 60,
-        ..Default::default()
-    });
 }
 
 pub fn add_anim_action(shared: &mut Shared) {

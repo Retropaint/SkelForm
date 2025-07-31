@@ -1018,8 +1018,30 @@ mod tests {
         let mut shared = Shared::default();
         shared.armature.new_bone(-1);
         shared.armature.new_bone(-1);
-        shared.armature.new_bone(-1);
         armature_window::drag_bone(&mut shared, false, 0, 1);
         assert_eq!(shared.armature.find_bone(0).unwrap().parent_id == 1, true);
+    }
+
+    #[test]
+    fn test_edit_bone() {
+        let mut shared = Shared::default();
+        let armature = &mut shared.armature;
+        armature.new_bone(-1);
+        armature.new_bone(-1);
+        armature.edit_bone(0, &AnimElement::PositionX, 10., usize::MAX, -1);
+        armature.edit_bone(0, &AnimElement::PositionY, 20., usize::MAX, -1);
+        assert_eq!(shared.armature.bones[0].pos, Vec2::new(10., 20.));
+    }
+
+    #[test]
+    fn test_edit_bone_animated() {
+        let mut shared = Shared::default();
+        shared.armature.new_animation();
+        let armature = &mut shared.armature;
+        armature.new_bone(-1);
+        armature.new_bone(-1);
+        armature.edit_bone(0, &AnimElement::PositionX, 10., 0, 2);
+        armature.edit_bone(0, &AnimElement::PositionY, 20., 0, 2);
+        assert_eq!(shared.armature.animations[0].keyframes[2].value, 10.);
     }
 }

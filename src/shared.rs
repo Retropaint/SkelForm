@@ -1278,6 +1278,17 @@ impl Armature {
             self.find_bone_mut(bone_id).unwrap().pos -= parent_pos;
         }
     }
+
+    pub fn new_animation(&mut self,) {
+        let ids = self.animations.iter().map(|a| a.id).collect();
+        self.animations.push(Animation {
+            name: "".to_string(),
+            id: generate_id(ids),
+            keyframes: vec![],
+            fps: 60,
+            ..Default::default()
+        });
+    }
 }
 
 // used for the json
