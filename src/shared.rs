@@ -591,22 +591,27 @@ impl Ui {
             };
         }
 
-        let mut first_bone = &Bone::default();
+        let mut fb = &Bone::default();
         let bones_len = armature.bones.len();
         if bones_len > 0 {
-            first_bone = &armature.bones[0];
+            fb = &armature.bones[0];
         }
         let anim_selected = self.anim.selected != usize::MAX;
+        let has_anim = armature.animations.len() > 0 && armature.animations[0].keyframes.len() > 0;
+        let selected_frame = self.anim.selected_frame != 0;
 
         #[rustfmt::skip]
         let final_step = match step {
-            TutorialStep::NewBone        => check!(bones_len > 0,            TutorialStep::GetImage),
-            TutorialStep::GetImage       => check!(first_bone.tex_idx != -1, TutorialStep::EditBoneX),
-            TutorialStep::EditBoneX      => check!(first_bone.pos.x != 0.,   TutorialStep::EditBoneY),
-            TutorialStep::EditBoneY      => check!(first_bone.pos.y != 0.,   TutorialStep::OpenAnim),
-            TutorialStep::OpenAnim       => check!(self.anim.open,           TutorialStep::CreateAnim),
-            TutorialStep::CreateAnim     => check!(anim_selected,            TutorialStep::SelectKeyframe),
-            TutorialStep::SelectKeyframe => step,
+            TutorialStep::NewBone        => check!(bones_len > 0,      TutorialStep::GetImage),
+            TutorialStep::GetImage       => check!(fb.tex_idx != -1,   TutorialStep::EditBoneX),
+            TutorialStep::EditBoneX      => check!(fb.pos.x != 0.,     TutorialStep::EditBoneY),
+            TutorialStep::EditBoneY      => check!(fb.pos.y != 0.,     TutorialStep::OpenAnim),
+            TutorialStep::OpenAnim       => check!(self.anim.open,     TutorialStep::CreateAnim),
+            TutorialStep::CreateAnim     => check!(anim_selected,      TutorialStep::SelectKeyframe),
+            TutorialStep::SelectKeyframe => check!(selected_frame,     TutorialStep::EditBoneAnim),
+            TutorialStep::EditBoneAnim   => check!(has_anim,           TutorialStep::PlayAnim),
+            TutorialStep::PlayAnim       => check!(self.anim.playing,  TutorialStep::StopAnim),
+            TutorialStep::StopAnim       => check!(!self.anim.playing, TutorialStep::Finish),
             _ => step
         };
         final_step
@@ -1279,7 +1284,7 @@ impl Armature {
         }
     }
 
-    pub fn new_animation(&mut self,) {
+    pub fn new_animation(&mut self) {
         let ids = self.animations.iter().map(|a| a.id).collect();
         self.animations.push(Animation {
             name: "".to_string(),
@@ -1551,7 +1556,10 @@ pub enum TutorialStep {
     OpenAnim,
     CreateAnim,
     SelectKeyframe,
-    EditBone,
+    EditBoneAnim,
+    PlayAnim,
+    StopAnim,
+    Finish,
 
     // tutorial is meant to work with first bone only,
     // so it must be reselected to proceed

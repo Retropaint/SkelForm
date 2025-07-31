@@ -1029,7 +1029,7 @@ pub fn draw_tutorial_rect(
     ui: &mut egui::Ui,
 ) {
     if shared.ui.tutorial_step_is(step) {
-        ui::draw_fading_rect(ui, rect, Color32::GOLD, 60., 2.);
+        ui::draw_fading_rect(ui, rect, Color32::GOLD, 60., 1.);
     }
 }
 

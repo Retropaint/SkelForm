@@ -8,6 +8,8 @@ use crate::*;
 
 const LINE_OFFSET: f32 = 30.;
 
+const HELP_DONE: &str = "Congratulations, you've made your first animation!\n\nYou may proceed with fleshing out the armature and animation, or read the user docs to learn more.\n\nHave fun with SkelForm!";
+
 pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
     if shared.input.mouse_left == -1 {
         shared.ui.anim.dragged_keyframe.frame = -1;
@@ -148,6 +150,10 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                 if edited {
                     shared.armature.animations[i].name = value;
                     shared.ui.anim.selected = i;
+                    println!("{}", shared.ui.anim.selected);
+                    shared
+                        .ui
+                        .start_next_tutorial_step(TutorialStep::SelectKeyframe, &shared.armature);
                 }
                 continue;
             }
@@ -453,48 +459,52 @@ pub fn draw_timeline_graph(
     bone_tops: BoneTops,
     hitbox: f32,
 ) {
-    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-        egui::Frame::new()
-            .fill(shared.config.ui_colors.light_accent.into())
-            .inner_margin(3)
-            .show(ui, |ui| {
-                let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
-                    ui.set_width(width);
-                    ui.set_height(ui.available_height());
+    let graph = ui
+        .with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+            egui::Frame::new()
+                .fill(shared.config.ui_colors.light_accent.into())
+                .inner_margin(3)
+                .show(ui, |ui| {
+                    let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
+                        ui.set_width(width);
+                        ui.set_height(ui.available_height());
 
-                    let mut cursor = shared.ui.get_cursor(ui);
-                    // keep cursor on the frame
-                    cursor.y -= shared.ui.anim.timeline_offset.y;
+                        let mut cursor = shared.ui.get_cursor(ui);
+                        // keep cursor on the frame
+                        cursor.y -= shared.ui.anim.timeline_offset.y;
 
-                    // render darkened background after last keyframe
-                    if shared.last_keyframe() != None
-                        && (shared.last_keyframe().unwrap().frame as usize)
-                            < shared.ui.anim.lines_x.len()
-                    {
-                        let left_top_rect = egui::vec2(
-                            shared.ui.anim.lines_x[shared.last_keyframe().unwrap().frame as usize],
-                            -3.,
-                        );
-                        let right_bottom_rect = egui::vec2(0., 999.);
+                        // render darkened background after last keyframe
+                        if shared.last_keyframe() != None
+                            && (shared.last_keyframe().unwrap().frame as usize)
+                                < shared.ui.anim.lines_x.len()
+                        {
+                            let left_top_rect = egui::vec2(
+                                shared.ui.anim.lines_x
+                                    [shared.last_keyframe().unwrap().frame as usize],
+                                -3.,
+                            );
+                            let right_bottom_rect = egui::vec2(0., 999.);
 
-                        let rect_to_fill = egui::Rect::from_min_size(
-                            ui.min_rect().left_top() + left_top_rect,
-                            ui.min_rect().size() + right_bottom_rect,
-                        );
+                            let rect_to_fill = egui::Rect::from_min_size(
+                                ui.min_rect().left_top() + left_top_rect,
+                                ui.min_rect().size() + right_bottom_rect,
+                            );
 
-                        ui.painter().rect_filled(
-                            rect_to_fill,
-                            0.,
-                            shared.config.ui_colors.dark_accent,
-                        );
-                    }
+                            ui.painter().rect_filled(
+                                rect_to_fill,
+                                0.,
+                                shared.config.ui_colors.dark_accent,
+                            );
+                        }
 
-                    draw_frame_lines(ui, shared, &bone_tops, hitbox, cursor);
+                        draw_frame_lines(ui, shared, &bone_tops, hitbox, cursor);
+                    });
+                    shared.ui.anim.timeline_offset = response.state.offset.into();
+                    shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
                 });
-                shared.ui.anim.timeline_offset = response.state.offset.into();
-                shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
-            });
-    });
+        })
+        .response;
+    ui::draw_tutorial_rect(TutorialStep::SelectKeyframe, graph.rect, shared, ui);
 }
 
 pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
@@ -508,15 +518,15 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 shared.config.ui_colors.main,
             );
 
-            let play_str = if shared.ui.anim.playing {
-                "Pause"
-            } else {
-                "Play"
-            };
-
-            let play_text = egui::RichText::new(play_str).color(shared.config.ui_colors.text);
-
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
+                let play_str = if shared.ui.anim.playing {
+                    "Pause"
+                } else {
+                    "Play"
+                };
+
+                let play_text = egui::RichText::new(play_str).color(shared.config.ui_colors.text);
+
                 let button = ui
                     .add_sized(
                         [50., 20.],
@@ -526,13 +536,28 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     )
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
 
+                ui::draw_tutorial_rect(TutorialStep::PlayAnim, button.rect, shared, ui);
+                ui::draw_tutorial_rect(TutorialStep::StopAnim, button.rect, shared, ui);
+
                 let pressed = ui.input(|i| i.key_pressed(egui::Key::Space));
-                if (button.clicked() || pressed)
-                    && shared.selected_animation().unwrap().keyframes.len() != 0
+                if !(button.clicked() || pressed)
+                    || shared.selected_animation().unwrap().keyframes.len() == 0
                 {
-                    shared.ui.anim.playing = !shared.ui.anim.playing;
-                    shared.ui.anim.started = Some(chrono::Utc::now());
-                    shared.ui.anim.played_frame = shared.ui.anim.selected_frame;
+                    return;
+                }
+
+                shared.ui.anim.playing = !shared.ui.anim.playing;
+                shared.ui.anim.started = Some(chrono::Utc::now());
+                shared.ui.anim.played_frame = shared.ui.anim.selected_frame;
+                if shared.ui.tutorial_step_is(TutorialStep::PlayAnim) {
+                    shared
+                        .ui
+                        .start_next_tutorial_step(TutorialStep::StopAnim, &shared.armature);
+                } else {
+                    shared
+                        .ui
+                        .start_next_tutorial_step(TutorialStep::Finish, &shared.armature);
+                    shared.ui.open_modal(HELP_DONE.to_string(), false);
                 }
             });
 
@@ -630,6 +655,9 @@ fn draw_frame_lines(
             // select this frame if clicked
             if shared.input.mouse_left == 0 {
                 shared.ui.anim.selected_frame = i;
+                shared
+                    .ui
+                    .start_next_tutorial_step(TutorialStep::EditBoneAnim, &shared.armature);
             }
         }
 
