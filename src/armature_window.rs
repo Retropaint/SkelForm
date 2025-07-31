@@ -279,13 +279,16 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         );
     } else {
         // set pointed bone as dragged bone's parent
-        shared.armature.bones[dragged_payload].parent_id = shared.armature.bones[idx].id;
+        let parent_id = shared.armature.bones[idx].id;
+        shared.armature.bones[dragged_payload].parent_id = parent_id;
         move_bone(
             &mut shared.armature.bones,
             dragged_payload as i32,
             idx as i32,
             true,
         );
+
+        shared.armature.find_bone_mut(parent_id).unwrap().folded = false;
     }
 
     if shared.selected_bone() != None {
