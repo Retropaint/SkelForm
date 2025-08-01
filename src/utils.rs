@@ -193,11 +193,51 @@ pub fn save_web(armature: &Armature) {
     downloadZip(bytes);
 }
 
-fn create_tex_sheet(armature: &mut Armature, size: &Vec2) -> std::vec::Vec<u8> {
-    // set up the buffer, to save pixels in
-    let mut raw_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size.x as u32, size.y as u32);
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Ord, PartialOrd)]
+enum RectGroupId {
+    GroupIdOne,
+}
 
-    let mut offset: u32 = 0;
+fn create_tex_sheet(armature: &mut Armature) -> std::vec::Vec<u8> {
+    let mut img_rect: rectangle_pack::GroupedRectsToPlace<i32, RectGroupId> =
+        rectangle_pack::GroupedRectsToPlace::new();
+    let mut idx = 0;
+    for texture in &armature.textures {
+        img_rect.push_rect(
+            idx,
+            None,
+            rectangle_pack::RectToInsert::new(texture.size.x as u32, texture.size.y as u32, 1),
+        );
+        idx += 1;
+    }
+
+    let mut size = 32;
+    let mut packed: Option<rectangle_pack::RectanglePackOk<i32, RectGroupId>> = None;
+    while packed == None {
+        let mut target_bins = std::collections::BTreeMap::new();
+        target_bins.insert(
+            RectGroupId::GroupIdOne,
+            rectangle_pack::TargetBin::new(size, size, 1),
+        );
+        match rectangle_pack::pack_rects(
+            &img_rect,
+            &mut target_bins,
+            &rectangle_pack::volume_heuristic,
+            &mut rectangle_pack::contains_smallest_box,
+        ) {
+            Ok(data) => {
+                packed = Some(data);
+            }
+            Err(_) => {
+                println!("Tried texture atlas ({}, {})", size, size);
+                size *= 2
+            }
+        }
+    }
+
+    let mut raw_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(2048, 2048);
+
+    let mut idx = 0;
     for tex in &mut armature.textures {
         // get current texture as a buffer
         let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
@@ -210,14 +250,18 @@ fn create_tex_sheet(armature: &mut Armature, size: &Vec2) -> std::vec::Vec<u8> {
         // add it to the final buffer
         for x in 0..img_buf.width() {
             for y in 0..img_buf.height() {
-                raw_buf.put_pixel(x + offset, y, *img_buf.get_pixel(x, y));
+                raw_buf.put_pixel(
+                    x + packed.as_ref().unwrap().packed_locations()[&idx].1.x(),
+                    y + packed.as_ref().unwrap().packed_locations()[&idx].1.y(),
+                    *img_buf.get_pixel(x, y),
+                );
             }
         }
 
-        tex.offset.x = offset as f32;
+        tex.offset.x = packed.as_ref().unwrap().packed_locations()[&idx].1.x() as f32;
+        tex.offset.y = packed.as_ref().unwrap().packed_locations()[&idx].1.y() as f32;
 
-        // make sure the next texture will be added beside this one, instead of overwriting
-        offset += img_buf.width();
+        idx += 1;
     }
 
     // encode buffer to png, to allow saving it as a png file
@@ -251,7 +295,7 @@ pub fn prepare_files(armature: &Armature) -> (Vec2, String, Vec<u8>) {
     let mut armature_copy = armature.clone();
 
     if size != Vec2::ZERO {
-        png_buf = create_tex_sheet(&mut armature_copy, &size);
+        png_buf = create_tex_sheet(&mut armature_copy);
     }
 
     for bone in &mut armature_copy.bones {
