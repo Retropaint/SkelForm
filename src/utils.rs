@@ -388,7 +388,7 @@ pub fn import<R: Read + std::io::Seek>(
             texture.pixels = img
                 .crop(
                     texture.offset.x as u32,
-                    0,
+                    texture.offset.y as u32,
                     texture.size.x as u32,
                     texture.size.y as u32,
                 )
