@@ -645,7 +645,9 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             ui.label(shared.ui.headline.to_string());
             ui.add_space(20.);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                if button("No", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                if button("No", ui).clicked()
+                    || ui.input_mut(|i| i.consume_shortcut(&shared.config.keys.cancel))
+                {
                     shared.ui.set_state(UiState::PolarModal, false);
                 }
                 if button("Yes", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
