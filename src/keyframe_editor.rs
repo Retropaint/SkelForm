@@ -645,10 +645,13 @@ fn draw_frame_lines(
 
         let above_scrollbar = cursor.y < ui.min_rect().height() - 13.;
         let in_ui = cursor.y > 0.;
+        let able =
+            !shared.ui.has_state(UiState::Modal) && !shared.ui.has_state(UiState::SettingsModal);
 
         if shared.ui.anim.selected_frame == i {
             color = egui::Color32::WHITE;
-        } else if in_ui && cursor.x < x + hitbox && cursor.x > x - hitbox && above_scrollbar {
+        } else if able && in_ui && cursor.x < x + hitbox && cursor.x > x - hitbox && above_scrollbar
+        {
             shared.cursor_icon = egui::CursorIcon::PointingHand;
             color = egui::Color32::WHITE;
 
