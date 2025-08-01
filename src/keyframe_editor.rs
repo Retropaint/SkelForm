@@ -553,10 +553,8 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     shared
                         .ui
                         .start_next_tutorial_step(TutorialStep::StopAnim, &shared.armature);
-                } else {
-                    shared
-                        .ui
-                        .start_next_tutorial_step(TutorialStep::Finish, &shared.armature);
+                } else if !shared.ui.tutorial_step_is(TutorialStep::None) {
+                    shared.ui.tutorial_step = TutorialStep::None;
                     shared.ui.open_modal(HELP_DONE.to_string(), false);
                 }
             });
