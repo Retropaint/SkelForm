@@ -199,6 +199,8 @@ enum RectGroupId {
 }
 
 fn create_tex_sheet(armature: &mut Armature) -> std::vec::Vec<u8> {
+
+    // add textures to sheet generator
     let mut img_rect: rectangle_pack::GroupedRectsToPlace<i32, RectGroupId> =
         rectangle_pack::GroupedRectsToPlace::new();
     let mut idx = 0;
@@ -211,6 +213,7 @@ fn create_tex_sheet(armature: &mut Armature) -> std::vec::Vec<u8> {
         idx += 1;
     }
 
+    // keep generating sheet until the size is big enough
     let mut size = 32;
     let mut packed: Option<rectangle_pack::RectanglePackOk<i32, RectGroupId>> = None;
     while packed == None {
