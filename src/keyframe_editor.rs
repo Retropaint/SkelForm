@@ -41,8 +41,8 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
 
     // navigating frames with kb input
     if shared.ui.rename_id == "" {
-        let right = egui_ctx.input(|i| i.key_pressed(egui::Key::ArrowRight));
-        let left = egui_ctx.input(|i| i.key_pressed(egui::Key::ArrowLeft));
+        let right = egui_ctx.input_mut(|i| i.consume_shortcut(&shared.config.keys.next_anim_frame));
+        let left = egui_ctx.input_mut(|i| i.consume_shortcut(&shared.config.keys.prev_anim_frame));
         if right {
             shared.ui.anim.selected_frame += 1;
             let last_frame = shared.last_keyframe();
