@@ -140,6 +140,7 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         };
     }
 
+    // iterable color config
     #[rustfmt::skip]
     {
         color_row!("Main",         col!().main,         col!().dark_accent);
@@ -178,6 +179,7 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     let keys = &mut shared.config.keys;
     let colors = &shared.config.ui_colors;
 
+    // iterable key config
     #[rustfmt::skip]
     {
         key!("Next Animation Frame",     keys.next_anim_frame, colors.dark_accent);
