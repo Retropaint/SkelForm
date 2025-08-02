@@ -35,6 +35,13 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         } else {
             shared.input.mouse_right = -1;
         }
+
+        if i.smooth_scroll_delta.y != 0. {
+            ui::set_zoom(
+                shared.camera.zoom + (i.smooth_scroll_delta.y as f32),
+                shared,
+            );
+        }
     });
 
     context.set_cursor_icon(shared.cursor_icon);
@@ -979,7 +986,8 @@ pub fn top_bar_button(
     // kb key text
     #[cfg(not(feature = "mobile"))]
     painter.text(
-        egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset) + egui::vec2(-5., 2.5),
+        egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset)
+            + egui::vec2(-5., 2.5),
         egui::Align2::RIGHT_TOP,
         key_str,
         font.clone(),
