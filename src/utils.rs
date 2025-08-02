@@ -199,11 +199,11 @@ enum RectGroupId {
 }
 
 fn create_tex_sheet(armature: &mut Armature) -> std::vec::Vec<u8> {
-
     // add textures to sheet generator
     let mut img_rect: rectangle_pack::GroupedRectsToPlace<i32, RectGroupId> =
         rectangle_pack::GroupedRectsToPlace::new();
     let mut idx = 0;
+
     for texture in &armature.textures {
         img_rect.push_rect(
             idx,

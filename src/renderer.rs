@@ -138,7 +138,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         draw_hover_triangle(shared, render_pass, device, &selected_bone_world_verts);
     }
 
-    if shared.input.mouse_left == -1 {
+    if shared.input.mouse_left == -1 && shared.input.mouse_right == -1 {
         shared.editing_bone = false;
         return;
     }
@@ -146,8 +146,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // mouse related stuff
 
     // move camera
-    if shared.input.is_pressing(KeyCode::SuperLeft) && !shared.input.on_ui
-        || shared.ui.selected_bone_idx == usize::MAX && !shared.input.on_ui
+    if (shared.input.is_pressing(KeyCode::SuperLeft)
+        || shared.input.mouse_right > 0
+        || shared.ui.selected_bone_idx == usize::MAX)
+        && !shared.input.on_ui
     {
         shared.camera.pos += shared.mouse_vel() * shared.camera.zoom;
         return;
