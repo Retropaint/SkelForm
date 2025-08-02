@@ -1621,7 +1621,6 @@ pub struct Shared {
     pub armature: Armature,
     pub camera: Camera,
     pub input: InputStates,
-    pub egui_ctx: egui::Context,
     pub cursor_icon: egui::CursorIcon,
     pub ui: Ui,
     pub editing_bone: bool,
