@@ -229,11 +229,10 @@ fn key(
                         field.logical_key.symbol_or_name()
                     };
 
+                    let button_rich_text = egui::RichText::new(button_str).color(text_color);
+
                     if ui
-                        .add_sized(
-                            [80., 20.],
-                            egui::Button::new(egui::RichText::new(button_str).color(text_color)),
-                        )
+                        .add_sized([80., 20.], egui::Button::new(button_rich_text))
                         .on_hover_cursor(egui::CursorIcon::PointingHand)
                         .clicked()
                     {

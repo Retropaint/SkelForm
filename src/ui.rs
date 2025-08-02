@@ -15,6 +15,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     context.input_mut(|i| {
         kb_inputs(i, shared);
         shared.input.last_pressed = i.keys_down.iter().last().copied();
+        println!("{:?}", shared.input.last_pressed);
 
         // process mouse inputs
 
@@ -29,6 +30,8 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         } else {
             shared.input.mouse_left = -1;
         }
+
+        if i.pointer.button_clicked(egui::PointerButton::Extra1) {}
 
         if i.pointer.secondary_down() {
             shared.input.mouse_right += 1;
@@ -196,6 +199,12 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
 }
 
 pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
+    mouse_button_as_key(input, egui::PointerButton::Primary, egui::Key::F30);
+    mouse_button_as_key(input, egui::PointerButton::Secondary, egui::Key::F31);
+    mouse_button_as_key(input, egui::PointerButton::Middle, egui::Key::F32);
+    mouse_button_as_key(input, egui::PointerButton::Extra1, egui::Key::F33);
+    mouse_button_as_key(input, egui::PointerButton::Extra2, egui::Key::F34);
+
     if input.consume_shortcut(&shared.config.keys.undo) {
         utils::undo_redo(true, shared);
     }
@@ -251,6 +260,26 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         shared.ui.set_state(UiState::ForcedModal, false);
         shared.ui.set_state(UiState::SettingsModal, false);
     }
+}
+
+pub fn mouse_button_as_key(
+    input: &mut egui::InputState,
+    button: egui::PointerButton,
+    fake_key: egui::Key,
+) {
+    if !input.pointer.button_down(button) {
+        input.keys_down.remove(&fake_key);
+        return;
+    }
+
+    input.keys_down.insert(fake_key);
+    input.events.push(egui::Event::Key {
+        key: fake_key,
+        physical_key: None,
+        pressed: true,
+        repeat: false,
+        modifiers: egui::Modifiers::NONE,
+    });
 }
 
 fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
