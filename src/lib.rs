@@ -1040,4 +1040,13 @@ mod tests {
         armature.edit_bone(0, &AnimElement::PositionY, 20., 0, 2);
         assert_eq!(armature.animations[0].keyframes[2].value, 10.);
     }
+
+    #[test]
+    fn test_linear_anim() {
+        let mut armature = init_shared().armature;
+        armature.new_animation();
+        armature.edit_bone(0, &AnimElement::PositionX, 10., 0, 20);
+        let animated_bones = armature.animate(0, 10);
+        assert_eq!(animated_bones[0].pos.x, 5.);
+    }
 }
