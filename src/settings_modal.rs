@@ -1,4 +1,4 @@
-use crate::{shared, ui};
+use crate::{shared, ui, Display};
 
 pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
     egui::Modal::new("test".into())
@@ -224,13 +224,12 @@ fn key(
                 ui.label(name);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let button_str = if changing_key == name {
-                        "..."
+                        "...".to_string()
                     } else {
-                        field.logical_key.symbol_or_name()
+                        field.logical_key.display()
                     };
 
                     let button_rich_text = egui::RichText::new(button_str).color(text_color);
-
                     if ui
                         .add_sized([80., 20.], egui::Button::new(button_rich_text))
                         .on_hover_cursor(egui::CursorIcon::PointingHand)
