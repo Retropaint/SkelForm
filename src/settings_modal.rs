@@ -226,14 +226,15 @@ fn key(
                     let button_str = if changing_key == name {
                         "..."
                     } else {
-                        field.logical_key.name()
+                        field.logical_key.symbol_or_name()
                     };
 
                     if ui
                         .add_sized(
-                            [120., 20.],
+                            [80., 20.],
                             egui::Button::new(egui::RichText::new(button_str).color(text_color)),
                         )
+                        .on_hover_cursor(egui::CursorIcon::PointingHand)
                         .clicked()
                     {
                         *changing_key = name.to_string();
