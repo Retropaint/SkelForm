@@ -281,7 +281,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
 
                 ui.menu_button(title!("Settings"), |ui| {
                     ui.set_width(100.);
-                    if top_bar_button(ui, "Manage", "", &mut offset, shared).clicked() {
+                    if top_bar_button(ui, "Manage", None, &mut offset, shared).clicked() {
                         shared.ui.set_state(UiState::SettingsModal, true);
                     }
                 });
@@ -293,7 +293,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     } else {
                         "Help Light"
                     };
-                    if top_bar_button(ui, str, "", &mut offset, shared).clicked() {
+                    if top_bar_button(ui, str, None, &mut offset, shared).clicked() {
                         if !shared.ui.tutorial_step_is(TutorialStep::None) {
                             shared.ui.set_tutorial_step(TutorialStep::None);
                         } else if shared.ui.tutorial_step_is(TutorialStep::Finish) {
@@ -307,21 +307,21 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         }
                         ui.close();
                     }
-                    if top_bar_button(ui, "User Docs", "", &mut offset, shared).clicked() {
+                    if top_bar_button(ui, "User Docs", None, &mut offset, shared).clicked() {
                         utils::open_docs(true, "");
                     }
-                    if top_bar_button(ui, "Dev Docs", "", &mut offset, shared).clicked() {
+                    if top_bar_button(ui, "Dev Docs", None, &mut offset, shared).clicked() {
                         utils::open_docs(false, "");
                     }
                     #[cfg(not(target_arch = "wasm32"))]
-                    if top_bar_button(ui, "Binary Folder", "", &mut offset, shared).clicked() {
+                    if top_bar_button(ui, "Binary Folder", None, &mut offset, shared).clicked() {
                         match open::that(utils::bin_path()) {
                             Err(_) => {}
                             Ok(file) => file,
                         };
                     }
                     #[cfg(not(target_arch = "wasm32"))]
-                    if top_bar_button(ui, "Config Folder", "", &mut offset, shared).clicked() {
+                    if top_bar_button(ui, "Config Folder", None, &mut offset, shared).clicked() {
                         match open::that(config_path().parent().unwrap()) {
                             Err(_) => {}
                             Ok(file) => file,
@@ -340,21 +340,28 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let title = egui::RichText::new("File").color(shared.config.ui_colors.text);
     ui.menu_button(title, |ui| {
         ui.set_width(125.);
-        if top_bar_button(ui, "Open", "O", &mut offset, shared).clicked() {
+
+        macro_rules! top_bar_button {
+            ($name:expr, $kb:expr) => {
+                top_bar_button(ui, $name, $kb, &mut offset, shared)
+            };
+        }
+
+        if top_bar_button!("Open", Some(&shared.config.keys.open)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog(shared.temp_path.import.clone());
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
             ui.close();
         }
-        if top_bar_button(ui, "Save", "Mod + S", &mut offset, shared).clicked() {
+        if top_bar_button!("Save", Some(&shared.config.keys.save)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog(shared.temp_path.save.clone());
             #[cfg(target_arch = "wasm32")]
             utils::save_web(&shared.armature);
             ui.close();
         }
-        if top_bar_button(ui, "Export Video", "E", &mut offset, shared).clicked() {
+        if top_bar_button!("Export Video", None).clicked() {
             // check if ffmpeg exists and complain if it doesn't
             let mut ffmpeg = false;
             match std::process::Command::new("ffmpeg")
@@ -407,26 +414,35 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             shared.ui.anim.loops = 1;
             ui.close();
         }
+
+        top_bar_button(ui, "test", None, &mut 0., shared);
     });
 }
 
 fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
+
     let title = egui::RichText::new("View").color(shared.config.ui_colors.text);
     ui.menu_button(title, |ui| {
+        macro_rules! tpb {
+            ($name:expr, $kb:expr) => {
+                top_bar_button(ui, $name, $kb, &mut offset, shared)
+            };
+        }
+
         ui.set_width(125.);
-        if top_bar_button(ui, "Zoom In", "=", &mut offset, shared).clicked() {
+        if tpb!("Zoom In", Some(&shared.config.keys.zoom_in_camera)).clicked() {
             set_zoom(shared.camera.zoom - 10., shared);
         }
-        if top_bar_button(ui, "Zoom Out", "-", &mut offset, shared).clicked() {
+        if tpb!("Zoom Out", Some(&shared.config.keys.zoom_out_camera)).clicked() {
             set_zoom(shared.camera.zoom + 10., shared);
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            if top_bar_button(ui, "Zoom In UI", "Mod + =", &mut offset, shared).clicked() {
+            if tpb!("Zoom In UI", Some(&shared.config.keys.zoom_in_ui)).clicked() {
                 shared.ui.scale += 0.1;
             }
-            if top_bar_button(ui, "Zoom Out UI", "Mod + -", &mut offset, shared).clicked() {
+            if tpb!("Zoom Out UI", Some(&shared.config.keys.zoom_out_ui)).clicked() {
                 shared.ui.scale -= 0.1;
             }
         }
@@ -444,11 +460,13 @@ fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let title = egui::RichText::new("Edit").color(shared.config.ui_colors.text);
     ui.menu_button(title, |ui| {
         ui.set_width(90.);
-        if top_bar_button(ui, "Undo", "Mod + Z", &mut offset, shared).clicked() {
+        let key_undo = Some(&shared.config.keys.undo);
+        if top_bar_button(ui, "Undo", key_undo, &mut offset, shared).clicked() {
             utils::undo_redo(true, shared);
             ui.close();
         }
-        if top_bar_button(ui, "Redo", "Mod + Y", &mut offset, shared).clicked() {
+        let key_redo = Some(&shared.config.keys.redo);
+        if top_bar_button(ui, "Redo", key_redo, &mut offset, shared).clicked() {
             utils::undo_redo(false, shared);
             ui.close();
         }
@@ -913,7 +931,7 @@ pub fn job_text(str: &str, color: Option<Color32>, job: &mut egui::text::LayoutJ
 pub fn top_bar_button(
     ui: &mut egui::Ui,
     text: &str,
-    kb_key: &str,
+    key: Option<&egui::KeyboardShortcut>,
     offset: &mut f32,
     shared: &Shared,
 ) -> egui::Response {
@@ -956,12 +974,18 @@ pub fn top_bar_button(
 
     let kb_font = egui::FontId::new(9., egui::FontFamily::Proportional);
 
+    let key_str = if key != None {
+        key.unwrap().display()
+    } else {
+        "".to_string()
+    };
+
     // kb key text
     #[cfg(not(feature = "mobile"))]
     painter.text(
         egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset) + egui::vec2(-5., 5.),
         egui::Align2::RIGHT_TOP,
-        kb_key,
+        key_str,
         kb_font,
         egui::Color32::DARK_GRAY,
     );
