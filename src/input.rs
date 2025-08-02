@@ -6,14 +6,14 @@ pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
     if shared.input.on_ui {
         return;
     }
-    let sens_reducer = 100.;
+    let _sens_reducer = 100.;
     match delta {
-        MouseScrollDelta::LineDelta(_x, y) => {
+        MouseScrollDelta::LineDelta(_x, _y) => {
             // ui::set_zoom(shared.camera.zoom + (y as f32 / sens_reducer), shared);
         }
 
         // this is actually the touch pad
-        MouseScrollDelta::PixelDelta(pos) => {
+        MouseScrollDelta::PixelDelta(_pos) => {
             // shared.camera.pos += Vec2::new(-pos.x as f32, pos.y as f32);
         }
     }
