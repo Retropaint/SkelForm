@@ -723,7 +723,20 @@ pub trait ShortcutDisplay {
 impl ShortcutDisplay for egui::KeyboardShortcut {
     /// Return this shortcut as a presentable string.
     fn display(self) -> String {
-        self.format(&egui::ModifierNames::NAMES, cfg!(target_os = "macos"))
+        let mut str: Vec<String> = self
+            .format(&egui::ModifierNames::SYMBOLS, cfg!(target_os = "macos"))
+            .chars()
+            .map(|c| c.to_string())
+            .collect();
+
+        // replace mod sybols with names for now, since egui default font doesn't have them
+        for key in &mut str {
+            *key = key.replace("⌥", "Opt");
+            *key = key.replace("⌃", "Ctrl");
+            *key = key.replace("⇧", "Shift");
+        }
+
+        str.join(" ")
     }
 }
 
