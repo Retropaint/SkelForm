@@ -414,8 +414,6 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             shared.ui.anim.loops = 1;
             ui.close();
         }
-
-        top_bar_button(ui, "test", None, &mut 0., shared);
     });
 }
 
