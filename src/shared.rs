@@ -717,11 +717,11 @@ pub struct KeyboardConfig {
     pub cancel: egui::KeyboardShortcut,
 }
 
-pub trait ShortcutDisplay {
+pub trait Display {
     fn display(self) -> String;
 }
 
-impl ShortcutDisplay for egui::KeyboardShortcut {
+impl Display for egui::KeyboardShortcut {
     /// Return this shortcut as a presentable string.
     fn display(self) -> String {
         let mut str: Vec<String> = self
@@ -738,6 +738,20 @@ impl ShortcutDisplay for egui::KeyboardShortcut {
         }
 
         str.join(" ")
+    }
+}
+
+impl Display for egui::Key {
+    fn display(self) -> String {
+        match self {
+            egui::Key::F31 => "M1",
+            egui::Key::F32 => "M2",
+            egui::Key::F33 => "M3",
+            egui::Key::F34 => "M4",
+            egui::Key::F35 => "M5",
+            _ => self.symbol_or_name(),
+        }
+        .to_string()
     }
 }
 

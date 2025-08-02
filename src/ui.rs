@@ -15,7 +15,6 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     context.input_mut(|i| {
         kb_inputs(i, shared);
         shared.input.last_pressed = i.keys_down.iter().last().copied();
-        println!("{:?}", shared.input.last_pressed);
 
         // process mouse inputs
 
@@ -199,11 +198,11 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
 }
 
 pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
-    mouse_button_as_key(input, egui::PointerButton::Primary, egui::Key::F30);
-    mouse_button_as_key(input, egui::PointerButton::Secondary, egui::Key::F31);
-    mouse_button_as_key(input, egui::PointerButton::Middle, egui::Key::F32);
-    mouse_button_as_key(input, egui::PointerButton::Extra1, egui::Key::F33);
-    mouse_button_as_key(input, egui::PointerButton::Extra2, egui::Key::F34);
+    mouse_button_as_key(input, egui::PointerButton::Primary, egui::Key::F31);
+    mouse_button_as_key(input, egui::PointerButton::Secondary, egui::Key::F32);
+    mouse_button_as_key(input, egui::PointerButton::Middle, egui::Key::F33);
+    mouse_button_as_key(input, egui::PointerButton::Extra1, egui::Key::F34);
+    mouse_button_as_key(input, egui::PointerButton::Extra2, egui::Key::F35);
 
     if input.consume_shortcut(&shared.config.keys.undo) {
         utils::undo_redo(true, shared);
