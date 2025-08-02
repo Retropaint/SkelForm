@@ -92,7 +92,6 @@ fn init_shared(shared: &mut Shared) {
         export_vid_done: base_path.clone() + "export_vid_done",
     };
 
-    let first_time = false;
     #[cfg(not(target_arch = "wasm32"))]
     {
         // import config
@@ -100,24 +99,20 @@ fn init_shared(shared: &mut Shared) {
             skelform_lib::utils::import_config(shared);
         } else {
             skelform_lib::utils::save_config(&shared.config);
-            shared.ui.start_tutorial(&shared.armature);
+            shared.ui.set_state(UiState::FirstTimeModal, true);
         }
     }
     #[cfg(target_arch = "wasm32")]
     {
         skelform_lib::utils::import_config(shared);
         skelform_lib::utils::save_config(&shared.config);
-        skelform_lib::updateUiSlider();
 
-        if shared.config.ui_scale == 1. {
-            skelform_lib::toggleElement(true, "ui-slider".to_string());
-            shared.ui.start_tutorial(&shared.armature);
+        if shared.config.first_time {
+            shared.config.first_time = false;
+            shared.ui.set_state(UiState::FirstTimeModal, true);
         }
     }
 
-    if first_time {
-        shared.ui.start_tutorial(&shared.armature);
-    }
     shared.ui.scale = shared.config.ui_scale;
 
     // shared.ui.set_state(UiState::SettingsModal, true);
