@@ -60,6 +60,7 @@
                 justify-content: center;
                 align-items: center;
                 flex-direction: column;
+                color: white
             }
 
             .file-dialog {
@@ -144,6 +145,10 @@
             >
         </div>
 
+        <div id="focus" class="modal" onclick="hideFocus()">
+            <p>Click to focus</p>
+        </div>
+
         <div
             id="resolution-message"
             class="resolution-message"
@@ -168,7 +173,7 @@
             data-target-name="SkelForm"
         />
         <div class="root">
-            <canvas class="main-canvas" id="canvas"></canvas>
+            <canvas class="main-canvas" id="canvas" style="visibility: hidden"></canvas>
         </div>
 
         <form></form>
@@ -184,6 +189,12 @@
             let hasLoaded = false;
             let config = "";
             loadConfig();
+
+            function hideFocus() {
+                toggleElement(false, "focus")
+                toggleElement(true, "canvas")
+                setTimeout(() => toggleElement(true, "resolution-message"), 1000)
+            }
 
             async function loadConfig() {
                 let data = await localStorage.getItem("skelform_config");
@@ -278,9 +289,6 @@
 
             function loaded() {
                 if (!hasLoaded) {
-                    document.getElementById(
-                        "resolution-message",
-                    ).style.visibility = "visible";
                     hasLoaded = true;
                 }
             }
@@ -291,13 +299,23 @@
 
             function getConfig() {
                 if (!config) {
-                    return "dummy";
+                    console.log("test")
+                    return "";
                 }
                 return JSON.stringify(config);
             }
 
             function saveConfig(data) {
                 localStorage.setItem("skelform_config", data);
+            }
+
+            async function downloadSample() {
+                fetch('/skellington.skf')
+                    .then(response => response.arrayBuffer())
+                    .then(arrayBuffer => {
+                        fileData = new Uint8Array(arrayBuffer);
+                        fileName = "skellington.skf"
+                    })
             }
 
             function downloadZip(binary) {

@@ -658,7 +658,7 @@ impl Ui {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
     #[serde(skip)]
-    pub first_launch: bool,
+    pub first_time: bool,
 
     #[serde(default = "default_one")]
     pub ui_scale: f32,
@@ -681,7 +681,7 @@ pub struct ColorConfig {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            first_launch: true,
+            first_time: true,
             ui_scale: 1.,
             ui_colors: ColorConfig::default(),
             keys: KeyboardConfig::default(),

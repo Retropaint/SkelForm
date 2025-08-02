@@ -36,6 +36,7 @@ pub mod file_reader;
 pub mod input;
 pub mod keyframe_editor;
 pub mod keyframe_panel;
+pub mod modal;
 pub mod renderer;
 pub mod settings_modal;
 pub mod shared;
@@ -65,6 +66,7 @@ extern "C" {
     pub fn focusEditInput();
     pub fn openDocumentation(docs_name: String);
     pub fn updateUiSlider();
+    pub fn downloadSample();
 }
 
 #[derive(Default)]
