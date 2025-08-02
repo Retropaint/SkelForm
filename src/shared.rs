@@ -600,6 +600,7 @@ impl Ui {
         let has_anim = armature.animations.len() > 0 && armature.animations[0].keyframes.len() > 0;
         let selected_frame = self.anim.selected_frame != 0;
 
+        // iterable tutorial steps
         #[rustfmt::skip]
         let final_step = match step {
             TutorialStep::NewBone        => check!(bones_len > 0,      TutorialStep::GetImage),
@@ -1050,15 +1051,17 @@ impl Armature {
 
         #[rustfmt::skip]
         match element {
-            AnimElement::PositionX => { edit!(bone_mut.pos.x);   },
-            AnimElement::PositionY => { edit!(bone_mut.pos.y);   },
-            AnimElement::Rotation  => { edit!(bone_mut.rot);     },
-            AnimElement::ScaleX    => { edit!(bone_mut.scale.x); },
-            AnimElement::ScaleY    => { edit!(bone_mut.scale.y); },
-            AnimElement::PivotX    => { edit!(bone_mut.pivot.x); },
-            AnimElement::PivotY    => { edit!(bone_mut.pivot.y); },
-            AnimElement::Zindex    => { edit!(bone_mut.zindex);  },
-            _ => {}
+            AnimElement::PositionX     => { edit!(bone_mut.pos.x);   },
+            AnimElement::PositionY     => { edit!(bone_mut.pos.y);   },
+            AnimElement::Rotation      => { edit!(bone_mut.rot);     },
+            AnimElement::ScaleX        => { edit!(bone_mut.scale.x); },
+            AnimElement::ScaleY        => { edit!(bone_mut.scale.y); },
+            AnimElement::PivotX        => { edit!(bone_mut.pivot.x); },
+            AnimElement::PivotY        => { edit!(bone_mut.pivot.y); },
+            AnimElement::Zindex        => { edit!(bone_mut.zindex);  },
+            AnimElement::VertPositionX => { /* do nothing */ },
+            AnimElement::VertPositionY => { /* do nothing */ },
+            AnimElement::Texture       => { /* handled in set_bone_tex() */ },
         };
 
         if anim_id == usize::MAX {
@@ -1143,7 +1146,7 @@ impl Armature {
                 };
             }
 
-            // interpolate!
+            // iterable anim interps
             #[rustfmt::skip]
             {
                 b.pos.x   += interpolate!(AnimElement::PositionX,  0., -1);
@@ -1469,6 +1472,7 @@ pub enum AnimElement {
     Texture,
 }
 
+// iterable anim change icons IDs
 #[rustfmt::skip]
 pub const ANIM_ICON_ID: [usize; 10] = [
     0,
