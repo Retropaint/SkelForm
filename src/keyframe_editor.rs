@@ -150,7 +150,6 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                 if edited {
                     shared.armature.animations[i].name = value;
                     shared.ui.anim.selected = i;
-                    println!("{}", shared.ui.anim.selected);
                     shared
                         .ui
                         .start_next_tutorial_step(TutorialStep::SelectKeyframe, &shared.armature);
