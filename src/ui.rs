@@ -972,8 +972,6 @@ pub fn top_bar_button(
         shared.config.ui_colors.text.into(),
     );
 
-    let kb_font = egui::FontId::new(9., egui::FontFamily::Proportional);
-
     let key_str = if key != None {
         key.unwrap().display()
     } else {
@@ -983,10 +981,10 @@ pub fn top_bar_button(
     // kb key text
     #[cfg(not(feature = "mobile"))]
     painter.text(
-        egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset) + egui::vec2(-5., 5.),
+        egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset) + egui::vec2(-5., 2.5),
         egui::Align2::RIGHT_TOP,
         key_str,
-        kb_font,
+        font.clone(),
         egui::Color32::DARK_GRAY,
     );
 
