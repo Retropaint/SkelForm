@@ -9,12 +9,12 @@ pub fn mouse_wheel_input(delta: MouseScrollDelta, shared: &mut Shared) {
     let sens_reducer = 100.;
     match delta {
         MouseScrollDelta::LineDelta(_x, y) => {
-            ui::set_zoom(shared.camera.zoom + (y as f32 / sens_reducer), shared);
+            // ui::set_zoom(shared.camera.zoom + (y as f32 / sens_reducer), shared);
         }
 
         // this is actually the touch pad
         MouseScrollDelta::PixelDelta(pos) => {
-            shared.camera.pos += Vec2::new(-pos.x as f32, pos.y as f32);
+            // shared.camera.pos += Vec2::new(-pos.x as f32, pos.y as f32);
         }
     }
 }
