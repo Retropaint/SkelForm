@@ -716,6 +716,17 @@ pub struct KeyboardConfig {
     pub cancel: egui::KeyboardShortcut,
 }
 
+pub trait ShortcutDisplay {
+    fn display(self) -> String;
+}
+
+impl ShortcutDisplay for egui::KeyboardShortcut {
+    /// Return this shortcut as a presentable string.
+    fn display(self) -> String {
+        self.format(&egui::ModifierNames::NAMES, cfg!(target_os = "macos"))
+    }
+}
+
 macro_rules! regular_key {
     ($key:expr) => {
         egui::KeyboardShortcut::new(egui::Modifiers::NONE, $key)
