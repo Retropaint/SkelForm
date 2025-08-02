@@ -17,7 +17,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         egui::SidePanel::left(panel_id)
             .default_width(min_default_size)
             .min_width(min_default_size)
-            .max_width(min_default_size)
+            .max_width(min_default_size + 100.)
             .resizable(true)
             .show(egui_ctx, |ui| {
                 ui_mod::draw_gradient(
@@ -72,7 +72,9 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
                 ui.add_space(3.);
 
-                draw_hierarchy(shared, ui);
+                egui::ScrollArea::both().max_height(ui.available_height() - 10.).show(ui, |ui| {
+                    draw_hierarchy(shared, ui);
+                });
             }),
         &mut shared.input.on_ui,
         &egui_ctx,
