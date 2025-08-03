@@ -24,13 +24,8 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                             macro_rules! tab {
                                 ($name:expr, $state:expr) => {
-                                    if ui::selection_button(
-                                        $name,
-                                        shared.ui.settings_state == $state,
-                                        ui,
-                                    )
-                                    .clicked()
-                                    {
+                                    let is_state = shared.ui.settings_state == $state;
+                                    if ui::selection_button($name, is_state, ui).clicked() {
                                         shared.ui.settings_state = $state;
                                     }
                                 };
