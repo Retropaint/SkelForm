@@ -10,29 +10,17 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
             ..Default::default()
         })
         .show(ctx, |modal_ui| {
-            #[allow(unused_mut)]
-            let mut scale: shared::Vec2;
-
-            #[cfg(target_arch = "wasm32")]
-            {
-                scale = shared::Vec2::new(0.5 / shared.ui.scale, 0.5 / shared.ui.scale);
-                scale.x *= 1.5;
-            }
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                scale = shared::Vec2::new(1., 1.);
-            }
-
-            modal_ui.set_width(500. * scale.x);
-            modal_ui.set_height(500. * scale.y);
+            let window = shared::Vec2::new(shared.window.x / 3., shared.window.y / 3.);
+            modal_ui.set_width(window.x.min(500.));
+            modal_ui.set_height(window.y.min(500.));
 
             modal_ui.horizontal(|ui| {
                 egui::Frame::new()
                     .fill(shared.config.ui_colors.dark_accent.into())
                     .inner_margin(egui::Margin::same(5))
                     .show(ui, |ui| {
-                        ui.set_width(100. * scale.x);
-                        ui.set_height(475. * scale.y);
+                        ui.set_width(window.x.min(100.));
+                        ui.set_height(window.y.min(475.));
                         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                             macro_rules! tab {
                                 ($name:expr, $state:expr) => {
@@ -53,8 +41,8 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         });
                     });
                 egui::Frame::new().show(ui, |ui| {
-                    ui.set_width(400. * scale.x);
-                    ui.set_height(475. * scale.y);
+                    ui.set_width(window.x.min(400.));
+                    ui.set_height(window.y.min(475.));
                     ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| match shared
                         .ui
                         .settings_state
