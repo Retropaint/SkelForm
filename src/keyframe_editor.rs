@@ -684,10 +684,12 @@ fn draw_frame_lines(
         let size = Vec2::new(17., 17.);
 
         // the Y position is based on this diamond's respective label
-        let top = bone_tops
-            .find(kf!().bone_id, &kf!().element.clone(), kf!().vert_id)
-            .unwrap()
-            .height;
+        let top: f32;
+        if let Some(bone_top) = bone_tops.find(kf!().bone_id, &kf!().element.clone(), kf!().vert_id) {
+            top = bone_top.height;
+        } else {
+            return;
+        }
         let x = shared.ui.anim.lines_x[kf!().frame as usize] + ui.min_rect().left();
         let pos = Vec2::new(x, top + size.y / 2.);
         let offset = size / 2.;
