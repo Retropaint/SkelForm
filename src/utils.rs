@@ -564,9 +564,7 @@ pub fn import_config(shared: &mut Shared) {
     }
     #[cfg(target_arch = "wasm32")]
     {
-        if getConfig().len() == 0 {
-            shared.config.ui_scale = 0.75;
-        } else if let Ok(data) = serde_json::from_str(&getConfig()) {
+        if let Ok(data) = serde_json::from_str(&getConfig()) {
             shared.config = data;
         }
     }
