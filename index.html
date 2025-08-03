@@ -310,7 +310,7 @@
             }
 
             async function downloadSample() {
-                fetch('/skellington.skf')
+                fetch('skellington.skf')
                     .then(response => response.arrayBuffer())
                     .then(arrayBuffer => {
                         fileData = new Uint8Array(arrayBuffer);
