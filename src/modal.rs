@@ -1,7 +1,7 @@
 use crate::{
     armature_window, bone_panel,
     ui::{self, button, job_text, selection_button},
-    utils, Action, ActionEnum, Config, PolarId, Shared, UiState,
+    utils, Action, ActionEnum, Config, PolarId, Shared, UiState, Vec2,
 };
 
 use egui::Color32;
@@ -167,22 +167,30 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 }
             });
 
-            let mut offset = 0.;
+            let mut offset = Vec2::new(0., 0.);
             let mut height = 0.;
-            let mut current_height = 0.;
             let mut tex_idx = -1;
+            let max_width = 250.;
             for i in 0..shared.ui.texture_images.len() {
                 // limit size
                 let mut size = shared.armature.textures[i].size;
                 let max = 50.;
+                let mut mult = 1.;
                 if size.x > max {
-                    let aspect_ratio = size.y / size.x;
-                    size.x = max;
-                    size.y = max * aspect_ratio;
-                } else if size.y > max {
-                    let aspect_ratio = size.x / size.y;
-                    size.y = max;
-                    size.x = max * aspect_ratio;
+                    mult = max / size.x
+                }
+                if size.y > max {
+                    mult = max / size.y
+                }
+                size.x *= mult;
+                size.y *= mult;
+
+                let padding = 2.;
+                // go to next row if there's no space
+                if size.x + offset.x + padding > max_width {
+                    offset.x = 0.;
+                    offset.y += height + 2.;
+                    height = 0.;
                 }
 
                 // record tallest texture of this row
@@ -191,8 +199,8 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 }
 
                 let pos = egui::pos2(
-                    ui.min_rect().left() + offset,
-                    ui.min_rect().top() + 50. + current_height,
+                    ui.min_rect().left() + offset.x,
+                    ui.min_rect().top() + 50. + offset.y,
                 );
 
                 let rect = egui::Rect::from_min_size(pos, size.into());
@@ -254,13 +262,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     }
                 }
 
-                offset += size.x + 2.;
-                // go to next row if there's no space
-                if offset > 250. {
-                    offset = 0.;
-                    current_height += height + 2.;
-                    height = 0.;
-                }
+                offset.x += size.x + padding;
             }
 
             ui.add_space(50.);
