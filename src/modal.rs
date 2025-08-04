@@ -1,7 +1,7 @@
 use crate::{
     armature_window, bone_panel,
     ui::{self, button, job_text, selection_button},
-    utils, Action, ActionEnum, Config, PolarId, Shared, UiState, Vec2,
+    utils, Action, ActionEnum, Bone, Config, PolarId, Shared, UiState, Vec2,
 };
 
 use egui::Color32;
@@ -59,14 +59,24 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
     shared.ui.set_state(UiState::PolarModal, false);
     match shared.ui.polar_id {
         PolarId::DeleteBone => {
-            let selected_id = shared.selected_bone().unwrap().id;
+            shared.undo_actions.push(Action {
+                action: ActionEnum::Bones,
+                bones: shared.armature.bones.clone(),
+                ..Default::default()
+            });
+
+            if shared.armature.find_bone(shared.ui.context_menu.id) == None {
+                return;
+            }
+
             let bone = shared
                 .armature
                 .find_bone(shared.ui.context_menu.id)
                 .unwrap();
+
             // remove all children of this bone as well
             let mut children = vec![bone.clone()];
-            armature_window::get_all_children(&shared.armature.bones, &mut children, &bone);
+            armature_window::get_all_children(&shared.armature.bones, &mut children, bone);
             children.reverse();
             for bone in &children {
                 shared.armature.delete_bone(bone.id);
@@ -81,11 +91,6 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
                         }
                     }
                 }
-            }
-            if let Some(bone) = shared.armature.find_bone_idx(selected_id) {
-                shared.ui.selected_bone_idx = bone;
-            } else {
-                shared.ui.selected_bone_idx = usize::MAX;
             }
         }
         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
@@ -234,7 +239,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                         break;
                     } else {
                         let mut anim_id = shared.ui.anim.selected;
-                        if !shared.ui.is_animating() {
+                        if !shared.ui.is_animating() && shared.selected_bone() != None {
                             anim_id = usize::MAX;
                             shared.undo_actions.push(Action {
                                 action: ActionEnum::Bone,
@@ -242,13 +247,17 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                                 bones: vec![shared.selected_bone().unwrap().clone()],
                                 ..Default::default()
                             });
-                        } else if shared.ui.is_animating() {
+                        } else if shared.ui.is_animating() && shared.selected_animation() != None {
                             shared.undo_actions.push(Action {
                                 action: ActionEnum::Animation,
                                 id: shared.selected_animation().unwrap().id,
                                 animations: vec![shared.selected_animation().unwrap().clone()],
                                 ..Default::default()
                             });
+                        }
+
+                        if shared.selected_bone() == None {
+                            return;
                         }
 
                         // set texture
