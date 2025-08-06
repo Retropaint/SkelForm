@@ -227,7 +227,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
 
     if input.consume_shortcut(&shared.config.keys.save) {
         #[cfg(target_arch = "wasm32")]
-        utils::save_web(&shared.armature);
+        utils::save_web(&mut shared.armature);
 
         #[cfg(not(target_arch = "wasm32"))]
         utils::open_save_dialog(shared.temp_path.save.clone());

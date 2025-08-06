@@ -162,6 +162,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         // save bone/animation for undo
         if !shared.editing_bone {
             shared.save_edited_bone();
+            shared.armature.autosave();
             shared.editing_bone = true;
         }
 

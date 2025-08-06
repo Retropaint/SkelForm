@@ -867,6 +867,9 @@ pub struct Armature {
 
     #[serde(skip)]
     pub bind_groups: Vec<BindGroup>,
+
+    #[serde(skip)]
+    pub tex_sheet_buf: Vec<u8>,
 }
 
 impl Armature {
@@ -1094,7 +1097,6 @@ impl Armature {
         let frame =
             self.animations[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone(), -1);
         self.animations[anim_id].keyframes[frame].value = value;
-        self.autosave();
     }
 
     pub fn edit_vert(
@@ -1295,15 +1297,13 @@ impl Armature {
         parents
     }
 
-    #[allow(unreachable_code)]
     pub fn autosave(&self) {
-        return;
         let armature = self.clone();
         std::thread::spawn(move || {
             #[cfg(not(target_arch = "wasm32"))]
             utils::save("./autosave.skf".to_string(), &armature);
-            #[cfg(target_arch = "wasm32")]
-            utils::save_web(&armature);
+            //#[cfg(target_arch = "wasm32")]
+            //utils::save_web(&armature);
         });
     }
 
