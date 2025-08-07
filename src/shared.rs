@@ -971,8 +971,6 @@ impl Armature {
             );
             self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
         }
-
-        self.autosave();
     }
 
     pub fn delete_bone(&mut self, id: i32) {

@@ -332,16 +332,19 @@ pub fn first_time_modal(shared: &mut Shared, ctx: &egui::Context) {
             ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing.x = 0.0;
                 ui.label("- Try out the ");
-                if ui::button("sample", ui).clicked() {
-                    #[cfg(target_arch = "wasm32")]
-                    crate::downloadSample();
-                    #[cfg(not(target_arch = "wasm32"))]
-                    crate::file_reader::create_temp_file(
-                        &shared.temp_path.import,
-                        &(utils::bin_path() + "/samples/skellington.skf"),
-                    );
-                    shared.ui.set_state(UiState::FirstTimeModal, false);
+
+                if !ui::button("sample", ui).clicked() {
+                    return;
                 }
+
+                #[cfg(target_arch = "wasm32")]
+                crate::downloadSample();
+                #[cfg(not(target_arch = "wasm32"))]
+                crate::file_reader::create_temp_file(
+                    &shared.temp_path.import,
+                    &(utils::bin_path() + "/samples/skellington.skf"),
+                );
+                shared.ui.set_state(UiState::FirstTimeModal, false);
             });
 
             ui.horizontal_wrapped(|ui| {
