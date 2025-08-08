@@ -18,26 +18,24 @@ serde_json = "1.0.140"
 tween = "2.0.4"
 wgpu = { version = "25.0.0", default-features = false }
 winit = "0.30.9"
-chrono = "0.4.41"
 image = "0.25.5"
-#lyon = "1.0.1"
-psd = "0.3.5"
-glob = "0.3.2"
-rectangle-pack = "0.4.2"
+psd = "0.3.5" # Photoshop Document file parser
+glob = "0.3.2" # file path wildcards
+rectangle-pack = "0.4.2" # texture atlas layout generator (does not generate the image itself)
+web-time = "1.1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 egui-winit = "0.32.0"
 pollster = "0.4.0"
 rfd = { version = "0.15.3",  features = ["gtk3"], default-features = false}
 zip = "4.0.0"
-directories-next = "2.0.0"
-open = "5.3.2"
+directories-next = "2.0.0" # for common dirs like config & temp data
+open = "5.3.2" # open links or folders
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3.77", features = ["Window", "Document", "HtmlImageElement", "CanvasRenderingContext2d", "HtmlCanvasElement", "ImageData"] }
 futures = "0.3.31"
 log = "0.4.26"
-web-time = "1.1.0"
 console_error_panic_hook = "0.1.7"
 console_log = "1.0.0"
 egui-winit = { version = "0.32.0", default-features = false }

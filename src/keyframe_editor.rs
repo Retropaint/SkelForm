@@ -15,7 +15,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         shared.ui.anim.dragged_keyframe.frame = -1;
     }
     if shared.ui.anim.playing {
-        let mut elapsed = (chrono::Utc::now() - shared.ui.anim.started.unwrap()).as_seconds_f32();
+        let mut elapsed = shared.ui.anim.elapsed.unwrap().elapsed().as_millis() as f32 / 1e3 as f32;
         let frametime = 1. / shared.selected_animation().unwrap().fps as f32;
 
         // Offset elapsed time with the selected frame.
@@ -33,7 +33,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                     shared.recording = false;
                 }
             } else {
-                shared.ui.anim.started = Some(chrono::Utc::now());
+                shared.ui.anim.elapsed = Some(Instant::now());
                 shared.ui.anim.played_frame = 0;
             }
         }
@@ -546,7 +546,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 }
 
                 shared.ui.anim.playing = !shared.ui.anim.playing;
-                shared.ui.anim.started = Some(chrono::Utc::now());
+                shared.ui.anim.elapsed = Some(Instant::now());
                 shared.ui.anim.played_frame = shared.ui.anim.selected_frame;
                 if shared.ui.tutorial_step_is(TutorialStep::PlayAnim) {
                     shared
@@ -685,7 +685,8 @@ fn draw_frame_lines(
 
         // the Y position is based on this diamond's respective label
         let top: f32;
-        if let Some(bone_top) = bone_tops.find(kf!().bone_id, &kf!().element.clone(), kf!().vert_id) {
+        if let Some(bone_top) = bone_tops.find(kf!().bone_id, &kf!().element.clone(), kf!().vert_id)
+        {
             top = bone_top.height;
         } else {
             return;
