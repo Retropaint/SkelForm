@@ -87,7 +87,6 @@ fn init_shared(shared: &mut Shared) {
         img: base_path.clone() + "img_path",
         save: base_path.clone() + "save_path",
         import: base_path.clone() + "import_path",
-        import_psd: base_path.clone() + "import_tiff_path",
         export_vid_text: base_path.clone() + "export_vid_text",
         export_vid_done: base_path.clone() + "export_vid_done",
     };

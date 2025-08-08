@@ -1625,7 +1625,6 @@ pub struct TempPath {
     pub img: String,
     pub save: String,
     pub import: String,
-    pub import_psd: String,
     pub export_vid_text: String,
     pub export_vid_done: String,
 }

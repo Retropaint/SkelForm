@@ -31,19 +31,21 @@ pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Co
         };
     }
 
-    if let Some(_) = renderer.as_ref() {
-        func!(read_image_loaders);
-        func!(read_psd);
+    match renderer.as_ref() {
+        None => return,
+        _ => {}
+    }
 
-        #[cfg(target_arch = "wasm32")]
-        func!(load_file);
+    func!(read_image_loaders);
 
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            read_save(shared);
-            func!(read_import);
-            read_exported_video_frame(shared);
-        }
+    #[cfg(target_arch = "wasm32")]
+    func!(load_file);
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        read_save(shared);
+        read_exported_video_frame(shared);
+        func!(read_import);
     }
 }
 /// read temporary files created from file dialogs (native & WASM)
@@ -176,11 +178,7 @@ pub fn read_psd(
     let psd: psd::Psd;
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if !fs::exists(shared.temp_path.import_psd.clone()).unwrap() {
-            return;
-        }
-
-        let psd_file_path = fs::read_to_string(shared.temp_path.import_psd.clone()).unwrap();
+        let psd_file_path = fs::read_to_string(shared.temp_path.import.clone()).unwrap();
         let psd_file = std::fs::read(psd_file_path).unwrap();
         psd = psd::Psd::from_bytes(&psd_file).unwrap();
         del_temp_files(&shared.temp_path.base);
@@ -206,6 +204,7 @@ pub fn read_psd(
     let mut group_ids: Vec<u32> = vec![];
     for l in 0..psd.layers().len() {
         let layer = &psd.layers()[l];
+        // for some reason, layer.visible() is inverted
         if layer.visible() || layer.parent_id() == None {
             continue;
         }
@@ -418,7 +417,7 @@ pub fn read_import(
     shared: &mut Shared,
     queue: &Queue,
     device: &Device,
-    bind_group_layout: &BindGroupLayout,
+    bgl: &BindGroupLayout,
     context: &egui::Context,
 ) {
     if !fs::exists(shared.temp_path.import.clone()).unwrap() {
@@ -427,25 +426,21 @@ pub fn read_import(
 
     let path = fs::read_to_string(shared.temp_path.import.clone()).unwrap();
 
+    let file = std::fs::File::open(&path);
+
+    if let Err(err) = file {
+        println!("{}", err);
+        del_temp_files(&shared.temp_path.base);
+        return;
+    }
+
     shared.save_path = path.clone();
 
-    match std::fs::File::open(&path) {
-        Err(err) => {
-            println!("{}", err);
-            del_temp_files(&shared.temp_path.base);
-        }
-        Ok(file) => {
-            shared.save_path = path.clone();
-            utils::import(
-                &path,
-                file,
-                shared,
-                queue,
-                device,
-                bind_group_layout,
-                context,
-            )
-        }
+    let ext = path.split('.').last().unwrap();
+    match ext {
+        "skf" => utils::import(file.unwrap(), shared, queue, device, bgl, context),
+        "psd" => read_psd(shared, queue, device, bgl, context),
+        _ => {}
     };
 }
 
