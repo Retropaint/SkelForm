@@ -1,8 +1,11 @@
 use crate::{
-    armature_window, bone_panel,
+    armature_window,
     ui::{self, button, job_text, selection_button},
-    utils, Action, ActionEnum, Bone, Config, PolarId, Shared, UiState, Vec2,
+    utils, Action, ActionEnum, Config, PolarId, Shared, UiState, Vec2,
 };
+
+#[cfg(not(target_arch = "wasm32"))]
+use crate::bone_panel;
 
 use egui::Color32;
 
