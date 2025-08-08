@@ -541,7 +541,6 @@ pub fn load_file(
     }
     let cursor = std::io::Cursor::new(getFile());
     utils::import(
-        "test.skf",
         cursor,
         shared,
         queue,
