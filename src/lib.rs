@@ -43,8 +43,6 @@ pub mod shared;
 pub mod ui;
 pub mod utils;
 
-//const FIRST_LAUNCH: &str = "Hello!\n\nSeems like this is your first time with SkelForm.\n\nWould you like to be quickly guided to making your first animation?";
-
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 extern "C" {
