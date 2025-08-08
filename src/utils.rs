@@ -325,7 +325,6 @@ pub fn prepare_files(armature: &Armature) -> (Vec2, String, Vec<u8>) {
 }
 
 pub fn import<R: Read + std::io::Seek>(
-    path: &str,
     data: R,
     shared: &mut crate::Shared,
     queue: &wgpu::Queue,
@@ -337,16 +336,6 @@ pub fn import<R: Read + std::io::Seek>(
     let mut ok = false;
     if let Ok(_) = zip {
         ok = true;
-    }
-    let ext = path.split('.').last().unwrap();
-    if ext != "skf" {
-        ok = false;
-        if ext == "psd" {
-            #[cfg(not(target_arch = "wasm32"))]
-            file_reader::create_temp_file(&shared.temp_path.import_psd, path);
-
-            return;
-        }
     }
 
     if !ok {
