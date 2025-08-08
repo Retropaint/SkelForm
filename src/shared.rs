@@ -805,7 +805,7 @@ pub struct UiAnim {
     pub timeline_zoom: f32,
     pub lines_x: Vec<f32>,
     pub playing: bool,
-    pub started: Option<chrono::DateTime<chrono::Utc>>,
+    pub elapsed: Option<Instant>,
 
     // the frame at which playing started
     pub played_frame: i32,
@@ -1296,13 +1296,16 @@ impl Armature {
     }
 
     pub fn autosave(&self) {
-        let armature = self.clone();
-        std::thread::spawn(move || {
-            #[cfg(not(target_arch = "wasm32"))]
-            utils::save("./autosave.skf".to_string(), &armature);
-            //#[cfg(target_arch = "wasm32")]
-            //utils::save_web(&armature);
-        });
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let armature = self.clone();
+            std::thread::spawn(move || {
+                #[cfg(not(target_arch = "wasm32"))]
+                utils::save("./autosave.skf".to_string(), &armature);
+                //#[cfg(target_arch = "wasm32")]
+                //utils::save_web(&armature);
+            });
+        }
     }
 
     pub fn offset_bone_by_parent(&mut self, old_parents: Vec<Bone>, bone_id: i32) {
