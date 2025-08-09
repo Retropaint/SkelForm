@@ -1,6 +1,6 @@
 # SkelForm
 
-SkelForm is a 2D animator, architecturally inspired by DragonBones and made in response to a lack of other free alternatives.
+SkelForm is a 2D skeletal animator, made in response to a lack of other free (and good) alternatives.
 
 ![example](example.png)
 
