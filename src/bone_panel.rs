@@ -68,7 +68,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label("Texture:");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let button = ui::button("Select", ui);
+            let button = ui.skf_button("Select");
             ui::draw_tutorial_rect(TutorialStep::GetImage, button.rect, shared, ui);
             if button.clicked() {
                 if shared.armature.bind_groups.len() == 0 {
@@ -231,7 +231,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     }
 
     ui.horizontal(|ui| {
-        if ui::button(mesh_label, ui).clicked() {
+        if ui.skf_button(mesh_label).clicked() {
             shared.ui.editing_mesh = !shared.ui.editing_mesh;
         }
     });
@@ -242,10 +242,10 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     ui.horizontal(|ui| {
         let tex_size = shared.armature.textures[bone.tex_idx as usize].size;
-        if ui::button("Center", ui).clicked() {
+        if ui.skf_button("Center").clicked() {
             center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
         }
-        if ui::button("Reset", ui).clicked() {
+        if ui.skf_button("Reset").clicked() {
             (
                 shared.selected_bone_mut().unwrap().vertices,
                 shared.selected_bone_mut().unwrap().indices,

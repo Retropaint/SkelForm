@@ -1,4 +1,4 @@
-use crate::{shared, ui, Display};
+use crate::{shared, ui, Display, EguiUi};
 
 pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
     egui::Modal::new("test".into())
@@ -49,11 +49,11 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
             });
 
             modal_ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui::button("Apply", ui).clicked() {
+                if ui.skf_button("Apply").clicked() {
                     crate::utils::save_config(&shared.config);
                     shared.ui.set_state(shared::UiState::SettingsModal, false);
                 }
-                if ui::button("Cancel", ui).clicked() {
+                if ui.skf_button("Cancel").clicked() {
                     crate::utils::import_config(shared);
                     shared.ui.set_state(shared::UiState::SettingsModal, false);
                 }
@@ -111,7 +111,7 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         ui.heading("Color");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui::button("Reset", ui).clicked() {
+            if ui.skf_button("Reset").clicked() {
                 shared.config.ui_colors = crate::ColorConfig::default();
             }
         });
@@ -139,7 +139,7 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         ui.heading("Keyboard");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui::button("Reset", ui).clicked() {
+            if ui.skf_button("Reset").clicked() {
                 shared.config.keys = crate::KeyboardConfig::default();
             }
         });

@@ -85,6 +85,19 @@ impl DivAssign<f32> for Vec2 {
     }
 }
 
+pub trait EguiUi {
+    fn skf_button(&mut self, text: &str) -> egui::Response;
+}
+
+impl EguiUi for egui::Ui {
+    fn skf_button(&mut self, text: &str) -> egui::Response {
+        self.add(
+            egui::Button::new(egui::RichText::new(text)).corner_radius(egui::CornerRadius::ZERO),
+        )
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
+    }
+}
+
 macro_rules! impl_assign_for_vec2 {
     ($trait:ident, $method:ident, $op:tt) => {
         impl std::ops::$trait for Vec2 {

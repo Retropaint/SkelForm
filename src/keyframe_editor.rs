@@ -108,7 +108,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.heading("Animation");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             ui.add_space(5.);
-            let button = ui::button("New", ui);
+            let button = ui.skf_button("New");
             ui::draw_tutorial_rect(TutorialStep::CreateAnim, button.rect, shared, ui);
 
             if !button.clicked() {
@@ -558,10 +558,10 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 }
             });
 
-            if ui::button("+", ui).clicked() {
+            if ui.skf_button("+").clicked() {
                 shared.ui.anim.timeline_zoom -= 0.1;
             }
-            if ui::button("-", ui).clicked() {
+            if ui.skf_button("-").clicked() {
                 shared.ui.anim.timeline_zoom += 0.1;
             }
 
@@ -579,7 +579,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             }
             shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
 
-            if ui::button("Copy", ui).clicked() {
+            if ui.skf_button("Copy").clicked() {
                 macro_rules! keyframes {
                     () => {
                         shared.selected_animation().unwrap().keyframes
@@ -592,7 +592,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 }
             }
 
-            if ui::button("Paste", ui).clicked() {
+            if ui.skf_button("Paste").clicked() {
                 add_anim_action(shared);
 
                 let frame = shared.ui.anim.selected_frame;

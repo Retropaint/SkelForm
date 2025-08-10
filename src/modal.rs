@@ -1,6 +1,7 @@
 use crate::{
     armature_window,
-    ui::{self, button, job_text, selection_button},
+    shared::EguiUi,
+    ui::{self, job_text, selection_button},
     utils, Action, ActionEnum, Config, PolarId, Shared, UiState, Vec2,
 };
 
@@ -46,10 +47,10 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
         },
         |ui| {
             let pressed_no = ui.input_mut(|i| i.consume_shortcut(&shared.config.keys.cancel));
-            if button("No", ui).clicked() || pressed_no {
+            if ui.skf_button("No").clicked() || pressed_no {
                 shared.ui.set_state(UiState::PolarModal, false);
             }
-            if button("Yes", ui).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+            if ui.skf_button("Yes").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                 yes = true;
             }
         },
@@ -167,7 +168,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 } else {
                     "Remove"
                 };
-                if button(label, ui).clicked() {
+                if ui.skf_button(label).clicked() {
                     shared.ui.set_state(
                         UiState::RemovingTexture,
                         shared.ui.has_state(UiState::RemovingTexture),
@@ -336,7 +337,7 @@ pub fn first_time_modal(shared: &mut Shared, ctx: &egui::Context) {
                 ui.spacing_mut().item_spacing.x = 0.0;
                 ui.label("- Try out the ");
 
-                if !ui::button("sample", ui).clicked() {
+                if !ui.skf_button("sample").clicked() {
                     return;
                 }
 
@@ -353,7 +354,7 @@ pub fn first_time_modal(shared: &mut Shared, ctx: &egui::Context) {
             ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing.x = 0.0;
                 ui.label("- Be guided from scratch with a ");
-                if ui::button("help light", ui).clicked() {
+                if ui.skf_button("help light").clicked() {
                     shared.ui.start_tutorial(&shared.armature);
                     shared.ui.set_state(UiState::FirstTimeModal, false);
                 }

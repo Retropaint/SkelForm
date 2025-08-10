@@ -19,6 +19,7 @@ macro_rules! con_vert {
     };
 }
 
+/// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
     #[cfg(target_arch = "wasm32")]
     loaded();
