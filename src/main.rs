@@ -1,5 +1,3 @@
-// #![windows_subsystem = "windows"] // uncomment this to suppress terminal on windows
-
 #![windows_subsystem = "windows"]
 
 #[cfg(not(target_arch = "wasm32"))]
