@@ -3,7 +3,7 @@
 use egui::*;
 
 use crate::{
-    shared::{Shared, Vec2},
+    shared::{EguiUi, Shared, Vec2},
     ui as ui_mod,
 };
 
@@ -33,7 +33,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 ui.separator();
 
                 ui.horizontal(|ui| {
-                    let button = ui_mod::button("New Bone", ui);
+                    let button = ui.skf_button("New Bone");
                     ui_mod::draw_tutorial_rect(TutorialStep::NewBone, button.rect, shared, ui);
                     if button.clicked() {
                         let idx: usize;
@@ -72,9 +72,11 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
                 ui.add_space(3.);
 
-                egui::ScrollArea::both().max_height(ui.available_height() - 10.).show(ui, |ui| {
-                    draw_hierarchy(shared, ui);
-                });
+                egui::ScrollArea::both()
+                    .max_height(ui.available_height() - 10.)
+                    .show(ui, |ui| {
+                        draw_hierarchy(shared, ui);
+                    });
             }),
         &mut shared.input.on_ui,
         &egui_ctx,

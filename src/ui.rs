@@ -660,11 +660,6 @@ pub fn set_zoom(zoom: f32, shared: &mut Shared) {
     }
 }
 
-pub fn button(text: &str, ui: &mut egui::Ui) -> egui::Response {
-    ui.add(egui::Button::new(egui::RichText::new(text)).corner_radius(egui::CornerRadius::ZERO))
-        .on_hover_cursor(egui::CursorIcon::PointingHand)
-}
-
 pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::Response {
     let mut cursor = egui::CursorIcon::PointingHand;
     let mut bg_col = ui.visuals().widgets.active.weak_bg_fill;
