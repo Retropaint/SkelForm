@@ -396,7 +396,8 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             utils::save_web(&shared.armature);
             ui.close();
         }
-        if top_bar_button!("Export Video", None).clicked() {
+        // disabled: export video is unstable and not really necessary (focus on sprite export instead!)
+        if false && top_bar_button!("Export Video", None).clicked() {
             // check if ffmpeg exists and complain if it doesn't
             let mut ffmpeg = false;
             match std::process::Command::new("ffmpeg")
