@@ -178,7 +178,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 if shared.ui.context_menu.is(ContextType::Bone, idx as i32) {
                     button.show_tooltip_ui(|ui| {
-                        if crate::ui::clickable_label(ui, "Delete").clicked() {
+                        if ui.clickable_label("Delete").clicked() {
                             shared.ui.open_polar_modal(
                                 PolarId::DeleteBone,
                                 "Are you sure to delete this bone?",
