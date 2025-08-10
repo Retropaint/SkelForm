@@ -1,4 +1,4 @@
-use crate::{shared, ui, Display, EguiUi};
+use crate::{shared, ui, Display, ui::EguiUi};
 
 pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
     egui::Modal::new("test".into())

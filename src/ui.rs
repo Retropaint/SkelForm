@@ -8,6 +8,34 @@ const HELP_LIGHT_CANT: &str = "There is already an animation! Looks like you've 
 const FFMPEG_ERR: &str =
     "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.";
 
+pub trait EguiUi {
+    fn skf_button(&mut self, text: &str) -> egui::Response;
+    fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32);
+}
+
+impl EguiUi for egui::Ui {
+    fn skf_button(&mut self, text: &str) -> egui::Response {
+        self.add(
+            egui::Button::new(egui::RichText::new(text)).corner_radius(egui::CornerRadius::ZERO),
+        )
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
+    }
+
+    fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32) {
+        let mut mesh = egui::Mesh::default();
+
+        mesh.colored_vertex(rect.left_top(), top);
+        mesh.colored_vertex(rect.right_top(), top);
+        mesh.colored_vertex(rect.left_bottom(), bottom);
+        mesh.colored_vertex(rect.right_bottom(), bottom);
+
+        mesh.add_triangle(0, 2, 3);
+        mesh.add_triangle(0, 3, 1);
+
+        self.painter().add(egui::Shape::mesh(mesh));
+    }
+}
+
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     shared.input.last_pressed = None;
@@ -160,8 +188,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             .min_width(min_default_size)
             .default_width(min_default_size)
             .show(context, |ui| {
-                draw_gradient(
-                    ui,
+                ui.gradient(
                     ui.ctx().screen_rect(),
                     Color32::TRANSPARENT,
                     shared.config.ui_colors.gradient.into(),
@@ -765,21 +792,6 @@ pub fn visualize_bone_point(context: &Context, shared: &Shared) {
             }
         });
 }
-
-pub fn draw_gradient(ui: &mut egui::Ui, rect: egui::Rect, top: Color32, bottom: Color32) {
-    let mut mesh = egui::Mesh::default();
-
-    mesh.colored_vertex(rect.left_top(), top);
-    mesh.colored_vertex(rect.right_top(), top);
-    mesh.colored_vertex(rect.left_bottom(), bottom);
-    mesh.colored_vertex(rect.right_bottom(), bottom);
-
-    mesh.add_triangle(0, 2, 3);
-    mesh.add_triangle(0, 3, 1);
-
-    ui.painter().add(egui::Shape::mesh(mesh));
-}
-
 pub fn draw_fading_rect(
     ui: &mut egui::Ui,
     rect: egui::Rect,
