@@ -11,29 +11,7 @@ const FFMPEG_ERR: &str =
 pub trait EguiUi {
     fn skf_button(&mut self, text: &str) -> egui::Response;
     fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32);
-}
-
-impl EguiUi for egui::Ui {
-    fn skf_button(&mut self, text: &str) -> egui::Response {
-        self.add(
-            egui::Button::new(egui::RichText::new(text)).corner_radius(egui::CornerRadius::ZERO),
-        )
-        .on_hover_cursor(egui::CursorIcon::PointingHand)
-    }
-
-    fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32) {
-        let mut mesh = egui::Mesh::default();
-
-        mesh.colored_vertex(rect.left_top(), top);
-        mesh.colored_vertex(rect.right_top(), top);
-        mesh.colored_vertex(rect.left_bottom(), bottom);
-        mesh.colored_vertex(rect.right_bottom(), bottom);
-
-        mesh.add_triangle(0, 2, 3);
-        mesh.add_triangle(0, 3, 1);
-
-        self.painter().add(egui::Shape::mesh(mesh));
-    }
+    fn clickable_label(&mut self, text: &str) -> egui::Response;
 }
 
 /// The `main` of this module.
@@ -395,6 +373,42 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
             shared.ui.edit_bar_pos.y = ui.min_rect().bottom();
             shared.ui.animate_mode_bar_pos.y = ui.min_rect().bottom();
         });
+}
+
+impl EguiUi for egui::Ui {
+    fn skf_button(&mut self, text: &str) -> egui::Response {
+        self.add(
+            egui::Button::new(egui::RichText::new(text)).corner_radius(egui::CornerRadius::ZERO),
+        )
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
+    }
+
+    fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32) {
+        let mut mesh = egui::Mesh::default();
+
+        mesh.colored_vertex(rect.left_top(), top);
+        mesh.colored_vertex(rect.right_top(), top);
+        mesh.colored_vertex(rect.left_bottom(), bottom);
+        mesh.colored_vertex(rect.right_bottom(), bottom);
+
+        mesh.add_triangle(0, 2, 3);
+        mesh.add_triangle(0, 3, 1);
+
+        self.painter().add(egui::Shape::mesh(mesh));
+    }
+
+    fn clickable_label(&mut self, text: &str) -> egui::Response {
+        let label = self
+            .label(text)
+            .on_hover_cursor(egui::CursorIcon::PointingHand)
+            .interact(egui::Sense::click());
+
+        if label.contains_pointer() {
+            return label.highlight();
+        }
+
+        label
+    }
 }
 
 fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
@@ -976,17 +990,4 @@ pub fn draw_resizable_panel<T>(
             *on_ui = true;
         }
     }
-}
-
-pub fn clickable_label(ui: &mut egui::Ui, text: &str) -> egui::Response {
-    let label = ui
-        .label(text)
-        .on_hover_cursor(egui::CursorIcon::PointingHand)
-        .interact(egui::Sense::click());
-
-    if label.contains_pointer() {
-        return label.highlight();
-    }
-
-    label
 }

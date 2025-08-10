@@ -181,11 +181,11 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
 
             if shared.ui.context_menu.is(ContextType::Animation, i as i32) {
                 button.show_tooltip_ui(|ui| {
-                    if ui::clickable_label(ui, "Rename").clicked() {
+                    if ui.clickable_label("Rename").clicked() {
                         activate_renaming!();
                         shared.ui.context_menu.close();
                     };
-                    if ui::clickable_label(ui, "Delete").clicked() {
+                    if ui.clickable_label("Delete").clicked() {
                         shared.ui.open_polar_modal(
                             PolarId::DeleteAnim,
                             "Are you sure to delete this animation?",
