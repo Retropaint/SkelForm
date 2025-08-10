@@ -186,6 +186,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "X");
         });
     });
+    // disabled: pivots are mostly superfluous as parent inheritance is mandatory 
     //ui.horizontal(|ui| {
     //    label!("Pivot:", ui);
     //    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -219,8 +220,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         return;
     }
 
-    // temporarily disable mesh deformation
-    // for now, runtimes need to focus on implementing basics
+    // disabled: mesh deformation is unstable
     if true {
         return;
     }
