@@ -1,7 +1,6 @@
 use crate::{
     armature_window,
-    shared::EguiUi,
-    ui::{self, job_text, selection_button},
+    ui::{self, job_text, selection_button, EguiUi},
     utils, Action, ActionEnum, Config, PolarId, Shared, UiState, Vec2,
 };
 

@@ -3,8 +3,9 @@
 use egui::*;
 
 use crate::{
-    shared::{EguiUi, Shared, Vec2},
-    ui as ui_mod,
+    shared::{Shared, Vec2},
+    ui,
+    ui::EguiUi,
 };
 
 use crate::shared::*;
@@ -12,7 +13,7 @@ use crate::shared::*;
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     let min_default_size = 135.;
     let panel_id = "Armature";
-    ui_mod::draw_resizable_panel(
+    ui::draw_resizable_panel(
         panel_id,
         egui::SidePanel::left(panel_id)
             .default_width(min_default_size)
@@ -20,8 +21,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             .max_width(min_default_size + 100.)
             .resizable(true)
             .show(egui_ctx, |ui| {
-                ui_mod::draw_gradient(
-                    ui,
+                ui.gradient(
                     ui.ctx().screen_rect(),
                     Color32::TRANSPARENT,
                     shared.config.ui_colors.gradient.into(),
@@ -34,7 +34,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
                 ui.horizontal(|ui| {
                     let button = ui.skf_button("New Bone");
-                    ui_mod::draw_tutorial_rect(TutorialStep::NewBone, button.rect, shared, ui);
+                    ui::draw_tutorial_rect(TutorialStep::NewBone, button.rect, shared, ui);
                     if button.clicked() {
                         let idx: usize;
 
@@ -194,7 +194,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 // highlight this bone if it's the first and is not selected during the tutorial
                 if idx == 0 {
-                    ui_mod::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
+                    ui::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
                 }
 
                 if check_bone_dragging(shared, ui, button, idx as usize) {

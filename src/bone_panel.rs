@@ -1,6 +1,7 @@
 //! UI Bone window.
 
 use crate::*;
+use ui::EguiUi;
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]

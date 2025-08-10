@@ -2,7 +2,7 @@
 
 use egui::Stroke;
 
-use ui::TextInputOptions;
+use ui::{TextInputOptions, EguiUi};
 
 use crate::*;
 
@@ -67,8 +67,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
             .min_height(150.)
             .resizable(true)
             .show(egui_ctx, |ui| {
-                ui::draw_gradient(
-                    ui,
+                ui.gradient(
                     ui.ctx().screen_rect(),
                     egui::Color32::TRANSPARENT,
                     shared.config.ui_colors.gradient.into(),
