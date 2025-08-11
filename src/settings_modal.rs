@@ -82,10 +82,9 @@ fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             // hex input
                             let color32: egui::Color32 = $color.into();
-                            let (edited, val, _) = ui::text_input(
+                            let (edited, val, _) = ui.text_input(
                                 $title.to_string() + "_hex",
                                 shared,
-                                ui,
                                 color32.to_hex().to_string()[..7].to_string(),
                                 Some(ui::TextInputOptions {
                                     size: shared::Vec2::new(60., 20.),

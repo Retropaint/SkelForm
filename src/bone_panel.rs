@@ -54,10 +54,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     ui.horizontal(|ui| {
         ui.label("Name:");
-        let (edited, value, _) = ui::text_input(
+        let (edited, value, _) = ui.text_input(
             "Name".to_string(),
             shared,
-            ui,
             shared.selected_bone().unwrap().name.clone(),
             None,
         );
@@ -133,7 +132,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     // main macro to use for editable bone fields
     macro_rules! input {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr) => {
-            (edited, $float, _) = ui::float_input($id.to_string(), shared, $ui, $float, $modifier);
+            (edited, $float, _) = $ui.float_input($id.to_string(), shared, $float, $modifier);
             check_input_edit!($float, $element, $ui, $label)
         };
     }
@@ -142,7 +141,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     macro_rules! input_response {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr, $input:expr) => {
             (edited, $float, $input) =
-                ui::float_input($id.to_string(), shared, $ui, $float, $modifier);
+                $ui.float_input($id.to_string(), shared, $float, $modifier);
             check_input_edit!($float, $element, $ui, $label)
         };
     }
@@ -258,7 +257,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.label("Base Index:")
             .on_hover_text("The vertex that all triangles point to");
         let base = shared.selected_bone().unwrap().indices[0] as f32;
-        let (edited, base, _) = ui::float_input("base_index".to_string(), shared, ui, base, 1.);
+        let (edited, base, _) = ui.float_input("base_index".to_string(), shared, base, 1.);
         if edited {
             shared.selected_bone_mut().unwrap().indices = crate::renderer::setup_indices(
                 &shared.selected_bone_mut().unwrap().vertices,
