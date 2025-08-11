@@ -134,10 +134,9 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
 
             // show input field if renaming
             if shared.ui.rename_id == "animation ".to_string() + &i.to_string() {
-                let (edited, value, _) = ui::text_input(
+                let (edited, value, _) = ui.text_input(
                     "animation ".to_string() + &i.to_string(),
                     shared,
-                    ui,
                     name.to_string(),
                     Some(TextInputOptions {
                         focus: true,
@@ -572,7 +571,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             let fps = shared.selected_animation().unwrap().fps;
 
             ui.label("FPS:").on_hover_text("Frames Per Second");
-            let (edited, value, _) = ui::float_input("fps".to_string(), shared, ui, fps as f32, 1.);
+            let (edited, value, _) = ui.float_input("fps".to_string(), shared, fps as f32, 1.);
             if edited {
                 shared.selected_animation_mut().unwrap().fps = value as i32;
             }
