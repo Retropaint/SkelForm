@@ -198,7 +198,7 @@ enum RectGroupId {
     GroupIdOne,
 }
 
-fn create_tex_sheet(armature: &mut Armature) -> std::vec::Vec<u8> {
+fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
     // add textures to sheet generator
     let mut img_rect: rectangle_pack::GroupedRectsToPlace<i32, RectGroupId> =
         rectangle_pack::GroupedRectsToPlace::new();
@@ -238,7 +238,7 @@ fn create_tex_sheet(armature: &mut Armature) -> std::vec::Vec<u8> {
         }
     }
 
-    let mut raw_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(2048, 2048);
+    let mut raw_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size, size);
 
     let mut idx = 0;
     for tex in &mut armature.textures {
@@ -279,26 +279,18 @@ fn create_tex_sheet(armature: &mut Armature) -> std::vec::Vec<u8> {
         )
         .unwrap();
 
-    png_buf
+    (png_buf, Vec2::new(size as f32, size as f32))
 }
 
 pub fn prepare_files(armature: &Armature) -> (Vec2, String, Vec<u8>) {
-    // get the image size in advance
-    let mut size = Vec2::default();
-    for tex in &armature.textures {
-        size.x += tex.size.x;
-        if tex.size.y > size.y {
-            size.y = tex.size.y;
-        }
-    }
-
     let mut png_buf = vec![];
+    let mut size = Vec2::new(0., 0.);
 
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
-    if size != Vec2::ZERO {
-        png_buf = create_tex_sheet(&mut armature_copy);
+    if armature.textures.len() != 0 {
+        (png_buf, size) = create_tex_sheet(&mut armature_copy);
     }
 
     for bone in &mut armature_copy.bones {
