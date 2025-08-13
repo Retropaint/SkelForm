@@ -107,6 +107,7 @@ if platform.system() == "Darwin":
         shutil.rmtree(bin_path)
     shutil.copytree(dirname, bin_path)
     shutil.make_archive("SkelForm.app", "zip", ".", "SkelForm.app")
+    subprocess.run("codesign --force --deep --sign - SkelForm.app", shell=True)
     if not args.dmg:
         print(f">>> Mac release complete. Please look for {BLUE}SkelForm.app{RESET}.")
         exit()
