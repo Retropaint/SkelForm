@@ -75,7 +75,11 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 egui::ScrollArea::both()
                     .max_height(ui.available_height() - 10.)
                     .show(ui, |ui| {
-                        draw_hierarchy(shared, ui);
+                        // hierarchy
+                        let frame = Frame::default().inner_margin(5.);
+                        ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                            draw_hierarchy(shared, ui);
+                        });
                     });
             }),
         &mut shared.input.on_ui,
@@ -84,128 +88,124 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 }
 
 pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
-    // hierarchy
-    let frame = Frame::default().inner_margin(5.);
-    ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-        ui.set_min_width(ui.available_width());
-        let mut idx: i32 = -1;
+    ui.set_min_width(ui.available_width());
+    let mut idx: i32 = -1;
 
-        for b in 0..shared.armature.bones.len() {
-            idx += 1;
-            // if this bone's parent is folded, skip drawing
-            let mut visible = true;
+    for b in 0..shared.armature.bones.len() {
+        idx += 1;
+        // if this bone's parent is folded, skip drawing
+        let mut visible = true;
+        let mut nb = &shared.armature.bones[b];
+        while nb.parent_id != -1 {
+            nb = shared.armature.find_bone(nb.parent_id).unwrap();
+            if nb.folded {
+                visible = false;
+                break;
+            }
+        }
+        if !visible {
+            continue;
+        }
+
+        let mut dragged = false;
+
+        ui.horizontal(|ui| {
+            let hidden_icon = if shared.armature.bones[b].hidden {
+                "---"
+            } else {
+                "👁"
+            };
+            if bone_label(hidden_icon, ui, shared, b).clicked() {
+                shared.armature.bones[b].hidden = !shared.armature.bones[b].hidden;
+            }
+            ui.add_space(15.);
+
+            // add space to the left if this is a child
             let mut nb = &shared.armature.bones[b];
             while nb.parent_id != -1 {
                 nb = shared.armature.find_bone(nb.parent_id).unwrap();
-                if nb.folded {
-                    visible = false;
-                    break;
-                }
-            }
-            if !visible {
-                continue;
-            }
-
-            let mut dragged = false;
-
-            ui.horizontal(|ui| {
-                let hidden_icon = if shared.armature.bones[b].hidden {
-                    "---"
-                } else {
-                    "👁"
-                };
-                if bone_label(hidden_icon, ui, shared, b).clicked() {
-                    shared.armature.bones[b].hidden = !shared.armature.bones[b].hidden;
-                }
                 ui.add_space(15.);
-
-                // add space to the left if this is a child
-                let mut nb = &shared.armature.bones[b];
-                while nb.parent_id != -1 {
-                    nb = shared.armature.find_bone(nb.parent_id).unwrap();
-                    ui.add_space(15.);
-                }
-
-                // show folding button, if this bone has children
-                let mut children = vec![];
-                get_all_children(
-                    &shared.armature.bones,
-                    &mut children,
-                    &shared.armature.bones[b],
-                );
-                if children.len() > 0 {
-                    let fold_icon = if shared.armature.bones[b].folded {
-                        "⏵"
-                    } else {
-                        "⏷"
-                    };
-                    if bone_label(fold_icon, ui, shared, b).clicked() {
-                        shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
-                    }
-                }
-                ui.add_space(13.);
-
-                let mut selected_col = shared.config.ui_colors.light_accent;
-                let mut cursor = egui::CursorIcon::PointingHand;
-
-                if shared.ui.selected_bone_idx == idx as usize {
-                    selected_col += Color::new(20, 20, 20, 0);
-                    cursor = egui::CursorIcon::Default;
-                }
-
-                let id = Id::new(("bone", idx, 0));
-                let button = ui
-                    .dnd_drag_source(id, idx, |ui| {
-                        ui.add(
-                            egui::Button::new(&shared.armature.bones[b].name.to_string())
-                                .fill(selected_col),
-                        )
-                    })
-                    .response
-                    .interact(Sense::click())
-                    .on_hover_cursor(cursor);
-
-                if button.clicked() {
-                    let anim_frame = shared.ui.anim.selected_frame;
-                    shared.ui.select_bone(idx as usize, &shared.armature);
-                    shared.ui.anim.selected_frame = anim_frame;
-                };
-
-                if button.secondary_clicked() {
-                    shared.ui.context_menu.show(ContextType::Bone, idx as i32);
-                }
-
-                if shared.ui.context_menu.is(ContextType::Bone, idx as i32) {
-                    button.show_tooltip_ui(|ui| {
-                        if ui.clickable_label("Delete").clicked() {
-                            shared.ui.open_polar_modal(
-                                PolarId::DeleteBone,
-                                "Are you sure to delete this bone?",
-                            );
-                            shared.ui.context_menu.hide = true;
-                        };
-
-                        if ui.ui_contains_pointer() {
-                            shared.ui.context_menu.keep = true;
-                        }
-                    });
-                }
-
-                // highlight this bone if it's the first and is not selected during the tutorial
-                if idx == 0 {
-                    ui::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
-                }
-
-                if check_bone_dragging(shared, ui, button, idx as usize) {
-                    dragged = true;
-                }
-            });
-
-            if dragged {
-                return;
             }
+
+            // show folding button, if this bone has children
+            let mut children = vec![];
+            get_all_children(
+                &shared.armature.bones,
+                &mut children,
+                &shared.armature.bones[b],
+            );
+            if children.len() > 0 {
+                let fold_icon = if shared.armature.bones[b].folded {
+                    "⏵"
+                } else {
+                    "⏷"
+                };
+                if bone_label(fold_icon, ui, shared, b).clicked() {
+                    shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
+                }
+            }
+            ui.add_space(13.);
+
+            let mut selected_col = shared.config.ui_colors.light_accent;
+            let mut cursor = egui::CursorIcon::PointingHand;
+
+            if shared.ui.selected_bone_idx == idx as usize {
+                selected_col += Color::new(20, 20, 20, 0);
+                cursor = egui::CursorIcon::Default;
+            }
+
+            let id = Id::new(("bone", idx, 0));
+            let button = ui
+                .dnd_drag_source(id, idx, |ui| {
+                    ui.add(
+                        egui::Button::new(&shared.armature.bones[b].name.to_string())
+                            .fill(selected_col),
+                    )
+                })
+                .response
+                .interact(Sense::click())
+                .on_hover_cursor(cursor);
+
+            if button.clicked() {
+                let anim_frame = shared.ui.anim.selected_frame;
+                shared.ui.select_bone(idx as usize, &shared.armature);
+                shared.ui.anim.selected_frame = anim_frame;
+            };
+
+            if button.secondary_clicked() {
+                shared.ui.context_menu.show(ContextType::Bone, idx as i32);
+            }
+
+            if shared.ui.context_menu.is(ContextType::Bone, idx as i32) {
+                button.show_tooltip_ui(|ui| {
+                    if ui.clickable_label("Delete").clicked() {
+                        shared.ui.open_polar_modal(
+                            PolarId::DeleteBone,
+                            "Are you sure to delete this bone?",
+                        );
+                        shared.ui.context_menu.hide = true;
+                    };
+
+                    if ui.ui_contains_pointer() {
+                        shared.ui.context_menu.keep = true;
+                    }
+                });
+            }
+
+            // highlight this bone if it's the first and is not selected during the tutorial
+            if idx == 0 {
+                ui::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
+            }
+
+            if check_bone_dragging(shared, ui, button, idx as usize) {
+                dragged = true;
+            }
+        });
+
+        if dragged {
+            return;
         }
-    });
+    }
 }
 
 fn bone_label(icon: &str, ui: &mut egui::Ui, shared: &Shared, bone_idx: usize) -> egui::Response {
