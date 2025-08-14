@@ -851,6 +851,8 @@ pub struct Bone {
     pub pivot: Vec2,
     #[serde(default)]
     pub zindex: f32,
+    #[serde(default)]
+    pub hidden: bool,
 
     #[serde(skip)]
     pub folded: bool,
@@ -1293,6 +1295,21 @@ impl Armature {
         parents.remove(0);
 
         parents
+    }
+
+    pub fn is_bone_hidden(&self, bone_id: i32) -> bool {
+        if self.find_bone(bone_id).unwrap().hidden {
+            return true;
+        }
+
+        let parents = self.get_all_parents(bone_id);
+        for parent in &parents {
+            if parent.hidden {
+                return true;
+            }
+        }
+
+        false
     }
 
     pub fn autosave(&self) {

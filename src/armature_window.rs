@@ -109,6 +109,16 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             let mut dragged = false;
 
             ui.horizontal(|ui| {
+                let hidden_icon = if shared.armature.bones[b].hidden {
+                    "---"
+                } else {
+                    "👁"
+                };
+                if bone_label(hidden_icon, ui, shared, b).clicked() {
+                    shared.armature.bones[b].hidden = !shared.armature.bones[b].hidden;
+                }
+                ui.add_space(15.);
+
                 // add space to the left if this is a child
                 let mut nb = &shared.armature.bones[b];
                 while nb.parent_id != -1 {
@@ -129,18 +139,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     } else {
                         "⏷"
                     };
-                    let rect = ui.painter().text(
-                        ui.cursor().min + Vec2::new(-2., 17.).into(),
-                        egui::Align2::LEFT_BOTTOM,
-                        fold_icon,
-                        egui::FontId::default(),
-                        shared.config.ui_colors.text.into(),
-                    );
-                    let id = "fold".to_owned() + &shared.armature.bones[b].id.to_string();
-                    let click_rect = ui
-                        .interact(rect, id.into(), egui::Sense::CLICK)
-                        .on_hover_cursor(egui::CursorIcon::PointingHand);
-                    if click_rect.clicked() {
+                    if bone_label(fold_icon, ui, shared, b).clicked() {
                         shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
                     }
                 }
@@ -207,6 +206,19 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             }
         }
     });
+}
+
+fn bone_label(icon: &str, ui: &mut egui::Ui, shared: &Shared, bone_idx: usize) -> egui::Response {
+    let rect = ui.painter().text(
+        ui.cursor().min + Vec2::new(-2., 17.).into(),
+        egui::Align2::LEFT_BOTTOM,
+        icon,
+        egui::FontId::default(),
+        shared.config.ui_colors.text.into(),
+    );
+    let id = icon.to_string() + &shared.armature.bones[bone_idx].id.to_string();
+    ui.interact(rect, id.into(), egui::Sense::CLICK)
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
 fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, idx: usize) -> bool {
