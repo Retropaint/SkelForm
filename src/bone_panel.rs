@@ -1,6 +1,7 @@
 //! UI Bone window.
 
 use crate::*;
+use egui::IntoAtoms;
 use ui::EguiUi;
 
 // native-only imports

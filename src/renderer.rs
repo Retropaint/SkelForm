@@ -72,7 +72,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // draw bone
     for b in 0..temp_bones.len() {
-        if temp_bones[b].tex_idx == -1 {
+        if shared.armature.is_bone_hidden(temp_bones[b].id) || temp_bones[b].tex_idx == -1 {
             continue;
         }
 
