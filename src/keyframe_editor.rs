@@ -2,7 +2,7 @@
 
 use egui::Stroke;
 
-use ui::{TextInputOptions, EguiUi};
+use ui::{EguiUi, TextInputOptions};
 
 use crate::*;
 
