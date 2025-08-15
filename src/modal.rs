@@ -170,7 +170,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 if ui.skf_button(label).clicked() {
                     shared.ui.set_state(
                         UiState::RemovingTexture,
-                        shared.ui.has_state(UiState::RemovingTexture),
+                        !shared.ui.has_state(UiState::RemovingTexture),
                     );
                 }
             });
