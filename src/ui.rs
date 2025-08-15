@@ -326,12 +326,13 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     };
                 }
 
-                ui.menu_button(title!("Settings"), |ui| {
-                    ui.set_width(100.);
-                    if top_bar_button(ui, "Manage", None, &mut offset, shared).clicked() {
-                        shared.ui.set_state(UiState::SettingsModal, true);
-                    }
-                });
+                if ui
+                    .menu_button(title!("Settings"), |_| {})
+                    .response
+                    .clicked()
+                {
+                    shared.ui.set_state(UiState::SettingsModal, true);
+                }
 
                 ui.menu_button(title!("Help"), |ui| {
                     ui.set_width(100.);
