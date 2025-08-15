@@ -1791,7 +1791,7 @@ fn default_one() -> f32 {
 }
 
 fn gridline_default() -> i32 {
-    250
+    200
 }
 
 fn is_neg_one<T: std::cmp::PartialEq<i32>>(value: &T) -> bool {
