@@ -1,4 +1,4 @@
-use crate::{shared, ui, Display, ui::EguiUi};
+use crate::{shared, ui, ui::EguiUi, Display};
 
 pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
     egui::Modal::new("test".into())
@@ -42,7 +42,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         .ui
                         .settings_state
                     {
-                        shared::SettingsState::Ui => general(ui, shared),
+                        shared::SettingsState::Ui => user_interface(ui, shared),
                         shared::SettingsState::Keyboard => keyboard(ui, shared),
                     });
                 })
@@ -50,6 +50,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
 
             modal_ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.skf_button("Apply").clicked() {
+                    shared.ui.scale = shared.config.ui_scale;
                     crate::utils::save_config(&shared.config);
                     shared.ui.set_state(shared::UiState::SettingsModal, false);
                 }
@@ -61,7 +62,20 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
         });
 }
 
-fn general(ui: &mut egui::Ui, shared: &mut shared::Shared) {
+fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
+    ui.heading("General");
+    ui.horizontal(|ui| {
+        ui.label("UI Scale:");
+        let (edited, value, _) = ui.float_input("ui_scale".to_string(), shared, shared.config.ui_scale, 1.);
+        if edited {
+            shared.config.ui_scale = value;
+        }
+    });
+
+    colors(ui, shared);
+}
+
+fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     macro_rules! drag_value {
         ($id:expr, $field:expr, $ui:expr) => {
             $ui.add(egui::DragValue::new(&mut $field).speed(0.1));
