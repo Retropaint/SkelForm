@@ -382,7 +382,7 @@ pub enum UiState {
 #[derive(Clone, Default, PartialEq)]
 pub enum SettingsState {
     #[default]
-    General,
+    Ui,
     Keyboard,
 }
 
