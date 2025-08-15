@@ -31,7 +31,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                                 };
                             }
 
-                            tab!("General", shared::SettingsState::General);
+                            tab!("User Interface", shared::SettingsState::Ui);
                             tab!("Keyboard", shared::SettingsState::Keyboard);
                         });
                     });
@@ -42,7 +42,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         .ui
                         .settings_state
                     {
-                        shared::SettingsState::General => general(ui, shared),
+                        shared::SettingsState::Ui => general(ui, shared),
                         shared::SettingsState::Keyboard => keyboard(ui, shared),
                     });
                 })

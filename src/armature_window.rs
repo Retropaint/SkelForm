@@ -127,7 +127,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 ui.add_space(15.);
             }
 
-            // show folding button, if this bone has children
+            // show folding button if this bone has children
             let mut children = vec![];
             get_all_children(
                 &shared.armature.bones,
