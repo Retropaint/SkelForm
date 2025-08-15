@@ -237,13 +237,6 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         ui::set_zoom(shared.camera.zoom + 10., shared);
     }
 
-    if input.consume_shortcut(&shared.config.keys.zoom_in_ui) {
-        shared.ui.scale += 0.01;
-    }
-    if input.consume_shortcut(&shared.config.keys.zoom_out_ui) {
-        shared.ui.scale -= 0.01;
-    }
-
     if input.consume_shortcut(&shared.config.keys.save) {
         #[cfg(target_arch = "wasm32")]
         utils::save_web(&mut shared.armature);
@@ -643,21 +636,6 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
         }
         if tpb!("Zoom Out", Some(&shared.config.keys.zoom_out_camera)).clicked() {
             set_zoom(shared.camera.zoom + 10., shared);
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            if tpb!("Zoom In UI", Some(&shared.config.keys.zoom_in_ui)).clicked() {
-                shared.ui.scale += 0.1;
-            }
-            if tpb!("Zoom Out UI", Some(&shared.config.keys.zoom_out_ui)).clicked() {
-                shared.ui.scale -= 0.1;
-            }
-        }
-
-        #[cfg(target_arch = "wasm32")]
-        if top_bar_button(ui, "Adjust UI", None, &mut offset, shared).clicked() {
-            toggleElement(true, "ui-slider".to_string());
-            ui.close();
         }
     });
 }

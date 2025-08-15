@@ -228,7 +228,10 @@ impl ApplicationHandler for App {
 
         #[cfg(target_arch = "wasm32")]
         {
-            self.shared.ui.scale = getUiSliderValue();
+            // disabled: web ui slider may be used to fix scaling issues, 
+            // but for now it's unneeded
+
+            // self.shared.ui.scale = getUiSliderValue();
         }
 
         if self.shared.ui.scale <= 0. {
