@@ -111,6 +111,7 @@ fn init_shared(shared: &mut Shared) {
     }
 
     shared.ui.scale = shared.config.ui_scale;
+    shared.gridline_gap = shared.config.gridline_gap;
 
     // shared.ui.set_state(UiState::SettingsModal, true);
 

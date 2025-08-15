@@ -51,6 +51,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
             modal_ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.skf_button("Apply").clicked() {
                     shared.ui.scale = shared.config.ui_scale;
+                    shared.gridline_gap = shared.config.gridline_gap;
                     crate::utils::save_config(&shared.config);
                     shared.ui.set_state(shared::UiState::SettingsModal, false);
                 }
@@ -66,11 +67,27 @@ fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.heading("General");
     ui.horizontal(|ui| {
         ui.label("UI Scale:");
-        let (edited, value, _) = ui.float_input("ui_scale".to_string(), shared, shared.config.ui_scale, 1.);
+        let (edited, value, _) =
+            ui.float_input("ui_scale".to_string(), shared, shared.config.ui_scale, 1.);
         if edited {
             shared.config.ui_scale = value;
         }
     });
+
+    ui.horizontal(|ui| {
+        ui.label("Gridline gap (pixels):");
+        let (edited, value, _) = ui.float_input(
+            "grid_gap".to_string(),
+            shared,
+            shared.config.gridline_gap as f32,
+            1.,
+        );
+        if edited {
+            shared.config.gridline_gap = value as i32;
+        }
+    });
+
+    ui.add_space(20.);
 
     colors(ui, shared);
 }
@@ -124,7 +141,7 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         ui.heading("Color");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.skf_button("Reset").clicked() {
+            if ui.skf_button("Default").clicked() {
                 shared.config.ui_colors = crate::ColorConfig::default();
             }
         });

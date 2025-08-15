@@ -789,7 +789,6 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
 
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
-    let gap = 250.;
     let width = 0.005 * shared.camera.zoom;
     let regular_color = VertexColor::new(0.5, 0.5, 0.5, 0.25);
     let highlight_color = VertexColor::new(0.7, 0.7, 0.7, 1.);
@@ -799,7 +798,7 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
     let mut x = (shared.camera.pos.x - shared.camera.zoom / aspect_ratio).round();
     let right_side = shared.camera.pos.x + shared.camera.zoom / aspect_ratio;
     while x < right_side {
-        if x % gap != 0. {
+        if x % shared.gridline_gap as f32 != 0. {
             x += 1.;
             continue;
         }
@@ -816,7 +815,7 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
     let mut y = (shared.camera.pos.y - shared.camera.zoom).round();
     let top_side = shared.camera.pos.y + shared.camera.zoom;
     while y < top_side {
-        if y % gap != 0. {
+        if y % shared.gridline_gap as f32 != 0. {
             y += 1.;
             continue;
         }

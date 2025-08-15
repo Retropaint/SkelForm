@@ -663,6 +663,9 @@ pub struct Config {
     #[serde(default = "default_one")]
     pub ui_scale: f32,
 
+    #[serde(default = "gridline_default")]
+    pub gridline_gap: i32,
+
     #[serde(default)]
     pub ui_colors: ColorConfig,
     pub keys: KeyboardConfig,
@@ -682,9 +685,10 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             first_time: true,
-            ui_scale: 1.,
+            ui_scale: default_one(),
             ui_colors: ColorConfig::default(),
             keys: KeyboardConfig::default(),
+            gridline_gap: gridline_default(),
         }
     }
 }
@@ -1680,6 +1684,8 @@ pub struct Shared {
 
     pub copy_buffer: CopyBuffer,
 
+    pub gridline_gap: i32,
+
     /// triggers debug stuff. Set in main.rs
     pub debug: bool,
 }
@@ -1782,6 +1788,10 @@ fn default_neg_one() -> i32 {
 
 fn default_one() -> f32 {
     1.
+}
+
+fn gridline_default() -> i32 {
+    250
 }
 
 fn is_neg_one<T: std::cmp::PartialEq<i32>>(value: &T) -> bool {
