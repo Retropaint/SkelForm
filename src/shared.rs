@@ -869,7 +869,6 @@ pub struct Armature {
 
     #[serde(skip)]
     pub bind_groups: Vec<BindGroup>,
-
     #[serde(skip)]
     pub tex_sheet_buf: Vec<u8>,
 }
@@ -1298,6 +1297,10 @@ impl Armature {
     }
 
     pub fn is_bone_hidden(&self, bone_id: i32) -> bool {
+        if self.find_bone(bone_id) == None {
+            return false;
+        }
+
         if self.find_bone(bone_id).unwrap().hidden {
             return true;
         }
