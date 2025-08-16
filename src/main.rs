@@ -57,6 +57,7 @@ fn init_shared(shared: &mut Shared) {
     };
     shared.dragging_vert = usize::MAX;
     shared.ui.scale = 1.;
+    shared.ui.selected_layer = -1;
 
     shared.ui.context_menu.close();
 

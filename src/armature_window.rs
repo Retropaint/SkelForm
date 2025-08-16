@@ -62,6 +62,48 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 .start_next_tutorial_step(TutorialStep::GetImage, &shared.armature);
                         }
                     }
+
+                    let name = if shared.ui.selected_layer != -1 {
+                        shared.armature.layers[shared.ui.selected_layer as usize]
+                            .name
+                            .to_string()
+                    } else {
+                        "Default".to_string()
+                    };
+
+                    egui::ComboBox::new("layer_dropdown".to_string(), "")
+                        .selected_text(name.to_string())
+                        .show_ui(ui, |ui| {
+                            ui.set_height(100.);
+                            ui.selectable_value(&mut shared.ui.selected_layer, -1, "Default")
+                                .clicked();
+                            for i in 0..shared.armature.layers.len() {
+                                ui.selectable_value(
+                                    &mut shared.ui.selected_layer,
+                                    i as i32,
+                                    shared.armature.layers[i].name.clone(),
+                                );
+                            }
+                            if shared.ui.selected_layer != -1 {
+                                ui.selectable_value(
+                                    &mut shared.ui.selected_layer,
+                                    -3,
+                                    "[Rename Layer]",
+                                )
+                                .clicked();
+                            }
+                            ui.selectable_value(&mut shared.ui.selected_layer, -2, "[New Layer]")
+                                .clicked();
+                        })
+                        .response;
+
+                    if shared.ui.selected_layer == -2 {
+                        shared.armature.layers.push(Layer {
+                            name: "New Layer".to_string(),
+                            ..Default::default()
+                        });
+                        shared.ui.selected_layer = (shared.armature.layers.len() - 1) as i32;
+                    }
                 });
 
                 shared.ui.edit_bar_pos.x = ui.min_rect().right();
