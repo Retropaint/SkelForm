@@ -175,107 +175,17 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 }
             });
 
-            let mut offset = Vec2::new(0., 0.);
-            let mut height = 0.;
-            let mut tex_idx = -1;
-            let max_width = 250.;
-            for i in 0..shared.ui.texture_images.len() {
-                // limit size
-                let mut size = shared.armature.textures[i].size;
-                let max = 50.;
-                let mut mult = 1.;
-                if size.x > max {
-                    mult = max / size.x
-                }
-                if size.y > max {
-                    mult = max / size.y
-                }
-                size.x *= mult;
-                size.y *= mult;
+            let tex_idx = -1;
+            ui.horizontal(|ui| {
+                let frame = egui::Frame::default().inner_margin(5.);
+                ui.vertical(|ui| {
+                    ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                        draw_tex_buttons(shared, ui);
+                    });
+                });
 
-                let padding = 2.;
-                // go to next row if there's no space
-                if size.x + offset.x + padding > max_width {
-                    offset.x = 0.;
-                    offset.y += height + 2.;
-                    height = 0.;
-                }
-
-                // record tallest texture of this row
-                if height < size.y {
-                    height = size.y;
-                }
-
-                let pos = egui::pos2(
-                    ui.min_rect().left() + offset.x,
-                    ui.min_rect().top() + 50. + offset.y,
-                );
-
-                let rect = egui::Rect::from_min_size(pos, size.into());
-                let response: egui::Response = ui
-                    .allocate_rect(rect, egui::Sense::click())
-                    .on_hover_cursor(egui::CursorIcon::PointingHand);
-
-                // draw image
-                ui.painter().rect_filled(
-                    rect,
-                    egui::CornerRadius::ZERO,
-                    shared.config.ui_colors.dark_accent,
-                );
-
-                if response.hovered() {
-                    tex_idx = i as i32;
-                    ui.painter_at(ui.min_rect()).rect_filled(
-                        rect,
-                        egui::CornerRadius::ZERO,
-                        egui::Color32::from_rgba_unmultiplied(255, 255, 255, 60),
-                    );
-                }
-
-                egui::Image::new(&shared.ui.texture_images[i]).paint_at(ui, rect);
-
-                if response.clicked() {
-                    if shared.ui.has_state(UiState::RemovingTexture) {
-                        shared.remove_texture(i as i32);
-                        shared.ui.set_state(UiState::RemovingTexture, false);
-                        // stop the loop to prevent index errors
-                        break;
-                    } else {
-                        let mut anim_id = shared.ui.anim.selected;
-                        if !shared.ui.is_animating() && shared.selected_bone() != None {
-                            anim_id = usize::MAX;
-                            shared.undo_actions.push(Action {
-                                action: ActionEnum::Bone,
-                                id: shared.selected_bone().unwrap().id,
-                                bones: vec![shared.selected_bone().unwrap().clone()],
-                                ..Default::default()
-                            });
-                        } else if shared.ui.is_animating() && shared.selected_animation() != None {
-                            shared.undo_actions.push(Action {
-                                action: ActionEnum::Animation,
-                                id: shared.selected_animation().unwrap().id,
-                                animations: vec![shared.selected_animation().unwrap().clone()],
-                                ..Default::default()
-                            });
-                        }
-
-                        if shared.selected_bone() == None {
-                            return;
-                        }
-
-                        // set texture
-                        shared.armature.set_bone_tex(
-                            shared.selected_bone().unwrap().id,
-                            i,
-                            anim_id,
-                            shared.ui.anim.selected_frame,
-                        );
-                        shared.ui.set_state(UiState::ImageModal, false);
-                    }
-                }
-
-                offset.x += size.x + padding;
-            }
+                // image_viewer(shared, ui);
+            });
 
             ui.add_space(50.);
 
@@ -305,6 +215,182 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
             ui.label(name);
             ui.label(size);
         });
+}
+
+pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
+    let mut idx: i32 = -1;
+    for i in 0..shared.armature.textures.len() {
+        idx += 1;
+        let button = ui
+            .dnd_drag_source(egui::Id::new(("tex", idx, 0)), idx, |ui| {
+                ui.add(egui::Button::new(shared.armature.textures[i].name.clone()))
+            })
+            .response
+            .interact(egui::Sense::click());
+
+        let pointer = ui.input(|i| i.pointer.interact_pos());
+        let hovered_payload = button.dnd_hover_payload::<i32>();
+
+        if pointer == None || hovered_payload == None {
+            continue;
+        }
+
+        let rect = button.rect;
+        let stroke = egui::Stroke::new(1.0, Color32::WHITE);
+        let mut is_below = false;
+
+        if pointer.unwrap().y < rect.center().y {
+            ui.painter().hline(rect.x_range(), rect.top(), stroke);
+        } else {
+            ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
+            is_below = true;
+        };
+
+        let dp = button.dnd_release_payload::<i32>();
+        if dp == None {
+            continue;
+        }
+        let dragged_payload = *dp.unwrap() as usize;
+
+        let mut old_name_order: Vec<String> = vec![];
+        for tex in &shared.armature.textures {
+            old_name_order.push(tex.name.clone());
+        }
+
+        let new_idx = idx as usize + is_below as usize;
+
+        let tex = shared.armature.textures[dragged_payload].clone();
+        shared.armature.textures.remove(dragged_payload);
+        shared.armature.textures.insert(new_idx, tex);
+
+        let bg = shared.armature.bind_groups[dragged_payload].clone();
+        shared.armature.bind_groups.remove(dragged_payload);
+        shared.armature.bind_groups.insert(new_idx, bg);
+
+        for b in 0..shared.armature.bones.len() {
+            macro_rules! bone {
+                () => {
+                    shared.armature.bones[b]
+                };
+            }
+
+            if bone!().tex_idx == -1 {
+                continue;
+            }
+
+            let old_name = &old_name_order[bone!().tex_idx as usize];
+            bone!().tex_idx = shared
+                .armature
+                .textures
+                .iter()
+                .position(|tex| tex.name == *old_name)
+                .unwrap() as i32;
+        }
+    }
+}
+
+pub fn image_viewer(shared: &mut Shared, ui: &mut egui::Ui) {
+    let mut offset = Vec2::new(0., 0.);
+    let mut height = 0.;
+    let mut tex_idx = -1;
+    let max_width = 250.;
+    for i in 0..shared.ui.texture_images.len() {
+        // limit size
+        let mut size = shared.armature.textures[i].size;
+        let max = 10.;
+        let mut mult = 1.;
+        if size.x > max {
+            mult = max / size.x
+        }
+        if size.y > max {
+            mult = max / size.y
+        }
+        size.x *= mult;
+        size.y *= mult;
+
+        let padding = 2.;
+        // go to next row if there's no space
+        if size.x + offset.x + padding > max_width {
+            offset.x = 0.;
+            offset.y += height + 2.;
+            height = 0.;
+        }
+
+        // record tallest texture of this row
+        if height < size.y {
+            height = size.y;
+        }
+
+        let pos = egui::pos2(
+            ui.min_rect().left() + offset.x,
+            ui.min_rect().top() + 50. + offset.y,
+        );
+
+        let rect = egui::Rect::from_min_size(pos, size.into());
+        let response: egui::Response = ui
+            .allocate_rect(rect, egui::Sense::click())
+            .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+        // draw image
+        ui.painter().rect_filled(
+            rect,
+            egui::CornerRadius::ZERO,
+            shared.config.ui_colors.dark_accent,
+        );
+
+        // if response.hovered() {
+        //     tex_idx = i as i32;
+        //     ui.painter_at(ui.min_rect()).rect_filled(
+        //         rect,
+        //         egui::CornerRadius::ZERO,
+        //         egui::Color32::from_rgba_unmultiplied(255, 255, 255, 60),
+        //     );
+        // }
+
+        egui::Image::new(&shared.ui.texture_images[i]).paint_at(ui, rect);
+
+        // if response.clicked() {
+        //     if shared.ui.has_state(UiState::RemovingTexture) {
+        //         shared.remove_texture(i as i32);
+        //         shared.ui.set_state(UiState::RemovingTexture, false);
+        //         // stop the loop to prevent index errors
+        //         break;
+        //     } else {
+        //         let mut anim_id = shared.ui.anim.selected;
+        //         if !shared.ui.is_animating() && shared.selected_bone() != None {
+        //             anim_id = usize::MAX;
+        //             shared.undo_actions.push(Action {
+        //                 action: ActionEnum::Bone,
+        //                 id: shared.selected_bone().unwrap().id,
+        //                 bones: vec![shared.selected_bone().unwrap().clone()],
+        //                 ..Default::default()
+        //             });
+        //         } else if shared.ui.is_animating() && shared.selected_animation() != None {
+        //             shared.undo_actions.push(Action {
+        //                 action: ActionEnum::Animation,
+        //                 id: shared.selected_animation().unwrap().id,
+        //                 animations: vec![shared.selected_animation().unwrap().clone()],
+        //                 ..Default::default()
+        //             });
+        //         }
+
+        //         if shared.selected_bone() == None {
+        //             return;
+        //         }
+
+        //         // set texture
+        //         shared.armature.set_bone_tex(
+        //             shared.selected_bone().unwrap().id,
+        //             i,
+        //             anim_id,
+        //             shared.ui.anim.selected_frame,
+        //         );
+        //         shared.ui.set_state(UiState::ImageModal, false);
+        //     }
+        // }
+
+        offset.x += size.x + padding;
+    }
 }
 
 pub fn first_time_modal(shared: &mut Shared, ctx: &egui::Context) {
