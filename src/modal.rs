@@ -223,10 +223,52 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         idx += 1;
         let button = ui
             .dnd_drag_source(egui::Id::new(("tex", idx, 0)), idx, |ui| {
-                ui.add(egui::Button::new(shared.armature.textures[i].name.clone()))
+                let but = egui::Button::new(shared.armature.textures[i].name.clone());
+                ui.add(but);
             })
             .response
-            .interact(egui::Sense::click());
+            .interact(egui::Sense::click())
+            .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+        if button.clicked() {
+            if shared.ui.has_state(UiState::RemovingTexture) {
+                shared.remove_texture(i as i32);
+                shared.ui.set_state(UiState::RemovingTexture, false);
+                // stop the loop to prevent index errors
+                break;
+            } else {
+                let mut anim_id = shared.ui.anim.selected;
+                if !shared.ui.is_animating() && shared.selected_bone() != None {
+                    anim_id = usize::MAX;
+                    shared.undo_actions.push(Action {
+                        action: ActionEnum::Bone,
+                        id: shared.selected_bone().unwrap().id,
+                        bones: vec![shared.selected_bone().unwrap().clone()],
+                        ..Default::default()
+                    });
+                } else if shared.ui.is_animating() && shared.selected_animation() != None {
+                    shared.undo_actions.push(Action {
+                        action: ActionEnum::Animation,
+                        id: shared.selected_animation().unwrap().id,
+                        animations: vec![shared.selected_animation().unwrap().clone()],
+                        ..Default::default()
+                    });
+                }
+
+                if shared.selected_bone() == None {
+                    return;
+                }
+
+                // set texture
+                shared.armature.set_bone_tex(
+                    shared.selected_bone().unwrap().id,
+                    i,
+                    anim_id,
+                    shared.ui.anim.selected_frame,
+                );
+                shared.ui.set_state(UiState::ImageModal, false);
+            }
+        }
 
         let pointer = ui.input(|i| i.pointer.interact_pos());
         let hovered_payload = button.dnd_hover_payload::<i32>();
@@ -349,45 +391,45 @@ pub fn image_viewer(shared: &mut Shared, ui: &mut egui::Ui) {
 
         egui::Image::new(&shared.ui.texture_images[i]).paint_at(ui, rect);
 
-        // if response.clicked() {
-        //     if shared.ui.has_state(UiState::RemovingTexture) {
-        //         shared.remove_texture(i as i32);
-        //         shared.ui.set_state(UiState::RemovingTexture, false);
-        //         // stop the loop to prevent index errors
-        //         break;
-        //     } else {
-        //         let mut anim_id = shared.ui.anim.selected;
-        //         if !shared.ui.is_animating() && shared.selected_bone() != None {
-        //             anim_id = usize::MAX;
-        //             shared.undo_actions.push(Action {
-        //                 action: ActionEnum::Bone,
-        //                 id: shared.selected_bone().unwrap().id,
-        //                 bones: vec![shared.selected_bone().unwrap().clone()],
-        //                 ..Default::default()
-        //             });
-        //         } else if shared.ui.is_animating() && shared.selected_animation() != None {
-        //             shared.undo_actions.push(Action {
-        //                 action: ActionEnum::Animation,
-        //                 id: shared.selected_animation().unwrap().id,
-        //                 animations: vec![shared.selected_animation().unwrap().clone()],
-        //                 ..Default::default()
-        //             });
-        //         }
+        if response.clicked() {
+            if shared.ui.has_state(UiState::RemovingTexture) {
+                shared.remove_texture(i as i32);
+                shared.ui.set_state(UiState::RemovingTexture, false);
+                // stop the loop to prevent index errors
+                break;
+            } else {
+                let mut anim_id = shared.ui.anim.selected;
+                if !shared.ui.is_animating() && shared.selected_bone() != None {
+                    anim_id = usize::MAX;
+                    shared.undo_actions.push(Action {
+                        action: ActionEnum::Bone,
+                        id: shared.selected_bone().unwrap().id,
+                        bones: vec![shared.selected_bone().unwrap().clone()],
+                        ..Default::default()
+                    });
+                } else if shared.ui.is_animating() && shared.selected_animation() != None {
+                    shared.undo_actions.push(Action {
+                        action: ActionEnum::Animation,
+                        id: shared.selected_animation().unwrap().id,
+                        animations: vec![shared.selected_animation().unwrap().clone()],
+                        ..Default::default()
+                    });
+                }
 
-        //         if shared.selected_bone() == None {
-        //             return;
-        //         }
+                if shared.selected_bone() == None {
+                    return;
+                }
 
-        //         // set texture
-        //         shared.armature.set_bone_tex(
-        //             shared.selected_bone().unwrap().id,
-        //             i,
-        //             anim_id,
-        //             shared.ui.anim.selected_frame,
-        //         );
-        //         shared.ui.set_state(UiState::ImageModal, false);
-        //     }
-        // }
+                // set texture
+                shared.armature.set_bone_tex(
+                    shared.selected_bone().unwrap().id,
+                    i,
+                    anim_id,
+                    shared.ui.anim.selected_frame,
+                );
+                shared.ui.set_state(UiState::ImageModal, false);
+            }
+        }
 
         offset.x += size.x + padding;
     }
