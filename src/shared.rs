@@ -1136,6 +1136,10 @@ impl Armature {
         }
 
         for b in &mut bones {
+            if b.hidden {
+                continue;
+            }
+
             macro_rules! interpolate {
                 ($element:expr, $default:expr, $vert_id:expr) => {{
                     let (prev, next, total_frames, current_frame, transition) = self
