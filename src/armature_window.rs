@@ -152,13 +152,31 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
         let mut dragged = false;
 
         ui.horizontal(|ui| {
-            let hidden_icon = if shared.armature.bones[b].hidden {
+            let id = shared.armature.bones[b].id;
+            let hidden_icon = if shared.is_bone_hidden(id) {
                 "---"
             } else {
                 "👁"
             };
             if bone_label(hidden_icon, ui, shared, b).clicked() {
-                shared.armature.bones[b].hidden = !shared.armature.bones[b].hidden;
+                // switch to a new layer if on default
+                if shared.ui.selected_layer == -1 {
+                    shared.armature.layers.push(Layer {
+                        name: "New Layer".to_string(),
+                        ..Default::default()
+                    });
+                    shared.ui.selected_layer = (shared.armature.layers.len() - 1) as i32;
+                }
+
+                if shared.is_bone_hidden(id) {
+                    shared.armature.layers[shared.ui.selected_layer as usize]
+                        .bone_ids
+                        .retain(|l_id| *l_id != id);
+                } else {
+                    shared.armature.layers[shared.ui.selected_layer as usize]
+                        .bone_ids
+                        .push(id);
+                }
             }
             ui.add_space(17.);
 
@@ -191,7 +209,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             let mut selected_col = shared.config.ui_colors.light_accent;
             let mut cursor = egui::CursorIcon::PointingHand;
 
-            if shared.armature.is_bone_hidden(b as i32) {
+            if shared.is_bone_hidden(b as i32) {
                 selected_col = shared.config.ui_colors.dark_accent;
             }
 

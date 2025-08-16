@@ -853,8 +853,6 @@ pub struct Bone {
     pub pivot: Vec2,
     #[serde(default)]
     pub zindex: f32,
-    #[serde(default)]
-    pub hidden: bool,
 
     #[serde(skip)]
     pub folded: bool,
@@ -1138,7 +1136,7 @@ impl Armature {
         animate!(AnimElement::VertPositionY, pos.y);
     }
 
-    pub fn animate(&mut self, anim_idx: usize, anim_frame: i32) -> Vec<Bone> {
+    pub fn animate(&mut self, anim_idx: usize, anim_frame: i32, selected_layer: usize) -> Vec<Bone> {
         let mut bones = self.bones.clone();
 
         // ignore if this animation has no keyframes
@@ -1148,7 +1146,7 @@ impl Armature {
         }
 
         for b in &mut bones {
-            if b.hidden {
+            if self.is_bone_hidden(b.id, selected_layer) {
                 continue;
             }
 
@@ -1312,18 +1310,20 @@ impl Armature {
         parents
     }
 
-    pub fn is_bone_hidden(&self, bone_id: i32) -> bool {
+    pub fn is_bone_hidden(&self, bone_id: i32, selected_layer: usize) -> bool {
         if self.find_bone(bone_id) == None {
             return false;
         }
 
-        if self.find_bone(bone_id).unwrap().hidden {
+        let is_hidden = self.layers[selected_layer].bone_ids.contains(&bone_id);
+
+        if self.layers[selected_layer].bone_ids.contains(&bone_id) {
             return true;
         }
 
         let parents = self.get_all_parents(bone_id);
         for parent in &parents {
-            if parent.hidden {
+            if self.layers[selected_layer].bone_ids.contains(&parent.id) {
                 return true;
             }
         }
@@ -1774,6 +1774,15 @@ impl Shared {
         let mouse_world = utils::screen_to_world_space(self.input.mouse, self.window);
         let mouse_prev_world = utils::screen_to_world_space(self.input.mouse_prev, self.window);
         mouse_prev_world - mouse_world
+    }
+
+    pub fn is_bone_hidden(&self, bone_id: i32) -> bool {
+        if self.ui.selected_layer == -1 {
+            return false;
+        }
+        self.armature.layers[self.ui.selected_layer as usize]
+            .bone_ids
+            .contains(&bone_id)
     }
 }
 

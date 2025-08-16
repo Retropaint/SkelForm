@@ -33,9 +33,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut bones = shared.armature.bones.clone();
     if shared.ui.is_animating() {
-        bones = shared
-            .armature
-            .animate(shared.ui.anim.selected, shared.ui.anim.selected_frame);
+        bones = shared.armature.animate(
+            shared.ui.anim.selected,
+            shared.ui.anim.selected_frame,
+            shared.ui.selected_layer as usize,
+        );
     }
 
     // For rendering purposes, bones need to have many of their attributes manipulated.
@@ -72,7 +74,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // draw bone
     for b in 0..temp_bones.len() {
-        if shared.armature.is_bone_hidden(temp_bones[b].id) || temp_bones[b].tex_idx == -1 {
+        if shared.is_bone_hidden(temp_bones[b].id) || temp_bones[b].tex_idx == -1 {
             continue;
         }
 
