@@ -96,10 +96,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     let mut bone = shared.selected_bone().unwrap().clone();
     if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
-        bone = shared
-            .armature
-            .animate(shared.ui.anim.selected, shared.ui.anim.selected_frame)
-            [shared.ui.selected_bone_idx]
+        bone = shared.armature.animate(
+            shared.ui.anim.selected,
+            shared.ui.anim.selected_frame,
+            shared.ui.selected_layer as usize,
+        )[shared.ui.selected_bone_idx]
             .clone();
     }
 
@@ -140,8 +141,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     // same as input!, but provides back input response
     macro_rules! input_response {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr, $input:expr) => {
-            (edited, $float, $input) =
-                $ui.float_input($id.to_string(), shared, $float, $modifier);
+            (edited, $float, $input) = $ui.float_input($id.to_string(), shared, $float, $modifier);
             check_input_edit!($float, $element, $ui, $label)
         };
     }
@@ -186,7 +186,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "X");
         });
     });
-    // disabled: pivots are mostly superfluous as parent inheritance is mandatory 
+    // disabled: pivots are mostly superfluous as parent inheritance is mandatory
     //ui.horizontal(|ui| {
     //    label!("Pivot:", ui);
     //    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
