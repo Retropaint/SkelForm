@@ -476,6 +476,8 @@ pub struct Ui {
     pub settings_state: SettingsState,
 
     pub changing_key: String,
+
+    pub selected_layer: i32,
 }
 
 impl Ui {
@@ -866,11 +868,21 @@ pub struct Armature {
     pub animations: Vec<Animation>,
     #[serde(default)]
     pub textures: Vec<Texture>,
+    #[serde(default)]
+    pub layers: Vec<Layer>,
 
     #[serde(skip)]
     pub bind_groups: Vec<BindGroup>,
     #[serde(skip)]
     pub tex_sheet_buf: Vec<u8>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+pub struct Layer {
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub bone_ids: Vec<i32>,
 }
 
 impl Armature {
