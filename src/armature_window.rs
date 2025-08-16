@@ -161,10 +161,14 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             let id = Id::new(("bone", idx, 0));
             let button = ui
                 .dnd_drag_source(id, idx, |ui| {
-                    ui.add(
-                        egui::Button::new(&shared.armature.bones[b].name.to_string())
-                            .fill(selected_col),
-                    )
+                    let pic = if shared.armature.bones[b].tex_idx != -1 {
+                        "🖻  "
+                    } else {
+                        ""
+                    };
+
+                    let name = pic.to_owned() + &shared.armature.bones[b].name.to_string();
+                    ui.add(egui::Button::new(name).fill(selected_col))
                 })
                 .response
                 .interact(Sense::click())
