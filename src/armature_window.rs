@@ -11,7 +11,7 @@ use crate::{
 use crate::shared::*;
 
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
-    let min_default_size = 135.;
+    let min_default_size = 175.;
     let panel_id = "Armature";
     ui::draw_resizable_panel(
         panel_id,
@@ -118,7 +118,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             if bone_label(hidden_icon, ui, shared, b).clicked() {
                 shared.armature.bones[b].hidden = !shared.armature.bones[b].hidden;
             }
-            ui.add_space(15.);
+            ui.add_space(17.);
 
             // add space to the left if this is a child
             let mut nb = &shared.armature.bones[b];
