@@ -867,7 +867,7 @@ pub struct Armature {
     pub animations: Vec<Animation>,
     #[serde(default)]
     pub textures: Vec<Texture>,
-    #[serde(default)]
+    #[serde(skip)]
     pub layers: Vec<Layer>,
 
     #[serde(skip)]
@@ -1399,6 +1399,8 @@ pub struct Texture {
     pub size: Vec2,
     #[serde(default)]
     pub name: String,
+    #[serde(default)]
+    pub variation: usize,
     #[serde(skip)]
     pub pixels: Vec<u8>,
 }

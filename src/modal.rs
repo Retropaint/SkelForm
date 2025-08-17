@@ -176,6 +176,31 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 }
             });
 
+            ui.horizontal(|ui| {
+                ui.label("Variations:");
+                let all_variations: Vec<usize> = shared
+                    .armature
+                    .textures
+                    .iter()
+                    .map(|tex| tex.variation)
+                    .collect();
+                let mut variations = vec![];
+
+                let mut last_var = usize::MAX;
+                for var in all_variations {
+                    if last_var != var {
+                        variations.push(var);
+                        last_var = var;
+                    }
+                }
+
+                for v in 0..variations.len() {
+                    ui.button(v.to_string());
+                }
+
+                ui.button("+");
+            });
+
             let tex_idx = -1;
             ui.horizontal(|ui| {
                 let frame = egui::Frame::default().inner_margin(5.);
