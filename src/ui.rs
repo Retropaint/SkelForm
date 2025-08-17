@@ -327,7 +327,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 }
 
                 if ui
-                    .menu_button(title!("Settings"), |_| {})
+                    .menu_button(title!("Settings"), |ui| ui.close())
                     .response
                     .clicked()
                 {
