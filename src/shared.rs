@@ -377,6 +377,7 @@ pub enum UiState {
     PolarModal,
     FirstTimeModal,
     SettingsModal,
+    LayerModal,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -875,12 +876,16 @@ pub struct Armature {
     pub tex_sheet_buf: Vec<u8>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
 pub struct Layer {
+    #[serde(default)]
+    pub id: i32,
     #[serde(default)]
     pub name: String,
     #[serde(default)]
     pub bone_ids: Vec<i32>,
+    #[serde(default)]
+    pub group_id: i32,
 }
 
 impl Armature {
@@ -1136,7 +1141,12 @@ impl Armature {
         animate!(AnimElement::VertPositionY, pos.y);
     }
 
-    pub fn animate(&mut self, anim_idx: usize, anim_frame: i32, selected_layer: usize) -> Vec<Bone> {
+    pub fn animate(
+        &mut self,
+        anim_idx: usize,
+        anim_frame: i32,
+        selected_layer: usize,
+    ) -> Vec<Bone> {
         let mut bones = self.bones.clone();
 
         // ignore if this animation has no keyframes
