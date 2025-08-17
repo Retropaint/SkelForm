@@ -63,11 +63,11 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         }
                     }
 
-                    if ui.button("Layers").clicked() {
-                        shared.ui.set_state(UiState::LayerModal, true);   
-                    }
-
                     return;
+
+                    if ui.button("Layers").clicked() {
+                        shared.ui.set_state(UiState::LayerModal, true);
+                    }
 
                     let name = if shared.ui.selected_layer != -1 {
                         shared.armature.layers[shared.ui.selected_layer as usize]
