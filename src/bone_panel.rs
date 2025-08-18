@@ -93,6 +93,14 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                         if set.textures.len() == 0 {
                             continue;
                         }
+                        if shared.ui.rename_id == "tex_set ".to_string() + &set.id.to_string() {
+                            let (edited, value, _) = ui.text_input(
+                                shared.ui.rename_id.clone(),
+                                shared,
+                                set.name.clone(),
+                                None,
+                            );
+                        }
                         ui.selectable_value(&mut selected_set, set.id as i32, set.name.clone());
                     }
                     ui.selectable_value(&mut selected_set, -2, "[Setup]");

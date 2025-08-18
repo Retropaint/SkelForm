@@ -443,6 +443,7 @@ impl EguiUi for egui::Ui {
             open_mobile_input(shared.ui.edit_value.clone().unwrap());
 
             shared.ui.input_focused = true;
+            shared.ui.edit_value = Some(value.clone());
         }
 
         if shared.ui.rename_id != id {
