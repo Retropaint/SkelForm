@@ -146,12 +146,25 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
         .show(ctx, |ui| {
             ui.set_width(250.);
             ui.set_height(250.);
-            ui.heading("Select Image");
-
+            ui.heading("Select Texture");
             modal_x(ui, || {
                 shared.ui.set_state(UiState::ImageModal, false);
             });
 
+            ui.add_space(5.);
+
+            ui.label("Variations:");
+            ui.horizontal(|ui| {
+                for tex_var in &shared.armature.texture_variations {
+                    ui.skf_button(&tex_var.name.to_string());
+                }
+
+                if ui.skf_button("+").clicked() {}
+            });
+
+            ui.add_space(10.);
+
+            ui.label("Textures:");
             ui.horizontal(|ui| {
                 if selection_button("Import", shared.ui.has_state(UiState::RemovingTexture), ui)
                     .clicked()
@@ -174,31 +187,6 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                         !shared.ui.has_state(UiState::RemovingTexture),
                     );
                 }
-            });
-
-            ui.horizontal(|ui| {
-                ui.label("Variations:");
-                let all_variations: Vec<usize> = shared
-                    .armature
-                    .textures
-                    .iter()
-                    .map(|tex| tex.variation)
-                    .collect();
-                let mut variations = vec![];
-
-                let mut last_var = usize::MAX;
-                for var in all_variations {
-                    if last_var != var {
-                        variations.push(var);
-                        last_var = var;
-                    }
-                }
-
-                for v in 0..variations.len() {
-                    ui.button(v.to_string());
-                }
-
-                ui.button("+");
             });
 
             let tex_idx = -1;
