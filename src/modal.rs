@@ -153,9 +153,9 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
             ui.add_space(5.);
 
-            ui.label("Variations:");
+            ui.label("Sets:");
             ui.horizontal(|ui| {
-                for tex_var in &shared.armature.texture_variations {
+                for tex_var in &shared.armature.texture_sets {
                     ui.skf_button(&tex_var.name.to_string());
                 }
 

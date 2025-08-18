@@ -354,11 +354,11 @@ pub fn import<R: Read + std::io::Seek>(
 
     let def_tex_var = shared
         .armature
-        .texture_variations
+        .texture_sets
         .iter()
         .find(|tex_var| tex_var.id == 0);
     if def_tex_var == None {
-        shared.armature.texture_variations.push(TextureVariation {
+        shared.armature.texture_sets.push(TextureSet {
             id: 0,
             name: "Default".to_string(),
         });

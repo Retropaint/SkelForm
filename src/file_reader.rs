@@ -394,7 +394,7 @@ pub fn add_texture(
         size: dimensions,
         pixels,
         name: tex_name.to_string(),
-        tex_var_id: 0,
+        set_id: 0,
     });
 }
 
