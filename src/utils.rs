@@ -352,6 +352,18 @@ pub fn import<R: Read + std::io::Seek>(
         shared.armature.bones[b].folded = children.len() > 0;
     }
 
+    let def_tex_var = shared
+        .armature
+        .texture_variations
+        .iter()
+        .find(|tex_var| tex_var.id == 0);
+    if def_tex_var == None {
+        shared.armature.texture_variations.push(TextureVariation {
+            id: 0,
+            name: "Default".to_string(),
+        });
+    }
+
     // load texture
     if root.armature.textures.len() > 0 {
         let texture_file = zip.as_mut().unwrap().by_name("textures.png").unwrap();
