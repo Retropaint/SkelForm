@@ -81,7 +81,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // draw bone
     for b in 0..temp_bones.len() {
-        if shared.is_bone_hidden(temp_bones[b].id) || temp_bones[b].tex_set_id == -1 {
+        if temp_bones[b].tex_set_id == -1 {
+            continue;
+        }
+        let set = shared
+            .armature
+            .texture_sets
+            .iter()
+            .find(|set| set.id == temp_bones[b].tex_set_id)
+            .unwrap();
+        if shared.is_bone_hidden(temp_bones[b].id)
+            || temp_bones[b].tex_set_id == -1
+                && temp_bones[b].tex_idx > set.textures.len() as i32 - 1
+        {
             continue;
         }
 
@@ -91,13 +103,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 raw_to_world_vert,
                 *vert,
                 temp_bones[b],
-                shared
-                    .armature
-                    .texture_sets
-                    .iter()
-                    .find(|set| set.id == temp_bones[b].tex_set_id)
-                    .unwrap()
-                    .textures[temp_bones[b].tex_idx as usize],
+                set.textures[temp_bones[b].tex_idx as usize],
                 shared
             );
             new_vert.pos.x /= shared.window.x / shared.window.y;
@@ -431,7 +437,8 @@ pub fn draw_bone(
             .iter()
             .find(|set| set.id == bone.tex_set_id)
             .unwrap()
-            .textures[bone.tex_idx as usize].bind_group,
+            .textures[bone.tex_idx as usize]
+            .bind_group,
         &[],
     );
     render_pass.set_vertex_buffer(0, vertex_buffer(&world_verts, device).slice(..));
