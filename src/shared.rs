@@ -949,17 +949,19 @@ impl Armature {
         let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
 
         // use texture's name for bone, if the latter is unnamed
-        let name = self
-            .texture_sets
-            .iter()
-            .find(|set| set.id == tex_set_id)
-            .unwrap()
-            .textures[new_tex_idx]
-            .name
-            .clone();
-        let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
-        if bone_name == NEW_BONE_NAME || bone_name == "" {
-            *bone_name = name;
+        if tex_set_id != -1 {
+            let name = self
+                .texture_sets
+                .iter()
+                .find(|set| set.id == tex_set_id)
+                .unwrap()
+                .textures[new_tex_idx]
+                .name
+                .clone();
+            let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
+            if bone_name == NEW_BONE_NAME || bone_name == "" {
+                *bone_name = name;
+            }
         }
 
         if selected_anim == usize::MAX {
@@ -997,13 +999,16 @@ impl Armature {
             self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
         }
 
+        if tex_set_id == -1 {
+            return;
+        }
+
         let set = self
             .texture_sets
             .iter()
             .find(|set| set.id == tex_set_id)
             .unwrap();
 
-        println!("{}", set.id);
         (
             self.find_bone_mut(bone_id).unwrap().vertices,
             self.find_bone_mut(bone_id).unwrap().indices,
