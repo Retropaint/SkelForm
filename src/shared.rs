@@ -479,6 +479,8 @@ pub struct Ui {
     pub changing_key: String,
 
     pub selected_layer: i32,
+
+    pub selected_tex_set_id: i32,
 }
 
 impl Ui {
@@ -1398,11 +1400,14 @@ pub struct Root {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 pub struct TextureSet {
+    #[serde(default)]
     pub id: i32,
     pub name: String,
+    #[serde(default)]
+    pub textures: Vec<Texture>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 pub struct Texture {
     #[serde(default)]
     pub offset: Vec2,
@@ -1410,8 +1415,6 @@ pub struct Texture {
     pub size: Vec2,
     #[serde(default)]
     pub name: String,
-    #[serde(default)]
-    pub set_id: usize,
     #[serde(skip)]
     pub pixels: Vec<u8>,
 }

@@ -90,6 +90,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                     ui.selectable_value(&mut selected_set, -1, "None");
                     let sets = shared.armature.texture_sets.clone();
                     for set in &sets {
+                        if set.textures.len() == 0 {
+                            continue;
+                        }
                         ui.selectable_value(
                             &mut shared.selected_bone_mut().unwrap().tex_set_id,
                             set.id as i32,
@@ -102,6 +105,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
     if selected_set == -2 {
+        shared.ui.selected_tex_set_id = shared.selected_bone().unwrap().tex_set_id;
         shared.ui.set_state(UiState::ImageModal, true);
     } else if selected_set != -10 {
         shared.selected_bone_mut().unwrap().tex_set_id = selected_set;
