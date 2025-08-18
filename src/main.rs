@@ -58,11 +58,6 @@ fn init_shared(shared: &mut Shared) {
     shared.dragging_vert = usize::MAX;
     shared.ui.scale = 1.;
     shared.ui.selected_layer = -1;
-    shared.armature.texture_sets.push(TextureSet {
-        id: 0,
-        name: "Default".to_string(),
-    });
-
     shared.ui.context_menu.close();
 
     #[cfg(feature = "debug")]

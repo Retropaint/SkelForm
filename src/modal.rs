@@ -159,10 +159,26 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     ui.skf_button(&tex_var.name.to_string());
                 }
 
-                if ui.skf_button("+").clicked() {}
+                if ui.skf_button("+").clicked() {
+                    let ids: Vec<i32> = shared
+                        .armature
+                        .texture_sets
+                        .iter()
+                        .map(|set| set.id)
+                        .collect();
+                    shared.armature.texture_sets.push(crate::TextureSet {
+                        id: generate_id(ids),
+                        name: "New Set".to_string(),
+                        textures: vec![],
+                    })
+                }
             });
 
             ui.add_space(10.);
+
+            if shared.armature.texture_sets.len() == 0 {
+                return;
+            }
 
             ui.label("Textures:");
             ui.horizontal(|ui| {
