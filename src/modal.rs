@@ -155,14 +155,38 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
             ui.label("Sets:");
             ui.horizontal(|ui| {
-                for set in &shared.armature.texture_sets {
+                for s in 0..shared.armature.texture_sets.len() {
+                    macro_rules! set {
+                        () => {
+                            shared.armature.texture_sets[s]
+                        };
+                    }
+
+                    if shared.ui.rename_id == "tex_set ".to_string() + &set!().id.to_string() {
+                        let (edited, value, _) = ui.text_input(
+                            shared.ui.rename_id.clone(),
+                            shared,
+                            set!().name.clone(),
+                            Some(crate::ui::TextInputOptions {
+                                size: Vec2::new(60., 20.),
+                                focus: true,
+                                default: "New Set".to_string(),
+                                ..Default::default()
+                            }),
+                        );
+                        if edited {
+                            set!().name = value;
+                        }
+                        continue;
+                    }
+
                     let mut col = shared.config.ui_colors.light_accent;
-                    if set.id == shared.ui.selected_tex_set_id {
+                    if set!().id == shared.ui.selected_tex_set_id {
                         col += crate::Color::new(20, 20, 20, 0);
                     }
-                    let button = ui.add(egui::Button::new(set.name.to_string()).fill(col));
+                    let button = ui.add(egui::Button::new(set!().name.to_string()).fill(col));
                     if button.clicked() {
-                        shared.ui.selected_tex_set_id = set.id;
+                        shared.ui.selected_tex_set_id = set!().id;
                     }
                 }
 
@@ -173,11 +197,13 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                         .iter()
                         .map(|set| set.id)
                         .collect();
+                    let id = generate_id(ids);
                     shared.armature.texture_sets.push(crate::TextureSet {
-                        id: generate_id(ids),
+                        id,
                         name: "New Set".to_string(),
                         textures: vec![],
-                    })
+                    });
+                    shared.ui.rename_id = "tex_set ".to_string() + &id.to_string();
                 }
             });
 
