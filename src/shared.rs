@@ -975,15 +975,6 @@ impl Armature {
                 //    &self.find_bone(bone_id).unwrap().vertices,
                 //);
                 //if !verts_edited {
-                let set = self
-                    .texture_sets
-                    .iter()
-                    .find(|set| set.id == tex_set_id)
-                    .unwrap();
-                (
-                    self.find_bone_mut(bone_id).unwrap().vertices,
-                    self.find_bone_mut(bone_id).unwrap().indices,
-                ) = renderer::create_tex_rect(&set.textures[new_tex_idx].size);
                 //}
             }
         } else {
@@ -1005,6 +996,18 @@ impl Armature {
             );
             self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
         }
+
+        let set = self
+            .texture_sets
+            .iter()
+            .find(|set| set.id == tex_set_id)
+            .unwrap();
+
+        println!("{}", set.id);
+        (
+            self.find_bone_mut(bone_id).unwrap().vertices,
+            self.find_bone_mut(bone_id).unwrap().indices,
+        ) = renderer::create_tex_rect(&set.textures[new_tex_idx].size);
     }
 
     pub fn delete_bone(&mut self, id: i32) {
