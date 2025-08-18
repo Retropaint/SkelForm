@@ -353,7 +353,7 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     // load texture
-    if root.armature.textures.len() > 0 {
+    if root.armature.texture_sets.len() > 0 {
         let texture_file = zip.as_mut().unwrap().by_name("textures.png").unwrap();
 
         let mut bytes = vec![];
@@ -365,45 +365,47 @@ pub fn import<R: Read + std::io::Seek>(
         shared.armature.bind_groups = vec![];
         shared.ui.texture_images = vec![];
 
-        for texture in &mut shared.armature.textures {
-            texture.pixels = img
-                .crop(
-                    texture.offset.x as u32,
-                    texture.offset.y as u32,
-                    texture.size.x as u32,
-                    texture.size.y as u32,
-                )
-                .into_rgba8()
-                .to_vec();
+        for set in &mut shared.armature.texture_sets {
+            for tex in &mut set.textures {
+                tex.pixels = img
+                    .crop(
+                        tex.offset.x as u32,
+                        tex.offset.y as u32,
+                        tex.size.x as u32,
+                        tex.size.y as u32,
+                    )
+                    .into_rgba8()
+                    .to_vec();
 
-            shared
-                .armature
-                .bind_groups
-                .push(renderer::create_texture_bind_group(
-                    texture.pixels.to_vec(),
-                    texture.size,
-                    queue,
-                    device,
-                    bind_group_layout,
-                ));
+                shared
+                    .armature
+                    .bind_groups
+                    .push(renderer::create_texture_bind_group(
+                        tex.pixels.to_vec(),
+                        tex.size,
+                        queue,
+                        device,
+                        bind_group_layout,
+                    ));
 
-            let pixels = img
-                .crop(
-                    texture.offset.x as u32,
-                    texture.offset.y as u32,
-                    texture.size.x as u32,
-                    texture.size.y as u32,
-                )
-                .resize_exact(300, 300, image::imageops::FilterType::Nearest)
-                .into_rgba8()
-                .to_vec();
+                let pixels = img
+                    .crop(
+                        tex.offset.x as u32,
+                        tex.offset.y as u32,
+                        tex.size.x as u32,
+                        tex.size.y as u32,
+                    )
+                    .resize_exact(300, 300, image::imageops::FilterType::Nearest)
+                    .into_rgba8()
+                    .to_vec();
 
-            let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &pixels);
-            let tex = context.load_texture("anim_icons", color_image, Default::default());
-            shared.ui.texture_images.push(tex);
+                let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &pixels);
+                let tex = context.load_texture("anim_icons", color_image, Default::default());
+                shared.ui.texture_images.push(tex);
+            }
         }
     }
-
+    
     shared.ui.unselect_everything();
     shared.ui.set_tutorial_step(TutorialStep::None);
 

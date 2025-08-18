@@ -213,6 +213,13 @@ pub fn read_psd(
         }
     }
 
+    let ids = shared.armature.texture_sets.iter().map(|a| a.id).collect();
+    shared.armature.texture_sets.push(TextureSet {
+        id: generate_id(ids),
+        name: "Default".to_string(),
+        textures: vec![],
+    });
+
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
     group_ids.reverse();
     for g in 0..group_ids.len() {
@@ -389,12 +396,18 @@ pub fn add_texture(
 
     ui.add_texture_img(&ctx, img_buf, Vec2::new(300., 300.));
 
-    armature.textures.push(crate::Texture {
-        offset: Vec2::ZERO,
-        size: dimensions,
-        pixels,
-        name: tex_name.to_string(),
-    });
+    armature
+        .texture_sets
+        .iter_mut()
+        .find(|set| set.id == ui.selected_tex_set_id)
+        .unwrap()
+        .textures
+        .push(crate::Texture {
+            offset: Vec2::ZERO,
+            size: dimensions,
+            pixels,
+            name: tex_name.to_string(),
+        });
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -540,13 +553,6 @@ pub fn load_file(
         return;
     }
     let cursor = std::io::Cursor::new(getFile());
-    utils::import(
-        cursor,
-        shared,
-        queue,
-        device,
-        bind_group_layout,
-        context,
-    );
+    utils::import(cursor, shared, queue, device, bind_group_layout, context);
     removeFile();
 }
