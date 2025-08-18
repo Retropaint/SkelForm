@@ -155,10 +155,17 @@ pub fn read_image_loaders(
         });
     }
 
-    let tex_idx = shared.armature.textures.len() - 1;
+    let set = shared
+        .armature
+        .texture_sets
+        .iter()
+        .find(|set| set.id == shared.ui.selected_tex_set_id)
+        .unwrap();
+    let tex_idx = set.textures.len() - 1;
     shared.armature.set_bone_tex(
         shared.selected_bone().unwrap().id,
         tex_idx,
+        set.id,
         anim_id,
         shared.ui.anim.selected_frame,
     );
@@ -310,6 +317,7 @@ pub fn read_psd(
         shared.armature.set_bone_tex(
             new_bone_id,
             tex_idx,
+            shared.ui.selected_tex_set_id,
             shared.ui.anim.selected,
             shared.ui.anim.selected_frame,
         );
@@ -395,6 +403,8 @@ pub fn add_texture(
     .unwrap();
 
     ui.add_texture_img(&ctx, img_buf, Vec2::new(300., 300.));
+
+    println!("{} {}", armature.texture_sets[0].id, ui.selected_tex_set_id);
 
     armature
         .texture_sets

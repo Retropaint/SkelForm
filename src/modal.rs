@@ -155,8 +155,10 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
             ui.label("Sets:");
             ui.horizontal(|ui| {
-                for tex_var in &shared.armature.texture_sets {
-                    ui.skf_button(&tex_var.name.to_string());
+                for set in &shared.armature.texture_sets {
+                    if ui.skf_button(&set.name.to_string()).clicked() {
+                        shared.ui.selected_tex_set_id = set.id;
+                    }
                 }
 
                 if ui.skf_button("+").clicked() {
@@ -176,7 +178,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
             ui.add_space(10.);
 
-            if shared.armature.texture_sets.len() == 0 {
+            if shared.ui.selected_tex_set_id < 0 {
                 return;
             }
 
@@ -293,6 +295,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 shared.armature.set_bone_tex(
                     shared.selected_bone().unwrap().id,
                     i,
+                    shared.ui.selected_tex_set_id,
                     anim_id,
                     shared.ui.anim.selected_frame,
                 );
@@ -454,6 +457,7 @@ pub fn image_viewer(shared: &mut Shared, ui: &mut egui::Ui) {
                 shared.armature.set_bone_tex(
                     shared.selected_bone().unwrap().id,
                     i,
+                    shared.ui.selected_tex_set_id,
                     anim_id,
                     shared.ui.anim.selected_frame,
                 );
