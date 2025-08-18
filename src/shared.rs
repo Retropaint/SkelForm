@@ -866,6 +866,8 @@ pub struct Armature {
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
     #[serde(default)]
+    pub texture_variations: Vec<TextureVariation>,
+    #[serde(default)]
     pub textures: Vec<Texture>,
     #[serde(skip)]
     pub layers: Vec<Layer>,
@@ -1391,6 +1393,12 @@ pub struct Root {
     pub armature: Armature,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
+pub struct TextureVariation {
+    pub id: usize,
+    pub name: String,
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Texture {
     #[serde(default)]
@@ -1400,7 +1408,7 @@ pub struct Texture {
     #[serde(default)]
     pub name: String,
     #[serde(default)]
-    pub variation: usize,
+    pub tex_var_id: usize,
     #[serde(skip)]
     pub pixels: Vec<u8>,
 }
