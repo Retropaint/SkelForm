@@ -877,8 +877,6 @@ pub struct Armature {
     pub layers: Vec<Layer>,
 
     #[serde(skip)]
-    pub bind_groups: Vec<BindGroup>,
-    #[serde(skip)]
     pub tex_sheet_buf: Vec<u8>,
 }
 
@@ -1431,6 +1429,8 @@ pub struct Texture {
     pub name: String,
     #[serde(skip)]
     pub pixels: Vec<u8>,
+    #[serde(skip)]
+    pub bind_group: Option<BindGroup>,
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -1798,7 +1798,7 @@ impl Shared {
 
     pub fn remove_texture(&mut self, tex_idx: i32) {
         self.armature.textures.remove(tex_idx as usize);
-        self.armature.bind_groups.remove(tex_idx as usize);
+        //self.armature.bind_groups.remove(tex_idx as usize);
         let _ = self.ui.texture_images.remove(tex_idx as usize);
         for bone in &mut self.armature.bones {
             if bone.tex_idx == tex_idx {

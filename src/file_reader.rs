@@ -204,7 +204,6 @@ pub fn read_psd(
 
     // reset armature (but not all of it) to make way for the psd rig
     shared.armature.bones = vec![];
-    shared.armature.bind_groups = vec![];
     shared.armature.textures = vec![];
 
     // collect group ids, to be used later
@@ -385,16 +384,6 @@ pub fn add_texture(
     bind_group_layout: &BindGroupLayout,
     ctx: &egui::Context,
 ) {
-    armature
-        .bind_groups
-        .push(renderer::create_texture_bind_group(
-            pixels.clone(),
-            dimensions,
-            queue,
-            device,
-            bind_group_layout,
-        ));
-
     let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
         dimensions.x as u32,
         dimensions.y as u32,
@@ -404,7 +393,13 @@ pub fn add_texture(
 
     ui.add_texture_img(&ctx, img_buf, Vec2::new(300., 300.));
 
-    println!("{} {}", armature.texture_sets[0].id, ui.selected_tex_set_id);
+    let bind_group = renderer::create_texture_bind_group(
+        pixels.clone(),
+        dimensions,
+        queue,
+        device,
+        bind_group_layout,
+    );
 
     armature
         .texture_sets
@@ -417,6 +412,7 @@ pub fn add_texture(
             size: dimensions,
             pixels,
             name: tex_name.to_string(),
+            bind_group: Some(bind_group),
         });
 }
 
