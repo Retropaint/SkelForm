@@ -156,7 +156,12 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
             ui.label("Sets:");
             ui.horizontal(|ui| {
                 for set in &shared.armature.texture_sets {
-                    if ui.skf_button(&set.name.to_string()).clicked() {
+                    let mut col = shared.config.ui_colors.light_accent;
+                    if set.id == shared.ui.selected_tex_set_id {
+                        col += crate::Color::new(20, 20, 20, 0);
+                    }
+                    let button = ui.add(egui::Button::new(set.name.to_string()).fill(col));
+                    if button.clicked() {
                         shared.ui.selected_tex_set_id = set.id;
                     }
                 }
@@ -251,11 +256,23 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
 pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
     let mut idx: i32 = -1;
-    for i in 0..shared.armature.textures.len() {
+    macro_rules! set {
+        () => {
+            shared
+                .armature
+                .texture_sets
+                .iter()
+                .find(|set| set.id == shared.ui.selected_tex_set_id)
+                .unwrap()
+        };
+    }
+
+    for i in 0..set!().textures.len() {
         idx += 1;
+        let name = set!().textures[i].name.clone();
         let button = ui
             .dnd_drag_source(egui::Id::new(("tex", idx, 0)), idx, |ui| {
-                let but = egui::Button::new(shared.armature.textures[i].name.clone());
+                let but = egui::Button::new(name);
                 ui.add(but);
             })
             .response
