@@ -944,13 +944,21 @@ impl Armature {
         &mut self,
         bone_id: i32,
         new_tex_idx: usize,
+        tex_set_id: i32,
         selected_anim: usize,
         selected_frame: i32,
     ) {
         let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
 
         // use texture's name for bone, if the latter is unnamed
-        let name = self.textures[new_tex_idx].name.clone();
+        let name = self
+            .texture_sets
+            .iter()
+            .find(|set| set.id == tex_set_id)
+            .unwrap()
+            .textures[new_tex_idx]
+            .name
+            .clone();
         let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
         if bone_name == NEW_BONE_NAME || bone_name == "" {
             *bone_name = name;
@@ -958,6 +966,7 @@ impl Armature {
 
         if selected_anim == usize::MAX {
             self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
+            self.find_bone_mut(bone_id).unwrap().tex_set_id = tex_set_id;
 
             // Set bone's verts to match texture.
             // Original logic checks if verts were edited, but this is temporarily disabled

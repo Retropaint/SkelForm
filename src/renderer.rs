@@ -26,7 +26,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     for bone in &mut shared.armature.bones {
         if bone.tex_idx != -1 && bone.vertices.len() == 0 {
-            let tex_size = shared.armature.textures[bone.tex_idx as usize].size;
+            let tex_size = shared
+                .armature
+                .texture_sets
+                .iter()
+                .find(|set| set.id == bone.tex_set_id)
+                .unwrap()
+                .textures[bone.tex_idx as usize]
+                .size;
             (bone.vertices, bone.indices) = create_tex_rect(&tex_size);
         }
     }
@@ -84,7 +91,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 raw_to_world_vert,
                 *vert,
                 temp_bones[b],
-                shared.armature.textures[temp_bones[b].tex_idx as usize],
+                shared
+                    .armature
+                    .texture_sets
+                    .iter()
+                    .find(|set| set.id == temp_bones[b].tex_set_id)
+                    .unwrap()
+                    .textures[temp_bones[b].tex_idx as usize],
                 shared
             );
             new_vert.pos.x /= shared.window.x / shared.window.y;
