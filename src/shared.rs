@@ -832,6 +832,8 @@ pub struct Bone {
     #[serde(default = "default_neg_one")]
     pub parent_id: i32,
     #[serde(default = "default_neg_one")]
+    pub tex_set_id: i32,
+    #[serde(default = "default_neg_one")]
     pub tex_idx: i32,
 
     #[serde(default, skip_serializing_if = "are_verts_empty")]
@@ -866,7 +868,7 @@ pub struct Armature {
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
     #[serde(default)]
-    pub texture_variations: Vec<TextureVariation>,
+    pub texture_sets: Vec<TextureSet>,
     #[serde(default)]
     pub textures: Vec<Texture>,
     #[serde(skip)]
@@ -1013,6 +1015,7 @@ impl Armature {
             id: generate_id(ids),
             scale: Vec2 { x: 1., y: 1. },
             tex_idx: -1,
+            tex_set_id: -1,
             pivot: Vec2::new(0.5, 0.5),
             zindex: self.bones.len() as f32,
             ..Default::default()
@@ -1394,8 +1397,8 @@ pub struct Root {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
-pub struct TextureVariation {
-    pub id: usize,
+pub struct TextureSet {
+    pub id: i32,
     pub name: String,
 }
 
@@ -1408,7 +1411,7 @@ pub struct Texture {
     #[serde(default)]
     pub name: String,
     #[serde(default)]
-    pub tex_var_id: usize,
+    pub set_id: usize,
     #[serde(skip)]
     pub pixels: Vec<u8>,
 }

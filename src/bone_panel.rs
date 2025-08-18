@@ -65,34 +65,64 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         }
     });
 
-    ui.horizontal(|ui| {
-        ui.label("Texture:");
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let button = ui.skf_button("Select");
-            ui::draw_tutorial_rect(TutorialStep::GetImage, button.rect, shared, ui);
-            if button.clicked() {
-                if shared.armature.bind_groups.len() == 0 {
-                    #[cfg(not(target_arch = "wasm32"))]
-                    open_file_dialog(shared.temp_path.img.clone());
-                    #[cfg(target_arch = "wasm32")]
-                    toggleElement(true, "image-dialog".to_string());
-                } else {
-                    shared.ui.set_state(UiState::ImageModal, true);
-                }
-                shared
-                    .ui
-                    .start_next_tutorial_step(TutorialStep::EditBoneX, &shared.armature);
-            };
-            let mut tex_name = "None";
-            if shared.selected_bone().unwrap().tex_idx != -1 {
-                tex_name =
-                    &shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize].name
-            }
-            ui.label(tex_name);
-        })
-    });
+    let set_id = shared.selected_bone().unwrap().tex_set_id;
 
-    ui.add_space(3.5);
+    let set_name = if set_id == -1 {
+        "None".to_string()
+    } else {
+        shared
+            .armature
+            .texture_sets
+            .iter()
+            .find(|set| set.id == set_id)
+            .unwrap()
+            .name
+            .to_string()
+    };
+
+    let mut selected_set = -10;
+    ui.horizontal(|ui| {
+        ui.label("Tex. Set:");
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            egui::ComboBox::new("mod", "")
+                .selected_text(set_name.to_string())
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(&mut selected_set, -1, "None");
+                    let sets = shared.armature.texture_sets.clone();
+                    for set in &sets {
+                        ui.selectable_value(
+                            &mut shared.selected_bone_mut().unwrap().tex_set_id,
+                            set.id as i32,
+                            set.name.clone(),
+                        );
+                    }
+                    ui.selectable_value(&mut selected_set, -2, "[Setup]");
+                })
+                .response;
+        });
+    });
+    if selected_set == -2 {
+        shared.ui.set_state(UiState::ImageModal, true);
+    } else if selected_set != -10 {
+        shared.selected_bone_mut().unwrap().tex_set_id = selected_set;
+    }
+
+    if set_id != -1 {
+        ui.horizontal(|ui| {
+            ui.label("Tex. Index:");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let (edited, value, _) = ui.float_input(
+                    "tex_idx".to_string(),
+                    shared,
+                    shared.selected_bone().unwrap().tex_idx as f32,
+                    1.,
+                );
+                if edited {
+                    shared.selected_bone_mut().unwrap().tex_idx = value as i32;
+                }
+            });
+        });
+    }
 
     let mut bone = shared.selected_bone().unwrap().clone();
     if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
