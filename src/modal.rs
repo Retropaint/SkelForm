@@ -186,6 +186,9 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     }
                     let button = ui.add(egui::Button::new(set!().name.to_string()).fill(col));
                     if button.clicked() {
+                        if shared.ui.selected_tex_set_id == set!().id {
+                            shared.ui.rename_id = "tex_set ".to_string() + &set!().id.to_string()
+                        }
                         shared.ui.selected_tex_set_id = set!().id;
                     }
                 }
