@@ -362,7 +362,6 @@ pub fn import<R: Read + std::io::Seek>(
         }
         let mut img = image::load_from_memory(&bytes).unwrap();
 
-        shared.armature.bind_groups = vec![];
         shared.ui.texture_images = vec![];
 
         for set in &mut shared.armature.texture_sets {
@@ -377,16 +376,13 @@ pub fn import<R: Read + std::io::Seek>(
                     .into_rgba8()
                     .to_vec();
 
-                shared
-                    .armature
-                    .bind_groups
-                    .push(renderer::create_texture_bind_group(
-                        tex.pixels.to_vec(),
-                        tex.size,
-                        queue,
-                        device,
-                        bind_group_layout,
-                    ));
+                tex.bind_group = Some(renderer::create_texture_bind_group(
+                    tex.pixels.to_vec(),
+                    tex.size,
+                    queue,
+                    device,
+                    bind_group_layout,
+                ));
 
                 let pixels = img
                     .crop(
@@ -405,7 +401,7 @@ pub fn import<R: Read + std::io::Seek>(
             }
         }
     }
-    
+
     shared.ui.unselect_everything();
     shared.ui.set_tutorial_step(TutorialStep::None);
 

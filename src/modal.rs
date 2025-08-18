@@ -355,10 +355,6 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         shared.armature.textures.remove(dragged_payload);
         shared.armature.textures.insert(new_idx, tex);
 
-        let bg = shared.armature.bind_groups[dragged_payload].clone();
-        shared.armature.bind_groups.remove(dragged_payload);
-        shared.armature.bind_groups.insert(new_idx, bg);
-
         for b in 0..shared.armature.bones.len() {
             macro_rules! bone {
                 () => {
