@@ -186,46 +186,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                         ui.set_height(size.y - 10.);
 
                         if shared.ui.hovering_tex != -1 {
-                            let tex = &shared.armature.texture_sets
-                                [shared.ui.selected_tex_set_idx as usize]
-                                .textures[shared.ui.hovering_tex as usize];
-                            let max = ui.available_width();
-                            let mut size = tex.size;
-                            let mut mult = 1.;
-                            if size.x > max {
-                                mult = max / size.x;
-                            }
-                            size.x *= mult;
-                            size.y *= mult;
-
-                            mult = 1.;
-                            if size.y > max {
-                                mult = max / size.y
-                            }
-                            size.x *= mult;
-                            size.y *= mult;
-                            let left_top = egui::Pos2::new(
-                                ui.min_rect().center().x - size.x / 2.,
-                                ui.min_rect().center().y - size.y / 2. - 40.,
-                            );
-                            let rect = egui::Rect::from_min_size(left_top, size.into());
-                            egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
-
-                            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                                let mut name = egui::text::LayoutJob::default();
-                                job_text("Name: ", Some(Color32::WHITE), &mut name);
-                                job_text(&tex.name, None, &mut name);
-                                let mut size = egui::text::LayoutJob::default();
-                                job_text("Size: ", Some(Color32::WHITE), &mut size);
-                                job_text(
-                                    &(tex.size.x.to_string() + " x " + &tex.size.y.to_string()),
-                                    None,
-                                    &mut size,
-                                );
-                                ui.label(name);
-                                ui.label(size);
-                            });
-
+                            draw_tex_preview(shared, ui);
                             return;
                         }
                         for s in 0..shared.armature.texture_sets.len() {
@@ -298,6 +259,47 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 });
             });
         });
+}
+
+pub fn draw_tex_preview(shared: &Shared, ui: &mut egui::Ui) {
+    let tex = &shared.armature.texture_sets[shared.ui.selected_tex_set_idx as usize].textures
+        [shared.ui.hovering_tex as usize];
+    let max = ui.available_width();
+    let mut size = tex.size;
+    let mut mult = 1.;
+    if size.x > max {
+        mult = max / size.x;
+    }
+    size.x *= mult;
+    size.y *= mult;
+
+    mult = 1.;
+    if size.y > max {
+        mult = max / size.y
+    }
+    size.x *= mult;
+    size.y *= mult;
+    let left_top = egui::Pos2::new(
+        ui.min_rect().center().x - size.x / 2.,
+        ui.min_rect().center().y - size.y / 2. - 40.,
+    );
+    let rect = egui::Rect::from_min_size(left_top, size.into());
+    egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
+
+    ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+        let mut name = egui::text::LayoutJob::default();
+        job_text("Name: ", Some(Color32::WHITE), &mut name);
+        job_text(&tex.name, None, &mut name);
+        let mut size = egui::text::LayoutJob::default();
+        job_text("Size: ", Some(Color32::WHITE), &mut size);
+        job_text(
+            &(tex.size.x.to_string() + " x " + &tex.size.y.to_string()),
+            None,
+            &mut size,
+        );
+        ui.label(name);
+        ui.label(size);
+    });
 }
 
 pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
@@ -433,9 +435,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             }
 
             let old_name = &old_name_order[bone!().tex_idx as usize];
-            bone!().tex_idx = shared
-                .armature
-                .texture_sets[selected_idx]
+            bone!().tex_idx = shared.armature.texture_sets[selected_idx]
                 .textures
                 .iter()
                 .position(|tex| tex.name == *old_name)
