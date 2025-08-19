@@ -113,11 +113,15 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         shared.ui.set_state(UiState::ImageModal, true);
     } else if selected_set != shared.selected_bone().unwrap().tex_set_id {
         let bone = shared.selected_bone().unwrap();
+        let mut anim_id = shared.ui.anim.selected;
+        if !shared.ui.is_animating() {
+            anim_id = usize::MAX;
+        }
         shared.armature.set_bone_tex(
             bone.id,
             bone.tex_idx as usize,
             selected_set,
-            shared.ui.anim.selected,
+            anim_id,
             shared.ui.anim.selected_frame,
         );
     }
@@ -133,7 +137,18 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                     1.,
                 );
                 if edited {
-                    shared.selected_bone_mut().unwrap().tex_idx = value as i32;
+                    let bone = shared.selected_bone().unwrap();
+                    let mut anim_id = shared.ui.anim.selected;
+                    if !shared.ui.is_animating() {
+                        anim_id = usize::MAX;
+                    }
+                    shared.armature.set_bone_tex(
+                        bone.id,
+                        value as usize,
+                        bone.tex_set_id,
+                        anim_id,
+                        shared.ui.anim.selected_frame,
+                    );
                 }
             });
         });
