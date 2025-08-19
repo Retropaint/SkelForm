@@ -386,8 +386,6 @@ pub fn add_texture(
     )
     .unwrap();
 
-    ui.add_texture_img(&ctx, img_buf, Vec2::new(300., 300.));
-
     let bind_group = renderer::create_texture_bind_group(
         pixels.clone(),
         dimensions,
@@ -404,6 +402,7 @@ pub fn add_texture(
             pixels,
             name: tex_name.to_string(),
             bind_group: Some(bind_group),
+            ui_img: Some(utils::add_texture_img(&ctx, img_buf, Vec2::new(300., 300.))),
         });
 }
 

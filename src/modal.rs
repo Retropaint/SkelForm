@@ -162,6 +162,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 ui.vertical(|ui| {
                     ui.set_height(height);
                     ui.set_width((modal_width / 2.) - 10.);
+
                     ui.horizontal(|ui| {
                         ui.label("Sets");
                         if !ui.skf_button("New").clicked() {
@@ -174,10 +175,36 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                         shared.ui.rename_id = "tex_set ".to_string()
                             + &(shared.armature.texture_sets.len() - 1).to_string();
                     });
+
                     let size = ui.available_size();
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         ui.set_width(size.x);
                         ui.set_height(size.y - 10.);
+
+                        if shared.ui.hovering_tex != -1 {
+                            let tex = &shared.armature.texture_sets
+                                [shared.ui.selected_tex_set_idx as usize]
+                                .textures[shared.ui.hovering_tex as usize];
+                            let max = ui.available_width();
+                            let mut size = tex.size;
+                            let mut mult = 1.;
+                            if size.x > max {
+                                mult = max / size.x;
+                            }
+                            size.x *= mult;
+                            size.y *= mult;
+
+                            mult = 1.;
+                            if size.y > max {
+                                mult = max / size.y
+                            }
+                            size.x *= mult;
+                            size.y *= mult;
+                            let rect =
+                                egui::Rect::from_min_size(ui.min_rect().left_top(), size.into());
+                            egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
+                            return;
+                        }
                         for s in 0..shared.armature.texture_sets.len() {
                             macro_rules! set {
                                 () => {
@@ -258,6 +285,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         };
     }
 
+    shared.ui.hovering_tex = -1;
     for i in 0..set!().textures.len() {
         idx += 1;
         let name = set!().textures[i].name.clone();
@@ -269,6 +297,10 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             .response
             .interact(egui::Sense::click())
             .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+        if button.hovered() {
+            shared.ui.hovering_tex = i as i32;
+        }
 
         if button.clicked() {
             if shared.ui.has_state(UiState::RemovingTexture) {

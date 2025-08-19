@@ -58,6 +58,7 @@ fn init_shared(shared: &mut Shared) {
     shared.dragging_vert = usize::MAX;
     shared.ui.scale = 1.;
     shared.ui.context_menu.close();
+    shared.ui.hovering_tex = -1;
 
     #[cfg(feature = "debug")]
     {
