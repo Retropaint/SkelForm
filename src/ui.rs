@@ -151,9 +151,6 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.ui.has_state(UiState::FirstTimeModal) {
         modal::first_time_modal(shared, context);
     }
-    if shared.ui.has_state(UiState::LayerModal) {
-        modal::layer_modal(shared, context);
-    }
     style_once!(top_panel(context, shared));
 
     camera_bar(context, shared);

@@ -38,7 +38,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         bones = shared.armature.animate(
             shared.ui.anim.selected,
             shared.ui.anim.selected_frame,
-            shared.ui.selected_layer as usize,
         );
     }
 
@@ -80,7 +79,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
         let set = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize];
-        if shared.is_bone_hidden(temp_bones[b].id)
+        if shared.armature.is_bone_hidden(temp_bones[b].id)
             || temp_bones[b].tex_idx > set.textures.len() as i32 - 1
         {
             continue;

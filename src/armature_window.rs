@@ -62,54 +62,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 .start_next_tutorial_step(TutorialStep::GetImage, &shared.armature);
                         }
                     }
-
-                    return;
-
-                    if ui.button("Layers").clicked() {
-                        shared.ui.set_state(UiState::LayerModal, true);
-                    }
-
-                    let name = if shared.ui.selected_layer != -1 {
-                        shared.armature.layers[shared.ui.selected_layer as usize]
-                            .name
-                            .to_string()
-                    } else {
-                        "Default".to_string()
-                    };
-
-                    egui::ComboBox::new("layer_dropdown".to_string(), "")
-                        .selected_text(name.to_string())
-                        .show_ui(ui, |ui| {
-                            ui.set_height(100.);
-                            ui.selectable_value(&mut shared.ui.selected_layer, -1, "Default")
-                                .clicked();
-                            for i in 0..shared.armature.layers.len() {
-                                ui.selectable_value(
-                                    &mut shared.ui.selected_layer,
-                                    i as i32,
-                                    shared.armature.layers[i].name.clone(),
-                                );
-                            }
-                            if shared.ui.selected_layer != -1 {
-                                ui.selectable_value(
-                                    &mut shared.ui.selected_layer,
-                                    -3,
-                                    "[Rename Layer]",
-                                )
-                                .clicked();
-                            }
-                            ui.selectable_value(&mut shared.ui.selected_layer, -2, "[New Layer]")
-                                .clicked();
-                        })
-                        .response;
-
-                    if shared.ui.selected_layer == -2 {
-                        shared.armature.layers.push(Layer {
-                            name: "New Layer".to_string(),
-                            ..Default::default()
-                        });
-                        shared.ui.selected_layer = (shared.armature.layers.len() - 1) as i32;
-                    }
                 });
 
                 shared.ui.edit_bar_pos.x = ui.min_rect().right();
@@ -159,30 +111,15 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
         ui.horizontal(|ui| {
             let id = shared.armature.bones[b].id;
-            let hidden_icon = if shared.is_bone_hidden(id) {
+            let hidden_icon = if shared.armature.is_bone_hidden(id) {
                 "---"
             } else {
                 "👁"
             };
             if bone_label(hidden_icon, ui, shared, b).clicked() {
                 // switch to a new layer if on default
-                if shared.ui.selected_layer == -1 {
-                    shared.armature.layers.push(Layer {
-                        name: "New Layer".to_string(),
-                        ..Default::default()
-                    });
-                    shared.ui.selected_layer = (shared.armature.layers.len() - 1) as i32;
-                }
-
-                if shared.is_bone_hidden(id) {
-                    shared.armature.layers[shared.ui.selected_layer as usize]
-                        .bone_ids
-                        .retain(|l_id| *l_id != id);
-                } else {
-                    shared.armature.layers[shared.ui.selected_layer as usize]
-                        .bone_ids
-                        .push(id);
-                }
+                shared.selected_bone_mut().unwrap().hidden =
+                    !shared.selected_bone_mut().unwrap().hidden;
             }
             ui.add_space(17.);
 
@@ -215,7 +152,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             let mut selected_col = shared.config.ui_colors.light_accent;
             let mut cursor = egui::CursorIcon::PointingHand;
 
-            if shared.is_bone_hidden(b as i32) {
+            if shared.armature.is_bone_hidden(b as i32) {
                 selected_col = shared.config.ui_colors.dark_accent;
             }
 
