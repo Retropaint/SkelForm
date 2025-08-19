@@ -153,98 +153,89 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
             ui.add_space(5.);
 
-            ui.label("Sets:");
-            ui.horizontal(|ui| {
-                for s in 0..shared.armature.texture_sets.len() {
-                    macro_rules! set {
-                        () => {
-                            shared.armature.texture_sets[s]
-                        };
-                    }
-
-                    if shared.ui.rename_id == "tex_set ".to_string() + &set!().id.to_string() {
-                        let (edited, value, _) = ui.text_input(
-                            shared.ui.rename_id.clone(),
-                            shared,
-                            set!().name.clone(),
-                            Some(crate::ui::TextInputOptions {
-                                size: Vec2::new(60., 20.),
-                                focus: true,
-                                default: "New Set".to_string(),
-                                ..Default::default()
-                            }),
-                        );
-                        if edited {
-                            set!().name = value;
-                        }
-                        continue;
-                    }
-
-                    let mut col = shared.config.ui_colors.light_accent;
-                    if set!().id == shared.ui.selected_tex_set_id {
-                        col += crate::Color::new(20, 20, 20, 0);
-                    }
-                    let button = ui.add(egui::Button::new(set!().name.to_string()).fill(col));
-                    if button.clicked() {
-                        if shared.ui.selected_tex_set_id == set!().id {
-                            shared.ui.rename_id = "tex_set ".to_string() + &set!().id.to_string()
-                        }
-                        shared.ui.selected_tex_set_id = set!().id;
-                    }
-                }
-
-                if ui.skf_button("+").clicked() {
-                    let ids: Vec<i32> = shared
-                        .armature
-                        .texture_sets
-                        .iter()
-                        .map(|set| set.id)
-                        .collect();
-                    let id = generate_id(ids);
-                    shared.armature.texture_sets.push(crate::TextureSet {
-                        id,
-                        name: "New Set".to_string(),
-                        textures: vec![],
-                    });
-                    shared.ui.rename_id = "tex_set ".to_string() + &id.to_string();
-                }
-            });
-
-            ui.add_space(10.);
-
-            if shared.ui.selected_tex_set_id < 0 {
-                return;
-            }
-
-            ui.label("Textures:");
-            ui.horizontal(|ui| {
-                if selection_button("Import", shared.ui.has_state(UiState::RemovingTexture), ui)
-                    .clicked()
-                {
-                    #[cfg(not(target_arch = "wasm32"))]
-                    bone_panel::open_file_dialog(shared.temp_path.img.clone());
-
-                    #[cfg(target_arch = "wasm32")]
-                    crate::toggleElement(true, "image-dialog".to_string());
-                }
-
-                let label = if shared.ui.has_state(UiState::RemovingTexture) {
-                    "Pick"
-                } else {
-                    "Remove"
-                };
-                if ui.skf_button(label).clicked() {
-                    shared.ui.set_state(
-                        UiState::RemovingTexture,
-                        !shared.ui.has_state(UiState::RemovingTexture),
-                    );
-                }
-            });
-
             let tex_idx = -1;
             ui.horizontal(|ui| {
                 let frame = egui::Frame::default().inner_margin(5.);
                 ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("Sets");
+                        if ui.skf_button("New").clicked() {
+                            let ids: Vec<i32> = shared
+                                .armature
+                                .texture_sets
+                                .iter()
+                                .map(|set| set.id)
+                                .collect();
+                            let id = generate_id(ids);
+                            shared.armature.texture_sets.push(crate::TextureSet {
+                                id,
+                                name: "New Set".to_string(),
+                                textures: vec![],
+                            });
+                            shared.ui.rename_id = "tex_set ".to_string() + &id.to_string();
+                        }
+                    });
+                    ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                        for s in 0..shared.armature.texture_sets.len() {
+                            macro_rules! set {
+                                () => {
+                                    shared.armature.texture_sets[s]
+                                };
+                            }
+
+                            if shared.ui.rename_id
+                                == "tex_set ".to_string() + &set!().id.to_string()
+                            {
+                                let (edited, value, _) = ui.text_input(
+                                    shared.ui.rename_id.clone(),
+                                    shared,
+                                    set!().name.clone(),
+                                    Some(crate::ui::TextInputOptions {
+                                        size: Vec2::new(60., 20.),
+                                        focus: true,
+                                        default: "New Set".to_string(),
+                                        ..Default::default()
+                                    }),
+                                );
+                                if edited {
+                                    set!().name = value;
+                                }
+                                continue;
+                            }
+
+                            let mut col = shared.config.ui_colors.light_accent;
+                            if set!().id == shared.ui.selected_tex_set_id {
+                                col += crate::Color::new(20, 20, 20, 0);
+                            }
+                            let button =
+                                ui.add(egui::Button::new(set!().name.to_string()).fill(col));
+                            if button.clicked() {
+                                if shared.ui.selected_tex_set_id == set!().id {
+                                    shared.ui.rename_id =
+                                        "tex_set ".to_string() + &set!().id.to_string()
+                                }
+                                shared.ui.selected_tex_set_id = set!().id;
+                            }
+                        }
+                    });
+                });
+
+                if shared.ui.selected_tex_set_id == -1 {
+                    return;
+                }
+
+                let frame = egui::Frame::default().inner_margin(5.);
+                ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("Textures");
+                        if ui.skf_button("Import").clicked() {
+                            #[cfg(not(target_arch = "wasm32"))]
+                            bone_panel::open_file_dialog(shared.temp_path.img.clone());
+
+                            #[cfg(target_arch = "wasm32")]
+                            crate::toggleElement(true, "image-dialog".to_string());
+                        }
+                    });
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         draw_tex_buttons(shared, ui);
                     });
