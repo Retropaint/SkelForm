@@ -25,7 +25,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     loaded();
 
     for bone in &mut shared.armature.bones {
-        if bone.tex_idx != -1 && bone.vertices.len() == 0 {
+        if bone.tex_set_idx != -1 && bone.vertices.len() == 0 {
             let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
                 [bone.tex_idx as usize]
                 .size;
@@ -35,10 +35,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut bones = shared.armature.bones.clone();
     if shared.ui.is_animating() {
-        bones = shared.armature.animate(
-            shared.ui.anim.selected,
-            shared.ui.anim.selected_frame,
-        );
+        bones = shared
+            .armature
+            .animate(shared.ui.anim.selected, shared.ui.anim.selected_frame);
     }
 
     // For rendering purposes, bones need to have many of their attributes manipulated.

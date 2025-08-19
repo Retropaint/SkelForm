@@ -971,6 +971,10 @@ impl Armature {
             *bone_name = name;
         }
 
+        if self.find_bone(bone_id).unwrap().tex_idx == -1 {
+            self.find_bone_mut(bone_id).unwrap().tex_idx = 0;
+        }
+
         (
             self.find_bone_mut(bone_id).unwrap().vertices,
             self.find_bone_mut(bone_id).unwrap().indices,
@@ -1000,7 +1004,6 @@ impl Armature {
             parent_id,
             id: generate_id(ids),
             scale: Vec2 { x: 1., y: 1. },
-            tex_idx: -1,
             tex_set_idx: -1,
             pivot: Vec2::new(0.5, 0.5),
             zindex: self.bones.len() as f32,
