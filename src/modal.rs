@@ -405,11 +405,22 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         }
 
         let new_idx = idx as usize + is_below as usize;
+        let selected_idx = shared.ui.selected_tex_set_idx as usize;
+        let tex = shared.armature.texture_sets[selected_idx].textures[dragged_payload].clone();
+        shared.armature.texture_sets[selected_idx]
+            .textures
+            .remove(dragged_payload);
+        shared.armature.texture_sets[selected_idx]
+            .textures
+            .insert(new_idx, tex);
 
-        let tex = shared.armature.textures[dragged_payload].clone();
-        shared.armature.textures.remove(dragged_payload);
-        shared.armature.textures.insert(new_idx, tex);
+        // disabled:
+        // bones would adjust their tex idx after dragging,
+        // but auto-adjusting would be confusing when other tex sets
+        // are involved
+        return;
 
+        #[allow(unreachable_code)]
         for b in 0..shared.armature.bones.len() {
             macro_rules! bone {
                 () => {
