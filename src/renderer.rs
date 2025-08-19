@@ -207,20 +207,20 @@ fn draw_hover_triangle(
     device: &Device,
     world_verts: &Vec<Vertex>,
 ) {
-    let tex = &shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize];
+    macro_rules! bone {
+        () => {
+            shared.selected_bone().unwrap()
+        };
+    }
+    let tex = &shared.armature.texture_sets[bone!().tex_set_idx as usize].textures
+        [bone!().tex_idx as usize];
 
     // create vert on cursor
     let mut mouse_world_vert = Vertex {
         pos: utils::screen_to_world_space(shared.input.mouse, shared.window),
         ..Default::default()
     };
-    let mut mouse_vert = con_vert!(
-        world_to_raw_vert,
-        mouse_world_vert,
-        shared.selected_bone().unwrap(),
-        tex,
-        shared
-    );
+    let mut mouse_vert = con_vert!(world_to_raw_vert, mouse_world_vert, bone!(), tex, shared);
     mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
     // get the 2 closest verts to the mouse
@@ -256,8 +256,8 @@ fn draw_hover_triangle(
 
     shared.undo_actions.push(Action {
         action: ActionEnum::Bone,
-        bones: vec![shared.selected_bone().unwrap().clone()],
-        id: shared.selected_bone().unwrap().id,
+        bones: vec![bone!().clone()],
+        id: bone!().id,
         ..Default::default()
     });
 
@@ -269,18 +269,11 @@ fn draw_hover_triangle(
         .vertices
         .push(mouse_vert);
 
-    shared.selected_bone_mut().unwrap().vertices =
-        sort_vertices(shared.selected_bone().unwrap().vertices.clone());
+    shared.selected_bone_mut().unwrap().vertices = sort_vertices(bone!().vertices.clone());
 
     // get the new vert's index, then use it as the base
     let mut vert_idx = 0;
-    for (i, v) in shared
-        .selected_bone_mut()
-        .unwrap()
-        .vertices
-        .iter()
-        .enumerate()
-    {
+    for (i, v) in bone!().vertices.iter().enumerate() {
         if v.pos == mouse_vert.pos {
             vert_idx = i;
             break;
@@ -500,9 +493,9 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
     // when moving a vertex, it must be interpreted in world coords first to align the with the mouse
     let mut world_vert = con_vert!(
         raw_to_world_vert,
-        shared.selected_bone().unwrap().vertices[vert_idx],
+        bone.vertices[vert_idx],
         bone,
-        shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize],
+        shared.armature.texture_sets[bone.tex_set_idx as usize].textures[bone.tex_idx as usize],
         shared
     );
 
@@ -514,7 +507,7 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
         world_to_raw_vert,
         world_vert,
         bone,
-        shared.armature.textures[shared.selected_bone().unwrap().tex_idx as usize],
+        shared.armature.texture_sets[bone.tex_set_idx as usize].textures[bone.tex_idx as usize],
         shared
     )
     .pos;
@@ -524,11 +517,11 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
         return;
     }
 
-    let og_vert_pos = shared.selected_bone().unwrap().vertices[vert_idx].pos;
+    let og_vert_pos = bone.vertices[vert_idx].pos;
     let final_pos = vert_pos - og_vert_pos;
 
     shared.armature.edit_vert(
-        shared.selected_bone().unwrap().id,
+        bone.id,
         shared.dragging_vert as i32,
         &(final_pos),
         shared.ui.anim.selected,
