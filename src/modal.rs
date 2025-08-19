@@ -183,9 +183,6 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                         });
                         shared.ui.rename_id = "tex_set ".to_string() + &id.to_string();
                     });
-                    if shared.armature.texture_sets.len() == 0 {
-                        return;
-                    }
                     let size = ui.available_size();
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         ui.set_width(size.x);
@@ -252,18 +249,6 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                         #[cfg(target_arch = "wasm32")]
                         crate::toggleElement(true, "image-dialog".to_string());
                     });
-                    if shared
-                        .armature
-                        .texture_sets
-                        .iter()
-                        .find(|set| set.id == shared.ui.selected_tex_set_id)
-                        .unwrap()
-                        .textures
-                        .len()
-                        == 0
-                    {
-                        return;
-                    }
                     let size = ui.available_size();
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         ui.set_width(size.x);
