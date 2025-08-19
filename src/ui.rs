@@ -774,20 +774,20 @@ pub fn default_styling(context: &Context, shared: &Shared) {
     visuals.window_corner_radius = egui::CornerRadius::ZERO;
 
     visuals.widgets.inactive.corner_radius = egui::CornerRadius::ZERO;
-    visuals.widgets.inactive.bg_fill = colors.dark_accent.into();
     visuals.widgets.inactive.weak_bg_fill = colors.light_accent.into();
+    visuals.widgets.inactive.bg_fill = colors.dark_accent.into();
 
     visuals.widgets.hovered.corner_radius = egui::CornerRadius::ZERO;
-    visuals.widgets.hovered.bg_fill = colors.dark_accent.into();
     visuals.widgets.hovered.weak_bg_fill = colors.light_accent.into();
+    visuals.widgets.hovered.bg_fill = colors.dark_accent.into();
 
     visuals.widgets.active.corner_radius = egui::CornerRadius::ZERO;
-    visuals.widgets.active.bg_fill = colors.dark_accent.into();
     visuals.widgets.active.weak_bg_fill = colors.light_accent.into();
+    visuals.widgets.active.bg_fill = colors.dark_accent.into();
 
     visuals.widgets.open.corner_radius = egui::CornerRadius::ZERO;
-    visuals.widgets.open.bg_fill = colors.dark_accent.into();
     visuals.widgets.open.weak_bg_fill = colors.dark_accent.into();
+    visuals.widgets.open.bg_fill = colors.dark_accent.into();
     visuals.widgets.open.bg_stroke = egui::Stroke::new(1., colors.dark_accent);
     visuals.widgets.open.fg_stroke = egui::Stroke::new(1., colors.dark_accent);
 
