@@ -1206,13 +1206,15 @@ impl Armature {
             };
 
             // restructure bone's verts to match texture
-            let set = &self.texture_sets[self.find_bone(b.id).unwrap().tex_set_idx as usize];
-            let set_tex_limit = self.texture_sets[b.tex_set_idx as usize].textures.len() - 1;
-            if b.tex_idx != -1 && b.tex_set_idx < set_tex_limit as i32 {
-                (
-                    self.find_bone_mut(b.id).unwrap().vertices,
-                    self.find_bone_mut(b.id).unwrap().indices,
-                ) = renderer::create_tex_rect(&set.textures[b.tex_idx as usize].size);
+            if b.tex_set_idx != -1 {
+                let set = &self.texture_sets[self.find_bone(b.id).unwrap().tex_set_idx as usize];
+                let set_tex_limit = self.texture_sets[b.tex_set_idx as usize].textures.len() - 1;
+                if b.tex_idx != -1 && b.tex_set_idx < set_tex_limit as i32 {
+                    (
+                        self.find_bone_mut(b.id).unwrap().vertices,
+                        self.find_bone_mut(b.id).unwrap().indices,
+                    ) = renderer::create_tex_rect(&set.textures[b.tex_idx as usize].size);
+                }
             }
 
             for v in 0..b.vertices.len() {
