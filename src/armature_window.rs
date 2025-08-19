@@ -162,7 +162,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             let id = Id::new(("bone", idx, 0));
             let button = ui
                 .dnd_drag_source(id, idx, |ui| {
-                    let pic = if shared.armature.bones[b].tex_idx != -1 {
+                    let pic = if shared.armature.bones[b].tex_set_idx != -1 {
                         "🖻  "
                     } else {
                         ""
