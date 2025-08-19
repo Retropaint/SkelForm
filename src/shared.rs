@@ -856,8 +856,6 @@ pub struct Armature {
     pub animations: Vec<Animation>,
     #[serde(default)]
     pub texture_sets: Vec<TextureSet>,
-    #[serde(default)]
-    pub textures: Vec<Texture>,
 
     #[serde(skip)]
     pub tex_sheet_buf: Vec<u8>,
@@ -1762,8 +1760,10 @@ impl Shared {
         }
     }
 
-    pub fn remove_texture(&mut self, tex_idx: i32) {
-        self.armature.textures.remove(tex_idx as usize);
+    pub fn remove_texture(&mut self, set_idx: i32, tex_idx: i32) {
+        self.armature.texture_sets[set_idx as usize]
+            .textures
+            .remove(tex_idx as usize);
         //self.armature.bind_groups.remove(tex_idx as usize);
         for bone in &mut self.armature.bones {
             if bone.tex_idx == tex_idx {

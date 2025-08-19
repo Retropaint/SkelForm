@@ -119,9 +119,11 @@ pub fn read_image_loaders(
     shared.ui.set_state(UiState::ImageModal, false);
 
     // check if this texture already exists
-    for tex in &shared.armature.textures {
-        if pixels == tex.pixels {
-            return;
+    for set in &shared.armature.texture_sets {
+        for tex in &set.textures {
+            if pixels == tex.pixels {
+                return;
+            }
         }
     }
 
@@ -201,7 +203,7 @@ pub fn read_psd(
 
     // reset armature (but not all of it) to make way for the psd rig
     shared.armature.bones = vec![];
-    shared.armature.textures = vec![];
+    shared.armature.texture_sets = vec![];
 
     // collect group ids, to be used later
     let mut group_ids: Vec<u32> = vec![];

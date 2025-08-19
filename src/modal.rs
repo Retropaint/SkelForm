@@ -327,7 +327,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
 
         if button.clicked() {
             if shared.ui.has_state(UiState::RemovingTexture) {
-                shared.remove_texture(i as i32);
+                shared.remove_texture(shared.ui.selected_tex_set_idx, i as i32);
                 shared.ui.set_state(UiState::RemovingTexture, false);
                 // stop the loop to prevent index errors
                 break;
@@ -398,14 +398,14 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             continue;
         }
         let dragged_payload = *dp.unwrap() as usize;
+        let selected_idx = shared.ui.selected_tex_set_idx as usize;
 
         let mut old_name_order: Vec<String> = vec![];
-        for tex in &shared.armature.textures {
+        for tex in &shared.armature.texture_sets[selected_idx].textures {
             old_name_order.push(tex.name.clone());
         }
 
         let new_idx = idx as usize + is_below as usize;
-        let selected_idx = shared.ui.selected_tex_set_idx as usize;
         let tex = shared.armature.texture_sets[selected_idx].textures[dragged_payload].clone();
         shared.armature.texture_sets[selected_idx]
             .textures
@@ -435,6 +435,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             let old_name = &old_name_order[bone!().tex_idx as usize];
             bone!().tex_idx = shared
                 .armature
+                .texture_sets[selected_idx]
                 .textures
                 .iter()
                 .position(|tex| tex.name == *old_name)
