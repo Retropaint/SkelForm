@@ -91,8 +91,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             .find(|set| set.id == temp_bones[b].tex_set_id)
             .unwrap();
         if shared.is_bone_hidden(temp_bones[b].id)
-            || temp_bones[b].tex_set_id == -1
-                && temp_bones[b].tex_idx > set.textures.len() as i32 - 1
+            || temp_bones[b].tex_idx > set.textures.len() as i32 - 1
         {
             continue;
         }
