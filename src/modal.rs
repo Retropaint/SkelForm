@@ -159,6 +159,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 let frame = egui::Frame::default().inner_margin(5.);
                 let modal_width = ui.max_rect().width();
                 let height = ui.available_height();
+                let mut hovered_set: i32 = -1;
                 ui.vertical(|ui| {
                     ui.set_height(height);
                     ui.set_width((modal_width / 2.) - 10.);
@@ -220,8 +221,17 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                             if s as i32 == shared.ui.selected_tex_set_idx {
                                 col += crate::Color::new(20, 20, 20, 0);
                             }
-                            let button =
-                                ui.add(egui::Button::new(set!().name.to_string()).fill(col));
+                            let cursor_icon = if shared.ui.selected_tex_set_idx != s as i32 {
+                                egui::CursorIcon::PointingHand
+                            } else {
+                                egui::CursorIcon::Default
+                            };
+                            let button = ui
+                                .add(egui::Button::new(set!().name.to_string()).fill(col))
+                                .on_hover_cursor(cursor_icon);
+                            if button.hovered() {
+                                hovered_set = s as i32;
+                            }
                             if button.clicked() {
                                 if shared.ui.selected_tex_set_idx == s as i32 {
                                     shared.ui.rename_id = "tex_set ".to_string() + &s.to_string()
@@ -232,7 +242,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     });
                 });
 
-                if shared.ui.selected_tex_set_idx == -1 {
+                if shared.ui.selected_tex_set_idx == -1 && hovered_set == -1 {
                     return;
                 }
 
@@ -241,6 +251,10 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     ui.set_width((modal_width / 2.) - 20.);
                     ui.set_height(height);
                     ui.horizontal(|ui| {
+                        if hovered_set != -1 {
+                            ui.label("Set Preview");
+                            return;
+                        }
                         ui.label("Textures");
                         if !ui.skf_button("Import").clicked() {
                             return;
@@ -254,6 +268,31 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         ui.set_width(size.x);
                         ui.set_height(size.y - 10.);
+                        if hovered_set != -1 {
+                            let mut offset = Vec2::new(0., 0.);
+                            let mut row_height = 0.;
+                            for tex in &shared.armature.texture_sets[hovered_set as usize].textures
+                            {
+                                let size = resize_tex_img(tex.size, 50);
+
+                                if offset.x + size.x > ui.available_width() {
+                                    offset.x = 0.;
+                                    offset.y += row_height;
+                                    row_height = 0.;
+                                }
+
+                                if size.y > row_height {
+                                    row_height = size.y;
+                                }
+                                let rect = egui::Rect::from_min_size(
+                                    ui.min_rect().left_top() + offset.into(),
+                                    size.into(),
+                                );
+                                egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
+                                offset.x += size.x;
+                            }
+                            return;
+                        }
                         draw_tex_buttons(shared, ui);
                     });
                 });
@@ -264,21 +303,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 pub fn draw_tex_preview(shared: &Shared, ui: &mut egui::Ui) {
     let tex = &shared.armature.texture_sets[shared.ui.selected_tex_set_idx as usize].textures
         [shared.ui.hovering_tex as usize];
-    let max = ui.available_width();
-    let mut size = tex.size;
-    let mut mult = 1.;
-    if size.x > max {
-        mult = max / size.x;
-    }
-    size.x *= mult;
-    size.y *= mult;
-
-    mult = 1.;
-    if size.y > max {
-        mult = max / size.y
-    }
-    size.x *= mult;
-    size.y *= mult;
+    let size = resize_tex_img(tex.size, ui.available_width() as usize);
     let left_top = egui::Pos2::new(
         ui.min_rect().center().x - size.x / 2.,
         ui.min_rect().center().y - size.y / 2. - 40.,
@@ -300,6 +325,23 @@ pub fn draw_tex_preview(shared: &Shared, ui: &mut egui::Ui) {
         ui.label(name);
         ui.label(size);
     });
+}
+
+fn resize_tex_img(mut size: Vec2, max: usize) -> Vec2 {
+    let mut mult = 1.;
+    if size.x > max as f32 {
+        mult = max as f32 / size.x;
+    }
+    size.x *= mult;
+    size.y *= mult;
+
+    mult = 1.;
+    if size.y > max as f32 {
+        mult = max as f32 / size.y
+    }
+    size.x *= mult;
+    size.y *= mult;
+    size
 }
 
 pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
