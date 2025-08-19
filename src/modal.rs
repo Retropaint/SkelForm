@@ -165,7 +165,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
                     ui.horizontal(|ui| {
                         if shared.ui.hovering_tex != -1 {
-                            ui.label("");
+                            ui.label("Texture Preview");
                             return;
                         }
                         ui.label("Sets");
