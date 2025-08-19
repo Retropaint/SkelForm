@@ -385,7 +385,6 @@ pub enum UiState {
     PolarModal,
     FirstTimeModal,
     SettingsModal,
-    LayerModal,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -485,8 +484,6 @@ pub struct Ui {
     pub settings_state: SettingsState,
 
     pub changing_key: String,
-
-    pub selected_layer: i32,
 
     pub selected_tex_set_idx: i32,
 }
@@ -867,6 +864,9 @@ pub struct Bone {
     #[serde(default)]
     pub zindex: f32,
 
+    #[serde(default)]
+    pub hidden: bool,
+
     #[serde(skip)]
     pub folded: bool,
 }
@@ -881,23 +881,9 @@ pub struct Armature {
     pub texture_sets: Vec<TextureSet>,
     #[serde(default)]
     pub textures: Vec<Texture>,
-    #[serde(skip)]
-    pub layers: Vec<Layer>,
 
     #[serde(skip)]
     pub tex_sheet_buf: Vec<u8>,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
-pub struct Layer {
-    #[serde(default)]
-    pub id: i32,
-    #[serde(default)]
-    pub name: String,
-    #[serde(default)]
-    pub bone_ids: Vec<i32>,
-    #[serde(default)]
-    pub group_id: i32,
 }
 
 impl Armature {
@@ -1171,7 +1157,6 @@ impl Armature {
         &mut self,
         anim_idx: usize,
         anim_frame: i32,
-        selected_layer: usize,
     ) -> Vec<Bone> {
         let mut bones = self.bones.clone();
 
@@ -1182,7 +1167,7 @@ impl Armature {
         }
 
         for b in &mut bones {
-            if self.is_bone_hidden(b.id, selected_layer) {
+            if self.is_bone_hidden(b.id) {
                 continue;
             }
 
@@ -1347,28 +1332,6 @@ impl Armature {
         parents
     }
 
-    pub fn is_bone_hidden(&self, bone_id: i32, selected_layer: usize) -> bool {
-        return false;
-        if self.find_bone(bone_id) == None {
-            return false;
-        }
-
-        let is_hidden = self.layers[selected_layer].bone_ids.contains(&bone_id);
-
-        if self.layers[selected_layer].bone_ids.contains(&bone_id) {
-            return true;
-        }
-
-        let parents = self.get_all_parents(bone_id);
-        for parent in &parents {
-            if self.layers[selected_layer].bone_ids.contains(&parent.id) {
-                return true;
-            }
-        }
-
-        false
-    }
-
     pub fn autosave(&self) {
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -1409,6 +1372,22 @@ impl Armature {
             fps: 60,
             ..Default::default()
         });
+    }
+
+    pub fn is_bone_hidden(&self, bone_id: i32) -> bool {
+        if self.find_bone(bone_id).unwrap().hidden {
+            return true;
+        }
+
+        let parents = self.get_all_parents(bone_id);
+
+        for parent in &parents {
+            if parent.hidden {
+                return true;
+            }
+        }
+
+        false
     }
 }
 
@@ -1821,15 +1800,6 @@ impl Shared {
         let mouse_world = utils::screen_to_world_space(self.input.mouse, self.window);
         let mouse_prev_world = utils::screen_to_world_space(self.input.mouse_prev, self.window);
         mouse_prev_world - mouse_world
-    }
-
-    pub fn is_bone_hidden(&self, bone_id: i32) -> bool {
-        if self.ui.selected_layer == -1 {
-            return false;
-        }
-        self.armature.layers[self.ui.selected_layer as usize]
-            .bone_ids
-            .contains(&bone_id)
     }
 }
 

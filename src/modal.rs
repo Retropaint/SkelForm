@@ -1,6 +1,5 @@
 use crate::{
     armature_window, generate_id,
-    shared::Layer,
     ui::{job_text, selection_button, EguiUi},
     utils, Action, ActionEnum, Config, PolarId, Shared, UiState, Vec2,
 };
@@ -559,93 +558,6 @@ pub fn first_time_modal(shared: &mut Shared, ctx: &egui::Context) {
         },
         |_| {},
     );
-}
-
-pub fn layer_modal(shared: &mut Shared, ctx: &egui::Context) {
-    egui::Modal::new("test".into())
-        .frame(egui::Frame {
-            corner_radius: 0.into(),
-            fill: shared.config.ui_colors.main.into(),
-            inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., shared.config.ui_colors.light_accent),
-            ..Default::default()
-        })
-        .show(ctx, |ui| {
-            ui.set_width(500.);
-            ui.set_height(500.);
-            ui.heading("Layers");
-            let mut groups: Vec<Layer> = vec![];
-            ui.horizontal(|ui| {
-                let ids = shared
-                    .armature
-                    .layers
-                    .iter()
-                    .map(|layer| layer.id)
-                    .collect();
-
-                let new_id = generate_id(ids);
-
-                // identify all groups
-                for layer in &shared.armature.layers {
-                    if layer.group_id == -1 {
-                        continue;
-                    }
-
-                    let group_ids: Vec<i32> = groups.iter().map(|group| group.id).collect();
-                    if !group_ids.contains(&layer.group_id) {
-                        let group_layer = shared
-                            .armature
-                            .layers
-                            .iter()
-                            .find(|gl| gl.id == layer.group_id)
-                            .unwrap()
-                            .clone();
-                        groups.push(group_layer);
-                    }
-                }
-
-                if ui.button("New Group").clicked() {
-                    shared.armature.layers.push(Layer {
-                        id: new_id,
-                        name: "New Group".to_string(),
-                        group_id: -1,
-                        ..Default::default()
-                    });
-
-                    shared.armature.layers.push(Layer {
-                        id: new_id + 1,
-                        name: "New Layer".to_string(),
-                        group_id: new_id,
-                        ..Default::default()
-                    })
-                };
-
-                if groups.len() > 0 && ui.button("New Layer").clicked() {
-                    shared.armature.layers.push(Layer {
-                        id: new_id,
-                        name: "New Layer".to_string(),
-                        group_id: 0,
-                        ..Default::default()
-                    })
-                };
-            });
-
-            ui.horizontal(|ui| {
-                for group in groups {
-                    ui.vertical(|ui| {
-                        ui.heading(group.name);
-                        let layers = shared
-                            .armature
-                            .layers
-                            .iter()
-                            .filter(|layer| layer.group_id == group.id);
-                        for layer in layers {
-                            ui.button(layer.name.to_string());
-                        }
-                    });
-                }
-            })
-        });
 }
 
 // top-right X label for modals
