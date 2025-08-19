@@ -28,6 +28,15 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         return;
     }
 
+    let mut bone = shared.selected_bone().unwrap().clone();
+    if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
+        bone = shared
+            .armature
+            .animate(shared.ui.anim.selected, shared.ui.anim.selected_frame)
+            [shared.ui.selected_bone_idx]
+            .clone();
+    }
+
     ui.horizontal(|ui| {
         ui.heading("Bone");
 
@@ -65,17 +74,15 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         }
     });
 
-    let set_idx = shared.selected_bone().unwrap().tex_set_idx;
-
-    let set_name = if set_idx == -1 {
+    let set_name = if bone.tex_set_idx == -1 {
         "None".to_string()
     } else {
-        shared.armature.texture_sets[set_idx as usize]
+        shared.armature.texture_sets[bone.tex_set_idx as usize]
             .name
             .to_string()
     };
 
-    let mut selected_set = shared.selected_bone().unwrap().tex_set_idx;
+    let mut selected_set = bone.tex_set_idx;
     ui.horizontal(|ui| {
         ui.label("Tex. Set:");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -96,10 +103,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
     if selected_set == -2 {
-        shared.ui.selected_tex_set_idx = shared.selected_bone().unwrap().tex_set_idx;
+        shared.ui.selected_tex_set_idx = bone.tex_set_idx;
         shared.ui.set_state(UiState::ImageModal, true);
-    } else if selected_set != shared.selected_bone().unwrap().tex_set_idx {
-        let bone = shared.selected_bone().unwrap();
+    } else if selected_set != bone.tex_set_idx {
         let mut anim_id = shared.ui.anim.selected;
         if !shared.ui.is_animating() {
             anim_id = usize::MAX;
@@ -113,18 +119,13 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         );
     }
 
-    if set_idx != -1 {
+    if bone.tex_set_idx != -1 {
         ui.horizontal(|ui| {
             ui.label("Tex. Index:");
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let (edited, value, _) = ui.float_input(
-                    "tex_idx".to_string(),
-                    shared,
-                    shared.selected_bone().unwrap().tex_idx as f32,
-                    1.,
-                );
+                let (edited, value, _) =
+                    ui.float_input("tex_idx".to_string(), shared, bone.tex_idx as f32, 1.);
                 if edited {
-                    let bone = shared.selected_bone().unwrap();
                     let mut anim_id = shared.ui.anim.selected;
                     if !shared.ui.is_animating() {
                         anim_id = usize::MAX;
@@ -141,15 +142,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     }
 
-    let mut bone = shared.selected_bone().unwrap().clone();
-    if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
-        bone = shared
-            .armature
-            .animate(shared.ui.anim.selected, shared.ui.anim.selected_frame)
-            [shared.ui.selected_bone_idx]
-            .clone();
-    }
-
     let mut edited = false;
 
     // Backbone of editable bone fields; do not use by itself. Instead refer to input!.
@@ -163,7 +155,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
                 shared.save_edited_bone();
                 shared.armature.edit_bone(
-                    shared.selected_bone().unwrap().id,
+                    bone.id,
                     $element,
                     $float,
                     anim_id,
@@ -262,7 +254,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
-    if shared.selected_bone().unwrap().vertices.len() == 0 {
+    if bone.vertices.len() == 0 {
         return;
     }
 
@@ -302,7 +294,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label("Base Index:")
             .on_hover_text("The vertex that all triangles point to");
-        let base = shared.selected_bone().unwrap().indices[0] as f32;
+        let base = bone.indices[0] as f32;
         let (edited, base, _) = ui.float_input("base_index".to_string(), shared, base, 1.);
         if edited {
             shared.selected_bone_mut().unwrap().indices = crate::renderer::setup_indices(
