@@ -164,6 +164,10 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     ui.set_width((modal_width / 2.) - 10.);
 
                     ui.horizontal(|ui| {
+                        if shared.ui.hovering_tex != -1 {
+                            ui.label("");
+                            return;
+                        }
                         ui.label("Sets");
                         if !ui.skf_button("New").clicked() {
                             return;
@@ -200,9 +204,29 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                             }
                             size.x *= mult;
                             size.y *= mult;
+                            let left_top = egui::Pos2::new(
+                                ui.min_rect().center().x - size.x / 2.,
+                                ui.min_rect().center().y - size.y / 2. - 40.,
+                            );
                             let rect =
-                                egui::Rect::from_min_size(ui.min_rect().left_top(), size.into());
+                                egui::Rect::from_min_size(left_top, size.into());
                             egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
+
+                            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+                                let mut name = egui::text::LayoutJob::default();
+                                job_text("Name: ", Some(Color32::WHITE), &mut name);
+                                job_text(&tex.name, None, &mut name);
+                                let mut size = egui::text::LayoutJob::default();
+                                job_text("Size: ", Some(Color32::WHITE), &mut size);
+                                job_text(
+                                    &(tex.size.x.to_string() + " x " + &tex.size.y.to_string()),
+                                    None,
+                                    &mut size,
+                                );
+                                ui.label(name);
+                                ui.label(size);
+                            });
+
                             return;
                         }
                         for s in 0..shared.armature.texture_sets.len() {
