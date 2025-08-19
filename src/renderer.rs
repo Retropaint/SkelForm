@@ -26,13 +26,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     for bone in &mut shared.armature.bones {
         if bone.tex_idx != -1 && bone.vertices.len() == 0 {
-            let tex_size = shared
-                .armature
-                .texture_sets
-                .iter()
-                .find(|set| set.id == bone.tex_set_id)
-                .unwrap()
-                .textures[bone.tex_idx as usize]
+            let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
+                [bone.tex_idx as usize]
                 .size;
             (bone.vertices, bone.indices) = create_tex_rect(&tex_size);
         }
@@ -81,15 +76,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // draw bone
     for b in 0..temp_bones.len() {
-        if temp_bones[b].tex_set_id == -1 {
+        if temp_bones[b].tex_set_idx == -1 {
             continue;
         }
-        let set = shared
-            .armature
-            .texture_sets
-            .iter()
-            .find(|set| set.id == temp_bones[b].tex_set_id)
-            .unwrap();
+        let set = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize];
         if shared.is_bone_hidden(temp_bones[b].id)
             || temp_bones[b].tex_idx > set.textures.len() as i32 - 1
         {
@@ -430,13 +420,7 @@ pub fn draw_bone(
     //render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
     render_pass.set_bind_group(
         0,
-        &shared
-            .armature
-            .texture_sets
-            .iter()
-            .find(|set| set.id == bone.tex_set_id)
-            .unwrap()
-            .textures[bone.tex_idx as usize]
+        &shared.armature.texture_sets[bone.tex_set_idx as usize].textures[bone.tex_idx as usize]
             .bind_group,
         &[],
     );

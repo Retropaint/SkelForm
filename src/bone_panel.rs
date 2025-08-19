@@ -65,22 +65,17 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         }
     });
 
-    let set_id = shared.selected_bone().unwrap().tex_set_id;
+    let set_idx = shared.selected_bone().unwrap().tex_set_idx;
 
-    let set_name = if set_id == -1 {
+    let set_name = if set_idx == -1 {
         "None".to_string()
     } else {
-        shared
-            .armature
-            .texture_sets
-            .iter()
-            .find(|set| set.id == set_id)
-            .unwrap()
+        shared.armature.texture_sets[set_idx as usize]
             .name
             .to_string()
     };
 
-    let mut selected_set = shared.selected_bone().unwrap().tex_set_id;
+    let mut selected_set = shared.selected_bone().unwrap().tex_set_idx;
     ui.horizontal(|ui| {
         ui.label("Tex. Set:");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -89,19 +84,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 .show_ui(ui, |ui| {
                     ui.selectable_value(&mut selected_set, -1, "None");
                     let sets = shared.armature.texture_sets.clone();
-                    for set in &sets {
-                        if set.textures.len() == 0 {
+                    for s in 0..sets.len() {
+                        if sets[s].textures.len() == 0 {
                             continue;
                         }
-                        if shared.ui.rename_id == "tex_set ".to_string() + &set.id.to_string() {
-                            let (edited, value, _) = ui.text_input(
-                                shared.ui.rename_id.clone(),
-                                shared,
-                                set.name.clone(),
-                                None,
-                            );
-                        }
-                        ui.selectable_value(&mut selected_set, set.id as i32, set.name.clone());
+                        ui.selectable_value(&mut selected_set, s as i32, sets[s].name.clone());
                     }
                     ui.selectable_value(&mut selected_set, -2, "[Setup]");
                 })
@@ -109,9 +96,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
     if selected_set == -2 {
-        shared.ui.selected_tex_set_id = shared.selected_bone().unwrap().tex_set_id;
+        shared.ui.selected_tex_set_idx = shared.selected_bone().unwrap().tex_set_idx;
         shared.ui.set_state(UiState::ImageModal, true);
-    } else if selected_set != shared.selected_bone().unwrap().tex_set_id {
+    } else if selected_set != shared.selected_bone().unwrap().tex_set_idx {
         let bone = shared.selected_bone().unwrap();
         let mut anim_id = shared.ui.anim.selected;
         if !shared.ui.is_animating() {
@@ -126,7 +113,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         );
     }
 
-    if set_id != -1 {
+    if set_idx != -1 {
         ui.horizontal(|ui| {
             ui.label("Tex. Index:");
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -145,7 +132,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                     shared.armature.set_bone_tex(
                         bone.id,
                         value as usize,
-                        bone.tex_set_id,
+                        bone.tex_set_idx,
                         anim_id,
                         shared.ui.anim.selected_frame,
                     );
