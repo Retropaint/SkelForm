@@ -300,7 +300,7 @@ pub fn prepare_files(armature: &Armature) -> (Vec2, String, Vec<u8>) {
 
     for bone in &mut armature_copy.bones {
         // if it is a regular rect, empty verts and indices
-        if bone.tex_idx == -1
+        if bone.tex_set_idx == -1
             || !bone_meshes_edited(
                 armature_copy.texture_sets[bone.tex_set_idx as usize].textures
                     [bone.tex_idx as usize]

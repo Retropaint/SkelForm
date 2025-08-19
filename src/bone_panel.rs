@@ -90,7 +90,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 .selected_text(set_name.to_string())
                 .show_ui(ui, |ui| {
                     ui.selectable_value(&mut selected_set, -1, "None");
-                    let sets = shared.armature.texture_sets.clone();
+                    let sets = &shared.armature.texture_sets;
                     for s in 0..sets.len() {
                         if sets[s].textures.len() == 0 {
                             continue;
@@ -120,26 +120,49 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     }
 
     if bone.tex_set_idx != -1 {
+        let mut selected_tex = bone.tex_set_idx;
+        let tex_name = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
+            [bone.tex_idx as usize]
+            .name;
         ui.horizontal(|ui| {
             ui.label("Tex. Index:");
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let (edited, value, _) =
-                    ui.float_input("tex_idx".to_string(), shared, bone.tex_idx as f32, 1.);
-                if edited {
-                    let mut anim_id = shared.ui.anim.selected;
-                    if !shared.ui.is_animating() {
-                        anim_id = usize::MAX;
-                    }
-                    shared.armature.set_bone_tex(
-                        bone.id,
-                        value as usize,
-                        bone.tex_set_idx,
-                        anim_id,
-                        shared.ui.anim.selected_frame,
-                    );
-                }
+                egui::ComboBox::new("tex_selector", "")
+                    .selected_text(tex_name.to_string())
+                    .show_ui(ui, |ui| {
+                        let set = &shared.armature.texture_sets[bone.tex_set_idx as usize];
+                        for t in 0..set.textures.len() {
+                            if set.textures.len() == 0 {
+                                continue;
+                            }
+                            ui.selectable_value(
+                                &mut selected_tex,
+                                t as i32,
+                                set.textures[t].name.clone(),
+                            );
+                        }
+                        ui.selectable_value(&mut selected_tex, -2, "[Setup]");
+                    })
+                    .response;
             });
         });
+
+        if selected_tex == -2 {
+            shared.ui.selected_tex_set_idx = bone.tex_set_idx;
+            shared.ui.set_state(UiState::ImageModal, true);
+        } else if selected_tex != bone.tex_set_idx {
+            let mut anim_id = shared.ui.anim.selected;
+            if !shared.ui.is_animating() {
+                anim_id = usize::MAX;
+            }
+            shared.armature.set_bone_tex(
+                bone.id,
+                selected_tex as usize,
+                selected_set,
+                anim_id,
+                shared.ui.anim.selected_frame,
+            );
+        }
     }
 
     let mut edited = false;
@@ -248,7 +271,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
     ui.horizontal(|ui| {
-        label!("Z-Index:", ui);
+        label!("Z-tex_set_idxIndex:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             input!(bone.zindex, "zindex", &AnimElement::Zindex, 1., ui, "");
         });
