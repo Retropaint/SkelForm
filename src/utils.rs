@@ -204,13 +204,15 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
         rectangle_pack::GroupedRectsToPlace::new();
     let mut idx = 0;
 
-    for texture in &armature.textures {
-        img_rect.push_rect(
-            idx,
-            None,
-            rectangle_pack::RectToInsert::new(texture.size.x as u32, texture.size.y as u32, 1),
-        );
-        idx += 1;
+    for set in &armature.texture_sets {
+        for tex in &set.textures {
+            img_rect.push_rect(
+                idx,
+                None,
+                rectangle_pack::RectToInsert::new(tex.size.x as u32, tex.size.y as u32, 1),
+            );
+            idx += 1;
+        }
     }
 
     // keep generating sheet until the size is big enough
@@ -241,30 +243,33 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
     let mut raw_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size, size);
 
     let mut idx = 0;
-    for tex in &mut armature.textures {
-        // get current texture as a buffer
-        let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
-            tex.size.x as u32,
-            tex.size.y as u32,
-            tex.pixels.clone(),
-        )
-        .unwrap();
 
-        // add it to the final buffer
-        for x in 0..img_buf.width() {
-            for y in 0..img_buf.height() {
-                raw_buf.put_pixel(
-                    x + packed.as_ref().unwrap().packed_locations()[&idx].1.x(),
-                    y + packed.as_ref().unwrap().packed_locations()[&idx].1.y(),
-                    *img_buf.get_pixel(x, y),
-                );
+    for set in &mut armature.texture_sets {
+        for tex in &mut set.textures {
+            // get current texture as a buffer
+            let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
+                tex.size.x as u32,
+                tex.size.y as u32,
+                tex.pixels.clone(),
+            )
+            .unwrap();
+
+            // add it to the final buffer
+            for x in 0..img_buf.width() {
+                for y in 0..img_buf.height() {
+                    raw_buf.put_pixel(
+                        x + packed.as_ref().unwrap().packed_locations()[&idx].1.x(),
+                        y + packed.as_ref().unwrap().packed_locations()[&idx].1.y(),
+                        *img_buf.get_pixel(x, y),
+                    );
+                }
             }
+
+            tex.offset.x = packed.as_ref().unwrap().packed_locations()[&idx].1.x() as f32;
+            tex.offset.y = packed.as_ref().unwrap().packed_locations()[&idx].1.y() as f32;
+
+            idx += 1;
         }
-
-        tex.offset.x = packed.as_ref().unwrap().packed_locations()[&idx].1.x() as f32;
-        tex.offset.y = packed.as_ref().unwrap().packed_locations()[&idx].1.y() as f32;
-
-        idx += 1;
     }
 
     // encode buffer to png, to allow saving it as a png file
@@ -289,7 +294,7 @@ pub fn prepare_files(armature: &Armature) -> (Vec2, String, Vec<u8>) {
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
-    if armature.textures.len() != 0 {
+    if armature.texture_sets.len() > 0 && armature.texture_sets[0].textures.len() > 0 {
         (png_buf, size) = create_tex_sheet(&mut armature_copy);
     }
 
@@ -297,7 +302,9 @@ pub fn prepare_files(armature: &Armature) -> (Vec2, String, Vec<u8>) {
         // if it is a regular rect, empty verts and indices
         if bone.tex_idx == -1
             || !bone_meshes_edited(
-                armature_copy.textures[bone.tex_idx as usize].size,
+                armature_copy.texture_sets[bone.tex_set_idx as usize].textures
+                    [bone.tex_idx as usize]
+                    .size,
                 &bone.vertices,
             )
         {
