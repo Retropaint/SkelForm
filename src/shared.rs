@@ -461,11 +461,7 @@ pub struct Ui {
     // the initial value of what is being edited via input
     pub edit_value: Option<String>,
 
-    pub texture_images: Vec<egui::TextureHandle>,
-
     pub states: Vec<UiState>,
-
-    pub default_font_size: f32,
 
     pub scale: f32,
 
@@ -486,6 +482,8 @@ pub struct Ui {
     pub changing_key: String,
 
     pub selected_tex_set_idx: i32,
+
+    pub hovering_tex: i32,
 }
 
 impl Ui {
@@ -541,24 +539,6 @@ impl Ui {
         self.set_state(UiState::PolarModal, true);
         self.polar_id = id;
         self.headline = headline.to_string();
-    }
-
-    pub fn add_texture_img(
-        &mut self,
-        ctx: &egui::Context,
-        img_buf: image::ImageBuffer<Rgba<u8>, Vec<u8>>,
-        size: Vec2,
-    ) {
-        // force 300x300 to texture size
-        let resized = image::imageops::resize(
-            &img_buf,
-            size.x as u32,
-            size.y as u32,
-            image::imageops::FilterType::Nearest,
-        );
-        let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &resized);
-        let tex = ctx.load_texture("anim_icons", color_image, Default::default());
-        self.texture_images.push(tex);
     }
 
     pub fn set_tutorial_step(&mut self, step: TutorialStep) {
@@ -1415,6 +1395,8 @@ pub struct Texture {
     pub pixels: Vec<u8>,
     #[serde(skip)]
     pub bind_group: Option<BindGroup>,
+    #[serde(skip)]
+    pub ui_img: Option<egui::TextureHandle>,
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -1783,7 +1765,6 @@ impl Shared {
     pub fn remove_texture(&mut self, tex_idx: i32) {
         self.armature.textures.remove(tex_idx as usize);
         //self.armature.bind_groups.remove(tex_idx as usize);
-        let _ = self.ui.texture_images.remove(tex_idx as usize);
         for bone in &mut self.armature.bones {
             if bone.tex_idx == tex_idx {
                 bone.tex_idx = -1;

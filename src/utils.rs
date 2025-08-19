@@ -369,8 +369,6 @@ pub fn import<R: Read + std::io::Seek>(
         }
         let mut img = image::load_from_memory(&bytes).unwrap();
 
-        shared.ui.texture_images = vec![];
-
         for set in &mut shared.armature.texture_sets {
             for tex in &mut set.textures {
                 tex.pixels = img
@@ -403,8 +401,8 @@ pub fn import<R: Read + std::io::Seek>(
                     .to_vec();
 
                 let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &pixels);
-                let tex = context.load_texture("anim_icons", color_image, Default::default());
-                shared.ui.texture_images.push(tex);
+                let ui_tex = context.load_texture("anim_icons", color_image, Default::default());
+                tex.ui_img = Some(ui_tex);
             }
         }
     }
@@ -554,4 +552,21 @@ pub fn import_config(shared: &mut Shared) {
             shared.config = data;
         }
     }
+}
+
+pub fn add_texture_img(
+    ctx: &egui::Context,
+    img_buf: image::ImageBuffer<Rgba<u8>, Vec<u8>>,
+    size: Vec2,
+) -> egui::TextureHandle {
+    // force 300x300 to texture size
+    let resized = image::imageops::resize(
+        &img_buf,
+        size.x as u32,
+        size.y as u32,
+        image::imageops::FilterType::Nearest,
+    );
+    let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &resized);
+    let tex = ctx.load_texture("anim_icons", color_image, Default::default());
+    tex
 }
