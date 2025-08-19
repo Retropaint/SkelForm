@@ -163,7 +163,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 let height = ui.available_height();
                 ui.vertical(|ui| {
                     ui.set_height(height);
-                    ui.set_width((modal_width / 2.) - 20.);
+                    ui.set_width((modal_width / 2.) - 10.);
                     ui.horizontal(|ui| {
                         ui.label("Sets");
                         if !ui.skf_button("New").clicked() {
@@ -241,6 +241,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 let frame = egui::Frame::default().inner_margin(5.);
                 ui.vertical(|ui| {
                     ui.set_width((modal_width / 2.) - 20.);
+                    ui.set_height(height);
                     ui.horizontal(|ui| {
                         ui.label("Textures");
                         if !ui.skf_button("Import").clicked() {
@@ -263,9 +264,10 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     {
                         return;
                     }
-                    let available_width = ui.available_width();
+                    let size = ui.available_size();
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-                        ui.set_width(available_width);
+                        ui.set_width(size.x);
+                        ui.set_height(size.y - 10.);
                         draw_tex_buttons(shared, ui);
                     });
                 });
