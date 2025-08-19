@@ -250,6 +250,14 @@ impl std::ops::AddAssign for Color {
     }
 }
 
+impl std::ops::SubAssign for Color {
+    fn sub_assign(&mut self, other: Color) {
+        self.r -= other.r;
+        self.g -= other.g;
+        self.b -= other.b;
+        self.a -= other.a;
+    }
+}
 impl Color {
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
         Color { r, g, b, a }
@@ -949,7 +957,7 @@ impl Armature {
         let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
 
         // use texture's name for bone, if the latter is unnamed
-        if tex_set_idx != -1 || tex_set_idx <= self.texture_sets.len() as i32 - 1 {
+        if tex_set_idx != -1 && tex_set_idx < self.texture_sets.len() as i32 - 1 {
             let name = self.texture_sets[tex_set_idx as usize].textures[new_tex_idx]
                 .name
                 .clone();

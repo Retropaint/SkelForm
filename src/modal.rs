@@ -170,7 +170,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                             return;
                         }
                         shared.armature.texture_sets.push(crate::TextureSet {
-                            name: "New Set".to_string(),
+                            name: "".to_string(),
                             textures: vec![],
                         });
                         shared.ui.rename_id = "tex_set ".to_string()
@@ -196,6 +196,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                                         size: Vec2::new(60., 20.),
                                         focus: true,
                                         placeholder: "New Set".to_string(),
+                                        default: "New Set".to_string(),
                                         ..Default::default()
                                     }),
                                 );

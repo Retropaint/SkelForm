@@ -800,7 +800,9 @@ pub fn default_styling(context: &Context, shared: &Shared) {
         egui::Stroke::new(1., shared.config.ui_colors.dark_accent);
 
     visuals.override_text_color = Some(shared.config.ui_colors.text.into());
-    visuals.weak_text_color = Some(shared.config.ui_colors.text.into());
+    let mut col = shared.config.ui_colors.text;
+    col -= Color::new(100, 100, 100, 0);
+    visuals.weak_text_color = Some(col.into());
 
     visuals.widgets.noninteractive.bg_fill = shared.config.ui_colors.text.into();
     visuals.widgets.noninteractive.weak_bg_fill = shared.config.ui_colors.text.into();
