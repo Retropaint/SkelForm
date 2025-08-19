@@ -307,7 +307,7 @@ pub fn read_psd(
 
         // create texture bone
         let new_bone_id = shared.armature.new_bone(-1).0.id;
-        let tex_idx = shared.armature.textures.len() - 1;
+        let tex_idx = shared.armature.texture_sets[0].textures.len() - 1;
         shared.armature.set_bone_tex(
             new_bone_id,
             tex_idx,
