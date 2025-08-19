@@ -271,7 +271,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
     ui.horizontal(|ui| {
-        label!("Z-tex_set_idxIndex:", ui);
+        label!("Z-Index:", ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             input!(bone.zindex, "zindex", &AnimElement::Zindex, 1., ui, "");
         });
