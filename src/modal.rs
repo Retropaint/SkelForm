@@ -208,8 +208,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                                 ui.min_rect().center().x - size.x / 2.,
                                 ui.min_rect().center().y - size.y / 2. - 40.,
                             );
-                            let rect =
-                                egui::Rect::from_min_size(left_top, size.into());
+                            let rect = egui::Rect::from_min_size(left_top, size.into());
                             egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
 
                             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
@@ -370,11 +369,20 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         let pointer = ui.input(|i| i.pointer.interact_pos());
         let hovered_payload = button.dnd_hover_payload::<i32>();
 
+        let rect = button.rect;
+
         if pointer == None || hovered_payload == None {
+            let stroke =
+                egui::Stroke::new(1.0, Color32::from_rgba_premultiplied(125, 125, 125, 255));
+            if button.contains_pointer() {
+                ui.painter().hline(rect.x_range(), rect.top(), stroke);
+                ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
+                ui.painter().vline(rect.right(), rect.y_range(), stroke);
+                ui.painter().vline(rect.left(), rect.y_range(), stroke);
+            }
             continue;
         }
 
-        let rect = button.rect;
         let stroke = egui::Stroke::new(1.0, Color32::WHITE);
         let mut is_below = false;
 
