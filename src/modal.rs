@@ -210,6 +210,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                                 );
                                 if edited {
                                     set!().name = value;
+                                    shared.ui.selected_tex_set_id = set!().id;
                                 }
                                 continue;
                             }
