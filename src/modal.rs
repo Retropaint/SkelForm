@@ -204,7 +204,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                                     Some(crate::ui::TextInputOptions {
                                         size: Vec2::new(60., 20.),
                                         focus: true,
-                                        default: "New Set".to_string(),
+                                        placeholder: "New Set".to_string(),
                                         ..Default::default()
                                     }),
                                 );
