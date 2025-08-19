@@ -144,8 +144,8 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
             ..Default::default()
         })
         .show(ctx, |ui| {
-            ui.set_width(250.);
-            ui.set_height(250.);
+            ui.set_width(300.);
+            ui.set_height(400.);
             ui.heading("Select Texture");
             modal_x(ui, || {
                 shared.ui.set_state(UiState::ImageModal, false);
