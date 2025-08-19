@@ -556,7 +556,7 @@ pub fn import_config(shared: &mut Shared) {
 
 pub fn add_texture_img(
     ctx: &egui::Context,
-    img_buf: image::ImageBuffer<Rgba<u8>, Vec<u8>>,
+    img_buf: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
     size: Vec2,
 ) -> egui::TextureHandle {
     // force 300x300 to texture size
