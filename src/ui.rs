@@ -766,44 +766,46 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
 /// Default styling to apply across all UI.
 pub fn default_styling(context: &Context, shared: &Shared) {
     let mut visuals = egui::Visuals::dark();
+    let colors = &shared.config.ui_colors;
+
+    visuals.menu_corner_radius = egui::CornerRadius::ZERO;
 
     // remove rounded corners on windows
     visuals.window_corner_radius = egui::CornerRadius::ZERO;
+
     visuals.widgets.inactive.corner_radius = egui::CornerRadius::ZERO;
+    visuals.widgets.inactive.bg_fill = colors.dark_accent.into();
+    visuals.widgets.inactive.weak_bg_fill = colors.light_accent.into();
+
     visuals.widgets.hovered.corner_radius = egui::CornerRadius::ZERO;
+    visuals.widgets.hovered.bg_fill = colors.dark_accent.into();
+    visuals.widgets.hovered.weak_bg_fill = colors.light_accent.into();
+
     visuals.widgets.active.corner_radius = egui::CornerRadius::ZERO;
+    visuals.widgets.active.bg_fill = colors.dark_accent.into();
+    visuals.widgets.active.weak_bg_fill = colors.light_accent.into();
+
     visuals.widgets.open.corner_radius = egui::CornerRadius::ZERO;
-    visuals.widgets.noninteractive.corner_radius = egui::CornerRadius::ZERO;
-    visuals.menu_corner_radius = egui::CornerRadius::ZERO;
+    visuals.widgets.open.bg_fill = colors.dark_accent.into();
+    visuals.widgets.open.weak_bg_fill = colors.dark_accent.into();
+    visuals.widgets.open.bg_stroke = egui::Stroke::new(1., colors.dark_accent);
+    visuals.widgets.open.fg_stroke = egui::Stroke::new(1., colors.dark_accent);
 
     visuals.window_shadow = Shadow::NONE;
-    visuals.window_fill = shared.config.ui_colors.main.into();
-    visuals.panel_fill = shared.config.ui_colors.main.into();
-    visuals.window_stroke = egui::Stroke::new(1., shared.config.ui_colors.dark_accent);
+    visuals.window_fill = colors.main.into();
+    visuals.panel_fill = colors.main.into();
+    visuals.window_stroke = egui::Stroke::new(1., colors.dark_accent);
 
-    visuals.widgets.active.bg_fill = shared.config.ui_colors.dark_accent.into();
-    visuals.widgets.hovered.bg_fill = shared.config.ui_colors.dark_accent.into();
-    visuals.widgets.inactive.bg_fill = shared.config.ui_colors.dark_accent.into();
-    visuals.widgets.noninteractive.bg_fill = shared.config.ui_colors.dark_accent.into();
-    visuals.widgets.open.bg_fill = shared.config.ui_colors.dark_accent.into();
-    visuals.widgets.open.weak_bg_fill = shared.config.ui_colors.dark_accent.into();
-    visuals.widgets.open.bg_stroke = egui::Stroke::new(1., shared.config.ui_colors.dark_accent);
-    visuals.widgets.open.fg_stroke = egui::Stroke::new(1., shared.config.ui_colors.dark_accent);
+    visuals.widgets.noninteractive.bg_fill = colors.text.into();
+    visuals.widgets.noninteractive.weak_bg_fill = colors.text.into();
+    visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(1., colors.text);
+    visuals.widgets.noninteractive.corner_radius = egui::CornerRadius::ZERO;
+    visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1., colors.dark_accent);
 
-    visuals.widgets.active.weak_bg_fill = shared.config.ui_colors.light_accent.into();
-    visuals.widgets.hovered.weak_bg_fill = shared.config.ui_colors.light_accent.into();
-    visuals.widgets.inactive.weak_bg_fill = shared.config.ui_colors.light_accent.into();
-    visuals.widgets.noninteractive.bg_stroke =
-        egui::Stroke::new(1., shared.config.ui_colors.dark_accent);
-
-    visuals.override_text_color = Some(shared.config.ui_colors.text.into());
-    let mut col = shared.config.ui_colors.text;
+    visuals.override_text_color = Some(colors.text.into());
+    let mut col = colors.text;
     col -= Color::new(100, 100, 100, 0);
     visuals.weak_text_color = Some(col.into());
-
-    visuals.widgets.noninteractive.bg_fill = shared.config.ui_colors.text.into();
-    visuals.widgets.noninteractive.weak_bg_fill = shared.config.ui_colors.text.into();
-    visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(1., shared.config.ui_colors.text);
 
     context.set_visuals(visuals);
 }
