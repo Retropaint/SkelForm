@@ -117,9 +117,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 "👁"
             };
             if bone_label(hidden_icon, ui, shared, b).clicked() {
-                // switch to a new layer if on default
-                shared.selected_bone_mut().unwrap().hidden =
-                    !shared.selected_bone_mut().unwrap().hidden;
+                shared.armature.bones[b].hidden = !shared.armature.bones[b].hidden;
             }
             ui.add_space(17.);
 
