@@ -56,7 +56,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             shared.input.mouse_right = -1;
         }
 
-        if i.smooth_scroll_delta.y != 0. {
+        if i.smooth_scroll_delta.y != 0. && !shared.input.on_ui {
             ui::set_zoom(
                 shared.camera.zoom + (i.smooth_scroll_delta.y as f32),
                 shared,
