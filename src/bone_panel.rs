@@ -120,7 +120,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     }
 
     if bone.tex_set_idx != -1 {
-        let mut selected_tex = bone.tex_set_idx;
+        let mut selected_tex = bone.tex_idx;
         let tex_name = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
             [bone.tex_idx as usize]
             .name;
@@ -132,9 +132,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                     .show_ui(ui, |ui| {
                         let set = &shared.armature.texture_sets[bone.tex_set_idx as usize];
                         for t in 0..set.textures.len() {
-                            if set.textures.len() == 0 {
-                                continue;
-                            }
                             ui.selectable_value(
                                 &mut selected_tex,
                                 t as i32,
@@ -150,7 +147,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         if selected_tex == -2 {
             shared.ui.selected_tex_set_idx = bone.tex_set_idx;
             shared.ui.set_state(UiState::ImageModal, true);
-        } else if selected_tex != bone.tex_set_idx {
+        } else if selected_tex != bone.tex_idx {
             let mut anim_id = shared.ui.anim.selected;
             if !shared.ui.is_animating() {
                 anim_id = usize::MAX;
