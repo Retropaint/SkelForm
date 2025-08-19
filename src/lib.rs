@@ -37,7 +37,6 @@ use winit::{
 pub mod armature_window;
 pub mod bone_panel;
 pub mod file_reader;
-pub mod input;
 pub mod keyframe_editor;
 pub mod keyframe_panel;
 pub mod modal;
@@ -320,20 +319,6 @@ impl ApplicationHandler for App {
                 {
                     self.shared.input.mouse = Vec2::new(position.x as f32, position.y as f32);
                 };
-            }
-            WindowEvent::MouseWheel {
-                device_id: _,
-                delta,
-                phase: _phase,
-            } => {
-                input::mouse_wheel_input(delta, &mut self.shared);
-            }
-            WindowEvent::PinchGesture {
-                device_id: _,
-                delta,
-                phase: _phase,
-            } => {
-                input::pinch(delta, &mut self.shared);
             }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
