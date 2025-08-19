@@ -154,7 +154,6 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
             let height = ui.available_height();
 
-            let tex_idx: i32 = -1;
             ui.horizontal(|ui| {
                 ui.set_height(height);
                 let frame = egui::Frame::default().inner_margin(5.);
@@ -247,37 +246,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                         draw_tex_buttons(shared, ui);
                     });
                 });
-
-                // image_viewer(shared, ui);
             });
-
-            // ui.add_space(50.);
-
-            let labels = 2;
-            let label_heights = (20 * labels) as f32;
-            let label_gaps = (2 * labels) as f32;
-            // ui.add_space(ui.available_height() - label_heights + label_gaps);
-
-            if tex_idx == -1 {
-                return;
-            }
-
-            // show image info at bottom left of modal
-
-            let tex = &shared.armature.textures[tex_idx as usize];
-
-            let mut name = egui::text::LayoutJob::default();
-            job_text("Name: ", Some(Color32::WHITE), &mut name);
-            job_text(&tex.name, None, &mut name);
-            let mut size = egui::text::LayoutJob::default();
-            job_text("Size: ", Some(Color32::WHITE), &mut size);
-            job_text(
-                &(tex.size.x.to_string() + " x " + &tex.size.y.to_string()),
-                None,
-                &mut size,
-            );
-            ui.label(name);
-            ui.label(size);
         });
 }
 
@@ -396,111 +365,6 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 .position(|tex| tex.name == *old_name)
                 .unwrap() as i32;
         }
-    }
-}
-
-pub fn image_viewer(shared: &mut Shared, ui: &mut egui::Ui) {
-    let mut offset = Vec2::new(0., 0.);
-    let mut height = 0.;
-    let mut tex_idx = -1;
-    let max_width = 250.;
-    for i in 0..shared.ui.texture_images.len() {
-        // limit size
-        let mut size = shared.armature.textures[i].size;
-        let max = 10.;
-        let mut mult = 1.;
-        if size.x > max {
-            mult = max / size.x
-        }
-        if size.y > max {
-            mult = max / size.y
-        }
-        size.x *= mult;
-        size.y *= mult;
-
-        let padding = 2.;
-        // go to next row if there's no space
-        if size.x + offset.x + padding > max_width {
-            offset.x = 0.;
-            offset.y += height + 2.;
-            height = 0.;
-        }
-
-        // record tallest texture of this row
-        if height < size.y {
-            height = size.y;
-        }
-
-        let pos = egui::pos2(
-            ui.min_rect().left() + offset.x,
-            ui.min_rect().top() + 50. + offset.y,
-        );
-
-        let rect = egui::Rect::from_min_size(pos, size.into());
-        let response: egui::Response = ui
-            .allocate_rect(rect, egui::Sense::click())
-            .on_hover_cursor(egui::CursorIcon::PointingHand);
-
-        // draw image
-        ui.painter().rect_filled(
-            rect,
-            egui::CornerRadius::ZERO,
-            shared.config.ui_colors.dark_accent,
-        );
-
-        // if response.hovered() {
-        //     tex_idx = i as i32;
-        //     ui.painter_at(ui.min_rect()).rect_filled(
-        //         rect,
-        //         egui::CornerRadius::ZERO,
-        //         egui::Color32::from_rgba_unmultiplied(255, 255, 255, 60),
-        //     );
-        // }
-
-        egui::Image::new(&shared.ui.texture_images[i]).paint_at(ui, rect);
-
-        if response.clicked() {
-            if shared.ui.has_state(UiState::RemovingTexture) {
-                shared.remove_texture(i as i32);
-                shared.ui.set_state(UiState::RemovingTexture, false);
-                // stop the loop to prevent index errors
-                break;
-            } else {
-                let mut anim_id = shared.ui.anim.selected;
-                if !shared.ui.is_animating() && shared.selected_bone() != None {
-                    anim_id = usize::MAX;
-                    shared.undo_actions.push(Action {
-                        action: ActionEnum::Bone,
-                        id: shared.selected_bone().unwrap().id,
-                        bones: vec![shared.selected_bone().unwrap().clone()],
-                        ..Default::default()
-                    });
-                } else if shared.ui.is_animating() && shared.selected_animation() != None {
-                    shared.undo_actions.push(Action {
-                        action: ActionEnum::Animation,
-                        id: shared.selected_animation().unwrap().id,
-                        animations: vec![shared.selected_animation().unwrap().clone()],
-                        ..Default::default()
-                    });
-                }
-
-                if shared.selected_bone() == None {
-                    return;
-                }
-
-                // set texture
-                shared.armature.set_bone_tex(
-                    shared.selected_bone().unwrap().id,
-                    i,
-                    shared.ui.selected_tex_set_idx,
-                    anim_id,
-                    shared.ui.anim.selected_frame,
-                );
-                shared.ui.set_state(UiState::ImageModal, false);
-            }
-        }
-
-        offset.x += size.x + padding;
     }
 }
 
