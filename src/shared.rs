@@ -942,17 +942,6 @@ impl Armature {
     ) {
         let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
 
-        // use texture's name for bone, if the latter is unnamed
-        if tex_set_idx != -1 && tex_set_idx < self.texture_sets.len() as i32 - 1 {
-            let name = self.texture_sets[tex_set_idx as usize].textures[new_tex_idx]
-                .name
-                .clone();
-            let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
-            if bone_name == NEW_BONE_NAME || bone_name == "" {
-                *bone_name = name;
-            }
-        }
-
         if selected_anim == usize::MAX {
             self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
             self.find_bone_mut(bone_id).unwrap().tex_set_idx = tex_set_idx;
@@ -988,8 +977,18 @@ impl Armature {
             self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
         }
 
-        if tex_set_idx == -1 {
+        if tex_set_idx == -1
+            || new_tex_idx > self.texture_sets[tex_set_idx as usize].textures.len() - 1
+        {
             return;
+        }
+
+        let name = self.texture_sets[tex_set_idx as usize].textures[new_tex_idx]
+            .name
+            .clone();
+        let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
+        if bone_name == NEW_BONE_NAME || bone_name == "" {
+            *bone_name = name;
         }
 
         (
@@ -1153,11 +1152,7 @@ impl Armature {
         animate!(AnimElement::VertPositionY, pos.y);
     }
 
-    pub fn animate(
-        &mut self,
-        anim_idx: usize,
-        anim_frame: i32,
-    ) -> Vec<Bone> {
+    pub fn animate(&mut self, anim_idx: usize, anim_frame: i32) -> Vec<Bone> {
         let mut bones = self.bones.clone();
 
         // ignore if this animation has no keyframes
@@ -1212,7 +1207,8 @@ impl Armature {
 
             // restructure bone's verts to match texture
             let set = &self.texture_sets[self.find_bone(b.id).unwrap().tex_set_idx as usize];
-            if b.tex_idx != -1 {
+            let set_tex_limit = self.texture_sets[b.tex_set_idx as usize].textures.len() - 1;
+            if b.tex_idx != -1 && b.tex_set_idx < set_tex_limit as i32 {
                 (
                     self.find_bone_mut(b.id).unwrap().vertices,
                     self.find_bone_mut(b.id).unwrap().indices,
