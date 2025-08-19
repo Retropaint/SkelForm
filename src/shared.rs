@@ -480,7 +480,7 @@ pub struct Ui {
 
     pub selected_layer: i32,
 
-    pub selected_tex_set_id: i32,
+    pub selected_tex_set_idx: i32,
 }
 
 impl Ui {
@@ -834,7 +834,7 @@ pub struct Bone {
     #[serde(default = "default_neg_one")]
     pub parent_id: i32,
     #[serde(default = "default_neg_one")]
-    pub tex_set_id: i32,
+    pub tex_set_idx: i32,
     #[serde(default = "default_neg_one")]
     pub tex_idx: i32,
 
@@ -942,20 +942,15 @@ impl Armature {
         &mut self,
         bone_id: i32,
         new_tex_idx: usize,
-        tex_set_id: i32,
+        tex_set_idx: i32,
         selected_anim: usize,
         selected_frame: i32,
     ) {
         let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
 
         // use texture's name for bone, if the latter is unnamed
-        if tex_set_id != -1 {
-            let name = self
-                .texture_sets
-                .iter()
-                .find(|set| set.id == tex_set_id)
-                .unwrap()
-                .textures[new_tex_idx]
+        if tex_set_idx != -1 || tex_set_idx <= self.texture_sets.len() as i32 - 1 {
+            let name = self.texture_sets[tex_set_idx as usize].textures[new_tex_idx]
                 .name
                 .clone();
             let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
@@ -966,7 +961,7 @@ impl Armature {
 
         if selected_anim == usize::MAX {
             self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
-            self.find_bone_mut(bone_id).unwrap().tex_set_id = tex_set_id;
+            self.find_bone_mut(bone_id).unwrap().tex_set_idx = tex_set_idx;
 
             // Set bone's verts to match texture.
             // Original logic checks if verts were edited, but this is temporarily disabled
@@ -999,20 +994,16 @@ impl Armature {
             self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
         }
 
-        if tex_set_id == -1 {
+        if tex_set_idx == -1 {
             return;
         }
-
-        let set = self
-            .texture_sets
-            .iter()
-            .find(|set| set.id == tex_set_id)
-            .unwrap();
 
         (
             self.find_bone_mut(bone_id).unwrap().vertices,
             self.find_bone_mut(bone_id).unwrap().indices,
-        ) = renderer::create_tex_rect(&set.textures[new_tex_idx].size);
+        ) = renderer::create_tex_rect(
+            &self.texture_sets[tex_set_idx as usize].textures[new_tex_idx].size,
+        );
     }
 
     pub fn delete_bone(&mut self, id: i32) {
@@ -1037,7 +1028,7 @@ impl Armature {
             id: generate_id(ids),
             scale: Vec2 { x: 1., y: 1. },
             tex_idx: -1,
-            tex_set_id: -1,
+            tex_set_idx: -1,
             pivot: Vec2::new(0.5, 0.5),
             zindex: self.bones.len() as f32,
             ..Default::default()
@@ -1227,11 +1218,7 @@ impl Armature {
             };
 
             // restructure bone's verts to match texture
-            let set = self
-                .texture_sets
-                .iter()
-                .find(|set| set.id == self.find_bone(b.id).unwrap().tex_set_id)
-                .unwrap();
+            let set = &self.texture_sets[self.find_bone(b.id).unwrap().tex_set_idx as usize];
             if b.tex_idx != -1 {
                 (
                     self.find_bone_mut(b.id).unwrap().vertices,
@@ -1426,8 +1413,6 @@ pub struct Root {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 pub struct TextureSet {
-    #[serde(default)]
-    pub id: i32,
     pub name: String,
     #[serde(default)]
     pub textures: Vec<Texture>,

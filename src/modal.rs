@@ -169,19 +169,12 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                         if !ui.skf_button("New").clicked() {
                             return;
                         }
-                        let ids: Vec<i32> = shared
-                            .armature
-                            .texture_sets
-                            .iter()
-                            .map(|set| set.id)
-                            .collect();
-                        let id = generate_id(ids);
                         shared.armature.texture_sets.push(crate::TextureSet {
-                            id,
                             name: "New Set".to_string(),
                             textures: vec![],
                         });
-                        shared.ui.rename_id = "tex_set ".to_string() + &id.to_string();
+                        shared.ui.rename_id = "tex_set ".to_string()
+                            + &(shared.armature.texture_sets.len() - 1).to_string();
                     });
                     let size = ui.available_size();
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
@@ -194,9 +187,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                                 };
                             }
 
-                            if shared.ui.rename_id
-                                == "tex_set ".to_string() + &set!().id.to_string()
-                            {
+                            if shared.ui.rename_id == "tex_set ".to_string() + &s.to_string() {
                                 let (edited, value, _) = ui.text_input(
                                     shared.ui.rename_id.clone(),
                                     shared,
@@ -210,29 +201,28 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                                 );
                                 if edited {
                                     set!().name = value;
-                                    shared.ui.selected_tex_set_id = set!().id;
+                                    shared.ui.selected_tex_set_idx = s as i32;
                                 }
                                 continue;
                             }
 
                             let mut col = shared.config.ui_colors.light_accent;
-                            if set!().id == shared.ui.selected_tex_set_id {
+                            if s as i32 == shared.ui.selected_tex_set_idx {
                                 col += crate::Color::new(20, 20, 20, 0);
                             }
                             let button =
                                 ui.add(egui::Button::new(set!().name.to_string()).fill(col));
                             if button.clicked() {
-                                if shared.ui.selected_tex_set_id == set!().id {
-                                    shared.ui.rename_id =
-                                        "tex_set ".to_string() + &set!().id.to_string()
+                                if shared.ui.selected_tex_set_idx == s as i32 {
+                                    shared.ui.rename_id = "tex_set ".to_string() + &s.to_string()
                                 }
-                                shared.ui.selected_tex_set_id = set!().id;
+                                shared.ui.selected_tex_set_idx = s as i32;
                             }
                         }
                     });
                 });
 
-                if shared.ui.selected_tex_set_id == -1 {
+                if shared.ui.selected_tex_set_idx == -1 {
                     return;
                 }
 
@@ -295,12 +285,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
     let mut idx: i32 = -1;
     macro_rules! set {
         () => {
-            shared
-                .armature
-                .texture_sets
-                .iter()
-                .find(|set| set.id == shared.ui.selected_tex_set_id)
-                .unwrap()
+            shared.armature.texture_sets[shared.ui.selected_tex_set_idx as usize]
         };
     }
 
@@ -349,7 +334,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 shared.armature.set_bone_tex(
                     shared.selected_bone().unwrap().id,
                     i,
-                    shared.ui.selected_tex_set_id,
+                    shared.ui.selected_tex_set_idx,
                     anim_id,
                     shared.ui.anim.selected_frame,
                 );
@@ -507,7 +492,7 @@ pub fn image_viewer(shared: &mut Shared, ui: &mut egui::Ui) {
                 shared.armature.set_bone_tex(
                     shared.selected_bone().unwrap().id,
                     i,
-                    shared.ui.selected_tex_set_id,
+                    shared.ui.selected_tex_set_idx,
                     anim_id,
                     shared.ui.anim.selected_frame,
                 );

@@ -155,17 +155,14 @@ pub fn read_image_loaders(
         });
     }
 
-    let set = shared
-        .armature
-        .texture_sets
-        .iter()
-        .find(|set| set.id == shared.ui.selected_tex_set_id)
-        .unwrap();
-    let tex_idx = set.textures.len() - 1;
+    let tex_idx = shared.armature.texture_sets[shared.ui.selected_tex_set_idx as usize]
+        .textures
+        .len()
+        - 1;
     shared.armature.set_bone_tex(
         shared.selected_bone().unwrap().id,
         tex_idx,
-        set.id,
+        shared.ui.selected_tex_set_idx,
         anim_id,
         shared.ui.anim.selected_frame,
     );
@@ -219,9 +216,7 @@ pub fn read_psd(
         }
     }
 
-    let ids = shared.armature.texture_sets.iter().map(|a| a.id).collect();
     shared.armature.texture_sets.push(TextureSet {
-        id: generate_id(ids),
         name: "Default".to_string(),
         textures: vec![],
     });
@@ -316,7 +311,7 @@ pub fn read_psd(
         shared.armature.set_bone_tex(
             new_bone_id,
             tex_idx,
-            shared.ui.selected_tex_set_id,
+            shared.ui.selected_tex_set_idx,
             shared.ui.anim.selected,
             shared.ui.anim.selected_frame,
         );
@@ -401,11 +396,7 @@ pub fn add_texture(
         bind_group_layout,
     );
 
-    armature
-        .texture_sets
-        .iter_mut()
-        .find(|set| set.id == ui.selected_tex_set_id)
-        .unwrap()
+    armature.texture_sets[ui.selected_tex_set_idx as usize]
         .textures
         .push(crate::Texture {
             offset: Vec2::ZERO,
