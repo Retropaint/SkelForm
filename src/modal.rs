@@ -153,29 +153,43 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
             ui.add_space(5.);
 
-            let tex_idx = -1;
+            let height = ui.available_height();
+
+            let tex_idx: i32 = -1;
             ui.horizontal(|ui| {
+                ui.set_height(height);
                 let frame = egui::Frame::default().inner_margin(5.);
+                let modal_width = ui.max_rect().width();
+                let height = ui.available_height();
                 ui.vertical(|ui| {
+                    ui.set_height(height);
+                    ui.set_width((modal_width / 2.) - 20.);
                     ui.horizontal(|ui| {
                         ui.label("Sets");
-                        if ui.skf_button("New").clicked() {
-                            let ids: Vec<i32> = shared
-                                .armature
-                                .texture_sets
-                                .iter()
-                                .map(|set| set.id)
-                                .collect();
-                            let id = generate_id(ids);
-                            shared.armature.texture_sets.push(crate::TextureSet {
-                                id,
-                                name: "New Set".to_string(),
-                                textures: vec![],
-                            });
-                            shared.ui.rename_id = "tex_set ".to_string() + &id.to_string();
+                        if !ui.skf_button("New").clicked() {
+                            return;
                         }
+                        let ids: Vec<i32> = shared
+                            .armature
+                            .texture_sets
+                            .iter()
+                            .map(|set| set.id)
+                            .collect();
+                        let id = generate_id(ids);
+                        shared.armature.texture_sets.push(crate::TextureSet {
+                            id,
+                            name: "New Set".to_string(),
+                            textures: vec![],
+                        });
+                        shared.ui.rename_id = "tex_set ".to_string() + &id.to_string();
                     });
+                    if shared.armature.texture_sets.len() == 0 {
+                        return;
+                    }
+                    let size = ui.available_size();
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                        ui.set_width(size.x);
+                        ui.set_height(size.y - 10.);
                         for s in 0..shared.armature.texture_sets.len() {
                             macro_rules! set {
                                 () => {
@@ -226,17 +240,32 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
                 let frame = egui::Frame::default().inner_margin(5.);
                 ui.vertical(|ui| {
+                    ui.set_width((modal_width / 2.) - 20.);
                     ui.horizontal(|ui| {
                         ui.label("Textures");
-                        if ui.skf_button("Import").clicked() {
-                            #[cfg(not(target_arch = "wasm32"))]
-                            bone_panel::open_file_dialog(shared.temp_path.img.clone());
-
-                            #[cfg(target_arch = "wasm32")]
-                            crate::toggleElement(true, "image-dialog".to_string());
+                        if !ui.skf_button("Import").clicked() {
+                            return;
                         }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        bone_panel::open_file_dialog(shared.temp_path.img.clone());
+                        #[cfg(target_arch = "wasm32")]
+                        crate::toggleElement(true, "image-dialog".to_string());
                     });
+                    if shared
+                        .armature
+                        .texture_sets
+                        .iter()
+                        .find(|set| set.id == shared.ui.selected_tex_set_id)
+                        .unwrap()
+                        .textures
+                        .len()
+                        == 0
+                    {
+                        return;
+                    }
+                    let available_width = ui.available_width();
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                        ui.set_width(available_width);
                         draw_tex_buttons(shared, ui);
                     });
                 });
@@ -244,12 +273,12 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 // image_viewer(shared, ui);
             });
 
-            ui.add_space(50.);
+            // ui.add_space(50.);
 
             let labels = 2;
             let label_heights = (20 * labels) as f32;
             let label_gaps = (2 * labels) as f32;
-            ui.add_space(ui.available_height() - label_heights + label_gaps);
+            // ui.add_space(ui.available_height() - label_heights + label_gaps);
 
             if tex_idx == -1 {
                 return;
