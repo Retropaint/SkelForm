@@ -984,7 +984,7 @@ impl Armature {
             let kf = self.animations[selected_anim].check_if_in_keyframe(
                 bone_id as i32,
                 selected_frame,
-                AnimElement::Texture,
+                AnimElement::TextureIndex,
                 -1,
             );
             self.animations[selected_anim].keyframes[kf].value = new_tex_idx as f32;
@@ -993,7 +993,7 @@ impl Armature {
             let first = self.animations[selected_anim].check_if_in_keyframe(
                 bone_id as i32,
                 0,
-                AnimElement::Texture,
+                AnimElement::TextureIndex,
                 -1,
             );
             self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
@@ -1119,7 +1119,7 @@ impl Armature {
             AnimElement::Zindex        => { edit!(bone_mut.zindex);  },
             AnimElement::VertPositionX => { /* do nothing */ },
             AnimElement::VertPositionY => { /* do nothing */ },
-            AnimElement::Texture       => { /* handled in set_bone_tex() */ },
+            AnimElement::TextureIndex       => { /* handled in set_bone_tex() */ },
         };
 
         if anim_id == usize::MAX {
@@ -1215,23 +1215,28 @@ impl Armature {
             // iterable anim interps
             #[rustfmt::skip]
             {
-                b.pos.x   += interpolate!(AnimElement::PositionX,  0., -1);
-                b.pos.y   += interpolate!(AnimElement::PositionY,  0., -1);
-                b.rot     += interpolate!(AnimElement::Rotation,   0., -1);
-                b.scale.x *= interpolate!(AnimElement::ScaleX,     1., -1);
-                b.scale.y *= interpolate!(AnimElement::ScaleY,     1., -1);
-                b.pivot.x += interpolate!(AnimElement::PivotX,     0., -1);
-                b.pivot.y += interpolate!(AnimElement::PivotY,     0., -1);
-                b.zindex  =  prev_frame!( AnimElement::Zindex,     0.);
-                b.tex_idx =  prev_frame!( AnimElement::Texture,    b.tex_idx as f32) as i32;
+                b.pos.x   += interpolate!(AnimElement::PositionX,    0., -1);
+                b.pos.y   += interpolate!(AnimElement::PositionY,    0., -1);
+                b.rot     += interpolate!(AnimElement::Rotation,     0., -1);
+                b.scale.x *= interpolate!(AnimElement::ScaleX,       1., -1);
+                b.scale.y *= interpolate!(AnimElement::ScaleY,       1., -1);
+                b.pivot.x += interpolate!(AnimElement::PivotX,       0., -1);
+                b.pivot.y += interpolate!(AnimElement::PivotY,       0., -1);
+                b.zindex  =  prev_frame!( AnimElement::Zindex,       0.);
+                b.tex_idx =  prev_frame!( AnimElement::TextureIndex, b.tex_idx as f32) as i32;
             };
 
             // restructure bone's verts to match texture
+            let set = self
+                .texture_sets
+                .iter()
+                .find(|set| set.id == self.find_bone(b.id).unwrap().tex_set_id)
+                .unwrap();
             if b.tex_idx != -1 {
                 (
                     self.find_bone_mut(b.id).unwrap().vertices,
                     self.find_bone_mut(b.id).unwrap().indices,
-                ) = renderer::create_tex_rect(&self.textures[b.tex_idx as usize].size);
+                ) = renderer::create_tex_rect(&set.textures[b.tex_idx as usize].size);
             }
 
             for v in 0..b.vertices.len() {
@@ -1348,6 +1353,7 @@ impl Armature {
     }
 
     pub fn is_bone_hidden(&self, bone_id: i32, selected_layer: usize) -> bool {
+        return false;
         if self.find_bone(bone_id) == None {
             return false;
         }
@@ -1568,7 +1574,7 @@ pub enum AnimElement {
     Zindex,
     VertPositionX,
     VertPositionY,
-    Texture,
+    TextureIndex,
 }
 
 // iterable anim change icons IDs
