@@ -35,9 +35,25 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut bones = shared.armature.bones.clone();
     if shared.ui.is_animating() {
-        bones = shared
-            .armature
-            .animate(shared.ui.anim.selected, shared.ui.anim.selected_frame);
+        let mut playing = false;
+        for a in 0..shared.armature.animations.len() {
+            let anim = &mut shared.armature.animations[a];
+            if anim.elapsed == None {
+                continue;
+            }
+            playing = true;
+            let frame = anim.set_frame();
+            bones = shared
+                .armature
+                .animate(a, frame, Some(&bones));
+        }
+        if !playing && shared.ui.anim.selected_frame != -1 {
+            bones = shared.armature.animate(
+                shared.ui.anim.selected,
+                shared.ui.anim.selected_frame,
+                None,
+            );
+        }
     }
 
     // For rendering purposes, bones need to have many of their attributes manipulated.

@@ -14,30 +14,6 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
     if shared.input.mouse_left == -1 {
         shared.ui.anim.dragged_keyframe.frame = -1;
     }
-    if shared.ui.anim.playing {
-        let mut elapsed = shared.ui.anim.elapsed.unwrap().elapsed().as_millis() as f32 / 1e3 as f32;
-        let frametime = 1. / shared.selected_animation().unwrap().fps as f32;
-
-        // Offset elapsed time with the selected frame.
-        // This only applies for the first play cycle, since selected frame
-        // is reset on the next one.
-        elapsed += shared.ui.anim.played_frame as f32 * frametime;
-
-        shared.ui.anim.selected_frame = (elapsed / frametime) as i32;
-        if shared.ui.anim.selected_frame >= shared.last_keyframe().unwrap().frame {
-            if shared.recording {
-                if shared.ui.anim.loops > 0 {
-                    shared.ui.anim.loops -= 1;
-                } else {
-                    shared.ui.anim.playing = false;
-                    shared.recording = false;
-                }
-            } else {
-                shared.ui.anim.elapsed = Some(Instant::now());
-                shared.ui.anim.played_frame = 0;
-            }
-        }
-    }
 
     // navigating frames with kb input
     if shared.ui.rename_id == "" {
@@ -516,7 +492,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             );
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
-                let play_str = if shared.ui.anim.playing {
+                let play_str = if shared.selected_animation().unwrap().elapsed != None {
                     "Pause"
                 } else {
                     "Play"
@@ -536,15 +512,20 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 ui::draw_tutorial_rect(TutorialStep::PlayAnim, button.rect, shared, ui);
                 ui::draw_tutorial_rect(TutorialStep::StopAnim, button.rect, shared, ui);
 
-                let pressed = ui.input(|i| i.key_pressed(egui::Key::Space));
-                if !(button.clicked() || pressed)
-                    || shared.selected_animation().unwrap().keyframes.len() == 0
-                {
+                let mut pressed = ui.input(|i| i.key_pressed(egui::Key::Space));
+                if button.clicked() {
+                    pressed = true;
+                }
+                if !pressed || shared.selected_animation().unwrap().keyframes.len() == 0 {
                     return;
                 }
 
-                shared.ui.anim.playing = !shared.ui.anim.playing;
-                shared.ui.anim.elapsed = Some(Instant::now());
+                let anim = shared.selected_animation_mut().unwrap();
+                anim.elapsed = if anim.elapsed == None {
+                    Some(Instant::now())
+                } else {
+                    None
+                };
                 shared.ui.anim.played_frame = shared.ui.anim.selected_frame;
                 if shared.ui.tutorial_step_is(TutorialStep::PlayAnim) {
                     shared
@@ -635,17 +616,24 @@ fn draw_frame_lines(
         let mut color: egui::Color32 = shared.config.ui_colors.frameline.into();
         if shared.last_keyframe() != None && i > shared.last_keyframe().unwrap().frame {
             color = shared.config.ui_colors.dark_accent.into();
-            color = color + egui::Color32::from_rgb(5, 5, 5);
+        }
+        let anim = &mut shared.armature.animations[shared.ui.anim.selected];
+        if i == anim.get_frame() && anim.elapsed != None {
+            color = color + egui::Color32::from_rgb(60, 60, 60);
         }
 
         let above_scrollbar = cursor.y < ui.min_rect().height() - 13.;
         let in_ui = cursor.y > 0.;
-        let able =
-            !shared.ui.has_state(UiState::Modal) && !shared.ui.has_state(UiState::SettingsModal);
+        let in_modal =
+            shared.ui.has_state(UiState::Modal) || shared.ui.has_state(UiState::SettingsModal);
 
         if shared.ui.anim.selected_frame == i {
             color = egui::Color32::WHITE;
-        } else if able && in_ui && cursor.x < x + hitbox && cursor.x > x - hitbox && above_scrollbar
+        } else if !in_modal
+            && in_ui
+            && cursor.x < x + hitbox
+            && cursor.x > x - hitbox
+            && above_scrollbar
         {
             shared.cursor_icon = egui::CursorIcon::PointingHand;
             color = egui::Color32::WHITE;
