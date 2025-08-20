@@ -13,75 +13,75 @@ use crate::shared::*;
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     let min_default_size = 175.;
     let panel_id = "Armature";
+    let side_panel = egui::SidePanel::left(panel_id)
+        .default_width(min_default_size)
+        .min_width(min_default_size)
+        .max_width(min_default_size + 100.)
+        .resizable(true);
     ui::draw_resizable_panel(
         panel_id,
-        egui::SidePanel::left(panel_id)
-            .default_width(min_default_size)
-            .min_width(min_default_size)
-            .max_width(min_default_size + 100.)
-            .resizable(true)
-            .show(egui_ctx, |ui| {
-                ui.gradient(
-                    ui.ctx().screen_rect(),
-                    Color32::TRANSPARENT,
-                    shared.config.ui_colors.gradient.into(),
-                );
-                ui.horizontal(|ui| {
-                    ui.heading("Armature");
-                });
+        side_panel.resizable(true).show(egui_ctx, |ui| {
+            ui.gradient(
+                ui.ctx().screen_rect(),
+                Color32::TRANSPARENT,
+                shared.config.ui_colors.gradient.into(),
+            );
+            ui.horizontal(|ui| {
+                ui.heading("Armature");
+            });
 
-                ui.separator();
+            ui.separator();
 
-                ui.horizontal(|ui| {
-                    let button = ui.skf_button("New Bone");
-                    ui::draw_tutorial_rect(TutorialStep::NewBone, button.rect, shared, ui);
-                    if button.clicked() {
-                        let idx: usize;
+            ui.horizontal(|ui| {
+                let button = ui.skf_button("New Bone");
+                ui::draw_tutorial_rect(TutorialStep::NewBone, button.rect, shared, ui);
+                if button.clicked() {
+                    let idx: usize;
 
-                        shared.undo_actions.push(Action {
-                            action: ActionEnum::Bones,
-                            bones: shared.armature.bones.clone(),
-                            ..Default::default()
-                        });
-
-                        if shared.selected_bone() == None {
-                            (_, idx) = shared.armature.new_bone(-1);
-                        } else {
-                            let id = shared.selected_bone().unwrap().id;
-                            (_, idx) = shared.armature.new_bone(id);
-                        }
-
-                        // immediately select new bone upon creating it
-                        shared.ui.select_bone(idx, &shared.armature);
-
-                        if shared.armature.bones.len() > 1 {
-                            shared.ui.set_tutorial_step(TutorialStep::ReselectBone);
-                        } else {
-                            shared
-                                .ui
-                                .start_next_tutorial_step(TutorialStep::GetImage, &shared.armature);
-                        }
-                    }
-                });
-
-                shared.ui.edit_bar_pos.x = ui.min_rect().right();
-
-                if shared.armature.bones.len() == 0 {
-                    return;
-                }
-
-                ui.add_space(3.);
-
-                egui::ScrollArea::both()
-                    .max_height(ui.available_height() - 10.)
-                    .show(ui, |ui| {
-                        // hierarchy
-                        let frame = Frame::default().inner_margin(5.);
-                        ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-                            draw_hierarchy(shared, ui);
-                        });
+                    shared.undo_actions.push(Action {
+                        action: ActionEnum::Bones,
+                        bones: shared.armature.bones.clone(),
+                        ..Default::default()
                     });
-            }),
+
+                    if shared.selected_bone() == None {
+                        (_, idx) = shared.armature.new_bone(-1);
+                    } else {
+                        let id = shared.selected_bone().unwrap().id;
+                        (_, idx) = shared.armature.new_bone(id);
+                    }
+
+                    // immediately select new bone upon creating it
+                    shared.ui.select_bone(idx, &shared.armature);
+
+                    if shared.armature.bones.len() > 1 {
+                        shared.ui.set_tutorial_step(TutorialStep::ReselectBone);
+                    } else {
+                        shared
+                            .ui
+                            .start_next_tutorial_step(TutorialStep::GetImage, &shared.armature);
+                    }
+                }
+            });
+
+            shared.ui.edit_bar_pos.x = ui.min_rect().right();
+
+            if shared.armature.bones.len() == 0 {
+                return;
+            }
+
+            ui.add_space(3.);
+
+            egui::ScrollArea::both()
+                .max_height(ui.available_height() - 10.)
+                .show(ui, |ui| {
+                    // hierarchy
+                    let frame = Frame::default().inner_margin(5.);
+                    ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                        draw_hierarchy(shared, ui);
+                    });
+                });
+        }),
         &mut shared.input.on_ui,
         &egui_ctx,
     );
