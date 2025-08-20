@@ -81,8 +81,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
 fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.heading("Animation");
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            ui.add_space(5.);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
             let button = ui.skf_button("New");
             ui::draw_tutorial_rect(TutorialStep::CreateAnim, button.rect, shared, ui);
 
@@ -138,42 +137,56 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                 };
             }
 
-            let button = ui::selection_button(&name, i == shared.ui.anim.selected, ui);
-            if button.clicked() {
-                if shared.ui.anim.selected != i {
-                    shared.ui.anim.selected = i;
-                    shared.ui.select_anim_frame(0);
-                } else {
-                    activate_renaming!();
-                }
-            }
-            if button.secondary_clicked() {
-                shared
-                    .ui
-                    .context_menu
-                    .show(ContextType::Animation, i as i32);
-            }
-
-            if shared.ui.context_menu.is(ContextType::Animation, i as i32) {
-                button.show_tooltip_ui(|ui| {
-                    if ui.clickable_label("Rename").clicked() {
+            ui.horizontal(|ui| {
+                let button = ui::selection_button(&name, i == shared.ui.anim.selected, ui);
+                if button.clicked() {
+                    if shared.ui.anim.selected != i {
+                        shared.ui.anim.selected = i;
+                        shared.ui.select_anim_frame(0);
+                    } else {
                         activate_renaming!();
-                        shared.ui.context_menu.close();
-                    };
-                    if ui.clickable_label("Delete").clicked() {
-                        shared.ui.open_polar_modal(
-                            PolarId::DeleteAnim,
-                            "Are you sure to delete this animation?",
-                        );
-
-                        // only hide the menu, as anim id is still needed for modal
-                        shared.ui.context_menu.hide = true;
                     }
-                    if ui.ui_contains_pointer() {
-                        shared.ui.context_menu.keep = true;
+                }
+                if button.secondary_clicked() {
+                    shared
+                        .ui
+                        .context_menu
+                        .show(ContextType::Animation, i as i32);
+                }
+
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                    let anim = &mut shared.armature.animations[i];
+                    let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
+                    if ui.skf_button(icon).clicked() {
+                        anim.elapsed = if anim.elapsed == None {
+                            Some(Instant::now())
+                        } else {
+                            None
+                        };
                     }
                 });
-            }
+
+                if shared.ui.context_menu.is(ContextType::Animation, i as i32) {
+                    button.show_tooltip_ui(|ui| {
+                        if ui.clickable_label("Rename").clicked() {
+                            activate_renaming!();
+                            shared.ui.context_menu.close();
+                        };
+                        if ui.clickable_label("Delete").clicked() {
+                            shared.ui.open_polar_modal(
+                                PolarId::DeleteAnim,
+                                "Are you sure to delete this animation?",
+                            );
+
+                            // only hide the menu, as anim id is still needed for modal
+                            shared.ui.context_menu.hide = true;
+                        }
+                        if ui.ui_contains_pointer() {
+                            shared.ui.context_menu.keep = true;
+                        }
+                    });
+                }
+            });
         }
     });
 }
@@ -493,7 +506,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
                 let play_str = if shared.selected_animation().unwrap().elapsed != None {
-                    "Pause"
+                    "Stop"
                 } else {
                     "Play"
                 };
