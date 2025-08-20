@@ -1501,6 +1501,10 @@ impl Animation {
     }
 
     pub fn set_frame(&mut self) -> i32 {
+        if self.elapsed == None {
+            return 0;
+        }
+
         let mut frame = self.get_frame();
 
         if frame >= self.keyframes.last().unwrap().frame {
