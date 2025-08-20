@@ -1485,7 +1485,7 @@ impl Animation {
     }
 
     pub fn get_frame(&self) -> i32 {
-        if self.elapsed == None {
+        if self.elapsed == None || self.keyframes.len() == 0 {
             return 0;
         }
 
@@ -1501,7 +1501,7 @@ impl Animation {
     }
 
     pub fn set_frame(&mut self) -> i32 {
-        if self.elapsed == None {
+        if self.elapsed == None || self.keyframes.len() == 0 {
             return 0;
         }
 

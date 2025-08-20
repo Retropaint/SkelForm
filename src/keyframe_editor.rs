@@ -156,6 +156,9 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
                     let anim = &mut shared.armature.animations[i];
+                    if anim.keyframes.len() == 0 {
+                        return;
+                    }
                     let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
                     if ui.skf_button(icon).clicked() {
                         anim.elapsed = if anim.elapsed == None {
