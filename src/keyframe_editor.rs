@@ -195,250 +195,248 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
 }
 
 fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
-    egui::Frame::new()
-        .outer_margin(egui::Margin {
-            left: 0,
-            ..Default::default()
-        })
-        .show(ui, |ui| {
-            ui.set_width(ui.available_width());
-            ui.set_height(ui.available_height());
+    let frame = egui::Frame::new().outer_margin(egui::Margin {
+        left: 0,
+        ..Default::default()
+    });
+    frame.show(ui, |ui| {
+        ui.set_width(ui.available_width());
+        ui.set_height(ui.available_height());
 
-            // track the Y of bone change labels for their diamonds
-            let mut bone_tops = BoneTops::default();
+        // track the Y of bone change labels for their diamonds
+        let mut bone_tops = BoneTops::default();
 
-            if shared.selected_animation().unwrap().keyframes.len() > 0 {
-                egui::Frame::new()
-                    .inner_margin(egui::Margin {
-                        top: 27,
-                        bottom: 27,
-                        left: 0,
-                        right: 0,
-                    })
-                    .show(ui, |ui| {
-                        ui.vertical(|ui| {
-                            draw_bones_list(ui, shared, &mut bone_tops);
-                        });
-                    });
-            }
-
-            // calculate how far apart each keyframe should visually be
-            let gap = 400.;
-            let hitbox = gap
-                / shared.ui.anim.timeline_zoom
-                / shared.selected_animation().unwrap().fps as f32
-                / 2.;
-
-            // add 1 second worth of frames after the last keyframe
-            let frames: i32;
-            if shared.last_keyframe() != None {
-                frames = shared.last_keyframe().unwrap().frame
-                    + shared.selected_animation().unwrap().fps;
-            } else {
-                frames = shared.selected_animation().unwrap().fps
-            }
-
-            let width: f32;
-            let generated_width = hitbox * frames as f32 * 2. + LINE_OFFSET;
-            if generated_width > ui.min_rect().width() {
-                width = generated_width;
-            } else {
-                width = ui.min_rect().width();
-            }
-
-            ui.vertical(|ui| {
-                // render top bar background
-                let rect = egui::Rect::from_min_size(
-                    ui.cursor().left_top(),
-                    egui::vec2(ui.available_width(), 20.),
-                );
-                ui.painter().rect_filled(
-                    rect,
-                    egui::CornerRadius::ZERO,
-                    shared.config.ui_colors.light_accent,
-                );
-
-                if shared.ui.anim.lines_x.len() > 0 {
-                    draw_top_bar(ui, shared, width, hitbox);
-                }
-
-                // The options bar has to be at the bottom, but it needs to be created first
-                // so that the remaining height can be taken up by timeline graph.
-                ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-                    draw_bottom_bar(ui, shared);
-                    draw_timeline_graph(ui, shared, width, bone_tops, hitbox);
+        if shared.selected_animation().unwrap().keyframes.len() > 0 {
+            let frame = egui::Frame::new().inner_margin(egui::Margin {
+                top: 27,
+                bottom: 27,
+                left: 0,
+                right: 0,
+            });
+            frame.show(ui, |ui| {
+                ui.vertical(|ui| {
+                    draw_bones_list(ui, shared, &mut bone_tops);
                 });
             });
+        }
+
+        // calculate how far apart each keyframe should visually be
+        let gap = 400.;
+        let hitbox = gap
+            / shared.ui.anim.timeline_zoom
+            / shared.selected_animation().unwrap().fps as f32
+            / 2.;
+
+        // add 1 second worth of frames after the last keyframe
+        let frames: i32;
+        if shared.last_keyframe() != None {
+            frames =
+                shared.last_keyframe().unwrap().frame + shared.selected_animation().unwrap().fps;
+        } else {
+            frames = shared.selected_animation().unwrap().fps
+        }
+
+        let width: f32;
+        let generated_width = hitbox * frames as f32 * 2. + LINE_OFFSET;
+        if generated_width > ui.min_rect().width() {
+            width = generated_width;
+        } else {
+            width = ui.min_rect().width();
+        }
+
+        ui.vertical(|ui| {
+            // render top bar background
+            let rect = egui::Rect::from_min_size(
+                ui.cursor().left_top(),
+                egui::vec2(ui.available_width(), 20.),
+            );
+            ui.painter().rect_filled(
+                rect,
+                egui::CornerRadius::ZERO,
+                shared.config.ui_colors.light_accent,
+            );
+
+            if shared.ui.anim.lines_x.len() > 0 {
+                draw_top_bar(ui, shared, width, hitbox);
+            }
+
+            // The options bar has to be at the bottom, but it needs to be created first
+            // so that the remaining height can be taken up by timeline graph.
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+                draw_bottom_bar(ui, shared);
+                draw_timeline_graph(ui, shared, width, bone_tops, hitbox);
+            });
         });
+    });
 }
 
 pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut BoneTops) {
-    egui::ScrollArea::vertical()
+    let scroll_area = egui::ScrollArea::vertical()
         .id_salt("bones_list")
         .vertical_scroll_offset(shared.ui.anim.timeline_offset.y)
-        .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
-        .show(ui, |ui| {
-            // sort keyframes by element & bone
-            let mut keyframes = shared.selected_animation().unwrap().keyframes.clone();
-            keyframes.sort_by(|a, b| (a.element.clone() as i32).cmp(&(b.element.clone() as i32)));
-            keyframes.sort_by(|a, b| a.bone_id.cmp(&b.bone_id));
+        .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
+    scroll_area.show(ui, |ui| {
+        // sort keyframes by element & bone
+        let mut keyframes = shared.selected_animation().unwrap().keyframes.clone();
+        keyframes.sort_by(|a, b| (a.element.clone() as i32).cmp(&(b.element.clone() as i32)));
+        keyframes.sort_by(|a, b| a.bone_id.cmp(&b.bone_id));
 
-            let mut last_bone_id = -1;
+        let mut last_bone_id = -1;
 
-            // keep track of elements, to prevent showing multiple of the same
-            let mut added_elements: Vec<AnimElement> = vec![];
+        // keep track of elements, to prevent showing multiple of the same
+        let mut added_elements: Vec<AnimElement> = vec![];
 
-            for i in 0..keyframes.len() {
-                let kf = &keyframes[i];
+        for i in 0..keyframes.len() {
+            let kf = &keyframes[i];
 
-                if last_bone_id != kf.bone_id {
-                    let label = ui
-                        .label(shared.armature.find_bone(kf.bone_id).unwrap().name.clone())
-                        .on_hover_cursor(egui::CursorIcon::PointingHand)
-                        .interact(egui::Sense::click());
-                    if label.clicked() {
-                        shared.ui.selected_bone_idx = shared
-                            .armature
-                            .bones
-                            .iter()
-                            .position(|b| b.id == kf.bone_id)
-                            .unwrap();
+            if last_bone_id != kf.bone_id {
+                let label = ui
+                    .label(shared.armature.find_bone(kf.bone_id).unwrap().name.clone())
+                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                    .interact(egui::Sense::click());
+                if label.clicked() {
+                    shared.ui.selected_bone_idx = shared
+                        .armature
+                        .bones
+                        .iter()
+                        .position(|b| b.id == kf.bone_id)
+                        .unwrap();
 
-                        shared.armature.unfold_to_bone(kf.bone_id);
-                    }
-                    last_bone_id = kf.bone_id;
-
-                    // reset element tracker, since this is a new bone
-                    added_elements = vec![];
+                    shared.armature.unfold_to_bone(kf.bone_id);
                 }
+                last_bone_id = kf.bone_id;
 
-                if added_elements.contains(&kf.element) {
-                    continue;
-                }
-
-                added_elements.push(kf.element.clone());
-                ui.horizontal(|ui| {
-                    ui.add_space(30.);
-                    let label = ui.label(kf.element.to_string());
-                    bone_tops.tops.push(BoneTop {
-                        id: kf.bone_id,
-                        element: kf.element.clone(),
-                        height: label.rect.top(),
-                        vert_id: kf.vert_id,
-                    });
-                });
+                // reset element tracker, since this is a new bone
+                added_elements = vec![];
             }
-        });
+
+            if added_elements.contains(&kf.element) {
+                continue;
+            }
+
+            added_elements.push(kf.element.clone());
+            ui.horizontal(|ui| {
+                ui.add_space(30.);
+                let label = ui.label(kf.element.to_string());
+                bone_tops.tops.push(BoneTop {
+                    id: kf.bone_id,
+                    element: kf.element.clone(),
+                    height: label.rect.top(),
+                    vert_id: kf.vert_id,
+                });
+            });
+        }
+    });
 }
 
 pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: f32) {
     let mut drew_drag = false;
-    egui::ScrollArea::horizontal()
+    let scroll_area = egui::ScrollArea::horizontal()
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
-        .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset.x, 0.))
-        .show(ui, |ui| {
-            egui::Frame::new().show(ui, |ui| {
-                ui.set_width(width);
-                ui.set_height(20.);
+        .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset.x, 0.));
+    scroll_area.show(ui, |ui| {
+        egui::Frame::new().show(ui, |ui| {
+            ui.set_width(width);
+            ui.set_height(20.);
 
-                for i in 0..shared.selected_animation().unwrap().keyframes.len() {
-                    let frame = shared.selected_animation().unwrap().keyframes[i].frame;
+            for i in 0..shared.selected_animation().unwrap().keyframes.len() {
+                let frame = shared.selected_animation().unwrap().keyframes[i].frame;
 
-                    // don't draw diamond if it's beyond the recorded lines
-                    if shared.ui.anim.lines_x.len() - 1 < frame as usize {
-                        break;
-                    }
+                // don't draw diamond if it's beyond the recorded lines
+                if shared.ui.anim.lines_x.len() - 1 < frame as usize {
+                    break;
+                }
 
-                    let pos = Vec2::new(
-                        ui.min_rect().left() + shared.ui.anim.lines_x[frame as usize] + 3.,
-                        ui.min_rect().top() + 10.,
+                let pos = Vec2::new(
+                    ui.min_rect().left() + shared.ui.anim.lines_x[frame as usize] + 3.,
+                    ui.min_rect().top() + 10.,
+                );
+
+                // create dragging area for diamond
+                let rect = egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5.));
+                let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
+
+                if response.drag_started() {
+                    shared.ui.select_anim_frame(frame);
+                }
+
+                if response.hovered() {
+                    shared.cursor_icon = egui::CursorIcon::Grab;
+                }
+
+                let cursor = shared.ui.get_cursor(ui);
+
+                if response.dragged() {
+                    shared.ui.anim.dragged_keyframe = Keyframe {
+                        frame,
+                        bone_id: -1,
+                        ..Default::default()
+                    };
+                    let color = if cursor.y < 0. {
+                        egui::Color32::RED
+                    } else {
+                        egui::Color32::WHITE
+                    };
+                    draw_diamond(
+                        &ui.ctx().debug_painter(),
+                        cursor + ui.min_rect().left_top().into(),
+                        color,
                     );
+                }
 
-                    // create dragging area for diamond
-                    let rect = egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5.));
-                    let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
+                let kf = &shared.ui.anim.dragged_keyframe;
+                if kf.frame != frame || kf.bone_id != -1 {
+                    draw_diamond(ui.painter(), pos, egui::Color32::WHITE);
+                } else if !drew_drag {
+                    draw_diamond(
+                        ui.painter(),
+                        pos,
+                        egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30),
+                    );
+                    drew_drag = true;
+                }
 
-                    if response.drag_started() {
-                        shared.ui.select_anim_frame(frame);
-                    }
+                let just_clicked = shared.input.mouse_left_prev < 10;
+                if !response.drag_stopped() || just_clicked {
+                    continue;
+                }
 
-                    if response.hovered() {
-                        shared.cursor_icon = egui::CursorIcon::Grab;
-                    }
+                add_anim_action(shared);
 
-                    let cursor = shared.ui.get_cursor(ui);
+                shared.cursor_icon = egui::CursorIcon::Grabbing;
 
-                    if response.dragged() {
-                        shared.ui.anim.dragged_keyframe = Keyframe {
-                            frame,
-                            bone_id: -1,
-                            ..Default::default()
-                        };
-                        let color = if cursor.y < 0. {
-                            egui::Color32::RED
-                        } else {
-                            egui::Color32::WHITE
-                        };
-                        draw_diamond(
-                            &ui.ctx().debug_painter(),
-                            cursor + ui.min_rect().left_top().into(),
-                            color,
-                        );
-                    }
+                // remove keyframe if dragged out
+                if cursor.y < 0. {
+                    let frame = shared.selected_animation_mut().unwrap().keyframes[i].frame;
+                    shared
+                        .selected_animation_mut()
+                        .unwrap()
+                        .remove_all_keyframes_of_frame(frame);
+                    // break loop to prevent OOB errors
+                    break;
+                }
 
-                    let kf = &shared.ui.anim.dragged_keyframe;
-                    if kf.frame != frame || kf.bone_id != -1 {
-                        draw_diamond(ui.painter(), pos, egui::Color32::WHITE);
-                    } else if !drew_drag {
-                        draw_diamond(
-                            ui.painter(),
-                            pos,
-                            egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30),
-                        );
-                        drew_drag = true;
-                    }
-
-                    let just_clicked = shared.input.mouse_left_prev < 10;
-                    if !response.drag_stopped() || just_clicked {
+                // move all keyframes under this one over
+                for j in 0..shared.ui.anim.lines_x.len() {
+                    let x = shared.ui.anim.lines_x[j];
+                    if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
                         continue;
                     }
-
-                    add_anim_action(shared);
-
-                    shared.cursor_icon = egui::CursorIcon::Grabbing;
-
-                    // remove keyframe if dragged out
-                    if cursor.y < 0. {
-                        let frame = shared.selected_animation_mut().unwrap().keyframes[i].frame;
-                        shared
-                            .selected_animation_mut()
-                            .unwrap()
-                            .remove_all_keyframes_of_frame(frame);
-                        // break loop to prevent OOB errors
-                        break;
-                    }
-
-                    // move all keyframes under this one over
-                    for j in 0..shared.ui.anim.lines_x.len() {
-                        let x = shared.ui.anim.lines_x[j];
-                        if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
-                            continue;
+                    shared
+                        .selected_animation_mut()
+                        .unwrap()
+                        .remove_all_keyframes_of_frame(j as i32);
+                    for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
+                        if kf.frame == frame as i32 {
+                            kf.frame = j as i32;
                         }
-                        shared
-                            .selected_animation_mut()
-                            .unwrap()
-                            .remove_all_keyframes_of_frame(j as i32);
-                        for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
-                            if kf.frame == frame as i32 {
-                                kf.frame = j as i32;
-                            }
-                        }
-                        shared.selected_animation_mut().unwrap().sort_keyframes();
-                        return;
                     }
+                    shared.selected_animation_mut().unwrap().sort_keyframes();
+                    return;
                 }
-            });
+            }
         });
+    });
 }
 
 pub fn draw_timeline_graph(
@@ -448,52 +446,52 @@ pub fn draw_timeline_graph(
     bone_tops: BoneTops,
     hitbox: f32,
 ) {
-    let graph = ui
-        .with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-            egui::Frame::new()
-                .fill(shared.config.ui_colors.light_accent.into())
-                .inner_margin(3)
-                .show(ui, |ui| {
-                    let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
-                        ui.set_width(width);
-                        ui.set_height(ui.available_height());
+    let frame = egui::Frame::new()
+        .fill(shared.config.ui_colors.light_accent.into())
+        .inner_margin(3);
+    let layout = egui::Layout::left_to_right(egui::Align::Center);
+    let graph = ui.with_layout(layout, |ui| {
+        frame.show(ui, |ui| {
+            let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
+                ui.set_width(width);
+                ui.set_height(ui.available_height());
 
-                        let mut cursor = shared.ui.get_cursor(ui);
-                        // keep cursor on the frame
-                        cursor.y -= shared.ui.anim.timeline_offset.y;
+                let mut cursor = shared.ui.get_cursor(ui);
+                // keep cursor on the frame
+                cursor.y -= shared.ui.anim.timeline_offset.y;
 
-                        // render darkened background after last keyframe
-                        if shared.last_keyframe() != None
-                            && (shared.last_keyframe().unwrap().frame as usize)
-                                < shared.ui.anim.lines_x.len()
-                        {
-                            let left_top_rect = egui::vec2(
-                                shared.ui.anim.lines_x
-                                    [shared.last_keyframe().unwrap().frame as usize],
-                                -3.,
-                            );
-                            let right_bottom_rect = egui::vec2(0., 999.);
+                // render darkened background after last keyframe
+                if shared.last_keyframe() != None
+                    && (shared.last_keyframe().unwrap().frame as usize)
+                        < shared.ui.anim.lines_x.len()
+                {
+                    let left_top_rect = egui::vec2(
+                        shared.ui.anim.lines_x[shared.last_keyframe().unwrap().frame as usize],
+                        -3.,
+                    );
+                    let right_bottom_rect = egui::vec2(0., 999.);
 
-                            let rect_to_fill = egui::Rect::from_min_size(
-                                ui.min_rect().left_top() + left_top_rect,
-                                ui.min_rect().size() + right_bottom_rect,
-                            );
+                    let rect_to_fill = egui::Rect::from_min_size(
+                        ui.min_rect().left_top() + left_top_rect,
+                        ui.min_rect().size() + right_bottom_rect,
+                    );
 
-                            ui.painter().rect_filled(
-                                rect_to_fill,
-                                0.,
-                                shared.config.ui_colors.dark_accent,
-                            );
-                        }
+                    ui.painter()
+                        .rect_filled(rect_to_fill, 0., shared.config.ui_colors.dark_accent);
+                }
 
-                        draw_frame_lines(ui, shared, &bone_tops, hitbox, cursor);
-                    });
-                    shared.ui.anim.timeline_offset = response.state.offset.into();
-                    shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
-                });
-        })
-        .response;
-    ui::draw_tutorial_rect(TutorialStep::SelectKeyframe, graph.rect, shared, ui);
+                draw_frame_lines(ui, shared, &bone_tops, hitbox, cursor);
+            });
+            shared.ui.anim.timeline_offset = response.state.offset.into();
+            shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
+        });
+    });
+    ui::draw_tutorial_rect(
+        TutorialStep::SelectKeyframe,
+        graph.response.rect,
+        shared,
+        ui,
+    );
 }
 
 pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
