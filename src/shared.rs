@@ -598,8 +598,8 @@ impl Ui {
             TutorialStep::CreateAnim     => check!(anim_selected,      TutorialStep::SelectKeyframe),
             TutorialStep::SelectKeyframe => check!(selected_frame,     TutorialStep::EditBoneAnim),
             TutorialStep::EditBoneAnim   => check!(has_anim,           TutorialStep::PlayAnim),
-            TutorialStep::PlayAnim       => check!(self.anim.playing,  TutorialStep::StopAnim),
-            TutorialStep::StopAnim       => check!(!self.anim.playing, TutorialStep::Finish),
+            // TutorialStep::PlayAnim       => check!(self.anim.playing,  TutorialStep::StopAnim),
+            // TutorialStep::StopAnim       => check!(!self.anim.playing, TutorialStep::Finish),
             _ => step
         };
         final_step
@@ -791,8 +791,6 @@ pub struct UiAnim {
     pub selected_frame: i32,
     pub timeline_zoom: f32,
     pub lines_x: Vec<f32>,
-    pub playing: bool,
-    pub elapsed: Option<Instant>,
 
     // the frame at which playing started
     pub played_frame: i32,
@@ -1130,8 +1128,17 @@ impl Armature {
         animate!(AnimElement::VertPositionY, pos.y);
     }
 
-    pub fn animate(&mut self, anim_idx: usize, anim_frame: i32) -> Vec<Bone> {
-        let mut bones = self.bones.clone();
+    pub fn animate(
+        &mut self,
+        anim_idx: usize,
+        anim_frame: i32,
+        og_bones: Option<&Vec<Bone>>,
+    ) -> Vec<Bone> {
+        let mut bones = if og_bones != None {
+            og_bones.unwrap().clone()
+        } else {
+            self.bones.clone()
+        };
 
         // ignore if this animation has no keyframes
         let kf_len = self.animations[anim_idx].keyframes.len();
@@ -1407,6 +1414,8 @@ pub struct Animation {
     pub fps: i32,
     #[serde(default)]
     pub keyframes: Vec<Keyframe>,
+    #[serde(skip)]
+    pub elapsed: Option<Instant>,
 }
 
 impl Animation {
@@ -1473,6 +1482,33 @@ impl Animation {
                 self.keyframes.remove(k);
             }
         }
+    }
+
+    pub fn get_frame(&self) -> i32 {
+        if self.elapsed == None {
+            return 0;
+        }
+
+        let elapsed = self.elapsed.unwrap().elapsed().as_millis() as f32 / 1e3 as f32;
+        let frametime = 1. / self.fps as f32;
+
+        // Offset elapsed time with the selected frame.
+        // This only applies for the first play cycle, since selected frame
+        // is reset on the next one.
+        // elapsed += shared.ui.anim.played_frame as f32 * frametime;
+
+        (elapsed / frametime) as i32
+    }
+
+    pub fn set_frame(&mut self) -> i32 {
+        let mut frame = self.get_frame();
+
+        if frame >= self.keyframes.last().unwrap().frame {
+            self.elapsed = Some(Instant::now());
+            frame = 0;
+        }
+
+        frame
     }
 }
 
