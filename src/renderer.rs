@@ -6,12 +6,12 @@ use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
 macro_rules! con_vert {
-    ($func:expr, $vert:expr, $bone:expr, $tex:expr, $shared:expr) => {
+    ($func:expr, $vert:expr, $bone:expr, $tex:expr, $cam_pos:expr, $cam_zoom:expr) => {
         $func(
             $vert,
             Some(&$bone),
-            &$shared.camera.pos,
-            $shared.camera.zoom,
+            &$cam_pos,
+            $cam_zoom,
             Some(&$tex),
             1.,
             1.,
@@ -43,9 +43,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             }
             playing = true;
             let frame = anim.set_frame();
-            bones = shared
-                .armature
-                .animate(a, frame, Some(&bones));
+            bones = shared.armature.animate(a, frame, Some(&bones));
         }
         if !playing && shared.ui.anim.selected_frame != -1 {
             bones = shared.armature.animate(
@@ -107,7 +105,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 *vert,
                 temp_bones[b],
                 set.textures[temp_bones[b].tex_idx as usize],
-                shared
+                shared.camera.pos,
+                shared.camera.zoom
             );
             new_vert.pos.x /= shared.window.x / shared.window.y;
             world_verts.push(new_vert);
@@ -236,7 +235,14 @@ fn draw_hover_triangle(
         pos: utils::screen_to_world_space(shared.input.mouse, shared.window),
         ..Default::default()
     };
-    let mut mouse_vert = con_vert!(world_to_raw_vert, mouse_world_vert, bone!(), tex, shared);
+    let mut mouse_vert = con_vert!(
+        world_to_raw_vert,
+        mouse_world_vert,
+        bone!(),
+        tex,
+        shared.camera.pos,
+        shared.camera.zoom
+    );
     mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
     // get the 2 closest verts to the mouse
@@ -512,7 +518,8 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
         bone.vertices[vert_idx],
         bone,
         shared.armature.texture_sets[bone.tex_set_idx as usize].textures[bone.tex_idx as usize],
-        shared
+        shared.camera.pos,
+        shared.camera.zoom
     );
 
     // now that it's in world coords, it can follow the mouse
@@ -524,7 +531,8 @@ pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
         world_vert,
         bone,
         shared.armature.texture_sets[bone.tex_set_idx as usize].textures[bone.tex_idx as usize],
-        shared
+        shared.camera.pos,
+        shared.camera.zoom
     )
     .pos;
 
