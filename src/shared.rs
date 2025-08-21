@@ -1358,6 +1358,10 @@ impl Armature {
     }
 
     pub fn is_bone_hidden(&self, bone_id: i32) -> bool {
+        if self.find_bone(bone_id) == None {
+            return false;
+        }
+
         if self.find_bone(bone_id).unwrap().hidden {
             return true;
         }

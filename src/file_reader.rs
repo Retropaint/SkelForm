@@ -148,7 +148,7 @@ pub fn read_image_loaders(
             bones: vec![shared.selected_bone().unwrap().clone()],
             ..Default::default()
         });
-    } else if shared.ui.is_animating() {
+    } else {
         shared.undo_actions.push(Action {
             action: ActionEnum::Animation,
             id: shared.selected_animation().unwrap().id,
