@@ -68,6 +68,8 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
                 ..Default::default()
             });
 
+            shared.ui.selected_bone_idx = usize::MAX;
+
             if shared.armature.find_bone(shared.ui.context_menu.id) == None {
                 return;
             }
