@@ -379,6 +379,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 break;
             } else {
                 let mut anim_id = shared.ui.anim.selected;
+                shared.ui.hovering_tex = -1;
                 if !shared.ui.is_animating() && shared.selected_bone() != None {
                     anim_id = usize::MAX;
                     shared.undo_actions.push(Action {
