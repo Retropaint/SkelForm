@@ -21,6 +21,10 @@ macro_rules! con_vert {
 
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
+    if shared.generic_bindgroup != None {
+        draw_gridline(render_pass, device, shared);
+    }
+
     #[cfg(target_arch = "wasm32")]
     loaded();
 
@@ -54,18 +58,79 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
+    // fabrik
+    let length = 150.;
+    // forward-reaching
+    let target = shared.armature.bones.last().unwrap().pos;
+    let end = shared
+        .armature
+        .bones
+        .iter_mut()
+        .find(|bone| bone.joint_effector == JointEffector::End)
+        .unwrap();
+    end.pos = target;
+    let mut next_pos: Vec2 = end.pos;
+    for b in (0..shared.armature.bones.len()).rev() {
+        if shared.armature.bones[b].joint_effector == JointEffector::None
+            || shared.armature.bones[b].joint_effector == JointEffector::End
+        {
+            continue;
+        }
+
+        let dir = next_pos - shared.armature.bones[b].pos;
+        shared.armature.bones[b].pos = next_pos - (dir.normalize() * length);
+        next_pos = shared.armature.bones[b].pos;
+    }
+
+    let start = shared
+        .armature
+        .bones
+        .iter_mut()
+        .find(|bone| bone.joint_effector == JointEffector::Start)
+        .unwrap();
+    start.pos = Vec2::new(0., 0.);
+    let mut prev_pos: Vec2 = start.pos;
+    let mut first_dir: Option<Vec2> = None;
+    for bone in &mut shared.armature.bones {
+        if bone.joint_effector == JointEffector::None || bone.joint_effector == JointEffector::Start
+        {
+            continue;
+        }
+
+        let dir = prev_pos - bone.pos;
+        bone.pos = prev_pos - (dir.normalize() * length);
+        bone.rot = dir.y.atan2(dir.x) + (0. * 3.14 / 180.);
+        prev_pos = bone.pos;
+    }
+
+    let mut tip_pos = shared
+        .armature
+        .bones
+        .iter_mut()
+        .find(|bone| bone.joint_effector == JointEffector::End)
+        .unwrap()
+        .pos;
+    for b in (0..shared.armature.bones.len()).rev() {
+        if shared.armature.bones[b].joint_effector == JointEffector::None
+            || shared.armature.bones[b].joint_effector == JointEffector::End
+        {
+            continue;
+        }
+
+        let dir = tip_pos - shared.armature.bones[b].pos;
+        shared.armature.bones[b].rot = dir.y.atan2(dir.x);
+        tip_pos = shared.armature.bones[b].pos;
+    }
+
     // For rendering purposes, bones need to have many of their attributes manipulated.
     // This is easier to do with a separate copy of them.
-    let mut temp_bones: Vec<Bone> = vec![];
-    for b in &mut bones {
-        temp_bones.push(b.clone());
-    }
-
-    if shared.generic_bindgroup != None {
-        draw_gridline(render_pass, device, shared);
-    }
+    let mut temp_bones: Vec<Bone> = bones.clone();
 
     for i in 0..temp_bones.len() {
+        if temp_bones[i].joint_effector != JointEffector::None {
+            continue;
+        }
+
         let mut parent: Option<Bone> = None;
         for b in &temp_bones {
             if b.id == temp_bones[i].parent_id {
@@ -75,7 +140,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         if parent != None {
-            temp_bones[i] = inherit_from_parent(temp_bones[i].clone(), parent.as_ref().unwrap());
+            inherit_from_parent(&mut temp_bones[i], parent.as_ref().unwrap());
         }
     }
 
@@ -86,8 +151,38 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut selected_bone_world_verts: Vec<Vertex> = vec![];
 
+    let colors = vec![
+        VertexColor::new(0., 255., 0., 1.),
+        VertexColor::new(255., 0., 0., 1.),
+        VertexColor::new(0., 0., 255., 1.),
+        VertexColor::new(0., 255., 255., 1.),
+        VertexColor::new(0., 0., 0., 0.),
+        VertexColor::new(0., 0., 0., 0.),
+        VertexColor::new(0., 0., 0., 0.),
+        VertexColor::new(0., 0., 0., 0.),
+        VertexColor::new(0., 0., 0., 0.),
+        VertexColor::new(0., 0., 0., 0.),
+        VertexColor::new(0., 0., 0., 0.),
+        VertexColor::new(0., 0., 0., 0.),
+        VertexColor::new(0., 0., 0., 0.),
+        VertexColor::new(0., 0., 0., 0.),
+        VertexColor::new(0., 0., 0., 0.),
+        VertexColor::new(0., 0., 0., 0.),
+        VertexColor::new(0., 0., 0., 0.),
+    ];
+
     // draw bone
     for b in 0..temp_bones.len() {
+        draw_point(
+            &Vec2::ZERO,
+            &shared,
+            render_pass,
+            device,
+            &temp_bones[b],
+            colors[b],
+            shared.camera.pos,
+            0.,
+        );
         if temp_bones[b].tex_set_idx == -1 {
             continue;
         }
@@ -126,19 +221,30 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             hovering_vert =
                 bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
         }
-    }
 
-    if shared.selected_bone() != None {
         draw_point(
             &Vec2::ZERO,
             &shared,
             render_pass,
             device,
-            &find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap(),
+            &temp_bones[b],
             VertexColor::new(0., 255., 0., 0.5),
             shared.camera.pos,
             0.,
         );
+    }
+
+    if shared.selected_bone() != None {
+        // draw_point(
+        //     &Vec2::ZERO,
+        //     &shared,
+        //     render_pass,
+        //     device,
+        //     &find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap(),
+        //     VertexColor::new(0., 255., 0., 0.5),
+        //     shared.camera.pos,
+        //     0.,
+        // );
     }
 
     if shared.input.mouse_left == -1 {
@@ -195,6 +301,49 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap();
         edit_bone(shared, bone, &temp_bones);
     }
+}
+
+// https://rodolphe-vaillant.fr/entry/114/cyclic-coordonate-descent-inverse-kynematic-ccd-ik
+pub fn inverse_kinematics(og_bones: &Vec<Bone>, bones: &mut Vec<Bone>) {
+    let mut end = Vec2::new(0., 0.);
+    let target = bones.last().unwrap().pos;
+    for b in (0..bones.len()).rev() {
+        macro_rules! bone {
+            () => {
+                bones[b]
+            };
+        }
+
+        if bone!().joint_effector == JointEffector::None {
+            continue;
+        }
+
+        if bone!().joint_effector == JointEffector::End {
+            end = bone!().pos;
+        }
+
+        if end == Vec2::new(0., 0.) {
+            break;
+        }
+
+        let ei = end - bone!().pos;
+        let ti = target - bone!().pos;
+
+        let angle = ei.y.atan2(ei.x) - ti.y.atan2(ti.x);
+        bone!().rot = angle;
+    }
+}
+
+pub fn ik_bone(bone: &Bone, target: Vec2, end: Vec2) -> f32 {
+    if bone.joint_effector == JointEffector::None {
+        return bone.rot;
+    }
+
+    let ei = end - bone.pos;
+    let ti = target - bone.pos;
+
+    let angle = ei.y.atan2(ei.x) - ti.y.atan2(ti.x);
+    angle
 }
 
 fn get_distance(a: Vec2, b: Vec2) -> f32 {
@@ -407,7 +556,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
     };
 }
 
-pub fn inherit_from_parent(mut child: Bone, parent: &Bone) -> Bone {
+pub fn inherit_from_parent(child: &mut Bone, parent: &Bone) {
     child.rot += parent.rot;
     child.scale *= parent.scale;
 
@@ -419,8 +568,6 @@ pub fn inherit_from_parent(mut child: Bone, parent: &Bone) -> Bone {
 
     // inherit position from parent
     child.pos += parent.pos;
-
-    child
 }
 
 pub fn draw_bone(

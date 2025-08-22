@@ -66,6 +66,15 @@ impl Vec2 {
     pub const fn new(x: f32, y: f32) -> Vec2 {
         Vec2 { x, y }
     }
+
+    pub fn mag(&self) -> f32 {
+        (self.x * self.x + self.y * self.y).sqrt()
+    }
+
+    pub fn normalize(&self) -> Vec2 {
+        let mag = self.mag();
+        Vec2::new(self.x / mag, self.y / mag)
+    }
 }
 
 impl MulAssign<f32> for Vec2 {
@@ -805,6 +814,18 @@ pub struct UiAnim {
     pub bottom_bar_top: f32,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq, Debug)]
+pub enum JointEffector {
+    #[default]
+    None,
+    Start,
+    Middle,
+    End,
+    Tip,
+}
+
+enum_string!(JointEffector);
+
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 pub struct Bone {
     #[serde(default)]
@@ -838,6 +859,8 @@ pub struct Bone {
     pub pivot: Vec2,
     #[serde(default)]
     pub zindex: f32,
+    #[serde(default)]
+    pub joint_effector: JointEffector,
 
     #[serde(default)]
     pub hidden: bool,
