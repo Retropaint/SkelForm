@@ -274,6 +274,22 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             input!(bone.zindex, "zindex", &AnimElement::Zindex, 1., ui, "");
         });
     });
+    ui.horizontal(|ui| {
+        ui.label("Joint Effector: ");
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            egui::ComboBox::new("joint_eff", "")
+                .selected_text(bone.joint_effector.to_string())
+                .show_ui(ui, |ui| {
+                    let bone = &mut shared.selected_bone_mut().unwrap().joint_effector;
+                    ui.selectable_value(bone, JointEffector::None, "None");
+                    ui.selectable_value(bone, JointEffector::Start, "Start");
+                    ui.selectable_value(bone, JointEffector::Middle, "Middle");
+                    ui.selectable_value(bone, JointEffector::End, "End");
+                    ui.selectable_value(bone, JointEffector::Tip, "Tip");
+                })
+                .response;
+        });
+    });
 
     if bone.vertices.len() == 0 {
         return;
