@@ -821,7 +821,6 @@ pub enum JointEffector {
     Start,
     Middle,
     End,
-    Tip,
 }
 
 enum_string!(JointEffector);

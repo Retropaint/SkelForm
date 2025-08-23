@@ -58,69 +58,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    // fabrik
-    let length = 150.;
-    // forward-reaching
-    let target = shared.armature.bones.last().unwrap().pos;
-    let end = shared
-        .armature
-        .bones
-        .iter_mut()
-        .find(|bone| bone.joint_effector == JointEffector::End)
-        .unwrap();
-    end.pos = target;
-    let mut next_pos: Vec2 = end.pos;
-    for b in (0..shared.armature.bones.len()).rev() {
-        if shared.armature.bones[b].joint_effector == JointEffector::None
-            || shared.armature.bones[b].joint_effector == JointEffector::End
-        {
-            continue;
-        }
-
-        let dir = next_pos - shared.armature.bones[b].pos;
-        shared.armature.bones[b].pos = next_pos - (dir.normalize() * length);
-        next_pos = shared.armature.bones[b].pos;
-    }
-
-    let start = shared
-        .armature
-        .bones
-        .iter_mut()
-        .find(|bone| bone.joint_effector == JointEffector::Start)
-        .unwrap();
-    start.pos = Vec2::new(0., 0.);
-    let mut prev_pos: Vec2 = start.pos;
-    let mut first_dir: Option<Vec2> = None;
-    for bone in &mut shared.armature.bones {
-        if bone.joint_effector == JointEffector::None || bone.joint_effector == JointEffector::Start
-        {
-            continue;
-        }
-
-        let dir = prev_pos - bone.pos;
-        bone.pos = prev_pos - (dir.normalize() * length);
-        bone.rot = dir.y.atan2(dir.x) + (0. * 3.14 / 180.);
-        prev_pos = bone.pos;
-    }
-
-    let mut tip_pos = shared
-        .armature
-        .bones
-        .iter_mut()
-        .find(|bone| bone.joint_effector == JointEffector::End)
-        .unwrap()
-        .pos;
-    for b in (0..shared.armature.bones.len()).rev() {
-        if shared.armature.bones[b].joint_effector == JointEffector::None
-            || shared.armature.bones[b].joint_effector == JointEffector::End
-        {
-            continue;
-        }
-
-        let dir = tip_pos - shared.armature.bones[b].pos;
-        shared.armature.bones[b].rot = dir.y.atan2(dir.x);
-        tip_pos = shared.armature.bones[b].pos;
-    }
+    inverse_kinematics(&mut shared.armature.bones);
 
     // For rendering purposes, bones need to have many of their attributes manipulated.
     // This is easier to do with a separate copy of them.
@@ -303,34 +241,85 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 }
 
-// https://rodolphe-vaillant.fr/entry/114/cyclic-coordonate-descent-inverse-kynematic-ccd-ik
-pub fn inverse_kinematics(og_bones: &Vec<Bone>, bones: &mut Vec<Bone>) {
-    let mut end = Vec2::new(0., 0.);
-    let target = bones.last().unwrap().pos;
-    for b in (0..bones.len()).rev() {
-        macro_rules! bone {
-            () => {
-                bones[b]
-            };
-        }
+pub fn inverse_kinematics(bones: &mut Vec<Bone>) {
+    let length = 150.;
 
-        if bone!().joint_effector == JointEffector::None {
+    // forward-reaching
+    let target = bones.last().unwrap().pos;
+    let end = bones
+        .iter_mut()
+        .find(|bone| bone.joint_effector == JointEffector::End)
+        .unwrap();
+    end.pos = target;
+    let mut next_pos: Vec2 = end.pos;
+    for b in (0..bones.len()).rev() {
+        let eff = bones[b].joint_effector.clone();
+        if eff == JointEffector::None || eff == JointEffector::End {
             continue;
         }
 
-        if bone!().joint_effector == JointEffector::End {
-            end = bone!().pos;
+        let dir = next_pos - bones[b].pos;
+        bones[b].pos = next_pos - (dir.normalize() * length);
+        next_pos = bones[b].pos;
+    }
+
+    // backward-reaching
+    let start = bones
+        .iter_mut()
+        .find(|bone| bone.joint_effector == JointEffector::Start)
+        .unwrap();
+    start.pos = Vec2::new(0., 0.);
+    let mut prev_pos: Vec2 = start.pos;
+    for b in 0..bones.len() {
+        let eff = bones[b].joint_effector.clone();
+        if eff == JointEffector::None || eff == JointEffector::Start {
+            continue;
         }
 
-        if end == Vec2::new(0., 0.) {
-            break;
+        let dir = prev_pos - bones[b].pos;
+        bones[b].pos = prev_pos - (dir.normalize() * length);
+        prev_pos = bones[b].pos;
+    }
+
+    // rotating bones
+    let mut tip_pos = bones
+        .iter_mut()
+        .find(|bone| bone.joint_effector == JointEffector::End)
+        .unwrap()
+        .pos;
+    for b in (0..bones.len()).rev() {
+        let eff = bones[b].joint_effector.clone();
+        if eff == JointEffector::None || eff == JointEffector::End {
+            continue;
         }
 
-        let ei = end - bone!().pos;
-        let ti = target - bone!().pos;
+        let dir = tip_pos - bones[b].pos;
+        bones[b].rot = dir.y.atan2(dir.x);
+        tip_pos = bones[b].pos;
+    }
 
-        let angle = ei.y.atan2(ei.x) - ti.y.atan2(ti.x);
-        bone!().rot = angle;
+    // constraints
+    // get 3 points
+    let mut const_pos = vec![];
+    for b in 0..bones.len() {
+        if bones[b].joint_effector != JointEffector::None {
+            const_pos.push(bones[b].pos);
+        }
+    }
+    let v1 = Vec2::new(
+        const_pos[1].x - const_pos[0].x,
+        const_pos[1].y - const_pos[0].y,
+    );
+    let v2 = Vec2::new(
+        const_pos[1].x - const_pos[2].x,
+        const_pos[1].y - const_pos[2].y,
+    );
+    let cross = v1.x * v2.y - v1.y * v2.x;
+    if cross < 0. {
+        //bones[0].rot += 45. * 3.14 / 180.;
+        // let parent = bones[0].clone();
+        // inherit_from_parent(&mut bones[2], &parent);
+        // inverse_kinematics(bones);
     }
 }
 

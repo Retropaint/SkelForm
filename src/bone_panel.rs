@@ -285,7 +285,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                     ui.selectable_value(bone, JointEffector::Start, "Start");
                     ui.selectable_value(bone, JointEffector::Middle, "Middle");
                     ui.selectable_value(bone, JointEffector::End, "End");
-                    ui.selectable_value(bone, JointEffector::Tip, "Tip");
                 })
                 .response;
         });
