@@ -182,10 +182,10 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             };
 
             if button.secondary_clicked() {
-                shared.ui.context_menu.show(ContextType::Bone, idx as i32);
+                shared.ui.context_menu.show(ContextType::Bone, shared.armature.bones[b].id);
             }
 
-            if shared.ui.context_menu.is(ContextType::Bone, idx as i32) {
+            if shared.ui.context_menu.is(ContextType::Bone, shared.armature.bones[b].id) {
                 button.show_tooltip_ui(|ui| {
                     if ui.clickable_label("Delete").clicked() {
                         shared.ui.open_polar_modal(
