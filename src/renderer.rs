@@ -28,6 +28,43 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     #[cfg(target_arch = "wasm32")]
     loaded();
 
+    for b in 0..shared.armature.bones.len() {
+        let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+        if mouse_world.x.is_nan() {
+            break;
+        }
+        if shared.armature.bones[b].joint_effector != JointEffector::Start {
+            continue;
+        }
+
+        // get all joint children of this bone, including itself
+        let mut joints = vec![];
+        armature_window::get_all_children(
+            &shared.armature.bones,
+            &mut joints,
+            &shared.armature.bones[b],
+        );
+        joints.insert(0, shared.armature.bones[b].clone());
+        joints = joints
+            .iter()
+            .filter(|joint| joint.joint_effector != JointEffector::None)
+            .cloned()
+            .collect();
+
+        // apply IK on the joint copy, then apply it to the actual bones
+        let target = (mouse_world * shared.camera.zoom) + shared.camera.pos;
+        inverse_kinematics(&mut joints, target);
+        for joint in joints {
+            let bone = shared
+                .armature
+                .bones
+                .iter_mut()
+                .find(|bone| bone.id == joint.id)
+                .unwrap();
+            *bone = joint;
+        }
+    }
+
     for bone in &mut shared.armature.bones {
         if bone.tex_set_idx != -1 && bone.vertices.len() == 0 {
             let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
@@ -58,15 +95,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    inverse_kinematics(&mut shared.armature.bones);
-
     // For rendering purposes, bones need to have many of their attributes manipulated.
     // This is easier to do with a separate copy of them.
     let mut temp_bones: Vec<Bone> = bones.clone();
 
     for i in 0..temp_bones.len() {
         if temp_bones[i].joint_effector != JointEffector::None {
-            continue;
+            // continue;
         }
 
         let mut parent: Option<Bone> = None;
@@ -111,16 +146,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // draw bone
     for b in 0..temp_bones.len() {
-        draw_point(
-            &Vec2::ZERO,
-            &shared,
-            render_pass,
-            device,
-            &temp_bones[b],
-            colors[b],
-            shared.camera.pos,
-            0.,
-        );
+        // draw_point(
+        //     &Vec2::ZERO,
+        //     &shared,
+        //     render_pass,
+        //     device,
+        //     &temp_bones[b],
+        //     colors[b],
+        //     shared.camera.pos,
+        //     0.,
+        // );
         if temp_bones[b].tex_set_idx == -1 {
             continue;
         }
@@ -159,30 +194,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             hovering_vert =
                 bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
         }
+    }
 
+    if shared.selected_bone() != None {
         draw_point(
             &Vec2::ZERO,
             &shared,
             render_pass,
             device,
-            &temp_bones[b],
+            &find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap(),
             VertexColor::new(0., 255., 0., 0.5),
             shared.camera.pos,
             0.,
         );
-    }
-
-    if shared.selected_bone() != None {
-        // draw_point(
-        //     &Vec2::ZERO,
-        //     &shared,
-        //     render_pass,
-        //     device,
-        //     &find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap(),
-        //     VertexColor::new(0., 255., 0., 0.5),
-        //     shared.camera.pos,
-        //     0.,
-        // );
     }
 
     if shared.input.mouse_left == -1 {
@@ -241,17 +265,24 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 }
 
-pub fn inverse_kinematics(bones: &mut Vec<Bone>) {
-    let length = 150.;
-
-    // forward-reaching
-    let target = bones.last().unwrap().pos;
-    let end = bones
+// https://www.youtube.com/watch?v=NfuO66wsuRg
+pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
+    let root = bones
         .iter_mut()
-        .find(|bone| bone.joint_effector == JointEffector::End)
-        .unwrap();
-    end.pos = target;
-    let mut next_pos: Vec2 = end.pos;
+        .find(|bone| bone.joint_effector == JointEffector::Start)
+        .unwrap()
+        .pos;
+    let length = 150.;
+    
+    // forward-reaching
+    let mut end = bones
+        .iter_mut()
+        .find(|bone| bone.joint_effector == JointEffector::End);
+    if end == None {
+        return;
+    }
+    end.as_mut().unwrap().pos = target;
+    let mut next_pos: Vec2 = end.unwrap().pos;
     for b in (0..bones.len()).rev() {
         let eff = bones[b].joint_effector.clone();
         if eff == JointEffector::None || eff == JointEffector::End {
@@ -268,7 +299,7 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>) {
         .iter_mut()
         .find(|bone| bone.joint_effector == JointEffector::Start)
         .unwrap();
-    start.pos = Vec2::new(0., 0.);
+    start.pos = root;
     let mut prev_pos: Vec2 = start.pos;
     for b in 0..bones.len() {
         let eff = bones[b].joint_effector.clone();
@@ -300,27 +331,38 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>) {
 
     // constraints
     // get 3 points
-    let mut const_pos = vec![];
-    for b in 0..bones.len() {
-        if bones[b].joint_effector != JointEffector::None {
-            const_pos.push(bones[b].pos);
-        }
-    }
-    let v1 = Vec2::new(
-        const_pos[1].x - const_pos[0].x,
-        const_pos[1].y - const_pos[0].y,
-    );
-    let v2 = Vec2::new(
-        const_pos[1].x - const_pos[2].x,
-        const_pos[1].y - const_pos[2].y,
-    );
-    let cross = v1.x * v2.y - v1.y * v2.x;
-    if cross < 0. {
-        //bones[0].rot += 45. * 3.14 / 180.;
-        // let parent = bones[0].clone();
-        // inherit_from_parent(&mut bones[2], &parent);
-        // inverse_kinematics(bones);
-    }
+    // let mut const_pos = vec![];
+    // for b in 0..bones.len() {
+    //     if bones[b].joint_effector != JointEffector::None {
+    //         const_pos.push(bones[b].pos);
+    //     }
+    // }
+    // let v1 = Vec2::new(
+    //     const_pos[1].x - const_pos[0].x,
+    //     const_pos[1].y - const_pos[0].y,
+    // );
+    // let v2 = Vec2::new(
+    //     const_pos[1].x - const_pos[2].x,
+    //     const_pos[1].y - const_pos[2].y,
+    // );
+    // let cross = v1.x * v2.y - v1.y * v2.x;
+    // if cross < 0. {
+    //     bones[2].rot = bones[0].rot;
+    //     // attempt at constraint via mirroring middle joint
+    //     //
+    //     // let m = (target - root).normalize();
+    //     // let mm = [
+    //     //     -m.x.powf(2.) - m.y.powf(2.),
+    //     //     -2. * m.x * m.y,
+    //     //     -2. * m.y * m.x,
+    //     //     -m.y.powf(2.) + m.x.powf(2.),
+    //     // ];
+    //     // println!("{:?}", mm);
+    //     // let x = bones[2].pos.x;
+    //     // let y = bones[2].pos.y;
+    //     // bones[2].pos.x = mm[0] * x + mm[1] * y;
+    //     // bones[2].pos.y = mm[2] * x + mm[3] * y;
+    // }
 }
 
 pub fn ik_bone(bone: &Bone, target: Vec2, end: Vec2) -> f32 {
@@ -485,12 +527,11 @@ pub fn setup_indices(verts: &Vec<Vertex>, base: i32) -> Vec<u32> {
             v2 -= len;
         }
 
-        // remove redundant verts
+        // exclude redundant verts
         if base as usize != v1 && v1 != v2 && v2 != base as usize {
             indices.push(base as u32);
             indices.push(v1 as u32);
             indices.push(v2 as u32);
-            continue;
         }
     }
 
