@@ -53,16 +53,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // apply IK on the joint copy, then apply it to the actual bones
         let target = (mouse_world * shared.camera.zoom) + shared.camera.pos;
-        inverse_kinematics(&mut joints, target);
-        for joint in joints {
-            let bone = shared
-                .armature
-                .bones
-                .iter_mut()
-                .find(|bone| bone.id == joint.id)
-                .unwrap();
-            *bone = joint;
-        }
+        // inverse_kinematics(&mut joints, target);
+        // for joint in joints {
+        //     let bone = shared
+        //         .armature
+        //         .bones
+        //         .iter_mut()
+        //         .find(|bone| bone.id == joint.id)
+        //         .unwrap();
+        //     *bone = joint;
+        // }
     }
 
     for bone in &mut shared.armature.bones {
@@ -101,7 +101,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     for i in 0..temp_bones.len() {
         if temp_bones[i].joint_effector != JointEffector::None {
-            // continue;
+            //continue;
         }
 
         let mut parent: Option<Bone> = None;
@@ -272,43 +272,40 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
         .find(|bone| bone.joint_effector == JointEffector::Start)
         .unwrap()
         .pos;
-    let length = 150.;
-    
+
     // forward-reaching
-    let mut end = bones
-        .iter_mut()
-        .find(|bone| bone.joint_effector == JointEffector::End);
-    if end == None {
-        return;
-    }
-    end.as_mut().unwrap().pos = target;
-    let mut next_pos: Vec2 = end.unwrap().pos;
+    let mut next_pos: Vec2 = target;
+    let mut next_length = 0.;
     for b in (0..bones.len()).rev() {
-        let eff = bones[b].joint_effector.clone();
-        if eff == JointEffector::None || eff == JointEffector::End {
-            continue;
+        let mut length = (next_pos - bones[b].pos).normalize() * next_length;
+        if length.x.is_nan() {
+            length = Vec2::new(0., 0.);
+        }
+        if b == 0 {
+            next_length = 0.;
+        } else {
+            next_length = (bones[b].pos - bones[b - 1].pos).mag();
         }
 
-        let dir = next_pos - bones[b].pos;
-        bones[b].pos = next_pos - (dir.normalize() * length);
+        bones[b].pos = next_pos - length;
         next_pos = bones[b].pos;
     }
 
     // backward-reaching
-    let start = bones
-        .iter_mut()
-        .find(|bone| bone.joint_effector == JointEffector::Start)
-        .unwrap();
-    start.pos = root;
-    let mut prev_pos: Vec2 = start.pos;
+    let mut prev_pos: Vec2 = root;
+    let mut prev_length = 0.;
     for b in 0..bones.len() {
-        let eff = bones[b].joint_effector.clone();
-        if eff == JointEffector::None || eff == JointEffector::Start {
-            continue;
+        let mut length = (prev_pos - bones[b].pos).normalize() * prev_length;
+        if length.x.is_nan() {
+            length = Vec2::new(0., 0.);
+        }
+        if b == bones.len() - 1 {
+            prev_length = 0.;
+        } else {
+            prev_length = (bones[b].pos - bones[b + 1].pos).mag();
         }
 
-        let dir = prev_pos - bones[b].pos;
-        bones[b].pos = prev_pos - (dir.normalize() * length);
+        bones[b].pos = prev_pos - length;
         prev_pos = bones[b].pos;
     }
 
@@ -329,8 +326,9 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
         tip_pos = bones[b].pos;
     }
 
-    // constraints
-    // get 3 points
+    // // constraints
+    // // get cross product of first 2 joints,
+    // // then use it's orientation (cc or ccw) to determine constraint
     // let mut const_pos = vec![];
     // for b in 0..bones.len() {
     //     if bones[b].joint_effector != JointEffector::None {
@@ -346,22 +344,23 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
     //     const_pos[1].y - const_pos[2].y,
     // );
     // let cross = v1.x * v2.y - v1.y * v2.x;
+    //
     // if cross < 0. {
     //     bones[2].rot = bones[0].rot;
     //     // attempt at constraint via mirroring middle joint
-    //     //
-    //     // let m = (target - root).normalize();
-    //     // let mm = [
-    //     //     -m.x.powf(2.) - m.y.powf(2.),
-    //     //     -2. * m.x * m.y,
-    //     //     -2. * m.y * m.x,
-    //     //     -m.y.powf(2.) + m.x.powf(2.),
-    //     // ];
-    //     // println!("{:?}", mm);
-    //     // let x = bones[2].pos.x;
-    //     // let y = bones[2].pos.y;
-    //     // bones[2].pos.x = mm[0] * x + mm[1] * y;
-    //     // bones[2].pos.y = mm[2] * x + mm[3] * y;
+    //
+    //     let m = (target - root).normalize();
+    //     let mm = [
+    //         -m.x.powf(2.) - m.y.powf(2.),
+    //         -2. * m.x * m.y,
+    //         -2. * m.y * m.x,
+    //         -m.y.powf(2.) + m.x.powf(2.),
+    //     ];
+    //     println!("{:?}", mm);
+    //     let x = bones[2].pos.x;
+    //     let y = bones[2].pos.y;
+    //     bones[2].pos.x = mm[0] * x + mm[1] * y;
+    //     bones[2].pos.y = mm[2] * x + mm[3] * y;
     // }
 }
 
