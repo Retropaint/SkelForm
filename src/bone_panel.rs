@@ -274,6 +274,13 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             input!(bone.zindex, "zindex", &AnimElement::Zindex, 1., ui, "");
         });
     });
+
+    // disabled: mesh deformation is unstable
+    // disabled: inverse kinematics is unstable
+    if true {
+        return;
+    }
+
     ui.horizontal(|ui| {
         ui.label("Joint Effector: ");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -291,11 +298,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     });
 
     if bone.vertices.len() == 0 {
-        return;
-    }
-
-    // disabled: mesh deformation is unstable
-    if true {
         return;
     }
 
