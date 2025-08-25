@@ -280,6 +280,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             egui::ComboBox::new("joint_eff", "")
                 .selected_text(bone.joint_effector.to_string())
+                .width(40.)
                 .show_ui(ui, |ui| {
                     let bone = &mut shared.selected_bone_mut().unwrap().joint_effector;
                     ui.selectable_value(bone, JointEffector::None, "None");
