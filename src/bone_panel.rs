@@ -275,12 +275,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
-    // disabled: mesh deformation is unstable
-    // disabled: inverse kinematics is unstable
-    if true {
-        return;
-    }
-
     ui.horizontal(|ui| {
         ui.label("Joint Effector: ");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -296,6 +290,17 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 .response;
         });
     });
+
+    if bone.joint_effector == JointEffector::Start {
+        if ui.button("Aim").clicked() {
+            shared.selected_bone_mut().unwrap().aiming = true;
+        }
+    }
+
+    // disabled: mesh deformation is unstable
+    if true {
+        return;
+    }
 
     if bone.vertices.len() == 0 {
         return;
