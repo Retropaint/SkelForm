@@ -302,7 +302,7 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
     );
     let cross = v1.x * v2.y - v1.y * v2.x;
     if cross < 0. {
-        bones[0].rot = bones[1].rot;
+        //bones[0].rot = bones[1].rot;
         // attempt at constraint via mirroring middle joint
         let m = (target - root).normalize();
         let mm = [
