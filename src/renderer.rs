@@ -90,7 +90,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // apply IK on the joint copy, then apply it to the actual bones
         let target = (mouse_world * shared.camera.zoom) + shared.camera.pos;
-        inverse_kinematics(&mut joints, target);
+        inverse_kinematics(&mut joints, target, 3.14, 0.);
         for joint in joints {
             init_rot.insert(joint.id, joint.rot);
         }
@@ -223,7 +223,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 }
 
 // https://www.youtube.com/watch?v=NfuO66wsuRg
-pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
+pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2, max_angle: f32, min_angle: f32) {
     let root = bones
         .iter_mut()
         .find(|bone| bone.joint_effector == JointEffector::Start)
@@ -243,8 +243,18 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
         } else {
             next_length = (bones[b].pos - bones[b - 1].pos).mag();
         }
-
         bones[b].pos = next_pos - length;
+
+        let joint_dir = (next_pos - bones[b].pos).normalize();
+        let base_dir = (target - root).normalize();
+        let joint_angle = joint_dir.y.atan2(joint_dir.x) - base_dir.y.atan2(base_dir.x);
+
+        if (joint_angle > max_angle || joint_angle < min_angle) && b < bones.len() - 1 {
+            let rot_offset = -joint_angle * 2.;
+            let rotated = utils::rotate(&(bones[b].pos - bones[b + 1].pos), rot_offset);
+            bones[b].pos = rotated + bones[b + 1].pos;
+        }
+
         next_pos = bones[b].pos;
     }
 
@@ -281,42 +291,6 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
         let dir = tip_pos - bones[b].pos;
         bones[b].rot = dir.y.atan2(dir.x);
         tip_pos = bones[b].pos;
-    }
-
-    // constraints
-    // get cross product of first 2 joints,
-    // then use it's orientation (cc or ccw) to determine constraint
-    let mut const_pos = vec![];
-    for b in 0..bones.len() {
-        if bones[b].joint_effector != JointEffector::None {
-            const_pos.push(bones[b].pos);
-        }
-    }
-    let v1 = Vec2::new(
-        const_pos[1].x - const_pos[0].x,
-        const_pos[1].y - const_pos[0].y,
-    );
-    let v2 = Vec2::new(
-        const_pos[1].x - const_pos[2].x,
-        const_pos[1].y - const_pos[2].y,
-    );
-    let cross = v1.x * v2.y - v1.y * v2.x;
-    if cross < 0. {
-        //bones[0].rot = bones[1].rot;
-        // attempt at constraint via mirroring middle joint
-        let m = (target - root).normalize();
-        let mm = [
-            -m.x.powf(2.) + m.y.powf(2.),
-            -2. * m.x * m.y,
-            -2. * m.y * m.x,
-            -m.y.powf(2.) + m.x.powf(2.),
-        ];
-        let x = bones[1].pos.x;
-        let y = bones[1].pos.y;
-        // bones[1].pos.x = mm[0] * x + mm[2] * y;
-        // bones[1].pos.y = mm[1] * x + mm[3] * y;
-        // let dir = (bones[2].pos - bones[1].pos).normalize();
-        // bones[0].rot = dir.y.atan2(dir.x);
     }
 }
 
