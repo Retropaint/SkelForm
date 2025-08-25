@@ -616,7 +616,7 @@ impl Ui {
 
     pub fn unselect_everything(&mut self) {
         self.selected_bone_idx = usize::MAX;
-        self.anim.selected_frame = 0;
+        self.anim.selected_frame = -1;
         self.editing_mesh = false;
         self.anim.selected = usize::MAX;
     }
@@ -866,6 +866,8 @@ pub struct Bone {
 
     #[serde(skip)]
     pub folded: bool,
+    #[serde(skip)]
+    pub aiming: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
