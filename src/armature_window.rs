@@ -150,7 +150,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             let mut selected_col = shared.config.ui_colors.light_accent;
             let mut cursor = egui::CursorIcon::PointingHand;
 
-            if shared.armature.is_bone_hidden(b as i32) {
+            if shared.armature.is_bone_hidden(id) {
                 selected_col = shared.config.ui_colors.dark_accent;
             }
 
