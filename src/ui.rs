@@ -33,7 +33,9 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     shared.input.last_pressed = None;
 
     context.input_mut(|i| {
-        kb_inputs(i, shared);
+        if shared.ui.rename_id == "" {
+            kb_inputs(i, shared);
+        }
         shared.input.last_pressed = i.keys_down.iter().last().copied();
 
         // process mouse inputs
