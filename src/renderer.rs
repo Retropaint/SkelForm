@@ -90,7 +90,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // apply IK on the joint copy, then apply it to the actual bones
         let target = (mouse_world * shared.camera.zoom) + shared.camera.pos;
-        for _ in 0..3 {
+        for _ in 0..10 {
             inverse_kinematics(&mut joints, target);
         }
         for joint in joints {
@@ -252,10 +252,26 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
         let base_dir = (target - root).normalize();
         let joint_angle = joint_dir.y.atan2(joint_dir.x) - base_dir.y.atan2(base_dir.x);
 
+        let const_min;
+        let const_max;
+
+        match bones[b].constraint {
+            JointConstraint::None => {
+                const_min = -3.14;
+                const_max = 3.14;
+            }
+            JointConstraint::Clockwise => {
+                const_min = -3.14;
+                const_max = 0.;
+            }
+            JointConstraint::CounterClockwise => {
+                const_min = 0.;
+                const_max = 3.14;
+            }
+        }
+
         // if joint angle is beyond constraint, rotate the hinge so it's on the opposite side
-        if (joint_angle > bones[b].constraint_max || joint_angle < bones[b].constraint_min)
-            && b < bones.len() - 1
-        {
+        if (joint_angle > const_max || joint_angle < const_min) && b < bones.len() - 1 {
             let rot_offset = -joint_angle * 2.;
             let rotated = utils::rotate(&(bones[b].pos - bones[b + 1].pos), rot_offset);
             bones[b].pos = rotated + bones[b + 1].pos;
