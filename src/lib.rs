@@ -1,6 +1,8 @@
 //! Notable comments:
 //!
 //! `disabled:` - features that have been implemented at some point, but are dormant for a later version. Usually for complex or optional features.
+//!
+//! `runtime:` - implementation that is relevant to runtimes (eg. animation logic, forward kinematics, etc).
 
 use shared::*;
 use wgpu::{BindGroupLayout, InstanceDescriptor};
@@ -30,7 +32,7 @@ use web::*;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
-    event::{MouseScrollDelta, WindowEvent},
+    event::WindowEvent,
     window::{Theme, Window},
 };
 
