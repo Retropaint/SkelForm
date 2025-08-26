@@ -822,8 +822,17 @@ pub enum JointEffector {
     Middle,
     End,
 }
-
 enum_string!(JointEffector);
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq, Debug)]
+pub enum JointConstraint {
+    #[default]
+    None,
+    Clockwise,
+    CounterClockwise
+}
+
+enum_string!(JointConstraint);
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 pub struct Bone {
@@ -861,9 +870,7 @@ pub struct Bone {
     #[serde(default)]
     pub joint_effector: JointEffector,
     #[serde(default)]
-    pub constraint_min: f32,
-    #[serde(default)]
-    pub constraint_max: f32,
+    pub constraint: JointConstraint,
 
     #[serde(default)]
     pub hidden: bool,
@@ -1028,8 +1035,7 @@ impl Armature {
             tex_set_idx: -1,
             pivot: Vec2::new(0.5, 0.5),
             zindex: self.bones.len() as f32,
-            constraint_min: -3.14,
-            constraint_max: 3.14,
+            constraint: JointConstraint::None,
             ..Default::default()
         };
         if id == -1 {

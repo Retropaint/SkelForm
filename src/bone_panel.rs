@@ -276,8 +276,12 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
+    ui.separator();
+    ui.label("Joint");
+    ui.separator();
+
     ui.horizontal(|ui| {
-        ui.label("Joint Effector: ");
+        ui.label("Effector: ");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             egui::ComboBox::new("joint_eff", "")
                 .selected_text(bone.joint_effector.to_string())
@@ -293,24 +297,29 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
-    if bone.joint_effector != JointEffector::None && bone.joint_effector != JointEffector::End {
+    if bone.joint_effector != JointEffector::None {
+        let const_label = if bone.constraint == JointConstraint::CounterClockwise {
+            "CCW".to_string()
+        } else {
+            bone.constraint.to_string()
+        };
         ui.horizontal(|ui| {
-            ui.label("Constraints:");
+            ui.label("Constraint: ");
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let min_id = "constraint_min".to_string();
-                let max_id = "constraint_max".to_string();
-                let deg = 180. / std::f32::consts::PI;
-                let (edited, value, _) = ui.float_input(max_id, shared, bone.constraint_max, deg);
-                if edited {
-                    shared.selected_bone_mut().unwrap().constraint_max = value;
-                }
-                let (edited, value, _) = ui.float_input(min_id, shared, bone.constraint_min, deg);
-                if edited {
-                    shared.selected_bone_mut().unwrap().constraint_min = value;
-                }
+                egui::ComboBox::new("joint_constraint", "")
+                    .selected_text(const_label)
+                    .width(40.)
+                    .show_ui(ui, |ui| {
+                        let bone = &mut shared.selected_bone_mut().unwrap().constraint;
+                        ui.selectable_value(bone, JointConstraint::None, "None");
+                        ui.selectable_value(bone, JointConstraint::Clockwise, "Clockwise");
+                        ui.selectable_value(bone, JointConstraint::CounterClockwise, "CCW");
+                    })
+                    .response;
             });
         });
     }
+
     if bone.joint_effector == JointEffector::Start {
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
