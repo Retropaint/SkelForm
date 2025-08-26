@@ -231,7 +231,8 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                             let button = ui
                                 .add(egui::Button::new(set!().name.to_string()).fill(col))
                                 .on_hover_cursor(cursor_icon);
-                            if button.hovered() {
+                            let tex_len = shared.armature.texture_sets[s].textures.len();
+                            if button.hovered() && tex_len > 0 {
                                 hovered_set = s as i32;
                             }
                             if button.clicked() {
