@@ -62,7 +62,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // This is easier to do with a separate copy of them.
     let mut temp_bones: Vec<Bone> = bones.clone();
 
-    let mut init_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
+    let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
 
     // first FK to construct the bones
     forward_kinematics(&mut temp_bones, std::collections::HashMap::new());
@@ -88,19 +88,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             .cloned()
             .collect();
 
-        // apply IK on the joint copy, then apply it to the actual bones
+        // apply IK on the joint copy, then save rotations for the next FK
         let target = (mouse_world * shared.camera.zoom) + shared.camera.pos;
         for _ in 0..10 {
             inverse_kinematics(&mut joints, target);
         }
         for joint in joints {
-            init_rot.insert(joint.id, joint.rot);
+            ik_rot.insert(joint.id, joint.rot);
         }
     }
 
     // re-construct bones, accounting for IK
     temp_bones = bones.clone();
-    forward_kinematics(&mut temp_bones, init_rot);
+    forward_kinematics(&mut temp_bones, ik_rot);
 
     // sort bones by z-index for drawing
     temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
