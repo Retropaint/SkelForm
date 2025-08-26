@@ -314,6 +314,7 @@ pub fn prepare_files(armature: &Armature) -> (Vec2, String, Vec<u8>) {
     }
 
     let root = Root {
+        version: env!("CARGO_PKG_VERSION").to_string(),
         armature: armature_copy,
         texture_size: size,
     };
