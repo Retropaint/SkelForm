@@ -292,6 +292,24 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
+    if bone.joint_effector != JointEffector::None && bone.joint_effector != JointEffector::End {
+        ui.horizontal(|ui| {
+            ui.label("Constraints:");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let min_id = "constraint_min".to_string();
+                let max_id = "constraint_max".to_string();
+                let deg = 180. / std::f32::consts::PI;
+                let (edited, value, _) = ui.float_input(max_id, shared, bone.constraint_max, deg);
+                if edited {
+                    shared.selected_bone_mut().unwrap().constraint_max = value;
+                }
+                let (edited, value, _) = ui.float_input(min_id, shared, bone.constraint_min, deg);
+                if edited {
+                    shared.selected_bone_mut().unwrap().constraint_min = value;
+                }
+            });
+        });
+    }
     if bone.joint_effector == JointEffector::Start {
         if ui.button("Aim").clicked() {
             shared.selected_bone_mut().unwrap().aiming = true;

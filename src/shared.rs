@@ -860,6 +860,10 @@ pub struct Bone {
     pub zindex: f32,
     #[serde(default)]
     pub joint_effector: JointEffector,
+    #[serde(default)]
+    pub constraint_min: f32,
+    #[serde(default)]
+    pub constraint_max: f32,
 
     #[serde(default)]
     pub hidden: bool,
@@ -1024,6 +1028,8 @@ impl Armature {
             tex_set_idx: -1,
             pivot: Vec2::new(0.5, 0.5),
             zindex: self.bones.len() as f32,
+            constraint_min: -3.14,
+            constraint_max: 3.14,
             ..Default::default()
         };
         if id == -1 {
