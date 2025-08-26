@@ -361,7 +361,13 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     // load texture
-    if root.armature.texture_sets.len() > 0 {
+    let has_tex = root
+        .armature
+        .texture_sets
+        .iter()
+        .find(|set| set.textures.len() > 0)
+        != None;
+    if root.armature.texture_sets.len() > 0 && has_tex {
         let texture_file = zip.as_mut().unwrap().by_name("textures.png").unwrap();
 
         let mut bytes = vec![];
