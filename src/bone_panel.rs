@@ -311,9 +311,18 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     }
     if bone.joint_effector == JointEffector::Start {
-        if ui.button("Aim").clicked() {
-            shared.selected_bone_mut().unwrap().aiming = true;
-        }
+        ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let label = if bone.aiming {
+                    "Click anwyehre to set"
+                } else {
+                    "Aim Joints"
+                };
+                if ui.skf_button(label).clicked() {
+                    shared.selected_bone_mut().unwrap().aiming = !bone.aiming;
+                }
+            });
+        });
     }
 
     // disabled: mesh deformation is unstable

@@ -171,6 +171,11 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         max_size = 250.;
     }
 
+    let mut enable_bone_panel = true;
+    if let Some(bone) = shared.selected_bone() {
+        enable_bone_panel = !bone.aiming;
+    }
+
     let bone_panel_id = "Bone";
     draw_resizable_panel(
         bone_panel_id,
@@ -180,21 +185,24 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             .min_width(min_default_size)
             .default_width(min_default_size)
             .show(context, |ui| {
-                ui.gradient(
-                    ui.ctx().screen_rect(),
-                    Color32::TRANSPARENT,
-                    shared.config.ui_colors.gradient.into(),
-                );
+                ui.add_enabled_ui(enable_bone_panel, |ui| {
+                    ui.gradient(
+                        ui.ctx().screen_rect(),
+                        Color32::TRANSPARENT,
+                        shared.config.ui_colors.gradient.into(),
+                    );
 
-                if shared.ui.selected_bone_idx != usize::MAX {
-                    bone_panel::draw(ui, shared);
-                } else if shared.selected_animation() != None && shared.ui.anim.selected_frame != -1
-                {
-                    keyframe_panel::draw(ui, shared);
-                }
+                    if shared.ui.selected_bone_idx != usize::MAX {
+                        bone_panel::draw(ui, shared);
+                    } else if shared.selected_animation() != None
+                        && shared.ui.anim.selected_frame != -1
+                    {
+                        keyframe_panel::draw(ui, shared);
+                    }
 
-                shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
-                shared.ui.camera_bar_pos.x = ui.min_rect().left();
+                    shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
+                    shared.ui.camera_bar_pos.x = ui.min_rect().left();
+                })
             }),
         &mut shared.input.on_ui,
         context,
