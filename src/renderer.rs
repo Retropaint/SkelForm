@@ -254,7 +254,6 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
 
         let const_min;
         let const_max;
-
         match bones[b].constraint {
             JointConstraint::None => {
                 const_min = -3.14;

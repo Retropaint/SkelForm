@@ -829,7 +829,7 @@ pub enum JointConstraint {
     #[default]
     None,
     Clockwise,
-    CounterClockwise
+    CounterClockwise,
 }
 
 enum_string!(JointConstraint);
@@ -877,6 +877,8 @@ pub struct Bone {
 
     #[serde(skip)]
     pub folded: bool,
+    #[serde(skip)]
+    pub joint_folded: bool,
     #[serde(skip)]
     pub aiming: bool,
 }
@@ -1417,6 +1419,7 @@ impl Armature {
 // used for the json
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Root {
+    pub version: String,
     pub texture_size: Vec2,
     pub armature: Armature,
 }
