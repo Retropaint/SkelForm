@@ -1166,6 +1166,7 @@ impl Armature {
         animate!(AnimElement::VertPositionY, pos.y);
     }
 
+    // runtime: core animation logic
     pub fn animate(
         &mut self,
         anim_idx: usize,

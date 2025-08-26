@@ -64,45 +64,48 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
 
-    // first FK to construct the bones
-    forward_kinematics(&mut temp_bones, std::collections::HashMap::new());
+    // runtime: constructing rig using forward (aka inheritance) & inverse kinematics
+    {
+        // first FK to construct the bones
+        forward_kinematics(&mut temp_bones, std::collections::HashMap::new());
 
-    // inverse kinematics
-    for b in 0..temp_bones.len() {
-        if !temp_bones[b].aiming {
-            continue;
+        // inverse kinematics
+        for b in 0..temp_bones.len() {
+            if !temp_bones[b].aiming {
+                continue;
+            }
+
+            let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
+            if mouse_world.x.is_nan() {
+                break;
+            }
+
+            // get all joint children of this bone, including itself
+            let mut joints = vec![];
+            armature_window::get_all_children(&temp_bones, &mut joints, &temp_bones[b]);
+            joints.insert(0, temp_bones[b].clone());
+            joints = joints
+                .iter()
+                .filter(|joint| joint.joint_effector != JointEffector::None)
+                .cloned()
+                .collect();
+
+            // apply IK on the joint copy, then save rotations for the next FK
+            let target = (mouse_world * shared.camera.zoom) + shared.camera.pos;
+            for _ in 0..10 {
+                inverse_kinematics(&mut joints, target);
+            }
+            for joint in joints {
+                ik_rot.insert(joint.id, joint.rot);
+            }
         }
 
-        let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-        if mouse_world.x.is_nan() {
-            break;
-        }
-
-        // get all joint children of this bone, including itself
-        let mut joints = vec![];
-        armature_window::get_all_children(&temp_bones, &mut joints, &temp_bones[b]);
-        joints.insert(0, temp_bones[b].clone());
-        joints = joints
-            .iter()
-            .filter(|joint| joint.joint_effector != JointEffector::None)
-            .cloned()
-            .collect();
-
-        // apply IK on the joint copy, then save rotations for the next FK
-        let target = (mouse_world * shared.camera.zoom) + shared.camera.pos;
-        for _ in 0..10 {
-            inverse_kinematics(&mut joints, target);
-        }
-        for joint in joints {
-            ik_rot.insert(joint.id, joint.rot);
-        }
+        // re-construct bones, accounting for IK
+        temp_bones = bones.clone();
+        forward_kinematics(&mut temp_bones, ik_rot);
     }
 
-    // re-construct bones, accounting for IK
-    temp_bones = bones.clone();
-    forward_kinematics(&mut temp_bones, ik_rot);
-
-    // sort bones by z-index for drawing
+    // runtime: sort bones by z-index for drawing
     temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
 
     let mut hovering_vert = usize::MAX;
