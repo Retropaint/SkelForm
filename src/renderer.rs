@@ -66,7 +66,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // runtime: constructing rig using forward (aka inheritance) & inverse kinematics
     {
-        // first FK to construct the bones
         forward_kinematics(&mut temp_bones, std::collections::HashMap::new());
 
         // inverse kinematics
