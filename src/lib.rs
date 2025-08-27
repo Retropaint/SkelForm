@@ -6,6 +6,7 @@
 
 use image::ImageEncoder;
 use shared::*;
+use std::io::Write;
 use wgpu::{BindGroupLayout, InstanceDescriptor};
 
 // native-only imports
@@ -471,80 +472,12 @@ impl Renderer {
         shared: &mut shared::Shared,
     ) {
         if shared.saving != shared::Saving::None {
-            self.take_screenshot(shared);
-            let buffer = shared.rendered_frames[0].buffer.clone();
-            shared.rendered_frames = vec![];
-            let window = shared.window;
-            let device = self.gpu.device.clone();
-            let armature = shared.armature.clone();
-            let saving = shared.saving.clone();
-            let save_path = shared.save_path.clone();
-            std::thread::spawn(move || {
-                let (size, armatures_json, png_buf) = utils::prepare_files(&armature);
-
-                let path = if saving == shared::Saving::CustomPath {
-                    save_path
-                } else {
-                    "autosave.skf".to_string()
-                };
-
-                // create zip file
-                let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
-
-                let options = zip::write::FullFileOptions::default()
-                    .compression_method(zip::CompressionMethod::Stored);
-
-                // wait for screenshot buffer to complete
-                let _ = device.poll(wgpu::PollType::Wait);
-
-                let view = buffer.slice(..).get_mapped_range();
-
-                let mut rgb = vec![0u8; (window.x * window.y * 3.) as usize];
-                for (j, chunk) in view.as_ref().chunks_exact(4).enumerate() {
-                    let offset = j * 3;
-                    if offset + 2 > rgb.len() {
-                        return;
-                    }
-                    rgb[offset + 0] = chunk[2];
-                    rgb[offset + 1] = chunk[1];
-                    rgb[offset + 2] = chunk[0];
-                }
-
-                let img_buf = <image::ImageBuffer<image::Rgb<u8>, _>>::from_raw(
-                    window.x as u32,
-                    window.y as u32,
-                    rgb.clone(),
-                )
-                .unwrap();
-
-                let thumb_size = Vec2::new(128., 128.);
-                let mut img = DynamicImage::ImageRgb8(img_buf);
-                img = img.thumbnail(thumb_size.x as u32, thumb_size.y as u32);
-
-                let mut thumb_buf: Vec<u8> = Vec::new();
-                let encoder = image::codecs::png::PngEncoder::new(&mut thumb_buf);
-                encoder
-                    .write_image(
-                        img.to_rgb8().as_raw(),
-                        img.width(),
-                        img.height(),
-                        image::ExtendedColorType::Rgb8,
-                    )
-                    .unwrap();
-
-                // save armature json, texture atlas, and thumbnail
-                zip.start_file("armature.json", options.clone()).unwrap();
-                zip.write(armatures_json.as_bytes()).unwrap();
-                zip.start_file("thumbnail.png", options.clone()).unwrap();
-                zip.write(&thumb_buf).unwrap();
-                if size != Vec2::ZERO {
-                    zip.start_file("textures.png", options).unwrap();
-                    zip.write(&png_buf).unwrap();
-                }
-
-                zip.finish().unwrap();
-            });
-            shared.saving = Saving::None;
+            #[cfg(target_arch = "wasm32")]
+            if shared.saving == shared::Saving::CustomPath {
+                utils::save_web(&shared.armature);
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            self.save(shared);
         }
         for (id, image_delta) in &textures_delta.set {
             self.egui_renderer
@@ -652,7 +585,83 @@ impl Renderer {
         }
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    pub fn save(&mut self, shared: &mut Shared) {
+        self.take_screenshot(shared);
+        let buffer = shared.rendered_frames[0].buffer.clone();
+        shared.rendered_frames = vec![];
+        let window = shared.window;
+        let device = self.gpu.device.clone();
+        let armature = shared.armature.clone();
+        let saving = shared.saving.clone();
+        let save_path = shared.save_path.clone();
+        std::thread::spawn(move || {
+            let (size, armatures_json, png_buf) = utils::prepare_files(&armature);
+
+            let path = if saving == shared::Saving::CustomPath {
+                save_path
+            } else {
+                "autosave.skf".to_string()
+            };
+
+            // create zip file
+            let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
+
+            let options = zip::write::FullFileOptions::default()
+                .compression_method(zip::CompressionMethod::Stored);
+
+            // wait for screenshot buffer to complete
+            let _ = device.poll(wgpu::PollType::Wait);
+
+            let view = buffer.slice(..).get_mapped_range();
+
+            let mut rgb = vec![0u8; (window.x * window.y * 3.) as usize];
+            for (j, chunk) in view.as_ref().chunks_exact(4).enumerate() {
+                let offset = j * 3;
+                if offset + 2 > rgb.len() {
+                    return;
+                }
+                rgb[offset + 0] = chunk[2];
+                rgb[offset + 1] = chunk[1];
+                rgb[offset + 2] = chunk[0];
+            }
+
+            let img_buf = <image::ImageBuffer<image::Rgb<u8>, _>>::from_raw(
+                window.x as u32,
+                window.y as u32,
+                rgb.clone(),
+            )
+            .unwrap();
+
+            let thumb_size = Vec2::new(128., 128.);
+            let mut img = image::DynamicImage::ImageRgb8(img_buf);
+            img = img.thumbnail(thumb_size.x as u32, thumb_size.y as u32);
+
+            let mut thumb_buf: Vec<u8> = Vec::new();
+            let encoder = image::codecs::png::PngEncoder::new(&mut thumb_buf);
+            encoder
+                .write_image(
+                    img.to_rgb8().as_raw(),
+                    img.width(),
+                    img.height(),
+                    image::ExtendedColorType::Rgb8,
+                )
+                .unwrap();
+
+            // save armature json, texture atlas, and thumbnail
+            zip.start_file("armature.json", options.clone()).unwrap();
+            zip.write(armatures_json.as_bytes()).unwrap();
+            zip.start_file("thumbnail.png", options.clone()).unwrap();
+            zip.write(&thumb_buf).unwrap();
+            if size != Vec2::ZERO {
+                zip.start_file("textures.png", options).unwrap();
+                zip.write(&png_buf).unwrap();
+            }
+
+            zip.finish().unwrap();
+        });
+        shared.saving = Saving::None;
+    }
+
     fn take_screenshot(&mut self, shared: &mut shared::Shared) {
         let width = shared.window.x as u32;
         let height = shared.window.y as u32;
