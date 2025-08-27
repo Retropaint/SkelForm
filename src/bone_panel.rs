@@ -182,7 +182,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                     anim_id,
                     shared.ui.anim.selected_frame,
                 );
-                shared.armature.autosave();
+                shared.saving = shared::Saving::Autosaving;
             }
             if $label != "" {
                 $ui.label($label);

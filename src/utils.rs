@@ -148,27 +148,6 @@ pub fn open_import_dialog(temp_file_to_write: String) {
     });
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-pub fn save(path: String, armature: &Armature) {
-    let (size, armatures_json, png_buf) = prepare_files(armature);
-
-    // create zip file
-    let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
-
-    let options =
-        zip::write::FullFileOptions::default().compression_method(zip::CompressionMethod::Stored);
-
-    // save armature json and texture image
-    zip.start_file("armature.json", options.clone()).unwrap();
-    zip.write(armatures_json.as_bytes()).unwrap();
-    if size != Vec2::ZERO {
-        zip.start_file("textures.png", options).unwrap();
-        zip.write(&png_buf).unwrap();
-    }
-
-    zip.finish().unwrap();
-}
-
 #[cfg(target_arch = "wasm32")]
 pub fn save_web(armature: &Armature) {
     let (size, armatures_json, png_buf) = prepare_files(armature);
