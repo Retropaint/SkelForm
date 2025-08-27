@@ -1354,19 +1354,6 @@ impl Armature {
         parents
     }
 
-    pub fn autosave(&self) {
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let armature = self.clone();
-            std::thread::spawn(move || {
-                #[cfg(not(target_arch = "wasm32"))]
-                utils::save("./autosave.skf".to_string(), &armature);
-                //#[cfg(target_arch = "wasm32")]
-                //utils::save_web(&armature);
-            });
-        }
-    }
-
     pub fn offset_bone_by_parent(&mut self, old_parents: Vec<Bone>, bone_id: i32) {
         for parent in old_parents {
             let parent_pos = parent.pos;
@@ -1753,6 +1740,14 @@ pub struct TempPath {
     pub export_vid_done: String,
 }
 
+#[derive(Default, Clone,PartialEq)]
+pub enum Saving {
+    #[default]
+    None,
+    CustomPath,
+    Autosaving
+}
+
 #[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
@@ -1789,7 +1784,7 @@ pub struct Shared {
 
     pub gridline_gap: i32,
 
-    pub autosaving: bool,
+    pub saving: Saving,
 
     /// triggers debug stuff. Set in main.rs
     pub debug: bool,

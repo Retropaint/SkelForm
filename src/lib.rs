@@ -470,13 +470,30 @@ impl Renderer {
         textures_delta: egui::TexturesDelta,
         shared: &mut shared::Shared,
     ) {
-        if shared.autosaving {
+        if shared.saving != shared::Saving::None {
             self.take_screenshot(shared);
             let buffer = shared.rendered_frames[0].buffer.clone();
             shared.rendered_frames = vec![];
             let window = shared.window;
             let device = self.gpu.device.clone();
+            let armature = shared.armature.clone();
+            let saving = shared.saving.clone();
+            let save_path = shared.save_path.clone();
             std::thread::spawn(move || {
+                let (size, armatures_json, png_buf) = utils::prepare_files(&armature);
+
+                let path = if saving == shared::Saving::CustomPath {
+                    save_path
+                } else {
+                    "autosave.skf".to_string()
+                };
+
+                // create zip file
+                let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
+
+                let options = zip::write::FullFileOptions::default()
+                    .compression_method(zip::CompressionMethod::Stored);
+
                 // wait for screenshot buffer to complete
                 let _ = device.poll(wgpu::PollType::Wait);
 
@@ -500,17 +517,34 @@ impl Renderer {
                 )
                 .unwrap();
 
-                let img_size = Vec2::new(128., 128.);
-
+                let thumb_size = Vec2::new(128., 128.);
                 let mut img = DynamicImage::ImageRgb8(img_buf);
-                img = img.resize_exact(
-                    img_size.x as u32,
-                    img_size.y as u32,
-                    imageops::FilterType::Nearest,
-                );
-                let _ = img.save("thumbnail.png");
+                img = img.thumbnail(thumb_size.x as u32, thumb_size.y as u32);
+
+                let mut thumb_buf: Vec<u8> = Vec::new();
+                let encoder = image::codecs::png::PngEncoder::new(&mut thumb_buf);
+                encoder
+                    .write_image(
+                        img.to_rgb8().as_raw(),
+                        img.width(),
+                        img.height(),
+                        image::ExtendedColorType::Rgb8,
+                    )
+                    .unwrap();
+
+                // save armature json, texture atlas, and thumbnail
+                zip.start_file("armature.json", options.clone()).unwrap();
+                zip.write(armatures_json.as_bytes()).unwrap();
+                zip.start_file("thumbnail.png", options.clone()).unwrap();
+                zip.write(&thumb_buf).unwrap();
+                if size != Vec2::ZERO {
+                    zip.start_file("textures.png", options).unwrap();
+                    zip.write(&png_buf).unwrap();
+                }
+
+                zip.finish().unwrap();
             });
-            shared.autosaving = false;
+            shared.saving = Saving::None;
         }
         for (id, image_delta) in &textures_delta.set {
             self.egui_renderer

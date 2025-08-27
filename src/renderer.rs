@@ -216,7 +216,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if !shared.editing_bone {
             shared.save_edited_bone();
             //shared.armature.autosave();
-            shared.autosaving = true;
+            shared.saving = Saving::Autosaving;
             shared.editing_bone = true;
         }
 
