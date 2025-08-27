@@ -559,15 +559,26 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
             ..Default::default()
         })
         .show(ctx, |ui| {
-            let width = shared.window.x / shared.window_factor - margin;
-            let height = shared.window.y / shared.window_factor - margin;
+            ui.gradient(
+                ui.ctx().screen_rect(),
+                egui::Color32::TRANSPARENT,
+                shared.config.ui_colors.gradient.into(),
+            );
+            let width = ui.ctx().screen_rect().width() - margin;
+            let height = ui.ctx().screen_rect().height() - margin;
             ui.set_width(width.max(0.));
             ui.set_height(height.max(0.));
-            ui.heading("SkelForm");
-            ui.label("Projects:");
-            ui.label("Samples");
+
+            ui.heading("Projects:");
+            ui.add_space(5.);
+            if ui.skf_button("+ New Project").clicked() {
+                shared.ui.set_state(UiState::StartupModal, false);
+            };
+            ui.add_space(20.);
+
+            ui.heading("Samples:");
+            ui.add_space(5.);
             let samples_folder = std::fs::read_dir("./samples").unwrap();
-            ui.add_space(7.);
             for entry in samples_folder {
                 let file_name = entry.as_ref().unwrap().file_name().into_string().unwrap();
                 if file_name.chars().next().unwrap() == '.' {
@@ -605,14 +616,12 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
 
                 let thumb_size = Vec2::new(64., 64.);
 
-                let size = ui.available_size();
-
                 let button = egui::Frame::new()
                     .stroke(egui::Stroke::new(2., shared.config.ui_colors.dark_accent))
                     .fill(shared.config.ui_colors.dark_accent.into())
                     .inner_margin(egui::Margin::same(10))
                     .show(ui, |ui| {
-                        ui.set_width(size.x * 0.4);
+                        ui.set_width(256.);
                         ui.set_height(64.);
                         let rect = egui::Rect::from_min_size(
                             egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
