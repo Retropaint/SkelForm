@@ -391,6 +391,7 @@ pub enum UiState {
     PolarModal,
     FirstTimeModal,
     SettingsModal,
+    StartupModal,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -1740,17 +1741,18 @@ pub struct TempPath {
     pub export_vid_done: String,
 }
 
-#[derive(Default, Clone,PartialEq)]
+#[derive(Default, Clone, PartialEq)]
 pub enum Saving {
     #[default]
     None,
     CustomPath,
-    Autosaving
+    Autosaving,
 }
 
 #[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
+    pub window_factor: f32,
     pub armature: Armature,
     pub camera: Camera,
     pub input: InputStates,
@@ -1785,6 +1787,8 @@ pub struct Shared {
     pub gridline_gap: i32,
 
     pub saving: Saving,
+
+    pub thumb_ui_tex: std::collections::HashMap<String, egui::TextureHandle>,
 
     /// triggers debug stuff. Set in main.rs
     pub debug: bool,

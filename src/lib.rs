@@ -15,7 +15,6 @@ mod native {
     pub use image::*;
     pub use std::fs;
     pub use std::io::Read;
-    pub use std::io::Write;
     pub use std::time::Instant;
 }
 #[cfg(not(target_arch = "wasm32"))]
@@ -152,6 +151,8 @@ impl ApplicationHandler for App {
                 {
                     gui_context.set_pixels_per_point(window_handle.scale_factor() as f32);
                 }
+
+                self.shared.window_factor = window_handle.scale_factor() as f32;
 
                 let viewport_id = gui_context.viewport_id();
                 let gui_state = egui_winit::State::new(
@@ -368,6 +369,7 @@ impl ApplicationHandler for App {
                     textures_delta,
                     &mut self.shared,
                 );
+                self.shared.window_factor = window.scale_factor() as f32;
             }
             _ => (),
         }
