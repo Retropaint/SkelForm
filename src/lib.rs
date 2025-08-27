@@ -4,6 +4,7 @@
 //!
 //! `runtime:` - implementation that is relevant to runtimes (eg. animation logic, forward kinematics, etc).
 
+use image::ImageEncoder;
 use shared::*;
 use wgpu::{BindGroupLayout, InstanceDescriptor};
 
@@ -225,7 +226,7 @@ impl ApplicationHandler for App {
 
         #[cfg(target_arch = "wasm32")]
         {
-            // disabled: web ui slider may be used to fix scaling issues, 
+            // disabled: web ui slider may be used to fix scaling issues,
             // but for now it's unneeded
 
             // self.shared.ui.scale = getUiSliderValue();
@@ -469,6 +470,48 @@ impl Renderer {
         textures_delta: egui::TexturesDelta,
         shared: &mut shared::Shared,
     ) {
+        if shared.autosaving {
+            self.take_screenshot(shared);
+            let buffer = shared.rendered_frames[0].buffer.clone();
+            shared.rendered_frames = vec![];
+            let window = shared.window;
+            let device = self.gpu.device.clone();
+            std::thread::spawn(move || {
+                // wait for screenshot buffer to complete
+                let _ = device.poll(wgpu::PollType::Wait);
+
+                let view = buffer.slice(..).get_mapped_range();
+
+                let mut rgb = vec![0u8; (window.x * window.y * 3.) as usize];
+                for (j, chunk) in view.as_ref().chunks_exact(4).enumerate() {
+                    let offset = j * 3;
+                    if offset + 2 > rgb.len() {
+                        return;
+                    }
+                    rgb[offset + 0] = chunk[2];
+                    rgb[offset + 1] = chunk[1];
+                    rgb[offset + 2] = chunk[0];
+                }
+
+                let img_buf = <image::ImageBuffer<image::Rgb<u8>, _>>::from_raw(
+                    window.x as u32,
+                    window.y as u32,
+                    rgb.clone(),
+                )
+                .unwrap();
+
+                let img_size = Vec2::new(128., 128.);
+
+                let mut img = DynamicImage::ImageRgb8(img_buf);
+                img = img.resize_exact(
+                    img_size.x as u32,
+                    img_size.y as u32,
+                    imageops::FilterType::Nearest,
+                );
+                let _ = img.save("thumbnail.png");
+            });
+            shared.autosaving = false;
+        }
         for (id, image_delta) in &textures_delta.set {
             self.egui_renderer
                 .update_texture(&self.gpu.device, &self.gpu.queue, *id, image_delta);
@@ -596,6 +639,7 @@ impl Renderer {
         });
 
         let capture_view = capture_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let clear_color = (50, 50, 50);
 
         let mut encoder = self
             .gpu
@@ -612,9 +656,9 @@ impl Renderer {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.8,
-                            g: 0.8,
-                            b: 0.8,
+                            r: clear_color.0 as f64 / 255.,
+                            g: clear_color.1 as f64 / 255.,
+                            b: clear_color.2 as f64 / 255.,
                             a: 1.0,
                         }),
                         store: wgpu::StoreOp::Store,
@@ -635,7 +679,7 @@ impl Renderer {
             capture_pass.set_pipeline(&self.scene.pipeline);
 
             // core rendering logic handled in renderer.rs
-            renderer::render(&mut capture_pass, &self.gpu.device, shared);
+            renderer::render_screenshot(&mut capture_pass, &self.gpu.device, shared);
         }
 
         let buffer_size = (width * height * 4) as u64;

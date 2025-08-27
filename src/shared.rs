@@ -1789,6 +1789,8 @@ pub struct Shared {
 
     pub gridline_gap: i32,
 
+    pub autosaving: bool,
+
     /// triggers debug stuff. Set in main.rs
     pub debug: bool,
 }

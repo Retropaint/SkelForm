@@ -215,7 +215,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         // save bone/animation for undo
         if !shared.editing_bone {
             shared.save_edited_bone();
-            shared.armature.autosave();
+            //shared.armature.autosave();
+            shared.autosaving = true;
             shared.editing_bone = true;
         }
 
@@ -223,6 +224,43 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         let bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap();
         edit_bone(shared, bone, &temp_bones);
+    }
+}
+
+/// Stripped-down renderer for screenshot purposes.
+pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: &Shared) {
+    let mut temp_bones: Vec<Bone> = shared.armature.bones.clone();
+    forward_kinematics(&mut temp_bones, std::collections::HashMap::new());
+    temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
+
+    let zoom = 1000.;
+
+    for b in 0..temp_bones.len() {
+        if temp_bones[b].tex_set_idx == -1 {
+            continue;
+        }
+        let set = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize];
+        if shared.armature.is_bone_hidden(temp_bones[b].id)
+            || temp_bones[b].tex_idx > set.textures.len() as i32 - 1
+        {
+            continue;
+        }
+
+        let mut world_verts: Vec<Vertex> = vec![];
+        for vert in &temp_bones[b].vertices {
+            let mut new_vert = con_vert!(
+                raw_to_world_vert,
+                *vert,
+                temp_bones[b],
+                set.textures[temp_bones[b].tex_idx as usize],
+                Vec2::new(0., 0.),
+                zoom
+            );
+            new_vert.pos.x /= shared.window.x / shared.window.y;
+            world_verts.push(new_vert);
+        }
+
+        draw_bone(&temp_bones[b], render_pass, device, &world_verts, shared);
     }
 }
 
