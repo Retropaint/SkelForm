@@ -548,6 +548,7 @@ pub fn first_time_modal(shared: &mut Shared, ctx: &egui::Context) {
     );
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
     let margin = 50.;
     egui::Modal::new("test".into())
@@ -579,7 +580,13 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
         });
 }
 
-fn startup_content(ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut crate::Shared, available_size: egui::Vec2) {
+#[cfg(not(target_arch = "wasm32"))]
+fn startup_content(
+    ctx: &egui::Context,
+    ui: &mut egui::Ui,
+    shared: &mut crate::Shared,
+    available_size: egui::Vec2,
+) {
     ui.vertical(|ui| {
         ui.set_width(available_size.x * 0.7);
         ui.heading("Projects:");
@@ -597,7 +604,7 @@ fn startup_content(ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut crate::S
         let samples_folder: std::fs::ReadDir;
         match sf {
             Ok(data) => samples_folder = data,
-            _ => return
+            _ => return,
         }
         for entry in samples_folder {
             let file_name = entry.as_ref().unwrap().file_name().into_string().unwrap();
@@ -729,6 +736,7 @@ fn startup_content(ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut crate::S
     });
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn open_link(item: &crate::StartupResourceItem, url_type: &crate::StartupItemType) {
     if *url_type == crate::StartupItemType::Custom {
         let _ = open::that(item.url.clone());
