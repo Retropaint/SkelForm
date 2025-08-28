@@ -18,12 +18,25 @@
     {
       "name": "Developer Documentation",
       "url_type": "DevDocs",
-      "url": ""
+      "url": "",
+      "items": [
+        {
+          "name": ".skf Structure",
+          "url": "file_specs.html"
+        },
+        {
+          "name": "Runtime Development",
+          "url": "runtime_spec.html"
+        }
+      ]
     },
     {
       "name": "Main Site",
-      "type": "custom",
       "url": "https://retropaint.github.io/skelform_site"
+    },
+    {
+      "name": "Discord",
+      "url": "https://discord.com/invite/V9gm4p4cAB"
     }
   ]
 }
