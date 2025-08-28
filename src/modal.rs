@@ -688,8 +688,21 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
                                 if heading.clicked() {
                                     open_link(&item, &item.url_type);
                                 }
+                                ui.add_space(5.);
                                 for sub in &item.items {
                                     ui.horizontal(|ui| {
+                                        let left_top = egui::Pos2::new(
+                                            ui.min_rect().left_top().x + 5.,
+                                            ui.min_rect().left_top().y - 10.,
+                                        );
+                                        ui.painter().rect_filled(
+                                            egui::Rect::from_min_size(
+                                                left_top,
+                                                egui::Vec2::new(2., sub_size + 8.),
+                                            ),
+                                            egui::CornerRadius::ZERO,
+                                            egui::Color32::from_hex("#223752").unwrap(),
+                                        );
                                         ui.add_space(sub_padding);
                                         let sub_text = ui.clickable_label(
                                             egui::RichText::new(sub.name.clone())
@@ -713,7 +726,7 @@ fn open_link(item: &crate::StartupResourceItem, url_type: &crate::StartupItemTyp
     if *url_type == crate::StartupItemType::Custom {
         let _ = open::that(item.url.clone());
     } else {
-        utils::open_docs(item.url_type == crate::StartupItemType::DevDocs, &item.url);
+        utils::open_docs(*url_type == crate::StartupItemType::DevDocs, &item.url);
     }
 }
 
