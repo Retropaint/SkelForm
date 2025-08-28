@@ -28,11 +28,9 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     {
         let args: Vec<String> = std::env::args().collect();
         if args.len() == 1 {
-            let startup_file = std::fs::File::open("startup.json");
-            match startup_file {
-                Ok(data) => startup = serde_json::from_reader(data).unwrap(),
-                _ => {}
-            };
+            if let Ok(data) = std::fs::File::open("startup.json") {
+                startup = serde_json::from_reader(data).unwrap();
+            }
         }
     }
 
@@ -130,9 +128,11 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.scale = shared.config.ui_scale;
     shared.gridline_gap = shared.config.gridline_gap;
 
-    // shared.ui.set_state(UiState::SettingsModal, true);
-
     // if this were false, the first click would always
     // be considered non-UI
     shared.input.on_ui = true;
+
+    if let Ok(data) = std::fs::File::open(".skelform_recent_files.json") {
+        shared.recent_file_paths = serde_json::from_reader(data).unwrap();
+    }
 }

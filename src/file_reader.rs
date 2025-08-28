@@ -449,7 +449,10 @@ pub fn read_import(
 
     let ext = path.split('.').last().unwrap();
     match ext {
-        "skf" => utils::import(file.unwrap(), shared, queue, device, bgl, context),
+        "skf" => {
+            utils::import(file.unwrap(), shared, queue, device, bgl, context);
+            utils::save_to_recent_files(path, shared);
+        }
         "psd" => read_psd(shared, queue, device, bgl, context),
         _ => {}
     };

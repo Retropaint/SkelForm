@@ -591,6 +591,10 @@ fn startup_content(
         ui.set_width(available_size.x * 0.7);
         ui.heading("Projects:");
 
+        for p in 0..shared.recent_file_paths.len() {
+            skf_file_button(shared.recent_file_paths[p].to_string(), shared, ui, ctx);
+        }
+
         ui.add_space(5.);
         if ui.skf_button("+ New Project").clicked() {
             shared.ui.set_state(UiState::StartupModal, false);
@@ -661,13 +665,11 @@ fn startup_content(
 }
 
 pub fn create_file_list(path: String, ui: &mut egui::Ui, shared: &mut Shared, ctx: &egui::Context) {
-    let sf = std::fs::read_dir(path);
-    let samples_folder: std::fs::ReadDir;
-    match sf {
-        Ok(data) => samples_folder = data,
-        _ => return,
+    let samples_folder = std::fs::read_dir(path);
+    if let Err(_) = samples_folder {
+        return;
     }
-    for entry in samples_folder {
+    for entry in samples_folder.unwrap() {
         let path = entry
             .unwrap()
             .path()
