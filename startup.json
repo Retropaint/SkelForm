@@ -1,0 +1,25 @@
+{
+  "resources": [
+    {
+      "name": "User Documentation",
+      "url": "",
+      "is_dev": false,
+      "items": [
+        {
+          "name": "Starter Guide",
+          "url": "starter_guide/main.html"
+        },
+        {
+          "name": "PSD Rigging",
+          "url": "psd.html"
+        }
+      ]
+    },
+    {
+      "name": "Developer Documentation",
+      "is_dev": false,
+      "url": "starter_guide/main.html",
+      "items": []
+    }
+  ]
+}
