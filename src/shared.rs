@@ -1749,10 +1749,12 @@ pub enum Saving {
     Autosaving,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Default)]
 pub struct StartupResourceItem {
     #[serde(default)]
     pub name: String,
+    #[serde(default)]
+    pub url_type: StartupItemType,
     #[serde(default)]
     pub url: String,
     #[serde(default)]
@@ -1761,7 +1763,15 @@ pub struct StartupResourceItem {
     pub items: Vec<StartupResourceItem>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Default, PartialEq)]
+pub enum StartupItemType {
+    #[default]
+    Custom,
+    DevDocs,
+    UserDocs,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Default)]
 pub struct Startup {
     #[serde(default)]
     pub resources: Vec<StartupResourceItem>,

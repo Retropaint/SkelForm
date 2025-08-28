@@ -674,38 +674,47 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
                             ui.set_width(available_size.x);
                             ui.set_height(available_size.y);
 
-                            macro_rules! link {
-                                ($text:expr, $size:expr, $ui:expr) => {
-                                    $ui.clickable_label(
-                                        egui::RichText::new($text)
-                                            .color(egui::Color32::from_hex("#659adf").unwrap())
-                                            .size($size),
-                                    )
-                                    .clicked()
-                                };
-                            }
-
                             let header_size = 15.;
                             let sub_size = 13.;
-                            let sub_space = 20.;
+                            let sub_padding = 20.;
+                            let separator = 15.;
 
                             for item in &shared.startup.resources {
-                                if link!(item.name.clone(), header_size, ui) {
-                                    utils::open_docs(item.is_dev, &item.url);
+                                let heading = ui.clickable_label(
+                                    egui::RichText::new(item.name.clone())
+                                        .color(egui::Color32::from_hex("#659adf").unwrap())
+                                        .size(header_size),
+                                );
+                                if heading.clicked() {
+                                    open_link(&item, &item.url_type);
                                 }
                                 for sub in &item.items {
                                     ui.horizontal(|ui| {
-                                        ui.add_space(sub_space);
-                                        if link!(sub.name.clone(), sub_size, ui) {
-                                            utils::open_docs(item.is_dev, &sub.url);
+                                        ui.add_space(sub_padding);
+                                        let sub_text = ui.clickable_label(
+                                            egui::RichText::new(sub.name.clone())
+                                                .color(egui::Color32::from_hex("#659adf").unwrap())
+                                                .size(sub_size),
+                                        );
+                                        if sub_text.clicked() {
+                                            open_link(&sub, &item.url_type);
                                         }
                                     });
                                 }
+                                ui.add_space(separator);
                             }
                         })
                 })
             });
         });
+}
+
+fn open_link(item: &crate::StartupResourceItem, url_type: &crate::StartupItemType) {
+    if *url_type == crate::StartupItemType::Custom {
+        let _ = open::that(item.url.clone());
+    } else {
+        utils::open_docs(item.url_type == crate::StartupItemType::DevDocs, &item.url);
+    }
 }
 
 // top-right X label for modals

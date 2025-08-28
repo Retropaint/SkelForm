@@ -2,8 +2,8 @@
   "resources": [
     {
       "name": "User Documentation",
+      "url_type": "UserDocs",
       "url": "",
-      "is_dev": false,
       "items": [
         {
           "name": "Starter Guide",
@@ -17,9 +17,13 @@
     },
     {
       "name": "Developer Documentation",
-      "is_dev": false,
-      "url": "starter_guide/main.html",
-      "items": []
+      "url_type": "DevDocs",
+      "url": ""
+    },
+    {
+      "name": "Main Site",
+      "type": "custom",
+      "url": "https://retropaint.github.io/skelform_site"
     }
   ]
 }
