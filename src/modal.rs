@@ -565,12 +565,17 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
                 shared.config.ui_colors.gradient.into(),
             );
             let width = ui.ctx().screen_rect().width() - margin;
-            let height = ui.ctx().screen_rect().height() - margin;
+            let height = ui.ctx().screen_rect().height() - margin - 20.;
             ui.set_width(width.max(0.));
             ui.set_height(height.max(0.));
 
+            let available_size = ui.available_size();
+
             ui.horizontal(|ui| {
+                ui.set_width(available_size.x);
+                ui.set_height(available_size.y);
                 ui.vertical(|ui| {
+                    ui.set_width(available_size.x * 0.7);
                     ui.heading("Projects:");
 
                     ui.add_space(5.);
@@ -659,7 +664,24 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
                 });
 
                 ui.vertical(|ui| {
+                    let available_size = ui.available_size();
                     ui.heading("Resources");
+                    ui.add_space(7.);
+                    egui::Frame::new()
+                        .fill(shared.config.ui_colors.dark_accent.into())
+                        .inner_margin(egui::Margin::same(10))
+                        .show(ui, |ui| {
+                            ui.set_width(available_size.x);
+                            ui.set_height(available_size.y);
+                            let user_docs = ui.clickable_label(
+                                egui::RichText::new("User Documentation")
+                                    .color(egui::Color32::from_hex("#659adf").unwrap())
+                                    .size(16.),
+                            );
+                            if user_docs.clicked() {
+                                utils::open_docs(false, "");
+                            }
+                        })
                 })
             });
         });
