@@ -1805,6 +1805,8 @@ pub struct Shared {
 
     pub save_path: String,
 
+    pub recent_file_paths: Vec<String>,
+
     pub temp_path: TempPath,
     pub has_temp: bool,
 

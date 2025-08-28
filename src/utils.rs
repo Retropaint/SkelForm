@@ -13,7 +13,10 @@ pub use web::*;
 
 use image::ImageEncoder;
 
-use std::io::{Read, Write};
+use std::{
+    io::{Read, Write},
+    os::unix::fs::FileExt,
+};
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
@@ -397,6 +400,23 @@ pub fn import<R: Read + std::io::Seek>(
     shared.ui.set_tutorial_step(TutorialStep::None);
 
     file_reader::del_temp_files(&shared.temp_path.base);
+}
+
+pub fn save_to_recent_files(path: String, shared: &mut crate::Shared) {
+    if shared.recent_file_paths.contains(&path) {
+        return
+    }
+
+    let file = std::fs::File::create("./.skelform_recent_files.json");
+    if let Err(_) = file {
+        return;
+    }
+
+    shared.recent_file_paths.push(path);
+    let paths_json = serde_json::to_string(&shared.recent_file_paths).unwrap();
+    if let Err(_) = file.unwrap().write(&paths_json.into_bytes()) {
+        return;
+    }
 }
 
 pub fn undo_redo(undo: bool, shared: &mut Shared) {
