@@ -21,7 +21,20 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     // }
 
     let mut app = skelform_lib::App::default();
+    let mut startup = Startup::default();
+
+    // load startup.json, but only if no args were given
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let args: Vec<String> = std::env::args().collect();
+        if args.len() == 1 {
+            let startup_file = std::fs::File::open("startup.json").unwrap();
+            startup = serde_json::from_reader(startup_file).unwrap();
+        }
+    }
+
     init_shared(&mut app.shared);
+    app.shared.startup = startup;
 
     // delete any leftover temporary files
     #[cfg(not(target_arch = "wasm32"))]

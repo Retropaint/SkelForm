@@ -1749,6 +1749,24 @@ pub enum Saving {
     Autosaving,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Default, Debug)]
+pub struct StartupResourceItem {
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub url: String,
+    #[serde(default)]
+    pub is_dev: bool,
+    #[serde(default)]
+    pub items: Vec<StartupResourceItem>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Default, Debug)]
+pub struct Startup {
+    #[serde(default)]
+    pub resources: Vec<StartupResourceItem>,
+}
+
 #[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
@@ -1789,6 +1807,8 @@ pub struct Shared {
     pub saving: Saving,
 
     pub thumb_ui_tex: std::collections::HashMap<String, egui::TextureHandle>,
+
+    pub startup: Startup,
 
     /// triggers debug stuff. Set in main.rs
     pub debug: bool,

@@ -685,20 +685,22 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
                                 };
                             }
 
-                            if link!("User Documentation", 18., ui) {
-                                utils::open_docs(false, "");
-                            }
-                            ui.horizontal(|ui| {
-                                ui.add_space(20.);
-                                if link!("Starter Guide", 16., ui) {
-                                    utils::open_docs(false, "starter_guide/main.html");
+                            let header_size = 15.;
+                            let sub_size = 13.;
+                            let sub_space = 20.;
+
+                            for item in &shared.startup.resources {
+                                if link!(item.name.clone(), header_size, ui) {
+                                    utils::open_docs(item.is_dev, &item.url);
                                 }
-                            });
-
-                            ui.add_space(15.);
-
-                            if link!("Developer Documentation", 18., ui) {
-                                utils::open_docs(true, "");
+                                for sub in &item.items {
+                                    ui.horizontal(|ui| {
+                                        ui.add_space(sub_space);
+                                        if link!(sub.name.clone(), sub_size, ui) {
+                                            utils::open_docs(item.is_dev, &sub.url);
+                                        }
+                                    });
+                                }
                             }
                         })
                 })
