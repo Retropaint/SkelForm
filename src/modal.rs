@@ -550,7 +550,7 @@ pub fn first_time_modal(shared: &mut Shared, ctx: &egui::Context) {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
-    let margin = 50.;
+    let margin = 75.;
     egui::Modal::new("test".into())
         .frame(egui::Frame {
             corner_radius: 0.into(),
@@ -591,8 +591,11 @@ fn startup_content(
 
     ui.vertical(|ui| {
         ui.set_width(available_size.x * column_size);
-        ui.heading("Projects:");
-        ui.add_space(10.);
+        ui.button("New Project");
+    });
+
+    ui.vertical(|ui| {
+        ui.set_width(available_size.x * column_size * 2.);
         for p in 0..shared.recent_file_paths.len() {
             let path = shared.recent_file_paths[p].to_string();
             if let Err(_) = std::fs::File::open(&path) {
@@ -605,20 +608,16 @@ fn startup_content(
                 continue;
             }
             skf_file_button(path, shared, ui, ctx);
+            ui.separator();
         }
-
-        ui.add_space(5.);
-        if ui.skf_button("+ New Project").clicked() {
-            shared.ui.set_state(UiState::StartupModal, false);
-        };
     });
 
-    ui.vertical(|ui| {
-        ui.set_width(available_size.x * column_size);
-        ui.heading("Samples:");
-        ui.add_space(10.);
-        create_file_list("./samples".to_string(), ui, shared, ctx);
-    });
+    // ui.vertical(|ui| {
+    //     ui.set_width(available_size.x * column_size);
+    //     ui.heading("Samples:");
+    //     ui.add_space(10.);
+    //     create_file_list("./samples".to_string(), ui, shared, ctx);
+    // });
 
     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
         ui.set_width(available_size.x * column_size);
@@ -729,8 +728,6 @@ pub fn skf_file_button(path: String, shared: &mut Shared, ui: &mut egui::Ui, ctx
     let thumb_size = Vec2::new(64., 64.);
 
     let button = egui::Frame::new()
-        .stroke(egui::Stroke::new(2., shared.config.ui_colors.dark_accent))
-        .fill(shared.config.ui_colors.dark_accent.into())
         .inner_margin(egui::Margin::same(10))
         .show(ui, |ui| {
             ui.set_width(256.);
@@ -742,7 +739,7 @@ pub fn skf_file_button(path: String, shared: &mut Shared, ui: &mut egui::Ui, ctx
             egui::Image::new(shared.thumb_ui_tex.get(&filename).unwrap()).paint_at(ui, rect);
             let heading_pos = egui::Pos2::new(
                 ui.min_rect().left_top().x + 72.,
-                ui.min_rect().left_top().y + 14.,
+                ui.min_rect().left_top().y + 18.,
             );
             ui.painter().text(
                 heading_pos,
