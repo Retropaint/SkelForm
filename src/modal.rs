@@ -591,38 +591,11 @@ fn startup_content(
 
     ui.vertical(|ui| {
         ui.set_width(available_size.x * column_size);
-        let new = egui::Frame::new()
-            .fill(shared.config.ui_colors.dark_accent.into())
-            .show(ui, |ui| {
-                ui.set_width(128.);
-                ui.set_height(48.);
-                let label_pos = egui::Pos2::new(
-                    ui.min_rect().left_center().x + 20.,
-                    ui.min_rect().left_center().y - 2.5,
-                );
-                ui.painter().text(
-                    label_pos,
-                    egui::Align2::LEFT_CENTER,
-                    "+",
-                    egui::FontId::new(30., egui::FontFamily::default()),
-                    egui::Color32::WHITE
-                );
-                let label_pos = egui::Pos2::new(
-                    ui.min_rect().left_center().x + 50.,
-                    ui.min_rect().left_center().y,
-                );
-                ui.painter().text(
-                    label_pos,
-                    egui::Align2::LEFT_CENTER,
-                    "New",
-                    egui::FontId::new(20., egui::FontFamily::default()),
-                    shared.config.ui_colors.text.into(),
-                );
-            })
-            .response
-            .interact(egui::Sense::click());
-        if new.clicked() {
+        if startup_leftside_button("+", "New", ui, shared).clicked() {
             shared.ui.set_state(UiState::StartupModal, false);
+        }
+        if startup_leftside_button("+", "Import", ui, shared).clicked() {
+            utils::open_import_dialog(shared.temp_path.import.clone());
         }
     });
 
@@ -711,6 +684,45 @@ fn startup_content(
                 })
         });
     });
+}
+
+pub fn startup_leftside_button(
+    icon: &str,
+    label: &str,
+    ui: &mut egui::Ui,
+    shared: &Shared,
+) -> egui::Response {
+    egui::Frame::new()
+        .fill(shared.config.ui_colors.dark_accent.into())
+        .show(ui, |ui| {
+            ui.set_width(128.);
+            ui.set_height(48.);
+            let label_pos = egui::Pos2::new(
+                ui.min_rect().left_center().x + 20.,
+                ui.min_rect().left_center().y - 2.5,
+            );
+            ui.painter().text(
+                label_pos,
+                egui::Align2::LEFT_CENTER,
+                icon.to_string(),
+                egui::FontId::new(30., egui::FontFamily::default()),
+                egui::Color32::WHITE,
+            );
+            let label_pos = egui::Pos2::new(
+                ui.min_rect().left_center().x + 50.,
+                ui.min_rect().left_center().y,
+            );
+            ui.painter().text(
+                label_pos,
+                egui::Align2::LEFT_CENTER,
+                label,
+                egui::FontId::new(20., egui::FontFamily::default()),
+                shared.config.ui_colors.text.into(),
+            );
+        })
+        .response
+        .interact(egui::Sense::click())
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
 pub fn skf_file_button(
