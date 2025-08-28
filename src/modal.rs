@@ -591,11 +591,44 @@ fn startup_content(
 
     ui.vertical(|ui| {
         ui.set_width(available_size.x * column_size);
-        ui.button("New Project");
+        let new = egui::Frame::new()
+            .fill(shared.config.ui_colors.dark_accent.into())
+            .show(ui, |ui| {
+                ui.set_width(128.);
+                ui.set_height(48.);
+                let label_pos = egui::Pos2::new(
+                    ui.min_rect().left_center().x + 20.,
+                    ui.min_rect().left_center().y - 2.5,
+                );
+                ui.painter().text(
+                    label_pos,
+                    egui::Align2::LEFT_CENTER,
+                    "+",
+                    egui::FontId::new(30., egui::FontFamily::default()),
+                    egui::Color32::WHITE
+                );
+                let label_pos = egui::Pos2::new(
+                    ui.min_rect().left_center().x + 50.,
+                    ui.min_rect().left_center().y,
+                );
+                ui.painter().text(
+                    label_pos,
+                    egui::Align2::LEFT_CENTER,
+                    "New",
+                    egui::FontId::new(20., egui::FontFamily::default()),
+                    shared.config.ui_colors.text.into(),
+                );
+            })
+            .response
+            .interact(egui::Sense::click());
+        if new.clicked() {
+            shared.ui.set_state(UiState::StartupModal, false);
+        }
     });
 
     ui.vertical(|ui| {
         ui.set_width(available_size.x * column_size * 2.);
+        let available_width = ui.available_width();
         for p in 0..shared.recent_file_paths.len() {
             let path = shared.recent_file_paths[p].to_string();
             if let Err(_) = std::fs::File::open(&path) {
@@ -607,7 +640,7 @@ fn startup_content(
                 shared.recent_file_paths.remove(idx);
                 continue;
             }
-            skf_file_button(path, shared, ui, ctx);
+            skf_file_button(path, shared, ui, ctx, available_width);
             ui.separator();
         }
     });
@@ -680,29 +713,13 @@ fn startup_content(
     });
 }
 
-pub fn create_file_list(path: String, ui: &mut egui::Ui, shared: &mut Shared, ctx: &egui::Context) {
-    let samples_folder = std::fs::read_dir(path);
-    if let Err(_) = samples_folder {
-        return;
-    }
-    for entry in samples_folder.unwrap() {
-        let path = entry
-            .unwrap()
-            .path()
-            .into_os_string()
-            .into_string()
-            .unwrap();
-        let file = std::fs::File::open(path.clone()).unwrap();
-        let zip = zip::ZipArchive::new(file);
-        if let Err(_) = zip {
-            continue;
-        }
-
-        skf_file_button(path, shared, ui, ctx);
-    }
-}
-
-pub fn skf_file_button(path: String, shared: &mut Shared, ui: &mut egui::Ui, ctx: &egui::Context) {
+pub fn skf_file_button(
+    path: String,
+    shared: &mut Shared,
+    ui: &mut egui::Ui,
+    ctx: &egui::Context,
+    width: f32,
+) {
     let filename = path.split('/').last().unwrap().to_string();
     let file = std::fs::File::open(path.clone()).unwrap();
     let zip = zip::ZipArchive::new(file);
@@ -730,7 +747,7 @@ pub fn skf_file_button(path: String, shared: &mut Shared, ui: &mut egui::Ui, ctx
     let button = egui::Frame::new()
         .inner_margin(egui::Margin::same(10))
         .show(ui, |ui| {
-            ui.set_width(256.);
+            ui.set_width(width);
             ui.set_height(64.);
             let rect = egui::Rect::from_min_size(
                 egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
