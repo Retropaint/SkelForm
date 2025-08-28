@@ -153,6 +153,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.ui.has_state(UiState::FirstTimeModal) {
         modal::first_time_modal(shared, context);
     }
+    #[cfg(not(target_arch = "wasm32"))]
     if shared.ui.has_state(UiState::StartupModal) {
         modal::startup_modal(shared, context);
     }
