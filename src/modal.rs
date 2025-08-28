@@ -673,13 +673,32 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
                         .show(ui, |ui| {
                             ui.set_width(available_size.x);
                             ui.set_height(available_size.y);
-                            let user_docs = ui.clickable_label(
-                                egui::RichText::new("User Documentation")
-                                    .color(egui::Color32::from_hex("#659adf").unwrap())
-                                    .size(16.),
-                            );
-                            if user_docs.clicked() {
+
+                            macro_rules! link {
+                                ($text:expr, $size:expr, $ui:expr) => {
+                                    $ui.clickable_label(
+                                        egui::RichText::new($text)
+                                            .color(egui::Color32::from_hex("#659adf").unwrap())
+                                            .size($size),
+                                    )
+                                    .clicked()
+                                };
+                            }
+
+                            if link!("User Documentation", 18., ui) {
                                 utils::open_docs(false, "");
+                            }
+                            ui.horizontal(|ui| {
+                                ui.add_space(20.);
+                                if link!("Starter Guide", 16., ui) {
+                                    utils::open_docs(false, "starter_guide/main.html");
+                                }
+                            });
+
+                            ui.add_space(15.);
+
+                            if link!("Developer Documentation", 18., ui) {
+                                utils::open_docs(true, "");
                             }
                         })
                 })
