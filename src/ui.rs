@@ -11,7 +11,7 @@ const FFMPEG_ERR: &str =
 pub trait EguiUi {
     fn skf_button(&mut self, text: &str) -> egui::Response;
     fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32);
-    fn clickable_label(&mut self, text: &str) -> egui::Response;
+    fn clickable_label(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response;
     fn text_input(
         &mut self,
         id: String,
@@ -418,7 +418,7 @@ impl EguiUi for egui::Ui {
         self.painter().add(egui::Shape::mesh(mesh));
     }
 
-    fn clickable_label(&mut self, text: &str) -> egui::Response {
+    fn clickable_label(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response {
         let label = self
             .label(text)
             .on_hover_cursor(egui::CursorIcon::PointingHand)
