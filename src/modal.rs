@@ -587,30 +587,44 @@ fn startup_content(
     shared: &mut crate::Shared,
     available_size: egui::Vec2,
 ) {
-    ui.vertical(|ui| {
-        ui.set_width(available_size.x * 0.7);
-        ui.heading("Projects:");
+    let column_size = 0.2;
 
+    ui.vertical(|ui| {
+        ui.set_width(available_size.x * column_size);
+        ui.heading("Projects:");
+        ui.add_space(10.);
         for p in 0..shared.recent_file_paths.len() {
-            skf_file_button(shared.recent_file_paths[p].to_string(), shared, ui, ctx);
+            let path = shared.recent_file_paths[p].to_string();
+            if let Err(_) = std::fs::File::open(&path) {
+                let idx = shared
+                    .recent_file_paths
+                    .iter()
+                    .position(|r_path| *r_path == path)
+                    .unwrap();
+                shared.recent_file_paths.remove(idx);
+                continue;
+            }
+            skf_file_button(path, shared, ui, ctx);
         }
 
         ui.add_space(5.);
         if ui.skf_button("+ New Project").clicked() {
             shared.ui.set_state(UiState::StartupModal, false);
         };
+    });
 
-        ui.add_space(20.);
+    ui.vertical(|ui| {
+        ui.set_width(available_size.x * column_size);
         ui.heading("Samples:");
-
-        ui.add_space(5.);
+        ui.add_space(10.);
         create_file_list("./samples".to_string(), ui, shared, ctx);
     });
 
     ui.vertical(|ui| {
+        ui.set_width(available_size.x * column_size);
         let available_size = ui.available_size();
         ui.heading("Resources");
-        ui.add_space(7.);
+        ui.add_space(10.);
         egui::Frame::new()
             .fill(shared.config.ui_colors.dark_accent.into())
             .inner_margin(egui::Margin::same(10))
