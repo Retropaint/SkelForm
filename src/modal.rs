@@ -574,152 +574,159 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
             ui.horizontal(|ui| {
                 ui.set_width(available_size.x);
                 ui.set_height(available_size.y);
-                ui.vertical(|ui| {
-                    ui.set_width(available_size.x * 0.7);
-                    ui.heading("Projects:");
-
-                    ui.add_space(5.);
-                    if ui.skf_button("+ New Project").clicked() {
-                        shared.ui.set_state(UiState::StartupModal, false);
-                    };
-
-                    ui.add_space(20.);
-                    ui.heading("Samples:");
-
-                    ui.add_space(5.);
-                    let samples_folder = std::fs::read_dir("./samples").unwrap();
-                    for entry in samples_folder {
-                        let file_name = entry.as_ref().unwrap().file_name().into_string().unwrap();
-                        if file_name.chars().next().unwrap() == '.' {
-                            continue;
-                        }
-
-                        let path = entry
-                            .unwrap()
-                            .path()
-                            .into_os_string()
-                            .into_string()
-                            .unwrap();
-                        let file = std::fs::File::open(path.clone()).unwrap();
-                        let zip = zip::ZipArchive::new(file);
-                        if let Err(_) = zip {
-                            continue;
-                        }
-
-                        // generate thumbnail UI texture
-                        if shared.thumb_ui_tex.get(&file_name) == None {
-                            let mut thumb_bytes = vec![];
-                            for byte in zip.unwrap().by_name("thumbnail.png").unwrap().bytes() {
-                                thumb_bytes.push(byte.unwrap());
-                            }
-                            let thumb_img = image::load_from_memory(&thumb_bytes).unwrap();
-                            let color_image = egui::ColorImage::from_rgb(
-                                [thumb_img.width() as usize, thumb_img.height() as usize],
-                                &thumb_img.into_rgb8(),
-                            );
-                            let ui_tex =
-                                ctx.load_texture("anim_icons", color_image, Default::default());
-                            shared
-                                .thumb_ui_tex
-                                .insert(file_name.clone(), ui_tex.clone());
-                        }
-
-                        let thumb_size = Vec2::new(64., 64.);
-
-                        let button = egui::Frame::new()
-                            .stroke(egui::Stroke::new(2., shared.config.ui_colors.dark_accent))
-                            .fill(shared.config.ui_colors.dark_accent.into())
-                            .inner_margin(egui::Margin::same(10))
-                            .show(ui, |ui| {
-                                ui.set_width(256.);
-                                ui.set_height(64.);
-                                let rect = egui::Rect::from_min_size(
-                                    egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
-                                    thumb_size.into(),
-                                );
-                                egui::Image::new(shared.thumb_ui_tex.get(&file_name).unwrap())
-                                    .paint_at(ui, rect);
-                                let heading_pos = egui::Pos2::new(
-                                    ui.min_rect().left_top().x + 72.,
-                                    ui.min_rect().left_top().y + 14.,
-                                );
-                                ui.painter().text(
-                                    heading_pos,
-                                    egui::Align2::LEFT_BOTTOM,
-                                    file_name,
-                                    egui::FontId::new(16., egui::FontFamily::Proportional),
-                                    shared.config.ui_colors.text.into(),
-                                );
-                            })
-                            .response
-                            .interact(egui::Sense::click())
-                            .on_hover_cursor(egui::CursorIcon::PointingHand);
-
-                        if button.clicked() {
-                            crate::file_reader::create_temp_file(&shared.temp_path.import, &path);
-                            shared.ui.set_state(UiState::StartupModal, false);
-                            println!("test")
-                        }
-                    }
-                });
-
-                ui.vertical(|ui| {
-                    let available_size = ui.available_size();
-                    ui.heading("Resources");
-                    ui.add_space(7.);
-                    egui::Frame::new()
-                        .fill(shared.config.ui_colors.dark_accent.into())
-                        .inner_margin(egui::Margin::same(10))
-                        .show(ui, |ui| {
-                            ui.set_width(available_size.x);
-                            ui.set_height(available_size.y);
-
-                            let header_size = 15.;
-                            let sub_size = 13.;
-                            let sub_padding = 20.;
-                            let separator = 15.;
-
-                            for item in &shared.startup.resources {
-                                let heading = ui.clickable_label(
-                                    egui::RichText::new(item.name.clone())
-                                        .color(egui::Color32::from_hex("#659adf").unwrap())
-                                        .size(header_size),
-                                );
-                                if heading.clicked() {
-                                    open_link(&item, &item.url_type);
-                                }
-                                ui.add_space(5.);
-                                for sub in &item.items {
-                                    ui.horizontal(|ui| {
-                                        let left_top = egui::Pos2::new(
-                                            ui.min_rect().left_top().x + 5.,
-                                            ui.min_rect().left_top().y - 10.,
-                                        );
-                                        ui.painter().rect_filled(
-                                            egui::Rect::from_min_size(
-                                                left_top,
-                                                egui::Vec2::new(2., sub_size + 8.),
-                                            ),
-                                            egui::CornerRadius::ZERO,
-                                            egui::Color32::from_hex("#223752").unwrap(),
-                                        );
-                                        ui.add_space(sub_padding);
-                                        let sub_text = ui.clickable_label(
-                                            egui::RichText::new(sub.name.clone())
-                                                .color(egui::Color32::from_hex("#659adf").unwrap())
-                                                .size(sub_size),
-                                        );
-                                        if sub_text.clicked() {
-                                            open_link(&sub, &item.url_type);
-                                        }
-                                    });
-                                }
-                                ui.add_space(separator);
-                            }
-                        })
-                })
+                startup_content(&ctx, ui, shared, available_size);
             });
         });
+}
+
+fn startup_content(ctx: &egui::Context, ui: &mut egui::Ui, shared: &mut crate::Shared, available_size: egui::Vec2) {
+    ui.vertical(|ui| {
+        ui.set_width(available_size.x * 0.7);
+        ui.heading("Projects:");
+
+        ui.add_space(5.);
+        if ui.skf_button("+ New Project").clicked() {
+            shared.ui.set_state(UiState::StartupModal, false);
+        };
+
+        ui.add_space(20.);
+        ui.heading("Samples:");
+
+        ui.add_space(5.);
+        let sf = std::fs::read_dir("./samples");
+        let samples_folder: std::fs::ReadDir;
+        match sf {
+            Ok(data) => samples_folder = data,
+            _ => return
+        }
+        for entry in samples_folder {
+            let file_name = entry.as_ref().unwrap().file_name().into_string().unwrap();
+            if file_name.chars().next().unwrap() == '.' {
+                continue;
+            }
+
+            let path = entry
+                .unwrap()
+                .path()
+                .into_os_string()
+                .into_string()
+                .unwrap();
+            let file = std::fs::File::open(path.clone()).unwrap();
+            let zip = zip::ZipArchive::new(file);
+            if let Err(_) = zip {
+                continue;
+            }
+
+            // generate thumbnail UI texture
+            if shared.thumb_ui_tex.get(&file_name) == None {
+                let mut thumb_bytes = vec![];
+                for byte in zip.unwrap().by_name("thumbnail.png").unwrap().bytes() {
+                    thumb_bytes.push(byte.unwrap());
+                }
+                let thumb_img = image::load_from_memory(&thumb_bytes).unwrap();
+                let color_image = egui::ColorImage::from_rgb(
+                    [thumb_img.width() as usize, thumb_img.height() as usize],
+                    &thumb_img.into_rgb8(),
+                );
+                let ui_tex = ctx.load_texture("anim_icons", color_image, Default::default());
+                shared
+                    .thumb_ui_tex
+                    .insert(file_name.clone(), ui_tex.clone());
+            }
+
+            let thumb_size = Vec2::new(64., 64.);
+
+            let button = egui::Frame::new()
+                .stroke(egui::Stroke::new(2., shared.config.ui_colors.dark_accent))
+                .fill(shared.config.ui_colors.dark_accent.into())
+                .inner_margin(egui::Margin::same(10))
+                .show(ui, |ui| {
+                    ui.set_width(256.);
+                    ui.set_height(64.);
+                    let rect = egui::Rect::from_min_size(
+                        egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
+                        thumb_size.into(),
+                    );
+                    egui::Image::new(shared.thumb_ui_tex.get(&file_name).unwrap())
+                        .paint_at(ui, rect);
+                    let heading_pos = egui::Pos2::new(
+                        ui.min_rect().left_top().x + 72.,
+                        ui.min_rect().left_top().y + 14.,
+                    );
+                    ui.painter().text(
+                        heading_pos,
+                        egui::Align2::LEFT_BOTTOM,
+                        file_name,
+                        egui::FontId::new(16., egui::FontFamily::Proportional),
+                        shared.config.ui_colors.text.into(),
+                    );
+                })
+                .response
+                .interact(egui::Sense::click())
+                .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+            if button.clicked() {
+                crate::file_reader::create_temp_file(&shared.temp_path.import, &path);
+                shared.ui.set_state(UiState::StartupModal, false);
+            }
+        }
+    });
+
+    ui.vertical(|ui| {
+        let available_size = ui.available_size();
+        ui.heading("Resources");
+        ui.add_space(7.);
+        egui::Frame::new()
+            .fill(shared.config.ui_colors.dark_accent.into())
+            .inner_margin(egui::Margin::same(10))
+            .show(ui, |ui| {
+                ui.set_width(available_size.x);
+                ui.set_height(available_size.y);
+
+                let header_size = 15.;
+                let sub_size = 13.;
+                let sub_padding = 20.;
+                let separator = 15.;
+
+                for item in &shared.startup.resources {
+                    let heading = ui.clickable_label(
+                        egui::RichText::new(item.name.clone())
+                            .color(egui::Color32::from_hex("#659adf").unwrap())
+                            .size(header_size),
+                    );
+                    if heading.clicked() {
+                        open_link(&item, &item.url_type);
+                    }
+                    ui.add_space(5.);
+                    for sub in &item.items {
+                        ui.horizontal(|ui| {
+                            let left_top = egui::Pos2::new(
+                                ui.min_rect().left_top().x + 5.,
+                                ui.min_rect().left_top().y - 10.,
+                            );
+                            ui.painter().rect_filled(
+                                egui::Rect::from_min_size(
+                                    left_top,
+                                    egui::Vec2::new(2., sub_size + 8.),
+                                ),
+                                egui::CornerRadius::ZERO,
+                                egui::Color32::from_hex("#223752").unwrap(),
+                            );
+                            ui.add_space(sub_padding);
+                            let sub_text = ui.clickable_label(
+                                egui::RichText::new(sub.name.clone())
+                                    .color(egui::Color32::from_hex("#659adf").unwrap())
+                                    .size(sub_size),
+                            );
+                            if sub_text.clicked() {
+                                open_link(&sub, &item.url_type);
+                            }
+                        });
+                    }
+                    ui.add_space(separator);
+                }
+            })
+    });
 }
 
 fn open_link(item: &crate::StartupResourceItem, url_type: &crate::StartupItemType) {
