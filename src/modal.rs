@@ -620,61 +620,64 @@ fn startup_content(
         create_file_list("./samples".to_string(), ui, shared, ctx);
     });
 
-    ui.vertical(|ui| {
+    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
         ui.set_width(available_size.x * column_size);
-        let available_size = ui.available_size();
-        ui.heading("Resources");
-        ui.add_space(10.);
-        egui::Frame::new()
-            .fill(shared.config.ui_colors.dark_accent.into())
-            .inner_margin(egui::Margin::same(10))
-            .show(ui, |ui| {
-                ui.set_width(available_size.x);
-                ui.set_height(available_size.y);
+        ui.vertical(|ui| {
+            ui.set_width(available_size.x * column_size);
+            let available_size = ui.available_size();
+            ui.heading("Resources");
+            ui.add_space(10.);
+            egui::Frame::new()
+                .fill(shared.config.ui_colors.dark_accent.into())
+                .inner_margin(egui::Margin::same(10))
+                .show(ui, |ui| {
+                    ui.set_width(available_size.x);
+                    ui.set_height(available_size.y);
 
-                let header_size = 15.;
-                let sub_size = 13.;
-                let sub_padding = 20.;
-                let separator = 15.;
+                    let header_size = 15.;
+                    let sub_size = 13.;
+                    let sub_padding = 20.;
+                    let separator = 15.;
 
-                for item in &shared.startup.resources {
-                    let heading = ui.clickable_label(
-                        egui::RichText::new(item.name.clone())
-                            .color(egui::Color32::from_hex("#659adf").unwrap())
-                            .size(header_size),
-                    );
-                    if heading.clicked() {
-                        open_link(&item, &item.url_type);
+                    for item in &shared.startup.resources {
+                        let heading = ui.clickable_label(
+                            egui::RichText::new(item.name.clone())
+                                .color(egui::Color32::from_hex("#659adf").unwrap())
+                                .size(header_size),
+                        );
+                        if heading.clicked() {
+                            open_link(&item, &item.url_type);
+                        }
+                        ui.add_space(5.);
+                        for sub in &item.items {
+                            ui.horizontal(|ui| {
+                                let left_top = egui::Pos2::new(
+                                    ui.min_rect().left_top().x + 5.,
+                                    ui.min_rect().left_top().y - 10.,
+                                );
+                                ui.painter().rect_filled(
+                                    egui::Rect::from_min_size(
+                                        left_top,
+                                        egui::Vec2::new(2., sub_size + 8.),
+                                    ),
+                                    egui::CornerRadius::ZERO,
+                                    egui::Color32::from_hex("#223752").unwrap(),
+                                );
+                                ui.add_space(sub_padding);
+                                let sub_text = ui.clickable_label(
+                                    egui::RichText::new(sub.name.clone())
+                                        .color(egui::Color32::from_hex("#659adf").unwrap())
+                                        .size(sub_size),
+                                );
+                                if sub_text.clicked() {
+                                    open_link(&sub, &item.url_type);
+                                }
+                            });
+                        }
+                        ui.add_space(separator);
                     }
-                    ui.add_space(5.);
-                    for sub in &item.items {
-                        ui.horizontal(|ui| {
-                            let left_top = egui::Pos2::new(
-                                ui.min_rect().left_top().x + 5.,
-                                ui.min_rect().left_top().y - 10.,
-                            );
-                            ui.painter().rect_filled(
-                                egui::Rect::from_min_size(
-                                    left_top,
-                                    egui::Vec2::new(2., sub_size + 8.),
-                                ),
-                                egui::CornerRadius::ZERO,
-                                egui::Color32::from_hex("#223752").unwrap(),
-                            );
-                            ui.add_space(sub_padding);
-                            let sub_text = ui.clickable_label(
-                                egui::RichText::new(sub.name.clone())
-                                    .color(egui::Color32::from_hex("#659adf").unwrap())
-                                    .size(sub_size),
-                            );
-                            if sub_text.clicked() {
-                                open_link(&sub, &item.url_type);
-                            }
-                        });
-                    }
-                    ui.add_space(separator);
-                }
-            })
+                })
+        });
     });
 }
 
