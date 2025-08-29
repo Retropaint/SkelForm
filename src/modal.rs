@@ -590,7 +590,7 @@ fn startup_content(
     let column_size = 0.2;
 
     ui.vertical(|ui| {
-        ui.set_width(available_size.x * column_size);
+        ui.set_width(150.);
         ui.add_space(10.);
         if startup_leftside_button("+", "New", ui, shared, None, None).clicked() {
             shared.ui.set_state(UiState::StartupModal, false);
