@@ -552,6 +552,35 @@ impl EguiUi for egui::Ui {
     }
 }
 
+pub fn create_ui_texture(
+    bytes: Vec<u8>,
+    has_alpha: bool,
+    ctx: &Context,
+) -> Option<egui::TextureHandle> {
+    let thumb_img;
+    if let Ok(data) = image::load_from_memory(&bytes) {
+        thumb_img = data;
+    } else {
+        return None;
+    }
+    let color_image: egui::ColorImage;
+    if has_alpha {
+        color_image = egui::ColorImage::from_rgba_unmultiplied(
+            [thumb_img.width() as usize, thumb_img.height() as usize],
+            &thumb_img.clone().into_rgba8(),
+        );
+    } else {
+        color_image = egui::ColorImage::from_rgb(
+            [thumb_img.width() as usize, thumb_img.height() as usize],
+            &thumb_img.clone().into_rgb8(),
+        );
+    }
+
+    let ui_tex = ctx.load_texture("anim_icons", color_image, Default::default());
+
+    Some(ui_tex)
+}
+
 fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     let title = egui::RichText::new("File").color(shared.config.ui_colors.text);

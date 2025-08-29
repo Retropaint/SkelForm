@@ -491,6 +491,8 @@ pub struct Ui {
     pub selected_tex_set_idx: i32,
 
     pub hovering_tex: i32,
+
+    pub showing_samples: bool
 }
 
 impl Ui {

@@ -592,20 +592,50 @@ fn startup_content(
     ui.vertical(|ui| {
         ui.set_width(available_size.x * column_size);
         ui.add_space(10.);
-        if startup_leftside_button("+", "New", ui, shared, None).clicked() {
+        if startup_leftside_button("+", "New", ui, shared, None, None).clicked() {
             shared.ui.set_state(UiState::StartupModal, false);
         }
-        if startup_leftside_button("🗋", "Import", ui, shared, Some(egui::Vec2::new(-5., 2.5)))
-            .clicked()
-        {
+        let import_pos = Some(egui::Vec2::new(-5., 2.5));
+        if startup_leftside_button("🗋", "Import", ui, shared, import_pos, None).clicked() {
             utils::open_import_dialog(shared.temp_path.import.clone());
         }
-        if startup_leftside_button("🗊", "Samples", ui, shared, Some(egui::Vec2::new(-5., 2.5)))
+        let samples_pos = Some(egui::Vec2::new(-5., 2.5));
+        if startup_leftside_button("🗊", "Samples", ui, shared, samples_pos, None).clicked() {
+            shared.ui.showing_samples = !shared.ui.showing_samples;
+        }
+        if shared.ui.showing_samples {
+            let skellington_pos = Some(egui::Vec2::new(-5., -10.));
+            if !shared.thumb_ui_tex.contains_key("skellington_sample.png") {
+                shared.thumb_ui_tex.insert(
+                    "skellington_sample.png".to_string(),
+                    crate::ui::create_ui_texture(
+                        include_bytes!("../skellington_sample.png").to_vec(),
+                        true,
+                        ctx,
+                    )
+                    .unwrap(),
+                );
+            }
+            if startup_leftside_button(
+                "",
+                "Skellington",
+                ui,
+                shared,
+                skellington_pos,
+                shared.thumb_ui_tex.get("skellington_sample.png"),
+            )
             .clicked()
-        {
-            utils::open_import_dialog(shared.temp_path.import.clone());
+            {
+                crate::file_reader::create_temp_file(
+                    &shared.temp_path.import,
+                    "./samples/skellington.skf",
+                );
+                shared.ui.set_state(UiState::StartupModal, false);
+            }
         }
     });
+
+    ui.add_space(20.);
 
     ui.vertical(|ui| {
         ui.set_width(available_size.x * column_size * 2.);
@@ -693,23 +723,31 @@ pub fn startup_leftside_button(
     ui: &mut egui::Ui,
     shared: &Shared,
     mut icon_offset: Option<egui::Vec2>,
+    img: Option<&egui::TextureHandle>,
 ) -> egui::Response {
     if icon_offset == None {
         icon_offset = Some(egui::Vec2::new(0., 0.));
     }
-    egui::Frame::new()
+    let frame = egui::Frame::new()
         .show(ui, |ui| {
             ui.set_width(128.);
             ui.set_height(48.);
-            let label_pos = egui::Pos2::new(
+            let icon_pos = egui::Pos2::new(
                 ui.min_rect().left_center().x + 20.,
                 ui.min_rect().left_center().y - 2.5,
             ) + icon_offset.unwrap();
+            if img != None {
+                let size = egui::Vec2::new(24., 24.);
+                let rect = egui::Rect::from_min_size(icon_pos, size.into());
+                egui::Image::new(img.unwrap())
+                    .fit_to_exact_size(size)
+                    .paint_at(ui, rect);
+            }
             ui.painter().text(
-                label_pos,
+                icon_pos,
                 egui::Align2::LEFT_CENTER,
                 icon.to_string(),
-                egui::FontId::new(30., egui::FontFamily::default()),
+                egui::FontId::new(25., egui::FontFamily::default()),
                 egui::Color32::WHITE,
             );
             let label_pos = egui::Pos2::new(
@@ -720,13 +758,17 @@ pub fn startup_leftside_button(
                 label_pos,
                 egui::Align2::LEFT_CENTER,
                 label,
-                egui::FontId::new(20., egui::FontFamily::default()),
+                egui::FontId::new(17., egui::FontFamily::default()),
                 shared.config.ui_colors.text.into(),
             );
         })
         .response
         .interact(egui::Sense::click())
-        .on_hover_cursor(egui::CursorIcon::PointingHand)
+        .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+    ui.separator();
+
+    frame
 }
 
 pub fn skf_file_button(
@@ -744,17 +786,12 @@ pub fn skf_file_button(
     }
 
     // generate thumbnail UI texture
-    if shared.thumb_ui_tex.get(&filename) == None {
+    if !shared.thumb_ui_tex.contains_key(&filename) {
         let mut thumb_bytes = vec![];
         for byte in zip.unwrap().by_name("thumbnail.png").unwrap().bytes() {
             thumb_bytes.push(byte.unwrap());
         }
-        let thumb_img = image::load_from_memory(&thumb_bytes).unwrap();
-        let color_image = egui::ColorImage::from_rgb(
-            [thumb_img.width() as usize, thumb_img.height() as usize],
-            &thumb_img.into_rgb8(),
-        );
-        let ui_tex = ctx.load_texture("anim_icons", color_image, Default::default());
+        let ui_tex = crate::ui::create_ui_texture(thumb_bytes, false, ctx).unwrap();
         shared.thumb_ui_tex.insert(filename.clone(), ui_tex.clone());
     }
 
