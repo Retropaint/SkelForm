@@ -635,10 +635,12 @@ fn startup_content(
         }
     });
 
-    ui.add_space(20.);
+    ui.add_space(10.);
+    ui.separator();
+    ui.add_space(10.);
 
     ui.vertical(|ui| {
-        ui.set_width(available_size.x * column_size * 2.);
+        ui.set_width(available_size.x * column_size * 3.);
         let available_width = ui.available_width();
         for p in 0..shared.recent_file_paths.len() {
             let path = shared.recent_file_paths[p].to_string();
