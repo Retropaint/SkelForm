@@ -268,7 +268,7 @@ pub fn skf_file_button(
                 ui.painter().text(
                     heading_pos,
                     egui::Align2::LEFT_BOTTOM,
-                    filename,
+                    filename.clone(),
                     egui::FontId::new(16., egui::FontFamily::Proportional),
                     shared.config.ui_colors.text.into(),
                 );
@@ -299,7 +299,11 @@ pub fn skf_file_button(
         pos += egui::Vec2::new(0., 25.);
 
         if file_button_icon("🗑", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
-            shared.ui.set_state(UiState::FirstTimeModal, true);
+            shared.ui.selected_path = path;
+            shared.ui.open_polar_modal(
+                PolarId::DeleteFile,
+                &("Are you sure to delete ".to_owned() + &filename + "?"),
+            );
         }
     });
 }
