@@ -34,7 +34,6 @@ fn startup_content(
     shared: &mut Shared,
     available_size: egui::Vec2,
 ) {
-    let column_size = 0.2;
     ui.add_space(10.);
 
     let padding = 5.;
@@ -90,7 +89,6 @@ fn startup_content(
 
     ui.add_space(10.);
     ui.separator();
-    ui.add_space(10.);
 
     ui.vertical(|ui| {
         let reserved_for_resources = 450.;
@@ -124,6 +122,7 @@ fn startup_content(
                         }
 
                         skf_file_button(path, shared, ui, ctx, available_width);
+                        ui.add_space(5.);
                     }
                 });
             },
@@ -303,18 +302,19 @@ pub fn skf_file_button(
         ui.set_height(85.);
 
         let gradient_rect = egui::Rect::from_min_max(
-            ui.min_rect().left_top(),
-            egui::Pos2::new(ui.min_rect().right() + 20., ui.min_rect().bottom()),
+            egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() - 5.),
+            egui::Pos2::new(ui.min_rect().right() + 25., ui.min_rect().bottom()),
         );
 
-        if ui
+        let button = ui
             .interact(
                 gradient_rect,
                 egui::Id::new("frame rect".to_owned() + &path),
                 egui::Sense::hover(),
             )
-            .contains_pointer()
-        {
+            .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+        if button.contains_pointer() {
             ui.gradient(
                 gradient_rect,
                 egui::Color32::TRANSPARENT,
@@ -322,12 +322,12 @@ pub fn skf_file_button(
             );
         }
 
-        let button = egui::Frame::new()
+        egui::Frame::new()
             .inner_margin(egui::Margin::same(10))
             .fill(egui::Color32::TRANSPARENT)
             .show(ui, |ui| {
                 ui.set_width(width);
-                ui.set_height(64.);
+                ui.set_height(65.);
 
                 let rect = egui::Rect::from_min_size(
                     egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
@@ -345,10 +345,7 @@ pub fn skf_file_button(
                     egui::FontId::new(16., egui::FontFamily::Proportional),
                     shared.config.ui_colors.text.into(),
                 );
-            })
-            .response
-            .interact(egui::Sense::click())
-            .on_hover_cursor(egui::CursorIcon::PointingHand);
+            });
 
         if button.clicked() {
             file_reader::create_temp_file(&shared.temp_path.import, &path);
