@@ -137,6 +137,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             }
         }
     }
+    camera_bar(context, shared);
 
     if shared.ui.has_state(UiState::PolarModal) {
         modal::polar_modal(shared, context);
@@ -155,11 +156,9 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     }
     #[cfg(not(target_arch = "wasm32"))]
     if shared.ui.has_state(UiState::StartupModal) {
-        modal::startup_modal(shared, context);
+        startup_window::startup_modal(shared, context);
     }
     style_once!(top_panel(context, shared));
-
-    camera_bar(context, shared);
 
     if shared.ui.anim.open {
         style_once!(keyframe_editor::draw(context, shared));

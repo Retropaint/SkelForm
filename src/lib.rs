@@ -46,6 +46,7 @@ pub mod modal;
 pub mod renderer;
 pub mod settings_modal;
 pub mod shared;
+pub mod startup_window;
 pub mod ui;
 pub mod utils;
 
