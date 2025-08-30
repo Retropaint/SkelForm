@@ -92,14 +92,14 @@ fn startup_content(
 
     ui.vertical(|ui| {
         let reserved_for_resources = 450.;
-        ui.set_width(available_size.x - reserved_for_resources);
+        ui.set_width((available_size.x - reserved_for_resources).max(1.));
         let width = ui.available_width();
         ui.with_layout(
             egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
             |ui| {
                 let max_width = 600.;
                 let right_margin = 50.;
-                ui.set_max_width(width.min(max_width) - right_margin);
+                ui.set_max_width((width.min(max_width) - right_margin).max(1.));
                 ui.set_min_width(0.);
                 ui.vertical(|ui| {
                     let available_width = ui.available_width();
