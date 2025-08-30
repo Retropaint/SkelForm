@@ -640,9 +640,13 @@ fn startup_content(
     ui.add_space(10.);
 
     ui.vertical(|ui| {
-        ui.set_width(available_size.x * column_size * 3.);
+        ui.set_width(available_size.x * column_size * 2.);
         let available_width = ui.available_width();
         for p in 0..shared.recent_file_paths.len() {
+            // safeguard for deleting a path during iteration
+            if p > shared.recent_file_paths.len() - 1 {
+                break;
+            }
             let path = shared.recent_file_paths[p].to_string();
             if let Err(_) = std::fs::File::open(&path) {
                 let idx = shared
@@ -799,36 +803,59 @@ pub fn skf_file_button(
 
     let thumb_size = Vec2::new(64., 64.);
 
-    let button = egui::Frame::new()
-        .inner_margin(egui::Margin::same(10))
-        .show(ui, |ui| {
-            ui.set_width(width);
-            ui.set_height(64.);
-            let rect = egui::Rect::from_min_size(
-                egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
-                thumb_size.into(),
-            );
-            egui::Image::new(shared.thumb_ui_tex.get(&filename).unwrap()).paint_at(ui, rect);
-            let heading_pos = egui::Pos2::new(
-                ui.min_rect().left_top().x + 72.,
-                ui.min_rect().left_top().y + 18.,
-            );
-            ui.painter().text(
-                heading_pos,
-                egui::Align2::LEFT_BOTTOM,
-                filename,
-                egui::FontId::new(16., egui::FontFamily::Proportional),
-                shared.config.ui_colors.text.into(),
-            );
-        })
-        .response
-        .interact(egui::Sense::click())
-        .on_hover_cursor(egui::CursorIcon::PointingHand);
+    ui.horizontal(|ui| {
+        let button = egui::Frame::new()
+            .inner_margin(egui::Margin::same(10))
+            .show(ui, |ui| {
+                ui.set_width(width);
+                ui.set_height(64.);
+                let rect = egui::Rect::from_min_size(
+                    egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
+                    thumb_size.into(),
+                );
+                egui::Image::new(shared.thumb_ui_tex.get(&filename).unwrap()).paint_at(ui, rect);
+                let heading_pos = egui::Pos2::new(
+                    ui.min_rect().left_top().x + 72.,
+                    ui.min_rect().left_top().y + 18.,
+                );
+                ui.painter().text(
+                    heading_pos,
+                    egui::Align2::LEFT_BOTTOM,
+                    filename,
+                    egui::FontId::new(16., egui::FontFamily::Proportional),
+                    shared.config.ui_colors.text.into(),
+                );
+            })
+            .response
+            .interact(egui::Sense::click())
+            .on_hover_cursor(egui::CursorIcon::PointingHand);
 
-    if button.clicked() {
-        crate::file_reader::create_temp_file(&shared.temp_path.import, &path);
-        shared.ui.set_state(UiState::StartupModal, false);
-    }
+        if button.clicked() {
+            crate::file_reader::create_temp_file(&shared.temp_path.import, &path);
+            shared.ui.set_state(UiState::StartupModal, false);
+        }
+
+        let offset = egui::Vec2::new(-20., 7.);
+        let trash_rect =
+            egui::Rect::from_min_size(ui.min_rect().right_top() + offset, egui::Vec2::ZERO);
+
+        if ui
+            .put(
+                trash_rect,
+                egui::Label::new(egui::RichText::new("X").size(18.)),
+            )
+            .on_hover_cursor(egui::CursorIcon::PointingHand)
+            .clicked()
+        {
+            let idx = shared
+                .recent_file_paths
+                .iter()
+                .position(|rfp| *rfp == path)
+                .unwrap();
+            shared.recent_file_paths.remove(idx);
+            utils::save_to_recent_files(&shared.recent_file_paths);
+        }
+    });
 }
 
 #[cfg(not(target_arch = "wasm32"))]
