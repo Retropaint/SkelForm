@@ -155,7 +155,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         modal::first_time_modal(shared, context);
     }
     #[cfg(not(target_arch = "wasm32"))]
-    if shared.ui.has_state(UiState::StartupModal) {
+    if shared.ui.has_state(UiState::StartupWindow) {
         startup_window::startup_modal(shared, context);
     }
     style_once!(top_panel(context, shared));

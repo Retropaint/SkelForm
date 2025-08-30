@@ -398,7 +398,7 @@ pub fn import<R: Read + std::io::Seek>(
 
     shared.ui.unselect_everything();
     shared.ui.set_tutorial_step(TutorialStep::None);
-    shared.ui.set_state(UiState::StartupModal, false);
+    shared.ui.set_state(UiState::StartupWindow, false);
 
     file_reader::del_temp_files(&shared.temp_path.base);
 }
