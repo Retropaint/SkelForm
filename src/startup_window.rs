@@ -40,7 +40,7 @@ fn startup_content(
         ui.set_width(150.);
         ui.add_space(10.);
         if startup_leftside_button("+", "New", ui, shared, None, None).clicked() {
-            shared.ui.set_state(UiState::StartupModal, false);
+            shared.ui.set_state(UiState::StartupWindow, false);
         }
         let import_pos = Some(egui::Vec2::new(-5., 2.5));
         if startup_leftside_button("🗋", "Import", ui, shared, import_pos, None).clicked() {
@@ -77,7 +77,7 @@ fn startup_content(
                     &shared.temp_path.import,
                     "./samples/skellington.skf",
                 );
-                shared.ui.set_state(UiState::StartupModal, false);
+                shared.ui.set_state(UiState::StartupWindow, false);
             }
         }
     });
@@ -279,7 +279,7 @@ pub fn skf_file_button(
 
         if button.clicked() {
             file_reader::create_temp_file(&shared.temp_path.import, &path);
-            shared.ui.set_state(UiState::StartupModal, false);
+            shared.ui.set_state(UiState::StartupWindow, false);
         }
 
         if !button.contains_pointer() {

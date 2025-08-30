@@ -108,7 +108,7 @@ fn init_shared(shared: &mut Shared) {
         // import config
         if config_path().exists() {
             skelform_lib::utils::import_config(shared);
-            shared.ui.set_state(UiState::StartupModal, true);
+            shared.ui.set_state(UiState::StartupWindow, true);
         } else {
             skelform_lib::utils::save_config(&shared.config);
             shared.ui.set_state(UiState::FirstTimeModal, true);
