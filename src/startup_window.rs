@@ -314,10 +314,26 @@ pub fn file_button_icon(
     pos: egui::Vec2,
     ui: &mut egui::Ui,
 ) -> egui::Response {
-    let rect =
-        egui::Rect::from_min_size(ui.min_rect().right_top() + pos + offset, egui::Vec2::ZERO);
+    let rect = egui::Rect::from_min_size(
+        ui.min_rect().right_top() + pos + offset,
+        egui::Vec2::splat(20.),
+    );
 
-    let label = egui::Label::new(egui::RichText::new(icon).size(18.));
+    let hovered = ui
+        .interact(
+            rect,
+            egui::Id::new("filebutton".to_owned() + icon),
+            egui::Sense::hover(),
+        )
+        .contains_pointer();
+
+    let col = if hovered {
+        egui::Color32::WHITE
+    } else {
+        egui::Color32::PLACEHOLDER
+    };
+
+    let label = egui::Label::new(egui::RichText::new(icon).size(18.).color(col));
     ui.put(rect, label)
         .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
