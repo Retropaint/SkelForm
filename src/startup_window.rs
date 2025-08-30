@@ -35,9 +35,10 @@ fn startup_content(
     available_size: egui::Vec2,
 ) {
     let column_size = 0.2;
+    ui.add_space(10.);
 
     ui.vertical(|ui| {
-        ui.set_width(150.);
+        ui.set_width(133.);
         ui.add_space(10.);
         if startup_leftside_button("+", "New", ui, shared, None, None).clicked() {
             shared.ui.set_state(UiState::StartupWindow, false);
@@ -182,6 +183,24 @@ pub fn startup_leftside_button(
     if icon_offset == None {
         icon_offset = Some(egui::Vec2::new(0., 0.));
     }
+
+    let gradient_rect =
+        egui::Rect::from_min_size(ui.cursor().left_top(), egui::Vec2::new(133., 48.));
+
+    if ui
+        .interact(
+            gradient_rect,
+            egui::Id::new("leftside".to_owned() + &label),
+            egui::Sense::hover(),
+        )
+        .contains_pointer()
+    {
+        ui.gradient(
+            gradient_rect,
+            egui::Color32::TRANSPARENT,
+            shared.config.ui_colors.dark_accent.into(),
+        );
+    }
     let frame = egui::Frame::new()
         .show(ui, |ui| {
             ui.set_width(128.);
@@ -220,7 +239,15 @@ pub fn startup_leftside_button(
         .interact(egui::Sense::click())
         .on_hover_cursor(egui::CursorIcon::PointingHand);
 
-    ui.separator();
+    let bottom = egui::Rect::from_min_size(
+        ui.min_rect().left_bottom(),
+        egui::Vec2::new(ui.min_rect().right() - ui.min_rect().left(), 1.),
+    );
+    ui.painter().rect_filled(
+        bottom,
+        egui::CornerRadius::ZERO,
+        shared.config.ui_colors.dark_accent,
+    );
 
     frame
 }
