@@ -3,26 +3,15 @@ use crate::*;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
-    let margin = 75.;
     egui::Window::new("startup")
         .title_bar(false)
         .resizable(false)
         .show(ctx, |ui| {
-            //.frame(egui::Frame {
-            //    corner_radius: 0.into(),
-            //    fill: shared.config.ui_colors.main.into(),
-            //    stroke: egui::Stroke::new(1., shared.config.ui_colors.light_accent),
-            //    inner_margin: egui::Margin::same(margin as i8),
-            //    ..Default::default()
-            //})
-            //.show(ctx, |ui| {
             ui.gradient(
                 ui.ctx().screen_rect(),
                 egui::Color32::TRANSPARENT,
                 shared.config.ui_colors.gradient.into(),
             );
-            //let width = ui.ctx().screen_rect().width() - margin;
-            //let height = ui.ctx().screen_rect().height() - margin - 20.;
             let width = ui.ctx().screen_rect().width();
             let height = ui.ctx().screen_rect().height();
             ui.set_width(width.max(0.));
