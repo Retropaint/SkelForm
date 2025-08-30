@@ -451,7 +451,8 @@ pub fn read_import(
     match ext {
         "skf" => {
             utils::import(file.unwrap(), shared, queue, device, bgl, context);
-            utils::save_to_recent_files(path, shared);
+            shared.recent_file_paths.push(path);
+            utils::save_to_recent_files(&shared.recent_file_paths);
         }
         "psd" => read_psd(shared, queue, device, bgl, context),
         _ => {}
