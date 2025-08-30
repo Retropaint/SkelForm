@@ -93,34 +93,49 @@ fn startup_content(
     ui.add_space(10.);
 
     ui.vertical(|ui| {
-        ui.set_width(available_size.x * column_size * 2.);
-        let available_width = ui.available_width();
-        for p in 0..shared.recent_file_paths.len() {
-            // safeguard for deleting a path during iteration
-            if p > shared.recent_file_paths.len() - 1 {
-                break;
-            }
+        let reserved_for_resources = 450.;
+        ui.set_width(available_size.x - reserved_for_resources);
+        let width = ui.available_width();
+        ui.with_layout(
+            egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
+            |ui| {
+                let max_width = 600.;
+                let right_margin = 50.;
+                ui.set_max_width(width.min(max_width) - right_margin);
+                ui.set_min_width(0.);
+                ui.vertical(|ui| {
+                    let available_width = ui.available_width();
+                    ui.set_width(available_width);
+                    for p in 0..shared.recent_file_paths.len() {
+                        // safeguard for deleting a path during iteration
+                        if p > shared.recent_file_paths.len() - 1 {
+                            break;
+                        }
 
-            let path = shared.recent_file_paths[p].to_string();
-            if let Err(_) = std::fs::File::open(&path) {
-                let idx = shared
-                    .recent_file_paths
-                    .iter()
-                    .position(|r_path| *r_path == path)
-                    .unwrap();
-                shared.recent_file_paths.remove(idx);
-                continue;
-            }
+                        let path = shared.recent_file_paths[p].to_string();
+                        if let Err(_) = std::fs::File::open(&path) {
+                            let idx = shared
+                                .recent_file_paths
+                                .iter()
+                                .position(|r_path| *r_path == path)
+                                .unwrap();
+                            shared.recent_file_paths.remove(idx);
+                            continue;
+                        }
 
-            skf_file_button(path, shared, ui, ctx, available_width);
-        }
+                        skf_file_button(path, shared, ui, ctx, available_width);
+                    }
+                });
+            },
+        );
     });
 
     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
         ui.add_space(45.);
-        ui.set_width(available_size.x * column_size);
+        let width = 200.;
+        ui.set_width(width);
         ui.vertical(|ui| {
-            ui.set_width(available_size.x * column_size);
+            ui.set_width(width);
             let available_size = ui.available_size();
             ui.add_space(10.);
             egui::Frame::new()
