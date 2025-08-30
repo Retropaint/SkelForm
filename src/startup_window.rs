@@ -364,7 +364,7 @@ pub fn skf_file_button(
             shared.recent_file_paths.remove(idx);
             utils::save_to_recent_files(&shared.recent_file_paths);
         }
-        pos += egui::Vec2::new(0., 25.);
+        pos += egui::Vec2::new(-21., 0.);
 
         if file_button_icon("🗑", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
             shared.ui.selected_path = path;
