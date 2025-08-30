@@ -835,7 +835,11 @@ pub fn skf_file_button(
             shared.ui.set_state(UiState::StartupModal, false);
         }
 
-        let offset = egui::Vec2::new(-20., 7.);
+        if !button.contains_pointer() {
+            return;
+        }
+
+        let offset = egui::Vec2::new(-20., 8.);
         let trash_rect =
             egui::Rect::from_min_size(ui.min_rect().right_top() + offset, egui::Vec2::ZERO);
 
