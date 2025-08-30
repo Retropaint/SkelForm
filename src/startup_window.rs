@@ -94,6 +94,7 @@ fn startup_content(
             if p > shared.recent_file_paths.len() - 1 {
                 break;
             }
+
             let path = shared.recent_file_paths[p].to_string();
             if let Err(_) = std::fs::File::open(&path) {
                 let idx = shared
@@ -104,8 +105,8 @@ fn startup_content(
                 shared.recent_file_paths.remove(idx);
                 continue;
             }
+
             skf_file_button(path, shared, ui, ctx, available_width);
-            ui.separator();
         }
     });
 
@@ -251,11 +252,36 @@ pub fn skf_file_button(
     let thumb_size = Vec2::new(64., 64.);
 
     ui.horizontal(|ui| {
+        ui.set_width(width);
+        ui.set_height(85.);
+
+        let gradient_rect = egui::Rect::from_min_max(
+            ui.min_rect().left_top(),
+            egui::Pos2::new(ui.min_rect().right() + 20., ui.min_rect().bottom()),
+        );
+
+        if ui
+            .interact(
+                gradient_rect,
+                egui::Id::new("frame rect".to_owned() + &path),
+                egui::Sense::hover(),
+            )
+            .contains_pointer()
+        {
+            ui.gradient(
+                gradient_rect,
+                egui::Color32::TRANSPARENT,
+                shared.config.ui_colors.dark_accent.into(),
+            );
+        }
+
         let button = egui::Frame::new()
             .inner_margin(egui::Margin::same(10))
+            .fill(egui::Color32::TRANSPARENT)
             .show(ui, |ui| {
                 ui.set_width(width);
                 ui.set_height(64.);
+
                 let rect = egui::Rect::from_min_size(
                     egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
                     thumb_size.into(),
@@ -281,6 +307,16 @@ pub fn skf_file_button(
             file_reader::create_temp_file(&shared.temp_path.import, &path);
             shared.ui.set_state(UiState::StartupWindow, false);
         }
+
+        let bottom = egui::Rect::from_min_size(
+            ui.min_rect().left_bottom(),
+            egui::Vec2::new(ui.min_rect().right() - ui.min_rect().left(), 1.),
+        );
+        ui.painter().rect_filled(
+            bottom,
+            egui::CornerRadius::ZERO,
+            shared.config.ui_colors.dark_accent,
+        );
 
         if !button.contains_pointer() {
             return;
