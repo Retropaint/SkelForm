@@ -37,20 +37,25 @@ fn startup_content(
     let column_size = 0.2;
     ui.add_space(10.);
 
+    let padding = 5.;
+
     ui.vertical(|ui| {
         ui.set_width(133.);
         ui.add_space(10.);
         if startup_leftside_button("+", "New", ui, shared, None, None).clicked() {
             shared.ui.set_state(UiState::StartupWindow, false);
         }
+        ui.add_space(padding);
         let import_pos = Some(egui::Vec2::new(-5., 2.5));
         if startup_leftside_button("🗋", "Import", ui, shared, import_pos, None).clicked() {
             utils::open_import_dialog(shared.temp_path.import.clone());
         }
+        ui.add_space(padding);
         let samples_pos = Some(egui::Vec2::new(-5., 2.5));
         if startup_leftside_button("🗊", "Samples", ui, shared, samples_pos, None).clicked() {
             shared.ui.showing_samples = !shared.ui.showing_samples;
         }
+        ui.add_space(padding);
         if shared.ui.showing_samples {
             let skellington_pos = Some(egui::Vec2::new(-5., -10.));
             if !shared.thumb_ui_tex.contains_key("skellington_sample.png") {
