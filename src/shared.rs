@@ -408,6 +408,7 @@ pub enum PolarId {
     Exiting,
     FirstTime,
     DeleteAnim,
+    DeleteFile,
 }
 enum_string!(PolarId);
 
@@ -492,7 +493,9 @@ pub struct Ui {
 
     pub hovering_tex: i32,
 
-    pub showing_samples: bool
+    pub showing_samples: bool,
+
+    pub selected_path: String,
 }
 
 impl Ui {

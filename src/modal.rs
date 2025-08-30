@@ -115,6 +115,9 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
                 .remove(shared.ui.context_menu.id as usize);
             shared.ui.context_menu.close();
         }
+        PolarId::DeleteFile => {
+            std::fs::remove_file(&shared.ui.selected_path).unwrap();
+        }
     }
 }
 
