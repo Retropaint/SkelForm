@@ -26,6 +26,7 @@ pub trait EguiUi {
         value: f32,
         modifier: f32,
     ) -> (bool, f32, egui::Response);
+    fn debug_rect(&mut self, rect: egui::Rect);
 }
 
 /// The `main` of this module.
@@ -548,6 +549,15 @@ impl EguiUi for egui::Ui {
         }
 
         (false, value, input)
+    }
+
+    fn debug_rect(&mut self, rect: egui::Rect) {
+        self.painter().rect_stroke(
+            rect,
+            egui::CornerRadius::ZERO,
+            egui::Stroke::new(1., egui::Color32::RED),
+            egui::StrokeKind::Outside,
+        );
     }
 }
 
