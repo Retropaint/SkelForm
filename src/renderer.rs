@@ -152,7 +152,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         };
         mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
-        if hover_bone_id == -1 && shared.input.mouse_left < 5 && !shared.input.on_ui{
+        if hover_bone_id == -1 && shared.input.mouse_left < 5 && !shared.input.on_ui {
             let tb = temp_bones[b].clone();
             for (_, chunk) in tb.indices.chunks_exact(3).enumerate() {
                 let bary = tri_point(
@@ -181,7 +181,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         // this is because most textured bones are meant to represent their parents
         let mut click_on_hover_id = temp_bones[b].id;
         let parents = shared.armature.get_all_parents(temp_bones[b].id);
-        for parent in parents {
+        for parent in &parents {
             if parent.tex_set_idx == -1 {
                 click_on_hover_id = parent.id;
                 break;
@@ -219,6 +219,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 .iter()
                 .position(|bone| bone.id == click_on_hover_id)
                 .unwrap();
+
+            // unfold all parents that lead to this bone, so it's visible in the hierarchy
+            let parents = shared.armature.get_all_parents(click_on_hover_id);
+            for parent in &parents {
+                shared.armature.find_bone_mut(parent.id).unwrap().folded = false;
+            }
         }
     }
 
