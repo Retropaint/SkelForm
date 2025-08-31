@@ -618,6 +618,10 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             utils::save_web(&shared.armature);
             ui.close();
         }
+        if top_bar_button!("Startup", None).clicked() {
+            shared.ui.set_state(UiState::StartupWindow, true);
+            ui.close();
+        } 
         // disabled: export video is unstable and not really necessary (focus on sprite export instead!)
         if false && top_bar_button!("Export Video", None).clicked() {
             // check if ffmpeg exists and complain if it doesn't
