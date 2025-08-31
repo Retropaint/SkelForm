@@ -99,6 +99,7 @@ fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
 fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
+        ui.heading("Rendering");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if ui.skf_button("Default").clicked() {
                 shared.config.ui_colors.background = crate::Config::default().ui_colors.background;
@@ -155,6 +156,8 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             shared.config.autosave_frequency = value as i32;
         }
     });
+
+    ui.add_space(20.);
 
     ui.heading("Startup");
     ui.horizontal(|ui| {
