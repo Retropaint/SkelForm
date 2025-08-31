@@ -57,7 +57,7 @@ pub fn read_image_loaders(
     ctx: &egui::Context,
 ) {
     #[allow(unused_assignments)]
-    let mut pixels: Vec<u8> = vec![];
+    let mut image: image::DynamicImage;
     #[allow(unused_assignments)]
     let mut dimensions = Vec2::default();
     #[allow(unused_assignments, unused_mut)]
@@ -89,10 +89,8 @@ pub fn read_image_loaders(
 
         // read image pixels and dimensions
         let file_bytes = fs::read(img_path);
-        let diffuse_image = image::load_from_memory(&file_bytes.unwrap()).unwrap();
-        let rgba = diffuse_image.to_rgba8();
-        pixels = rgba.as_bytes().to_vec();
-        dimensions = Vec2::new(diffuse_image.width() as f32, diffuse_image.height() as f32);
+        image = image::load_from_memory(&file_bytes.unwrap()).unwrap();
+        dimensions = Vec2::new(image.width() as f32, image.height() as f32);
 
         del_temp_files(&shared.temp_path.base);
     }
@@ -111,7 +109,7 @@ pub fn read_image_loaders(
         removeImage();
     }
 
-    if pixels.len() == 0 {
+    if image.clone().into_rgba8().to_vec().len() == 0 {
         shared.ui.open_modal(IMPORT_IMG_ERR.to_string(), false);
         return;
     }
@@ -121,14 +119,14 @@ pub fn read_image_loaders(
     // check if this texture already exists
     for set in &shared.armature.texture_sets {
         for tex in &set.textures {
-            if pixels == tex.pixels {
+            if image == tex.image {
                 return;
             }
         }
     }
 
     add_texture(
-        pixels,
+        image,
         dimensions,
         &name,
         &mut shared.ui,
@@ -279,7 +277,7 @@ pub fn read_psd(
         .to_image();
 
         add_texture(
-            crop.to_vec(),
+            image::DynamicImage::ImageRgba8(crop),
             dims,
             group.name(),
             &mut shared.ui,
@@ -372,7 +370,7 @@ pub fn read_psd(
 }
 
 pub fn add_texture(
-    pixels: Vec<u8>,
+    image: image::DynamicImage,
     dimensions: Vec2,
     tex_name: &str,
     ui: &mut Ui,
@@ -385,12 +383,12 @@ pub fn add_texture(
     let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
         dimensions.x as u32,
         dimensions.y as u32,
-        pixels.clone(),
+        image.clone().into_rgba8().to_vec(),
     )
     .unwrap();
 
     let bind_group = renderer::create_texture_bind_group(
-        pixels.clone(),
+        image.clone().into_rgba8().to_vec(),
         dimensions,
         queue,
         device,
@@ -402,7 +400,7 @@ pub fn add_texture(
         .push(crate::Texture {
             offset: Vec2::ZERO,
             size: dimensions,
-            pixels,
+            image,
             name: tex_name.to_string(),
             bind_group: Some(bind_group),
             ui_img: Some(utils::add_texture_img(&ctx, img_buf, Vec2::new(300., 300.))),

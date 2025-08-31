@@ -1459,7 +1459,7 @@ pub struct Texture {
     #[serde(default)]
     pub name: String,
     #[serde(skip)]
-    pub pixels: Vec<u8>,
+    pub image: image::DynamicImage,
     #[serde(skip)]
     pub bind_group: Option<BindGroup>,
     #[serde(skip)]

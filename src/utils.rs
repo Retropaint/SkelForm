@@ -13,9 +13,7 @@ pub use web::*;
 
 use image::ImageEncoder;
 
-use std::{
-    io::{Read, Write},
-};
+use std::io::{Read, Write};
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
@@ -231,7 +229,7 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
             let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
                 tex.size.x as u32,
                 tex.size.y as u32,
-                tex.pixels.clone(),
+                tex.image.clone().into_rgba8().to_vec(),
             )
             .unwrap();
 
@@ -359,18 +357,15 @@ pub fn import<R: Read + std::io::Seek>(
 
         for set in &mut shared.armature.texture_sets {
             for tex in &mut set.textures {
-                tex.pixels = img
-                    .crop(
-                        tex.offset.x as u32,
-                        tex.offset.y as u32,
-                        tex.size.x as u32,
-                        tex.size.y as u32,
-                    )
-                    .into_rgba8()
-                    .to_vec();
+                tex.image = img.crop(
+                    tex.offset.x as u32,
+                    tex.offset.y as u32,
+                    tex.size.x as u32,
+                    tex.size.y as u32,
+                );
 
                 tex.bind_group = Some(renderer::create_texture_bind_group(
-                    tex.pixels.to_vec(),
+                    tex.image.clone().into_rgba8().to_vec(),
                     tex.size,
                     queue,
                     device,
