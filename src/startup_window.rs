@@ -1,6 +1,9 @@
 use crate::ui::EguiUi;
 use crate::*;
 
+pub const EMPTY_RECENTS: &str =
+    "Start from scratch, import something, or try a sample from the options on the left.";
+
 #[cfg(not(target_arch = "wasm32"))]
 pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
     egui::Window::new("startup")
@@ -104,6 +107,12 @@ fn startup_content(
                 ui.vertical(|ui| {
                     let available_width = ui.available_width();
                     ui.set_width(available_width);
+                    if shared.recent_file_paths.len() == 0 {
+                        let text = egui::RichText::new(EMPTY_RECENTS).size(14.);
+                        ui.label(text);
+                        return;
+                    }
+
                     for p in 0..shared.recent_file_paths.len() {
                         // safeguard for deleting a path during iteration
                         if p > shared.recent_file_paths.len() - 1 {
