@@ -4,9 +4,12 @@
 //!
 //! `runtime:` - implementation that is relevant to runtimes (eg. animation logic, forward kinematics, etc).
 
+#[cfg(not(target_arch = "wasm32"))]
 use image::ImageEncoder;
-use shared::*;
+#[cfg(not(target_arch = "wasm32"))]
 use std::io::Write;
+
+use shared::*;
 use wgpu::{BindGroupLayout, InstanceDescriptor};
 
 // native-only imports
@@ -588,6 +591,7 @@ impl Renderer {
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&mut self, shared: &mut Shared) {
         self.take_screenshot(shared);
         let buffer = shared.rendered_frames[0].buffer.clone();
@@ -672,6 +676,7 @@ impl Renderer {
         shared.saving = Saving::None;
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     fn take_screenshot(&mut self, shared: &mut shared::Shared) {
         let width = shared.window.x as u32;
         let height = shared.window.y as u32;
