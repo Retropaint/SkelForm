@@ -104,7 +104,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         forward_kinematics(&mut temp_bones, ik_rot);
     }
 
-    // sort boens by highest zindex first, so that hover logic will pick the top-most one
+    // sort bones by highest zindex first, so that hover logic will pick the top-most one
     temp_bones.sort_by(|a, b| b.zindex.total_cmp(&a.zindex));
 
     let mut hovering_vert = usize::MAX;
@@ -113,7 +113,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut hover_bone_id = -1;
 
-    // draw bone
+    // pre-draw bone setup
     for b in 0..temp_bones.len() {
         if temp_bones[b].tex_set_idx == -1 {
             continue;
@@ -152,6 +152,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         };
         mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
+        // check if cursor is on an opaque pixel of this bone's texture
         if hover_bone_id == -1 && shared.input.mouse_left < 5 && !shared.input.on_ui {
             let tb = temp_bones[b].clone();
             for (_, chunk) in tb.indices.chunks_exact(3).enumerate() {
@@ -161,15 +162,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     &tb.world_verts[chunk[1] as usize].pos,
                     &tb.world_verts[chunk[2] as usize].pos,
                 );
+
                 if bary.0 == -1. {
                     continue;
                 }
+
                 let uv = temp_bones[b].world_verts[chunk[0] as usize].uv * bary.3
                     + temp_bones[b].world_verts[chunk[1] as usize].uv * bary.1
                     + temp_bones[b].world_verts[chunk[2] as usize].uv * bary.2;
+
                 let img = &set.textures[temp_bones[b].tex_idx as usize].image;
-                let point = Vec2::new(uv.x * img.width() as f32, uv.y * img.height() as f32);
-                let is_opaque_pixel = img.get_pixel(point.x as u32, point.y as u32).0[3] == 255;
+                let cursor_texel = Vec2::new(uv.x * img.width() as f32, uv.y * img.height() as f32);
+
+                let is_opaque_pixel = img.get_pixel(cursor_texel.x as u32, cursor_texel.y as u32).0[3] == 255;
                 if is_opaque_pixel {
                     hover_bone_id = temp_bones[b].id;
                     break;
@@ -193,6 +198,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             selected_id = bone.id;
         }
 
+        // hovering glow animation
         if hover_bone_id == temp_bones[b].id && selected_id != click_on_hover_id {
             let fade = 0.25 * ((shared.time * 3.).sin()).abs() as f32;
             let min = 0.1;
@@ -212,6 +218,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             );
         }
 
+        // select bone on click
         if shared.input.mouse_left > 0 && hover_bone_id == temp_bones[b].id {
             shared.ui.selected_bone_idx = shared
                 .armature
@@ -232,11 +239,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
 
     for bone in &temp_bones {
-        if bone.tex_set_idx == -1 {
-            continue;
+        if bone.tex_set_idx != -1 {
+            draw_bone(&bone, render_pass, device, &bone.world_verts, shared);
         }
-        draw_bone(&bone, render_pass, device, &bone.world_verts, shared);
     }
+
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
     if shared.selected_bone() != None {
