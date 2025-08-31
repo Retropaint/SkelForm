@@ -684,10 +684,14 @@ pub struct Config {
 
     #[serde(default)]
     pub ui_colors: ColorConfig,
+    #[serde(default)]
     pub keys: KeyboardConfig,
 
+    #[serde(default)]
     pub hide_startup: bool,
-    pub default_file: String,
+
+    #[serde(default)]
+    pub autosave_frequency: i32,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -711,7 +715,7 @@ impl Default for Config {
             keys: KeyboardConfig::default(),
             gridline_gap: gridline_default(),
             hide_startup: false,
-            default_file: "".to_string(),
+            autosave_frequency: 5,
         }
     }
 }
@@ -1856,6 +1860,8 @@ pub struct Shared {
     pub debug: bool,
 
     pub time: f32,
+
+    pub last_autosave: f32,
 }
 
 impl Shared {
