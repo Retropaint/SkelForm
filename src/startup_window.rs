@@ -354,6 +354,21 @@ pub fn skf_file_button(
                     egui::FontId::new(16., egui::FontFamily::Proportional),
                     shared.config.ui_colors.text.into(),
                 );
+                if filename == "autosave.skf" {
+                    let heading_pos = egui::Pos2::new(
+                        ui.min_rect().left_bottom().x + 72.,
+                        ui.min_rect().left_bottom().y,
+                    );
+                    let mut col = shared.config.ui_colors.text;
+                    col -= Color::new(40, 40, 40, 0);
+                    ui.painter().text(
+                        heading_pos,
+                        egui::Align2::LEFT_BOTTOM,
+                        "Auto-generated backup file",
+                        egui::FontId::new(11., egui::FontFamily::Proportional),
+                        col.into(),
+                    );
+                }
             });
 
         if button.clicked() {
