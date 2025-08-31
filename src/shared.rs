@@ -412,7 +412,7 @@ pub enum SettingsState {
     Ui,
     Rendering,
     Keyboard,
-    Startup,
+    Misc,
 }
 
 #[derive(Clone, Default, PartialEq, Debug)]
