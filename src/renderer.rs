@@ -104,15 +104,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         forward_kinematics(&mut temp_bones, ik_rot);
     }
 
-    // runtime: sort bones by z-index for drawing
-    //temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
+    // sort boens by highest zindex first, so that hover logic will pick the top-most one
+    temp_bones.sort_by(|a, b| b.zindex.total_cmp(&a.zindex));
 
     let mut hovering_vert = usize::MAX;
 
     let mut selected_bone_world_verts: Vec<Vertex> = vec![];
 
     let mut hover_bone_id = -1;
-    let mut hover_bone_zindex = -1.;
 
     // draw bone
     for b in 0..temp_bones.len() {
@@ -154,36 +153,30 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
         if hover_bone_id == -1 {
-            for (_, chunk) in temp_bones[b].indices.chunks_exact(3).enumerate() {
-                if is_point_in_triangle(
+            let tb = temp_bones[b].clone();
+            for (_, chunk) in tb.indices.chunks_exact(3).enumerate() {
+                let bary = tri_point(
                     &mouse_world_vert.pos,
-                    &temp_bones[b].world_verts[chunk[0] as usize].pos,
-                    &temp_bones[b].world_verts[chunk[1] as usize].pos,
-                    &temp_bones[b].world_verts[chunk[2] as usize].pos,
-                ) && temp_bones[b].zindex >= hover_bone_zindex
-                {
-                    hover_bone_id = temp_bones[b].id;
-                    hover_bone_zindex = temp_bones[b].zindex;
-                    break;
+                    &tb.world_verts[chunk[0] as usize].pos,
+                    &tb.world_verts[chunk[1] as usize].pos,
+                    &tb.world_verts[chunk[2] as usize].pos,
+                );
+                if bary.0 == -1. {
+                    continue;
                 }
+                let uv = temp_bones[b].world_verts[chunk[0] as usize].uv * bary.3
+                    + temp_bones[b].world_verts[chunk[1] as usize].uv * bary.1
+                    + temp_bones[b].world_verts[chunk[2] as usize].uv * bary.2;
             }
         }
 
         if hover_bone_id == temp_bones[b].id {
-            let fade = 0.25 * ((shared.time * 3.).sin()).abs() as f32;
-            let min = 0.1;
-            for vert in &mut temp_bones[b].world_verts {
-                vert.add_color = VertexColor::new(min + fade, min + fade, min + fade, 0.);
-            }
+            // let fade = 0.25 * ((shared.time * 3.).sin()).abs() as f32;
+            // let min = 0.1;
+            // for vert in &mut temp_bones[b].world_verts {
+            //     vert.add_color = VertexColor::new(min + fade, min + fade, min + fade, 0.);
+            // }
         }
-
-        draw_bone(
-            &temp_bones[b],
-            render_pass,
-            device,
-            &temp_bones[b].world_verts,
-            shared,
-        );
 
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
         if shared.ui.editing_mesh && b == shared.ui.selected_bone_idx {
@@ -195,6 +188,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 &temp_bones[b].world_verts,
             );
         }
+    }
+
+    // runtime: sort bones by z-index for drawing
+    temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
+
+    for bone in &temp_bones {
+        if bone.tex_set_idx == -1 {
+            continue;
+        }
+        draw_bone(&bone, render_pass, device, &bone.world_verts, shared);
     }
 
     if shared.selected_bone() != None {
@@ -271,23 +274,40 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 }
 
-fn is_point_in_triangle(p: &Vec2, a: &Vec2, b: &Vec2, c: &Vec2) -> bool {
+fn tri_point(p: &Vec2, a: &Vec2, b: &Vec2, c: &Vec2) -> (f32, f32, f32, f32) {
     let s = a.y * c.x - a.x * c.y + (c.y - a.y) * p.x + (a.x - c.x) * p.y;
     let t = a.x * b.y - a.y * b.x + (a.y - b.y) * p.x + (b.x - a.x) * p.y;
 
     if (s < 0.0) != (t < 0.0) && s != 0.0 && t != 0.0 {
-        return false;
+        return (-1., -1., -1., -1.);
     }
 
     let area = -b.y * c.x + a.y * (c.x - b.x) + a.x * (b.y - c.y) + b.x * c.y;
     if area == 0.0 {
-        return false;
+        return (-1., -1., -1., -1.);
     }
 
     let s_normalized = s / area;
     let t_normalized = t / area;
 
-    s_normalized >= 0.0 && t_normalized >= 0.0 && (s_normalized + t_normalized) <= 1.0
+    println!(
+        "{} {} {} {}",
+        area,
+        s_normalized,
+        t_normalized,
+        1. - (s_normalized + t_normalized)
+    );
+
+    if s_normalized >= 0.0 && t_normalized >= 0.0 && (s_normalized + t_normalized) <= 1.0 {
+        return (
+            area,
+            s_normalized,
+            t_normalized,
+            1. - (s_normalized + t_normalized),
+        );
+    }
+
+    (-1., -1., -1., -1.)
 }
 
 /// Stripped-down renderer for screenshot purposes.
