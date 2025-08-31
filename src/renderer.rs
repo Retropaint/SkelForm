@@ -172,10 +172,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     + temp_bones[b].world_verts[chunk[2] as usize].uv * bary.2;
 
                 let img = &set.textures[temp_bones[b].tex_idx as usize].image;
-                let cursor_texel = Vec2::new(uv.x * img.width() as f32, uv.y * img.height() as f32);
+                let pixel_pos = Vec2::new(uv.x * img.width() as f32, uv.y * img.height() as f32);
 
-                let is_opaque_pixel = img.get_pixel(cursor_texel.x as u32, cursor_texel.y as u32).0[3] == 255;
-                if is_opaque_pixel {
+                let pixel_alpha = img.get_pixel(pixel_pos.x as u32, pixel_pos.y as u32).0[3];
+                if pixel_alpha == 255 {
                     hover_bone_id = temp_bones[b].id;
                     break;
                 }
