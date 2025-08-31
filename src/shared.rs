@@ -671,7 +671,6 @@ pub struct Config {
 
     #[serde(default)]
     pub ui_colors: ColorConfig,
-    pub bg_color: Color,
     pub keys: KeyboardConfig,
 }
 
@@ -683,6 +682,8 @@ pub struct ColorConfig {
     pub text: Color,
     pub frameline: Color,
     pub gradient: Color,
+    pub background: Color,
+    pub gridline: Color,
 }
 
 impl Default for Config {
@@ -691,7 +692,6 @@ impl Default for Config {
             first_time: true,
             ui_scale: default_one(),
             ui_colors: ColorConfig::default(),
-            bg_color: Color::new(50, 50, 50, 255),
             keys: KeyboardConfig::default(),
             gridline_gap: gridline_default(),
         }
@@ -707,6 +707,8 @@ impl Default for ColorConfig {
             text: Color::new(180, 180, 180, 255),
             frameline: Color::new(80, 60, 130, 255),
             gradient: Color::new(28, 20, 42, 255),
+            background: Color::new(50, 50, 50, 255),
+            gridline: Color::new(150, 150, 150, 255),
         }
     }
 }

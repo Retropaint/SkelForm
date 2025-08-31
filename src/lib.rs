@@ -528,7 +528,7 @@ impl Renderer {
                 });
 
         encoder.insert_debug_marker("Render scene");
-        let clear_color = shared.config.bg_color;
+        let clear_color = shared.config.ui_colors.background;
 
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
