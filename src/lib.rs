@@ -52,6 +52,7 @@ pub mod shared;
 pub mod startup_window;
 pub mod ui;
 pub mod utils;
+pub mod localization;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]

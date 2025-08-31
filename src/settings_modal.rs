@@ -9,6 +9,8 @@ use crate::{
     Display,
 };
 
+pub const DIRECT_BONE: &str = "When clicking a bone's texture, the first untextured parent of the bone will be selected. Checkmark this to always select the textured bone directly.";
+
 pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
     egui::Modal::new("test".into())
         .frame(egui::Frame {
@@ -154,6 +156,19 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         ui.label("Autosave frequency (seconds)");
         let (edited, value, _) = ui.float_input(
             "autosave_freq".to_string(),
+            shared,
+            shared.config.autosave_frequency as f32,
+            1.,
+        );
+        if edited && value > 0. {
+            shared.config.autosave_frequency = value as i32;
+        }
+    });
+    ui.horizontal(|ui| {
+        ui.label("Select exact bone on click ℹ")
+            .on_hover_cursor(egui::CursorIcon::Default).on_hover_text("When clicking a bone's texture, the first untextured parent of the bone will be selected. Checkmark this to always select the textured bone directly.");
+        let (edited, value, _) = ui.float_input(
+            "exact_bone".to_string(),
             shared,
             shared.config.autosave_frequency as f32,
             1.,
