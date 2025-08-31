@@ -177,7 +177,23 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             }
         }
 
-        if hover_bone_id == temp_bones[b].id {
+        // QoL: select first untextured parent of this bone
+        // this is because most textured bones are meant to represent their parents
+        let mut click_on_hover_id = temp_bones[b].id;
+        let parents = shared.armature.get_all_parents(temp_bones[b].id);
+        for parent in parents {
+            if parent.tex_set_idx == -1 {
+                click_on_hover_id = parent.id;
+                break;
+            }
+        }
+
+        let mut selected_id = -1;
+        if let Some(bone) = shared.selected_bone() {
+            selected_id = bone.id;
+        }
+
+        if hover_bone_id == temp_bones[b].id && selected_id != click_on_hover_id {
             let fade = 0.25 * ((shared.time * 3.).sin()).abs() as f32;
             let min = 0.1;
             for vert in &mut temp_bones[b].world_verts {
@@ -197,19 +213,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         if shared.input.mouse_left > 0 && hover_bone_id == temp_bones[b].id {
-            let mut id = temp_bones[b].id;
-            let parents = shared.armature.get_all_parents(temp_bones[b].id);
-            for parent in parents {
-                if parent.tex_set_idx == -1 {
-                    id = parent.id;
-                    break;
-                }
-            }
             shared.ui.selected_bone_idx = shared
                 .armature
                 .bones
                 .iter()
-                .position(|bone| bone.id == id)
+                .position(|bone| bone.id == click_on_hover_id)
                 .unwrap();
         }
     }
