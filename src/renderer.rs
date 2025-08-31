@@ -167,15 +167,22 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 let uv = temp_bones[b].world_verts[chunk[0] as usize].uv * bary.3
                     + temp_bones[b].world_verts[chunk[1] as usize].uv * bary.1
                     + temp_bones[b].world_verts[chunk[2] as usize].uv * bary.2;
+                let img = &set.textures[temp_bones[b].tex_idx as usize].image;
+                let point = Vec2::new(uv.x * img.width() as f32, uv.y * img.height() as f32);
+                let is_opaque_pixel = img.get_pixel(point.x as u32, point.y as u32).0[3] == 255;
+                if is_opaque_pixel {
+                    hover_bone_id = temp_bones[b].id;
+                    break;
+                }
             }
         }
 
         if hover_bone_id == temp_bones[b].id {
-            // let fade = 0.25 * ((shared.time * 3.).sin()).abs() as f32;
-            // let min = 0.1;
-            // for vert in &mut temp_bones[b].world_verts {
-            //     vert.add_color = VertexColor::new(min + fade, min + fade, min + fade, 0.);
-            // }
+            let fade = 0.25 * ((shared.time * 3.).sin()).abs() as f32;
+            let min = 0.1;
+            for vert in &mut temp_bones[b].world_verts {
+                vert.add_color = VertexColor::new(min + fade, min + fade, min + fade, 0.);
+            }
         }
 
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
@@ -289,14 +296,6 @@ fn tri_point(p: &Vec2, a: &Vec2, b: &Vec2, c: &Vec2) -> (f32, f32, f32, f32) {
 
     let s_normalized = s / area;
     let t_normalized = t / area;
-
-    println!(
-        "{} {} {} {}",
-        area,
-        s_normalized,
-        t_normalized,
-        1. - (s_normalized + t_normalized)
-    );
 
     if s_normalized >= 0.0 && t_normalized >= 0.0 && (s_normalized + t_normalized) <= 1.0 {
         return (
