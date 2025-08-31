@@ -1011,9 +1011,16 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
 
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
+    let col = VertexColor::new(
+        shared.config.ui_colors.gridline.r as f32 / 255.,
+        shared.config.ui_colors.gridline.g as f32 / 255.,
+        shared.config.ui_colors.gridline.b as f32 / 255.,
+        1.,
+    );
+
     let width = 0.005 * shared.camera.zoom;
-    let regular_color = VertexColor::new(0.5, 0.5, 0.5, 0.25);
-    let highlight_color = VertexColor::new(0.7, 0.7, 0.7, 1.);
+    let regular_color = VertexColor::new(col.r, col.g, col.b, 0.15);
+    let highlight_color = VertexColor::new(col.r, col.g, col.b, 1.);
 
     // draw vertical lines
     let aspect_ratio = shared.window.y / shared.window.x;

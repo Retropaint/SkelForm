@@ -85,7 +85,8 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if ui.skf_button("Default").clicked() {
-                shared.config.bg_color = crate::Config::default().bg_color;
+                shared.config.ui_colors.background = crate::Config::default().ui_colors.background;
+                shared.config.ui_colors.gridline = crate::Config::default().ui_colors.gridline;
                 shared.config.gridline_gap = crate::Config::default().gridline_gap;
             }
         });
@@ -104,15 +105,24 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         }
     });
 
-    let mut bg = shared.config.bg_color;
-    color_row(
+    macro_rules! color_row {
+        ($title:expr, $color:expr, $bg_color:expr) => {
+            let mut col = $color.clone();
+            color_row($title, &mut col, $bg_color, ui, shared);
+            $color = col;
+        };
+    }
+
+    color_row!(
         "Background",
-        &mut bg,
-        shared.config.ui_colors.main,
-        ui,
-        shared,
+        shared.config.ui_colors.background,
+        shared.config.ui_colors.main
     );
-    shared.config.bg_color = bg;
+    color_row!(
+        "Gridline",
+        shared.config.ui_colors.gridline,
+        shared.config.ui_colors.main
+    );
 }
 
 fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
