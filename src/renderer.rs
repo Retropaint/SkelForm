@@ -149,14 +149,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             pos: utils::screen_to_world_space(shared.input.mouse, shared.window),
             ..Default::default()
         };
-        let mut mouse_vert = con_vert!(
-            world_to_raw_vert,
-            mouse_world_vert,
-            temp_bones[b],
-            set.textures[temp_bones[b].tex_idx as usize],
-            shared.camera.pos,
-            shared.camera.zoom
-        );
         mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
         let mut hovered = false;
@@ -173,8 +165,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         if hovered {
+            let fade = 0.5 * ((shared.time * 3.).sin()).abs() as f32;
+            let min = 0.25;
             for vert in &mut world_verts {
-                vert.add_color = VertexColor::new(0., 0., 1., 0.);
+                vert.add_color = VertexColor::new(min + fade, min + fade, min + fade, 0.);
             }
         }
 
