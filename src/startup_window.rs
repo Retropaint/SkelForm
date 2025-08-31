@@ -216,57 +216,55 @@ pub fn startup_leftside_button(
     let gradient_rect =
         egui::Rect::from_min_size(ui.cursor().left_top(), egui::Vec2::new(133., 48.));
 
-    if ui
+    let button = ui
         .interact(
             gradient_rect,
             egui::Id::new("leftside".to_owned() + &label),
-            egui::Sense::hover(),
+            egui::Sense::click(),
         )
-        .contains_pointer()
-    {
+        .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+    if button.contains_pointer() {
         ui.gradient(
             gradient_rect,
             egui::Color32::TRANSPARENT,
             shared.config.ui_colors.dark_accent.into(),
         );
     }
-    let frame = egui::Frame::new()
-        .show(ui, |ui| {
-            ui.set_width(128.);
-            ui.set_height(48.);
-            let icon_pos = egui::Pos2::new(
-                ui.min_rect().left_center().x + 20.,
-                ui.min_rect().left_center().y - 2.5,
-            ) + icon_offset.unwrap();
-            if img != None {
-                let size = egui::Vec2::new(24., 24.);
-                let rect = egui::Rect::from_min_size(icon_pos, size.into());
-                egui::Image::new(img.unwrap())
-                    .fit_to_exact_size(size)
-                    .paint_at(ui, rect);
-            }
-            ui.painter().text(
-                icon_pos,
-                egui::Align2::LEFT_CENTER,
-                icon.to_string(),
-                egui::FontId::new(25., egui::FontFamily::default()),
-                egui::Color32::WHITE,
-            );
-            let label_pos = egui::Pos2::new(
-                ui.min_rect().left_center().x + 50.,
-                ui.min_rect().left_center().y,
-            );
-            ui.painter().text(
-                label_pos,
-                egui::Align2::LEFT_CENTER,
-                label,
-                egui::FontId::new(17., egui::FontFamily::default()),
-                shared.config.ui_colors.text.into(),
-            );
-        })
-        .response
-        .interact(egui::Sense::click())
-        .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+    egui::Frame::new().show(ui, |ui| {
+        ui.set_width(128.);
+        ui.set_height(48.);
+        let icon_pos = egui::Pos2::new(
+            ui.min_rect().left_center().x + 20.,
+            ui.min_rect().left_center().y - 2.5,
+        ) + icon_offset.unwrap();
+        if img != None {
+            let size = egui::Vec2::new(24., 24.);
+            let rect = egui::Rect::from_min_size(icon_pos, size.into());
+            egui::Image::new(img.unwrap())
+                .fit_to_exact_size(size)
+                .paint_at(ui, rect);
+        }
+        ui.painter().text(
+            icon_pos,
+            egui::Align2::LEFT_CENTER,
+            icon.to_string(),
+            egui::FontId::new(25., egui::FontFamily::default()),
+            egui::Color32::WHITE,
+        );
+        let label_pos = egui::Pos2::new(
+            ui.min_rect().left_center().x + 50.,
+            ui.min_rect().left_center().y,
+        );
+        ui.painter().text(
+            label_pos,
+            egui::Align2::LEFT_CENTER,
+            label,
+            egui::FontId::new(17., egui::FontFamily::default()),
+            shared.config.ui_colors.text.into(),
+        );
+    });
 
     let bottom = egui::Rect::from_min_size(
         ui.min_rect().left_bottom(),
@@ -278,7 +276,7 @@ pub fn startup_leftside_button(
         shared.config.ui_colors.dark_accent,
     );
 
-    frame
+    button
 }
 
 pub fn skf_file_button(
