@@ -84,7 +84,7 @@ fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.skf_button("Reset").clicked() {
+            if ui.skf_button("Default").clicked() {
                 shared.config.bg_color = crate::Config::default().bg_color;
                 shared.config.gridline_gap = crate::Config::default().gridline_gap;
             }
@@ -205,7 +205,7 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         ui.heading("Keyboard");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.skf_button("Reset").clicked() {
+            if ui.skf_button("Default").clicked() {
                 shared.config.keys = crate::KeyboardConfig::default();
             }
         });
