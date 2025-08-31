@@ -1,0 +1,8 @@
+{
+  "startup": {
+    "new": "New",
+    "import": "Import",
+    "samples": "Samples",
+    "empty_recent_files": "Start from scratch, import something, or try a sample from the options on the left."
+  }
+}
