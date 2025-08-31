@@ -388,11 +388,19 @@ pub fn skf_file_button(
         pos += egui::Vec2::new(-21., 0.);
 
         if file_button_icon("🗑", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
-            shared.ui.selected_path = path;
+            shared.ui.selected_path = path.clone();
             shared.ui.open_polar_modal(
                 PolarId::DeleteFile,
                 &("Are you sure to delete ".to_owned() + &filename + "?"),
             );
+        }
+        pos += egui::Vec2::new(-21., 0.);
+
+        if file_button_icon("🗁", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
+            match open::that(std::path::Path::new(&path).parent().unwrap()) {
+                Ok(file) => file,
+                _ => {}
+            }
         }
     });
 }
