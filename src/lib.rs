@@ -609,9 +609,9 @@ impl Renderer {
                 .unwrap()
                 .to_string();
             save_path = dir + "/autosave.skf";
-            if !shared.recent_file_paths.contains(&save_path) {
-                shared.recent_file_paths.push(save_path.clone());
-            }
+        }
+        if !shared.recent_file_paths.contains(&save_path) {
+            shared.recent_file_paths.push(save_path.clone());
         }
         utils::save_to_recent_files(&shared.recent_file_paths);
         std::thread::spawn(move || {
