@@ -376,7 +376,7 @@ pub fn skf_file_button(
         }
 
         let mut pos = egui::Vec2::new(0., 0.);
-        if file_button_icon("X", egui::Vec2::new(-20., 8.), pos, ui).clicked() {
+        if file_button_icon("X", "Remove from list", egui::Vec2::new(-20., 8.), pos, ui).clicked() {
             let idx = shared
                 .recent_file_paths
                 .iter()
@@ -387,7 +387,7 @@ pub fn skf_file_button(
         }
         pos += egui::Vec2::new(-21., 0.);
 
-        if file_button_icon("🗑", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
+        if file_button_icon("🗑", "Delete file", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
             shared.ui.selected_path = path.clone();
             shared.ui.open_polar_modal(
                 PolarId::DeleteFile,
@@ -396,7 +396,7 @@ pub fn skf_file_button(
         }
         pos += egui::Vec2::new(-21., 0.);
 
-        if file_button_icon("🗁", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
+        if file_button_icon("🗁", "Open folder", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
             match open::that(std::path::Path::new(&path).parent().unwrap()) {
                 Ok(file) => file,
                 _ => {}
@@ -408,6 +408,7 @@ pub fn skf_file_button(
 #[cfg(not(target_arch = "wasm32"))]
 pub fn file_button_icon(
     icon: &str,
+    name: &str,
     offset: egui::Vec2,
     pos: egui::Vec2,
     ui: &mut egui::Ui,
@@ -434,6 +435,7 @@ pub fn file_button_icon(
     let label = egui::Label::new(egui::RichText::new(icon).size(18.).color(col));
     ui.put(rect, label)
         .on_hover_cursor(egui::CursorIcon::PointingHand)
+        .on_hover_text(name)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
