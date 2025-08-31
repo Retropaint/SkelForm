@@ -65,6 +65,8 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
                 shared,
             );
         }
+
+        shared.time = i.time as f32;
     });
 
     context.set_cursor_icon(shared.cursor_icon);

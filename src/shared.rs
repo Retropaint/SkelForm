@@ -1852,6 +1852,8 @@ pub struct Shared {
 
     /// triggers debug stuff. Set in main.rs
     pub debug: bool,
+
+    pub time: f32,
 }
 
 impl Shared {
