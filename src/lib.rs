@@ -593,6 +593,9 @@ impl Renderer {
 
     #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&mut self, shared: &mut Shared) {
+        if shared.time - shared.last_autosave < shared.config.autosave_frequency as f32 {
+            return;
+        }
         self.take_screenshot(shared);
         let buffer = shared.rendered_frames[0].buffer.clone();
         shared.rendered_frames = vec![];
@@ -609,6 +612,7 @@ impl Renderer {
                 .unwrap()
                 .to_string();
             save_path = dir + "/autosave.skf";
+            shared.last_autosave = shared.time;
         }
         if !shared.recent_file_paths.contains(&save_path) {
             shared.recent_file_paths.push(save_path.clone());
