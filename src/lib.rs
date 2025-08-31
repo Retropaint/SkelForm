@@ -597,6 +597,10 @@ impl Renderer {
         let armature = shared.armature.clone();
         let saving = shared.saving.clone();
         let save_path = shared.save_path.clone();
+        if saving == shared::Saving::Autosaving {
+            shared.recent_file_paths.push("autosave.skf".to_string());
+        }
+        utils::save_to_recent_files(&shared.recent_file_paths);
         std::thread::spawn(move || {
             let (size, armatures_json, png_buf) = utils::prepare_files(&armature);
 
