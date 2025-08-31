@@ -18,10 +18,9 @@ RESET = "\033[0m"
 
 # yapf: disable
 parser = argparse.ArgumentParser(prog="SkelForm Release Builder", description="Build script for SkelForm release distributions.")
-
 parser.add_argument("-v", "--verbose", action="store_true", help="Print output of everything")
 parser.add_argument("-dmg", "--dmg", action="store_true", help="Attempt to create Mac dmg (requires create-dmg)")
-
+parser.add_argument("-debug", "--debug", action="store_true", help="Create debug build.")
 args = parser.parse_args()
 
 stdout = "" if args.verbose else " &> /dev/null"
@@ -76,8 +75,14 @@ if os.path.exists(dirname):
     shutil.rmtree(dirname)
 os.mkdir(dirname)
 
-subprocess.run("cargo build --release", shell=True)
-shutil.copy("../target/release/SkelForm" + binExt, "./" + dirname)
+mode = "--release"
+path = "release"
+if args.debug:
+    mode = ""
+    path = "debug"
+
+subprocess.run(f"cargo build {mode}", shell=True)
+shutil.copy(f"../target/{path}/SkelForm" + binExt, "./" + dirname)
 shutil.copytree("./user_docs", "./" + dirname + "/user_docs")
 shutil.copytree("./dev_docs", "./" + dirname + "/dev_docs")
 shutil.copy("../skf_icon.ico", "./" + dirname + "/skf_icon.ico")
@@ -107,7 +112,10 @@ if platform.system() == "Darwin":
         shutil.rmtree(bin_path)
     shutil.copytree(dirname, bin_path)
     shutil.make_archive("SkelForm.app", "zip", ".", "SkelForm.app")
+
+    # sign the app in any way, so the OS doesn't show 'this app is damaged'
     subprocess.run("codesign --force --deep --sign - SkelForm.app", shell=True)
+
     if not args.dmg:
         print(f">>> Mac release complete. Please look for {BLUE}SkelForm.app{RESET}.")
         exit()
