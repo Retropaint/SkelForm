@@ -393,7 +393,7 @@ impl ApplicationHandler for App {
         #[cfg(feature = "debug")]
         if self.shared.debug {
             // macro-type debug stuff goes here
-            shared.self.shared.debug = false;
+            self.shared.debug = false;
         }
 
         window.request_redraw();
@@ -596,22 +596,23 @@ impl Renderer {
         let device = self.gpu.device.clone();
         let armature = shared.armature.clone();
         let saving = shared.saving.clone();
-        let save_path = shared.save_path.clone();
+        let mut save_path = shared.save_path.clone();
         if saving == shared::Saving::Autosaving {
-            shared.recent_file_paths.push("autosave.skf".to_string());
+            let dir = directories_next::ProjectDirs::from("com", "retropaint", "skelform")
+                .unwrap()
+                .data_dir()
+                .to_str()
+                .unwrap()
+                .to_string();
+            save_path = dir + "/autosave.skf";
+            shared.recent_file_paths.push(save_path.clone());
         }
         utils::save_to_recent_files(&shared.recent_file_paths);
         std::thread::spawn(move || {
             let (size, armatures_json, png_buf) = utils::prepare_files(&armature);
 
-            let path = if saving == shared::Saving::CustomPath {
-                save_path
-            } else {
-                "autosave.skf".to_string()
-            };
-
             // create zip file
-            let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
+            let mut zip = zip::ZipWriter::new(std::fs::File::create(save_path).unwrap());
 
             let options = zip::write::FullFileOptions::default()
                 .compression_method(zip::CompressionMethod::Stored);
