@@ -150,7 +150,6 @@ fn init_shared(shared: &mut Shared) {
     #[cfg(not(target_arch = "wasm32"))]
     {
         let bytes = include_bytes!("../assets/i18n/en.json").as_slice();
-        let en: localization::LocalizedStrings = serde_json::from_slice(bytes).unwrap();
-        shared.loc_strings.insert("en".to_string(), en);
+        shared.loc_strings = serde_json::from_slice(bytes).unwrap();
     }
 }
