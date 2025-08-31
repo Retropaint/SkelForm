@@ -398,6 +398,7 @@ pub enum UiState {
 pub enum SettingsState {
     #[default]
     Ui,
+    Rendering,
     Keyboard,
 }
 
@@ -670,6 +671,7 @@ pub struct Config {
 
     #[serde(default)]
     pub ui_colors: ColorConfig,
+    pub bg_color: Color,
     pub keys: KeyboardConfig,
 }
 
@@ -689,6 +691,7 @@ impl Default for Config {
             first_time: true,
             ui_scale: default_one(),
             ui_colors: ColorConfig::default(),
+            bg_color: Color::new(50, 50, 50, 255),
             keys: KeyboardConfig::default(),
             gridline_gap: gridline_default(),
         }

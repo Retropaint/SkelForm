@@ -44,7 +44,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         .settings_state
                     {
                         shared::SettingsState::Ui => user_interface(ui, shared),
-                        shared::SettingsState::Rendering => user_interface(ui, shared),
+                        shared::SettingsState::Rendering => rendering(ui, shared),
                         shared::SettingsState::Keyboard => keyboard(ui, shared),
                     });
                 })
@@ -94,11 +94,23 @@ fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     colors(ui, shared);
 }
 
+fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
+    let mut bg = shared.config.bg_color;
+    color_row(
+        "Background",
+        &mut bg,
+        shared.config.ui_colors.main,
+        ui,
+        shared,
+    );
+    shared.config.bg_color = bg;
+}
+
 fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     macro_rules! color_row {
         ($title:expr, $color:expr, $bg_color:expr) => {
             let mut col = $color.clone();
-            color_row("test".to_string(), &mut col, $bg_color, ui, shared);
+            color_row($title, &mut col, $bg_color, ui, shared);
             $color = col;
         };
     }
@@ -121,7 +133,6 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     // iterable color config
     #[rustfmt::skip]
     {
-        
         color_row!("Main",         col!().main,         col!().dark_accent);
         color_row!("Light Accent", col!().light_accent, col!().main       );
         color_row!("Dark Accent",  col!().dark_accent,  col!().dark_accent);
@@ -132,7 +143,7 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 }
 
 fn color_row(
-    title: String,
+    title: &str,
     color: &mut shared::Color,
     bg: shared::Color,
     ui: &mut egui::Ui,
