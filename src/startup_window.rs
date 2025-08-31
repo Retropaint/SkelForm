@@ -279,6 +279,7 @@ pub fn startup_leftside_button(
     button
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn skf_file_button(
     path: String,
     shared: &mut Shared,
@@ -396,6 +397,7 @@ pub fn skf_file_button(
     });
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn file_button_icon(
     icon: &str,
     offset: egui::Vec2,

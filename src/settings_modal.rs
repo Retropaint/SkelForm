@@ -1,9 +1,12 @@
+#[cfg(not(target_arch = "wasm32"))]
 use egui::IntoAtoms;
+#[cfg(not(target_arch = "wasm32"))]
+use crate::utils;
 
 use crate::{
     shared,
     ui::{self, EguiUi},
-    utils, Display,
+    Display,
 };
 
 pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
@@ -40,6 +43,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                             tab!("User Interface", shared::SettingsState::Ui);
                             tab!("Rendering", shared::SettingsState::Rendering);
                             tab!("Keyboard", shared::SettingsState::Keyboard);
+                            #[cfg(not(target_arch = "wasm32"))]
                             tab!("Startup", shared::SettingsState::Startup);
                         });
                     });
@@ -53,7 +57,11 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         shared::SettingsState::Ui => user_interface(ui, shared),
                         shared::SettingsState::Rendering => rendering(ui, shared),
                         shared::SettingsState::Keyboard => keyboard(ui, shared),
-                        shared::SettingsState::Startup => startup(ui, shared),
+                        shared::SettingsState::Startup =>
+                        {
+                            #[cfg(not(target_arch = "wasm32"))]
+                            startup(ui, shared)
+                        }
                     });
                 })
             });
@@ -133,6 +141,7 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     );
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn startup(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         ui.label("Skip startup window");

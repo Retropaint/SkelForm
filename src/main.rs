@@ -8,10 +8,8 @@ use skelform_lib::shared::*;
 #[cfg(not(target_arch = "wasm32"))]
 use skelform_lib::file_reader;
 
-use std::{
-    io::{Read, Write},
-    os::unix::fs::FileExt,
-};
+#[cfg(not(target_arch = "wasm32"))]
+use std::io::Read;
 
 fn main() -> Result<(), winit::error::EventLoopError> {
     // uncomment below to get console panic hook as early as possible for debugging
@@ -26,20 +24,20 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     // }
 
     let mut app = skelform_lib::App::default();
-    let mut startup = Startup::default();
+
+    init_shared(&mut app.shared);
 
     // load startup.json, but only if no args were given
     #[cfg(not(target_arch = "wasm32"))]
     {
+        let mut startup = Startup::default();
         let args: Vec<String> = std::env::args().collect();
         if args.len() == 1 {
             let bytes = include_bytes!("../startup.json").as_slice();
             startup = serde_json::from_slice(bytes).unwrap();
         }
+        app.shared.startup = startup;
     }
-
-    init_shared(&mut app.shared);
-    app.shared.startup = startup;
 
     // delete any leftover temporary files
     #[cfg(not(target_arch = "wasm32"))]
@@ -138,6 +136,7 @@ fn init_shared(shared: &mut Shared) {
     // be considered non-UI
     shared.input.on_ui = true;
 
+    #[cfg(not(target_arch = "wasm32"))]
     if recents_path().exists() {
         let mut str = String::new();
         std::fs::File::open(&recents_path())

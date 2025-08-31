@@ -15,7 +15,6 @@ use image::ImageEncoder;
 
 use std::{
     io::{Read, Write},
-    os::unix::fs::FileExt,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -403,6 +402,7 @@ pub fn import<R: Read + std::io::Seek>(
     file_reader::del_temp_files(&shared.temp_path.base);
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn save_to_recent_files(paths: &Vec<String>) {
     fs::create_dir_all(recents_path().parent().unwrap()).unwrap();
     let mut file = std::fs::File::create(&recents_path()).unwrap();
