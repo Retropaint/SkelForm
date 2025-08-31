@@ -675,7 +675,7 @@ pub struct Config {
     pub keys: KeyboardConfig,
 
     pub hide_startup: bool,
-    pub default_file: String
+    pub default_file: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -699,7 +699,7 @@ impl Default for Config {
             keys: KeyboardConfig::default(),
             gridline_gap: gridline_default(),
             hide_startup: false,
-            default_file: "".to_string()
+            default_file: "".to_string(),
         }
     }
 }
@@ -1967,5 +1967,12 @@ fn are_anims_empty<T: std::cmp::PartialEq<Vec<Animation>>>(value: &T) -> bool {
 pub fn config_path() -> std::path::PathBuf {
     directories_next::ProjectDirs::from("com", "retropaint", "skelform")
         .map(|proj_dirs| proj_dirs.data_dir().join("config.json"))
+        .unwrap()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn recents_path() -> std::path::PathBuf {
+    directories_next::ProjectDirs::from("com", "retropaint", "skelform")
+        .map(|proj_dirs| proj_dirs.data_dir().join("recent_files.json"))
         .unwrap()
 }

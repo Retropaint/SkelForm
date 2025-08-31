@@ -404,15 +404,10 @@ pub fn import<R: Read + std::io::Seek>(
 }
 
 pub fn save_to_recent_files(paths: &Vec<String>) {
-    let file = std::fs::File::create("./.skelform_recent_files.json");
-    if let Err(_) = file {
-        return;
-    }
-
-    let paths_json = serde_json::to_string(paths).unwrap();
-    if let Err(_) = file.unwrap().write(&paths_json.into_bytes()) {
-        return;
-    }
+    fs::create_dir_all(recents_path().parent().unwrap()).unwrap();
+    let mut file = std::fs::File::create(&recents_path()).unwrap();
+    file.write_all(serde_json::to_string(&paths).unwrap().as_bytes())
+        .unwrap();
 }
 
 pub fn undo_redo(undo: bool, shared: &mut Shared) {
@@ -507,6 +502,9 @@ pub fn open_docs(is_dev: bool, _path: &str) {
 }
 
 pub fn bin_path() -> String {
+    #[cfg(feature = "debug")]
+    return "".to_string();
+
     let mut bin = std::env::current_exe()
         .unwrap()
         .to_str()

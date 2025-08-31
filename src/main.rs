@@ -8,6 +8,11 @@ use skelform_lib::shared::*;
 #[cfg(not(target_arch = "wasm32"))]
 use skelform_lib::file_reader;
 
+use std::{
+    io::{Read, Write},
+    os::unix::fs::FileExt,
+};
+
 fn main() -> Result<(), winit::error::EventLoopError> {
     // uncomment below to get console panic hook as early as possible for debugging
     //
@@ -107,7 +112,9 @@ fn init_shared(shared: &mut Shared) {
         // import config
         if config_path().exists() {
             skelform_lib::utils::import_config(shared);
-            shared.ui.set_state(UiState::StartupWindow, !shared.config.hide_startup);
+            shared
+                .ui
+                .set_state(UiState::StartupWindow, !shared.config.hide_startup);
         } else {
             skelform_lib::utils::save_config(&shared.config);
             shared.ui.set_state(UiState::FirstTimeModal, true);
@@ -131,7 +138,12 @@ fn init_shared(shared: &mut Shared) {
     // be considered non-UI
     shared.input.on_ui = true;
 
-    if let Ok(data) = std::fs::File::open(".skelform_recent_files.json") {
-        shared.recent_file_paths = serde_json::from_reader(data).unwrap();
+    if recents_path().exists() {
+        let mut str = String::new();
+        std::fs::File::open(&recents_path())
+            .unwrap()
+            .read_to_string(&mut str)
+            .unwrap();
+        shared.recent_file_paths = serde_json::from_str(&str).unwrap();
     }
 }
