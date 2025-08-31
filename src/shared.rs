@@ -910,6 +910,8 @@ pub struct Bone {
     pub joint_folded: bool,
     #[serde(skip)]
     pub aiming: bool,
+    #[serde(skip)]
+    pub world_verts: Vec<Vertex>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
