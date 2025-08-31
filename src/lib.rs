@@ -685,7 +685,7 @@ impl Renderer {
         });
 
         let capture_view = capture_texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let clear_color = (50, 50, 50);
+        let clear_color = shared.config.ui_colors.background;
 
         let mut encoder = self
             .gpu
@@ -702,9 +702,9 @@ impl Renderer {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: clear_color.0 as f64 / 255.,
-                            g: clear_color.1 as f64 / 255.,
-                            b: clear_color.2 as f64 / 255.,
+                            r: clear_color.r as f64 / 255.,
+                            g: clear_color.g as f64 / 255.,
+                            b: clear_color.b as f64 / 255.,
                             a: 1.0,
                         }),
                         store: wgpu::StoreOp::Store,
