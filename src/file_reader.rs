@@ -368,6 +368,7 @@ pub fn read_psd(
 
     let psd_text = "PSD imported!\n\nIf the armature is incorrect, please check the PSD Structure section in the documentation.";
     shared.ui.open_modal(psd_text.to_string(), false);
+    shared.ui.set_state(UiState::StartupWindow, false);
 }
 
 pub fn add_texture(
