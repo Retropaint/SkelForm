@@ -197,7 +197,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
                     ui.gradient(
                         ui.ctx().screen_rect(),
                         Color32::TRANSPARENT,
-                        shared.config.ui_colors.gradient.into(),
+                        shared.config.colors.gradient.into(),
                     );
 
                     if shared.ui.selected_bone_idx != usize::MAX {
@@ -312,8 +312,8 @@ pub fn mouse_button_as_key(
 fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
     egui::TopBottomPanel::top("top_bar")
         .frame(egui::Frame {
-            fill: shared.config.ui_colors.main.into(),
-            stroke: Stroke::new(0., shared.config.ui_colors.main),
+            fill: shared.config.colors.main.into(),
+            stroke: Stroke::new(0., shared.config.colors.main),
             inner_margin: egui::Margin {
                 left: 0,
                 right: 0,
@@ -338,7 +338,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
 
                 macro_rules! title {
                     ($title:expr) => {
-                        egui::RichText::new($title).color(shared.config.ui_colors.text)
+                        egui::RichText::new($title).color(shared.config.colors.text)
                     };
                 }
 
@@ -594,7 +594,7 @@ pub fn create_ui_texture(
 
 fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
-    let title = egui::RichText::new("File").color(shared.config.ui_colors.text);
+    let title = egui::RichText::new("File").color(shared.config.colors.text);
     ui.menu_button(title, |ui| {
         ui.set_width(125.);
 
@@ -676,7 +676,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
 fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
 
-    let title = egui::RichText::new("View").color(shared.config.ui_colors.text);
+    let title = egui::RichText::new("View").color(shared.config.colors.text);
     ui.menu_button(title, |ui| {
         macro_rules! tpb {
             ($name:expr, $kb:expr) => {
@@ -696,7 +696,7 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
 
 fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
-    let title = egui::RichText::new("Edit").color(shared.config.ui_colors.text);
+    let title = egui::RichText::new("Edit").color(shared.config.colors.text);
     ui.menu_button(title, |ui| {
         ui.set_width(90.);
         let key_undo = Some(&shared.config.keys.undo);
@@ -776,11 +776,11 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
         .max_height(25.)
         .movable(false)
         .frame(egui::Frame {
-            fill: shared.config.ui_colors.gradient.into(),
+            fill: shared.config.colors.gradient.into(),
             inner_margin: margin.into(),
             stroke: Stroke {
                 width: 1.,
-                color: shared.config.ui_colors.dark_accent.into(),
+                color: shared.config.colors.dark_accent.into(),
             },
             ..Default::default()
         })
@@ -818,7 +818,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
 /// Default styling to apply across all UI.
 pub fn default_styling(context: &Context, shared: &Shared) {
     let mut visuals = egui::Visuals::dark();
-    let colors = &shared.config.ui_colors;
+    let colors = &shared.config.colors;
 
     visuals.menu_corner_radius = egui::CornerRadius::ZERO;
 
@@ -920,7 +920,7 @@ pub fn top_bar_button(
         painter.rect_filled(
             rect,
             egui::CornerRadius::ZERO,
-            shared.config.ui_colors.light_accent,
+            shared.config.colors.light_accent,
         );
     } else {
         painter.rect_filled(rect, egui::CornerRadius::ZERO, egui::Color32::TRANSPARENT);
@@ -934,7 +934,7 @@ pub fn top_bar_button(
         egui::Align2::LEFT_TOP,
         text,
         font.clone(),
-        shared.config.ui_colors.text.into(),
+        shared.config.colors.text.into(),
     );
 
     let key_str = if key != None {

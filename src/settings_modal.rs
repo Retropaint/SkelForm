@@ -13,9 +13,9 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
     egui::Modal::new("test".into())
         .frame(egui::Frame {
             corner_radius: 0.into(),
-            fill: shared.config.ui_colors.main.into(),
+            fill: shared.config.colors.main.into(),
             inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., shared.config.ui_colors.light_accent),
+            stroke: egui::Stroke::new(1., shared.config.colors.light_accent),
             ..Default::default()
         })
         .show(ctx, |modal_ui| {
@@ -25,7 +25,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
 
             modal_ui.horizontal(|ui| {
                 egui::Frame::new()
-                    .fill(shared.config.ui_colors.dark_accent.into())
+                    .fill(shared.config.colors.dark_accent.into())
                     .inner_margin(egui::Margin::same(5))
                     .show(ui, |ui| {
                         ui.set_width(window.x.min(100.));
@@ -102,8 +102,8 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         ui.heading("Rendering");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if ui.skf_button("Default").clicked() {
-                shared.config.ui_colors.background = crate::Config::default().ui_colors.background;
-                shared.config.ui_colors.gridline = crate::Config::default().ui_colors.gridline;
+                shared.config.colors.background = crate::Config::default().colors.background;
+                shared.config.colors.gridline = crate::Config::default().colors.gridline;
                 shared.config.gridline_gap = crate::Config::default().gridline_gap;
             }
         });
@@ -132,13 +132,18 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
     color_row!(
         "Background",
-        shared.config.ui_colors.background,
-        shared.config.ui_colors.main
+        shared.config.colors.background,
+        shared.config.colors.main
     );
     color_row!(
         "Gridline",
-        shared.config.ui_colors.gridline,
-        shared.config.ui_colors.main
+        shared.config.colors.gridline,
+        shared.config.colors.main
+    );
+    color_row!(
+        "Center Point",
+        shared.config.colors.center_point,
+        shared.config.colors.main
     );
 }
 
@@ -188,14 +193,14 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         ui.heading("Color");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if ui.skf_button("Default").clicked() {
-                shared.config.ui_colors = crate::ColorConfig::default();
+                shared.config.colors = crate::ColorConfig::default();
             }
         });
     });
 
     macro_rules! col {
         () => {
-            &mut shared.config.ui_colors
+            &mut shared.config.colors
         };
     }
 
@@ -280,13 +285,13 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
                 &mut shared.ui.changing_key,
                 &shared.input.last_pressed,
                 $color,
-                shared.config.ui_colors.text,
+                shared.config.colors.text,
             );
         };
     }
 
     let keys = &mut shared.config.keys;
-    let colors = &shared.config.ui_colors;
+    let colors = &shared.config.colors;
 
     // iterable key config
     #[rustfmt::skip]

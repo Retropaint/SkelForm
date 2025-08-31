@@ -46,7 +46,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                 ui.gradient(
                     ui.ctx().screen_rect(),
                     egui::Color32::TRANSPARENT,
-                    shared.config.ui_colors.gradient.into(),
+                    shared.config.colors.gradient.into(),
                 );
                 shared.ui.camera_bar_pos.y = ui.min_rect().top();
 
@@ -253,7 +253,7 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
             ui.painter().rect_filled(
                 rect,
                 egui::CornerRadius::ZERO,
-                shared.config.ui_colors.light_accent,
+                shared.config.colors.light_accent,
             );
 
             if shared.ui.anim.lines_x.len() > 0 {
@@ -447,7 +447,7 @@ pub fn draw_timeline_graph(
     hitbox: f32,
 ) {
     let frame = egui::Frame::new()
-        .fill(shared.config.ui_colors.light_accent.into())
+        .fill(shared.config.colors.light_accent.into())
         .inner_margin(3);
     let layout = egui::Layout::left_to_right(egui::Align::Center);
     let graph = ui.with_layout(layout, |ui| {
@@ -477,7 +477,7 @@ pub fn draw_timeline_graph(
                     );
 
                     ui.painter()
-                        .rect_filled(rect_to_fill, 0., shared.config.ui_colors.dark_accent);
+                        .rect_filled(rect_to_fill, 0., shared.config.colors.dark_accent);
                 }
 
                 draw_frame_lines(ui, shared, &bone_tops, hitbox, cursor);
@@ -502,7 +502,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             ui.painter_at(ui.min_rect()).rect_filled(
                 ui.min_rect(),
                 egui::CornerRadius::ZERO,
-                shared.config.ui_colors.main,
+                shared.config.colors.main,
             );
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
@@ -512,13 +512,13 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     "Play"
                 };
 
-                let play_text = egui::RichText::new(play_str).color(shared.config.ui_colors.text);
+                let play_text = egui::RichText::new(play_str).color(shared.config.colors.text);
 
                 let button = ui
                     .add_sized(
                         [50., 20.],
                         egui::Button::new(play_text)
-                            .fill(shared.config.ui_colors.light_accent)
+                            .fill(shared.config.colors.light_accent)
                             .corner_radius(0.),
                     )
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
@@ -627,9 +627,9 @@ fn draw_frame_lines(
 
         shared.ui.anim.lines_x.push(x);
 
-        let mut color: egui::Color32 = shared.config.ui_colors.frameline.into();
+        let mut color: egui::Color32 = shared.config.colors.frameline.into();
         if shared.last_keyframe() != None && i > shared.last_keyframe().unwrap().frame {
-            color = shared.config.ui_colors.dark_accent.into();
+            color = shared.config.colors.dark_accent.into();
         }
         let anim = &mut shared.armature.animations[shared.ui.anim.selected];
         if i == anim.get_frame() && anim.elapsed != None {

@@ -13,7 +13,7 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
             ui.gradient(
                 ui.ctx().screen_rect(),
                 egui::Color32::TRANSPARENT,
-                shared.config.ui_colors.gradient.into(),
+                shared.config.colors.gradient.into(),
             );
             let width = ui.ctx().screen_rect().width();
             let height = ui.ctx().screen_rect().height();
@@ -148,7 +148,7 @@ fn startup_content(
             let available_size = ui.available_size();
             ui.add_space(10.);
             egui::Frame::new()
-                .fill(shared.config.ui_colors.dark_accent.into())
+                .fill(shared.config.colors.dark_accent.into())
                 .inner_margin(egui::Margin::same(10))
                 .show(ui, |ui| {
                     ui.set_width(available_size.x);
@@ -228,7 +228,7 @@ pub fn startup_leftside_button(
         ui.gradient(
             gradient_rect,
             egui::Color32::TRANSPARENT,
-            shared.config.ui_colors.dark_accent.into(),
+            shared.config.colors.dark_accent.into(),
         );
     }
 
@@ -262,7 +262,7 @@ pub fn startup_leftside_button(
             egui::Align2::LEFT_CENTER,
             label,
             egui::FontId::new(17., egui::FontFamily::default()),
-            shared.config.ui_colors.text.into(),
+            shared.config.colors.text.into(),
         );
     });
 
@@ -273,7 +273,7 @@ pub fn startup_leftside_button(
     ui.painter().rect_filled(
         bottom,
         egui::CornerRadius::ZERO,
-        shared.config.ui_colors.dark_accent,
+        shared.config.colors.dark_accent,
     );
 
     button
@@ -327,7 +327,7 @@ pub fn skf_file_button(
             ui.gradient(
                 gradient_rect,
                 egui::Color32::TRANSPARENT,
-                shared.config.ui_colors.dark_accent.into(),
+                shared.config.colors.dark_accent.into(),
             );
         }
 
@@ -352,14 +352,14 @@ pub fn skf_file_button(
                     egui::Align2::LEFT_BOTTOM,
                     filename.clone(),
                     egui::FontId::new(16., egui::FontFamily::Proportional),
-                    shared.config.ui_colors.text.into(),
+                    shared.config.colors.text.into(),
                 );
                 if filename == "autosave.skf" {
                     let heading_pos = egui::Pos2::new(
                         ui.min_rect().left_bottom().x + 72.,
                         ui.min_rect().left_bottom().y,
                     );
-                    let mut col = shared.config.ui_colors.text;
+                    let mut col = shared.config.colors.text;
                     col -= Color::new(40, 40, 40, 0);
                     ui.painter().text(
                         heading_pos,
@@ -383,7 +383,7 @@ pub fn skf_file_button(
         ui.painter().rect_filled(
             bottom,
             egui::CornerRadius::ZERO,
-            shared.config.ui_colors.dark_accent,
+            shared.config.colors.dark_accent,
         );
 
         if !button.contains_pointer() {

@@ -683,7 +683,7 @@ pub struct Config {
     pub gridline_gap: i32,
 
     #[serde(default)]
-    pub ui_colors: ColorConfig,
+    pub colors: ColorConfig,
     #[serde(default)]
     pub keys: KeyboardConfig,
 
@@ -704,6 +704,7 @@ pub struct ColorConfig {
     pub gradient: Color,
     pub background: Color,
     pub gridline: Color,
+    pub center_point: Color
 }
 
 impl Default for Config {
@@ -711,7 +712,7 @@ impl Default for Config {
         Config {
             first_time: true,
             ui_scale: default_one(),
-            ui_colors: ColorConfig::default(),
+            colors: ColorConfig::default(),
             keys: KeyboardConfig::default(),
             gridline_gap: gridline_default(),
             hide_startup: false,
@@ -731,6 +732,7 @@ impl Default for ColorConfig {
             gradient: Color::new(28, 20, 42, 255),
             background: Color::new(50, 50, 50, 255),
             gridline: Color::new(150, 150, 150, 255),
+            center_point: Color::new(0, 150, 0, 255),
         }
     }
 }

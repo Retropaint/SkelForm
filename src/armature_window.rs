@@ -24,7 +24,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             ui.gradient(
                 ui.ctx().screen_rect(),
                 Color32::TRANSPARENT,
-                shared.config.ui_colors.gradient.into(),
+                shared.config.colors.gradient.into(),
             );
             ui.horizontal(|ui| {
                 ui.heading("Armature");
@@ -147,11 +147,11 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             }
             ui.add_space(13.);
 
-            let mut selected_col = shared.config.ui_colors.light_accent;
+            let mut selected_col = shared.config.colors.light_accent;
             let mut cursor = egui::CursorIcon::PointingHand;
 
             if shared.armature.is_bone_hidden(id) {
-                selected_col = shared.config.ui_colors.dark_accent;
+                selected_col = shared.config.colors.dark_accent;
             }
 
             if shared.ui.selected_bone_idx == idx as usize {
@@ -223,7 +223,7 @@ fn bone_label(icon: &str, ui: &mut egui::Ui, shared: &Shared, bone_idx: usize) -
         egui::Align2::LEFT_BOTTOM,
         icon,
         egui::FontId::default(),
-        shared.config.ui_colors.text.into(),
+        shared.config.colors.text.into(),
     );
     let id = icon.to_string() + &shared.armature.bones[bone_idx].id.to_string();
     ui.interact(rect, id.into(), egui::Sense::CLICK)
