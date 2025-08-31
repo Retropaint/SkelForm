@@ -240,13 +240,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
     if shared.selected_bone() != None {
+        let color = VertexColor::new(
+            shared.config.colors.center_point.r as f32 / 255.,
+            shared.config.colors.center_point.g as f32 / 255.,
+            shared.config.colors.center_point.b as f32 / 255.,
+            0.5,
+        );
         draw_point(
             &Vec2::ZERO,
             &shared,
             render_pass,
             device,
             &find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap(),
-            VertexColor::new(0., 255., 0., 0.5),
+            color,
             shared.camera.pos,
             0.,
         );

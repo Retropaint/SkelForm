@@ -104,6 +104,7 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             if ui.skf_button("Default").clicked() {
                 shared.config.colors.background = crate::Config::default().colors.background;
                 shared.config.colors.gridline = crate::Config::default().colors.gridline;
+                shared.config.colors.center_point = crate::Config::default().colors.center_point;
                 shared.config.gridline_gap = crate::Config::default().gridline_gap;
             }
         });
@@ -133,7 +134,7 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     color_row!(
         "Background",
         shared.config.colors.background,
-        shared.config.colors.main
+        shared.config.colors.dark_accent
     );
     color_row!(
         "Gridline",
@@ -143,7 +144,7 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     color_row!(
         "Center Point",
         shared.config.colors.center_point,
-        shared.config.colors.main
+        shared.config.colors.dark_accent
     );
 }
 
