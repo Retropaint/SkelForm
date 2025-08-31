@@ -152,7 +152,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         };
         mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
-        if hover_bone_id == -1 {
+        if hover_bone_id == -1 && shared.input.mouse_left < 5 {
             let tb = temp_bones[b].clone();
             for (_, chunk) in tb.indices.chunks_exact(3).enumerate() {
                 let bary = tri_point(
@@ -195,6 +195,23 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 &temp_bones[b].world_verts,
             );
         }
+
+        if shared.input.mouse_left > 0 && hover_bone_id == temp_bones[b].id {
+            let mut id = temp_bones[b].id;
+            let parents = shared.armature.get_all_parents(temp_bones[b].id);
+            for parent in parents {
+                if parent.tex_set_idx == -1 {
+                    id = parent.id;
+                    break;
+                }
+            }
+            shared.ui.selected_bone_idx = shared
+                .armature
+                .bones
+                .iter()
+                .position(|bone| bone.id == id)
+                .unwrap();
+        }
     }
 
     // runtime: sort bones by z-index for drawing
@@ -206,6 +223,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
         draw_bone(&bone, render_pass, device, &bone.world_verts, shared);
     }
+    render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
     if shared.selected_bone() != None {
         draw_point(
