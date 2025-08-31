@@ -310,7 +310,7 @@ pub fn skf_file_button(
             .interact(
                 gradient_rect,
                 egui::Id::new("frame rect".to_owned() + &path),
-                egui::Sense::hover(),
+                egui::Sense::click(),
             )
             .on_hover_cursor(egui::CursorIcon::PointingHand);
 
