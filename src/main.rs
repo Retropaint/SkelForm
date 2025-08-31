@@ -28,9 +28,8 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     {
         let args: Vec<String> = std::env::args().collect();
         if args.len() == 1 {
-            if let Ok(data) = std::fs::File::open("startup.json") {
-                startup = serde_json::from_reader(data).unwrap();
-            }
+            let bytes = include_bytes!("../startup.json").as_slice();
+            startup = serde_json::from_slice(bytes).unwrap();
         }
     }
 
