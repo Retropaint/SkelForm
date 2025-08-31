@@ -704,7 +704,7 @@ pub struct ColorConfig {
     pub gradient: Color,
     pub background: Color,
     pub gridline: Color,
-    pub center_point: Color
+    pub center_point: Color,
 }
 
 impl Default for Config {
@@ -1864,6 +1864,9 @@ pub struct Shared {
     pub time: f32,
 
     pub last_autosave: f32,
+
+    // key is lang code (eg; en, id, ru, etc)
+    pub loc_strings: std::collections::HashMap<String, localization::LocalizedStrings>,
 }
 
 impl Shared {

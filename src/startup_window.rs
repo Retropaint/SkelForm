@@ -44,18 +44,19 @@ fn startup_content(
     ui.vertical(|ui| {
         ui.set_width(133.);
         ui.add_space(10.);
-        if startup_leftside_button("+", "New", ui, shared, None, None).clicked() {
+        let startup = &shared.loc_strings.get("en").unwrap().startup;
+        if startup_leftside_button("+", &startup.new, ui, shared, None, None).clicked() {
             shared.armature = Armature::default();
             shared.ui.set_state(UiState::StartupWindow, false);
         }
         ui.add_space(padding);
         let import_pos = Some(egui::Vec2::new(-5., 2.5));
-        if startup_leftside_button("🗋", "Import", ui, shared, import_pos, None).clicked() {
+        if startup_leftside_button("🗋", &startup.import, ui, shared, import_pos, None).clicked() {
             utils::open_import_dialog(shared.temp_path.import.clone());
         }
         ui.add_space(padding);
         let samples_pos = Some(egui::Vec2::new(-5., 2.5));
-        if startup_leftside_button("🗊", "Samples", ui, shared, samples_pos, None).clicked() {
+        if startup_leftside_button("🗊", &startup.samples, ui, shared, samples_pos, None).clicked() {
             shared.ui.showing_samples = !shared.ui.showing_samples;
         }
         ui.add_space(padding);
@@ -110,7 +111,14 @@ fn startup_content(
                     ui.set_width(available_width);
                     if shared.recent_file_paths.len() == 0 {
                         ui.add_space(10.);
-                        let text = egui::RichText::new(EMPTY_RECENTS).size(14.);
+                        let msg = shared
+                            .loc_strings
+                            .get("en")
+                            .unwrap()
+                            .startup
+                            .empty_recent_files
+                            .clone();
+                        let text = egui::RichText::new(msg).size(14.);
                         ui.label(text);
                         return;
                     }
