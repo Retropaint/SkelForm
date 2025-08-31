@@ -108,6 +108,7 @@ fn startup_content(
                     let available_width = ui.available_width();
                     ui.set_width(available_width);
                     if shared.recent_file_paths.len() == 0 {
+                        ui.add_space(10.);
                         let text = egui::RichText::new(EMPTY_RECENTS).size(14.);
                         ui.label(text);
                         return;
