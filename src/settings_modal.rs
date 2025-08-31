@@ -1,7 +1,7 @@
 #[cfg(not(target_arch = "wasm32"))]
-use egui::IntoAtoms;
-#[cfg(not(target_arch = "wasm32"))]
 use crate::utils;
+#[cfg(not(target_arch = "wasm32"))]
+use egui::IntoAtoms;
 
 use crate::{
     shared,
@@ -44,7 +44,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                             tab!("Rendering", shared::SettingsState::Rendering);
                             tab!("Keyboard", shared::SettingsState::Keyboard);
                             #[cfg(not(target_arch = "wasm32"))]
-                            tab!("Startup", shared::SettingsState::Startup);
+                            tab!("Miscellaneous", shared::SettingsState::Misc);
                         });
                     });
                 egui::Frame::new().show(ui, |ui| {
@@ -57,10 +57,10 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         shared::SettingsState::Ui => user_interface(ui, shared),
                         shared::SettingsState::Rendering => rendering(ui, shared),
                         shared::SettingsState::Keyboard => keyboard(ui, shared),
-                        shared::SettingsState::Startup =>
+                        shared::SettingsState::Misc =>
                         {
                             #[cfg(not(target_arch = "wasm32"))]
-                            startup(ui, shared)
+                            misc(ui, shared)
                         }
                     });
                 })
@@ -142,7 +142,21 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn startup(ui: &mut egui::Ui, shared: &mut shared::Shared) {
+fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
+    ui.horizontal(|ui| {
+        ui.label("Autosave frequency (seconds)");
+        let (edited, value, _) = ui.float_input(
+            "autosave_freq".to_string(),
+            shared,
+            shared.config.autosave_frequency as f32,
+            1.,
+        );
+        if edited && value > 0. {
+            shared.config.autosave_frequency = value as i32;
+        }
+    });
+
+    ui.heading("Startup");
     ui.horizontal(|ui| {
         ui.label("Skip startup window");
         ui.checkbox(&mut shared.config.hide_startup, "".into_atoms());
