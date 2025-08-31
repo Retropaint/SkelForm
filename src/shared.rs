@@ -400,6 +400,7 @@ pub enum SettingsState {
     Ui,
     Rendering,
     Keyboard,
+    Startup,
 }
 
 #[derive(Clone, Default, PartialEq, Debug)]
@@ -672,6 +673,9 @@ pub struct Config {
     #[serde(default)]
     pub ui_colors: ColorConfig,
     pub keys: KeyboardConfig,
+
+    pub hide_startup: bool,
+    pub default_file: String
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -694,6 +698,8 @@ impl Default for Config {
             ui_colors: ColorConfig::default(),
             keys: KeyboardConfig::default(),
             gridline_gap: gridline_default(),
+            hide_startup: false,
+            default_file: "".to_string()
         }
     }
 }
