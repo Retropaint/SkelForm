@@ -152,7 +152,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         };
         mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
-        if hover_bone_id == -1 && shared.input.mouse_left < 5 {
+        if hover_bone_id == -1 && shared.input.mouse_left < 5 && !shared.input.on_ui{
             let tb = temp_bones[b].clone();
             for (_, chunk) in tb.indices.chunks_exact(3).enumerate() {
                 let bary = tri_point(
