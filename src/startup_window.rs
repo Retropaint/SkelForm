@@ -45,6 +45,7 @@ fn startup_content(
         ui.set_width(133.);
         ui.add_space(10.);
         if startup_leftside_button("+", "New", ui, shared, None, None).clicked() {
+            shared.armature = Armature::default();
             shared.ui.set_state(UiState::StartupWindow, false);
         }
         ui.add_space(padding);
