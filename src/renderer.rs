@@ -144,6 +144,40 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             selected_bone_world_verts = world_verts.clone();
         }
 
+        // create vert on cursor
+        let mut mouse_world_vert = Vertex {
+            pos: utils::screen_to_world_space(shared.input.mouse, shared.window),
+            ..Default::default()
+        };
+        let mut mouse_vert = con_vert!(
+            world_to_raw_vert,
+            mouse_world_vert,
+            temp_bones[b],
+            set.textures[temp_bones[b].tex_idx as usize],
+            shared.camera.pos,
+            shared.camera.zoom
+        );
+        mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
+
+        let mut hovered = false;
+        for (_, chunk) in temp_bones[b].indices.chunks_exact(3).enumerate() {
+            if is_point_in_triangle(
+                &mouse_world_vert.pos,
+                &world_verts[chunk[0] as usize].pos,
+                &world_verts[chunk[1] as usize].pos,
+                &world_verts[chunk[2] as usize].pos,
+            ) {
+                hovered = true;
+                break;
+            }
+        }
+
+        if hovered {
+            for vert in &mut world_verts {
+                vert.add_color = VertexColor::new(0., 0., 1., 0.);
+            }
+        }
+
         draw_bone(&temp_bones[b], render_pass, device, &world_verts, shared);
 
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
@@ -225,6 +259,25 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap();
         edit_bone(shared, bone, &temp_bones);
     }
+}
+
+fn is_point_in_triangle(p: &Vec2, a: &Vec2, b: &Vec2, c: &Vec2) -> bool {
+    let s = a.y * c.x - a.x * c.y + (c.y - a.y) * p.x + (a.x - c.x) * p.y;
+    let t = a.x * b.y - a.y * b.x + (a.y - b.y) * p.x + (b.x - a.x) * p.y;
+
+    if (s < 0.0) != (t < 0.0) && s != 0.0 && t != 0.0 {
+        return false;
+    }
+
+    let area = -b.y * c.x + a.y * (c.x - b.x) + a.x * (b.y - c.y) + b.x * c.y;
+    if area == 0.0 {
+        return false;
+    }
+
+    let s_normalized = s / area;
+    let t_normalized = t / area;
+
+    s_normalized >= 0.0 && t_normalized >= 0.0 && (s_normalized + t_normalized) <= 1.0
 }
 
 /// Stripped-down renderer for screenshot purposes.
@@ -751,17 +804,17 @@ pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
         Vertex {
             pos: Vec2::new(tex_size.x, 0.),
             uv: Vec2::new(1., 0.),
-            color: VertexColor::default(),
+            ..Default::default()
         },
         Vertex {
             pos: Vec2::new(tex_size.x, -tex_size.y),
             uv: Vec2::new(1., 1.),
-            color: VertexColor::default(),
+            ..Default::default()
         },
         Vertex {
             pos: Vec2::new(0., -tex_size.y),
             uv: Vec2::new(0., 1.),
-            color: VertexColor::default(),
+            ..Default::default()
         },
     ];
     verts = sort_vertices(verts.clone());
@@ -789,21 +842,25 @@ fn draw_point(
             pos: Vec2::new(-point_size, point_size),
             uv: Vec2::new(1., 0.),
             color,
+            ..Default::default()
         },
         Vertex {
             pos: Vec2::new(point_size, point_size),
             uv: Vec2::new(0., 1.),
             color,
+            ..Default::default()
         },
         Vertex {
             pos: Vec2::new(-point_size, -point_size),
             uv: Vec2::new(0., 0.),
             color,
+            ..Default::default()
         },
         Vertex {
             pos: Vec2::new(point_size, -point_size),
             uv: Vec2::new(1., 1.),
             color,
+            ..Default::default()
         },
     ];
 

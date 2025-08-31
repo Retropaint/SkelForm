@@ -193,7 +193,6 @@ macro_rules! enum_string {
     Clone,
     bytemuck::Pod,
     bytemuck::Zeroable,
-    Default,
     Debug,
 )]
 pub struct Vertex {
@@ -201,6 +200,19 @@ pub struct Vertex {
     pub uv: Vec2,
     #[serde(skip)]
     pub color: VertexColor,
+    #[serde(skip)]
+    pub add_color: VertexColor,
+}
+
+impl Default for Vertex {
+    fn default() -> Self {
+        Vertex {
+            pos: Vec2::default(),
+            uv: Vec2::default(),
+            color: VertexColor::default(),
+            add_color: VertexColor::new(0., 0., 0., 0.),
+        }
+    }
 }
 
 #[repr(C)]
