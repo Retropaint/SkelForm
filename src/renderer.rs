@@ -105,11 +105,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // runtime: sort bones by z-index for drawing
-    temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
+    //temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
 
     let mut hovering_vert = usize::MAX;
 
     let mut selected_bone_world_verts: Vec<Vertex> = vec![];
+
+    let mut hover_bone_id = -1;
+    let mut hover_bone_zindex = -1.;
 
     // draw bone
     for b in 0..temp_bones.len() {
@@ -123,25 +126,24 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
 
-        let mut world_verts: Vec<Vertex> = vec![];
-        for vert in &temp_bones[b].vertices {
+        for v in 0..temp_bones[b].vertices.len() {
             let mut new_vert = con_vert!(
                 raw_to_world_vert,
-                *vert,
+                temp_bones[b].vertices[v],
                 temp_bones[b],
                 set.textures[temp_bones[b].tex_idx as usize],
                 shared.camera.pos,
                 shared.camera.zoom
             );
             new_vert.pos.x /= shared.window.x / shared.window.y;
-            world_verts.push(new_vert);
+            temp_bones[b].world_verts.push(new_vert);
         }
 
         let selected = shared.selected_bone() != None
             && temp_bones[b].id == shared.selected_bone().unwrap().id;
 
         if selected {
-            selected_bone_world_verts = world_verts.clone();
+            selected_bone_world_verts = temp_bones[b].world_verts.clone();
         }
 
         // create vert on cursor
@@ -151,33 +153,47 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         };
         mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
-        let mut hovered = false;
-        for (_, chunk) in temp_bones[b].indices.chunks_exact(3).enumerate() {
-            if is_point_in_triangle(
-                &mouse_world_vert.pos,
-                &world_verts[chunk[0] as usize].pos,
-                &world_verts[chunk[1] as usize].pos,
-                &world_verts[chunk[2] as usize].pos,
-            ) {
-                hovered = true;
-                break;
+        if hover_bone_id == -1 {
+            for (_, chunk) in temp_bones[b].indices.chunks_exact(3).enumerate() {
+                if is_point_in_triangle(
+                    &mouse_world_vert.pos,
+                    &temp_bones[b].world_verts[chunk[0] as usize].pos,
+                    &temp_bones[b].world_verts[chunk[1] as usize].pos,
+                    &temp_bones[b].world_verts[chunk[2] as usize].pos,
+                ) && temp_bones[b].zindex >= hover_bone_zindex
+                {
+                    hover_bone_id = temp_bones[b].id;
+                    hover_bone_zindex = temp_bones[b].zindex;
+                    break;
+                }
             }
         }
 
-        if hovered {
-            let fade = 0.5 * ((shared.time * 3.).sin()).abs() as f32;
-            let min = 0.25;
-            for vert in &mut world_verts {
+        if hover_bone_id == temp_bones[b].id {
+            let fade = 0.25 * ((shared.time * 3.).sin()).abs() as f32;
+            let min = 0.1;
+            for vert in &mut temp_bones[b].world_verts {
                 vert.add_color = VertexColor::new(min + fade, min + fade, min + fade, 0.);
             }
         }
 
-        draw_bone(&temp_bones[b], render_pass, device, &world_verts, shared);
+        draw_bone(
+            &temp_bones[b],
+            render_pass,
+            device,
+            &temp_bones[b].world_verts,
+            shared,
+        );
 
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
         if shared.ui.editing_mesh && b == shared.ui.selected_bone_idx {
-            hovering_vert =
-                bone_vertices(&temp_bones[b], shared, render_pass, device, &world_verts);
+            hovering_vert = bone_vertices(
+                &temp_bones[b],
+                shared,
+                render_pass,
+                device,
+                &temp_bones[b].world_verts,
+            );
         }
     }
 
