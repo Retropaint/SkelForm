@@ -1,4 +1,10 @@
-use crate::{shared, ui, ui::EguiUi, Display};
+use egui::IntoAtoms;
+
+use crate::{
+    shared,
+    ui::{self, EguiUi},
+    utils, Display,
+};
 
 pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
     egui::Modal::new("test".into())
@@ -34,6 +40,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                             tab!("User Interface", shared::SettingsState::Ui);
                             tab!("Rendering", shared::SettingsState::Rendering);
                             tab!("Keyboard", shared::SettingsState::Keyboard);
+                            tab!("Startup", shared::SettingsState::Startup);
                         });
                     });
                 egui::Frame::new().show(ui, |ui| {
@@ -46,6 +53,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         shared::SettingsState::Ui => user_interface(ui, shared),
                         shared::SettingsState::Rendering => rendering(ui, shared),
                         shared::SettingsState::Keyboard => keyboard(ui, shared),
+                        shared::SettingsState::Startup => startup(ui, shared),
                     });
                 })
             });
@@ -123,6 +131,22 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         shared.config.ui_colors.gridline,
         shared.config.ui_colors.main
     );
+}
+
+fn startup(ui: &mut egui::Ui, shared: &mut shared::Shared) {
+    ui.horizontal(|ui| {
+        ui.label("Skip startup window");
+        ui.checkbox(&mut shared.config.hide_startup, "".into_atoms());
+    });
+    ui.horizontal(|ui| {
+        if shared.recent_file_paths.len() == 0 {
+            ui.disable();
+        }
+        if ui.skf_button("Clear recent files").clicked() {
+            shared.recent_file_paths = vec![];
+            utils::save_to_recent_files(&vec![]);
+        }
+    });
 }
 
 fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
