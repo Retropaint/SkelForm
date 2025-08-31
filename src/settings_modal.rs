@@ -32,6 +32,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                             }
 
                             tab!("User Interface", shared::SettingsState::Ui);
+                            tab!("Rendering", shared::SettingsState::Rendering);
                             tab!("Keyboard", shared::SettingsState::Keyboard);
                         });
                     });
@@ -43,6 +44,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         .settings_state
                     {
                         shared::SettingsState::Ui => user_interface(ui, shared),
+                        shared::SettingsState::Rendering => user_interface(ui, shared),
                         shared::SettingsState::Keyboard => keyboard(ui, shared),
                     });
                 })
@@ -93,48 +95,11 @@ fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 }
 
 fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
-    macro_rules! drag_value {
-        ($id:expr, $field:expr, $ui:expr) => {
-            $ui.add(egui::DragValue::new(&mut $field).speed(0.1));
-        };
-    }
-
     macro_rules! color_row {
         ($title:expr, $color:expr, $bg_color:expr) => {
-            ui.horizontal(|ui| {
-                egui::Frame::show(
-                    egui::Frame {
-                        fill: $bg_color.into(),
-                        ..Default::default()
-                    },
-                    ui,
-                    |ui| {
-                        ui.label($title);
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            // hex input
-                            let color32: egui::Color32 = $color.into();
-                            let (edited, val, _) = ui.text_input(
-                                $title.to_string() + "_hex",
-                                shared,
-                                color32.to_hex().to_string()[..7].to_string(),
-                                Some(ui::TextInputOptions {
-                                    size: shared::Vec2::new(60., 20.),
-                                    ..Default::default()
-                                }),
-                            );
-                            if edited {
-                                if let Ok(data) = egui::Color32::from_hex(&(val + "ff")) {
-                                    $color = data.into()
-                                }
-                            }
-
-                            drag_value!($title.to_string() + "_b", $color.b, ui);
-                            drag_value!($title.to_string() + "_g", $color.g, ui);
-                            drag_value!($title.to_string() + "_r", $color.r, ui);
-                        });
-                    },
-                );
-            });
+            let mut col = $color.clone();
+            color_row("test".to_string(), &mut col, $bg_color, ui, shared);
+            $color = col;
         };
     }
 
@@ -156,6 +121,7 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     // iterable color config
     #[rustfmt::skip]
     {
+        
         color_row!("Main",         col!().main,         col!().dark_accent);
         color_row!("Light Accent", col!().light_accent, col!().main       );
         color_row!("Dark Accent",  col!().dark_accent,  col!().dark_accent);
@@ -163,6 +129,56 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         color_row!("Frameline",    col!().frameline,    col!().dark_accent);
         color_row!("Gradient",     col!().gradient,     col!().main       );
     };
+}
+
+fn color_row(
+    title: String,
+    color: &mut shared::Color,
+    bg: shared::Color,
+    ui: &mut egui::Ui,
+    shared: &mut shared::Shared,
+) {
+    macro_rules! drag_value {
+        ($id:expr, $field:expr, $ui:expr) => {
+            $ui.add(egui::DragValue::new(&mut $field).speed(0.1));
+        };
+    }
+    ui.horizontal(|ui| {
+        egui::Frame::show(
+            egui::Frame {
+                fill: bg.into(),
+                ..Default::default()
+            },
+            ui,
+            |ui| {
+                ui.label(title);
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    // hex input
+                    let color32: egui::Color32 = (*color).into();
+                    let (edited, val, _) = ui.text_input(
+                        "test".to_string() + "_hex",
+                        shared,
+                        color32.to_hex().to_string()[..7].to_string(),
+                        Some(ui::TextInputOptions {
+                            size: shared::Vec2::new(60., 20.),
+                            ..Default::default()
+                        }),
+                    );
+                    if edited {
+                        if let Ok(data) = egui::Color32::from_hex(&(val + "ff")) {
+                            color.r = data.r();
+                            color.g = data.g();
+                            color.b = data.b();
+                        }
+                    }
+
+                    drag_value!("test".to_string() + "_b", color.b, ui);
+                    drag_value!("test".to_string() + "_g", color.g, ui);
+                    drag_value!("test".to_string() + "_r", color.r, ui);
+                });
+            },
+        );
+    });
 }
 
 fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
