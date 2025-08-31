@@ -240,7 +240,7 @@ pub fn startup_leftside_button(
             ui.min_rect().left_center().y - 2.5,
         ) + icon_offset.unwrap();
         if img != None {
-            let size = egui::Vec2::new(24., 24.);
+            let size = egui::Vec2::new(20., 24.);
             let rect = egui::Rect::from_min_size(icon_pos, size.into());
             egui::Image::new(img.unwrap())
                 .fit_to_exact_size(size)
