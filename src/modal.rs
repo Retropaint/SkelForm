@@ -18,9 +18,9 @@ pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     egui::Modal::new("test".into())
         .frame(egui::Frame {
             corner_radius: 0.into(),
-            fill: config.ui_colors.main.into(),
+            fill: config.colors.main.into(),
             inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., config.ui_colors.light_accent),
+            stroke: egui::Stroke::new(1., config.colors.light_accent),
             ..Default::default()
         })
         .show(ctx, |ui| {
@@ -142,9 +142,9 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
     egui::Modal::new("test".into())
         .frame(egui::Frame {
             corner_radius: 0.into(),
-            fill: shared.config.ui_colors.main.into(),
+            fill: shared.config.colors.main.into(),
             inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., shared.config.ui_colors.light_accent),
+            stroke: egui::Stroke::new(1., shared.config.colors.light_accent),
             ..Default::default()
         })
         .show(ctx, |ui| {
@@ -222,7 +222,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                                 continue;
                             }
 
-                            let mut col = shared.config.ui_colors.light_accent;
+                            let mut col = shared.config.colors.light_accent;
                             if s as i32 == shared.ui.selected_tex_set_idx {
                                 col += crate::Color::new(20, 20, 20, 0);
                             }

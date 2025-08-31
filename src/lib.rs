@@ -531,7 +531,7 @@ impl Renderer {
                 });
 
         encoder.insert_debug_marker("Render scene");
-        let clear_color = shared.config.ui_colors.background;
+        let clear_color = shared.config.colors.background;
 
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
@@ -701,7 +701,7 @@ impl Renderer {
         });
 
         let capture_view = capture_texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let clear_color = shared.config.ui_colors.background;
+        let clear_color = shared.config.colors.background;
 
         let mut encoder = self
             .gpu

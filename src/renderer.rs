@@ -1130,9 +1130,9 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
     let col = VertexColor::new(
-        shared.config.ui_colors.gridline.r as f32 / 255.,
-        shared.config.ui_colors.gridline.g as f32 / 255.,
-        shared.config.ui_colors.gridline.b as f32 / 255.,
+        shared.config.colors.gridline.r as f32 / 255.,
+        shared.config.colors.gridline.g as f32 / 255.,
+        shared.config.colors.gridline.b as f32 / 255.,
         1.,
     );
 
