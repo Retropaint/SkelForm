@@ -67,8 +67,8 @@ print("\nBuild command:\n" + build_command + "\n")
 subprocess.run(build_command, shell=True)
 
 # copy assets over to /dist
-shutil.copy("anim_icons.png", "dist/anim_icons.png")
-shutil.copy("skf_icon.ico", "dist/favicon.ico")
+shutil.copy("assets/anim_icons.png", "dist/anim_icons.png")
+shutil.copy("assets/skf_icon.ico", "dist/favicon.ico")
 shutil.copy("samples/skellington.skf", "dist/skellington.skf")
 
 if args.serve:
