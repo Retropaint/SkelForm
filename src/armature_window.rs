@@ -273,14 +273,6 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     let stroke = egui::Stroke::new(1.0, Color32::WHITE);
 
     if pointer == None || hovered_payload == None {
-        // render hover box
-        let stroke = egui::Stroke::new(1.0, Color32::from_rgba_premultiplied(125, 125, 125, 255));
-        if drag.contains_pointer() {
-            //ui.painter().hline(rect.x_range(), rect.top(), stroke);
-            //ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
-            //ui.painter().vline(rect.right(), rect.y_range(), stroke);
-            //ui.painter().vline(rect.left(), rect.y_range(), stroke);
-        }
         return false;
     }
 

@@ -380,21 +380,26 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     if top_bar_button(ui, str_dev_docs, None, &mut offset, shared).clicked() {
                         utils::open_docs(false, "");
                     }
-                    let str_binary_folder = shared.loc("top_bar.help.binary_folder");
                     #[cfg(not(target_arch = "wasm32"))]
-                    if top_bar_button(ui, str_binary_folder, None, &mut offset, shared).clicked() {
-                        match open::that(utils::bin_path()) {
-                            Err(_) => {}
-                            Ok(file) => file,
-                        };
+                    {
+                        let str_binary = shared.loc("top_bar.help.binary_folder");
+                        if top_bar_button(ui, str_binary, None, &mut offset, shared).clicked() {
+                            match open::that(utils::bin_path()) {
+                                Err(_) => {}
+                                Ok(file) => file,
+                            };
+                        }
                     }
-                    let str_config_folder = shared.loc("top_bar.help.config_folder");
+
                     #[cfg(not(target_arch = "wasm32"))]
-                    if top_bar_button(ui, str_config_folder, None, &mut offset, shared).clicked() {
-                        match open::that(config_path().parent().unwrap()) {
-                            Err(_) => {}
-                            Ok(file) => file,
-                        };
+                    {
+                        let str_config = shared.loc("top_bar.help.config_folder");
+                        if top_bar_button(ui, str_config, None, &mut offset, shared).clicked() {
+                            match open::that(config_path().parent().unwrap()) {
+                                Err(_) => {}
+                                Ok(file) => file,
+                            };
+                        }
                     }
                 });
             });
