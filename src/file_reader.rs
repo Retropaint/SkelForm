@@ -365,8 +365,8 @@ pub fn read_psd(
         }
     }
 
-    let psd_text = "PSD imported!\n\nIf the armature is incorrect, please check the PSD Structure section in the documentation.";
-    shared.ui.open_modal(psd_text.to_string(), false);
+    let str_psd = shared.loc("psd_imported");
+    shared.ui.open_modal(str_psd.to_string(), false);
     shared.ui.set_state(UiState::StartupWindow, false);
 }
 
