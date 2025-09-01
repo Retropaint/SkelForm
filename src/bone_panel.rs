@@ -287,10 +287,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
-    // don't show joint if bone has no children
+    // don't show joint if bone has no children nor parents
     let mut children = vec![];
     armature_window::get_all_children(&shared.armature.bones, &mut children, &bone);
-    if children.len() == 0 {
+    let parents = shared.armature.get_all_parents(bone.id);
+    if children.len() == 0 && parents.len() == 0 {
         return;
     }
 
