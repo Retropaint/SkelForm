@@ -1866,7 +1866,7 @@ pub struct Shared {
     pub last_autosave: f32,
 
     // key is lang code (eg; en, id, ru, etc)
-    pub loc_strings: localization::LocalizedStrings,
+    loc_strings: std::collections::HashMap<String, String>,
 }
 
 impl Shared {
@@ -1939,6 +1939,20 @@ impl Shared {
         let mouse_world = utils::screen_to_world_space(self.input.mouse, self.window);
         let mouse_prev_world = utils::screen_to_world_space(self.input.mouse_prev, self.window);
         mouse_prev_world - mouse_world
+    }
+
+    pub fn loc(&self, str: &str) -> &String {
+        let result = self.loc_strings.get(str);
+        if let Some(string) = result {
+            return &string;
+        }
+
+        &self.loc_strings[""]
+    }
+
+    pub fn init_lang(&mut self, lang_json: serde_json::Value) {
+        utils::flatten_json(&lang_json, "".to_string(), &mut self.loc_strings);
+        self.loc_strings.insert("".to_string(), "".to_string());
     }
 }
 
