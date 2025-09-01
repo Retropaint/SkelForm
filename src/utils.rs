@@ -565,3 +565,30 @@ pub fn add_texture_img(
     let tex = ctx.load_texture("anim_icons", color_image, Default::default());
     tex
 }
+
+/// Recursively flattens a JSON object into dotted keys
+pub fn flatten_json(
+    value: &serde_json::Value,
+    prefix: String,
+    out: &mut std::collections::HashMap<String, String>,
+) {
+    match value {
+        serde_json::Value::Object(map) => {
+            for (k, v) in map {
+                let new_prefix = if prefix.is_empty() {
+                    k.to_string()
+                } else {
+                    format!("{}.{}", prefix, k)
+                };
+                flatten_json(v, new_prefix, out);
+            }
+        }
+        serde_json::Value::String(s) => {
+            out.insert(prefix, s.clone());
+        }
+        _ => {
+            // only strings should be in your loc json
+            // but you can handle numbers/bools here if you want
+        }
+    }
+}
