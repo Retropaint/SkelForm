@@ -1,9 +1,6 @@
 use crate::ui::EguiUi;
 use crate::*;
 
-pub const EMPTY_RECENTS: &str =
-    "Start from scratch, import something, or try a sample from the options on the left.";
-
 #[cfg(not(target_arch = "wasm32"))]
 pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
     egui::Window::new("startup")
@@ -181,8 +178,10 @@ fn startup_content(
                     let separator = 15.;
 
                     for item in &shared.startup.resources {
+                        let heading_str =
+                            shared.loc(&("startup.resources.".to_owned() + &item.code));
                         let heading = ui.clickable_label(
-                            egui::RichText::new(item.name.clone())
+                            egui::RichText::new(heading_str)
                                 .color(egui::Color32::from_hex("#659adf").unwrap())
                                 .size(header_size),
                         );
@@ -205,8 +204,10 @@ fn startup_content(
                                     egui::Color32::from_hex("#223752").unwrap(),
                                 );
                                 ui.add_space(sub_padding);
+                                let sub_str =
+                                    shared.loc(&("startup.resources.".to_owned() + &sub.code));
                                 let sub_text = ui.clickable_label(
-                                    egui::RichText::new(sub.name.clone())
+                                    egui::RichText::new(sub_str)
                                         .color(egui::Color32::from_hex("#659adf").unwrap())
                                         .size(sub_size),
                                 );

@@ -1,41 +1,41 @@
 {
   "resources": [
     {
-      "name": "User Documentation",
+      "code": "user_docs",
       "url_type": "UserDocs",
       "url": "",
       "items": [
         {
-          "name": "Starter Guide",
+          "code": "starter_guide",
           "url": "starter_guide/main.html"
         },
         {
-          "name": "PSD Rigging",
+          "code": "psd",
           "url": "psd.html"
         }
       ]
     },
     {
-      "name": "Developer Documentation",
+      "code": "dev_docs",
       "url_type": "DevDocs",
       "url": "",
       "items": [
         {
-          "name": ".skf Structure",
+          "code": "skf",
           "url": "file_specs.html"
         },
         {
-          "name": "Runtime Development",
+          "name": "runtime",
           "url": "runtime_spec.html"
         }
       ]
     },
     {
-      "name": "Main Site",
+      "code": "main_site",
       "url": "https://retropaint.github.io/skelform_site"
     },
     {
-      "name": "Discord",
+      "code": "discord",
       "url": "https://discord.com/invite/V9gm4p4cAB"
     }
   ]
