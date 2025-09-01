@@ -42,9 +42,12 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                                 };
                             }
 
-                            let str_ui = shared.loc("settings_modal.user_interface.heading");
-                            tab!(str_ui, shared::SettingsState::Ui);
-                            tab!("Rendering", shared::SettingsState::Rendering);
+                            let str_ui =
+                                shared.loc("settings_modal.user_interface.heading").clone();
+                            let str_rendering =
+                                shared.loc("settings_modal.rendering.heading").clone();
+                            tab!(&str_ui, shared::SettingsState::Ui);
+                            tab!(&str_rendering, shared::SettingsState::Rendering);
                             tab!("Keyboard", shared::SettingsState::Keyboard);
                             #[cfg(not(target_arch = "wasm32"))]
                             tab!("Miscellaneous", shared::SettingsState::Misc);
@@ -298,9 +301,11 @@ fn color_row(
 
 fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
-        ui.heading("Keyboard");
+        let str_heading = shared.loc("settings_modal.keyboard.heading");
+        ui.heading(str_heading);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.skf_button("Default").clicked() {
+            let str_default = shared.loc("settings_modal.default");
+            if ui.skf_button(str_default).clicked() {
                 shared.config.keys = crate::KeyboardConfig::default();
             }
         });
@@ -320,26 +325,39 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         };
     }
 
-    let keys = &mut shared.config.keys;
+    macro_rules! loc {
+        ($label:expr) => {
+            shared
+                .loc(&("settings_modal.keyboard.".to_owned() + $label))
+                .clone()
+        };
+    }
+
+    macro_rules! keys {
+        () => {
+            &mut shared.config.keys
+        };
+    }
+
     let colors = &shared.config.colors;
 
     // iterable key config
     #[rustfmt::skip]
     {
-        key!("Next Animation Frame",     keys.next_anim_frame, colors.dark_accent);
-        key!("Previous Animation Frame", keys.prev_anim_frame, colors.main);
-        key!("Zoom Camera In",           keys.zoom_in_camera,  colors.dark_accent);
-        key!("Zoom Camera Out",          keys.zoom_out_camera, colors.main);
-        key!("Undo",                     keys.undo,            colors.dark_accent);
-        key!("Redo",                     keys.redo,            colors.main);
-        key!("Save",                     keys.save,            colors.dark_accent);
-        key!("Open",                     keys.open,            colors.main);
-        key!("Cancel",                   keys.cancel,          colors.dark_accent);
+        key!(loc!("next_anim_frame"), keys!().next_anim_frame, colors.dark_accent);
+        key!(loc!("prev_anim_frame"), keys!().prev_anim_frame, colors.main);
+        key!(loc!("zoom_camera_in"),  keys!().zoom_in_camera,  colors.dark_accent);
+        key!(loc!("zoom_camera_out"), keys!().zoom_out_camera, colors.main);
+        key!(loc!("undo"),            keys!().undo,            colors.dark_accent);
+        key!(loc!("redo"),            keys!().redo,            colors.main);
+        key!(loc!("save"),            keys!().save,            colors.dark_accent);
+        key!(loc!("open"),            keys!().open,            colors.main);
+        key!(loc!("cancel"),          keys!().cancel,          colors.dark_accent);
     };
 }
 
 fn key(
-    name: &str,
+    name: String,
     field: &mut egui::KeyboardShortcut,
     ui: &mut egui::Ui,
     changing_key: &mut String,
@@ -365,9 +383,9 @@ fn key(
             },
             ui,
             |ui| {
-                ui.label(name);
+                ui.label(name.clone());
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let button_str = if changing_key == name {
+                    let button_str = if *changing_key == name {
                         "...".to_string()
                     } else {
                         field.logical_key.display()
@@ -409,7 +427,7 @@ fn key(
         );
     });
 
-    if changing_key == name && *last_pressed != None {
+    if *changing_key == name && *last_pressed != None {
         field.logical_key = last_pressed.unwrap();
         *changing_key = "".to_string();
     }

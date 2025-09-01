@@ -104,6 +104,18 @@
       "background": "Background",
       "gridline": "Gridline",
       "center_point": "Center Point"
+    },
+    "keyboard": {
+      "heading": "Keyboard",
+      "next_anim_frame": "Next Animation Frame",
+      "prev_anim_frame": "Previous Animation Frame",
+      "zoom_camera_in": "Zoom Camera In",
+      "zoom_camera_out": "Zoom Camera Out",
+      "undo": "Undo",
+      "redo": "Redo",
+      "save": "Save",
+      "open": "Open",
+      "cancel": "Cancel"
     }
   }
 }
