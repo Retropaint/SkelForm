@@ -571,6 +571,7 @@ pub fn flatten_json(
     value: &serde_json::Value,
     prefix: String,
     out: &mut std::collections::HashMap<String, String>,
+    suffix: String,
 ) {
     match value {
         serde_json::Value::Object(map) => {
@@ -580,11 +581,11 @@ pub fn flatten_json(
                 } else {
                     format!("{}.{}", prefix, k)
                 };
-                flatten_json(v, new_prefix, out);
+                flatten_json(v, new_prefix, out, suffix.clone());
             }
         }
         serde_json::Value::String(s) => {
-            out.insert(prefix, s.clone());
+            out.insert(prefix, s.clone() + &suffix);
         }
         _ => {
             // only strings should be in your loc json
