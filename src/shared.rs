@@ -1788,7 +1788,7 @@ pub enum Saving {
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 pub struct StartupResourceItem {
     #[serde(default)]
-    pub name: String,
+    pub code: String,
     #[serde(default)]
     pub url_type: StartupItemType,
     #[serde(default)]

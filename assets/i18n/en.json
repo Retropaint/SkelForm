@@ -3,6 +3,16 @@
     "new": "New",
     "import": "Import",
     "samples": "Samples",
-    "empty_recent_files": "Start from scratch, import something, or try a sample from the options on the left."
+    "empty_recent_files": "Start from scratch, import something, or try a sample from the options on the left.",
+    "resources": {
+      "user_docs": "User Documentation",
+      "starter_guide": "Starter Guide",
+      "dev_docs": "Developer Documentation",
+      "runtime": "Runtime Development",
+      "psd": "PSD Rigging",
+      "skf": ".skf Structure",
+      "main_site": "Main Site",
+      "discord": "Discord"
+    }
   }
 }
