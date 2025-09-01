@@ -182,12 +182,17 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     };
 
                     let name = pic.to_owned() + &shared.armature.bones[b].name.to_string();
+                    let mut text_col = shared.config.colors.text;
+                    if shared.armature.is_bone_hidden(shared.armature.bones[b].id) {
+                        text_col = shared.config.colors.dark_accent;
+                        text_col += Color::new(40, 40, 40, 0)
+                    }
                     egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
                         ui.horizontal(|ui| {
                             ui.set_width(width);
                             ui.set_height(21.);
                             ui.add_space(5.);
-                            ui.label(name);
+                            ui.label(egui::RichText::new(name).color(text_col));
                         });
                     });
                 })
