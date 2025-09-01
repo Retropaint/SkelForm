@@ -1951,7 +1951,7 @@ impl Shared {
     }
 
     pub fn init_lang(&mut self, lang_json: serde_json::Value) {
-        utils::flatten_json(&lang_json, "".to_string(), &mut self.loc_strings, "1".to_string());
+        utils::flatten_json(&lang_json, "".to_string(), &mut self.loc_strings, "".to_string());
         self.loc_strings.insert("".to_string(), "".to_string());
     }
 }
