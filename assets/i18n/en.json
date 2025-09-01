@@ -83,6 +83,7 @@
     "delete_bone": "Are you sure to delete this bone?"
   },
   "settings_modal": {
+    "default": "Default",
     "user_interface": {
       "heading": "User Interface",
       "general": "General",
@@ -96,6 +97,13 @@
         "frameline": "Frameline",
         "gradient": "Gradient"
       }
+    },
+    "rendering": {
+      "heading": "Rendering",
+      "gridline_gap": "Gridline gap (pixels): ",
+      "background": "Background",
+      "gridline": "Gridline",
+      "center_point": "Center Point"
     }
   }
 }
