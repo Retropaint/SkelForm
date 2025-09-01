@@ -39,7 +39,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     }
 
     ui.horizontal(|ui| {
-        ui.heading("Bone");
+        ui.heading(shared.loc("bone_panel.heading"));
 
         // delete label
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -51,10 +51,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 .on_hover_cursor(egui::CursorIcon::PointingHand)
                 .clicked()
             {
+                let str = shared.loc("polar.delete_bone").clone();
                 shared.ui.context_menu.id = shared.selected_bone().unwrap().id;
-                shared
-                    .ui
-                    .open_polar_modal(PolarId::DeleteBone, "Are you sure to delete this bone?");
+                shared.ui.open_polar_modal(PolarId::DeleteBone, &str);
             }
         });
     });
@@ -63,7 +62,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.add_space(3.);
 
     ui.horizontal(|ui| {
-        ui.label("Name:");
+        ui.label(shared.loc("bone_panel.name"));
         let (edited, value, _) = ui.text_input(
             "Name".to_string(),
             shared,
@@ -85,12 +84,16 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     let mut selected_set = bone.tex_set_idx;
     ui.horizontal(|ui| {
-        ui.label("Tex. Set:");
+        ui.label(shared.loc("bone_panel.texture_set"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             egui::ComboBox::new("mod", "")
                 .selected_text(set_name.to_string())
                 .show_ui(ui, |ui| {
-                    ui.selectable_value(&mut selected_set, -1, "None");
+                    ui.selectable_value(
+                        &mut selected_set,
+                        -1,
+                        shared.loc("bone_panel.texture_set_none"),
+                    );
                     let sets = &shared.armature.texture_sets;
                     for s in 0..sets.len() {
                         if sets[s].textures.len() == 0 {
@@ -98,7 +101,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                         }
                         ui.selectable_value(&mut selected_set, s as i32, sets[s].name.clone());
                     }
-                    ui.selectable_value(&mut selected_set, -2, "[Setup]");
+                    ui.selectable_value(
+                        &mut selected_set,
+                        -2,
+                        shared.loc("bone_panel.texture_set_setup"),
+                    );
                 })
                 .response;
         });
@@ -126,7 +133,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             [bone.tex_idx as usize]
             .name;
         ui.horizontal(|ui| {
-            ui.label("Tex. Index:");
+            ui.label(shared.loc("texture_index"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 egui::ComboBox::new("tex_selector", "")
                     .selected_text(tex_name.to_string())
@@ -139,7 +146,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                                 set.textures[t].name.clone(),
                             );
                         }
-                        ui.selectable_value(&mut selected_tex, -2, "[Setup]");
+                        ui.selectable_value(
+                            &mut selected_tex,
+                            -2,
+                            shared.loc("bone_panel.texture_set_setup"),
+                        );
                     })
                     .response;
             });
@@ -216,7 +227,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     }
 
     ui.horizontal(|ui| {
-        label!("Position:", ui);
+        label!(shared.loc("bone_panel.position"), ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let input: egui::Response;
             let pos_y = &AnimElement::PositionY;
@@ -240,7 +251,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         })
     });
     ui.horizontal(|ui| {
-        label!("Scale:", ui);
+        label!(shared.loc("bone_panel.scale"), ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             input!(bone.scale.y, "scale_y", &AnimElement::ScaleY, 1., ui, "Y");
             input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "X");
@@ -255,7 +266,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     //    });
     //});
     ui.horizontal(|ui| {
-        label!("Rotation:", ui);
+        label!(shared.loc("bone_panel.rotation"), ui);
         let rot_el = &AnimElement::Rotation;
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let input: egui::Response;
@@ -270,7 +281,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
     ui.horizontal(|ui| {
-        label!("Z-Index:", ui);
+        label!(shared.loc("bone_panel.zindex"), ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             input!(bone.zindex, "zindex", &AnimElement::Zindex, 1., ui, "");
         });
@@ -284,11 +295,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     }
 
     ui.separator();
-    ui.label("Joint");
+    ui.label(shared.loc("bone_panel.joint.heading"));
     ui.separator();
 
     ui.horizontal(|ui| {
-        ui.label("Effector: ");
+        ui.label(shared.loc("bone_panel.joint.effector"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             egui::ComboBox::new("joint_eff", "")
                 .selected_text(bone.joint_effector.to_string())
@@ -311,7 +322,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             bone.constraint.to_string()
         };
         ui.horizontal(|ui| {
-            ui.label("Constraint: ");
+            ui.label(shared.loc("bone_panel.joint.constraint"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 egui::ComboBox::new("joint_constraint", "")
                     .selected_text(const_label)
@@ -331,9 +342,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let label = if bone.aiming {
-                    "Click anwyehre to set"
+                    shared.loc("bone_panel.joint.stop_aim")
                 } else {
-                    "Aim Joints"
+                    shared.loc("bone_panel.joint.aim")
                 };
                 if ui.skf_button(label).clicked() {
                     shared.selected_bone_mut().unwrap().aiming = !bone.aiming;
