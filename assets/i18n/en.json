@@ -19,5 +19,27 @@
     "heading": "Armature",
     "new_bone_button": "New Bone",
     "new_bone_name": "New Bone"
+  },
+  "bone_panel": {
+    "heading": "Bone",
+    "name": "Name:",
+    "texture_set": "Tex. Set:",
+    "texture_index": "Tex. Index:",
+    "texture_set_none": "None",
+    "texture_set_setup": "[Setup]",
+    "position": "Position:",
+    "scale": "Scale:",
+    "rotation": "Rotation:",
+    "zindex": "Z-Index:",
+    "joint": {
+      "heading": "Joint",
+      "effector": "Effector:",
+      "constraint": "Constraint:",
+      "aim": "Aim Joints",
+      "stop_aim": "Click anywhere to set"
+    }
+  },
+  "polar": {
+    "delete_bone": "Are you sure to delete this bone?"
   }
 }
