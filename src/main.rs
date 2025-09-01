@@ -33,7 +33,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
         let mut startup = Startup::default();
         let args: Vec<String> = std::env::args().collect();
         if args.len() == 1 {
-            let bytes = include_bytes!("../startup.json").as_slice();
+            let bytes = include_bytes!("../assets/startup.json").as_slice();
             startup = serde_json::from_slice(bytes).unwrap();
         }
         app.shared.startup = startup;

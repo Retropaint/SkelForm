@@ -81,7 +81,7 @@ fn startup_content(
                 shared.thumb_ui_tex.insert(
                     "skellington_sample.png".to_string(),
                     ui::create_ui_texture(
-                        include_bytes!("../skellington_sample.png").to_vec(),
+                        include_bytes!("../assets/skellington_sample.png").to_vec(),
                         true,
                         ctx,
                     )

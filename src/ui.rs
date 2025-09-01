@@ -110,7 +110,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.ui.anim.icon_images.len() == 0 {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            full_img = image::load_from_memory(include_bytes!("../anim_icons.png")).unwrap();
+            full_img = image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
         }
         #[cfg(target_arch = "wasm32")]
         {
