@@ -43,6 +43,18 @@
       "config_folder": "Config Folder"
     }
   },
+  "texture_modal": {
+    "heading": "Select Texture",
+    "texture_preview": "Texture Preview",
+    "set_preview": "Set Preview",
+    "sets": "Sets",
+    "textures": "Textures",
+    "new_button": "New",
+    "new_set": "New Set",
+    "import": "Import",
+    "img_name": "Name: ",
+    "img_size": "Size: "
+  },
   "armature_panel": {
     "heading": "Armature",
     "new_bone_button": "New Bone",

@@ -150,7 +150,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
         .show(ctx, |ui| {
             ui.set_width(300.);
             ui.set_height(400.);
-            ui.heading("Select Texture");
+            ui.heading(shared.loc("texture_modal.heading"));
             modal_x(ui, || {
                 shared.ui.set_state(UiState::ImageModal, false);
             });
@@ -171,11 +171,11 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
                     ui.horizontal(|ui| {
                         if shared.ui.hovering_tex != -1 {
-                            ui.label("Texture Preview");
+                            ui.label(shared.loc("Texture Preview"));
                             return;
                         }
-                        ui.label("Sets");
-                        if !ui.skf_button("New").clicked() {
+                        ui.label(shared.loc("texture_modal.sets"));
+                        if !ui.skf_button(shared.loc("texture_modal.new_button")).clicked() {
                             return;
                         }
                         shared.armature.texture_sets.push(crate::TextureSet {
@@ -210,8 +210,10 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                                     Some(crate::ui::TextInputOptions {
                                         size: Vec2::new(ui.available_width(), 20.),
                                         focus: true,
-                                        placeholder: "New Set".to_string(),
-                                        default: "New Set".to_string(),
+                                        placeholder: shared
+                                            .loc("texture_modal.new_set")
+                                            .to_string(),
+                                        default: shared.loc("texture_modal.new_set").to_string(),
                                         ..Default::default()
                                     }),
                                 );
@@ -258,11 +260,11 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     ui.set_height(height);
                     ui.horizontal(|ui| {
                         if hovered_set != -1 {
-                            ui.label("Set Preview");
+                            ui.label(shared.loc("texture_modal.set_preview"));
                             return;
                         }
-                        ui.label("Textures");
-                        if !ui.skf_button("Import").clicked() {
+                        ui.label(shared.loc("texture_modal.textures"));
+                        if !ui.skf_button(shared.loc("texture_modal.import")).clicked() {
                             return;
                         }
                         #[cfg(not(target_arch = "wasm32"))]
@@ -319,10 +321,10 @@ pub fn draw_tex_preview(shared: &Shared, ui: &mut egui::Ui) {
 
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         let mut name = egui::text::LayoutJob::default();
-        job_text("Name: ", Some(Color32::WHITE), &mut name);
+        job_text(shared.loc("texture_modal.img_name"), Some(Color32::WHITE), &mut name);
         job_text(&tex.name, None, &mut name);
         let mut size = egui::text::LayoutJob::default();
-        job_text("Size: ", Some(Color32::WHITE), &mut size);
+        job_text(shared.loc("texture_modal.img_size"), Some(Color32::WHITE), &mut size);
         job_text(
             &(tex.size.x.to_string() + " x " + &tex.size.y.to_string()),
             None,
