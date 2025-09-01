@@ -41,7 +41,7 @@ fn startup_content(
     ui.vertical(|ui| {
         ui.set_width(133.);
         ui.add_space(10.);
-        if startup_leftside_button("+", shared.loc("startup.new"), ui, shared, None, None).clicked()
+        if startup_leftside_button("+", shared.loc("new"), ui, shared, None, None).clicked()
         {
             shared.armature = Armature::default();
             shared.ui.set_state(UiState::StartupWindow, false);

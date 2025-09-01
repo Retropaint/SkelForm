@@ -85,7 +85,7 @@ subprocess.run(f"cargo build {mode}", shell=True)
 shutil.copy(f"../target/{path}/SkelForm" + binExt, "./" + dirname)
 shutil.copytree("./user_docs", "./" + dirname + "/user_docs")
 shutil.copytree("./dev_docs", "./" + dirname + "/dev_docs")
-shutil.copy("../skf_icon.ico", "./" + dirname + "/skf_icon.ico")
+shutil.copy("../assets/skf_icon.ico", "./" + dirname + "/skf_icon.ico")
 shutil.copytree("../samples", "./" + dirname + "/samples")
 
 # Source code distribution
@@ -95,7 +95,7 @@ os.mkdir("./" + source)
 shutil.copy("../Cargo.toml", "./" + source)
 shutil.copy("./release.py", "./" + source)
 shutil.copy("../web_build.py", "./" + source)
-shutil.copy("../anim_icons.png", "./" + source)
+shutil.copy("../assets/anim_icons.png", "./" + source)
 shutil.copy("../readme.md", "./" + source)
 shutil.copytree("../src", "./" + source + "/src")
 
