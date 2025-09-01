@@ -25,7 +25,7 @@
           "url": "file_specs.html"
         },
         {
-          "name": "runtime",
+          "code": "runtime",
           "url": "runtime_spec.html"
         }
       ]
