@@ -46,11 +46,15 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                                 shared.loc("settings_modal.user_interface.heading").clone();
                             let str_rendering =
                                 shared.loc("settings_modal.rendering.heading").clone();
+                            let str_keyboard =
+                                shared.loc("settings_modal.keyboard.heading").clone();
+                            let str_misc =
+                                shared.loc("settings_modal.miscellaneous.heading").clone();
                             tab!(&str_ui, shared::SettingsState::Ui);
                             tab!(&str_rendering, shared::SettingsState::Rendering);
-                            tab!("Keyboard", shared::SettingsState::Keyboard);
+                            tab!(&str_keyboard, shared::SettingsState::Keyboard);
                             #[cfg(not(target_arch = "wasm32"))]
-                            tab!("Miscellaneous", shared::SettingsState::Misc);
+                            tab!(&str_misc, shared::SettingsState::Misc);
                         });
                     });
                 egui::Frame::new().show(ui, |ui| {
@@ -165,7 +169,8 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 #[cfg(not(target_arch = "wasm32"))]
 fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
-        ui.label("Autosave frequency (seconds)");
+        let str_autosave_freq = shared.loc("settings_modal.miscellaneous.autosave_frequency");
+        ui.label(str_autosave_freq);
         let (edited, value, _) = ui.float_input(
             "autosave_freq".to_string(),
             shared,
@@ -177,8 +182,11 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         }
     });
     ui.horizontal(|ui| {
-        ui.label("Select exact bone on click ℹ")
-            .on_hover_cursor(egui::CursorIcon::Default).on_hover_text("When clicking a bone's texture, the first untextured parent of the bone will be selected. Checkmark this to always select the textured bone directly.");
+        let str_exact_bone = shared.loc("settings_modal.miscellaneous.select_exact_bone");
+        let str_exact_bone_desc = shared.loc("settings_modal.miscellaneous.select_exact_bone_desc");
+        ui.label(&(str_exact_bone.to_owned() + "ℹ"))
+            .on_hover_cursor(egui::CursorIcon::Default)
+            .on_hover_text(str_exact_bone_desc);
         let (edited, value, _) = ui.float_input(
             "exact_bone".to_string(),
             shared,
@@ -192,16 +200,19 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
     ui.add_space(20.);
 
-    ui.heading("Startup");
+    let str_startup = shared.loc("top_bar.file.startup");
+    ui.heading(str_startup);
     ui.horizontal(|ui| {
-        ui.label("Skip startup window");
+        let str_skip_startup = shared.loc("settings_modal.miscellaneous.skip_startup_window");
+        ui.label(str_skip_startup);
         ui.checkbox(&mut shared.config.hide_startup, "".into_atoms());
     });
     ui.horizontal(|ui| {
         if shared.recent_file_paths.len() == 0 {
             ui.disable();
         }
-        if ui.skf_button("Clear recent files").clicked() {
+        let str_clear_recents = shared.loc("settings_modal.miscellaneous.clear_recent_files");
+        if ui.skf_button(str_clear_recents).clicked() {
             shared.recent_file_paths = vec![];
             utils::save_to_recent_files(&vec![]);
         }
