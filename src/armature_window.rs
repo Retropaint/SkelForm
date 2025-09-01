@@ -93,6 +93,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
     ui.set_min_width(ui.available_width());
     let mut idx: i32 = -1;
+    let mut is_hovering = false;
 
     for b in 0..shared.armature.bones.len() {
         idx += 1;
@@ -150,11 +151,15 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             }
             ui.add_space(13.);
 
-            let mut selected_col = shared.config.colors.light_accent;
+            let mut selected_col = shared.config.colors.dark_accent;
             let mut cursor = egui::CursorIcon::PointingHand;
 
             if shared.armature.is_bone_hidden(id) {
                 selected_col = shared.config.colors.dark_accent;
+            }
+
+            if shared.ui.hovering_bone == idx {
+                selected_col += Color::new(20, 20, 20, 0);
             }
 
             if shared.ui.selected_bone_idx == idx as usize {
@@ -162,9 +167,12 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 cursor = egui::CursorIcon::Default;
             }
 
+            let width = ui.available_width();
+
             let id = Id::new(("bone", idx, 0));
             let button = ui
                 .dnd_drag_source(id, idx, |ui| {
+                    ui.set_width(width);
                     let pic = if shared.armature.bones[b].tex_set_idx != -1 {
                         "🖻  "
                     } else {
@@ -172,11 +180,22 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     };
 
                     let name = pic.to_owned() + &shared.armature.bones[b].name.to_string();
-                    ui.add(egui::Button::new(name).fill(selected_col))
+                    egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.set_width(width);
+                            ui.add_space(5.);
+                            ui.label(name);
+                        });
+                    });
                 })
                 .response
                 .interact(Sense::click())
                 .on_hover_cursor(cursor);
+
+            if button.contains_pointer() {
+                is_hovering = true;
+                shared.ui.hovering_bone = idx;
+            }
 
             if button.clicked() {
                 let anim_frame = shared.ui.anim.selected_frame;
@@ -222,8 +241,12 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
         });
 
         if dragged {
-            return;
+            break;
         }
+    }
+
+    if !is_hovering {
+        shared.ui.hovering_bone = -1;
     }
 }
 
@@ -250,10 +273,10 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         // render hover box
         let stroke = egui::Stroke::new(1.0, Color32::from_rgba_premultiplied(125, 125, 125, 255));
         if drag.contains_pointer() {
-            ui.painter().hline(rect.x_range(), rect.top(), stroke);
-            ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
-            ui.painter().vline(rect.right(), rect.y_range(), stroke);
-            ui.painter().vline(rect.left(), rect.y_range(), stroke);
+            //ui.painter().hline(rect.x_range(), rect.top(), stroke);
+            //ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
+            //ui.painter().vline(rect.right(), rect.y_range(), stroke);
+            //ui.painter().vline(rect.left(), rect.y_range(), stroke);
         }
         return false;
     }
