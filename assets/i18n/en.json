@@ -1,7 +1,10 @@
 {
   "psd_imported": "PSD imported!\n\nIf the armature is incorrect, please check the PSD Structure section in the documentation.",
+  "move": "Move",
+  "rotate": "Rotate",
+  "scale": "Scale",
+  "new": "New",
   "startup": {
-    "new": "New",
     "import": "Import",
     "samples": "Samples",
     "empty_recent_files": "Start from scratch, import something, or try a sample from the options on the left.",
@@ -50,7 +53,6 @@
     "set_preview": "Set Preview",
     "sets": "Sets",
     "textures": "Textures",
-    "new_button": "New",
     "new_set": "New Set",
     "import": "Import",
     "img_name": "Name: ",
@@ -125,6 +127,26 @@
       "select_exact_bone_desc": "When clicking a bone's texture, the first untextured parent of the bone will be selected. Tick this to always select the textured bone directly.",
       "skip_startup_window": "Skip startup window",
       "clear_recent_files": "Clear recent files"
+    }
+  },
+  "keyframe_editor": {
+    "heading": "Animation",
+    "new_animation": "New Animation",
+    "play": "Play",
+    "pause": "Pause",
+    "frame": "Frame: ",
+    "fps": "FPS: ",
+    "frames_per_second": "Frames Per Second",
+    "copy": "Copy",
+    "paste": "Paste",
+    "elements": {
+      "PositionX": "Position X",
+      "PositionY": "Position Y",
+      "Rotation": "Rotation",
+      "ScaleX": "Scale X",
+      "ScaleY": "Scale Y",
+      "Zindex": "Zindex",
+      "TextureIndex": "Texture"
     }
   }
 }

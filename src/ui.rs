@@ -751,9 +751,9 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
                         };
                     };
                 }
-                edit_mode_button!("Move", EditMode::Move);
-                edit_mode_button!("Rotate", EditMode::Rotate);
-                edit_mode_button!("Scale", EditMode::Scale);
+                edit_mode_button!(shared.loc("move"), EditMode::Move);
+                edit_mode_button!(shared.loc("rotate"), EditMode::Rotate);
+                edit_mode_button!(shared.loc("scale"), EditMode::Scale);
             });
         });
 }
@@ -770,10 +770,12 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
         ))
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
-                if selection_button("Armature", !shared.ui.anim.open, ui).clicked() {
+                let str_armature = shared.loc("armature_panel.heading");
+                if selection_button(str_armature, !shared.ui.anim.open, ui).clicked() {
                     shared.ui.anim.open = false;
                 }
-                let button = selection_button("Animation", shared.ui.anim.open, ui);
+                let str_animation = shared.loc("keyframe_editor.heading");
+                let button = selection_button(str_animation, shared.ui.anim.open, ui);
                 draw_tutorial_rect(TutorialStep::OpenAnim, button.rect, shared, ui);
                 if button.clicked() {
                     shared.ui.anim.open = true;

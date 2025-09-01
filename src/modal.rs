@@ -175,7 +175,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                             return;
                         }
                         ui.label(shared.loc("texture_modal.sets"));
-                        if !ui.skf_button(shared.loc("texture_modal.new_button")).clicked() {
+                        if !ui.skf_button(shared.loc("new")).clicked() {
                             return;
                         }
                         shared.armature.texture_sets.push(crate::TextureSet {
