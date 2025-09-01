@@ -126,9 +126,9 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             ui.add_space(17.);
 
             // add space to the left if this is a child
-            let mut nb = &shared.armature.bones[b];
-            while nb.parent_id != -1 {
-                nb = shared.armature.find_bone(nb.parent_id).unwrap();
+            let parents = shared.armature.get_all_parents(shared.armature.bones[b].id);
+            for _ in 0..parents.len() {
+                vert_line(0., ui, shared);
                 ui.add_space(15.);
             }
 
@@ -139,7 +139,9 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 &mut children,
                 &shared.armature.bones[b],
             );
-            if children.len() > 0 {
+            if children.len() == 0 {
+                vert_line(0., ui, shared);
+            } else {
                 let fold_icon = if shared.armature.bones[b].folded {
                     "⏵"
                 } else {
@@ -183,6 +185,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
                         ui.horizontal(|ui| {
                             ui.set_width(width);
+                            ui.set_height(21.);
                             ui.add_space(5.);
                             ui.label(name);
                         });
@@ -397,6 +400,17 @@ pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_p
             b.clone(),
         );
     }
+}
+
+pub fn vert_line(offset: f32, ui: &mut egui::Ui, shared: &mut Shared) {
+    let rect = egui::Rect::from_min_size(
+        ui.cursor().left_top() + [3., -1.5 + offset].into(),
+        [2., 24.].into(),
+    );
+    let mut line_col = shared.config.colors.dark_accent;
+    line_col += Color::new(20, 20, 20, 0);
+    ui.painter()
+        .rect_filled(rect, egui::CornerRadius::ZERO, line_col);
 }
 
 /// Retrieve all children of this bone (recursive)
