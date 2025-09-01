@@ -27,13 +27,13 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 shared.config.colors.gradient.into(),
             );
             ui.horizontal(|ui| {
-                ui.heading("Armature");
+                ui.heading(shared.loc("armature_panel.heading"));
             });
 
             ui.separator();
 
             ui.horizontal(|ui| {
-                let button = ui.skf_button("New Bone");
+                let button = ui.skf_button(shared.loc("armature_panel.new_bone_button"));
                 ui::draw_tutorial_rect(TutorialStep::NewBone, button.rect, shared, ui);
                 if button.clicked() {
                     let idx: usize;
@@ -53,6 +53,9 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
                     // immediately select new bone upon creating it
                     shared.ui.select_bone(idx, &shared.armature);
+
+                    shared.selected_bone_mut().unwrap().name =
+                        shared.loc("armature_panel.new_bone_name").to_string();
 
                     if shared.armature.bones.len() > 1 {
                         shared.ui.set_tutorial_step(TutorialStep::ReselectBone);
@@ -182,10 +185,17 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             };
 
             if button.secondary_clicked() {
-                shared.ui.context_menu.show(ContextType::Bone, shared.armature.bones[b].id);
+                shared
+                    .ui
+                    .context_menu
+                    .show(ContextType::Bone, shared.armature.bones[b].id);
             }
 
-            if shared.ui.context_menu.is(ContextType::Bone, shared.armature.bones[b].id) {
+            if shared
+                .ui
+                .context_menu
+                .is(ContextType::Bone, shared.armature.bones[b].id)
+            {
                 button.show_tooltip_ui(|ui| {
                     if ui.clickable_label("Delete").clicked() {
                         shared.ui.open_polar_modal(
