@@ -104,9 +104,11 @@ fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
 fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
-        ui.heading("Rendering");
+        let str_heading = shared.loc("settings_modal.rendering.heading");
+        ui.heading(str_heading);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.skf_button("Default").clicked() {
+            let str_default = shared.loc("settings_modal.default");
+            if ui.skf_button(str_default).clicked() {
                 shared.config.colors.background = crate::Config::default().colors.background;
                 shared.config.colors.gridline = crate::Config::default().colors.gridline;
                 shared.config.colors.center_point = crate::Config::default().colors.center_point;
@@ -116,7 +118,8 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     });
 
     ui.horizontal(|ui| {
-        ui.label("Gridline gap (pixels):");
+        let str_gridline_gap = shared.loc("settings_modal.rendering.gridline_gap");
+        ui.label(str_gridline_gap);
         let (edited, value, _) = ui.float_input(
             "grid_gap".to_string(),
             shared,
@@ -130,24 +133,27 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
     macro_rules! color_row {
         ($title:expr, $color:expr, $bg_color:expr) => {
+            let str_color = shared
+                .loc(&("settings_modal.rendering.".to_owned() + $title))
+                .clone();
             let mut col = $color.clone();
-            color_row($title, &mut col, $bg_color, ui, shared);
+            color_row(str_color, &mut col, $bg_color, ui, shared);
             $color = col;
         };
     }
 
     color_row!(
-        "Background".to_string(),
+        "background",
         shared.config.colors.background,
         shared.config.colors.dark_accent
     );
     color_row!(
-        "Gridline".to_string(),
+        "gridline",
         shared.config.colors.gridline,
         shared.config.colors.main
     );
     color_row!(
-        "Center Point".to_string(),
+        "center_point",
         shared.config.colors.center_point,
         shared.config.colors.dark_accent
     );
@@ -215,7 +221,8 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         let str_colors = shared.loc("settings_modal.user_interface.colors_heading");
         ui.heading(str_colors);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.skf_button("Default").clicked() {
+            let str_default = shared.loc("settings_modal.default");
+            if ui.skf_button(str_default).clicked() {
                 shared.config.colors = crate::ColorConfig::default();
             }
         });
