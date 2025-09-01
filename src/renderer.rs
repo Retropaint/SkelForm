@@ -4,6 +4,7 @@ use crate::*;
 use armature_window::find_bone;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
+use image::GenericImageView;
 
 macro_rules! con_vert {
     ($func:expr, $vert:expr, $bone:expr, $tex:expr, $cam_pos:expr, $cam_zoom:expr) => {

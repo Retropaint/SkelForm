@@ -56,8 +56,7 @@ pub fn read_image_loaders(
     bind_group_layout: &BindGroupLayout,
     ctx: &egui::Context,
 ) {
-    #[allow(unused_assignments)]
-    let mut image: image::DynamicImage;
+    let image: image::DynamicImage;
     #[allow(unused_assignments)]
     let mut dimensions = Vec2::default();
     #[allow(unused_assignments, unused_mut)]
@@ -99,7 +98,9 @@ pub fn read_image_loaders(
     {
         if let Some((wasm_pixels, dims)) = load_image_wasm("last-image".to_string()) {
             dimensions = Vec2::new(dims.x as f32, dims.y as f32);
-            pixels = wasm_pixels;
+            image = image::DynamicImage::ImageRgba8(
+                image::ImageBuffer::from_raw(dims.x as u32, dims.y as u32, wasm_pixels).unwrap(),
+            );
         } else {
             return;
         }
