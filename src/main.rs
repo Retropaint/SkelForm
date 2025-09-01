@@ -3,9 +3,7 @@
 #[cfg(not(target_arch = "wasm32"))]
 use skelform_lib::shared::config_path;
 
-use skelform_lib::localization;
 use skelform_lib::shared::*;
-use skelform_lib::utils;
 
 #[cfg(not(target_arch = "wasm32"))]
 use skelform_lib::file_reader;
@@ -148,10 +146,7 @@ fn init_shared(shared: &mut Shared) {
         shared.recent_file_paths = serde_json::from_str(&str).unwrap();
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let bytes = include_bytes!("../assets/i18n/en.json").as_slice();
-        let en: serde_json::Value = serde_json::from_slice(bytes).unwrap();
-        shared.init_lang(en);
-    }
+    let bytes = include_bytes!("../assets/i18n/en.json").as_slice();
+    let en: serde_json::Value = serde_json::from_slice(bytes).unwrap();
+    shared.init_lang(en);
 }

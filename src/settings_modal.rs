@@ -53,7 +53,6 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                             tab!(&str_ui, shared::SettingsState::Ui);
                             tab!(&str_rendering, shared::SettingsState::Rendering);
                             tab!(&str_keyboard, shared::SettingsState::Keyboard);
-                            #[cfg(not(target_arch = "wasm32"))]
                             tab!(&str_misc, shared::SettingsState::Misc);
                         });
                     });
@@ -184,7 +183,7 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         let str_exact_bone = shared.loc("settings_modal.miscellaneous.select_exact_bone");
         let str_exact_bone_desc = shared.loc("settings_modal.miscellaneous.select_exact_bone_desc");
-        ui.label(&(str_exact_bone.to_owned() + "ℹ"))
+        ui.label(&(str_exact_bone.to_owned() + " ℹ"))
             .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_exact_bone_desc);
         let (edited, value, _) = ui.float_input(
