@@ -81,5 +81,21 @@
   },
   "polar": {
     "delete_bone": "Are you sure to delete this bone?"
+  },
+  "settings_modal": {
+    "user_interface": {
+      "heading": "User Interface",
+      "general": "General",
+      "ui_scale": "UI Scale: ",
+      "colors_heading": "Colors",
+      "colors": {
+        "main": "Main",
+        "light_accent": "Light Accent",
+        "dark_accent": "Dark Accent",
+        "text": "Text",
+        "frameline": "Frameline",
+        "gradient": "Gradient"
+      }
+    }
   }
 }

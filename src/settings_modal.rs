@@ -42,7 +42,8 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                                 };
                             }
 
-                            tab!("User Interface", shared::SettingsState::Ui);
+                            let str_ui = shared.loc("settings_modal.user_interface.heading");
+                            tab!(str_ui, shared::SettingsState::Ui);
                             tab!("Rendering", shared::SettingsState::Rendering);
                             tab!("Keyboard", shared::SettingsState::Keyboard);
                             #[cfg(not(target_arch = "wasm32"))]
@@ -84,9 +85,11 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
 }
 
 fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
-    ui.heading("General");
+    let str_general = shared.loc("settings_modal.user_interface.general");
+    ui.heading(str_general);
     ui.horizontal(|ui| {
-        ui.label("UI Scale:");
+        let str_ui_scale = shared.loc("settings_modal.user_interface.ui_scale");
+        ui.label(str_ui_scale);
         let (edited, value, _) =
             ui.float_input("ui_scale".to_string(), shared, shared.config.ui_scale, 1.);
         if edited {
@@ -134,17 +137,17 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     }
 
     color_row!(
-        "Background",
+        "Background".to_string(),
         shared.config.colors.background,
         shared.config.colors.dark_accent
     );
     color_row!(
-        "Gridline",
+        "Gridline".to_string(),
         shared.config.colors.gridline,
         shared.config.colors.main
     );
     color_row!(
-        "Center Point",
+        "Center Point".to_string(),
         shared.config.colors.center_point,
         shared.config.colors.dark_accent
     );
@@ -199,14 +202,18 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     macro_rules! color_row {
         ($title:expr, $color:expr, $bg_color:expr) => {
+            let str_color = shared
+                .loc(&("settings_modal.user_interface.colors.".to_owned() + $title))
+                .clone();
             let mut col = $color.clone();
-            color_row($title, &mut col, $bg_color, ui, shared);
+            color_row(str_color, &mut col, $bg_color, ui, shared);
             $color = col;
         };
     }
 
     ui.horizontal(|ui| {
-        ui.heading("Color");
+        let str_colors = shared.loc("settings_modal.user_interface.colors_heading");
+        ui.heading(str_colors);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if ui.skf_button("Default").clicked() {
                 shared.config.colors = crate::ColorConfig::default();
@@ -223,17 +230,17 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     // iterable color config
     #[rustfmt::skip]
     {
-        color_row!("Main",         col!().main,         col!().dark_accent);
-        color_row!("Light Accent", col!().light_accent, col!().main       );
-        color_row!("Dark Accent",  col!().dark_accent,  col!().dark_accent);
-        color_row!("Text",         col!().text,         col!().main       );
-        color_row!("Frameline",    col!().frameline,    col!().dark_accent);
-        color_row!("Gradient",     col!().gradient,     col!().main       );
+        color_row!("main",         col!().main,         col!().dark_accent);
+        color_row!("light_accent", col!().light_accent, col!().main       );
+        color_row!("dark_accent",  col!().dark_accent,  col!().dark_accent);
+        color_row!("text",         col!().text,         col!().main       );
+        color_row!("frameline",    col!().frameline,    col!().dark_accent);
+        color_row!("gradient",     col!().gradient,     col!().main       );
     };
 }
 
 fn color_row(
-    title: &str,
+    title: String,
     color: &mut shared::Color,
     bg: shared::Color,
     ui: &mut egui::Ui,
