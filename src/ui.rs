@@ -342,20 +342,21 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     };
                 }
 
+                let str_settings = shared.loc("top_bar.settings");
                 if ui
-                    .menu_button(title!("Settings"), |ui| ui.close())
+                    .menu_button(title!(str_settings), |ui| ui.close())
                     .response
                     .clicked()
                 {
                     shared.ui.set_state(UiState::SettingsModal, true);
                 }
 
-                ui.menu_button(title!("Help"), |ui| {
+                ui.menu_button(title!(shared.loc("top_bar.help.heading")), |ui| {
                     ui.set_width(100.);
                     let str = if !shared.ui.tutorial_step_is(TutorialStep::None) {
-                        "Stop Help Light"
+                        shared.loc("top_bar.help.stop_help_light")
                     } else {
-                        "Help Light"
+                        shared.loc("top_bar.help.help_light")
                     };
                     if top_bar_button(ui, str, None, &mut offset, shared).clicked() {
                         if !shared.ui.tutorial_step_is(TutorialStep::None) {
@@ -371,21 +372,25 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                         }
                         ui.close();
                     }
-                    if top_bar_button(ui, "User Docs", None, &mut offset, shared).clicked() {
+                    let str_user_docs = shared.loc("top_bar.help.user_docs");
+                    if top_bar_button(ui, str_user_docs, None, &mut offset, shared).clicked() {
                         utils::open_docs(true, "");
                     }
-                    if top_bar_button(ui, "Dev Docs", None, &mut offset, shared).clicked() {
+                    let str_dev_docs = shared.loc("top_bar.help.dev_docs");
+                    if top_bar_button(ui, str_dev_docs, None, &mut offset, shared).clicked() {
                         utils::open_docs(false, "");
                     }
+                    let str_binary_folder = shared.loc("top_bar.help.binary_folder");
                     #[cfg(not(target_arch = "wasm32"))]
-                    if top_bar_button(ui, "Binary Folder", None, &mut offset, shared).clicked() {
+                    if top_bar_button(ui, str_binary_folder, None, &mut offset, shared).clicked() {
                         match open::that(utils::bin_path()) {
                             Err(_) => {}
                             Ok(file) => file,
                         };
                     }
+                    let str_config_folder = shared.loc("top_bar.help.config_folder");
                     #[cfg(not(target_arch = "wasm32"))]
-                    if top_bar_button(ui, "Config Folder", None, &mut offset, shared).clicked() {
+                    if top_bar_button(ui, str_config_folder, None, &mut offset, shared).clicked() {
                         match open::that(config_path().parent().unwrap()) {
                             Err(_) => {}
                             Ok(file) => file,
@@ -594,7 +599,8 @@ pub fn create_ui_texture(
 
 fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
-    let title = egui::RichText::new("File").color(shared.config.colors.text);
+    let title =
+        egui::RichText::new(shared.loc("top_bar.file.heading")).color(shared.config.colors.text);
     ui.menu_button(title, |ui| {
         ui.set_width(125.);
 
@@ -604,24 +610,27 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             };
         }
 
-        if top_bar_button!("Open", Some(&shared.config.keys.open)).clicked() {
+        let str_open = shared.loc("top_bar.file.open");
+        if top_bar_button!(str_open, Some(&shared.config.keys.open)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog(shared.temp_path.import.clone());
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
             ui.close();
         }
-        if top_bar_button!("Save", Some(&shared.config.keys.save)).clicked() {
+        let str_save = shared.loc("top_bar.file.save");
+        if top_bar_button!(str_save, Some(&shared.config.keys.save)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog(shared.temp_path.save.clone());
             #[cfg(target_arch = "wasm32")]
             utils::save_web(&shared.armature);
             ui.close();
         }
-        if top_bar_button!("Startup", None).clicked() {
+        let str_startup = shared.loc("top_bar.file.startup");
+        if top_bar_button!(str_startup, None).clicked() {
             shared.ui.set_state(UiState::StartupWindow, true);
             ui.close();
-        } 
+        }
         // disabled: export video is unstable and not really necessary (focus on sprite export instead!)
         if false && top_bar_button!("Export Video", None).clicked() {
             // check if ffmpeg exists and complain if it doesn't
@@ -680,7 +689,8 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
 fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
 
-    let title = egui::RichText::new("View").color(shared.config.colors.text);
+    let str_view = shared.loc("top_bar.view.heading");
+    let title = egui::RichText::new(str_view).color(shared.config.colors.text);
     ui.menu_button(title, |ui| {
         macro_rules! tpb {
             ($name:expr, $kb:expr) => {
@@ -689,10 +699,12 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
         }
 
         ui.set_width(125.);
-        if tpb!("Zoom In", Some(&shared.config.keys.zoom_in_camera)).clicked() {
+        let str_zoom_in = shared.loc("top_bar.view.zoom_in");
+        if tpb!(str_zoom_in, Some(&shared.config.keys.zoom_in_camera)).clicked() {
             set_zoom(shared.camera.zoom - 10., shared);
         }
-        if tpb!("Zoom Out", Some(&shared.config.keys.zoom_out_camera)).clicked() {
+        let str_zoom_out = shared.loc("top_bar.view.zoom_out");
+        if tpb!(str_zoom_out, Some(&shared.config.keys.zoom_out_camera)).clicked() {
             set_zoom(shared.camera.zoom + 10., shared);
         }
     });
@@ -700,16 +712,19 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
 
 fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
-    let title = egui::RichText::new("Edit").color(shared.config.colors.text);
+    let str_edit = shared.loc("top_bar.edit.heading");
+    let title = egui::RichText::new(str_edit).color(shared.config.colors.text);
     ui.menu_button(title, |ui| {
         ui.set_width(90.);
         let key_undo = Some(&shared.config.keys.undo);
-        if top_bar_button(ui, "Undo", key_undo, &mut offset, shared).clicked() {
+        let str_undo = shared.loc("top_bar.edit.undo");
+        if top_bar_button(ui, str_undo, key_undo, &mut offset, shared).clicked() {
             utils::undo_redo(true, shared);
             ui.close();
         }
+        let str_redo = shared.loc("top_bar.edit.redo");
         let key_redo = Some(&shared.config.keys.redo);
-        if top_bar_button(ui, "Redo", key_redo, &mut offset, shared).clicked() {
+        if top_bar_button(ui, str_redo, key_redo, &mut offset, shared).clicked() {
             utils::undo_redo(false, shared);
             ui.close();
         }

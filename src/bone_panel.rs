@@ -133,7 +133,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             [bone.tex_idx as usize]
             .name;
         ui.horizontal(|ui| {
-            ui.label(shared.loc("texture_index"));
+            ui.label(shared.loc("bone_panel.texture_index"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 egui::ComboBox::new("tex_selector", "")
                     .selected_text(tex_name.to_string())

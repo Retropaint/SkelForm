@@ -15,6 +15,34 @@
       "discord": "Discord"
     }
   },
+  "top_bar": {
+    "file": {
+      "heading": "File",
+      "open": "Open",
+      "save": "Save",
+      "startup": "Startup"
+    },
+    "edit": {
+      "heading": "Edit",
+      "undo": "Undo1",
+      "redo": "Redo1"
+    },
+    "view": {
+      "heading": "View",
+      "zoom_in": "Zoom In",
+      "zoom_out": "Zoom Out"
+    },
+    "settings": "Settings",
+    "help": {
+      "heading": "Help",
+      "help_light": "Help Light",
+      "stop_help_light": "Stop Help Light",
+      "user_docs": "User Docs",
+      "dev_docs": "Dev Docs",
+      "binary_folder": "Binary Folder",
+      "config_folder": "Config Folder"
+    }
+  },
   "armature_panel": {
     "heading": "Armature",
     "new_bone_button": "New Bone",
