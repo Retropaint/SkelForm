@@ -24,8 +24,8 @@
     },
     "edit": {
       "heading": "Edit",
-      "undo": "Undo1",
-      "redo": "Redo1"
+      "undo": "Undo",
+      "redo": "Redo"
     },
     "view": {
       "heading": "View",
