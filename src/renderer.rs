@@ -287,7 +287,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         && !shared.input.on_ui
         && shared.dragging_vert == usize::MAX
     {
-        draw_hover_triangle(shared, render_pass, device, &selected_bone_world_verts);
+        //draw_hover_triangle(shared, render_pass, device, &selected_bone_world_verts);
     }
 
     if shared.input.mouse_left == -1 && shared.input.mouse_right == -1 {
