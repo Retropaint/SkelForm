@@ -239,6 +239,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if bone.tex_set_idx != -1 {
             draw_bone(&bone, render_pass, device, &bone.world_verts, shared);
         }
+
+        if shared.ui.editing_mesh && shared.selected_bone().unwrap().id == bone.id {
+            render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+            hovering_vert = bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
+        }
     }
 
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
