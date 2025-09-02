@@ -291,72 +291,70 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut children = vec![];
     armature_window::get_all_children(&shared.armature.bones, &mut children, &bone);
     let parents = shared.armature.get_all_parents(bone.id);
-    if children.len() == 0 && parents.len() == 0 {
-        return;
-    }
+    if children.len() > 0 && parents.len() > 0 {
+        ui.separator();
+        ui.label(shared.loc("bone_panel.joint.heading"));
+        ui.separator();
 
-    ui.separator();
-    ui.label(shared.loc("bone_panel.joint.heading"));
-    ui.separator();
-
-    ui.horizontal(|ui| {
-        ui.label(shared.loc("bone_panel.joint.effector"));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            egui::ComboBox::new("joint_eff", "")
-                .selected_text(bone.joint_effector.to_string())
-                .width(40.)
-                .show_ui(ui, |ui| {
-                    let bone = &mut shared.selected_bone_mut().unwrap().joint_effector;
-                    ui.selectable_value(bone, JointEffector::None, "None");
-                    ui.selectable_value(bone, JointEffector::Start, "Start");
-                    ui.selectable_value(bone, JointEffector::Middle, "Middle");
-                    ui.selectable_value(bone, JointEffector::End, "End");
-                })
-                .response;
-        });
-    });
-
-    if bone.joint_effector != JointEffector::None {
-        let const_label = if bone.constraint == JointConstraint::CounterClockwise {
-            "CCW".to_string()
-        } else {
-            bone.constraint.to_string()
-        };
         ui.horizontal(|ui| {
-            ui.label(shared.loc("bone_panel.joint.constraint"));
+            ui.label(shared.loc("bone_panel.joint.effector"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                egui::ComboBox::new("joint_constraint", "")
-                    .selected_text(const_label)
+                egui::ComboBox::new("joint_eff", "")
+                    .selected_text(bone.joint_effector.to_string())
                     .width(40.)
                     .show_ui(ui, |ui| {
-                        let bone = &mut shared.selected_bone_mut().unwrap().constraint;
-                        ui.selectable_value(bone, JointConstraint::None, "None");
-                        ui.selectable_value(bone, JointConstraint::Clockwise, "Clockwise");
-                        ui.selectable_value(bone, JointConstraint::CounterClockwise, "CCW");
+                        let bone = &mut shared.selected_bone_mut().unwrap().joint_effector;
+                        ui.selectable_value(bone, JointEffector::None, "None");
+                        ui.selectable_value(bone, JointEffector::Start, "Start");
+                        ui.selectable_value(bone, JointEffector::Middle, "Middle");
+                        ui.selectable_value(bone, JointEffector::End, "End");
                     })
                     .response;
             });
         });
-    }
 
-    if bone.joint_effector == JointEffector::Start {
-        ui.horizontal(|ui| {
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let label = if bone.aiming {
-                    shared.loc("bone_panel.joint.stop_aim")
-                } else {
-                    shared.loc("bone_panel.joint.aim")
-                };
-                if ui.skf_button(label).clicked() {
-                    shared.selected_bone_mut().unwrap().aiming = !bone.aiming;
-                }
+        if bone.joint_effector != JointEffector::None {
+            let const_label = if bone.constraint == JointConstraint::CounterClockwise {
+                "CCW".to_string()
+            } else {
+                bone.constraint.to_string()
+            };
+            ui.horizontal(|ui| {
+                ui.label(shared.loc("bone_panel.joint.constraint"));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    egui::ComboBox::new("joint_constraint", "")
+                        .selected_text(const_label)
+                        .width(40.)
+                        .show_ui(ui, |ui| {
+                            let bone = &mut shared.selected_bone_mut().unwrap().constraint;
+                            ui.selectable_value(bone, JointConstraint::None, "None");
+                            ui.selectable_value(bone, JointConstraint::Clockwise, "Clockwise");
+                            ui.selectable_value(bone, JointConstraint::CounterClockwise, "CCW");
+                        })
+                        .response;
+                });
             });
-        });
+        }
+
+        if bone.joint_effector == JointEffector::Start {
+            ui.horizontal(|ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let label = if bone.aiming {
+                        shared.loc("bone_panel.joint.stop_aim")
+                    } else {
+                        shared.loc("bone_panel.joint.aim")
+                    };
+                    if ui.skf_button(label).clicked() {
+                        shared.selected_bone_mut().unwrap().aiming = !bone.aiming;
+                    }
+                });
+            });
+        }
     }
 
     // disabled: mesh deformation is unstable
     if true {
-        return;
+        //return;
     }
 
     if bone.vertices.len() == 0 {
