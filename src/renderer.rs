@@ -209,17 +209,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             for vert in &mut temp_bones[b].world_verts {
                 vert.add_color = VertexColor::new(min + fade, min + fade, min + fade, 0.);
             }
-        }
-
-        render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-        if shared.ui.editing_mesh && b == shared.ui.selected_bone_idx {
-            hovering_vert = bone_vertices(
-                &temp_bones[b],
-                shared,
-                render_pass,
-                device,
-                &temp_bones[b].world_verts,
-            );
+        } else {
+            for vert in &mut temp_bones[b].world_verts {
+                vert.add_color = VertexColor::new(0., 0., 0., 0.);
+            }
         }
 
         // select bone on click
