@@ -173,7 +173,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     + temp_bones[b].world_verts[chunk[2] as usize].uv * bary.2;
 
                 let img = &set.textures[temp_bones[b].tex_idx as usize].image;
-                let pixel_pos = Vec2::new(uv.x * img.width() as f32, uv.y * img.height() as f32);
+                let pixel_pos = Vec2::new(
+                    (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
+                    (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
+                );
 
                 let pixel_alpha = img.get_pixel(pixel_pos.x as u32, pixel_pos.y as u32).0[3];
                 if pixel_alpha == 255 {
