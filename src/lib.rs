@@ -45,6 +45,7 @@ pub mod bone_panel;
 pub mod file_reader;
 pub mod keyframe_editor;
 pub mod keyframe_panel;
+pub mod localization;
 pub mod modal;
 pub mod renderer;
 pub mod settings_modal;
@@ -52,7 +53,6 @@ pub mod shared;
 pub mod startup_window;
 pub mod ui;
 pub mod utils;
-pub mod localization;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
@@ -595,6 +595,7 @@ impl Renderer {
     #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&mut self, shared: &mut Shared) {
         if shared.time - shared.last_autosave < shared.config.autosave_frequency as f32 {
+            shared.saving = Saving::None;
             return;
         }
         self.take_screenshot(shared);
@@ -618,12 +619,13 @@ impl Renderer {
         if !shared.recent_file_paths.contains(&save_path) {
             shared.recent_file_paths.push(save_path.clone());
         }
+        save_path += "~";
         utils::save_to_recent_files(&shared.recent_file_paths);
         std::thread::spawn(move || {
             let (size, armatures_json, png_buf) = utils::prepare_files(&armature);
 
             // create zip file
-            let mut zip = zip::ZipWriter::new(std::fs::File::create(save_path).unwrap());
+            let mut zip = zip::ZipWriter::new(std::fs::File::create(save_path.clone()).unwrap());
 
             let options = zip::write::FullFileOptions::default()
                 .compression_method(zip::CompressionMethod::Stored);
@@ -677,6 +679,9 @@ impl Renderer {
             }
 
             zip.finish().unwrap();
+
+            save_path.pop();
+            let _ = std::fs::copy(save_path.clone() + "~", save_path);
         });
         shared.saving = Saving::None;
     }
