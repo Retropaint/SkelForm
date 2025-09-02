@@ -2,9 +2,9 @@
 
 use crate::*;
 use armature_window::find_bone;
+use image::GenericImageView;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
-use image::GenericImageView;
 
 macro_rules! con_vert {
     ($func:expr, $vert:expr, $bone:expr, $tex:expr, $cam_pos:expr, $cam_zoom:expr) => {
@@ -375,21 +375,26 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
             continue;
         }
 
-        let mut world_verts: Vec<Vertex> = vec![];
-        for vert in &temp_bones[b].vertices {
+        for v in 0..temp_bones[b].vertices.len() {
             let mut new_vert = con_vert!(
                 raw_to_world_vert,
-                *vert,
+                temp_bones[b].vertices[v],
                 temp_bones[b],
                 set.textures[temp_bones[b].tex_idx as usize],
                 Vec2::new(0., 0.),
                 zoom
             );
             new_vert.pos.x /= shared.window.x / shared.window.y;
-            world_verts.push(new_vert);
+            temp_bones[b].world_verts.push(new_vert);
         }
 
-        draw_bone(&temp_bones[b], render_pass, device, &world_verts, shared);
+        draw_bone(
+            &temp_bones[b],
+            render_pass,
+            device,
+            &temp_bones[b].world_verts,
+            shared,
+        );
     }
 }
 
