@@ -155,7 +155,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
         // check if cursor is on an opaque pixel of this bone's texture
-        if hover_bone_id == -1 && shared.input.mouse_left < 5 && !shared.input.on_ui {
+        let is_aiming = shared.armature.bones.iter().find(|bone| bone.aiming) != None;
+        if hover_bone_id == -1 && shared.input.mouse_left < 5 && !shared.input.on_ui && !is_aiming {
             let tb = temp_bones[b].clone();
             for (_, chunk) in tb.indices.chunks_exact(3).enumerate() {
                 let bary = tri_point(
