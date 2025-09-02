@@ -386,6 +386,7 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
                 zoom
             );
             new_vert.pos.x /= shared.window.x / shared.window.y;
+            new_vert.add_color = VertexColor::new(0., 0., 0., 0.);
             temp_bones[b].world_verts.push(new_vert);
         }
 
