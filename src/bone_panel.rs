@@ -291,7 +291,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut children = vec![];
     armature_window::get_all_children(&shared.armature.bones, &mut children, &bone);
     let parents = shared.armature.get_all_parents(bone.id);
-    if children.len() > 0 && parents.len() > 0 {
+    if children.len() > 0 || parents.len() > 0 {
         ui.separator();
         ui.label(shared.loc("bone_panel.joint.heading"));
         ui.separator();
