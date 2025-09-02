@@ -317,6 +317,7 @@ pub struct InputStates {
     pub mouse_right_prev: i32,
     pub mouse: Vec2,
     pub mouse_prev: Vec2,
+    pub left_clicked: bool,
 
     // is mouse on UI?
     pub on_ui: bool,

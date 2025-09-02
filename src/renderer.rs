@@ -120,9 +120,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if temp_bones[b].tex_set_idx == -1 {
             continue;
         }
-        let set = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize];
+
         if shared.armature.is_bone_hidden(temp_bones[b].id)
-            || temp_bones[b].tex_idx > set.textures.len() as i32 - 1
+            || temp_bones[b].tex_idx
+                > shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize]
+                    .textures
+                    .len() as i32
+                    - 1
         {
             continue;
         }
@@ -132,7 +136,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 raw_to_world_vert,
                 temp_bones[b].vertices[v],
                 temp_bones[b],
-                set.textures[temp_bones[b].tex_idx as usize],
+                shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize].textures
+                    [temp_bones[b].tex_idx as usize],
                 shared.camera.pos,
                 shared.camera.zoom
             );
@@ -174,13 +179,34 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     + temp_bones[b].world_verts[chunk[1] as usize].uv * bary.1
                     + temp_bones[b].world_verts[chunk[2] as usize].uv * bary.2;
 
-                let img = &set.textures[temp_bones[b].tex_idx as usize].image;
-                let pixel_pos = Vec2::new(
-                    (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
-                    (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
-                );
+                let pixel_pos: Vec2;
 
-                let pixel_alpha = img.get_pixel(pixel_pos.x as u32, pixel_pos.y as u32).0[3];
+                {
+                    let img = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize]
+                        .textures[temp_bones[b].tex_idx as usize]
+                        .image;
+                    pixel_pos = Vec2::new(
+                        (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
+                        (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
+                    );
+                }
+
+                if shared.input.left_clicked && shared.ui.editing_mesh {
+                    let bone_mut = shared.selected_bone_mut().unwrap();
+                    bone_mut.vertices.push(Vertex {
+                        pos: Vec2::new(pixel_pos.x, -pixel_pos.y),
+                        uv,
+                        ..Default::default()
+                    });
+                    bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
+                    bone_mut.indices = setup_indices(&bone_mut.vertices, 0);
+                }
+
+                let pixel_alpha = shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize]
+                    .textures[temp_bones[b].tex_idx as usize]
+                    .image
+                    .get_pixel(pixel_pos.x as u32, pixel_pos.y as u32)
+                    .0[3];
                 if pixel_alpha == 255 {
                     hover_bone_id = temp_bones[b].id;
                     break;
@@ -238,7 +264,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
 
     for bone in &temp_bones {
-        if bone.tex_set_idx != -1 && !bone.hidden{
+        if bone.tex_set_idx != -1 && !bone.hidden {
             draw_bone(&bone, render_pass, device, &bone.world_verts, shared);
         }
 
