@@ -3,6 +3,7 @@
 use crate::*;
 use armature_window::find_bone;
 use image::GenericImageView;
+use spade::{DelaunayTriangulation, InsertionError, Point2, Triangulation};
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
@@ -633,7 +634,7 @@ fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
 /// don't forget to use sort_vertices() first!
 pub fn setup_indices(verts: &Vec<Vertex>, base: i32) -> Vec<u32> {
     //return lyon_poly(verts);
-    //return triangulate(verts);
+    return triangulate(verts);
 
     let len = verts.len();
     let mut indices: Vec<u32> = vec![];
@@ -1261,93 +1262,23 @@ pub fn draw_vertical_line(
     render_pass.draw_indexed(0..3, 0, 0..1);
 }
 
-// pub fn triangulate(verts: &Vec<Vertex>) -> Vec<u32> {
-//     let mut poly: Vec<geo::Coord> = vec![];
-//     for vert in verts {
-//         poly.push(geo::Coord {
-//             x: vert.pos.x as f64,
-//             y: vert.pos.y as f64,
-//         });
-//     }
-//     let square_polygon = geo::Polygon::new(geo::LineString(poly), vec![]);
-//     let indices = square_polygon.earcut_triangles_raw().triangle_indices;
-//     let mut u32_indices: Vec<u32> = vec![];
-//     for index in &indices {
-//         u32_indices.push(*index as u32);
-//     }
-//     u32_indices
-// }
+pub fn triangulate(verts: &Vec<Vertex>) -> Vec<u32> {
+    let mut triangulation: spade::DelaunayTriangulation<_> = spade::DelaunayTriangulation::new();
 
-// pub fn lyon_poly(verts: &Vec<Vertex>) -> Vec<u32> {
-//     let mut raw_points: Vec<[f32; 2]> = vec![];
-//     for vert in verts {
-//         raw_points.push([vert.pos.x, vert.pos.y]);
-//     }
+    for vert in verts {
+        let _ = triangulation.insert(spade::Point2::new(vert.uv.x, vert.uv.y));
+    }
 
-//     //raw_points.push([0., 0.]);
-//     //raw_points.push([1., 0.]);
-//     //raw_points.push([1., 1.]);
-//     //raw_points.push([0., 1.]);
+    let mut indices: Vec<u32> = Vec::new();
+    for face in triangulation.inner_faces() {
+        let tri_indices = face.vertices().map(|v| v.index()).to_vec();
 
-//     println!("{:?}", raw_points);
+        if tri_indices.len() == 3 {
+            indices.push(tri_indices[0] as u32);
+            indices.push(tri_indices[1] as u32);
+            indices.push(tri_indices[2] as u32);
+        }
+    }
 
-//     // Convert to lyon Points
-//     let points: Vec<lyon::math::Point> = raw_points
-//         .iter()
-//         .map(|&[x, y]| lyon::math::point(x, y))
-//         .collect();
-
-//     // Create path builder
-//     let mut builder = lyon::path::Path::builder();
-//     builder.begin(points[0]);
-//     for p in &points[1..] {
-//         builder.line_to(*p);
-//     }
-//     builder.end(true); // Close the polygon
-
-//     let path = builder.build();
-
-//     // Vertex + index buffers for tessellation result
-//     let mut geometry: lyon::tessellation::VertexBuffers<lyon::math::Point, u16> =
-//         lyon::tessellation::VertexBuffers::new();
-
-//     let mut tessellator = lyon::tessellation::FillTessellator::new();
-//     let result = tessellator.tessellate_path(
-//         &path,
-//         &lyon::tessellation::FillOptions::default(),
-//         &mut lyon::tessellation::BuffersBuilder::new(
-//             &mut geometry,
-//             |vertex: lyon::tessellation::FillVertex| vertex.position(),
-//         ),
-//     );
-
-//     match result {
-//         Ok(_) => {
-//             println!("Generated {} triangles", geometry.indices.len() / 3);
-//             let mut indices = vec![];
-//             for tri in geometry.indices.chunks(3) {
-//                 println!(
-//                     "Triangle: {:?} {:?} {:?}",
-//                     geometry.vertices[tri[0] as usize],
-//                     geometry.vertices[tri[1] as usize],
-//                     geometry.vertices[tri[2] as usize],
-//                 );
-//                 for v in 0..verts.len() {
-//                     if (geometry.vertices[tri[0] as usize].x == verts[v].pos.x
-//                         && geometry.vertices[tri[0] as usize].y == verts[v].pos.y)
-//                         || (geometry.vertices[tri[1] as usize].x == verts[v].pos.x
-//                             && geometry.vertices[tri[1] as usize].y == verts[v].pos.y)
-//                         || (geometry.vertices[tri[2] as usize].x == verts[v].pos.x
-//                             && geometry.vertices[tri[2] as usize].y == verts[v].pos.y)
-//                     {
-//                         indices.push(v as u32);
-//                     }
-//                 }
-//             }
-//             return indices;
-//         }
-//         Err(e) => eprintln!("Tessellation error: {:?}", e),
-//     }
-
-//     vec![]
-// }
+    indices
+}
