@@ -758,7 +758,7 @@ pub fn draw_bone(
     world_verts: &Vec<Vertex>,
     shared: &Shared,
 ) {
-    //render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+    // runtime: use texture_set_idx and tex_idx to determine bone's texture
     render_pass.set_bind_group(
         0,
         &shared.armature.texture_sets[bone.tex_set_idx as usize].textures[bone.tex_idx as usize]
