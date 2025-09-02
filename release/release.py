@@ -20,7 +20,7 @@ RESET = "\033[0m"
 parser = argparse.ArgumentParser(prog="SkelForm Release Builder", description="Build script for SkelForm release distributions.")
 parser.add_argument("-v", "--verbose", action="store_true", help="Print output of everything")
 parser.add_argument("-dmg", "--dmg", action="store_true", help="Attempt to create Mac dmg (requires create-dmg)")
-parser.add_argument("-debug", "--debug", action="store_true", help="Create debug build.")
+parser.add_argument("-debug", "--debug", action="store_true", help="Create debug build")
 args = parser.parse_args()
 
 stdout = "" if args.verbose else " &> /dev/null"
@@ -95,7 +95,7 @@ os.mkdir("./" + source)
 shutil.copy("../Cargo.toml", "./" + source)
 shutil.copy("./release.py", "./" + source)
 shutil.copy("../web_build.py", "./" + source)
-shutil.copy("../assets/anim_icons.png", "./" + source)
+shutil.copy("../assets", "./" + source)
 shutil.copy("../readme.md", "./" + source)
 shutil.copytree("../src", "./" + source + "/src")
 
