@@ -251,7 +251,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
 
     for bone in &temp_bones {
-        if bone.tex_set_idx != -1 && !bone.hidden {
+        if bone.tex_set_idx != -1 && !shared.armature.is_bone_hidden(bone.id) {
             draw_bone(&bone, render_pass, device, &bone.world_verts, shared);
         }
 
