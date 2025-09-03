@@ -2,6 +2,7 @@
 
 use crate::*;
 use armature_window::find_bone;
+use image::DynamicImage;
 use image::GenericImageView;
 use spade::Triangulation;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
@@ -26,7 +27,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     #[cfg(target_arch = "wasm32")]
     loaded();
 
-    if shared.generic_bindgroup != None && !shared.config.gridline_front{
+    if shared.generic_bindgroup != None && !shared.config.gridline_front {
         draw_gridline(render_pass, device, shared);
     }
 
@@ -797,7 +798,6 @@ pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
 
 pub fn polygonate(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     let gap = 25.;
-    let area = 10.;
     let mut poi: Vec<Vec2> = vec![];
 
     // create spaced-out points of interest
@@ -858,7 +858,6 @@ pub fn polygonate(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
         ),
         ..Default::default()
     }];
-    let mut verts = vec![];
     let mut curr_poi = 0;
 
     // get last point that current one has line of sight one
@@ -867,7 +866,7 @@ pub fn polygonate(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
         if p == poi.len() - 1 {
             break;
         }
-        if line_of_sight(&texture, poi[curr_poi], poi[(p + 1) % poi.len() - 1]) {
+        if line_of_sight(&texture, poi[curr_poi], poi[(p + 1) % (poi.len() - 1)]) {
             continue;
         }
         if p == 0 {
@@ -896,6 +895,9 @@ pub fn polygonate(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     //        ..Default::default()
     //    });
     //}
+
+    verts = sort_vertices(verts);
+
     (verts.clone(), triangulate(&verts))
 }
 
@@ -1278,7 +1280,7 @@ pub fn triangulate(verts: &Vec<Vertex>) -> Vec<u32> {
     indices
 }
 
-fn line_of_sight(img: &DynamicImage, mut p0: Vec2, mut p1: Vec2) -> bool {
+fn line_of_sight(img: &DynamicImage, mut p0: Vec2, p1: Vec2) -> bool {
     let dx = (p1.x - p0.x).abs();
     let sx = if p0.x < p1.x { 1 } else { -1 };
     let dy = -(p1.y - p0.y).abs();
