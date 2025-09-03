@@ -313,7 +313,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             });
         });
 
-        if bone.joint_effector != JointEffector::None {
+        if bone.joint_effector == JointEffector::Start {
             let const_label = if bone.constraint == JointConstraint::CounterClockwise {
                 "CCW".to_string()
             } else {
@@ -322,21 +322,48 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             ui.horizontal(|ui| {
                 ui.label(shared.loc("bone_panel.joint.constraint"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let last_constraint = bone.clone().constraint;
                     egui::ComboBox::new("joint_constraint", "")
                         .selected_text(const_label)
                         .width(40.)
                         .show_ui(ui, |ui| {
-                            let bone = &mut shared.selected_bone_mut().unwrap().constraint;
-                            ui.selectable_value(bone, JointConstraint::None, "None");
-                            ui.selectable_value(bone, JointConstraint::Clockwise, "Clockwise");
-                            ui.selectable_value(bone, JointConstraint::CounterClockwise, "CCW");
-                        })
-                        .response;
+                            let constraint = &mut shared.selected_bone_mut().unwrap().constraint;
+                            ui.selectable_value(constraint, JointConstraint::None, "None");
+                            ui.selectable_value(
+                                constraint,
+                                JointConstraint::Clockwise,
+                                "Clockwise",
+                            );
+                            ui.selectable_value(
+                                constraint,
+                                JointConstraint::CounterClockwise,
+                                "CCW",
+                            );
+                        });
+
+                    if last_constraint == shared.selected_bone().unwrap().constraint {
+                        return;
+                    }
+
+                    let mut joints = vec![];
+                    armature_window::get_all_children(&shared.armature.bones, &mut joints, &bone);
+                    joints = joints
+                        .iter()
+                        .filter(|joint| joint.joint_effector != JointEffector::None)
+                        .cloned()
+                        .collect();
+                    for joint in joints {
+                        shared
+                            .armature
+                            .bones
+                            .iter_mut()
+                            .find(|bone| bone.id == joint.id)
+                            .unwrap()
+                            .constraint = shared.selected_bone().unwrap().constraint;
+                    }
                 });
             });
-        }
 
-        if bone.joint_effector == JointEffector::Start {
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let label = if bone.aiming {
