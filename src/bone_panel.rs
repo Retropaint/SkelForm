@@ -390,19 +390,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             ) = renderer::create_tex_rect(&tex_size);
         }
     });
-
-    ui.horizontal(|ui| {
-        ui.label("Base Index:")
-            .on_hover_text("The vertex that all triangles point to");
-        let base = bone.indices[0] as f32;
-        let (edited, base, _) = ui.float_input("base_index".to_string(), shared, base, 1.);
-        if edited {
-            shared.selected_bone_mut().unwrap().indices = crate::renderer::setup_indices(
-                &shared.selected_bone_mut().unwrap().vertices,
-                base as i32,
-            );
-        }
-    });
 }
 
 pub fn center_verts(verts: &mut Vec<Vertex>, tex_size: &Vec2) {
