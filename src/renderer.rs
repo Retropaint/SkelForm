@@ -813,8 +813,9 @@ pub fn polygonate(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
         }
     }
 
+    // only keep points that are close to the image
+    // redundant points are determined if all 8 neighbouring coords have points (or is in bounds)
     let poi_clone = poi.clone();
-
     poi.retain(|point| {
         let left = Vec2::new(point.x - gap, point.y);
         let right = Vec2::new(point.x + gap, point.y);
@@ -849,18 +850,52 @@ pub fn polygonate(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     // sort points in any winding order
     poi = winding_sort(poi);
 
+    let mut verts = vec![Vertex {
+        pos: Vec2::new(poi[0].x, -poi[0].y),
+        uv: Vec2::new(
+            poi[0].x / texture.width() as f32,
+            poi[0].y / texture.height() as f32,
+        ),
+        ..Default::default()
+    }];
     let mut verts = vec![];
-    for point in poi {
+    let mut curr_poi = 0;
+
+    // get last point that current one has line of sight one
+    // if next point checked happens to be first and there's line of sight, tracing is over
+    for p in curr_poi..poi.len() {
+        if p == poi.len() - 1 {
+            break;
+        }
+        if line_of_sight(&texture, poi[curr_poi], poi[(p + 1) % poi.len() - 1]) {
+            continue;
+        }
+        if p == 0 {
+            curr_poi = 1;
+            continue;
+        }
+
         verts.push(Vertex {
-            pos: Vec2::new(point.x, -point.y),
+            pos: Vec2::new(poi[p - 1].x, -poi[p - 1].y),
             uv: Vec2::new(
-                point.x / texture.width() as f32,
-                point.y / texture.height() as f32,
+                poi[p - 1].x / texture.width() as f32,
+                poi[p - 1].y / texture.height() as f32,
             ),
             ..Default::default()
         });
+        curr_poi = p - 1;
     }
 
+    //for point in poi {
+    //    verts.push(Vertex {
+    //        pos: Vec2::new(point.x, -point.y),
+    //        uv: Vec2::new(
+    //            point.x / texture.width() as f32,
+    //            point.y / texture.height() as f32,
+    //        ),
+    //        ..Default::default()
+    //    });
+    //}
     (verts.clone(), triangulate(&verts))
 }
 
@@ -878,7 +913,7 @@ fn draw_point(
         return vec![];
     }
 
-    let point_size = 2.;
+    let point_size = 5.;
     let mut temp_point_verts: [Vertex; 4] = [
         Vertex {
             pos: Vec2::new(-point_size, point_size),
@@ -1241,4 +1276,36 @@ pub fn triangulate(verts: &Vec<Vertex>) -> Vec<u32> {
     }
 
     indices
+}
+
+fn line_of_sight(img: &DynamicImage, mut p0: Vec2, mut p1: Vec2) -> bool {
+    let dx = (p1.x - p0.x).abs();
+    let sx = if p0.x < p1.x { 1 } else { -1 };
+    let dy = -(p1.y - p0.y).abs();
+    let sy = if p0.y < p1.y { 1 } else { -1 };
+    let mut err = dx + dy;
+
+    loop {
+        if p0.x >= 0. && p0.y >= 0. && p0.x < img.width() as f32 && p0.y < img.height() as f32 {
+            let px = img.get_pixel(p0.x as u32, p0.y as u32);
+            if px[3] == 255 {
+                return false;
+            }
+        }
+
+        if p0.x == p1.x && p0.y == p1.y {
+            break;
+        }
+        let e2 = 2. * err;
+        if e2 >= dy {
+            err += dy;
+            p0.x += sx as f32;
+        }
+        if e2 <= dx {
+            err += dx;
+            p0.y += sy as f32;
+        }
+    }
+
+    true
 }
