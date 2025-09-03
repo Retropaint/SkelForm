@@ -685,15 +685,18 @@ pub struct Config {
     pub gridline_gap: i32,
 
     #[serde(default)]
-    pub colors: ColorConfig,
-    #[serde(default)]
-    pub keys: KeyboardConfig,
-
-    #[serde(default)]
     pub hide_startup: bool,
 
     #[serde(default)]
     pub autosave_frequency: i32,
+
+    #[serde(default)]
+    pub exact_bone_select: bool,
+
+    #[serde(default)]
+    pub colors: ColorConfig,
+    #[serde(default)]
+    pub keys: KeyboardConfig,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -719,6 +722,7 @@ impl Default for Config {
             gridline_gap: gridline_default(),
             hide_startup: false,
             autosave_frequency: 5,
+            exact_bone_select: false
         }
     }
 }

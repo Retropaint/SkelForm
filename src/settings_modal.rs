@@ -182,15 +182,7 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         ui.label(&(str_exact_bone.to_owned() + " ℹ"))
             .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_exact_bone_desc);
-        let (edited, value, _) = ui.float_input(
-            "exact_bone".to_string(),
-            shared,
-            shared.config.autosave_frequency as f32,
-            1.,
-        );
-        if edited && value > 0. {
-            shared.config.autosave_frequency = value as i32;
-        }
+        ui.checkbox(&mut shared.config.exact_bone_select, "".into_atoms());
     });
 
     ui.add_space(20.);

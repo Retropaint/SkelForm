@@ -205,14 +205,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             }
         }
 
-        // QoL: select first untextured parent of this bone
-        // this is because most textured bones are meant to represent their parents
         let mut click_on_hover_id = temp_bones[b].id;
-        let parents = shared.armature.get_all_parents(temp_bones[b].id);
-        for parent in &parents {
-            if parent.tex_set_idx == -1 {
-                click_on_hover_id = parent.id;
-                break;
+        if !shared.config.exact_bone_select {
+            // QoL: select first untextured parent of this bone
+            // this is because most textured bones are meant to represent their parents
+            let parents = shared.armature.get_all_parents(temp_bones[b].id);
+            for parent in &parents {
+                if parent.tex_set_idx == -1 {
+                    click_on_hover_id = parent.id;
+                    break;
+                }
             }
         }
 
