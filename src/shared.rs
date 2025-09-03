@@ -721,7 +721,7 @@ impl Default for Config {
             hide_startup: false,
             autosave_frequency: 5,
             exact_bone_select: false,
-            gridline_front: false
+            gridline_front: false,
         }
     }
 }
@@ -864,7 +864,7 @@ pub enum JointEffector {
 }
 enum_string!(JointEffector);
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Default, PartialEq, Debug)]
 pub enum JointConstraint {
     #[default]
     None,
@@ -1946,6 +1946,11 @@ impl Shared {
         mouse_prev_world - mouse_world
     }
 
+    /// Localization
+    /// Extracts the specified text from the current language.
+    /// ex: `settings_modal.user_interface.general` -> "General"
+    ///
+    /// All localized text *must* be from this method, as edge cases and fallbacks must be handled as well.
     pub fn loc(&self, str: &str) -> &String {
         let result = self.loc_strings.get(str);
         if let Some(string) = result {
