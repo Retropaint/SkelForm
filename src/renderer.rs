@@ -707,7 +707,7 @@ pub fn bone_vertices(
 
         hovering_vert = wv;
         point!(wv, VertexColor::WHITE);
-        if shared.input.right_clicked() && world_verts.len() > 4 {
+        if shared.input.right_clicked && world_verts.len() > 4 {
             let verts = &mut shared.selected_bone_mut().unwrap().vertices;
             verts.remove(wv);
             *verts = sort_vertices(verts.clone());
