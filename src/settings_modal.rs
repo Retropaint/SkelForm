@@ -1,6 +1,5 @@
 #[cfg(not(target_arch = "wasm32"))]
 use crate::utils;
-#[cfg(not(target_arch = "wasm32"))]
 use egui::IntoAtoms;
 
 use crate::{
