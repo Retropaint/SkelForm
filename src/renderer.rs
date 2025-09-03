@@ -836,11 +836,14 @@ pub fn polygonate(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
             };
         }
 
-        p!(&left) || p!(&right) || p!(&up) || p!(&down)
-        //&& p!(&left_top)
-        //&& p!(&left_bot)
-        //&& p!(&right_top)
-        //&& p!(&right_bot)
+        p!(&left)
+            || p!(&right)
+            || p!(&up)
+            || p!(&down)
+            || p!(&left_top)
+            || p!(&left_bot)
+            || p!(&right_top)
+            || p!(&right_bot)
     });
 
     // sort points in any winding order
