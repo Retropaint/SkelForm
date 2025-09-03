@@ -386,7 +386,7 @@ pub fn skf_file_button(
                     ui.painter().text(
                         heading_pos,
                         egui::Align2::LEFT_BOTTOM,
-                        "Auto-generated backup file",
+                        shared.loc("startup.autosave_note"),
                         egui::FontId::new(11., egui::FontFamily::Proportional),
                         col.into(),
                     );
