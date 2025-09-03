@@ -8,6 +8,7 @@
     "import": "Import",
     "samples": "Samples",
     "empty_recent_files": "Start from scratch, import something, or try a sample from the options on the left.",
+    "autosave_note": "Auto-generated backup file",
     "resources": {
       "user_docs": "User Documentation",
       "starter_guide": "Starter Guide",
