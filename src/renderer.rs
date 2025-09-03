@@ -194,7 +194,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     .image
                     .get_pixel(pixel_pos.x as u32, pixel_pos.y as u32)
                     .0[3];
-                if pixel_alpha == 255 {
+                if pixel_alpha == 255 && !shared.ui.editing_mesh{
                     hover_bone_id = temp_bones[b].id;
                     break;
                 }
@@ -798,6 +798,7 @@ pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
 
 pub fn polygonate(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     let gap = 25.;
+    let area = 10.;
     let mut poi: Vec<Vec2> = vec![];
 
     // create spaced-out points of interest
