@@ -32,12 +32,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     for bone in &mut shared.armature.bones {
-        if bone.tex_set_idx != -1 && bone.vertices.len() == 0 {
-            let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-                [bone.tex_idx as usize]
-                .size;
-            (bone.vertices, bone.indices) = create_tex_rect(&tex_size);
+        if bone.tex_set_idx == -1 || bone.vertices.len() != 0 {
+            continue;
         }
+
+        let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
+            [bone.tex_idx as usize]
+            .size;
+        (bone.vertices, bone.indices) = create_tex_rect(&tex_size);
     }
 
     let mut bones = shared.armature.bones.clone();
