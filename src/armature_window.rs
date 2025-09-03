@@ -120,7 +120,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             } else {
                 "👁"
             };
-            if bone_label(hidden_icon, ui, shared, b).clicked() {
+            if bone_label(hidden_icon, ui, shared, b, Vec2::new(-2., 18.)).clicked() {
                 shared.armature.bones[b].hidden = !shared.armature.bones[b].hidden;
             }
             ui.add_space(17.);
@@ -147,7 +147,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 } else {
                     "⏷"
                 };
-                if bone_label(fold_icon, ui, shared, b).clicked() {
+                if bone_label(fold_icon, ui, shared, b, Vec2::new(-2., 18.)).clicked() {
                     shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
                 }
             }
@@ -258,9 +258,9 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
     }
 }
 
-fn bone_label(icon: &str, ui: &mut egui::Ui, shared: &Shared, bone_idx: usize) -> egui::Response {
+fn bone_label(icon: &str, ui: &mut egui::Ui, shared: &Shared, bone_idx: usize, offset: Vec2) -> egui::Response {
     let rect = ui.painter().text(
-        ui.cursor().min + Vec2::new(-2., 17.).into(),
+        ui.cursor().min + Vec2::new(offset.x, offset.y).into(),
         egui::Align2::LEFT_BOTTOM,
         icon,
         egui::FontId::default(),
