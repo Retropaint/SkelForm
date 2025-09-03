@@ -194,7 +194,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     .image
                     .get_pixel(pixel_pos.x as u32, pixel_pos.y as u32)
                     .0[3];
-                if pixel_alpha == 255 && !shared.ui.editing_mesh{
+                if pixel_alpha == 255 && !shared.ui.editing_mesh {
                     hover_bone_id = temp_bones[b].id;
                     break;
                 }
@@ -291,8 +291,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     } else if shared.dragging_vert != usize::MAX {
         drag_vertex(
             shared,
+            &temp_bones[shared.ui.selected_bone_idx],
             shared.dragging_vert,
-            &temp_bones[shared.ui.selected_bone_idx].pos,
         );
         return;
     }
@@ -723,14 +723,7 @@ pub fn bone_vertices(
     hovering_vert
 }
 
-pub fn drag_vertex(shared: &mut Shared, vert_idx: usize, bone_pos: &Vec2) {
-    let mut bone = shared.selected_bone().unwrap().clone();
-
-    // vertex conversion should consider the animated bone position
-    if shared.ui.is_animating() {
-        bone.pos = *bone_pos;
-    }
-
+pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
     // when moving a vertex, it must be interpreted in world coords first to align the with the mouse
     let mut world_vert = con_vert!(
         raw_to_world_vert,
