@@ -1870,7 +1870,6 @@ pub struct Shared {
 
     pub last_autosave: f32,
 
-    // key is lang code (eg; en, id, ru, etc)
     loc_strings: std::collections::HashMap<String, String>,
 }
 
