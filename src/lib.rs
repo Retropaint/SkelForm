@@ -45,7 +45,6 @@ pub mod bone_panel;
 pub mod file_reader;
 pub mod keyframe_editor;
 pub mod keyframe_panel;
-pub mod localization;
 pub mod modal;
 pub mod renderer;
 pub mod settings_modal;
