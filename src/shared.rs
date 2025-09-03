@@ -677,21 +677,18 @@ impl Ui {
 pub struct Config {
     #[serde(skip)]
     pub first_time: bool,
-
     #[serde(default = "default_one")]
     pub ui_scale: f32,
-
     #[serde(default = "gridline_default")]
     pub gridline_gap: i32,
-
     #[serde(default)]
     pub hide_startup: bool,
-
     #[serde(default)]
     pub autosave_frequency: i32,
-
     #[serde(default)]
     pub exact_bone_select: bool,
+    #[serde(default)]
+    pub gridline_front: bool,
 
     #[serde(default)]
     pub colors: ColorConfig,
@@ -722,7 +719,8 @@ impl Default for Config {
             gridline_gap: gridline_default(),
             hide_startup: false,
             autosave_frequency: 5,
-            exact_bone_select: false
+            exact_bone_select: false,
+            gridline_front: false
         }
     }
 }

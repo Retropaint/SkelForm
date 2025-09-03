@@ -133,6 +133,12 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         }
     });
 
+    ui.horizontal(|ui| {
+        let str_gridline_gap = shared.loc("settings_modal.rendering.gridline_front");
+        ui.label(str_gridline_gap);
+        ui.checkbox(&mut shared.config.gridline_front, "".into_atoms());
+    });
+
     macro_rules! color_row {
         ($title:expr, $color:expr, $bg_color:expr) => {
             let str_color = shared

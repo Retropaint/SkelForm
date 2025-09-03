@@ -106,7 +106,8 @@
       "gridline_gap": "Gridline gap (pixels): ",
       "background": "Background",
       "gridline": "Gridline",
-      "center_point": "Center Point"
+      "center_point": "Center Point",
+      "gridline_front": "Render gridline in front: "
     },
     "keyboard": {
       "heading": "Keyboard",
