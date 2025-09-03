@@ -380,9 +380,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
             [bone.tex_idx as usize]
             .size;
-        if ui.skf_button("Center").clicked() {
-            center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
-        }
+        //if ui.skf_button("Center").clicked() {
+        //    center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
+        //}
         if ui.skf_button("Reset").clicked() {
             (
                 shared.selected_bone_mut().unwrap().vertices,
