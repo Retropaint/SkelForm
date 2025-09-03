@@ -3,7 +3,7 @@
 use crate::*;
 use armature_window::find_bone;
 use image::GenericImageView;
-use spade::{DelaunayTriangulation, InsertionError, Point2, Triangulation};
+use spade::Triangulation;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
@@ -111,8 +111,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut hovering_vert = usize::MAX;
 
-    let mut selected_bone_world_verts: Vec<Vertex> = vec![];
-
     let mut hover_bone_id = -1;
 
     // pre-draw bone setup
@@ -143,13 +141,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             );
             new_vert.pos.x /= shared.window.x / shared.window.y;
             temp_bones[b].world_verts.push(new_vert);
-        }
-
-        let selected = shared.selected_bone() != None
-            && temp_bones[b].id == shared.selected_bone().unwrap().id;
-
-        if selected {
-            selected_bone_world_verts = temp_bones[b].world_verts.clone();
         }
 
         // create vert on cursor
@@ -199,7 +190,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                         ..Default::default()
                     });
                     bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
-                    bone_mut.indices = setup_indices(&bone_mut.vertices, 0);
+                    bone_mut.indices = triangulate(&bone_mut.vertices);
                 }
 
                 let pixel_alpha = shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize]
@@ -530,115 +521,6 @@ pub fn ik_bone(bone: &Bone, target: Vec2, end: Vec2) -> f32 {
     angle
 }
 
-fn get_distance(a: Vec2, b: Vec2) -> f32 {
-    let dx = b.x - a.x;
-    let dy = b.y - a.y;
-    (dx * dx + dy * dy).sqrt()
-}
-
-fn find_closest_vert(point_vert: Vertex, verts: &Vec<Vertex>, exception: usize) -> usize {
-    let mut closest = 0;
-    let mut distance = std::f32::INFINITY;
-    for i in 0..verts.len() {
-        let current_distance = get_distance(point_vert.pos, verts[i].pos);
-        if current_distance < distance && i != exception {
-            distance = current_distance;
-            closest = i;
-        }
-    }
-    closest
-}
-
-fn draw_hover_triangle(
-    shared: &mut Shared,
-    render_pass: &mut RenderPass,
-    device: &Device,
-    world_verts: &Vec<Vertex>,
-) {
-    macro_rules! bone {
-        () => {
-            shared.selected_bone().unwrap()
-        };
-    }
-    let tex = &shared.armature.texture_sets[bone!().tex_set_idx as usize].textures
-        [bone!().tex_idx as usize];
-
-    // create vert on cursor
-    let mut mouse_world_vert = Vertex {
-        pos: utils::screen_to_world_space(shared.input.mouse, shared.window),
-        ..Default::default()
-    };
-    let mut mouse_vert = con_vert!(
-        world_to_raw_vert,
-        mouse_world_vert,
-        bone!(),
-        tex,
-        shared.camera.pos,
-        shared.camera.zoom
-    );
-    mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
-
-    // get the 2 closest verts to the mouse
-    let closest_vert1 = find_closest_vert(mouse_world_vert, world_verts, usize::MAX);
-    let closest_vert2 = find_closest_vert(mouse_world_vert, world_verts, closest_vert1);
-
-    // draw hover triangle
-    render_pass.set_vertex_buffer(
-        0,
-        vertex_buffer(
-            &vec![
-                world_verts[closest_vert1],
-                world_verts[closest_vert2],
-                mouse_world_vert,
-            ],
-            device,
-        )
-        .slice(..),
-    );
-    render_pass.set_index_buffer(
-        index_buffer(vec![0, 1, 2], &device).slice(..),
-        wgpu::IndexFormat::Uint32,
-    );
-    render_pass.draw_indexed(0..3, 0, 0..1);
-
-    if shared.selected_bone() == None
-        || !shared.input.clicked()
-        || shared.input.on_ui
-        || !shared.ui.editing_mesh
-    {
-        return;
-    }
-
-    shared.undo_actions.push(Action {
-        action: ActionEnum::Bone,
-        bones: vec![bone!().clone()],
-        id: bone!().id,
-        ..Default::default()
-    });
-
-    // add new vertex
-    mouse_vert.uv = (world_verts[closest_vert1].uv + world_verts[closest_vert2].uv) / 2.;
-    shared
-        .selected_bone_mut()
-        .unwrap()
-        .vertices
-        .push(mouse_vert);
-
-    shared.selected_bone_mut().unwrap().vertices = sort_vertices(bone!().vertices.clone());
-
-    // get the new vert's index, then use it as the base
-    let mut vert_idx = 0;
-    for (i, v) in bone!().vertices.iter().enumerate() {
-        if v.pos == mouse_vert.pos {
-            vert_idx = i;
-            break;
-        }
-    }
-
-    shared.selected_bone_mut().unwrap().indices =
-        setup_indices(&shared.selected_bone().unwrap().vertices, vert_idx as i32);
-}
-
 /// sort vertices in cw (or ccw?) order
 fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
     // get center point
@@ -655,40 +537,6 @@ fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
     });
 
     verts
-}
-
-/// generate a usable index array for the supplied vertices
-///
-/// don't forget to use sort_vertices() first!
-pub fn setup_indices(verts: &Vec<Vertex>, base: i32) -> Vec<u32> {
-    //return lyon_poly(verts);
-    return triangulate(verts);
-
-    let len = verts.len();
-    let mut indices: Vec<u32> = vec![];
-    for v in 0..verts.len() {
-        if v > verts.len() - 1 {
-            break;
-        }
-        let mut v1 = v + base as usize;
-        if v1 > len - 1 {
-            v1 -= len;
-        }
-
-        let mut v2 = v + base as usize + 1;
-        if v2 > len - 1 {
-            v2 -= len;
-        }
-
-        // exclude redundant verts
-        if base as usize != v1 && v1 != v2 && v2 != base as usize {
-            indices.push(base as u32);
-            indices.push(v1 as u32);
-            indices.push(v2 as u32);
-        }
-    }
-
-    indices
 }
 
 pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
@@ -841,7 +689,7 @@ pub fn bone_vertices(
             verts.remove(wv);
             *verts = sort_vertices(verts.clone());
             shared.selected_bone_mut().unwrap().indices =
-                setup_indices(&verts, verts.len() as i32 - 1);
+                triangulate(&verts);
             break;
         }
         if shared.input.is_clicking() {
@@ -928,7 +776,7 @@ pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
         },
     ];
     verts = sort_vertices(verts.clone());
-    let indices = setup_indices(&verts, verts.len() as i32 - 1);
+    let indices = triangulate(&verts);
     (verts, indices)
 }
 
