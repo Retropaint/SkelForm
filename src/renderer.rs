@@ -23,10 +23,6 @@ macro_rules! con_vert {
 
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
-    if shared.generic_bindgroup != None {
-        draw_gridline(render_pass, device, shared);
-    }
-
     #[cfg(target_arch = "wasm32")]
     loaded();
 
@@ -263,6 +259,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
             hovering_vert = bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
         }
+    }
+
+    if shared.generic_bindgroup != None {
+        draw_gridline(render_pass, device, shared);
     }
 
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
@@ -539,6 +539,22 @@ fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
     verts
 }
 
+fn winding_sort(mut points: Vec<Vec2>) -> Vec<Vec2> {
+    let mut center = Vec2::default();
+    for p in &points {
+        center += *p;
+    }
+    center /= points.len() as f32;
+
+    points.sort_by(|a, b| {
+        let angle_a = (a.y - center.y).atan2(a.x - center.x);
+        let angle_b = (b.y - center.y).atan2(b.x - center.x);
+        angle_a.partial_cmp(&angle_b).unwrap()
+    });
+
+    points
+}
+
 pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
     let mut anim_id = shared.ui.anim.selected;
     if !shared.ui.is_animating() {
@@ -676,7 +692,8 @@ pub fn bone_vertices(
     let mut hovering_vert = usize::MAX;
 
     for wv in 0..world_verts.len() {
-        let point = point!(wv, VertexColor::GREEN);
+        let c = wv as f32 / world_verts.len() as f32;
+        let point = point!(wv, VertexColor::new(c, 0., 0., 1.));
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
         if shared.input.on_ui || !mouse_on_it || shared.dragging_vert != usize::MAX {
             continue;
@@ -688,8 +705,7 @@ pub fn bone_vertices(
             let verts = &mut shared.selected_bone_mut().unwrap().vertices;
             verts.remove(wv);
             *verts = sort_vertices(verts.clone());
-            shared.selected_bone_mut().unwrap().indices =
-                triangulate(&verts);
+            shared.selected_bone_mut().unwrap().indices = triangulate(&verts);
             break;
         }
         if shared.input.is_clicking() {
@@ -780,6 +796,71 @@ pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
     (verts, indices)
 }
 
+pub fn polygonate(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
+    let gap = 25.;
+    let mut poi: Vec<Vec2> = vec![];
+
+    // create spaced-out points of interest
+    let mut cursor = Vec2::default();
+    while cursor.y < texture.height() as f32 {
+        if texture.get_pixel(cursor.x as u32, cursor.y as u32).0[3] == 0 {
+            poi.push(cursor);
+        }
+        cursor.x += gap;
+        if cursor.x > texture.width() as f32 {
+            cursor.x = 0.;
+            cursor.y += gap;
+        }
+    }
+
+    let poi_clone = poi.clone();
+
+    poi.retain(|point| {
+        let left = Vec2::new(point.x - gap, point.y);
+        let right = Vec2::new(point.x + gap, point.y);
+        let up = Vec2::new(point.x, point.y + gap);
+        let down = Vec2::new(point.x, point.y - gap);
+
+        let left_top = Vec2::new(point.x - gap, point.y + gap);
+        let left_bot = Vec2::new(point.x - gap, point.y - gap);
+        let right_top = Vec2::new(point.x + gap, point.y + gap);
+        let right_bot = Vec2::new(point.x + gap, point.y - gap);
+
+        macro_rules! p {
+            ($dir:expr) => {
+                !poi_clone.contains($dir)
+                    && $dir.x > 0.
+                    && $dir.y > 0.
+                    && $dir.x < texture.width() as f32
+                    && $dir.y < texture.height() as f32
+            };
+        }
+
+        p!(&left) || p!(&right) || p!(&up) || p!(&down)
+        //&& p!(&left_top)
+        //&& p!(&left_bot)
+        //&& p!(&right_top)
+        //&& p!(&right_bot)
+    });
+
+    // sort points in any winding order
+    poi = winding_sort(poi);
+
+    let mut verts = vec![];
+    for point in poi {
+        verts.push(Vertex {
+            pos: Vec2::new(point.x, -point.y),
+            uv: Vec2::new(
+                point.x / texture.width() as f32,
+                point.y / texture.height() as f32,
+            ),
+            ..Default::default()
+        });
+    }
+
+    (verts.clone(), triangulate(&verts))
+}
+
 fn draw_point(
     offset: &Vec2,
     shared: &Shared,
@@ -794,7 +875,7 @@ fn draw_point(
         return vec![];
     }
 
-    let point_size = 10.;
+    let point_size = 2.;
     let mut temp_point_verts: [Vertex; 4] = [
         Vertex {
             pos: Vec2::new(-point_size, point_size),
