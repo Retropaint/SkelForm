@@ -26,6 +26,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     #[cfg(target_arch = "wasm32")]
     loaded();
 
+    if shared.generic_bindgroup != None {
+        draw_gridline(render_pass, device, shared);
+    }
+
     for bone in &mut shared.armature.bones {
         if bone.tex_set_idx != -1 && bone.vertices.len() == 0 {
             let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
@@ -259,10 +263,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
             hovering_vert = bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
         }
-    }
-
-    if shared.generic_bindgroup != None {
-        draw_gridline(render_pass, device, shared);
     }
 
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
