@@ -106,7 +106,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // re-construct bones, accounting for IK
         temp_bones = bones.clone();
-        forward_kinematics(&mut temp_bones, ik_rot);
+        forward_kinematics(&mut temp_bones, ik_rot.clone());
     }
 
     // sort bones by highest zindex first, so that hover logic will pick the top-most one
@@ -323,6 +323,21 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     if let Some(aimed_bone) = shared.armature.bones.iter_mut().find(|bone| bone.aiming) {
         aimed_bone.aiming = false;
+
+        // apply IK rotations into armature
+        for b in 0..shared.armature.bones.len() {
+            let id = shared.armature.bones[b].id;
+            let parents = shared.armature.get_all_parents(id);
+            if ik_rot.get(&id) == None {
+                continue;
+            }
+
+            let mut rot_offset = 0.;
+            for parent in parents {
+                rot_offset += parent.rot;
+            }
+            shared.armature.bones[b].rot = *ik_rot.get(&id).unwrap() - rot_offset;
+        }
     }
 
     // mouse related stuff
