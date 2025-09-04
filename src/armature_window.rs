@@ -114,8 +114,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
         let mut dragged = false;
 
         ui.horizontal(|ui| {
-            let id = shared.armature.bones[b].id;
-            let hidden_icon = if shared.armature.is_bone_hidden(id) {
+            let bone_id = shared.armature.bones[b].id;
+            let hidden_icon = if shared.armature.is_bone_hidden(bone_id) {
                 "---"
             } else {
                 "👁"
@@ -156,7 +156,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             let mut selected_col = shared.config.colors.dark_accent;
             let mut cursor = egui::CursorIcon::PointingHand;
 
-            if shared.armature.is_bone_hidden(id) {
+            if shared.armature.is_bone_hidden(bone_id) {
                 selected_col = shared.config.colors.dark_accent;
             }
 
@@ -206,9 +206,14 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             }
 
             if button.clicked() {
-                let anim_frame = shared.ui.anim.selected_frame;
-                shared.ui.select_bone(idx as usize, &shared.armature);
-                shared.ui.anim.selected_frame = anim_frame;
+                if shared.ui.setting_ik_target {
+                    shared.selected_bone_mut().unwrap().ik_target_id = bone_id;
+                    shared.ui.setting_ik_target = false;
+                } else {
+                    let anim_frame = shared.ui.anim.selected_frame;
+                    shared.ui.select_bone(idx as usize, &shared.armature);
+                    shared.ui.anim.selected_frame = anim_frame;
+                }
             };
 
             if button.secondary_clicked() {
@@ -258,7 +263,13 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
     }
 }
 
-fn bone_label(icon: &str, ui: &mut egui::Ui, shared: &Shared, bone_idx: usize, offset: Vec2) -> egui::Response {
+fn bone_label(
+    icon: &str,
+    ui: &mut egui::Ui,
+    shared: &Shared,
+    bone_idx: usize,
+    offset: Vec2,
+) -> egui::Response {
     let rect = ui.painter().text(
         ui.cursor().min + Vec2::new(offset.x, offset.y).into(),
         egui::Align2::LEFT_BOTTOM,

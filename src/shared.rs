@@ -513,6 +513,8 @@ pub struct Ui {
     pub showing_samples: bool,
 
     pub selected_path: String,
+
+    pub setting_ik_target: bool,
 }
 
 impl Ui {
@@ -861,6 +863,7 @@ pub enum JointEffector {
     Start,
     Middle,
     End,
+    Target,
 }
 enum_string!(JointEffector);
 
@@ -887,16 +890,6 @@ pub struct Bone {
     #[serde(default = "default_neg_one")]
     pub tex_idx: i32,
 
-    #[serde(default, skip_serializing_if = "are_verts_empty")]
-    pub vertices: Vec<Vertex>,
-
-    #[serde(default, skip_serializing_if = "are_indices_empty")]
-    pub indices: Vec<u32>,
-
-    /// used to properly offset bone's movement to counteract it's parent
-    #[serde(skip)]
-    pub parent_rot: f32,
-
     #[serde(default)]
     pub rot: f32,
     #[serde(default)]
@@ -914,6 +907,13 @@ pub struct Bone {
 
     #[serde(default)]
     pub hidden: bool,
+    #[serde(default)]
+    pub ik_target_id: i32,
+
+    #[serde(default, skip_serializing_if = "are_verts_empty")]
+    pub vertices: Vec<Vertex>,
+    #[serde(default, skip_serializing_if = "are_indices_empty")]
+    pub indices: Vec<u32>,
 
     #[serde(skip)]
     pub folded: bool,
