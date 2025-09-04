@@ -75,7 +75,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // inverse kinematics
         for b in 0..temp_bones.len() {
-            if !temp_bones[b].aiming {
+            //if !temp_bones[b].aiming {
+            if temp_bones[b].joint_effector != JointEffector::Start {
                 continue;
             }
 
@@ -90,12 +91,21 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             joints.insert(0, temp_bones[b].clone());
             joints = joints
                 .iter()
-                .filter(|joint| joint.joint_effector != JointEffector::None)
+                .filter(|joint| {
+                    joint.joint_effector != JointEffector::None
+                        && joint.joint_effector != JointEffector::Target
+                })
                 .cloned()
                 .collect();
 
             // apply IK on the joint copy, then save rotations for the next FK
-            let target = (mouse_world * shared.camera.zoom) + shared.camera.pos;
+            //let target = (mouse_world * shared.camera.zoom) + shared.camera.pos;
+            let target = temp_bones
+                .iter()
+                .find(|bone| bone.id == temp_bones[b].ik_target_id)
+                .unwrap()
+                .pos;
+
             for _ in 0..10 {
                 inverse_kinematics(&mut joints, target);
             }

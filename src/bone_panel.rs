@@ -366,13 +366,8 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let label = if bone.aiming {
-                        shared.loc("bone_panel.joint.stop_aim")
-                    } else {
-                        shared.loc("bone_panel.joint.aim")
-                    };
-                    if ui.skf_button(label).clicked() {
-                        shared.selected_bone_mut().unwrap().aiming = !bone.aiming;
+                    if ui.skf_button("Set Target").clicked() {
+                        shared.ui.setting_ik_target = true;
                     }
                 });
             });
