@@ -114,10 +114,18 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
         let mut dragged = false;
 
-        // disable selected bone from armature if setting IK target, since IK target cannot be itself
-        // not it's children
-        let setting_ik_target =
-            shared.ui.setting_ik_target && bone_id == shared.selected_bone().unwrap().id;
+        let parents = shared.armature.get_all_parents(shared.armature.bones[b].id);
+        let selected_bone_id = if let Some(bone) = shared.selected_bone() {
+            bone.id
+        } else {
+            -1
+        };
+
+        // disable selected bone and it's children from armature if setting IK target, 
+        // since IK target cannot be itself
+        let setting_ik_target = shared.ui.setting_ik_target
+            && (bone_id == selected_bone_id
+                || parents.iter().find(|bone| bone.id == selected_bone_id) != None);
 
         ui.add_enabled_ui(!setting_ik_target, |ui| {
             ui.horizontal(|ui| {
@@ -132,7 +140,6 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 ui.add_space(17.);
 
                 // add space to the left if this is a child
-                let parents = shared.armature.get_all_parents(shared.armature.bones[b].id);
                 for _ in 0..parents.len() {
                     vert_line(0., ui, shared);
                     ui.add_space(15.);
