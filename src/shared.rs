@@ -713,7 +713,7 @@ impl Default for ColorConfig {
             frameline: Color::new(80, 60, 130, 255),
             gradient: Color::new(28, 20, 42, 255),
             background: Color::new(50, 50, 50, 255),
-            gridline: Color::new(150, 150, 150, 255),
+            gridline: Color::new(128, 128, 128, 255),
             center_point: Color::new(0, 255, 0, 255),
         }
     }
