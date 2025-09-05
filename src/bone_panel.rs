@@ -352,7 +352,14 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     ui.separator();
 
     ui.horizontal(|ui| {
-        ui.label(shared.loc("bone_panel.inverse_kinematics.effector"));
+        ui.label(
+            shared
+                .loc("bone_panel.inverse_kinematics.effector")
+                .to_owned()
+                + ICON_INFO
+                + ":",
+        )
+        .on_hover_text(shared.loc("bone_panel.inverse_kinematics.effector_desc"));
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let str_selected = shared
