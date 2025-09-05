@@ -93,7 +93,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 .iter()
                 .filter(|joint| {
                     joint.joint_effector != JointEffector::None
-                        && joint.joint_effector != JointEffector::Target
                 })
                 .cloned()
                 .collect();
