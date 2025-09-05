@@ -277,6 +277,8 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         shared.ui.set_state(UiState::PolarModal, false);
         shared.ui.set_state(UiState::ForcedModal, false);
         shared.ui.set_state(UiState::SettingsModal, false);
+
+        shared.ui.setting_ik_target = false;
     }
 }
 
