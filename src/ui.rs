@@ -871,6 +871,9 @@ pub fn default_styling(context: &Context, shared: &Shared) {
     visuals.widgets.noninteractive.corner_radius = egui::CornerRadius::ZERO;
     visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1., colors.dark_accent);
 
+    visuals.selection.bg_fill = colors.light_accent.into();
+    visuals.selection.stroke = egui::Stroke::new(1., colors.text);
+
     visuals.override_text_color = Some(colors.text.into());
     let mut col = colors.text;
     col -= Color::new(100, 100, 100, 0);
