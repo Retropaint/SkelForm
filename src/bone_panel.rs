@@ -413,6 +413,16 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
         ui.horizontal(|ui| {
             ui.label(shared.loc("bone_panel.inverse_kinematics.target"));
+
+            if let Some(target) = shared.armature.find_bone(bone.ik_target_id) {
+                if ui.clickable_label(target.name.clone()).clicked() {
+                    shared.ui.selected_bone_idx =
+                        shared.armature.find_bone_idx(bone.ik_target_id).unwrap();
+                };
+            } else {
+                ui.label("None");
+            }
+
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let str_set_target = shared
                     .loc("bone_panel.inverse_kinematics.set_target")
@@ -435,15 +445,6 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 if ui.skf_button("⌖").on_hover_text(str_set_target).clicked() {
                     shared.ui.setting_ik_target = true;
                 }
-
-                let mut bone_name = "None";
-                if let Some(target) = shared.armature.find_bone(bone.ik_target_id) {
-                    bone_name = &target.name;
-                }
-                if ui.clickable_label(bone_name).clicked() {
-                    shared.ui.selected_bone_idx =
-                        shared.armature.find_bone_idx(bone.ik_target_id).unwrap();
-                };
             });
         });
     }
