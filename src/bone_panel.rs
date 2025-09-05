@@ -176,7 +176,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     let mut edited = false;
 
-    // Backbone of editable bone fields; do not use by itself. Instead refer to input!.
+    // Backbone of editable bone fields. Do not use by itself, instead refer to `input!`.
     macro_rules! check_input_edit {
         ($float:expr, $element:expr, $ui:expr, $label:expr) => {
             if edited {
@@ -287,122 +287,14 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
-    // don't show joint if bone has no children nor parents
     let mut children = vec![];
     armature_window::get_all_children(&shared.armature.bones, &mut children, &bone);
     let parents = shared.armature.get_all_parents(bone.id);
     if children.len() > 0 || parents.len() > 0 {
-        ui.separator();
-        ui.label(shared.loc("bone_panel.inverse_kinematics.heading"));
-        ui.separator();
-
-        ui.horizontal(|ui| {
-            ui.label(shared.loc("bone_panel.inverse_kinematics.effector"));
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                egui::ComboBox::new("joint_eff", "")
-                    .selected_text(bone.joint_effector.to_string())
-                    .width(40.)
-                    .show_ui(ui, |ui| {
-                        let bone = &mut shared.selected_bone_mut().unwrap().joint_effector;
-                        ui.selectable_value(bone, JointEffector::None, "None");
-                        ui.selectable_value(bone, JointEffector::Start, "Start");
-                        ui.selectable_value(bone, JointEffector::Middle, "Middle");
-                        ui.selectable_value(bone, JointEffector::End, "End");
-                    })
-                    .response;
-            });
-        });
-
-        if bone.joint_effector == JointEffector::Start {
-            let const_label = if bone.constraint == JointConstraint::CounterClockwise {
-                "CCW".to_string()
-            } else {
-                bone.constraint.to_string()
-            };
-            ui.horizontal(|ui| {
-                ui.label(shared.loc("bone_panel.inverse_kinematics.constraint"));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let last_constraint = bone.clone().constraint;
-                    egui::ComboBox::new("joint_constraint", "")
-                        .selected_text(const_label)
-                        .width(40.)
-                        .show_ui(ui, |ui| {
-                            let constraint = &mut shared.selected_bone_mut().unwrap().constraint;
-                            ui.selectable_value(constraint, JointConstraint::None, "None");
-                            ui.selectable_value(
-                                constraint,
-                                JointConstraint::Clockwise,
-                                "Clockwise",
-                            );
-                            ui.selectable_value(
-                                constraint,
-                                JointConstraint::CounterClockwise,
-                                "CCW",
-                            );
-                        });
-
-                    if last_constraint == shared.selected_bone().unwrap().constraint {
-                        return;
-                    }
-
-                    let mut joints = vec![];
-                    armature_window::get_all_children(&shared.armature.bones, &mut joints, &bone);
-                    joints = joints
-                        .iter()
-                        .filter(|joint| joint.joint_effector != JointEffector::None)
-                        .cloned()
-                        .collect();
-                    for joint in joints {
-                        shared
-                            .armature
-                            .bones
-                            .iter_mut()
-                            .find(|bone| bone.id == joint.id)
-                            .unwrap()
-                            .constraint = shared.selected_bone().unwrap().constraint;
-                    }
-                });
-            });
-
-            ui.horizontal(|ui| {
-                ui.label(shared.loc("bone_panel.inverse_kinematics.target"));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let str_set_target = shared
-                        .loc("bone_panel.inverse_kinematics.set_target")
-                        .clone();
-                    let str_remove_target = shared
-                        .loc("bone_panel.inverse_kinematics.remove_target")
-                        .clone();
-
-                    let remove_enabled = bone.ik_target_id != -1;
-                    ui.add_enabled_ui(remove_enabled, |ui| {
-                        if ui
-                            .skf_button("🗑")
-                            .on_hover_text(str_remove_target)
-                            .clicked()
-                        {
-                            shared.selected_bone_mut().unwrap().ik_target_id = -1;
-                        }
-                    });
-
-                    if ui.skf_button("⌖").on_hover_text(str_set_target).clicked() {
-                        shared.ui.setting_ik_target = true;
-                    }
-
-                    let mut bone_name = "None";
-                    if let Some(target) = shared.armature.find_bone(bone.ik_target_id) {
-                        bone_name = &target.name;
-                    }
-                    if ui.clickable_label(bone_name).clicked() {
-                        shared.ui.selected_bone_idx =
-                            shared.armature.find_bone_idx(bone.ik_target_id).unwrap();
-                    };
-                });
-            });
-        }
+        inverse_kinematics(ui, shared, &bone);
     }
 
-    // disabled: mesh deformation is unstable
+    // disabled: mesh deformation is incomplete
     if true {
         return;
     }
@@ -449,6 +341,109 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             shared.selected_bone_mut().unwrap().indices = indices;
         }
     });
+}
+
+pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
+    ui.separator();
+    ui.label(shared.loc("bone_panel.inverse_kinematics.heading"));
+    ui.separator();
+
+    ui.horizontal(|ui| {
+        ui.label(shared.loc("bone_panel.inverse_kinematics.effector"));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            egui::ComboBox::new("joint_eff", "")
+                .selected_text(bone.joint_effector.to_string())
+                .width(40.)
+                .show_ui(ui, |ui| {
+                    let bone = &mut shared.selected_bone_mut().unwrap().joint_effector;
+                    ui.selectable_value(bone, JointEffector::None, "None");
+                    ui.selectable_value(bone, JointEffector::Start, "Start");
+                    ui.selectable_value(bone, JointEffector::Middle, "Middle");
+                    ui.selectable_value(bone, JointEffector::End, "End");
+                })
+                .response;
+        });
+    });
+
+    if bone.joint_effector == JointEffector::Start {
+        let const_label = if bone.constraint == JointConstraint::CounterClockwise {
+            "CCW".to_string()
+        } else {
+            bone.constraint.to_string()
+        };
+        ui.horizontal(|ui| {
+            ui.label(shared.loc("bone_panel.inverse_kinematics.constraint"));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let last_constraint = bone.clone().constraint;
+                egui::ComboBox::new("joint_constraint", "")
+                    .selected_text(const_label)
+                    .width(40.)
+                    .show_ui(ui, |ui| {
+                        let constraint = &mut shared.selected_bone_mut().unwrap().constraint;
+                        ui.selectable_value(constraint, JointConstraint::None, "None");
+                        ui.selectable_value(constraint, JointConstraint::Clockwise, "Clockwise");
+                        ui.selectable_value(constraint, JointConstraint::CounterClockwise, "CCW");
+                    });
+
+                if last_constraint == shared.selected_bone().unwrap().constraint {
+                    return;
+                }
+
+                let mut joints = vec![];
+                armature_window::get_all_children(&shared.armature.bones, &mut joints, &bone);
+                joints = joints
+                    .iter()
+                    .filter(|joint| joint.joint_effector != JointEffector::None)
+                    .cloned()
+                    .collect();
+                for joint in joints {
+                    shared
+                        .armature
+                        .bones
+                        .iter_mut()
+                        .find(|bone| bone.id == joint.id)
+                        .unwrap()
+                        .constraint = shared.selected_bone().unwrap().constraint;
+                }
+            });
+        });
+
+        ui.horizontal(|ui| {
+            ui.label(shared.loc("bone_panel.inverse_kinematics.target"));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let str_set_target = shared
+                    .loc("bone_panel.inverse_kinematics.set_target")
+                    .clone();
+                let str_remove_target = shared
+                    .loc("bone_panel.inverse_kinematics.remove_target")
+                    .clone();
+
+                let remove_enabled = bone.ik_target_id != -1;
+                ui.add_enabled_ui(remove_enabled, |ui| {
+                    if ui
+                        .skf_button("🗑")
+                        .on_hover_text(str_remove_target)
+                        .clicked()
+                    {
+                        shared.selected_bone_mut().unwrap().ik_target_id = -1;
+                    }
+                });
+
+                if ui.skf_button("⌖").on_hover_text(str_set_target).clicked() {
+                    shared.ui.setting_ik_target = true;
+                }
+
+                let mut bone_name = "None";
+                if let Some(target) = shared.armature.find_bone(bone.ik_target_id) {
+                    bone_name = &target.name;
+                }
+                if ui.clickable_label(bone_name).clicked() {
+                    shared.ui.selected_bone_idx =
+                        shared.armature.find_bone_idx(bone.ik_target_id).unwrap();
+                };
+            });
+        });
+    }
 }
 
 pub fn center_verts(verts: &mut Vec<Vertex>, tex_size: &Vec2) {
