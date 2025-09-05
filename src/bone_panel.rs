@@ -75,7 +75,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     });
 
     let set_name = if bone.tex_set_idx == -1 {
-        "None".to_string()
+        shared.loc("bone_panel.texture_set_none").to_string()
     } else {
         shared.armature.texture_sets[bone.tex_set_idx as usize]
             .name
@@ -87,7 +87,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.label(shared.loc("bone_panel.texture_set"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             egui::ComboBox::new("mod", "")
-                .selected_text(shared.loc(&set_name))
+                .selected_text(set_name)
                 .show_ui(ui, |ui| {
                     ui.selectable_value(
                         &mut selected_set,
