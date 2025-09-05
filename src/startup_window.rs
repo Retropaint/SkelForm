@@ -41,8 +41,7 @@ fn startup_content(
     ui.vertical(|ui| {
         ui.set_width(133.);
         ui.add_space(10.);
-        if startup_leftside_button("+", shared.loc("new"), ui, shared, None, None).clicked()
-        {
+        if startup_leftside_button("+", shared.loc("new"), ui, shared, None, None).clicked() {
             shared.armature = Armature::default();
             shared.ui.set_state(UiState::StartupWindow, false);
         }
@@ -177,38 +176,45 @@ fn startup_content(
                     let sub_padding = 20.;
                     let separator = 15.;
 
+                    let link_color = shared.config.colors.link;
+
                     for item in &shared.startup.resources {
                         let heading_str =
                             shared.loc(&("startup.resources.".to_owned() + &item.code));
                         let heading = ui.clickable_label(
                             egui::RichText::new(heading_str)
-                                .color(egui::Color32::from_hex("#659adf").unwrap())
+                                .color(link_color)
                                 .size(header_size),
                         );
                         if heading.clicked() {
                             open_link(&item, &item.url_type);
                         }
                         ui.add_space(5.);
+
                         for sub in &item.items {
                             ui.horizontal(|ui| {
                                 let left_top = egui::Pos2::new(
                                     ui.min_rect().left_top().x + 5.,
                                     ui.min_rect().left_top().y - 10.,
                                 );
+                                let mut line_color = link_color;
+                                let darker = 105;
+                                line_color -= Color::new(darker, darker, darker, 0);
                                 ui.painter().rect_filled(
                                     egui::Rect::from_min_size(
                                         left_top,
                                         egui::Vec2::new(2., sub_size + 8.),
                                     ),
                                     egui::CornerRadius::ZERO,
-                                    egui::Color32::from_hex("#223752").unwrap(),
+                                    line_color,
                                 );
                                 ui.add_space(sub_padding);
                                 let sub_str =
                                     shared.loc(&("startup.resources.".to_owned() + &sub.code));
+
                                 let sub_text = ui.clickable_label(
                                     egui::RichText::new(sub_str)
-                                        .color(egui::Color32::from_hex("#659adf").unwrap())
+                                        .color(link_color)
                                         .size(sub_size),
                                 );
                                 if sub_text.clicked() {

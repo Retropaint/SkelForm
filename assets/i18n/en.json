@@ -101,7 +101,8 @@
         "dark_accent": "Dark Accent",
         "text": "Text",
         "frameline": "Frameline",
-        "gradient": "Gradient"
+        "gradient": "Gradient",
+        "link": "Link"
       }
     },
     "rendering": {

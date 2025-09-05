@@ -252,6 +252,7 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         color_row!("text",         col!().text,         col!().main       );
         color_row!("frameline",    col!().frameline,    col!().dark_accent);
         color_row!("gradient",     col!().gradient,     col!().main       );
+        color_row!("link",         col!().link,         col!().dark_accent);
     };
 }
 
