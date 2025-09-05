@@ -1943,7 +1943,7 @@ impl Shared {
             &lang_json,
             "".to_string(),
             &mut self.loc_strings,
-            "".to_string(),
+            "1".to_string(),
         );
         self.loc_strings.insert("".to_string(), "".to_string());
     }
