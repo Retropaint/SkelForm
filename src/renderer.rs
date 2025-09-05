@@ -91,9 +91,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             joints.insert(0, temp_bones[b].clone());
             joints = joints
                 .iter()
-                .filter(|joint| {
-                    joint.joint_effector != JointEffector::None
-                })
+                .filter(|joint| joint.joint_effector != JointEffector::None)
                 .cloned()
                 .collect();
 
@@ -166,7 +164,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // check if cursor is on an opaque pixel of this bone's texture
         let is_aiming = shared.armature.bones.iter().find(|bone| bone.aiming) != None;
-        if hover_bone_id == -1 && shared.input.mouse_left < 5 && !shared.input.on_ui && !is_aiming {
+        if hover_bone_id == -1 && !shared.input.left_down && !shared.input.on_ui && !is_aiming {
             let tb = temp_bones[b].clone();
             for (_, chunk) in tb.indices.chunks_exact(3).enumerate() {
                 let bary = tri_point(
@@ -251,7 +249,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         // select bone on click
-        if shared.input.mouse_left > 0 && hover_bone_id == temp_bones[b].id {
+        if shared.input.left_clicked && hover_bone_id == temp_bones[b].id {
             shared.ui.selected_bone_idx = shared
                 .armature
                 .bones
@@ -306,7 +304,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         );
     }
 
-    if shared.input.mouse_left == -1 {
+    if !shared.input.left_down {
         shared.dragging_vert = usize::MAX;
     } else if shared.dragging_vert != usize::MAX {
         drag_vertex(
@@ -327,7 +325,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         //draw_hover_triangle(shared, render_pass, device, &selected_bone_world_verts);
     }
 
-    if shared.input.mouse_left == -1 && shared.input.mouse_right == -1 {
+    if !shared.input.left_down {
         shared.editing_bone = false;
         return;
     }
@@ -366,7 +364,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // editing bone
     if shared.input.on_ui || shared.ui.has_state(UiState::PolarModal) {
         shared.editing_bone = false;
-    } else if shared.ui.selected_bone_idx != usize::MAX && shared.input.is_holding_click() {
+    } else if shared.ui.selected_bone_idx != usize::MAX && shared.input.left_down {
         // save bone/animation for undo
         if !shared.editing_bone {
             shared.save_edited_bone();
@@ -743,7 +741,7 @@ pub fn bone_vertices(
             shared.selected_bone_mut().unwrap().indices = triangulate(&verts);
             break;
         }
-        if shared.input.is_clicking() {
+        if shared.input.left_clicked {
             shared.undo_actions.push(Action {
                 action: ActionEnum::Bone,
                 bones: vec![shared.selected_bone().unwrap().clone()],
