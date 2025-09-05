@@ -216,6 +216,11 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if !shared.input.left_down {
         shared.input.on_ui = context.is_pointer_over_area();
     }
+
+    // close all context menus if clicking outside of them
+    if shared.input.left_clicked && !shared.ui.context_menu.keep {
+        shared.ui.context_menu.close();
+    }
 }
 
 pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
