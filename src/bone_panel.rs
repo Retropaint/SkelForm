@@ -293,11 +293,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     let parents = shared.armature.get_all_parents(bone.id);
     if children.len() > 0 || parents.len() > 0 {
         ui.separator();
-        ui.label(shared.loc("bone_panel.joint.heading"));
+        ui.label(shared.loc("bone_panel.inverse_kinematics.heading"));
         ui.separator();
 
         ui.horizontal(|ui| {
-            ui.label(shared.loc("bone_panel.joint.effector"));
+            ui.label(shared.loc("bone_panel.inverse_kinematics.effector"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 egui::ComboBox::new("joint_eff", "")
                     .selected_text(bone.joint_effector.to_string())
@@ -320,7 +320,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 bone.constraint.to_string()
             };
             ui.horizontal(|ui| {
-                ui.label(shared.loc("bone_panel.joint.constraint"));
+                ui.label(shared.loc("bone_panel.inverse_kinematics.constraint"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let last_constraint = bone.clone().constraint;
                     egui::ComboBox::new("joint_constraint", "")
@@ -365,10 +365,38 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             });
 
             ui.horizontal(|ui| {
+                ui.label(shared.loc("bone_panel.inverse_kinematics.target"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.skf_button("Set Target").clicked() {
+                    let str_set_target = shared
+                        .loc("bone_panel.inverse_kinematics.set_target")
+                        .clone();
+                    let str_remove_target = shared
+                        .loc("bone_panel.inverse_kinematics.remove_target")
+                        .clone();
+
+                    let remove_enabled = bone.ik_target_id != -1;
+                    ui.add_enabled_ui(remove_enabled, |ui| {
+                        if ui
+                            .skf_button("🗑")
+                            .on_hover_text(str_remove_target)
+                            .clicked()
+                        {
+                            shared.selected_bone_mut().unwrap().ik_target_id = -1;
+                        }
+                    });
+
+                    if ui.skf_button("⌖").on_hover_text(str_set_target).clicked() {
                         shared.ui.setting_ik_target = true;
                     }
+
+                    let mut bone_name = "None";
+                    if let Some(target) = shared.armature.find_bone(bone.ik_target_id) {
+                        bone_name = &target.name;
+                    }
+                    if ui.clickable_label(bone_name).clicked() {
+                        shared.ui.selected_bone_idx =
+                            shared.armature.find_bone_idx(bone.ik_target_id).unwrap();
+                    };
                 });
             });
         }
