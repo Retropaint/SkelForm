@@ -347,7 +347,8 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     let str_heading = shared.loc("bone_panel.inverse_kinematics.heading");
     let str_desc = shared.loc("bone_panel.inverse_kinematics.desc");
     ui.separator();
-    ui.label(str_heading).on_hover_text(str_desc);
+    ui.label(str_heading.to_owned() + ICON_INFO)
+        .on_hover_text(str_desc);
     ui.separator();
 
     ui.horizontal(|ui| {

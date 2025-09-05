@@ -76,7 +76,8 @@
     "rotation": "Rotation:",
     "zindex": "Z-Index:",
     "inverse_kinematics": {
-      "heading": "Inverse Kinematics",
+      "heading": "Inverse Kinematics ",
+      "desc": "Automatically adjust and bend bones to reach a specified target.\n\nBest used for joints like shoulders and legs.",
       "effector": "Effector:",
       "constraint": "Constraint:",
       "target": "Target: ",

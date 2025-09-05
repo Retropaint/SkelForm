@@ -184,7 +184,7 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         let str_exact_bone = shared.loc("settings_modal.miscellaneous.select_exact_bone");
         let str_exact_bone_desc = shared.loc("settings_modal.miscellaneous.select_exact_bone_desc");
-        ui.label(&(str_exact_bone.to_owned() + " ℹ"))
+        ui.label(&(str_exact_bone.to_owned() + crate::ICON_INFO))
             .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_exact_bone_desc);
         ui.checkbox(&mut shared.config.exact_bone_select, "".into_atoms());
