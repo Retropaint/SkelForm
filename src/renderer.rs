@@ -102,12 +102,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             //let target = (mouse_world * shared.camera.zoom) + shared.camera.pos;
             let target = temp_bones
                 .iter()
-                .find(|bone| bone.id == temp_bones[b].ik_target_id)
-                .unwrap()
-                .pos;
+                .find(|bone| bone.id == temp_bones[b].ik_target_id);
+
+            if target == None {
+                continue;
+            }
 
             for _ in 0..10 {
-                inverse_kinematics(&mut joints, target);
+                inverse_kinematics(&mut joints, target.unwrap().pos);
             }
             for joint in joints {
                 ik_rot.insert(joint.id, joint.rot);

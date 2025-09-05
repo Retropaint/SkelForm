@@ -97,6 +97,15 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
                     }
                 }
             }
+
+            // IK bones that target this are now -1
+            shared
+                .armature
+                .bones
+                .iter_mut()
+                .find(|bone| bone.ik_target_id == shared.ui.context_menu.id)
+                .unwrap()
+                .ik_target_id = -1;
         }
         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
         PolarId::FirstTime => shared.ui.start_tutorial(&shared.armature),
@@ -321,10 +330,18 @@ pub fn draw_tex_preview(shared: &Shared, ui: &mut egui::Ui) {
 
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         let mut name = egui::text::LayoutJob::default();
-        job_text(shared.loc("texture_modal.img_name"), Some(Color32::WHITE), &mut name);
+        job_text(
+            shared.loc("texture_modal.img_name"),
+            Some(Color32::WHITE),
+            &mut name,
+        );
         job_text(&tex.name, None, &mut name);
         let mut size = egui::text::LayoutJob::default();
-        job_text(shared.loc("texture_modal.img_size"), Some(Color32::WHITE), &mut size);
+        job_text(
+            shared.loc("texture_modal.img_size"),
+            Some(Color32::WHITE),
+            &mut size,
+        );
         job_text(
             &(tex.size.x.to_string() + " x " + &tex.size.y.to_string()),
             None,
