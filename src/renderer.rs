@@ -525,11 +525,13 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
     }
 
     // rotating bones
-    let mut tip_pos = bones
+    let end_bone = bones
         .iter_mut()
-        .find(|bone| bone.joint_effector == JointEffector::End)
-        .unwrap()
-        .pos;
+        .find(|bone| bone.joint_effector == JointEffector::End);
+    if end_bone == None {
+        return;
+    }
+    let mut tip_pos = end_bone.unwrap().pos;
     for b in (0..bones.len()).rev() {
         let eff = bones[b].joint_effector.clone();
         if eff == JointEffector::None || eff == JointEffector::End {
