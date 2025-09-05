@@ -110,147 +110,154 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
         if !visible {
             continue;
         }
+        let bone_id = shared.armature.bones[b].id;
 
         let mut dragged = false;
 
-        ui.horizontal(|ui| {
-            let bone_id = shared.armature.bones[b].id;
-            let hidden_icon = if shared.armature.is_bone_hidden(bone_id) {
-                "---"
-            } else {
-                "👁"
-            };
-            if bone_label(hidden_icon, ui, shared, b, Vec2::new(-2., 18.)).clicked() {
-                shared.armature.bones[b].hidden = !shared.armature.bones[b].hidden;
-            }
-            ui.add_space(17.);
+        // disable selected bone from armature if setting IK target, since IK target cannot be itself
+        // not it's children
+        let setting_ik_target =
+            shared.ui.setting_ik_target && bone_id == shared.selected_bone().unwrap().id;
 
-            // add space to the left if this is a child
-            let parents = shared.armature.get_all_parents(shared.armature.bones[b].id);
-            for _ in 0..parents.len() {
-                vert_line(0., ui, shared);
-                ui.add_space(15.);
-            }
-
-            // show folding button if this bone has children
-            let mut children = vec![];
-            get_all_children(
-                &shared.armature.bones,
-                &mut children,
-                &shared.armature.bones[b],
-            );
-            if children.len() == 0 {
-                vert_line(0., ui, shared);
-            } else {
-                let fold_icon = if shared.armature.bones[b].folded {
-                    "⏵"
+        ui.add_enabled_ui(!setting_ik_target, |ui| {
+            ui.horizontal(|ui| {
+                let hidden_icon = if shared.armature.is_bone_hidden(bone_id) {
+                    "---"
                 } else {
-                    "⏷"
+                    "👁"
                 };
-                if bone_label(fold_icon, ui, shared, b, Vec2::new(-2., 18.)).clicked() {
-                    shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
+                if bone_label(hidden_icon, ui, shared, b, Vec2::new(-2., 18.)).clicked() {
+                    shared.armature.bones[b].hidden = !shared.armature.bones[b].hidden;
                 }
-            }
-            ui.add_space(13.);
+                ui.add_space(17.);
 
-            let mut selected_col = shared.config.colors.dark_accent;
-            let mut cursor = egui::CursorIcon::PointingHand;
+                // add space to the left if this is a child
+                let parents = shared.armature.get_all_parents(shared.armature.bones[b].id);
+                for _ in 0..parents.len() {
+                    vert_line(0., ui, shared);
+                    ui.add_space(15.);
+                }
 
-            if shared.armature.is_bone_hidden(bone_id) {
-                selected_col = shared.config.colors.dark_accent;
-            }
-
-            if shared.ui.hovering_bone == idx {
-                selected_col += Color::new(20, 20, 20, 0);
-            }
-
-            if shared.ui.selected_bone_idx == idx as usize {
-                selected_col += Color::new(20, 20, 20, 0);
-                cursor = egui::CursorIcon::Default;
-            }
-
-            let width = ui.available_width();
-
-            let id = Id::new(("bone", idx, 0));
-            let button = ui
-                .dnd_drag_source(id, idx, |ui| {
-                    ui.set_width(width);
-                    let pic = if shared.armature.bones[b].tex_set_idx != -1 {
-                        "🖻  "
-                    } else {
-                        ""
-                    };
-
-                    let name = pic.to_owned() + &shared.armature.bones[b].name.to_string();
-                    let mut text_col = shared.config.colors.text;
-                    if shared.armature.is_bone_hidden(shared.armature.bones[b].id) {
-                        text_col = shared.config.colors.dark_accent;
-                        text_col += Color::new(40, 40, 40, 0)
-                    }
-                    egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
-                        ui.horizontal(|ui| {
-                            ui.set_width(width);
-                            ui.set_height(21.);
-                            ui.add_space(5.);
-                            ui.label(egui::RichText::new(name).color(text_col));
-                        });
-                    });
-                })
-                .response
-                .interact(Sense::click())
-                .on_hover_cursor(cursor);
-
-            if button.contains_pointer() {
-                is_hovering = true;
-                shared.ui.hovering_bone = idx;
-            }
-
-            if button.clicked() {
-                if shared.ui.setting_ik_target {
-                    shared.selected_bone_mut().unwrap().ik_target_id = bone_id;
-                    shared.ui.setting_ik_target = false;
+                // show folding button if this bone has children
+                let mut children = vec![];
+                get_all_children(
+                    &shared.armature.bones,
+                    &mut children,
+                    &shared.armature.bones[b],
+                );
+                if children.len() == 0 {
+                    vert_line(0., ui, shared);
                 } else {
-                    let anim_frame = shared.ui.anim.selected_frame;
-                    shared.ui.select_bone(idx as usize, &shared.armature);
-                    shared.ui.anim.selected_frame = anim_frame;
+                    let fold_icon = if shared.armature.bones[b].folded {
+                        "⏵"
+                    } else {
+                        "⏷"
+                    };
+                    if bone_label(fold_icon, ui, shared, b, Vec2::new(-2., 18.)).clicked() {
+                        shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
+                    }
                 }
-            };
+                ui.add_space(13.);
 
-            if button.secondary_clicked() {
-                shared
+                let mut selected_col = shared.config.colors.dark_accent;
+                let mut cursor = egui::CursorIcon::PointingHand;
+
+                if shared.armature.is_bone_hidden(bone_id) {
+                    selected_col = shared.config.colors.dark_accent;
+                }
+
+                if shared.ui.hovering_bone == idx {
+                    selected_col += Color::new(20, 20, 20, 0);
+                }
+
+                if shared.ui.selected_bone_idx == idx as usize {
+                    selected_col += Color::new(20, 20, 20, 0);
+                    cursor = egui::CursorIcon::Default;
+                }
+
+                let width = ui.available_width();
+
+                let id = Id::new(("bone", idx, 0));
+                let button = ui
+                    .dnd_drag_source(id, idx, |ui| {
+                        ui.set_width(width);
+                        let pic = if shared.armature.bones[b].tex_set_idx != -1 {
+                            "🖻  "
+                        } else {
+                            ""
+                        };
+
+                        let name = pic.to_owned() + &shared.armature.bones[b].name.to_string();
+                        let mut text_col = shared.config.colors.text;
+                        if shared.armature.is_bone_hidden(shared.armature.bones[b].id) {
+                            text_col = shared.config.colors.dark_accent;
+                            text_col += Color::new(40, 40, 40, 0)
+                        }
+                        egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
+                            ui.horizontal(|ui| {
+                                ui.set_width(width);
+                                ui.set_height(21.);
+                                ui.add_space(5.);
+                                ui.label(egui::RichText::new(name).color(text_col));
+                            });
+                        });
+                    })
+                    .response
+                    .interact(Sense::click())
+                    .on_hover_cursor(cursor);
+
+                if button.contains_pointer() {
+                    is_hovering = true;
+                    shared.ui.hovering_bone = idx;
+                }
+
+                if button.clicked() {
+                    if shared.ui.setting_ik_target {
+                        shared.selected_bone_mut().unwrap().ik_target_id = bone_id;
+                        shared.ui.setting_ik_target = false;
+                    } else {
+                        let anim_frame = shared.ui.anim.selected_frame;
+                        shared.ui.select_bone(idx as usize, &shared.armature);
+                        shared.ui.anim.selected_frame = anim_frame;
+                    }
+                };
+
+                if button.secondary_clicked() {
+                    shared
+                        .ui
+                        .context_menu
+                        .show(ContextType::Bone, shared.armature.bones[b].id);
+                }
+
+                if shared
                     .ui
                     .context_menu
-                    .show(ContextType::Bone, shared.armature.bones[b].id);
-            }
+                    .is(ContextType::Bone, shared.armature.bones[b].id)
+                {
+                    button.show_tooltip_ui(|ui| {
+                        if ui.clickable_label("Delete").clicked() {
+                            shared.ui.open_polar_modal(
+                                PolarId::DeleteBone,
+                                "Are you sure to delete this bone?",
+                            );
+                            shared.ui.context_menu.hide = true;
+                        };
 
-            if shared
-                .ui
-                .context_menu
-                .is(ContextType::Bone, shared.armature.bones[b].id)
-            {
-                button.show_tooltip_ui(|ui| {
-                    if ui.clickable_label("Delete").clicked() {
-                        shared.ui.open_polar_modal(
-                            PolarId::DeleteBone,
-                            "Are you sure to delete this bone?",
-                        );
-                        shared.ui.context_menu.hide = true;
-                    };
+                        if ui.ui_contains_pointer() {
+                            shared.ui.context_menu.keep = true;
+                        }
+                    });
+                }
 
-                    if ui.ui_contains_pointer() {
-                        shared.ui.context_menu.keep = true;
-                    }
-                });
-            }
+                // highlight this bone if it's the first and is not selected during the tutorial
+                if idx == 0 {
+                    ui::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
+                }
 
-            // highlight this bone if it's the first and is not selected during the tutorial
-            if idx == 0 {
-                ui::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
-            }
-
-            if check_bone_dragging(shared, ui, button, idx as usize) {
-                dragged = true;
-            }
+                if check_bone_dragging(shared, ui, button, idx as usize) {
+                    dragged = true;
+                }
+            });
         });
 
         if dragged {
