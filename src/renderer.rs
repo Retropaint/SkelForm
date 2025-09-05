@@ -353,7 +353,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // move camera
     if (shared.input.is_pressing(KeyCode::SuperLeft)
-        || shared.input.mouse_right > 0
+        || shared.input.right_down
         || shared.ui.selected_bone_idx == usize::MAX)
         && !shared.input.on_ui
     {

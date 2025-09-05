@@ -308,14 +308,12 @@ pub struct Camera {
 #[derive(Clone, Default)]
 pub struct InputStates {
     // mouse stuff
-    pub mouse_left_prev: i32,
-    pub mouse_right: i32,
-    pub mouse_right_prev: i32,
     pub mouse: Vec2,
     pub mouse_prev: Vec2,
     pub left_clicked: bool,
     pub right_clicked: bool,
     pub left_down: bool,
+    pub right_down: bool,
 
     // is mouse on UI?
     pub on_ui: bool,
