@@ -87,7 +87,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.label(shared.loc("bone_panel.texture_set"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             egui::ComboBox::new("mod", "")
-                .selected_text(set_name.to_string())
+                .selected_text(shared.loc(&set_name))
                 .show_ui(ui, |ui| {
                     ui.selectable_value(
                         &mut selected_set,
@@ -353,16 +353,27 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
     ui.horizontal(|ui| {
         ui.label(shared.loc("bone_panel.inverse_kinematics.effector"));
+
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let str_selected = shared
+                .loc(
+                    &("bone_panel.inverse_kinematics.".to_owned()
+                        + &bone.joint_effector.to_string()),
+                )
+                .clone();
+            let str_none = shared.loc("bone_panel.inverse_kinematics.None").clone();
+            let str_start = shared.loc("bone_panel.inverse_kinematics.Start").clone();
+            let str_middle = shared.loc("bone_panel.inverse_kinematics.Middle").clone();
+            let str_end = shared.loc("bone_panel.inverse_kinematics.End").clone();
             egui::ComboBox::new("joint_eff", "")
-                .selected_text(bone.joint_effector.to_string())
+                .selected_text(str_selected)
                 .width(40.)
                 .show_ui(ui, |ui| {
                     let bone = &mut shared.selected_bone_mut().unwrap().joint_effector;
-                    ui.selectable_value(bone, JointEffector::None, "None");
-                    ui.selectable_value(bone, JointEffector::Start, "Start");
-                    ui.selectable_value(bone, JointEffector::Middle, "Middle");
-                    ui.selectable_value(bone, JointEffector::End, "End");
+                    ui.selectable_value(bone, JointEffector::None, str_none);
+                    ui.selectable_value(bone, JointEffector::Start, str_start);
+                    ui.selectable_value(bone, JointEffector::Middle, str_middle);
+                    ui.selectable_value(bone, JointEffector::End, str_end);
                 })
                 .response;
         });
@@ -378,14 +389,21 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             ui.label(shared.loc("bone_panel.inverse_kinematics.constraint"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let last_constraint = bone.clone().constraint;
+                let str_selected =
+                    shared.loc(&("bone_panel.inverse_kinematics.".to_owned() + &const_label));
+                let str_none = shared.loc("bone_panel.inverse_kinematics.None").clone();
+                let str_clockwise = shared
+                    .loc("bone_panel.inverse_kinematics.Clockwise")
+                    .clone();
+                let str_ccw = shared.loc("bone_panel.inverse_kinematics.CCW").clone();
                 egui::ComboBox::new("joint_constraint", "")
-                    .selected_text(const_label)
+                    .selected_text(str_selected)
                     .width(40.)
                     .show_ui(ui, |ui| {
                         let constraint = &mut shared.selected_bone_mut().unwrap().constraint;
-                        ui.selectable_value(constraint, JointConstraint::None, "None");
-                        ui.selectable_value(constraint, JointConstraint::Clockwise, "Clockwise");
-                        ui.selectable_value(constraint, JointConstraint::CounterClockwise, "CCW");
+                        ui.selectable_value(constraint, JointConstraint::None, str_none);
+                        ui.selectable_value(constraint, JointConstraint::Clockwise, str_clockwise);
+                        ui.selectable_value(constraint, JointConstraint::CounterClockwise, str_ccw);
                     });
 
                 if last_constraint == shared.selected_bone().unwrap().constraint {

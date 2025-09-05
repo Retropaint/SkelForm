@@ -82,7 +82,13 @@
       "constraint": "Constraint:",
       "target": "Target: ",
       "set_target": "Set Target",
-      "remove_target": "Remove Target"
+      "remove_target": "Remove Target",
+      "None": "None",
+      "Start": "Start",
+      "Middle": "Middle",
+      "End": "End",
+      "Clockwise": "Clockwise",
+      "CCW": "CCW"
     }
   },
   "polar": {
