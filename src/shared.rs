@@ -900,14 +900,14 @@ pub struct Bone {
     pub pivot: Vec2,
     #[serde(default)]
     pub zindex: f32,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_not_joint")]
     pub joint_effector: JointEffector,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "no_constraint")]
     pub constraint: JointConstraint,
 
     #[serde(default)]
     pub hidden: bool,
-    #[serde(default)]
+    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
     pub ik_target_id: i32,
 
     #[serde(default, skip_serializing_if = "are_verts_empty")]
@@ -1080,6 +1080,7 @@ impl Armature {
             pivot: Vec2::new(0.5, 0.5),
             zindex: self.bones.len() as f32,
             constraint: JointConstraint::None,
+            ik_target_id: -1,
             ..Default::default()
         };
         if id == -1 {
@@ -2008,6 +2009,14 @@ fn is_neg_one<T: std::cmp::PartialEq<i32>>(value: &T) -> bool {
 
 fn are_verts_empty<T: std::cmp::PartialEq<Vec<Vertex>>>(value: &T) -> bool {
     *value == vec![]
+}
+
+fn is_not_joint<T: std::cmp::PartialEq<JointEffector>>(value: &T) -> bool {
+    *value == JointEffector::None
+}
+
+fn no_constraint<T: std::cmp::PartialEq<JointConstraint>>(value: &T) -> bool {
+    *value == JointConstraint::None
 }
 
 fn are_indices_empty<T: std::cmp::PartialEq<Vec<u32>>>(value: &T) -> bool {
