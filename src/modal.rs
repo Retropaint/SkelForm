@@ -99,13 +99,14 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             }
 
             // IK bones that target this are now -1
-            shared
+            let targeters = shared
                 .armature
                 .bones
                 .iter_mut()
-                .find(|bone| bone.ik_target_id == shared.ui.context_menu.id)
-                .unwrap()
-                .ik_target_id = -1;
+                .filter(|bone| bone.ik_target_id == shared.ui.context_menu.id);
+            for bone in targeters {
+                bone.ik_target_id = -1;
+            }
         }
         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
         PolarId::FirstTime => shared.ui.start_tutorial(&shared.armature),
