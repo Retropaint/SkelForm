@@ -7,9 +7,6 @@ use std::{
     ops::{DivAssign, MulAssign},
 };
 
-pub const NEW_BONE_NAME: &str = "New Bone";
-pub const CLICK_THRESHOLD: i32 = 5;
-
 use tween::Tweener;
 use wgpu::BindGroup;
 use winit::keyboard::KeyCode;
@@ -311,7 +308,6 @@ pub struct Camera {
 #[derive(Clone, Default)]
 pub struct InputStates {
     // mouse stuff
-    pub mouse_left: i32,
     pub mouse_left_prev: i32,
     pub mouse_right: i32,
     pub mouse_right_prev: i32,
@@ -319,6 +315,7 @@ pub struct InputStates {
     pub mouse_prev: Vec2,
     pub left_clicked: bool,
     pub right_clicked: bool,
+    pub left_down: bool,
 
     // is mouse on UI?
     pub on_ui: bool,
@@ -370,26 +367,6 @@ impl InputStates {
         }
 
         false
-    }
-
-    pub fn clicked(&self) -> bool {
-        self.mouse_left == -1
-            && self.mouse_left_prev != -1
-            && self.mouse_left_prev < CLICK_THRESHOLD
-    }
-
-    pub fn right_clicked(&self) -> bool {
-        self.mouse_right == -1
-            && self.mouse_right_prev != -1
-            && self.mouse_right_prev < CLICK_THRESHOLD
-    }
-
-    pub fn is_clicking(&self) -> bool {
-        self.mouse_left > 0
-    }
-
-    pub fn is_holding_click(&self) -> bool {
-        self.mouse_left > CLICK_THRESHOLD
     }
 }
 
@@ -1038,7 +1015,7 @@ impl Armature {
             .name
             .clone();
         let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
-        if bone_name == NEW_BONE_NAME || bone_name == "" {
+        if bone_name == "New Bone" || bone_name == "" {
             *bone_name = name;
         }
 
@@ -1071,7 +1048,7 @@ impl Armature {
         }
         let ids = self.bones.iter().map(|a| a.id).collect();
         let new_bone = Bone {
-            name: NEW_BONE_NAME.to_string(),
+            name: "New Bone".to_string(),
             parent_id,
             id: generate_id(ids),
             scale: Vec2 { x: 1., y: 1. },

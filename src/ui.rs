@@ -41,26 +41,9 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
 
         // process mouse inputs
 
-        shared.input.mouse_left_prev = shared.input.mouse_left;
-        shared.input.mouse_right_prev = shared.input.mouse_right;
-        if i.pointer.primary_down() {
-            shared.input.mouse_left += 1;
-            if !shared.ui.context_menu.keep {
-                shared.ui.context_menu.close();
-            }
-            shared.ui.context_menu.keep = false;
-        } else {
-            shared.input.mouse_left = -1;
-        }
-
-        if i.pointer.secondary_down() {
-            shared.input.mouse_right += 1;
-        } else {
-            shared.input.mouse_right = -1;
-        }
-
         shared.input.left_clicked = i.pointer.primary_clicked();
         shared.input.right_clicked = i.pointer.secondary_clicked();
+        shared.input.left_down = i.pointer.primary_down();
 
         if i.smooth_scroll_delta.y != 0. && !shared.input.on_ui {
             ui::set_zoom(
@@ -230,7 +213,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     // check if mouse is on ui
     //
     // this check always returns false on mouse click, so it's only checked when the mouse isn't clicked
-    if shared.input.mouse_left == -1 {
+    if !shared.input.left_down {
         shared.input.on_ui = context.is_pointer_over_area();
     }
 }

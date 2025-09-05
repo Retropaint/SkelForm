@@ -11,7 +11,7 @@ const LINE_OFFSET: f32 = 30.;
 const HELP_DONE: &str = "Congratulations, you've made your first animation!\n\nYou may proceed with fleshing out the armature and animation, or read the user docs to learn more.\n\nHave fun with SkelForm!";
 
 pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
-    if shared.input.mouse_left == -1 {
+    if !shared.input.left_down {
         shared.ui.anim.dragged_keyframe.frame = -1;
     }
 
@@ -321,7 +321,9 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
             added_elements.push(kf.element.clone());
             ui.horizontal(|ui| {
                 ui.add_space(30.);
-                let label = ui.label(shared.loc(&("keyframe_editor.elements.".to_owned() + &kf.element.to_string())));
+                let label = ui.label(
+                    shared.loc(&("keyframe_editor.elements.".to_owned() + &kf.element.to_string())),
+                );
                 bone_tops.tops.push(BoneTop {
                     id: kf.bone_id,
                     element: kf.element.clone(),
@@ -400,8 +402,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     drew_drag = true;
                 }
 
-                let just_clicked = shared.input.mouse_left_prev < 10;
-                if !response.drag_stopped() || just_clicked {
+                if !response.drag_stopped() || shared.input.left_clicked {
                     continue;
                 }
 
@@ -658,7 +659,7 @@ fn draw_frame_lines(
             color = egui::Color32::WHITE;
 
             // select this frame if clicked
-            if shared.input.mouse_left == 0 {
+            if shared.input.left_clicked {
                 shared.ui.anim.selected_frame = i;
                 shared
                     .ui
