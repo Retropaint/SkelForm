@@ -863,7 +863,6 @@ pub enum JointEffector {
     Start,
     Middle,
     End,
-    Target,
 }
 enum_string!(JointEffector);
 
