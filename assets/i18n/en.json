@@ -78,9 +78,10 @@
     "inverse_kinematics": {
       "heading": "Inverse Kinematics ",
       "desc": "Automatically adjust and bend bones to reach a specified target.\n\nBest used for joints like shoulders and legs.",
-      "effector": "Effector:",
+      "effector": "Effector ",
+      "effector_desc": "Start - used as base, will only rotate and stay in place\n\nMiddle - will rotate and move such that End matches Target\n\nEnd - all prior effectors will adjust such that this matches Target",
       "constraint": "Constraint:",
-      "target": "Target: ",
+      "target": "Target:",
       "set_target": "Set Target",
       "remove_target": "Remove Target",
       "None": "None",
