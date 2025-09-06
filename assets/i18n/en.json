@@ -146,9 +146,9 @@
     },
     "miscellaneous": {
       "heading": "Miscellaneous",
-      "autosave_frequency": "Autosave frequency (seconds)",
-      "select_exact_bone": "Select exact bone in click",
-      "select_exact_bone_desc": "When clicking a bone's texture, the first untextured parent of the bone will be selected. Tick this to always select the textured bone directly.",
+      "autosave_frequency": "Autosave frequency (seconds):",
+      "select_exact_bone": "Select exact bone in click ",
+      "select_exact_bone_desc": "When clicking a bone's texture, the first untextured parent of the bone will be selected.\n\nTick this to always select the textured bone directly.",
       "skip_startup_window": "Skip startup window",
       "clear_recent_files": "Clear recent files"
     }
