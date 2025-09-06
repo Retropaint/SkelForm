@@ -136,71 +136,72 @@ impl ApplicationHandler for App {
             let window_handle = Arc::new(window);
             self.window = Some(window_handle.clone());
 
-            // initial launch
-            if first_window_handle {
-                let gui_context = egui::Context::default();
-
-                // turn off egui kb zoom
-                gui_context.options_mut(|op| {
-                    op.zoom_with_keyboard = false;
-                });
-
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    let inner_size = window_handle.inner_size();
-                    self.last_size = (inner_size.width, inner_size.height);
-                }
-
-                #[cfg(target_arch = "wasm32")]
-                {
-                    gui_context.set_pixels_per_point(window_handle.scale_factor() as f32);
-                }
-
-                self.shared.window_factor = window_handle.scale_factor() as f32;
-
-                let viewport_id = gui_context.viewport_id();
-                let gui_state = egui_winit::State::new(
-                    gui_context,
-                    viewport_id,
-                    &window_handle,
-                    Some(window_handle.scale_factor() as f32),
-                    Some(Theme::Dark),
-                    None,
-                );
-
-                #[cfg(not(target_arch = "wasm32"))]
-                let (width, height) = (
-                    window_handle.inner_size().width,
-                    window_handle.inner_size().height,
-                );
-
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    let renderer = pollster::block_on(async move {
-                        Renderer::new(window_handle.clone(), width, height).await
-                    });
-                    self.renderer = Some(renderer);
-                }
-
-                #[cfg(target_arch = "wasm32")]
-                {
-                    let (sender, receiver) = futures::channel::oneshot::channel();
-                    self.renderer_receiver = Some(receiver);
-                    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-                    console_log::init().expect("Failed to initialize logger!");
-                    log::info!("Canvas dimensions: ({canvas_width} x {canvas_height})");
-                    wasm_bindgen_futures::spawn_local(async move {
-                        let renderer =
-                            Renderer::new(window_handle.clone(), canvas_width, canvas_height).await;
-                        if sender.send(renderer).is_err() {
-                            log::error!("Failed to create and send renderer!");
-                        }
-                    });
-                }
-
-                self.gui_state = Some(gui_state);
-                self.last_render_time = Some(Instant::now());
+            if !first_window_handle {
+                return;
             }
+
+            let gui_context = egui::Context::default();
+
+            // turn off egui kb zoom
+            gui_context.options_mut(|op| {
+                op.zoom_with_keyboard = false;
+            });
+
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let inner_size = window_handle.inner_size();
+                self.last_size = (inner_size.width, inner_size.height);
+            }
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                gui_context.set_pixels_per_point(window_handle.scale_factor() as f32);
+            }
+
+            self.shared.window_factor = window_handle.scale_factor() as f32;
+
+            let viewport_id = gui_context.viewport_id();
+            let gui_state = egui_winit::State::new(
+                gui_context,
+                viewport_id,
+                &window_handle,
+                Some(window_handle.scale_factor() as f32),
+                Some(Theme::Dark),
+                None,
+            );
+
+            #[cfg(not(target_arch = "wasm32"))]
+            let (width, height) = (
+                window_handle.inner_size().width,
+                window_handle.inner_size().height,
+            );
+
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let renderer = pollster::block_on(async move {
+                    Renderer::new(window_handle.clone(), width, height).await
+                });
+                self.renderer = Some(renderer);
+            }
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                let (sender, receiver) = futures::channel::oneshot::channel();
+                self.renderer_receiver = Some(receiver);
+                std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+                console_log::init().expect("Failed to initialize logger!");
+                log::info!("Canvas dimensions: ({canvas_width} x {canvas_height})");
+                wasm_bindgen_futures::spawn_local(async move {
+                    let renderer =
+                        Renderer::new(window_handle.clone(), canvas_width, canvas_height).await;
+                    if sender.send(renderer).is_err() {
+                        log::error!("Failed to create and send renderer!");
+                    }
+                });
+            }
+
+            self.gui_state = Some(gui_state);
+            self.last_render_time = Some(Instant::now());
         }
     }
 
@@ -382,16 +383,6 @@ impl ApplicationHandler for App {
             event_loop.exit();
         }
 
-        if self.shared.generic_bindgroup == None {
-            self.shared.generic_bindgroup = Some(renderer::create_texture_bind_group(
-                vec![255, 255, 255, 255],
-                Vec2::new(1., 1.),
-                &self.renderer.as_ref().unwrap().gpu.queue,
-                &self.renderer.as_ref().unwrap().gpu.device,
-                &self.renderer.as_ref().unwrap().bind_group_layout,
-            ));
-        }
-
         #[cfg(not(target_arch = "wasm32"))]
         #[cfg(feature = "debug")]
         if self.shared.debug {
@@ -477,6 +468,15 @@ impl Renderer {
         textures_delta: egui::TexturesDelta,
         shared: &mut shared::Shared,
     ) {
+        if shared.generic_bindgroup == None {
+            shared.generic_bindgroup = Some(renderer::create_texture_bind_group(
+                vec![255, 255, 255, 255],
+                Vec2::new(1., 1.),
+                &self.gpu.queue,
+                &self.gpu.device,
+                &self.bind_group_layout,
+            ));
+        }
         if shared.saving != shared::Saving::None {
             #[cfg(target_arch = "wasm32")]
             if shared.saving == shared::Saving::CustomPath {
