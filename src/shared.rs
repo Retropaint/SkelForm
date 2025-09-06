@@ -892,11 +892,10 @@ pub struct Bone {
     pub joint_effector: JointEffector,
     #[serde(default, skip_serializing_if = "no_constraint")]
     pub constraint: JointConstraint,
-
-    #[serde(default)]
-    pub hidden: bool,
     #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
     pub ik_target_id: i32,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub hidden: bool,
 
     #[serde(default, skip_serializing_if = "are_verts_empty")]
     pub vertices: Vec<Vertex>,
@@ -1991,19 +1990,23 @@ fn gridline_default() -> i32 {
     200
 }
 
-fn is_neg_one<T: std::cmp::PartialEq<i32>>(value: &T) -> bool {
+fn is_neg_one(value: &i32) -> bool {
     *value == -1
 }
 
-fn are_verts_empty<T: std::cmp::PartialEq<Vec<Vertex>>>(value: &T) -> bool {
+fn is_false(value: &bool) -> bool {
+    !*value
+}
+
+fn are_verts_empty(value: &Vec<Vertex>) -> bool {
     *value == vec![]
 }
 
-fn is_not_joint<T: std::cmp::PartialEq<JointEffector>>(value: &T) -> bool {
+fn is_not_joint(value: &JointEffector) -> bool {
     *value == JointEffector::None
 }
 
-fn no_constraint<T: std::cmp::PartialEq<JointConstraint>>(value: &T) -> bool {
+fn no_constraint(value: &JointConstraint) -> bool {
     *value == JointConstraint::None
 }
 
@@ -2011,7 +2014,7 @@ fn are_indices_empty<T: std::cmp::PartialEq<Vec<u32>>>(value: &T) -> bool {
     *value == vec![]
 }
 
-fn are_anims_empty<T: std::cmp::PartialEq<Vec<Animation>>>(value: &T) -> bool {
+fn are_anims_empty(value: &Vec<Animation>) -> bool {
     *value == vec![]
 }
 
