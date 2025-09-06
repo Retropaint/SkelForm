@@ -278,14 +278,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 device,
             );
         }
+    }
 
-        if !shared.ui.editing_mesh || shared.selected_bone().unwrap().id != bone.id {
-            continue;
-        }
-
+    if shared.ui.editing_mesh {
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-        vert_lines(bone, shared, &mouse_world_vert, render_pass, device);
-
+        let bone = temp_bones.iter().find(|bone| bone.id == shared.selected_bone().unwrap().id).unwrap();
+        vert_lines(&bone, shared, &mouse_world_vert, render_pass, device);
         bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
     }
 
