@@ -1809,7 +1809,7 @@ pub struct Shared {
     pub ui: Ui,
     pub editing_bone: bool,
 
-    pub dragging_vert: usize,
+    pub dragging_verts: Vec<usize>,
 
     pub frame: i32,
     pub recording: bool,
