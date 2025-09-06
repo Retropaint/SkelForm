@@ -265,24 +265,48 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // runtime: sort bones by z-index for drawing
     temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
 
-    for bone in &temp_bones {
-        if bone.tex_set_idx != -1 && !shared.armature.is_bone_hidden(bone.id) {
-            let bind_group = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-                [bone.tex_idx as usize]
-                .bind_group;
-            draw(
-                &bind_group,
-                &bone.world_verts,
-                &bone.indices,
-                render_pass,
-                device,
-            );
+    for bone in &mut temp_bones {
+        if bone.tex_set_idx == -1 || shared.armature.is_bone_hidden(bone.id) {
+            continue;
         }
+
+        if shared.ui.editing_mesh && shared.selected_bone().unwrap().id == bone.id {
+            continue;
+        }
+
+        let bind_group = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
+            [bone.tex_idx as usize]
+            .bind_group;
+        draw(
+            &bind_group,
+            &bone.world_verts,
+            &bone.indices,
+            render_pass,
+            device,
+        );
     }
 
     if shared.ui.editing_mesh {
+        let bone = temp_bones
+            .iter_mut()
+            .find(|bone| bone.id == shared.selected_bone().unwrap().id)
+            .unwrap();
+        let bind_group = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
+            [bone.tex_idx as usize]
+            .bind_group;
+        for vert in &mut bone.world_verts {
+            vert.add_color = VertexColor::new(0., 0., 0., 0.5);
+        }
+        draw(
+            &bind_group,
+            &bone.world_verts,
+            &bone.indices,
+            render_pass,
+            device,
+        );
+
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-        let bone = temp_bones.iter().find(|bone| bone.id == shared.selected_bone().unwrap().id).unwrap();
+
         vert_lines(&bone, shared, &mouse_world_vert, render_pass, device);
         bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
     }
