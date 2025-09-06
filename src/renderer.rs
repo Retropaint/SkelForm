@@ -762,12 +762,17 @@ pub fn bone_vertices(
         }
 
         point!(wv, VertexColor::WHITE);
-        if shared.input.right_clicked && world_verts.len() > 4 {
-            let verts = &mut shared.selected_bone_mut().unwrap().vertices;
-            verts.remove(wv);
-            *verts = sort_vertices(verts.clone());
-            shared.selected_bone_mut().unwrap().indices = triangulate(&verts);
-            break;
+        if shared.input.right_clicked {
+            if world_verts.len() <= 4 {
+                let str_vert_limit = shared.loc("vert_limit");
+                shared.ui.open_modal(str_vert_limit.to_string(), false);
+            } else {
+                let verts = &mut shared.selected_bone_mut().unwrap().vertices;
+                verts.remove(wv);
+                *verts = sort_vertices(verts.clone());
+                shared.selected_bone_mut().unwrap().indices = triangulate(&verts);
+                break;
+            }
         }
         if shared.input.left_pressed {
             shared.undo_actions.push(Action {
@@ -824,7 +829,7 @@ pub fn vert_lines(
 
         let mut verts = vec![v0_top, v0_bot, v1_top, v1_bot];
         let indices = vec![0, 1, 2, 1, 2, 3];
-        let add_color = VertexColor::new(0.1, 0.1, 0.1, 0.);
+        let add_color = VertexColor::new(0.2, 0.2, 0.2, 0.);
 
         let mut is_hovering = false;
 
