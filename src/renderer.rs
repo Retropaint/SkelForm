@@ -756,7 +756,11 @@ pub fn bone_vertices(
     for wv in 0..world_verts.len() {
         let point = point!(wv, VertexColor::GREEN);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
-        if shared.input.on_ui || !mouse_on_it || shared.dragging_verts.len() > 0 {
+
+        // left_pressed indicates that dragging hasn't started, so override line verts if this vert is also pressed on
+        let clicked_this_frame = shared.dragging_verts.len() > 0 && !shared.input.left_pressed;
+
+        if shared.input.on_ui || !mouse_on_it || clicked_this_frame {
             continue;
         }
 
@@ -775,7 +779,7 @@ pub fn bone_vertices(
                 id: shared.selected_bone().unwrap().id,
                 ..Default::default()
             });
-            shared.dragging_verts.push(wv);
+            shared.dragging_verts = vec![wv];
             break;
         }
     }
@@ -827,20 +831,22 @@ pub fn vert_lines(
 
         let mut is_hovering = false;
 
-        for (_, chunk) in indices.chunks_exact(3).enumerate() {
-            let bary = tri_point(
-                &mouse_world_vert.pos,
-                &verts[chunk[0] as usize].pos,
-                &verts[chunk[1] as usize].pos,
-                &verts[chunk[2] as usize].pos,
-            );
-            if bary.0 == -1. {
-                continue;
-            }
-            is_hovering = true;
-            if shared.input.left_pressed {
-                shared.dragging_verts.push(i0);
-                shared.dragging_verts.push(i1);
+        if shared.dragging_verts.len() == 0 {
+            for (_, chunk) in indices.chunks_exact(3).enumerate() {
+                let bary = tri_point(
+                    &mouse_world_vert.pos,
+                    &verts[chunk[0] as usize].pos,
+                    &verts[chunk[1] as usize].pos,
+                    &verts[chunk[2] as usize].pos,
+                );
+                if bary.0 == -1. {
+                    continue;
+                }
+                is_hovering = true;
+                if shared.input.left_pressed {
+                    shared.dragging_verts.push(i0);
+                    shared.dragging_verts.push(i1);
+                }
             }
         }
 
