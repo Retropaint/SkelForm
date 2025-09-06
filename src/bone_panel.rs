@@ -296,7 +296,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
     // disabled: mesh deformation is incomplete
     if true {
-        return;
+        //return;
     }
 
     if bone.vertices.len() == 0 {
