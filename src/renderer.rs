@@ -754,8 +754,7 @@ pub fn bone_vertices(
     }
 
     for wv in 0..world_verts.len() {
-        let c = wv as f32 / world_verts.len() as f32;
-        let point = point!(wv, VertexColor::new(c, 0., 0., 1.));
+        let point = point!(wv, VertexColor::GREEN);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
         if shared.input.on_ui || !mouse_on_it || shared.dragging_verts.len() > 0 {
             continue;
@@ -798,12 +797,8 @@ pub fn vert_lines(
         let width = 0.007;
         let mut size = Vec2::new(width, width);
         size = utils::rotate(&size, dir.y.atan2(dir.x));
-        let col = VertexColor::new(
-            shared.config.colors.gridline.r as f32 / 255.,
-            shared.config.colors.gridline.g as f32 / 255.,
-            shared.config.colors.gridline.b as f32 / 255.,
-            1.,
-        );
+        let mut col = VertexColor::GREEN;
+        col += VertexColor::new(-0.5, -0.5, -0.5, 0.);
 
         let mut v0_top = Vertex {
             pos: v0.pos + size,
@@ -1057,7 +1052,7 @@ fn draw_point(
         return vec![];
     }
 
-    let point_size = 5.;
+    let point_size = 10.;
     let mut temp_point_verts: [Vertex; 4] = [
         Vertex {
             pos: Vec2::new(-point_size, point_size),
