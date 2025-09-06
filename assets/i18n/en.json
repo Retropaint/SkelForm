@@ -91,6 +91,10 @@
       "End": "End",
       "Clockwise": "Clockwise",
       "CCW": "CCW"
+    },
+    "mesh_deformation": {
+      "heading": "Mesh Deformation ",
+      "desc": "As all textures are made up of triangles, vertices can be moved and created to create more dynamic and flexible rigs & animations."
     }
   },
   "polar": {

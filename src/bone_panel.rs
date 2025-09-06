@@ -294,53 +294,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         inverse_kinematics(ui, shared, &bone);
     }
 
-    // disabled: mesh deformation is incomplete
-    if true {
-        //return;
-    }
-
     if bone.vertices.len() == 0 {
         return;
     }
 
-    let mut mesh_label = "Edit Mesh";
-    if shared.ui.editing_mesh {
-        mesh_label = "Finish Edit";
-    }
-
-    ui.horizontal(|ui| {
-        if ui.skf_button(mesh_label).clicked() {
-            shared.ui.editing_mesh = !shared.ui.editing_mesh;
-        }
-    });
-
-    if !shared.ui.editing_mesh {
-        return;
-    }
-
-    ui.horizontal(|ui| {
-        //if ui.skf_button("Center").clicked() {
-        //    center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
-        //}
-        if ui.skf_button("Reset").clicked() {
-            let (verts, indices) = renderer::create_tex_rect(
-                &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-                    [bone.tex_idx as usize]
-                    .size,
-            );
-            shared.selected_bone_mut().unwrap().vertices = verts;
-            shared.selected_bone_mut().unwrap().indices = indices;
-        }
-        if ui.skf_button("Generate").clicked() {
-            let (verts, indices) = renderer::polygonate(
-                &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-                    [bone.tex_idx as usize]
-                    .image,
-            );
-            shared.selected_bone_mut().unwrap().vertices = verts;
-            shared.selected_bone_mut().unwrap().indices = indices;
-        }
-    });
+    mesh_deformation(ui, shared, &bone);
 }
 
 pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
@@ -472,6 +430,54 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             });
         });
     }
+}
+
+pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
+    let str_heading = shared.loc("bone_panel.mesh_deformation.heading");
+    let str_desc = shared.loc("bone_panel.mesh_deformation.desc");
+    ui.separator();
+    ui.label(str_heading.to_owned() + ICON_INFO)
+        .on_hover_text(str_desc);
+    ui.separator();
+
+    let mut mesh_label = "Edit Mesh";
+    if shared.ui.editing_mesh {
+        mesh_label = "Finish Edit";
+    }
+
+    ui.horizontal(|ui| {
+        if ui.skf_button(mesh_label).clicked() {
+            shared.ui.editing_mesh = !shared.ui.editing_mesh;
+        }
+    });
+
+    if !shared.ui.editing_mesh {
+        return;
+    }
+
+    ui.horizontal(|ui| {
+        //if ui.skf_button("Center").clicked() {
+        //    center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
+        //}
+        if ui.skf_button("Reset").clicked() {
+            let (verts, indices) = renderer::create_tex_rect(
+                &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
+                    [bone.tex_idx as usize]
+                    .size,
+            );
+            shared.selected_bone_mut().unwrap().vertices = verts;
+            shared.selected_bone_mut().unwrap().indices = indices;
+        }
+        if ui.skf_button("Generate").clicked() {
+            let (verts, indices) = renderer::polygonate(
+                &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
+                    [bone.tex_idx as usize]
+                    .image,
+            );
+            shared.selected_bone_mut().unwrap().vertices = verts;
+            shared.selected_bone_mut().unwrap().indices = indices;
+        }
+    });
 }
 
 pub fn center_verts(verts: &mut Vec<Vertex>, tex_size: &Vec2) {
