@@ -121,7 +121,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
             -1
         };
 
-        // disable selected bone and it's children from armature if setting IK target, 
+        // disable selected bone and it's children from armature if setting IK target,
         // since IK target cannot be itself
         let setting_ik_target = shared.ui.setting_ik_target
             && (bone_id == selected_bone_id
@@ -188,13 +188,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 let button = ui
                     .dnd_drag_source(id, idx, |ui| {
                         ui.set_width(width);
-                        let pic = if shared.armature.bones[b].tex_set_idx != -1 {
-                            "🖻  "
-                        } else {
-                            ""
-                        };
 
-                        let name = pic.to_owned() + &shared.armature.bones[b].name.to_string();
+                        let name = shared.armature.bones[b].name.to_string();
                         let mut text_col = shared.config.colors.text;
                         if shared.armature.is_bone_hidden(shared.armature.bones[b].id) {
                             text_col = shared.config.colors.dark_accent;
@@ -206,6 +201,15 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                                 ui.set_height(21.);
                                 ui.add_space(5.);
                                 ui.label(egui::RichText::new(name).color(text_col));
+
+                                let pic = if shared.armature.bones[b].tex_set_idx != -1 {
+                                    "🖻  "
+                                } else {
+                                    ""
+                                };
+                                let mut pic_col = shared.config.colors.dark_accent;
+                                pic_col += Color::new(40, 40, 40, 0);
+                                ui.label(egui::RichText::new(pic).color(pic_col))
                             });
                         });
                     })
