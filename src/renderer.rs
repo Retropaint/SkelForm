@@ -27,6 +27,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     #[cfg(target_arch = "wasm32")]
     loaded();
 
+    // create vert on cursor
+    let mut mouse_world_vert = Vertex {
+        pos: utils::screen_to_world_space(shared.input.mouse, shared.window),
+        ..Default::default()
+    };
+    mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
+
     if shared.generic_bindgroup != None && !shared.config.gridline_front {
         draw_gridline(render_pass, device, shared);
     }
@@ -149,13 +156,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             temp_bones[b].world_verts.push(new_vert);
         }
 
-        // create vert on cursor
-        let mut mouse_world_vert = Vertex {
-            pos: utils::screen_to_world_space(shared.input.mouse, shared.window),
-            ..Default::default()
-        };
-        mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
-
         // check if cursor is on an opaque pixel of this bone's texture
         let is_aiming = shared.armature.bones.iter().find(|bone| bone.aiming) != None;
         if hover_bone_id == -1 && !shared.input.left_down && !shared.input.on_ui && !is_aiming {
@@ -178,15 +178,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
                 let pixel_pos: Vec2;
 
-                {
-                    let img = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize]
-                        .textures[temp_bones[b].tex_idx as usize]
-                        .image;
-                    pixel_pos = Vec2::new(
-                        (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
-                        (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
-                    );
-                }
+                let img = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize]
+                    .textures[temp_bones[b].tex_idx as usize]
+                    .image;
+                pixel_pos = Vec2::new(
+                    (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
+                    (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
+                );
 
                 if shared.input.left_clicked && shared.ui.editing_mesh {
                     let bone_mut = shared.selected_bone_mut().unwrap();
@@ -305,13 +303,28 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     ..v1
                 };
                 let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
-                draw(
-                    &None,
-                    &verts,
-                    &vec![0, 1, 2, 1, 2, 3],
-                    render_pass,
-                    device,
-                )
+                let indices = vec![0, 1, 2, 1, 2, 3];
+                draw(&None, &verts, &indices, render_pass, device);
+
+                if shared.dragging_verts.len() > 0 {
+                    continue;
+                }
+
+                for (_, chunk) in indices.chunks_exact(3).enumerate() {
+                    let bary = tri_point(
+                        &mouse_world_vert.pos,
+                        &verts[chunk[0] as usize].pos,
+                        &verts[chunk[1] as usize].pos,
+                        &verts[chunk[2] as usize].pos,
+                    );
+                    if bary.0 == -1. {
+                        continue;
+                    }
+                    if shared.input.left_pressed {
+                        shared.dragging_verts.push(v);
+                        shared.dragging_verts.push((v + 1) % bone.world_verts.len());
+                    }
+                }
             }
         }
     }
@@ -342,19 +355,22 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     if !shared.input.left_down {
-        shared.dragging_vert = usize::MAX;
+        shared.dragging_verts = vec![];
         shared.editing_bone = false;
         return;
-    } else if shared.dragging_vert != usize::MAX {
+    } else if shared.dragging_verts.len() > 0 {
         let mut bone_id = -1;
         if let Some(bone) = shared.selected_bone() {
             bone_id = bone.id
         }
-        drag_vertex(
-            shared,
-            &temp_bones.iter().find(|bone| bone.id == bone_id).unwrap(),
-            shared.dragging_vert,
-        );
+        for vert in shared.dragging_verts.clone() {
+            drag_vertex(
+                shared,
+                &temp_bones.iter().find(|bone| bone.id == bone_id).unwrap(),
+                vert
+            );
+        }
+
         return;
     }
 
@@ -755,7 +771,7 @@ pub fn bone_vertices(
         let c = wv as f32 / world_verts.len() as f32;
         let point = point!(wv, VertexColor::new(c, 0., 0., 1.));
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
-        if shared.input.on_ui || !mouse_on_it || shared.dragging_vert != usize::MAX {
+        if shared.input.on_ui || !mouse_on_it || shared.dragging_verts.len() > 0 {
             continue;
         }
 
@@ -774,7 +790,7 @@ pub fn bone_vertices(
                 id: shared.selected_bone().unwrap().id,
                 ..Default::default()
             });
-            shared.dragging_vert = wv;
+            shared.dragging_verts.push(wv);
             break;
         }
     }
@@ -815,7 +831,7 @@ pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
 
     shared.armature.edit_vert(
         bone.id,
-        shared.dragging_vert as i32,
+        vert_idx as i32,
         &(final_pos),
         shared.ui.anim.selected,
         shared.ui.anim.selected_frame,

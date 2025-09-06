@@ -70,7 +70,7 @@ fn init_shared(shared: &mut Shared) {
         frame: -1,
         ..Default::default()
     };
-    shared.dragging_vert = usize::MAX;
+    shared.dragging_verts = vec![];
     shared.ui.scale = 1.;
     shared.ui.context_menu.close();
     shared.ui.hovering_tex = -1;
