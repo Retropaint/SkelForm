@@ -34,7 +34,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     };
     mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
-    if shared.generic_bindgroup != None && !shared.config.gridline_front {
+    if !shared.config.gridline_front {
         draw_gridline(render_pass, device, shared);
     }
 
@@ -310,7 +310,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
     }
 
-    if shared.generic_bindgroup != None && shared.config.gridline_front {
+    if shared.config.gridline_front {
         draw_gridline(render_pass, device, shared);
     }
 
@@ -1076,10 +1076,6 @@ fn draw_point(
     camera: Vec2,
     rotation: f32,
 ) -> Vec<Vertex> {
-    if shared.generic_bindgroup == None {
-        return vec![];
-    }
-
     let point_size = 10.;
     let mut temp_point_verts: [Vertex; 4] = [
         Vertex {
