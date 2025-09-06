@@ -281,7 +281,38 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
 
             // draw vert lines
-            for vert in &bone.world_verts {}
+            for v in 0..bone.world_verts.len() {
+                let v0 = bone.world_verts[v];
+                let v1 = bone.world_verts[(v + 1) % bone.world_verts.len()];
+                let dir = v0.pos - v1.pos;
+                let width = 0.005;
+                let mut size = Vec2::new(width, width);
+                size = utils::rotate(&size, dir.y.atan2(dir.x));
+                let v0_top = Vertex {
+                    pos: v0.pos + size,
+                    ..v0
+                };
+                let v0_bot = Vertex {
+                    pos: v0.pos - size,
+                    ..v0
+                };
+                let v1_top = Vertex {
+                    pos: v1.pos + size,
+                    ..v1
+                };
+                let v1_bot = Vertex {
+                    pos: v1.pos - size,
+                    ..v1
+                };
+                let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
+                draw(
+                    &None,
+                    &verts,
+                    &vec![0, 1, 2, 1, 2, 3],
+                    render_pass,
+                    device,
+                )
+            }
         }
     }
 
@@ -684,7 +715,9 @@ pub fn draw(
     render_pass: &mut RenderPass,
     device: &Device,
 ) {
-    render_pass.set_bind_group(0, bind_group, &[]);
+    if *bind_group != None {
+        render_pass.set_bind_group(0, bind_group, &[]);
+    }
     render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
     render_pass.set_index_buffer(
         index_buffer(indices.to_vec(), &device).slice(..),
