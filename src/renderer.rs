@@ -283,10 +283,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // draw vert lines
         for v in 0..bone.world_verts.len() {
-            let v0 = bone.world_verts[v];
-            let v1 = bone.world_verts[(v + 1) % bone.world_verts.len()];
+            let i0 = v;
+            let i1 = (v + 1) % bone.world_verts.len();
+            let v0 = bone.world_verts[i0];
+            let v1 = bone.world_verts[i1];
             let dir = v0.pos - v1.pos;
-            let width = 0.005;
+            let width = 0.007;
             let mut size = Vec2::new(width, width);
             size = utils::rotate(&size, dir.y.atan2(dir.x));
             let col = VertexColor::new(
@@ -295,33 +297,33 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.config.colors.gridline.b as f32 / 255.,
                 1.,
             );
-            let v0_top = Vertex {
+
+            let mut v0_top = Vertex {
                 pos: v0.pos + size,
                 color: col,
                 ..v0
             };
-            let v0_bot = Vertex {
+            let mut v0_bot = Vertex {
                 pos: v0.pos - size,
                 color: col,
                 ..v0
             };
-            let v1_top = Vertex {
+            let mut v1_top = Vertex {
                 pos: v1.pos + size,
                 color: col,
                 ..v1
             };
-            let v1_bot = Vertex {
+            let mut v1_bot = Vertex {
                 pos: v1.pos - size,
                 color: col,
                 ..v1
             };
-            let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
-            let indices = vec![0, 1, 2, 1, 2, 3];
-            draw(&None, &verts, &indices, render_pass, device);
 
-            if shared.dragging_verts.len() > 0 {
-                continue;
-            }
+            let mut verts = vec![v0_top, v0_bot, v1_top, v1_bot];
+            let indices = vec![0, 1, 2, 1, 2, 3];
+            let add_color = VertexColor::new(0.1, 0.1, 0.1, 0.);
+
+            let mut is_hovering = false;
 
             for (_, chunk) in indices.chunks_exact(3).enumerate() {
                 let bary = tri_point(
@@ -333,11 +335,33 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 if bary.0 == -1. {
                     continue;
                 }
+                is_hovering = true;
                 if shared.input.left_pressed {
-                    shared.dragging_verts.push(v);
-                    shared.dragging_verts.push((v + 1) % bone.world_verts.len());
+                    shared.dragging_verts.push(i0);
+                    shared.dragging_verts.push(i1);
                 }
             }
+
+            if is_hovering {
+                v0_top.add_color += add_color;
+                v0_bot.add_color += add_color;
+                v1_top.add_color += add_color;
+                v1_bot.add_color += add_color;
+                verts = vec![v0_top, v0_bot, v1_top, v1_bot];
+            }
+
+            if shared.dragging_verts.len() == 2
+                && shared.dragging_verts[0] == i0
+                && shared.dragging_verts[1] == i1
+            {
+                v0_top.add_color += add_color;
+                v0_bot.add_color += add_color;
+                v1_top.add_color += add_color;
+                v1_bot.add_color += add_color;
+                verts = vec![v0_top, v0_bot, v1_top, v1_bot];
+            }
+
+            draw(&None, &verts, &indices, render_pass, device);
         }
     }
 

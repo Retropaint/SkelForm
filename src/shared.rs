@@ -232,6 +232,15 @@ impl VertexColor {
     pub const WHITE: VertexColor = VertexColor::new(1., 1., 1., 1.);
 }
 
+impl std::ops::AddAssign for VertexColor {
+    fn add_assign(&mut self, other: VertexColor) {
+        self.r += other.r;
+        self.g += other.g;
+        self.b += other.b;
+        self.a += other.a;
+    }
+}
+
 #[rustfmt::skip]
 impl Default for VertexColor {
     fn default() -> Self {
