@@ -39,8 +39,6 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         }
         shared.input.last_pressed = i.keys_down.iter().last().copied();
 
-        // process mouse inputs
-
         shared.input.left_clicked = i.pointer.primary_clicked();
         shared.input.right_clicked = i.pointer.secondary_clicked();
         shared.input.left_down = i.pointer.primary_down();

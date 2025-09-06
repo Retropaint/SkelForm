@@ -129,13 +129,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
 
-        if shared.armature.is_bone_hidden(temp_bones[b].id)
-            || temp_bones[b].tex_idx
-                > shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize]
-                    .textures
-                    .len() as i32
-                    - 1
-        {
+        let set = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize];
+        let out_of_bounds = temp_bones[b].tex_idx > set.textures.len() as i32 - 1;
+        if shared.armature.is_bone_hidden(temp_bones[b].id) || out_of_bounds {
             continue;
         }
 
@@ -694,7 +690,7 @@ pub fn bone_vertices(
     render_pass: &mut RenderPass,
     device: &Device,
     world_verts: &Vec<Vertex>,
-) -> usize {
+) {
     macro_rules! point {
         ($idx:expr, $color:expr) => {
             draw_point(
@@ -713,8 +709,6 @@ pub fn bone_vertices(
         };
     }
 
-    let mut hovering_vert = usize::MAX;
-
     for wv in 0..world_verts.len() {
         let c = wv as f32 / world_verts.len() as f32;
         let point = point!(wv, VertexColor::new(c, 0., 0., 1.));
@@ -723,7 +717,6 @@ pub fn bone_vertices(
             continue;
         }
 
-        hovering_vert = wv;
         point!(wv, VertexColor::WHITE);
         if shared.input.right_clicked && world_verts.len() > 4 {
             let verts = &mut shared.selected_bone_mut().unwrap().vertices;
@@ -743,8 +736,6 @@ pub fn bone_vertices(
             break;
         }
     }
-
-    hovering_vert
 }
 
 pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
