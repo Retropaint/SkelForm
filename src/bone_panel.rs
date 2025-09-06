@@ -440,43 +440,56 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         .on_hover_text(str_desc);
     ui.separator();
 
-    let mut mesh_label = "Edit Mesh";
+    let str_edit = shared.loc("bone_panel.mesh_deformation.edit").clone();
+    let str_finish_edit = shared.loc("bone_panel.mesh_deformation.finish_edit").clone();
+    let mut mesh_label = str_edit;
     if shared.ui.editing_mesh {
-        mesh_label = "Finish Edit";
+        mesh_label = str_finish_edit;
     }
 
     ui.horizontal(|ui| {
-        if ui.skf_button(mesh_label).clicked() {
+        if ui.skf_button(&mesh_label).clicked() {
             shared.ui.editing_mesh = !shared.ui.editing_mesh;
         }
-    });
 
-    if !shared.ui.editing_mesh {
-        return;
-    }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
+                [bone.tex_idx as usize]
+                .size
+                .clone();
+            let str_center = shared.loc("bone_panel.mesh_deformation.center");
+            let str_center_desc = shared.loc("bone_panel.mesh_deformation.center_desc");
+            if ui
+                .skf_button(str_center)
+                .on_hover_text(str_center_desc)
+                .clicked()
+            {
+                center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
+            }
+            let str_reset = shared.loc("bone_panel.mesh_deformation.reset");
+            let str_reset_desc = shared.loc("bone_panel.mesh_deformation.reset_desc");
+            if ui
+                .skf_button(str_reset)
+                .on_hover_text(str_reset_desc)
+                .clicked()
+            {
+                let (verts, indices) = renderer::create_tex_rect(&tex_size);
+                shared.selected_bone_mut().unwrap().vertices = verts;
+                shared.selected_bone_mut().unwrap().indices = indices;
+            }
 
-    ui.horizontal(|ui| {
-        //if ui.skf_button("Center").clicked() {
-        //    center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
-        //}
-        if ui.skf_button("Reset").clicked() {
-            let (verts, indices) = renderer::create_tex_rect(
-                &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-                    [bone.tex_idx as usize]
-                    .size,
-            );
-            shared.selected_bone_mut().unwrap().vertices = verts;
-            shared.selected_bone_mut().unwrap().indices = indices;
-        }
-        if ui.skf_button("Generate").clicked() {
-            let (verts, indices) = renderer::polygonate(
-                &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-                    [bone.tex_idx as usize]
-                    .image,
-            );
-            shared.selected_bone_mut().unwrap().vertices = verts;
-            shared.selected_bone_mut().unwrap().indices = indices;
-        }
+            // disbaled: polygonation not great yet
+            //
+            //if ui.skf_button("Generate").clicked() {
+            //    let (verts, indices) = renderer::polygonate(
+            //        &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
+            //            [bone.tex_idx as usize]
+            //            .image,
+            //    );
+            //    shared.selected_bone_mut().unwrap().vertices = verts;
+            //    shared.selected_bone_mut().unwrap().indices = indices;
+            //}
+        });
     });
 }
 
