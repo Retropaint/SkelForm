@@ -294,9 +294,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let bind_group = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
             [bone.tex_idx as usize]
             .bind_group;
-        for vert in &mut bone.world_verts {
-            vert.add_color = VertexColor::new(0., 0., 0., 0.5);
-        }
         draw(
             &bind_group,
             &bone.world_verts,
@@ -798,8 +795,8 @@ pub fn vert_lines(
         let v0 = bone.world_verts[i0];
         let v1 = bone.world_verts[i1];
         let dir = v0.pos - v1.pos;
-        let width = 0.007;
-        let mut size = Vec2::new(width, width);
+        let width = 5.;
+        let mut size = Vec2::new(width, width) / shared.camera.zoom;
         size = utils::rotate(&size, dir.y.atan2(dir.x));
         let mut col = VertexColor::GREEN;
         col += VertexColor::new(-0.5, -0.5, -0.5, 0.);
