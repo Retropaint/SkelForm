@@ -397,6 +397,9 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     .loc("bone_panel.inverse_kinematics.Clockwise")
                     .clone();
                 let str_ccw = shared.loc("bone_panel.inverse_kinematics.CCW").clone();
+                let str_desc = shared
+                    .loc("bone_panel.inverse_kinematics.constraint_desc")
+                    .clone();
                 egui::ComboBox::new("joint_constraint", "")
                     .selected_text(str_selected)
                     .width(40.)
@@ -405,7 +408,9 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                         ui.selectable_value(constraint, JointConstraint::None, str_none);
                         ui.selectable_value(constraint, JointConstraint::Clockwise, str_clockwise);
                         ui.selectable_value(constraint, JointConstraint::CounterClockwise, str_ccw);
-                    });
+                    })
+                    .response
+                    .on_hover_text(str_desc);
 
                 if last_constraint == shared.selected_bone().unwrap().constraint {
                     return;
