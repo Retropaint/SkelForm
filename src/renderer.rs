@@ -792,7 +792,7 @@ pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
     );
 
     // now that it's in world coords, it can follow the mouse
-    world_vert.pos = utils::screen_to_world_space(shared.input.mouse, shared.window);
+    world_vert.pos -= shared.mouse_vel();
 
     // convert back to normal coords
     let vert_pos = con_vert!(
