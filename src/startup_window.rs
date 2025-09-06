@@ -317,7 +317,7 @@ pub fn skf_file_button(
 ) {
     let filename = path.split('/').last().unwrap().to_string();
     let file = std::fs::File::open(path.clone()).unwrap();
-    let zip = zip::ZipArchive::new(file);
+    let mut zip = zip::ZipArchive::new(file);
     if let Err(_) = zip {
         return;
     }
@@ -325,11 +325,14 @@ pub fn skf_file_button(
     // generate thumbnail UI texture
     if !shared.thumb_ui_tex.contains_key(&filename) {
         let mut thumb_bytes = vec![];
-        for byte in zip.unwrap().by_name("thumbnail.png").unwrap().bytes() {
-            thumb_bytes.push(byte.unwrap());
+        let file = zip.as_mut().unwrap().by_name("thumbnail.png");
+        if let Ok(_) = file {
+            for byte in file.unwrap().bytes() {
+                thumb_bytes.push(byte.unwrap());
+            }
+            let ui_tex = ui::create_ui_texture(thumb_bytes, false, ctx).unwrap();
+            shared.thumb_ui_tex.insert(filename.clone(), ui_tex.clone());
         }
-        let ui_tex = ui::create_ui_texture(thumb_bytes, false, ctx).unwrap();
-        shared.thumb_ui_tex.insert(filename.clone(), ui_tex.clone());
     }
 
     let thumb_size = Vec2::new(64., 64.);
@@ -370,7 +373,9 @@ pub fn skf_file_button(
                     egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
                     thumb_size.into(),
                 );
-                egui::Image::new(shared.thumb_ui_tex.get(&filename).unwrap()).paint_at(ui, rect);
+                if let Some(thumb_tex) = shared.thumb_ui_tex.get(&filename) {
+                    egui::Image::new(thumb_tex).paint_at(ui, rect);
+                }
                 let heading_pos = egui::Pos2::new(
                     ui.min_rect().left_top().x + 72.,
                     ui.min_rect().left_top().y + 18.,
