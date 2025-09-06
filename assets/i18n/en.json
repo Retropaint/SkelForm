@@ -4,6 +4,7 @@
   "rotate": "Rotate",
   "scale": "Scale",
   "new": "New",
+  "vert_limit": "Cannot delete vertex. Meshes must have at least 4 vertices.",
   "startup": {
     "import": "Import",
     "samples": "Samples",
