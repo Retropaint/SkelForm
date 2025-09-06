@@ -365,6 +365,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         return;
     }
 
+    if shared.ui.editing_mesh {
+        return;
+    }
+
     // editing bone
     if shared.input.on_ui || shared.ui.has_state(UiState::PolarModal) {
         shared.editing_bone = false;

@@ -740,18 +740,22 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
             shared.ui.edit_bar_pos.y - 1.,
         ))
         .show(egui_ctx, |ui| {
-            ui.horizontal(|ui| {
-                macro_rules! edit_mode_button {
-                    ($label:expr, $edit_mode:expr) => {
-                        if selection_button($label, shared.edit_mode == $edit_mode, ui).clicked() {
-                            shared.edit_mode = $edit_mode;
+            ui.add_enabled_ui(!shared.ui.editing_mesh, |ui| {
+                ui.horizontal(|ui| {
+                    macro_rules! edit_mode_button {
+                        ($label:expr, $edit_mode:expr) => {
+                            if selection_button($label, shared.edit_mode == $edit_mode, ui)
+                                .clicked()
+                            {
+                                shared.edit_mode = $edit_mode;
+                            };
                         };
-                    };
-                }
-                edit_mode_button!(shared.loc("move"), EditMode::Move);
-                edit_mode_button!(shared.loc("rotate"), EditMode::Rotate);
-                edit_mode_button!(shared.loc("scale"), EditMode::Scale);
-            });
+                    }
+                    edit_mode_button!(shared.loc("move"), EditMode::Move);
+                    edit_mode_button!(shared.loc("rotate"), EditMode::Rotate);
+                    edit_mode_button!(shared.loc("scale"), EditMode::Scale);
+                });
+            })
         });
 }
 
