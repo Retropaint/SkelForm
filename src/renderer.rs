@@ -242,17 +242,22 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // select bone on click
         if shared.input.left_clicked && hover_bone_id == temp_bones[b].id {
-            shared.ui.selected_bone_idx = shared
-                .armature
-                .bones
-                .iter()
-                .position(|bone| bone.id == click_on_hover_id)
-                .unwrap();
+            if shared.ui.setting_ik_target {
+                shared.selected_bone_mut().unwrap().ik_target_id = click_on_hover_id;
+                shared.ui.setting_ik_target = false;
+            } else {
+                shared.ui.selected_bone_idx = shared
+                    .armature
+                    .bones
+                    .iter()
+                    .position(|bone| bone.id == click_on_hover_id)
+                    .unwrap();
 
-            // unfold all parents that lead to this bone, so it's visible in the hierarchy
-            let parents = shared.armature.get_all_parents(click_on_hover_id);
-            for parent in &parents {
-                shared.armature.find_bone_mut(parent.id).unwrap().folded = false;
+                // unfold all parents that lead to this bone, so it's visible in the hierarchy
+                let parents = shared.armature.get_all_parents(click_on_hover_id);
+                for parent in &parents {
+                    shared.armature.find_bone_mut(parent.id).unwrap().folded = false;
+                }
             }
         }
     }
