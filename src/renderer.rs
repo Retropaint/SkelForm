@@ -274,56 +274,68 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             );
         }
 
-        if shared.ui.editing_mesh && shared.selected_bone().unwrap().id == bone.id {
-            render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-            bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
+        if !shared.ui.editing_mesh || shared.selected_bone().unwrap().id != bone.id {
+            continue;
+        }
 
-            // draw vert lines
-            for v in 0..bone.world_verts.len() {
-                let v0 = bone.world_verts[v];
-                let v1 = bone.world_verts[(v + 1) % bone.world_verts.len()];
-                let dir = v0.pos - v1.pos;
-                let width = 0.005;
-                let mut size = Vec2::new(width, width);
-                size = utils::rotate(&size, dir.y.atan2(dir.x));
-                let v0_top = Vertex {
-                    pos: v0.pos + size,
-                    ..v0
-                };
-                let v0_bot = Vertex {
-                    pos: v0.pos - size,
-                    ..v0
-                };
-                let v1_top = Vertex {
-                    pos: v1.pos + size,
-                    ..v1
-                };
-                let v1_bot = Vertex {
-                    pos: v1.pos - size,
-                    ..v1
-                };
-                let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
-                let indices = vec![0, 1, 2, 1, 2, 3];
-                draw(&None, &verts, &indices, render_pass, device);
+        render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+        bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
 
-                if shared.dragging_verts.len() > 0 {
+        // draw vert lines
+        for v in 0..bone.world_verts.len() {
+            let v0 = bone.world_verts[v];
+            let v1 = bone.world_verts[(v + 1) % bone.world_verts.len()];
+            let dir = v0.pos - v1.pos;
+            let width = 0.005;
+            let mut size = Vec2::new(width, width);
+            size = utils::rotate(&size, dir.y.atan2(dir.x));
+            let col = VertexColor::new(
+                shared.config.colors.gridline.r as f32 / 255.,
+                shared.config.colors.gridline.g as f32 / 255.,
+                shared.config.colors.gridline.b as f32 / 255.,
+                1.,
+            );
+            let v0_top = Vertex {
+                pos: v0.pos + size,
+                color: col,
+                ..v0
+            };
+            let v0_bot = Vertex {
+                pos: v0.pos - size,
+                color: col,
+                ..v0
+            };
+            let v1_top = Vertex {
+                pos: v1.pos + size,
+                color: col,
+                ..v1
+            };
+            let v1_bot = Vertex {
+                pos: v1.pos - size,
+                color: col,
+                ..v1
+            };
+            let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
+            let indices = vec![0, 1, 2, 1, 2, 3];
+            draw(&None, &verts, &indices, render_pass, device);
+
+            if shared.dragging_verts.len() > 0 {
+                continue;
+            }
+
+            for (_, chunk) in indices.chunks_exact(3).enumerate() {
+                let bary = tri_point(
+                    &mouse_world_vert.pos,
+                    &verts[chunk[0] as usize].pos,
+                    &verts[chunk[1] as usize].pos,
+                    &verts[chunk[2] as usize].pos,
+                );
+                if bary.0 == -1. {
                     continue;
                 }
-
-                for (_, chunk) in indices.chunks_exact(3).enumerate() {
-                    let bary = tri_point(
-                        &mouse_world_vert.pos,
-                        &verts[chunk[0] as usize].pos,
-                        &verts[chunk[1] as usize].pos,
-                        &verts[chunk[2] as usize].pos,
-                    );
-                    if bary.0 == -1. {
-                        continue;
-                    }
-                    if shared.input.left_pressed {
-                        shared.dragging_verts.push(v);
-                        shared.dragging_verts.push((v + 1) % bone.world_verts.len());
-                    }
+                if shared.input.left_pressed {
+                    shared.dragging_verts.push(v);
+                    shared.dragging_verts.push((v + 1) % bone.world_verts.len());
                 }
             }
         }
@@ -367,7 +379,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             drag_vertex(
                 shared,
                 &temp_bones.iter().find(|bone| bone.id == bone_id).unwrap(),
-                vert
+                vert,
             );
         }
 
