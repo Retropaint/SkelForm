@@ -129,6 +129,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     temp_bones.sort_by(|a, b| b.zindex.total_cmp(&a.zindex));
 
     let mut hover_bone_id = -1;
+    let mut added_verts = false;
 
     // pre-draw bone setup
     for b in 0..temp_bones.len() {
@@ -186,7 +187,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
                 );
 
-                if shared.input.left_clicked && shared.ui.editing_mesh {
+                if shared.input.left_clicked && shared.ui.editing_mesh && !added_verts {
                     let bone_mut = shared.selected_bone_mut().unwrap();
                     bone_mut.vertices.push(Vertex {
                         pos: Vec2::new(pixel_pos.x, -pixel_pos.y),
@@ -195,6 +196,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     });
                     bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
                     bone_mut.indices = triangulate(&bone_mut.vertices);
+                    added_verts = true;
                 }
 
                 let pixel_alpha = shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize]
@@ -794,11 +796,29 @@ pub fn vert_lines(
     render_pass: &mut RenderPass,
     device: &Device,
 ) {
-    for v in 0..bone.world_verts.len() {
-        let i0 = v;
-        let i1 = (v + 1) % bone.world_verts.len();
-        let v0 = bone.world_verts[i0];
-        let v1 = bone.world_verts[i1];
+    let mut lines: Vec<(u32, u32)> = vec![];
+    for (_, chunk) in bone.indices.chunks_exact(3).enumerate() {
+        macro_rules! doesnt_contain {
+            ($first:expr, $second:expr) => {
+                !lines.contains(&(chunk[$first], chunk[$second]))
+                    && !lines.contains(&(chunk[$second], chunk[$first]))
+            };
+        }
+        if doesnt_contain!(0, 1) {
+            lines.push((chunk[0], chunk[1]));
+        }
+        if doesnt_contain!(1, 2) {
+            lines.push((chunk[1], chunk[2]));
+        }
+        if doesnt_contain!(0, 2) {
+            lines.push((chunk[0], chunk[2]));
+        }
+    }
+    for l in 0..lines.len() {
+        let i0 = lines[l].0;
+        let i1 = lines[l].1;
+        let v0 = bone.world_verts[i0 as usize];
+        let v1 = bone.world_verts[i1 as usize];
         let dir = v0.pos - v1.pos;
         let width = 5.;
         let mut size = Vec2::new(width, width) / shared.camera.zoom;
@@ -846,8 +866,8 @@ pub fn vert_lines(
                 }
                 is_hovering = true;
                 if shared.input.left_pressed {
-                    shared.dragging_verts.push(i0);
-                    shared.dragging_verts.push(i1);
+                    shared.dragging_verts.push(i0 as usize);
+                    shared.dragging_verts.push(i1 as usize);
                 }
             }
         }
@@ -861,8 +881,8 @@ pub fn vert_lines(
         }
 
         if shared.dragging_verts.len() == 2
-            && shared.dragging_verts[0] == i0
-            && shared.dragging_verts[1] == i1
+            && shared.dragging_verts[0] == i0 as usize
+            && shared.dragging_verts[1] == i1 as usize
         {
             v0_top.add_color += add_color;
             v0_bot.add_color += add_color;
