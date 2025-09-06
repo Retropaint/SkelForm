@@ -313,6 +313,7 @@ pub struct InputStates {
     pub mouse: Vec2,
     pub mouse_prev: Vec2,
     pub left_clicked: bool,
+    pub left_pressed: bool,
     pub right_clicked: bool,
     pub left_down: bool,
     pub right_down: bool,

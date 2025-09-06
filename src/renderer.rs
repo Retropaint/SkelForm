@@ -121,8 +121,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // sort bones by highest zindex first, so that hover logic will pick the top-most one
     temp_bones.sort_by(|a, b| b.zindex.total_cmp(&a.zindex));
 
-    let mut hovering_vert = usize::MAX;
-
     let mut hover_bone_id = -1;
 
     // pre-draw bone setup
@@ -275,7 +273,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         if shared.ui.editing_mesh && shared.selected_bone().unwrap().id == bone.id {
             render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-            hovering_vert = bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
+            bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
         }
     }
 
@@ -306,27 +304,18 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     if !shared.input.left_down {
         shared.dragging_vert = usize::MAX;
+        shared.editing_bone = false;
+        return;
     } else if shared.dragging_vert != usize::MAX {
+        let mut bone_id = -1;
+        if let Some(bone) = shared.selected_bone() {
+            bone_id = bone.id
+        }
         drag_vertex(
             shared,
-            &temp_bones[shared.ui.selected_bone_idx],
+            &temp_bones.iter().find(|bone| bone.id == bone_id).unwrap(),
             shared.dragging_vert,
         );
-        return;
-    }
-
-    if shared.selected_bone() != None
-        && shared.ui.editing_mesh
-        && shared.selected_bone().unwrap().vertices.len() > 0
-        && hovering_vert == usize::MAX
-        && !shared.input.on_ui
-        && shared.dragging_vert == usize::MAX
-    {
-        //draw_hover_triangle(shared, render_pass, device, &selected_bone_world_verts);
-    }
-
-    if !shared.input.left_down {
-        shared.editing_bone = false;
         return;
     }
 
@@ -743,7 +732,7 @@ pub fn bone_vertices(
             shared.selected_bone_mut().unwrap().indices = triangulate(&verts);
             break;
         }
-        if shared.input.left_clicked {
+        if shared.input.left_pressed {
             shared.undo_actions.push(Action {
                 action: ActionEnum::Bone,
                 bones: vec![shared.selected_bone().unwrap().clone()],
