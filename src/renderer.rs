@@ -264,12 +264,24 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     for bone in &temp_bones {
         if bone.tex_set_idx != -1 && !shared.armature.is_bone_hidden(bone.id) {
-            draw_bone(&bone, render_pass, device, &bone.world_verts, shared);
+            let bind_group = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
+                [bone.tex_idx as usize]
+                .bind_group;
+            draw(
+                &bind_group,
+                &bone.world_verts,
+                &bone.indices,
+                render_pass,
+                device,
+            );
         }
 
         if shared.ui.editing_mesh && shared.selected_bone().unwrap().id == bone.id {
             render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
             bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
+
+            // draw vert lines
+            for vert in &bone.world_verts {}
         }
     }
 
@@ -426,12 +438,15 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
             temp_bones[b].world_verts.push(new_vert);
         }
 
-        draw_bone(
-            &temp_bones[b],
+        let bind_group = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize].textures
+            [temp_bones[b].tex_idx as usize]
+            .bind_group;
+        draw(
+            bind_group,
+            &temp_bones[b].world_verts,
+            &temp_bones[b].indices,
             render_pass,
             device,
-            &temp_bones[b].world_verts,
-            shared,
         );
     }
 }
@@ -662,26 +677,20 @@ pub fn inherit_from_parent(child: &mut Bone, parent: &Bone) {
     child.pos += parent.pos;
 }
 
-pub fn draw_bone(
-    bone: &Bone,
+pub fn draw(
+    bind_group: &Option<BindGroup>,
+    verts: &Vec<Vertex>,
+    indices: &Vec<u32>,
     render_pass: &mut RenderPass,
     device: &Device,
-    world_verts: &Vec<Vertex>,
-    shared: &Shared,
 ) {
-    // runtime: use texture_set_idx and tex_idx to determine bone's texture
-    render_pass.set_bind_group(
-        0,
-        &shared.armature.texture_sets[bone.tex_set_idx as usize].textures[bone.tex_idx as usize]
-            .bind_group,
-        &[],
-    );
-    render_pass.set_vertex_buffer(0, vertex_buffer(&world_verts, device).slice(..));
+    render_pass.set_bind_group(0, bind_group, &[]);
+    render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
     render_pass.set_index_buffer(
-        index_buffer(bone.indices.to_vec(), &device).slice(..),
+        index_buffer(indices.to_vec(), &device).slice(..),
         wgpu::IndexFormat::Uint32,
     );
-    render_pass.draw_indexed(0..bone.indices.len() as u32, 0, 0..1);
+    render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
 }
 
 pub fn bone_vertices(
