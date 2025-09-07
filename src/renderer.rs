@@ -103,7 +103,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 .collect();
 
             // apply IK on the joint copy, then save rotations for the next FK
-            //let target = (mouse_world * shared.camera.zoom) + shared.camera.pos;
             let target = temp_bones
                 .iter()
                 .find(|bone| bone.id == temp_bones[b].ik_target_id);
