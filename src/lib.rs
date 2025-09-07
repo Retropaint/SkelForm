@@ -600,7 +600,7 @@ impl Renderer {
         self.take_screenshot(shared);
         let buffer = shared.rendered_frames[0].buffer.clone();
         shared.rendered_frames = vec![];
-        let window = shared.window;
+        let window = shared.screenshot_res;
         let device = self.gpu.device.clone();
         let armature = shared.armature.clone();
         let saving = shared.saving.clone();
@@ -687,8 +687,8 @@ impl Renderer {
 
     #[cfg(not(target_arch = "wasm32"))]
     fn take_screenshot(&mut self, shared: &mut shared::Shared) {
-        let width = shared.window.x as u32;
-        let height = shared.window.y as u32;
+        let width = shared.screenshot_res.x as u32;
+        let height = shared.screenshot_res.y as u32;
 
         let capture_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
@@ -706,6 +706,7 @@ impl Renderer {
         });
 
         let capture_view = capture_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let depth_texture_view = self.gpu.create_depth_texture(width, height);
         let clear_color = shared.config.colors.background;
 
         let mut encoder = self
@@ -732,7 +733,7 @@ impl Renderer {
                     },
                 })],
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: &self.depth_texture_view,
+                    view: &depth_texture_view,
                     depth_ops: Some(wgpu::Operations {
                         load: wgpu::LoadOp::Clear(1.0),
                         store: wgpu::StoreOp::Store,
@@ -757,6 +758,8 @@ impl Renderer {
             mapped_at_creation: false,
         });
 
+        let bytes_per_row = 4 * width;
+
         encoder.copy_texture_to_buffer(
             wgpu::TexelCopyTextureInfo {
                 texture: &capture_texture,
@@ -768,7 +771,7 @@ impl Renderer {
                 buffer: &output_buffer,
                 layout: wgpu::TexelCopyBufferLayout {
                     offset: 0,
-                    bytes_per_row: Some(4 * width),
+                    bytes_per_row: Some(bytes_per_row),
                     rows_per_image: Some(height),
                 },
             },

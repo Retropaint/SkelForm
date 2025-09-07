@@ -74,6 +74,7 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.scale = 1.;
     shared.ui.context_menu.close();
     shared.ui.hovering_tex = -1;
+    shared.screenshot_res = Vec2::new(256., 256.);
 
     #[cfg(feature = "debug")]
     {
