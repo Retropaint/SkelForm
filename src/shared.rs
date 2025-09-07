@@ -1860,6 +1860,8 @@ pub struct Shared {
 
     pub screenshot_res: Vec2,
 
+    pub ik_arrow_bindgroup: Option<BindGroup>,
+
     loc_strings: std::collections::HashMap<String, String>,
 }
 
