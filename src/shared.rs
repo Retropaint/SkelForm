@@ -1858,6 +1858,8 @@ pub struct Shared {
 
     pub last_autosave: f32,
 
+    pub screenshot_res: Vec2,
+
     loc_strings: std::collections::HashMap<String, String>,
 }
 

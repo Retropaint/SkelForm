@@ -509,6 +509,26 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
         .unwrap()
         .pos;
 
+    // get initial rot of bones for offsets
+    let end_bone = bones
+        .iter_mut()
+        .find(|bone| bone.joint_effector == JointEffector::End);
+    if end_bone == None {
+        return;
+    }
+    let mut init_rots = vec![];
+    let mut tip_pos = end_bone.unwrap().pos;
+    for b in (0..bones.len()).rev() {
+        let eff = bones[b].joint_effector.clone();
+        if eff == JointEffector::None || eff == JointEffector::End {
+            continue;
+        }
+
+        let dir = tip_pos - bones[b].pos;
+        init_rots.push(dir.y.atan2(dir.x));
+        tip_pos = bones[b].pos;
+    }
+
     // forward-reaching
     let mut next_pos: Vec2 = target;
     let mut next_length = 0.;
