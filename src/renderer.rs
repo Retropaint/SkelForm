@@ -70,8 +70,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    // For rendering purposes, bones need to have many of their attributes manipulated.
-    // This is easier to do with a separate copy of them.
+    // armature bones should be immutable to rendering
     let mut temp_bones: Vec<Bone> = bones.clone();
 
     let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
