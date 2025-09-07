@@ -318,6 +318,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     if let Some(vert) = new_vert {
+        shared.undo_actions.push(Action {
+            action: ActionEnum::Bone,
+            id: shared.selected_bone().unwrap().id,
+            bones: vec![shared.selected_bone().unwrap().clone()],
+            ..Default::default()
+        });
         let bone_mut = shared.selected_bone_mut().unwrap();
         bone_mut.vertices.push(vert);
         bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
@@ -770,7 +776,7 @@ pub fn bone_vertices(
         let point = point!(wv, VertexColor::GREEN);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
 
-        if shared.input.on_ui || !mouse_on_it  {
+        if shared.input.on_ui || !mouse_on_it {
             continue;
         }
 
