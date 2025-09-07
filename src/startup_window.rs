@@ -6,6 +6,7 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
     egui::Window::new("startup")
         .title_bar(false)
         .resizable(false)
+        .movable(false)
         .show(ctx, |ui| {
             ui.gradient(
                 ui.ctx().screen_rect(),
