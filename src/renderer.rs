@@ -9,16 +9,8 @@ use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
 macro_rules! con_vert {
-    ($func:expr, $vert:expr, $bone:expr, $tex:expr, $cam_pos:expr, $cam_zoom:expr) => {
-        $func(
-            $vert,
-            Some(&$bone),
-            &$cam_pos,
-            $cam_zoom,
-            Some(&$tex),
-            1.,
-            1.,
-        )
+    ($func:expr, $vert:expr, $bone:expr, $tex_size:expr, $cam_pos:expr, $cam_zoom:expr) => {
+        $func($vert, Some(&$bone), &$cam_pos, $cam_zoom, $tex_size, 1., 1.)
     };
 }
 
@@ -144,13 +136,15 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
 
+        let tex_size = shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize].textures
+            [temp_bones[b].tex_idx as usize]
+            .size;
         for v in 0..temp_bones[b].vertices.len() {
             let mut new_vert = con_vert!(
                 raw_to_world_vert,
                 temp_bones[b].vertices[v],
                 temp_bones[b],
-                shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize].textures
-                    [temp_bones[b].tex_idx as usize],
+                tex_size,
                 shared.camera.pos,
                 shared.camera.zoom
             );
@@ -281,6 +275,41 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             &bind_group,
             &bone.world_verts,
             &bone.indices,
+            render_pass,
+            device,
+        );
+    }
+
+    for bone in &temp_bones {
+        if bone.joint_effector == JointEffector::None || bone.joint_effector == JointEffector::End {
+            continue;
+        }
+        let mut arrow = Bone {
+            pos: bone.pos,
+            rot: bone.rot,
+            scale: Vec2::new(2., 2.),
+            pivot: Vec2::new(0., 0.5),
+            ..Default::default()
+        };
+        let tex_size = Vec2::new(61., 48.);
+        (arrow.vertices, arrow.indices) = create_tex_rect(&tex_size);
+        for v in 0..4 {
+            let mut new_vert = con_vert!(
+                raw_to_world_vert,
+                arrow.vertices[v],
+                arrow,
+                tex_size,
+                shared.camera.pos,
+                shared.camera.zoom
+            );
+            new_vert.pos.x /= shared.window.x / shared.window.y;
+            new_vert.color = VertexColor::new(1., 1., 1., 0.2);
+            arrow.world_verts.push(new_vert);
+        }
+        draw(
+            &shared.ik_arrow_bindgroup,
+            &arrow.world_verts,
+            &arrow.indices,
             render_pass,
             device,
         );
@@ -474,12 +503,13 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
             continue;
         }
 
+        let tex_size = set.textures[temp_bones[b].tex_idx as usize].size;
         for v in 0..temp_bones[b].vertices.len() {
             let mut new_vert = con_vert!(
                 raw_to_world_vert,
                 temp_bones[b].vertices[v],
                 temp_bones[b],
-                set.textures[temp_bones[b].tex_idx as usize],
+                tex_size,
                 Vec2::new(0., 0.),
                 zoom
             );
@@ -508,26 +538,6 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
         .find(|bone| bone.joint_effector == JointEffector::Start)
         .unwrap()
         .pos;
-
-    // get initial rot of bones for offsets
-    let end_bone = bones
-        .iter_mut()
-        .find(|bone| bone.joint_effector == JointEffector::End);
-    if end_bone == None {
-        return;
-    }
-    let mut init_rots = vec![];
-    let mut tip_pos = end_bone.unwrap().pos;
-    for b in (0..bones.len()).rev() {
-        let eff = bones[b].joint_effector.clone();
-        if eff == JointEffector::None || eff == JointEffector::End {
-            continue;
-        }
-
-        let dir = tip_pos - bones[b].pos;
-        init_rots.push(dir.y.atan2(dir.x));
-        tip_pos = bones[b].pos;
-    }
 
     // forward-reaching
     let mut next_pos: Vec2 = target;
@@ -950,12 +960,15 @@ pub fn vert_lines(
 }
 
 pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
+    let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
+        [bone.tex_idx as usize]
+        .size;
     // when moving a vertex, it must be interpreted in world coords first to align the with the mouse
     let mut world_vert = con_vert!(
         raw_to_world_vert,
         bone.vertices[vert_idx],
         bone,
-        shared.armature.texture_sets[bone.tex_set_idx as usize].textures[bone.tex_idx as usize],
+        tex_size,
         shared.camera.pos,
         shared.camera.zoom
     );
@@ -968,7 +981,7 @@ pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
         world_to_raw_vert,
         world_vert,
         bone,
-        shared.armature.texture_sets[bone.tex_set_idx as usize].textures[bone.tex_idx as usize],
+        tex_size,
         shared.camera.pos,
         shared.camera.zoom
     )
@@ -1170,7 +1183,7 @@ fn draw_point(
             None,
             &camera,
             shared.camera.zoom,
-            None,
+            Vec2::new(0., 0.),
             shared.window.x / shared.window.y,
             1.,
         ));
@@ -1290,14 +1303,14 @@ fn raw_to_world_vert(
     bone: Option<&Bone>,
     camera: &Vec2,
     zoom: f32,
-    tex: Option<&Texture>,
+    tex_size: Vec2,
     aspect_ratio: f32,
     hard_scale: f32,
 ) -> Vertex {
     vert.pos *= hard_scale;
 
     if let Some(bone) = bone {
-        let pivot_offset = tex.unwrap().size * bone.pivot * hard_scale;
+        let pivot_offset = tex_size * bone.pivot * hard_scale;
         vert.pos.x -= pivot_offset.x;
         vert.pos.y += pivot_offset.y;
 
@@ -1327,7 +1340,7 @@ fn world_to_raw_vert(
     bone: Option<&Bone>,
     camera: &Vec2,
     zoom: f32,
-    tex: Option<&Texture>,
+    tex_size: Vec2,
     aspect_ratio: f32,
     hard_scale: f32,
 ) -> Vertex {
@@ -1344,7 +1357,7 @@ fn world_to_raw_vert(
 
         vert.pos /= bone.scale;
 
-        let pivot_offset = tex.unwrap().size * bone.pivot * hard_scale;
+        let pivot_offset = tex_size * bone.pivot * hard_scale;
         vert.pos.x += pivot_offset.x;
         vert.pos.y -= pivot_offset.y;
     }
