@@ -290,7 +290,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut children = vec![];
     armature_window::get_all_children(&shared.armature.bones, &mut children, &bone);
     let parents = shared.armature.get_all_parents(bone.id);
+
+    let section_spacing = 10.;
+
     if children.len() > 0 || parents.len() > 0 {
+        ui.add_space(section_spacing);
         inverse_kinematics(ui, shared, &bone);
     }
 
@@ -298,6 +302,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         return;
     }
 
+    ui.add_space(section_spacing);
     mesh_deformation(ui, shared, &bone);
 }
 
