@@ -1891,6 +1891,14 @@ impl Shared {
         None
     }
 
+    pub fn selected_bone_id(&self) -> i32 {
+        if let Some(bone) = self.selected_bone() {
+            return bone.id;
+        }
+
+        -1
+    }
+
     pub fn selected_bone_mut(&mut self) -> Option<&mut Bone> {
         if self.ui.selected_bone_idx != usize::MAX {
             return Some(&mut self.armature.bones[self.ui.selected_bone_idx]);

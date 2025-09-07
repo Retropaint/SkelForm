@@ -73,7 +73,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // inverse kinematics
         for b in 0..temp_bones.len() {
-            //if !temp_bones[b].aiming {
             if temp_bones[b].joint_effector != JointEffector::Start {
                 continue;
             }
@@ -216,13 +215,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             }
         }
 
-        let mut selected_id = -1;
-        if let Some(bone) = shared.selected_bone() {
-            selected_id = bone.id;
-        }
-
         // hovering glow animation
-        if hover_bone_id == temp_bones[b].id && selected_id != click_on_hover_id {
+        if hover_bone_id == temp_bones[b].id && shared.selected_bone_id() != click_on_hover_id {
             let fade = 0.25 * ((shared.time * 3.).sin()).abs() as f32;
             let min = 0.1;
             for vert in &mut temp_bones[b].world_verts {
