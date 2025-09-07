@@ -3,7 +3,6 @@
 # The full distribution requires, but is not limited to:
 # - main binary (release version)
 # - user documentation (built/distributed, not source)
-# - source code & assets
 
 import subprocess
 import os
@@ -85,19 +84,8 @@ subprocess.run(f"cargo build {mode}", shell=True)
 shutil.copy(f"../target/{path}/SkelForm" + binExt, "./" + dirname)
 shutil.copytree("./user_docs", "./" + dirname + "/user_docs")
 shutil.copytree("./dev_docs", "./" + dirname + "/dev_docs")
-shutil.copy("../assets/skf_icon.ico", "./" + dirname + "/skf_icon.ico")
+shutil.copytree("../assets", "./" + dirname + "/assets")
 shutil.copytree("../samples", "./" + dirname + "/samples")
-
-# Source code distribution
-
-source = dirname + "/source"
-os.mkdir("./" + source)
-shutil.copy("../Cargo.toml", "./" + source)
-shutil.copy("./release.py", "./" + source)
-shutil.copy("../web_build.py", "./" + source)
-shutil.copy("../assets", "./" + source)
-shutil.copy("../readme.md", "./" + source)
-shutil.copytree("../src", "./" + source + "/src")
 
 # make zip
 
