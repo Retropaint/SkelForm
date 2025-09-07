@@ -336,10 +336,8 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     let dragged_payload = *dp.unwrap() as usize;
 
     let dragged_id = shared.armature.bones[dragged_payload as usize].id;
-    let mut selected_id: i32 = 0;
-    if shared.selected_bone() != None {
-        selected_id = shared.selected_bone().unwrap().id;
-    }
+
+    let selected_id = shared.selected_bone_id();
 
     // ignore if target bone is a child of this
     let mut children: Vec<Bone> = vec![];
