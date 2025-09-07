@@ -294,7 +294,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         inverse_kinematics(ui, shared, &bone);
     }
 
-    if bone.vertices.len() == 0 {
+    if bone.vertices.len() == 0 || selected_set == -1 {
         return;
     }
 
@@ -441,7 +441,9 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     ui.separator();
 
     let str_edit = shared.loc("bone_panel.mesh_deformation.edit").clone();
-    let str_finish_edit = shared.loc("bone_panel.mesh_deformation.finish_edit").clone();
+    let str_finish_edit = shared
+        .loc("bone_panel.mesh_deformation.finish_edit")
+        .clone();
     let mut mesh_label = str_edit;
     if shared.ui.editing_mesh {
         mesh_label = str_finish_edit;
