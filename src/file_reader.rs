@@ -451,8 +451,14 @@ pub fn read_import(
     match ext {
         "skf" => {
             utils::import(file.unwrap(), shared, queue, device, bgl, context);
-            if !shared.recent_file_paths.contains(&path) {
-                shared.recent_file_paths.push(path);
+            let full_path_canon = std::fs::canonicalize(&path);
+            let full_path = if let Ok(_) = full_path_canon {
+                &full_path_canon.unwrap().to_str().unwrap().to_string()
+            } else {
+                &path
+            };
+            if !shared.recent_file_paths.contains(&full_path) {
+                shared.recent_file_paths.push(full_path.to_string());
             }
             utils::save_to_recent_files(&shared.recent_file_paths);
         }
