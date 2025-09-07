@@ -129,6 +129,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     temp_bones.sort_by(|a, b| b.zindex.total_cmp(&a.zindex));
 
     let mut hover_bone_id = -1;
+
+    // many fight for spot of newest vertex; there will only be one.
+    let mut new_vert: Option<Vertex> = None;
     let mut added_verts = false;
 
     // pre-draw bone setup
@@ -188,14 +191,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 );
 
                 if shared.input.left_clicked && shared.ui.editing_mesh && !added_verts {
-                    let bone_mut = shared.selected_bone_mut().unwrap();
-                    bone_mut.vertices.push(Vertex {
+                    new_vert = Some(Vertex {
                         pos: Vec2::new(pixel_pos.x, -pixel_pos.y),
                         uv,
                         ..Default::default()
                     });
-                    bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
-                    bone_mut.indices = triangulate(&bone_mut.vertices);
                     added_verts = true;
                 }
 
@@ -306,8 +306,22 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
-        vert_lines(&bone, shared, &mouse_world_vert, render_pass, device);
+        vert_lines(
+            &bone,
+            shared,
+            &mouse_world_vert,
+            render_pass,
+            device,
+            &mut new_vert,
+        );
         bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
+    }
+
+    if let Some(vert) = new_vert {
+        let bone_mut = shared.selected_bone_mut().unwrap();
+        bone_mut.vertices.push(vert);
+        bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
+        bone_mut.indices = triangulate(&bone_mut.vertices);
     }
 
     if shared.config.gridline_front {
@@ -756,10 +770,7 @@ pub fn bone_vertices(
         let point = point!(wv, VertexColor::GREEN);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
 
-        // left_pressed indicates that dragging hasn't started, so override line verts if this vert is also pressed on
-        let clicked_this_frame = shared.dragging_verts.len() > 0 && !shared.input.left_pressed;
-
-        if shared.input.on_ui || !mouse_on_it || clicked_this_frame {
+        if shared.input.on_ui || !mouse_on_it  {
             continue;
         }
 
@@ -795,7 +806,9 @@ pub fn vert_lines(
     mouse_world_vert: &Vertex,
     render_pass: &mut RenderPass,
     device: &Device,
+    new_vert: &mut Option<Vertex>,
 ) {
+    let mut clicked = false;
     let mut lines: Vec<(u32, u32)> = vec![];
     for (_, chunk) in bone.indices.chunks_exact(3).enumerate() {
         macro_rules! doesnt_contain {
@@ -820,7 +833,7 @@ pub fn vert_lines(
         let v0 = bone.world_verts[i0 as usize];
         let v1 = bone.world_verts[i1 as usize];
         let dir = v0.pos - v1.pos;
-        let width = 5.;
+        let width = 2.5;
         let mut size = Vec2::new(width, width) / shared.camera.zoom;
         size = utils::rotate(&size, dir.y.atan2(dir.x));
         let mut col = VertexColor::GREEN;
@@ -853,22 +866,39 @@ pub fn vert_lines(
 
         let mut is_hovering = false;
 
-        if shared.dragging_verts.len() == 0 {
-            for (_, chunk) in indices.chunks_exact(3).enumerate() {
-                let bary = tri_point(
-                    &mouse_world_vert.pos,
-                    &verts[chunk[0] as usize].pos,
-                    &verts[chunk[1] as usize].pos,
-                    &verts[chunk[2] as usize].pos,
+        for (_, chunk) in indices.chunks_exact(3).enumerate() {
+            let bary = tri_point(
+                &mouse_world_vert.pos,
+                &verts[chunk[0] as usize].pos,
+                &verts[chunk[1] as usize].pos,
+                &verts[chunk[2] as usize].pos,
+            );
+            if bary.0 == -1. {
+                continue;
+            }
+            is_hovering = true;
+
+            let mouse_line = mouse_world_vert.pos - v0.pos;
+            let whole_line = v1.pos - v0.pos;
+            let interp = mouse_line.mag() / whole_line.mag();
+            let uv = v0.uv + ((v1.uv - v0.uv) * interp);
+            if shared.input.left_clicked && !clicked {
+                let img = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
+                    [bone.tex_idx as usize]
+                    .image;
+                let pos = Vec2::new(
+                    (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
+                    -(uv.y * img.height() as f32).min(img.height() as f32 - 1.),
                 );
-                if bary.0 == -1. {
-                    continue;
-                }
-                is_hovering = true;
-                if shared.input.left_pressed {
-                    shared.dragging_verts.push(i0 as usize);
-                    shared.dragging_verts.push(i1 as usize);
-                }
+                *new_vert = Some(Vertex {
+                    pos,
+                    uv,
+                    ..Default::default()
+                });
+                clicked = true;
+            } else if shared.input.left_pressed {
+                shared.dragging_verts.push(i0 as usize);
+                shared.dragging_verts.push(i1 as usize);
             }
         }
 
