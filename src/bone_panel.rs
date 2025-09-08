@@ -1,6 +1,7 @@
 //! UI Bone window.
 
 use crate::*;
+use egui::IntoAtoms;
 use ui::EguiUi;
 
 // native-only imports
@@ -320,6 +321,10 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 shared.selected_bone_mut().unwrap().ik_folded =
                     !shared.selected_bone_mut().unwrap().ik_folded;
             }
+
+            let mut enabled = !bone.ik_disabled;
+            ui.checkbox(&mut enabled, "".into_atoms());
+            shared.selected_bone_mut().unwrap().ik_disabled = !enabled;
         })
     });
 
