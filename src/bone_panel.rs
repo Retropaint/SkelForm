@@ -299,6 +299,10 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
+    if true {
+        return;
+    }
+
     let mut children = vec![];
     armature_window::get_all_children(&shared.armature.bones, &mut children, &bone);
     let parents = shared.armature.get_all_parents(bone.id);
