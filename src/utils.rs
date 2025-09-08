@@ -348,7 +348,8 @@ pub fn import<R: Read + std::io::Seek>(
 
             // iterable editor bone imports
             bone.folded = ed_bone.folded;
-            bone.joint_folded = ed_bone.joint_folded;
+            bone.ik_folded = ed_bone.ik_folded;
+            bone.meshdef_folded = ed_bone.meshdef_folded;
             bone.ik_disabled = ed_bone.ik_disabled;
         }
     }

@@ -905,7 +905,9 @@ pub struct Bone {
     #[serde(skip)]
     pub folded: bool,
     #[serde(skip)]
-    pub joint_folded: bool,
+    pub ik_folded: bool,
+    #[serde(skip)]
+    pub meshdef_folded: bool,
     #[serde(skip)]
     pub world_verts: Vec<Vertex>,
     #[serde(skip)]
@@ -915,7 +917,7 @@ pub struct Bone {
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 pub struct EditorOptions {
     #[serde(default)]
-    pub bones: Vec<EditorBone>
+    pub bones: Vec<EditorBone>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
@@ -925,7 +927,9 @@ pub struct EditorBone {
     #[serde(default)]
     pub folded: bool,
     #[serde(default)]
-    pub joint_folded: bool,
+    pub ik_folded: bool,
+    #[serde(default)]
+    pub meshdef_folded: bool,
     #[serde(default)]
     pub ik_disabled: bool,
 }

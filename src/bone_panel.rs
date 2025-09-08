@@ -302,17 +302,32 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         return;
     }
 
-    ui.add_space(section_spacing);
     mesh_deformation(ui, shared, &bone);
 }
 
 pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
-    let str_heading = shared.loc("bone_panel.inverse_kinematics.heading");
-    let str_desc = shared.loc("bone_panel.inverse_kinematics.desc");
+    let str_heading = shared.loc("bone_panel.inverse_kinematics.heading").clone();
+    let str_desc = shared.loc("bone_panel.inverse_kinematics.desc").clone();
     ui.separator();
-    ui.label(str_heading.to_owned() + ICON_INFO)
-        .on_hover_text(str_desc);
+    ui.horizontal(|ui| {
+        ui.label(str_heading.to_owned() + ICON_INFO)
+            .on_hover_text(str_desc);
+
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
+            let pointing_hand = egui::CursorIcon::PointingHand;
+            if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
+                shared.selected_bone_mut().unwrap().ik_folded =
+                    !shared.selected_bone_mut().unwrap().ik_folded;
+            }
+        })
+    });
+
     ui.separator();
+
+    if bone.ik_folded {
+        return;
+    }
 
     ui.horizontal(|ui| {
         ui.label(shared.loc("bone_panel.inverse_kinematics.effector"));
@@ -435,15 +450,32 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             });
         });
     }
+
+    ui.add_space(20.);
 }
 
 pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
-    let str_heading = shared.loc("bone_panel.mesh_deformation.heading");
-    let str_desc = shared.loc("bone_panel.mesh_deformation.desc");
+    let str_heading = shared.loc("bone_panel.mesh_deformation.heading").clone();
+    let str_desc = shared.loc("bone_panel.mesh_deformation.desc").clone();
     ui.separator();
-    ui.label(str_heading.to_owned() + ICON_INFO)
-        .on_hover_text(str_desc);
+    ui.horizontal(|ui| {
+        ui.label(str_heading.to_owned() + ICON_INFO)
+            .on_hover_text(str_desc);
+
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let fold_icon = if bone.meshdef_folded { "⏴" } else { "⏷" };
+            let pointing_hand = egui::CursorIcon::PointingHand;
+            if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
+                shared.selected_bone_mut().unwrap().meshdef_folded =
+                    !shared.selected_bone_mut().unwrap().meshdef_folded;
+            }
+        })
+    });
     ui.separator();
+
+    if bone.meshdef_folded {
+        return;
+    }
 
     let str_edit = shared.loc("bone_panel.mesh_deformation.edit").clone();
     let str_finish_edit = shared
