@@ -610,7 +610,7 @@ impl Renderer {
         self.take_screenshot(shared);
         let buffer = shared.rendered_frames[0].buffer.clone();
         shared.rendered_frames = vec![];
-        let window = shared.screenshot_res;
+        let screenshot_res = shared.screenshot_res;
         let device = self.gpu.device.clone();
         let armature = shared.armature.clone();
         let saving = shared.saving.clone();
@@ -644,7 +644,7 @@ impl Renderer {
 
             let view = buffer.slice(..).get_mapped_range();
 
-            let mut rgb = vec![0u8; (window.x * window.y * 3.) as usize];
+            let mut rgb = vec![0u8; (screenshot_res.x * screenshot_res.y * 3.) as usize];
             for (j, chunk) in view.as_ref().chunks_exact(4).enumerate() {
                 let offset = j * 3;
                 if offset + 2 > rgb.len() {
@@ -656,8 +656,8 @@ impl Renderer {
             }
 
             let img_buf = <image::ImageBuffer<image::Rgb<u8>, _>>::from_raw(
-                window.x as u32,
-                window.y as u32,
+                screenshot_res.x as u32,
+                screenshot_res.y as u32,
                 rgb.clone(),
             )
             .unwrap();
