@@ -8,8 +8,8 @@
   "startup": {
     "import": "Import",
     "samples": "Samples",
-    "empty_recent_files": "Start from scratch, import something, or try a sample from the options on the left.",
-    "web_note": "Start from scratch, import something, or try a sample below:",
+    "empty_recent_files": "Start from scratch, import an SKF/PSD file, or try a sample from the options on the left.",
+    "web_note": "Start from scratch, import an SKF/PSD file, or try a sample below:",
     "autosave_note": "Auto-generated backup file",
     "resources": {
       "user_docs": "User Documentation",
