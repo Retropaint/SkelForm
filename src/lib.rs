@@ -678,16 +678,16 @@ impl Renderer {
                 .unwrap();
 
             // iterable editor bone exports
-            let mut editor_bones: Vec<EditorBone> = vec![];
+            let mut editor = EditorOptions::default();
             for bone in &armature.bones {
-                editor_bones.push(EditorBone {
+                editor.bones.push(EditorBone {
                     id: bone.id,
                     folded: bone.folded,
                     joint_folded: bone.joint_folded,
                     ik_disabled: bone.ik_disabled,
                 });
             }
-            let editor_json = serde_json::to_string(&editor_bones).unwrap();
+            let editor_json = serde_json::to_string(&editor).unwrap();
 
             // save relevant files into the zip
             zip.start_file("armature.json", options.clone()).unwrap();
