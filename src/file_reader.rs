@@ -167,10 +167,6 @@ pub fn read_image_loaders(
         anim_id,
         shared.ui.anim.selected_frame,
     );
-
-    shared
-        .ui
-        .start_next_tutorial_step(TutorialStep::EditBoneX, &shared.armature);
 }
 
 pub fn read_psd(

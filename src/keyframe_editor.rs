@@ -8,8 +8,6 @@ use crate::*;
 
 const LINE_OFFSET: f32 = 30.;
 
-const HELP_DONE: &str = "Congratulations, you've made your first animation!\n\nYou may proceed with fleshing out the armature and animation, or read the user docs to learn more.\n\nHave fun with SkelForm!";
-
 pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
     if !shared.input.left_down {
         shared.ui.anim.dragged_keyframe.frame = -1;
@@ -85,7 +83,6 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
             let str_new = shared.loc("new");
             let button = ui.skf_button(str_new);
-            ui::draw_tutorial_rect(TutorialStep::CreateAnim, button.rect, shared, ui);
 
             if !button.clicked() {
                 return;
@@ -127,9 +124,6 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                     shared.armature.animations[i].name = value;
                     shared.ui.anim.selected = i;
                     shared.ui.anim.selected_frame = 0;
-                    shared
-                        .ui
-                        .start_next_tutorial_step(TutorialStep::SelectKeyframe, &shared.armature);
                 }
                 continue;
             }
@@ -455,7 +449,7 @@ pub fn draw_timeline_graph(
         .fill(shared.config.colors.light_accent.into())
         .inner_margin(3);
     let layout = egui::Layout::left_to_right(egui::Align::Center);
-    let graph = ui.with_layout(layout, |ui| {
+    ui.with_layout(layout, |ui| {
         frame.show(ui, |ui| {
             let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
                 ui.set_width(width);
@@ -491,12 +485,6 @@ pub fn draw_timeline_graph(
             shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
         });
     });
-    ui::draw_tutorial_rect(
-        TutorialStep::SelectKeyframe,
-        graph.response.rect,
-        shared,
-        ui,
-    );
 }
 
 pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
@@ -528,9 +516,6 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     )
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
 
-                ui::draw_tutorial_rect(TutorialStep::PlayAnim, button.rect, shared, ui);
-                ui::draw_tutorial_rect(TutorialStep::StopAnim, button.rect, shared, ui);
-
                 let mut pressed = ui.input(|i| i.key_pressed(egui::Key::Space));
                 if button.clicked() {
                     pressed = true;
@@ -546,14 +531,6 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     None
                 };
                 shared.ui.anim.played_frame = shared.ui.anim.selected_frame;
-                if shared.ui.tutorial_step_is(TutorialStep::PlayAnim) {
-                    shared
-                        .ui
-                        .start_next_tutorial_step(TutorialStep::StopAnim, &shared.armature);
-                } else if !shared.ui.tutorial_step_is(TutorialStep::None) {
-                    shared.ui.tutorial_step = TutorialStep::None;
-                    shared.ui.open_modal(HELP_DONE.to_string(), false);
-                }
             });
 
             if ui.skf_button("+").clicked() {
@@ -661,9 +638,6 @@ fn draw_frame_lines(
             // select this frame if clicked
             if shared.input.left_clicked {
                 shared.ui.anim.selected_frame = i;
-                shared
-                    .ui
-                    .start_next_tutorial_step(TutorialStep::EditBoneAnim, &shared.armature);
             }
         }
 

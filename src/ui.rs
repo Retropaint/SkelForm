@@ -3,8 +3,6 @@ use egui::{Color32, Context, Shadow, Stroke};
 
 use crate::*;
 
-const HELP_LIGHT_CANT: &str = "There is already an animation! Looks like you've figured it out.\n\nTo activate the help light, please start a new project.";
-
 const FFMPEG_ERR: &str =
     "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.";
 
@@ -323,26 +321,8 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 }
 
                 ui.menu_button(title!(shared.loc("top_bar.help.heading")), |ui| {
-                    ui.set_width(100.);
-                    let str = if !shared.ui.tutorial_step_is(TutorialStep::None) {
-                        shared.loc("top_bar.help.stop_help_light")
-                    } else {
-                        shared.loc("top_bar.help.help_light")
-                    };
-                    if top_bar_button(ui, str, None, &mut offset, shared).clicked() {
-                        if !shared.ui.tutorial_step_is(TutorialStep::None) {
-                            shared.ui.set_tutorial_step(TutorialStep::None);
-                        } else if shared.ui.tutorial_step_is(TutorialStep::Finish) {
-                            shared.ui.open_modal(HELP_LIGHT_CANT.to_string(), false);
-                        } else {
-                            shared.ui.start_tutorial(&shared.armature);
-                            if shared.armature.animations.len() > 0 {
-                                shared.ui.tutorial_step = TutorialStep::Finish;
-                                shared.ui.open_modal(HELP_LIGHT_CANT.to_string(), false);
-                            }
-                        }
-                        ui.close();
-                    }
+                    ui.set_width(90.);
+                    //let str_user_docs = shared.loc("top_bar.help.user_docs");
                     let str_user_docs = shared.loc("top_bar.help.user_docs");
                     if top_bar_button(ui, str_user_docs, None, &mut offset, shared).clicked() {
                         utils::open_docs(true, "");
@@ -760,14 +740,7 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
                     shared.ui.anim.open = false;
                 }
                 let str_animation = shared.loc("keyframe_editor.heading");
-                let button = selection_button(str_animation, shared.ui.anim.open, ui);
-                draw_tutorial_rect(TutorialStep::OpenAnim, button.rect, shared, ui);
-                if button.clicked() {
-                    shared.ui.anim.open = true;
-                    shared
-                        .ui
-                        .start_next_tutorial_step(TutorialStep::CreateAnim, &shared.armature);
-                }
+                selection_button(str_animation, shared.ui.anim.open, ui);
                 shared.ui.animate_mode_bar_scale = ui.min_rect().size().into();
             });
         });
@@ -996,17 +969,6 @@ pub fn draw_fading_rect(
     let fade_color =
         Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), (fade * max_alpha) as u8);
     ui.painter().rect_filled(rect, 0., fade_color);
-}
-
-pub fn draw_tutorial_rect(
-    step: TutorialStep,
-    rect: egui::Rect,
-    shared: &mut Shared,
-    ui: &mut egui::Ui,
-) {
-    if shared.ui.tutorial_step_is(step) {
-        ui::draw_fading_rect(ui, rect, Color32::GOLD, 60., 1.);
-    }
 }
 
 #[derive(PartialEq)]

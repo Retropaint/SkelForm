@@ -1,7 +1,7 @@
 use crate::{
     armature_window,
     ui::{job_text, EguiUi},
-    utils, Action, ActionEnum, Config, PolarId, Shared, UiState, Vec2,
+    Action, ActionEnum, Config, PolarId, Shared, UiState, Vec2,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -109,7 +109,6 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             }
         }
         PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
-        PolarId::FirstTime => shared.ui.start_tutorial(&shared.armature),
         PolarId::DeleteAnim => {
             shared.ui.anim.selected = usize::MAX;
             shared.undo_actions.push(Action {

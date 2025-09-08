@@ -408,7 +408,6 @@ pub enum PolarId {
     #[default]
     DeleteBone,
     Exiting,
-    FirstTime,
     DeleteAnim,
     DeleteFile,
 }
@@ -457,8 +456,6 @@ pub struct Ui {
 
     pub selected_bone_idx: usize,
     pub editing_mesh: bool,
-
-    pub tutorial_step: TutorialStep,
 
     pub rename_id: String,
     pub original_name: String,
@@ -558,73 +555,6 @@ impl Ui {
         self.headline = headline.to_string();
     }
 
-    pub fn set_tutorial_step(&mut self, step: TutorialStep) {
-        if !self.tutorial_step_is(TutorialStep::None) {
-            self.tutorial_step = step;
-        }
-    }
-
-    pub fn tutorial_step_is(&self, step: TutorialStep) -> bool {
-        self.tutorial_step == step
-    }
-
-    pub fn start_tutorial(&mut self, armature: &Armature) {
-        if self.selected_bone_idx != 0 && self.selected_bone_idx != usize::MAX {
-            self.tutorial_step = TutorialStep::ReselectBone;
-        } else {
-            self.tutorial_step = TutorialStep::NewBone;
-            self.tutorial_step = self.next_tutorial_step(self.tutorial_step.clone(), armature);
-        }
-    }
-
-    pub fn start_next_tutorial_step(&mut self, next: TutorialStep, armature: &Armature) {
-        if next as usize == self.tutorial_step.clone() as usize + 1 {
-            self.tutorial_step = self.next_tutorial_step(self.tutorial_step.clone(), armature);
-        }
-    }
-
-    pub fn next_tutorial_step(&mut self, step: TutorialStep, armature: &Armature) -> TutorialStep {
-        if self.tutorial_step == TutorialStep::None {
-            return TutorialStep::None;
-        }
-
-        macro_rules! check {
-            ($bool:expr, $next:expr) => {
-                if $bool {
-                    self.next_tutorial_step($next, armature)
-                } else {
-                    step
-                }
-            };
-        }
-
-        let mut fb = &Bone::default();
-        let bones_len = armature.bones.len();
-        if bones_len > 0 {
-            fb = &armature.bones[0];
-        }
-        let anim_selected = self.anim.selected != usize::MAX;
-        let has_anim = armature.animations.len() > 0 && armature.animations[0].keyframes.len() > 0;
-        let selected_frame = self.anim.selected_frame != 0;
-
-        // iterable tutorial steps
-        #[rustfmt::skip]
-        let final_step = match step {
-            TutorialStep::NewBone        => check!(bones_len > 0,      TutorialStep::GetImage),
-            TutorialStep::GetImage       => check!(fb.tex_idx != -1,   TutorialStep::EditBoneX),
-            TutorialStep::EditBoneX      => check!(fb.pos.x != 0.,     TutorialStep::EditBoneY),
-            TutorialStep::EditBoneY      => check!(fb.pos.y != 0.,     TutorialStep::OpenAnim),
-            TutorialStep::OpenAnim       => check!(self.anim.open,     TutorialStep::CreateAnim),
-            TutorialStep::CreateAnim     => check!(anim_selected,      TutorialStep::SelectKeyframe),
-            TutorialStep::SelectKeyframe => check!(selected_frame,     TutorialStep::EditBoneAnim),
-            TutorialStep::EditBoneAnim   => check!(has_anim,           TutorialStep::PlayAnim),
-            // TutorialStep::PlayAnim       => check!(self.anim.playing,  TutorialStep::StopAnim),
-            // TutorialStep::StopAnim       => check!(!self.anim.playing, TutorialStep::Finish),
-            _ => step
-        };
-        final_step
-    }
-
     pub fn unselect_everything(&mut self) {
         self.selected_bone_idx = usize::MAX;
         self.anim.selected_frame = -1;
@@ -643,22 +573,11 @@ impl Ui {
         self.anim.selected_frame = idx;
     }
 
-    pub fn select_bone(&mut self, idx: usize, armature: &Armature) {
+    pub fn select_bone(&mut self, idx: usize) {
         let selected_anim = self.anim.selected;
         self.unselect_everything();
         self.anim.selected = selected_anim;
         self.selected_bone_idx = idx;
-
-        if self.tutorial_step == TutorialStep::None {
-            return;
-        }
-
-        // guide user to select first bone again in tutorial
-        if idx != 0 {
-            self.tutorial_step = TutorialStep::ReselectBone;
-        } else {
-            self.tutorial_step = self.next_tutorial_step(TutorialStep::NewBone, &armature);
-        }
     }
 }
 
@@ -1755,30 +1674,6 @@ pub struct RenderedFrame {
     pub width: u32,
     pub height: u32,
 }
-
-#[derive(Default, PartialEq, Clone, Debug)]
-pub enum TutorialStep {
-    NewBone,
-    GetImage,
-    EditBoneX,
-    EditBoneY,
-    OpenAnim,
-    CreateAnim,
-    SelectKeyframe,
-    EditBoneAnim,
-    PlayAnim,
-    StopAnim,
-    Finish,
-
-    // tutorial is meant to work with first bone only,
-    // so it must be reselected to proceed
-    ReselectBone,
-
-    #[default]
-    None,
-}
-
-enum_string!(TutorialStep);
 
 #[derive(Default)]
 pub struct CopyBuffer {
