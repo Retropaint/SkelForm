@@ -165,8 +165,8 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     }
 
     let mut enable_bone_panel = true;
-    if let Some(bone) = shared.selected_bone() {
-        enable_bone_panel = !bone.aiming && !shared.ui.setting_ik_target;
+    if let Some(_) = shared.selected_bone() {
+        enable_bone_panel = !shared.ui.setting_ik_target;
     }
 
     let bone_panel_id = "Bone";
