@@ -1,7 +1,6 @@
 use crate::ui::EguiUi;
 use crate::*;
 
-#[cfg(not(target_arch = "wasm32"))]
 pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
     egui::Window::new("startup")
         .title_bar(false)
@@ -28,7 +27,6 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
         });
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 fn startup_content(
     ctx: &egui::Context,
     ui: &mut egui::Ui,
@@ -50,6 +48,9 @@ fn startup_content(
         let import_pos = Some(egui::Vec2::new(-5., 2.5));
         let str_import = shared.loc("startup.import");
         if startup_leftside_button("🗋", str_import, ui, shared, import_pos, None).clicked() {
+            #[cfg(target_arch = "wasm32")]
+            toggleElement(true, "file-dialog".to_string());
+            #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog(shared.temp_path.import.clone());
         }
         ui.add_space(padding);
@@ -76,11 +77,14 @@ fn startup_content(
             if startup_leftside_button("", "Skellington", ui, shared, skellington_pos, thumb_tex)
                 .clicked()
             {
+                #[cfg(not(target_arch = "wasm32"))]
                 file_reader::create_temp_file(
                     &shared.temp_path.import,
                     "./samples/skellington.skf",
                 );
                 shared.ui.set_state(UiState::StartupWindow, false);
+                #[cfg(target_arch = "wasm32")]
+                crate::downloadSample();
             }
         }
     });
@@ -127,7 +131,7 @@ fn startup_content(
                             continue;
                         }
 
-                        skf_file_button(path, shared, ui, ctx, available_width);
+                        //skf_file_button(path, shared, ui, ctx, available_width);
                         ui.add_space(5.);
                     }
                 });
@@ -465,10 +469,12 @@ pub fn file_button_icon(
         .on_hover_text(name)
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 fn open_link(item: &StartupResourceItem, url_type: &StartupItemType) {
     if *url_type == StartupItemType::Custom {
+        #[cfg(not(target_arch = "wasm32"))]
         let _ = open::that(item.url.clone());
+        #[cfg(target_arch = "wasm32")]
+        crate::openLink(item.url.clone());
     } else {
         utils::open_docs(*url_type == StartupItemType::DevDocs, &item.url);
     }
