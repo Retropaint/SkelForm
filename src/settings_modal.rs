@@ -192,26 +192,24 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
     ui.add_space(20.);
 
+    let str_startup = shared.loc("top_bar.file.startup");
+    ui.heading(str_startup);
+    ui.horizontal(|ui| {
+        let str_skip_startup = shared.loc("settings_modal.miscellaneous.skip_startup_window");
+        ui.label(str_skip_startup);
+        ui.checkbox(&mut shared.config.skip_startup, "".into_atoms());
+    });
     #[cfg(not(target_arch = "wasm32"))]
-    {
-        let str_startup = shared.loc("top_bar.file.startup");
-        ui.heading(str_startup);
-        ui.horizontal(|ui| {
-            let str_skip_startup = shared.loc("settings_modal.miscellaneous.skip_startup_window");
-            ui.label(str_skip_startup);
-            ui.checkbox(&mut shared.config.hide_startup, "".into_atoms());
-        });
-        ui.horizontal(|ui| {
-            if shared.recent_file_paths.len() == 0 {
-                ui.disable();
-            }
-            let str_clear_recents = shared.loc("settings_modal.miscellaneous.clear_recent_files");
-            if ui.skf_button(str_clear_recents).clicked() {
-                shared.recent_file_paths = vec![];
-                utils::save_to_recent_files(&vec![]);
-            }
-        });
-    }
+    ui.horizontal(|ui| {
+        if shared.recent_file_paths.len() == 0 {
+            ui.disable();
+        }
+        let str_clear_recents = shared.loc("settings_modal.miscellaneous.clear_recent_files");
+        if ui.skf_button(str_clear_recents).clicked() {
+            shared.recent_file_paths = vec![];
+            utils::save_to_recent_files(&vec![]);
+        }
+    });
 }
 
 fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
