@@ -139,7 +139,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
 
     style_once!(armature_window::draw(context, shared));
 
-    let min_default_size = 220.;
+    let min_default_size = 210.;
     let mut max_size = min_default_size;
     if shared.ui.selected_bone_idx != usize::MAX {
         max_size = 250.;
