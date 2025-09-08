@@ -2,7 +2,9 @@
 //!
 //! `disabled:` - features that have been implemented at some point, but are dormant for a later version. Usually for complex or optional features.
 //!
-//! `runtime:` - implementation that is relevant to runtimes (eg. animation logic, forward kinematics, etc).
+//! `runtime:` - implementation relevant to runtimes (eg. animation logic, forward/inverse kinematics, etc).
+//!
+//! `iterable` - snippets that aren't automated/iterated, but probably should be.
 
 #[cfg(not(target_arch = "wasm32"))]
 use image::ImageEncoder;
