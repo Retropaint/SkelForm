@@ -48,30 +48,14 @@ fn startup_content(
         }
         ui.add_space(padding);
         let import_pos = Some(egui::Vec2::new(-5., 2.5));
-        if startup_leftside_button(
-            "🗋",
-            shared.loc("startup.import"),
-            ui,
-            shared,
-            import_pos,
-            None,
-        )
-        .clicked()
-        {
+        let str_import = shared.loc("startup.import");
+        if startup_leftside_button("🗋", str_import, ui, shared, import_pos, None).clicked() {
             utils::open_import_dialog(shared.temp_path.import.clone());
         }
         ui.add_space(padding);
         let samples_pos = Some(egui::Vec2::new(-5., 2.5));
-        if startup_leftside_button(
-            "🗊",
-            shared.loc("startup.samples"),
-            ui,
-            shared,
-            samples_pos,
-            None,
-        )
-        .clicked()
-        {
+        let str_samples = shared.loc("startup.samples");
+        if startup_leftside_button("🗊", str_samples, ui, shared, samples_pos, None).clicked() {
             shared.ui.showing_samples = !shared.ui.showing_samples;
         }
         ui.add_space(padding);
@@ -88,15 +72,9 @@ fn startup_content(
                     .unwrap(),
                 );
             }
-            if startup_leftside_button(
-                "",
-                "Skellington",
-                ui,
-                shared,
-                skellington_pos,
-                shared.thumb_ui_tex.get("skellington_sample.png"),
-            )
-            .clicked()
+            let thumb_tex = shared.thumb_ui_tex.get("skellington_sample.png");
+            if startup_leftside_button("", "Skellington", ui, shared, skellington_pos, thumb_tex)
+                .clicked()
             {
                 file_reader::create_temp_file(
                     &shared.temp_path.import,
