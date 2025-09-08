@@ -41,6 +41,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         (bone.vertices, bone.indices) = create_tex_rect(&tex_size);
     }
 
+    // runtime: simultaneous animations
     let mut bones = shared.armature.bones.clone();
     if shared.ui.anim.open {
         let mut playing = false;
