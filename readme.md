@@ -2,7 +2,7 @@
 
 SkelForm is a 2D skeletal animator, made in response to a lack of other free (and good) alternatives.
 
-![example](example.png)
+![example](assets/example.png)
 
 # Building
 
