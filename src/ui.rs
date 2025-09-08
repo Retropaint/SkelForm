@@ -740,7 +740,9 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
                     shared.ui.anim.open = false;
                 }
                 let str_animation = shared.loc("keyframe_editor.heading");
-                selection_button(str_animation, shared.ui.anim.open, ui);
+                if selection_button(str_animation, shared.ui.anim.open, ui).clicked() {
+                    shared.ui.anim.open = true;
+                }
                 shared.ui.animate_mode_bar_scale = ui.min_rect().size().into();
             });
         });
