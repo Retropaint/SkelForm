@@ -228,6 +228,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     }
 
     let has_ik = !bone.ik_disabled && bone.joint_effector != JointEffector::None;
+    let str_cant_edit = shared
+        .loc("bone_panel.inverse_kinematics.cant_edit")
+        .clone();
 
     ui.add_enabled_ui(!has_ik, |ui| {
         ui.horizontal(|ui| {
@@ -254,38 +257,41 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 }
             })
         });
-    });
 
-    ui.horizontal(|ui| {
-        label!(shared.loc("bone_panel.scale"), ui);
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            input!(bone.scale.y, "scale_y", &AnimElement::ScaleY, 1., ui, "Y");
-            input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "X");
+        ui.horizontal(|ui| {
+            label!(shared.loc("bone_panel.scale"), ui);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                input!(bone.scale.y, "scale_y", &AnimElement::ScaleY, 1., ui, "Y");
+                input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "X");
+            });
         });
-    });
-    // disabled: pivots are mostly superfluous as parent inheritance is mandatory
-    //ui.horizontal(|ui| {
-    //    label!("Pivot:", ui);
-    //    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-    //        input!(bone.pivot.y, "pivot_y", &AnimElement::PivotY, 1., ui, "Y");
-    //        input!(bone.pivot.x, "pivot_x", &AnimElement::PivotX, 1., ui, "X");
-    //    });
-    //});
-    ui.horizontal(|ui| {
-        label!(shared.loc("bone_panel.rotation"), ui);
-        let rot_el = &AnimElement::Rotation;
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let input: egui::Response;
-            let deg_mod = 180. / std::f32::consts::PI;
-            input_response!(bone.rot, "rot", rot_el, deg_mod, ui, "", input);
-            ui::draw_tutorial_rect(TutorialStep::EditBoneAnim, input.rect, shared, ui);
-            if edited {
-                shared
-                    .ui
-                    .start_next_tutorial_step(TutorialStep::PlayAnim, &shared.armature);
-            }
+        // disabled: pivots are mostly superfluous as parent inheritance is mandatory
+        //ui.horizontal(|ui| {
+        //    label!("Pivot:", ui);
+        //    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+        //        input!(bone.pivot.y, "pivot_y", &AnimElement::PivotY, 1., ui, "Y");
+        //        input!(bone.pivot.x, "pivot_x", &AnimElement::PivotX, 1., ui, "X");
+        //    });
+        //});
+        ui.horizontal(|ui| {
+            label!(shared.loc("bone_panel.rotation"), ui);
+            let rot_el = &AnimElement::Rotation;
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let input: egui::Response;
+                let deg_mod = 180. / std::f32::consts::PI;
+                input_response!(bone.rot, "rot", rot_el, deg_mod, ui, "", input);
+                ui::draw_tutorial_rect(TutorialStep::EditBoneAnim, input.rect, shared, ui);
+                if edited {
+                    shared
+                        .ui
+                        .start_next_tutorial_step(TutorialStep::PlayAnim, &shared.armature);
+                }
+            });
         });
-    });
+    })
+    .response
+    .on_disabled_hover_text(str_cant_edit);
+
     ui.horizontal(|ui| {
         label!(shared.loc("bone_panel.zindex"), ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {

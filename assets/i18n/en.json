@@ -92,7 +92,8 @@
       "Middle": "Middle",
       "End": "End",
       "Clockwise": "Clockwise",
-      "CCW": "CCW"
+      "CCW": "CCW",
+      "cant_edit": "Turn off inverse kinematics to edit"
     },
     "mesh_deformation": {
       "heading": "Mesh Deformation ",
