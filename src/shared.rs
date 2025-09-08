@@ -912,7 +912,13 @@ pub struct Bone {
     pub ik_disabled: bool,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, Default)]
+pub struct EditorOptions {
+    #[serde(default)]
+    pub bones: Vec<EditorBone>
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Default)]
 pub struct EditorBone {
     #[serde(default)]
     pub id: i32,
