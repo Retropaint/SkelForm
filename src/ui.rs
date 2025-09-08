@@ -93,23 +93,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     #[allow(unused_assignments)]
     let mut full_img = image::DynamicImage::default();
     if shared.ui.anim.icon_images.len() == 0 {
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            full_img = image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            if let Some((pixels, dims)) = file_reader::load_image_wasm("img-anim-icons".to_string())
-            {
-                let buffer = image::ImageBuffer::<image::Rgba<u8>, Vec<u8>>::from_vec(
-                    dims.x as u32,
-                    dims.y as u32,
-                    pixels,
-                )
-                .unwrap();
-                full_img = image::DynamicImage::ImageRgba8(buffer);
-            }
-        }
+        full_img = image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
 
         if full_img.width() > 0 {
             let mut x = 0;
