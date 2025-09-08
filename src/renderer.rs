@@ -413,7 +413,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         return;
     }
 
-    if shared.ui.editing_mesh {
+    let mut ik_disabled = false;
+    if let Some(bone) = shared.selected_bone() {
+        ik_disabled = bone.ik_disabled;
+    }
+
+    if shared.ui.editing_mesh || !ik_disabled {
         return;
     }
 
