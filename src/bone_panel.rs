@@ -227,30 +227,35 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         };
     }
 
-    ui.horizontal(|ui| {
-        label!(shared.loc("bone_panel.position"), ui);
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let input: egui::Response;
-            let pos_y = &AnimElement::PositionY;
-            input_response!(bone.pos.y, "pos_y", pos_y, 1., ui, "Y", input);
-            ui::draw_tutorial_rect(TutorialStep::EditBoneY, input.rect, shared, ui);
-            if edited {
-                shared
-                    .ui
-                    .start_next_tutorial_step(TutorialStep::OpenAnim, &shared.armature);
-            }
+    let has_ik = !bone.ik_disabled && bone.joint_effector != JointEffector::None;
 
-            let input: egui::Response;
-            let pos_x = &AnimElement::PositionX;
-            input_response!(bone.pos.x, "pos_x", pos_x, 1., ui, "X", input);
-            ui::draw_tutorial_rect(TutorialStep::EditBoneX, input.rect, shared, ui);
-            if edited {
-                shared
-                    .ui
-                    .start_next_tutorial_step(TutorialStep::EditBoneY, &shared.armature);
-            }
-        })
+    ui.add_enabled_ui(!has_ik, |ui| {
+        ui.horizontal(|ui| {
+            label!(shared.loc("bone_panel.position"), ui);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let input: egui::Response;
+                let pos_y = &AnimElement::PositionY;
+                input_response!(bone.pos.y, "pos_y", pos_y, 1., ui, "Y", input);
+                ui::draw_tutorial_rect(TutorialStep::EditBoneY, input.rect, shared, ui);
+                if edited {
+                    shared
+                        .ui
+                        .start_next_tutorial_step(TutorialStep::OpenAnim, &shared.armature);
+                }
+
+                let input: egui::Response;
+                let pos_x = &AnimElement::PositionX;
+                input_response!(bone.pos.x, "pos_x", pos_x, 1., ui, "X", input);
+                ui::draw_tutorial_rect(TutorialStep::EditBoneX, input.rect, shared, ui);
+                if edited {
+                    shared
+                        .ui
+                        .start_next_tutorial_step(TutorialStep::EditBoneY, &shared.armature);
+                }
+            })
+        });
     });
+
     ui.horizontal(|ui| {
         label!(shared.loc("bone_panel.scale"), ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -325,8 +330,17 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             if bone.joint_effector == JointEffector::Start {
                 let mut enabled = !bone.ik_disabled;
                 let str_desc = shared.loc("bone_panel.inverse_kinematics.enabled_desc");
-                ui.checkbox(&mut enabled, "".into_atoms()).on_hover_text(str_desc);
-                shared.selected_bone_mut().unwrap().ik_disabled = !enabled;
+                let checkbox = ui
+                    .checkbox(&mut enabled, "".into_atoms())
+                    .on_hover_text(str_desc);
+                if checkbox.clicked() {
+                    let mut bones = vec![];
+                    armature_window::get_all_children(&shared.armature.bones, &mut bones, &bone);
+                    bones.push(bone.clone());
+                    for bone in bones {
+                        shared.armature.find_bone_mut(bone.id).unwrap().ik_disabled = !enabled;
+                    }
+                }
             }
         })
     });
