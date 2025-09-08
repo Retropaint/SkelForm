@@ -712,6 +712,11 @@ fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
 }
 
 fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
+    let mut ik_disabled = true;
+    if let Some(bone) = shared.selected_bone() {
+        ik_disabled = bone.ik_disabled || bone.joint_effector == JointEffector::None;
+    }
+
     // edit mode window
     egui::Window::new("Mode")
         .resizable(false)
@@ -723,7 +728,7 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
             shared.ui.edit_bar_pos.y - 1.,
         ))
         .show(egui_ctx, |ui| {
-            ui.add_enabled_ui(!shared.ui.editing_mesh, |ui| {
+            ui.add_enabled_ui(!shared.ui.editing_mesh && ik_disabled, |ui| {
                 ui.horizontal(|ui| {
                     macro_rules! edit_mode_button {
                         ($label:expr, $edit_mode:expr) => {
