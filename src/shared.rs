@@ -1180,9 +1180,16 @@ impl Armature {
         if anim_frame != 0 {
             let frame =
                 self.animations[anim_id].check_if_in_keyframe(bone_id, 0, element.clone(), -1);
-            self.animations[anim_id].keyframes[frame].value = match element {
-                AnimElement::ScaleX | AnimElement::ScaleY => 1.,
-                _ => 0.,
+            if self.animations[anim_id]
+                .keyframes
+                .iter()
+                .find(|kf| kf.frame == anim_frame && kf.element == *element)
+                == None
+            {
+                self.animations[anim_id].keyframes[frame].value = match element {
+                    AnimElement::ScaleX | AnimElement::ScaleY => 1.,
+                    _ => 0.,
+                }
             }
         }
         let frame =
