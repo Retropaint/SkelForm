@@ -53,38 +53,50 @@ fn startup_content(
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog(shared.temp_path.import.clone());
         }
-        ui.add_space(padding);
-        let samples_pos = Some(egui::Vec2::new(-5., 2.5));
-        let str_samples = shared.loc("startup.samples");
-        if startup_leftside_button("🗊", str_samples, ui, shared, samples_pos, None).clicked() {
-            shared.ui.showing_samples = !shared.ui.showing_samples;
-        }
-        ui.add_space(padding);
-        if shared.ui.showing_samples {
-            let skellington_pos = Some(egui::Vec2::new(-5., -10.));
-            if !shared.thumb_ui_tex.contains_key("skellington_sample.png") {
-                shared.thumb_ui_tex.insert(
-                    "skellington_sample.png".to_string(),
-                    ui::create_ui_texture(
-                        include_bytes!("../assets/skellington_sample.png").to_vec(),
-                        true,
-                        ctx,
-                    )
-                    .unwrap(),
-                );
-            }
-            let thumb_tex = shared.thumb_ui_tex.get("skellington_sample.png");
-            if startup_leftside_button("", "Skellington", ui, shared, skellington_pos, thumb_tex)
-                .clicked()
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            ui.add_space(padding);
+            let samples_pos = Some(egui::Vec2::new(-5., 2.5));
+            let str_samples = shared.loc("startup.samples");
+            if startup_leftside_button("🗊", str_samples, ui, shared, samples_pos, None).clicked()
             {
-                #[cfg(not(target_arch = "wasm32"))]
-                file_reader::create_temp_file(
-                    &shared.temp_path.import,
-                    "./samples/skellington.skf",
-                );
-                shared.ui.set_state(UiState::StartupWindow, false);
-                #[cfg(target_arch = "wasm32")]
-                crate::downloadSample();
+                shared.ui.showing_samples = !shared.ui.showing_samples;
+            }
+            ui.add_space(padding);
+            if shared.ui.showing_samples {
+                let skellington_pos = Some(egui::Vec2::new(-5., -10.));
+                if !shared.thumb_ui_tex.contains_key("skellington_sample.png") {
+                    shared.thumb_ui_tex.insert(
+                        "skellington_sample.png".to_string(),
+                        ui::create_ui_texture(
+                            include_bytes!("../assets/skellington_sample.png").to_vec(),
+                            true,
+                            ctx,
+                        )
+                        .unwrap(),
+                    );
+                }
+                let thumb_tex = shared.thumb_ui_tex.get("skellington_sample.png");
+                if startup_leftside_button(
+                    "",
+                    "Skellington",
+                    ui,
+                    shared,
+                    skellington_pos,
+                    thumb_tex,
+                )
+                .clicked()
+                {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    file_reader::create_temp_file(
+                        &shared.temp_path.import,
+                        "./samples/skellington.skf",
+                    );
+                    shared.ui.set_state(UiState::StartupWindow, false);
+                    #[cfg(target_arch = "wasm32")]
+                    crate::downloadSample();
+                }
             }
         }
     });
@@ -103,6 +115,8 @@ fn startup_content(
                 let right_margin = 50.;
                 ui.set_max_width((width.min(max_width) - right_margin).max(1.));
                 ui.set_min_width(0.);
+
+                #[cfg(not(target_arch = "wasm32"))]
                 ui.vertical(|ui| {
                     let available_width = ui.available_width();
                     ui.set_width(available_width);
@@ -131,10 +145,24 @@ fn startup_content(
                             continue;
                         }
 
-                        //skf_file_button(path, shared, ui, ctx, available_width);
+                        skf_file_button(path, shared, ui, ctx, available_width);
                         ui.add_space(5.);
                     }
                 });
+
+                #[cfg(target_arch = "wasm32")]
+                ui.vertical(|ui| {
+                    let available_width = ui.available_width();
+                    ui.set_width(available_width);
+                    web_sample_button(
+                        "Skellington Sample".to_owned(),
+                        include_bytes!(".././assets/skellington_sample.png").to_vec(),
+                        shared,
+                        ui,
+                        ctx,
+                        available_width,
+                    );
+                })
             },
         );
     });
@@ -433,6 +461,91 @@ pub fn skf_file_button(
                 _ => {}
             }
         }
+    });
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn web_sample_button(
+    name: String,
+    thumb_bytes: Vec<u8>,
+    shared: &mut Shared,
+    ui: &mut egui::Ui,
+    ctx: &egui::Context,
+    width: f32,
+) {
+    let thumb_size = Vec2::new(64., 64.);
+
+    if !shared.thumb_ui_tex.contains_key(&name) {
+        let ui_tex = ui::create_ui_texture(thumb_bytes, true, ctx).unwrap();
+        shared.thumb_ui_tex.insert(name.clone(), ui_tex.clone());
+    }
+
+    ui.horizontal(|ui| {
+        ui.set_width(width);
+        ui.set_height(85.);
+
+        let gradient_rect = egui::Rect::from_min_max(
+            egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() - 5.),
+            egui::Pos2::new(ui.min_rect().right() + 25., ui.min_rect().bottom()),
+        );
+
+        let button = ui
+            .interact(
+                gradient_rect,
+                egui::Id::new("frame rect".to_owned() + &name),
+                egui::Sense::click(),
+            )
+            .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+        if button.contains_pointer() {
+            ui.gradient(
+                gradient_rect,
+                egui::Color32::TRANSPARENT,
+                shared.config.colors.dark_accent.into(),
+            );
+        }
+
+        egui::Frame::new()
+            .inner_margin(egui::Margin::same(10))
+            .fill(egui::Color32::TRANSPARENT)
+            .show(ui, |ui| {
+                ui.set_width(width);
+                ui.set_height(65.);
+
+                let rect = egui::Rect::from_min_size(
+                    egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
+                    thumb_size.into(),
+                );
+                if let Some(thumb_tex) = shared.thumb_ui_tex.get(&name) {
+                    egui::Image::new(thumb_tex).paint_at(ui, rect);
+                }
+                let heading_pos = egui::Pos2::new(
+                    ui.min_rect().left_top().x + 72.,
+                    ui.min_rect().left_top().y + 18.,
+                );
+                ui.painter().text(
+                    heading_pos,
+                    egui::Align2::LEFT_BOTTOM,
+                    name.clone(),
+                    egui::FontId::new(16., egui::FontFamily::Proportional),
+                    shared.config.colors.text.into(),
+                );
+            });
+
+        if button.clicked() {
+            crate::downloadSample();
+            shared.ui.set_state(UiState::StartupWindow, false);
+        }
+
+        let bottom = egui::Rect::from_min_size(
+            ui.min_rect().left_bottom(),
+            egui::Vec2::new(ui.min_rect().right() - ui.min_rect().left(), 1.),
+        );
+        ui.painter().rect_filled(
+            bottom,
+            egui::CornerRadius::ZERO,
+            shared.config.colors.dark_accent,
+        );
     });
 }
 
