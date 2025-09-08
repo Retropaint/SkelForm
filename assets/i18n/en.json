@@ -78,7 +78,7 @@
     "zindex": "Z-Index:",
     "inverse_kinematics": {
       "heading": "Inverse Kinematics ",
-      "desc": "Automatically adjust and bend bones to reach a specified target.\nBest used for joints like shoulders and legs.\n\nSubesequent joints must be located towards it's parent's arrow.",
+      "desc": "Automatically adjust and bend bones to reach a specified target.\nBest used for joints like shoulders and legs.\n\nEvery Middle and End joint must be located towards it's parent's arrow.",
       "enabled_desc": "Should inverse kinematics be running?\n\nUntick this to allow setting up joint positions and rotations.",
       "effector": "Effector: ",
       "effector_desc": "Start: used as base, will only rotate and stay in place\n\nMiddle: will rotate and move such that End matches Target\n\nEnd: all prior effectors will adjust such that this matches Target",
