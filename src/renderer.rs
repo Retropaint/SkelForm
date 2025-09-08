@@ -152,8 +152,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         // check if cursor is on an opaque pixel of this bone's texture
-        let is_aiming = shared.armature.bones.iter().find(|bone| bone.aiming) != None;
-        if hover_bone_id == -1 && !shared.input.left_down && !shared.input.on_ui && !is_aiming {
+        if hover_bone_id == -1 && !shared.input.left_down && !shared.input.on_ui {
             let tb = temp_bones[b].clone();
             for (_, chunk) in tb.indices.chunks_exact(3).enumerate() {
                 let bary = tri_point(
@@ -274,39 +273,45 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         );
     }
 
-    for bone in &temp_bones {
-        if bone.joint_effector == JointEffector::None || bone.joint_effector == JointEffector::End {
-            continue;
-        }
-        let mut arrow = Bone {
-            pos: bone.pos,
-            rot: bone.rot,
-            scale: Vec2::new(2., 2.),
-            pivot: Vec2::new(0., 0.5),
-            ..Default::default()
-        };
-        let tex_size = Vec2::new(61., 48.);
-        (arrow.vertices, arrow.indices) = create_tex_rect(&tex_size);
-        for v in 0..4 {
-            let mut new_vert = con_vert!(
-                raw_to_world_vert,
-                arrow.vertices[v],
-                arrow,
-                tex_size,
-                shared.camera.pos,
-                shared.camera.zoom
+    if shared.selected_bone() != None
+        && shared.selected_bone().unwrap().joint_effector != JointEffector::None
+    {
+        for bone in &temp_bones {
+            if bone.joint_effector == JointEffector::None
+                || bone.joint_effector == JointEffector::End
+            {
+                continue;
+            }
+            let mut arrow = Bone {
+                pos: bone.pos,
+                rot: bone.rot,
+                scale: Vec2::new(2., 2.),
+                pivot: Vec2::new(0., 0.5),
+                ..Default::default()
+            };
+            let tex_size = Vec2::new(61., 48.);
+            (arrow.vertices, arrow.indices) = create_tex_rect(&tex_size);
+            for v in 0..4 {
+                let mut new_vert = con_vert!(
+                    raw_to_world_vert,
+                    arrow.vertices[v],
+                    arrow,
+                    tex_size,
+                    shared.camera.pos,
+                    shared.camera.zoom
+                );
+                new_vert.pos.x /= shared.window.x / shared.window.y;
+                new_vert.color = VertexColor::new(1., 1., 1., 0.2);
+                arrow.world_verts.push(new_vert);
+            }
+            draw(
+                &shared.ik_arrow_bindgroup,
+                &arrow.world_verts,
+                &arrow.indices,
+                render_pass,
+                device,
             );
-            new_vert.pos.x /= shared.window.x / shared.window.y;
-            new_vert.color = VertexColor::new(1., 1., 1., 0.2);
-            arrow.world_verts.push(new_vert);
         }
-        draw(
-            &shared.ik_arrow_bindgroup,
-            &arrow.world_verts,
-            &arrow.indices,
-            render_pass,
-            device,
-        );
     }
 
     if shared.ui.editing_mesh {
@@ -394,25 +399,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         return;
-    }
-
-    if let Some(aimed_bone) = shared.armature.bones.iter_mut().find(|bone| bone.aiming) {
-        aimed_bone.aiming = false;
-
-        // apply IK rotations into armature
-        for b in 0..shared.armature.bones.len() {
-            let id = shared.armature.bones[b].id;
-            let parents = shared.armature.get_all_parents(id);
-            if ik_rot.get(&id) == None {
-                continue;
-            }
-
-            let mut rot_offset = 0.;
-            for parent in parents {
-                rot_offset += parent.rot;
-            }
-            shared.armature.bones[b].rot = *ik_rot.get(&id).unwrap() - rot_offset;
-        }
     }
 
     // mouse related stuff
