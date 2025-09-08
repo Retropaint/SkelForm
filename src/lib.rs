@@ -677,9 +677,23 @@ impl Renderer {
                 )
                 .unwrap();
 
-            // save armature json, texture atlas, and thumbnail
+            // iterable editor bone exports
+            let mut editor_bones: Vec<EditorBone> = vec![];
+            for bone in &armature.bones {
+                editor_bones.push(EditorBone {
+                    id: bone.id,
+                    folded: bone.folded,
+                    joint_folded: bone.joint_folded,
+                    ik_disabled: bone.ik_disabled,
+                });
+            }
+            let editor_json = serde_json::to_string(&editor_bones).unwrap();
+
+            // save relevant files into the zip
             zip.start_file("armature.json", options.clone()).unwrap();
             zip.write(armatures_json.as_bytes()).unwrap();
+            zip.start_file("editor.json", options.clone()).unwrap();
+            zip.write(editor_json.as_bytes()).unwrap();
             zip.start_file("thumbnail.png", options.clone()).unwrap();
             zip.write(&thumb_buf).unwrap();
             if size != Vec2::ZERO {

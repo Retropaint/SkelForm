@@ -339,6 +339,20 @@ pub fn import<R: Read + std::io::Seek>(
         shared.armature.bones[b].folded = children.len() > 0;
     }
 
+    // load editor data
+    if let Ok(editor_file) = zip.as_mut().unwrap().by_name("editor.json") {
+        let editor_bones: Vec<crate::EditorBone> = serde_json::from_reader(editor_file).unwrap();
+        for b in 0..shared.armature.bones.len() {
+            let bone = &mut shared.armature.bones[b];
+            let ed_bone = &editor_bones[b];
+
+            // iterable editor bone imports
+            bone.folded = ed_bone.folded;
+            bone.joint_folded = ed_bone.joint_folded;
+            bone.ik_disabled = ed_bone.ik_disabled;
+        }
+    }
+
     // load texture
     let has_tex = root
         .armature
