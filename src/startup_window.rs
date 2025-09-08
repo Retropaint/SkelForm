@@ -155,6 +155,17 @@ fn startup_content(
                 ui.vertical(|ui| {
                     let available_width = ui.available_width();
                     ui.set_width(available_width);
+                    ui.horizontal(|ui| {
+                        ui.with_layout(
+                            egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
+                            |ui| {
+                                let msg = shared.loc("startup.web_note");
+                                let text = egui::RichText::new(msg).size(14.);
+                                ui.label(text);
+                            },
+                        )
+                    });
+                    ui.add_space(20.);
                     web_sample_button(
                         "Skellington Sample".to_owned(),
                         include_bytes!(".././assets/skellington_sample.png").to_vec(),
@@ -535,7 +546,6 @@ pub fn web_sample_button(
 
         if button.clicked() {
             crate::downloadSample();
-            shared.ui.set_state(UiState::StartupWindow, false);
         }
 
         let bottom = egui::Rect::from_min_size(
