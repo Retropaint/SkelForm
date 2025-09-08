@@ -387,17 +387,22 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     });
 
     if bone.joint_effector == JointEffector::Start {
+        let icon: &str;
         let const_label = if bone.constraint == JointConstraint::CounterClockwise {
+            icon = "  ⟲";
             "CCW".to_string()
         } else {
+            icon = "  ⟳";
             bone.constraint.to_string()
         };
         ui.horizontal(|ui| {
             ui.label(shared.loc("bone_panel.inverse_kinematics.constraint"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let last_constraint = bone.clone().constraint;
-                let str_selected =
-                    shared.loc(&("bone_panel.inverse_kinematics.".to_owned() + &const_label));
+                let str_selected = shared
+                    .loc(&("bone_panel.inverse_kinematics.".to_owned() + &const_label))
+                    .to_owned()
+                    + icon;
                 let str_none = shared.loc("bone_panel.inverse_kinematics.None").clone();
                 let str_clockwise = shared
                     .loc("bone_panel.inverse_kinematics.Clockwise")
@@ -412,8 +417,16 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     .show_ui(ui, |ui| {
                         let constraint = &mut shared.selected_bone_mut().unwrap().constraint;
                         ui.selectable_value(constraint, JointConstraint::None, str_none);
-                        ui.selectable_value(constraint, JointConstraint::Clockwise, str_clockwise);
-                        ui.selectable_value(constraint, JointConstraint::CounterClockwise, str_ccw);
+                        ui.selectable_value(
+                            constraint,
+                            JointConstraint::Clockwise,
+                            str_clockwise + "  ⟳",
+                        );
+                        ui.selectable_value(
+                            constraint,
+                            JointConstraint::CounterClockwise,
+                            str_ccw + "  ⟲",
+                        );
                     })
                     .response
                     .on_hover_text(str_desc);
