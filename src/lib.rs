@@ -683,7 +683,8 @@ impl Renderer {
                 editor.bones.push(EditorBone {
                     id: bone.id,
                     folded: bone.folded,
-                    joint_folded: bone.joint_folded,
+                    ik_folded: bone.ik_folded,
+                    meshdef_folded: bone.meshdef_folded,
                     ik_disabled: bone.ik_disabled,
                 });
             }
