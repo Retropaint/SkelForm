@@ -912,6 +912,18 @@ pub struct Bone {
     pub ik_disabled: bool,
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct EditorBone {
+    #[serde(default)]
+    pub id: i32,
+    #[serde(default)]
+    pub folded: bool,
+    #[serde(default)]
+    pub joint_folded: bool,
+    #[serde(default)]
+    pub ik_disabled: bool,
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Armature {
     #[serde(default)]
