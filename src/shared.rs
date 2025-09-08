@@ -588,7 +588,7 @@ pub struct Config {
     #[serde(default = "gridline_default")]
     pub gridline_gap: i32,
     #[serde(default)]
-    pub hide_startup: bool,
+    pub skip_startup: bool,
     #[serde(default)]
     pub autosave_frequency: i32,
     #[serde(default)]
@@ -623,7 +623,7 @@ impl Default for Config {
             colors: ColorConfig::default(),
             keys: KeyboardConfig::default(),
             gridline_gap: gridline_default(),
-            hide_startup: false,
+            skip_startup: false,
             autosave_frequency: 5,
             exact_bone_select: false,
             gridline_front: false,

@@ -127,7 +127,9 @@ fn init_shared(shared: &mut Shared) {
         skelform_lib::utils::save_config(&shared.config);
     }
 
-    shared.ui.set_state(UiState::StartupWindow, true);
+    if !shared.config.skip_startup {
+        shared.ui.set_state(UiState::StartupWindow, true);
+    }
 
     shared.ui.scale = shared.config.ui_scale;
     shared.gridline_gap = shared.config.gridline_gap;
