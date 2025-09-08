@@ -513,62 +513,6 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
     }
 }
 
-pub fn first_time_modal(shared: &mut Shared, ctx: &egui::Context) {
-    modal_template(
-        ctx,
-        &shared.config,
-        |ui| {
-            ui.heading("Welcome!");
-            modal_x(ui, || {
-                shared.ui.set_state(UiState::FirstTimeModal, false);
-            });
-            ui.label("\nA few resources to get you started:\n");
-            ui.horizontal_wrapped(|ui| {
-                ui.spacing_mut().item_spacing.x = 0.0;
-                ui.label("- Check out the ");
-                let mut link = ui
-                    .label(
-                        egui::RichText::new("User Documentation")
-                            .color(egui::Color32::from_hex("#659adf").unwrap()),
-                    )
-                    .on_hover_cursor(egui::CursorIcon::PointingHand);
-                link.sense = egui::Sense::click();
-                if link.clicked() {
-                    utils::open_docs(false, "");
-                }
-            });
-
-            ui.horizontal_wrapped(|ui| {
-                ui.spacing_mut().item_spacing.x = 0.0;
-                ui.label("- Try out the ");
-
-                if !ui.skf_button("sample").clicked() {
-                    return;
-                }
-
-                #[cfg(target_arch = "wasm32")]
-                crate::downloadSample();
-                #[cfg(not(target_arch = "wasm32"))]
-                crate::file_reader::create_temp_file(
-                    &shared.temp_path.import,
-                    &(utils::bin_path() + "/samples/skellington.skf"),
-                );
-                shared.ui.set_state(UiState::FirstTimeModal, false);
-            });
-
-            ui.horizontal_wrapped(|ui| {
-                ui.spacing_mut().item_spacing.x = 0.0;
-                ui.label("- Be guided from scratch with a ");
-                if ui.skf_button("help light").clicked() {
-                    shared.ui.start_tutorial(&shared.armature);
-                    shared.ui.set_state(UiState::FirstTimeModal, false);
-                }
-            });
-        },
-        |_| {},
-    );
-}
-
 // top-right X label for modals
 pub fn modal_x<T: FnOnce()>(ui: &mut egui::Ui, after_close: T) {
     let x_rect = egui::Rect::from_min_size(ui.min_rect().right_top(), egui::Vec2::ZERO);

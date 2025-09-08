@@ -123,11 +123,6 @@ fn init_shared(shared: &mut Shared) {
     {
         skelform_lib::utils::import_config(shared);
         skelform_lib::utils::save_config(&shared.config);
-
-        if shared.config.first_time {
-            //shared.config.first_time = false;
-            //shared.ui.set_state(UiState::FirstTimeModal, true);
-        }
     }
 
     shared.ui.set_state(UiState::StartupWindow, true);

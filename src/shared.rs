@@ -390,7 +390,6 @@ pub enum UiState {
     ForcedModal,
     Modal,
     PolarModal,
-    FirstTimeModal,
     SettingsModal,
     StartupWindow,
 }
@@ -665,8 +664,6 @@ impl Ui {
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
-    #[serde(skip)]
-    pub first_time: bool,
     #[serde(default = "default_one")]
     pub ui_scale: f32,
     #[serde(default = "gridline_default")]
@@ -703,7 +700,6 @@ pub struct ColorConfig {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            first_time: true,
             ui_scale: default_one(),
             colors: ColorConfig::default(),
             keys: KeyboardConfig::default(),

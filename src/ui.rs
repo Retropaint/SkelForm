@@ -122,9 +122,6 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.ui.has_state(UiState::SettingsModal) {
         settings_modal::draw(shared, context);
     }
-    if shared.ui.has_state(UiState::FirstTimeModal) {
-        modal::first_time_modal(shared, context);
-    }
     if shared.ui.has_state(UiState::StartupWindow) {
         startup_window::startup_modal(shared, context);
     }
