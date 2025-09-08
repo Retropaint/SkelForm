@@ -324,7 +324,8 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
             if bone.joint_effector == JointEffector::Start {
                 let mut enabled = !bone.ik_disabled;
-                ui.checkbox(&mut enabled, "".into_atoms());
+                let str_desc = shared.loc("bone_panel.inverse_kinematics.enabled_desc");
+                ui.checkbox(&mut enabled, "".into_atoms()).on_hover_text(str_desc);
                 shared.selected_bone_mut().unwrap().ik_disabled = !enabled;
             }
         })
