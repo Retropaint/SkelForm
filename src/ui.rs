@@ -90,10 +90,9 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     }
 
     let anim_icon_size = 18;
-    #[allow(unused_assignments)]
-    let mut full_img = image::DynamicImage::default();
     if shared.ui.anim.icon_images.len() == 0 {
-        full_img = image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
+        let mut full_img =
+            image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
 
         if full_img.width() > 0 {
             let mut x = 0;
