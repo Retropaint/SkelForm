@@ -73,7 +73,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // inverse kinematics
         for b in 0..temp_bones.len() {
-            if temp_bones[b].joint_effector != JointEffector::Start {
+            if temp_bones[b].joint_effector != JointEffector::Start || temp_bones[b].ik_disabled {
                 continue;
             }
 
