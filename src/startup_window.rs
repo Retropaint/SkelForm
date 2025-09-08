@@ -105,6 +105,7 @@ fn startup_content(
     ui.separator();
 
     ui.vertical(|ui| {
+        ui.add_space(11.);
         let reserved_for_resources = 450.;
         ui.set_width((available_size.x - reserved_for_resources).max(1.));
         let width = ui.available_width();
