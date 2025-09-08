@@ -150,7 +150,7 @@ pub fn open_import_dialog(temp_file_to_write: String) {
 
 #[cfg(target_arch = "wasm32")]
 pub fn save_web(armature: &Armature) {
-    let (size, armatures_json, png_buf) = prepare_files(armature);
+    let (size, armatures_json, editor_json, png_buf) = prepare_files(armature);
 
     // create zip file
     let mut buf: Vec<u8> = Vec::new();
@@ -163,6 +163,8 @@ pub fn save_web(armature: &Armature) {
     // save armature json and texture image
     zip.start_file("armature.json", options).unwrap();
     zip.write(armatures_json.as_bytes()).unwrap();
+    zip.start_file("editor.json", options).unwrap();
+    zip.write(editor_json.as_bytes()).unwrap();
     if size != Vec2::ZERO {
         zip.start_file("textures.png", options).unwrap();
         zip.write(&png_buf).unwrap();
@@ -266,7 +268,7 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
     (png_buf, Vec2::new(size as f32, size as f32))
 }
 
-pub fn prepare_files(armature: &Armature) -> (Vec2, String, Vec<u8>) {
+pub fn prepare_files(armature: &Armature) -> (Vec2, String, String, Vec<u8>) {
     let mut png_buf = vec![];
     let mut size = Vec2::new(0., 0.);
 
@@ -300,7 +302,20 @@ pub fn prepare_files(armature: &Armature) -> (Vec2, String, Vec<u8>) {
 
     let armatures_json = serde_json::to_string(&root).unwrap();
 
-    (size, armatures_json, png_buf)
+    // iterable editor bone exports
+    let mut editor = EditorOptions::default();
+    for bone in &armature.bones {
+        editor.bones.push(EditorBone {
+            id: bone.id,
+            folded: bone.folded,
+            ik_folded: bone.ik_folded,
+            meshdef_folded: bone.meshdef_folded,
+            ik_disabled: bone.ik_disabled,
+        });
+    }
+    let editor_json = serde_json::to_string(&editor).unwrap();
+
+    (size, armatures_json, editor_json, png_buf)
 }
 
 pub fn import<R: Read + std::io::Seek>(

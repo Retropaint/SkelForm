@@ -634,7 +634,7 @@ impl Renderer {
         save_path += "~";
         utils::save_to_recent_files(&shared.recent_file_paths);
         std::thread::spawn(move || {
-            let (size, armatures_json, png_buf) = utils::prepare_files(&armature);
+            let (size, armatures_json, editor_json, png_buf) = utils::prepare_files(&armature);
 
             // create zip file
             let mut zip = zip::ZipWriter::new(std::fs::File::create(save_path.clone()).unwrap());
@@ -679,19 +679,6 @@ impl Renderer {
                     image::ExtendedColorType::Rgb8,
                 )
                 .unwrap();
-
-            // iterable editor bone exports
-            let mut editor = EditorOptions::default();
-            for bone in &armature.bones {
-                editor.bones.push(EditorBone {
-                    id: bone.id,
-                    folded: bone.folded,
-                    ik_folded: bone.ik_folded,
-                    meshdef_folded: bone.meshdef_folded,
-                    ik_disabled: bone.ik_disabled,
-                });
-            }
-            let editor_json = serde_json::to_string(&editor).unwrap();
 
             // save relevant files into the zip
             zip.start_file("armature.json", options.clone()).unwrap();
