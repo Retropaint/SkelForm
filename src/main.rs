@@ -28,13 +28,15 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     init_shared(&mut app.shared);
 
     // load startup.json, but only if no args were given
-    let mut startup = Startup::default();
+    let startup: Startup;
     #[cfg(not(target_arch = "wasm32"))]
     {
         let args: Vec<String> = std::env::args().collect();
         if args.len() == 1 {
             let bytes = include_bytes!("../assets/startup.json").as_slice();
             startup = serde_json::from_slice(bytes).unwrap();
+        } else {
+            startup = Startup::default();
         }
     }
     #[cfg(target_arch = "wasm32")]

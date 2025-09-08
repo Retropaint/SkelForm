@@ -210,14 +210,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         };
     }
 
-    // same as input!, but provides back input response
-    macro_rules! input_response {
-        ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr, $input:expr) => {
-            (edited, $float, $input) = $ui.float_input($id.to_string(), shared, $float, $modifier);
-            check_input_edit!($float, $element, $ui, $label)
-        };
-    }
-
     // for labels that are not part of any input fields (eg "Position:", "Rotation:", etc)
     macro_rules! label {
         ($name:expr, $ui:expr) => {
@@ -236,25 +228,11 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.horizontal(|ui| {
             label!(shared.loc("bone_panel.position"), ui);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let input: egui::Response;
                 let pos_y = &AnimElement::PositionY;
-                input_response!(bone.pos.y, "pos_y", pos_y, 1., ui, "Y", input);
-                ui::draw_tutorial_rect(TutorialStep::EditBoneY, input.rect, shared, ui);
-                if edited {
-                    shared
-                        .ui
-                        .start_next_tutorial_step(TutorialStep::OpenAnim, &shared.armature);
-                }
+                input!(bone.pos.y, "pos_y", pos_y, 1., ui, "Y");
 
-                let input: egui::Response;
                 let pos_x = &AnimElement::PositionX;
-                input_response!(bone.pos.x, "pos_x", pos_x, 1., ui, "X", input);
-                ui::draw_tutorial_rect(TutorialStep::EditBoneX, input.rect, shared, ui);
-                if edited {
-                    shared
-                        .ui
-                        .start_next_tutorial_step(TutorialStep::EditBoneY, &shared.armature);
-                }
+                input!(bone.pos.x, "pos_x", pos_x, 1., ui, "X");
             })
         });
 
@@ -277,15 +255,8 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
             label!(shared.loc("bone_panel.rotation"), ui);
             let rot_el = &AnimElement::Rotation;
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let input: egui::Response;
                 let deg_mod = 180. / std::f32::consts::PI;
-                input_response!(bone.rot, "rot", rot_el, deg_mod, ui, "", input);
-                ui::draw_tutorial_rect(TutorialStep::EditBoneAnim, input.rect, shared, ui);
-                if edited {
-                    shared
-                        .ui
-                        .start_next_tutorial_step(TutorialStep::PlayAnim, &shared.armature);
-                }
+                input!(bone.rot, "rot", rot_el, deg_mod, ui, "");
             });
         });
     })

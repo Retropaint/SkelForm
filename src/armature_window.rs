@@ -34,7 +34,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 let button = ui.skf_button(shared.loc("armature_panel.new_bone_button"));
-                ui::draw_tutorial_rect(TutorialStep::NewBone, button.rect, shared, ui);
                 if button.clicked() {
                     let idx: usize;
 
@@ -52,18 +51,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     }
 
                     // immediately select new bone upon creating it
-                    shared.ui.select_bone(idx, &shared.armature);
+                    shared.ui.select_bone(idx);
 
                     shared.selected_bone_mut().unwrap().name =
                         shared.loc("armature_panel.new_bone_name").to_string();
-
-                    if shared.armature.bones.len() > 1 {
-                        shared.ui.set_tutorial_step(TutorialStep::ReselectBone);
-                    } else {
-                        shared
-                            .ui
-                            .start_next_tutorial_step(TutorialStep::GetImage, &shared.armature);
-                    }
                 }
             });
 
@@ -228,7 +219,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         shared.ui.setting_ik_target = false;
                     } else {
                         let anim_frame = shared.ui.anim.selected_frame;
-                        shared.ui.select_bone(idx as usize, &shared.armature);
+                        shared.ui.select_bone(idx as usize);
                         shared.ui.anim.selected_frame = anim_frame;
                     }
                 };
@@ -258,11 +249,6 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                             shared.ui.context_menu.keep = true;
                         }
                     });
-                }
-
-                // highlight this bone if it's the first and is not selected during the tutorial
-                if idx == 0 {
-                    ui::draw_tutorial_rect(TutorialStep::ReselectBone, button.rect, shared, ui);
                 }
 
                 if check_bone_dragging(shared, ui, button, idx as usize) {
