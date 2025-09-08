@@ -28,16 +28,21 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     init_shared(&mut app.shared);
 
     // load startup.json, but only if no args were given
+    let mut startup = Startup::default();
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let mut startup = Startup::default();
         let args: Vec<String> = std::env::args().collect();
         if args.len() == 1 {
             let bytes = include_bytes!("../assets/startup.json").as_slice();
             startup = serde_json::from_slice(bytes).unwrap();
         }
-        app.shared.startup = startup;
     }
+    #[cfg(target_arch = "wasm32")]
+    {
+        let bytes = include_bytes!("../assets/startup.json").as_slice();
+        startup = serde_json::from_slice(bytes).unwrap();
+    }
+    app.shared.startup = startup;
 
     // delete any leftover temporary files
     #[cfg(not(target_arch = "wasm32"))]
@@ -113,10 +118,6 @@ fn init_shared(shared: &mut Shared) {
         } else {
             skelform_lib::utils::save_config(&shared.config);
         }
-
-        shared
-            .ui
-            .set_state(UiState::StartupWindow, !shared.config.hide_startup);
     }
     #[cfg(target_arch = "wasm32")]
     {
@@ -124,10 +125,12 @@ fn init_shared(shared: &mut Shared) {
         skelform_lib::utils::save_config(&shared.config);
 
         if shared.config.first_time {
-            shared.config.first_time = false;
-            shared.ui.set_state(UiState::FirstTimeModal, true);
+            //shared.config.first_time = false;
+            //shared.ui.set_state(UiState::FirstTimeModal, true);
         }
     }
+
+    shared.ui.set_state(UiState::StartupWindow, true);
 
     shared.ui.scale = shared.config.ui_scale;
     shared.gridline_gap = shared.config.gridline_gap;

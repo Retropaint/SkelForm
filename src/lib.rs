@@ -77,6 +77,7 @@ extern "C" {
     pub fn openDocumentation(docs_name: String);
     pub fn updateUiSlider();
     pub fn downloadSample();
+    pub fn openLink(url: String);
 }
 
 #[derive(Default)]
