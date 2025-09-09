@@ -127,7 +127,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // many fight for spot of newest vertex; there will only be one.
     let mut new_vert: Option<Vertex> = None;
-    let mut added_verts = false;
+
+    // ensure only 1 vert is ever added
+    let mut added_vert = false;
 
     // pre-draw bone setup
     for b in 0..temp_bones.len() {
@@ -186,13 +188,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
                 );
 
-                if shared.input.left_clicked && shared.ui.editing_mesh && !added_verts {
+                if shared.input.left_clicked && shared.ui.editing_mesh && !added_vert {
                     new_vert = Some(Vertex {
                         pos: Vec2::new(pixel_pos.x, -pixel_pos.y),
                         uv,
                         ..Default::default()
                     });
-                    added_verts = true;
+                    added_vert = true;
                 }
 
                 let pixel_alpha = shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize]
