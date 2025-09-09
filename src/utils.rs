@@ -11,7 +11,7 @@ mod web {
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
-use image::ImageEncoder;
+use image::{GenericImage, ImageEncoder};
 
 use std::io::{Read, Write};
 

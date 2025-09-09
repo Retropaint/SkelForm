@@ -189,6 +189,14 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             .on_hover_text(str_exact_bone_desc);
         ui.checkbox(&mut shared.config.exact_bone_select, "".into_atoms());
     });
+    ui.horizontal(|ui| {
+        let str_keep_tex_idx = shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx");
+        let str_keep_tex_idx_desc = shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx_desc");
+        ui.label(&(str_keep_tex_idx.to_owned() + crate::ICON_INFO + ":"))
+            .on_hover_cursor(egui::CursorIcon::Default)
+            .on_hover_text(str_keep_tex_idx_desc);
+        ui.checkbox(&mut shared.config.keep_tex_idx_on_move, "".into_atoms());
+    });
 
     ui.add_space(20.);
 

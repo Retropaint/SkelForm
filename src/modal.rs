@@ -491,6 +491,10 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             .textures
             .insert(new_idx, tex);
 
+        if shared.config.keep_tex_idx_on_move {
+            return;
+        }
+
         // adjust bones to use the new texture indices that matched prior
         #[allow(unreachable_code)]
         for b in 0..shared.armature.bones.len() {
