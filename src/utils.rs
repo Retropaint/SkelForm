@@ -227,24 +227,13 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
 
     for set in &mut armature.texture_sets {
         for tex in &mut set.textures {
-            // get current texture as a buffer
-            let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
-                tex.size.x as u32,
-                tex.size.y as u32,
-                tex.image.clone().into_rgba8().to_vec(),
-            )
-            .unwrap();
-
-            // add it to the final buffer
-            for x in 0..img_buf.width() {
-                for y in 0..img_buf.height() {
-                    raw_buf.put_pixel(
-                        x + packed.as_ref().unwrap().packed_locations()[&idx].1.x(),
-                        y + packed.as_ref().unwrap().packed_locations()[&idx].1.y(),
-                        *img_buf.get_pixel(x, y),
-                    );
-                }
-            }
+            raw_buf
+                .copy_from(
+                    &tex.image,
+                    packed.as_ref().unwrap().packed_locations()[&idx].1.x(),
+                    packed.as_ref().unwrap().packed_locations()[&idx].1.y(),
+                )
+                .unwrap();
 
             tex.offset.x = packed.as_ref().unwrap().packed_locations()[&idx].1.x() as f32;
             tex.offset.y = packed.as_ref().unwrap().packed_locations()[&idx].1.y() as f32;
