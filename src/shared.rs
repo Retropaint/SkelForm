@@ -1762,7 +1762,6 @@ pub struct Shared {
     pub gridline_gap: i32,
 
     pub saving: Saving,
-    pub saving_in_progress: bool,
 
     pub thumb_ui_tex: std::collections::HashMap<String, egui::TextureHandle>,
 

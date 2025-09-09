@@ -5,6 +5,7 @@
   "scale": "Scale",
   "new": "New",
   "vert_limit": "Cannot delete vertex. Meshes must have at least 4 vertices.",
+  "saving": "Saving, please wait...",
   "startup": {
     "import": "Import",
     "samples": "Samples",
