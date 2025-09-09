@@ -10,7 +10,16 @@ use winit::keyboard::KeyCode;
 
 macro_rules! con_vert {
     ($func:expr, $vert:expr, $bone:expr, $tex_size:expr, $cam_pos:expr, $cam_zoom:expr) => {
-        $func($vert, Some(&$bone), &$cam_pos, $cam_zoom, $tex_size, 1., 1.)
+        $func(
+            $vert,
+            Some(&$bone),
+            &$cam_pos,
+            $cam_zoom,
+            $tex_size,
+            1.,
+            1.,
+            Vec2::new(0.5, 0.5),
+        )
     };
 }
 
@@ -292,13 +301,15 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             let tex_size = Vec2::new(61., 48.);
             (arrow.vertices, arrow.indices) = create_tex_rect(&tex_size);
             for v in 0..4 {
-                let mut new_vert = con_vert!(
-                    raw_to_world_vert,
+                let mut new_vert = raw_to_world_vert(
                     arrow.vertices[v],
-                    arrow,
+                    Some(&arrow),
+                    &shared.camera.pos,
+                    shared.camera.zoom,
                     tex_size,
-                    shared.camera.pos,
-                    shared.camera.zoom
+                    1.,
+                    1.,
+                    Vec2::new(0., 0.5)
                 );
                 new_vert.pos.x /= shared.window.x / shared.window.y;
                 new_vert.color = VertexColor::new(1., 1., 1., 0.2);
@@ -1171,6 +1182,7 @@ fn draw_point(
             Vec2::new(0., 0.),
             shared.window.x / shared.window.y,
             1.,
+            Vec2::new(0.5, 0.5)
         ));
     }
 
@@ -1291,8 +1303,8 @@ fn raw_to_world_vert(
     tex_size: Vec2,
     aspect_ratio: f32,
     hard_scale: f32,
+    pivot: Vec2,
 ) -> Vertex {
-    let pivot = Vec2::new(0.5, 0.5);
     vert.pos *= hard_scale;
 
     if let Some(bone) = bone {
@@ -1329,8 +1341,8 @@ fn world_to_raw_vert(
     tex_size: Vec2,
     aspect_ratio: f32,
     hard_scale: f32,
+    pivot: Vec2,
 ) -> Vertex {
-    let pivot = Vec2::new(0.5, 0.5);
     vert.pos.x *= aspect_ratio;
 
     vert.pos *= zoom;
