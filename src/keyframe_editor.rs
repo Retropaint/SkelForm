@@ -89,7 +89,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             shared.undo_actions.push(Action {
-                action: ActionEnum::Animations,
+                action: ActionType::Animations,
                 animations: shared.armature.animations.clone(),
                 ..Default::default()
             });
@@ -788,7 +788,7 @@ pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32) {
 
 pub fn add_anim_action(shared: &mut Shared) {
     shared.undo_actions.push(shared::Action {
-        action: ActionEnum::Animation,
+        action: ActionType::Animation,
         id: shared.selected_animation().unwrap().id as i32,
         animations: vec![shared.selected_animation().unwrap().clone()],
         ..Default::default()

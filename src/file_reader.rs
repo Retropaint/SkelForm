@@ -143,14 +143,14 @@ pub fn read_image_loaders(
     if !shared.ui.is_animating() {
         anim_id = usize::MAX;
         shared.undo_actions.push(Action {
-            action: ActionEnum::Bone,
+            action: ActionType::Bone,
             id: shared.selected_bone().unwrap().id,
             bones: vec![shared.selected_bone().unwrap().clone()],
             ..Default::default()
         });
     } else {
         shared.undo_actions.push(Action {
-            action: ActionEnum::Animation,
+            action: ActionType::Animation,
             id: shared.selected_animation().unwrap().id,
             animations: vec![shared.selected_animation().unwrap().clone()],
             ..Default::default()
