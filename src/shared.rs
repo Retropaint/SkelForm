@@ -1396,6 +1396,11 @@ pub struct Texture {
     pub size: Vec2,
     #[serde(default)]
     pub name: String,
+
+    // todo: 
+    // Make a global texture list that keeps track of these separately.
+    // Texture sets are cloned for the undo actions list, which bloats mem usage
+    // if the user adds or modifies texture sets lots of times.
     #[serde(skip)]
     pub image: image::DynamicImage,
     #[serde(skip)]
