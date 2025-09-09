@@ -152,7 +152,9 @@
       "select_exact_bone": "Select exact bone in click ",
       "select_exact_bone_desc": "When clicking a bone's texture, the first untextured parent of the bone will be selected.\n\nTick this to always select the textured bone directly.",
       "skip_startup_window": "Skip startup window",
-      "clear_recent_files": "Clear recent files"
+      "clear_recent_files": "Clear recent files",
+      "keep_bone_tex_idx": "Keep tex. index after moving ",
+      "keep_bone_tex_idx_desc": "After moving a texture in a texture set, all bones will automatically adjust their Tex. Index to match.\n\nTick this to preserve indexes after moving."
     }
   },
   "keyframe_editor": {
