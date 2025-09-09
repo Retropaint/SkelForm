@@ -116,7 +116,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // sort bones by highest zindex first, so that hover logic will pick the top-most one
-    temp_bones.sort_by(|a, b| b.zindex.total_cmp(&a.zindex));
+    temp_bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
 
     let mut hover_bone_id = -1;
 
@@ -251,7 +251,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // runtime: sort bones by z-index for drawing
-    temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
+    temp_bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
     for bone in &mut temp_bones {
         if bone.tex_set_idx == -1 || shared.armature.is_bone_hidden(bone.id) {
@@ -474,7 +474,7 @@ fn tri_point(p: &Vec2, a: &Vec2, b: &Vec2, c: &Vec2) -> (f32, f32, f32, f32) {
 pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: &Shared) {
     let mut temp_bones: Vec<Bone> = shared.armature.bones.clone();
     forward_kinematics(&mut temp_bones, std::collections::HashMap::new());
-    temp_bones.sort_by(|a, b| a.zindex.total_cmp(&b.zindex));
+    temp_bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
     let zoom = 1000.;
 

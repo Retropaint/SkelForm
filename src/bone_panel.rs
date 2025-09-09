@@ -266,7 +266,9 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         label!(shared.loc("bone_panel.zindex"), ui);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            input!(bone.zindex, "zindex", &AnimElement::Zindex, 1., ui, "");
+            let mut zindex = bone.zindex as f32;
+            input!(zindex, "zindex", &AnimElement::Zindex, 1., ui, "");
+            bone.zindex = zindex as i32;
         });
     });
 

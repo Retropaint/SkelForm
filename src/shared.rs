@@ -802,7 +802,7 @@ pub struct Bone {
     #[serde(default)]
     pub pivot: Vec2,
     #[serde(default)]
-    pub zindex: f32,
+    pub zindex: i32,
     #[serde(default, skip_serializing_if = "is_not_joint")]
     pub joint_effector: JointEffector,
     #[serde(default, skip_serializing_if = "no_constraint")]
@@ -1002,7 +1002,7 @@ impl Armature {
             scale: Vec2 { x: 1., y: 1. },
             tex_set_idx: -1,
             pivot: Vec2::new(0.5, 0.5),
-            zindex: self.bones.len() as f32,
+            zindex: self.bones.len() as i32,
             constraint: JointConstraint::None,
             ik_target_id: -1,
             ..Default::default()
@@ -1057,14 +1057,14 @@ impl Armature {
         anim_frame: i32,
     ) {
         macro_rules! edit {
-            ($field:expr) => {
+            ($field:expr, $typ:ty) => {
                 if anim_id == usize::MAX {
-                    $field = value;
+                    $field = value as $typ;
                 } else {
                     // offset value by its field, so it's effectively overwritten
                     match element {
-                        AnimElement::ScaleX | AnimElement::ScaleY => value /= $field,
-                        _ => value -= $field,
+                        AnimElement::ScaleX | AnimElement::ScaleY => value /= $field as f32,
+                        _ => value -= $field as f32,
                     }
                 }
             };
@@ -1074,14 +1074,14 @@ impl Armature {
 
         #[rustfmt::skip]
         match element {
-            AnimElement::PositionX     => { edit!(bone_mut.pos.x);   },
-            AnimElement::PositionY     => { edit!(bone_mut.pos.y);   },
-            AnimElement::Rotation      => { edit!(bone_mut.rot);     },
-            AnimElement::ScaleX        => { edit!(bone_mut.scale.x); },
-            AnimElement::ScaleY        => { edit!(bone_mut.scale.y); },
-            AnimElement::PivotX        => { edit!(bone_mut.pivot.x); },
-            AnimElement::PivotY        => { edit!(bone_mut.pivot.y); },
-            AnimElement::Zindex        => { edit!(bone_mut.zindex);  },
+            AnimElement::PositionX     => { edit!(bone_mut.pos.x, f32);   },
+            AnimElement::PositionY     => { edit!(bone_mut.pos.y, f32);   },
+            AnimElement::Rotation      => { edit!(bone_mut.rot, f32);     },
+            AnimElement::ScaleX        => { edit!(bone_mut.scale.x, f32); },
+            AnimElement::ScaleY        => { edit!(bone_mut.scale.y, f32); },
+            AnimElement::PivotX        => { edit!(bone_mut.pivot.x, f32); },
+            AnimElement::PivotY        => { edit!(bone_mut.pivot.y, f32); },
+            AnimElement::Zindex        => { edit!(bone_mut.zindex, i32);  },
             AnimElement::VertPositionX => { /* do nothing */ },
             AnimElement::VertPositionY => { /* do nothing */ },
             AnimElement::TextureIndex       => { /* handled in set_bone_tex() */ },
@@ -1199,7 +1199,7 @@ impl Armature {
                 b.scale.y *= interpolate!(AnimElement::ScaleY,       1., -1);
                 b.pivot.x += interpolate!(AnimElement::PivotX,       0., -1);
                 b.pivot.y += interpolate!(AnimElement::PivotY,       0., -1);
-                b.zindex  =  prev_frame!( AnimElement::Zindex,       0.);
+                b.zindex  =  prev_frame!( AnimElement::Zindex,       b.zindex as f32) as i32;
                 b.tex_idx =  prev_frame!( AnimElement::TextureIndex, b.tex_idx as f32) as i32;
             };
 
