@@ -272,8 +272,10 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
+    // disabled: inverse kinematics (not ready)
+    // disabled: mesh deformation (not ready either)
     if true {
-        //return;
+        return;
     }
 
     let mut children = vec![];
