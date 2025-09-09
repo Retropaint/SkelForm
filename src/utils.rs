@@ -277,15 +277,37 @@ pub fn prepare_files(armature: &Armature) -> (Vec2, String, String, Vec<u8>) {
 
     // populate parent_idx
     for b in 0..armature_copy.bones.len() {
-        if armature_copy.bones[b].parent_id == -1 {
-            armature_copy.bones[b].parent_idx = -1;
+        macro_rules! bone {
+            () => {
+                armature_copy.bones[b]
+            };
+        }
+        if bone!().parent_id == -1 {
+            bone!().parent_idx = -1;
             continue;
         }
-        armature_copy.bones[b].parent_idx = armature_copy
+        bone!().parent_idx = armature_copy
             .bones
             .iter()
-            .position(|bone| bone.id == armature_copy.bones[b].parent_id)
+            .position(|bone| bone.id == bone!().parent_id)
             .unwrap() as i32;
+    }
+
+    // populate keyframe bone_idx
+    for a in 0..armature_copy.animations.len() {
+        for kf in 0..armature_copy.animations[a].keyframes.len() {
+            let keyframe = &mut armature_copy.animations[a].keyframes[kf];
+            if keyframe.bone_id == -1 {
+                keyframe.bone_idx = -1;
+                continue;
+            }
+
+            keyframe.bone_idx = armature_copy
+                .bones
+                .iter()
+                .position(|bone| bone.id == keyframe.bone_id)
+                .unwrap() as i32;
+        }
     }
 
     if armature.texture_sets.len() > 0 && armature.texture_sets[0].textures.len() > 0 {
@@ -373,6 +395,18 @@ pub fn import<R: Read + std::io::Seek>(
             bone!().parent_id = -1;
         } else {
             bone!().parent_id = shared.armature.bones[bone!().parent_idx as usize].id;
+        }
+    }
+
+    // populate keyframe bone_id based on bone_idx
+    for a in 0..shared.armature.animations.len() {
+        for kf in 0..shared.armature.animations[a].keyframes.len() {
+            let keyframe = &mut shared.armature.animations[a].keyframes[kf];
+            if keyframe.bone_idx == -1 {
+                keyframe.bone_id = -1;
+            } else {
+                keyframe.bone_id = shared.armature.bones[keyframe.bone_idx as usize].id;
+            }
         }
     }
 

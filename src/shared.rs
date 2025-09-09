@@ -1527,8 +1527,10 @@ impl Animation {
 pub struct Keyframe {
     #[serde(default)]
     pub frame: i32,
-    #[serde(default)]
+    #[serde(skip)]
     pub bone_id: i32,
+    #[serde(default)]
+    pub bone_idx: i32,
     #[serde(default)]
     pub element_id: i32,
     #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
