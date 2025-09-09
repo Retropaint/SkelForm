@@ -243,14 +243,6 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
                 input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "X");
             });
         });
-        // disabled: pivots are mostly superfluous as parent inheritance is mandatory
-        //ui.horizontal(|ui| {
-        //    label!("Pivot:", ui);
-        //    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-        //        input!(bone.pivot.y, "pivot_y", &AnimElement::PivotY, 1., ui, "Y");
-        //        input!(bone.pivot.x, "pivot_x", &AnimElement::PivotX, 1., ui, "X");
-        //    });
-        //});
         ui.horizontal(|ui| {
             label!(shared.loc("bone_panel.rotation"), ui);
             let rot_el = &AnimElement::Rotation;
