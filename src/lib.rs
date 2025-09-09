@@ -5,6 +5,8 @@
 //! `runtime:` - implementation relevant to runtimes (eg. animation logic, forward/inverse kinematics, etc).
 //!
 //! `iterable` - snippets that aren't automated/iterated, but probably should be.
+//!
+//! `todo:` - not important as of being written, but good to keep in mind.
 
 #[cfg(not(target_arch = "wasm32"))]
 use image::ImageEncoder;
