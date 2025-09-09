@@ -273,7 +273,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     });
 
     if true {
-        return;
+        //return;
     }
 
     let mut children = vec![];
