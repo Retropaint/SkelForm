@@ -606,6 +606,8 @@ impl Renderer {
 
     #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&mut self, shared: &mut Shared) {
+        use bone_panel::create_temp_file;
+
         if shared.time - shared.last_autosave < shared.config.autosave_frequency as f32 {
             shared.saving = Saving::None;
             return;
@@ -618,6 +620,7 @@ impl Renderer {
         let armature = shared.armature.clone();
         let saving = shared.saving.clone();
         let mut save_path = shared.save_path.clone();
+        let save_finish = shared.temp_path.save_finish.clone();
         if saving == shared::Saving::Autosaving {
             let dir = directories_next::ProjectDirs::from("com", "retropaint", "skelform")
                 .unwrap()
@@ -631,7 +634,6 @@ impl Renderer {
         if !shared.recent_file_paths.contains(&save_path) {
             shared.recent_file_paths.push(save_path.clone());
         }
-        save_path += "~";
         utils::save_to_recent_files(&shared.recent_file_paths);
         std::thread::spawn(move || {
             let (size, armatures_json, editor_json, png_buf) = utils::prepare_files(&armature);
@@ -694,10 +696,11 @@ impl Renderer {
 
             zip.finish().unwrap();
 
-            save_path.pop();
-            let _ = std::fs::copy(save_path.clone() + "~", save_path);
+            let _ = std::fs::copy(save_path.clone(), save_path + "~");
+            create_temp_file(&save_finish, "");
         });
         shared.saving = Saving::None;
+        shared.saving_in_progress = true;
     }
 
     #[cfg(not(target_arch = "wasm32"))]
