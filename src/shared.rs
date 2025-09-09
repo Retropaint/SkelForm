@@ -786,8 +786,10 @@ pub struct Bone {
     pub id: i32,
     #[serde(default)]
     pub name: String,
-    #[serde(default = "default_neg_one")]
+    #[serde(skip)]
     pub parent_id: i32,
+    #[serde(default)]
+    pub parent_idx: i32,
     #[serde(default = "default_neg_one")]
     pub tex_set_idx: i32,
     #[serde(default = "default_neg_one")]

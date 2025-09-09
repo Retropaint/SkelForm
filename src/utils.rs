@@ -275,6 +275,19 @@ pub fn prepare_files(armature: &Armature) -> (Vec2, String, String, Vec<u8>) {
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
+    // populate parent_idx
+    for b in 0..armature_copy.bones.len() {
+        if armature_copy.bones[b].parent_id == -1 {
+            armature_copy.bones[b].parent_idx = -1;
+            continue;
+        }
+        armature_copy.bones[b].parent_idx = armature_copy
+            .bones
+            .iter()
+            .position(|bone| bone.id == armature_copy.bones[b].parent_id)
+            .unwrap() as i32;
+    }
+
     if armature.texture_sets.len() > 0 && armature.texture_sets[0].textures.len() > 0 {
         (png_buf, size) = create_tex_sheet(&mut armature_copy);
     }
@@ -345,13 +358,22 @@ pub fn import<R: Read + std::io::Seek>(
 
     shared.armature = root.armature.clone();
     for b in 0..shared.armature.bones.len() {
+        macro_rules! bone {
+            () => {
+                shared.armature.bones[b]
+            };
+        }
+
         let mut children = vec![];
-        armature_window::get_all_children(
-            &shared.armature.bones,
-            &mut children,
-            &shared.armature.bones[b],
-        );
-        shared.armature.bones[b].folded = children.len() > 0;
+        armature_window::get_all_children(&shared.armature.bones, &mut children, &bone!());
+        bone!().folded = children.len() > 0;
+
+        // populate parent_id based on parent_idx
+        if bone!().parent_idx == -1 {
+            bone!().parent_id = -1;
+        } else {
+            bone!().parent_id = shared.armature.bones[bone!().parent_idx as usize].id;
+        }
     }
 
     // load editor data
