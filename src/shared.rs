@@ -1586,10 +1586,11 @@ pub const ANIM_ICON_ID: [usize; 10] = [
 pub enum ActionType {
     #[default]
     Bone,
-    Animation,
-    Keyframe,
     Bones,
+    Animation,
     Animations,
+    Keyframe,
+    TextureSet
 }
 
 #[derive(Default, Clone, PartialEq)]
@@ -1599,6 +1600,7 @@ pub struct Action {
     pub id: i32,
     pub bones: Vec<Bone>,
     pub animations: Vec<Animation>,
+    pub tex_sets: Vec<TextureSet>
 }
 
 impl AnimElement {

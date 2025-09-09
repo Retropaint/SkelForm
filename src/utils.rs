@@ -517,6 +517,10 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
                 shared.ui.anim.selected = usize::MAX;
             }
         }
+        ActionType::TextureSet => {
+            new_action.tex_sets = vec![shared.armature.texture_sets[action.id as usize].clone()];
+            shared.armature.texture_sets[action.id as usize] = action.tex_sets[0].clone();
+        }
         _ => {}
     }
 
