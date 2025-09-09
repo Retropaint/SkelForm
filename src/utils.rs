@@ -227,12 +227,12 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
 
     for set in &mut armature.texture_sets {
         for tex in &mut set.textures {
-            let pixel_x = packed.as_ref().unwrap().packed_locations()[&idx].1.x();
-            let pixel_y = packed.as_ref().unwrap().packed_locations()[&idx].1.y();
+            let offset_x = packed.as_ref().unwrap().packed_locations()[&idx].1.x();
+            let offset_y = packed.as_ref().unwrap().packed_locations()[&idx].1.y();
 
-            raw_buf.copy_from(&tex.image, pixel_x, pixel_y).unwrap();
+            raw_buf.copy_from(&tex.image, offset_x, offset_y).unwrap();
 
-            tex.offset = Vec2::new(pixel_x as f32, pixel_y as f32);
+            tex.offset = Vec2::new(offset_x as f32, offset_y as f32);
 
             idx += 1;
         }
