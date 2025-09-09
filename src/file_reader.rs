@@ -426,7 +426,7 @@ pub fn read_save_finish(shared: &mut Shared) {
         return;
     }
 
-    shared.saving_in_progress = false;
+    shared.ui.set_state(UiState::Modal, false);
 
     del_temp_files(&shared.temp_path.base);
 }

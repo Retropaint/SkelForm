@@ -606,11 +606,13 @@ impl Renderer {
 
     #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&mut self, shared: &mut Shared) {
-        use bone_panel::create_temp_file;
-
         if shared.time - shared.last_autosave < shared.config.autosave_frequency as f32 {
             shared.saving = Saving::None;
             return;
+        }
+        if shared.saving == Saving::CustomPath {
+            let str_saving = shared.loc("saving");
+            shared.ui.open_modal(str_saving.to_string(), true);
         }
         self.take_screenshot(shared);
         let buffer = shared.rendered_frames[0].buffer.clone();
@@ -635,6 +637,7 @@ impl Renderer {
             shared.recent_file_paths.push(save_path.clone());
         }
         utils::save_to_recent_files(&shared.recent_file_paths);
+        shared.saving = Saving::None;
         std::thread::spawn(move || {
             let (size, armatures_json, editor_json, png_buf) = utils::prepare_files(&armature);
 
@@ -697,10 +700,8 @@ impl Renderer {
             zip.finish().unwrap();
 
             let _ = std::fs::copy(save_path.clone(), save_path + "~");
-            create_temp_file(&save_finish, "");
+            bone_panel::create_temp_file(&save_finish, "");
         });
-        shared.saving = Saving::None;
-        shared.saving_in_progress = true;
     }
 
     #[cfg(not(target_arch = "wasm32"))]

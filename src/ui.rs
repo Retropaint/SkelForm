@@ -355,16 +355,6 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                 });
             });
 
-            if shared.saving_in_progress {
-                ui.painter().text(
-                    egui::Pos2::new(ui.min_rect().right() - 30., ui.min_rect().center().y),
-                    egui::Align2::CENTER_CENTER,
-                    "Saving",
-                    egui::FontId::default(),
-                    shared.config.colors.light_accent.into(),
-                );
-            }
-
             shared.ui.edit_bar_pos.y = ui.min_rect().bottom();
             shared.ui.animate_mode_bar_pos.y = ui.min_rect().bottom();
         });
