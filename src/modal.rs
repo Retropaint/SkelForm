@@ -180,7 +180,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
                     ui.horizontal(|ui| {
                         if shared.ui.hovering_tex != -1 {
-                            ui.label(shared.loc("Texture Preview"));
+                            ui.label(shared.loc("texture_modal.texture_preview"));
                             return;
                         }
                         ui.label(shared.loc("texture_modal.sets"));
