@@ -87,11 +87,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 continue;
             }
 
-            let mouse_world = utils::screen_to_world_space(shared.input.mouse, shared.window);
-            if mouse_world.x.is_nan() {
-                break;
-            }
-
             // get all joint children of this bone, including itself
             let mut joints = vec![];
             armature_window::get_all_children(&temp_bones, &mut joints, &temp_bones[b]);
@@ -111,6 +106,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 continue;
             }
 
+            // IK is iterated 10 times for accuracy
             for _ in 0..10 {
                 inverse_kinematics(&mut joints, target.unwrap().pos);
             }
@@ -309,7 +305,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     tex_size,
                     1.,
                     1.,
-                    Vec2::new(0., 0.5)
+                    Vec2::new(0., 0.5),
                 );
                 new_vert.pos.x /= shared.window.x / shared.window.y;
                 new_vert.color = VertexColor::new(1., 1., 1., 0.2);
@@ -714,7 +710,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
     };
 }
 
-pub fn forward_kinematics(bones: &mut Vec<Bone>, init_rot: std::collections::HashMap<i32, f32>) {
+pub fn forward_kinematics(bones: &mut Vec<Bone>, ik_rot: std::collections::HashMap<i32, f32>) {
     for i in 0..bones.len() {
         let mut parent: Option<Bone> = None;
         for b in 0..bones.len() {
@@ -724,33 +720,31 @@ pub fn forward_kinematics(bones: &mut Vec<Bone>, init_rot: std::collections::Has
             }
         }
 
+        // apply rotations from IK, if provided
         let id = bones[i].id;
-        if init_rot.get(&id) != None {
+        if ik_rot.get(&id) != None {
             if parent == None {
-                bones[i].rot = *init_rot.get(&id).unwrap();
+                bones[i].rot = *ik_rot.get(&id).unwrap();
             } else {
-                bones[i].rot = *init_rot.get(&id).unwrap() - parent.as_ref().unwrap().rot;
+                bones[i].rot = *ik_rot.get(&id).unwrap() - parent.as_ref().unwrap().rot;
             }
         }
 
-        if parent != None {
-            inherit_from_parent(&mut bones[i], parent.as_ref().unwrap());
+        // inherit parent
+        if let Some(parent) = parent {
+            bones[i].rot += parent.rot;
+            bones[i].scale *= parent.scale;
+
+            // adjust bone's position based on parent's scale
+            bones[i].pos *= parent.scale;
+
+            // rotate such that it will orbit the parent
+            bones[i].pos = utils::rotate(&bones[i].pos, parent.rot);
+
+            // inherit position from parent
+            bones[i].pos += parent.pos;
         }
     }
-}
-
-pub fn inherit_from_parent(child: &mut Bone, parent: &Bone) {
-    child.rot += parent.rot;
-    child.scale *= parent.scale;
-
-    // adjust bone's position based on parent's scale
-    child.pos *= parent.scale;
-
-    // rotate such that it will orbit the parent
-    child.pos = utils::rotate(&child.pos, parent.rot);
-
-    // inherit position from parent
-    child.pos += parent.pos;
 }
 
 pub fn draw(
@@ -1182,7 +1176,7 @@ fn draw_point(
             Vec2::new(0., 0.),
             shared.window.x / shared.window.y,
             1.,
-            Vec2::new(0.5, 0.5)
+            Vec2::new(0.5, 0.5),
         ));
     }
 
