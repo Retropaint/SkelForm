@@ -1680,6 +1680,7 @@ pub struct TempPath {
     pub base: String,
     pub img: String,
     pub save: String,
+    pub save_finish: String,
     pub import: String,
     pub export_vid_text: String,
     pub export_vid_done: String,
@@ -1761,6 +1762,7 @@ pub struct Shared {
     pub gridline_gap: i32,
 
     pub saving: Saving,
+    pub saving_in_progress: bool,
 
     pub thumb_ui_tex: std::collections::HashMap<String, egui::TextureHandle>,
 
