@@ -802,8 +802,6 @@ pub struct Bone {
     #[serde(default)]
     pub pos: Vec2,
     #[serde(default)]
-    pub pivot: Vec2,
-    #[serde(default)]
     pub zindex: i32,
     #[serde(default, skip_serializing_if = "is_not_joint")]
     pub joint_effector: JointEffector,
@@ -1003,7 +1001,6 @@ impl Armature {
             id: generate_id(ids),
             scale: Vec2 { x: 1., y: 1. },
             tex_set_idx: -1,
-            pivot: Vec2::new(0.5, 0.5),
             zindex: self.bones.len() as i32,
             constraint: JointConstraint::None,
             ik_target_id: -1,
@@ -1081,12 +1078,10 @@ impl Armature {
             AnimElement::Rotation      => { edit!(bone_mut.rot, f32);     },
             AnimElement::ScaleX        => { edit!(bone_mut.scale.x, f32); },
             AnimElement::ScaleY        => { edit!(bone_mut.scale.y, f32); },
-            AnimElement::PivotX        => { edit!(bone_mut.pivot.x, f32); },
-            AnimElement::PivotY        => { edit!(bone_mut.pivot.y, f32); },
             AnimElement::Zindex        => { edit!(bone_mut.zindex, i32);  },
             AnimElement::VertPositionX => { /* do nothing */ },
             AnimElement::VertPositionY => { /* do nothing */ },
-            AnimElement::TextureIndex       => { /* handled in set_bone_tex() */ },
+            AnimElement::TextureIndex  => { /* handled in set_bone_tex() */ },
         };
 
         if anim_id == usize::MAX {
@@ -1199,8 +1194,6 @@ impl Armature {
                 b.rot     += interpolate!(AnimElement::Rotation,     0., -1);
                 b.scale.x *= interpolate!(AnimElement::ScaleX,       1., -1);
                 b.scale.y *= interpolate!(AnimElement::ScaleY,       1., -1);
-                b.pivot.x += interpolate!(AnimElement::PivotX,       0., -1);
-                b.pivot.y += interpolate!(AnimElement::PivotY,       0., -1);
                 b.zindex  =  prev_frame!( AnimElement::Zindex,       b.zindex as f32) as i32;
                 b.tex_idx =  prev_frame!( AnimElement::TextureIndex, b.tex_idx as f32) as i32;
             };
@@ -1568,8 +1561,6 @@ pub enum AnimElement {
     Rotation,
     ScaleX,
     ScaleY,
-    PivotX,
-    PivotY,
     Zindex,
     VertPositionX,
     VertPositionY,

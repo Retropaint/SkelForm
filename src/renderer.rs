@@ -287,7 +287,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 pos: bone.pos,
                 rot: bone.rot,
                 scale: Vec2::new(2., 2.),
-                pivot: Vec2::new(0., 0.5),
                 ..Default::default()
             };
             let tex_size = Vec2::new(61., 48.);
@@ -1293,10 +1292,11 @@ fn raw_to_world_vert(
     aspect_ratio: f32,
     hard_scale: f32,
 ) -> Vertex {
+    let pivot = Vec2::new(0.5, 0.5);
     vert.pos *= hard_scale;
 
     if let Some(bone) = bone {
-        let pivot_offset = tex_size * bone.pivot * hard_scale;
+        let pivot_offset = tex_size * pivot * hard_scale;
         vert.pos.x -= pivot_offset.x;
         vert.pos.y += pivot_offset.y;
 
@@ -1330,6 +1330,7 @@ fn world_to_raw_vert(
     aspect_ratio: f32,
     hard_scale: f32,
 ) -> Vertex {
+    let pivot = Vec2::new(0.5, 0.5);
     vert.pos.x *= aspect_ratio;
 
     vert.pos *= zoom;
@@ -1343,7 +1344,7 @@ fn world_to_raw_vert(
 
         vert.pos /= bone.scale;
 
-        let pivot_offset = tex_size * bone.pivot * hard_scale;
+        let pivot_offset = tex_size * pivot * hard_scale;
         vert.pos.x += pivot_offset.x;
         vert.pos.y -= pivot_offset.y;
     }
