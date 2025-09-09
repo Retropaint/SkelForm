@@ -1,5 +1,5 @@
 {
-  "psd_imported": "PSD imported!\n\nIf the armature is incorrect, please check the PSD Structure section in the documentation.",
+  "psd_imported": "PSD imported!\n\nIf the armature is incorrect, please check the PSD Rigging section in the user documentation.",
   "move": "Move",
   "rotate": "Rotate",
   "scale": "Scale",
@@ -42,8 +42,6 @@
     "settings": "Settings",
     "help": {
       "heading": "Help",
-      "help_light": "Help Light",
-      "stop_help_light": "Stop Help Light",
       "user_docs": "User Docs",
       "dev_docs": "Dev Docs",
       "binary_folder": "Binary Folder",
@@ -79,10 +77,10 @@
     "zindex": "Z-Index:",
     "inverse_kinematics": {
       "heading": "Inverse Kinematics ",
-      "desc": "Automatically adjust and bend bones to reach a specified target.\nBest used for joints like shoulders and legs.\n\nEvery Middle and End joint must be located towards it's parent's arrow.",
+      "desc": "Automatically adjust and bend bones to reach a specified target.\nBest used for joints like shoulders and legs.",
       "enabled_desc": "Should inverse kinematics be running?\n\nUntick this to allow setting up joint positions and rotations.",
       "effector": "Effector: ",
-      "effector_desc": "Start: used as base, will only rotate and stay in place\n\nMiddle: will rotate and move such that End matches Target\n\nEnd: all prior effectors will adjust such that this matches Target",
+      "effector_desc": "Start: used as base, will only rotate and stay in place\n\nMiddle: will rotate and move such that End matches Target\n\nEnd: all prior effectors will adjust such that this matches Target\n\nEvery Middle and End joint must be located towards it's parent's arrow.",
       "constraint": "Constraint:",
       "constraint_desc": "CC: Clockwise, all Middle effectors will move up/right (ie; legs)\n\nCCW: Counter-clockwise, all Middle effectors will move down/left (ie; shoulders)",
       "target": "Target:",
