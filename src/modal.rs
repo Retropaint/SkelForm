@@ -491,12 +491,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             .textures
             .insert(new_idx, tex);
 
-        // disabled:
-        // bones would adjust their tex idx after dragging,
-        // but auto-adjusting would be confusing when other tex sets
-        // are involved
-        return;
-
+        // adjust bones to use the new texture indices that matched prior
         #[allow(unreachable_code)]
         for b in 0..shared.armature.bones.len() {
             macro_rules! bone {
