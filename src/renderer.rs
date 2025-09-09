@@ -616,21 +616,8 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
     }
 }
 
-pub fn ik_bone(bone: &Bone, target: Vec2, end: Vec2) -> f32 {
-    if bone.joint_effector == JointEffector::None {
-        return bone.rot;
-    }
-
-    let ei = end - bone.pos;
-    let ti = target - bone.pos;
-
-    let angle = ei.y.atan2(ei.x) - ti.y.atan2(ti.x);
-    angle
-}
-
 /// sort vertices in cw (or ccw?) order
 fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
-    // get center point
     let mut center = Vec2::default();
     for v in &verts {
         center += v.pos;
