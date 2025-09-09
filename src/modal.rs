@@ -1,7 +1,7 @@
 use crate::{
     armature_window,
     ui::{job_text, EguiUi},
-    Action, ActionEnum, Config, PolarId, Shared, UiState, Vec2,
+    Action, ActionType, Config, PolarId, Shared, UiState, Vec2,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -63,7 +63,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
     match shared.ui.polar_id {
         PolarId::DeleteBone => {
             shared.undo_actions.push(Action {
-                action: ActionEnum::Bones,
+                action: ActionType::Bones,
                 bones: shared.armature.bones.clone(),
                 ..Default::default()
             });
@@ -112,7 +112,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
         PolarId::DeleteAnim => {
             shared.ui.anim.selected = usize::MAX;
             shared.undo_actions.push(Action {
-                action: ActionEnum::Animations,
+                action: ActionType::Animations,
                 animations: shared.armature.animations.clone(),
                 ..Default::default()
             });
@@ -406,14 +406,14 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 if !shared.ui.is_animating() && shared.selected_bone() != None {
                     anim_id = usize::MAX;
                     shared.undo_actions.push(Action {
-                        action: ActionEnum::Bone,
+                        action: ActionType::Bone,
                         id: shared.selected_bone().unwrap().id,
                         bones: vec![shared.selected_bone().unwrap().clone()],
                         ..Default::default()
                     });
                 } else if shared.ui.is_animating() && shared.selected_animation() != None {
                     shared.undo_actions.push(Action {
-                        action: ActionEnum::Animation,
+                        action: ActionType::Animation,
                         id: shared.selected_animation().unwrap().id,
                         animations: vec![shared.selected_animation().unwrap().clone()],
                         ..Default::default()

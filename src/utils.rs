@@ -491,11 +491,11 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
     let mut new_action = action.clone();
 
     match &action.action {
-        ActionEnum::Bone => {
+        ActionType::Bone => {
             new_action.bones = vec![shared.armature.bones[action.id as usize].clone()];
             *shared.armature.find_bone_mut(action.id).unwrap() = action.bones[0].clone();
         }
-        ActionEnum::Bones => {
+        ActionType::Bones => {
             new_action.bones = shared.armature.bones.clone();
             shared.armature.bones = action.bones.clone();
             if shared.armature.bones.len() == 0
@@ -504,11 +504,11 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
                 shared.ui.selected_bone_idx = usize::MAX;
             }
         }
-        ActionEnum::Animation => {
+        ActionType::Animation => {
             new_action.animations = vec![shared.armature.animations[action.id as usize].clone()];
             *shared.armature.find_anim_mut(action.id).unwrap() = action.animations[0].clone();
         }
-        ActionEnum::Animations => {
+        ActionType::Animations => {
             new_action.animations = shared.armature.animations.clone();
             shared.armature.animations = action.animations.clone();
             if shared.armature.animations.len() == 0

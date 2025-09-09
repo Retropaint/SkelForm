@@ -1583,7 +1583,7 @@ pub const ANIM_ICON_ID: [usize; 10] = [
 ];
 
 #[derive(Default, Clone, PartialEq)]
-pub enum ActionEnum {
+pub enum ActionType {
     #[default]
     Bone,
     Animation,
@@ -1594,7 +1594,7 @@ pub enum ActionEnum {
 
 #[derive(Default, Clone, PartialEq)]
 pub struct Action {
-    pub action: ActionEnum,
+    pub action: ActionType,
 
     pub id: i32,
     pub bones: Vec<Bone>,
@@ -1825,14 +1825,14 @@ impl Shared {
     pub fn save_edited_bone(&mut self) {
         if self.ui.is_animating() {
             self.undo_actions.push(Action {
-                action: ActionEnum::Animation,
+                action: ActionType::Animation,
                 id: self.selected_animation().unwrap().id as i32,
                 animations: vec![self.selected_animation().unwrap().clone()],
                 ..Default::default()
             });
         } else {
             self.undo_actions.push(Action {
-                action: ActionEnum::Bone,
+                action: ActionType::Bone,
                 id: self.selected_bone().unwrap().id,
                 bones: vec![self.selected_bone().unwrap().clone()],
                 ..Default::default()

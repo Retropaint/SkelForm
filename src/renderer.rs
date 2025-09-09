@@ -354,7 +354,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     if let Some(vert) = new_vert {
         shared.undo_actions.push(Action {
-            action: ActionEnum::Bone,
+            action: ActionType::Bone,
             id: shared.selected_bone().unwrap().id,
             bones: vec![shared.selected_bone().unwrap().clone()],
             ..Default::default()
@@ -802,7 +802,7 @@ pub fn bone_vertices(
         }
         if shared.input.left_pressed {
             shared.undo_actions.push(Action {
-                action: ActionEnum::Bone,
+                action: ActionType::Bone,
                 bones: vec![shared.selected_bone().unwrap().clone()],
                 id: shared.selected_bone().unwrap().id,
                 ..Default::default()
