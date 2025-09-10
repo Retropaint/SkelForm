@@ -50,10 +50,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         (bone.vertices, bone.indices) = create_tex_rect(&tex_size);
     }
 
-    // runtime: simultaneous animations
     let mut bones = shared.armature.bones.clone();
-    if shared.ui.anim.open {
+    if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
         let mut playing = false;
+
+        // runtime: playing animations (single & simultaneous)
         for a in 0..shared.armature.animations.len() {
             let anim = &mut shared.armature.animations[a];
             if anim.elapsed == None {
@@ -63,6 +64,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             let frame = anim.set_frame();
             bones = shared.armature.animate(a, frame, Some(&bones));
         }
+
+        // display the selected animation's frame
         if !playing && shared.ui.anim.selected_frame != -1 {
             bones = shared.armature.animate(
                 shared.ui.anim.selected,
