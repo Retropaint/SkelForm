@@ -54,6 +54,7 @@
     "heading_desc": "Texture sets allow hotswapping of textures to create multiple outfits/skins.\n\nTexture order of 2 sets for the same skin/outfit should match.",
     "texture_preview": "Texture Preview",
     "set_preview": "Set Preview",
+    "set_preview_empty": "No textures in this set.\n\nClick to select and add to it.",
     "sets": "Sets",
     "textures": "Textures",
     "new_set": "New Set",

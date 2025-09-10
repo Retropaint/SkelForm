@@ -311,38 +311,45 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         ui.set_width(size.x);
                         ui.set_height(size.y - 10.);
-                        let hoverable_set = shared.ui.hovering_set != -1
-                            && shared.armature.texture_sets[shared.ui.hovering_set as usize]
-                                .textures
-                                .len()
-                                > 0;
-                        if hoverable_set {
-                            let mut offset = Vec2::new(0., 0.);
-                            let mut row_height = 0.;
-                            for tex in &shared.armature.texture_sets
+                        if shared.ui.hovering_set != -1 {
+                            let is_empty = shared.armature.texture_sets
                                 [shared.ui.hovering_set as usize]
                                 .textures
-                            {
-                                let size = resize_tex_img(tex.size, 50);
+                                .len()
+                                == 0;
+                            if is_empty {
+                                let str_empty = shared.loc("texture_modal.set_preview_empty");
+                                ui.label(str_empty);
+                            } else {
+                                let mut offset = Vec2::new(0., 0.);
+                                let mut row_height = 0.;
+                                for tex in &shared.armature.texture_sets
+                                    [shared.ui.hovering_set as usize]
+                                    .textures
+                                {
+                                    let size = resize_tex_img(tex.size, 50);
 
-                                if offset.x + size.x > ui.available_width() {
-                                    offset.x = 0.;
-                                    offset.y += row_height;
-                                    row_height = 0.;
-                                }
+                                    if offset.x + size.x > ui.available_width() {
+                                        offset.x = 0.;
+                                        offset.y += row_height;
+                                        row_height = 0.;
+                                    }
 
-                                if size.y > row_height {
-                                    row_height = size.y;
+                                    if size.y > row_height {
+                                        row_height = size.y;
+                                    }
+                                    let rect = egui::Rect::from_min_size(
+                                        ui.min_rect().left_top() + offset.into(),
+                                        size.into(),
+                                    );
+                                    egui::Image::new(tex.ui_img.as_ref().unwrap())
+                                        .paint_at(ui, rect);
+                                    offset.x += size.x;
                                 }
-                                let rect = egui::Rect::from_min_size(
-                                    ui.min_rect().left_top() + offset.into(),
-                                    size.into(),
-                                );
-                                egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
-                                offset.x += size.x;
                             }
                             return;
                         }
+
                         draw_tex_buttons(shared, ui);
                     });
                 });
