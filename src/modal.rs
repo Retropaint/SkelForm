@@ -290,11 +290,12 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 }
 
                 let frame = egui::Frame::default().inner_margin(5.);
+                let is_selected = shared.ui.selected_tex_set_idx == shared.ui.hovering_set;
                 ui.vertical(|ui| {
                     ui.set_width((modal_width / 2.) - 20.);
                     ui.set_height(height);
                     ui.horizontal(|ui| {
-                        if shared.ui.hovering_set != -1 {
+                        if shared.ui.hovering_set != -1 && !is_selected{
                             ui.label(shared.loc("texture_modal.set_preview"));
                             return;
                         }
@@ -311,7 +312,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         ui.set_width(size.x);
                         ui.set_height(size.y - 10.);
-                        if shared.ui.hovering_set != -1 {
+                        if shared.ui.hovering_set != -1 && !is_selected {
                             let is_empty = shared.armature.texture_sets
                                 [shared.ui.hovering_set as usize]
                                 .textures
