@@ -410,14 +410,27 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         };
     }
 
-    shared.ui.hovering_tex = -1;
+    let width = ui.available_width();
+
+    let mut hovered = false;
     for i in 0..set!().textures.len() {
         idx += 1;
         let name = set!().textures[i].name.clone();
+
+        let mut col = shared.config.colors.dark_accent;
+        if i == shared.ui.hovering_tex as usize {
+            col += crate::Color::new(20, 20, 20, 0);
+        }
         let button = ui
             .dnd_drag_source(egui::Id::new(("tex", idx, 0)), idx, |ui| {
-                let but = egui::Button::new(name);
-                ui.add(but);
+                egui::Frame::new().fill(col.into()).show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.set_width(width);
+                        ui.set_height(21.);
+                        ui.add_space(5.);
+                        ui.label(egui::RichText::new(name).color(shared.config.colors.text));
+                    });
+                });
             })
             .response
             .interact(egui::Sense::click())
@@ -425,6 +438,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
 
         if button.hovered() {
             shared.ui.hovering_tex = i as i32;
+            hovered = true;
         }
 
         if button.clicked() {
@@ -475,14 +489,6 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         let rect = button.rect;
 
         if pointer == None || hovered_payload == None {
-            let stroke =
-                egui::Stroke::new(1.0, Color32::from_rgba_premultiplied(125, 125, 125, 255));
-            if button.contains_pointer() {
-                ui.painter().hline(rect.x_range(), rect.top(), stroke);
-                ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
-                ui.painter().vline(rect.right(), rect.y_range(), stroke);
-                ui.painter().vline(rect.left(), rect.y_range(), stroke);
-            }
             continue;
         }
 
@@ -548,6 +554,10 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 .position(|tex| tex.name == *old_name)
                 .unwrap() as i32;
         }
+    }
+
+    if !hovered {
+        shared.ui.hovering_tex = -1;
     }
 }
 
