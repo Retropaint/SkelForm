@@ -372,6 +372,11 @@ pub fn import<R: Read + std::io::Seek>(
     let root: crate::Root = serde_json::from_reader(armature_file).unwrap();
 
     shared.armature = root.armature.clone();
+
+    for b in 0..shared.armature.bones.len() {
+        shared.armature.bones[b].id = b as i32;
+    }
+
     for b in 0..shared.armature.bones.len() {
         macro_rules! bone {
             () => {
@@ -408,7 +413,7 @@ pub fn import<R: Read + std::io::Seek>(
         let editor: crate::EditorOptions = serde_json::from_reader(editor_file).unwrap();
 
         shared.camera.zoom = editor.zoom;
-        
+
         for b in 0..shared.armature.bones.len() {
             let bone = &mut shared.armature.bones[b];
             let ed_bone = &editor.bones[b];
