@@ -1100,7 +1100,7 @@ impl Armature {
             if self.animations[anim_id]
                 .keyframes
                 .iter()
-                .find(|kf| kf.frame == anim_frame && kf.element == *element)
+                .find(|kf| kf.frame == 0 && kf.element == *element)
                 == None
             {
                 self.animations[anim_id].keyframes[frame].value = match element {
