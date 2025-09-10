@@ -402,6 +402,8 @@ pub fn add_texture(
             name: tex_name.to_string(),
             bind_group: Some(bind_group),
             ui_img: Some(utils::add_texture_img(&ctx, img_buf, Vec2::new(300., 300.))),
+            ser_offset: Vec2I::new(0, 0),
+            ser_size: Vec2I::new(0, 0),
         });
 }
 

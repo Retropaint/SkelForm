@@ -1382,7 +1382,7 @@ impl Armature {
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Root {
     pub version: String,
-    pub texture_size: Vec2,
+    pub texture_size: Vec2I,
     pub armature: Armature,
 }
 
@@ -1394,13 +1394,32 @@ pub struct TextureSet {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
+pub struct Vec2I {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl Vec2I {
+    pub const fn new(x: i32, y: i32) -> Vec2I {
+        Vec2I { x, y }
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 pub struct Texture {
     #[serde(default)]
-    pub offset: Vec2,
-    #[serde(default)]
-    pub size: Vec2,
-    #[serde(default)]
     pub name: String,
+
+    #[serde(skip)]
+    pub offset: Vec2,
+    #[serde(skip)]
+    pub size: Vec2,
+
+    /// size and offset should be saved as integers
+    #[serde(default, rename = "offset")]
+    pub ser_offset: Vec2I,
+    #[serde(default, rename = "size")]
+    pub ser_size: Vec2I,
 
     // todo:
     // Make a global texture list that keeps track of these separately.
