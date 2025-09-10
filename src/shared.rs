@@ -492,6 +492,7 @@ pub struct Ui {
 
     pub hovering_tex: i32,
     pub hovering_bone: i32,
+    pub hovering_set: i32,
 
     pub showing_samples: bool,
 
