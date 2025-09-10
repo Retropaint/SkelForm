@@ -304,6 +304,15 @@ pub fn prepare_files(armature: &Armature, zoom: f32) -> (Vec2, String, String, V
         (png_buf, size) = create_tex_sheet(&mut armature_copy);
     }
 
+    // populate texture ser_offset and ser_size
+    for s in 0..armature.texture_sets.len() {
+        for t in 0..armature.texture_sets[s].textures.len() {
+            let tex = &mut armature_copy.texture_sets[s].textures[t];
+            tex.ser_offset = Vec2I::new(tex.offset.x as i32, tex.offset.y as i32);
+            tex.ser_size = Vec2I::new(tex.size.x as i32, tex.size.y as i32);
+        }
+    }
+
     for bone in &mut armature_copy.bones {
         // if it is a regular rect, empty verts and indices
         if bone.tex_set_idx == -1
@@ -322,7 +331,7 @@ pub fn prepare_files(armature: &Armature, zoom: f32) -> (Vec2, String, String, V
     let root = Root {
         version: env!("CARGO_PKG_VERSION").to_string(),
         armature: armature_copy,
-        texture_size: size,
+        texture_size: Vec2I::new(size.x as i32, size.y as i32),
     };
 
     let armatures_json = serde_json::to_string(&root).unwrap();
@@ -373,6 +382,7 @@ pub fn import<R: Read + std::io::Seek>(
 
     shared.armature = root.armature.clone();
 
+    // populate bone ids
     for b in 0..shared.armature.bones.len() {
         shared.armature.bones[b].id = b as i32;
     }
@@ -444,6 +454,9 @@ pub fn import<R: Read + std::io::Seek>(
 
         for set in &mut shared.armature.texture_sets {
             for tex in &mut set.textures {
+                tex.offset = Vec2::new(tex.ser_offset.x as f32, tex.ser_offset.y as f32);
+                tex.size = Vec2::new(tex.ser_size.x as f32, tex.ser_size.y as f32);
+
                 tex.image = img.crop(
                     tex.offset.x as u32,
                     tex.offset.y as u32,
