@@ -160,9 +160,9 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
             ui.set_width(300.);
             ui.set_height(400.);
             let str_desc = shared.loc("texture_modal.heading_desc");
-            let str_heading =
-                shared.loc(&("texture_modal.heading")).to_owned();
-            ui.heading(str_heading + " " + crate::ICON_INFO).on_hover_text(str_desc);
+            let str_heading = shared.loc(&("texture_modal.heading")).to_owned();
+            ui.heading(str_heading + " " + crate::ICON_INFO)
+                .on_hover_text(str_desc);
             modal_x(ui, || {
                 shared.ui.set_state(UiState::ImageModal, false);
             });
@@ -176,7 +176,6 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 let frame = egui::Frame::default().inner_margin(5.);
                 let modal_width = ui.max_rect().width();
                 let height = ui.available_height();
-                let mut hovered_set: i32 = -1;
                 ui.vertical(|ui| {
                     ui.set_height(height);
                     ui.set_width((modal_width / 2.) - 10.);
@@ -207,6 +206,9 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                             draw_tex_preview(shared, ui);
                             return;
                         }
+
+                        let mut hovered = false;
+
                         for s in 0..shared.armature.texture_sets.len() {
                             macro_rules! set {
                                 () => {
@@ -236,8 +238,11 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                                 continue;
                             }
 
-                            let mut col = shared.config.colors.light_accent;
-                            if s as i32 == shared.ui.selected_tex_set_idx {
+                            let mut col = shared.config.colors.dark_accent;
+                            if s == shared.ui.selected_tex_set_idx as usize {
+                                col += crate::Color::new(20, 20, 20, 0);
+                            }
+                            if s == shared.ui.hovering_set as usize {
                                 col += crate::Color::new(20, 20, 20, 0);
                             }
                             let cursor_icon = if shared.ui.selected_tex_set_idx != s as i32 {
@@ -245,12 +250,26 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                             } else {
                                 egui::CursorIcon::Default
                             };
-                            let button = ui
-                                .add(egui::Button::new(set!().name.to_string()).fill(col))
+                            let width = ui.available_width();
+                            let button = egui::Frame::new()
+                                .fill(col.into())
+                                .show(ui, |ui| {
+                                    ui.horizontal(|ui| {
+                                        ui.set_width(width);
+                                        ui.set_height(21.);
+                                        ui.add_space(5.);
+                                        ui.label(
+                                            egui::RichText::new(set!().name.clone())
+                                                .color(shared.config.colors.text),
+                                        );
+                                    });
+                                })
+                                .response
+                                .interact(egui::Sense::click())
                                 .on_hover_cursor(cursor_icon);
-                            let tex_len = shared.armature.texture_sets[s].textures.len();
-                            if button.hovered() && tex_len > 0 {
-                                hovered_set = s as i32;
+                            if button.contains_pointer() {
+                                shared.ui.hovering_set = s as i32;
+                                hovered = true;
                             }
                             if button.clicked() {
                                 if shared.ui.selected_tex_set_idx == s as i32 {
@@ -259,10 +278,14 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                                 shared.ui.selected_tex_set_idx = s as i32;
                             }
                         }
+
+                        if !hovered {
+                            shared.ui.hovering_set = -1;
+                        }
                     });
                 });
 
-                if shared.ui.selected_tex_set_idx == -1 && hovered_set == -1 {
+                if shared.ui.selected_tex_set_idx == -1 && shared.ui.hovering_set == -1 {
                     return;
                 }
 
@@ -271,7 +294,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     ui.set_width((modal_width / 2.) - 20.);
                     ui.set_height(height);
                     ui.horizontal(|ui| {
-                        if hovered_set != -1 {
+                        if shared.ui.hovering_set != -1 {
                             ui.label(shared.loc("texture_modal.set_preview"));
                             return;
                         }
@@ -288,10 +311,17 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         ui.set_width(size.x);
                         ui.set_height(size.y - 10.);
-                        if hovered_set != -1 {
+                        let hoverable_set = shared.ui.hovering_set != -1
+                            && shared.armature.texture_sets[shared.ui.hovering_set as usize]
+                                .textures
+                                .len()
+                                > 0;
+                        if hoverable_set {
                             let mut offset = Vec2::new(0., 0.);
                             let mut row_height = 0.;
-                            for tex in &shared.armature.texture_sets[hovered_set as usize].textures
+                            for tex in &shared.armature.texture_sets
+                                [shared.ui.hovering_set as usize]
+                                .textures
                             {
                                 let size = resize_tex_img(tex.size, 50);
 
