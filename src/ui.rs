@@ -222,7 +222,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
 
     if input.consume_shortcut(&shared.config.keys.save) {
         #[cfg(target_arch = "wasm32")]
-        utils::save_web(&mut shared.armature);
+        utils::save_web(shared, shared.camera.zoom);
 
         #[cfg(not(target_arch = "wasm32"))]
         utils::open_save_dialog(shared.temp_path.save.clone());
@@ -579,7 +579,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog(shared.temp_path.save.clone());
             #[cfg(target_arch = "wasm32")]
-            utils::save_web(&shared.armature);
+            utils::save_web(&shared, shared.camera.zoom);
             ui.close();
         }
         let str_startup = shared.loc("top_bar.file.startup");

@@ -149,8 +149,8 @@ pub fn open_import_dialog(temp_file_to_write: String) {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn save_web(armature: &Armature) {
-    let (size, armatures_json, editor_json, png_buf) = prepare_files(armature);
+pub fn save_web(shared: &Shared, zoom: f32) {
+    let (size, armatures_json, editor_json, png_buf) = prepare_files(&shared.armature, zoom);
 
     // create zip file
     let mut buf: Vec<u8> = Vec::new();
@@ -258,7 +258,7 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
     (png_buf, Vec2::new(size as f32, size as f32))
 }
 
-pub fn prepare_files(armature: &Armature) -> (Vec2, String, String, Vec<u8>) {
+pub fn prepare_files(armature: &Armature, zoom: f32) -> (Vec2, String, String, Vec<u8>) {
     let mut png_buf = vec![];
     let mut size = Vec2::new(0., 0.);
 
@@ -328,7 +328,10 @@ pub fn prepare_files(armature: &Armature) -> (Vec2, String, String, Vec<u8>) {
     let armatures_json = serde_json::to_string(&root).unwrap();
 
     // iterable editor bone exports
-    let mut editor = EditorOptions::default();
+    let mut editor = EditorOptions {
+        zoom,
+        bones: vec![],
+    };
     for bone in &armature.bones {
         editor.bones.push(EditorBone {
             id: bone.id,
@@ -403,6 +406,9 @@ pub fn import<R: Read + std::io::Seek>(
     // load editor data
     if let Ok(editor_file) = zip.as_mut().unwrap().by_name("editor.json") {
         let editor: crate::EditorOptions = serde_json::from_reader(editor_file).unwrap();
+
+        shared.camera.zoom = editor.zoom;
+        
         for b in 0..shared.armature.bones.len() {
             let bone = &mut shared.armature.bones[b];
             let ed_bone = &editor.bones[b];
