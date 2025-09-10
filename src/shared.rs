@@ -836,6 +836,8 @@ pub struct Bone {
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 pub struct EditorOptions {
+    #[serde(default = "default_zoom")]
+    pub zoom: f32,
     #[serde(default)]
     pub bones: Vec<EditorBone>,
 }
@@ -1926,6 +1928,10 @@ fn default_one() -> f32 {
 
 fn gridline_default() -> i32 {
     200
+}
+
+fn default_zoom() -> f32 {
+    1000.
 }
 
 fn is_neg_one(value: &i32) -> bool {
