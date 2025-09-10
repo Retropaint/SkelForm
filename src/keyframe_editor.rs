@@ -57,6 +57,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                         .min_height(full_height) // make height unadjustable
                         .max_height(full_height) //
                         .default_width(150.)
+                        .max_width(200.)
                         .with_stroke(false)
                         .show(ui, |ui| {
                             egui::Frame::new().show(ui, |ui| {
@@ -102,7 +103,8 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
     egui::ScrollArea::vertical().show(ui, |ui| {
-        ui.set_width(ui.available_width());
+        let width = ui.available_width();
+        let mut hovered = false;
         for i in 0..shared.armature.animations.len() {
             let name = &mut shared.armature.animations[i].name.clone();
 
@@ -136,7 +138,43 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             ui.horizontal(|ui| {
-                let button = ui::selection_button(&name, i == shared.ui.anim.selected, ui);
+                let button_padding = if shared.armature.animations[i].keyframes.len() > 0 {
+                    28.
+                } else {
+                    0.
+                };
+                let mut col = shared.config.colors.dark_accent;
+                if i == shared.ui.hovering_anim as usize {
+                    col += crate::Color::new(20, 20, 20, 0);
+                }
+                if i == shared.ui.anim.selected {
+                    col += crate::Color::new(20, 20, 20, 0);
+                }
+                let cursor_icon = if shared.ui.selected_tex_set_idx != i as i32 {
+                    egui::CursorIcon::PointingHand
+                } else {
+                    egui::CursorIcon::Default
+                };
+                //let button = ui::selection_button(&name, i == shared.ui.anim.selected, ui);
+                let button = egui::Frame::new()
+                    .fill(col.into())
+                    .show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.set_width(width - button_padding);
+                            ui.set_height(21.);
+                            ui.add_space(5.);
+                            ui.label(
+                                egui::RichText::new(name.clone()).color(shared.config.colors.text),
+                            );
+                        });
+                    })
+                    .response
+                    .interact(egui::Sense::click())
+                    .on_hover_cursor(cursor_icon);
+                if button.contains_pointer() {
+                    shared.ui.hovering_anim = i as i32;
+                    hovered = true;
+                }
                 if button.clicked() {
                     if shared.ui.anim.selected != i {
                         shared.ui.anim.selected = i;
@@ -152,20 +190,19 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                         .show(ContextType::Animation, i as i32);
                 }
 
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                if shared.armature.animations[i].keyframes.len() > 0 {
                     let anim = &mut shared.armature.animations[i];
-                    if anim.keyframes.len() == 0 {
-                        return;
-                    }
-                    let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
-                    if ui.skf_button(icon).clicked() {
-                        anim.elapsed = if anim.elapsed == None {
-                            Some(Instant::now())
-                        } else {
-                            None
-                        };
-                    }
-                });
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                        let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
+                        if ui.skf_button(icon).clicked() {
+                            anim.elapsed = if anim.elapsed == None {
+                                Some(Instant::now())
+                            } else {
+                                None
+                            };
+                        }
+                    });
+                }
 
                 if shared.ui.context_menu.is(ContextType::Animation, i as i32) {
                     button.show_tooltip_ui(|ui| {
@@ -188,6 +225,10 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                     });
                 }
             });
+        }
+
+        if !hovered {
+            shared.ui.hovering_anim = -1;
         }
     });
 }
