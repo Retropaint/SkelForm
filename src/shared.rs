@@ -629,7 +629,7 @@ impl Default for Config {
             autosave_frequency: 5,
             exact_bone_select: false,
             gridline_front: false,
-            keep_tex_idx_on_move: false
+            keep_tex_idx_on_move: false,
         }
     }
 }
@@ -1206,10 +1206,8 @@ impl Armature {
                 let set = &self.texture_sets[self.find_bone(b.id).unwrap().tex_set_idx as usize];
                 let set_tex_limit = self.texture_sets[b.tex_set_idx as usize].textures.len() - 1;
                 if b.tex_idx != -1 && b.tex_set_idx < set_tex_limit as i32 {
-                    (
-                        self.find_bone_mut(b.id).unwrap().vertices,
-                        self.find_bone_mut(b.id).unwrap().indices,
-                    ) = renderer::create_tex_rect(&set.textures[b.tex_idx as usize].size);
+                    (b.vertices, b.indices) =
+                        renderer::create_tex_rect(&set.textures[b.tex_idx as usize].size);
                 }
             }
 
