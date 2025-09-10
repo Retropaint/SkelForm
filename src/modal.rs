@@ -159,7 +159,10 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
         .show(ctx, |ui| {
             ui.set_width(300.);
             ui.set_height(400.);
-            ui.heading(shared.loc("texture_modal.heading"));
+            let str_desc = shared.loc("texture_modal.heading_desc");
+            let str_heading =
+                shared.loc(&("texture_modal.heading")).to_owned();
+            ui.heading(str_heading + " " + crate::ICON_INFO).on_hover_text(str_desc);
             modal_x(ui, || {
                 shared.ui.set_state(UiState::ImageModal, false);
             });

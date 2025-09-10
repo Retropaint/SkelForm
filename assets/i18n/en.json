@@ -50,7 +50,8 @@
     }
   },
   "texture_modal": {
-    "heading": "Select Texture",
+    "heading": "Texture Sets",
+    "heading_desc": "Texture sets allow hotswapping of textures to create multiple outfits/skins.\n\nTexture order of 2 sets for the same skin/outfit should match.",
     "texture_preview": "Texture Preview",
     "set_preview": "Set Preview",
     "sets": "Sets",
