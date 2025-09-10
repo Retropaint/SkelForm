@@ -139,7 +139,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
 
             ui.horizontal(|ui| {
                 let button_padding = if shared.armature.animations[i].keyframes.len() > 0 {
-                    28.
+                    25.
                 } else {
                     0.
                 };
@@ -192,7 +192,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
 
                 if shared.armature.animations[i].keyframes.len() > 0 {
                     let anim = &mut shared.armature.animations[i];
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
                         if ui.skf_button(icon).clicked() {
                             anim.elapsed = if anim.elapsed == None {
