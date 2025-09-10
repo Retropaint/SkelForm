@@ -50,7 +50,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         (bone.vertices, bone.indices) = create_tex_rect(&tex_size);
     }
 
-    let mut bones = shared.armature.bones.clone();
+    // runtime: armature bones should be immutable to animations
+    let mut animated_bones = shared.armature.bones.clone();
+
     if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
         let mut playing = false;
 
@@ -62,12 +64,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             }
             playing = true;
             let frame = anim.set_frame();
-            bones = shared.armature.animate(a, frame, Some(&bones));
+            animated_bones = shared.armature.animate(a, frame, Some(&animated_bones));
         }
 
         // display the selected animation's frame
         if !playing && shared.ui.anim.selected_frame != -1 {
-            bones = shared.armature.animate(
+            animated_bones = shared.armature.animate(
                 shared.ui.anim.selected,
                 shared.ui.anim.selected_frame,
                 None,
@@ -75,8 +77,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    // armature bones should be immutable to rendering
-    let mut temp_bones: Vec<Bone> = bones.clone();
+    // runtime: armature bones should be immutable to rendering
+    let mut temp_bones: Vec<Bone> = animated_bones.clone();
 
     let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
 
@@ -119,7 +121,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         // re-construct bones, accounting for IK
-        temp_bones = bones.clone();
+        temp_bones = animated_bones.clone();
         forward_kinematics(&mut temp_bones, ik_rot.clone());
     }
 
