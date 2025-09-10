@@ -131,11 +131,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut hover_bone_id = -1;
 
-    // many fight for spot of newest vertex; there will only be one.
+    // many fight for spot of newest vertex; only one will emerge victorious.
     let mut new_vert: Option<Vertex> = None;
-
-    // ensure only 1 vert is ever added
-    let mut added_vert = false;
 
     // pre-draw bone setup
     for b in 0..temp_bones.len() {
@@ -194,13 +191,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
                 );
 
-                if shared.input.left_clicked && shared.ui.editing_mesh && !added_vert {
+                if shared.input.left_clicked && shared.ui.editing_mesh && new_vert == None {
                     new_vert = Some(Vertex {
                         pos: Vec2::new(pixel_pos.x, -pixel_pos.y),
                         uv,
                         ..Default::default()
                     });
-                    added_vert = true;
                 }
 
                 let pixel_alpha = shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize]
