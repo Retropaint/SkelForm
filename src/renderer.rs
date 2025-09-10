@@ -111,7 +111,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 continue;
             }
 
-            // IK is iterated 10 times for accuracy
+            // IK is iterated multiple times over for accuracy
+            // runtimes could adjust this, or make it customizable
             for _ in 0..10 {
                 inverse_kinematics(&mut joints, target.unwrap().pos);
             }
