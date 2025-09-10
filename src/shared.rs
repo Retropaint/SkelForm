@@ -801,11 +801,11 @@ pub struct Bone {
     pub tex_idx: i32,
 
     #[serde(default)]
-    pub rot: f32,
+    pub pos: Vec2,
     #[serde(default)]
     pub scale: Vec2,
     #[serde(default)]
-    pub pos: Vec2,
+    pub rot: f32,
     #[serde(default)]
     pub zindex: i32,
     #[serde(default, skip_serializing_if = "is_not_joint")]
