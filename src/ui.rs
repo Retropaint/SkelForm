@@ -782,8 +782,8 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
                 };
             }
 
-            input!(shared.camera.pos, shared.camera.pos.y, "cam_pos_x", "Y", "cam_x");
-            input!(shared.camera.pos, shared.camera.pos.x, "cam_pos_y", "X", "cam_y");
+            input!(shared.camera.pos, shared.camera.pos.x, "cam_pos_x", "X", "cam_x");
+            input!(shared.camera.pos, shared.camera.pos.y, "cam_pos_y", "Y", "cam_y");
             input!(shared.camera.zoom, shared.camera.zoom, "cam_zoom", "🔍", "cam_zoom");
 
             shared.ui.camera_bar_scale = ui.min_rect().size().into();
