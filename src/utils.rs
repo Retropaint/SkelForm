@@ -367,15 +367,7 @@ pub fn import<R: Read + std::io::Seek>(
     context: &egui::Context,
 ) {
     let mut zip = zip::ZipArchive::new(data);
-    let mut ok = false;
-    if let Ok(_) = zip {
-        ok = true;
-    }
-
-    if !ok {
-        let text = "File could not be parsed.\n\nSupported files:\n- SkelForm armature (.skf)\n- Photoshop Document (.psd)";
-        shared.ui.open_modal(text.to_string(), false);
-        file_reader::del_temp_files(&shared.temp_path.base);
+    if let Err(_) = zip {
         return;
     }
 

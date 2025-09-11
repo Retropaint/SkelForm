@@ -6,6 +6,7 @@
   "new": "New",
   "vert_limit": "Cannot delete vertex. Meshes must have at least 4 vertices.",
   "saving": "Saving, please wait...",
+  "import_err": "File could not be parsed.\n\nSupported files:\n- SkelForm armature (.skf)\n- Photoshop Document (.psd)",
   "startup": {
     "import": "Import",
     "samples": "Samples",
