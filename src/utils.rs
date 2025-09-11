@@ -149,8 +149,9 @@ pub fn open_import_dialog(temp_file_to_write: String) {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn save_web(shared: &Shared, zoom: f32) {
-    let (size, armatures_json, editor_json, png_buf) = prepare_files(&shared.armature, zoom);
+pub fn save_web(shared: &Shared) {
+    let (size, armatures_json, editor_json, png_buf) =
+        prepare_files(&shared.armature, shared.camera.clone());
 
     // create zip file
     let mut buf: Vec<u8> = Vec::new();
