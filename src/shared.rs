@@ -308,11 +308,10 @@ impl Default for Color {
         Color {  r: 0, g: 0, b: 0, a: 255 }
     }
 }
-#[derive(Clone, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
 pub struct Camera {
     pub pos: Vec2,
     pub zoom: f32,
-    pub initial_pos: Vec2,
 }
 
 /// Input-related fields.
@@ -840,8 +839,8 @@ pub struct Bone {
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 pub struct EditorOptions {
-    #[serde(default = "default_zoom")]
-    pub zoom: f32,
+    #[serde(default)]
+    pub camera: Camera,
     #[serde(default)]
     pub bones: Vec<EditorBone>,
 }

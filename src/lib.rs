@@ -623,7 +623,7 @@ impl Renderer {
         let device = self.gpu.device.clone();
         let armature = shared.armature.clone();
         let saving = shared.saving.clone();
-        let zoom = shared.camera.zoom;
+        let camera = shared.camera.clone();
         let mut save_path = shared.save_path.clone();
         let save_finish = shared.temp_path.save_finish.clone();
         if saving == shared::Saving::Autosaving {
@@ -642,7 +642,7 @@ impl Renderer {
         utils::save_to_recent_files(&shared.recent_file_paths);
         shared.saving = Saving::None;
         std::thread::spawn(move || {
-            let (size, armatures_json, editor_json, png_buf) = utils::prepare_files(&armature, zoom);
+            let (size, armatures_json, editor_json, png_buf) = utils::prepare_files(&armature, camera);
 
             // create zip file
             let mut zip = zip::ZipWriter::new(std::fs::File::create(save_path.clone()).unwrap());

@@ -258,7 +258,7 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
     (png_buf, Vec2::new(size as f32, size as f32))
 }
 
-pub fn prepare_files(armature: &Armature, zoom: f32) -> (Vec2, String, String, Vec<u8>) {
+pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, String, Vec<u8>) {
     let mut png_buf = vec![];
     let mut size = Vec2::new(0., 0.);
 
@@ -342,7 +342,7 @@ pub fn prepare_files(armature: &Armature, zoom: f32) -> (Vec2, String, String, V
 
     // iterable editor bone exports
     let mut editor = EditorOptions {
-        zoom,
+        camera,
         bones: vec![],
     };
     for bone in &armature.bones {
@@ -417,7 +417,7 @@ pub fn import<R: Read + std::io::Seek>(
     if let Ok(editor_file) = zip.as_mut().unwrap().by_name("editor.json") {
         let editor: crate::EditorOptions = serde_json::from_reader(editor_file).unwrap();
 
-        shared.camera.zoom = editor.zoom;
+        shared.camera = editor.camera;
 
         for b in 0..shared.armature.bones.len() {
             let bone = &mut shared.armature.bones[b];
