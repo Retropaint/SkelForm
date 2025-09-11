@@ -753,7 +753,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
     egui::Window::new("Camera")
         .resizable(false)
         .title_bar(false)
-        .max_width(100.)
+        .max_width(60.)
         .max_height(25.)
         .movable(false)
         .frame(egui::Frame {
@@ -771,24 +771,20 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
         ))
         .show(egui_ctx, |ui| {
             macro_rules! input {
-                ($element:expr, $float:expr, $id:expr, $ui:expr, $label:expr) => {
-                    if $label != "" {
-                        $ui.label($label);
-                    }
-                    (_, $float, _) = $ui.float_input($id.to_string(), shared, $float, 1.);
+                ($element:expr, $float:expr, $id:expr, $label:expr, $tip:expr) => {
+                    ui.horizontal(|ui| {
+                        ui.label($label).on_hover_text(shared.loc($tip));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            (_, $float, _) =
+                                ui.float_input($id.to_string(), shared, $float.round(), 1.);
+                        })
+                    })
                 };
             }
 
-            ui.horizontal(|ui| {
-                ui.label("Camera:");
-                input!(shared.camera.pos, shared.camera.pos.x, "cam_pos_y", ui, "X");
-                input!(shared.camera.pos, shared.camera.pos.y, "cam_pos_x", ui, "Y");
-            });
-
-            ui.horizontal(|ui| {
-                ui.label("Zoom:");
-                input!(shared.camera.zoom, shared.camera.zoom, "cam_zoom", ui, "");
-            });
+            input!(shared.camera.pos, shared.camera.pos.y, "cam_pos_x", "Y", "cam_x");
+            input!(shared.camera.pos, shared.camera.pos.x, "cam_pos_y", "X", "cam_y");
+            input!(shared.camera.zoom, shared.camera.zoom, "cam_zoom", "🔍", "cam_zoom");
 
             shared.ui.camera_bar_scale = ui.min_rect().size().into();
         })
