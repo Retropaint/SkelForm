@@ -1393,13 +1393,6 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
         x += 1.;
     }
 
-    render_pass.set_index_buffer(
-        index_buffer(indices.clone(), &device).slice(..),
-        wgpu::IndexFormat::Uint32,
-    );
-    render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
-    render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
-
     // draw horizontal lines
     let mut y = (shared.camera.pos.y - shared.camera.zoom).round();
     let top_side = shared.camera.pos.y + shared.camera.zoom;
@@ -1417,6 +1410,10 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
         indices.append(&mut vec![i, i + 1, i + 2]);
         i += 3;
         y += 1.;
+    }
+
+    if verts.len() == 0 {
+        return;
     }
 
     render_pass.set_index_buffer(
