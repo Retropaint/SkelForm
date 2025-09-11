@@ -1099,7 +1099,7 @@ impl Armature {
         let has_0th_frame = self.animations[anim_id]
             .keyframes
             .iter()
-            .find(|kf| kf.frame == 0 && kf.element == *element)
+            .find(|kf| kf.frame == 0 && kf.element == *element && kf.bone_id == bone_id)
             != None;
         if anim_frame != 0 && !has_0th_frame {
             let init_value = match element {
@@ -1112,7 +1112,7 @@ impl Armature {
             self.animations[anim_id]
                 .keyframes
                 .iter_mut()
-                .find(|kf| kf.frame == 0 && kf.element == *element)
+                .find(|kf| kf.frame == 0 && kf.element == *element && kf.bone_id == bone_id)
                 .unwrap()
                 .value = init_value;
         }
