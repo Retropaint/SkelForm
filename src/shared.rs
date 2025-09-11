@@ -1557,11 +1557,14 @@ pub struct Keyframe {
     pub bone_id: i32,
     #[serde(default)]
     pub bone_idx: i32,
-    #[serde(default)]
-    pub element_id: i32,
     #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
     pub vert_id: i32,
+
+    /// runtime: while the editor uses enums for elements, runtimes can use their numerical id
+    /// for simplicity and performance
     #[serde(default)]
+    pub element_id: i32,
+    #[serde(default, rename = "_element")]
     pub element: AnimElement,
 
     #[serde(default)]
