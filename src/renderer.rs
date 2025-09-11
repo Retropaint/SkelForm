@@ -25,6 +25,10 @@ macro_rules! con_vert {
 
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
+    if shared.window == Vec2::ZERO {
+        return;
+    }
+
     #[cfg(target_arch = "wasm32")]
     loaded();
 
@@ -1351,14 +1355,7 @@ fn world_to_raw_vert(
     vert
 }
 
-// todo:
-// draw gridlines using wgpu instances for performance
 fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared) {
-    render_pass.set_index_buffer(
-        index_buffer([0, 1, 2].to_vec(), &device).slice(..),
-        wgpu::IndexFormat::Uint32,
-    );
-
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
     let col = VertexColor::new(
@@ -1371,6 +1368,10 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
     let width = 0.005 * shared.camera.zoom;
     let regular_color = VertexColor::new(col.r, col.g, col.b, 0.15);
     let highlight_color = VertexColor::new(col.r, col.g, col.b, 1.);
+
+    let mut verts = vec![];
+    let mut indices: Vec<u32> = vec![];
+    let mut i: u32 = 0;
 
     // draw vertical lines
     let aspect_ratio = shared.window.y / shared.window.x;
@@ -1386,9 +1387,22 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
         } else {
             regular_color
         };
-        draw_vertical_line(x, width, render_pass, device, shared, color);
+        verts.append(&mut draw_vertical_line(x, width, shared, color));
+        indices.append(&mut vec![i, i + 1, i + 2]);
+        i += 3;
         x += 1.;
     }
+
+    render_pass.set_index_buffer(
+        index_buffer(indices.clone(), &device).slice(..),
+        wgpu::IndexFormat::Uint32,
+    );
+    render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
+    render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
+
+    verts = vec![];
+    indices = vec![];
+    i = 0;
 
     // draw horizontal lines
     let mut y = (shared.camera.pos.y - shared.camera.zoom).round();
@@ -1403,19 +1417,26 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
         } else {
             regular_color
         };
-        draw_horizontal_line(y, width, render_pass, device, shared, color);
+        verts.append(&mut draw_horizontal_line(y, width, shared, color));
+        indices.append(&mut vec![i, i + 1, i + 2]);
+        i += 3;
         y += 1.;
     }
+
+    render_pass.set_index_buffer(
+        index_buffer(indices.clone(), &device).slice(..),
+        wgpu::IndexFormat::Uint32,
+    );
+    render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
+    render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
 }
 
 pub fn draw_horizontal_line(
     y: f32,
     width: f32,
-    render_pass: &mut RenderPass,
-    device: &Device,
     shared: &Shared,
     color: VertexColor,
-) {
+) -> Vec<Vertex> {
     let edge = shared.camera.zoom * 5.;
     let camera_pos = shared.camera.pos;
     let camera_zoom = shared.camera.zoom;
@@ -1436,18 +1457,10 @@ pub fn draw_horizontal_line(
             ..Default::default()
         },
     ];
-    render_pass.set_vertex_buffer(0, vertex_buffer(&vertices, device).slice(..));
-    render_pass.draw_indexed(0..3, 0, 0..1);
+    vertices
 }
 
-pub fn draw_vertical_line(
-    x: f32,
-    width: f32,
-    render_pass: &mut RenderPass,
-    device: &Device,
-    shared: &Shared,
-    color: VertexColor,
-) {
+pub fn draw_vertical_line(x: f32, width: f32, shared: &Shared, color: VertexColor) -> Vec<Vertex> {
     let aspect_ratio = shared.window.y / shared.window.x;
     let edge = shared.camera.zoom * 5.;
     let camera_pos = shared.camera.pos;
@@ -1469,8 +1482,7 @@ pub fn draw_vertical_line(
             ..Default::default()
         },
     ];
-    render_pass.set_vertex_buffer(0, vertex_buffer(&vertices, device).slice(..));
-    render_pass.draw_indexed(0..3, 0, 0..1);
+    vertices
 }
 
 pub fn triangulate(verts: &Vec<Vertex>) -> Vec<u32> {
