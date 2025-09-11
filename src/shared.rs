@@ -1953,10 +1953,6 @@ fn gridline_default() -> i32 {
     200
 }
 
-fn default_zoom() -> f32 {
-    1000.
-}
-
 fn is_neg_one(value: &i32) -> bool {
     *value == -1
 }
