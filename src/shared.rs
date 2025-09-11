@@ -787,6 +787,10 @@ enum_string!(JointConstraint);
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 pub struct Bone {
+    /// for runtimes
+    #[serde(default)]
+    pub _idx: usize,
+
     #[serde(skip)]
     pub id: i32,
     #[serde(default)]

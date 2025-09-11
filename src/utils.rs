@@ -265,8 +265,12 @@ pub fn prepare_files(armature: &Armature, zoom: f32) -> (Vec2, String, String, V
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
-    // populate parent_idx
     for b in 0..armature_copy.bones.len() {
+        // populate bone idx
+        armature_copy.bones[b]._idx = b;
+
+        // populate parent_idx
+
         macro_rules! bone {
             () => {
                 armature_copy.bones[b]
