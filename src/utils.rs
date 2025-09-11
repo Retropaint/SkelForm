@@ -347,7 +347,6 @@ pub fn prepare_files(armature: &Armature, zoom: f32) -> (Vec2, String, String, V
     };
     for bone in &armature.bones {
         editor.bones.push(EditorBone {
-            id: bone.id,
             folded: bone.folded,
             ik_folded: bone.ik_folded,
             meshdef_folded: bone.meshdef_folded,
