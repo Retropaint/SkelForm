@@ -1097,20 +1097,25 @@ impl Armature {
         }
 
         // create keyframe at 0th frame for this element if it doesn't exist
-        if anim_frame != 0 {
-            let frame =
-                self.animations[anim_id].check_if_in_keyframe(bone_id, 0, element.clone(), -1);
-            if self.animations[anim_id]
+        let has_0th_frame = self.animations[anim_id]
+            .keyframes
+            .iter()
+            .find(|kf| kf.frame == 0 && kf.element == *element)
+            != None;
+        if anim_frame != 0 && !has_0th_frame {
+            let init_value = match element {
+                AnimElement::ScaleX | AnimElement::ScaleY => 1.,
+                _ => 0.,
+            };
+
+            self.animations[anim_id].check_if_in_keyframe(bone_id, 0, element.clone(), -1);
+
+            self.animations[anim_id]
                 .keyframes
-                .iter()
+                .iter_mut()
                 .find(|kf| kf.frame == 0 && kf.element == *element)
-                == None
-            {
-                self.animations[anim_id].keyframes[frame].value = match element {
-                    AnimElement::ScaleX | AnimElement::ScaleY => 1.,
-                    _ => 0.,
-                }
-            }
+                .unwrap()
+                .value = init_value;
         }
         let frame =
             self.animations[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone(), -1);
