@@ -450,7 +450,8 @@ pub fn read_import(
     let file = std::fs::File::open(&path);
 
     if let Err(err) = file {
-        println!("{}", err);
+        let text = shared.loc("import_err").to_owned() + &err.to_string();
+        shared.ui.open_modal(text.to_string(), false);
         del_temp_files(&shared.temp_path.base);
         return;
     }
@@ -474,9 +475,9 @@ pub fn read_import(
         }
         "psd" => read_psd(shared, queue, device, bgl, context),
         _ => {
-            let text = shared.loc("import_err");
+            let text = shared.loc("import_unrecognized");
             shared.ui.open_modal(text.to_string(), false);
-            file_reader::del_temp_files(&shared.temp_path.base);
+            del_temp_files(&shared.temp_path.base);
         }
     };
 }
