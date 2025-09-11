@@ -842,11 +842,11 @@ pub fn default_styling(context: &Context, shared: &Shared) {
     context.set_visuals(visuals);
 }
 
-pub fn set_zoom(zoom: f32, shared: &mut Shared) {
-    shared.camera.zoom = zoom;
-    if shared.camera.zoom < 0.1 {
-        shared.camera.zoom = 0.1;
+pub fn set_zoom(mut zoom: f32, shared: &mut Shared) {
+    if zoom < 10. {
+        zoom = 10.;
     }
+    shared.camera.zoom = zoom;
 }
 
 pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::Response {
