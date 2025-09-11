@@ -849,8 +849,6 @@ pub struct EditorOptions {
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 pub struct EditorBone {
     #[serde(default)]
-    pub id: i32,
-    #[serde(default)]
     pub folded: bool,
     #[serde(default)]
     pub ik_folded: bool,
