@@ -473,7 +473,11 @@ pub fn read_import(
             utils::save_to_recent_files(&shared.recent_file_paths);
         }
         "psd" => read_psd(shared, queue, device, bgl, context),
-        _ => {}
+        _ => {
+            let text = shared.loc("import_err");
+            shared.ui.open_modal(text.to_string(), false);
+            file_reader::del_temp_files(&shared.temp_path.base);
+        }
     };
 }
 
