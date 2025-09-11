@@ -1400,10 +1400,6 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
     render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
     render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
 
-    verts = vec![];
-    indices = vec![];
-    i = 0;
-
     // draw horizontal lines
     let mut y = (shared.camera.pos.y - shared.camera.zoom).round();
     let top_side = shared.camera.pos.y + shared.camera.zoom;
