@@ -144,7 +144,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     &shared.armature.bones[b],
                 );
                 if children.len() == 0 {
-                    vert_line(0., ui, shared);
+                    hor_line(11., ui, shared);
                 } else {
                     let fold_icon = if shared.armature.bones[b].folded {
                         "⏵"
@@ -416,6 +416,17 @@ pub fn vert_line(offset: f32, ui: &mut egui::Ui, shared: &mut Shared) {
     let rect = egui::Rect::from_min_size(
         ui.cursor().left_top() + [3., -1.5 + offset].into(),
         [2., 24.].into(),
+    );
+    let mut line_col = shared.config.colors.dark_accent;
+    line_col += Color::new(20, 20, 20, 0);
+    ui.painter()
+        .rect_filled(rect, egui::CornerRadius::ZERO, line_col);
+}
+
+pub fn hor_line(offset: f32, ui: &mut egui::Ui, shared: &mut Shared) {
+    let rect = egui::Rect::from_min_size(
+        ui.cursor().left_top() + [-2., -1.5 + offset].into(),
+        [12., 2.].into(),
     );
     let mut line_col = shared.config.colors.dark_accent;
     line_col += Color::new(20, 20, 20, 0);
