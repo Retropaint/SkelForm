@@ -495,7 +495,7 @@ impl Renderer {
         if shared.saving != shared::Saving::None {
             #[cfg(target_arch = "wasm32")]
             if shared.saving == shared::Saving::CustomPath {
-                utils::save_web(&shared, shared.camera.zoom);
+                utils::save_web(&shared);
             }
             #[cfg(not(target_arch = "wasm32"))]
             self.save(shared);

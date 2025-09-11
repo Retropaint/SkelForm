@@ -1096,7 +1096,6 @@ impl Armature {
             return;
         }
 
-        // create keyframe at 0th frame for this element if it doesn't exist
         let has_0th_frame = self.animations[anim_id]
             .keyframes
             .iter()
