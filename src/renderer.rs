@@ -1351,6 +1351,8 @@ fn world_to_raw_vert(
     vert
 }
 
+// todo:
+// draw gridlines using wgpu instances for performance
 fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared) {
     render_pass.set_index_buffer(
         index_buffer([0, 1, 2].to_vec(), &device).slice(..),
