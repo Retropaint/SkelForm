@@ -146,7 +146,7 @@
         </div>
 
         <div id="focus" class="modal" onclick="hideFocus()">
-            <p id="focus-p">Please wait...</p>
+            <p id="focus-p">Click to focus</p>
         </div>
 
         <div
@@ -190,9 +190,6 @@
             loadConfig();
 
             function hideFocus() {
-                if(!hasLoaded) {
-                    return;
-                }
                 toggleElement(false, "focus")
                 toggleElement(true, "canvas")
                 setTimeout(() => toggleElement(true, "resolution-message"), 1000)
@@ -282,10 +279,6 @@
             }
 
             function loaded() {
-                if(hasLoaded) {
-                    return;
-                }
-                document.getElementById("focus-p").innerText = "Click to focus";
                 hasLoaded = true;
             }
 
