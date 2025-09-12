@@ -5,6 +5,8 @@ use wgpu::*;
 
 use crate::*;
 
+use std::io::Read;
+
 // web-only imports
 #[cfg(target_arch = "wasm32")]
 mod web {
@@ -171,31 +173,15 @@ pub fn read_image_loaders(
 }
 
 pub fn read_psd(
+    bytes: Vec<u8>,
     shared: &mut Shared,
     queue: &Queue,
     device: &Device,
     bind_group_layout: &BindGroupLayout,
     ctx: &egui::Context,
 ) {
-    let psd: psd::Psd;
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let psd_file_path = fs::read_to_string(shared.temp_path.import.clone()).unwrap();
-        let psd_file = std::fs::read(psd_file_path).unwrap();
-        psd = psd::Psd::from_bytes(&psd_file).unwrap();
-        del_temp_files(&shared.temp_path.base);
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        if getFile().len() == 0 || !getFileName().contains(".psd") {
-            return;
-        }
-        psd = psd::Psd::from_bytes(&getFile()).unwrap();
-        removeFile();
-    }
-
-    shared.ui.unselect_everything();
+    let psd = psd::Psd::from_bytes(&bytes).unwrap();
+    del_temp_files(&shared.temp_path.base);
 
     // reset armature (but not all of it) to make way for the psd rig
     shared.armature.bones = vec![];
@@ -473,7 +459,11 @@ pub fn read_import(
             }
             utils::save_to_recent_files(&shared.recent_file_paths);
         }
-        "psd" => read_psd(shared, queue, device, bgl, context),
+        "psd" => {
+            let psd_file_path = fs::read_to_string(shared.temp_path.import.clone()).unwrap();
+            let psd_file = std::fs::read(psd_file_path).unwrap();
+            read_psd(psd_file, shared, queue, device, bgl, context)
+        }
         _ => {
             let text = shared.loc("import_unrecognized");
             shared.ui.open_modal(text.to_string(), false);
@@ -574,10 +564,18 @@ pub fn load_file(
     bind_group_layout: &BindGroupLayout,
     context: &egui::Context,
 ) {
-    if getFile().len() == 0 || !getFileName().contains(".skf") {
+    let is_skf = getFileName().contains(".skf");
+    let is_psd = getFileName().contains(".psd");
+    if getFile().len() == 0 || (!is_psd && !is_skf) {
         return;
     }
+
     let cursor = std::io::Cursor::new(getFile());
-    utils::import(cursor, shared, queue, device, bind_group_layout, context);
+    if is_psd {
+        read_psd(cursor.into_inner(), shared, queue, device, bind_group_layout, context);
+    } else if is_skf {
+        utils::import(cursor, shared, queue, device, bind_group_layout, context);
+    }
+
     removeFile();
 }
