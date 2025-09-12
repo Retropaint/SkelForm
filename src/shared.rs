@@ -1381,6 +1381,19 @@ impl Armature {
 
         false
     }
+
+    pub fn is_valid_tex(&self, bone_id: i32) -> bool {
+        let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
+        let set_idx = self.find_bone(bone_id).unwrap().tex_set_idx;
+        if set_idx == -1 {
+            return false;
+        }
+        if tex_idx as usize > self.texture_sets[set_idx as usize].textures.len() {
+            return false;
+        }
+
+        true
+    }
 }
 
 // used for the json

@@ -128,7 +128,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         );
     }
 
-    if bone.tex_set_idx != -1 {
+    if shared.armature.is_valid_tex(bone.id) {
         let mut selected_tex = bone.tex_idx;
         let tex_name = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
             [bone.tex_idx as usize]

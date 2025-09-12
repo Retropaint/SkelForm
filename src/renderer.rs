@@ -43,15 +43,21 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         draw_gridline(render_pass, device, shared);
     }
 
-    for bone in &mut shared.armature.bones {
-        if bone.tex_set_idx == -1 || bone.vertices.len() != 0 {
+    for b in 0..shared.armature.bones.len() {
+        macro_rules! bone {
+            () => {
+                shared.armature.bones[b]
+            };
+        }
+
+        if !shared.armature.is_valid_tex(bone!().id) || bone!().vertices.len() != 0 {
             continue;
         }
 
-        let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-            [bone.tex_idx as usize]
+        let tex_size = shared.armature.texture_sets[bone!().tex_set_idx as usize].textures
+            [bone!().tex_idx as usize]
             .size;
-        (bone.vertices, bone.indices) = create_tex_rect(&tex_size);
+        (bone!().vertices, bone!().indices) = create_tex_rect(&tex_size);
     }
 
     // runtime: armature bones should be immutable to animations
@@ -140,13 +146,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // pre-draw bone setup
     for b in 0..temp_bones.len() {
-        if temp_bones[b].tex_set_idx == -1 {
+        if !shared.armature.is_valid_tex(temp_bones[b].id) {
             continue;
         }
 
-        let set = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize];
-        let out_of_bounds = temp_bones[b].tex_idx > set.textures.len() as i32 - 1;
-        if shared.armature.is_bone_hidden(temp_bones[b].id) || out_of_bounds {
+        if shared.armature.is_bone_hidden(temp_bones[b].id) {
             continue;
         }
 
@@ -267,7 +271,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     temp_bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
     for bone in &mut temp_bones {
-        if bone.tex_set_idx == -1 || shared.armature.is_bone_hidden(bone.id) {
+        if !shared.armature.is_valid_tex(bone.id) || shared.armature.is_bone_hidden(bone.id) {
             continue;
         }
 
@@ -493,7 +497,7 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
     let zoom = 1000.;
 
     for b in 0..temp_bones.len() {
-        if temp_bones[b].tex_set_idx == -1 {
+        if !shared.armature.is_valid_tex(temp_bones[b].id) {
             continue;
         }
         let set = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize];
