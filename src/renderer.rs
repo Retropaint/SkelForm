@@ -417,22 +417,20 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.dragging_verts = vec![];
         shared.editing_bone = false;
         return;
-    } else {
-        if shared.dragging_verts.len() > 0 {
-            let mut bone_id = -1;
-            if let Some(bone) = shared.selected_bone() {
-                bone_id = bone.id
-            }
-            for vert in shared.dragging_verts.clone() {
-                drag_vertex(
-                    shared,
-                    &temp_bones.iter().find(|bone| bone.id == bone_id).unwrap(),
-                    vert,
-                );
-            }
-
-            return;
+    } else if shared.dragging_verts.len() > 0 {
+        let mut bone_id = -1;
+        if let Some(bone) = shared.selected_bone() {
+            bone_id = bone.id
         }
+        for vert in shared.dragging_verts.clone() {
+            drag_vertex(
+                shared,
+                &temp_bones.iter().find(|bone| bone.id == bone_id).unwrap(),
+                vert,
+            );
+        }
+
+        return;
     }
 
     // mouse related stuff
