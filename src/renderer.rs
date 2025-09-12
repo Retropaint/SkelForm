@@ -33,7 +33,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     shared.ui.set_state(UiState::Scaling, false);
     shared.ui.set_state(UiState::Rotating, false);
- 
+
     #[cfg(target_arch = "wasm32")]
     loaded();
 
@@ -418,31 +418,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.editing_bone = false;
         return;
     } else {
-        // show rotation line
-        if shared.edit_mode == EditMode::Rotate
-            && shared.selected_bone() != None
-            && !shared.input.on_ui
-        {
-            let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
-            mouse.x *= shared.aspect_ratio();
-            let bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap();
-            let center = Vertex {
-                pos: bone.pos,
-                ..Default::default()
-            };
-            let center_world = raw_to_world_vert(
-                center,
-                None,
-                &shared.camera.pos,
-                shared.camera.zoom,
-                Vec2::ZERO,
-                shared.aspect_ratio(),
-                1.,
-                Vec2::new(0.5, 0.5),
-            );
-            draw_line(center_world.pos, mouse, shared, render_pass, &device);
-        }
-
         if shared.dragging_verts.len() > 0 {
             let mut bone_id = -1;
             if let Some(bone) = shared.selected_bone() {
@@ -484,7 +459,32 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // editing bone
     if shared.input.on_ui || shared.ui.has_state(UiState::PolarModal) {
         shared.editing_bone = false;
-    } else if shared.ui.selected_bone_idx != usize::MAX && shared.input.left_down {
+    } else if shared.ui.selected_bone_idx != usize::MAX
+        && shared.input.left_down
+        && hover_bone_id == -1
+        && shared.input.down_dur > 5
+    {
+        if shared.edit_mode == EditMode::Rotate {
+            let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
+            mouse.x *= shared.aspect_ratio();
+            let bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap();
+            let center = Vertex {
+                pos: bone.pos,
+                ..Default::default()
+            };
+            let center_world = raw_to_world_vert(
+                center,
+                None,
+                &shared.camera.pos,
+                shared.camera.zoom,
+                Vec2::ZERO,
+                shared.aspect_ratio(),
+                1.,
+                Vec2::new(0.5, 0.5),
+            );
+            draw_line(center_world.pos, mouse, shared, render_pass, &device);
+        }
+
         // save bone/animation for undo
         if !shared.editing_bone {
             shared.save_edited_bone();
