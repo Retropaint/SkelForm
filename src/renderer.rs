@@ -31,6 +31,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         return;
     }
 
+    shared.ui.set_state(UiState::Scaling, false);
+
     #[cfg(target_arch = "wasm32")]
     loaded();
 
@@ -757,6 +759,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             edit!(AnimElement::Rotation, rot);
         }
         shared::EditMode::Scale => {
+            shared.ui.set_state(UiState::Scaling, true);
             let scale = bone.scale - shared.mouse_vel();
             edit!(AnimElement::ScaleX, scale.x);
             edit!(AnimElement::ScaleY, scale.y);
