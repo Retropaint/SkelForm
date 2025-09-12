@@ -179,8 +179,8 @@
       "PositionX": "Position X",
       "PositionY": "Position Y",
       "Rotation": "Rotation",
-      "ScaleX": "Scale X",
-      "ScaleY": "Scale Y",
+      "ScaleX": "Scale W",
+      "ScaleY": "Scale H",
       "Zindex": "Zindex",
       "TextureIndex": "Texture"
     }
