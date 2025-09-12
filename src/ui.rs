@@ -48,6 +48,12 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             shared.input.mouse *= shared.window_factor;
         }
 
+        // don't record prev mouse on first frame of touch as it
+        // goes all over the place
+        if i.any_touches() && i.pointer.primary_pressed() {
+            shared.input.mouse_prev = shared.input.mouse;
+        }
+
         if i.smooth_scroll_delta.y != 0. && !shared.input.on_ui {
             ui::set_zoom(
                 shared.camera.zoom + (i.smooth_scroll_delta.y as f32),

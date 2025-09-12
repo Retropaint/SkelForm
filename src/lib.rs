@@ -306,21 +306,6 @@ impl ApplicationHandler for App {
                 self.shared.window = Vec2::new(self.last_size.0 as f32, self.last_size.1 as f32);
                 renderer.resize(self.shared.window.x as u32, self.shared.window.y as u32);
             }
-            WindowEvent::Touch(winit::event::Touch {
-                device_id: _,
-                phase,
-                location,
-                force: _,
-                id: _,
-            }) => {
-                let pos = location.to_logical::<f64>(window.scale_factor());
-                self.shared.input.mouse = Vec2::new(pos.x as f32, pos.y as f32);
-
-                // don't track velocity on first touch frame
-                if phase == winit::event::TouchPhase::Started {
-                    self.shared.input.mouse_prev = self.shared.input.mouse;
-                }
-            }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
                 *last_render_time = now;
