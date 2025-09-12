@@ -436,7 +436,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                         ui.set_width(width);
                         ui.set_height(21.);
                         ui.add_space(5.);
-                        ui.label(egui::RichText::new(name).color(shared.config.colors.text));
+                        ui.label(egui::RichText::new(i.to_string() + ") " + &name).color(shared.config.colors.text));
                     });
                 });
             })

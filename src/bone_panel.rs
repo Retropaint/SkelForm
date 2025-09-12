@@ -133,18 +133,20 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         let tex_name = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
             [bone.tex_idx as usize]
             .name;
+        let str_idx = bone.tex_idx.to_string() + ") ";
         ui.horizontal(|ui| {
             ui.label(shared.loc("bone_panel.texture_index"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 egui::ComboBox::new("tex_selector", "")
-                    .selected_text(tex_name.to_string())
+                    .selected_text(str_idx + tex_name)
                     .show_ui(ui, |ui| {
                         let set = &shared.armature.texture_sets[bone.tex_set_idx as usize];
                         for t in 0..set.textures.len() {
+                            let str_idx = t.to_string() + ") ";
                             ui.selectable_value(
                                 &mut selected_tex,
                                 t as i32,
-                                set.textures[t].name.clone(),
+                                str_idx + &set.textures[t].name.clone(),
                             );
                         }
                         ui.selectable_value(

@@ -58,7 +58,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let str_skin = shared.loc("armature_panel.skins");
-                    egui::ComboBox::new("skins", "").selected_text(str_skin).width(60.).show_ui(ui, |ui| {});
+                    egui::ComboBox::new("skins", "")
+                        .selected_text(str_skin)
+                        .width(60.)
+                        .show_ui(ui, |ui| {});
                 });
             });
 
