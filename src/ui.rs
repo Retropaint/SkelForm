@@ -232,7 +232,8 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.ui.has_state(UiState::Rotating) {
         let offset = Vec2::new(50., 0.);
         let rot = shared.selected_bone().unwrap().rot / 3.14 * 180.;
-        helper_text!(rot.to_string(), offset);
+        let formatted = (rot * 100.).round() / 100.;
+        helper_text!(formatted.to_string() + "°", offset);
     }
     if shared.ui.has_state(UiState::Scaling) {
         let offset = Vec2::new(50., 0.);
