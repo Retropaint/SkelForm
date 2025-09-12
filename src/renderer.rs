@@ -63,7 +63,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // runtime: armature bones should be immutable to animations
     let mut animated_bones = shared.armature.bones.clone();
 
-    if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
+    let is_any_anim_playing = shared
+        .armature
+        .animations
+        .iter()
+        .find(|anim| anim.elapsed != None)
+        != None;
+
+    if is_any_anim_playing {
         let mut playing = false;
 
         // runtime: playing animations (single & simultaneous)
