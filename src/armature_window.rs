@@ -57,11 +57,17 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         shared.loc("armature_panel.new_bone_name").to_string();
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let str_skin = shared.loc("armature_panel.skins");
+                    let mut selected_skin = -1;
                     egui::ComboBox::new("skins", "")
-                        .selected_text(str_skin)
+                        .selected_text("👕 Default")
                         .width(60.)
-                        .show_ui(ui, |ui| {});
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(
+                                &mut selected_skin,
+                                0,
+                                shared.loc("bone_panel.texture_set_none"),
+                            );
+                        });
                 });
             });
 
