@@ -241,8 +241,8 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.horizontal(|ui| {
             label!(shared.loc("bone_panel.scale"), ui);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                input!(bone.scale.y, "scale_y", &AnimElement::ScaleY, 1., ui, "Y");
-                input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "X");
+                input!(bone.scale.y, "scale_y", &AnimElement::ScaleY, 1., ui, "H");
+                input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "W");
             });
         });
         ui.horizontal(|ui| {
