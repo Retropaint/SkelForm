@@ -325,6 +325,7 @@ pub struct InputStates {
     pub right_clicked: bool,
     pub left_down: bool,
     pub right_down: bool,
+    pub down_dur: i32,
 
     // is mouse on UI?
     pub on_ui: bool,

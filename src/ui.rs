@@ -41,6 +41,11 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         shared.input.right_clicked = i.pointer.secondary_clicked();
         shared.input.left_down = i.pointer.primary_down();
         shared.input.left_pressed = i.pointer.primary_pressed();
+        if shared.input.left_down {
+            shared.input.down_dur += 1;
+        } else {
+            shared.input.down_dur = -1;
+        }
 
         shared.input.mouse_prev = shared.input.mouse;
         if let Some(mouse) = i.pointer.latest_pos() {
