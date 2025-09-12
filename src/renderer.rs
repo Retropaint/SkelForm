@@ -757,7 +757,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             edit!(AnimElement::Rotation, rot);
         }
         shared::EditMode::Scale => {
-            let scale = (shared.input.mouse / shared.window) * 2.;
+            let scale = bone.scale - shared.mouse_vel();
             edit!(AnimElement::ScaleX, scale.x);
             edit!(AnimElement::ScaleY, scale.y);
         }
