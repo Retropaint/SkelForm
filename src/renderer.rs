@@ -174,7 +174,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.camera.pos,
                 shared.camera.zoom
             );
-            new_vert.pos.x /= shared.window.x / shared.window.y;
+            new_vert.pos.x *= shared.aspect_ratio();
             temp_bones[b].world_verts.push(new_vert);
         }
 
@@ -389,18 +389,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
-    if temp_bones.len() > 0 {
-        let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
-        mouse.x *= shared.aspect_ratio();
-        draw_line(
-            temp_bones[1].world_verts[0].pos,
-            mouse,
-            shared,
-            render_pass,
-            device,
-        );
-    }
-
     if shared.selected_bone() != None {
         let color = VertexColor::new(
             shared.config.colors.center_point.r as f32 / 255.,
@@ -424,20 +412,42 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.dragging_verts = vec![];
         shared.editing_bone = false;
         return;
-    } else if shared.dragging_verts.len() > 0 {
-        let mut bone_id = -1;
-        if let Some(bone) = shared.selected_bone() {
-            bone_id = bone.id
-        }
-        for vert in shared.dragging_verts.clone() {
-            drag_vertex(
-                shared,
-                &temp_bones.iter().find(|bone| bone.id == bone_id).unwrap(),
-                vert,
+    } else {
+        if shared.edit_mode == EditMode::Rotate && shared.selected_bone() != None {
+            let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
+            mouse.x *= shared.aspect_ratio();
+            let bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap();
+            let center = Vertex {
+                pos: bone.pos,
+                ..Default::default()
+            };
+            let center_world = raw_to_world_vert(
+                center,
+                None,
+                &shared.camera.pos,
+                shared.camera.zoom,
+                Vec2::ZERO,
+                shared.aspect_ratio(),
+                1.,
+                Vec2::new(0.5, 0.5),
             );
+            draw_line(center_world.pos, mouse, shared, render_pass, &device);
         }
+        if shared.dragging_verts.len() > 0 {
+            let mut bone_id = -1;
+            if let Some(bone) = shared.selected_bone() {
+                bone_id = bone.id
+            }
+            for vert in shared.dragging_verts.clone() {
+                drag_vertex(
+                    shared,
+                    &temp_bones.iter().find(|bone| bone.id == bone_id).unwrap(),
+                    vert,
+                );
+            }
 
-        return;
+            return;
+        }
     }
 
     // mouse related stuff
@@ -992,22 +1002,22 @@ fn draw_line(
 
     let col = VertexColor::new(0., 1., 0., 1.);
 
-    let mut v0_top = Vertex {
+    let v0_top = Vertex {
         pos: origin + base,
         color: col,
         ..Default::default()
     };
-    let mut v0_bot = Vertex {
+    let v0_bot = Vertex {
         pos: origin - base,
         color: col,
         ..Default::default()
     };
-    let mut v1_top = Vertex {
+    let v1_top = Vertex {
         pos: target + base,
         color: col,
         ..Default::default()
     };
-    let mut v1_bot = Vertex {
+    let v1_bot = Vertex {
         pos: target - base,
         color: col,
         ..Default::default()
@@ -1244,7 +1254,7 @@ fn draw_point(
             &camera,
             shared.camera.zoom,
             Vec2::new(0., 0.),
-            shared.window.x / shared.window.y,
+            shared.aspect_ratio(),
             1.,
             Vec2::new(0.5, 0.5),
         ));
@@ -1392,7 +1402,7 @@ fn raw_to_world_vert(
     vert.pos /= zoom;
 
     // adjust verts for aspect ratio
-    vert.pos.x /= aspect_ratio;
+    vert.pos.x *= aspect_ratio;
 
     vert
 }
