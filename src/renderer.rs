@@ -415,7 +415,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.editing_bone = false;
         return;
     } else {
-        if shared.edit_mode == EditMode::Rotate && shared.selected_bone() != None && !shared.input.on_ui{
+
+        // show rotation line 
+        if shared.edit_mode == EditMode::Rotate
+            && shared.selected_bone() != None
+            && !shared.input.on_ui
+        {
             let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
             mouse.x *= shared.aspect_ratio();
             let bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap();
@@ -435,6 +440,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             );
             draw_line(center_world.pos, mouse, shared, render_pass, &device);
         }
+
         if shared.dragging_verts.len() > 0 {
             let mut bone_id = -1;
             if let Some(bone) = shared.selected_bone() {
