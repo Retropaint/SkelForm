@@ -1936,6 +1936,10 @@ impl Shared {
         );
         self.loc_strings.insert("".to_string(), "".to_string());
     }
+
+    pub fn aspect_ratio(&self) -> f32 {
+        self.window.y / self.window.x
+    }
 }
 
 // generate non-clashing id

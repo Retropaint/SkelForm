@@ -389,6 +389,18 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
+    if temp_bones.len() > 0 {
+        let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
+        mouse.x *= shared.aspect_ratio();
+        draw_line(
+            temp_bones[1].world_verts[0].pos,
+            mouse,
+            shared,
+            render_pass,
+            device,
+        );
+    }
+
     if shared.selected_bone() != None {
         let color = VertexColor::new(
             shared.config.colors.center_point.r as f32 / 255.,
@@ -707,6 +719,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
         }
         shared::EditMode::Rotate => {
             let rot = (shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.;
+
             edit!(AnimElement::Rotation, rot);
         }
         shared::EditMode::Scale => {
@@ -962,6 +975,48 @@ pub fn vert_lines(
 
         draw(&None, &verts, &indices, render_pass, device);
     }
+}
+
+fn draw_line(
+    origin: Vec2,
+    target: Vec2,
+    shared: &Shared,
+    render_pass: &mut RenderPass,
+    device: &Device,
+) {
+    let dir = target - origin;
+
+    let width = 2.5;
+    let mut base = Vec2::new(width, width) / shared.camera.zoom;
+    base = utils::rotate(&base, dir.y.atan2(dir.x));
+
+    let col = VertexColor::new(0., 1., 0., 1.);
+
+    let mut v0_top = Vertex {
+        pos: origin + base,
+        color: col,
+        ..Default::default()
+    };
+    let mut v0_bot = Vertex {
+        pos: origin - base,
+        color: col,
+        ..Default::default()
+    };
+    let mut v1_top = Vertex {
+        pos: target + base,
+        color: col,
+        ..Default::default()
+    };
+    let mut v1_bot = Vertex {
+        pos: target - base,
+        color: col,
+        ..Default::default()
+    };
+
+    let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
+    let indices = vec![0, 1, 2, 1, 2, 3];
+
+    draw(&None, &verts, &indices, render_pass, device);
 }
 
 pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
@@ -1394,9 +1449,8 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
     let mut i: u32 = 0;
 
     // draw vertical lines
-    let aspect_ratio = shared.window.y / shared.window.x;
-    let mut x = (shared.camera.pos.x - shared.camera.zoom / aspect_ratio).round();
-    let right_side = shared.camera.pos.x + shared.camera.zoom / aspect_ratio;
+    let mut x = (shared.camera.pos.x - shared.camera.zoom / shared.aspect_ratio()).round();
+    let right_side = shared.camera.pos.x + shared.camera.zoom / shared.aspect_ratio();
     while x < right_side {
         if x % shared.gridline_gap as f32 != 0. {
             x += 1.;
@@ -1474,23 +1528,25 @@ pub fn draw_horizontal_line(
 }
 
 pub fn draw_vertical_line(x: f32, width: f32, shared: &Shared, color: VertexColor) -> Vec<Vertex> {
-    let aspect_ratio = shared.window.y / shared.window.x;
     let edge = shared.camera.zoom * 5.;
     let camera_pos = shared.camera.pos;
     let camera_zoom = shared.camera.zoom;
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: (Vec2::new(x, camera_pos.y - edge) - camera_pos) / camera_zoom * aspect_ratio,
+            pos: (Vec2::new(x, camera_pos.y - edge) - camera_pos) / camera_zoom
+                * shared.aspect_ratio(),
             color,
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(width + x, camera_pos.y) - camera_pos) / camera_zoom * aspect_ratio,
+            pos: (Vec2::new(width + x, camera_pos.y) - camera_pos) / camera_zoom
+                * shared.aspect_ratio(),
             color,
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(x, camera_pos.y + edge) - camera_pos) / camera_zoom * aspect_ratio,
+            pos: (Vec2::new(x, camera_pos.y + edge) - camera_pos) / camera_zoom
+                * shared.aspect_ratio(),
             color,
             ..Default::default()
         },
