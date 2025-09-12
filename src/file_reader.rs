@@ -5,11 +5,10 @@ use wgpu::*;
 
 use crate::*;
 
-use std::io::Read;
-
 // web-only imports
 #[cfg(target_arch = "wasm32")]
 mod web {
+    pub use std::io::Read;
     pub use wasm_bindgen::prelude::wasm_bindgen;
     pub use web_sys::*;
 }
@@ -572,7 +571,14 @@ pub fn load_file(
 
     let cursor = std::io::Cursor::new(getFile());
     if is_psd {
-        read_psd(cursor.into_inner(), shared, queue, device, bind_group_layout, context);
+        read_psd(
+            cursor.into_inner(),
+            shared,
+            queue,
+            device,
+            bind_group_layout,
+            context,
+        );
     } else if is_skf {
         utils::import(cursor, shared, queue, device, bind_group_layout, context);
     }

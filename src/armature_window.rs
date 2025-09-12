@@ -56,6 +56,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     shared.selected_bone_mut().unwrap().name =
                         shared.loc("armature_panel.new_bone_name").to_string();
                 }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let str_skin = shared.loc("armature_panel.skins");
+                    egui::ComboBox::new("skins", "").selected_text(str_skin).width(60.).show_ui(ui, |ui| {});
+                });
             });
 
             shared.ui.edit_bar_pos.x = ui.min_rect().right();

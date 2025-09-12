@@ -70,7 +70,8 @@
   "armature_panel": {
     "heading": "Armature",
     "new_bone_button": "New Bone",
-    "new_bone_name": "New Bone"
+    "new_bone_name": "New Bone",
+    "skins": "Skins"
   },
   "bone_panel": {
     "heading": "Bone",
