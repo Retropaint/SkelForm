@@ -738,6 +738,9 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
                 let str_armature = shared.loc("armature_panel.heading");
                 if selection_button(str_armature, !shared.ui.anim.open, ui).clicked() {
                     shared.ui.anim.open = false;
+                    for anim in &mut shared.armature.animations {
+                        anim.elapsed = None;
+                    }
                 }
                 let str_animation = shared.loc("keyframe_editor.heading");
                 if selection_button(str_animation, shared.ui.anim.open, ui).clicked() {
