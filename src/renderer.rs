@@ -831,15 +831,19 @@ pub fn vert_lines(
     device: &Device,
     new_vert: &mut Option<Vertex>,
 ) {
-    let mut clicked = false;
+    let mut added_vert = false;
+
+    // identify how many lines to create based on indices
     let mut lines: Vec<(u32, u32)> = vec![];
     for (_, chunk) in bone.indices.chunks_exact(3).enumerate() {
+        // don't add duplicate lines
         macro_rules! doesnt_contain {
             ($first:expr, $second:expr) => {
                 !lines.contains(&(chunk[$first], chunk[$second]))
                     && !lines.contains(&(chunk[$second], chunk[$first]))
             };
         }
+
         if doesnt_contain!(0, 1) {
             lines.push((chunk[0], chunk[1]));
         }
@@ -850,35 +854,38 @@ pub fn vert_lines(
             lines.push((chunk[0], chunk[2]));
         }
     }
+
     for l in 0..lines.len() {
         let i0 = lines[l].0;
         let i1 = lines[l].1;
         let v0 = bone.world_verts[i0 as usize];
         let v1 = bone.world_verts[i1 as usize];
         let dir = v0.pos - v1.pos;
+
         let width = 2.5;
-        let mut size = Vec2::new(width, width) / shared.camera.zoom;
-        size = utils::rotate(&size, dir.y.atan2(dir.x));
+        let mut base = Vec2::new(width, width) / shared.camera.zoom;
+        base = utils::rotate(&base, dir.y.atan2(dir.x));
+
         let mut col = VertexColor::GREEN;
         col += VertexColor::new(-0.5, -0.5, -0.5, 0.);
 
         let mut v0_top = Vertex {
-            pos: v0.pos + size,
+            pos: v0.pos + base,
             color: col,
             ..v0
         };
         let mut v0_bot = Vertex {
-            pos: v0.pos - size,
+            pos: v0.pos - base,
             color: col,
             ..v0
         };
         let mut v1_top = Vertex {
-            pos: v1.pos + size,
+            pos: v1.pos + base,
             color: col,
             ..v1
         };
         let mut v1_bot = Vertex {
-            pos: v1.pos - size,
+            pos: v1.pos - base,
             color: col,
             ..v1
         };
@@ -905,7 +912,11 @@ pub fn vert_lines(
             let whole_line = v1.pos - v0.pos;
             let interp = mouse_line.mag() / whole_line.mag();
             let uv = v0.uv + ((v1.uv - v0.uv) * interp);
-            if shared.input.left_clicked && !clicked {
+
+            if shared.input.left_pressed {
+                shared.dragging_verts.push(i0 as usize);
+                shared.dragging_verts.push(i1 as usize);
+            } else if shared.input.left_clicked && !added_vert {
                 let img = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
                     [bone.tex_idx as usize]
                     .image;
@@ -918,10 +929,7 @@ pub fn vert_lines(
                     uv,
                     ..Default::default()
                 });
-                clicked = true;
-            } else if shared.input.left_pressed {
-                shared.dragging_verts.push(i0 as usize);
-                shared.dragging_verts.push(i1 as usize);
+                added_vert = true;
             }
         }
 
@@ -930,7 +938,6 @@ pub fn vert_lines(
             v0_bot.add_color += add_color;
             v1_top.add_color += add_color;
             v1_bot.add_color += add_color;
-            verts = vec![v0_top, v0_bot, v1_top, v1_bot];
         }
 
         if shared.dragging_verts.len() == 2
@@ -941,8 +948,9 @@ pub fn vert_lines(
             v0_bot.add_color += add_color;
             v1_top.add_color += add_color;
             v1_bot.add_color += add_color;
-            verts = vec![v0_top, v0_bot, v1_top, v1_bot];
         }
+
+        verts = vec![v0_top, v0_bot, v1_top, v1_bot];
 
         draw(&None, &verts, &indices, render_pass, device);
     }
