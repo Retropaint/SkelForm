@@ -222,10 +222,12 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         };
     }
 
-    let offset = Vec2::new(37., 3.);
-    scale_text!("⏵ Width", offset);
-    let offset = Vec2::new(3., -20.);
-    scale_text!("Height\n    ⏶", offset);
+    if shared.ui.has_state(UiState::Scaling) {
+        let offset = Vec2::new(50., 0.);
+        scale_text!("⏵ Width", offset);
+        let offset = Vec2::new(2., -38.);
+        scale_text!("Height\n    ⏶", offset);
+    }
 }
 
 pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
