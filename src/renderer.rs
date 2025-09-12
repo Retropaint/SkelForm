@@ -90,11 +90,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // runtime: armature bones should be immutable to rendering
     let mut temp_bones: Vec<Bone> = animated_bones.clone();
 
-    let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
-
     // runtime: constructing rig using forward (aka inheritance) & inverse kinematics
     {
         forward_kinematics(&mut temp_bones, std::collections::HashMap::new());
+
+        let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
 
         // inverse kinematics
         for b in 0..temp_bones.len() {
