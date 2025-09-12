@@ -90,7 +90,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // runtime: armature bones should be immutable to rendering
     let mut temp_bones: Vec<Bone> = animated_bones.clone();
 
-    // runtime: constructing rig using forward (aka inheritance) & inverse kinematics
+    // runtime: rig construction & kinematics (forward & backward)
     {
         forward_kinematics(&mut temp_bones, std::collections::HashMap::new());
 
@@ -112,7 +112,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 .cloned()
                 .collect();
 
-            // apply IK on the joint copy, then save rotations for the next FK
             let target = temp_bones
                 .iter()
                 .find(|bone| bone.id == temp_bones[b].ik_target_id);
@@ -126,12 +125,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             for _ in 0..10 {
                 inverse_kinematics(&mut joints, target.unwrap().pos);
             }
+
+            // save rotations for the next forward kinematics call
             for joint in joints {
                 ik_rot.insert(joint.id, joint.rot);
             }
         }
 
-        // re-construct bones, accounting for IK
+        // re-construct bones, accounting for rotations saved from IK
         temp_bones = animated_bones.clone();
         forward_kinematics(&mut temp_bones, ik_rot.clone());
     }
