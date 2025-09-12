@@ -101,7 +101,7 @@
                 accept=".png"
                 id="img-input"
             />
-            <label class="button" for="img-input">Upload Image</label>
+            <label class="button" for="img-input" title="For security reasons, images must be uploaded using this overlay.">Upload Image</label>
             <label
                 class="button"
                 onclick="toggleElement(false, 'image-dialog')"
@@ -115,7 +115,7 @@
                 onchange="toggleElement(false, 'file-dialog'); loadFile(event)"
                 id="file-input"
             />
-            <label class="button" for="file-input">Upload File</label>
+            <label class="button" for="file-input" title="For security reasons, files must be uploaded using this overlay.">Upload File</label>
             <label
                 class="button"
                 onclick="toggleElement(false, 'file-dialog')"
@@ -282,6 +282,9 @@
             }
 
             function loaded() {
+                if(hasLoaded) {
+                    return;
+                }
                 document.getElementById("focus-p").innerText = "Click to focus";
                 hasLoaded = true;
             }
