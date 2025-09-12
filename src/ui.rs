@@ -210,8 +210,15 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         shared.ui.context_menu.close();
     }
 
-    macro_rules! scale_text {
+    macro_rules! helper_text {
         ($text:expr, $offset:expr) => {
+            context.debug_painter().text(
+                (shared.input.mouse / shared.window_factor + $offset + Vec2::new(1., 1.)).into(),
+                egui::Align2::CENTER_CENTER,
+                $text,
+                egui::FontId::default(),
+                egui::Color32::BLACK,
+            );
             context.debug_painter().text(
                 (shared.input.mouse / shared.window_factor + $offset).into(),
                 egui::Align2::CENTER_CENTER,
@@ -222,11 +229,16 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         };
     }
 
+    if shared.ui.has_state(UiState::Rotating) {
+        let offset = Vec2::new(50., 0.);
+        let rot = shared.selected_bone().unwrap().rot / 3.14 * 180.;
+        helper_text!(rot.to_string(), offset);
+    }
     if shared.ui.has_state(UiState::Scaling) {
         let offset = Vec2::new(50., 0.);
-        scale_text!("⏵ Width", offset);
+        helper_text!("⏵ Width", offset);
         let offset = Vec2::new(2., -38.);
-        scale_text!("Height\n    ⏶", offset);
+        helper_text!("Height\n    ⏶", offset);
     }
 }
 
