@@ -295,7 +295,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     ui.set_width((modal_width / 2.) - 20.);
                     ui.set_height(height);
                     ui.horizontal(|ui| {
-                        if shared.ui.hovering_set != -1 && !is_selected{
+                        if shared.ui.hovering_set != -1 && !is_selected {
                             ui.label(shared.loc("texture_modal.set_preview"));
                             return;
                         }
@@ -436,7 +436,10 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                         ui.set_width(width);
                         ui.set_height(21.);
                         ui.add_space(5.);
-                        ui.label(egui::RichText::new(i.to_string() + ") " + &name).color(shared.config.colors.text));
+                        ui.label(
+                            egui::RichText::new(i.to_string() + ") " + &name)
+                                .color(shared.config.colors.text),
+                        );
                     });
                 });
             })

@@ -642,7 +642,8 @@ impl Renderer {
         utils::save_to_recent_files(&shared.recent_file_paths);
         shared.saving = Saving::None;
         std::thread::spawn(move || {
-            let (size, armatures_json, editor_json, png_buf) = utils::prepare_files(&armature, camera);
+            let (size, armatures_json, editor_json, png_buf) =
+                utils::prepare_files(&armature, camera);
 
             // create zip file
             let mut zip = zip::ZipWriter::new(std::fs::File::create(save_path.clone()).unwrap());
