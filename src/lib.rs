@@ -321,20 +321,6 @@ impl ApplicationHandler for App {
                     self.shared.input.mouse_prev = self.shared.input.mouse;
                 }
             }
-            WindowEvent::CursorMoved {
-                device_id: _,
-                position,
-            } => {
-                #[cfg(target_arch = "wasm32")]
-                {
-                    let pos = position.to_logical::<f64>(window.scale_factor());
-                    self.shared.input.mouse = Vec2::new(pos.x as f32, pos.y as f32);
-                };
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    self.shared.input.mouse = Vec2::new(position.x as f32, position.y as f32);
-                };
-            }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
                 *last_render_time = now;
@@ -579,7 +565,6 @@ impl Renderer {
 
         // core rendering logic handled in renderer.rs
         renderer::render(&mut render_pass, &self.gpu.device, shared);
-        shared.input.mouse_prev = shared.input.mouse;
 
         self.egui_renderer.render(
             &mut render_pass.forget_lifetime(),

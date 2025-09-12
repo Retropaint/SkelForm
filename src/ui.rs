@@ -42,6 +42,12 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         shared.input.left_down = i.pointer.primary_down();
         shared.input.left_pressed = i.pointer.primary_pressed();
 
+        shared.input.mouse_prev = shared.input.mouse;
+        if let Some(mouse) = i.pointer.latest_pos() {
+            shared.input.mouse = mouse.into();
+            shared.input.mouse *= shared.window_factor;
+        }
+
         if i.smooth_scroll_delta.y != 0. && !shared.input.on_ui {
             ui::set_zoom(
                 shared.camera.zoom + (i.smooth_scroll_delta.y as f32),

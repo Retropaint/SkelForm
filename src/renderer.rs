@@ -415,8 +415,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.editing_bone = false;
         return;
     } else {
-
-        // show rotation line 
+        // show rotation line
         if shared.edit_mode == EditMode::Rotate
             && shared.selected_bone() != None
             && !shared.input.on_ui
