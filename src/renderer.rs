@@ -415,7 +415,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.editing_bone = false;
         return;
     } else {
-        if shared.edit_mode == EditMode::Rotate && shared.selected_bone() != None {
+        if shared.edit_mode == EditMode::Rotate && shared.selected_bone() != None && !shared.input.on_ui{
             let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
             mouse.x *= shared.aspect_ratio();
             let bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap();
