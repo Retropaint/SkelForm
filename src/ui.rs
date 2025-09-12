@@ -253,14 +253,14 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
                 offset
             );
 
-            let offset = Vec2::new(5., -38.);
+            let offset = Vec2::new(-1., -38.);
             let formatted = (bone.scale.y * 100.).round() / 100.;
             let mut padding = "";
             if formatted.to_string() == "1" {
                 padding = ".00";
             }
             helper_text!(
-                "h: ".to_owned() + &formatted.to_string() + padding + "\n   ⏶",
+                "h: ".to_owned() + &formatted.to_string() + padding + "\n     ⏶",
                 offset
             );
         }
