@@ -23,7 +23,6 @@ parser = argparse.ArgumentParser(
     epilog="Default build command:\ntrunk build " + default_build,
 )
 
-# arguments
 # yapf: disable
 parser.add_argument("-s",   "--serve",   action="store_true", help="automatically run localhost:8000 after build",)
 parser.add_argument("-r",   "--release", action="store_true", help="build for release/production")
@@ -33,13 +32,10 @@ parser.add_argument("-wgl", "--webgl",   action="store_true", help="use webgl in
 
 args = parser.parse_args()
 
-# add default release config, but only if not building for mobile
 if args.release and not args.mobile:
     generic += " --release --public-url=/skelform_web"
-
 if args.webgl:
     features = '"webgl'
-
 if args.mobile:
     features += " mobile"
 if args.debug and not args.release:
