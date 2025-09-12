@@ -229,17 +229,36 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         };
     }
 
-    if shared.ui.has_state(UiState::Rotating) {
-        let offset = Vec2::new(50., 0.);
-        let rot = shared.selected_bone().unwrap().rot / 3.14 * 180.;
-        let formatted = (rot * 100.).round() / 100.;
-        helper_text!(formatted.to_string() + "°", offset);
-    }
-    if shared.ui.has_state(UiState::Scaling) {
-        let offset = Vec2::new(50., 0.);
-        helper_text!("⏵ Width", offset);
-        let offset = Vec2::new(2., -38.);
-        helper_text!("Height\n    ⏶", offset);
+    if let Some(bone) = shared.selected_bone() {
+        if shared.ui.has_state(UiState::Rotating) {
+            let offset = Vec2::new(50., 0.);
+            let rot = bone.rot / 3.14 * 180.;
+            let formatted = (rot * 100.).round() / 100.;
+            helper_text!(formatted.to_string() + "°", offset);
+        }
+        if shared.ui.has_state(UiState::Scaling) {
+            let offset = Vec2::new(50., 0.);
+            let formatted = (bone.scale.x * 100.).round() / 100.;
+            let mut padding = "";
+            if formatted.to_string() == "1" {
+                padding = ".00";
+            }
+            helper_text!(
+                "⏵ w: ".to_owned() + &formatted.to_string() + padding,
+                offset
+            );
+
+            let offset = Vec2::new(5., -38.);
+            let formatted = (bone.scale.y * 100.).round() / 100.;
+            let mut padding = "";
+            if formatted.to_string() == "1" {
+                padding = ".00";
+            }
+            helper_text!(
+                "h: ".to_owned() + &formatted.to_string() + padding + "\n   ⏶",
+                offset
+            );
+        }
     }
 }
 
