@@ -488,6 +488,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.cursor_icon = egui::CursorIcon::Crosshair;
 
         let bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap();
+
         edit_bone(shared, bone, &temp_bones);
     }
 }
@@ -730,8 +731,24 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             edit!(AnimElement::PositionY, pos.y);
         }
         shared::EditMode::Rotate => {
-            let rot = (shared.input.mouse.x / shared.window.x) * std::f32::consts::PI * 2.;
+            let bone_center = raw_to_world_vert(
+                Vertex {
+                    pos: bone.pos,
+                    ..Default::default()
+                },
+                None,
+                &shared.camera.pos,
+                shared.camera.zoom,
+                Vec2::ZERO,
+                shared.aspect_ratio(),
+                1.,
+                Vec2::new(0.5, 0.5),
+            );
+            let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
+            mouse.x *= shared.aspect_ratio();
 
+            let dir = mouse - bone_center.pos;
+            let rot = dir.y.atan2(dir.x);
             edit!(AnimElement::Rotation, rot);
         }
         shared::EditMode::Scale => {
