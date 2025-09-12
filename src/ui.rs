@@ -209,6 +209,23 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.input.left_clicked && !shared.ui.context_menu.keep {
         shared.ui.context_menu.close();
     }
+
+    macro_rules! scale_text {
+        ($text:expr, $offset:expr) => {
+            context.debug_painter().text(
+                (shared.input.mouse / shared.window_factor + $offset).into(),
+                egui::Align2::CENTER_CENTER,
+                $text,
+                egui::FontId::default(),
+                shared.config.colors.center_point.into(),
+            );
+        };
+    }
+
+    let offset = Vec2::new(37., 3.);
+    scale_text!("⏵ Width", offset);
+    let offset = Vec2::new(3., -20.);
+    scale_text!("Height\n    ⏶", offset);
 }
 
 pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
