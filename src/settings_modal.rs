@@ -191,7 +191,8 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     });
     ui.horizontal(|ui| {
         let str_keep_tex_idx = shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx");
-        let str_keep_tex_idx_desc = shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx_desc");
+        let str_keep_tex_idx_desc =
+            shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx_desc");
         ui.label(&(str_keep_tex_idx.to_owned() + crate::ICON_INFO + ":"))
             .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_keep_tex_idx_desc);
