@@ -8,6 +8,8 @@ use spade::Triangulation;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
+// todo:
+// improve vert space conversions. This macro is starting to become the bane of my existence
 macro_rules! con_vert {
     ($func:expr, $vert:expr, $bone:expr, $tex_size:expr, $cam_pos:expr, $cam_zoom:expr) => {
         $func(
