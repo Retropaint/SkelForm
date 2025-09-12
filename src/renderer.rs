@@ -32,7 +32,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     shared.ui.set_state(UiState::Scaling, false);
-
+    shared.ui.set_state(UiState::Rotating, false);
+ 
     #[cfg(target_arch = "wasm32")]
     loaded();
 
@@ -738,6 +739,8 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             edit!(AnimElement::PositionY, pos.y);
         }
         shared::EditMode::Rotate => {
+            shared.ui.set_state(UiState::Rotating, true);
+
             let bone_center = raw_to_world_vert(
                 Vertex {
                     pos: bone.pos,
