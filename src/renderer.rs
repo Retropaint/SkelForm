@@ -85,7 +85,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             let frame = anim.set_frame();
             animated_bones = shared.armature.animate(a, frame, Some(&animated_bones));
         }
-    } else if shared.ui.anim.selected != usize::MAX && shared.ui.anim.selected_frame != -1 {
+    } else if shared.ui.anim.open
+        && shared.ui.anim.selected != usize::MAX
+        && shared.ui.anim.selected_frame != -1
+    {
         // display the selected animation's frame
         animated_bones =
             shared

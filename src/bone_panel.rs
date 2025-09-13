@@ -23,20 +23,10 @@ mod web {
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
-pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
+pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     if shared.ui.has_state(UiState::DraggingBone) {
         ui.disable();
         return;
-    }
-
-    let mut bone = shared.selected_bone().unwrap().clone();
-    if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
-        bone =
-            shared
-                .armature
-                .animate(shared.ui.anim.selected, shared.ui.anim.selected_frame, None)
-                [shared.ui.selected_bone_idx]
-                .clone();
     }
 
     ui.horizontal(|ui| {
