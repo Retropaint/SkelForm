@@ -1833,6 +1833,8 @@ pub struct Shared {
 
     pub ik_arrow_bindgroup: Option<BindGroup>,
 
+    pub selected_temp_bone: Bone,
+
     loc_strings: std::collections::HashMap<String, String>,
 }
 

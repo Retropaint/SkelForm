@@ -76,27 +76,21 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         != None;
 
     if is_any_anim_playing {
-        let mut playing = false;
-
         // runtime: playing animations (single & simultaneous)
         for a in 0..shared.armature.animations.len() {
             let anim = &mut shared.armature.animations[a];
             if anim.elapsed == None {
                 continue;
             }
-            playing = true;
             let frame = anim.set_frame();
             animated_bones = shared.armature.animate(a, frame, Some(&animated_bones));
         }
-
+    } else if shared.ui.anim.selected != usize::MAX && shared.ui.anim.selected_frame != -1 {
         // display the selected animation's frame
-        if !playing && shared.ui.anim.selected_frame != -1 {
-            animated_bones = shared.armature.animate(
-                shared.ui.anim.selected,
-                shared.ui.anim.selected_frame,
-                None,
-            );
-        }
+        animated_bones =
+            shared
+                .armature
+                .animate(shared.ui.anim.selected, shared.ui.anim.selected_frame, None);
     }
 
     // runtime: armature bones should be immutable to rendering
@@ -411,6 +405,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             shared.camera.pos,
             0.,
         );
+        shared.selected_temp_bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id)
+            .unwrap()
+            .clone();
     }
 
     if !shared.input.left_down {
