@@ -29,7 +29,15 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         return;
     }
 
-    let mut bone = shared.selected_temp_bone.clone();
+    let mut bone = shared.selected_bone().unwrap().clone();
+    if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
+        bone =
+            shared
+                .armature
+                .animate(shared.ui.anim.selected, shared.ui.anim.selected_frame, None)
+                [shared.ui.selected_bone_idx]
+                .clone();
+    }
 
     ui.horizontal(|ui| {
         ui.heading(shared.loc("bone_panel.heading"));
