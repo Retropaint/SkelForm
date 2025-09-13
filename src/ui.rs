@@ -163,6 +163,21 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         enable_bone_panel = !shared.ui.setting_ik_target;
     }
 
+    // get current properties of selected bone, including animations
+    let mut selected_bone = Bone::default();
+    if shared.ui.selected_bone_idx != usize::MAX {
+        selected_bone = shared.selected_bone().unwrap().clone();
+
+        if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
+            selected_bone = shared.armature.animate(
+                shared.ui.anim.selected,
+                shared.ui.anim.selected_frame,
+                None,
+            )[shared.ui.selected_bone_idx]
+                .clone();
+        }
+    }
+
     let bone_panel_id = "Bone";
     draw_resizable_panel(
         bone_panel_id,
@@ -180,7 +195,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
                     );
 
                     if shared.ui.selected_bone_idx != usize::MAX {
-                        bone_panel::draw(ui, shared);
+                        bone_panel::draw(selected_bone.clone(), ui, shared);
                     } else if shared.selected_animation() != None
                         && shared.ui.anim.selected_frame != -1
                     {
@@ -240,13 +255,13 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
 
     if shared.ui.has_state(UiState::Rotating) {
         let offset = Vec2::new(50., 0.);
-        let rot = shared.selected_temp_bone.rot / 3.14 * 180.;
+        let rot = selected_bone.rot / 3.14 * 180.;
         let formatted = (rot * 100.).round() / 100.;
         helper_text!(formatted.to_string() + "°", offset);
     }
     if shared.ui.has_state(UiState::Scaling) {
         let offset = Vec2::new(50., 0.);
-        let formatted = (shared.selected_temp_bone.scale.x * 100.).round() / 100.;
+        let formatted = (selected_bone.scale.x * 100.).round() / 100.;
         let mut padding = "";
         if formatted.to_string() == "1" {
             padding = ".00";
@@ -257,7 +272,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         );
 
         let offset = Vec2::new(-1., -38.);
-        let formatted = (shared.selected_temp_bone.scale.y * 100.).round() / 100.;
+        let formatted = (selected_bone.scale.y * 100.).round() / 100.;
         let mut padding = "";
         if formatted.to_string() == "1" {
             padding = ".00";
