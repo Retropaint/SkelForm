@@ -502,6 +502,8 @@ pub struct Ui {
     pub selected_path: String,
 
     pub setting_ik_target: bool,
+
+    pub selected_style: i32,
 }
 
 impl Ui {
@@ -861,6 +863,20 @@ pub struct EditorBone {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+pub struct Style {
+    #[serde(default, rename = "_name")]
+    pub name: String,
+    #[serde(skip)]
+    pub bone_id: i32,
+    #[serde(default)]
+    pub bone_idx: i32,
+    #[serde(default)]
+    pub set_idx: i32,
+    #[serde(skip)]
+    pub active: bool,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Armature {
     #[serde(default)]
     pub bones: Vec<Bone>,
@@ -868,6 +884,8 @@ pub struct Armature {
     pub animations: Vec<Animation>,
     #[serde(default)]
     pub texture_sets: Vec<TextureSet>,
+    #[serde(default)]
+    pub styles: Vec<Style>,
 
     #[serde(skip)]
     pub tex_sheet_buf: Vec<u8>,
