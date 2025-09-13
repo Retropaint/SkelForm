@@ -71,7 +71,8 @@
     "heading": "Armature",
     "new_bone_button": "New Bone",
     "new_bone_name": "New Bone",
-    "skins": "Skins"
+    "styles": "👕 Styles",
+    "styles_desc": "Create a style, then assign bones to it (with 👕 icon) to change their texture sets when active.\n\nStyles with distinct bones can be active simultaneously. Otherwise, selected styles will deactivate those with overlapping bones."
   },
   "bone_panel": {
     "heading": "Bone",

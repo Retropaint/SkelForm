@@ -57,17 +57,58 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         shared.loc("armature_panel.new_bone_name").to_string();
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let mut selected_skin = -1;
-                    egui::ComboBox::new("skins", "")
-                        .selected_text("👕 Default")
-                        .width(60.)
+                    let mut selected_style = -1;
+                    let name = if shared.ui.selected_style == -1 {
+                        shared.loc("bone_panel.texture_set_none")
+                    } else {
+                        &shared.armature.styles[shared.ui.selected_style as usize].name
+                    };
+                    egui::ComboBox::new("styles", "")
+                        .selected_text(name)
+                        .width(80.)
+                        .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                         .show_ui(ui, |ui| {
-                            ui.selectable_value(
-                                &mut selected_skin,
-                                0,
-                                shared.loc("bone_panel.texture_set_none"),
-                            );
+                            ui.set_min_height(200.);
+                            ui.horizontal(|ui| {
+                                let label = ui.selectable_value(
+                                    &mut selected_style,
+                                    0,
+                                    shared.loc("bone_panel.texture_set_none"),
+                                );
+                                if label.clicked() {
+                                    ui.close();
+                                }
+                            });
+
+                            for s in 0..shared.armature.styles.len() {
+                                ui.horizontal(|ui| {
+                                    let label = ui.selectable_value(
+                                        &mut selected_style,
+                                        s as i32,
+                                        shared.armature.styles[s].name.to_string(),
+                                    );
+                                    if label.clicked() {
+                                        ui.close();
+                                    }
+                                    ui.checkbox(
+                                        &mut shared.armature.styles[s].active,
+                                        "".into_atoms(),
+                                    );
+                                });
+                            }
+                            ui.selectable_value(&mut selected_style, -2, "[New]");
+                        })
+                        .response
+                        .on_hover_text(shared.loc("armature_panel.styles_desc"));
+                    if selected_style == -2 {
+                        shared.armature.styles.push(crate::Style {
+                            name: "New".to_string(),
+                            ..Default::default()
                         });
+                    } else if selected_style != -1 {
+                        shared.ui.selected_style = selected_style;
+                        shared.armature.styles[selected_style as usize].active = true;
+                    }
                 });
             });
 
