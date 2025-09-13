@@ -116,6 +116,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
             anim_id,
             shared.ui.anim.selected_frame,
         );
+        return;
     }
 
     if shared.armature.is_valid_tex(bone.id) {
