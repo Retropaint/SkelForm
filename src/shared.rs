@@ -1415,7 +1415,7 @@ impl Armature {
         if set_idx == -1 {
             return false;
         }
-        if tex_idx as usize > self.texture_sets[set_idx as usize].textures.len() {
+        if tex_idx as usize > self.texture_sets[set_idx as usize].textures.len() - 1 {
             return false;
         }
 
