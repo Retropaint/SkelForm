@@ -758,7 +758,17 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
         }
         shared::EditMode::Scale => {
             shared.ui.set_state(UiState::Scaling, true);
-            let scale = bone.scale - shared.mouse_vel();
+
+            let mut scale = bone.scale;
+
+            // restore universal scale, by offsetting against parent's
+            if bone.parent_id != -1 {
+                let parent = find_bone(bones, bone.parent_id).unwrap();
+                scale /= parent.scale;
+            }
+
+            scale -= shared.mouse_vel();
+
             edit!(AnimElement::ScaleX, scale.x);
             edit!(AnimElement::ScaleY, scale.y);
         }
