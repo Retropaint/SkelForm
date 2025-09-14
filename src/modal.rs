@@ -157,7 +157,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
             ..Default::default()
         })
         .show(ctx, |ui| {
-            ui.set_width(300.);
+            ui.set_width(450.);
             ui.set_height(400.);
             let str_desc = shared.loc("texture_modal.heading_desc");
             let str_heading = shared.loc(&("texture_modal.heading")).to_owned();
@@ -169,6 +169,9 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
 
             ui.add_space(5.);
 
+            let frame_padding = 10.;
+            let frame_count = 3.;
+
             let height = ui.available_height();
 
             ui.horizontal(|ui| {
@@ -178,7 +181,7 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                 let height = ui.available_height();
                 ui.vertical(|ui| {
                     ui.set_height(height);
-                    ui.set_width((modal_width / 2.) - 10.);
+                    ui.set_width((modal_width / frame_count) - frame_padding);
 
                     ui.horizontal(|ui| {
                         if shared.ui.hovering_tex != -1 {
@@ -285,14 +288,10 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     });
                 });
 
-                if shared.ui.selected_tex_set_idx == -1 && shared.ui.hovering_set == -1 {
-                    return;
-                }
-
                 let frame = egui::Frame::default().inner_margin(5.);
                 let is_selected = shared.ui.selected_tex_set_idx == shared.ui.hovering_set;
                 ui.vertical(|ui| {
-                    ui.set_width((modal_width / 2.) - 20.);
+                    ui.set_width((modal_width / frame_count) - frame_padding);
                     ui.set_height(height);
                     ui.horizontal(|ui| {
                         if shared.ui.hovering_set != -1 && !is_selected {
@@ -312,7 +311,12 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         ui.set_width(size.x);
                         ui.set_height(size.y - 10.);
-                        if shared.ui.hovering_set != -1 && !is_selected {
+
+                        if shared.ui.hovering_set == -1 || is_selected {
+                            if shared.ui.selected_tex_set_idx != -1 {
+                                draw_tex_buttons(shared, ui);
+                            }
+                        } else {
                             let is_empty = shared.armature.texture_sets
                                 [shared.ui.hovering_set as usize]
                                 .textures
@@ -348,21 +352,16 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                                     offset.x += size.x;
                                 }
                             }
-                            return;
                         }
-
-                        draw_tex_buttons(shared, ui);
                     });
                 });
 
                 ui.vertical(|ui| {
-                    ui.horizontal(|ui| {
-                        ui.label("Assigned Bones")
-                    });
+                    ui.horizontal(|ui| ui.label("Assigned Bones"));
                     egui::Frame::new()
                         .fill(shared.config.colors.dark_accent.into())
                         .show(ui, |ui| {
-                            ui.set_width((modal_width / 2.) - 20.);
+                            ui.set_width((modal_width / frame_count) - frame_padding);
                             ui.set_height(height - 21.);
                             ui.label("test")
                         })
