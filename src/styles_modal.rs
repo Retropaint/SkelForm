@@ -48,6 +48,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         shared.armature.texture_sets.push(crate::TextureSet {
                             name: "".to_string(),
                             textures: vec![],
+                            active: false,
                         });
                         shared.ui.rename_id = "tex_set ".to_string()
                             + &(shared.armature.texture_sets.len() - 1).to_string();
@@ -285,7 +286,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                             let mut selected_col = shared.config.colors.dark_accent;
 
                             if shared.armature.bones[b]
-                                .styles
+                                .style_idxs
                                 .contains(&shared.ui.selected_tex_set_idx)
                             {
                                 selected_col += crate::Color::new(20, 20, 20, 0);
@@ -332,8 +333,8 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                                 hovered = true;
                             }
                             if button.clicked() {
-                                let styles = &mut shared.armature.bones[b].styles;
-                                if styles.contains(&shared.ui.hovering_set) {
+                                let styles = &mut shared.armature.bones[b].style_idxs;
+                                if styles.contains(&shared.ui.selected_tex_set_idx) {
                                     styles.retain(|style| *style != shared.ui.selected_tex_set_idx);
                                 } else {
                                     styles.push(shared.ui.selected_tex_set_idx);
