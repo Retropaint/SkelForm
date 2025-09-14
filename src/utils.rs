@@ -318,18 +318,22 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
         }
     }
 
-    for bone in &mut armature_copy.bones {
+    for b in 0..armature_copy.bones.len() {
+        macro_rules! bone {
+            () => {
+                armature_copy.bones[b]
+            };
+        }
+
         // if it is a regular rect, empty verts and indices
-        if bone.tex_set_idx == -1
+        if armature_copy.get_current_set(bone!().id) == None
             || !bone_meshes_edited(
-                armature_copy.texture_sets[bone.tex_set_idx as usize].textures
-                    [bone.tex_idx as usize]
-                    .size,
-                &bone.vertices,
+                armature_copy.get_current_tex(bone!().id).unwrap().size,
+                &bone!().vertices,
             )
         {
-            bone.vertices = vec![];
-            bone.indices = vec![];
+            bone!().vertices = vec![];
+            bone!().indices = vec![];
         }
     }
 
