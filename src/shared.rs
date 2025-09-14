@@ -806,6 +806,8 @@ pub struct Bone {
     pub parent_idx: i32,
     #[serde(default = "default_neg_one")]
     pub tex_set_idx: i32,
+    #[serde(default)]
+    pub styles: Vec<i32>,
     #[serde(default = "default_neg_one")]
     pub tex_idx: i32,
 
@@ -863,22 +865,17 @@ pub struct EditorBone {
     pub ik_disabled: bool,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
-pub struct StyleBone {
-    #[serde(skip)]
-    pub id: i32,
-    #[serde(default)]
-    pub idx: i32,
-    #[serde(default)]
-    pub set_idx: i32,
-}
-
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Style {
     #[serde(default, rename = "_name")]
     pub name: String,
+    #[serde(skip)]
+    pub bone_ids: Vec<i32>,
     #[serde(default)]
-    pub bones: Vec<StyleBone>,
+    pub bone_idxs: Vec<i32>,
+    #[serde(default)]
+    pub textures: Vec<Texture>,
+
     #[serde(skip)]
     pub active: bool,
 }
@@ -1421,18 +1418,6 @@ impl Armature {
         }
 
         true
-    }
-
-    pub fn is_in_style(&self, bone_id: i32, style_idx: i32) -> bool {
-        if style_idx == -1 {
-            return false;
-        }
-
-        self.styles[style_idx as usize]
-            .bones
-            .iter()
-            .find(|bone| bone.id == bone_id)
-            != None
     }
 }
 
