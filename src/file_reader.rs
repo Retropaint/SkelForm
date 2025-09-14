@@ -70,14 +70,6 @@ pub fn read_image_loaders(
             return;
         }
 
-        // delete files if selected bone is invalid
-        if shared.armature.bones.len() == 0
-            || shared.ui.selected_bone_idx > shared.armature.bones.len() - 1
-        {
-            del_temp_files(&shared.temp_path.base);
-            return;
-        }
-
         let img_path = fs::read_to_string(shared.temp_path.img.clone()).unwrap();
         if img_path == "" {
             del_temp_files(&shared.temp_path.base);
@@ -138,36 +130,6 @@ pub fn read_image_loaders(
         device,
         bind_group_layout,
         ctx,
-    );
-
-    let mut anim_id = shared.ui.anim.selected;
-    if !shared.ui.is_animating() {
-        anim_id = usize::MAX;
-        shared.undo_actions.push(Action {
-            action: ActionType::Bone,
-            id: shared.selected_bone().unwrap().id,
-            bones: vec![shared.selected_bone().unwrap().clone()],
-            ..Default::default()
-        });
-    } else {
-        shared.undo_actions.push(Action {
-            action: ActionType::Animation,
-            id: shared.selected_animation().unwrap().id,
-            animations: vec![shared.selected_animation().unwrap().clone()],
-            ..Default::default()
-        });
-    }
-
-    let tex_idx = shared.armature.texture_sets[shared.ui.selected_tex_set_idx as usize]
-        .textures
-        .len()
-        - 1;
-    shared.armature.set_bone_tex(
-        shared.selected_bone().unwrap().id,
-        tex_idx,
-        shared.ui.selected_tex_set_idx,
-        anim_id,
-        shared.ui.anim.selected_frame,
     );
 }
 
