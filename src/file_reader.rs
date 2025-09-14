@@ -110,11 +110,9 @@ pub fn read_image_loaders(
     }
 
     // check if this texture already exists
-    for set in &shared.armature.texture_sets {
-        for tex in &set.textures {
-            if image == tex.image {
-                return;
-            }
+    for tex in &shared.armature.texture_sets[shared.ui.selected_tex_set_idx as usize].textures {
+        if image == tex.image {
+            return;
         }
     }
 
