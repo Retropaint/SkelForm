@@ -208,7 +208,10 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 let mut cursor = egui::CursorIcon::PointingHand;
                 let mut style_col = shared.config.colors.dark_accent;
                 style_col += Color::new(20, 20, 20, 0);
-                if shared.armature.is_in_style(shared.armature.bones[b].id, shared.ui.selected_style) {
+                if shared
+                    .armature
+                    .is_in_style(shared.armature.bones[b].id, shared.ui.selected_style)
+                {
                     style_col = shared.config.colors.text;
                 }
 
@@ -227,10 +230,12 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 let width = ui.available_width();
 
+                let has_tex = shared.armature.bones[b].tex_set_idx != -1;
+
                 let id = Id::new(("bone", idx, 0));
                 let button = ui
                     .dnd_drag_source(id, idx, |ui| {
-                        let style_icon_width = 22.;
+                        let style_icon_width = if has_tex { 22. } else { 0. };
                         ui.set_width(width - style_icon_width);
 
                         let name = shared.armature.bones[b].name.to_string();
@@ -246,11 +251,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                                 ui.add_space(5.);
                                 ui.label(egui::RichText::new(name).color(text_col));
 
-                                let pic = if shared.armature.bones[b].tex_set_idx != -1 {
-                                    "🖻  "
-                                } else {
-                                    ""
-                                };
+                                let pic = if has_tex { "🖻  " } else { "" };
                                 let mut pic_col = shared.config.colors.dark_accent;
                                 pic_col += Color::new(40, 40, 40, 0);
                                 ui.label(egui::RichText::new(pic).color(pic_col))
@@ -261,23 +262,25 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     .interact(Sense::click())
                     .on_hover_cursor(cursor);
 
-                let style_label = ui
-                    .label(egui::RichText::new("👕").color(style_col))
-                    .on_hover_cursor(egui::CursorIcon::PointingHand);
-                if style_label.clicked() {
-                    let style = &mut shared.armature.styles[shared.ui.selected_style as usize];
-                    let bone_idx = style
-                        .bones
-                        .iter()
-                        .position(|bone| bone.id == shared.armature.bones[b].id);
-                    if bone_idx != None {
-                        style.bones.remove(bone_idx.unwrap());
-                    } else {
-                        style.bones.push(StyleBone {
-                            id: shared.armature.bones[b].id,
-                            set_idx: shared.armature.bones[b].tex_set_idx,
-                            ..Default::default()
-                        })
+                if has_tex {
+                    let style_label = ui
+                        .label(egui::RichText::new("👕").color(style_col))
+                        .on_hover_cursor(egui::CursorIcon::PointingHand);
+                    if style_label.clicked() && shared.ui.selected_style != -1 {
+                        let style = &mut shared.armature.styles[shared.ui.selected_style as usize];
+                        let bone_idx = style
+                            .bones
+                            .iter()
+                            .position(|bone| bone.id == shared.armature.bones[b].id);
+                        if bone_idx != None {
+                            style.bones.remove(bone_idx.unwrap());
+                        } else {
+                            style.bones.push(StyleBone {
+                                id: shared.armature.bones[b].id,
+                                set_idx: shared.armature.bones[b].tex_set_idx,
+                                ..Default::default()
+                            })
+                        }
                     }
                 }
 
