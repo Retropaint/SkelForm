@@ -225,7 +225,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                 ui.set_height(height - 33.);
 
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    let hovered = true;
+                    let mut hovered = false;
                     for b in 0..shared.armature.bones.len() {
                         // if this bone's parent is folded, skip drawing
                         let mut visible = true;
@@ -284,6 +284,13 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
 
                             let mut selected_col = shared.config.colors.dark_accent;
 
+                            if shared.armature.bones[b]
+                                .styles
+                                .contains(&shared.ui.selected_tex_set_idx)
+                            {
+                                selected_col += crate::Color::new(20, 20, 20, 0);
+                            }
+
                             if shared.ui.hovering_style_bone == b as i32 {
                                 selected_col += crate::Color::new(20, 20, 20, 0);
                             }
@@ -320,6 +327,18 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                                 .response
                                 .interact(egui::Sense::click())
                                 .on_hover_cursor(egui::CursorIcon::PointingHand);
+                            if button.contains_pointer() {
+                                shared.ui.hovering_style_bone = b as i32;
+                                hovered = true;
+                            }
+                            if button.clicked() {
+                                let styles = &mut shared.armature.bones[b].styles;
+                                if styles.contains(&shared.ui.hovering_set) {
+                                    styles.retain(|style| *style != shared.ui.selected_tex_set_idx);
+                                } else {
+                                    styles.push(shared.ui.selected_tex_set_idx);
+                                }
+                            }
                         });
                     }
                     if !hovered {
