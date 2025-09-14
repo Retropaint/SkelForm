@@ -224,8 +224,6 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 let width = ui.available_width();
 
-                let has_tex = shared.armature.bones[b].tex_set_idx != -1;
-
                 let id = Id::new(("bone", idx, 0));
                 let button = ui
                     .dnd_drag_source(id, idx, |ui| {
@@ -244,7 +242,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                                 ui.add_space(5.);
                                 ui.label(egui::RichText::new(name).color(text_col));
 
-                                let pic = if has_tex { "🖻  " } else { "" };
+                                //let pic = if has_tex { "🖻  " } else { "" };
+                                let pic = "";
                                 let mut pic_col = shared.config.colors.dark_accent;
                                 pic_col += Color::new(40, 40, 40, 0);
                                 ui.label(egui::RichText::new(pic).color(pic_col))

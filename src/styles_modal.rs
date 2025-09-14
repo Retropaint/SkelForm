@@ -298,7 +298,8 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
 
                             let width = ui.available_width();
 
-                            let has_tex = shared.armature.bones[b].tex_set_idx != -1;
+                            //let has_tex = shared.armature.bones[b].tex_set_idx != -1;
+                            let has_tex = false;
 
                             let id = egui::Id::new(("styles_bone", b, 0));
                             let button = ui

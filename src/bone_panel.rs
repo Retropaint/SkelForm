@@ -29,8 +29,6 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         return;
     }
 
-    let selected_set = shared.armature.get_current_set(bone.id);
-
     ui.horizontal(|ui| {
         ui.heading(shared.loc("bone_panel.heading"));
 
@@ -67,19 +65,41 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         }
     });
 
-    if shared.armature.get_current_tex(bone.id) != None {
-        let mut selected_tex = bone.tex_idx;
-        let tex_name = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-            [bone.tex_idx as usize]
-            .name;
-        let str_idx = bone.tex_idx.to_string() + ") ";
+    ui.horizontal(|ui| {
+        ui.label("Style:");
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let name = if let Some(set) = shared.armature.get_current_set(bone.id) {
+                &set.name
+            } else {
+                &"None".to_string()
+            };
+            ui.label(name);
+        });
+    });
+
+    let tex = shared.armature.get_current_tex(bone.id);
+
+    let tex_name_col = if tex != None {
+        shared.config.colors.text
+    } else {
+        shared.config.colors.light_accent + Color::new(60, 60, 60, 0)
+    };
+
+    let mut selected_tex = bone.tex_idx;
+    let tex_name = if tex != None {
+        &tex.unwrap().name
+    } else {
+        &"None".to_string()
+    };
+    let str_idx = bone.tex_idx.to_string() + ") ";
+    ui.add_enabled_ui(tex != None, |ui| {
         ui.horizontal(|ui| {
             ui.label(shared.loc("bone_panel.texture_index"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 egui::ComboBox::new("tex_selector", "")
-                    .selected_text(str_idx + tex_name)
+                    .selected_text(egui::RichText::new(str_idx + tex_name).color(tex_name_col))
                     .show_ui(ui, |ui| {
-                        let set = &shared.armature.texture_sets[bone.tex_set_idx as usize];
+                        let set = &shared.armature.get_current_set(bone.id).unwrap();
                         for t in 0..set.textures.len() {
                             let str_idx = t.to_string() + ") ";
                             ui.selectable_value(
@@ -97,9 +117,12 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                     .response;
             });
         });
+    });
 
+    if tex != None {
         if selected_tex == -2 {
-            shared.ui.selected_tex_set_idx = bone.tex_set_idx;
+            //shared.ui.selected_tex_set_idx = bone.tex_set_idx;
+            shared.ui.selected_tex_set_idx = 0;
             shared.ui.set_state(UiState::ImageModal, true);
         } else if selected_tex != bone.tex_idx {
             let mut anim_id = shared.ui.anim.selected;
@@ -444,8 +467,10 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         }
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-                [bone.tex_idx as usize]
+            let tex_size = shared
+                .armature
+                .get_current_tex(bone.id)
+                .unwrap()
                 .size
                 .clone();
             let str_center = shared.loc("bone_panel.mesh_deformation.center");

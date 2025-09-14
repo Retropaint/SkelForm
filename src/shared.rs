@@ -284,6 +284,20 @@ impl std::ops::SubAssign for Color {
         self.a -= other.a;
     }
 }
+
+impl std::ops::Add for Color {
+    type Output = Self;
+
+    #[inline(always)]
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            r: self.r + rhs.r,
+            g: self.g + rhs.g,
+            b: self.b + rhs.b,
+            a: self.a + rhs.a,
+        }
+    }
+}
 impl Color {
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
         Color { r, g, b, a }
@@ -804,8 +818,6 @@ pub struct Bone {
     pub parent_id: i32,
     #[serde(default)]
     pub parent_idx: i32,
-    #[serde(default = "default_neg_one")]
-    pub tex_set_idx: i32,
     #[serde(default)]
     pub style_idxs: Vec<i32>,
     #[serde(default = "default_neg_one")]
@@ -1016,7 +1028,6 @@ impl Armature {
             parent_id,
             id: generate_id(ids),
             scale: Vec2 { x: 1., y: 1. },
-            tex_set_idx: -1,
             zindex: self.bones.len() as i32,
             constraint: JointConstraint::None,
             ik_target_id: -1,
@@ -1219,13 +1230,10 @@ impl Armature {
             };
 
             // restructure bone's verts to match texture
-            if b.tex_set_idx != -1 {
-                let set = &self.texture_sets[self.find_bone(b.id).unwrap().tex_set_idx as usize];
-                let set_tex_limit = self.texture_sets[b.tex_set_idx as usize].textures.len() - 1;
-                if b.tex_idx != -1 && b.tex_set_idx < set_tex_limit as i32 {
-                    (b.vertices, b.indices) =
-                        renderer::create_tex_rect(&set.textures[b.tex_idx as usize].size);
-                }
+            if self.get_current_tex(b.id) != None {
+                (b.vertices, b.indices) = renderer::create_tex_rect(
+                    &self.get_current_set(b.id).unwrap().textures[b.tex_idx as usize].size,
+                );
             }
 
             for v in 0..b.vertices.len() {
