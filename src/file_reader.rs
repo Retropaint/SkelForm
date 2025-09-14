@@ -161,10 +161,12 @@ pub fn read_psd(
         }
     }
 
+    shared.ui.selected_tex_set_idx = 0;
+
     shared.armature.texture_sets.push(TextureSet {
         name: "Default".to_string(),
         textures: vec![],
-        active: false,
+        active: true,
     });
 
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
@@ -254,6 +256,11 @@ pub fn read_psd(
         // create texture bone
         let new_bone_id = shared.armature.new_bone(-1).0.id;
         let tex_idx = shared.armature.texture_sets[0].textures.len() - 1;
+        shared
+            .armature
+            .find_bone_mut(new_bone_id)
+            .unwrap()
+            .style_idxs = vec![0];
         shared.armature.set_bone_tex(
             new_bone_id,
             tex_idx,
