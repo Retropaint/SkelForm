@@ -208,14 +208,6 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 let mut selected_col = shared.config.colors.dark_accent;
                 let mut cursor = egui::CursorIcon::PointingHand;
-                let mut style_col = shared.config.colors.dark_accent;
-                style_col += Color::new(20, 20, 20, 0);
-                if shared
-                    .armature
-                    .is_in_style(shared.armature.bones[b].id, shared.ui.selected_style)
-                {
-                    style_col = shared.config.colors.text;
-                }
 
                 if shared.armature.is_bone_hidden(bone_id) {
                     selected_col = shared.config.colors.dark_accent;
@@ -237,8 +229,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 let id = Id::new(("bone", idx, 0));
                 let button = ui
                     .dnd_drag_source(id, idx, |ui| {
-                        let style_icon_width = if has_tex { 22. } else { 0. };
-                        ui.set_width(width - style_icon_width);
+                        ui.set_width(width);
 
                         let name = shared.armature.bones[b].name.to_string();
                         let mut text_col = shared.config.colors.text;
@@ -248,7 +239,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         }
                         egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
                             ui.horizontal(|ui| {
-                                ui.set_width(width - style_icon_width);
+                                ui.set_width(width);
                                 ui.set_height(21.);
                                 ui.add_space(5.);
                                 ui.label(egui::RichText::new(name).color(text_col));
@@ -263,28 +254,6 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     .response
                     .interact(Sense::click())
                     .on_hover_cursor(cursor);
-
-                if has_tex {
-                    let style_label = ui
-                        .label(egui::RichText::new("👕").color(style_col))
-                        .on_hover_cursor(egui::CursorIcon::PointingHand);
-                    if style_label.clicked() && shared.ui.selected_style != -1 {
-                        let style = &mut shared.armature.styles[shared.ui.selected_style as usize];
-                        let bone_idx = style
-                            .bones
-                            .iter()
-                            .position(|bone| bone.id == shared.armature.bones[b].id);
-                        if bone_idx != None {
-                            style.bones.remove(bone_idx.unwrap());
-                        } else {
-                            style.bones.push(StyleBone {
-                                id: shared.armature.bones[b].id,
-                                set_idx: shared.armature.bones[b].tex_set_idx,
-                                ..Default::default()
-                            })
-                        }
-                    }
-                }
 
                 if button.contains_pointer() {
                     is_hovering = true;
