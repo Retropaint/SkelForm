@@ -16,9 +16,6 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             let str_heading = shared.loc(&("texture_modal.heading")).to_owned();
             ui.heading(str_heading + " " + crate::ICON_INFO)
                 .on_hover_text(str_desc);
-            modal::modal_x(ui, || {
-                shared.ui.set_state(UiState::ImageModal, false);
-            });
 
             ui.add_space(5.);
 
@@ -211,6 +208,10 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                 });
 
                 draw_bones_list(ui, shared, modal_width, height);
+            });
+
+            modal::modal_x(ui, egui::Vec2::new(-5., 0.), || {
+                shared.ui.set_state(UiState::ImageModal, false);
             });
         });
 }
