@@ -58,33 +58,37 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let mut selected_style = -1;
-                    let name = if shared.ui.selected_style == -1 {
-                        shared.loc("bone_panel.texture_set_none")
-                    } else {
-                        &shared.armature.texture_sets[shared.ui.selected_style as usize].name
-                    };
                     let dropdown = egui::ComboBox::new("styles", "")
                         .selected_text(shared.loc("armature_panel.styles"))
                         .width(80.)
                         .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                         .show_ui(ui, |ui| {
                             ui.set_min_height(200.);
+                            let width = ui.available_width();
                             for s in 0..shared.armature.texture_sets.len() {
-                                ui.horizontal(|ui| {
-                                    let label = ui.selectable_value(
-                                        &mut selected_style,
-                                        s as i32,
-                                        shared.armature.texture_sets[s].name.to_string(),
-                                    );
-                                    if label.clicked() {
-                                        shared.armature.texture_sets[s].active =
-                                            !shared.armature.texture_sets[s].active;
-                                    }
-                                    ui.checkbox(
-                                        &mut shared.armature.texture_sets[s].active,
-                                        "".into_atoms(),
-                                    );
-                                });
+                                ui.set_width(80.);
+                                ui.set_width(width);
+                                let tick = if shared.armature.texture_sets[s].active {
+                                    " ✅"
+                                } else {
+                                    ""
+                                };
+                                let label = ui.selectable_value(
+                                    &mut selected_style,
+                                    s as i32,
+                                    shared.armature.texture_sets[s].name.to_string(),
+                                );
+                                ui.painter().text(
+                                    label.rect.right_center(),
+                                    egui::Align2::RIGHT_CENTER,
+                                    tick,
+                                    egui::FontId::default(),
+                                    shared.config.colors.text.into(),
+                                );
+                                if label.clicked() {
+                                    shared.armature.texture_sets[s].active =
+                                        !shared.armature.texture_sets[s].active;
+                                }
                             }
                             let label = ui.selectable_value(&mut selected_style, -2, "[Setup]");
                             if label.clicked() {
