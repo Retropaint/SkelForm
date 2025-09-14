@@ -63,7 +63,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     } else {
                         &shared.armature.texture_sets[shared.ui.selected_style as usize].name
                     };
-                    egui::ComboBox::new("styles", "")
+                    let dropdown = egui::ComboBox::new("styles", "")
                         .selected_text(name)
                         .width(80.)
                         .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
@@ -85,13 +85,18 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                     );
                                 });
                             }
-                            let label = ui.selectable_value(&mut selected_style, -2, "[New]");
+                            let label = ui.selectable_value(&mut selected_style, -2, "[Setup]");
                             if label.clicked() {
                                 ui.close();
                             }
                         })
                         .response
                         .on_hover_text(shared.loc("armature_panel.styles_desc"));
+
+                    if shared.ui.has_state(UiState::FocusStyleDropdown) {
+                        dropdown.request_focus();
+                        shared.ui.set_state(UiState::FocusStyleDropdown, false);
+                    }
                     if selected_style == -2 {
                         shared.ui.set_state(UiState::ImageModal, true);
                     } else if selected_style != -1 {

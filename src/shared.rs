@@ -408,6 +408,7 @@ pub enum UiState {
     StartupWindow,
     Scaling,
     Rotating,
+    FocusStyleDropdown
 }
 
 #[derive(Clone, Default, PartialEq)]
