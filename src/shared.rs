@@ -408,7 +408,7 @@ pub enum UiState {
     StartupWindow,
     Scaling,
     Rotating,
-    FocusStyleDropdown
+    FocusStyleDropdown,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -1422,7 +1422,10 @@ impl Armature {
         }
 
         let bone = self.bones.iter().find(|bone| bone.id == bone_id);
-        if bone == None || bone.unwrap().tex_idx as usize > set.unwrap().textures.len() - 1 {
+        if bone == None
+            || set.unwrap().textures.len() == 0
+            || bone.unwrap().tex_idx as usize > set.unwrap().textures.len() - 1
+        {
             return None;
         }
         Some(&set.unwrap().textures[bone.unwrap().tex_idx as usize])
