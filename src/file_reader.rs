@@ -109,8 +109,6 @@ pub fn read_image_loaders(
         return;
     }
 
-    shared.ui.set_state(UiState::ImageModal, false);
-
     // check if this texture already exists
     for set in &shared.armature.texture_sets {
         for tex in &set.textures {
