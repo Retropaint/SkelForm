@@ -72,7 +72,7 @@
     "new_bone_button": "New Bone",
     "new_bone_name": "New Bone",
     "styles": "👕 Styles",
-    "styles_desc": "Create a style, then assign bones to it (with 👕 icon) to change their texture sets when active.\n\nStyles with distinct bones can be active simultaneously. Otherwise, selected styles will deactivate those with overlapping bones."
+    "styles_desc": "Create a style, add textures, then assign bones to use it. Click on styles in the dropdown to toggle them.\n\nBones use textures based on their index. To change it, select a bone > 'Tex Index'.\n\nMultiple styles can be active at once. Bones assinged to multiple active styles will use the top-most first."
   },
   "bone_panel": {
     "heading": "Bone",
