@@ -807,7 +807,7 @@ pub struct Bone {
     #[serde(default = "default_neg_one")]
     pub tex_set_idx: i32,
     #[serde(default)]
-    pub styles: Vec<i32>,
+    pub style_idxs: Vec<i32>,
     #[serde(default = "default_neg_one")]
     pub tex_idx: i32,
 
@@ -866,21 +866,6 @@ pub struct EditorBone {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
-pub struct Style {
-    #[serde(default, rename = "_name")]
-    pub name: String,
-    #[serde(skip)]
-    pub bone_ids: Vec<i32>,
-    #[serde(default)]
-    pub bone_idxs: Vec<i32>,
-    #[serde(default)]
-    pub textures: Vec<Texture>,
-
-    #[serde(skip)]
-    pub active: bool,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Armature {
     #[serde(default)]
     pub bones: Vec<Bone>,
@@ -888,8 +873,6 @@ pub struct Armature {
     pub animations: Vec<Animation>,
     #[serde(default)]
     pub texture_sets: Vec<TextureSet>,
-    #[serde(default)]
-    pub styles: Vec<Style>,
 
     #[serde(skip)]
     pub tex_sheet_buf: Vec<u8>,
@@ -1434,6 +1417,8 @@ pub struct TextureSet {
     pub name: String,
     #[serde(default)]
     pub textures: Vec<Texture>,
+    #[serde(default)]
+    pub active: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]

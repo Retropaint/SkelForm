@@ -164,6 +164,7 @@ pub fn read_psd(
     shared.armature.texture_sets.push(TextureSet {
         name: "Default".to_string(),
         textures: vec![],
+        active: false,
     });
 
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);

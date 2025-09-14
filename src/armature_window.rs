@@ -61,7 +61,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     let name = if shared.ui.selected_style == -1 {
                         shared.loc("bone_panel.texture_set_none")
                     } else {
-                        &shared.armature.styles[shared.ui.selected_style as usize].name
+                        &shared.armature.texture_sets[shared.ui.selected_style as usize].name
                     };
                     egui::ComboBox::new("styles", "")
                         .selected_text(name)
@@ -69,18 +69,18 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                         .show_ui(ui, |ui| {
                             ui.set_min_height(200.);
-                            for s in 0..shared.armature.styles.len() {
+                            for s in 0..shared.armature.texture_sets.len() {
                                 ui.horizontal(|ui| {
                                     let label = ui.selectable_value(
                                         &mut selected_style,
                                         s as i32,
-                                        shared.armature.styles[s].name.to_string(),
+                                        shared.armature.texture_sets[s].name.to_string(),
                                     );
                                     if label.clicked() {
                                         ui.close();
                                     }
                                     ui.checkbox(
-                                        &mut shared.armature.styles[s].active,
+                                        &mut shared.armature.texture_sets[s].active,
                                         "".into_atoms(),
                                     );
                                 });
@@ -97,7 +97,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     } else if selected_style != -1 {
                         if selected_style != shared.ui.selected_style {
                             shared.ui.selected_style = selected_style;
-                            shared.armature.styles[selected_style as usize].active = true;
+                            shared.armature.texture_sets[selected_style as usize].active = true;
                         } else {
                             shared.ui.selected_style = -1;
                         }
