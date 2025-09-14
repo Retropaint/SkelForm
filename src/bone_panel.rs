@@ -111,34 +111,23 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                                 str_idx + &set.textures[t].name.clone(),
                             );
                         }
-                        ui.selectable_value(
-                            &mut selected_tex,
-                            -2,
-                            shared.loc("bone_panel.texture_set_setup"),
-                        );
                     })
                     .response;
             });
         });
     });
 
-    if set != None {
-        if selected_tex == -2 {
-            //shared.ui.selected_tex_set_idx = bone.tex_set_idx;
-            shared.ui.selected_tex_set_idx = 0;
-            shared.ui.set_state(UiState::ImageModal, true);
-        } else if selected_tex != bone.tex_idx {
-            let mut anim_id = shared.ui.anim.selected;
-            if !shared.ui.is_animating() {
-                anim_id = usize::MAX;
-            }
-            shared.armature.set_bone_tex(
-                bone.id,
-                selected_tex as usize,
-                anim_id,
-                shared.ui.anim.selected_frame,
-            );
+    if set != None && selected_tex != bone.tex_idx {
+        let mut anim_id = shared.ui.anim.selected;
+        if !shared.ui.is_animating() {
+            anim_id = usize::MAX;
         }
+        shared.armature.set_bone_tex(
+            bone.id,
+            selected_tex as usize,
+            anim_id,
+            shared.ui.anim.selected_frame,
+        );
     }
 
     let mut edited = false;
