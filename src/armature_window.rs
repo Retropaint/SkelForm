@@ -69,17 +69,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                         .show_ui(ui, |ui| {
                             ui.set_min_height(200.);
-                            ui.horizontal(|ui| {
-                                let label = ui.selectable_value(
-                                    &mut selected_style,
-                                    0,
-                                    shared.loc("bone_panel.texture_set_none"),
-                                );
-                                if label.clicked() {
-                                    ui.close();
-                                }
-                            });
-
                             for s in 0..shared.armature.styles.len() {
                                 ui.horizontal(|ui| {
                                     let label = ui.selectable_value(
@@ -106,8 +95,12 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                             ..Default::default()
                         });
                     } else if selected_style != -1 {
-                        shared.ui.selected_style = selected_style;
-                        shared.armature.styles[selected_style as usize].active = true;
+                        if selected_style != shared.ui.selected_style {
+                            shared.ui.selected_style = selected_style;
+                            shared.armature.styles[selected_style as usize].active = true;
+                        } else {
+                            shared.ui.selected_style = -1;
+                        }
                     }
                 });
             });
