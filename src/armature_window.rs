@@ -172,7 +172,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 } else {
                     "👁"
                 };
-                if bone_label(hidden_icon, ui, shared, b, Vec2::new(-2., 18.)).clicked() {
+                let id = "bone_hidden".to_owned() + &b.to_string();
+                if bone_label(hidden_icon, ui, id, shared, b, Vec2::new(-2., 18.)).clicked() {
                     shared.armature.bones[b].hidden = !shared.armature.bones[b].hidden;
                 }
                 ui.add_space(17.);
@@ -198,7 +199,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     } else {
                         "⏷"
                     };
-                    if bone_label(fold_icon, ui, shared, b, Vec2::new(-2., 18.)).clicked() {
+                    let id = "bone_fold".to_owned() + &b.to_string();
+                    if bone_label(fold_icon, ui, id, shared, b, Vec2::new(-2., 18.)).clicked() {
                         shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
                     }
                 }
@@ -346,6 +348,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 pub fn bone_label(
     icon: &str,
     ui: &mut egui::Ui,
+    id: String,
     shared: &Shared,
     bone_idx: usize,
     offset: Vec2,
@@ -357,7 +360,6 @@ pub fn bone_label(
         egui::FontId::default(),
         shared.config.colors.text.into(),
     );
-    let id = icon.to_string() + &shared.armature.bones[bone_idx].id.to_string();
     ui.interact(rect, id.into(), egui::Sense::CLICK)
         .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
