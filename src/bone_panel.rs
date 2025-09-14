@@ -74,7 +74,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                 &"None".to_string()
             };
             if ui.clickable_label(name).clicked() {
-                shared.ui.set_state(UiState::ImageModal, true);
+                shared.ui.set_state(UiState::FocusStyleDropdown, true);
             }
         });
     });
