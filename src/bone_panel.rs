@@ -80,6 +80,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     });
 
     let tex = shared.armature.get_current_tex(bone.id);
+    let set = shared.armature.get_current_set(bone.id);
 
     let tex_name_col = if tex != None {
         shared.config.colors.text
@@ -94,7 +95,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         &"None".to_string()
     };
     let str_idx = bone.tex_idx.to_string() + ") ";
-    ui.add_enabled_ui(tex != None, |ui| {
+    ui.add_enabled_ui(set != None, |ui| {
         ui.horizontal(|ui| {
             ui.label(shared.loc("bone_panel.texture_index"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -121,7 +122,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
-    if tex != None {
+    if set != None {
         if selected_tex == -2 {
             //shared.ui.selected_tex_set_idx = bone.tex_set_idx;
             shared.ui.selected_tex_set_idx = 0;

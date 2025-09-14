@@ -326,7 +326,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
         }
 
         // if it is a regular rect, empty verts and indices
-        if armature_copy.get_current_set(bone!().id) == None
+        if armature_copy.get_current_tex(bone!().id) == None
             || !bone_meshes_edited(
                 armature_copy.get_current_tex(bone!().id).unwrap().size,
                 &bone!().vertices,
