@@ -435,55 +435,11 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                     });
                 });
             })
-            .response
-            .interact(egui::Sense::click())
-            .on_hover_cursor(egui::CursorIcon::PointingHand);
+            .response;
 
-        if button.hovered() {
+        if button.contains_pointer() {
             shared.ui.hovering_tex = i as i32;
             hovered = true;
-        }
-
-        if button.clicked() {
-            if shared.ui.has_state(UiState::RemovingTexture) {
-                shared.remove_texture(shared.ui.selected_tex_set_idx, i as i32);
-                shared.ui.set_state(UiState::RemovingTexture, false);
-                // stop the loop to prevent index errors
-                break;
-            } else {
-                let mut anim_id = shared.ui.anim.selected;
-                shared.ui.hovering_tex = -1;
-                if !shared.ui.is_animating() && shared.selected_bone() != None {
-                    anim_id = usize::MAX;
-                    shared.undo_actions.push(Action {
-                        action: ActionType::Bone,
-                        id: shared.selected_bone().unwrap().id,
-                        bones: vec![shared.selected_bone().unwrap().clone()],
-                        ..Default::default()
-                    });
-                } else if shared.ui.is_animating() && shared.selected_animation() != None {
-                    shared.undo_actions.push(Action {
-                        action: ActionType::Animation,
-                        id: shared.selected_animation().unwrap().id,
-                        animations: vec![shared.selected_animation().unwrap().clone()],
-                        ..Default::default()
-                    });
-                }
-
-                if shared.selected_bone() == None {
-                    return;
-                }
-
-                // set texture
-                shared.armature.set_bone_tex(
-                    shared.selected_bone().unwrap().id,
-                    i,
-                    shared.ui.selected_tex_set_idx,
-                    anim_id,
-                    shared.ui.anim.selected_frame,
-                );
-                shared.ui.set_state(UiState::ImageModal, false);
-            }
         }
 
         let pointer = ui.input(|i| i.pointer.interact_pos());
