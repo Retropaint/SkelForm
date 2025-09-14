@@ -343,7 +343,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
     }
 }
 
-fn bone_label(
+pub fn bone_label(
     icon: &str,
     ui: &mut egui::Ui,
     shared: &Shared,

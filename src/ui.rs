@@ -132,7 +132,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         modal::modal(shared, context);
     }
     if shared.ui.has_state(UiState::ImageModal) {
-        modal::image_modal(shared, context);
+        styles_modal::draw(shared, context);
     }
     if shared.ui.has_state(UiState::SettingsModal) {
         settings_modal::draw(shared, context);
