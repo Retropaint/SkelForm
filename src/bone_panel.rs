@@ -73,7 +73,9 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
             } else {
                 &"None".to_string()
             };
-            ui.label(name);
+            if ui.clickable_label(name).clicked() {
+                shared.ui.set_state(UiState::ImageModal, true);
+            }
         });
     });
 
