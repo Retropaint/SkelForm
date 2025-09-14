@@ -257,7 +257,6 @@ pub fn read_psd(
         shared.armature.set_bone_tex(
             new_bone_id,
             tex_idx,
-            shared.ui.selected_tex_set_idx,
             shared.ui.anim.selected,
             shared.ui.anim.selected_frame,
         );

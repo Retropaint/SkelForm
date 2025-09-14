@@ -928,15 +928,17 @@ impl Armature {
         &mut self,
         bone_id: i32,
         new_tex_idx: usize,
-        tex_set_idx: i32,
         selected_anim: usize,
         selected_frame: i32,
     ) {
         let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
 
+        if self.get_current_set(bone_id) == None {
+            return;
+        }
+
         if selected_anim == usize::MAX {
             self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
-            self.find_bone_mut(bone_id).unwrap().tex_set_idx = tex_set_idx;
 
             // Set bone's verts to match texture.
             // Original logic checks if verts were edited, but this is temporarily disabled
@@ -969,13 +971,11 @@ impl Armature {
             self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
         }
 
-        if tex_set_idx == -1
-            || new_tex_idx > self.texture_sets[tex_set_idx as usize].textures.len() - 1
-        {
+        if new_tex_idx > self.get_current_set(bone_id).unwrap().textures.len() - 1 {
             return;
         }
 
-        let name = self.texture_sets[tex_set_idx as usize].textures[new_tex_idx]
+        let name = self.get_current_set(bone_id).unwrap().textures[new_tex_idx]
             .name
             .clone();
         let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
@@ -991,7 +991,7 @@ impl Armature {
             self.find_bone_mut(bone_id).unwrap().vertices,
             self.find_bone_mut(bone_id).unwrap().indices,
         ) = renderer::create_tex_rect(
-            &self.texture_sets[tex_set_idx as usize].textures[new_tex_idx].size,
+            &self.get_current_set(bone_id).unwrap().textures[new_tex_idx].size,
         );
     }
 

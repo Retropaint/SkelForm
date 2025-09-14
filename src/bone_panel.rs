@@ -29,6 +29,8 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         return;
     }
 
+    let selected_set = shared.armature.get_current_set(bone.id);
+
     ui.horizontal(|ui| {
         ui.heading(shared.loc("bone_panel.heading"));
 
@@ -64,52 +66,6 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
             shared.selected_bone_mut().unwrap().name = value;
         }
     });
-
-    let set_name = if bone.tex_set_idx == -1 {
-        shared.loc("bone_panel.texture_set_none").to_string()
-    } else {
-        shared.armature.texture_sets[bone.tex_set_idx as usize]
-            .name
-            .to_string()
-    };
-
-    let mut selected_set = bone.tex_set_idx;
-    ui.horizontal(|ui| {
-        ui.label(shared.loc("bone_panel.texture_set"));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if let Some(set) = shared.armature.get_current_set(bone.id) {
-                ui.label(set.name.clone());
-            }
-        });
-    });
-    if selected_set == -2 {
-        shared.ui.selected_tex_set_idx = bone.tex_set_idx;
-        shared.ui.set_state(UiState::ImageModal, true);
-    } else if selected_set != bone.tex_set_idx {
-        let mut anim_id = shared.ui.anim.selected;
-        if !shared.ui.is_animating() {
-            anim_id = usize::MAX;
-        }
-        shared.armature.set_bone_tex(
-            bone.id,
-            bone.tex_idx as usize,
-            selected_set,
-            anim_id,
-            shared.ui.anim.selected_frame,
-        );
-        bone.tex_set_idx = selected_set;
-    }
-
-    if bone.tex_set_idx != -1 && shared.armature.get_current_tex(bone.id) == None {
-        shared.armature.set_bone_tex(
-            bone.id,
-            0,
-            selected_set,
-            shared.ui.anim.selected,
-            shared.ui.anim.selected_frame,
-        );
-        bone.tex_idx = 0;
-    }
 
     if shared.armature.get_current_tex(bone.id) != None {
         let mut selected_tex = bone.tex_idx;
@@ -153,7 +109,6 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
             shared.armature.set_bone_tex(
                 bone.id,
                 selected_tex as usize,
-                selected_set,
                 anim_id,
                 shared.ui.anim.selected_frame,
             );
@@ -266,7 +221,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         inverse_kinematics(ui, shared, &bone);
     }
 
-    if bone.vertices.len() == 0 || selected_set == -1 {
+    if bone.vertices.len() == 0 {
         return;
     }
 
