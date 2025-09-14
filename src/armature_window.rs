@@ -64,7 +64,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         &shared.armature.texture_sets[shared.ui.selected_style as usize].name
                     };
                     let dropdown = egui::ComboBox::new("styles", "")
-                        .selected_text(name)
+                        .selected_text(shared.loc("armature_panel.styles"))
                         .width(80.)
                         .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                         .show_ui(ui, |ui| {
@@ -77,7 +77,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                         shared.armature.texture_sets[s].name.to_string(),
                                     );
                                     if label.clicked() {
-                                        ui.close();
+                                        shared.armature.texture_sets[s].active =
+                                            !shared.armature.texture_sets[s].active;
                                     }
                                     ui.checkbox(
                                         &mut shared.armature.texture_sets[s].active,

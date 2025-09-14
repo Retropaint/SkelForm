@@ -150,7 +150,9 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                             return;
                         }
                         ui.label(shared.loc("texture_modal.textures"));
-                        if !ui.skf_button(shared.loc("texture_modal.import")).clicked() {
+                        if shared.ui.selected_tex_set_idx == -1
+                            || !ui.skf_button(shared.loc("texture_modal.import")).clicked()
+                        {
                             return;
                         }
                         #[cfg(not(target_arch = "wasm32"))]
@@ -225,6 +227,10 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
             .show(ui, |ui| {
                 ui.set_width((modal_width / 3.) - 10.);
                 ui.set_height(height - 33.);
+
+                if shared.ui.selected_tex_set_idx == -1 {
+                    return;
+                }
 
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     let mut hovered = false;
