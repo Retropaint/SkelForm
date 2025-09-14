@@ -85,15 +85,15 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                     );
                                 });
                             }
-                            ui.selectable_value(&mut selected_style, -2, "[New]");
+                            let label = ui.selectable_value(&mut selected_style, -2, "[New]");
+                            if label.clicked() {
+                                ui.close();
+                            }
                         })
                         .response
                         .on_hover_text(shared.loc("armature_panel.styles_desc"));
                     if selected_style == -2 {
-                        shared.armature.styles.push(crate::Style {
-                            name: "New".to_string(),
-                            ..Default::default()
-                        });
+                        shared.ui.set_state(UiState::ImageModal, true);
                     } else if selected_style != -1 {
                         if selected_style != shared.ui.selected_style {
                             shared.ui.selected_style = selected_style;
