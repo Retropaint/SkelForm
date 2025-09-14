@@ -354,6 +354,19 @@ pub fn image_modal(shared: &mut Shared, ctx: &egui::Context) {
                         draw_tex_buttons(shared, ui);
                     });
                 });
+
+                ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("Assigned Bones")
+                    });
+                    egui::Frame::new()
+                        .fill(shared.config.colors.dark_accent.into())
+                        .show(ui, |ui| {
+                            ui.set_width((modal_width / 2.) - 20.);
+                            ui.set_height(height - 21.);
+                            ui.label("test")
+                        })
+                });
             });
         });
 }
