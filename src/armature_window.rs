@@ -107,7 +107,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     } else if selected_style != -1 {
                         if selected_style != shared.ui.selected_style {
                             shared.ui.selected_style = selected_style;
-                            shared.armature.texture_sets[selected_style as usize].active = true;
                             for b in 0..shared.armature.bones.len() {
                                 if shared.armature.bones[b]
                                     .style_idxs

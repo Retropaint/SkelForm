@@ -988,14 +988,6 @@ impl Armature {
             return;
         }
 
-        let name = self.get_current_set(bone_id).unwrap().textures[new_tex_idx]
-            .name
-            .clone();
-        let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
-        if bone_name == "New Bone" || bone_name == "" {
-            *bone_name = name;
-        }
-
         if self.find_bone(bone_id).unwrap().tex_idx == -1 {
             self.find_bone_mut(bone_id).unwrap().tex_idx = 0;
         }
