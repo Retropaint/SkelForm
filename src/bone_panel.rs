@@ -77,28 +77,9 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label(shared.loc("bone_panel.texture_set"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            egui::ComboBox::new("mod", "")
-                .selected_text(set_name)
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(
-                        &mut selected_set,
-                        -1,
-                        shared.loc("bone_panel.texture_set_none"),
-                    );
-                    let sets = &shared.armature.texture_sets;
-                    for s in 0..sets.len() {
-                        if sets[s].textures.len() == 0 {
-                            continue;
-                        }
-                        ui.selectable_value(&mut selected_set, s as i32, sets[s].name.clone());
-                    }
-                    ui.selectable_value(
-                        &mut selected_set,
-                        -2,
-                        shared.loc("bone_panel.texture_set_setup"),
-                    );
-                })
-                .response;
+            if let Some(set) = shared.armature.get_current_set(bone.id) {
+                ui.label(set.name.clone());
+            }
         });
     });
     if selected_set == -2 {
@@ -119,7 +100,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         bone.tex_set_idx = selected_set;
     }
 
-    if bone.tex_set_idx != -1 && !shared.armature.is_valid_tex(bone.id) {
+    if bone.tex_set_idx != -1 && shared.armature.get_current_tex(bone.id) == None {
         shared.armature.set_bone_tex(
             bone.id,
             0,
@@ -130,7 +111,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         bone.tex_idx = 0;
     }
 
-    if shared.armature.is_valid_tex(bone.id) {
+    if shared.armature.get_current_tex(bone.id) != None {
         let mut selected_tex = bone.tex_idx;
         let tex_name = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
             [bone.tex_idx as usize]

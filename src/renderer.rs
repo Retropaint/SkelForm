@@ -525,7 +525,7 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
     let zoom = 1000.;
 
     for b in 0..temp_bones.len() {
-        if !shared.armature.is_valid_tex(temp_bones[b].id) {
+        if shared.armature.get_current_tex(temp_bones[b].id) == None {
             continue;
         }
         let set = shared.armature.get_current_set(temp_bones[b].id);

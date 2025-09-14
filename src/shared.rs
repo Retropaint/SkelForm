@@ -1390,19 +1390,6 @@ impl Armature {
         false
     }
 
-    pub fn is_valid_tex(&self, bone_id: i32) -> bool {
-        let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
-        let set_idx = self.find_bone(bone_id).unwrap().tex_set_idx;
-        if set_idx == -1 {
-            return false;
-        }
-        if tex_idx as usize > self.texture_sets[set_idx as usize].textures.len() - 1 {
-            return false;
-        }
-
-        true
-    }
-
     pub fn get_current_set(&self, bone_id: i32) -> Option<&TextureSet> {
         let bone = self.bones.iter().find(|bone| bone.id == bone_id);
         if bone == None {
