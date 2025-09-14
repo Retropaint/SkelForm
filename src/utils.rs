@@ -392,7 +392,6 @@ pub fn import<R: Read + std::io::Seek>(
 
         let mut children = vec![];
         armature_window::get_all_children(&shared.armature.bones, &mut children, &bone!());
-        bone!().folded = children.len() > 0;
 
         // populate parent_id based on parent_idx
         if bone!().parent_idx == -1 {
@@ -425,7 +424,7 @@ pub fn import<R: Read + std::io::Seek>(
             let ed_bone = &editor.bones[b];
 
             // iterable editor bone imports
-            bone.folded = ed_bone.folded;
+            //bone.folded = ed_bone.folded;
             bone.ik_folded = ed_bone.ik_folded;
             bone.meshdef_folded = ed_bone.meshdef_folded;
             bone.ik_disabled = ed_bone.ik_disabled;
