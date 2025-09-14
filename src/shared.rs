@@ -1402,6 +1402,35 @@ impl Armature {
 
         true
     }
+
+    pub fn get_current_set(&self, bone_id: i32) -> Option<&TextureSet> {
+        let bone = self.bones.iter().find(|bone| bone.id == bone_id);
+        if bone == None {
+            return None;
+        }
+        for s in 0..self.texture_sets.len() {
+            if !self.texture_sets[s].active || !bone.unwrap().style_idxs.contains(&(s as i32)) {
+                continue;
+            }
+
+            return Some(&self.texture_sets[s]);
+        }
+
+        None
+    }
+
+    pub fn get_current_tex(&self, bone_id: i32) -> Option<&Texture> {
+        let set = self.get_current_set(bone_id);
+        if set == None {
+            return None;
+        }
+
+        let bone = self.bones.iter().find(|bone| bone.id == bone_id);
+        if bone == None || bone.unwrap().tex_idx as usize > set.unwrap().textures.len() - 1 {
+            return None;
+        }
+        Some(&set.unwrap().textures[bone.unwrap().tex_idx as usize])
+    }
 }
 
 // used for the json
