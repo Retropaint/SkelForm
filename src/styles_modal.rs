@@ -219,112 +219,120 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                             ui.label("test");
 
                             for b in 0..shared.armature.bones.len() {
-                                let parents =
-                                    shared.armature.get_all_parents(shared.armature.bones[b].id);
-                                // add space to the left if this is a child
-                                for _ in 0..parents.len() {
-                                    armature_window::vert_line(0., ui, shared);
-                                    ui.add_space(15.);
-                                }
-
-                                // show folding button if this bone has children
-                                let mut children = vec![];
-                                armature_window::get_all_children(
-                                    &shared.armature.bones,
-                                    &mut children,
-                                    &shared.armature.bones[b],
-                                );
-                                if children.len() == 0 {
-                                    armature_window::hor_line(11., ui, shared);
-                                } else {
-                                    let fold_icon = if shared.armature.bones[b].folded {
-                                        "⏵"
-                                    } else {
-                                        "⏷"
-                                    };
-                                    if armature_window::bone_label(
-                                        fold_icon,
-                                        ui,
-                                        shared,
-                                        b,
-                                        Vec2::new(-2., 18.),
-                                    )
-                                    .clicked()
-                                    {
-                                        shared.armature.bones[b].folded =
-                                            !shared.armature.bones[b].folded;
+                                ui.horizontal(|ui| {
+                                    let parents = shared
+                                        .armature
+                                        .get_all_parents(shared.armature.bones[b].id);
+                                    // add space to the left if this is a child
+                                    for _ in 0..parents.len() {
+                                        armature_window::vert_line(0., ui, shared);
+                                        ui.add_space(15.);
                                     }
-                                }
-                                ui.add_space(13.);
 
-                                let mut selected_col = shared.config.colors.dark_accent;
-                                let mut cursor = egui::CursorIcon::PointingHand;
-                                let mut style_col = shared.config.colors.dark_accent;
-                                style_col += crate::Color::new(20, 20, 20, 0);
-                                if shared.armature.is_in_style(
-                                    shared.armature.bones[b].id,
-                                    shared.ui.selected_style,
-                                ) {
-                                    style_col = shared.config.colors.text;
-                                }
+                                    // show folding button if this bone has children
+                                    let mut children = vec![];
+                                    armature_window::get_all_children(
+                                        &shared.armature.bones,
+                                        &mut children,
+                                        &shared.armature.bones[b],
+                                    );
+                                    if children.len() == 0 {
+                                        armature_window::hor_line(11., ui, shared);
+                                    } else {
+                                        let fold_icon = if shared.armature.bones[b].folded {
+                                            "⏵"
+                                        } else {
+                                            "⏷"
+                                        };
 
-                                if shared.armature.is_bone_hidden(shared.armature.bones[b].id) {
-                                    selected_col = shared.config.colors.dark_accent;
-                                }
-
-                                if shared.ui.hovering_bone == b as i32 {
-                                    selected_col += crate::Color::new(20, 20, 20, 0);
-                                }
-
-                                if shared.ui.selected_bone_idx == b {
-                                    selected_col += crate::Color::new(20, 20, 20, 0);
-                                    cursor = egui::CursorIcon::Default;
-                                }
-
-                                let width = ui.available_width();
-
-                                let has_tex = shared.armature.bones[b].tex_set_idx != -1;
-
-                                let id = egui::Id::new(("styles_bone", b, 0));
-                                let button = ui
-                                    .dnd_drag_source(id, b, |ui| {
-                                        let style_icon_width = if has_tex { 22. } else { 0. };
-                                        ui.set_width(width - style_icon_width);
-
-                                        let name = shared.armature.bones[b].name.to_string();
-                                        let mut text_col = shared.config.colors.text;
-                                        if shared
-                                            .armature
-                                            .is_bone_hidden(shared.armature.bones[b].id)
-                                        {
-                                            text_col = shared.config.colors.dark_accent;
-                                            text_col += crate::Color::new(40, 40, 40, 0)
-                                        }
-                                        egui::Frame::new().fill(selected_col.into()).show(
+                                        let id = "style_bone_fold".to_owned() + &b.to_string();
+                                        if armature_window::bone_label(
+                                            fold_icon,
                                             ui,
-                                            |ui| {
-                                                ui.horizontal(|ui| {
-                                                    ui.set_width(width - style_icon_width);
-                                                    ui.set_height(21.);
-                                                    ui.add_space(5.);
-                                                    ui.label(
-                                                        egui::RichText::new(name).color(text_col),
-                                                    );
+                                            id,
+                                            shared,
+                                            b,
+                                            Vec2::new(-2., 18.),
+                                        )
+                                        .clicked()
+                                        {
+                                            shared.armature.bones[b].folded =
+                                                !shared.armature.bones[b].folded;
+                                        }
+                                    }
+                                    ui.add_space(13.);
 
-                                                    let pic = if has_tex { "🖻  " } else { "" };
-                                                    let mut pic_col =
-                                                        shared.config.colors.dark_accent;
-                                                    pic_col += crate::Color::new(40, 40, 40, 0);
-                                                    ui.label(
-                                                        egui::RichText::new(pic).color(pic_col),
-                                                    )
-                                                });
-                                            },
-                                        );
-                                    })
-                                    .response
-                                    .interact(egui::Sense::click())
-                                    .on_hover_cursor(cursor);
+                                    let mut selected_col = shared.config.colors.dark_accent;
+                                    let mut cursor = egui::CursorIcon::PointingHand;
+                                    let mut style_col = shared.config.colors.dark_accent;
+                                    style_col += crate::Color::new(20, 20, 20, 0);
+                                    if shared.armature.is_in_style(
+                                        shared.armature.bones[b].id,
+                                        shared.ui.selected_style,
+                                    ) {
+                                        style_col = shared.config.colors.text;
+                                    }
+
+                                    if shared.armature.is_bone_hidden(shared.armature.bones[b].id) {
+                                        selected_col = shared.config.colors.dark_accent;
+                                    }
+
+                                    if shared.ui.hovering_bone == b as i32 {
+                                        selected_col += crate::Color::new(20, 20, 20, 0);
+                                    }
+
+                                    if shared.ui.selected_bone_idx == b {
+                                        selected_col += crate::Color::new(20, 20, 20, 0);
+                                        cursor = egui::CursorIcon::Default;
+                                    }
+
+                                    let width = ui.available_width();
+
+                                    let has_tex = shared.armature.bones[b].tex_set_idx != -1;
+
+                                    let id = egui::Id::new(("styles_bone", b, 0));
+                                    let button = ui
+                                        .dnd_drag_source(id, b, |ui| {
+                                            let style_icon_width = if has_tex { 22. } else { 0. };
+                                            ui.set_width(width - style_icon_width);
+
+                                            let name = shared.armature.bones[b].name.to_string();
+                                            let mut text_col = shared.config.colors.text;
+                                            if shared
+                                                .armature
+                                                .is_bone_hidden(shared.armature.bones[b].id)
+                                            {
+                                                text_col = shared.config.colors.dark_accent;
+                                                text_col += crate::Color::new(40, 40, 40, 0)
+                                            }
+                                            egui::Frame::new().fill(selected_col.into()).show(
+                                                ui,
+                                                |ui| {
+                                                    ui.horizontal(|ui| {
+                                                        ui.set_width(width - style_icon_width);
+                                                        ui.set_height(21.);
+                                                        ui.add_space(5.);
+                                                        ui.label(
+                                                            egui::RichText::new(name)
+                                                                .color(text_col),
+                                                        );
+
+                                                        let pic =
+                                                            if has_tex { "🖻  " } else { "" };
+                                                        let mut pic_col =
+                                                            shared.config.colors.dark_accent;
+                                                        pic_col += crate::Color::new(40, 40, 40, 0);
+                                                        ui.label(
+                                                            egui::RichText::new(pic).color(pic_col),
+                                                        )
+                                                    });
+                                                },
+                                            );
+                                        })
+                                        .response
+                                        .interact(egui::Sense::click())
+                                        .on_hover_cursor(cursor);
+                                });
                             }
                         })
                 });
