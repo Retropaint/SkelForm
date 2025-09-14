@@ -45,7 +45,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         shared.armature.texture_sets.push(crate::TextureSet {
                             name: "".to_string(),
                             textures: vec![],
-                            active: false,
+                            active: true,
                         });
                         shared.ui.rename_id = "tex_set ".to_string()
                             + &(shared.armature.texture_sets.len() - 1).to_string();
