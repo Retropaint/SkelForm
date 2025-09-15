@@ -143,7 +143,8 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                                         &mut shared.armature.styles[s].active,
                                         "".into_atoms(),
                                     )
-                                    .on_hover_cursor(egui::CursorIcon::PointingHand);
+                                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                    .on_hover_text(shared.loc("styles_modal.active_desc"));
                                 if checkbox.clicked() {
                                     for b in 0..shared.armature.bones.len() {
                                         if shared.armature.bones[b].style_idxs.contains(&(s as i32))

@@ -65,7 +65,8 @@
     "new_style": "New Style",
     "import": "Import",
     "img_name": "Name: ",
-    "img_size": "Size: "
+    "img_size": "Size: ",
+    "active_desc": "Should this style be active?"
   },
   "armature_panel": {
     "heading": "Armature",
