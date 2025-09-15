@@ -66,7 +66,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                             let width = ui.available_width();
                             for s in 0..shared.armature.styles.len() {
                                 ui.set_width(80.);
-                                ui.set_width(width);
                                 let tick = if shared.armature.styles[s].active {
                                     " ✅"
                                 } else {
