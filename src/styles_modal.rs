@@ -1,3 +1,5 @@
+use egui::IntoAtoms;
+
 use crate::{ui::EguiUi, *};
 
 pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
@@ -107,32 +109,55 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                                 egui::CursorIcon::Default
                             };
                             let width = ui.available_width();
-                            let button = egui::Frame::new()
-                                .fill(col.into())
-                                .show(ui, |ui| {
-                                    ui.horizontal(|ui| {
-                                        ui.set_width(width);
-                                        ui.set_height(21.);
-                                        ui.add_space(5.);
-                                        ui.label(
-                                            egui::RichText::new(set!().name.clone())
-                                                .color(shared.config.colors.text),
-                                        );
-                                    });
-                                })
-                                .response
-                                .interact(egui::Sense::click())
-                                .on_hover_cursor(cursor_icon);
-                            if button.contains_pointer() {
-                                shared.ui.hovering_set = s as i32;
-                                hovered = true;
-                            }
-                            if button.clicked() {
-                                if shared.ui.selected_tex_set_id == set!().id {
-                                    shared.ui.rename_id = "tex_set ".to_string() + &s.to_string()
+                            let checkbox_width = 26.;
+                            ui.horizontal(|ui| {
+                                let button = egui::Frame::new()
+                                    .fill(col.into())
+                                    .show(ui, |ui| {
+                                        ui.horizontal(|ui| {
+                                            ui.set_width(width - checkbox_width);
+                                            ui.set_height(21.);
+                                            ui.add_space(5.);
+                                            ui.label(
+                                                egui::RichText::new(set!().name.clone())
+                                                    .color(shared.config.colors.text),
+                                            );
+                                        });
+                                    })
+                                    .response
+                                    .interact(egui::Sense::click())
+                                    .on_hover_cursor(cursor_icon);
+                                if button.contains_pointer() {
+                                    shared.ui.hovering_set = s as i32;
+                                    hovered = true;
                                 }
-                                shared.ui.selected_tex_set_id = set!().id;
-                            }
+                                if button.clicked() {
+                                    if shared.ui.selected_tex_set_id == set!().id {
+                                        shared.ui.rename_id =
+                                            "tex_set ".to_string() + &s.to_string()
+                                    }
+                                    shared.ui.selected_tex_set_id = set!().id;
+                                }
+                                let checkbox = ui
+                                    .checkbox(
+                                        &mut shared.armature.styles[s].active,
+                                        "".into_atoms(),
+                                    )
+                                    .on_hover_cursor(egui::CursorIcon::PointingHand);
+                                if checkbox.clicked() {
+                                    for b in 0..shared.armature.bones.len() {
+                                        if shared.armature.bones[b].style_idxs.contains(&(s as i32))
+                                        {
+                                            shared.armature.set_bone_tex(
+                                                shared.armature.bones[b].id,
+                                                shared.armature.bones[b].tex_idx as usize,
+                                                shared.ui.anim.selected,
+                                                shared.ui.anim.selected_frame,
+                                            );
+                                        }
+                                    }
+                                }
+                            });
                         }
 
                         if !hovered {
