@@ -82,9 +82,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                 &"None".to_string()
             };
 
-            if ui.clickable_label(name).clicked() {
-                shared.ui.set_state(UiState::FocusStyleDropdown, true);
-            }
+            ui.label(name);
         });
     });
 
@@ -393,7 +391,7 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             ui.label(shared.loc("bone_panel.inverse_kinematics.target"));
 
             if let Some(target) = shared.armature.find_bone(bone.ik_target_id) {
-                if ui.clickable_label(target.name.clone()).clicked() {
+                if ui.label(target.name.clone()).clicked() {
                     shared.ui.selected_bone_idx =
                         shared.armature.find_bone_idx(bone.ik_target_id).unwrap();
                 };
