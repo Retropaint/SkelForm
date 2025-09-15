@@ -73,9 +73,14 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
             } else {
                 &"None".to_string()
             };
-            if ui.button("✏").clicked() {
-                shared.ui.set_state(UiState::FocusStyleDropdown, true);
+            if shared.armature.get_current_set(bone.id) != None {
+                if ui.skf_button("✏").clicked() {
+                    shared.ui.selected_tex_set_id =
+                        shared.armature.get_current_set(bone.id).unwrap().id;
+                    shared.ui.set_state(UiState::ImageModal, true);
+                }
             }
+
             if ui.clickable_label(name).clicked() {
                 shared.ui.set_state(UiState::FocusStyleDropdown, true);
             }
