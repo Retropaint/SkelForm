@@ -385,6 +385,9 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                             ui.with_layout(
                                 egui::Layout::right_to_left(egui::Align::default()),
                                 |ui| {
+                                    if !shared.armature.bones[b].style_idxs.contains(&set_idx) {
+                                        return;
+                                    }
                                     let (edited, value, input) = ui.float_input(
                                         "styles_bone".to_owned() + &b.to_string(),
                                         shared,
