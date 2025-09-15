@@ -253,6 +253,7 @@ pub fn read_psd(
         // create texture bone
         let new_bone_id = shared.armature.new_bone(-1).0.id;
         let tex_idx = shared.armature.styles[0].textures.len() - 1;
+        let tex_name = shared.armature.styles[0].textures[tex_idx].name.clone();
         shared
             .armature
             .find_bone_mut(new_bone_id)
@@ -265,6 +266,7 @@ pub fn read_psd(
             shared.ui.anim.selected_frame,
         );
         let new_bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
+        new_bone.name = tex_name;
 
         // layers start from top-left, so push bone down and right to reflect that
         new_bone.pos = Vec2::new(dims.x / 2., -dims.y / 2.);
