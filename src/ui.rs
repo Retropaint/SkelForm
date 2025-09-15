@@ -131,7 +131,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.ui.has_state(UiState::Modal) {
         modal::modal(shared, context);
     }
-    if shared.ui.has_state(UiState::ImageModal) {
+    if shared.ui.has_state(UiState::StylesModal) {
         styles_modal::draw(shared, context);
     }
     if shared.ui.has_state(UiState::SettingsModal) {
@@ -333,7 +333,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
             toggleElement(false, "ui-slider".to_string());
         }
 
-        shared.ui.set_state(UiState::ImageModal, false);
+        shared.ui.set_state(UiState::StylesModal, false);
         shared.ui.set_state(UiState::Modal, false);
         shared.ui.set_state(UiState::PolarModal, false);
         shared.ui.set_state(UiState::ForcedModal, false);

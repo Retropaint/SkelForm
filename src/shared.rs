@@ -3,6 +3,7 @@
 use crate::*;
 
 use std::{
+    collections::HashMap,
     fmt,
     ops::{DivAssign, MulAssign},
 };
@@ -397,7 +398,7 @@ impl InputStates {
 #[derive(Clone, Default, PartialEq)]
 pub enum UiState {
     #[default]
-    ImageModal,
+    StylesModal,
     Exiting,
     DraggingBone,
     RemovingTexture,
@@ -520,6 +521,8 @@ pub struct Ui {
     pub setting_ik_target: bool,
 
     pub selected_style: i32,
+
+    pub styles_folded_bones: HashMap<i32, bool>,
 }
 
 impl Ui {
@@ -1988,6 +1991,14 @@ impl Shared {
             .styles
             .iter_mut()
             .find(|set| set.id == self.ui.selected_tex_set_id)
+    }
+
+    pub fn open_style_modal(&mut self) {
+        self.ui.styles_folded_bones = HashMap::new();
+        for bone in &self.armature.bones {
+            self.ui.styles_folded_bones.insert(bone.id, bone.folded);
+        }
+        self.ui.set_state(UiState::StylesModal, true);
     }
 }
 

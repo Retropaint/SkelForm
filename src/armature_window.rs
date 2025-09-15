@@ -103,7 +103,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         shared.ui.set_state(UiState::FocusStyleDropdown, false);
                     }
                     if selected_style == -2 {
-                        shared.ui.set_state(UiState::ImageModal, true);
+                        shared.open_style_modal();
                     } else if selected_style != -1 {
                         if selected_style != shared.ui.selected_style {
                             shared.ui.selected_style = selected_style;
