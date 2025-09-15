@@ -66,7 +66,9 @@
     "import": "Import",
     "img_name": "Name: ",
     "img_size": "Size: ",
-    "active_desc": "Should this style be active?"
+    "active_desc": "Should this style be active?",
+    "assigned_bones": "Assigned Bones",
+    "assigned_bones_desc": "Click on bones in the list to assign/unassign them from using this style.\n\nAssigned bones will use this style's textures (based on index).\n\nStyles above this one take priority over a bone's textures if the bone is assigned to them."
   },
   "armature_panel": {
     "heading": "Armature",
