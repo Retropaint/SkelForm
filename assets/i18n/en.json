@@ -54,7 +54,7 @@
       "config_folder": "Config Folder"
     }
   },
-  "texture_modal": {
+  "styles_modal": {
     "heading": "Styles",
     "heading_desc": "Styles allow hotswapping of textures to create multiple outfits/skins.\n\nKeep texture order in mind to ensure that the correct textures are used across styles.",
     "texture_preview": "Texture Preview",

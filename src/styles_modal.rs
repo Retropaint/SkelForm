@@ -12,8 +12,8 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
         .show(ctx, |ui| {
             ui.set_width(450.);
             ui.set_height(400.);
-            let str_desc = shared.loc("texture_modal.heading_desc");
-            let str_heading = shared.loc(&("texture_modal.heading")).to_owned();
+            let str_desc = shared.loc("styles_modal.heading_desc");
+            let str_heading = shared.loc(&("styles_modal.heading")).to_owned();
             ui.heading(str_heading + " " + crate::ICON_INFO)
                 .on_hover_text(str_desc);
 
@@ -35,10 +35,10 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
 
                     ui.horizontal(|ui| {
                         if shared.ui.hovering_tex != -1 {
-                            ui.label(shared.loc("texture_modal.texture_preview"));
+                            ui.label(shared.loc("styles_modal.texture_preview"));
                             return;
                         }
-                        ui.label(shared.loc("texture_modal.sets"));
+                        ui.label(shared.loc("styles_modal.sets"));
                         if !ui.skf_button(shared.loc("new")).clicked() {
                             return;
                         }
@@ -86,9 +86,9 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                                         size: Vec2::new(ui.available_width(), 20.),
                                         focus: true,
                                         placeholder: shared
-                                            .loc("texture_modal.new_style")
+                                            .loc("styles_modal.new_style")
                                             .to_string(),
-                                        default: shared.loc("texture_modal.new_style").to_string(),
+                                        default: shared.loc("styles_modal.new_style").to_string(),
                                         ..Default::default()
                                     }),
                                 );
@@ -159,12 +159,12 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                     ui.set_height(height);
                     ui.horizontal(|ui| {
                         if shared.ui.hovering_set != -1 && !is_selected {
-                            ui.label(shared.loc("texture_modal.style_preview"));
+                            ui.label(shared.loc("styles_modal.style_preview"));
                             return;
                         }
-                        ui.label(shared.loc("texture_modal.textures"));
+                        ui.label(shared.loc("styles_modal.textures"));
                         if shared.ui.selected_tex_set_id == -1
-                            || !ui.skf_button(shared.loc("texture_modal.import")).clicked()
+                            || !ui.skf_button(shared.loc("styles_modal.import")).clicked()
                         {
                             return;
                         }
@@ -189,7 +189,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                                 .len()
                                 == 0;
                             if is_empty {
-                                let str_empty = shared.loc("texture_modal.style_preview_empty");
+                                let str_empty = shared.loc("styles_modal.style_preview_empty");
                                 ui.label(str_empty);
                             } else {
                                 let mut offset = Vec2::new(0., 0.);
@@ -387,14 +387,14 @@ pub fn draw_tex_preview(shared: &Shared, ui: &mut egui::Ui) {
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         let mut name = egui::text::LayoutJob::default();
         ui::job_text(
-            shared.loc("texture_modal.img_name"),
+            shared.loc("styles_modal.img_name"),
             Some(egui::Color32::WHITE),
             &mut name,
         );
         ui::job_text(&tex.name, None, &mut name);
         let mut size = egui::text::LayoutJob::default();
         ui::job_text(
-            shared.loc("texture_modal.img_size"),
+            shared.loc("styles_modal.img_size"),
             Some(egui::Color32::WHITE),
             &mut size,
         );
