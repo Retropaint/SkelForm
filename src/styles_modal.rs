@@ -285,6 +285,17 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                     return;
                 }
 
+                let set = shared
+                    .armature
+                    .styles
+                    .iter()
+                    .find(|style| style.id == shared.ui.selected_tex_set_id)
+                    .unwrap();
+
+                if set.textures.len() == 0 {
+                    return;
+                }
+
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     let mut hovered = false;
                     macro_rules! folded {
