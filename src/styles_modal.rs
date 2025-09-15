@@ -86,9 +86,9 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                                         size: Vec2::new(ui.available_width(), 20.),
                                         focus: true,
                                         placeholder: shared
-                                            .loc("texture_modal.new_set")
+                                            .loc("texture_modal.new_style")
                                             .to_string(),
-                                        default: shared.loc("texture_modal.new_set").to_string(),
+                                        default: shared.loc("texture_modal.new_style").to_string(),
                                         ..Default::default()
                                     }),
                                 );
@@ -159,7 +159,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                     ui.set_height(height);
                     ui.horizontal(|ui| {
                         if shared.ui.hovering_set != -1 && !is_selected {
-                            ui.label(shared.loc("texture_modal.set_preview"));
+                            ui.label(shared.loc("texture_modal.style_preview"));
                             return;
                         }
                         ui.label(shared.loc("texture_modal.textures"));
@@ -189,7 +189,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                                 .len()
                                 == 0;
                             if is_empty {
-                                let str_empty = shared.loc("texture_modal.set_preview_empty");
+                                let str_empty = shared.loc("texture_modal.style_preview_empty");
                                 ui.label(str_empty);
                             } else {
                                 let mut offset = Vec2::new(0., 0.);

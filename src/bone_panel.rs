@@ -66,7 +66,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     });
 
     ui.horizontal(|ui| {
-        ui.label("Style:");
+        ui.label(shared.loc("bone_panel.style"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let name = if let Some(set) = shared.armature.get_current_set(bone.id) {
                 &set.name
