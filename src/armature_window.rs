@@ -57,13 +57,15 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         shared.loc("armature_panel.new_bone_name").to_string();
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if shared.armature.bones.len() == 0 {
+                        return;
+                    }
                     let mut selected_style = -1;
                     let dropdown = egui::ComboBox::new("styles", "")
                         .selected_text(shared.loc("armature_panel.styles"))
                         .width(80.)
                         .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                         .show_ui(ui, |ui| {
-                            let width = ui.available_width();
                             for s in 0..shared.armature.styles.len() {
                                 ui.set_width(80.);
                                 let tick = if shared.armature.styles[s].active {
