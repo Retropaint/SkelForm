@@ -48,7 +48,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                             .iter()
                             .map(|set| set.id)
                             .collect();
-                        shared.armature.texture_sets.push(crate::TextureSet {
+                        shared.armature.texture_sets.push(crate::Style {
                             id: generate_id(ids),
                             name: "".to_string(),
                             textures: vec![],

@@ -885,7 +885,7 @@ pub struct Armature {
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
     #[serde(default)]
-    pub texture_sets: Vec<TextureSet>,
+    pub texture_sets: Vec<Style>,
 
     #[serde(skip)]
     pub tex_sheet_buf: Vec<u8>,
@@ -1391,7 +1391,7 @@ impl Armature {
         false
     }
 
-    pub fn get_current_set(&self, bone_id: i32) -> Option<&TextureSet> {
+    pub fn get_current_set(&self, bone_id: i32) -> Option<&Style> {
         let bone = self.bones.iter().find(|bone| bone.id == bone_id);
         if bone == None {
             return None;
@@ -1433,14 +1433,14 @@ pub struct Root {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
-pub struct TextureSet {
+pub struct Style {
     #[serde(skip)]
     pub id: i32,
     #[serde(default, rename = "_name")]
     pub name: String,
     #[serde(default)]
     pub textures: Vec<Texture>,
-    #[serde(default)]
+    #[serde(skip)]
     pub active: bool,
 }
 
@@ -1683,7 +1683,7 @@ pub struct Action {
     pub id: i32,
     pub bones: Vec<Bone>,
     pub animations: Vec<Animation>,
-    pub tex_sets: Vec<TextureSet>,
+    pub tex_sets: Vec<Style>,
 }
 
 impl AnimElement {
@@ -1976,14 +1976,14 @@ impl Shared {
         self.window.y / self.window.x
     }
 
-    pub fn selected_set(&self) -> Option<&TextureSet> {
+    pub fn selected_set(&self) -> Option<&Style> {
         self.armature
             .texture_sets
             .iter()
             .find(|set| set.id == self.ui.selected_tex_set_id)
     }
 
-    pub fn selected_set_mut(&mut self) -> Option<&mut TextureSet> {
+    pub fn selected_set_mut(&mut self) -> Option<&mut Style> {
         self.armature
             .texture_sets
             .iter_mut()
