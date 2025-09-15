@@ -304,9 +304,14 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                         };
                     }
                     for b in 0..shared.armature.bones.len() {
+                        macro_rules! bone {
+                            () => {
+                                shared.armature.bones[b]
+                            };
+                        }
                         // if this bone's parent is folded, skip drawing
                         let mut visible = true;
-                        let mut nb = &shared.armature.bones[b];
+                        let mut nb = &bone!();
                         while nb.parent_id != -1 {
                             nb = shared.armature.find_bone(nb.parent_id).unwrap();
                             if *folded!().get(&nb.id).unwrap() {
@@ -318,8 +323,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                             continue;
                         }
                         ui.horizontal(|ui| {
-                            let parents =
-                                shared.armature.get_all_parents(shared.armature.bones[b].id);
+                            let parents = shared.armature.get_all_parents(bone!().id);
                             // add space to the left if this is a child
                             for _ in 0..parents.len() {
                                 armature_window::vert_line(0., ui, shared);
@@ -331,12 +335,12 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                             armature_window::get_all_children(
                                 &shared.armature.bones,
                                 &mut children,
-                                &shared.armature.bones[b],
+                                &bone!(),
                             );
                             if children.len() == 0 {
                                 armature_window::hor_line(11., ui, shared);
                             } else {
-                                let bone_id = shared.armature.bones[b].id;
+                                let bone_id = bone!().id;
                                 let fold_icon = if *folded!().get(&bone_id).unwrap() {
                                     "⏵"
                                 } else {
@@ -370,10 +374,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                             {
                                 set_idx = idx;
                             }
-                            if shared.armature.bones[b]
-                                .style_idxs
-                                .contains(&(set_idx as i32))
-                            {
+                            if bone!().style_idxs.contains(&(set_idx as i32)) {
                                 selected_col += crate::Color::new(20, 20, 20, 0);
                             }
 
@@ -387,12 +388,12 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                             let has_tex = false;
 
                             let id = egui::Id::new(("styles_bone", b, 0));
-                            let idx_input_width = 38.;
+                            let idx_input_width = 45.;
                             let button = ui
                                 .dnd_drag_source(id, b, |ui| {
-                                    let name = shared.armature.bones[b].name.to_string();
+                                    let name = bone!().name.to_string();
                                     let mut text_col = shared.config.colors.text;
-                                    if shared.armature.is_bone_hidden(shared.armature.bones[b].id) {
+                                    if shared.armature.is_bone_hidden(bone!().id) {
                                         text_col = shared.config.colors.dark_accent;
                                         text_col += crate::Color::new(40, 40, 40, 0)
                                     }
@@ -415,38 +416,35 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                                 .on_hover_cursor(egui::CursorIcon::PointingHand);
 
                             ui.with_layout(
-                                egui::Layout::right_to_left(egui::Align::default()),
+                                egui::Layout::right_to_left(egui::Align::Center),
                                 |ui| {
-                                    if !shared.armature.bones[b]
-                                        .style_idxs
-                                        .contains(&(set_idx as i32))
-                                    {
+                                    if !bone!().style_idxs.contains(&(set_idx as i32)) {
                                         return;
                                     }
-                                    let (edited, value, input) = ui.float_input(
-                                        "styles_bone".to_owned() + &b.to_string(),
-                                        shared,
-                                        shared.armature.bones[b].tex_idx as f32,
-                                        1.,
-                                        Some(TextInputOptions {
-                                            size: Vec2::new(7., 10.),
-                                            ..Default::default()
-                                        }),
-                                    );
-                                    let name = &shared.armature.bones[b].name;
-                                    let str_desc = shared
-                                        .loc("styles_modal.assigned_bones_tex_idx_desc")
-                                        .to_owned()
-                                        + &name;
-                                    input.on_hover_text(str_desc);
-                                    if edited {
-                                        shared.armature.set_bone_tex(
-                                            shared.armature.bones[b].id,
-                                            value as usize,
-                                            shared.ui.anim.selected,
-                                            shared.ui.anim.selected_frame,
-                                        );
-                                    }
+
+                                    ui.add_space(15.);
+
+                                    let str_idx =
+                                        "  ".to_owned() + &bone!().tex_idx.to_string() + "  ";
+                                    ui.menu_button(str_idx, |ui| {
+                                        let set = shared
+                                            .armature
+                                            .styles
+                                            .iter()
+                                            .find(|style| style.id == shared.ui.selected_tex_set_id)
+                                            .unwrap();
+                                        let mut tex_idx = bone!().tex_idx;
+                                        for t in 0..set.textures.len() {
+                                            let str_idx = t.to_string() + ") ";
+                                            let name = set.textures[t].name.clone().to_string();
+                                            ui.selectable_value(
+                                                &mut tex_idx,
+                                                t as i32,
+                                                str_idx + &name,
+                                            );
+                                        }
+                                        bone!().tex_idx = tex_idx;
+                                    });
                                 },
                             );
 
@@ -455,7 +453,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                                 hovered = true;
                             }
                             if button.clicked() {
-                                let styles = &mut shared.armature.bones[b].style_idxs;
+                                let styles = &mut bone!().style_idxs;
                                 if styles.contains(&(set_idx as i32)) {
                                     styles.retain(|style| *style != set_idx as i32);
                                 } else {
