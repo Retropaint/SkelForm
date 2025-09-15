@@ -169,23 +169,34 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                 });
 
                 let frame = egui::Frame::default().inner_margin(5.);
-                let set_idx = shared
+                let mut set_idx: usize = usize::MAX;
+                if let Some(idx) = shared
                     .armature
                     .styles
                     .iter()
                     .position(|set| set.id == shared.ui.selected_tex_set_id)
-                    .unwrap();
+                {
+                    set_idx = idx;
+                }
                 let is_selected = set_idx == shared.ui.hovering_set as usize;
                 ui.vertical(|ui| {
                     ui.set_width((modal_width / frame_count) - frame_padding);
                     ui.set_height(height);
+
                     ui.horizontal(|ui| {
                         if shared.ui.hovering_set != -1 && !is_selected {
                             ui.label(shared.loc("styles_modal.style_preview"));
                             return;
                         }
                         ui.label(shared.loc("styles_modal.textures"));
-                        if shared.ui.selected_tex_set_id == -1
+
+                        // don't show import button if first created style is still being named
+                        let naming_first_style =
+                            shared.armature.styles.len() == 1 && shared.ui.rename_id == "tex_set 0";
+
+                        if naming_first_style
+                            || set_idx == usize::MAX
+                            || shared.ui.selected_tex_set_id == -1
                             || !ui.skf_button(shared.loc("styles_modal.import")).clicked()
                         {
                             return;
@@ -199,6 +210,10 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         ui.set_width(size.x);
                         ui.set_height(size.y - 10.);
+
+                        if set_idx == usize::MAX {
+                            return;
+                        }
 
                         if shared.ui.hovering_set == -1 || is_selected {
                             if shared.ui.selected_tex_set_id != -1 {
@@ -335,13 +350,19 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
 
                             let mut selected_col = shared.config.colors.dark_accent;
 
-                            let set_idx = shared
+                            let mut set_idx: usize = usize::MAX;
+                            if let Some(idx) = shared
                                 .armature
                                 .styles
                                 .iter()
                                 .position(|set| set.id == shared.ui.selected_tex_set_id)
-                                .unwrap() as i32;
-                            if shared.armature.bones[b].style_idxs.contains(&set_idx) {
+                            {
+                                set_idx = idx;
+                            }
+                            if shared.armature.bones[b]
+                                .style_idxs
+                                .contains(&(set_idx as i32))
+                            {
                                 selected_col += crate::Color::new(20, 20, 20, 0);
                             }
 
@@ -385,7 +406,10 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                             ui.with_layout(
                                 egui::Layout::right_to_left(egui::Align::default()),
                                 |ui| {
-                                    if !shared.armature.bones[b].style_idxs.contains(&set_idx) {
+                                    if !shared.armature.bones[b]
+                                        .style_idxs
+                                        .contains(&(set_idx as i32))
+                                    {
                                         return;
                                     }
                                     let (edited, value, input) = ui.float_input(
@@ -421,10 +445,10 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                             }
                             if button.clicked() {
                                 let styles = &mut shared.armature.bones[b].style_idxs;
-                                if styles.contains(&set_idx) {
-                                    styles.retain(|style| *style != set_idx);
+                                if styles.contains(&(set_idx as i32)) {
+                                    styles.retain(|style| *style != set_idx as i32);
                                 } else {
-                                    styles.push(set_idx);
+                                    styles.push(set_idx as i32);
                                 }
                             }
                         });
