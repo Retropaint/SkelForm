@@ -455,7 +455,14 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
 
         let rect = button.rect;
 
-        if pointer == None || hovered_payload == None {
+        let dp = button.dnd_release_payload::<i32>();
+        if dp == None {
+            continue;
+        }
+        let dragged_payload = *dp.unwrap() as usize;
+        let selected_idx = shared.ui.selected_tex_set_idx as usize;
+
+        if pointer == None || hovered_payload == None || dragged_payload == idx as usize {
             continue;
         }
 
@@ -468,13 +475,6 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
             is_below = true;
         };
-
-        let dp = button.dnd_release_payload::<i32>();
-        if dp == None {
-            continue;
-        }
-        let dragged_payload = *dp.unwrap() as usize;
-        let selected_idx = shared.ui.selected_tex_set_idx as usize;
 
         let mut old_name_order: Vec<String> = vec![];
         for tex in &shared.armature.texture_sets[selected_idx].textures {
