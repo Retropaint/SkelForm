@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{ui::EguiUi, *};
 
 pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
@@ -42,12 +44,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         if !ui.skf_button(shared.loc("new")).clicked() {
                             return;
                         }
-                        let ids = shared
-                            .armature
-                            .styles
-                            .iter()
-                            .map(|set| set.id)
-                            .collect();
+                        let ids = shared.armature.styles.iter().map(|set| set.id).collect();
                         shared.armature.styles.push(crate::Style {
                             id: generate_id(ids),
                             name: "".to_string(),
@@ -183,8 +180,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                                 draw_tex_buttons(shared, ui);
                             }
                         } else {
-                            let is_empty = shared.armature.styles
-                                [shared.ui.hovering_set as usize]
+                            let is_empty = shared.armature.styles[shared.ui.hovering_set as usize]
                                 .textures
                                 .len()
                                 == 0;
@@ -194,8 +190,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                             } else {
                                 let mut offset = Vec2::new(0., 0.);
                                 let mut row_height = 0.;
-                                for tex in &shared.armature.styles
-                                    [shared.ui.hovering_set as usize]
+                                for tex in &shared.armature.styles[shared.ui.hovering_set as usize]
                                     .textures
                                 {
                                     let size = resize_tex_img(tex.size, 50);
@@ -226,7 +221,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             });
 
             modal::modal_x(ui, egui::Vec2::new(-5., 0.), || {
-                shared.ui.set_state(UiState::ImageModal, false);
+                shared.ui.set_state(UiState::StylesModal, false);
             });
         });
 }
@@ -247,13 +242,18 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
 
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     let mut hovered = false;
+                    macro_rules! folded {
+                        () => {
+                            shared.ui.styles_folded_bones
+                        };
+                    }
                     for b in 0..shared.armature.bones.len() {
                         // if this bone's parent is folded, skip drawing
                         let mut visible = true;
                         let mut nb = &shared.armature.bones[b];
                         while nb.parent_id != -1 {
                             nb = shared.armature.find_bone(nb.parent_id).unwrap();
-                            if nb.folded {
+                            if *folded!().get(&nb.id).unwrap() {
                                 visible = false;
                                 break;
                             }
@@ -280,7 +280,8 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                             if children.len() == 0 {
                                 armature_window::hor_line(11., ui, shared);
                             } else {
-                                let fold_icon = if shared.armature.bones[b].folded {
+                                let bone_id = shared.armature.bones[b].id;
+                                let fold_icon = if *folded!().get(&bone_id).unwrap() {
                                     "⏵"
                                 } else {
                                     "⏷"
@@ -297,8 +298,8 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                                 )
                                 .clicked()
                                 {
-                                    shared.armature.bones[b].folded =
-                                        !shared.armature.bones[b].folded;
+                                    *folded!().get_mut(&bone_id).unwrap() =
+                                        !folded!().get(&bone_id).unwrap();
                                 }
                             }
                             ui.add_space(13.);

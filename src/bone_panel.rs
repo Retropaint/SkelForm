@@ -68,18 +68,19 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label(shared.loc("bone_panel.style"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if shared.armature.get_current_set(bone.id) != None {
+                if ui.skf_button("✏").clicked() {
+                    shared.ui.selected_tex_set_id =
+                        shared.armature.get_current_set(bone.id).unwrap().id;
+                    shared.open_style_modal();
+                }
+            }
+
             let name = if let Some(set) = shared.armature.get_current_set(bone.id) {
                 &set.name
             } else {
                 &"None".to_string()
             };
-            if shared.armature.get_current_set(bone.id) != None {
-                if ui.skf_button("✏").clicked() {
-                    shared.ui.selected_tex_set_id =
-                        shared.armature.get_current_set(bone.id).unwrap().id;
-                    shared.ui.set_state(UiState::ImageModal, true);
-                }
-            }
 
             if ui.clickable_label(name).clicked() {
                 shared.ui.set_state(UiState::FocusStyleDropdown, true);
