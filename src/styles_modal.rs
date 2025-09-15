@@ -44,18 +44,18 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         }
                         let ids = shared
                             .armature
-                            .texture_sets
+                            .styles
                             .iter()
                             .map(|set| set.id)
                             .collect();
-                        shared.armature.texture_sets.push(crate::Style {
+                        shared.armature.styles.push(crate::Style {
                             id: generate_id(ids),
                             name: "".to_string(),
                             textures: vec![],
                             active: true,
                         });
                         shared.ui.rename_id = "tex_set ".to_string()
-                            + &(shared.armature.texture_sets.len() - 1).to_string();
+                            + &(shared.armature.styles.len() - 1).to_string();
                     });
 
                     let size = ui.available_size();
@@ -70,10 +70,10 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
 
                         let mut hovered = false;
 
-                        for s in 0..shared.armature.texture_sets.len() {
+                        for s in 0..shared.armature.styles.len() {
                             macro_rules! set {
                                 () => {
-                                    shared.armature.texture_sets[s]
+                                    shared.armature.styles[s]
                                 };
                             }
 
@@ -149,7 +149,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                 let frame = egui::Frame::default().inner_margin(5.);
                 let set_idx = shared
                     .armature
-                    .texture_sets
+                    .styles
                     .iter()
                     .position(|set| set.id == shared.ui.selected_tex_set_id)
                     .unwrap();
@@ -183,7 +183,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                                 draw_tex_buttons(shared, ui);
                             }
                         } else {
-                            let is_empty = shared.armature.texture_sets
+                            let is_empty = shared.armature.styles
                                 [shared.ui.hovering_set as usize]
                                 .textures
                                 .len()
@@ -194,7 +194,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                             } else {
                                 let mut offset = Vec2::new(0., 0.);
                                 let mut row_height = 0.;
-                                for tex in &shared.armature.texture_sets
+                                for tex in &shared.armature.styles
                                     [shared.ui.hovering_set as usize]
                                     .textures
                                 {
@@ -307,7 +307,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
 
                             let set_idx = shared
                                 .armature
-                                .texture_sets
+                                .styles
                                 .iter()
                                 .position(|set| set.id == shared.ui.selected_tex_set_id)
                                 .unwrap() as i32;

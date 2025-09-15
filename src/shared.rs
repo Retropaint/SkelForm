@@ -885,7 +885,7 @@ pub struct Armature {
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
     #[serde(default)]
-    pub texture_sets: Vec<Style>,
+    pub styles: Vec<Style>,
 
     #[serde(skip)]
     pub tex_sheet_buf: Vec<u8>,
@@ -1396,12 +1396,12 @@ impl Armature {
         if bone == None {
             return None;
         }
-        for s in 0..self.texture_sets.len() {
-            if !self.texture_sets[s].active || !bone.unwrap().style_idxs.contains(&(s as i32)) {
+        for s in 0..self.styles.len() {
+            if !self.styles[s].active || !bone.unwrap().style_idxs.contains(&(s as i32)) {
                 continue;
             }
 
-            return Some(&self.texture_sets[s]);
+            return Some(&self.styles[s]);
         }
 
         None
@@ -1928,7 +1928,7 @@ impl Shared {
     }
 
     pub fn remove_texture(&mut self, set_idx: i32, tex_idx: i32) {
-        self.armature.texture_sets[set_idx as usize]
+        self.armature.styles[set_idx as usize]
             .textures
             .remove(tex_idx as usize);
         //self.armature.bind_groups.remove(tex_idx as usize);
@@ -1978,14 +1978,14 @@ impl Shared {
 
     pub fn selected_set(&self) -> Option<&Style> {
         self.armature
-            .texture_sets
+            .styles
             .iter()
             .find(|set| set.id == self.ui.selected_tex_set_id)
     }
 
     pub fn selected_set_mut(&mut self) -> Option<&mut Style> {
         self.armature
-            .texture_sets
+            .styles
             .iter_mut()
             .find(|set| set.id == self.ui.selected_tex_set_id)
     }

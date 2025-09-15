@@ -65,10 +65,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         .show_ui(ui, |ui| {
                             ui.set_min_height(200.);
                             let width = ui.available_width();
-                            for s in 0..shared.armature.texture_sets.len() {
+                            for s in 0..shared.armature.styles.len() {
                                 ui.set_width(80.);
                                 ui.set_width(width);
-                                let tick = if shared.armature.texture_sets[s].active {
+                                let tick = if shared.armature.styles[s].active {
                                     " ✅"
                                 } else {
                                     ""
@@ -76,7 +76,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 let label = ui.selectable_value(
                                     &mut selected_style,
                                     s as i32,
-                                    shared.armature.texture_sets[s].name.to_string(),
+                                    shared.armature.styles[s].name.to_string(),
                                 );
                                 ui.painter().text(
                                     label.rect.right_center(),
@@ -86,8 +86,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                     shared.config.colors.text.into(),
                                 );
                                 if label.clicked() {
-                                    shared.armature.texture_sets[s].active =
-                                        !shared.armature.texture_sets[s].active;
+                                    shared.armature.styles[s].active =
+                                        !shared.armature.styles[s].active;
                                 }
                             }
                             let label = ui.selectable_value(&mut selected_style, -2, "[Setup]");
