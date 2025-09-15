@@ -159,7 +159,7 @@ pub fn read_psd(
 
     shared.ui.selected_tex_set_id = 0;
 
-    shared.armature.texture_sets.push(TextureSet {
+    shared.armature.texture_sets.push(Style {
         id: 0,
         name: "Default".to_string(),
         textures: vec![],
