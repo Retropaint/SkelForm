@@ -23,6 +23,7 @@ pub trait EguiUi {
         shared: &mut Shared,
         value: f32,
         modifier: f32,
+        options: Option<TextInputOptions>,
     ) -> (bool, f32, egui::Response);
     fn debug_rect(&mut self, rect: egui::Rect);
 }
@@ -570,15 +571,20 @@ impl EguiUi for egui::Ui {
         shared: &mut Shared,
         value: f32,
         modifier: f32,
+        mut options: Option<TextInputOptions>,
     ) -> (bool, f32, egui::Response) {
+        if options == None {
+            options = Some(TextInputOptions {
+                size: Vec2::new(40., 20.),
+                ..Default::default()
+            })
+        }
+
         let (edited, _, input) = self.text_input(
             id,
             shared,
             (value * modifier).to_string(),
-            Some(TextInputOptions {
-                size: Vec2::new(40., 20.),
-                ..Default::default()
-            }),
+            options,
         );
 
         if edited {
@@ -864,7 +870,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
                         ui.label($label).on_hover_text(shared.loc($tip));
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             (_, $float, _) =
-                                ui.float_input($id.to_string(), shared, $float.round(), 1.);
+                                ui.float_input($id.to_string(), shared, $float.round(), 1., None);
                         })
                     })
                 };

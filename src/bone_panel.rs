@@ -169,7 +169,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     // main macro to use for editable bone fields
     macro_rules! input {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr) => {
-            (edited, $float, _) = $ui.float_input($id.to_string(), shared, $float, $modifier);
+            (edited, $float, _) = $ui.float_input($id.to_string(), shared, $float, $modifier, None);
             check_input_edit!($float, $element, $ui, $label)
         };
     }

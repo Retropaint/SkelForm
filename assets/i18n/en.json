@@ -68,7 +68,8 @@
     "img_size": "Size: ",
     "active_desc": "Should this style be active?",
     "assigned_bones": "Assigned Bones",
-    "assigned_bones_desc": "Click on bones in the list to assign/unassign them from using this style.\n\nAssigned bones will use this style's textures (based on index).\n\nStyles above this one take priority over a bone's textures if the bone is assigned to them."
+    "assigned_bones_desc": "Click on bones in the list to assign/unassign them from using this style.\n\nAssigned bones will use this style's textures based on the bone's texture index.\n\nStyles above this one take priority over a bone's textures if the bone is assigned to them.",
+    "assigned_bones_tex_idx_desc": "Texture index for "
   },
   "armature_panel": {
     "heading": "Armature",

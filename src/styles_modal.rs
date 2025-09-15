@@ -1,4 +1,5 @@
 use egui::IntoAtoms;
+use ui::TextInputOptions;
 
 use crate::{ui::EguiUi, *};
 
@@ -12,7 +13,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             ..Default::default()
         })
         .show(ctx, |ui| {
-            ui.set_width(450.);
+            ui.set_width(500.);
             ui.set_height(400.);
             let str_desc = shared.loc("styles_modal.heading_desc");
             let str_heading = shared.loc(&("styles_modal.heading")).to_owned();
@@ -262,7 +263,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
             .fill(shared.config.colors.dark_accent.into())
             .inner_margin(6.)
             .show(ui, |ui| {
-                ui.set_width((modal_width / 3.) - 10.);
+                ui.set_width((modal_width / 3.) + 20.);
                 ui.set_height(height - 33.);
 
                 if shared.ui.selected_tex_set_id == -1 {
@@ -354,10 +355,9 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                             let has_tex = false;
 
                             let id = egui::Id::new(("styles_bone", b, 0));
+                            let idx_input_width = 38.;
                             let button = ui
                                 .dnd_drag_source(id, b, |ui| {
-                                    ui.set_width(width);
-
                                     let name = shared.armature.bones[b].name.to_string();
                                     let mut text_col = shared.config.colors.text;
                                     if shared.armature.is_bone_hidden(shared.armature.bones[b].id) {
@@ -366,7 +366,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                                     }
                                     egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
                                         ui.horizontal(|ui| {
-                                            ui.set_width(width);
+                                            ui.set_width(width - idx_input_width);
                                             ui.set_height(21.);
                                             ui.add_space(5.);
                                             ui.label(egui::RichText::new(name).color(text_col));
@@ -381,6 +381,37 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                                 .response
                                 .interact(egui::Sense::click())
                                 .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+                            ui.with_layout(
+                                egui::Layout::right_to_left(egui::Align::default()),
+                                |ui| {
+                                    let (edited, value, input) = ui.float_input(
+                                        "styles_bone".to_owned() + &b.to_string(),
+                                        shared,
+                                        shared.armature.bones[b].tex_idx as f32,
+                                        1.,
+                                        Some(TextInputOptions {
+                                            size: Vec2::new(7., 10.),
+                                            ..Default::default()
+                                        }),
+                                    );
+                                    let name = &shared.armature.bones[b].name;
+                                    let str_desc = shared
+                                        .loc("styles_modal.assigned_bones_tex_idx_desc")
+                                        .to_owned()
+                                        + &name;
+                                    input.on_hover_text(str_desc);
+                                    if edited {
+                                        shared.armature.set_bone_tex(
+                                            shared.armature.bones[b].id,
+                                            value as usize,
+                                            shared.ui.anim.selected,
+                                            shared.ui.anim.selected_frame,
+                                        );
+                                    }
+                                },
+                            );
+
                             if button.contains_pointer() {
                                 shared.ui.hovering_style_bone = b as i32;
                                 hovered = true;
