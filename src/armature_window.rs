@@ -195,7 +195,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     "👁"
                 };
                 let id = "bone_hidden".to_owned() + &b.to_string();
-                if bone_label(hidden_icon, ui, id, shared, b, Vec2::new(-2., 18.)).clicked() {
+                if bone_label(hidden_icon, ui, id, shared, Vec2::new(-2., 18.)).clicked() {
                     shared.armature.bones[b].hidden = !shared.armature.bones[b].hidden;
                 }
                 ui.add_space(17.);
@@ -222,7 +222,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         "⏷"
                     };
                     let id = "bone_fold".to_owned() + &b.to_string();
-                    if bone_label(fold_icon, ui, id, shared, b, Vec2::new(-2., 18.)).clicked() {
+                    if bone_label(fold_icon, ui, id, shared, Vec2::new(-2., 18.)).clicked() {
                         shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
                     }
                 }
@@ -340,7 +340,6 @@ pub fn bone_label(
     ui: &mut egui::Ui,
     id: String,
     shared: &Shared,
-    bone_idx: usize,
     offset: Vec2,
 ) -> egui::Response {
     let rect = ui.painter().text(

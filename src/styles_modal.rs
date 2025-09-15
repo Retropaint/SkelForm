@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{ui::EguiUi, *};
 
 pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
@@ -293,7 +291,6 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                                     ui,
                                     id,
                                     shared,
-                                    b,
                                     Vec2::new(-2., 18.),
                                 )
                                 .clicked()
