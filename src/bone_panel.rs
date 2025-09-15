@@ -74,6 +74,11 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                         shared.armature.get_current_set(bone.id).unwrap().id;
                     shared.open_style_modal();
                 }
+            } else {
+                if ui.skf_button("👕").clicked() {
+                    shared.ui.selected_tex_set_id = -1;
+                    shared.open_style_modal();
+                }
             }
 
             let name = if let Some(set) = shared.armature.get_current_set(bone.id) {
