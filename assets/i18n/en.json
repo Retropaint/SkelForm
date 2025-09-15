@@ -55,14 +55,14 @@
     }
   },
   "texture_modal": {
-    "heading": "Texture Sets",
-    "heading_desc": "Texture sets allow hotswapping of textures to create multiple outfits/skins.\n\nKeep texture order in mind to ensure that the correct textures are used across skins.",
+    "heading": "Styles",
+    "heading_desc": "Styles allow hotswapping of textures to create multiple outfits/skins.\n\nKeep texture order in mind to ensure that the correct textures are used across styles.",
     "texture_preview": "Texture Preview",
-    "set_preview": "Set Preview",
-    "set_preview_empty": "No textures in this set.\n\nClick to select and add to it.",
-    "sets": "Sets",
+    "style_preview": "Style Preview",
+    "style_preview_empty": "No textures in this style.\n\nClick to select and add to it.",
+    "sets": "Styles",
     "textures": "Textures",
-    "new_set": "New Set",
+    "new_style": "New Style",
     "import": "Import",
     "img_name": "Name: ",
     "img_size": "Size: "
@@ -77,7 +77,7 @@
   "bone_panel": {
     "heading": "Bone",
     "name": "Name:",
-    "texture_set": "Tex. Set:",
+    "style": "Style:",
     "texture_index": "Tex. Index:",
     "texture_set_none": "None",
     "texture_set_setup": "[Setup]",
@@ -163,7 +163,7 @@
       "skip_startup_window": "Skip startup window",
       "clear_recent_files": "Clear recent files",
       "keep_bone_tex_idx": "Keep tex. index after moving ",
-      "keep_bone_tex_idx_desc": "After moving a texture in a texture set, all bones will automatically adjust their Tex. Index to match.\n\nTick this to preserve indexes after moving."
+      "keep_bone_tex_idx_desc": "After moving a texture in a style, all bones will automatically adjust their Tex. Index to match.\n\nTick this to preserve indexes after moving."
     }
   },
   "keyframe_editor": {
