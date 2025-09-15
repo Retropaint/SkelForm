@@ -405,6 +405,11 @@ pub fn import<R: Read + std::io::Seek>(
         }
     }
 
+    // populate style ids
+    for s in 0..shared.armature.texture_sets.len() {
+        shared.armature.texture_sets[s].id = s as i32;
+    }
+
     // populate keyframe bone_id based on bone_idx
     for a in 0..shared.armature.animations.len() {
         for kf in 0..shared.armature.animations[a].keyframes.len() {

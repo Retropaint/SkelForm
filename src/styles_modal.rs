@@ -42,7 +42,14 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         if !ui.skf_button(shared.loc("new")).clicked() {
                             return;
                         }
+                        let ids = shared
+                            .armature
+                            .texture_sets
+                            .iter()
+                            .map(|set| set.id)
+                            .collect();
                         shared.armature.texture_sets.push(crate::TextureSet {
+                            id: generate_id(ids),
                             name: "".to_string(),
                             textures: vec![],
                             active: true,
@@ -87,19 +94,19 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                                 );
                                 if edited {
                                     set!().name = value;
-                                    shared.ui.selected_tex_set_idx = s as i32;
+                                    shared.ui.selected_tex_set_id = set!().id;
                                 }
                                 continue;
                             }
 
                             let mut col = shared.config.colors.dark_accent;
-                            if s == shared.ui.selected_tex_set_idx as usize {
+                            if set!().id == shared.ui.selected_tex_set_id {
                                 col += crate::Color::new(20, 20, 20, 0);
                             }
                             if s == shared.ui.hovering_set as usize {
                                 col += crate::Color::new(20, 20, 20, 0);
                             }
-                            let cursor_icon = if shared.ui.selected_tex_set_idx != s as i32 {
+                            let cursor_icon = if shared.ui.selected_tex_set_id != set!().id {
                                 egui::CursorIcon::PointingHand
                             } else {
                                 egui::CursorIcon::Default
@@ -126,10 +133,10 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                                 hovered = true;
                             }
                             if button.clicked() {
-                                if shared.ui.selected_tex_set_idx == s as i32 {
+                                if shared.ui.selected_tex_set_id == set!().id {
                                     shared.ui.rename_id = "tex_set ".to_string() + &s.to_string()
                                 }
-                                shared.ui.selected_tex_set_idx = s as i32;
+                                shared.ui.selected_tex_set_id = set!().id;
                             }
                         }
 
@@ -140,7 +147,13 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                 });
 
                 let frame = egui::Frame::default().inner_margin(5.);
-                let is_selected = shared.ui.selected_tex_set_idx == shared.ui.hovering_set;
+                let set_idx = shared
+                    .armature
+                    .texture_sets
+                    .iter()
+                    .position(|set| set.id == shared.ui.selected_tex_set_id)
+                    .unwrap();
+                let is_selected = set_idx == shared.ui.hovering_set as usize;
                 ui.vertical(|ui| {
                     ui.set_width((modal_width / frame_count) - frame_padding);
                     ui.set_height(height);
@@ -150,7 +163,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                             return;
                         }
                         ui.label(shared.loc("texture_modal.textures"));
-                        if shared.ui.selected_tex_set_idx == -1
+                        if shared.ui.selected_tex_set_id == -1
                             || !ui.skf_button(shared.loc("texture_modal.import")).clicked()
                         {
                             return;
@@ -166,7 +179,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         ui.set_height(size.y - 10.);
 
                         if shared.ui.hovering_set == -1 || is_selected {
-                            if shared.ui.selected_tex_set_idx != -1 {
+                            if shared.ui.selected_tex_set_id != -1 {
                                 draw_tex_buttons(shared, ui);
                             }
                         } else {
@@ -228,7 +241,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                 ui.set_width((modal_width / 3.) - 10.);
                 ui.set_height(height - 33.);
 
-                if shared.ui.selected_tex_set_idx == -1 {
+                if shared.ui.selected_tex_set_id == -1 {
                     return;
                 }
 
@@ -292,10 +305,13 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
 
                             let mut selected_col = shared.config.colors.dark_accent;
 
-                            if shared.armature.bones[b]
-                                .style_idxs
-                                .contains(&shared.ui.selected_tex_set_idx)
-                            {
+                            let set_idx = shared
+                                .armature
+                                .texture_sets
+                                .iter()
+                                .position(|set| set.id == shared.ui.selected_tex_set_id)
+                                .unwrap() as i32;
+                            if shared.armature.bones[b].style_idxs.contains(&set_idx) {
                                 selected_col += crate::Color::new(20, 20, 20, 0);
                             }
 
@@ -342,10 +358,10 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                             }
                             if button.clicked() {
                                 let styles = &mut shared.armature.bones[b].style_idxs;
-                                if styles.contains(&shared.ui.selected_tex_set_idx) {
-                                    styles.retain(|style| *style != shared.ui.selected_tex_set_idx);
+                                if styles.contains(&set_idx) {
+                                    styles.retain(|style| *style != set_idx);
                                 } else {
-                                    styles.push(shared.ui.selected_tex_set_idx);
+                                    styles.push(set_idx);
                                 }
                             }
                         });
@@ -359,8 +375,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
 }
 
 pub fn draw_tex_preview(shared: &Shared, ui: &mut egui::Ui) {
-    let tex = &shared.armature.texture_sets[shared.ui.selected_tex_set_idx as usize].textures
-        [shared.ui.hovering_tex as usize];
+    let tex = &shared.selected_set().unwrap().textures[shared.ui.hovering_tex as usize];
     let size = resize_tex_img(tex.size, ui.available_width() as usize);
     let left_top = egui::Pos2::new(
         ui.min_rect().center().x - size.x / 2.,
@@ -414,7 +429,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
     let mut idx: i32 = -1;
     macro_rules! set {
         () => {
-            shared.armature.texture_sets[shared.ui.selected_tex_set_idx as usize]
+            shared.selected_set().unwrap()
         };
     }
 
@@ -460,7 +475,6 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             continue;
         }
         let dragged_payload = *dp.unwrap() as usize;
-        let selected_idx = shared.ui.selected_tex_set_idx as usize;
 
         if pointer == None || hovered_payload == None || dragged_payload == idx as usize {
             continue;
@@ -477,23 +491,27 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         };
 
         let mut old_name_order: Vec<String> = vec![];
-        for tex in &shared.armature.texture_sets[selected_idx].textures {
+        for tex in &shared.selected_set().unwrap().textures {
             old_name_order.push(tex.name.clone());
         }
 
         shared.undo_actions.push(Action {
             action: ActionType::TextureSet,
-            id: selected_idx as i32,
-            tex_sets: vec![shared.armature.texture_sets[selected_idx].clone()],
+            id: shared.ui.selected_tex_set_id as i32,
+            tex_sets: vec![shared.selected_set().unwrap().clone()],
             ..Default::default()
         });
 
         let new_idx = idx as usize + is_below as usize;
-        let tex = shared.armature.texture_sets[selected_idx].textures[dragged_payload].clone();
-        shared.armature.texture_sets[selected_idx]
+        let tex = shared.selected_set().unwrap().textures[dragged_payload].clone();
+        shared
+            .selected_set_mut()
+            .unwrap()
             .textures
             .remove(dragged_payload);
-        shared.armature.texture_sets[selected_idx]
+        shared
+            .selected_set_mut()
+            .unwrap()
             .textures
             .insert(new_idx, tex);
 
@@ -515,7 +533,9 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             }
 
             let old_name = &old_name_order[bone!().tex_idx as usize];
-            bone!().tex_idx = shared.armature.texture_sets[selected_idx]
+            bone!().tex_idx = shared
+                .selected_set()
+                .unwrap()
                 .textures
                 .iter()
                 .position(|tex| tex.name == *old_name)
