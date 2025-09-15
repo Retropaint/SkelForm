@@ -1,13 +1,8 @@
 use crate::{
     armature_window,
-    ui::{job_text, EguiUi},
-    Action, ActionType, Config, PolarId, Shared, UiState, Vec2,
+    ui::EguiUi,
+    Action, ActionType, Config, PolarId, Shared, UiState,
 };
-
-#[cfg(not(target_arch = "wasm32"))]
-use crate::bone_panel;
-
-use egui::Color32;
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     ctx: &egui::Context,
