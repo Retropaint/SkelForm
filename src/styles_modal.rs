@@ -252,7 +252,12 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
 
 fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, height: f32) {
     ui.vertical(|ui| {
-        ui.horizontal(|ui| ui.label("Assigned Bones"));
+        ui.horizontal(|ui| {
+            let str_heading = shared.loc("styles_modal.assigned_bones");
+            let str_desc = shared.loc("styles_modal.assigned_bones_desc");
+            ui.label(str_heading.to_owned() + " " + ICON_INFO)
+                .on_hover_text(str_desc)
+        });
         egui::Frame::new()
             .fill(shared.config.colors.dark_accent.into())
             .inner_margin(6.)

@@ -63,7 +63,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         .width(80.)
                         .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                         .show_ui(ui, |ui| {
-                            ui.set_min_height(200.);
                             let width = ui.available_width();
                             for s in 0..shared.armature.styles.len() {
                                 ui.set_width(80.);
