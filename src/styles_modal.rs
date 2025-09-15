@@ -170,12 +170,9 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
 
                 let frame = egui::Frame::default().inner_margin(5.);
                 let mut set_idx: usize = usize::MAX;
-                if let Some(idx) = shared
-                    .armature
-                    .styles
-                    .iter()
-                    .position(|set| set.id == shared.ui.selected_tex_set_id)
-                {
+                let styles = &shared.armature.styles;
+                let tex_id = shared.ui.selected_tex_set_id;
+                if let Some(idx) = styles.iter().position(|set| set.id == tex_id) {
                     set_idx = idx;
                 }
                 let is_selected = set_idx == shared.ui.hovering_set as usize;
@@ -285,189 +282,163 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                     return;
                 }
 
-                let set = shared
-                    .armature
-                    .styles
-                    .iter()
-                    .find(|style| style.id == shared.ui.selected_tex_set_id)
-                    .unwrap();
+                let styles = &shared.armature.styles;
+                let tex_id = shared.ui.selected_tex_set_id;
+
+                let set = styles.iter().find(|style| style.id == tex_id).unwrap();
 
                 if set.textures.len() == 0 {
                     return;
                 }
 
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    let mut hovered = false;
-                    macro_rules! folded {
-                        () => {
-                            shared.ui.styles_folded_bones
-                        };
-                    }
-                    for b in 0..shared.armature.bones.len() {
-                        macro_rules! bone {
-                            () => {
-                                shared.armature.bones[b]
-                            };
-                        }
-                        // if this bone's parent is folded, skip drawing
-                        let mut visible = true;
-                        let mut nb = &bone!();
-                        while nb.parent_id != -1 {
-                            nb = shared.armature.find_bone(nb.parent_id).unwrap();
-                            if *folded!().get(&nb.id).unwrap() {
-                                visible = false;
-                                break;
-                            }
-                        }
-                        if !visible {
-                            continue;
-                        }
-                        ui.horizontal(|ui| {
-                            let parents = shared.armature.get_all_parents(bone!().id);
-                            // add space to the left if this is a child
-                            for _ in 0..parents.len() {
-                                armature_window::vert_line(0., ui, shared);
-                                ui.add_space(15.);
-                            }
-
-                            // show folding button if this bone has children
-                            let mut children = vec![];
-                            armature_window::get_all_children(
-                                &shared.armature.bones,
-                                &mut children,
-                                &bone!(),
-                            );
-                            if children.len() == 0 {
-                                armature_window::hor_line(11., ui, shared);
-                            } else {
-                                let bone_id = bone!().id;
-                                let fold_icon = if *folded!().get(&bone_id).unwrap() {
-                                    "⏵"
-                                } else {
-                                    "⏷"
-                                };
-
-                                let id = "style_bone_fold".to_owned() + &b.to_string();
-                                if armature_window::bone_label(
-                                    fold_icon,
-                                    ui,
-                                    id,
-                                    shared,
-                                    Vec2::new(-2., 18.),
-                                )
-                                .clicked()
-                                {
-                                    *folded!().get_mut(&bone_id).unwrap() =
-                                        !folded!().get(&bone_id).unwrap();
-                                }
-                            }
-                            ui.add_space(13.);
-
-                            let mut selected_col = shared.config.colors.dark_accent;
-
-                            let mut set_idx: usize = usize::MAX;
-                            if let Some(idx) = shared
-                                .armature
-                                .styles
-                                .iter()
-                                .position(|set| set.id == shared.ui.selected_tex_set_id)
-                            {
-                                set_idx = idx;
-                            }
-                            if bone!().style_idxs.contains(&(set_idx as i32)) {
-                                selected_col += crate::Color::new(20, 20, 20, 0);
-                            }
-
-                            if shared.ui.hovering_style_bone == b as i32 {
-                                selected_col += crate::Color::new(20, 20, 20, 0);
-                            }
-
-                            let width = ui.available_width();
-
-                            //let has_tex = shared.armature.bones[b].tex_set_idx != -1;
-                            let has_tex = false;
-
-                            let id = egui::Id::new(("styles_bone", b, 0));
-                            let idx_input_width = 45.;
-                            let button = ui
-                                .dnd_drag_source(id, b, |ui| {
-                                    let name = bone!().name.to_string();
-                                    let mut text_col = shared.config.colors.text;
-                                    if shared.armature.is_bone_hidden(bone!().id) {
-                                        text_col = shared.config.colors.dark_accent;
-                                        text_col += crate::Color::new(40, 40, 40, 0)
-                                    }
-                                    egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
-                                        ui.horizontal(|ui| {
-                                            ui.set_width(width - idx_input_width);
-                                            ui.set_height(21.);
-                                            ui.add_space(5.);
-                                            ui.label(egui::RichText::new(name).color(text_col));
-
-                                            let pic = if has_tex { "🖻  " } else { "" };
-                                            let mut pic_col = shared.config.colors.dark_accent;
-                                            pic_col += crate::Color::new(40, 40, 40, 0);
-                                            ui.label(egui::RichText::new(pic).color(pic_col))
-                                        });
-                                    });
-                                })
-                                .response
-                                .interact(egui::Sense::click())
-                                .on_hover_cursor(egui::CursorIcon::PointingHand);
-
-                            ui.with_layout(
-                                egui::Layout::right_to_left(egui::Align::Center),
-                                |ui| {
-                                    if !bone!().style_idxs.contains(&(set_idx as i32)) {
-                                        return;
-                                    }
-
-                                    ui.add_space(15.);
-
-                                    let str_idx =
-                                        "  ".to_owned() + &bone!().tex_idx.to_string() + "  ";
-                                    ui.menu_button(str_idx, |ui| {
-                                        let set = shared
-                                            .armature
-                                            .styles
-                                            .iter()
-                                            .find(|style| style.id == shared.ui.selected_tex_set_id)
-                                            .unwrap();
-                                        let mut tex_idx = bone!().tex_idx;
-                                        for t in 0..set.textures.len() {
-                                            let str_idx = t.to_string() + ") ";
-                                            let name = set.textures[t].name.clone().to_string();
-                                            ui.selectable_value(
-                                                &mut tex_idx,
-                                                t as i32,
-                                                str_idx + &name,
-                                            );
-                                        }
-                                        bone!().tex_idx = tex_idx;
-                                    });
-                                },
-                            );
-
-                            if button.contains_pointer() {
-                                shared.ui.hovering_style_bone = b as i32;
-                                hovered = true;
-                            }
-                            if button.clicked() {
-                                let styles = &mut bone!().style_idxs;
-                                if styles.contains(&(set_idx as i32)) {
-                                    styles.retain(|style| *style != set_idx as i32);
-                                } else {
-                                    styles.push(set_idx as i32);
-                                }
-                            }
-                        });
-                    }
-                    if !hovered {
-                        shared.ui.hovering_style_bone = -1;
-                    }
+                    draw_bone_buttons(ui, shared);
                 });
             })
     });
+}
+
+pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
+    let style_id = shared.ui.selected_tex_set_id;
+    let mut hovered = false;
+    macro_rules! folded {
+        () => {
+            shared.ui.styles_folded_bones
+        };
+    }
+    for b in 0..shared.armature.bones.len() {
+        macro_rules! bone {
+            () => {
+                shared.armature.bones[b]
+            };
+        }
+        // if this bone's parent is folded, skip drawing
+        let mut visible = true;
+        let mut nb = &bone!();
+        while nb.parent_id != -1 {
+            nb = shared.armature.find_bone(nb.parent_id).unwrap();
+            if *folded!().get(&nb.id).unwrap() {
+                visible = false;
+                break;
+            }
+        }
+        if !visible {
+            continue;
+        }
+        ui.horizontal(|ui| {
+            let parents = shared.armature.get_all_parents(bone!().id);
+            // add space to the left if this is a child
+            for _ in 0..parents.len() {
+                armature_window::vert_line(0., ui, shared);
+                ui.add_space(15.);
+            }
+
+            // show folding button if this bone has children
+            let mut children = vec![];
+            armature_window::get_all_children(&shared.armature.bones, &mut children, &bone!());
+            if children.len() == 0 {
+                armature_window::hor_line(11., ui, shared);
+            } else {
+                let bone_id = bone!().id;
+                let is_folded = *folded!().get(&bone_id).unwrap();
+                let fold_icon = if is_folded { "⏵" } else { "⏷" };
+
+                let id = "style_bone_fold".to_owned() + &b.to_string();
+                if armature_window::bone_label(fold_icon, ui, id, shared, Vec2::new(-2., 18.))
+                    .clicked()
+                {
+                    *folded!().get_mut(&bone_id).unwrap() = !folded!().get(&bone_id).unwrap();
+                }
+            }
+            ui.add_space(13.);
+
+            let mut selected_col = shared.config.colors.dark_accent;
+
+            let mut set_idx: usize = usize::MAX;
+            let styles = &shared.armature.styles;
+            if let Some(idx) = styles.iter().position(|set| set.id == style_id) {
+                set_idx = idx;
+            }
+            if bone!().style_idxs.contains(&(set_idx as i32)) {
+                selected_col += crate::Color::new(20, 20, 20, 0);
+            }
+
+            if shared.ui.hovering_style_bone == b as i32 {
+                selected_col += crate::Color::new(20, 20, 20, 0);
+            }
+
+            let width = ui.available_width();
+
+            //let has_tex = shared.armature.bones[b].tex_set_idx != -1;
+            let has_tex = false;
+
+            let id = egui::Id::new(("styles_bone", b, 0));
+            let idx_input_width = 45.;
+            let button = ui
+                .dnd_drag_source(id, b, |ui| {
+                    let name = bone!().name.to_string();
+                    let mut text_col = shared.config.colors.text;
+                    if shared.armature.is_bone_hidden(bone!().id) {
+                        text_col = shared.config.colors.dark_accent;
+                        text_col += crate::Color::new(40, 40, 40, 0)
+                    }
+                    egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.set_width(width - idx_input_width);
+                            ui.set_height(21.);
+                            ui.add_space(5.);
+                            ui.label(egui::RichText::new(name).color(text_col));
+
+                            let pic = if has_tex { "🖻  " } else { "" };
+                            let mut pic_col = shared.config.colors.dark_accent;
+                            pic_col += crate::Color::new(40, 40, 40, 0);
+                            ui.label(egui::RichText::new(pic).color(pic_col))
+                        });
+                    });
+                })
+                .response
+                .interact(egui::Sense::click())
+                .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if !bone!().style_idxs.contains(&(set_idx as i32)) {
+                    return;
+                }
+
+                ui.add_space(15.);
+
+                let str_idx = "  ".to_owned() + &bone!().tex_idx.to_string() + "  ";
+                ui.menu_button(str_idx, |ui| {
+                    let style_id = shared.ui.selected_tex_set_id;
+                    let styles = &shared.armature.styles;
+                    let set = styles.iter().find(|style| style.id == style_id).unwrap();
+                    let mut tex_idx = bone!().tex_idx;
+                    for t in 0..set.textures.len() {
+                        let str_idx = t.to_string() + ") ";
+                        let name = set.textures[t].name.clone().to_string();
+                        ui.selectable_value(&mut tex_idx, t as i32, str_idx + &name);
+                    }
+                    bone!().tex_idx = tex_idx;
+                });
+            });
+
+            if button.contains_pointer() {
+                shared.ui.hovering_style_bone = b as i32;
+                hovered = true;
+            }
+            if button.clicked() {
+                let styles = &mut bone!().style_idxs;
+                if styles.contains(&(set_idx as i32)) {
+                    styles.retain(|style| *style != set_idx as i32);
+                } else {
+                    styles.push(set_idx as i32);
+                }
+            }
+        });
+    }
+    if !hovered {
+        shared.ui.hovering_style_bone = -1;
+    }
 }
 
 pub fn draw_tex_preview(shared: &Shared, ui: &mut egui::Ui) {
