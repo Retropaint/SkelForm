@@ -142,7 +142,7 @@ pub fn read_psd(
 
     // reset armature (but not all of it) to make way for the psd rig
     shared.armature.bones = vec![];
-    shared.armature.texture_sets = vec![];
+    shared.armature.styles = vec![];
 
     // collect group ids, to be used later
     let mut group_ids: Vec<u32> = vec![];
@@ -159,7 +159,7 @@ pub fn read_psd(
 
     shared.ui.selected_tex_set_id = 0;
 
-    shared.armature.texture_sets.push(Style {
+    shared.armature.styles.push(Style {
         id: 0,
         name: "Default".to_string(),
         textures: vec![],
@@ -252,7 +252,7 @@ pub fn read_psd(
 
         // create texture bone
         let new_bone_id = shared.armature.new_bone(-1).0.id;
-        let tex_idx = shared.armature.texture_sets[0].textures.len() - 1;
+        let tex_idx = shared.armature.styles[0].textures.len() - 1;
         shared
             .armature
             .find_bone_mut(new_bone_id)
@@ -345,7 +345,7 @@ pub fn add_texture(
     );
 
     armature
-        .texture_sets
+        .styles
         .iter_mut()
         .find(|set| set.id == ui.selected_tex_set_id)
         .unwrap()
