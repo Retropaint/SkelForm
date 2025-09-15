@@ -1440,7 +1440,7 @@ pub struct Style {
     pub name: String,
     #[serde(default)]
     pub textures: Vec<Texture>,
-    #[serde(skip)]
+    #[serde(default)]
     pub active: bool,
 }
 
