@@ -505,7 +505,7 @@ pub struct Ui {
 
     pub changing_key: String,
 
-    pub selected_tex_set_idx: i32,
+    pub selected_tex_set_id: i32,
 
     pub hovering_tex: i32,
     pub hovering_bone: i32,
@@ -1434,6 +1434,9 @@ pub struct Root {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 pub struct TextureSet {
+    #[serde(skip)]
+    pub id: i32,
+    #[serde(default, rename = "_name")]
     pub name: String,
     #[serde(default)]
     pub textures: Vec<Texture>,
@@ -1971,6 +1974,20 @@ impl Shared {
 
     pub fn aspect_ratio(&self) -> f32 {
         self.window.y / self.window.x
+    }
+
+    pub fn selected_set(&self) -> Option<&TextureSet> {
+        self.armature
+            .texture_sets
+            .iter()
+            .find(|set| set.id == self.ui.selected_tex_set_id)
+    }
+
+    pub fn selected_set_mut(&mut self) -> Option<&mut TextureSet> {
+        self.armature
+            .texture_sets
+            .iter_mut()
+            .find(|set| set.id == self.ui.selected_tex_set_id)
     }
 }
 

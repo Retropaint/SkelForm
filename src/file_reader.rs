@@ -110,7 +110,7 @@ pub fn read_image_loaders(
     }
 
     // check if this texture already exists
-    for tex in &shared.armature.texture_sets[shared.ui.selected_tex_set_idx as usize].textures {
+    for tex in &shared.selected_set().unwrap().textures {
         if image == tex.image {
             return;
         }
@@ -157,9 +157,10 @@ pub fn read_psd(
         }
     }
 
-    shared.ui.selected_tex_set_idx = 0;
+    shared.ui.selected_tex_set_id = 0;
 
     shared.armature.texture_sets.push(TextureSet {
+        id: 0,
         name: "Default".to_string(),
         textures: vec![],
         active: true,
@@ -343,7 +344,11 @@ pub fn add_texture(
         bind_group_layout,
     );
 
-    armature.texture_sets[ui.selected_tex_set_idx as usize]
+    armature
+        .texture_sets
+        .iter_mut()
+        .find(|set| set.id == ui.selected_tex_set_id)
+        .unwrap()
         .textures
         .push(crate::Texture {
             offset: Vec2::ZERO,
