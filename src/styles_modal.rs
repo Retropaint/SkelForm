@@ -455,10 +455,11 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
             let hovered_payload = button.dnd_hover_payload::<i32>();
             let dragged_payload = button.dnd_release_payload::<i32>();
 
+            let dragged_onto_itself = *dragged_payload.clone().unwrap() == idx;
             if pointer == None
                 || hovered_payload == None
                 || dragged_payload == None
-                || *dragged_payload.unwrap() == idx
+                || dragged_onto_itself
             {
                 return;
             }
@@ -566,18 +567,20 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
 
         let pointer = ui.input(|i| i.pointer.interact_pos());
         let hovered_payload = button.dnd_hover_payload::<i32>();
+        let dragged_payload = button.dnd_release_payload::<i32>();
+
+        let dragged_onto_itself = *dragged_payload.as_ref().unwrap() == idx.into();
+        if pointer == None
+            || hovered_payload == None
+            || dragged_payload == None
+            || dragged_onto_itself
+        {
+            return;
+        }
+
+        let dp = *dragged_payload.unwrap() as usize;
 
         let rect = button.rect;
-
-        let dp = button.dnd_release_payload::<i32>();
-        if dp == None {
-            continue;
-        }
-        let dragged_payload = *dp.unwrap() as usize;
-
-        if pointer == None || hovered_payload == None || dragged_payload == idx as usize {
-            continue;
-        }
 
         let stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
         let mut is_below = false;
@@ -602,17 +605,11 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         });
 
         let new_idx = idx as usize + is_below as usize;
-        let tex = shared.selected_set().unwrap().textures[dragged_payload].clone();
-        shared
-            .selected_set_mut()
-            .unwrap()
-            .textures
-            .remove(dragged_payload);
-        shared
-            .selected_set_mut()
-            .unwrap()
-            .textures
-            .insert(new_idx, tex);
+
+        let textures = &mut shared.selected_set_mut().unwrap().textures;
+        let tex = textures[dp].clone();
+        textures.remove(dp);
+        textures.insert(new_idx, tex);
 
         if shared.config.keep_tex_idx_on_move {
             return;
@@ -632,13 +629,8 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             }
 
             let old_name = &old_name_order[bone!().tex_idx as usize];
-            bone!().tex_idx = shared
-                .selected_set()
-                .unwrap()
-                .textures
-                .iter()
-                .position(|tex| tex.name == *old_name)
-                .unwrap() as i32;
+            let tex = &shared.selected_set().unwrap().textures;
+            bone!().tex_idx = tex.iter().position(|tex| tex.name == *old_name).unwrap() as i32;
         }
     }
 
