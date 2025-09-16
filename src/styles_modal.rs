@@ -214,7 +214,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         crate::toggleElement(true, "image-dialog".to_string());
                     });
                     let size = ui.available_size();
-                    ui.dnd_drop_zone::<DraggedStyleTexBone, _>(frame, |ui| {
+                    ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         ui.set_width(size.x);
                         ui.set_height(size.y - 10.);
 
@@ -281,34 +281,34 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
             ui.label(str_heading.to_owned() + " " + ICON_INFO)
                 .on_hover_text(str_desc)
         });
-        egui::Frame::new()
-            .fill(shared.config.colors.dark_accent.into())
-            .inner_margin(6.)
-            .show(ui, |ui| {
-                let padding = Vec2::new(20., 33.);
-                ui.set_width((modal_width / 3.) - padding.x);
-                ui.set_height(height - padding.y);
+        let frame = egui::Frame::default();
+        ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+            egui::Frame::new()
+                .fill(shared.config.colors.dark_accent.into())
+                .inner_margin(6.)
+                .show(ui, |ui| {
+                    let padding = Vec2::new(20., 33.);
+                    ui.set_width((modal_width / 3.) - padding.x);
+                    ui.set_height(height - padding.y);
 
-                if shared.ui.selected_tex_set_id == -1 {
-                    return;
-                }
+                    if shared.ui.selected_tex_set_id == -1 {
+                        return;
+                    }
 
-                let styles = &shared.armature.styles;
-                let tex_id = shared.ui.selected_tex_set_id;
+                    let styles = &shared.armature.styles;
+                    let tex_id = shared.ui.selected_tex_set_id;
 
-                let set = styles.iter().find(|style| style.id == tex_id).unwrap();
+                    let set = styles.iter().find(|style| style.id == tex_id).unwrap();
 
-                if set.textures.len() == 0 {
-                    return;
-                }
+                    if set.textures.len() == 0 {
+                        return;
+                    }
 
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                    let frame = egui::Frame::default().inner_margin(5.);
-                    ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                    egui::ScrollArea::vertical().show(ui, |ui| {
                         draw_bone_buttons(ui, shared);
                     });
-                });
-            })
+                })
+        });
     });
 }
 
@@ -390,27 +390,26 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 
             let id = egui::Id::new(("styles_bone", idx, 0));
             let idx_input_width = 45.;
-            let payload = DraggedStyleTexBone { is_tex: false, idx };
-            let button = ui
-                .dnd_drag_source(id, payload, |ui| {
-                    let name = bone!().name.to_string();
-                    let mut text_col = shared.config.colors.text;
-                    if shared.armature.is_bone_hidden(bone!().id) {
-                        text_col = shared.config.colors.dark_accent;
-                        text_col += crate::Color::new(40, 40, 40, 0)
-                    }
-                    egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
-                        ui.horizontal(|ui| {
-                            ui.set_width(width - idx_input_width);
-                            ui.set_height(21.);
-                            ui.add_space(5.);
-                            ui.label(egui::RichText::new(name).color(text_col));
 
-                            let pic = if has_tex { "🖻  " } else { "" };
-                            let mut pic_col = shared.config.colors.dark_accent;
-                            pic_col += crate::Color::new(40, 40, 40, 0);
-                            ui.label(egui::RichText::new(pic).color(pic_col))
-                        });
+            let name = bone!().name.to_string();
+            let mut text_col = shared.config.colors.text;
+            if shared.armature.is_bone_hidden(bone!().id) {
+                text_col = shared.config.colors.dark_accent;
+                text_col += crate::Color::new(40, 40, 40, 0)
+            }
+            let button = egui::Frame::new()
+                .fill(selected_col.into())
+                .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.set_width(width - idx_input_width);
+                        ui.set_height(21.);
+                        ui.add_space(5.);
+                        ui.label(egui::RichText::new(name).color(text_col));
+
+                        let pic = if has_tex { "🖻  " } else { "" };
+                        let mut pic_col = shared.config.colors.dark_accent;
+                        pic_col += crate::Color::new(40, 40, 40, 0);
+                        ui.label(egui::RichText::new(pic).color(pic_col))
                     });
                 })
                 .response
@@ -452,22 +451,18 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                 }
             }
 
-            let rect = button.rect;
-
             let pointer = ui.input(|i| i.pointer.interact_pos());
-            let hovered_payload = button.dnd_hover_payload::<i32>();
-            let dragged_payload = button.dnd_release_payload::<DraggedStyleTexBone>();
+            let dragged_payload = button.dnd_release_payload::<i32>();
 
-            if pointer == None
-                || dragged_payload == None
-                || dragged_payload.as_ref().unwrap().idx == idx
-            {
+            if pointer == None || dragged_payload == None {
                 return;
             }
 
-            let dp = dragged_payload.unwrap();
-
-            println!("{}", dp.is_tex);
+            let bone = &mut shared.armature.bones[idx as usize];
+            if !bone.style_idxs.contains(&shared.ui.selected_tex_set_id) {
+                bone.style_idxs.push(shared.ui.selected_tex_set_id);
+            }
+            bone.tex_idx = *dragged_payload.unwrap();
         });
     }
     if !hovered {
@@ -545,9 +540,8 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         if i == shared.ui.hovering_tex as usize {
             col += crate::Color::new(20, 20, 20, 0);
         }
-        let payload = DraggedStyleTexBone { is_tex: true, idx };
         let button = ui
-            .dnd_drag_source(egui::Id::new(("tex", idx, 0)), payload, |ui| {
+            .dnd_drag_source(egui::Id::new(("tex", idx, 0)), idx, |ui| {
                 egui::Frame::new().fill(col.into()).show(ui, |ui| {
                     ui.horizontal(|ui| {
                         ui.set_width(width);
@@ -573,7 +567,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         let hovered_payload = button.dnd_hover_payload::<i32>();
         let dragged_payload = button.dnd_release_payload::<i32>();
 
-        if hovered_payload == None || pointer == None {
+        if hovered_payload == None || pointer == None || hovered_payload.unwrap() == idx.into() {
             return;
         };
 
