@@ -536,98 +536,115 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         idx += 1;
         let name = set!().textures[i].name.clone();
 
-        let str_desc = shared.loc("styles_modal.texture_desc");
+        let str_desc = shared.loc("styles_modal.texture_desc").clone();
 
         let mut col = shared.config.colors.dark_accent;
         if i == shared.ui.hovering_tex as usize {
             col += crate::Color::new(20, 20, 20, 0);
         }
-        let button = ui
-            .dnd_drag_source(egui::Id::new(("tex", idx, 0)), idx, |ui| {
-                egui::Frame::new().fill(col.into()).show(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        ui.set_width(width);
-                        ui.set_height(21.);
-                        ui.add_space(5.);
-                        ui.label(
-                            egui::RichText::new(i.to_string() + ") " + &name)
-                                .color(shared.config.colors.text),
-                        );
+
+        let mut removed = false;
+
+        ui.horizontal(|ui| {
+            let bin_width = 30.;
+            let button = ui
+                .dnd_drag_source(egui::Id::new(("tex", idx, 0)), idx, |ui| {
+                    egui::Frame::new().fill(col.into()).show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.set_width(width - bin_width);
+                            ui.set_height(21.);
+                            ui.add_space(5.);
+                            ui.label(
+                                egui::RichText::new(i.to_string() + ") " + &name)
+                                    .color(shared.config.colors.text),
+                            );
+                        });
                     });
-                });
-            })
-            .response
-            .on_hover_text(str_desc);
+                })
+                .response
+                .on_hover_text(str_desc);
 
-        if button.contains_pointer() {
-            shared.ui.hovering_tex = i as i32;
-            hovered = true;
-        }
+            if ui.skf_button("🗑").clicked() {
+                shared.selected_set_mut().unwrap().textures.remove(i);
+                removed = true;
+                return;
+            }
 
-        let rect = button.rect;
+            if button.contains_pointer() {
+                shared.ui.hovering_tex = i as i32;
+                hovered = true;
+            }
 
-        let pointer = ui.input(|i| i.pointer.interact_pos());
-        let hovered_payload = button.dnd_hover_payload::<i32>();
-        let dragged_payload = button.dnd_release_payload::<i32>();
+            let rect = button.rect;
 
-        if hovered_payload == None || pointer == None || hovered_payload.unwrap() == idx.into() {
-            continue;
-        };
+            let pointer = ui.input(|i| i.pointer.interact_pos());
+            let hovered_payload = button.dnd_hover_payload::<i32>();
+            let dragged_payload = button.dnd_release_payload::<i32>();
 
-        let stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
-        let mut is_below = false;
-        if pointer.unwrap().y < rect.center().y {
-            ui.painter().hline(rect.x_range(), rect.top(), stroke);
-        } else {
-            ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
-            is_below = true;
-        };
+            if hovered_payload == None || pointer == None || hovered_payload.unwrap() == idx.into()
+            {
+                return;
+            };
 
-        let dp = if let Some(dp) = dragged_payload {
-            *dp as usize
-        } else {
-            continue;
-        };
+            let stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
+            let mut is_below = false;
+            if pointer.unwrap().y < rect.center().y {
+                ui.painter().hline(rect.x_range(), rect.top(), stroke);
+            } else {
+                ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
+                is_below = true;
+            };
 
-        let mut old_name_order: Vec<String> = vec![];
-        for tex in &shared.selected_set().unwrap().textures {
-            old_name_order.push(tex.name.clone());
-        }
+            let dp = if let Some(dp) = dragged_payload {
+                *dp as usize
+            } else {
+                return;
+            };
 
-        shared.undo_actions.push(Action {
-            action: ActionType::TextureSet,
-            id: shared.ui.selected_tex_set_id as i32,
-            tex_sets: vec![shared.selected_set().unwrap().clone()],
-            ..Default::default()
+            let mut old_name_order: Vec<String> = vec![];
+            for tex in &shared.selected_set().unwrap().textures {
+                old_name_order.push(tex.name.clone());
+            }
+
+            shared.undo_actions.push(Action {
+                action: ActionType::TextureSet,
+                id: shared.ui.selected_tex_set_id as i32,
+                tex_sets: vec![shared.selected_set().unwrap().clone()],
+                ..Default::default()
+            });
+
+            let new_idx = idx as usize + is_below as usize;
+
+            let textures = &mut shared.selected_set_mut().unwrap().textures;
+            let tex = textures[dp].clone();
+            textures.remove(dp);
+            textures.insert(new_idx, tex);
+
+            if shared.config.keep_tex_idx_on_move {
+                return;
+            }
+
+            // adjust bones to use the new texture indices that matched prior
+            #[allow(unreachable_code)]
+            for b in 0..shared.armature.bones.len() {
+                macro_rules! bone {
+                    () => {
+                        shared.armature.bones[b]
+                    };
+                }
+
+                if bone!().tex_idx == -1 {
+                    continue;
+                }
+
+                let old_name = &old_name_order[bone!().tex_idx as usize];
+                let tex = &shared.selected_set().unwrap().textures;
+                bone!().tex_idx = tex.iter().position(|tex| tex.name == *old_name).unwrap() as i32;
+            }
         });
 
-        let new_idx = idx as usize + is_below as usize;
-
-        let textures = &mut shared.selected_set_mut().unwrap().textures;
-        let tex = textures[dp].clone();
-        textures.remove(dp);
-        textures.insert(new_idx, tex);
-
-        if shared.config.keep_tex_idx_on_move {
-            continue;
-        }
-
-        // adjust bones to use the new texture indices that matched prior
-        #[allow(unreachable_code)]
-        for b in 0..shared.armature.bones.len() {
-            macro_rules! bone {
-                () => {
-                    shared.armature.bones[b]
-                };
-            }
-
-            if bone!().tex_idx == -1 {
-                continue;
-            }
-
-            let old_name = &old_name_order[bone!().tex_idx as usize];
-            let tex = &shared.selected_set().unwrap().textures;
-            bone!().tex_idx = tex.iter().position(|tex| tex.name == *old_name).unwrap() as i32;
+        if removed {
+            break;
         }
     }
 
