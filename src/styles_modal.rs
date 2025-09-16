@@ -536,6 +536,8 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         idx += 1;
         let name = set!().textures[i].name.clone();
 
+        let str_desc = shared.loc("styles_modal.texture_desc");
+
         let mut col = shared.config.colors.dark_accent;
         if i == shared.ui.hovering_tex as usize {
             col += crate::Color::new(20, 20, 20, 0);
@@ -554,7 +556,8 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                     });
                 });
             })
-            .response;
+            .response
+            .on_hover_text(str_desc);
 
         if button.contains_pointer() {
             shared.ui.hovering_tex = i as i32;
