@@ -62,6 +62,7 @@
     "style_preview_empty": "No textures in this style.\n\nClick to select and add to it.",
     "sets": "Styles",
     "textures": "Textures",
+    "texture_desc": "Drag to a bone to set this as it's texture, or above/below another texture to change order",
     "new_style": "New Style",
     "import": "Import",
     "img_name": "Name: ",
