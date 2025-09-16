@@ -568,7 +568,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         let dragged_payload = button.dnd_release_payload::<i32>();
 
         if hovered_payload == None || pointer == None || hovered_payload.unwrap() == idx.into() {
-            return;
+            continue;
         };
 
         let stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
@@ -583,7 +583,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         let dp = if let Some(dp) = dragged_payload {
             *dp as usize
         } else {
-            return;
+            continue;
         };
 
         let mut old_name_order: Vec<String> = vec![];
@@ -606,7 +606,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         textures.insert(new_idx, tex);
 
         if shared.config.keep_tex_idx_on_move {
-            return;
+            continue;
         }
 
         // adjust bones to use the new texture indices that matched prior
