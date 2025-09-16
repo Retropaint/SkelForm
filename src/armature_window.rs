@@ -378,13 +378,13 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         ui.painter().vline(rect.left(), rect.y_range(), stroke);
     };
 
-    let dp = drag.dnd_release_payload::<i32>();
-    if dp == None {
+    let dp = if let Some(dp) = drag.dnd_release_payload::<i32>() {
+        *dp as usize
+    } else {
         return false;
-    }
-    let dragged_payload = *dp.unwrap() as usize;
+    };
 
-    let dragged_id = shared.armature.bones[dragged_payload as usize].id;
+    let dragged_id = shared.armature.bones[dp].id;
 
     let selected_id = shared.selected_bone_id();
 
@@ -393,7 +393,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     get_all_children(
         &shared.armature.bones,
         &mut children,
-        &shared.armature.bones[dragged_payload as usize],
+        &shared.armature.bones[dp],
     );
     for c in children {
         if shared.armature.bones[idx as usize].id == c.id {
@@ -409,9 +409,9 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
 
     let old_parents = shared
         .armature
-        .get_all_parents(shared.armature.bones[dragged_payload].id);
+        .get_all_parents(shared.armature.bones[dp].id);
 
-    drag_bone(shared, is_above, dragged_payload, idx);
+    drag_bone(shared, is_above, dp, idx);
 
     if shared.selected_bone() != None {
         shared.ui.selected_bone_idx = shared.armature.find_bone_idx(selected_id).unwrap();
