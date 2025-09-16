@@ -303,7 +303,10 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                 }
 
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    draw_bone_buttons(ui, shared);
+                    let frame = egui::Frame::default().inner_margin(5.);
+                    ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                        draw_bone_buttons(ui, shared);
+                    });
                 });
             })
     });
@@ -317,7 +320,9 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
             shared.ui.styles_folded_bones
         };
     }
+    let mut idx = -1;
     for b in 0..shared.armature.bones.len() {
+        idx += 1;
         macro_rules! bone {
             () => {
                 shared.armature.bones[b]
@@ -383,10 +388,10 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
             //let has_tex = shared.armature.bones[b].tex_set_idx != -1;
             let has_tex = false;
 
-            let id = egui::Id::new(("styles_bone", b, 0));
+            let id = egui::Id::new(("styles_bone", idx, 0));
             let idx_input_width = 45.;
             let button = ui
-                .dnd_drag_source(id, b, |ui| {
+                .dnd_drag_source(id, idx, |ui| {
                     let name = bone!().name.to_string();
                     let mut text_col = shared.config.colors.text;
                     if shared.armature.is_bone_hidden(bone!().id) {
@@ -445,6 +450,22 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                     styles.push(set_idx as i32);
                 }
             }
+
+            let pointer = ui.input(|i| i.pointer.interact_pos());
+            let hovered_payload = button.dnd_hover_payload::<i32>();
+            let dragged_payload = button.dnd_release_payload::<i32>();
+
+            if pointer == None
+                || hovered_payload == None
+                || dragged_payload == None
+                || *dragged_payload.unwrap() == idx
+            {
+                return;
+            }
+
+            let hp = *hovered_payload.unwrap();
+
+            let rect = button.rect;
         });
     }
     if !hovered {
