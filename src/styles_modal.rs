@@ -214,7 +214,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         crate::toggleElement(true, "image-dialog".to_string());
                     });
                     let size = ui.available_size();
-                    ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                    ui.dnd_drop_zone::<DraggedStyleTexBone, _>(frame, |ui| {
                         ui.set_width(size.x);
                         ui.set_height(size.y - 10.);
 
@@ -390,8 +390,9 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 
             let id = egui::Id::new(("styles_bone", idx, 0));
             let idx_input_width = 45.;
+            let payload = DraggedStyleTexBone { is_tex: false, idx };
             let button = ui
-                .dnd_drag_source(id, idx, |ui| {
+                .dnd_drag_source(id, payload, |ui| {
                     let name = bone!().name.to_string();
                     let mut text_col = shared.config.colors.text;
                     if shared.armature.is_bone_hidden(bone!().id) {
@@ -453,10 +454,20 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 
             let rect = button.rect;
 
-            let (dp, pointer) = utils::init_drag(idx, ui, button);
-            if dp == usize::MAX {
+            let pointer = ui.input(|i| i.pointer.interact_pos());
+            let hovered_payload = button.dnd_hover_payload::<i32>();
+            let dragged_payload = button.dnd_release_payload::<DraggedStyleTexBone>();
+
+            if pointer == None
+                || dragged_payload == None
+                || dragged_payload.as_ref().unwrap().idx == idx
+            {
                 return;
             }
+
+            let dp = dragged_payload.unwrap();
+
+            println!("{}", dp.is_tex);
         });
     }
     if !hovered {
@@ -534,8 +545,9 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         if i == shared.ui.hovering_tex as usize {
             col += crate::Color::new(20, 20, 20, 0);
         }
+        let payload = DraggedStyleTexBone { is_tex: true, idx };
         let button = ui
-            .dnd_drag_source(egui::Id::new(("tex", idx, 0)), idx, |ui| {
+            .dnd_drag_source(egui::Id::new(("tex", idx, 0)), payload, |ui| {
                 egui::Frame::new().fill(col.into()).show(ui, |ui| {
                     ui.horizontal(|ui| {
                         ui.set_width(width);

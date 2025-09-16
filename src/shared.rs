@@ -525,6 +525,12 @@ pub struct Ui {
     pub styles_folded_bones: HashMap<i32, bool>,
 }
 
+#[derive(PartialEq)]
+pub struct DraggedStyleTexBone {
+    pub is_tex: bool,
+    pub idx: i32,
+}
+
 impl Ui {
     pub fn get_cursor(&self, ui: &egui::Ui) -> Vec2 {
         let cursor_pos = ui.ctx().input(|i| {
