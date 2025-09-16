@@ -231,12 +231,6 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
-    // disabled: inverse kinematics (not ready)
-    // disabled: mesh deformation (not ready either)
-    if true {
-        return;
-    }
-
     let mut children = vec![];
     armature_window::get_all_children(&shared.armature.bones, &mut children, &bone);
     let parents = shared.armature.get_all_parents(bone.id);
@@ -246,6 +240,11 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     if children.len() > 0 || parents.len() > 0 {
         ui.add_space(section_spacing);
         inverse_kinematics(ui, shared, &bone);
+    }
+
+    // disabled: mesh deformation (not ready either)
+    if true {
+        return;
     }
 
     if bone.vertices.len() == 0 {
