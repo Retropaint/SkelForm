@@ -1,10 +1,20 @@
 use egui::IntoAtoms;
-use ui::TextInputOptions;
 
 use crate::{ui::EguiUi, *};
 
 pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
-    egui::Modal::new("test".into())
+    let modal_size = Vec2::new(550., 400.);
+    let center = egui::Pos2::new(
+        (shared.window.x / 2. - modal_size.x) / 2.,
+        (shared.window.y / 2. - modal_size.y) / 2.,
+    );
+    egui::Modal::new("styles_modal".into())
+        // set modal render order so that tex idx dropdown can be rendered above
+        .area(
+            egui::Area::new("styles_modal_area".into())
+                .fixed_pos(center)
+                .order(egui::Order::Middle),
+        )
         .frame(egui::Frame {
             corner_radius: 0.into(),
             fill: shared.config.colors.main.into(),
@@ -13,8 +23,8 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             ..Default::default()
         })
         .show(ctx, |ui| {
-            ui.set_width(500.);
-            ui.set_height(400.);
+            ui.set_width(modal_size.x);
+            ui.set_height(modal_size.y);
             let str_desc = shared.loc("styles_modal.heading_desc");
             let str_heading = shared.loc(&("styles_modal.heading")).to_owned();
             ui.heading(str_heading + " " + crate::ICON_INFO)
@@ -275,8 +285,9 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
             .fill(shared.config.colors.dark_accent.into())
             .inner_margin(6.)
             .show(ui, |ui| {
-                ui.set_width((modal_width / 3.) + 20.);
-                ui.set_height(height - 33.);
+                let padding = Vec2::new(20., 33.);
+                ui.set_width((modal_width / 3.) - padding.x);
+                ui.set_height(height - padding.y);
 
                 if shared.ui.selected_tex_set_id == -1 {
                     return;
@@ -408,7 +419,7 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                 ui.add_space(15.);
 
                 let str_idx = "  ".to_owned() + &bone!().tex_idx.to_string() + "  ";
-                ui.menu_button(str_idx, |ui| {
+                egui::containers::menu::MenuButton::new(str_idx).ui(ui, |ui| {
                     let style_id = shared.ui.selected_tex_set_id;
                     let styles = &shared.armature.styles;
                     let set = styles.iter().find(|style| style.id == style_id).unwrap();
