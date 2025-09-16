@@ -703,3 +703,22 @@ pub fn flatten_json(
         }
     }
 }
+
+/// Initiate drag 'n drop logic for a dnd source.
+pub fn init_drag(idx: i32, ui: &mut egui::Ui, response: egui::Response) -> (usize, egui::Pos2) {
+    let pointer = ui.input(|i| i.pointer.interact_pos());
+    let hovered_payload = response.dnd_hover_payload::<i32>();
+    let dragged_payload = response.dnd_release_payload::<i32>();
+
+    if pointer == None
+        || hovered_payload == None
+        || dragged_payload == None
+
+        // ignore if element was dragged onto itself
+        || *dragged_payload.as_ref().unwrap() == idx.into()
+    {
+        return (usize::MAX, [0., 0.].into());
+    }
+
+    (*dragged_payload.unwrap() as usize, pointer.unwrap())
+}
