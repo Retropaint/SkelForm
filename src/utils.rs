@@ -349,6 +349,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
     let mut editor = EditorOptions {
         camera,
         bones: vec![],
+        styles: vec![],
     };
     for bone in &armature.bones {
         editor.bones.push(EditorBone {
@@ -357,6 +358,11 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
             meshdef_folded: bone.meshdef_folded,
             ik_disabled: bone.ik_disabled,
         });
+    }
+    for style in &armature.styles {
+        editor.styles.push(EditorStyle {
+            active: style.active,
+        })
     }
     let editor_json = serde_json::to_string(&editor).unwrap();
 
@@ -437,6 +443,13 @@ pub fn import<R: Read + std::io::Seek>(
             bone.ik_folded = ed_bone.ik_folded;
             bone.meshdef_folded = ed_bone.meshdef_folded;
             bone.ik_disabled = ed_bone.ik_disabled;
+        }
+
+        for s in 0..shared.armature.styles.len() {
+            let style = &mut shared.armature.styles[s];
+            let ed_style = &editor.styles[s];
+
+            style.active = ed_style.active;
         }
     }
 
