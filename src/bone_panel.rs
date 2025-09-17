@@ -270,18 +270,29 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     !shared.selected_bone_mut().unwrap().ik_folded;
             }
 
-            if bone.joint_effector == JointEffector::Start {
-                let mut enabled = !bone.ik_disabled;
-                let str_desc = shared.loc("bone_panel.inverse_kinematics.enabled_desc");
-                let checkbox = ui
-                    .checkbox(&mut enabled, "".into_atoms())
-                    .on_hover_text(str_desc);
-                if checkbox.clicked() {
-                    let mut bones = vec![];
-                    armature_window::get_all_children(&shared.armature.bones, &mut bones, &bone);
-                    bones.push(bone.clone());
-                    for bone in bones {
-                        shared.armature.find_bone_mut(bone.id).unwrap().ik_disabled = !enabled;
+            let mut enabled = !bone.ik_disabled;
+            let str_desc = shared.loc("bone_panel.inverse_kinematics.enabled_desc");
+            let checkbox = ui
+                .checkbox(&mut enabled, "".into_atoms())
+                .on_hover_text(str_desc);
+            if checkbox.clicked() {
+                let mut bones = vec![];
+                armature_window::get_all_children(&shared.armature.bones, &mut bones, &bone);
+                bones.push(bone.clone());
+                for bone in bones {
+                    shared.armature.find_bone_mut(bone.id).unwrap().ik_disabled = !enabled;
+                }
+
+                if bone.joint_effector != JointEffector::Start {
+                    let parents = shared.armature.get_all_parents(bone.id);
+                    for parent in parents {
+                        if parent.joint_effector != JointEffector::None {
+                            shared
+                                .armature
+                                .find_bone_mut(parent.id)
+                                .unwrap()
+                                .ik_disabled = !enabled;
+                        }
                     }
                 }
             }
