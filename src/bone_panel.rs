@@ -270,6 +270,10 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     !shared.selected_bone_mut().unwrap().ik_folded;
             }
 
+            if bone.joint_effector == JointEffector::None {
+                return;
+            }
+
             let mut enabled = !bone.ik_disabled;
             let str_desc = shared.loc("bone_panel.inverse_kinematics.enabled_desc");
             let checkbox = ui
