@@ -1442,9 +1442,9 @@ pub struct Style {
     #[serde(default, rename = "_name")]
     pub name: String,
     #[serde(default)]
-    pub textures: Vec<Texture>,
-    #[serde(default)]
     pub active: bool,
+    #[serde(default)]
+    pub textures: Vec<Texture>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
@@ -1461,7 +1461,7 @@ impl Vec2I {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 pub struct Texture {
-    #[serde(default)]
+    #[serde(default, rename="_name")]
     pub name: String,
 
     #[serde(skip)]
