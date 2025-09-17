@@ -391,7 +391,6 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
             //let has_tex = shared.armature.bones[b].tex_set_idx != -1;
             let has_tex = false;
 
-            let id = egui::Id::new(("styles_bone", idx, 0));
             let idx_input_width = 45.;
 
             let name = bone!().name.to_string();
