@@ -260,8 +260,9 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                                 ui.add_space(5.);
                                 ui.label(egui::RichText::new(name).color(text_col));
 
-                                //let pic = if has_tex { "🖻  " } else { "" };
-                                let pic = "";
+                                let has_tex = shared.armature.get_current_tex(bone_id) != None;
+
+                                let pic = if has_tex { "🖻  " } else { "" };
                                 let mut pic_col = shared.config.colors.dark_accent;
                                 pic_col += Color::new(40, 40, 40, 0);
                                 ui.label(egui::RichText::new(pic).color(pic_col))

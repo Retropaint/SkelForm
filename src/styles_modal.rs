@@ -388,9 +388,6 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 
             let width = ui.available_width();
 
-            //let has_tex = shared.armature.bones[b].tex_set_idx != -1;
-            let has_tex = false;
-
             let idx_input_width = 45.;
 
             let name = bone!().name.to_string();
@@ -407,11 +404,6 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                         ui.set_height(21.);
                         ui.add_space(5.);
                         ui.label(egui::RichText::new(name).color(text_col));
-
-                        let pic = if has_tex { "🖻  " } else { "" };
-                        let mut pic_col = shared.config.colors.dark_accent;
-                        pic_col += crate::Color::new(40, 40, 40, 0);
-                        ui.label(egui::RichText::new(pic).color(pic_col))
                     });
                 })
                 .response
