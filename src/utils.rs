@@ -186,7 +186,7 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
         rectangle_pack::GroupedRectsToPlace::new();
     let mut idx = 0;
 
-    for set in &armature.texture_sets {
+    for set in &armature.styles {
         for tex in &set.textures {
             img_rect.push_rect(
                 idx,
@@ -231,7 +231,7 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
     // - coping individual textures to the final image
     // - encoding to png (mandatory for regular saving, but autosaving could use bmp or some such)
 
-    for set in &mut armature.texture_sets {
+    for set in &mut armature.styles {
         for tex in &mut set.textures {
             let offset_x = packed.as_ref().unwrap().packed_locations()[&idx].1.x();
             let offset_y = packed.as_ref().unwrap().packed_locations()[&idx].1.y();
@@ -305,31 +305,35 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
         }
     }
 
-    if armature.texture_sets.len() > 0 && armature.texture_sets[0].textures.len() > 0 {
+    if armature.styles.len() > 0 && armature.styles[0].textures.len() > 0 {
         (png_buf, size) = create_tex_sheet(&mut armature_copy);
     }
 
     // populate texture ser_offset and ser_size
-    for s in 0..armature.texture_sets.len() {
-        for t in 0..armature.texture_sets[s].textures.len() {
-            let tex = &mut armature_copy.texture_sets[s].textures[t];
+    for s in 0..armature.styles.len() {
+        for t in 0..armature.styles[s].textures.len() {
+            let tex = &mut armature_copy.styles[s].textures[t];
             tex.ser_offset = Vec2I::new(tex.offset.x as i32, tex.offset.y as i32);
             tex.ser_size = Vec2I::new(tex.size.x as i32, tex.size.y as i32);
         }
     }
 
-    for bone in &mut armature_copy.bones {
+    for b in 0..armature_copy.bones.len() {
+        macro_rules! bone {
+            () => {
+                armature_copy.bones[b]
+            };
+        }
+
         // if it is a regular rect, empty verts and indices
-        if bone.tex_set_idx == -1
+        if armature_copy.get_current_tex(bone!().id) == None
             || !bone_meshes_edited(
-                armature_copy.texture_sets[bone.tex_set_idx as usize].textures
-                    [bone.tex_idx as usize]
-                    .size,
-                &bone.vertices,
+                armature_copy.get_current_tex(bone!().id).unwrap().size,
+                &bone!().vertices,
             )
         {
-            bone.vertices = vec![];
-            bone.indices = vec![];
+            bone!().vertices = vec![];
+            bone!().indices = vec![];
         }
     }
 
@@ -392,7 +396,6 @@ pub fn import<R: Read + std::io::Seek>(
 
         let mut children = vec![];
         armature_window::get_all_children(&shared.armature.bones, &mut children, &bone!());
-        bone!().folded = children.len() > 0;
 
         // populate parent_id based on parent_idx
         if bone!().parent_idx == -1 {
@@ -400,6 +403,11 @@ pub fn import<R: Read + std::io::Seek>(
         } else {
             bone!().parent_id = shared.armature.bones[bone!().parent_idx as usize].id;
         }
+    }
+
+    // populate style ids
+    for s in 0..shared.armature.styles.len() {
+        shared.armature.styles[s].id = s as i32;
     }
 
     // populate keyframe bone_id based on bone_idx
@@ -425,7 +433,7 @@ pub fn import<R: Read + std::io::Seek>(
             let ed_bone = &editor.bones[b];
 
             // iterable editor bone imports
-            bone.folded = ed_bone.folded;
+            //bone.folded = ed_bone.folded;
             bone.ik_folded = ed_bone.ik_folded;
             bone.meshdef_folded = ed_bone.meshdef_folded;
             bone.ik_disabled = ed_bone.ik_disabled;
@@ -435,11 +443,11 @@ pub fn import<R: Read + std::io::Seek>(
     // load texture
     let has_tex = root
         .armature
-        .texture_sets
+        .styles
         .iter()
         .find(|set| set.textures.len() > 0)
         != None;
-    if root.armature.texture_sets.len() > 0 && has_tex {
+    if root.armature.styles.len() > 0 && has_tex {
         let texture_file = zip.as_mut().unwrap().by_name("textures.png").unwrap();
 
         let mut bytes = vec![];
@@ -448,7 +456,7 @@ pub fn import<R: Read + std::io::Seek>(
         }
         let mut img = image::load_from_memory(&bytes).unwrap();
 
-        for set in &mut shared.armature.texture_sets {
+        for set in &mut shared.armature.styles {
             for tex in &mut set.textures {
                 tex.offset = Vec2::new(tex.ser_offset.x as f32, tex.ser_offset.y as f32);
                 tex.size = Vec2::new(tex.ser_size.x as f32, tex.ser_size.y as f32);
@@ -543,8 +551,8 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
             }
         }
         ActionType::TextureSet => {
-            new_action.tex_sets = vec![shared.armature.texture_sets[action.id as usize].clone()];
-            shared.armature.texture_sets[action.id as usize] = action.tex_sets[0].clone();
+            new_action.tex_sets = vec![shared.armature.styles[action.id as usize].clone()];
+            shared.armature.styles[action.id as usize] = action.tex_sets[0].clone();
         }
         _ => {}
     }

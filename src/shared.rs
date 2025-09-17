@@ -3,6 +3,7 @@
 use crate::*;
 
 use std::{
+    collections::HashMap,
     fmt,
     ops::{DivAssign, MulAssign},
 };
@@ -284,6 +285,20 @@ impl std::ops::SubAssign for Color {
         self.a -= other.a;
     }
 }
+
+impl std::ops::Add for Color {
+    type Output = Self;
+
+    #[inline(always)]
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            r: self.r + rhs.r,
+            g: self.g + rhs.g,
+            b: self.b + rhs.b,
+            a: self.a + rhs.a,
+        }
+    }
+}
 impl Color {
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
         Color { r, g, b, a }
@@ -383,7 +398,7 @@ impl InputStates {
 #[derive(Clone, Default, PartialEq)]
 pub enum UiState {
     #[default]
-    ImageModal,
+    StylesModal,
     Exiting,
     DraggingBone,
     RemovingTexture,
@@ -394,6 +409,7 @@ pub enum UiState {
     StartupWindow,
     Scaling,
     Rotating,
+    FocusStyleDropdown,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -490,12 +506,13 @@ pub struct Ui {
 
     pub changing_key: String,
 
-    pub selected_tex_set_idx: i32,
+    pub selected_tex_set_id: i32,
 
     pub hovering_tex: i32,
     pub hovering_bone: i32,
     pub hovering_set: i32,
     pub hovering_anim: i32,
+    pub hovering_style_bone: i32,
 
     pub showing_samples: bool,
 
@@ -504,6 +521,8 @@ pub struct Ui {
     pub setting_ik_target: bool,
 
     pub selected_style: i32,
+
+    pub styles_folded_bones: HashMap<i32, bool>,
 }
 
 impl Ui {
@@ -803,8 +822,8 @@ pub struct Bone {
     pub parent_id: i32,
     #[serde(default)]
     pub parent_idx: i32,
-    #[serde(default = "default_neg_one")]
-    pub tex_set_idx: i32,
+    #[serde(default)]
+    pub style_idxs: Vec<i32>,
     #[serde(default = "default_neg_one")]
     pub tex_idx: i32,
 
@@ -862,34 +881,12 @@ pub struct EditorBone {
     pub ik_disabled: bool,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
-pub struct StyleBone {
-    #[serde(skip)]
-    pub id: i32,
-    #[serde(default)]
-    pub idx: i32,
-    #[serde(default)]
-    pub set_idx: i32,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
-pub struct Style {
-    #[serde(default, rename = "_name")]
-    pub name: String,
-    #[serde(default)]
-    pub bones: Vec<StyleBone>,
-    #[serde(skip)]
-    pub active: bool,
-}
-
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Armature {
     #[serde(default)]
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
-    #[serde(default)]
-    pub texture_sets: Vec<TextureSet>,
     #[serde(default)]
     pub styles: Vec<Style>,
 
@@ -947,15 +944,17 @@ impl Armature {
         &mut self,
         bone_id: i32,
         new_tex_idx: usize,
-        tex_set_idx: i32,
         selected_anim: usize,
         selected_frame: i32,
     ) {
         let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
 
+        if self.get_current_set(bone_id) == None {
+            return;
+        }
+
         if selected_anim == usize::MAX {
             self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
-            self.find_bone_mut(bone_id).unwrap().tex_set_idx = tex_set_idx;
 
             // Set bone's verts to match texture.
             // Original logic checks if verts were edited, but this is temporarily disabled
@@ -988,18 +987,8 @@ impl Armature {
             self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
         }
 
-        if tex_set_idx == -1
-            || new_tex_idx > self.texture_sets[tex_set_idx as usize].textures.len() - 1
-        {
+        if new_tex_idx > self.get_current_set(bone_id).unwrap().textures.len() - 1 {
             return;
-        }
-
-        let name = self.texture_sets[tex_set_idx as usize].textures[new_tex_idx]
-            .name
-            .clone();
-        let bone_name = &mut self.find_bone_mut(bone_id).unwrap().name;
-        if bone_name == "New Bone" || bone_name == "" {
-            *bone_name = name;
         }
 
         if self.find_bone(bone_id).unwrap().tex_idx == -1 {
@@ -1010,7 +999,7 @@ impl Armature {
             self.find_bone_mut(bone_id).unwrap().vertices,
             self.find_bone_mut(bone_id).unwrap().indices,
         ) = renderer::create_tex_rect(
-            &self.texture_sets[tex_set_idx as usize].textures[new_tex_idx].size,
+            &self.get_current_set(bone_id).unwrap().textures[new_tex_idx].size,
         );
     }
 
@@ -1035,7 +1024,6 @@ impl Armature {
             parent_id,
             id: generate_id(ids),
             scale: Vec2 { x: 1., y: 1. },
-            tex_set_idx: -1,
             zindex: self.bones.len() as i32,
             constraint: JointConstraint::None,
             ik_target_id: -1,
@@ -1238,13 +1226,10 @@ impl Armature {
             };
 
             // restructure bone's verts to match texture
-            if b.tex_set_idx != -1 {
-                let set = &self.texture_sets[self.find_bone(b.id).unwrap().tex_set_idx as usize];
-                let set_tex_limit = self.texture_sets[b.tex_set_idx as usize].textures.len() - 1;
-                if b.tex_idx != -1 && b.tex_set_idx < set_tex_limit as i32 {
-                    (b.vertices, b.indices) =
-                        renderer::create_tex_rect(&set.textures[b.tex_idx as usize].size);
-                }
+            if self.get_current_tex(b.id) != None {
+                (b.vertices, b.indices) = renderer::create_tex_rect(
+                    &self.get_current_set(b.id).unwrap().textures[b.tex_idx as usize].size,
+                );
             }
 
             for v in 0..b.vertices.len() {
@@ -1409,29 +1394,36 @@ impl Armature {
         false
     }
 
-    pub fn is_valid_tex(&self, bone_id: i32) -> bool {
-        let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
-        let set_idx = self.find_bone(bone_id).unwrap().tex_set_idx;
-        if set_idx == -1 {
-            return false;
+    pub fn get_current_set(&self, bone_id: i32) -> Option<&Style> {
+        let bone = self.bones.iter().find(|bone| bone.id == bone_id);
+        if bone == None {
+            return None;
         }
-        if tex_idx as usize > self.texture_sets[set_idx as usize].textures.len() - 1 {
-            return false;
+        for s in 0..self.styles.len() {
+            if !self.styles[s].active || !bone.unwrap().style_idxs.contains(&(s as i32)) {
+                continue;
+            }
+
+            return Some(&self.styles[s]);
         }
 
-        true
+        None
     }
 
-    pub fn is_in_style(&self, bone_id: i32, style_idx: i32) -> bool {
-        if style_idx == -1 {
-            return false;
+    pub fn get_current_tex(&self, bone_id: i32) -> Option<&Texture> {
+        let set = self.get_current_set(bone_id);
+        if set == None {
+            return None;
         }
 
-        self.styles[style_idx as usize]
-            .bones
-            .iter()
-            .find(|bone| bone.id == bone_id)
-            != None
+        let bone = self.bones.iter().find(|bone| bone.id == bone_id);
+        if bone == None
+            || set.unwrap().textures.len() == 0
+            || bone.unwrap().tex_idx as usize > set.unwrap().textures.len() - 1
+        {
+            return None;
+        }
+        Some(&set.unwrap().textures[bone.unwrap().tex_idx as usize])
     }
 }
 
@@ -1444,8 +1436,13 @@ pub struct Root {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
-pub struct TextureSet {
+pub struct Style {
+    #[serde(skip)]
+    pub id: i32,
+    #[serde(default, rename = "_name")]
     pub name: String,
+    #[serde(default)]
+    pub active: bool,
     #[serde(default)]
     pub textures: Vec<Texture>,
 }
@@ -1464,7 +1461,7 @@ impl Vec2I {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 pub struct Texture {
-    #[serde(default)]
+    #[serde(default, rename="_name")]
     pub name: String,
 
     #[serde(skip)]
@@ -1689,7 +1686,7 @@ pub struct Action {
     pub id: i32,
     pub bones: Vec<Bone>,
     pub animations: Vec<Animation>,
-    pub tex_sets: Vec<TextureSet>,
+    pub tex_sets: Vec<Style>,
 }
 
 impl AnimElement {
@@ -1934,7 +1931,7 @@ impl Shared {
     }
 
     pub fn remove_texture(&mut self, set_idx: i32, tex_idx: i32) {
-        self.armature.texture_sets[set_idx as usize]
+        self.armature.styles[set_idx as usize]
             .textures
             .remove(tex_idx as usize);
         //self.armature.bind_groups.remove(tex_idx as usize);
@@ -1980,6 +1977,28 @@ impl Shared {
 
     pub fn aspect_ratio(&self) -> f32 {
         self.window.y / self.window.x
+    }
+
+    pub fn selected_set(&self) -> Option<&Style> {
+        self.armature
+            .styles
+            .iter()
+            .find(|set| set.id == self.ui.selected_tex_set_id)
+    }
+
+    pub fn selected_set_mut(&mut self) -> Option<&mut Style> {
+        self.armature
+            .styles
+            .iter_mut()
+            .find(|set| set.id == self.ui.selected_tex_set_id)
+    }
+
+    pub fn open_style_modal(&mut self) {
+        self.ui.styles_folded_bones = HashMap::new();
+        for bone in &self.armature.bones {
+            self.ui.styles_folded_bones.insert(bone.id, bone.folded);
+        }
+        self.ui.set_state(UiState::StylesModal, true);
     }
 }
 

@@ -57,49 +57,67 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         shared.loc("armature_panel.new_bone_name").to_string();
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if shared.armature.bones.len() == 0 {
+                        return;
+                    }
                     let mut selected_style = -1;
-                    let name = if shared.ui.selected_style == -1 {
-                        shared.loc("bone_panel.texture_set_none")
-                    } else {
-                        &shared.armature.styles[shared.ui.selected_style as usize].name
-                    };
-                    egui::ComboBox::new("styles", "")
-                        .selected_text(name)
+                    let dropdown = egui::ComboBox::new("styles", "")
+                        .selected_text(shared.loc("armature_panel.styles"))
                         .width(80.)
                         .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                         .show_ui(ui, |ui| {
-                            ui.set_min_height(200.);
                             for s in 0..shared.armature.styles.len() {
-                                ui.horizontal(|ui| {
-                                    let label = ui.selectable_value(
-                                        &mut selected_style,
-                                        s as i32,
-                                        shared.armature.styles[s].name.to_string(),
-                                    );
-                                    if label.clicked() {
-                                        ui.close();
-                                    }
-                                    ui.checkbox(
-                                        &mut shared.armature.styles[s].active,
-                                        "".into_atoms(),
-                                    );
-                                });
+                                ui.set_width(80.);
+                                let tick = if shared.armature.styles[s].active {
+                                    " ✅"
+                                } else {
+                                    ""
+                                };
+                                let label = ui.selectable_value(
+                                    &mut selected_style,
+                                    s as i32,
+                                    shared.armature.styles[s].name.to_string(),
+                                );
+                                ui.painter().text(
+                                    label.rect.right_center(),
+                                    egui::Align2::RIGHT_CENTER,
+                                    tick,
+                                    egui::FontId::default(),
+                                    shared.config.colors.text.into(),
+                                );
+                                if label.clicked() {
+                                    shared.armature.styles[s].active =
+                                        !shared.armature.styles[s].active;
+                                }
                             }
-                            let label = ui.selectable_value(&mut selected_style, -2, "[New]");
+                            let label = ui.selectable_value(&mut selected_style, -2, "[Setup]");
                             if label.clicked() {
                                 ui.close();
                             }
                         })
                         .response
                         .on_hover_text(shared.loc("armature_panel.styles_desc"));
+
+                    if shared.ui.has_state(UiState::FocusStyleDropdown) {
+                        dropdown.request_focus();
+                        shared.ui.set_state(UiState::FocusStyleDropdown, false);
+                    }
                     if selected_style == -2 {
-                        shared.ui.set_state(UiState::ImageModal, true);
+                        shared.open_style_modal();
                     } else if selected_style != -1 {
-                        if selected_style != shared.ui.selected_style {
-                            shared.ui.selected_style = selected_style;
-                            shared.armature.styles[selected_style as usize].active = true;
-                        } else {
-                            shared.ui.selected_style = -1;
+                        shared.ui.selected_style = selected_style;
+                        for b in 0..shared.armature.bones.len() {
+                            if shared.armature.bones[b]
+                                .style_idxs
+                                .contains(&selected_style)
+                            {
+                                shared.armature.set_bone_tex(
+                                    shared.armature.bones[b].id,
+                                    shared.armature.bones[b].tex_idx as usize,
+                                    shared.ui.anim.selected,
+                                    shared.ui.anim.selected_frame,
+                                );
+                            }
                         }
                     }
                 });
@@ -172,7 +190,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 } else {
                     "👁"
                 };
-                if bone_label(hidden_icon, ui, shared, b, Vec2::new(-2., 18.)).clicked() {
+                let id = "bone_hidden".to_owned() + &b.to_string();
+                if bone_label(hidden_icon, ui, id, shared, Vec2::new(-2., 18.)).clicked() {
                     shared.armature.bones[b].hidden = !shared.armature.bones[b].hidden;
                 }
                 ui.add_space(17.);
@@ -198,7 +217,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     } else {
                         "⏷"
                     };
-                    if bone_label(fold_icon, ui, shared, b, Vec2::new(-2., 18.)).clicked() {
+                    let id = "bone_fold".to_owned() + &b.to_string();
+                    if bone_label(fold_icon, ui, id, shared, Vec2::new(-2., 18.)).clicked() {
                         shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
                     }
                 }
@@ -206,14 +226,6 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 let mut selected_col = shared.config.colors.dark_accent;
                 let mut cursor = egui::CursorIcon::PointingHand;
-                let mut style_col = shared.config.colors.dark_accent;
-                style_col += Color::new(20, 20, 20, 0);
-                if shared
-                    .armature
-                    .is_in_style(shared.armature.bones[b].id, shared.ui.selected_style)
-                {
-                    style_col = shared.config.colors.text;
-                }
 
                 if shared.armature.is_bone_hidden(bone_id) {
                     selected_col = shared.config.colors.dark_accent;
@@ -230,13 +242,10 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 let width = ui.available_width();
 
-                let has_tex = shared.armature.bones[b].tex_set_idx != -1;
-
                 let id = Id::new(("bone", idx, 0));
                 let button = ui
                     .dnd_drag_source(id, idx, |ui| {
-                        let style_icon_width = if has_tex { 22. } else { 0. };
-                        ui.set_width(width - style_icon_width);
+                        ui.set_width(width);
 
                         let name = shared.armature.bones[b].name.to_string();
                         let mut text_col = shared.config.colors.text;
@@ -246,12 +255,13 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         }
                         egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
                             ui.horizontal(|ui| {
-                                ui.set_width(width - style_icon_width);
+                                ui.set_width(width);
                                 ui.set_height(21.);
                                 ui.add_space(5.);
                                 ui.label(egui::RichText::new(name).color(text_col));
 
-                                let pic = if has_tex { "🖻  " } else { "" };
+                                //let pic = if has_tex { "🖻  " } else { "" };
+                                let pic = "";
                                 let mut pic_col = shared.config.colors.dark_accent;
                                 pic_col += Color::new(40, 40, 40, 0);
                                 ui.label(egui::RichText::new(pic).color(pic_col))
@@ -261,28 +271,6 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     .response
                     .interact(Sense::click())
                     .on_hover_cursor(cursor);
-
-                if has_tex {
-                    let style_label = ui
-                        .label(egui::RichText::new("👕").color(style_col))
-                        .on_hover_cursor(egui::CursorIcon::PointingHand);
-                    if style_label.clicked() && shared.ui.selected_style != -1 {
-                        let style = &mut shared.armature.styles[shared.ui.selected_style as usize];
-                        let bone_idx = style
-                            .bones
-                            .iter()
-                            .position(|bone| bone.id == shared.armature.bones[b].id);
-                        if bone_idx != None {
-                            style.bones.remove(bone_idx.unwrap());
-                        } else {
-                            style.bones.push(StyleBone {
-                                id: shared.armature.bones[b].id,
-                                set_idx: shared.armature.bones[b].tex_set_idx,
-                                ..Default::default()
-                            })
-                        }
-                    }
-                }
 
                 if button.contains_pointer() {
                     is_hovering = true;
@@ -343,11 +331,11 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
     }
 }
 
-fn bone_label(
+pub fn bone_label(
     icon: &str,
     ui: &mut egui::Ui,
+    id: String,
     shared: &Shared,
-    bone_idx: usize,
     offset: Vec2,
 ) -> egui::Response {
     let rect = ui.painter().text(
@@ -357,7 +345,6 @@ fn bone_label(
         egui::FontId::default(),
         shared.config.colors.text.into(),
     );
-    let id = icon.to_string() + &shared.armature.bones[bone_idx].id.to_string();
     ui.interact(rect, id.into(), egui::Sense::CLICK)
         .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
@@ -391,13 +378,13 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         ui.painter().vline(rect.left(), rect.y_range(), stroke);
     };
 
-    let dp = drag.dnd_release_payload::<i32>();
-    if dp == None {
+    let dp = if let Some(dp) = drag.dnd_release_payload::<i32>() {
+        *dp as usize
+    } else {
         return false;
-    }
-    let dragged_payload = *dp.unwrap() as usize;
+    };
 
-    let dragged_id = shared.armature.bones[dragged_payload as usize].id;
+    let dragged_id = shared.armature.bones[dp].id;
 
     let selected_id = shared.selected_bone_id();
 
@@ -406,7 +393,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     get_all_children(
         &shared.armature.bones,
         &mut children,
-        &shared.armature.bones[dragged_payload as usize],
+        &shared.armature.bones[dp],
     );
     for c in children {
         if shared.armature.bones[idx as usize].id == c.id {
@@ -422,9 +409,9 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
 
     let old_parents = shared
         .armature
-        .get_all_parents(shared.armature.bones[dragged_payload].id);
+        .get_all_parents(shared.armature.bones[dp].id);
 
-    drag_bone(shared, is_above, dragged_payload, idx);
+    drag_bone(shared, is_above, dp, idx);
 
     if shared.selected_bone() != None {
         shared.ui.selected_bone_idx = shared.armature.find_bone_idx(selected_id).unwrap();
