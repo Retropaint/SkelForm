@@ -65,84 +65,56 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         }
     });
 
-    let set_name = if bone.tex_set_idx == -1 {
-        shared.loc("bone_panel.texture_set_none").to_string()
-    } else {
-        shared.armature.texture_sets[bone.tex_set_idx as usize]
-            .name
-            .to_string()
-    };
-
-    let mut selected_set = bone.tex_set_idx;
     ui.horizontal(|ui| {
-        ui.label(shared.loc("bone_panel.texture_set"));
+        ui.label(shared.loc("bone_panel.style"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            egui::ComboBox::new("mod", "")
-                .selected_text(set_name)
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(
-                        &mut selected_set,
-                        -1,
-                        shared.loc("bone_panel.texture_set_none"),
-                    );
-                    let sets = &shared.armature.texture_sets;
-                    for s in 0..sets.len() {
-                        if sets[s].textures.len() == 0 {
-                            continue;
-                        }
-                        ui.selectable_value(&mut selected_set, s as i32, sets[s].name.clone());
-                    }
-                    ui.selectable_value(
-                        &mut selected_set,
-                        -2,
-                        shared.loc("bone_panel.texture_set_setup"),
-                    );
-                })
-                .response;
+            if shared.armature.get_current_set(bone.id) != None {
+                if ui.skf_button("✏").clicked() {
+                    shared.ui.selected_tex_set_id =
+                        shared.armature.get_current_set(bone.id).unwrap().id;
+                    shared.open_style_modal();
+                }
+            } else {
+                if ui.skf_button("👕").clicked() {
+                    shared.ui.selected_tex_set_id = -1;
+                    shared.open_style_modal();
+                }
+            }
+
+            let name = if let Some(set) = shared.armature.get_current_set(bone.id) {
+                &set.name
+            } else {
+                &"None".to_string()
+            };
+
+            ui.label(name);
         });
     });
-    if selected_set == -2 {
-        shared.ui.selected_tex_set_idx = bone.tex_set_idx;
-        shared.ui.set_state(UiState::ImageModal, true);
-    } else if selected_set != bone.tex_set_idx {
-        let mut anim_id = shared.ui.anim.selected;
-        if !shared.ui.is_animating() {
-            anim_id = usize::MAX;
-        }
-        shared.armature.set_bone_tex(
-            bone.id,
-            bone.tex_idx as usize,
-            selected_set,
-            anim_id,
-            shared.ui.anim.selected_frame,
-        );
-        bone.tex_set_idx = selected_set;
-    }
 
-    if bone.tex_set_idx != -1 && !shared.armature.is_valid_tex(bone.id) {
-        shared.armature.set_bone_tex(
-            bone.id,
-            0,
-            selected_set,
-            shared.ui.anim.selected,
-            shared.ui.anim.selected_frame,
-        );
-        bone.tex_idx = 0;
-    }
+    let tex = shared.armature.get_current_tex(bone.id);
+    let set = shared.armature.get_current_set(bone.id);
 
-    if shared.armature.is_valid_tex(bone.id) {
-        let mut selected_tex = bone.tex_idx;
-        let tex_name = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-            [bone.tex_idx as usize]
-            .name;
-        let str_idx = bone.tex_idx.to_string() + ") ";
+    let tex_name_col = if tex != None {
+        shared.config.colors.text
+    } else {
+        shared.config.colors.light_accent + Color::new(60, 60, 60, 0)
+    };
+
+    let mut selected_tex = bone.tex_idx;
+    let tex_name = if tex != None {
+        &tex.unwrap().name
+    } else {
+        &"None".to_string()
+    };
+    let str_idx = bone.tex_idx.to_string() + ") ";
+    ui.add_enabled_ui(set != None, |ui| {
         ui.horizontal(|ui| {
             ui.label(shared.loc("bone_panel.texture_index"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 egui::ComboBox::new("tex_selector", "")
-                    .selected_text(str_idx + tex_name)
+                    .selected_text(egui::RichText::new(str_idx + tex_name).color(tex_name_col))
                     .show_ui(ui, |ui| {
-                        let set = &shared.armature.texture_sets[bone.tex_set_idx as usize];
+                        let set = &shared.armature.get_current_set(bone.id).unwrap();
                         for t in 0..set.textures.len() {
                             let str_idx = t.to_string() + ") ";
                             ui.selectable_value(
@@ -151,32 +123,23 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                                 str_idx + &set.textures[t].name.clone(),
                             );
                         }
-                        ui.selectable_value(
-                            &mut selected_tex,
-                            -2,
-                            shared.loc("bone_panel.texture_set_setup"),
-                        );
                     })
                     .response;
             });
         });
+    });
 
-        if selected_tex == -2 {
-            shared.ui.selected_tex_set_idx = bone.tex_set_idx;
-            shared.ui.set_state(UiState::ImageModal, true);
-        } else if selected_tex != bone.tex_idx {
-            let mut anim_id = shared.ui.anim.selected;
-            if !shared.ui.is_animating() {
-                anim_id = usize::MAX;
-            }
-            shared.armature.set_bone_tex(
-                bone.id,
-                selected_tex as usize,
-                selected_set,
-                anim_id,
-                shared.ui.anim.selected_frame,
-            );
+    if set != None && selected_tex != bone.tex_idx {
+        let mut anim_id = shared.ui.anim.selected;
+        if !shared.ui.is_animating() {
+            anim_id = usize::MAX;
         }
+        shared.armature.set_bone_tex(
+            bone.id,
+            selected_tex as usize,
+            anim_id,
+            shared.ui.anim.selected_frame,
+        );
     }
 
     let mut edited = false;
@@ -209,7 +172,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     // main macro to use for editable bone fields
     macro_rules! input {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr) => {
-            (edited, $float, _) = $ui.float_input($id.to_string(), shared, $float, $modifier);
+            (edited, $float, _) = $ui.float_input($id.to_string(), shared, $float, $modifier, None);
             check_input_edit!($float, $element, $ui, $label)
         };
     }
@@ -268,12 +231,6 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
-    // disabled: inverse kinematics (not ready)
-    // disabled: mesh deformation (not ready either)
-    if true {
-        return;
-    }
-
     let mut children = vec![];
     armature_window::get_all_children(&shared.armature.bones, &mut children, &bone);
     let parents = shared.armature.get_all_parents(bone.id);
@@ -285,7 +242,12 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         inverse_kinematics(ui, shared, &bone);
     }
 
-    if bone.vertices.len() == 0 || selected_set == -1 {
+    // disabled: mesh deformation (not ready either)
+    if true {
+        return;
+    }
+
+    if bone.vertices.len() == 0 {
         return;
     }
 
@@ -308,18 +270,37 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     !shared.selected_bone_mut().unwrap().ik_folded;
             }
 
-            if bone.joint_effector == JointEffector::Start {
-                let mut enabled = !bone.ik_disabled;
-                let str_desc = shared.loc("bone_panel.inverse_kinematics.enabled_desc");
-                let checkbox = ui
-                    .checkbox(&mut enabled, "".into_atoms())
-                    .on_hover_text(str_desc);
-                if checkbox.clicked() {
-                    let mut bones = vec![];
-                    armature_window::get_all_children(&shared.armature.bones, &mut bones, &bone);
-                    bones.push(bone.clone());
-                    for bone in bones {
-                        shared.armature.find_bone_mut(bone.id).unwrap().ik_disabled = !enabled;
+            if bone.joint_effector == JointEffector::None {
+                return;
+            }
+
+            let mut enabled = !bone.ik_disabled;
+            let str_desc = shared.loc("bone_panel.inverse_kinematics.enabled_desc");
+            let checkbox = ui
+                .checkbox(&mut enabled, "".into_atoms())
+                .on_hover_text(str_desc);
+            if checkbox.clicked() {
+                let mut bones = vec![];
+                armature_window::get_all_children(&shared.armature.bones, &mut bones, &bone);
+                bones.push(bone.clone());
+                for bone in bones {
+                    shared.armature.find_bone_mut(bone.id).unwrap().ik_disabled = !enabled;
+                }
+
+                if bone.joint_effector == JointEffector::Start {
+                    return;
+                }
+
+                // emable parents IK as well
+
+                let parents = shared.armature.get_all_parents(bone.id);
+                for parent in parents {
+                    if parent.joint_effector != JointEffector::None {
+                        shared
+                            .armature
+                            .find_bone_mut(parent.id)
+                            .unwrap()
+                            .ik_disabled = !enabled;
                     }
                 }
             }
@@ -433,7 +414,7 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             ui.label(shared.loc("bone_panel.inverse_kinematics.target"));
 
             if let Some(target) = shared.armature.find_bone(bone.ik_target_id) {
-                if ui.clickable_label(target.name.clone()).clicked() {
+                if ui.label(target.name.clone()).clicked() {
                     shared.ui.selected_bone_idx =
                         shared.armature.find_bone_idx(bone.ik_target_id).unwrap();
                 };
@@ -508,8 +489,10 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         }
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-                [bone.tex_idx as usize]
+            let tex_size = shared
+                .armature
+                .get_current_tex(bone.id)
+                .unwrap()
                 .size
                 .clone();
             let str_center = shared.loc("bone_panel.mesh_deformation.center");

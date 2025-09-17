@@ -91,8 +91,13 @@ fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         let str_ui_scale = shared.loc("settings_modal.user_interface.ui_scale");
         ui.label(str_ui_scale);
-        let (edited, value, _) =
-            ui.float_input("ui_scale".to_string(), shared, shared.config.ui_scale, 1.);
+        let (edited, value, _) = ui.float_input(
+            "ui_scale".to_string(),
+            shared,
+            shared.config.ui_scale,
+            1.,
+            None,
+        );
         if edited {
             shared.config.ui_scale = value;
         }
@@ -126,6 +131,7 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             shared,
             shared.config.gridline_gap as f32,
             1.,
+            None
         );
         if edited {
             shared.config.gridline_gap = value as i32;
@@ -176,6 +182,7 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             shared,
             shared.config.autosave_frequency as f32,
             1.,
+            None
         );
         if edited && value > 0. {
             shared.config.autosave_frequency = value as i32;

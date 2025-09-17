@@ -55,14 +55,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             };
         }
 
-        if !shared.armature.is_valid_tex(bone!().id) || bone!().vertices.len() != 0 {
+        let tex = shared.armature.get_current_tex(bone!().id);
+
+        if tex == None || bone!().vertices.len() != 0 {
             continue;
         }
 
-        let tex_size = shared.armature.texture_sets[bone!().tex_set_idx as usize].textures
-            [bone!().tex_idx as usize]
-            .size;
-        (bone!().vertices, bone!().indices) = create_tex_rect(&tex_size);
+        (bone!().vertices, bone!().indices) = create_tex_rect(&tex.unwrap().size);
     }
 
     // runtime: armature bones should be immutable to animations
@@ -156,17 +155,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // pre-draw bone setup
     for b in 0..temp_bones.len() {
-        if !shared.armature.is_valid_tex(temp_bones[b].id) {
+        let tex = shared.armature.get_current_tex(temp_bones[b].id);
+        if tex == None || shared.armature.is_bone_hidden(temp_bones[b].id) {
             continue;
         }
 
-        if shared.armature.is_bone_hidden(temp_bones[b].id) {
-            continue;
-        }
-
-        let tex_size = shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize].textures
-            [temp_bones[b].tex_idx as usize]
-            .size;
+        let tex_size = tex.unwrap().size;
         for v in 0..temp_bones[b].vertices.len() {
             let mut new_vert = con_vert!(
                 raw_to_world_vert,
@@ -201,9 +195,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
                 let pixel_pos: Vec2;
 
-                let img = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize]
-                    .textures[temp_bones[b].tex_idx as usize]
-                    .image;
+                let img = &tex.unwrap().image;
                 pixel_pos = Vec2::new(
                     (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
@@ -217,8 +209,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     });
                 }
 
-                let pixel_alpha = shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize]
-                    .textures[temp_bones[b].tex_idx as usize]
+                let pixel_alpha = tex
+                    .unwrap()
                     .image
                     .get_pixel(pixel_pos.x as u32, pixel_pos.y as u32)
                     .0[3];
@@ -235,7 +227,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             // this is because most textured bones are meant to represent their parents
             let parents = shared.armature.get_all_parents(temp_bones[b].id);
             for parent in &parents {
-                if parent.tex_set_idx == -1 {
+                if shared.armature.get_current_tex(parent.id) != None {
                     click_on_hover_id = parent.id;
                     break;
                 }
@@ -281,7 +273,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     temp_bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
     for bone in &mut temp_bones {
-        if !shared.armature.is_valid_tex(bone.id) || shared.armature.is_bone_hidden(bone.id) {
+        let tex = shared.armature.get_current_tex(bone.id);
+        if tex == None || shared.armature.is_bone_hidden(bone.id) {
             continue;
         }
 
@@ -289,9 +282,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
 
-        let bind_group = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-            [bone.tex_idx as usize]
-            .bind_group;
+        let bind_group = &tex.unwrap().bind_group;
         draw(
             &bind_group,
             &bone.world_verts,
@@ -348,9 +339,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             .iter_mut()
             .find(|bone| bone.id == shared.selected_bone().unwrap().id)
             .unwrap();
-        let bind_group = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-            [bone.tex_idx as usize]
-            .bind_group;
+        let bind_group = &shared.armature.get_current_tex(bone.id).unwrap().bind_group;
         draw(
             &bind_group,
             &bone.world_verts,
@@ -536,17 +525,18 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
     let zoom = 1000.;
 
     for b in 0..temp_bones.len() {
-        if !shared.armature.is_valid_tex(temp_bones[b].id) {
+        if shared.armature.get_current_tex(temp_bones[b].id) == None {
             continue;
         }
-        let set = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize];
-        if shared.armature.is_bone_hidden(temp_bones[b].id)
-            || temp_bones[b].tex_idx > set.textures.len() as i32 - 1
+        let set = shared.armature.get_current_set(temp_bones[b].id);
+        if set == None
+            || temp_bones[b].tex_idx > set.unwrap().textures.len() as i32 - 1
+            || shared.armature.is_bone_hidden(temp_bones[b].id)
         {
             continue;
         }
 
-        let tex_size = set.textures[temp_bones[b].tex_idx as usize].size;
+        let tex_size = set.unwrap().textures[temp_bones[b].tex_idx as usize].size;
         for v in 0..temp_bones[b].vertices.len() {
             let mut new_vert = con_vert!(
                 raw_to_world_vert,
@@ -561,8 +551,10 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
             temp_bones[b].world_verts.push(new_vert);
         }
 
-        let bind_group = &shared.armature.texture_sets[temp_bones[b].tex_set_idx as usize].textures
-            [temp_bones[b].tex_idx as usize]
+        let bind_group = &shared
+            .armature
+            .get_current_tex(temp_bones[b].id)
+            .unwrap()
             .bind_group;
         draw(
             bind_group,
@@ -986,9 +978,7 @@ pub fn vert_lines(
                 shared.dragging_verts.push(i0 as usize);
                 shared.dragging_verts.push(i1 as usize);
             } else if shared.input.left_clicked && !added_vert {
-                let img = &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-                    [bone.tex_idx as usize]
-                    .image;
+                let img = &shared.armature.get_current_tex(bone.id).unwrap().image;
                 let pos = Vec2::new(
                     (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
                     -(uv.y * img.height() as f32).min(img.height() as f32 - 1.),
@@ -1068,9 +1058,7 @@ fn draw_line(
 }
 
 pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
-    let tex_size = shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-        [bone.tex_idx as usize]
-        .size;
+    let tex_size = shared.armature.get_current_tex(bone.id).unwrap().size;
     // when moving a vertex, it must be interpreted in world coords first to align the with the mouse
     let mut world_vert = con_vert!(
         raw_to_world_vert,

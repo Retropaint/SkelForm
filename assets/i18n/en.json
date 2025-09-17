@@ -54,30 +54,35 @@
       "config_folder": "Config Folder"
     }
   },
-  "texture_modal": {
-    "heading": "Texture Sets",
-    "heading_desc": "Texture sets allow hotswapping of textures to create multiple outfits/skins.\n\nKeep texture order in mind to ensure that the correct textures are used across skins.",
+  "styles_modal": {
+    "heading": "Styles",
+    "heading_desc": "Styles allow hotswapping of textures to create multiple outfits/skins.\n\nKeep texture order in mind to ensure that the correct textures are used across styles.",
     "texture_preview": "Texture Preview",
-    "set_preview": "Set Preview",
-    "set_preview_empty": "No textures in this set.\n\nClick to select and add to it.",
-    "sets": "Sets",
+    "style_preview": "Style Preview",
+    "style_preview_empty": "No textures in this style.\n\nClick to select and add to it.",
+    "sets": "Styles",
     "textures": "Textures",
-    "new_set": "New Set",
+    "texture_desc": "Drag to a bone to set this as it's texture, or above/below another texture to change order",
+    "new_style": "New Style",
     "import": "Import",
     "img_name": "Name: ",
-    "img_size": "Size: "
+    "img_size": "Size: ",
+    "active_desc": "Should this style be active?",
+    "assigned_bones": "Assigned Bones",
+    "assigned_bones_desc": "Click on bones in the list to assign/unassign them from using this style.\n\nAssigned bones will use this style's textures based on the bone's texture index.\n\nStyles above this one take priority over a bone's textures if the bone is assigned to them.",
+    "assigned_bones_tex_idx_desc": "Texture index for "
   },
   "armature_panel": {
     "heading": "Armature",
     "new_bone_button": "New Bone",
     "new_bone_name": "New Bone",
     "styles": "👕 Styles",
-    "styles_desc": "Create a style, then assign bones to it (with 👕 icon) to change their texture sets when active.\n\nStyles with distinct bones can be active simultaneously. Otherwise, selected styles will deactivate those with overlapping bones."
+    "styles_desc": "Create a style, add textures, then assign bones to use it. Click on styles in the dropdown to toggle them.\n\nBones use textures based on their index. To change it, select a bone > 'Tex Index'.\n\nMultiple styles can be active at once. Bones assinged to multiple active styles will use the top-most first."
   },
   "bone_panel": {
     "heading": "Bone",
     "name": "Name:",
-    "texture_set": "Tex. Set:",
+    "style": "Style:",
     "texture_index": "Tex. Index:",
     "texture_set_none": "None",
     "texture_set_setup": "[Setup]",
@@ -87,8 +92,8 @@
     "zindex": "Z-Index:",
     "inverse_kinematics": {
       "heading": "Inverse Kinematics ",
-      "desc": "Automatically adjust and bend bones to reach a specified target.\nBest used for joints like shoulders and legs.",
-      "enabled_desc": "Should inverse kinematics be running?\n\nUntick this to allow setting up joint positions and rotations.",
+      "desc": "Automatically adjust and bend bones to reach a specified target.\nBest used for joints like shoulders and legs.\n\nAfter the joints have been set up, click the checkbox next to this header to activate IK.",
+      "enabled_desc": "Should inverse kinematics be running for this set of joints?\n\nUntick this to allow setting up joint positions and rotations.",
       "effector": "Effector: ",
       "effector_desc": "Start: used as base, will only rotate and stay in place\n\nMiddle: will rotate and move such that End matches Target\n\nEnd: all prior effectors will adjust such that this matches Target\n\nEvery Middle and End joint must be located towards it's parent's arrow.",
       "constraint": "Constraint:",
@@ -163,7 +168,7 @@
       "skip_startup_window": "Skip startup window",
       "clear_recent_files": "Clear recent files",
       "keep_bone_tex_idx": "Keep tex. index after moving ",
-      "keep_bone_tex_idx_desc": "After moving a texture in a texture set, all bones will automatically adjust their Tex. Index to match.\n\nTick this to preserve indexes after moving."
+      "keep_bone_tex_idx_desc": "After moving a texture in a style, all bones will automatically adjust their Tex. Index to match.\n\nTick this to preserve indexes after moving."
     }
   },
   "keyframe_editor": {

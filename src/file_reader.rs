@@ -70,14 +70,6 @@ pub fn read_image_loaders(
             return;
         }
 
-        // delete files if selected bone is invalid
-        if shared.armature.bones.len() == 0
-            || shared.ui.selected_bone_idx > shared.armature.bones.len() - 1
-        {
-            del_temp_files(&shared.temp_path.base);
-            return;
-        }
-
         let img_path = fs::read_to_string(shared.temp_path.img.clone()).unwrap();
         if img_path == "" {
             del_temp_files(&shared.temp_path.base);
@@ -117,14 +109,10 @@ pub fn read_image_loaders(
         return;
     }
 
-    shared.ui.set_state(UiState::ImageModal, false);
-
     // check if this texture already exists
-    for set in &shared.armature.texture_sets {
-        for tex in &set.textures {
-            if image == tex.image {
-                return;
-            }
+    for tex in &shared.selected_set().unwrap().textures {
+        if image == tex.image {
+            return;
         }
     }
 
@@ -138,36 +126,6 @@ pub fn read_image_loaders(
         device,
         bind_group_layout,
         ctx,
-    );
-
-    let mut anim_id = shared.ui.anim.selected;
-    if !shared.ui.is_animating() {
-        anim_id = usize::MAX;
-        shared.undo_actions.push(Action {
-            action: ActionType::Bone,
-            id: shared.selected_bone().unwrap().id,
-            bones: vec![shared.selected_bone().unwrap().clone()],
-            ..Default::default()
-        });
-    } else {
-        shared.undo_actions.push(Action {
-            action: ActionType::Animation,
-            id: shared.selected_animation().unwrap().id,
-            animations: vec![shared.selected_animation().unwrap().clone()],
-            ..Default::default()
-        });
-    }
-
-    let tex_idx = shared.armature.texture_sets[shared.ui.selected_tex_set_idx as usize]
-        .textures
-        .len()
-        - 1;
-    shared.armature.set_bone_tex(
-        shared.selected_bone().unwrap().id,
-        tex_idx,
-        shared.ui.selected_tex_set_idx,
-        anim_id,
-        shared.ui.anim.selected_frame,
     );
 }
 
@@ -184,7 +142,7 @@ pub fn read_psd(
 
     // reset armature (but not all of it) to make way for the psd rig
     shared.armature.bones = vec![];
-    shared.armature.texture_sets = vec![];
+    shared.armature.styles = vec![];
 
     // collect group ids, to be used later
     let mut group_ids: Vec<u32> = vec![];
@@ -199,9 +157,13 @@ pub fn read_psd(
         }
     }
 
-    shared.armature.texture_sets.push(TextureSet {
+    shared.ui.selected_tex_set_id = 0;
+
+    shared.armature.styles.push(Style {
+        id: 0,
         name: "Default".to_string(),
         textures: vec![],
+        active: true,
     });
 
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
@@ -290,15 +252,21 @@ pub fn read_psd(
 
         // create texture bone
         let new_bone_id = shared.armature.new_bone(-1).0.id;
-        let tex_idx = shared.armature.texture_sets[0].textures.len() - 1;
+        let tex_idx = shared.armature.styles[0].textures.len() - 1;
+        let tex_name = shared.armature.styles[0].textures[tex_idx].name.clone();
+        shared
+            .armature
+            .find_bone_mut(new_bone_id)
+            .unwrap()
+            .style_idxs = vec![0];
         shared.armature.set_bone_tex(
             new_bone_id,
             tex_idx,
-            shared.ui.selected_tex_set_idx,
             shared.ui.anim.selected,
             shared.ui.anim.selected_frame,
         );
         let new_bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
+        new_bone.name = tex_name;
 
         // layers start from top-left, so push bone down and right to reflect that
         new_bone.pos = Vec2::new(dims.x / 2., -dims.y / 2.);
@@ -378,7 +346,11 @@ pub fn add_texture(
         bind_group_layout,
     );
 
-    armature.texture_sets[ui.selected_tex_set_idx as usize]
+    armature
+        .styles
+        .iter_mut()
+        .find(|set| set.id == ui.selected_tex_set_id)
+        .unwrap()
         .textures
         .push(crate::Texture {
             offset: Vec2::ZERO,
