@@ -862,11 +862,19 @@ pub struct Bone {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
+pub struct EditorStyle {
+    #[serde(default)]
+    pub active: bool,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Default)]
 pub struct EditorOptions {
     #[serde(default)]
     pub camera: Camera,
     #[serde(default)]
     pub bones: Vec<EditorBone>,
+    #[serde(default)]
+    pub styles: Vec<EditorStyle>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
@@ -1441,7 +1449,7 @@ pub struct Style {
     pub id: i32,
     #[serde(default, rename = "_name")]
     pub name: String,
-    #[serde(default)]
+    #[serde(skip)]
     pub active: bool,
     #[serde(default)]
     pub textures: Vec<Texture>,
@@ -1461,7 +1469,7 @@ impl Vec2I {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 pub struct Texture {
-    #[serde(default, rename="_name")]
+    #[serde(default, rename = "_name")]
     pub name: String,
 
     #[serde(skip)]
