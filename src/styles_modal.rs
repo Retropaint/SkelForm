@@ -455,9 +455,22 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             let pointer = ui.input(|i| i.pointer.interact_pos());
+            let hovered_payload = button.dnd_hover_payload::<i32>();
             let dragged_payload = button.dnd_release_payload::<i32>();
 
-            if pointer == None || dragged_payload == None {
+            if pointer == None || hovered_payload == None {
+                return;
+            }
+
+            let rect = button.rect;
+            let stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
+
+            ui.painter().hline(rect.x_range(), rect.top(), stroke);
+            ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
+            ui.painter().vline(rect.right(), rect.y_range(), stroke);
+            ui.painter().vline(rect.left(), rect.y_range(), stroke);
+
+            if dragged_payload == None {
                 return;
             }
 
