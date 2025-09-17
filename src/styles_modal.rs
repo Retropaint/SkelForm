@@ -42,9 +42,10 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                 let frame = egui::Frame::default().inner_margin(5.);
                 let modal_width = ui.max_rect().width();
                 let height = ui.available_height();
+                let smaller = 25.;
                 ui.vertical(|ui| {
                     ui.set_height(height);
-                    ui.set_width((modal_width / frame_count) - frame_padding);
+                    ui.set_width((modal_width / frame_count) - frame_padding - smaller);
 
                     ui.horizontal(|ui| {
                         if shared.ui.hovering_tex != -1 {
@@ -186,8 +187,9 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                     set_idx = idx;
                 }
                 let is_selected = set_idx == shared.ui.hovering_set as usize;
+                let smaller = 25.;
                 ui.vertical(|ui| {
-                    ui.set_width((modal_width / frame_count) - frame_padding);
+                    ui.set_width((modal_width / frame_count) - frame_padding - smaller);
                     ui.set_height(height);
 
                     ui.horizontal(|ui| {
@@ -288,7 +290,8 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                 .inner_margin(6.)
                 .show(ui, |ui| {
                     let padding = Vec2::new(20., 33.);
-                    ui.set_width((modal_width / 3.) - padding.x);
+                    let extra = 50.;
+                    ui.set_width((modal_width / 3.) - padding.x + extra);
                     ui.set_height(height - padding.y);
 
                     if shared.ui.selected_tex_set_id == -1 {
@@ -304,7 +307,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                         return;
                     }
 
-                    egui::ScrollArea::vertical().show(ui, |ui| {
+                    egui::ScrollArea::both().show(ui, |ui| {
                         draw_bone_buttons(ui, shared);
                     });
                 })
