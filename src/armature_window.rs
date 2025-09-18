@@ -69,7 +69,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                             for s in 0..shared.armature.styles.len() {
                                 ui.set_width(80.);
                                 let tick = if shared.armature.styles[s].active {
-                                    " ✅"
+                                    " 👁"
                                 } else {
                                     ""
                                 };
