@@ -81,19 +81,21 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                 .show_ui(ui, |ui| {
                     let mut selected_value = -1;
                     for s in 0..shared.armature.styles.len() {
-                        ui.horizontal(|ui| {
-                            ui.selectable_value(
-                                &mut selected_value,
-                                s as i32,
-                                shared.armature.styles[s].name.to_string(),
+                        let label = ui.selectable_value(
+                            &mut selected_value,
+                            s as i32,
+                            shared.armature.styles[s].name.to_string(),
+                        );
+
+                        if bone.style_idxs.contains(&(s as i32)) {
+                            ui.painter().text(
+                                label.rect.right_center(),
+                                egui::Align2::RIGHT_CENTER,
+                                "✅",
+                                egui::FontId::default(),
+                                shared.config.colors.text.into(),
                             );
-                            if bone.style_idxs.contains(&(s as i32)) {
-                                ui.with_layout(
-                                    egui::Layout::right_to_left(egui::Align::Center),
-                                    |ui| ui.label("✅"),
-                                );
-                            }
-                        });
+                        }
                     }
                     ui.selectable_value(
                         &mut selected_value,
