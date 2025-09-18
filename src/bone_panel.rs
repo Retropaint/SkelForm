@@ -67,7 +67,58 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
 
     ui.horizontal(|ui| {
         ui.label(shared.loc("bone_panel.style"));
+
+        let name = if let Some(set) = shared.armature.get_current_set(bone.id) {
+            set.name.clone()
+        } else {
+            "None".to_string()
+        };
+
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            egui::ComboBox::new("bone_style_drop", "")
+                .selected_text(name.clone())
+                .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
+                .show_ui(ui, |ui| {
+                    let mut selected_value = -1;
+                    for s in 0..shared.armature.styles.len() {
+                        ui.horizontal(|ui| {
+                            ui.selectable_value(
+                                &mut selected_value,
+                                s as i32,
+                                shared.armature.styles[s].name.to_string(),
+                            );
+                            if bone.style_idxs.contains(&(s as i32)) {
+                                ui.with_layout(
+                                    egui::Layout::right_to_left(egui::Align::Center),
+                                    |ui| ui.label("✅"),
+                                );
+                            }
+                        });
+                    }
+                    ui.selectable_value(
+                        &mut selected_value,
+                        -2,
+                        shared.loc("bone_panel.texture_set_setup"),
+                    );
+
+                    if selected_value == -2 {
+                        shared.open_style_modal();
+                        ui.close();
+                    } else if selected_value != -1 {
+                        let styles =
+                            &mut shared.armature.find_bone_mut(bone.id).unwrap().style_idxs;
+                        if styles.contains(&selected_value) {
+                            let idx = styles
+                                .iter()
+                                .position(|style| *style == selected_value)
+                                .unwrap();
+                            styles.remove(idx);
+                        } else {
+                            styles.push(selected_value);
+                        }
+                    }
+                });
+            return;
             if shared.armature.get_current_set(bone.id) != None {
                 if ui.skf_button("✏").clicked() {
                     shared.ui.selected_tex_set_id =
@@ -80,12 +131,6 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                     shared.open_style_modal();
                 }
             }
-
-            let name = if let Some(set) = shared.armature.get_current_set(bone.id) {
-                &set.name
-            } else {
-                &"None".to_string()
-            };
 
             ui.label(name);
         });
