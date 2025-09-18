@@ -453,7 +453,12 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                         let name = set.textures[t].name.clone().to_string();
                         ui.selectable_value(&mut tex_idx, t as i32, str_idx + &name);
                     }
-                    bone!().tex_idx = tex_idx;
+                    shared.armature.set_bone_tex(
+                        bone!().id,
+                        tex_idx as usize,
+                        shared.ui.anim.selected,
+                        shared.ui.anim.selected_frame,
+                    );
                 });
             });
 
