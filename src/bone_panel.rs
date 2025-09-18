@@ -120,21 +120,6 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                         }
                     }
                 });
-            return;
-            if shared.armature.get_current_set(bone.id) != None {
-                if ui.skf_button("✏").clicked() {
-                    shared.ui.selected_tex_set_id =
-                        shared.armature.get_current_set(bone.id).unwrap().id;
-                    shared.open_style_modal();
-                }
-            } else {
-                if ui.skf_button("👕").clicked() {
-                    shared.ui.selected_tex_set_id = -1;
-                    shared.open_style_modal();
-                }
-            }
-
-            ui.label(name);
         });
     });
 
