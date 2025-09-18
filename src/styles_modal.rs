@@ -492,7 +492,13 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
             if !bone.style_idxs.contains(&shared.ui.selected_tex_set_id) {
                 bone.style_idxs.push(shared.ui.selected_tex_set_id);
             }
-            bone.tex_idx = *dragged_payload.unwrap();
+            let id = bone.id;
+            shared.armature.set_bone_tex(
+                id,
+                *dragged_payload.unwrap() as usize,
+                shared.ui.anim.selected,
+                shared.ui.anim.selected_frame,
+            );
         });
     }
     if !hovered {
