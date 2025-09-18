@@ -82,7 +82,7 @@
   "bone_panel": {
     "heading": "Bone",
     "name": "Name:",
-    "style": "Style:",
+    "style": "Styles:",
     "texture_index": "Tex. Index:",
     "texture_set_none": "None",
     "texture_set_setup": "[Setup]",
