@@ -121,7 +121,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                                 egui::CursorIcon::Default
                             };
                             let width = ui.available_width();
-                            let checkbox_width = 26.;
+                            let checkbox_width = 28.;
                             ui.horizontal(|ui| {
                                 let button = egui::Frame::new()
                                     .fill(col.into())
@@ -150,14 +150,36 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                                     }
                                     shared.ui.selected_tex_set_id = set!().id;
                                 }
-                                let checkbox = ui
-                                    .checkbox(
-                                        &mut shared.armature.styles[s].active,
-                                        "".into_atoms(),
+                                let str_style_active_desc = shared.loc("styles_modal.active_desc");
+                                let visible_checkbox = ui
+                                    .allocate_rect(
+                                        egui::Rect::from_min_size(
+                                            ui.cursor().left_top(),
+                                            [20., 20.].into(),
+                                        ),
+                                        egui::Sense::click(),
                                     )
                                     .on_hover_cursor(egui::CursorIcon::PointingHand)
-                                    .on_hover_text(shared.loc("styles_modal.active_desc"));
-                                if checkbox.clicked() {
+                                    .on_hover_text(str_style_active_desc);
+                                let mut visible_col = shared.config.colors.text;
+                                if visible_checkbox.contains_pointer() {
+                                    visible_col += Color::new(60, 60, 60, 0);
+                                }
+                                let visible = if shared.armature.styles[s].active {
+                                    "👁"
+                                } else {
+                                    "---"
+                                };
+                                ui.painter().text(
+                                    visible_checkbox.rect.left_top(),
+                                    egui::Align2::LEFT_TOP,
+                                    visible,
+                                    egui::FontId::new(20., egui::FontFamily::default()),
+                                    visible_col.into(),
+                                );
+                                if visible_checkbox.clicked() {
+                                    shared.armature.styles[s].active =
+                                        !shared.armature.styles[s].active;
                                     for b in 0..shared.armature.bones.len() {
                                         if shared.armature.bones[b].style_idxs.contains(&(s as i32))
                                         {
