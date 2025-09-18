@@ -359,7 +359,8 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                 armature_window::hor_line(11., ui, shared);
             } else {
                 let bone_id = bone!().id;
-                let is_folded = *folded!().get(&bone_id).unwrap();
+                let fold_err = "Please use `shared.open_style_modal()` to populate the shared.styles_folded_bones array.";
+                let is_folded = *folded!().get(&bone_id).expect(fold_err);
                 let fold_icon = if is_folded { "⏵" } else { "⏷" };
 
                 let id = "style_bone_fold".to_owned() + &b.to_string();
