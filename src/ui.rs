@@ -581,12 +581,8 @@ impl EguiUi for egui::Ui {
             })
         }
 
-        let (edited, _, input) = self.text_input(
-            id,
-            shared,
-            (value * modifier).to_string(),
-            options,
-        );
+        let (edited, _, input) =
+            self.text_input(id, shared, (value * modifier).to_string(), options);
 
         if edited {
             shared.ui.rename_id = "".to_string();

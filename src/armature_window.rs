@@ -289,24 +289,17 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     }
                 };
 
+                let id = shared.armature.bones[b].id;
+
                 if button.secondary_clicked() {
-                    shared
-                        .ui
-                        .context_menu
-                        .show(ContextType::Bone, shared.armature.bones[b].id);
+                    shared.ui.context_menu.show(ContextType::Bone, id);
                 }
 
-                if shared
-                    .ui
-                    .context_menu
-                    .is(ContextType::Bone, shared.armature.bones[b].id)
-                {
+                if shared.ui.context_menu.is(ContextType::Bone, id) {
                     button.show_tooltip_ui(|ui| {
                         if ui.clickable_label("Delete").clicked() {
-                            shared.ui.open_polar_modal(
-                                PolarId::DeleteBone,
-                                "Are you sure to delete this bone?",
-                            );
+                            let str_del = shared.loc("polar.delete_bone").clone();
+                            shared.ui.open_polar_modal(PolarId::DeleteBone, &str_del);
                             shared.ui.context_menu.hide = true;
                         };
 
