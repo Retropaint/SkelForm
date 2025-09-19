@@ -131,7 +131,7 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             shared,
             shared.config.gridline_gap as f32,
             1.,
-            None
+            None,
         );
         if edited {
             shared.config.gridline_gap = value as i32;
@@ -182,7 +182,7 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             shared,
             shared.config.autosave_frequency as f32,
             1.,
-            None
+            None,
         );
         if edited && value > 0. {
             shared.config.autosave_frequency = value as i32;

@@ -1,8 +1,4 @@
-use crate::{
-    armature_window,
-    ui::EguiUi,
-    Action, ActionType, Config, PolarId, Shared, UiState,
-};
+use crate::{armature_window, ui::EguiUi, Action, ActionType, Config, PolarId, Shared, UiState};
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     ctx: &egui::Context,
@@ -144,8 +140,7 @@ pub fn modal(shared: &mut Shared, ctx: &egui::Context) {
 
 // top-right X label for modals
 pub fn modal_x<T: FnOnce()>(ui: &mut egui::Ui, offset: egui::Vec2, after_close: T) {
-    let x_rect =
-        egui::Rect::from_min_size(ui.min_rect().right_top() + offset, egui::Vec2::ZERO);
+    let x_rect = egui::Rect::from_min_size(ui.min_rect().right_top() + offset, egui::Vec2::ZERO);
     if ui
         .put(x_rect, egui::Label::new(egui::RichText::new("X").size(18.)))
         .on_hover_cursor(egui::CursorIcon::PointingHand)

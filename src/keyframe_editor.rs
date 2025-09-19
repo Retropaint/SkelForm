@@ -598,7 +598,8 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
             ui.label(shared.loc("keyframe_editor.fps"))
                 .on_hover_text(shared.loc("keyframe_editor.frames_per_second"));
-            let (edited, value, _) = ui.float_input("fps".to_string(), shared, fps as f32, 1., None);
+            let (edited, value, _) =
+                ui.float_input("fps".to_string(), shared, fps as f32, 1., None);
             if edited {
                 shared.selected_animation_mut().unwrap().fps = value as i32;
             }
