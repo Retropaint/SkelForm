@@ -12,7 +12,6 @@ use tween::Tweener;
 use wgpu::BindGroup;
 use winit::keyboard::KeyCode;
 
-use crate::ui::EguiUi;
 pub const ICON_INFO: &str = "ℹ";
 
 #[repr(C)]
