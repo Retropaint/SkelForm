@@ -202,92 +202,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                     });
                 });
 
-                let frame = egui::Frame::default().inner_margin(5.);
-                let mut set_idx: usize = usize::MAX;
-                let styles = &shared.armature.styles;
-                let tex_id = shared.ui.selected_tex_set_id;
-                if let Some(idx) = styles.iter().position(|set| set.id == tex_id) {
-                    set_idx = idx;
-                }
-                let is_selected = set_idx == shared.ui.hovering_set as usize;
-                let smaller = 25.;
-                ui.vertical(|ui| {
-                    ui.set_width((modal_width / frame_count) - frame_padding - smaller);
-                    ui.set_height(height);
-
-                    ui.horizontal(|ui| {
-                        if shared.ui.hovering_set != -1 && !is_selected {
-                            ui.label(shared.loc("styles_modal.style_preview"));
-                            return;
-                        }
-                        ui.label(shared.loc("styles_modal.textures"));
-
-                        // don't show import button if first created style is still being named
-                        let naming_first_style =
-                            shared.armature.styles.len() == 1 && shared.ui.rename_id == "tex_set 0";
-
-                        if naming_first_style
-                            || set_idx == usize::MAX
-                            || shared.ui.selected_tex_set_id == -1
-                            || !ui.skf_button(shared.loc("styles_modal.import")).clicked()
-                        {
-                            return;
-                        }
-                        #[cfg(not(target_arch = "wasm32"))]
-                        bone_panel::open_file_dialog(shared.temp_path.img.clone());
-                        #[cfg(target_arch = "wasm32")]
-                        crate::toggleElement(true, "image-dialog".to_string());
-                    });
-                    let size = ui.available_size();
-                    ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-                        ui.set_width(size.x);
-                        ui.set_height(size.y - 10.);
-
-                        if set_idx == usize::MAX {
-                            return;
-                        }
-
-                        if shared.ui.hovering_set == -1 || is_selected {
-                            if shared.ui.selected_tex_set_id != -1 {
-                                draw_tex_buttons(shared, ui);
-                            }
-                        } else {
-                            let is_empty = shared.armature.styles[shared.ui.hovering_set as usize]
-                                .textures
-                                .len()
-                                == 0;
-                            if is_empty {
-                                let str_empty = shared.loc("styles_modal.style_preview_empty");
-                                ui.label(str_empty);
-                            } else {
-                                let mut offset = Vec2::new(0., 0.);
-                                let mut row_height = 0.;
-                                for tex in &shared.armature.styles[shared.ui.hovering_set as usize]
-                                    .textures
-                                {
-                                    let size = resize_tex_img(tex.size, 50);
-
-                                    if offset.x + size.x > ui.available_width() {
-                                        offset.x = 0.;
-                                        offset.y += row_height;
-                                        row_height = 0.;
-                                    }
-
-                                    if size.y > row_height {
-                                        row_height = size.y;
-                                    }
-                                    let rect = egui::Rect::from_min_size(
-                                        ui.min_rect().left_top() + offset.into(),
-                                        size.into(),
-                                    );
-                                    egui::Image::new(tex.ui_img.as_ref().unwrap())
-                                        .paint_at(ui, rect);
-                                    offset.x += size.x;
-                                }
-                            }
-                        }
-                    });
-                });
+                draw_textures_list(ui, shared, modal_width, height, frame_padding);
 
                 draw_bones_list(ui, shared, modal_width, height);
             });
@@ -296,6 +211,98 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                 shared.ui.set_state(UiState::StylesModal, false);
             });
         });
+}
+
+pub fn draw_textures_list(
+    ui: &mut egui::Ui,
+    shared: &mut Shared,
+    modal_width: f32,
+    height: f32,
+    padding: f32,
+) {
+    let frame = egui::Frame::default().inner_margin(5.);
+    let mut set_idx: usize = usize::MAX;
+    let styles = &shared.armature.styles;
+    let tex_id = shared.ui.selected_tex_set_id;
+    if let Some(idx) = styles.iter().position(|set| set.id == tex_id) {
+        set_idx = idx;
+    }
+    let is_selected = set_idx == shared.ui.hovering_set as usize;
+    let smaller = 25.;
+    ui.vertical(|ui| {
+        ui.set_width((modal_width / 3.) - padding - smaller);
+        ui.set_height(height);
+
+        ui.horizontal(|ui| {
+            if shared.ui.hovering_set != -1 && !is_selected {
+                ui.label(shared.loc("styles_modal.style_preview"));
+                return;
+            }
+            ui.label(shared.loc("styles_modal.textures"));
+
+            // don't show import button if first created style is still being named
+            let naming_first_style =
+                shared.armature.styles.len() == 1 && shared.ui.rename_id == "tex_set 0";
+
+            if naming_first_style
+                || set_idx == usize::MAX
+                || shared.ui.selected_tex_set_id == -1
+                || !ui.skf_button(shared.loc("styles_modal.import")).clicked()
+            {
+                return;
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            bone_panel::open_file_dialog(shared.temp_path.img.clone());
+            #[cfg(target_arch = "wasm32")]
+            crate::toggleElement(true, "image-dialog".to_string());
+        });
+        let size = ui.available_size();
+        ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+            ui.set_width(size.x);
+            ui.set_height(size.y - 10.);
+
+            if set_idx == usize::MAX {
+                return;
+            }
+
+            if shared.ui.hovering_set == -1 || is_selected {
+                if shared.ui.selected_tex_set_id != -1 {
+                    draw_tex_buttons(shared, ui);
+                }
+            } else {
+                let is_empty = shared.armature.styles[shared.ui.hovering_set as usize]
+                    .textures
+                    .len()
+                    == 0;
+                if is_empty {
+                    let str_empty = shared.loc("styles_modal.style_preview_empty");
+                    ui.label(str_empty);
+                } else {
+                    let mut offset = Vec2::new(0., 0.);
+                    let mut row_height = 0.;
+                    for tex in &shared.armature.styles[shared.ui.hovering_set as usize].textures {
+                        let size = resize_tex_img(tex.size, 50);
+
+                        if offset.x + size.x > ui.available_width() {
+                            offset.x = 0.;
+                            offset.y += row_height;
+                            row_height = 0.;
+                        }
+
+                        if size.y > row_height {
+                            row_height = size.y;
+                        }
+                        let rect = egui::Rect::from_min_size(
+                            ui.min_rect().left_top() + offset.into(),
+                            size.into(),
+                        );
+                        egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
+                        offset.x += size.x;
+                    }
+                }
+            }
+        });
+    });
 }
 
 fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, height: f32) {
