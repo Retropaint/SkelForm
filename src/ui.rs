@@ -31,6 +31,7 @@ pub trait EguiUi {
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     shared.input.last_pressed = None;
+    shared.ui.context_menu.keep = false;
 
     context.input_mut(|i| {
         if shared.ui.rename_id == "" {
