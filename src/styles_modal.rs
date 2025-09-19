@@ -34,7 +34,6 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             ui.add_space(5.);
 
             let frame_padding = 10.;
-            let frame_count = 3.;
 
             let height = ui.available_height();
 
@@ -220,7 +219,9 @@ pub fn draw_textures_list(
     height: f32,
     padding: f32,
 ) {
-    let frame = egui::Frame::default().inner_margin(5.);
+    let frame = egui::Frame::default()
+        .inner_margin(5.)
+        .fill(egui::Color32::RED);
     let mut set_idx: usize = usize::MAX;
     let styles = &shared.armature.styles;
     let tex_id = shared.ui.selected_tex_set_id;
@@ -269,37 +270,39 @@ pub fn draw_textures_list(
                 if shared.ui.selected_tex_set_id != -1 {
                     draw_tex_buttons(shared, ui);
                 }
-            } else {
-                let is_empty = shared.armature.styles[shared.ui.hovering_set as usize]
-                    .textures
-                    .len()
-                    == 0;
-                if is_empty {
-                    let str_empty = shared.loc("styles_modal.style_preview_empty");
-                    ui.label(str_empty);
-                } else {
-                    let mut offset = Vec2::new(0., 0.);
-                    let mut row_height = 0.;
-                    for tex in &shared.armature.styles[shared.ui.hovering_set as usize].textures {
-                        let size = resize_tex_img(tex.size, 50);
+                return;
+            }
 
-                        if offset.x + size.x > ui.available_width() {
-                            offset.x = 0.;
-                            offset.y += row_height;
-                            row_height = 0.;
-                        }
+            let is_empty = shared.armature.styles[shared.ui.hovering_set as usize]
+                .textures
+                .len()
+                == 0;
+            if is_empty {
+                let str_empty = shared.loc("styles_modal.style_preview_empty");
+                ui.label(str_empty);
+                return;
+            }
 
-                        if size.y > row_height {
-                            row_height = size.y;
-                        }
-                        let rect = egui::Rect::from_min_size(
-                            ui.min_rect().left_top() + offset.into(),
-                            size.into(),
-                        );
-                        egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
-                        offset.x += size.x;
-                    }
+            let mut offset = Vec2::new(0., 0.);
+            let mut row_height = 0.;
+            for tex in &shared.armature.styles[shared.ui.hovering_set as usize].textures {
+                let size = resize_tex_img(tex.size, 50);
+
+                if offset.x + size.x > ui.available_width() {
+                    offset.x = 0.;
+                    offset.y += row_height;
+                    row_height = 0.;
                 }
+
+                if size.y > row_height {
+                    row_height = size.y;
+                }
+                let rect = egui::Rect::from_min_size(
+                    ui.min_rect().left_top() + offset.into(),
+                    size.into(),
+                );
+                egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
+                offset.x += size.x;
             }
         });
     });
