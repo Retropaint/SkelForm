@@ -347,6 +347,8 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
                 bone.id = highest_id;
                 if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
                     bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
+                } else {
+                    bone.parent_id = -1;
                 }
             }
             shared.armature.bones.append(&mut shared.copy_buffer.bones);

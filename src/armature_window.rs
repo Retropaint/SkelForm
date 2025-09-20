@@ -313,6 +313,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                             );
                             bones.insert(0, shared.armature.bones[b].clone());
                             shared.copy_buffer.bones = bones;
+                            shared.ui.context_menu.close();
                         }
 
                         if ui.ui_contains_pointer() {
