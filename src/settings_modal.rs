@@ -374,6 +374,8 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         key!(loc!("save"),            keys!().save,            colors.dark_accent);
         key!(loc!("open"),            keys!().open,            colors.main);
         key!(loc!("cancel"),          keys!().cancel,          colors.dark_accent);
+        key!(loc!("copy"),            keys!().copy,            colors.main);
+        key!(loc!("paste"),           keys!().paste,           colors.dark_accent);
     };
 }
 

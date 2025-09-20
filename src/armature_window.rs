@@ -303,6 +303,18 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                             shared.ui.context_menu.hide = true;
                         };
 
+                        if ui.clickable_label("Copy").clicked() {
+                            shared.copy_buffer = CopyBuffer::default();
+                            let mut bones = vec![];
+                            get_all_children(
+                                &shared.armature.bones,
+                                &mut bones,
+                                &shared.armature.bones[b],
+                            );
+                            bones.insert(0, shared.armature.bones[b].clone());
+                            shared.copy_buffer.bones = bones;
+                        }
+
                         if ui.ui_contains_pointer() {
                             shared.ui.context_menu.keep = true;
                         }
