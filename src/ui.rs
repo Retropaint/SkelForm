@@ -338,21 +338,36 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
                 highest_id = id.max(highest_id);
             }
             highest_id += 1;
+
+            let mut insert_idx = usize::MAX;
             let mut id_refs: HashMap<i32, i32> = HashMap::new();
+
             for b in 0..shared.copy_buffer.bones.len() {
                 let bone = &mut shared.copy_buffer.bones[b];
+
                 highest_id += 1;
                 let new_id = highest_id;
+
                 id_refs.insert(bone.id, new_id);
                 bone.id = highest_id;
+
                 if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
                     bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
+                } else if shared.ui.selected_bone_idx != usize::MAX {
+                    insert_idx = shared.ui.selected_bone_idx + 1;
+                    bone.parent_id = shared.armature.bones[shared.ui.selected_bone_idx].id;
                 } else {
                     bone.parent_id = -1;
                 }
             }
-            shared.armature.bones.append(&mut shared.copy_buffer.bones);
-            shared.copy_buffer.bones = vec![];
+            if insert_idx == usize::MAX {
+                shared.armature.bones.append(&mut shared.copy_buffer.bones);
+            } else {
+                for bone in &shared.copy_buffer.bones {
+                    shared.armature.bones.insert(insert_idx, bone.clone());
+                    insert_idx += 1;
+                }
+            }
         }
     }
 
