@@ -258,7 +258,7 @@ pub fn draw_textures_list(
         let size = ui.available_size();
         if shared.ui.selected_tex_set_id == -1 {
             let mut darker = shared.config.colors.dark_accent;
-            darker -= Color::new(100, 100, 100, 0);
+            darker -= Color::new(5, 5, 5, 0);
             egui::Frame::new()
                 .inner_margin(5.)
                 .fill(darker.into())
@@ -326,6 +326,21 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
             ui.label(str_heading.to_owned() + " " + ICON_INFO)
                 .on_hover_text(str_desc)
         });
+
+        if shared.ui.selected_tex_set_id == -1 {
+            let size = ui.available_size();
+            let mut darker = shared.config.colors.dark_accent;
+            darker -= Color::new(5, 5, 5, 0);
+            egui::Frame::new()
+                .inner_margin(5.)
+                .fill(darker.into())
+                .show(ui, |ui| {
+                    ui.set_width(size.x);
+                    ui.set_height(size.y - 10.);
+                });
+            return;
+        }
+
         let frame = egui::Frame::default();
         ui.dnd_drop_zone::<i32, _>(frame, |ui| {
             egui::Frame::new()
