@@ -255,7 +255,9 @@ pub fn draw_textures_list(
             #[cfg(target_arch = "wasm32")]
             crate::toggleElement(true, "image-dialog".to_string());
         });
+
         let size = ui.available_size();
+
         if shared.ui.selected_tex_set_id == -1 {
             let mut darker = shared.config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
@@ -268,52 +270,63 @@ pub fn draw_textures_list(
                 });
             return;
         }
+
         ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-            ui.set_width(size.x);
-            ui.set_height(size.y - 10.);
+            egui::Frame::new()
+                .fill(shared.config.colors.dark_accent.into())
+                .inner_margin(2.)
+                .show(ui, |ui| {
+                    let padding = Vec2::new(10., 15.);
+                    ui.set_width(size.x - padding.x);
+                    ui.set_height(size.y - padding.y);
 
-            if set_idx == usize::MAX {
-                return;
-            }
+                    if set_idx == usize::MAX {
+                        return;
+                    }
 
-            if shared.ui.hovering_set == -1 || is_selected {
-                if shared.ui.selected_tex_set_id != -1 {
-                    draw_tex_buttons(shared, ui);
-                }
-                return;
-            }
+                    if shared.ui.hovering_set == -1 || is_selected {
+                        if shared.ui.selected_tex_set_id != -1 {
+                            egui::ScrollArea::vertical()
+                                .id_salt("tex_list")
+                                .show(ui, |ui| {
+                                    draw_tex_buttons(shared, ui);
+                                });
+                        }
+                        return;
+                    }
 
-            let is_empty = shared.armature.styles[shared.ui.hovering_set as usize]
-                .textures
-                .len()
-                == 0;
-            if is_empty {
-                let str_empty = shared.loc("styles_modal.style_preview_empty");
-                ui.label(str_empty);
-                return;
-            }
+                    let is_empty = shared.armature.styles[shared.ui.hovering_set as usize]
+                        .textures
+                        .len()
+                        == 0;
+                    if is_empty {
+                        let str_empty = shared.loc("styles_modal.style_preview_empty");
+                        ui.label(str_empty);
+                        return;
+                    }
 
-            let mut offset = Vec2::new(0., 0.);
-            let mut row_height = 0.;
-            for tex in &shared.armature.styles[shared.ui.hovering_set as usize].textures {
-                let size = resize_tex_img(tex.size, 50);
+                    let mut offset = Vec2::new(0., 0.);
+                    let mut row_height = 0.;
+                    for tex in &shared.armature.styles[shared.ui.hovering_set as usize].textures {
+                        let size = resize_tex_img(tex.size, 50);
 
-                if offset.x + size.x > ui.available_width() {
-                    offset.x = 0.;
-                    offset.y += row_height;
-                    row_height = 0.;
-                }
+                        if offset.x + size.x > ui.available_width() {
+                            offset.x = 0.;
+                            offset.y += row_height;
+                            row_height = 0.;
+                        }
 
-                if size.y > row_height {
-                    row_height = size.y;
-                }
-                let rect = egui::Rect::from_min_size(
-                    ui.min_rect().left_top() + offset.into(),
-                    size.into(),
-                );
-                egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
-                offset.x += size.x;
-            }
+                        if size.y > row_height {
+                            row_height = size.y;
+                        }
+                        let rect = egui::Rect::from_min_size(
+                            ui.min_rect().left_top() + offset.into(),
+                            size.into(),
+                        );
+                        egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
+                        offset.x += size.x;
+                    }
+                });
         });
     });
 }
@@ -650,6 +663,8 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 shared.ui.hovering_tex = i as i32;
                 hovered = true;
             }
+
+            ui.add_space(10.);
 
             let rect = button.rect;
 
