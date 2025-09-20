@@ -279,10 +279,10 @@ impl std::ops::AddAssign for Color {
 
 impl std::ops::SubAssign for Color {
     fn sub_assign(&mut self, other: Color) {
-        self.r = 0.max(self.r - other.r);
-        self.g = 0.max(self.g - other.g);
-        self.b = 0.max(self.b - other.b);
-        self.a = 0.max(self.a - other.a);
+        self.r -= other.r.min(self.r);
+        self.g -= other.g.min(self.g);
+        self.b -= other.b.min(self.b);
+        self.a -= other.a.min(self.a);
     }
 }
 
