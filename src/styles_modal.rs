@@ -219,9 +219,7 @@ pub fn draw_textures_list(
     height: f32,
     padding: f32,
 ) {
-    let frame = egui::Frame::default()
-        .inner_margin(5.)
-        .fill(egui::Color32::RED);
+    let frame = egui::Frame::default().inner_margin(5.);
     let mut set_idx: usize = usize::MAX;
     let styles = &shared.armature.styles;
     let tex_id = shared.ui.selected_tex_set_id;
@@ -258,6 +256,18 @@ pub fn draw_textures_list(
             crate::toggleElement(true, "image-dialog".to_string());
         });
         let size = ui.available_size();
+        if shared.ui.selected_tex_set_id == -1 {
+            let mut darker = shared.config.colors.dark_accent;
+            darker -= Color::new(100, 100, 100, 0);
+            egui::Frame::new()
+                .inner_margin(5.)
+                .fill(darker.into())
+                .show(ui, |ui| {
+                    ui.set_width(size.x);
+                    ui.set_height(size.y - 10.);
+                });
+            return;
+        }
         ui.dnd_drop_zone::<i32, _>(frame, |ui| {
             ui.set_width(size.x);
             ui.set_height(size.y - 10.);

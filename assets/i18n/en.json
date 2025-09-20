@@ -158,7 +158,9 @@
       "redo": "Redo",
       "save": "Save",
       "open": "Open",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "copy": "Copy",
+      "paste": "Paste"
     },
     "miscellaneous": {
       "heading": "Miscellaneous",

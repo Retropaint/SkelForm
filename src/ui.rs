@@ -1,4 +1,6 @@
 //! Core user interface (UI) logic.
+use std::collections::HashMap;
+
 use egui::{Color32, Context, Shadow, Stroke};
 
 use crate::*;
@@ -325,6 +327,31 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         utils::open_import_dialog(shared.temp_path.import.clone());
         #[cfg(target_arch = "wasm32")]
         toggleElement(true, "file-dialog".to_string());
+    }
+
+    if input.consume_shortcut(&shared.config.keys.paste) {
+        if shared.copy_buffer.keyframes.len() > 0 {
+        } else if shared.copy_buffer.bones.len() > 0 {
+            let ids: Vec<i32> = shared.armature.bones.iter().map(|bone| bone.id).collect();
+            let mut highest_id = 0;
+            for id in ids {
+                highest_id = id.max(highest_id);
+            }
+            highest_id += 1;
+            let mut id_refs: HashMap<i32, i32> = HashMap::new();
+            for b in 0..shared.copy_buffer.bones.len() {
+                let bone = &mut shared.copy_buffer.bones[b];
+                highest_id += 1;
+                let new_id = highest_id;
+                id_refs.insert(bone.id, new_id);
+                bone.id = highest_id;
+                if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
+                    bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
+                }
+            }
+            shared.armature.bones.append(&mut shared.copy_buffer.bones);
+            shared.copy_buffer.bones = vec![];
+        }
     }
 
     if input.consume_shortcut(&shared.config.keys.cancel) {

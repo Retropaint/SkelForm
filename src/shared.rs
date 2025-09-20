@@ -687,6 +687,8 @@ pub struct KeyboardConfig {
     pub save: egui::KeyboardShortcut,
     pub open: egui::KeyboardShortcut,
     pub cancel: egui::KeyboardShortcut,
+    pub copy: egui::KeyboardShortcut,
+    pub paste: egui::KeyboardShortcut,
 }
 
 pub trait Display {
@@ -745,6 +747,8 @@ impl Default for KeyboardConfig {
             save: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S),
             open: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O),
             cancel: regular_key!(egui::Key::Escape),
+            copy: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::C),
+            paste: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::P),
         }
     }
 }
@@ -1769,6 +1773,7 @@ pub struct RenderedFrame {
 #[derive(Default)]
 pub struct CopyBuffer {
     pub keyframes: Vec<Keyframe>,
+    pub bones: Vec<Bone>,
 }
 
 #[derive(Default, Clone)]
