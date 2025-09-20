@@ -748,7 +748,7 @@ impl Default for KeyboardConfig {
             open: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O),
             cancel: regular_key!(egui::Key::Escape),
             copy: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::C),
-            paste: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::P),
+            paste: egui::KeyboardShortcut::new(egui::Modifiers::NONE, egui::Key::V),
         }
     }
 }
