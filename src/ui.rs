@@ -329,6 +329,22 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         toggleElement(true, "file-dialog".to_string());
     }
 
+    if input.consume_shortcut(&shared.config.keys.copy) {
+        // copy bone(s)
+        shared.copy_buffer = CopyBuffer::default();
+        let idx = shared.ui.selected_bone_idx;
+        if idx != usize::MAX {
+            let mut bones = vec![];
+            armature_window::get_all_children(
+                &shared.armature.bones,
+                &mut bones,
+                &shared.armature.bones[idx],
+            );
+            bones.insert(0, shared.armature.bones[idx].clone());
+            shared.copy_buffer.bones = bones;
+        }
+    }
+
     if input.consume_shortcut(&shared.config.keys.paste) {
         if shared.copy_buffer.keyframes.len() > 0 {
         } else if shared.copy_buffer.bones.len() > 0 {
