@@ -178,7 +178,7 @@ pub fn read_psd(
                     return false;
                 }
                 let parent_group = &psd.groups()[&layer.parent_id().unwrap()];
-                parent_group.name().contains(group.name())
+                parent_group.id() == group.id()
             })
             .unwrap();
 
