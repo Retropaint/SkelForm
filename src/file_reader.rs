@@ -174,7 +174,7 @@ pub fn read_psd(
         // flatten this group's layers, to form the final texture
         let pixels = psd
             .flatten_layers_rgba(&|(_d, layer)| {
-                if layer.parent_id() == None || layer.name().contains("$pivot") {
+                if layer.parent_id() == None || layer.name().contains("$") {
                     return false;
                 }
                 let parent_group = &psd.groups()[&layer.parent_id().unwrap()];
@@ -187,7 +187,7 @@ pub fn read_psd(
         let mut pos_tl = Vec2::new(f32::INFINITY, f32::INFINITY);
         for layer in psd.get_group_sub_layers(&group.id()).unwrap() {
             // ignore layers that aren't direct children of this group
-            if layer.parent_id().unwrap() != group.id() {
+            if layer.parent_id().unwrap() != group.id() || layer.name().contains("$") {
                 continue;
             }
 
@@ -265,6 +265,31 @@ pub fn read_psd(
             shared.ui.anim.selected,
             shared.ui.anim.selected_frame,
         );
+
+        for l in 0..psd.layers().len() {
+            let layer = &psd.layers()[l];
+            if layer.parent_id() != Some(group_ids[g]) || !layer.name().contains("$ik") {
+                continue;
+            }
+
+            let eff: JointEffector;
+            if layer.name().contains("start") {
+                eff = JointEffector::Start;
+            } else if layer.name().contains("middle") {
+                eff = JointEffector::Middle;
+            } else {
+                eff = JointEffector::End;
+            }
+
+            let bone;
+            if pivot_id != -1 {
+                bone = shared.armature.find_bone_mut(pivot_id).unwrap();
+            } else {
+                bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
+            }
+            bone.joint_effector = eff;
+        }
+
         let new_bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
         new_bone.name = tex_name;
 
