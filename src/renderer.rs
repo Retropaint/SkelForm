@@ -582,9 +582,7 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
         if length.x.is_nan() {
             length = Vec2::new(0., 0.);
         }
-        if b == 0 {
-            next_length = 0.;
-        } else {
+        if b != 0 {
             next_length = (bones[b].pos - bones[b - 1].pos).mag();
         }
         bones[b].pos = next_pos - length;
@@ -629,9 +627,7 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
         if length.x.is_nan() {
             length = Vec2::new(0., 0.);
         }
-        if b == bones.len() - 1 {
-            prev_length = 0.;
-        } else {
+        if b != bones.len() - 1 {
             prev_length = (bones[b].pos - bones[b + 1].pos).mag();
         }
 
