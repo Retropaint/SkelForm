@@ -785,7 +785,7 @@ pub fn forward_kinematics(bones: &mut Vec<Bone>, ik_rot: std::collections::HashM
         if ik_rot.get(&id) != None {
             if parent == None {
                 bones[i].rot = *ik_rot.get(&id).unwrap();
-            } else {
+            } else if bones[i].joint_effector != JointEffector::End {
                 bones[i].rot = *ik_rot.get(&id).unwrap() - parent.as_ref().unwrap().rot;
             }
         }
