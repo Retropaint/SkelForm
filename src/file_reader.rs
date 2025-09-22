@@ -254,11 +254,8 @@ pub fn read_psd(
         let new_bone_id = shared.armature.new_bone(-1).0.id;
         let tex_idx = shared.armature.styles[0].textures.len() - 1;
         let tex_name = shared.armature.styles[0].textures[tex_idx].name.clone();
-        shared
-            .armature
-            .find_bone_mut(new_bone_id)
-            .unwrap()
-            .style_idxs = vec![0];
+        let bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
+        bone.style_idxs = vec![0];
         shared.armature.set_bone_tex(
             new_bone_id,
             tex_idx,
@@ -272,22 +269,26 @@ pub fn read_psd(
                 continue;
             }
 
-            let eff: JointEffector;
-            if layer.name().contains("start") {
-                eff = JointEffector::Start;
-            } else if layer.name().contains("middle") {
-                eff = JointEffector::Middle;
-            } else {
-                eff = JointEffector::End;
-            }
-
             let bone;
             if pivot_id != -1 {
                 bone = shared.armature.find_bone_mut(pivot_id).unwrap();
             } else {
                 bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
             }
-            bone.joint_effector = eff;
+
+            if layer.name().contains("start") {
+                bone.joint_effector = JointEffector::Start;
+            } else if layer.name().contains("middle") {
+                bone.joint_effector = JointEffector::Middle;
+            } else if layer.name().contains("end") {
+                bone.joint_effector = JointEffector::End;
+            }
+
+            if layer.name().contains("counterclockwise") {
+                bone.constraint = JointConstraint::CounterClockwise;
+            } else if layer.name().contains("clockwise") {
+                bone.constraint = JointConstraint::Clockwise;
+            }
         }
 
         let new_bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
