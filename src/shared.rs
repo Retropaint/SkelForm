@@ -830,6 +830,8 @@ pub struct Bone {
     pub style_idxs: Vec<i32>,
     #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
     pub tex_idx: i32,
+    #[serde(default, skip_serializing_if = "is_neg_one")]
+    pub zindex: i32,
 
     #[serde(default)]
     pub pos: Vec2,
@@ -837,8 +839,7 @@ pub struct Bone {
     pub scale: Vec2,
     #[serde(default)]
     pub rot: f32,
-    #[serde(default, skip_serializing_if = "is_neg_one")]
-    pub zindex: i32,
+
     #[serde(default, skip_serializing_if = "is_not_joint")]
     pub joint_effector: JointEffector,
     #[serde(default, skip_serializing_if = "no_constraint")]
