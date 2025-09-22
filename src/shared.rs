@@ -820,15 +820,15 @@ pub struct Bone {
 
     #[serde(skip)]
     pub id: i32,
-    #[serde(default)]
+    #[serde(default, rename = "_name")]
     pub name: String,
     #[serde(skip)]
     pub parent_id: i32,
-    #[serde(default)]
-    pub parent_idx: i32,
-    #[serde(default)]
-    pub style_idxs: Vec<i32>,
     #[serde(default = "default_neg_one")]
+    pub parent_idx: i32,
+    #[serde(default, skip_serializing_if = "are_styles_empty")]
+    pub style_idxs: Vec<i32>,
+    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
     pub tex_idx: i32,
 
     #[serde(default)]
@@ -837,7 +837,7 @@ pub struct Bone {
     pub scale: Vec2,
     #[serde(default)]
     pub rot: f32,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_neg_one")]
     pub zindex: i32,
     #[serde(default, skip_serializing_if = "is_not_joint")]
     pub joint_effector: JointEffector,
@@ -2073,6 +2073,14 @@ fn are_indices_empty<T: std::cmp::PartialEq<Vec<u32>>>(value: &T) -> bool {
 
 fn are_anims_empty(value: &Vec<Animation>) -> bool {
     *value == vec![]
+}
+
+fn are_styles_empty(value: &Vec<i32>) -> bool {
+    value.len() == 0
+}
+
+fn is_zero(value: &i32) -> bool {
+    *value == 0
 }
 
 #[cfg(not(target_arch = "wasm32"))]

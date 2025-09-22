@@ -277,6 +277,12 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
                 armature_copy.bones[b]
             };
         }
+
+        if bone!().style_idxs.len() == 0 {
+            bone!().tex_idx = -1;
+            bone!().zindex = -1;
+        }
+
         if bone!().parent_id == -1 {
             bone!().parent_idx = -1;
             continue;
