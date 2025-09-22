@@ -431,13 +431,9 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     .cloned()
                     .collect();
                 for joint in joints {
-                    shared
-                        .armature
-                        .bones
-                        .iter_mut()
-                        .find(|bone| bone.id == joint.id)
-                        .unwrap()
-                        .constraint = shared.selected_bone().unwrap().constraint;
+                    let constraint = shared.selected_bone().unwrap().constraint;
+                    let bones = &mut shared.armature.bones.iter_mut();
+                    bones.find(|bone| bone.id == joint.id).unwrap().constraint = constraint;
                 }
             });
         });

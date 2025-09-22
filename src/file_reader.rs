@@ -341,6 +341,28 @@ pub fn read_psd(
         }
     }
 
+    // populate child IK joint constraints
+    for b in 0..shared.armature.bones.len() {
+        if shared.armature.bones[b].joint_effector != JointEffector::Start {
+            continue;
+        }
+
+        let mut children = vec![];
+        armature_window::get_all_children(
+            &shared.armature.bones,
+            &mut children,
+            &shared.armature.bones[b],
+        );
+
+        children.retain(|bone| bone.joint_effector != JointEffector::None);
+
+        for child in &children {
+            let constraint = shared.armature.bones[b].constraint;
+            let bones = &mut shared.armature.bones.iter_mut();
+            bones.find(|bone| bone.id == child.id).unwrap().constraint = constraint;
+        }
+    }
+
     let str_psd = shared.loc("psd_imported");
     shared.ui.open_modal(str_psd.to_string(), false);
     shared.ui.set_state(UiState::StartupWindow, false);
