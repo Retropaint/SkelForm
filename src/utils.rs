@@ -294,6 +294,8 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
             .unwrap() as i32;
     }
 
+    armature_copy.ik_families = vec![];
+
     // populate ik families
     for b in 0..armature_copy.bones.len() {
         if armature_copy.bones[b].joint_effector != JointEffector::Start {
@@ -315,14 +317,18 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
 
         let mut bone_idxs: Vec<i32> = vec![];
         for joint in &joints {
-            let idx = armature_copy.bones.iter().position(|bone| bone.id == joint.id).unwrap();
+            let idx = armature_copy
+                .bones
+                .iter()
+                .position(|bone| bone.id == joint.id)
+                .unwrap();
             bone_idxs.push(idx as i32);
         }
 
         let family = IkFamily {
             constraint: armature_copy.bones[b].constraint,
             target_idx: armature_copy.bones[b].ik_target_id,
-            bone_idxs
+            bone_idxs,
         };
 
         armature_copy.ik_families.push(family)
@@ -454,6 +460,31 @@ pub fn import<R: Read + std::io::Seek>(
     // populate style ids
     for s in 0..shared.armature.styles.len() {
         shared.armature.styles[s].id = s as i32;
+    }
+
+    // populate bone IK data from ik_families
+    for f in 0..shared.armature.ik_families.len() {
+        let family = &shared.armature.ik_families[f];
+        let target_id = if let Some(target) = shared.armature.find_bone(family.target_idx) {
+            target.id
+        } else {
+            -1
+        };
+
+        for i in 0..family.bone_idxs.len() {
+            let effector = if i == 0 {
+                JointEffector::Start
+            } else if i == family.bone_idxs.len() - 1 {
+                JointEffector::End
+            } else {
+                JointEffector::Middle
+            };
+
+            let bone = &mut shared.armature.bones[family.bone_idxs[i] as usize];
+            bone.joint_effector = effector;
+            bone.constraint = family.constraint;
+            bone.ik_target_id = target_id;
+        }
     }
 
     // populate keyframe bone_id based on bone_idx
