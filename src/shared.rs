@@ -840,11 +840,14 @@ pub struct Bone {
     #[serde(default)]
     pub rot: f32,
 
-    #[serde(default, skip_serializing_if = "is_not_joint")]
+    //#[serde(default, skip_serializing_if = "is_not_joint")]
+    #[serde(skip)]
     pub joint_effector: JointEffector,
-    #[serde(default, skip_serializing_if = "no_constraint")]
+    //#[serde(default, skip_serializing_if = "no_constraint")]
+    #[serde(skip)]
     pub constraint: JointConstraint,
-    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
+    //#[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
+    #[serde(skip)]
     pub ik_target_id: i32,
     #[serde(default, skip_serializing_if = "is_false")]
     pub hidden: bool,
