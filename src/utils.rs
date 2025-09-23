@@ -294,6 +294,40 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
             .unwrap() as i32;
     }
 
+    // populate ik families
+    for b in 0..armature_copy.bones.len() {
+        if armature_copy.bones[b].joint_effector != JointEffector::Start {
+            continue;
+        }
+
+        let mut joints = vec![];
+        armature_window::get_all_children(
+            &armature_copy.bones,
+            &mut joints,
+            &armature_copy.bones[b],
+        );
+        joints.insert(0, armature_copy.bones[b].clone());
+        joints = joints
+            .iter()
+            .filter(|joint| joint.joint_effector != JointEffector::None)
+            .cloned()
+            .collect();
+
+        let mut bone_idxs: Vec<i32> = vec![];
+        for joint in &joints {
+            let idx = armature_copy.bones.iter().position(|bone| bone.id == joint.id).unwrap();
+            bone_idxs.push(idx as i32);
+        }
+
+        let family = IkFamily {
+            constraint: armature_copy.bones[b].constraint,
+            target_idx: armature_copy.bones[b].ik_target_id,
+            bone_idxs
+        };
+
+        armature_copy.ik_families.push(family)
+    }
+
     // populate keyframe bone_idx
     for a in 0..armature_copy.animations.len() {
         for kf in 0..armature_copy.animations[a].keyframes.len() {

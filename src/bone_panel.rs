@@ -327,13 +327,12 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
                 let parents = shared.armature.get_all_parents(bone.id);
                 for parent in parents {
-                    if parent.joint_effector != JointEffector::None {
-                        shared
-                            .armature
-                            .find_bone_mut(parent.id)
-                            .unwrap()
-                            .ik_disabled = !enabled;
+                    if parent.joint_effector == JointEffector::None {
+                        continue;
                     }
+
+                    let bone = shared.armature.find_bone_mut(parent.id).unwrap();
+                    bone.ik_disabled = !enabled;
                 }
             }
         })

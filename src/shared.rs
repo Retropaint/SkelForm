@@ -895,7 +895,16 @@ pub struct EditorBone {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+pub struct IkFamily {
+    pub constraint: JointConstraint,
+    pub target_idx: i32,
+    pub bone_idxs: Vec<i32>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Armature {
+    #[serde(default)]
+    pub ik_families: Vec<IkFamily>,
     #[serde(default)]
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
