@@ -776,19 +776,8 @@ pub fn forward_kinematics(bones: &mut Vec<Bone>, ik_rot: std::collections::HashM
             }
         }
 
-        // apply rotations from IK, if provided
-        let id = bones[i].id;
-        if ik_rot.get(&id) != None && bones[i].joint_effector != JointEffector::End {
-            let parent_rot = if parent != None {
-                parent.as_ref().unwrap().rot
-            } else {
-                0.
-            };
-            bones[i].rot = *ik_rot.get(&id).unwrap() - parent_rot;
-        }
-
         // inherit parent
-        if let Some(parent) = parent {
+        if let Some(parent) = parent.clone() {
             bones[i].rot += parent.rot;
             bones[i].scale *= parent.scale;
 
@@ -800,6 +789,12 @@ pub fn forward_kinematics(bones: &mut Vec<Bone>, ik_rot: std::collections::HashM
 
             // inherit position from parent
             bones[i].pos += parent.pos;
+        }
+
+        // apply rotations from IK, if provided
+        let ik_rot = ik_rot.get(&bones[i].id);
+        if ik_rot != None && bones[i].joint_effector != JointEffector::End {
+            bones[i].rot = *ik_rot.unwrap();
         }
     }
 }
