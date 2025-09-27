@@ -840,13 +840,10 @@ pub struct Bone {
     #[serde(default)]
     pub rot: f32,
 
-    //#[serde(default, skip_serializing_if = "is_not_joint")]
     #[serde(skip)]
     pub joint_effector: JointEffector,
-    //#[serde(default, skip_serializing_if = "no_constraint")]
     #[serde(skip)]
     pub constraint: JointConstraint,
-    //#[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
     #[serde(skip)]
     pub ik_target_id: i32,
     #[serde(default, skip_serializing_if = "is_false")]
@@ -2072,14 +2069,6 @@ fn are_verts_empty(value: &Vec<Vertex>) -> bool {
     *value == vec![]
 }
 
-fn is_not_joint(value: &JointEffector) -> bool {
-    *value == JointEffector::None
-}
-
-fn no_constraint(value: &JointConstraint) -> bool {
-    *value == JointConstraint::None
-}
-
 fn are_indices_empty<T: std::cmp::PartialEq<Vec<u32>>>(value: &T) -> bool {
     *value == vec![]
 }
@@ -2090,10 +2079,6 @@ fn are_anims_empty(value: &Vec<Animation>) -> bool {
 
 fn are_styles_empty(value: &Vec<i32>) -> bool {
     value.len() == 0
-}
-
-fn is_zero(value: &i32) -> bool {
-    *value == 0
 }
 
 #[cfg(not(target_arch = "wasm32"))]
