@@ -589,6 +589,7 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
             next_length = (bones[b].pos - bones[b - 1].pos).mag();
         }
         bones[b].pos = next_pos - length;
+        next_pos = bones[b].pos;
 
         if b == bones.len() - 1 || bones[b].constraint == JointConstraint::None {
             continue;
