@@ -814,18 +814,12 @@ enum_string!(JointConstraint);
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 pub struct Bone {
-    /// for runtimes
-    #[serde(default)]
-    pub _idx: usize,
-
-    #[serde(skip)]
-    pub id: i32,
     #[serde(default, rename = "_name")]
     pub name: String,
-    #[serde(skip)]
+    #[serde(default)]
+    pub id: i32,
+    #[serde(default)]
     pub parent_id: i32,
-    #[serde(default = "default_neg_one")]
-    pub parent_idx: i32,
     #[serde(default, skip_serializing_if = "are_styles_empty")]
     pub style_idxs: Vec<i32>,
     #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
@@ -897,8 +891,8 @@ pub struct EditorBone {
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct IkFamily {
     pub constraint: JointConstraint,
-    pub target_idx: i32,
-    pub bone_idxs: Vec<i32>,
+    pub target_id: i32,
+    pub bone_ids: Vec<i32>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
