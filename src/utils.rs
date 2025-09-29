@@ -325,9 +325,16 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
             bone_idxs.push(idx as i32);
         }
 
+        let mut target_idx = -1;
+        if armature_copy.bones[b].ik_target_id != -1 {
+            let target_id = armature_copy.bones[b].ik_target_id;
+            let mut iter = armature_copy.bones.iter();
+            target_idx = iter.position(|bone| bone.id == target_id).unwrap() as i32
+        }
+
         let family = IkFamily {
             constraint: armature_copy.bones[b].constraint,
-            target_idx: armature_copy.bones[b].ik_target_id,
+            target_idx,
             bone_idxs,
         };
 
