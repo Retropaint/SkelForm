@@ -267,6 +267,21 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
     let mut armature_copy = armature.clone();
 
     for b in 0..armature_copy.bones.len() {
+        macro_rules! bone {
+            () => {
+                armature_copy.bones[b]
+            };
+        }
+        if bone!().parent_id != -1 {
+            bone!().parent_id = armature_copy
+                .bones
+                .iter()
+                .position(|bone| bone.id == bone!().parent_id)
+                .unwrap() as i32;
+        }
+    }
+
+    for b in 0..armature_copy.bones.len() {
         armature_copy.bones[b].id = b as i32;
 
         // populate parent_idx
