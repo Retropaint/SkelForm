@@ -443,17 +443,6 @@ pub fn import<R: Read + std::io::Seek>(
         shared.armature.bones[b].id = b as i32;
     }
 
-    for b in 0..shared.armature.bones.len() {
-        macro_rules! bone {
-            () => {
-                shared.armature.bones[b]
-            };
-        }
-
-        let mut children = vec![];
-        armature_window::get_all_children(&shared.armature.bones, &mut children, &bone!());
-    }
-
     // populate style ids
     for s in 0..shared.armature.styles.len() {
         shared.armature.styles[s].id = s as i32;
