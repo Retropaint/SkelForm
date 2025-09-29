@@ -296,14 +296,6 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
             bone!().tex_idx = -1;
             bone!().zindex = -1;
         }
-
-        if bone!().parent_id != -1 {
-            bone!().parent_id = armature_copy
-                .bones
-                .iter()
-                .position(|bone| bone.id == bone!().parent_id)
-                .unwrap() as i32;
-        }
     }
 
     armature_copy.ik_families = vec![];
@@ -452,11 +444,6 @@ pub fn import<R: Read + std::io::Seek>(
     let root: crate::Root = serde_json::from_reader(armature_file).unwrap();
 
     shared.armature = root.armature.clone();
-
-    // populate bone ids
-    for b in 0..shared.armature.bones.len() {
-        shared.armature.bones[b].id = b as i32;
-    }
 
     // populate style ids
     for s in 0..shared.armature.styles.len() {
