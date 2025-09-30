@@ -267,40 +267,19 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
     let mut armature_copy = armature.clone();
 
     for b in 0..armature_copy.bones.len() {
-        macro_rules! bone {
-            () => {
-                armature_copy.bones[b]
-            };
+        if armature_copy.bones[b].parent_id == -1 {
+            continue;
         }
-        if bone!().parent_id != -1 {
-            bone!().parent_id = armature_copy
-                .bones
-                .iter()
-                .position(|bone| bone.id == bone!().parent_id)
-                .unwrap() as i32;
-        }
+
+        armature_copy.bones[b].parent_id = armature_copy
+            .bones
+            .iter()
+            .position(|bone| bone.id == armature_copy.bones[b].parent_id)
+            .unwrap() as i32;
     }
-
-    for b in 0..armature_copy.bones.len() {
-        armature_copy.bones[b].id = b as i32;
-
-        // populate parent_idx
-
-        macro_rules! bone {
-            () => {
-                armature_copy.bones[b]
-            };
-        }
-
-        if bone!().style_idxs.len() == 0 {
-            bone!().tex_idx = -1;
-            bone!().zindex = -1;
-        }
-    }
-
-    armature_copy.ik_families = vec![];
 
     // populate ik families
+    armature_copy.ik_families = vec![];
     for b in 0..armature_copy.bones.len() {
         if armature_copy.bones[b].joint_effector != JointEffector::Start {
             continue;
@@ -362,6 +341,32 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
         }
     }
 
+    for b in 0..armature_copy.bones.len() {
+        // if it is a regular rect, empty verts and indices
+        if armature_copy.get_current_tex(armature_copy.bones[b].id) == None
+            || !bone_meshes_edited(
+                armature_copy
+                    .get_current_tex(armature_copy.bones[b].id)
+                    .unwrap()
+                    .size,
+                &armature_copy.bones[b].vertices,
+            )
+        {
+            armature_copy.bones[b].vertices = vec![];
+            armature_copy.bones[b].indices = vec![];
+        }
+    }
+
+    // restructure bone ids.
+    for b in 0..armature_copy.bones.len() {
+        armature_copy.bones[b].id = b as i32;
+
+        if armature_copy.bones[b].style_idxs.len() == 0 {
+            armature_copy.bones[b].tex_idx = -1;
+            armature_copy.bones[b].zindex = -1;
+        }
+    }
+
     if armature.styles.len() > 0 && armature.styles[0].textures.len() > 0 {
         (png_buf, size) = create_tex_sheet(&mut armature_copy);
     }
@@ -372,25 +377,6 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
             let tex = &mut armature_copy.styles[s].textures[t];
             tex.ser_offset = Vec2I::new(tex.offset.x as i32, tex.offset.y as i32);
             tex.ser_size = Vec2I::new(tex.size.x as i32, tex.size.y as i32);
-        }
-    }
-
-    for b in 0..armature_copy.bones.len() {
-        macro_rules! bone {
-            () => {
-                armature_copy.bones[b]
-            };
-        }
-
-        // if it is a regular rect, empty verts and indices
-        if armature_copy.get_current_tex(bone!().id) == None
-            || !bone_meshes_edited(
-                armature_copy.get_current_tex(bone!().id).unwrap().size,
-                &bone!().vertices,
-            )
-        {
-            bone!().vertices = vec![];
-            bone!().indices = vec![];
         }
     }
 
