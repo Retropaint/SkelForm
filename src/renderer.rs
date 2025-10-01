@@ -589,30 +589,6 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
             next_length = (bones[b].pos - bones[b - 1].pos).mag();
         }
         bones[b].pos = next_pos - length;
-
-        if b != 0 && b != bones.len() - 1 && bones[b].constraint != JointConstraint::None {
-            // get local angle of joint
-            let joint_dir = (next_pos - bones[b].pos).normalize();
-            let joint_angle = joint_dir.y.atan2(joint_dir.x) - base_angle;
-
-            let const_min;
-            let const_max;
-            if bones[b].constraint == JointConstraint::Clockwise {
-                const_min = -3.14;
-                const_max = 0.;
-            } else {
-                const_min = 0.;
-                const_max = 3.14;
-            }
-
-            // if joint angle is beyond constraint, rotate the hinge so it's on the opposite side
-            if joint_angle > const_max || joint_angle < const_min {
-                let rot_offset = -joint_angle * 2.;
-                let rotated = utils::rotate(&(bones[b].pos - next_pos), rot_offset);
-                bones[b].pos = rotated + next_pos;
-            }
-        }
-
         next_pos = bones[b].pos;
     }
 
@@ -629,6 +605,30 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
         }
 
         bones[b].pos = prev_pos - length;
+
+        if b != 0 && b != bones.len() - 1 && bones[b].constraint != JointConstraint::None {
+            // get local angle of joint
+            let joint_dir = (prev_pos - bones[b].pos).normalize();
+            let joint_angle = joint_dir.y.atan2(joint_dir.x) - base_angle;
+
+            let const_min;
+            let const_max;
+            if bones[b].constraint == JointConstraint::Clockwise {
+                const_min = -3.14;
+                const_max = 0.;
+            } else {
+                const_min = 0.;
+                const_max = 3.14;
+            }
+
+            // if joint angle is beyond constraint, rotate the hinge so it's on the opposite side
+            if joint_angle > const_max || joint_angle < const_min {
+                let rot_offset = -joint_angle * 2.;
+                let rotated = utils::rotate(&(bones[b].pos - prev_pos), rot_offset);
+                bones[b].pos = rotated + prev_pos;
+            }
+        }
+
         prev_pos = bones[b].pos;
     }
 
