@@ -1416,11 +1416,9 @@ impl Armature {
             return None;
         }
         for s in 0..self.styles.len() {
-            if !self.styles[s].active || !bone.unwrap().style_idxs.contains(&(s as i32)) {
-                continue;
+            if self.styles[s].active && bone.unwrap().style_idxs.contains(&(s as i32)) {
+                return Some(&self.styles[s]);
             }
-
-            return Some(&self.styles[s]);
         }
 
         None
@@ -1619,10 +1617,8 @@ impl Animation {
 pub struct Keyframe {
     #[serde(default)]
     pub frame: i32,
-    #[serde(skip)]
-    pub bone_id: i32,
     #[serde(default)]
-    pub bone_idx: i32,
+    pub bone_id: i32,
     #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
     pub vert_id: i32,
 
