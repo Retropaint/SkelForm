@@ -328,16 +328,8 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
     for a in 0..armature_copy.animations.len() {
         for kf in 0..armature_copy.animations[a].keyframes.len() {
             let keyframe = &mut armature_copy.animations[a].keyframes[kf];
-            if keyframe.bone_id == -1 {
-                keyframe.bone_idx = -1;
-                continue;
-            }
-
-            keyframe.bone_idx = armature_copy
-                .bones
-                .iter()
-                .position(|bone| bone.id == keyframe.bone_id)
-                .unwrap() as i32;
+            let bones = &mut armature_copy.bones.iter();
+            keyframe.bone_id = bones.position(|bone| bone.id == keyframe.bone_id).unwrap() as i32;
         }
     }
 
@@ -357,7 +349,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
         }
     }
 
-    // restructure bone ids.
+    // restructure bone ids
     for b in 0..armature_copy.bones.len() {
         armature_copy.bones[b].id = b as i32;
 
@@ -458,18 +450,6 @@ pub fn import<R: Read + std::io::Seek>(
             bone.joint_effector = effector;
             bone.constraint = family.constraint;
             bone.ik_target_id = target_id;
-        }
-    }
-
-    // populate keyframe bone_id based on bone_idx
-    for a in 0..shared.armature.animations.len() {
-        for kf in 0..shared.armature.animations[a].keyframes.len() {
-            let keyframe = &mut shared.armature.animations[a].keyframes[kf];
-            if keyframe.bone_idx == -1 {
-                keyframe.bone_id = -1;
-            } else {
-                keyframe.bone_id = shared.armature.bones[keyframe.bone_idx as usize].id;
-            }
         }
     }
 
