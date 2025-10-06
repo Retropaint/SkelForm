@@ -105,8 +105,8 @@
       "Start": "Start",
       "Middle": "Middle",
       "End": "End",
-      "Clockwise": "CC",
-      "CCW": "CCW",
+      "Clockwise": "CW",
+      "CounterClockwise": "CCW",
       "cant_edit": "Turn off inverse kinematics to edit"
     },
     "mesh_deformation": {
