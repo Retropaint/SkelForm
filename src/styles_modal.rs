@@ -664,7 +664,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 hovered = true;
             }
 
-            ui.add_space(10.);
+            ui.add_space(5.);
 
             let rect = button.rect;
 
