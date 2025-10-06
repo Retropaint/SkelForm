@@ -374,46 +374,30 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     });
 
     if bone.joint_effector == JointEffector::Start {
-        let icon: &str;
-        let const_label = if bone.constraint == JointConstraint::CounterClockwise {
-            icon = "  ⟲";
-            "CCW".to_string()
-        } else {
-            icon = "  ⟳";
-            bone.constraint.to_string()
-        };
         ui.horizontal(|ui| {
-            ui.label(shared.loc("bone_panel.inverse_kinematics.constraint"));
+            let ik = "bone_panel.inverse_kinematics.";
+            ui.label(shared.loc(&(ik.to_owned() + "constraint")));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let last_constraint = bone.clone().constraint;
-                let str_selected = shared
-                    .loc(&("bone_panel.inverse_kinematics.".to_owned() + &const_label))
-                    .to_owned()
-                    + icon;
-                let str_none = shared.loc("bone_panel.inverse_kinematics.None").clone();
-                let str_clockwise = shared
-                    .loc("bone_panel.inverse_kinematics.Clockwise")
-                    .clone();
-                let str_ccw = shared.loc("bone_panel.inverse_kinematics.CCW").clone();
-                let str_desc = shared
-                    .loc("bone_panel.inverse_kinematics.constraint_desc")
-                    .clone();
+
+                let str_none = shared.loc(&(ik.to_owned() + "None")).clone();
+                let str_clockwise = shared.loc(&(ik.to_owned() + "Clockwise")).clone() + "  ⟲";
+                let str_ccw = shared.loc(&(ik.to_owned() + "CounterClockwise")).clone() + "  ⟳";
+                let str_desc = shared.loc(&(ik.to_owned() + "constraint_desc")).clone();
+                let selected = match bone.constraint {
+                    JointConstraint::Clockwise => str_clockwise.clone(),
+                    JointConstraint::CounterClockwise => str_ccw.clone(),
+                    JointConstraint::None => str_none.clone(),
+                };
+
                 egui::ComboBox::new("joint_constraint", "")
-                    .selected_text(str_selected)
+                    .selected_text(selected)
                     .width(40.)
                     .show_ui(ui, |ui| {
                         let constraint = &mut shared.selected_bone_mut().unwrap().constraint;
                         ui.selectable_value(constraint, JointConstraint::None, str_none);
-                        ui.selectable_value(
-                            constraint,
-                            JointConstraint::Clockwise,
-                            str_clockwise + "  ⟳",
-                        );
-                        ui.selectable_value(
-                            constraint,
-                            JointConstraint::CounterClockwise,
-                            str_ccw + "  ⟲",
-                        );
+                        ui.selectable_value(constraint, JointConstraint::Clockwise, str_clockwise);
+                        ui.selectable_value(constraint, JointConstraint::CounterClockwise, str_ccw);
                     })
                     .response
                     .on_hover_text(str_desc);
