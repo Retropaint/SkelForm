@@ -5,9 +5,10 @@ pub const FOLD_ERR: &str =
 
 pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
     let modal_size = Vec2::new(550., 400.);
+    let padding = 10.;
     let center = egui::Pos2::new(
-        (shared.window.x / 2. - modal_size.x) / 2.,
-        (shared.window.y / 2. - modal_size.y) / 2.,
+        (shared.window.x / 2. - modal_size.x) / 2. - padding,
+        (shared.window.y / 2. - modal_size.y) / 2. - padding,
     );
     egui::Modal::new("styles_modal".into())
         // set modal render order so that tex idx dropdown can be rendered above
@@ -459,7 +460,7 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 
             let width = ui.available_width();
 
-            let idx_input_width = 45.;
+            let idx_input_width = 15.;
 
             let name = bone!().name.to_string();
             let mut text_col = shared.config.colors.text;
