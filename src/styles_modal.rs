@@ -636,7 +636,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         let mut removed = false;
 
         ui.horizontal(|ui| {
-            let bin_width = 30.;
+            let bin_width = 10.;
             let button = ui
                 .dnd_drag_source(egui::Id::new(("tex", idx, 0)), idx, |ui| {
                     egui::Frame::new().fill(col.into()).show(ui, |ui| {
@@ -652,14 +652,32 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                     });
                 })
                 .response
-                .on_hover_text(str_desc);
+                .on_hover_text(str_desc)
+                .interact(egui::Sense::click());
 
-            if ui.skf_button("🗑").clicked() {
-                shared.selected_set_mut().unwrap().textures.remove(i);
-                removed = true;
-                return;
+            if button.secondary_clicked() {
+                shared.ui.context_menu.show(ContextType::Texture, i as i32)
             }
 
+            if shared.ui.context_menu.is(ContextType::Texture, i as i32) {
+                button.show_tooltip_ui(|ui| {
+                    if ui.clickable_label("Rename").clicked() {
+                        shared.ui.context_menu.close();
+                    };
+                    if ui.clickable_label("Delete").clicked() {
+                        shared.ui.open_polar_modal(
+                            PolarId::DeleteTex,
+                            "Are you sure to delete this texture?",
+                        );
+
+                        // only hide the menu, as tex id is still needed for modal
+                        shared.ui.context_menu.hide = true;
+                    }
+                    if ui.ui_contains_pointer() {
+                        shared.ui.context_menu.keep = true;
+                    }
+                });
+            }
             if button.contains_pointer() {
                 shared.ui.hovering_tex = i as i32;
                 hovered = true;

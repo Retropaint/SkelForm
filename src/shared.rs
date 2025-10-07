@@ -428,6 +428,7 @@ pub enum PolarId {
     Exiting,
     DeleteAnim,
     DeleteFile,
+    DeleteTex,
 }
 enum_string!(PolarId);
 
@@ -437,6 +438,7 @@ pub enum ContextType {
     None,
     Animation,
     Bone,
+    Texture,
 }
 
 #[derive(Clone, Default)]
