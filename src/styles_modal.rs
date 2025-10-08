@@ -633,8 +633,6 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             col += crate::Color::new(20, 20, 20, 0);
         }
 
-        let mut removed = false;
-
         ui.horizontal(|ui| {
             let bin_width = 10.;
             let button = ui
@@ -752,10 +750,6 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 bone!().tex_idx = tex.iter().position(|tex| tex.name == *old_name).unwrap() as i32;
             }
         });
-
-        if removed {
-            break;
-        }
     }
 
     if !hovered {
