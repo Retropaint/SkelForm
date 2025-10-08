@@ -353,7 +353,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
     for b in 0..armature_copy.bones.len() {
         armature_copy.bones[b].id = b as i32;
 
-        if armature_copy.bones[b].style_idxs.len() == 0 {
+        if armature_copy.bones[b].style_ids.len() == 0 {
             armature_copy.bones[b].tex_idx = -1;
             armature_copy.bones[b].zindex = -1;
         }

@@ -87,7 +87,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                             shared.armature.styles[s].name.to_string(),
                         );
 
-                        if bone.style_idxs.contains(&(s as i32)) {
+                        if bone.style_ids.contains(&(s as i32)) {
                             ui.painter().text(
                                 label.rect.right_center(),
                                 egui::Align2::RIGHT_CENTER,
@@ -107,8 +107,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                         shared.open_style_modal();
                         ui.close();
                     } else if selected_value != -1 {
-                        let styles =
-                            &mut shared.armature.find_bone_mut(bone.id).unwrap().style_idxs;
+                        let styles = &mut shared.armature.find_bone_mut(bone.id).unwrap().style_ids;
                         if styles.contains(&selected_value) {
                             let idx = styles
                                 .iter()
