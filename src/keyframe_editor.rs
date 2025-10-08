@@ -218,10 +218,8 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                     shared.ui.context_menu.close();
                                 };
                                 if ui.clickable_label("Delete").clicked() {
-                                    shared.ui.open_polar_modal(
-                                        PolarId::DeleteAnim,
-                                        "Are you sure to delete this animation?",
-                                    );
+                                    let str_del = shared.loc("polar.delete_anim").clone();
+                                    shared.ui.open_polar_modal(PolarId::DeleteAnim, &str_del);
 
                                     // only hide the menu, as anim id is still needed for modal
                                     shared.ui.context_menu.hide = true;

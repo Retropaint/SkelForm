@@ -294,10 +294,8 @@ impl ApplicationHandler for App {
             }
             WindowEvent::CloseRequested => {
                 if self.shared.undo_actions.len() > 0 {
-                    self.shared.ui.open_polar_modal(
-                        PolarId::Exiting,
-                        "Are you sure you want to quit and discard unsaved changes?",
-                    );
+                    let str_del = self.shared.loc("polar.unsaved").clone();
+                    self.shared.ui.open_polar_modal(PolarId::Exiting, &str_del);
                 } else {
                     event_loop.exit();
                 }

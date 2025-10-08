@@ -193,5 +193,12 @@
       "Zindex": "Zindex",
       "TextureIndex": "Texture"
     }
+  },
+  "polar": {
+    "delete_bone": "Are you sure to delete this bone?",
+    "delete_anim": "Are you sure to delete this animation?",
+    "delete_file": "Are you sure to delete $?",
+    "delete_tex": "Are you sure to delete this texture?",
+    "unsaved": "Are you sure you want to quit and discard unsaved changes?"
   }
 }
