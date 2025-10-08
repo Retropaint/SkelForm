@@ -11,6 +11,7 @@
   "cam_x": "Camera X position",
   "cam_y": "Camera Y position",
   "cam_zoom": "Camera zoom (in pixels)",
+  "drop_file": "Drop file to load...",
   "startup": {
     "import": "Import",
     "samples": "Samples",

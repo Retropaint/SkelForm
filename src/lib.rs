@@ -281,9 +281,8 @@ impl ApplicationHandler for App {
                 }
             }
             WindowEvent::HoveredFile(_) => {
-                self.shared
-                    .ui
-                    .open_modal("Drop file to load...".to_string(), true);
+                let str_drop_file = self.shared.loc("drop_file").to_string();
+                self.shared.ui.open_modal(str_drop_file, true);
             }
             WindowEvent::HoveredFileCancelled => {
                 self.shared.ui.set_state(UiState::Modal, false);
