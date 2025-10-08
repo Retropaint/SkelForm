@@ -823,7 +823,7 @@ pub struct Bone {
     #[serde(default)]
     pub parent_id: i32,
     #[serde(default, skip_serializing_if = "are_styles_empty")]
-    pub style_idxs: Vec<i32>,
+    pub style_ids: Vec<i32>,
     #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
     pub tex_idx: i32,
     #[serde(default, skip_serializing_if = "is_neg_one")]
@@ -1418,7 +1418,7 @@ impl Armature {
             return None;
         }
         for s in 0..self.styles.len() {
-            if self.styles[s].active && bone.unwrap().style_idxs.contains(&(s as i32)) {
+            if self.styles[s].active && bone.unwrap().style_ids.contains(&(s as i32)) {
                 return Some(&self.styles[s]);
             }
         }
@@ -1453,7 +1453,7 @@ pub struct Root {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 pub struct Style {
-    #[serde(skip)]
+    #[serde(default)]
     pub id: i32,
     #[serde(default, rename = "_name")]
     pub name: String,

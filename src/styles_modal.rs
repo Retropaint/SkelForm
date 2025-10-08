@@ -193,7 +193,7 @@ pub fn draw_styles_list(
                     if visible_checkbox.clicked() {
                         shared.armature.styles[s].active = !shared.armature.styles[s].active;
                         for b in 0..shared.armature.bones.len() {
-                            if shared.armature.bones[b].style_idxs.contains(&(s as i32)) {
+                            if shared.armature.bones[b].style_ids.contains(&(s as i32)) {
                                 shared.armature.set_bone_tex(
                                     shared.armature.bones[b].id,
                                     shared.armature.bones[b].tex_idx as usize,
@@ -450,7 +450,7 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
             if let Some(idx) = styles.iter().position(|set| set.id == style_id) {
                 set_idx = idx;
             }
-            if bone!().style_idxs.contains(&(set_idx as i32)) {
+            if bone!().style_ids.contains(&(set_idx as i32)) {
                 selected_col += crate::Color::new(20, 20, 20, 0);
             }
 
@@ -483,7 +483,7 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                 .on_hover_cursor(egui::CursorIcon::PointingHand);
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if !bone!().style_idxs.contains(&(set_idx as i32)) {
+                if !bone!().style_ids.contains(&(set_idx as i32)) {
                     return;
                 }
 
@@ -514,7 +514,7 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                 hovered = true;
             }
             if button.clicked() {
-                let styles = &mut bone!().style_idxs;
+                let styles = &mut bone!().style_ids;
                 if styles.contains(&(set_idx as i32)) {
                     styles.retain(|style| *style != set_idx as i32);
                 } else {
@@ -543,8 +543,8 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             let bone = &mut shared.armature.bones[idx as usize];
-            if !bone.style_idxs.contains(&shared.ui.selected_tex_set_id) {
-                bone.style_idxs.push(shared.ui.selected_tex_set_id);
+            if !bone.style_ids.contains(&shared.ui.selected_tex_set_id) {
+                bone.style_ids.push(shared.ui.selected_tex_set_id);
             }
             let id = bone.id;
             shared.armature.set_bone_tex(
