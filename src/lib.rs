@@ -280,6 +280,19 @@ impl ApplicationHandler for App {
                     self.shared.input.remove_key(&key_code);
                 }
             }
+            WindowEvent::HoveredFile(_) => {
+                self.shared
+                    .ui
+                    .open_modal("Drop file to load...".to_string(), true);
+            }
+            WindowEvent::HoveredFileCancelled => {
+                self.shared.ui.set_state(UiState::Modal, false);
+            }
+            WindowEvent::DroppedFile(path_buf) => {
+                self.shared.ui.set_state(UiState::Modal, false);
+                let file_path = path_buf.into_os_string().into_string().unwrap();
+                file_reader::create_temp_file(&self.shared.temp_path.import, &file_path);
+            }
             WindowEvent::CloseRequested => {
                 if self.shared.undo_actions.len() > 0 {
                     self.shared.ui.open_polar_modal(
