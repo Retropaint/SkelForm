@@ -663,10 +663,8 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                         shared.ui.context_menu.close();
                     };
                     if ui.clickable_label("Delete").clicked() {
-                        shared.ui.open_polar_modal(
-                            PolarId::DeleteTex,
-                            "Are you sure to delete this texture?",
-                        );
+                        let str_del = shared.loc("polar.delete_tex").clone();
+                        shared.ui.open_polar_modal(PolarId::DeleteTex, &str_del);
 
                         // only hide the menu, as tex id is still needed for modal
                         shared.ui.context_menu.hide = true;

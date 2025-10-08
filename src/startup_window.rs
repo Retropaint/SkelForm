@@ -460,10 +460,8 @@ pub fn skf_file_button(
 
         if file_button_icon("🗑", "Delete file", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
             shared.ui.selected_path = path.clone();
-            shared.ui.open_polar_modal(
-                PolarId::DeleteFile,
-                &("Are you sure to delete ".to_owned() + &filename + "?"),
-            );
+            let str_del = shared.loc("polar.delete_file").replace("$", &filename);
+            shared.ui.open_polar_modal(PolarId::DeleteFile, &str_del);
         }
         pos += egui::Vec2::new(-21., 0.);
 
