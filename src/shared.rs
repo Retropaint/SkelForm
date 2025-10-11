@@ -1092,34 +1092,20 @@ impl Armature {
         &mut self,
         bone_id: i32,
         element: &AnimElement,
-        mut value: f32,
+        value: f32,
         anim_id: usize,
         anim_frame: i32,
     ) {
-        macro_rules! edit {
-            ($field:expr, $typ:ty) => {
-                if anim_id == usize::MAX {
-                    $field = value as $typ;
-                } else {
-                    // offset value by its field, so it's effectively overwritten
-                    match element {
-                        AnimElement::ScaleX | AnimElement::ScaleY => value /= $field as f32,
-                        _ => value -= $field as f32,
-                    }
-                }
-            };
-        }
-
-        let bone_mut = self.find_bone_mut(bone_id).unwrap();
+        let bone = self.find_bone_mut(bone_id).unwrap();
 
         #[rustfmt::skip]
         match element {
-            AnimElement::PositionX     => { edit!(bone_mut.pos.x, f32);   },
-            AnimElement::PositionY     => { edit!(bone_mut.pos.y, f32);   },
-            AnimElement::Rotation      => { edit!(bone_mut.rot, f32);     },
-            AnimElement::ScaleX        => { edit!(bone_mut.scale.x, f32); },
-            AnimElement::ScaleY        => { edit!(bone_mut.scale.y, f32); },
-            AnimElement::Zindex        => { edit!(bone_mut.zindex, i32);  },
+            AnimElement::PositionX     => { bone.pos.x   = value },
+            AnimElement::PositionY     => { bone.pos.y   = value },
+            AnimElement::Rotation      => { bone.rot     = value },
+            AnimElement::ScaleX        => { bone.scale.x = value },
+            AnimElement::ScaleY        => { bone.scale.y = value },
+            AnimElement::Zindex        => { bone.zindex  = value as i32 },
             AnimElement::VertPositionX => { /* do nothing */ },
             AnimElement::VertPositionY => { /* do nothing */ },
             AnimElement::TextureIndex  => { /* handled in set_bone_tex() */ },
@@ -1234,13 +1220,13 @@ impl Armature {
             // iterable anim interps
             #[rustfmt::skip]
             {
-                b.pos.x   += interpolate!(AnimElement::PositionX,    0., -1);
-                b.pos.y   += interpolate!(AnimElement::PositionY,    0., -1);
-                b.rot     += interpolate!(AnimElement::Rotation,     0., -1);
-                b.scale.x *= interpolate!(AnimElement::ScaleX,       1., -1);
-                b.scale.y *= interpolate!(AnimElement::ScaleY,       1., -1);
-                b.zindex  =  prev_frame!( AnimElement::Zindex,       b.zindex as f32) as i32;
-                b.tex_idx =  prev_frame!( AnimElement::TextureIndex, b.tex_idx as f32) as i32;
+                b.pos.x   = interpolate!(AnimElement::PositionX,    b.pos.x,   -1);
+                b.pos.y   = interpolate!(AnimElement::PositionY,    b.pos.y,   -1);
+                b.rot     = interpolate!(AnimElement::Rotation,     b.rot,     -1);
+                b.scale.x = interpolate!(AnimElement::ScaleX,       b.scale.x, -1);
+                b.scale.y = interpolate!(AnimElement::ScaleY,       b.scale.y, -1);
+                b.zindex  = prev_frame!( AnimElement::Zindex,       b.zindex  as f32) as i32;
+                b.tex_idx = prev_frame!( AnimElement::TextureIndex, b.tex_idx as f32) as i32;
             };
 
             // restructure bone's verts to match texture
