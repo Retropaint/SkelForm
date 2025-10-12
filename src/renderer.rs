@@ -64,7 +64,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         (bone!().vertices, bone!().indices) = create_tex_rect(&tex.unwrap().size);
     }
 
-    // runtime: armature bones should be immutable to animations
+    // runtime:
+    // armature bones should normally be mutable to animation for blending,
+    // but that's not ideal when editing
     let mut animated_bones = shared.armature.bones.clone();
 
     let is_any_anim_playing = shared
@@ -98,52 +100,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // runtime: armature bones should be immutable to rendering
     let mut temp_bones: Vec<Bone> = animated_bones.clone();
 
-    // runtime: rig construction & kinematics (forward & backward)
-    {
-        forward_kinematics(&mut temp_bones, std::collections::HashMap::new());
-
-        let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
-
-        // inverse kinematics
-        for b in 0..temp_bones.len() {
-            if temp_bones[b].joint_effector != JointEffector::Start || temp_bones[b].ik_disabled {
-                continue;
-            }
-
-            // get all joint children of this bone, including itself
-            let mut joints = vec![];
-            armature_window::get_all_children(&temp_bones, &mut joints, &temp_bones[b]);
-            joints.insert(0, temp_bones[b].clone());
-            joints = joints
-                .iter()
-                .filter(|joint| joint.joint_effector != JointEffector::None)
-                .cloned()
-                .collect();
-
-            let target = temp_bones
-                .iter()
-                .find(|bone| bone.id == temp_bones[b].ik_target_id);
-
-            if target == None {
-                continue;
-            }
-
-            // IK is iterated multiple times over for accuracy
-            // runtimes could adjust this, or make it customizable
-            for _ in 0..10 {
-                inverse_kinematics(&mut joints, target.unwrap().pos);
-            }
-
-            // save rotations for the next forward kinematics call
-            for joint in joints {
-                ik_rot.insert(joint.id, joint.rot);
-            }
-        }
-
-        // re-construct bones, accounting for rotations saved from IK
-        temp_bones = animated_bones.clone();
-        forward_kinematics(&mut temp_bones, ik_rot.clone());
-    }
+    construction(&mut temp_bones, &animated_bones);
 
     // sort bones by highest zindex first, so that hover logic will pick the top-most one
     temp_bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
@@ -292,6 +249,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         );
     }
 
+    // draw inverse kinematics arrows
+
+    // todo:
+    // only draw arrows for the selected set of bones.
+    // currently it shows all when any are selected.
     if shared.selected_bone() != None
         && shared.selected_bone().unwrap().joint_effector != JointEffector::None
     {
@@ -519,7 +481,7 @@ fn tri_point(p: &Vec2, a: &Vec2, b: &Vec2, c: &Vec2) -> (f32, f32, f32, f32) {
 /// Stripped-down renderer for screenshot purposes.
 pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: &Shared) {
     let mut temp_bones: Vec<Bone> = shared.armature.bones.clone();
-    forward_kinematics(&mut temp_bones, std::collections::HashMap::new());
+    construction(&mut temp_bones, &shared.armature.bones);
     temp_bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
     let zoom = 1000.;
@@ -564,6 +526,50 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
             device,
         );
     }
+}
+
+pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
+    inheritance(bones, std::collections::HashMap::new());
+
+    let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
+
+    // inverse kinematics
+    for b in 0..bones.len() {
+        if bones[b].joint_effector != JointEffector::Start || bones[b].ik_disabled {
+            continue;
+        }
+
+        // get all joint children of this bone, including itself
+        let mut joints = vec![];
+        armature_window::get_all_children(&bones, &mut joints, &bones[b]);
+        joints.insert(0, bones[b].clone());
+        joints = joints
+            .iter()
+            .filter(|joint| joint.joint_effector != JointEffector::None)
+            .cloned()
+            .collect();
+
+        let target = bones.iter().find(|bone| bone.id == bones[b].ik_target_id);
+
+        if target == None {
+            continue;
+        }
+
+        // IK is iterated multiple times over for accuracy
+        // runtimes could adjust this, or make it customizable
+        for _ in 0..10 {
+            inverse_kinematics(&mut joints, target.unwrap().pos);
+        }
+
+        // save rotations for the next forward kinematics call
+        for joint in joints {
+            ik_rot.insert(joint.id, joint.rot);
+        }
+    }
+
+    // re-construct bones, accounting for rotations saved from IK
+    *bones = og_bones.clone();
+    inheritance(bones, ik_rot.clone());
 }
 
 // https://www.youtube.com/watch?v=NfuO66wsuRg
@@ -763,7 +769,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
     };
 }
 
-pub fn forward_kinematics(bones: &mut Vec<Bone>, ik_rot: std::collections::HashMap<i32, f32>) {
+pub fn inheritance(bones: &mut Vec<Bone>, ik_rot: std::collections::HashMap<i32, f32>) {
     for i in 0..bones.len() {
         let mut parent: Option<Bone> = None;
         for b in 0..bones.len() {
