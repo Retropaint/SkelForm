@@ -229,7 +229,7 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
     // todo:
     // Texture atlas is the biggest bottleneck in saving time. Both could be improved:
     // - coping individual textures to the final image
-    // - encoding to png (mandatory for regular saving, but autosaving could use bmp or some such)
+    // - encoding to png (mandatory for regular saving, but autosaving could use another format like bmp)
 
     for set in &mut armature.styles {
         for tex in &mut set.textures {
@@ -244,7 +244,7 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
         }
     }
 
-    // encode buffer to png, to allow saving it as a png file
+    // encode buffer to png
     let mut png_buf: Vec<u8> = vec![];
     let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
     encoder

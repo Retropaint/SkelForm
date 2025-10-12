@@ -290,6 +290,7 @@ impl ApplicationHandler for App {
             WindowEvent::DroppedFile(path_buf) => {
                 self.shared.ui.set_state(UiState::Modal, false);
                 let file_path = path_buf.into_os_string().into_string().unwrap();
+                #[cfg(not(target_arch = "wasm32"))]
                 file_reader::create_temp_file(&self.shared.temp_path.import, &file_path);
             }
             WindowEvent::CloseRequested => {
