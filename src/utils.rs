@@ -464,7 +464,7 @@ pub fn import<R: Read + std::io::Seek>(
             let ed_bone = &editor.bones[b];
 
             // iterable editor bone imports
-            //bone.folded = ed_bone.folded;
+            bone.folded = ed_bone.folded;
             bone.ik_folded = ed_bone.ik_folded;
             bone.meshdef_folded = ed_bone.meshdef_folded;
             bone.ik_disabled = ed_bone.ik_disabled;
