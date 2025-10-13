@@ -380,8 +380,8 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 let last_constraint = bone.clone().constraint;
 
                 let str_none = shared.loc(&(ik.to_owned() + "None")).clone();
-                let str_clockwise = shared.loc(&(ik.to_owned() + "Clockwise")).clone() + "  ⟲";
-                let str_ccw = shared.loc(&(ik.to_owned() + "CounterClockwise")).clone() + "  ⟳";
+                let str_clockwise = shared.loc(&(ik.to_owned() + "Clockwise")).clone() + "  ⟳";
+                let str_ccw = shared.loc(&(ik.to_owned() + "CounterClockwise")).clone() + "  ⟲";
                 let str_desc = shared.loc(&(ik.to_owned() + "constraint_desc")).clone();
                 let selected = match bone.constraint {
                     JointConstraint::Clockwise => str_clockwise.clone(),
