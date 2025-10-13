@@ -166,8 +166,6 @@ pub fn read_psd(
         active: true,
     });
 
-    let pixels: Vec<Vec<u8>> = vec![];
-
     let mut bone_psd_id: std::collections::HashMap<i32, u32> = Default::default();
 
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
@@ -283,6 +281,8 @@ pub fn read_psd(
             shared.ui.anim.selected_frame,
         );
 
+        let mut added_ik = false;
+
         for l in 0..psd.layers().len() {
             let layer = &psd.layers()[l];
             if layer.parent_id() != Some(group_ids[g]) || !layer.name().contains("$ik") {
@@ -298,6 +298,7 @@ pub fn read_psd(
 
             if layer.name().contains("start") {
                 bone.joint_effector = JointEffector::Start;
+                added_ik = true;
             } else if layer.name().contains("middle") {
                 bone.joint_effector = JointEffector::Middle;
             } else if layer.name().contains("end") {
@@ -330,6 +331,18 @@ pub fn read_psd(
             new_bone.pos.y -= pivot_pos.y;
         } else {
             new_bone.pos -= Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
+        }
+
+        if added_ik {
+            let target_id = shared.armature.new_bone(-1).0.id;
+            let target_name = group.name().to_owned() + " Target";
+            shared.armature.find_bone_mut(target_id).unwrap().name = target_name;
+            let id = if pivot_id != -1 {
+                pivot_id
+            } else {
+                new_bone_id
+            };
+            shared.armature.find_bone_mut(id).unwrap().ik_target_id = target_id;
         }
 
         let bone_id = if pivot_id != -1 {
