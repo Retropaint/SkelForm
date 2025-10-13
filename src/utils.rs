@@ -266,18 +266,6 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
-    for b in 0..armature_copy.bones.len() {
-        if armature_copy.bones[b].parent_id == -1 {
-            continue;
-        }
-
-        armature_copy.bones[b].parent_id = armature_copy
-            .bones
-            .iter()
-            .position(|bone| bone.id == armature_copy.bones[b].parent_id)
-            .unwrap() as i32;
-    }
-
     // populate ik families
     armature_copy.ik_families = vec![];
     for b in 0..armature_copy.bones.len() {
@@ -347,6 +335,18 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
             armature_copy.bones[b].vertices = vec![];
             armature_copy.bones[b].indices = vec![];
         }
+    }
+
+    for b in 0..armature_copy.bones.len() {
+        if armature_copy.bones[b].parent_id == -1 {
+            continue;
+        }
+
+        armature_copy.bones[b].parent_id = armature_copy
+            .bones
+            .iter()
+            .position(|bone| bone.id == armature_copy.bones[b].parent_id)
+            .unwrap() as i32;
     }
 
     // restructure bone ids
