@@ -230,7 +230,6 @@ pub fn read_psd(
         for t in 0..shared.armature.styles[0].textures.len() {
             let img = &shared.armature.styles[0].textures[t].image;
             if img.to_rgba8().to_vec() == crop.to_vec() {
-                println!("test");
                 tex_idx = t;
                 break;
             }

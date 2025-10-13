@@ -612,14 +612,14 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
 
         bones[b].pos = prev_pos - length;
 
-        if b != 0 && b != bones.len() - 1 && bones[b].constraint != JointConstraint::None {
+        if b != 0 && b != bones.len() - 1 && bones[0].constraint != JointConstraint::None {
             // get local angle of joint
             let joint_dir = (prev_pos - bones[b].pos).normalize();
             let joint_angle = joint_dir.y.atan2(joint_dir.x) - base_angle;
 
             let const_min;
             let const_max;
-            if bones[b].constraint == JointConstraint::Clockwise {
+            if bones[0].constraint == JointConstraint::Clockwise {
                 const_min = -3.14;
                 const_max = 0.;
             } else {
