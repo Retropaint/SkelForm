@@ -599,7 +599,14 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             let (edited, value, _) =
                 ui.float_input("fps".to_string(), shared, fps as f32, 1., None);
             if edited {
-                shared.selected_animation_mut().unwrap().fps = value as i32;
+                let anim_mut = shared.selected_animation_mut().unwrap();
+                let div = anim_mut.fps as f32 / value;
+                anim_mut.fps = value as i32;
+
+                // adjust keyframes to maintain spacing
+                for kf in &mut anim_mut.keyframes {
+                    kf.frame = ((kf.frame as f32) / div) as i32
+                }
             }
             shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
 
