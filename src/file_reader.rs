@@ -166,6 +166,10 @@ pub fn read_psd(
         active: true,
     });
 
+    let pixels: Vec<Vec<u8>> = vec![];
+
+    let mut bone_psd_id: std::collections::HashMap<i32, u32> = Default::default();
+
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
     group_ids.reverse();
     for g in 0..group_ids.len() {
@@ -181,6 +185,13 @@ pub fn read_psd(
                 parent_group.id() == group.id()
             })
             .unwrap();
+
+        let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
+            dimensions.x as u32,
+            dimensions.y as u32,
+            pixels.clone(),
+        )
+        .unwrap();
 
         // get dimension and top left position of this group
         let mut dims = Vec2::default();
@@ -205,13 +216,6 @@ pub fn read_psd(
             }
         }
 
-        // all layers use the full canvas size, so crop them
-        let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
-            dimensions.x as u32,
-            dimensions.y as u32,
-            pixels.clone(),
-        )
-        .unwrap();
         let crop = image::imageops::crop_imm(
             &img_buf,
             pos_tl.x as u32,
@@ -221,17 +225,31 @@ pub fn read_psd(
         )
         .to_image();
 
-        add_texture(
-            image::DynamicImage::ImageRgba8(crop),
-            dims,
-            group.name(),
-            &mut shared.ui,
-            &mut shared.armature,
-            queue,
-            device,
-            bind_group_layout,
-            ctx,
-        );
+        // add tex if not a duplicate
+        let mut tex_idx = usize::MAX;
+        for t in 0..shared.armature.styles[0].textures.len() {
+            let img = &shared.armature.styles[0].textures[t].image;
+            if img.to_rgba8().to_vec() == crop.to_vec() {
+                println!("test");
+                tex_idx = t;
+                break;
+            }
+        }
+        if tex_idx == usize::MAX {
+            add_texture(
+                image::DynamicImage::ImageRgba8(crop),
+                dims,
+                group.name(),
+                &mut shared.ui,
+                &mut shared.armature,
+                queue,
+                device,
+                bind_group_layout,
+                ctx,
+            );
+
+            tex_idx = shared.armature.styles[0].textures.len() - 1;
+        }
 
         // check if this group has a pivot, and create it if so
         let mut pivot_id = -1;
@@ -243,6 +261,7 @@ pub fn read_psd(
             }
 
             pivot_id = shared.armature.new_bone(-1).0.id;
+            bone_psd_id.insert(pivot_id, group_ids[g] as u32);
             let pivot_bone = shared.armature.find_bone_mut(pivot_id).unwrap();
             pivot_pos = Vec2::new(layer.layer_left() as f32, -layer.layer_top() as f32);
             pivot_bone.pos = pivot_pos - Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
@@ -252,7 +271,9 @@ pub fn read_psd(
 
         // create texture bone
         let new_bone_id = shared.armature.new_bone(-1).0.id;
-        let tex_idx = shared.armature.styles[0].textures.len() - 1;
+        if pivot_id == -1 {
+            bone_psd_id.insert(new_bone_id, group_ids[g] as u32);
+        }
         let tex_name = shared.armature.styles[0].textures[tex_idx].name.clone();
         let bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
         bone.style_ids = vec![0];
@@ -322,10 +343,11 @@ pub fn read_psd(
             continue;
         }
 
-        // find parent by name
-        let parent_name = psd.groups()[&group.parent_id().unwrap()].name();
+        // find parent by group id
         for b in 0..shared.armature.bones.len() {
-            if shared.armature.bones[b].name != parent_name {
+            let id = shared.armature.bones[b].id;
+            let psd_id = bone_psd_id.get(&id);
+            if psd_id == None || group.parent_id().unwrap() != *psd_id.unwrap() {
                 continue;
             }
 
