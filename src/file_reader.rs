@@ -167,6 +167,7 @@ pub fn read_psd(
     });
 
     let mut bone_psd_id: std::collections::HashMap<i32, u32> = Default::default();
+    let mut start_eff_ids: Vec<i32> = vec![];
 
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
     group_ids.reverse();
@@ -281,8 +282,6 @@ pub fn read_psd(
             shared.ui.anim.selected_frame,
         );
 
-        let mut added_ik = false;
-
         for l in 0..psd.layers().len() {
             let layer = &psd.layers()[l];
             if layer.parent_id() != Some(group_ids[g]) || !layer.name().contains("$ik") {
@@ -298,7 +297,7 @@ pub fn read_psd(
 
             if layer.name().contains("start") {
                 bone.joint_effector = JointEffector::Start;
-                added_ik = true;
+                start_eff_ids.push(bone.id);
             } else if layer.name().contains("middle") {
                 bone.joint_effector = JointEffector::Middle;
             } else if layer.name().contains("end") {
@@ -333,18 +332,6 @@ pub fn read_psd(
             new_bone.pos -= Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
         }
 
-        if added_ik {
-            let target_id = shared.armature.new_bone(-1).0.id;
-            let target_name = group.name().to_owned() + " Target";
-            shared.armature.find_bone_mut(target_id).unwrap().name = target_name;
-            let id = if pivot_id != -1 {
-                pivot_id
-            } else {
-                new_bone_id
-            };
-            shared.armature.find_bone_mut(id).unwrap().ik_target_id = target_id;
-        }
-
         let bone_id = if pivot_id != -1 {
             pivot_id
         } else {
@@ -375,26 +362,12 @@ pub fn read_psd(
         }
     }
 
-    // populate child IK joint constraints
-    for b in 0..shared.armature.bones.len() {
-        if shared.armature.bones[b].joint_effector != JointEffector::Start {
-            continue;
-        }
-
-        let mut children = vec![];
-        armature_window::get_all_children(
-            &shared.armature.bones,
-            &mut children,
-            &shared.armature.bones[b],
-        );
-
-        children.retain(|bone| bone.joint_effector != JointEffector::None);
-
-        for child in &children {
-            let constraint = shared.armature.bones[b].constraint;
-            let bones = &mut shared.armature.bones.iter_mut();
-            bones.find(|bone| bone.id == child.id).unwrap().constraint = constraint;
-        }
+    // add IK targets
+    for eff_id in start_eff_ids {
+        let target_id = shared.armature.new_bone(-1).0.id;
+        shared.armature.find_bone_mut(eff_id).unwrap().ik_target_id = target_id;
+        let target_name = shared.armature.find_bone(eff_id).unwrap().name.to_owned() + " Target";
+        shared.armature.find_bone_mut(target_id).unwrap().name = target_name;
     }
 
     let str_psd = shared.loc("psd_imported");
