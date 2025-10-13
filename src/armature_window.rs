@@ -462,10 +462,6 @@ pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_p
     let mut to_move: Vec<Bone> = vec![main.clone()];
     get_all_children(bones, &mut to_move, main);
 
-    let mut anchor_children: Vec<Bone> = vec![];
-    get_all_children(bones, &mut anchor_children, &anchor);
-    let parent_offset = anchor_children.len();
-
     // remove them
     for _ in &to_move {
         bones.remove(old_idx as usize);
@@ -477,7 +473,7 @@ pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_p
     }
     for bone in to_move {
         bones.insert(
-            find_bone_idx(bones, anchor.id) as usize + is_setting_parent as usize + parent_offset,
+            find_bone_idx(bones, anchor.id) as usize + is_setting_parent as usize,
             bone.clone(),
         );
     }
