@@ -587,6 +587,7 @@ impl Ui {
 
     pub fn unselect_everything(&mut self) {
         self.selected_bone_idx = usize::MAX;
+        self.selected_bone_ids = vec![];
         self.anim.selected_frame = -1;
         self.editing_mesh = false;
         self.anim.selected = usize::MAX;
