@@ -628,6 +628,8 @@ pub struct Config {
     pub gridline_front: bool,
     #[serde(default)]
     pub keep_tex_idx_on_move: bool,
+    #[serde(default)]
+    pub meshdef: bool,
 
     #[serde(default)]
     pub colors: ColorConfig,
@@ -661,6 +663,7 @@ impl Default for Config {
             exact_bone_select: false,
             gridline_front: false,
             keep_tex_idx_on_move: false,
+            meshdef: false,
         }
     }
 }
