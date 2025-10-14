@@ -442,9 +442,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     for id in sorted_ids {
         let old_parents = shared.armature.get_all_parents(id as i32);
         drag_bone(shared, is_above, id, pointing_id);
-        shared
-            .armature
-            .offset_bone_by_parent(old_parents, id as i32);
+        shared.armature.offset_pos_by_parent(old_parents, id as i32);
     }
 
     return true;
