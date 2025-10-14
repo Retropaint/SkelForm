@@ -374,7 +374,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         return false;
     }
 
-    // prevent one from being draggable onto itself
+    // prevent dragging bone onto itself
     if *hovered_payload.unwrap() == idx as i32 {
         return false;
     }
@@ -393,9 +393,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         ui.painter().vline(rect.left(), rect.y_range(), stroke);
     };
 
-    let dragged_idx = if let Some(dp) = drag.dnd_release_payload::<i32>() {
-        *dp as usize
-    } else {
+    if drag.dnd_release_payload::<i32>() == None {
         return false;
     };
 
@@ -408,11 +406,11 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
 
     // ignore if pointing bone is a child of this
     let mut children: Vec<Bone> = vec![];
-    get_all_children(
-        &shared.armature.bones,
-        &mut children,
-        &shared.armature.bones[dragged_idx],
-    );
+    let first_drag_bone = shared
+        .armature
+        .find_bone(shared.ui.selected_bone_ids[0])
+        .unwrap();
+    get_all_children(&shared.armature.bones, &mut children, &first_drag_bone);
     for c in children {
         if shared.armature.bones[idx as usize].id == c.id {
             return false;
