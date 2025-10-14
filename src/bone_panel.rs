@@ -274,7 +274,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     }
 
     // disabled: mesh deformation (not ready either)
-    if true {
+    if !shared.config.meshdef {
         return;
     }
 

@@ -226,6 +226,20 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             utils::save_to_recent_files(&vec![]);
         }
     });
+
+    ui.add_space(20.);
+
+    let str_startup = shared.loc("settings_modal.miscellaneous.beta.heading");
+    ui.heading(str_startup);
+    let text =
+        egui::RichText::new(shared.loc("settings_modal.miscellaneous.beta.warning")).italics();
+    ui.label(text);
+    ui.add_space(5.);
+    ui.horizontal(|ui| {
+        let str_skip_startup = shared.loc("settings_modal.miscellaneous.beta.mesh_deformation");
+        ui.label(str_skip_startup);
+        ui.checkbox(&mut shared.config.meshdef, "".into_atoms());
+    });
 }
 
 fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {

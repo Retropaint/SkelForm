@@ -171,7 +171,12 @@
       "skip_startup_window": "Skip startup window",
       "clear_recent_files": "Clear recent files",
       "keep_bone_tex_idx": "Keep tex. index after moving ",
-      "keep_bone_tex_idx_desc": "After moving a texture in a style, all bones will automatically adjust their Tex. Index to match.\n\nTick this to preserve indexes after moving."
+      "keep_bone_tex_idx_desc": "After moving a texture in a style, all bones will automatically adjust their Tex. Index to match.\n\nTick this to preserve indexes after moving.",
+      "beta": {
+        "heading": "Beta",
+        "warning": "The following options will enable incomplete features.\nPlease save and backup your project before proceeding.",
+        "mesh_deformation": "Mesh Deformation:"
+      }
     }
   },
   "keyframe_editor": {
