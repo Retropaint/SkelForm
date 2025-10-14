@@ -285,7 +285,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         shared.selected_bone_mut().unwrap().ik_target_id = bone_id;
                         shared.ui.setting_ik_target = false;
                     } else {
-                        if !shared.input.holding_mod {
+                        if !shared.input.holding_mod && !shared.input.holding_shift {
                             shared.ui.selected_bone_ids = vec![];
                             let anim_frame = shared.ui.anim.selected_frame;
                             shared.ui.select_bone(idx as usize);
@@ -294,6 +294,17 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                         let id = shared.armature.bones[idx as usize].id;
                         shared.ui.selected_bone_ids.push(id);
+
+                        if shared.input.holding_shift {
+                            for i in shared.ui.selected_bone_idx..idx as usize {
+                                let bone = &shared.armature.bones[i];
+                                if !shared.ui.selected_bone_ids.contains(&bone.id)
+                                    && bone.parent_id == shared.selected_bone().unwrap().parent_id
+                                {
+                                    shared.ui.selected_bone_ids.push(bone.id);
+                                }
+                            }
+                        }
                     }
                 };
 
