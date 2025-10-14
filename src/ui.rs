@@ -295,6 +295,9 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
     mouse_button_as_key(input, egui::PointerButton::Extra1, egui::Key::F34);
     mouse_button_as_key(input, egui::PointerButton::Extra2, egui::Key::F35);
 
+    shared.input.holding_mod = input.modifiers.command;
+    shared.input.holding_shift = input.modifiers.shift;
+
     if input.consume_shortcut(&shared.config.keys.undo) {
         utils::undo_redo(true, shared);
     }
