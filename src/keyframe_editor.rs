@@ -21,15 +21,13 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
             shared.ui.anim.selected_frame += 1;
             let last_frame = shared.last_keyframe();
             if last_frame != None && shared.ui.anim.selected_frame > last_frame.unwrap().frame {
-                shared.ui.select_anim_frame(0);
+                shared.ui.anim.selected_frame = 0;
             }
         } else if left {
             shared.ui.anim.selected_frame -= 1;
             let last_frame = shared.last_keyframe();
             if last_frame != None && shared.ui.anim.selected_frame < 0 {
-                shared.ui.select_anim_frame(last_frame.unwrap().frame);
-            } else if last_frame == None && shared.ui.anim.selected_frame < 0 {
-                shared.ui.select_anim_frame(0);
+                shared.ui.anim.selected_frame = last_frame.unwrap().frame;
             }
         }
     }
