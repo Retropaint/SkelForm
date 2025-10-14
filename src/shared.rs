@@ -1102,20 +1102,19 @@ impl Armature {
     ) {
         let bone = self.find_bone_mut(bone_id).unwrap();
 
-        #[rustfmt::skip]
-        match element {
-            AnimElement::PositionX     => { bone.pos.x   = value },
-            AnimElement::PositionY     => { bone.pos.y   = value },
-            AnimElement::Rotation      => { bone.rot     = value },
-            AnimElement::ScaleX        => { bone.scale.x = value },
-            AnimElement::ScaleY        => { bone.scale.y = value },
-            AnimElement::Zindex        => { bone.zindex  = value as i32 },
-            AnimElement::VertPositionX => { /* do nothing */ },
-            AnimElement::VertPositionY => { /* do nothing */ },
-            AnimElement::TextureIndex  => { /* handled in set_bone_tex() */ },
-        };
-
         if anim_id == usize::MAX {
+            match element {
+                AnimElement::PositionX => bone.pos.x = value,
+                AnimElement::PositionY => bone.pos.y = value,
+                AnimElement::Rotation => bone.rot = value,
+                AnimElement::ScaleX => bone.scale.x = value,
+                AnimElement::ScaleY => bone.scale.y = value,
+                AnimElement::Zindex => bone.zindex = value as i32,
+                AnimElement::VertPositionX => { /* do nothing */ }
+                AnimElement::VertPositionY => { /* do nothing */ }
+                AnimElement::TextureIndex => { /* handled in set_bone_tex() */ }
+            };
+
             return;
         }
 
