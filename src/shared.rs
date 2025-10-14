@@ -1352,7 +1352,7 @@ impl Armature {
         parents
     }
 
-    pub fn offset_bone_by_parent(&mut self, old_parents: Vec<Bone>, bone_id: i32) {
+    pub fn offset_pos_by_parent(&mut self, old_parents: Vec<Bone>, bone_id: i32) {
         for parent in old_parents {
             let parent_pos = parent.pos;
             self.find_bone_mut(bone_id).unwrap().pos += parent_pos;
