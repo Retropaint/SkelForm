@@ -404,9 +404,18 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         ui.painter().vline(rect.left(), rect.y_range(), stroke);
     };
 
-    if drag.dnd_release_payload::<i32>() == None {
+    let drag_payload = drag.dnd_release_payload::<i32>();
+    if drag_payload == None {
         return false;
     };
+    let drag_idx = drag_payload.unwrap();
+
+    // if this bone wasn't selected before being dragged,
+    // set only this one to be dragged.
+    // prevents edge case of dragging bones while another is selected.
+    if !shared.ui.selected_bone_ids.contains(&drag_idx) {
+        shared.ui.selected_bone_ids = vec![*drag_idx];
+    }
 
     let pointing_id = shared.armature.bones[idx].id;
 
