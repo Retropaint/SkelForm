@@ -600,12 +600,28 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 ui.float_input("fps".to_string(), shared, fps as f32, 1., None);
             if edited {
                 let anim_mut = shared.selected_animation_mut().unwrap();
-                let div = anim_mut.fps as f32 / value;
-                anim_mut.fps = value as i32;
+
+                let mut old_unique_keyframes: Vec<i32> =
+                    anim_mut.keyframes.iter().map(|kf| kf.frame).collect();
+                old_unique_keyframes.dedup();
+
+                let mut anim_clone = anim_mut.clone();
 
                 // adjust keyframes to maintain spacing
-                for kf in &mut anim_mut.keyframes {
+                let div = anim_mut.fps as f32 / value;
+                for kf in &mut anim_clone.keyframes {
                     kf.frame = ((kf.frame as f32) / div) as i32
+                }
+
+                let mut unique_keyframes: Vec<i32> =
+                    anim_clone.keyframes.iter().map(|kf| kf.frame).collect();
+                unique_keyframes.dedup();
+
+                if unique_keyframes.len() == old_unique_keyframes.len() {
+                    anim_mut.fps = value as i32;
+                } else {
+                    let str_invalid = shared.loc("keyframe_editor.invalid_fps").to_string();
+                    shared.ui.open_modal(str_invalid, false);
                 }
             }
             shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
