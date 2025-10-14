@@ -617,6 +617,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
                 if unique_keyframes.len() == old_unique_keyframes.len() {
                     anim_mut.fps = value as i32;
+                    anim_mut.keyframes = anim_clone.keyframes;
                 } else {
                     let str_invalid = shared.loc("keyframe_editor.invalid_fps").to_string();
                     shared.ui.open_modal(str_invalid, false);
