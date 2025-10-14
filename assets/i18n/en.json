@@ -182,6 +182,7 @@
     "frame": "Frame: ",
     "fps": "FPS: ",
     "frames_per_second": "Frames Per Second",
+    "invalid_fps": "Some keyframes will be lost.\n\nPotential fixes:\n- Spread out keyframes\n- Incrementally change FPS",
     "copy": "Copy",
     "paste": "Paste",
     "elements": {
