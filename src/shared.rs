@@ -341,6 +341,8 @@ pub struct InputStates {
     pub left_down: bool,
     pub right_down: bool,
     pub down_dur: i32,
+    pub holding_mod: bool,
+    pub holding_shift: bool,
 
     // is mouse on UI?
     pub on_ui: bool,
@@ -475,6 +477,7 @@ pub struct Ui {
     pub animate_mode_bar_scale: Vec2,
 
     pub selected_bone_idx: usize,
+    pub selected_bone_ids: Vec<i32>,
     pub editing_mesh: bool,
 
     pub rename_id: String,
