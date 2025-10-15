@@ -1104,20 +1104,33 @@ impl Armature {
         anim_frame: i32,
     ) {
         let bone = self.find_bone_mut(bone_id).unwrap();
+        let mut init_value = 0.;
+
+        macro_rules! set {
+            ($field:expr) => {{
+                init_value = $field;
+                if anim_id == usize::MAX {
+                    $field = value;
+                }
+            }};
+        }
+
+        match element {
+            AnimElement::PositionX => set!(bone.pos.x),
+            AnimElement::PositionY => set!(bone.pos.y),
+            AnimElement::Rotation => set!(bone.rot),
+            AnimElement::ScaleX => set!(bone.scale.x),
+            AnimElement::ScaleY => set!(bone.scale.y),
+            AnimElement::Zindex => {
+                init_value = bone.zindex as f32;
+                bone.zindex = value as i32
+            }
+            AnimElement::VertPositionX => { /* do nothing */ }
+            AnimElement::VertPositionY => { /* do nothing */ }
+            AnimElement::TextureIndex => { /* handled in set_bone_tex() */ }
+        };
 
         if anim_id == usize::MAX {
-            match element {
-                AnimElement::PositionX => bone.pos.x = value,
-                AnimElement::PositionY => bone.pos.y = value,
-                AnimElement::Rotation => bone.rot = value,
-                AnimElement::ScaleX => bone.scale.x = value,
-                AnimElement::ScaleY => bone.scale.y = value,
-                AnimElement::Zindex => bone.zindex = value as i32,
-                AnimElement::VertPositionX => { /* do nothing */ }
-                AnimElement::VertPositionY => { /* do nothing */ }
-                AnimElement::TextureIndex => { /* handled in set_bone_tex() */ }
-            };
-
             return;
         }
 
@@ -1127,12 +1140,9 @@ impl Armature {
             .find(|kf| kf.frame == 0 && kf.element == *element && kf.bone_id == bone_id)
             != None;
         if anim_frame != 0 && !has_0th_frame {
-            let init_value = match element {
-                AnimElement::ScaleX | AnimElement::ScaleY => 1.,
-                _ => 0.,
-            };
-
             self.animations[anim_id].check_if_in_keyframe(bone_id, 0, element.clone(), -1);
+
+            println!("{}", init_value);
 
             self.animations[anim_id]
                 .keyframes
