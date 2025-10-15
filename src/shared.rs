@@ -831,7 +831,7 @@ pub struct Bone {
     pub parent_id: i32,
     #[serde(default, skip_serializing_if = "are_styles_empty")]
     pub style_ids: Vec<i32>,
-    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
+    #[serde(default, skip_serializing_if = "is_neg_one")]
     pub tex_idx: i32,
     #[serde(default, skip_serializing_if = "is_neg_one")]
     pub zindex: i32,
