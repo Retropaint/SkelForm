@@ -1648,30 +1648,30 @@ enum_string!(Transition);
 )]
 pub enum AnimElement {
     #[default]
+    /* 1 */
     PositionX,
-    PositionY,
-    Rotation,
-    ScaleX,
-    ScaleY,
-    Zindex,
-    VertPositionX,
-    VertPositionY,
-    TextureIndex,
+    /* 2 */ PositionY,
+    /* 3 */ Rotation,
+    /* 4 */ ScaleX,
+    /* 5 */ ScaleY,
+    /* 6 */ Zindex,
+    /* 7 */ VertPositionX,
+    /* 8 */ VertPositionY,
+    /* 9 */ TextureIndex,
 }
 
 // iterable anim change icons IDs
 #[rustfmt::skip]
-pub const ANIM_ICON_ID: [usize; 10] = [
-    0,
-    0,
-    1,
-    2,
-    2,
-    3,
-    3,
-    0,
-    0,
-    4,
+pub const ANIM_ICON_ID: [usize; 9] = [
+    /* 1 */ 0,
+    /* 2 */ 1,
+    /* 3 */ 2,
+    /* 4 */ 3,
+    /* 5 */ 4,
+    /* 6 */ 5,
+    /* 7 */ 5,
+    /* 8 */ 5,
+    /* 9 */ 5,
 ];
 
 #[derive(Default, Clone, PartialEq)]
