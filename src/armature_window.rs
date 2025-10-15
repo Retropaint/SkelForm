@@ -296,7 +296,13 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         shared.ui.selected_bone_ids.push(id);
 
                         if shared.input.holding_shift {
-                            for i in shared.ui.selected_bone_idx..idx as usize {
+                            let mut first = shared.ui.selected_bone_idx;
+                            let mut second = idx as usize;
+                            if first > second {
+                                first = idx as usize;
+                                second = shared.ui.selected_bone_idx;
+                            }
+                            for i in first..second as usize {
                                 let bone = &shared.armature.bones[i];
                                 if !shared.ui.selected_bone_ids.contains(&bone.id)
                                     && bone.parent_id == shared.selected_bone().unwrap().parent_id
