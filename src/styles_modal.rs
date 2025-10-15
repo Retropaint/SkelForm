@@ -258,6 +258,7 @@ pub fn draw_textures_list(
         });
 
         let size = ui.available_size();
+        let tex_frame_padding = Vec2::new(10., 15.);
 
         if shared.ui.selected_tex_set_id == -1 {
             let mut darker = shared.config.colors.dark_accent;
@@ -266,20 +267,23 @@ pub fn draw_textures_list(
                 .inner_margin(5.)
                 .fill(darker.into())
                 .show(ui, |ui| {
-                    ui.set_width(size.x);
-                    ui.set_height(size.y - 10.);
+                    ui.set_width(size.x - tex_frame_padding.x + 5.);
+                    ui.set_height(size.y - tex_frame_padding.y + 5.);
                 });
             return;
         }
 
         ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+            let mut darker = shared.config.colors.dark_accent;
+            if shared.ui.selected_tex_set_id == -1 {
+                darker -= Color::new(5, 5, 5, 0);
+            }
             egui::Frame::new()
-                .fill(shared.config.colors.dark_accent.into())
+                .fill(darker.into())
                 .inner_margin(2.)
                 .show(ui, |ui| {
-                    let padding = Vec2::new(10., 15.);
-                    ui.set_width(size.x - padding.x);
-                    ui.set_height(size.y - padding.y);
+                    ui.set_width(size.x - tex_frame_padding.x);
+                    ui.set_height(size.y - tex_frame_padding.y);
 
                     if set_idx == usize::MAX {
                         return;
@@ -302,7 +306,7 @@ pub fn draw_textures_list(
                         == 0;
                     if is_empty {
                         let str_empty = shared.loc("styles_modal.style_preview_empty");
-                        ui.label(str_empty);
+                        //ui.label(str_empty);
                         return;
                     }
 
@@ -634,7 +638,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         }
 
         ui.horizontal(|ui| {
-            let bin_width = 10.;
+            let bin_width = 13.;
             let button = ui
                 .dnd_drag_source(egui::Id::new(("tex", idx, 0)), idx, |ui| {
                     egui::Frame::new().fill(col.into()).show(ui, |ui| {
