@@ -398,7 +398,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut ik_disabled = true;
     if let Some(bone) = shared.selected_bone() {
-        ik_disabled = bone.ik_disabled || bone.joint_effector == JointEffector::None;
+        let is_end =
+            shared.edit_mode == EditMode::Rotate && bone.joint_effector == JointEffector::End;
+        ik_disabled = is_end || (bone.ik_disabled || bone.joint_effector == JointEffector::None);
     }
 
     if shared.ui.editing_mesh || !ik_disabled {
