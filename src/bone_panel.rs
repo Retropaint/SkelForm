@@ -241,6 +241,16 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                 input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "W");
             });
         });
+    })
+    .response
+    .on_disabled_hover_text(str_cant_edit);
+
+    let has_end_ik = !bone.ik_disabled && bone.joint_effector != JointEffector::End;
+    let str_cant_edit = shared
+        .loc("bone_panel.inverse_kinematics.cant_edit")
+        .clone();
+
+    ui.add_enabled_ui(!has_end_ik, |ui| {
         ui.horizontal(|ui| {
             label!(shared.loc("bone_panel.rotation"), ui);
             let rot_el = &AnimElement::Rotation;
