@@ -419,8 +419,9 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     // if this bone wasn't selected before being dragged,
     // set only this one to be dragged.
     // prevents edge case of dragging bones while another is selected.
-    if !shared.ui.selected_bone_ids.contains(&drag_idx) {
-        shared.ui.selected_bone_ids = vec![*drag_idx];
+    let drag_id = shared.armature.bones[*drag_idx as usize].id;
+    if !shared.ui.selected_bone_ids.contains(&drag_id) {
+        shared.ui.selected_bone_ids = vec![drag_id];
     }
 
     let pointing_id = shared.armature.bones[idx].id;
