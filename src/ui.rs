@@ -845,8 +845,10 @@ fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
 
 fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
     let mut ik_disabled = true;
+    let mut is_end = false;
     if let Some(bone) = shared.selected_bone() {
         ik_disabled = bone.ik_disabled || bone.joint_effector == JointEffector::None;
+        is_end = bone.joint_effector == JointEffector::End;
     }
 
     // edit mode window
@@ -860,22 +862,24 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
             shared.ui.edit_bar_pos.y - 1.,
         ))
         .show(egui_ctx, |ui| {
-            ui.add_enabled_ui(!shared.ui.editing_mesh && ik_disabled, |ui| {
-                ui.horizontal(|ui| {
-                    macro_rules! edit_mode_button {
-                        ($label:expr, $edit_mode:expr) => {
+            ui.horizontal(|ui| {
+                macro_rules! edit_mode_button {
+                    ($label:expr, $edit_mode:expr, $check:expr) => {
+                        ui.add_enabled_ui($check, |ui| {
                             if selection_button($label, shared.edit_mode == $edit_mode, ui)
                                 .clicked()
                             {
                                 shared.edit_mode = $edit_mode;
                             };
-                        };
-                    }
-                    edit_mode_button!(shared.loc("move"), EditMode::Move);
-                    edit_mode_button!(shared.loc("rotate"), EditMode::Rotate);
-                    edit_mode_button!(shared.loc("scale"), EditMode::Scale);
-                });
-            })
+                        })
+                    };
+                }
+                let ik_disabled = !shared.ui.editing_mesh && ik_disabled;
+                let rot = ik_disabled || is_end;
+                edit_mode_button!(shared.loc("move"), EditMode::Move, ik_disabled);
+                edit_mode_button!(shared.loc("rotate"), EditMode::Rotate, rot);
+                edit_mode_button!(shared.loc("scale"), EditMode::Scale, ik_disabled);
+            });
         });
 }
 
