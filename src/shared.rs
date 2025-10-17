@@ -867,6 +867,16 @@ pub struct Bone {
     pub world_verts: Vec<Vertex>,
     #[serde(skip)]
     pub ik_disabled: bool,
+
+    // todo:
+    // these should be private, but that upsets
+    // default constructor for some reason
+    #[serde(default)]
+    pub init_pos: Vec2,
+    #[serde(default)]
+    pub init_scale: Vec2,
+    #[serde(default)]
+    pub init_rot: f32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
