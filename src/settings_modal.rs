@@ -150,7 +150,7 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
                 .loc(&("settings_modal.rendering.".to_owned() + $title))
                 .clone();
             let mut col = $color.clone();
-            color_row(str_color, &mut col, $bg_color, ui, shared);
+            color_row(str_color, &mut col, $bg_color, ui);
             $color = col;
         };
     }
@@ -248,9 +248,7 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
             let str_color = shared
                 .loc(&("settings_modal.user_interface.colors.".to_owned() + $title))
                 .clone();
-            let mut col = $color.clone();
-            color_row(str_color, &mut col, $bg_color, ui, shared);
-            $color = col;
+            color_row(str_color, $color, $bg_color, ui);
         };
     }
 
@@ -265,72 +263,47 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         });
     });
 
-    macro_rules! col {
-        () => {
-            &mut shared.config.colors
-        };
-    }
+    let alt_bg = shared.config.colors.main.clone();
+    let main_bg = shared.config.colors.dark_accent.clone();
 
     // iterable color config
     #[rustfmt::skip]
     {
-        color_row!("main",         col!().main,         col!().dark_accent);
-        color_row!("light_accent", col!().light_accent, col!().main       );
-        color_row!("dark_accent",  col!().dark_accent,  col!().dark_accent);
-        color_row!("text",         col!().text,         col!().main       );
-        color_row!("frameline",    col!().frameline,    col!().dark_accent);
-        color_row!("gradient",     col!().gradient,     col!().main       );
-        color_row!("link",         col!().link,         col!().dark_accent);
+        color_row!("main",         &mut shared.config.colors.main,         main_bg);
+        color_row!("light_accent", &mut shared.config.colors.light_accent, alt_bg);
+        color_row!("dark_accent",  &mut shared.config.colors.dark_accent,  main_bg);
+        color_row!("text",         &mut shared.config.colors.text,         alt_bg);
+        color_row!("frameline",    &mut shared.config.colors.frameline,    main_bg);
+        color_row!("gradient",     &mut shared.config.colors.gradient,     alt_bg);
+        color_row!("link",         &mut shared.config.colors.link,         main_bg);
     };
 }
 
-fn color_row(
-    title: String,
-    color: &mut shared::Color,
-    bg: shared::Color,
-    ui: &mut egui::Ui,
-    shared: &mut shared::Shared,
-) {
-    macro_rules! drag_value {
-        ($id:expr, $field:expr, $ui:expr) => {
-            $ui.add(egui::DragValue::new(&mut $field).speed(0.1));
-        };
-    }
+fn color_row(title: String, color: &mut shared::Color, bg: shared::Color, ui: &mut egui::Ui) {
+    let frame = egui::Frame {
+        fill: bg.into(),
+        ..Default::default()
+    };
     ui.horizontal(|ui| {
-        egui::Frame::show(
-            egui::Frame {
-                fill: bg.into(),
-                ..Default::default()
-            },
-            ui,
-            |ui| {
-                ui.label(title);
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    // hex input
-                    let color32: egui::Color32 = (*color).into();
-                    let (edited, val, _) = ui.text_input(
-                        "test".to_string() + "_hex",
-                        shared,
-                        color32.to_hex().to_string()[..7].to_string(),
-                        Some(ui::TextInputOptions {
-                            size: shared::Vec2::new(60., 20.),
-                            ..Default::default()
-                        }),
-                    );
-                    if edited {
-                        if let Ok(data) = egui::Color32::from_hex(&(val + "ff")) {
-                            color.r = data.r();
-                            color.g = data.g();
-                            color.b = data.b();
-                        }
-                    }
+        egui::Frame::show(frame, ui, |ui| {
+            ui.label(title);
 
-                    drag_value!("test".to_string() + "_b", color.b, ui);
-                    drag_value!("test".to_string() + "_g", color.g, ui);
-                    drag_value!("test".to_string() + "_r", color.r, ui);
-                });
-            },
-        );
+            // color picker
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let mut col: [f32; 3] = [
+                    color.r as f32 / 255.,
+                    color.g as f32 / 255.,
+                    color.b as f32 / 255.,
+                ];
+                ui.color_edit_button_rgb(&mut col);
+                *color = shared::Color {
+                    r: (col[0] * 255.) as u8,
+                    g: (col[1] * 255.) as u8,
+                    b: (col[2] * 255.) as u8,
+                    a: 255,
+                };
+            });
+        });
     });
 }
 
