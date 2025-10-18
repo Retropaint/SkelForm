@@ -270,19 +270,19 @@ pub struct Color {
 
 impl std::ops::AddAssign for Color {
     fn add_assign(&mut self, other: Color) {
-        self.r += other.r;
-        self.g += other.g;
-        self.b += other.b;
-        self.a += other.a;
+        self.r = (self.r + other.r).min(255);
+        self.g = (self.g + other.g).min(255);
+        self.b = (self.b + other.b).min(255);
+        self.a = (self.a + other.a).min(255);
     }
 }
 
 impl std::ops::SubAssign for Color {
     fn sub_assign(&mut self, other: Color) {
-        self.r -= other.r.min(self.r);
-        self.g -= other.g.min(self.g);
-        self.b -= other.b.min(self.b);
-        self.a -= other.a.min(self.a);
+        self.r = (self.r - other.r).max(0);
+        self.g = (self.g - other.g).max(0);
+        self.b = (self.b - other.b).max(0);
+        self.a = (self.a - other.a).max(0);
     }
 }
 
