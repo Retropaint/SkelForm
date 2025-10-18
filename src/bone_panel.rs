@@ -490,7 +490,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     });
     ui.separator();
 
-    if bone.meshdef_folded {
+    if bone.meshdef_folded || shared.armature.get_current_tex(bone.id) == None {
         return;
     }
 
