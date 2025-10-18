@@ -350,11 +350,14 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
     }
 
     // restructure bone ids
-    for bone in &mut armature_copy.bones {
+    for b in 0..armature_copy.bones.len() {
+        let bone = &mut armature_copy.bones[b];
         if bone.style_ids.len() == 0 {
             bone.tex_idx = -1;
             bone.zindex = -1;
         }
+
+        bone.id = b as i32;
     }
 
     for bone in &mut armature_copy.bones {
