@@ -33,7 +33,7 @@ parser.add_argument("-wgl", "--webgl",   action="store_true", help="use webgl in
 args = parser.parse_args()
 
 if args.release and not args.mobile:
-    generic += " --release --public-url=/skelform_web"
+    generic += " --release --public-url=/editor"
 if args.webgl:
     features = '"webgl'
 if args.mobile:
