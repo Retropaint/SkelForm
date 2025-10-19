@@ -518,6 +518,7 @@ pub struct Ui {
     pub hovering_set: i32,
     pub hovering_anim: i32,
     pub hovering_style_bone: i32,
+    pub hovering_setting: Option<shared::SettingsState>,
 
     pub showing_samples: bool,
 
@@ -1151,8 +1152,6 @@ impl Armature {
             != None;
         if anim_frame != 0 && !has_0th_frame {
             self.animations[anim_id].check_if_in_keyframe(bone_id, 0, element.clone(), -1);
-
-            println!("{}", init_value);
 
             self.animations[anim_id]
                 .keyframes

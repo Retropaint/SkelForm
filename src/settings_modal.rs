@@ -31,13 +31,19 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                     .show(ui, |ui| {
                         ui.set_width(window.x.min(100.));
                         ui.set_height(window.y.min(475.));
+                        let width = ui.min_rect().width();
                         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
+                            let mut is_hovered = false;
                             macro_rules! tab {
                                 ($name:expr, $state:expr) => {
-                                    let is_state = shared.ui.settings_state == $state;
-                                    if ui::selection_button($name, is_state, ui).clicked() {
-                                        shared.ui.settings_state = $state;
-                                    }
+                                    settings_button(
+                                        $name,
+                                        $state,
+                                        ui,
+                                        shared,
+                                        width,
+                                        &mut is_hovered,
+                                    )
                                 };
                             }
 
@@ -49,10 +55,14 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                                 shared.loc("settings_modal.keyboard.heading").clone();
                             let str_misc =
                                 shared.loc("settings_modal.miscellaneous.heading").clone();
-                            tab!(&str_ui, shared::SettingsState::Ui);
-                            tab!(&str_rendering, shared::SettingsState::Rendering);
-                            tab!(&str_keyboard, shared::SettingsState::Keyboard);
-                            tab!(&str_misc, shared::SettingsState::Misc);
+                            tab!(str_ui, shared::SettingsState::Ui);
+                            tab!(str_rendering, shared::SettingsState::Rendering);
+                            tab!(str_keyboard, shared::SettingsState::Keyboard);
+                            tab!(str_misc, shared::SettingsState::Misc);
+
+                            if !is_hovered {
+                                shared.ui.hovering_setting = None;
+                            }
                         });
                     });
                 egui::Frame::new().show(ui, |ui| {
@@ -83,6 +93,43 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                 }
             })
         });
+}
+
+fn settings_button(
+    name: String,
+    state: shared::SettingsState,
+    ui: &mut egui::Ui,
+    shared: &mut shared::Shared,
+    width: f32,
+    is_hovered: &mut bool,
+) {
+    let mut col = shared.config.colors.dark_accent;
+    if shared.ui.hovering_setting == Some(state.clone()) {
+        col += shared::Color::new(20, 20, 20, 0);
+    }
+    if shared.ui.settings_state == state.clone() {
+        col += shared::Color::new(20, 20, 20, 0);
+    }
+    let button = egui::Frame::new()
+        .fill(col.into())
+        .show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.set_width(width);
+                ui.set_height(21.);
+                ui.add_space(5.);
+                ui.label(name);
+            });
+        })
+        .response
+        .interact(egui::Sense::click())
+        .on_hover_cursor(egui::CursorIcon::PointingHand);
+    if button.contains_pointer() {
+        shared.ui.hovering_setting = Some(state.clone());
+        *is_hovered = true;
+    }
+    if button.clicked() {
+        shared.ui.settings_state = state;
+    }
 }
 
 fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
