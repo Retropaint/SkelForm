@@ -627,25 +627,27 @@ pub fn bone_meshes_edited(tex_size: Vec2, verts: &Vec<Vertex>) -> bool {
 }
 
 pub fn open_docs(is_dev: bool, mut _path: &str) {
-    let docs_name = if is_dev { "dev_docs" } else { "user_docs" };
-    if _path == "" {
-        _path = "index.html";
-    }
+    let docs_name = if is_dev { "dev-docs" } else { "user-docs" };
     #[cfg(target_arch = "wasm32")]
     openDocumentation(docs_name.to_string());
     // open the local docs, or online if it can't be found on default path
     #[cfg(not(target_arch = "wasm32"))]
     {
+        if _path == "" {
+            _path = "index.html";
+        }
         match open::that(bin_path() + docs_name + "/" + _path) {
-            Err(_) => match open::that(
-                "https://retropaint.github.io/skelform_".to_string()
-                    + docs_name
-                    + "/"
-                    + &_path.to_string(),
-            ) {
-                Err(_) => println!("couldn't open"),
-                Ok(file) => file,
-            },
+            Err(_) => {
+                if _path == "index.html" {
+                    _path = "";
+                }
+                match open::that(
+                    "https://skelform.org/".to_string() + docs_name + "/" + &_path.to_string(),
+                ) {
+                    Err(_) => println!("couldn't open"),
+                    Ok(file) => file,
+                }
+            }
             Ok(file) => file,
         };
     }

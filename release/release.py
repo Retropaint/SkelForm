@@ -33,11 +33,13 @@ def require_docs(header, doc_name):
 
 # Require user & dev docs before building
 can_build = True
-if not os.path.exists("user_docs"):
-    require_docs("USER", "user_docs")
+user_docs = "user-docs"
+dev_docs = "dev-docs"
+if not os.path.exists(user_docs):
+    require_docs("USER", user_docs)
     can_build = False
-if not os.path.exists("dev_docs"):
-    require_docs("DEV", "dev_docs")
+if not os.path.exists(user_docs):
+    require_docs("DEV", user_docs)
     can_build = False
 
 
@@ -80,12 +82,13 @@ if args.debug:
     mode = ""
     path = "debug"
 
-subprocess.run(f"cargo build {mode}", shell=True)
-shutil.copy(f"../target/{path}/SkelForm" + binExt, "./" + dirname)
-shutil.copytree("./user_docs", "./" + dirname + "/user_docs")
-shutil.copytree("./dev_docs", "./" + dirname + "/dev_docs")
-shutil.copytree("../assets", "./" + dirname + "/assets")
-shutil.copytree("../samples", "./" + dirname + "/samples")
+# yapf: disable
+subprocess.run (f"cargo build {mode}", shell=True)
+shutil.copy    (f"../target/{path}/SkelForm{binExt}", f"./{dirname}")
+shutil.copytree(f"./{user_docs}", f"./{dirname}/{user_docs}")
+shutil.copytree(f"./{dev_docs}",  f"./{dirname}/{dev_docs}")
+shutil.copytree("../assets",      f"./{dirname}/assets")
+shutil.copytree("../samples",     f"./{dirname}/samples")
 
 # make zip
 

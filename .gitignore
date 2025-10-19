@@ -4,6 +4,8 @@
 /dev_docs
 /release/dev_docs
 /release/user_docs
+/release/dev-docs
+/release/user-docs
 /release/SkelForm.app/Contents/MacOS
 autosave.skf
 armature.json
