@@ -250,6 +250,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         shared,
                         shared.ui.edit_value.clone().unwrap(),
                         Some(TextInputOptions {
+                            size: Vec2::new(ui.available_width(), 21.),
                             focus: true,
                             ..Default::default()
                         }),
