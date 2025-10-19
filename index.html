@@ -149,11 +149,7 @@
             <p id="focus-p">Click to focus</p>
         </div>
 
-        <div
-            id="resolution-message"
-            class="resolution-message"
-            style="visibility: hidden"
-        >
+        <div id="resolution-message" class="resolution-message" style="visibility: hidden">
             <p>
                 If you see this message, SkelForm has failed to load properly.
                 <br />
@@ -163,6 +159,11 @@
                 <br />
                 If this persists, please try another browser (preferrably Chrome).
             </p>
+        </div>
+
+
+        <div id="wait-message" class="resolution-message" style="visibility: hidden">
+            <p>Loading, please wait...</p>
         </div>
 
         <link
@@ -192,7 +193,11 @@
             function hideFocus() {
                 toggleElement(false, "focus")
                 toggleElement(true, "canvas")
-                setTimeout(() => toggleElement(true, "resolution-message"), 1000)
+                toggleElement(true, "wait-message")
+                setTimeout(() => {
+                    toggleElement(false, "wait-message"); 
+                    toggleElement(true, "resolution-message")
+                }, 5000)
             }
 
             async function loadConfig() {
