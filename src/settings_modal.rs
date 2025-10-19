@@ -2,11 +2,7 @@
 use crate::utils;
 use egui::IntoAtoms;
 
-use crate::{
-    shared,
-    ui::{self, EguiUi},
-    Display,
-};
+use crate::{shared, ui::EguiUi, Display};
 
 pub const DIRECT_BONE: &str = "When clicking a bone's texture, the first untextured parent of the bone will be selected. Checkmark this to always select the textured bone directly.";
 

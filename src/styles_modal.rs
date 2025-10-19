@@ -306,7 +306,7 @@ pub fn draw_textures_list(
                         == 0;
                     if is_empty {
                         let str_empty = shared.loc("styles_modal.style_preview_empty");
-                        //ui.label(str_empty);
+                        ui.label(str_empty);
                         return;
                     }
 
