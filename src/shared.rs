@@ -745,20 +745,27 @@ macro_rules! regular_key {
     };
 }
 
+macro_rules! shortcut_key {
+    ($mod:expr, $key:expr) => {
+        egui::KeyboardShortcut::new($mod, $key)
+    };
+}
+
 impl Default for KeyboardConfig {
+    #[rustfmt::skip]
     fn default() -> Self {
         KeyboardConfig {
             next_anim_frame: regular_key!(egui::Key::ArrowRight),
             prev_anim_frame: regular_key!(egui::Key::ArrowLeft),
-            zoom_in_camera: regular_key!(egui::Key::Equals),
+            zoom_in_camera:  regular_key!(egui::Key::Equals),
             zoom_out_camera: regular_key!(egui::Key::Minus),
-            undo: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Z),
-            redo: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Y),
-            save: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S),
-            open: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O),
-            cancel: regular_key!(egui::Key::Escape),
-            copy: egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::C),
-            paste: egui::KeyboardShortcut::new(egui::Modifiers::NONE, egui::Key::V),
+            cancel:          regular_key!(egui::Key::Escape),
+            undo:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::Z),
+            redo:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::Y),
+            save:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::S),
+            open:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::O),
+            copy:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::C),
+            paste:           shortcut_key!(egui::Modifiers::COMMAND, egui::Key::V),
         }
     }
 }
