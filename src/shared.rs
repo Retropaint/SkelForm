@@ -2064,7 +2064,7 @@ fn default_one() -> f32 {
 }
 
 fn gridline_default() -> i32 {
-    200
+    500
 }
 
 fn is_neg_one(value: &i32) -> bool {
