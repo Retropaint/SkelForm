@@ -19,11 +19,19 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
 
             let available_size = ui.available_size();
 
-            ui.horizontal(|ui| {
-                ui.set_width(available_size.x);
-                ui.set_height(available_size.y);
-                startup_content(&ctx, ui, shared, available_size);
-            });
+            ui.with_layout(
+                egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
+                |ui| {
+                    let padding = 600.;
+                    ui.set_width((available_size.x - padding).max(800.));
+                    let size = ui.available_size();
+                    ui.horizontal(|ui| {
+                        ui.set_width(size.x);
+                        ui.set_height(size.y);
+                        startup_content(&ctx, ui, shared, size);
+                    });
+                },
+            )
         });
 }
 
@@ -154,17 +162,9 @@ fn startup_content(
                 #[cfg(target_arch = "wasm32")]
                 ui.vertical(|ui| {
                     let available_width = ui.available_width();
-                    ui.set_width(available_width);
-                    ui.horizontal(|ui| {
-                        ui.with_layout(
-                            egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
-                            |ui| {
-                                let msg = shared.loc("startup.web_note");
-                                let text = egui::RichText::new(msg).size(14.);
-                                ui.label(text);
-                            },
-                        )
-                    });
+                    let msg = shared.loc("startup.web_note");
+                    let text = egui::RichText::new(msg).size(14.);
+                    ui.label(text);
                     ui.add_space(20.);
                     web_sample_button(
                         "Skellington Sample".to_owned(),
