@@ -4,8 +4,7 @@ use egui::*;
 
 use crate::{
     shared::{Shared, Vec2},
-    ui,
-    ui::EguiUi,
+    ui::{self, EguiUi, TextInputOptions},
 };
 
 use crate::shared::*;
@@ -243,6 +242,22 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 }
 
                 let width = ui.available_width();
+                let rename_str = "bone_".to_string() + &idx.to_string();
+
+                if shared.ui.rename_id == rename_str {
+                    let (edited, value, _) = ui.text_input(
+                        shared.ui.rename_id.clone(),
+                        shared,
+                        shared.ui.edit_value.clone().unwrap(),
+                        Some(TextInputOptions {
+                            focus: true,
+                            ..Default::default()
+                        }),
+                    );
+                    if edited {
+                        shared.selected_bone_mut().unwrap().name = value;
+                    }
+                }
 
                 let id = Id::new(("bone", idx, 0));
                 let button = ui
@@ -281,38 +296,44 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 }
 
                 if button.clicked() {
-                    if shared.ui.setting_ik_target {
-                        shared.selected_bone_mut().unwrap().ik_target_id = bone_id;
-                        shared.ui.setting_ik_target = false;
+                    if shared.ui.selected_bone_idx == idx as usize {
+                        shared.ui.rename_id = rename_str;
+                        shared.ui.edit_value = Some(shared.armature.bones[b].name.clone());
                     } else {
-                        if !shared.input.holding_mod && !shared.input.holding_shift {
-                            shared.ui.selected_bone_ids = vec![];
-                            let anim_frame = shared.ui.anim.selected_frame;
-                            shared.ui.select_bone(idx as usize);
-                            shared.ui.anim.selected_frame = anim_frame;
-                        }
-
-                        let id = shared.armature.bones[idx as usize].id;
-                        shared.ui.selected_bone_ids.push(id);
-
-                        if shared.input.holding_shift {
-                            let mut first = shared.ui.selected_bone_idx;
-                            let mut second = idx as usize;
-                            if first > second {
-                                first = idx as usize;
-                                second = shared.ui.selected_bone_idx;
+                        if shared.ui.setting_ik_target {
+                            shared.selected_bone_mut().unwrap().ik_target_id = bone_id;
+                            shared.ui.setting_ik_target = false;
+                        } else {
+                            if !shared.input.holding_mod && !shared.input.holding_shift {
+                                shared.ui.selected_bone_ids = vec![];
+                                let anim_frame = shared.ui.anim.selected_frame;
+                                shared.ui.select_bone(idx as usize);
+                                shared.ui.anim.selected_frame = anim_frame;
                             }
-                            for i in first..second as usize {
-                                let bone = &shared.armature.bones[i];
-                                if !shared.ui.selected_bone_ids.contains(&bone.id)
-                                    && bone.parent_id == shared.selected_bone().unwrap().parent_id
-                                {
-                                    shared.ui.selected_bone_ids.push(bone.id);
+
+                            let id = shared.armature.bones[idx as usize].id;
+                            shared.ui.selected_bone_ids.push(id);
+
+                            if shared.input.holding_shift {
+                                let mut first = shared.ui.selected_bone_idx;
+                                let mut second = idx as usize;
+                                if first > second {
+                                    first = idx as usize;
+                                    second = shared.ui.selected_bone_idx;
+                                }
+                                for i in first..second as usize {
+                                    let bone = &shared.armature.bones[i];
+                                    if !shared.ui.selected_bone_ids.contains(&bone.id)
+                                        && bone.parent_id
+                                            == shared.selected_bone().unwrap().parent_id
+                                    {
+                                        shared.ui.selected_bone_ids.push(bone.id);
+                                    }
                                 }
                             }
                         }
                     }
-                };
+                }
 
                 let id = shared.armature.bones[b].id;
 

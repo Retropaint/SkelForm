@@ -636,14 +636,15 @@ pub fn open_docs(is_dev: bool, mut _path: &str) {
         if _path == "" {
             _path = "index.html";
         }
-        match open::that(bin_path() + docs_name + "/" + _path) {
+        let url = bin_path() + docs_name + "/" + _path;
+        match open::that(url) {
             Err(_) => {
                 if _path == "index.html" {
                     _path = "";
                 }
-                match open::that(
-                    "https://skelform.org/".to_string() + docs_name + "/" + &_path.to_string(),
-                ) {
+                let url =
+                    "https://skelform.org/".to_string() + docs_name + "/" + &_path.to_string();
+                match open::that(url) {
                     Err(_) => println!("couldn't open"),
                     Ok(file) => file,
                 }
