@@ -1,6 +1,8 @@
 # SkelForm
 
-SkelForm is a 2D skeletal animator, made in response to a lack of other free (and good) alternatives.
+[skelform.org](https://skelform.org)
+
+SkelForm is a 2D skeletal animator, designed for games.
 
 ![example](assets/example.png)
 
