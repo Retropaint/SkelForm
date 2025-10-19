@@ -186,7 +186,7 @@
             let fileName = "";
             let imgName = "";
             let hasLoaded = false;
-            let config = "";
+            let config = {};
             loadConfig();
 
             function hideFocus() {
@@ -212,7 +212,11 @@
 
             async function updateUiSlider() {
                 await loadConfig();
-                document.getElementById("ui-slider-input").value = config.ui_scale;
+                ui_scale = 1;
+                if(config) {
+                    ui_scale = config.ui_scale;
+                }
+                document.getElementById("ui-slider-input").value = ui_scale;
             }
 
             function isModalActive(id) {

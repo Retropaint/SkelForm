@@ -68,10 +68,8 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                 egui::Frame::new().show(ui, |ui| {
                     ui.set_width(window.x.min(400.));
                     ui.set_height(window.y.min(475.));
-                    ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| match shared
-                        .ui
-                        .settings_state
-                    {
+                    let layout = egui::Layout::top_down(egui::Align::Min);
+                    ui.with_layout(layout, |ui| match shared.ui.settings_state {
                         shared::SettingsState::Ui => user_interface(ui, shared),
                         shared::SettingsState::Rendering => rendering(ui, shared),
                         shared::SettingsState::Keyboard => keyboard(ui, shared),
