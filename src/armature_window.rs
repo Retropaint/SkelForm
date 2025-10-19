@@ -257,6 +257,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     if edited {
                         shared.selected_bone_mut().unwrap().name = value;
                     }
+                    return;
                 }
 
                 let id = Id::new(("bone", idx, 0));
