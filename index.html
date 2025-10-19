@@ -344,14 +344,13 @@
                 document.getElementById("edit-input").focus();
             }
 
-            function openDocumentation(docs_name) {
-                var url = "https://retropaint.github.io/skelform_" + docs_name + "/";
+            function openDocumentation(docs_name, path) {
+                var url = "https://skelform.org/" + docs_name + "/" + path;
                 window.open(url, '_blank');
             }
 
             function openLink(url) {
                 window.open(url)
-                console.log("test")
             }
 
             window.addEventListener("resize", resizeCanvas);

@@ -629,7 +629,7 @@ pub fn bone_meshes_edited(tex_size: Vec2, verts: &Vec<Vertex>) -> bool {
 pub fn open_docs(is_dev: bool, mut _path: &str) {
     let docs_name = if is_dev { "dev-docs" } else { "user-docs" };
     #[cfg(target_arch = "wasm32")]
-    openDocumentation(docs_name.to_string());
+    openDocumentation(docs_name.to_string(), _path.to_string());
     // open the local docs, or online if it can't be found on default path
     #[cfg(not(target_arch = "wasm32"))]
     {

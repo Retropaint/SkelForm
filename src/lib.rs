@@ -77,7 +77,7 @@ extern "C" {
     pub fn getImgName() -> String;
     pub fn loaded();
     pub fn focusEditInput();
-    pub fn openDocumentation(docs_name: String);
+    pub fn openDocumentation(docs_name: String, path: String);
     pub fn updateUiSlider();
     pub fn downloadSample();
     pub fn openLink(url: String);
