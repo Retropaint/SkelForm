@@ -1674,16 +1674,16 @@ enum_string!(Transition);
 )]
 pub enum AnimElement {
     #[default]
-    /* 1 */
+    /* 0 */
     PositionX,
-    /* 2 */ PositionY,
-    /* 3 */ Rotation,
-    /* 4 */ ScaleX,
-    /* 5 */ ScaleY,
-    /* 6 */ Zindex,
-    /* 7 */ VertPositionX,
-    /* 8 */ VertPositionY,
-    /* 9 */ TextureIndex,
+    /* 1 */ PositionY,
+    /* 2 */ Rotation,
+    /* 3 */ ScaleX,
+    /* 4 */ ScaleY,
+    /* 5 */ Zindex,
+    /* 6 */ VertPositionX,
+    /* 7 */ VertPositionY,
+    /* 8 */ TextureIndex,
 }
 
 // iterable anim change icons IDs

@@ -12,6 +12,10 @@
         {
           "code": "psd",
           "url": "psd.html"
+        },
+        {
+          "code": "runtime_api",
+          "url": "runtime-api.html"
         }
       ]
     },
@@ -36,7 +40,7 @@
     },
     {
       "code": "main_site",
-      "url": "https://retropaint.github.io/skelform_site"
+      "url": "https://skelform.org"
     },
     {
       "code": "discord",

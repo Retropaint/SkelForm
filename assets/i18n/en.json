@@ -21,6 +21,7 @@
     "resources": {
       "user_docs": "User Documentation",
       "starter_guide": "Starter Guide",
+      "runtime_api": "Runtime API",
       "dev_docs": "Developer Documentation",
       "generic_runtime": "Generic Runtimes",
       "engine_runtime": "Engine Runtimes",
