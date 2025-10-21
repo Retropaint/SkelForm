@@ -854,8 +854,6 @@ pub struct Bone {
     #[serde(skip, default = "default_neg_one")]
     pub ik_family_id: i32,
     #[serde(skip)]
-    pub joint_effector: JointEffector,
-    #[serde(skip)]
     pub constraint: JointConstraint,
     #[serde(skip, default = "default_neg_one")]
     pub ik_target_id: i32,

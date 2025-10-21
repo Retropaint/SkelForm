@@ -168,6 +168,7 @@ pub fn read_psd(
 
     let mut bone_psd_id: std::collections::HashMap<i32, u32> = Default::default();
     let mut start_eff_ids: Vec<i32> = vec![];
+    let mut ik_family_ids: Vec<i32> = vec![];
 
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
     group_ids.reverse();
@@ -284,7 +285,7 @@ pub fn read_psd(
 
         for l in 0..psd.layers().len() {
             let layer = &psd.layers()[l];
-            if layer.parent_id() != Some(group_ids[g]) || !layer.name().contains("$ik") {
+            if layer.parent_id() != Some(group_ids[g]) || !layer.name().contains("$ik_") {
                 continue;
             }
 
@@ -295,19 +296,23 @@ pub fn read_psd(
                 bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
             }
 
-            if layer.name().contains("start") {
-                bone.joint_effector = JointEffector::Start;
-                start_eff_ids.push(bone.id);
-            } else if layer.name().contains("middle") {
-                bone.joint_effector = JointEffector::Middle;
-            } else if layer.name().contains("end") {
-                bone.joint_effector = JointEffector::End;
-            }
-
             if layer.name().contains("counterclockwise") {
                 bone.constraint = JointConstraint::CounterClockwise;
             } else if layer.name().contains("clockwise") {
                 bone.constraint = JointConstraint::Clockwise;
+            } else {
+                let num_unicode = layer.name().split('_').collect::<Vec<_>>()[1];
+                let num = num_unicode.split('\u{0000}').collect::<Vec<_>>()[0];
+                match num.parse::<i32>() {
+                    Ok(id) => {
+                        bone.ik_family_id = id;
+                        if !ik_family_ids.contains(&id) {
+                            start_eff_ids.push(bone.id);
+                            ik_family_ids.push(id);
+                        }
+                    }
+                    Err(err) => println!("{}", err),
+                }
             }
         }
 
