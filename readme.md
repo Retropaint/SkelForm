@@ -14,7 +14,7 @@ Then, run `cargo run` in the terminal.
 
 ## Web
 
-Install [Trunk](https://trunkrs.dev) v0.21.7 or above, as well as Python (any version should do).
+Install [Trunk](https://trunkrs.dev) v0.21.7 or above, as well as Python 3 (any version should do).
 
 Then, run the `web_build.py` script to build the `dist` folder with the necessary files for web distribution.
 
