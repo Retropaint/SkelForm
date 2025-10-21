@@ -847,8 +847,8 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
     let mut ik_disabled = true;
     let mut is_end = false;
     if let Some(bone) = shared.selected_bone() {
-        ik_disabled = bone.ik_disabled || bone.joint_effector == JointEffector::None;
-        is_end = bone.joint_effector == JointEffector::End;
+        ik_disabled = bone.ik_disabled || shared.armature.bone_eff(bone.id) == JointEffector::None;
+        is_end = shared.armature.bone_eff(bone.id) == JointEffector::End;
     }
 
     // edit mode window

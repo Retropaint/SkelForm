@@ -255,11 +255,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // only draw arrows for the selected set of bones.
     // currently it shows all when any are selected.
     if shared.selected_bone() != None
-        && shared.selected_bone().unwrap().joint_effector != JointEffector::None
+        && shared.armature.bone_eff(shared.selected_bone().unwrap().id) != JointEffector::None
     {
         for bone in &temp_bones {
-            if bone.joint_effector == JointEffector::None
-                || bone.joint_effector == JointEffector::End
+            if shared.armature.bone_eff(bone.id) == JointEffector::None
+                || shared.armature.bone_eff(bone.id) == JointEffector::End
             {
                 continue;
             }
@@ -398,9 +398,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     let mut ik_disabled = true;
     if let Some(bone) = shared.selected_bone() {
-        let is_end =
-            shared.edit_mode == EditMode::Rotate && bone.joint_effector == JointEffector::End;
-        ik_disabled = is_end || (bone.ik_disabled || bone.joint_effector == JointEffector::None);
+        let is_end = shared.edit_mode == EditMode::Rotate
+            && shared.armature.bone_eff(bone.id) == JointEffector::End;
+        ik_disabled = is_end
+            || (bone.ik_disabled || shared.armature.bone_eff(bone.id) == JointEffector::None);
     }
 
     if shared.ui.editing_mesh || !ik_disabled {
@@ -535,26 +536,28 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
 
     let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
 
-    // inverse kinematics
+    let mut done_ids: Vec<i32> = vec![];
+
     for b in 0..bones.len() {
-        if bones[b].joint_effector != JointEffector::Start || bones[b].ik_disabled {
+        if bones[b].ik_family_id == -1 || done_ids.contains(&bones[b].ik_family_id) {
             continue;
         }
 
-        // get all joint children of this bone, including itself
-        let mut joints = vec![];
-        armature_window::get_all_children(&bones, &mut joints, &bones[b]);
-        joints.insert(0, bones[b].clone());
-        joints = joints
-            .iter()
-            .filter(|joint| joint.joint_effector != JointEffector::None)
-            .cloned()
-            .collect();
+        done_ids.push(bones[b].ik_family_id);
 
         let target = bones.iter().find(|bone| bone.id == bones[b].ik_target_id);
-
         if target == None {
             continue;
+        }
+
+        let family: Vec<&Bone> = bones
+            .iter()
+            .filter(|bone| bone.ik_family_id == bones[b].ik_family_id)
+            .collect();
+
+        let mut joints = vec![];
+        for bone in family {
+            joints.push(bone.clone());
         }
 
         // IK is iterated multiple times over for accuracy
@@ -564,8 +567,11 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
         }
 
         // save rotations for the next forward kinematics call
-        for joint in joints {
-            ik_rot.insert(joint.id, joint.rot);
+        for j in 0..joints.len() {
+            if j == joints.len() - 1 {
+                continue;
+            }
+            ik_rot.insert(joints[j].id, joints[j].rot);
         }
     }
 
@@ -576,11 +582,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
 
 // https://www.youtube.com/watch?v=NfuO66wsuRg
 pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
-    let root = bones
-        .iter_mut()
-        .find(|bone| bone.joint_effector == JointEffector::Start)
-        .unwrap()
-        .pos;
+    let root = bones[0].pos;
 
     let base_dir = (target - root).normalize();
     let base_angle = base_dir.y.atan2(base_dir.x);
@@ -641,16 +643,10 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
     }
 
     // rotating bones
-    let end_bone = bones
-        .iter_mut()
-        .find(|bone| bone.joint_effector == JointEffector::End);
-    if end_bone == None {
-        return;
-    }
-    let mut tip_pos = end_bone.unwrap().pos;
+    let end_bone = bones.last().unwrap();
+    let mut tip_pos = end_bone.pos;
     for b in (0..bones.len()).rev() {
-        let eff = bones[b].joint_effector.clone();
-        if eff == JointEffector::None || eff == JointEffector::End {
+        if b == bones.len() - 1 {
             continue;
         }
 
@@ -798,7 +794,7 @@ pub fn inheritance(bones: &mut Vec<Bone>, ik_rot: std::collections::HashMap<i32,
 
         // apply rotations from IK, if provided
         let ik_rot = ik_rot.get(&bones[i].id);
-        if ik_rot != None && bones[i].joint_effector != JointEffector::End {
+        if ik_rot != None {
             bones[i].rot = *ik_rot.unwrap();
         }
     }

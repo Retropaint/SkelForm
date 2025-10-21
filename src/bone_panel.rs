@@ -217,7 +217,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         };
     }
 
-    let has_ik = !bone.ik_disabled && bone.joint_effector != JointEffector::None;
+    let has_ik = !bone.ik_disabled && shared.armature.bone_eff(bone.id) == JointEffector::None;
     let str_cant_edit = shared
         .loc("bone_panel.inverse_kinematics.cant_edit")
         .clone();
@@ -245,7 +245,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     .response
     .on_disabled_hover_text(str_cant_edit);
 
-    let not_end_ik = !has_ik || (bone.joint_effector == JointEffector::End);
+    let not_end_ik = !has_ik || shared.armature.bone_eff(bone.id) == JointEffector::End;
     let str_cant_edit = shared
         .loc("bone_panel.inverse_kinematics.cant_edit")
         .clone();
@@ -311,7 +311,7 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     !shared.selected_bone_mut().unwrap().ik_folded;
             }
 
-            if bone.joint_effector == JointEffector::None {
+            if shared.armature.bone_eff(bone.id) == JointEffector::None {
                 return;
             }
 
@@ -328,7 +328,7 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     shared.armature.find_bone_mut(bone.id).unwrap().ik_disabled = !enabled;
                 }
 
-                if bone.joint_effector == JointEffector::Start {
+                if shared.armature.bone_eff(bone.id) == JointEffector::Start {
                     return;
                 }
 
@@ -336,7 +336,7 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
                 let parents = shared.armature.get_all_parents(bone.id);
                 for parent in parents {
-                    if parent.joint_effector == JointEffector::None {
+                    if shared.armature.bone_eff(parent.id) == JointEffector::None {
                         continue;
                     }
 
@@ -354,35 +354,59 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     }
 
     ui.horizontal(|ui| {
-        ui.label(shared.loc("bone_panel.inverse_kinematics.effector"));
-
+        //ui.label(shared.loc("bone_panel.inverse_kinematics.effector"));
+        ui.label("Family Index: ");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_selected = shared
-                .loc(
-                    &("bone_panel.inverse_kinematics.".to_owned()
-                        + &bone.joint_effector.to_string()),
-                )
-                .clone();
-            let str_none = shared.loc("bone_panel.inverse_kinematics.None").clone();
-            let str_start = shared.loc("bone_panel.inverse_kinematics.Start").clone();
-            let str_middle = shared.loc("bone_panel.inverse_kinematics.Middle").clone();
-            let str_end = shared.loc("bone_panel.inverse_kinematics.End").clone();
+            let str_selected = if bone.ik_family_id == -1 {
+                "None".to_string()
+            } else {
+                bone.ik_family_id.to_string()
+            };
             egui::ComboBox::new("joint_eff", "")
                 .selected_text(str_selected)
                 .width(40.)
                 .show_ui(ui, |ui| {
-                    let bone = &mut shared.selected_bone_mut().unwrap().joint_effector;
-                    ui.selectable_value(bone, JointEffector::None, str_none);
-                    ui.selectable_value(bone, JointEffector::Start, str_start);
-                    ui.selectable_value(bone, JointEffector::Middle, str_middle);
-                    ui.selectable_value(bone, JointEffector::End, str_end);
+                    let mut selected = -1;
+
+                    let mut ik_family_ids: Vec<i32> = shared
+                        .armature
+                        .bones
+                        .iter()
+                        .map(|bone| bone.ik_family_id)
+                        .filter(|id| *id != -1)
+                        .collect();
+                    ik_family_ids.dedup();
+
+                    ui.selectable_value(&mut selected, -3, "None");
+                    for id in &ik_family_ids {
+                        ui.selectable_value(&mut selected, *id, id.to_string());
+                    }
+                    ui.selectable_value(&mut selected, -2, "New");
+
+                    let bone = &mut shared.selected_bone_mut().unwrap();
+                    if selected == -3 {
+                        bone.ik_family_id = -1;
+                    } else if selected == -2 {
+                        let id = generate_id(ik_family_ids);
+                        bone.ik_family_id = id;
+                    } else if selected != -1 {
+                        bone.ik_family_id = selected;
+                    }
                 })
                 .response
                 .on_hover_text(shared.loc("bone_panel.inverse_kinematics.effector_desc"));
         });
     });
 
-    if bone.joint_effector == JointEffector::Start {
+    let mut is_first = true;
+    for other_bone in &shared.armature.bones {
+        if other_bone.ik_family_id == bone.ik_family_id {
+            is_first = other_bone.id == bone.id;
+            break;
+        }
+    }
+
+    if is_first && bone.ik_family_id != -1 {
         ui.horizontal(|ui| {
             let ik = "bone_panel.inverse_kinematics.";
             ui.label(shared.loc(&(ik.to_owned() + "constraint")));

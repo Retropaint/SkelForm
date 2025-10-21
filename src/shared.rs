@@ -851,11 +851,13 @@ pub struct Bone {
     #[serde(default)]
     pub rot: f32,
 
+    #[serde(skip, default = "default_neg_one")]
+    pub ik_family_id: i32,
     #[serde(skip)]
     pub joint_effector: JointEffector,
     #[serde(skip)]
     pub constraint: JointConstraint,
-    #[serde(skip)]
+    #[serde(skip, default = "default_neg_one")]
     pub ik_target_id: i32,
     #[serde(default, skip_serializing_if = "is_false")]
     pub hidden: bool,
@@ -1070,6 +1072,7 @@ impl Armature {
             zindex: self.bones.len() as i32,
             constraint: JointConstraint::None,
             ik_target_id: -1,
+            ik_family_id: -1,
             ..Default::default()
         };
         if id == -1 {
@@ -1458,6 +1461,42 @@ impl Armature {
             return None;
         }
         Some(&set.unwrap().textures[bone.unwrap().tex_idx as usize])
+    }
+
+    pub fn bone_eff(&self, bone_id: i32) -> JointEffector {
+        let bone = self.bones.iter().find(|bone| bone.id == bone_id).unwrap();
+        let ik_id = bone.ik_family_id;
+        if ik_id == -1 {
+            return JointEffector::None;
+        }
+
+        let family: Vec<&Bone> = self
+            .bones
+            .iter()
+            .filter(|bone| bone.ik_family_id == ik_id)
+            .collect();
+
+        let mut count = 0;
+        for other_bone in &self.bones {
+            if other_bone.ik_family_id != ik_id {
+                continue;
+            }
+
+            if other_bone.id != bone.id {
+                count += 1;
+                continue;
+            }
+
+            return if count == 0 {
+                JointEffector::Start
+            } else if count == family.len() - 1 {
+                JointEffector::End
+            } else {
+                JointEffector::Middle
+            };
+        }
+
+        JointEffector::None
     }
 }
 

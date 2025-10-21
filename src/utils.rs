@@ -266,27 +266,24 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
-    // populate ik families
     armature_copy.ik_families = vec![];
-    for b in 0..armature_copy.bones.len() {
-        if armature_copy.bones[b].joint_effector != JointEffector::Start {
-            continue;
-        }
 
-        let mut joints = vec![];
-        armature_window::get_all_children(
-            &armature_copy.bones,
-            &mut joints,
-            &armature_copy.bones[b],
-        );
-        joints.insert(0, armature_copy.bones[b].clone());
-        joints = joints
+    let mut family_ids: Vec<i32> = armature_copy
+        .bones
+        .iter()
+        .map(|bone| bone.ik_family_id)
+        .filter(|id| *id != -1)
+        .collect();
+    family_ids.dedup();
+
+    for fid in family_ids {
+        let joints: Vec<&Bone> = armature_copy
+            .bones
             .iter()
-            .filter(|joint| joint.joint_effector != JointEffector::None)
-            .cloned()
+            .filter(|bone| bone.ik_family_id == fid)
             .collect();
 
-        let mut bone_ids: Vec<i32> = vec![];
+        let mut bone_ids = vec![];
         for joint in &joints {
             let idx = armature_copy
                 .bones
@@ -296,20 +293,14 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
             bone_ids.push(idx as i32);
         }
 
-        let mut target_id = -1;
-        if armature_copy.bones[b].ik_target_id != -1 {
-            let bone_target_id = armature_copy.bones[b].ik_target_id;
-            let mut iter = armature_copy.bones.iter();
-            target_id = iter.position(|bone| bone.id == bone_target_id).unwrap() as i32
-        }
+        let target_id = joints[0].ik_target_id;
+        let constraint = joints[0].constraint;
 
-        let family = IkFamily {
-            constraint: armature_copy.bones[b].constraint,
+        armature_copy.ik_families.push(IkFamily {
+            constraint,
             target_id,
             bone_ids,
-        };
-
-        armature_copy.ik_families.push(family)
+        })
     }
 
     // populate keyframe bone_idx
@@ -445,16 +436,8 @@ pub fn import<R: Read + std::io::Seek>(
         };
 
         for i in 0..family.bone_ids.len() {
-            let effector = if i == 0 {
-                JointEffector::Start
-            } else if i == family.bone_ids.len() - 1 {
-                JointEffector::End
-            } else {
-                JointEffector::Middle
-            };
-
             let bone = &mut shared.armature.bones[family.bone_ids[i] as usize];
-            bone.joint_effector = effector;
+            bone.ik_family_id = f as i32;
             bone.constraint = family.constraint;
             bone.ik_target_id = target_id;
         }
