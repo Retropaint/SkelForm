@@ -217,7 +217,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         };
     }
 
-    let has_ik = !bone.ik_disabled && shared.armature.bone_eff(bone.id) == JointEffector::None;
+    let has_ik = !bone.ik_disabled && shared.armature.bone_eff(bone.id) != JointEffector::None;
     let str_cant_edit = shared
         .loc("bone_panel.inverse_kinematics.cant_edit")
         .clone();

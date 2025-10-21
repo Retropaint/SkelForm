@@ -539,7 +539,10 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
     let mut done_ids: Vec<i32> = vec![];
 
     for b in 0..bones.len() {
-        if bones[b].ik_family_id == -1 || done_ids.contains(&bones[b].ik_family_id) {
+        if bones[b].ik_disabled
+            || bones[b].ik_family_id == -1
+            || done_ids.contains(&bones[b].ik_family_id)
+        {
             continue;
         }
 
