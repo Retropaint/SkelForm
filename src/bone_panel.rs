@@ -411,8 +411,6 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             let ik = "bone_panel.inverse_kinematics.";
             ui.label(shared.loc(&(ik.to_owned() + "constraint")));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let last_constraint = bone.clone().constraint;
-
                 let str_none = shared.loc(&(ik.to_owned() + "None")).clone();
                 let str_clockwise = shared.loc(&(ik.to_owned() + "Clockwise")).clone() + "  ⟳";
                 let str_ccw = shared.loc(&(ik.to_owned() + "CounterClockwise")).clone() + "  ⟲";
@@ -434,23 +432,6 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     })
                     .response
                     .on_hover_text(str_desc);
-
-                if last_constraint == shared.selected_bone().unwrap().constraint {
-                    return;
-                }
-
-                let mut joints = vec![];
-                armature_window::get_all_children(&shared.armature.bones, &mut joints, &bone);
-                joints = joints
-                    .iter()
-                    .filter(|joint| joint.joint_effector != JointEffector::None)
-                    .cloned()
-                    .collect();
-                for joint in joints {
-                    let constraint = shared.selected_bone().unwrap().constraint;
-                    let bones = &mut shared.armature.bones.iter_mut();
-                    bones.find(|bone| bone.id == joint.id).unwrap().constraint = constraint;
-                }
             });
         });
 
