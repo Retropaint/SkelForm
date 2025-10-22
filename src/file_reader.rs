@@ -217,8 +217,6 @@ pub fn read_psd(
             image = load_psd_tex(cpsd, dims, cgroup.clone());
         }
 
-        log::info!("{:?}", image.0.dimensions());
-
         let dims = Vec2::new(image.0.width() as f32, image.0.height() as f32);
 
         // add tex if not a duplicate
