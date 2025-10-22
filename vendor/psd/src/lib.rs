@@ -241,18 +241,32 @@ impl Psd {
         // to perform that operation again.
         let renderer = render::Renderer::new(&layers_to_flatten_top_down, self.width() as usize);
 
-        println!("{} {}", self.width(), self.height());
+        // Get top left and bottom right boundaries.
+        // Pixels beyond this are automatically ignored and made transparent.
 
+        let mut tl_x = usize::MAX;
+        let mut tl_y = usize::MAX;
+        let mut br_x = 0 as usize;
+        let mut br_y = 0 as usize;
+        for layer in &layers_to_flatten_top_down {
+            tl_x = tl_x.min(layer.layer_left() as usize);
+            tl_y = tl_y.min(layer.layer_top() as usize);
+            br_x = br_x.max(layer.layer_right() as usize);
+            br_y = br_y.max(layer.layer_bottom() as usize);
+        }
         let mut flattened_pixels = Vec::with_capacity((pixel_count * 4) as usize);
 
         // Iterate over each pixel and, if it is transparent, blend it with the pixel below it
         // recursively.
         for pixel_idx in 0..pixel_count as usize {
+            let mut blended_pixel = [0, 0, 0, 0];
             let left = pixel_idx % self.width() as usize;
             let top = pixel_idx / self.width() as usize;
             let pixel_coord = (left, top);
 
-            let blended_pixel = renderer.flattened_pixel(pixel_coord);
+            if left > tl_x && left < br_x && top > tl_y && top < br_y {
+                blended_pixel = renderer.flattened_pixel(pixel_coord);
+            }
 
             flattened_pixels.push(blended_pixel[0]);
             flattened_pixels.push(blended_pixel[1]);

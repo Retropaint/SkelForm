@@ -68,21 +68,11 @@ impl<'a> Renderer<'a> {
         // (left, top)
         pixel_coord: (usize, usize),
     ) -> [u8; 4] {
-        let (pixel_left, pixel_top) = pixel_coord;
         let mut pixels = self.pixel_cache.borrow_mut();
         pixels.clear();
         for (idx, layer) in self.layers_to_flatten_top_down.iter().enumerate() {
-            // If this pixel is out of bounds of this layer we return the pixel below it.
-            // If there is no pixel below it we return a transparent pixel
-            if (pixel_left as i32) < layer.layer_properties.layer_left
-                || (pixel_left as i32) > layer.layer_properties.layer_right
-                || (pixel_top as i32) < layer.layer_properties.layer_top
-                || (pixel_top as i32) > layer.layer_properties.layer_bottom
-            {
-                continue;
-            }
-
             let pixel = self.pixel_rgba_for_layer(idx, pixel_coord);
+
             pixels.push((pixel, layer.blend_mode));
 
             // This pixel is fully opaque, no point in going deeper
