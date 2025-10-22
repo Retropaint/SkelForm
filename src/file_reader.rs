@@ -1,9 +1,18 @@
 //! Reading uploaded images to turn into textures.
 // test
 
+#[cfg(not(target_arch = "wasm32"))]
+use pollster::FutureExt;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen_futures::spawn_local;
 use wgpu::*;
 
 use crate::*;
+use image::Rgba;
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use image::ImageBuffer;
 
 // web-only imports
 #[cfg(target_arch = "wasm32")]
@@ -167,67 +176,56 @@ pub fn read_psd(
     let mut bone_psd_id: std::collections::HashMap<i32, u32> = Default::default();
     let mut start_eff_ids: Vec<i32> = vec![];
     let mut ik_family_ids: Vec<i32> = vec![];
-
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
+
+    type ImageType = (ImageBuffer<Rgba<u8>, Vec<u8>>, Vec2);
+    let mut images: Vec<ImageType> = vec![];
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let mut processes = vec![];
+        async_std::task::block_on(async {
+            for g in (0..group_ids.len()).rev() {
+                let group = psd.groups()[&group_ids[g]].clone();
+                let psd = psd::Psd::from_bytes(&bytes).unwrap();
+                processes.push(async_std::task::spawn(load_psd_tex_async(
+                    psd, dimensions, group,
+                )));
+            }
+            for process in processes {
+                images.push(process.await);
+            }
+        });
+    }
+
     group_ids.reverse();
     for g in 0..group_ids.len() {
         let group = &psd.groups()[&group_ids[g]];
+        let mut image: (image::ImageBuffer<Rgba<u8>, Vec<u8>>, Vec2) =
+            (Default::default(), Default::default());
 
-        // flatten this group's layers, to form the final texture
-        let pixels = psd
-            .flatten_layers_rgba(&|(_d, layer)| {
-                if layer.parent_id() == None || layer.name().contains("$") {
-                    return false;
-                }
-                let parent_group = &psd.groups()[&layer.parent_id().unwrap()];
-                parent_group.id() == group.id()
-            })
-            .unwrap();
-
-        let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
-            dimensions.x as u32,
-            dimensions.y as u32,
-            pixels.clone(),
-        )
-        .unwrap();
-
-        // get dimension and top left position of this group
-        let mut dims = Vec2::default();
-        let mut pos_tl = Vec2::new(f32::INFINITY, f32::INFINITY);
-        for layer in psd.get_group_sub_layers(&group.id()).unwrap() {
-            // ignore layers that aren't direct children of this group
-            if layer.parent_id().unwrap() != group.id() || layer.name().contains("$") {
-                continue;
-            }
-
-            if layer.width() as f32 > dims.x {
-                dims.x = layer.width() as f32;
-            }
-            if layer.height() as f32 > dims.y {
-                dims.y = layer.height() as f32;
-            }
-            if (layer.layer_top() as f32) < pos_tl.y {
-                pos_tl.y = layer.layer_top() as f32;
-            }
-            if (layer.layer_left() as f32) < pos_tl.x {
-                pos_tl.x = layer.layer_left() as f32;
-            }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            image = images[g].clone();
         }
 
-        let crop = image::imageops::crop_imm(
-            &img_buf,
-            pos_tl.x as u32,
-            pos_tl.y as u32,
-            dims.x as u32,
-            dims.y as u32,
-        )
-        .to_image();
+        #[cfg(target_arch = "wasm32")]
+        {
+            let cpsd = psd::Psd::from_bytes(&bytes).unwrap();
+            let dims = dimensions.clone();
+            let cgroup = group.clone();
+            image = load_psd_tex(cpsd, dims, cgroup.clone());
+        }
+
+        log::info!("{:?}", image.0.dimensions());
+
+        let dims = Vec2::new(image.0.width() as f32, image.0.height() as f32);
 
         // add tex if not a duplicate
         let mut tex_idx = usize::MAX;
         for t in 0..shared.armature.styles[0].textures.len() {
             let img = &shared.armature.styles[0].textures[t].image;
-            if img.to_rgba8().to_vec() == crop.to_vec() {
+            if img.to_rgba8().to_vec() == image.0.to_vec() {
                 tex_idx = t;
                 break;
             }
@@ -259,9 +257,9 @@ pub fn read_psd(
             }
 
             add_texture(
-                image::DynamicImage::ImageRgba8(crop),
+                image::DynamicImage::ImageRgba8(image.0.clone()),
                 style_idx,
-                dims,
+                Vec2::new(dims.x, dims.y),
                 tex_name,
                 &mut shared.armature,
                 queue,
@@ -350,8 +348,8 @@ pub fn read_psd(
         new_bone.pos = Vec2::new(dims.x / 2., -dims.y / 2.);
 
         // push bone to wherever it would have been on the canvas
-        new_bone.pos.x += pos_tl.x;
-        new_bone.pos.y -= pos_tl.y;
+        new_bone.pos.x += image.1.x;
+        new_bone.pos.y -= image.1.y;
 
         // set up texture to be part of it's pivot, if it exists
         if pivot_id != -1 {
@@ -644,4 +642,118 @@ pub fn load_file(
     }
 
     removeFile();
+}
+
+fn load_psd_tex(
+    psd: psd::Psd,
+    dimensions: Vec2,
+    group: psd::PsdGroup,
+) -> (image::ImageBuffer<Rgba<u8>, Vec<u8>>, Vec2) {
+    let pixels = psd
+        .flatten_layers_rgba(&|(_d, layer)| {
+            if layer.parent_id() == None || layer.name().contains("$") {
+                return false;
+            }
+            let parent_group = &psd.groups()[&layer.parent_id().unwrap()];
+            parent_group.id() == group.id()
+        })
+        .unwrap();
+
+    let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
+        dimensions.x as u32,
+        dimensions.y as u32,
+        pixels.clone(),
+    )
+    .unwrap();
+
+    // get dimension and top left position of this group
+    let mut dims = Vec2::default();
+    let mut pos_tl = Vec2::new(f32::INFINITY, f32::INFINITY);
+    for layer in psd.get_group_sub_layers(&group.id()).unwrap() {
+        // ignore layers that aren't direct children of this group
+        if layer.parent_id().unwrap() != group.id() || layer.name().contains("$") {
+            continue;
+        }
+
+        if layer.width() as f32 > dims.x {
+            dims.x = layer.width() as f32;
+        }
+        if layer.height() as f32 > dims.y {
+            dims.y = layer.height() as f32;
+        }
+        if (layer.layer_top() as f32) < pos_tl.y {
+            pos_tl.y = layer.layer_top() as f32;
+        }
+        if (layer.layer_left() as f32) < pos_tl.x {
+            pos_tl.x = layer.layer_left() as f32;
+        }
+    }
+
+    let crop = image::imageops::crop_imm(
+        &img_buf,
+        pos_tl.x as u32,
+        pos_tl.y as u32,
+        dims.x as u32,
+        dims.y as u32,
+    )
+    .to_image();
+
+    (crop, pos_tl)
+}
+
+async fn load_psd_tex_async(
+    psd: psd::Psd,
+    dimensions: Vec2,
+    group: psd::PsdGroup,
+) -> (image::ImageBuffer<Rgba<u8>, Vec<u8>>, Vec2) {
+    let pixels = psd
+        .flatten_layers_rgba(&|(_d, layer)| {
+            if layer.parent_id() == None || layer.name().contains("$") {
+                return false;
+            }
+            let parent_group = &psd.groups()[&layer.parent_id().unwrap()];
+            parent_group.id() == group.id()
+        })
+        .unwrap();
+
+    let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
+        dimensions.x as u32,
+        dimensions.y as u32,
+        pixels.clone(),
+    )
+    .unwrap();
+
+    // get dimension and top left position of this group
+    let mut dims = Vec2::default();
+    let mut pos_tl = Vec2::new(f32::INFINITY, f32::INFINITY);
+    for layer in psd.get_group_sub_layers(&group.id()).unwrap() {
+        // ignore layers that aren't direct children of this group
+        if layer.parent_id().unwrap() != group.id() || layer.name().contains("$") {
+            continue;
+        }
+
+        if layer.width() as f32 > dims.x {
+            dims.x = layer.width() as f32;
+        }
+        if layer.height() as f32 > dims.y {
+            dims.y = layer.height() as f32;
+        }
+        if (layer.layer_top() as f32) < pos_tl.y {
+            pos_tl.y = layer.layer_top() as f32;
+        }
+        if (layer.layer_left() as f32) < pos_tl.x {
+            pos_tl.x = layer.layer_left() as f32;
+        }
+    }
+
+    let crop = image::imageops::crop_imm(
+        &img_buf,
+        pos_tl.x as u32,
+        pos_tl.y as u32,
+        dims.x as u32,
+        dims.y as u32,
+    )
+    .to_image();
+
+    (crop, pos_tl)
 }
