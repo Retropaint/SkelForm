@@ -734,3 +734,11 @@ pub fn flatten_json(
         }
     }
 }
+
+pub fn after_underscore(str: &str) -> &str {
+    str.split('_').collect::<Vec<_>>()[1]
+}
+
+pub fn without_unicode(str: &str) -> &str {
+    str.split('\u{0000}').collect::<Vec<_>>()[0]
+}

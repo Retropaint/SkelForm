@@ -118,9 +118,9 @@ pub fn read_image_loaders(
 
     add_texture(
         image,
+        shared.ui.selected_tex_set_id,
         dimensions,
         &name,
-        &mut shared.ui,
         &mut shared.armature,
         queue,
         device,
@@ -156,8 +156,6 @@ pub fn read_psd(
             group_ids.push(layer.parent_id().unwrap());
         }
     }
-
-    shared.ui.selected_tex_set_id = 0;
 
     shared.armature.styles.push(Style {
         id: 0,
@@ -235,11 +233,36 @@ pub fn read_psd(
             }
         }
         if tex_idx == usize::MAX {
+            let mut style_idx: i32 = 0;
+            let tex_name = group.name();
+
+            if group.name().contains("$style") {
+                let style_name =
+                    utils::without_unicode(utils::after_underscore(group.name())).to_string();
+                let styles = &shared.armature.styles;
+                let names: Vec<String> = styles.iter().map(|style| style.name.clone()).collect();
+                if let Some(idx) = names
+                    .iter()
+                    .position(|name| name.to_lowercase() == style_name.to_lowercase())
+                {
+                    style_idx = idx as i32;
+                } else {
+                    let new_idx = shared.armature.styles.len() as i32;
+                    shared.armature.styles.push(Style {
+                        id: shared.armature.styles.len() as i32,
+                        name: style_name.to_string(),
+                        active: true,
+                        textures: vec![],
+                    });
+                    style_idx = new_idx;
+                }
+            }
+
             add_texture(
                 image::DynamicImage::ImageRgba8(crop),
+                style_idx,
                 dims,
-                group.name(),
-                &mut shared.ui,
+                tex_name,
                 &mut shared.armature,
                 queue,
                 device,
@@ -248,6 +271,10 @@ pub fn read_psd(
             );
 
             tex_idx = shared.armature.styles[0].textures.len() - 1;
+        }
+
+        if group.name().contains("$style") {
+            continue;
         }
 
         // check if this group has a pivot, and create it if so
@@ -283,6 +310,7 @@ pub fn read_psd(
             shared.ui.anim.selected_frame,
         );
 
+        // process inverse kinematics layers ($ik_)
         for l in 0..psd.layers().len() {
             let layer = &psd.layers()[l];
             if layer.parent_id() != Some(group_ids[g]) || !layer.name().contains("$ik_") {
@@ -301,8 +329,7 @@ pub fn read_psd(
             } else if layer.name().contains("clockwise") {
                 bone.constraint = JointConstraint::Clockwise;
             } else {
-                let num_unicode = layer.name().split('_').collect::<Vec<_>>()[1];
-                let num = num_unicode.split('\u{0000}').collect::<Vec<_>>()[0];
+                let num = utils::without_unicode(utils::after_underscore(layer.name()));
                 match num.parse::<i32>() {
                     Ok(id) => {
                         bone.ik_family_id = id;
@@ -383,9 +410,9 @@ pub fn read_psd(
 
 pub fn add_texture(
     image: image::DynamicImage,
+    style_id: i32,
     dimensions: Vec2,
     tex_name: &str,
-    ui: &mut Ui,
     armature: &mut Armature,
     queue: &Queue,
     device: &Device,
@@ -410,7 +437,7 @@ pub fn add_texture(
     armature
         .styles
         .iter_mut()
-        .find(|set| set.id == ui.selected_tex_set_id)
+        .find(|set| set.id == style_id)
         .unwrap()
         .textures
         .push(crate::Texture {
