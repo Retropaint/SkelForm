@@ -5,7 +5,8 @@
 //!
 //! psd spec: https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/
 
-#![deny(missing_docs)]
+ #![allow(warnings)]
+ #![deny(missing_docs)]
 
 use std::collections::HashMap;
 use std::ops::Deref;
