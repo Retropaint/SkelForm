@@ -157,8 +157,7 @@ pub fn read_psd(
     let mut group_ids: Vec<u32> = vec![];
     for l in 0..psd.layers().len() {
         let layer = &psd.layers()[l];
-        // for some reason, layer.visible() is inverted
-        if layer.visible() || layer.parent_id() == None {
+        if !layer.visible() || layer.parent_id() == None {
             continue;
         }
         if !group_ids.contains(&layer.parent_id().unwrap()) {
