@@ -202,6 +202,10 @@ impl Psd {
     ///
     /// TODO: Take the layer's blend mode into account when blending layers. Right now
     /// we just use ONE_MINUS_SRC_ALPHA blending regardless of the layer.
+    ///
+    // TODO (retropaint): submit 2 PRs:
+    // 1) general boundary optimization
+    // 2) separate `flatten_layers_rgba_cropped()` (exactly as below) to maintain backwards compat
     pub fn flatten_layers_rgba(
         &self,
         filter: &dyn Fn((usize, &PsdLayer)) -> bool,
