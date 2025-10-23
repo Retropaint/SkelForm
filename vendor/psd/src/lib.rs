@@ -205,7 +205,7 @@ impl Psd {
     pub fn flatten_layers_rgba(
         &self,
         filter: &dyn Fn((usize, &PsdLayer)) -> bool,
-    ) -> Result<Vec<u8>, PsdError> {
+    ) -> Result<(Vec<u8>, u32, u32, u32, u32), PsdError> {
         // When you create a PSD but don't create any new layers the bottom layer might not
         // show up in the layer and mask information section, so we won't see any layers.
         //
@@ -213,7 +213,7 @@ impl Psd {
         // a completely transparent image if it is filtered out. But this should be a rare
         // use case so we can just always return the final image for now.
         if self.layers().is_empty() {
-            return Ok(self.rgba());
+            return Ok((self.rgba(), self.width(), self.height(), 0, 0));
         }
 
         // Filter out layers based on the passed in filter.
@@ -231,7 +231,13 @@ impl Psd {
 
         // If there aren't any layers left after filtering we return a complete transparent image.
         if layers_to_flatten_top_down.is_empty() {
-            return Ok(vec![0; pixel_count as usize * 4]);
+            return Ok((
+                vec![0; pixel_count as usize * 4],
+                self.width(),
+                self.height(),
+                0,
+                0,
+            ));
         }
 
         // During the process of flattening the PSD we might need to look at the pixels on one of
@@ -241,9 +247,7 @@ impl Psd {
         // to perform that operation again.
         let renderer = render::Renderer::new(&layers_to_flatten_top_down, self.width() as usize);
 
-        // Get top left and bottom right boundaries.
-        // Pixels beyond this are automatically ignored and made transparent.
-
+        // Only pixels within the boundaries of all flattened layers will be acknowledged.
         let mut tl_x = usize::MAX;
         let mut tl_y = usize::MAX;
         let mut br_x = 0 as usize;
@@ -254,19 +258,19 @@ impl Psd {
             br_x = br_x.max(layer.layer_right() as usize);
             br_y = br_y.max(layer.layer_bottom() as usize);
         }
+        let width = br_x - tl_x;
+        let height = br_y - tl_y;
+        let pixel_count = width * height;
         let mut flattened_pixels = Vec::with_capacity((pixel_count * 4) as usize);
 
         // Iterate over each pixel and, if it is transparent, blend it with the pixel below it
         // recursively.
         for pixel_idx in 0..pixel_count as usize {
-            let mut blended_pixel = [0, 0, 0, 0];
-            let left = pixel_idx % self.width() as usize;
-            let top = pixel_idx / self.width() as usize;
-            let pixel_coord = (left, top);
+            let left = pixel_idx % width as usize;
+            let top = pixel_idx / width as usize;
+            let pixel_coord = (tl_x + left, tl_y + top);
 
-            if left > tl_x && left < br_x && top > tl_y && top < br_y {
-                blended_pixel = renderer.flattened_pixel(pixel_coord);
-            }
+            let blended_pixel = renderer.flattened_pixel(pixel_coord);
 
             flattened_pixels.push(blended_pixel[0]);
             flattened_pixels.push(blended_pixel[1]);
@@ -274,7 +278,13 @@ impl Psd {
             flattened_pixels.push(blended_pixel[3]);
         }
 
-        Ok(flattened_pixels)
+        Ok((
+            flattened_pixels,
+            width as u32,
+            height as u32,
+            tl_x as u32,
+            tl_y as u32,
+        ))
     }
 }
 
