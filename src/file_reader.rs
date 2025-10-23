@@ -639,6 +639,7 @@ pub fn load_file(
     removeFile();
 }
 
+#[cfg(target_arch = "wasm32")]
 fn load_psd_tex(
     psd: psd::Psd,
     group: psd::PsdGroup,
@@ -654,7 +655,7 @@ fn load_psd_tex(
         .unwrap();
 
     let img_buf =
-        <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(width, height, pixels.clone()).unwrap();
+        <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(width, height, pixels).unwrap();
 
     (img_buf, Vec2::new(tl_x as f32, tl_y as f32))
 }
@@ -674,7 +675,7 @@ async fn load_psd_tex_async(
         .unwrap();
 
     let img_buf =
-        <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(width, height, pixels.clone()).unwrap();
+        <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(width, height, pixels).unwrap();
 
     (img_buf, Vec2::new(tl_x as f32, tl_y as f32))
 }

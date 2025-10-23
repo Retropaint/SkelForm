@@ -247,7 +247,7 @@ impl Psd {
         // to perform that operation again.
         let renderer = render::Renderer::new(&layers_to_flatten_top_down, self.width() as usize);
 
-        // Only pixels within the boundaries of all flattened layers will be acknowledged.
+        // Crop psd to layers' boundaries.
         let mut tl_x = usize::MAX;
         let mut tl_y = usize::MAX;
         let mut br_x = 0 as usize;
