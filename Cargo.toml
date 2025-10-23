@@ -18,8 +18,7 @@ tween = "2.0.4" # todo: replace this with runtime implementation
 wgpu = { version = "25.0.0", default-features = false }
 winit = "0.30.9"
 image = "0.25.5"
-# psd = "0.3.5" # Photoshop Document file parser
-psd = { "path" = "./vendor/psd"}  # Photoshop Document file parser
+psd = { "path" = "./vendor/psd"}  # vendored for faster layer flattening algorithm
 glob = "0.3.2" # file path wildcards
 rectangle-pack = "0.4.2" # texture atlas layout generator
 web-time = "1.1.0"
