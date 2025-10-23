@@ -498,11 +498,8 @@ pub fn target_buttons(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
         let remove_enabled = bone.ik_target_id != -1;
         ui.add_enabled_ui(remove_enabled, |ui| {
-            if ui
-                .skf_button("🗑")
-                .on_hover_text(str_remove_target)
-                .clicked()
-            {
+            let button = ui.skf_button("🗑");
+            if button.on_hover_text(str_remove_target).clicked() {
                 shared.selected_bone_mut().unwrap().ik_target_id = -1;
             }
         });
@@ -559,20 +556,14 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 .clone();
             let str_center = shared.loc("bone_panel.mesh_deformation.center");
             let str_center_desc = shared.loc("bone_panel.mesh_deformation.center_desc");
-            if ui
-                .skf_button(str_center)
-                .on_hover_text(str_center_desc)
-                .clicked()
-            {
+            let button = ui.skf_button(str_center);
+            if button.on_hover_text(str_center_desc).clicked() {
                 center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
             }
             let str_reset = shared.loc("bone_panel.mesh_deformation.reset");
             let str_reset_desc = shared.loc("bone_panel.mesh_deformation.reset_desc");
-            if ui
-                .skf_button(str_reset)
-                .on_hover_text(str_reset_desc)
-                .clicked()
-            {
+            let button = ui.skf_button(str_reset);
+            if button.on_hover_text(str_reset_desc).clicked() {
                 let (verts, indices) = renderer::create_tex_rect(&tex_size);
                 shared.selected_bone_mut().unwrap().vertices = verts;
                 shared.selected_bone_mut().unwrap().indices = indices;
