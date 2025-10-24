@@ -210,7 +210,32 @@ pub fn read_psd(
         {
             let cpsd = psd::Psd::from_bytes(&bytes).unwrap();
             let cgroup = group.clone();
-            image = load_psd_tex(cpsd, cgroup.clone());
+            let layer = psd
+                .layers()
+                .iter()
+                .find(|layer| {
+                    !layer.name().contains("$")
+                        && layer.visible()
+                        && layer.parent_id() == Some(group.id())
+                })
+                .unwrap();
+            let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
+                psd.width() as u32,
+                psd.height() as u32,
+                layer.rgba(),
+            )
+            .unwrap();
+            let crop = image::imageops::crop_imm(
+                &img_buf,
+                layer.layer_left() as u32,
+                layer.layer_top() as u32,
+                layer.width() as u32,
+                layer.height() as u32,
+            );
+            image = (
+                crop.to_image(),
+                Vec2::new(layer.layer_left() as f32, layer.layer_top() as f32),
+            );
         }
 
         let dims = Vec2::new(image.0.width() as f32, image.0.height() as f32);
