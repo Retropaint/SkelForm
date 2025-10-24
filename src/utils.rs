@@ -181,50 +181,29 @@ enum RectGroupId {
 }
 
 fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
-    // add textures to sheet generator
-    let mut img_rect: rectangle_pack::GroupedRectsToPlace<i32, RectGroupId> =
-        rectangle_pack::GroupedRectsToPlace::new();
-    let mut idx = 0;
+    let mut boxes = vec![];
+    let mut size = 0;
+    let mut placed = vec![];
+    let mut tex_len = 0;
 
     for set in &armature.styles {
         for tex in &set.textures {
-            img_rect.push_rect(
-                idx,
-                None,
-                rectangle_pack::RectToInsert::new(tex.size.x as u32, tex.size.y as u32, 1),
-            );
-            idx += 1;
+            boxes.push(max_rects::packing_box::PackingBox::new(
+                tex.image.width() as i32,
+                tex.image.height() as i32,
+            ));
+            tex_len += 1;
         }
     }
 
-    // keep generating sheet until the size is big enough
-    let mut size = 32;
-    let mut packed: Option<rectangle_pack::RectanglePackOk<i32, RectGroupId>> = None;
-    while packed == None {
-        let mut target_bins = std::collections::BTreeMap::new();
-        target_bins.insert(
-            RectGroupId::GroupIdOne,
-            rectangle_pack::TargetBin::new(size, size, 1),
-        );
-        match rectangle_pack::pack_rects(
-            &img_rect,
-            &mut target_bins,
-            &rectangle_pack::volume_heuristic,
-            &mut rectangle_pack::contains_smallest_box,
-        ) {
-            Ok(data) => {
-                packed = Some(data);
-            }
-            Err(_) => {
-                println!("Tried texture atlas ({}, {})", size, size);
-                size *= 2
-            }
-        }
+    while placed.len() != tex_len {
+        size += 128;
+        let bins = vec![max_rects::bucket::Bucket::new(size - 1, size - 1, 0, 0, 1)];
+        let mut problem = max_rects::max_rects::MaxRects::new(boxes.clone(), bins.clone());
+        (placed, _, _) = problem.place();
     }
 
-    let mut raw_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size, size);
-
-    let mut idx = 0;
+    let mut raw_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size as u32, size as u32);
 
     // todo:
     // Texture atlas is the biggest bottleneck in saving time. Both could be improved:
@@ -233,14 +212,20 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
 
     for set in &mut armature.styles {
         for tex in &mut set.textures {
-            let offset_x = packed.as_ref().unwrap().packed_locations()[&idx].1.x();
-            let offset_y = packed.as_ref().unwrap().packed_locations()[&idx].1.y();
+            let p = placed
+                .iter()
+                .position(|pl| pl.width == tex.size.x as i32 && pl.height == tex.size.y as i32)
+                .unwrap();
+
+            let offset_x = placed[p].get_coords().0 as u32;
+            let offset_y = placed[p].get_coords().2 as u32;
+
+            // ensure another tex of the same size won't overwrite this one
+            placed.remove(p);
 
             raw_buf.copy_from(&tex.image, offset_x, offset_y).unwrap();
 
             tex.offset = Vec2::new(offset_x as f32, offset_y as f32);
-
-            idx += 1;
         }
     }
 
