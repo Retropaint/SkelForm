@@ -2035,6 +2035,9 @@ impl Shared {
 
         &self.loc_strings[""]
     }
+    pub fn init_empty_loc(&mut self) {
+        self.loc_strings.insert("".to_string(), "".to_string());
+    }
 
     pub fn init_lang(&mut self, lang_json: serde_json::Value) {
         utils::flatten_json(

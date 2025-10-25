@@ -396,10 +396,10 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
 pub fn import<R: Read + std::io::Seek>(
     data: R,
     shared: &mut crate::Shared,
-    queue: &wgpu::Queue,
-    device: &wgpu::Device,
-    bind_group_layout: &BindGroupLayout,
-    context: &egui::Context,
+    queue: Option<&wgpu::Queue>,
+    device: Option<&wgpu::Device>,
+    bind_group_layout: Option<&BindGroupLayout>,
+    context: Option<&egui::Context>,
 ) {
     let mut zip = zip::ZipArchive::new(data);
     if let Err(_) = zip {
@@ -488,13 +488,19 @@ pub fn import<R: Read + std::io::Seek>(
                     tex.size.y as u32,
                 );
 
-                tex.bind_group = Some(renderer::create_texture_bind_group(
-                    tex.image.clone().into_rgba8().to_vec(),
-                    tex.size,
-                    queue,
-                    device,
-                    bind_group_layout,
-                ));
+                if queue != None && device != None && bind_group_layout != None {
+                    tex.bind_group = Some(renderer::create_texture_bind_group(
+                        tex.image.clone().into_rgba8().to_vec(),
+                        tex.size,
+                        queue.unwrap(),
+                        device.unwrap(),
+                        bind_group_layout.unwrap(),
+                    ));
+                }
+
+                if context == None {
+                    continue;
+                }
 
                 let pixels = img
                     .crop(
@@ -508,7 +514,10 @@ pub fn import<R: Read + std::io::Seek>(
                     .to_vec();
 
                 let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &pixels);
-                let ui_tex = context.load_texture("anim_icons", color_image, Default::default());
+                let ui_tex =
+                    context
+                        .unwrap()
+                        .load_texture("anim_icons", color_image, Default::default());
                 tex.ui_img = Some(ui_tex);
             }
         }

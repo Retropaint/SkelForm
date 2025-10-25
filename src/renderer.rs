@@ -717,7 +717,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             // move position with mouse velocity
             pos -= shared.mouse_vel() * shared.camera.zoom;
 
-            // restore universal position, by offsetting against parents' attributes
+            // restore universal position by offsetting against parents' attributes
             if bone.parent_id != -1 {
                 let parent = find_bone(bones, bone.parent_id).unwrap();
                 pos -= parent.pos;

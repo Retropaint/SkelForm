@@ -1121,8 +1121,8 @@ impl Scene {
 
 #[cfg(test)]
 mod tests {
-    use crate::armature_window;
     use crate::shared::{AnimElement, Shared, Vec2};
+    use crate::{armature_window, file_reader};
 
     fn init_shared() -> Shared {
         let mut shared = Shared::default();
@@ -1131,6 +1131,29 @@ mod tests {
         shared.armature.new_bone(-1);
         armature_window::drag_bone(&mut shared, false, 2, 1);
         armature_window::drag_bone(&mut shared, false, 1, 0);
+        shared.init_empty_loc();
         shared
+    }
+
+    // todo: add headless wgpu and egui to test them as well
+    #[test]
+    fn import_skf() {
+        let mut shared = init_shared();
+        *shared.file_name.lock().unwrap() = "./samples/Untitled.skf".to_string();
+        *shared.import_contents.lock().unwrap() = vec![0];
+        file_reader::read_import(&mut shared, None, None, None, None);
+        assert_eq!(shared.armature.bones[0].name != "New Bone", true);
+        assert_eq!(shared.armature.styles.len() > 0, true);
+    }
+
+    // todo: add headless wgpu and egui to test them as well
+    #[test]
+    fn import_psd() {
+        let mut shared = init_shared();
+        *shared.file_name.lock().unwrap() = "./samples/skellington.psd".to_string();
+        *shared.import_contents.lock().unwrap() = vec![0];
+        file_reader::read_import(&mut shared, None, None, None, None);
+        assert_eq!(shared.armature.bones[0].name != "New Bone", true);
+        assert_eq!(shared.armature.styles.len() > 0, true);
     }
 }

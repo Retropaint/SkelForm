@@ -29,10 +29,10 @@ pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Co
         ($func:expr) => {
             $func(
                 shared,
-                &renderer.as_ref().unwrap().gpu.queue,
-                &renderer.as_ref().unwrap().gpu.device,
-                &renderer.as_ref().unwrap().bind_group_layout,
-                context,
+                Some(&renderer.as_ref().unwrap().gpu.queue),
+                Some(&renderer.as_ref().unwrap().gpu.device),
+                Some(&renderer.as_ref().unwrap().bind_group_layout),
+                Some(&context),
             )
         };
     }
@@ -55,10 +55,10 @@ pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Co
 /// read temporary files created from file dialogs (native & WASM)
 pub fn read_image_loaders(
     shared: &mut Shared,
-    queue: &Queue,
-    device: &Device,
-    bind_group_layout: &BindGroupLayout,
-    ctx: &egui::Context,
+    queue: Option<&Queue>,
+    device: Option<&Device>,
+    bind_group_layout: Option<&BindGroupLayout>,
+    ctx: Option<&egui::Context>,
 ) {
     let image: image::DynamicImage;
     #[allow(unused_assignments)]
@@ -128,10 +128,10 @@ pub fn read_image_loaders(
 pub fn read_psd(
     bytes: Vec<u8>,
     shared: &mut Shared,
-    queue: &Queue,
-    device: &Device,
-    bind_group_layout: &BindGroupLayout,
-    ctx: &egui::Context,
+    queue: Option<&Queue>,
+    device: Option<&Device>,
+    bind_group_layout: Option<&BindGroupLayout>,
+    ctx: Option<&egui::Context>,
 ) {
     let psd = psd::Psd::from_bytes(&bytes).unwrap();
 
@@ -280,12 +280,9 @@ pub fn read_psd(
         let tex_name = shared.armature.styles[0].textures[tex_idx].name.clone();
         let bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
         bone.style_ids = vec![0];
-        shared.armature.set_bone_tex(
-            new_bone_id,
-            tex_idx,
-            shared.ui.anim.selected,
-            shared.ui.anim.selected_frame,
-        );
+        shared
+            .armature
+            .set_bone_tex(new_bone_id, tex_idx, usize::MAX, 0);
 
         // process inverse kinematics layers ($ik_)
         for l in 0..psd.layers().len() {
@@ -385,16 +382,17 @@ pub fn read_psd(
     shared.ui.set_state(UiState::StartupWindow, false);
 }
 
+/// add texture to style, including it's bind group and UI image.
 pub fn add_texture(
     image: image::DynamicImage,
     style_id: i32,
     dimensions: Vec2,
     tex_name: &str,
     armature: &mut Armature,
-    queue: &Queue,
-    device: &Device,
-    bind_group_layout: &BindGroupLayout,
-    ctx: &egui::Context,
+    queue: Option<&Queue>,
+    device: Option<&Device>,
+    bind_group_layout: Option<&BindGroupLayout>,
+    ctx: Option<&egui::Context>,
 ) {
     let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
         dimensions.x as u32,
@@ -403,13 +401,26 @@ pub fn add_texture(
     )
     .unwrap();
 
-    let bind_group = renderer::create_texture_bind_group(
-        image.clone().into_rgba8().to_vec(),
-        dimensions,
-        queue,
-        device,
-        bind_group_layout,
-    );
+    let mut bind_group = None;
+
+    if queue != None && device != None && bind_group_layout != None {
+        bind_group = Some(renderer::create_texture_bind_group(
+            image.clone().into_rgba8().to_vec(),
+            dimensions,
+            queue.unwrap(),
+            device.unwrap(),
+            bind_group_layout.unwrap(),
+        ));
+    }
+
+    let mut ui_img = None;
+    if ctx != None {
+        ui_img = Some(utils::add_texture_img(
+            &ctx.unwrap(),
+            img_buf,
+            Vec2::new(300., 300.),
+        ));
+    }
 
     armature
         .styles
@@ -422,8 +433,8 @@ pub fn add_texture(
             size: dimensions,
             image,
             name: tex_name.to_string(),
-            bind_group: Some(bind_group),
-            ui_img: Some(utils::add_texture_img(&ctx, img_buf, Vec2::new(300., 300.))),
+            bind_group,
+            ui_img,
             ser_offset: Vec2I::new(0, 0),
             ser_size: Vec2I::new(0, 0),
         });
@@ -432,10 +443,10 @@ pub fn add_texture(
 #[cfg(not(target_arch = "wasm32"))]
 pub fn read_import(
     shared: &mut Shared,
-    queue: &Queue,
-    device: &Device,
-    bgl: &BindGroupLayout,
-    context: &egui::Context,
+    queue: Option<&Queue>,
+    device: Option<&Device>,
+    bgl: Option<&BindGroupLayout>,
+    context: Option<&egui::Context>,
 ) {
     if shared.import_contents.lock().unwrap().len() == 0 {
         return;
@@ -479,6 +490,7 @@ pub fn read_import(
             shared.ui.open_modal(text.to_string(), false);
         }
     };
+
     *shared.import_contents.lock().unwrap() = vec![];
 }
 
