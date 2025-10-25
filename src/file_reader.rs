@@ -51,7 +51,6 @@ pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Co
     #[cfg(not(target_arch = "wasm32"))]
     {
         read_save(shared);
-        read_save_finish(shared);
         read_exported_video_frame(shared);
         func!(read_import);
     }
@@ -447,17 +446,6 @@ pub fn read_save(shared: &mut Shared) {
     shared.save_path = path.clone();
 
     shared.saving = Saving::CustomPath;
-
-    del_temp_files(&shared.temp_path.base);
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-pub fn read_save_finish(shared: &mut Shared) {
-    if !fs::exists(shared.temp_path.save_finish.clone()).unwrap() {
-        return;
-    }
-
-    shared.ui.set_state(UiState::Modal, false);
 
     del_temp_files(&shared.temp_path.base);
 }

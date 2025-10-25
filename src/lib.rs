@@ -475,6 +475,10 @@ impl Renderer {
                 &self.bind_group_layout,
             ));
         }
+        if *shared.save_finished.lock().unwrap() {
+            shared.ui.set_state(UiState::Modal, false);
+            *shared.save_finished.lock().unwrap() = false;
+        }
         if shared.saving != shared::Saving::None {
             #[cfg(target_arch = "wasm32")]
             if shared.saving == shared::Saving::CustomPath {
@@ -607,7 +611,6 @@ impl Renderer {
         let saving = shared.saving.clone();
         let camera = shared.camera.clone();
         let mut save_path = shared.save_path.clone();
-        let save_finish = shared.temp_path.save_finish.clone();
         if saving == shared::Saving::Autosaving {
             let dir = directories_next::ProjectDirs::from("com", "retropaint", "skelform")
                 .unwrap()
@@ -623,6 +626,7 @@ impl Renderer {
         }
         utils::save_to_recent_files(&shared.recent_file_paths);
         shared.saving = Saving::None;
+        let save_finished = Arc::clone(&shared.save_finished);
         std::thread::spawn(move || {
             let mut size = Vec2::default();
             let mut png_buf = vec![];
@@ -692,7 +696,7 @@ impl Renderer {
             zip.finish().unwrap();
 
             let _ = std::fs::copy(save_path.clone(), save_path + "~");
-            bone_panel::create_temp_file(&save_finish, "");
+            *save_finished.lock().unwrap() = true;
         });
     }
 
