@@ -195,11 +195,6 @@ pub fn save_web(shared: &Shared) {
     downloadZip(bytes);
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Ord, PartialOrd)]
-enum RectGroupId {
-    GroupIdOne,
-}
-
 pub fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
     let mut boxes = vec![];
     let mut size = 0;

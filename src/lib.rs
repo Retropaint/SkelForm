@@ -877,15 +877,15 @@ impl Renderer {
 
             stdin.write_all(img.as_ref().unwrap()).unwrap();
 
-            let frame = i.to_string();
-            let headline = "Exporting... ".to_owned()
-                + &frame.to_owned()
-                + " out of "
-                + &(rendered_frames.len() - 1).to_string()
-                + " frames";
-            if i != rendered_frames.len() - 1 {
-                //file_reader::create_temp_file(&temp.export_vid_text, &headline);
-            }
+            //let frame = i.to_string();
+            //let headline = "Exporting... ".to_owned()
+            //    + &frame.to_owned()
+            //    + " out of "
+            //    + &(rendered_frames.len() - 1).to_string()
+            //    + " frames";
+            //if i != rendered_frames.len() - 1 {
+            //    file_reader::create_temp_file(&temp.export_vid_text, &headline);
+            //}
         }
 
         //file_reader::create_temp_file(&temp.export_vid_text, &temp.export_vid_done);

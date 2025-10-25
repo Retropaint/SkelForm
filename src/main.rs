@@ -6,9 +6,6 @@ use skelform_lib::shared::config_path;
 use skelform_lib::shared::*;
 
 #[cfg(not(target_arch = "wasm32"))]
-use skelform_lib::file_reader;
-
-#[cfg(not(target_arch = "wasm32"))]
 use std::io::Read;
 
 fn main() -> Result<(), winit::error::EventLoopError> {

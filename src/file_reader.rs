@@ -1,7 +1,6 @@
 //! Reading uploaded images to turn into textures.
 // test
 
-use egui::TextBuffer;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 use wgpu::*;
