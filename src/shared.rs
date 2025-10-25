@@ -933,9 +933,6 @@ pub struct Armature {
     pub animations: Vec<Animation>,
     #[serde(default)]
     pub styles: Vec<Style>,
-
-    #[serde(skip)]
-    pub tex_sheet_buf: Vec<u8>,
 }
 
 impl Armature {
@@ -1504,7 +1501,15 @@ impl Armature {
 pub struct Root {
     pub version: String,
     pub texture_size: Vec2I,
-    pub armature: Armature,
+
+    #[serde(default)]
+    pub ik_families: Vec<IkFamily>,
+    #[serde(default)]
+    pub bones: Vec<Bone>,
+    #[serde(default, skip_serializing_if = "are_anims_empty")]
+    pub animations: Vec<Animation>,
+    #[serde(default)]
+    pub styles: Vec<Style>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]

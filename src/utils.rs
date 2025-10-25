@@ -352,8 +352,11 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
 
     let root = Root {
         version: env!("CARGO_PKG_VERSION").to_string(),
-        armature: armature_copy,
         texture_size: Vec2I::new(tex_size.x as i32, tex_size.y as i32),
+        bones: armature_copy.bones,
+        ik_families: armature_copy.ik_families,
+        animations: armature_copy.animations,
+        styles: armature_copy.styles,
     };
 
     let armatures_json = serde_json::to_string(&root).unwrap();
@@ -399,7 +402,12 @@ pub fn import<R: Read + std::io::Seek>(
     let armature_file = zip.as_mut().unwrap().by_name("armature.json").unwrap();
     let root: crate::Root = serde_json::from_reader(armature_file).unwrap();
 
-    shared.armature = root.armature.clone();
+    shared.armature = shared::Armature {
+        bones: root.bones,
+        ik_families: root.ik_families,
+        animations: root.animations,
+        styles: root.styles,
+    };
 
     // populate style ids
     for s in 0..shared.armature.styles.len() {
@@ -449,13 +457,9 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     // load texture
-    let has_tex = root
-        .armature
-        .styles
-        .iter()
-        .find(|set| set.textures.len() > 0)
-        != None;
-    if root.armature.styles.len() > 0 && has_tex {
+    let styles = &shared.armature.styles;
+    let has_tex = styles.iter().find(|set| set.textures.len() > 0) != None;
+    if styles.len() > 0 && has_tex {
         let texture_file = zip.as_mut().unwrap().by_name("textures.png").unwrap();
 
         let mut bytes = vec![];
