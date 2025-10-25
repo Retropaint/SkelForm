@@ -1689,7 +1689,7 @@ pub struct Keyframe {
     /// for simplicity and performance
     #[serde(default)]
     pub element_id: i32,
-    #[serde(default, rename = "_element")]
+    #[serde(default)]
     pub element: AnimElement,
 
     #[serde(default)]
