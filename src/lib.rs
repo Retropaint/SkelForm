@@ -291,7 +291,10 @@ impl ApplicationHandler for App {
                 self.shared.ui.set_state(UiState::Modal, false);
                 let file_path = path_buf.into_os_string().into_string().unwrap();
                 #[cfg(not(target_arch = "wasm32"))]
-                file_reader::create_temp_file(&self.shared.temp_path.import, &file_path);
+                {
+                    *self.shared.file_name.lock().unwrap() = file_path;
+                    *self.shared.import_contents.lock().unwrap() = vec![0];
+                }
             }
             WindowEvent::CloseRequested => {
                 if self.shared.undo_actions.len() > 0 {

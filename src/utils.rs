@@ -12,6 +12,7 @@ mod web {
 pub use web::*;
 
 use image::{GenericImage, ImageEncoder};
+use std::sync::Mutex;
 
 use std::io::{Read, Write};
 
@@ -135,16 +136,19 @@ pub fn open_save_dialog(temp_save_path: String) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_import_dialog(temp_file_to_write: String) {
+pub fn open_import_dialog(file_name: &Arc<Mutex<String>>, file_contents: &Arc<Mutex<Vec<u8>>>) {
+    let filename = Arc::clone(&file_name);
+    let filecontents = Arc::clone(&file_contents);
     std::thread::spawn(move || {
         let task = rfd::FileDialog::new().pick_file();
         if task == None {
             return;
         }
-        file_reader::create_temp_file(
-            &temp_file_to_write,
-            task.unwrap().as_path().to_str().unwrap(),
-        );
+
+        let file_str = task.as_ref().unwrap().as_path().to_str();
+        *filename.lock().unwrap() = file_str.unwrap().to_string();
+        *filecontents.lock().unwrap() =
+            fs::read(task.unwrap().as_path().to_str().unwrap()).unwrap();
     });
 }
 

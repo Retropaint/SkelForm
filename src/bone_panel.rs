@@ -626,13 +626,8 @@ pub fn open_file_dialog(file_name: Arc<Mutex<String>>, file_contents: Arc<Mutex<
         if task == None {
             return;
         }
-        *file_name.lock().unwrap() = task
-            .as_ref()
-            .unwrap()
-            .as_path()
-            .to_str()
-            .unwrap()
-            .to_string();
+        let file_str = task.as_ref().unwrap().as_path().to_str();
+        *file_name.lock().unwrap() = file_str.unwrap().to_string();
         *file_contents.lock().unwrap() =
             fs::read(task.unwrap().as_path().to_str().unwrap()).unwrap();
     });

@@ -71,7 +71,7 @@ pub fn read_image_loaders(
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if shared.file_contents.lock().unwrap().len() == 0 {
+        if shared.img_contents.lock().unwrap().len() == 0 {
             return;
         }
 
@@ -81,10 +81,10 @@ pub fn read_image_loaders(
         name = filename.split('.').collect::<Vec<_>>()[0].to_string();
 
         // read image pixels and dimensions
-        image = image::load_from_memory(&shared.file_contents.lock().unwrap()).unwrap();
+        image = image::load_from_memory(&shared.img_contents.lock().unwrap()).unwrap();
         dimensions = Vec2::new(image.width() as f32, image.height() as f32);
 
-        *shared.file_contents.lock().unwrap() = vec![];
+        *shared.img_contents.lock().unwrap() = vec![];
 
         del_temp_files(&shared.temp_path.base);
     }
@@ -458,14 +458,12 @@ pub fn read_import(
     bgl: &BindGroupLayout,
     context: &egui::Context,
 ) {
-    if !fs::exists(shared.temp_path.import.clone()).unwrap() {
+    if shared.import_contents.lock().unwrap().len() == 0 {
         return;
     }
+    *shared.import_contents.lock().unwrap() = vec![];
 
-    let path = fs::read_to_string(shared.temp_path.import.clone()).unwrap();
-
-    let file = std::fs::File::open(&path);
-
+    let file = std::fs::File::open(shared.file_name.lock().unwrap().to_string());
     if let Err(err) = file {
         let text = shared.loc("import_err").to_owned() + &err.to_string();
         shared.ui.open_modal(text.to_string(), false);
@@ -473,34 +471,38 @@ pub fn read_import(
         return;
     }
 
-    shared.save_path = path.clone();
+    shared.save_path = shared.file_name.lock().unwrap().clone();
 
-    let ext = path.split('.').last().unwrap();
+    let str = shared.file_name.lock().unwrap().to_string();
+    let ext = str.split('.').last().unwrap();
     match ext {
         "skf" => {
             utils::import(file.unwrap(), shared, queue, device, bgl, context);
-            let full_path_canon = std::fs::canonicalize(&path);
-            let full_path = if let Ok(_) = full_path_canon {
-                &full_path_canon.unwrap().to_str().unwrap().to_string()
-            } else {
-                &path
-            };
-            if !shared.recent_file_paths.contains(&full_path) {
-                shared.recent_file_paths.push(full_path.to_string());
+            if !shared
+                .recent_file_paths
+                .contains(&shared.file_name.lock().unwrap())
+            {
+                shared
+                    .recent_file_paths
+                    .push(shared.file_name.lock().unwrap().to_string());
             }
             utils::save_to_recent_files(&shared.recent_file_paths);
         }
-        "psd" => {
-            let psd_file_path = fs::read_to_string(shared.temp_path.import.clone()).unwrap();
-            let psd_file = std::fs::read(psd_file_path).unwrap();
-            read_psd(psd_file, shared, queue, device, bgl, context)
-        }
+        "psd" => read_psd(
+            std::fs::read(str).unwrap(),
+            shared,
+            queue,
+            device,
+            bgl,
+            context,
+        ),
         _ => {
             let text = shared.loc("import_unrecognized");
             shared.ui.open_modal(text.to_string(), false);
             del_temp_files(&shared.temp_path.base);
         }
     };
+    *shared.import_contents.lock().unwrap() = vec![];
 }
 
 #[cfg(not(target_arch = "wasm32"))]

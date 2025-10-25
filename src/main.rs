@@ -56,7 +56,8 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 
         // load .skf based on first arg
         if args.len() > 1 {
-            file_reader::create_temp_file(&app.shared.temp_path.import, &args[1].to_string());
+            *app.shared.file_name.lock().unwrap() = args[1].to_string();
+            *app.shared.import_contents.lock().unwrap() = vec![0];
         }
     }
 
@@ -108,8 +109,6 @@ fn init_shared(shared: &mut Shared) {
     shared.temp_path = TempPath {
         base: base_path.clone(),
         save: base_path.clone() + "save_path",
-        save_finish: base_path.clone() + "save_finish",
-        import: base_path.clone() + "import_path",
         export_vid_text: base_path.clone() + "export_vid_text",
         export_vid_done: base_path.clone() + "export_vid_done",
     };

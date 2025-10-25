@@ -327,7 +327,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
 
     if input.consume_shortcut(&shared.config.keys.open) {
         #[cfg(not(target_arch = "wasm32"))]
-        utils::open_import_dialog(shared.temp_path.import.clone());
+        utils::open_import_dialog(&shared.file_name, &shared.import_contents);
         #[cfg(target_arch = "wasm32")]
         toggleElement(true, "file-dialog".to_string());
     }
@@ -725,7 +725,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
         let str_open = shared.loc("top_bar.file.open");
         if top_bar_button!(str_open, Some(&shared.config.keys.open)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_import_dialog(shared.temp_path.import.clone());
+            utils::open_import_dialog(&shared.file_name, &shared.import_contents);
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
             ui.close();

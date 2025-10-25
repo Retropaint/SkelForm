@@ -1843,8 +1843,6 @@ pub struct CopyBuffer {
 pub struct TempPath {
     pub base: String,
     pub save: String,
-    pub save_finish: String,
-    pub import: String,
     pub export_vid_text: String,
     pub export_vid_done: String,
 }
@@ -1945,7 +1943,9 @@ pub struct Shared {
     pub selected_temp_bone: Bone,
 
     pub file_name: Arc<Mutex<String>>,
-    pub file_contents: Arc<Mutex<Vec<u8>>>,
+    pub img_contents: Arc<Mutex<Vec<u8>>>,
+    pub save_contents: Arc<Mutex<Vec<u8>>>,
+    pub import_contents: Arc<Mutex<Vec<u8>>>,
 
     loc_strings: std::collections::HashMap<String, String>,
 }

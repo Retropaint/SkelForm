@@ -59,7 +59,7 @@ fn startup_content(
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_import_dialog(shared.temp_path.import.clone());
+            utils::open_import_dialog(&shared.file_name, &shared.import_contents);
         }
 
         #[cfg(not(target_arch = "wasm32"))]
@@ -96,11 +96,12 @@ fn startup_content(
                 )
                 .clicked()
                 {
+                    let sample_path = "./samples/skellington.skf";
                     #[cfg(not(target_arch = "wasm32"))]
-                    file_reader::create_temp_file(
-                        &shared.temp_path.import,
-                        "./samples/skellington.skf",
-                    );
+                    {
+                        *shared.file_name.lock().unwrap() = sample_path.to_string();
+                        *shared.import_contents.lock().unwrap() = vec![0];
+                    }
                     shared.ui.set_state(UiState::StartupWindow, false);
                     #[cfg(target_arch = "wasm32")]
                     crate::downloadSample();
@@ -428,7 +429,8 @@ pub fn skf_file_button(
             });
 
         if button.clicked() {
-            file_reader::create_temp_file(&shared.temp_path.import, &path);
+            *shared.file_name.lock().unwrap() = path.clone();
+            *shared.import_contents.lock().unwrap() = vec![0];
             shared.ui.set_state(UiState::StartupWindow, false);
         }
 
