@@ -239,7 +239,7 @@ pub fn read_psd(
                 image::DynamicImage::ImageRgba8(image.0.clone()),
                 style_idx,
                 Vec2::new(dims.x, dims.y),
-                tex_name,
+                utils::without_unicode(tex_name),
                 &mut shared.armature,
                 queue,
                 device,
@@ -268,7 +268,7 @@ pub fn read_psd(
             let pivot_bone = shared.armature.find_bone_mut(pivot_id).unwrap();
             pivot_pos = Vec2::new(layer.layer_left() as f32, -layer.layer_top() as f32);
             pivot_bone.pos = pivot_pos - Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
-            pivot_bone.name = group.name().to_string();
+            pivot_bone.name = utils::without_unicode(group.name()).to_string();
             pivot_bone.folded = true;
         }
 
