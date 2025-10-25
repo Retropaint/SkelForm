@@ -13,16 +13,24 @@ import zipfile
 
 RED = "\033[31m"
 BLUE = "\033[34m"
+CYAN = "\033[36m"
 RESET = "\033[0m"
 
 # yapf: disable
-parser = argparse.ArgumentParser(prog="SkelForm Release Builder", description="Build script for SkelForm release distributions.")
+parser = argparse.ArgumentParser(prog="SkelForm Release Builder", description="Build script for SkelForm release distributions.", formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument("-v", "--verbose", action="store_true", help="Print output of everything")
 parser.add_argument("-dmg", "--dmg", action="store_true", help="Attempt to create Mac dmg (requires create-dmg)")
-parser.add_argument("-debug", "--debug", action="store_true", help="Create debug build")
+parser.add_argument("-dbg", "--debug", action="store_true", help="Create debug build")
+parser.add_argument("-d", "--docs", type=str, help=f"Build and move user & dev docs here. `user_docs` and `dev_docs` will be appended to the input dir.\n{CYAN}Example{RESET}: -docs ../../skelform_")
 args = parser.parse_args()
 
 stdout = "" if args.verbose else " &> /dev/null"
+
+if args.docs:
+    subprocess.run ("mdbook build " + args.docs + "user_docs", shell=True)
+    shutil.copytree(f"{args.docs}user_docs/book", "./user-docs")
+    subprocess.run ("mdbook build " + args.docs + "dev_docs", shell=True)
+    shutil.copytree(f"{args.docs}dev_docs/book", "./dev-docs")
 
 def require_docs(header, doc_name):
     print(f">>> {RED}!! {header} DOCUMENTATION REQUIRED !!{RESET}")
