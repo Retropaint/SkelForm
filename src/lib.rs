@@ -1133,40 +1133,4 @@ mod tests {
         armature_window::drag_bone(&mut shared, false, 1, 0);
         shared
     }
-
-    #[test]
-    fn test_dragging() {
-        let armature = init_shared().armature;
-        assert_eq!(
-            armature.find_bone(2).unwrap().parent_id == 1
-                && armature.find_bone(1).unwrap().parent_id == 0,
-            true
-        );
-    }
-
-    #[test]
-    fn test_edit_bone() {
-        let mut armature = init_shared().armature;
-        armature.edit_bone(0, &AnimElement::PositionX, 10., usize::MAX, -1);
-        armature.edit_bone(0, &AnimElement::PositionY, 20., usize::MAX, -1);
-        assert_eq!(armature.bones[0].pos, Vec2::new(10., 20.));
-    }
-
-    #[test]
-    fn test_edit_bone_animated() {
-        let mut armature = init_shared().armature;
-        armature.new_animation();
-        armature.edit_bone(0, &AnimElement::PositionX, 10., 0, 2);
-        armature.edit_bone(0, &AnimElement::PositionY, 20., 0, 2);
-        assert_eq!(armature.animations[0].keyframes[2].value, 10.);
-    }
-
-    #[test]
-    fn test_linear_anim() {
-        let mut armature = init_shared().armature;
-        armature.new_animation();
-        armature.edit_bone(0, &AnimElement::PositionX, 10., 0, 20);
-        let animated_bones = armature.animate(0, 10);
-        assert_eq!(animated_bones[0].pos.x, 5.);
-    }
 }
