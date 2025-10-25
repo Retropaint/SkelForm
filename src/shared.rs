@@ -832,7 +832,7 @@ enum_string!(JointConstraint);
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 pub struct Bone {
-    #[serde(default, rename = "_name")]
+    #[serde(default)]
     pub name: String,
     #[serde(default)]
     pub id: i32,
@@ -1516,7 +1516,7 @@ pub struct Root {
 pub struct Style {
     #[serde(default)]
     pub id: i32,
-    #[serde(default, rename = "_name")]
+    #[serde(default)]
     pub name: String,
     #[serde(skip)]
     pub active: bool,
@@ -1538,7 +1538,7 @@ impl Vec2I {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 pub struct Texture {
-    #[serde(default, rename = "_name")]
+    #[serde(default)]
     pub name: String,
 
     #[serde(skip)]
