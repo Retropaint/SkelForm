@@ -19,9 +19,8 @@ wgpu = { version = "25.0.0", default-features = false }
 winit = "0.30.9"
 image = "0.25.5"
 psd = { "path" = "./vendor_deps/psd"}  # vendored for faster layer flattening algorithm
-max_rects = { "path" = "./vendor_deps/max_rects"}  # vendored for faster layer flattening algorithm
+max_rects = { "path" = "./vendor_deps/max_rects"}  # vendored to remove visualizer
 glob = "0.3.2" # file path wildcards
-rectangle-pack = "0.4.2" # texture atlas layout generator
 web-time = "1.1.0"
 spade = "2.15.0" # Delaunay triangulation for meshes
 async-std = "1.13.2"
