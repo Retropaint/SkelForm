@@ -17,10 +17,9 @@ serde_json = "1.0.140"
 tween = "2.0.4" # todo: replace this with runtime implementation
 wgpu = { version = "25.0.0", default-features = false }
 winit = "0.30.9"
-image = "0.25.5"
+image = { version = "0.25.5", default-features = false, features = ["png"] }
 psd = { "path" = "./vendor_deps/psd"}  # vendored for faster layer flattening algorithm
 max_rects = { "path" = "./vendor_deps/max_rects"}  # vendored to remove visualizer
-glob = "0.3.2" # file path wildcards
 web-time = "1.1.0"
 spade = "2.15.0" # Delaunay triangulation for meshes
 async-std = "1.13.2"
@@ -29,7 +28,7 @@ async-std = "1.13.2"
 pollster = "0.4.0"
 egui-winit = "0.32.0"
 rfd = { version = "0.15.3",  features = ["gtk3"], default-features = false}
-zip = "4.0.0"
+zip = { version = "4.0.0", default-features = false }
 directories-next = "2.0.0" # for common dirs like config & temp data
 open = "5.3.2" # open links or folders
 
