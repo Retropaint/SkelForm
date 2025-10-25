@@ -117,6 +117,12 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                         } else {
                             styles.push(selected_value);
                         }
+                        shared.armature.set_bone_tex(
+                            bone.id,
+                            bone.tex_idx as usize,
+                            usize::MAX,
+                            -1,
+                        );
                     }
                 });
         });
