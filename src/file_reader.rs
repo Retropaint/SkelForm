@@ -50,8 +50,6 @@ pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Co
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        read_save(shared);
-        read_exported_video_frame(shared);
         func!(read_import);
     }
 }
@@ -85,8 +83,6 @@ pub fn read_image_loaders(
         dimensions = Vec2::new(image.width() as f32, image.height() as f32);
 
         *shared.img_contents.lock().unwrap() = vec![];
-
-        del_temp_files(&shared.temp_path.base);
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -139,7 +135,6 @@ pub fn read_psd(
     ctx: &egui::Context,
 ) {
     let psd = psd::Psd::from_bytes(&bytes).unwrap();
-    del_temp_files(&shared.temp_path.base);
 
     // reset armature (but not all of it) to make way for the psd rig
     shared.armature.bones = vec![];
@@ -436,21 +431,6 @@ pub fn add_texture(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn read_save(shared: &mut Shared) {
-    if !fs::exists(shared.temp_path.save.clone()).unwrap() {
-        return;
-    }
-
-    let path = fs::read_to_string(shared.temp_path.save.clone()).unwrap();
-
-    shared.save_path = path.clone();
-
-    shared.saving = Saving::CustomPath;
-
-    del_temp_files(&shared.temp_path.base);
-}
-
-#[cfg(not(target_arch = "wasm32"))]
 pub fn read_import(
     shared: &mut Shared,
     queue: &Queue,
@@ -467,7 +447,6 @@ pub fn read_import(
     if let Err(err) = file {
         let text = shared.loc("import_err").to_owned() + &err.to_string();
         shared.ui.open_modal(text.to_string(), false);
-        del_temp_files(&shared.temp_path.base);
         return;
     }
 
@@ -499,36 +478,9 @@ pub fn read_import(
         _ => {
             let text = shared.loc("import_unrecognized");
             shared.ui.open_modal(text.to_string(), false);
-            del_temp_files(&shared.temp_path.base);
         }
     };
     *shared.import_contents.lock().unwrap() = vec![];
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-pub fn read_exported_video_frame(shared: &mut Shared) {
-    if !fs::exists(shared.temp_path.export_vid_text.clone()).unwrap() {
-        return;
-    }
-    let frame = fs::read_to_string(shared.temp_path.export_vid_text.clone()).unwrap();
-    shared.ui.open_modal(frame, false);
-    fs::remove_file(shared.temp_path.export_vid_text.clone()).unwrap();
-}
-
-pub fn del_temp_files(_base: &str) {
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        for file in glob::glob(&(_base.to_string() + "*")).unwrap() {
-            if let Ok(path) = file {
-                match fs::remove_file(path) {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("{}", e)
-                    }
-                }
-            }
-        }
-    }
 }
 
 /// Load image by reading an `img` tag with id `last-image`.

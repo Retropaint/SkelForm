@@ -1839,14 +1839,6 @@ pub struct CopyBuffer {
     pub bones: Vec<Bone>,
 }
 
-#[derive(Default, Clone)]
-pub struct TempPath {
-    pub base: String,
-    pub save: String,
-    pub export_vid_text: String,
-    pub export_vid_done: String,
-}
-
 #[derive(Default, Clone, PartialEq)]
 pub enum Saving {
     #[default]
@@ -1913,7 +1905,6 @@ pub struct Shared {
 
     pub recent_file_paths: Vec<String>,
 
-    pub temp_path: TempPath,
     pub has_temp: bool,
 
     pub config: Config,
@@ -1922,7 +1913,7 @@ pub struct Shared {
 
     pub gridline_gap: i32,
 
-    pub saving: Saving,
+    pub saving: Arc<Mutex<Saving>>,
     pub save_finished: Arc<Mutex<bool>>,
 
     pub thumb_ui_tex: std::collections::HashMap<String, egui::TextureHandle>,

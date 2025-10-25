@@ -199,7 +199,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                     anim_id,
                     shared.ui.anim.selected_frame,
                 );
-                shared.saving = shared::Saving::Autosaving;
+                *shared.saving.lock().unwrap() = shared::Saving::Autosaving;
             }
             if $label != "" {
                 $ui.label($label);

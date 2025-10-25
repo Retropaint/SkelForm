@@ -482,7 +482,7 @@ impl Renderer {
             shared.ui.set_state(UiState::Modal, false);
             *shared.save_finished.lock().unwrap() = false;
         }
-        if shared.saving != shared::Saving::None {
+        if *shared.saving.lock().unwrap() != shared::Saving::None {
             #[cfg(target_arch = "wasm32")]
             if shared.saving == shared::Saving::CustomPath {
                 utils::save_web(&shared);
@@ -586,9 +586,8 @@ impl Renderer {
             {
                 let frames = shared.rendered_frames.clone();
                 let window = shared.window.clone();
-                let temp = shared.temp_path.clone();
                 std::thread::spawn(move || {
-                    Self::export_video(frames, window, temp);
+                    Self::export_video(frames, window);
                 });
                 shared.done_recording = false;
             }
@@ -598,10 +597,10 @@ impl Renderer {
     #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&mut self, shared: &mut Shared) {
         if shared.time - shared.last_autosave < shared.config.autosave_frequency as f32 {
-            shared.saving = Saving::None;
+            *shared.saving.lock().unwrap() = Saving::None;
             return;
         }
-        if shared.saving == Saving::CustomPath {
+        if *shared.saving.lock().unwrap() == Saving::CustomPath {
             let str_saving = shared.loc("saving");
             shared.ui.open_modal(str_saving.to_string(), true);
         }
@@ -611,10 +610,9 @@ impl Renderer {
         let screenshot_res = shared.screenshot_res;
         let device = self.gpu.device.clone();
         let mut armature = shared.armature.clone();
-        let saving = shared.saving.clone();
         let camera = shared.camera.clone();
-        let mut save_path = shared.save_path.clone();
-        if saving == shared::Saving::Autosaving {
+        let mut save_path = shared.file_name.lock().unwrap().clone();
+        if *shared.saving.lock().unwrap() == shared::Saving::Autosaving {
             let dir = directories_next::ProjectDirs::from("com", "retropaint", "skelform")
                 .unwrap()
                 .data_dir()
@@ -628,7 +626,7 @@ impl Renderer {
             shared.recent_file_paths.push(save_path.clone());
         }
         utils::save_to_recent_files(&shared.recent_file_paths);
-        shared.saving = Saving::None;
+        *shared.saving.lock().unwrap() = Saving::None;
         let save_finished = Arc::clone(&shared.save_finished);
         std::thread::spawn(move || {
             let mut size = Vec2::default();
@@ -817,7 +815,7 @@ impl Renderer {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    fn export_video(rendered_frames: Vec<RenderedFrame>, window: Vec2, temp: TempPath) {
+    fn export_video(rendered_frames: Vec<RenderedFrame>, window: Vec2) {
         let width = rendered_frames[0].width.to_string();
         let height = rendered_frames[0].height.to_string();
 
@@ -886,11 +884,11 @@ impl Renderer {
                 + &(rendered_frames.len() - 1).to_string()
                 + " frames";
             if i != rendered_frames.len() - 1 {
-                file_reader::create_temp_file(&temp.export_vid_text, &headline);
+                //file_reader::create_temp_file(&temp.export_vid_text, &headline);
             }
         }
 
-        file_reader::create_temp_file(&temp.export_vid_text, &temp.export_vid_done);
+        //file_reader::create_temp_file(&temp.export_vid_text, &temp.export_vid_done);
 
         stdin.flush().unwrap();
         drop(stdin);

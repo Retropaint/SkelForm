@@ -317,7 +317,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         utils::save_web(shared);
 
         #[cfg(not(target_arch = "wasm32"))]
-        utils::open_save_dialog(shared.temp_path.save.clone());
+        utils::open_save_dialog(&shared.file_name, &shared.saving);
         //if shared.save_path == "" {
         //    utils::open_save_dialog();
         //} else {
@@ -733,7 +733,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
         let str_save = shared.loc("top_bar.file.save");
         if top_bar_button!(str_save, Some(&shared.config.keys.save)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(shared.temp_path.save.clone());
+            utils::open_save_dialog(&shared.file_name, &shared.saving);
             #[cfg(target_arch = "wasm32")]
             utils::save_web(&shared);
             ui.close();

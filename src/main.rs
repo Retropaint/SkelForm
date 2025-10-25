@@ -46,10 +46,6 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     }
     app.shared.startup = startup;
 
-    // delete any leftover temporary files
-    #[cfg(not(target_arch = "wasm32"))]
-    file_reader::del_temp_files(&app.shared.temp_path.base);
-
     #[cfg(not(target_arch = "wasm32"))]
     {
         let args: Vec<String> = std::env::args().collect();
@@ -90,28 +86,6 @@ fn init_shared(shared: &mut Shared) {
     {
         shared.debug = true;
     }
-
-    let base_path: String;
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        base_path = directories_next::BaseDirs::new()
-            .unwrap()
-            .cache_dir()
-            .to_str()
-            .unwrap()
-            .to_owned()
-            + "/.skelform_";
-    }
-    #[cfg(target_arch = "wasm32")]
-    {
-        base_path = "".to_string();
-    }
-    shared.temp_path = TempPath {
-        base: base_path.clone(),
-        save: base_path.clone() + "save_path",
-        export_vid_text: base_path.clone() + "export_vid_text",
-        export_vid_done: base_path.clone() + "export_vid_done",
-    };
 
     #[cfg(not(target_arch = "wasm32"))]
     {

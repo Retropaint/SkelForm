@@ -123,7 +123,9 @@ pub fn to_vec2(f: f32) -> Vec2 {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_save_dialog(temp_save_path: String) {
+pub fn open_save_dialog(file_name: &Arc<Mutex<String>>, saving: &Arc<Mutex<Saving>>) {
+    let filename = Arc::clone(&file_name);
+    let csaving = Arc::clone(&saving);
     std::thread::spawn(move || {
         let task = rfd::FileDialog::new()
             .add_filter("SkelForm Armature", &["skf"])
@@ -131,7 +133,14 @@ pub fn open_save_dialog(temp_save_path: String) {
         if task == None {
             return;
         }
-        file_reader::create_temp_file(&temp_save_path, task.unwrap().as_path().to_str().unwrap());
+        *filename.lock().unwrap() = task
+            .as_ref()
+            .unwrap()
+            .as_path()
+            .to_str()
+            .unwrap()
+            .to_string();
+        *csaving.lock().unwrap() = shared::Saving::CustomPath;
     });
 }
 
@@ -512,8 +521,6 @@ pub fn import<R: Read + std::io::Seek>(
 
     shared.ui.unselect_everything();
     shared.ui.set_state(UiState::StartupWindow, false);
-
-    file_reader::del_temp_files(&shared.temp_path.base);
 }
 
 #[cfg(not(target_arch = "wasm32"))]
