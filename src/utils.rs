@@ -150,8 +150,15 @@ pub fn open_import_dialog(temp_file_to_write: String) {
 
 #[cfg(target_arch = "wasm32")]
 pub fn save_web(shared: &Shared) {
-    let (size, armatures_json, editor_json, png_buf) =
-        prepare_files(&shared.armature, shared.camera.clone());
+    let mut size = Vec2::default();
+    let mut png_buf = vec![];
+    let mut carmature = shared.armature.clone();
+
+    if shared.armature.styles.len() > 0 && shared.armature.styles[0].textures.len() > 0 {
+        (png_buf, size) = utils::create_tex_sheet(&mut carmature);
+    }
+
+    let (armatures_json, editor_json) = prepare_files(&carmature, shared.camera.clone(), size);
 
     // create zip file
     let mut buf: Vec<u8> = Vec::new();
@@ -180,7 +187,7 @@ enum RectGroupId {
     GroupIdOne,
 }
 
-fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
+pub fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
     let mut boxes = vec![];
     let mut size = 0;
     let mut placed = vec![];
@@ -204,11 +211,6 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
     }
 
     let mut raw_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size as u32, size as u32);
-
-    // todo:
-    // Texture atlas is the biggest bottleneck in saving time. Both could be improved:
-    // - coping individual textures to the final image
-    // - encoding to png (mandatory for regular saving, but autosaving could use another format like bmp)
 
     for set in &mut armature.styles {
         for tex in &mut set.textures {
@@ -244,10 +246,7 @@ fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
     (png_buf, Vec2::new(size as f32, size as f32))
 }
 
-pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, String, Vec<u8>) {
-    let mut png_buf = vec![];
-    let mut size = Vec2::new(0., 0.);
-
+pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (String, String) {
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
@@ -342,10 +341,6 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
         bone.init_scale = bone.scale;
     }
 
-    if armature.styles.len() > 0 && armature.styles[0].textures.len() > 0 {
-        (png_buf, size) = create_tex_sheet(&mut armature_copy);
-    }
-
     // populate texture ser_offset and ser_size
     for s in 0..armature.styles.len() {
         for t in 0..armature.styles[s].textures.len() {
@@ -358,7 +353,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
     let root = Root {
         version: env!("CARGO_PKG_VERSION").to_string(),
         armature: armature_copy,
-        texture_size: Vec2I::new(size.x as i32, size.y as i32),
+        texture_size: Vec2I::new(tex_size.x as i32, tex_size.y as i32),
     };
 
     let armatures_json = serde_json::to_string(&root).unwrap();
@@ -384,7 +379,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera) -> (Vec2, String, Stri
     }
     let editor_json = serde_json::to_string(&editor).unwrap();
 
-    (size, armatures_json, editor_json, png_buf)
+    (armatures_json, editor_json)
 }
 
 pub fn import<R: Read + std::io::Seek>(

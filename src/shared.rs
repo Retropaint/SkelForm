@@ -8,6 +8,7 @@ use std::{
     ops::{DivAssign, MulAssign},
 };
 
+use std::sync::Mutex;
 use tween::Tweener;
 use wgpu::BindGroup;
 use winit::keyboard::KeyCode;

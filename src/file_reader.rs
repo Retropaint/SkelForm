@@ -1,16 +1,12 @@
 //! Reading uploaded images to turn into textures.
 // test
 
-#[cfg(not(target_arch = "wasm32"))]
-use pollster::FutureExt;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 use wgpu::*;
 
 use crate::*;
 use image::Rgba;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 use image::ImageBuffer;
 

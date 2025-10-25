@@ -603,7 +603,7 @@ impl Renderer {
         shared.rendered_frames = vec![];
         let screenshot_res = shared.screenshot_res;
         let device = self.gpu.device.clone();
-        let armature = shared.armature.clone();
+        let mut armature = shared.armature.clone();
         let saving = shared.saving.clone();
         let camera = shared.camera.clone();
         let mut save_path = shared.save_path.clone();
@@ -624,8 +624,14 @@ impl Renderer {
         utils::save_to_recent_files(&shared.recent_file_paths);
         shared.saving = Saving::None;
         std::thread::spawn(move || {
-            let (size, armatures_json, editor_json, png_buf) =
-                utils::prepare_files(&armature, camera);
+            let mut size = Vec2::default();
+            let mut png_buf = vec![];
+
+            if armature.styles.len() > 0 && armature.styles[0].textures.len() > 0 {
+                (png_buf, size) = utils::create_tex_sheet(&mut armature);
+            }
+
+            let (armatures_json, editor_json) = utils::prepare_files(&armature, camera, size);
 
             // create zip file
             let mut zip = zip::ZipWriter::new(std::fs::File::create(save_path.clone()).unwrap());
