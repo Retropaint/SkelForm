@@ -396,6 +396,20 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
     }
 
     if input.consume_shortcut(&shared.config.keys.cancel) {
+        macro_rules! modal {
+            ($modal:expr) => {
+                !shared.ui.has_state($modal)
+            };
+        }
+        if modal!(UiState::StylesModal)
+            && modal!(UiState::Modal)
+            && modal!(UiState::PolarModal)
+            && modal!(UiState::ForcedModal)
+            && modal!(UiState::SettingsModal)
+        {
+            shared.ui.unselect_everything();
+        }
+
         #[cfg(target_arch = "wasm32")]
         {
             toggleElement(false, "image-dialog".to_string());

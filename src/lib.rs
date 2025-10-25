@@ -1135,7 +1135,8 @@ mod tests {
         shared
     }
 
-    // todo: add headless wgpu and egui to test them as well
+    // todo: add headless wgpu and egui to test those that depend on it
+
     #[test]
     fn import_skf() {
         let mut shared = init_shared();
@@ -1146,7 +1147,6 @@ mod tests {
         assert_eq!(shared.armature.styles.len() > 0, true);
     }
 
-    // todo: add headless wgpu and egui to test them as well
     #[test]
     fn import_psd() {
         let mut shared = init_shared();
