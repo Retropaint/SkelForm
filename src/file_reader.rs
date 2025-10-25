@@ -1,6 +1,7 @@
 //! Reading uploaded images to turn into textures.
 // test
 
+use egui::TextBuffer;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 use wgpu::*;
@@ -71,24 +72,20 @@ pub fn read_image_loaders(
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if !fs::exists(shared.temp_path.img.clone()).unwrap() {
-            return;
-        }
-
-        let img_path = fs::read_to_string(shared.temp_path.img.clone()).unwrap();
-        if img_path == "" {
-            del_temp_files(&shared.temp_path.base);
+        if shared.file_contents.lock().unwrap().len() == 0 {
             return;
         }
 
         // extract name
-        let filename = img_path.split('/').last().unwrap().to_string();
+        let raw_filename = shared.file_name.lock().unwrap();
+        let filename = raw_filename.split('/').last().unwrap().to_string();
         name = filename.split('.').collect::<Vec<_>>()[0].to_string();
 
         // read image pixels and dimensions
-        let file_bytes = fs::read(img_path);
-        image = image::load_from_memory(&file_bytes.unwrap()).unwrap();
+        image = image::load_from_memory(&shared.file_contents.lock().unwrap()).unwrap();
         dimensions = Vec2::new(image.width() as f32, image.height() as f32);
+
+        *shared.file_contents.lock().unwrap() = vec![];
 
         del_temp_files(&shared.temp_path.base);
     }

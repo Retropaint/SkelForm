@@ -252,7 +252,11 @@ pub fn draw_textures_list(
                 return;
             }
             #[cfg(not(target_arch = "wasm32"))]
-            bone_panel::open_file_dialog(shared.temp_path.img.clone());
+            {
+                let file_name = Arc::clone(&shared.file_name);
+                let file_contents = Arc::clone(&shared.file_contents);
+                bone_panel::open_file_dialog(file_name, file_contents);
+            }
             #[cfg(target_arch = "wasm32")]
             crate::toggleElement(true, "image-dialog".to_string());
         });

@@ -107,7 +107,6 @@ fn init_shared(shared: &mut Shared) {
     }
     shared.temp_path = TempPath {
         base: base_path.clone(),
-        img: base_path.clone() + "img_path",
         save: base_path.clone() + "save_path",
         save_finish: base_path.clone() + "save_finish",
         import: base_path.clone() + "import_path",

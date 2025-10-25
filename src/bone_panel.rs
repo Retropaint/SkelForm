@@ -8,6 +8,7 @@ use ui::EguiUi;
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
     pub use crate::file_reader::*;
+    pub use std::sync::Mutex;
     pub use std::{fs::File, io::Write, thread};
 }
 #[cfg(not(target_arch = "wasm32"))]
@@ -617,7 +618,7 @@ pub fn center_verts(verts: &mut Vec<Vertex>, tex_size: &Vec2) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_file_dialog(temp_img_path: String) {
+pub fn open_file_dialog(file_name: Arc<Mutex<String>>, file_contents: Arc<Mutex<Vec<u8>>>) {
     thread::spawn(move || {
         let task = rfd::FileDialog::new()
             .add_filter("image", &["png", "jpg", "tif"])
@@ -625,6 +626,14 @@ pub fn open_file_dialog(temp_img_path: String) {
         if task == None {
             return;
         }
-        create_temp_file(&temp_img_path, task.unwrap().as_path().to_str().unwrap());
+        *file_name.lock().unwrap() = task
+            .as_ref()
+            .unwrap()
+            .as_path()
+            .to_str()
+            .unwrap()
+            .to_string();
+        *file_contents.lock().unwrap() =
+            fs::read(task.unwrap().as_path().to_str().unwrap()).unwrap();
     });
 }
