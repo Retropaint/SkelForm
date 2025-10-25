@@ -29,11 +29,5 @@ path = "src/bin/main.rs"
 [dependencies.clap]
 version = "3"
 
-[dependencies.image]
-version = "0.23"
-
-[dependencies.rand]
-version = "0.8"
-
 [dependencies.rayon]
 version = "1.5.1"

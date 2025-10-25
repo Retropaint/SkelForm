@@ -69,7 +69,6 @@
 pub mod bucket;
 pub mod max_rects;
 pub mod packing_box;
-pub mod visualizer;
 
 use bucket::Bucket;
 use packing_box::PackingBox;
