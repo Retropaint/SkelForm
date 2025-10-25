@@ -484,7 +484,7 @@ impl Renderer {
         }
         if *shared.saving.lock().unwrap() != shared::Saving::None {
             #[cfg(target_arch = "wasm32")]
-            if shared.saving == shared::Saving::CustomPath {
+            if *shared.saving.lock().unwrap() == shared::Saving::CustomPath {
                 utils::save_web(&shared);
             }
             #[cfg(not(target_arch = "wasm32"))]
