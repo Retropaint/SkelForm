@@ -1028,7 +1028,8 @@ impl Armature {
             self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
         }
 
-        if new_tex_idx > self.get_current_set(bone_id).unwrap().textures.len() - 1 {
+        let style = self.get_current_set(bone_id).unwrap();
+        if style.textures.len() == 0 || new_tex_idx > style.textures.len() - 1 {
             return;
         }
 
