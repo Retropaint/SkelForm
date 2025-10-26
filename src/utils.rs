@@ -741,3 +741,45 @@ pub fn after_underscore(str: &str) -> &str {
 pub fn without_unicode(str: &str) -> &str {
     str.split('\u{0000}').collect::<Vec<_>>()[0]
 }
+
+pub fn process_thumbnail(buffer: &wgpu::Buffer, device: &wgpu::Device, resolution: Vec2) -> Vec<u8> {
+    // wait for screenshot buffer to complete
+    let _ = device.poll(wgpu::PollType::Wait);
+
+    let view = buffer.slice(..).get_mapped_range();
+
+    let mut rgb = vec![0u8; (resolution.x * resolution.y * 3.) as usize];
+    for (j, chunk) in view.as_ref().chunks_exact(4).enumerate() {
+        let offset = j * 3;
+        if offset + 2 > rgb.len() {
+            return vec![];
+        }
+        rgb[offset + 0] = chunk[2];
+        rgb[offset + 1] = chunk[1];
+        rgb[offset + 2] = chunk[0];
+    }
+
+    let img_buf = <image::ImageBuffer<image::Rgb<u8>, _>>::from_raw(
+        resolution.x as u32,
+        resolution.y as u32,
+        rgb.clone(),
+    )
+    .unwrap();
+
+    let thumb_size = Vec2::new(128., 128.);
+    let mut img = image::DynamicImage::ImageRgb8(img_buf);
+    img = img.thumbnail(thumb_size.x as u32, thumb_size.y as u32);
+
+    let mut thumb_buf: Vec<u8> = Vec::new();
+    let encoder = image::codecs::png::PngEncoder::new(&mut thumb_buf);
+    encoder
+        .write_image(
+            img.to_rgb8().as_raw(),
+            img.width(),
+            img.height(),
+            image::ExtendedColorType::Rgb8,
+        )
+        .unwrap();
+
+    thumb_buf
+}
