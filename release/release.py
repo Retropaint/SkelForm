@@ -28,9 +28,9 @@ stdout = "" if args.verbose else " &> /dev/null"
 
 if args.docs:
     subprocess.run ("mdbook build " + args.docs + "user_docs", shell=True)
-    shutil.copytree(f"{args.docs}user_docs/book", "./user-docs")
+    shutil.copytree(f"{args.docs}user_docs/book", "./user-docs", dirs_exist_ok = True)
     subprocess.run ("mdbook build " + args.docs + "dev_docs", shell=True)
-    shutil.copytree(f"{args.docs}dev_docs/book", "./dev-docs")
+    shutil.copytree(f"{args.docs}dev_docs/book", "./dev-docs", dirs_exist_ok = True)
 
 def require_docs(header, doc_name):
     print(f">>> {RED}!! {header} DOCUMENTATION REQUIRED !!{RESET}")
