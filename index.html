@@ -94,7 +94,7 @@
     </head>
 
     <body>
-        <div id="image-dialog" class="modal file-dialog" style="visibility: hidden">
+        <div id="image-dialog" class="modal file-dialog">
             <input
                 onchange="toggleElement(false, 'image-dialog'); loadImage(event)"
                 type="file"
@@ -109,7 +109,7 @@
             >
         </div>
 
-        <div id="file-dialog" class="modal file-dialog" style="visibility: hidden">
+        <div id="file-dialog" class="modal file-dialog">
             <input
                 type="file"
                 onchange="toggleElement(false, 'file-dialog'); loadFile(event)"
@@ -122,7 +122,7 @@
                 >Cancel</label>
         </div>
 
-        <div id="ui-slider" class="modal ui-slider"  style="visibility: hidden">
+        <div id="ui-slider" class="modal ui-slider">
             <div class="box">
                 <p>
                     Use the slider below to adjust the UI scale.
@@ -134,7 +134,7 @@
             </div>
         </div>
 
-        <div id="edit-input-modal" class="modal" style="visibility: hidden" keypress="onEditInputPress($event)">
+        <div id="edit-input-modal" class="modal" keypress="onEditInputPress($event)">
             <form>
                 <input id="edit-input"></input>
             </form>
@@ -149,7 +149,7 @@
             <p id="focus-p">Click to focus</p>
         </div>
 
-        <div id="resolution-message" class="resolution-message" style="visibility: hidden">
+        <div id="resolution-message" class="resolution-message">
             <p>
                 If you see this message, SkelForm has failed to load properly.
                 <br />
@@ -162,7 +162,7 @@
         </div>
 
 
-        <div id="wait-message" class="resolution-message" style="visibility: hidden">
+        <div id="wait-message" class="resolution-message">
             <p>Loading, please wait...</p>
         </div>
 
@@ -188,6 +188,13 @@
             let config = {};
             loadConfig();
 
+            toggleElement(false, "image-dialog");
+            toggleElement(false, "file-dialog");
+            toggleElement(false, "ui-slider");
+            toggleElement(false, "edit-input-modal");
+            toggleElement(false, "resolution-message");
+            toggleElement(false, "wait-message");
+
             function hideFocus() {
                 toggleElement(false, "focus")
                 toggleElement(true, "canvas")
@@ -209,7 +216,9 @@
 
             function toggleElement(open, id) {
                 let str = open ? "visible" : "hidden";
+                let pointer = open ? "auto" : "none";
                 document.getElementById(id).style.visibility = str;
+                document.getElementById(id).style.pointerEvents = pointer;
                 updateUiSlider();
             }
 
