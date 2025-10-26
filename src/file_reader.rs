@@ -43,14 +43,7 @@ pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Co
     }
 
     func!(read_image_loaders);
-
-    #[cfg(target_arch = "wasm32")]
-    func!(load_file);
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        func!(read_import);
-    }
+    func!(read_import);
 }
 /// read temporary files created from file dialogs (native & WASM)
 pub fn read_image_loaders(
@@ -440,7 +433,6 @@ pub fn add_texture(
         });
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 pub fn read_import(
     shared: &mut Shared,
     queue: Option<&Queue>,
@@ -448,43 +440,62 @@ pub fn read_import(
     bgl: Option<&BindGroupLayout>,
     context: Option<&egui::Context>,
 ) {
-    if shared.import_contents.lock().unwrap().len() == 0 {
-        return;
+    let filename;
+    let file;
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        filename = shared.file_name.lock().unwrap().to_string();
+        if shared.import_contents.lock().unwrap().len() == 0 {
+            return;
+        }
+        *shared.import_contents.lock().unwrap() = vec![];
+
+        file = std::fs::File::open(shared.file_name.lock().unwrap().to_string());
+        if let Err(err) = file {
+            let text = shared.loc("import_err").to_owned() + &err.to_string();
+            shared.ui.open_modal(text.to_string(), false);
+            return;
+        }
+
+        shared.save_path = filename.clone();
     }
-    *shared.import_contents.lock().unwrap() = vec![];
 
-    let file = std::fs::File::open(shared.file_name.lock().unwrap().to_string());
-    if let Err(err) = file {
-        let text = shared.loc("import_err").to_owned() + &err.to_string();
-        shared.ui.open_modal(text.to_string(), false);
-        return;
+    #[cfg(target_arch = "wasm32")]
+    {
+        filename = getFileName();
+        if filename == "" {
+            return;
+        }
+        file = getFile();
     }
 
-    shared.save_path = shared.file_name.lock().unwrap().clone();
-
-    let str = shared.file_name.lock().unwrap().to_string();
-    let ext = str.split('.').last().unwrap();
+    let ext = filename.split('.').last().unwrap();
     match ext {
         "skf" => {
-            utils::import(file.unwrap(), shared, queue, device, bgl, context);
-            if !shared
-                .recent_file_paths
-                .contains(&shared.file_name.lock().unwrap())
+            #[cfg(target_arch = "wasm32")]
             {
-                shared
-                    .recent_file_paths
-                    .push(shared.file_name.lock().unwrap().to_string());
+                let cursor = std::io::Cursor::new(getFile());
+                utils::import(cursor, shared, queue, device, bgl, context);
             }
-            utils::save_to_recent_files(&shared.recent_file_paths);
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                utils::import(file.unwrap(), shared, queue, device, bgl, context);
+                if !shared.recent_file_paths.contains(&filename) {
+                    shared.recent_file_paths.push(filename);
+                }
+                utils::save_to_recent_files(&shared.recent_file_paths);
+            }
         }
-        "psd" => read_psd(
-            std::fs::read(str).unwrap(),
-            shared,
-            queue,
-            device,
-            bgl,
-            context,
-        ),
+        "psd" => {
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let file = std::fs::read(filename).unwrap();
+                read_psd(file, shared, queue, device, bgl, context);
+            }
+            #[cfg(target_arch = "wasm32")]
+            read_psd(file, shared, queue, device, bgl, context)
+        }
         _ => {
             let text = shared.loc("import_unrecognized");
             shared.ui.open_modal(text.to_string(), false);
@@ -492,6 +503,8 @@ pub fn read_import(
     };
 
     *shared.import_contents.lock().unwrap() = vec![];
+    #[cfg(target_arch = "wasm32")]
+    removeFile();
 }
 
 /// Load image by reading an `img` tag with id `last-image`.
@@ -550,37 +563,6 @@ pub fn load_image_wasm(id: String) -> Option<(Vec<u8>, Vec2)> {
 pub fn create_temp_file(name: &str, content: &str) {
     let mut img_path = std::fs::File::create(name).unwrap();
     img_path.write_all(content.as_bytes()).unwrap();
-}
-
-#[cfg(target_arch = "wasm32")]
-pub fn load_file(
-    shared: &mut crate::Shared,
-    queue: &wgpu::Queue,
-    device: &wgpu::Device,
-    bind_group_layout: &BindGroupLayout,
-    context: &egui::Context,
-) {
-    let is_skf = getFileName().contains(".skf");
-    let is_psd = getFileName().contains(".psd");
-    if getFile().len() == 0 || (!is_psd && !is_skf) {
-        return;
-    }
-
-    let cursor = std::io::Cursor::new(getFile());
-    if is_psd {
-        read_psd(
-            cursor.into_inner(),
-            shared,
-            queue,
-            device,
-            bind_group_layout,
-            context,
-        );
-    } else if is_skf {
-        utils::import(cursor, shared, queue, device, bind_group_layout, context);
-    }
-
-    removeFile();
 }
 
 #[cfg(target_arch = "wasm32")]
