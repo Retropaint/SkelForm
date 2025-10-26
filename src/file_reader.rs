@@ -132,6 +132,11 @@ pub fn read_psd(
     shared.armature.bones = vec![];
     shared.armature.styles = vec![];
 
+    // create root bone, where all except targets will go
+    shared.armature.new_bone(-1);
+    shared.armature.bones[0].name = "Root".to_string();
+    shared.armature.bones[0].folded = true;
+
     // collect group ids, to be used later
     let mut group_ids: Vec<u32> = vec![];
     for l in 0..psd.layers().len() {
@@ -260,6 +265,7 @@ pub fn read_psd(
             bone_psd_id.insert(pivot_id, group_ids[g] as u32);
             let pivot_bone = shared.armature.find_bone_mut(pivot_id).unwrap();
             pivot_pos = Vec2::new(layer.layer_left() as f32, -layer.layer_top() as f32);
+            pivot_bone.parent_id = 0;
             pivot_bone.pos = pivot_pos - Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
             pivot_bone.name = utils::without_unicode(group.name()).to_string();
             pivot_bone.folded = true;
@@ -272,6 +278,7 @@ pub fn read_psd(
         }
         let tex_name = shared.armature.styles[0].textures[tex_idx].name.clone();
         let bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
+        bone.parent_id = 0;
         bone.style_ids = vec![0];
         shared
             .armature
