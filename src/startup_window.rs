@@ -115,7 +115,7 @@ fn startup_content(
 
     ui.vertical(|ui| {
         ui.add_space(11.);
-        let reserved_for_resources = 450.;
+        let reserved_for_resources = 420.;
         ui.set_width((available_size.x - reserved_for_resources).max(1.));
         let width = ui.available_width();
         ui.with_layout(
@@ -180,8 +180,10 @@ fn startup_content(
         );
     });
 
+    ui.separator();
+
     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-        ui.add_space(45.);
+        ui.add_space(15.);
         let width = 200.;
         ui.set_width(width);
         ui.vertical(|ui| {
@@ -189,8 +191,8 @@ fn startup_content(
             let available_size = ui.available_size();
             ui.add_space(10.);
             egui::Frame::new()
-                .fill(shared.config.colors.dark_accent.into())
-                .inner_margin(egui::Margin::same(10))
+                //.fill(shared.config.colors.dark_accent.into())
+                .inner_margin(egui::Margin::same(5))
                 .show(ui, |ui| {
                     ui.set_width(available_size.x);
                     ui.set_height(available_size.y - 55.);
@@ -198,6 +200,7 @@ fn startup_content(
                     let header_size = 15.;
                     let sub_size = 13.;
                     let sub_padding = 20.;
+                    let sub_line_height = 2.;
                     let separator = 15.;
 
                     let link_color = shared.config.colors.link;
@@ -227,7 +230,7 @@ fn startup_content(
                                 ui.painter().rect_filled(
                                     egui::Rect::from_min_size(
                                         left_top,
-                                        egui::Vec2::new(2., sub_size + 8.),
+                                        egui::Vec2::new(2., sub_size + 8. + sub_line_height),
                                     ),
                                     egui::CornerRadius::ZERO,
                                     line_color,
@@ -245,6 +248,7 @@ fn startup_content(
                                     open_link(&sub, &item.url_type);
                                 }
                             });
+                            ui.add_space(sub_line_height);
                         }
                         ui.add_space(separator);
                     }
