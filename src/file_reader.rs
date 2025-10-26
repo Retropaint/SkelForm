@@ -365,9 +365,27 @@ pub fn read_psd(
     // add IK targets
     for eff_id in start_eff_ids {
         let target_id = shared.armature.new_bone(-1).0.id;
-        shared.armature.find_bone_mut(eff_id).unwrap().ik_target_id = target_id;
-        let target_name = shared.armature.find_bone(eff_id).unwrap().name.to_owned() + " Target";
-        shared.armature.find_bone_mut(target_id).unwrap().name = target_name;
+        let start_eff_bone = &mut shared.armature.find_bone_mut(eff_id).unwrap();
+        let ik_id = start_eff_bone.ik_family_id;
+
+        start_eff_bone.ik_target_id = target_id;
+        let target_name = start_eff_bone.name.to_owned() + " Target";
+
+        // determine target's base position
+        let mut pos = Vec2::default();
+        let effs = shared
+            .armature
+            .bones
+            .iter()
+            .filter(|bone| bone.ik_family_id == ik_id);
+        let parents = shared.armature.get_all_parents(effs.last().unwrap().id);
+        for bone in parents {
+            pos += bone.pos;
+        }
+
+        let target_bone = shared.armature.find_bone_mut(target_id).unwrap();
+        target_bone.name = target_name;
+        target_bone.pos = pos;
     }
 
     let str_psd = shared.loc("psd_imported");
