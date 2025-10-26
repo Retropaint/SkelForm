@@ -134,6 +134,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     let frame = Frame::default().inner_margin(5.);
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         draw_hierarchy(shared, ui);
+                        ui.add_space(4.);
                     });
                 });
         }),
