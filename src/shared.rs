@@ -271,19 +271,37 @@ pub struct Color {
 
 impl std::ops::AddAssign for Color {
     fn add_assign(&mut self, other: Color) {
-        self.r = (self.r + other.r).min(255);
-        self.g = (self.g + other.g).min(255);
-        self.b = (self.b + other.b).min(255);
-        self.a = (self.a + other.a).min(255);
+        macro_rules! add {
+            ($col:expr, $other_col:expr) => {
+                $col = if let Some(col) = $col.checked_add($other_col) {
+                    col
+                } else {
+                    0
+                }
+            };
+        }
+        add!(self.r, other.r);
+        add!(self.g, other.g);
+        add!(self.b, other.b);
+        add!(self.a, other.a);
     }
 }
 
 impl std::ops::SubAssign for Color {
     fn sub_assign(&mut self, other: Color) {
-        self.r = (self.r - other.r).max(0);
-        self.g = (self.g - other.g).max(0);
-        self.b = (self.b - other.b).max(0);
-        self.a = (self.a - other.a).max(0);
+        macro_rules! sub {
+            ($col:expr, $other_col:expr) => {
+                $col = if let Some(col) = $col.checked_sub($other_col) {
+                    col
+                } else {
+                    0
+                }
+            };
+        }
+        sub!(self.r, other.r);
+        sub!(self.g, other.g);
+        sub!(self.b, other.b);
+        sub!(self.a, other.a);
     }
 }
 
@@ -918,8 +936,13 @@ pub struct EditorBone {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct IkFamily {
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
     pub constraint: JointConstraint,
+    #[serde(default)]
     pub target_id: i32,
+    #[serde(default)]
     pub bone_ids: Vec<i32>,
 }
 
