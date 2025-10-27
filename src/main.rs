@@ -79,12 +79,6 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.selected_tex_set_id = -1;
     shared.screenshot_res = Vec2::new(128., 128.);
 
-    let url = utils::bin_path() + "dev-docs";
-    match open::that(url) {
-        Ok(_) => shared.local_doc_url = utils::bin_path(),
-        _ => {}
-    };
-
     #[cfg(feature = "debug")]
     {
         shared.debug = true;
@@ -92,6 +86,12 @@ fn init_shared(shared: &mut Shared) {
 
     #[cfg(not(target_arch = "wasm32"))]
     {
+        let url = utils::bin_path() + "dev-docs";
+        match open::that(url) {
+            Ok(_) => shared.local_doc_url = utils::bin_path(),
+            _ => {}
+        };
+
         // import config
         if config_path().exists() {
             utils::import_config(shared);
