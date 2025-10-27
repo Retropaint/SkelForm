@@ -1119,16 +1119,18 @@ pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
 
 pub fn polygonate(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     let gap = 25.;
+    let padding = 50.;
     let mut poi: Vec<Vec2> = vec![];
 
     // create spaced-out points of interest
     let mut cursor = Vec2::default();
-    while cursor.y < texture.height() as f32 {
-        if texture.get_pixel(cursor.x as u32, cursor.y as u32).0[3] == 0 {
+    while cursor.y < texture.height() as f32 + padding {
+        let out_of_bounds = cursor.x > texture.width() as f32 || cursor.y > texture.height() as f32;
+        if out_of_bounds || texture.get_pixel(cursor.x as u32, cursor.y as u32).0[3] == 0 {
             poi.push(cursor);
         }
         cursor.x += gap;
-        if cursor.x > texture.width() as f32 {
+        if cursor.x > texture.width() as f32 + padding {
             cursor.x = 0.;
             cursor.y += gap;
         }

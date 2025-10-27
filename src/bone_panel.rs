@@ -578,15 +578,15 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
             // disbaled: polygonation not great yet
             //
-            //if ui.skf_button("Generate").clicked() {
-            //    let (verts, indices) = renderer::polygonate(
-            //        &shared.armature.texture_sets[bone.tex_set_idx as usize].textures
-            //            [bone.tex_idx as usize]
-            //            .image,
-            //    );
-            //    shared.selected_bone_mut().unwrap().vertices = verts;
-            //    shared.selected_bone_mut().unwrap().indices = indices;
-            //}
+            if ui.skf_button("Generate").clicked() {
+                let (verts, indices) = renderer::polygonate(
+                    &shared.armature.get_current_set(bone.id).unwrap().textures
+                        [bone.tex_idx as usize]
+                        .image,
+                );
+                shared.selected_bone_mut().unwrap().vertices = verts;
+                shared.selected_bone_mut().unwrap().indices = indices;
+            }
         });
     });
 }
