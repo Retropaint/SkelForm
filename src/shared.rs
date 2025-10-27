@@ -276,7 +276,7 @@ impl std::ops::AddAssign for Color {
                 $col = if let Some(col) = $col.checked_add($other_col) {
                     col
                 } else {
-                    0
+                    255
                 }
             };
         }
