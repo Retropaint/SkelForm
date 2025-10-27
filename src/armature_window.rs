@@ -130,7 +130,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     // hierarchy
                     let frame = Frame::default().inner_margin(5.);
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-                        ui.set_height(ui.available_height());
+                        ui.set_min_height(ui.available_height());
                         ui.set_width(ui.available_width());
 
                         // The empty armature text should have blue hyperlinks to attract the user's
@@ -321,6 +321,10 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         if shared.ui.setting_ik_target {
                             shared.selected_bone_mut().unwrap().ik_target_id = bone_id;
                             shared.ui.setting_ik_target = false;
+                        } else if shared.ui.setting_weight_bone {
+                            let idx = shared.ui.selected_weights as usize;
+                            shared.selected_bone_mut().unwrap().weights[idx].bone_id = bone_id;
+                            shared.ui.setting_weight_bone = false;
                         } else {
                             if !shared.input.holding_mod && !shared.input.holding_shift {
                                 shared.ui.selected_bone_ids = vec![];

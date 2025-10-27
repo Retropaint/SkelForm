@@ -618,9 +618,6 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     if shared.ui.selected_weights != -1 {
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.skf_button("Set Bone").clicked() {
-                    println!("test");
-                }
                 let str_set_verts = if shared.ui.setting_weight_verts {
                     "Finish"
                 } else {
@@ -629,6 +626,27 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 if ui.skf_button(str_set_verts).clicked() {
                     shared.ui.showing_mesh = !shared.ui.setting_weight_verts;
                     shared.ui.setting_weight_verts = !shared.ui.setting_weight_verts;
+                }
+            });
+        });
+
+        ui.horizontal(|ui| {
+            let bone_id = shared.selected_bone().unwrap().weights
+                [shared.ui.selected_weights as usize]
+                .bone_id;
+            let mut bone_name = "";
+            if let Some(bone) = shared.armature.bones.iter().find(|bone| bone.id == bone_id) {
+                bone_name = &bone.name;
+            }
+            ui.label("Bone: ".to_owned() + bone_name);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let str_set_bone = if shared.ui.setting_weight_bone {
+                    "Finish"
+                } else {
+                    "Set Bone"
+                };
+                if ui.skf_button(str_set_bone).clicked() {
+                    shared.ui.setting_weight_bone = !shared.ui.setting_weight_bone;
                 }
             });
         });

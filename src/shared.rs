@@ -500,6 +500,7 @@ pub struct Ui {
     pub selected_bone_ids: Vec<i32>,
     pub showing_mesh: bool,
     pub setting_weight_verts: bool,
+    pub setting_weight_bone: bool,
 
     pub rename_id: String,
     pub original_name: String,
@@ -916,8 +917,8 @@ pub struct Bone {
 pub struct BoneWeight {
     #[serde(default)]
     pub verts: Vec<i32>,
-    #[serde(default)]
-    pub bone_id: Vec<i32>,
+    #[serde(default = "default_neg_one")]
+    pub bone_id: i32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]

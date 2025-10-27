@@ -849,10 +849,11 @@ pub fn bone_vertices(
     }
 
     for wv in 0..world_verts.len() {
-        let idx = shared.ui.selected_weights as usize;
-        let col = if shared.selected_bone().unwrap().weights[idx]
-            .verts
-            .contains(&(wv as i32))
+        let idx = shared.ui.selected_weights;
+        let col = if idx != -1
+            && shared.selected_bone().unwrap().weights[idx as usize]
+                .verts
+                .contains(&(wv as i32))
         {
             VertexColor::YELLOW
         } else {
