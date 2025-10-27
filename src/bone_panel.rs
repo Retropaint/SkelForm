@@ -615,17 +615,24 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         });
     });
 
-    ui.horizontal(|ui| {
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.skf_button("Set Bone").clicked() {
-                println!("test");
-            }
-            if ui.skf_button("Set Verts").clicked() {
-                shared.ui.showing_mesh = true;
-                shared.ui.setting_weight_verts = true;
-            }
+    if shared.ui.selected_weights != -1 {
+        ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.skf_button("Set Bone").clicked() {
+                    println!("test");
+                }
+                let str_set_verts = if shared.ui.setting_weight_verts {
+                    "Finish"
+                } else {
+                    "Set Verts"
+                };
+                if ui.skf_button(str_set_verts).clicked() {
+                    shared.ui.showing_mesh = !shared.ui.setting_weight_verts;
+                    shared.ui.setting_weight_verts = !shared.ui.setting_weight_verts;
+                }
+            });
         });
-    });
+    }
 }
 
 pub fn center_verts(verts: &mut Vec<Vertex>, tex_size: &Vec2) {
