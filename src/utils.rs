@@ -285,7 +285,12 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
             bone_ids.push(idx as i32);
         }
 
-        let target_id = joints[0].ik_target_id;
+        let target_idx = armature_copy
+            .bones
+            .iter()
+            .position(|bone| bone.id == joints[0].ik_target_id)
+            .unwrap();
+        let target_id = target_idx as i32;
         let constraint = joints[0].constraint;
 
         armature_copy.ik_families.push(IkFamily {
@@ -742,7 +747,11 @@ pub fn without_unicode(str: &str) -> &str {
     str.split('\u{0000}').collect::<Vec<_>>()[0]
 }
 
-pub fn process_thumbnail(buffer: &wgpu::Buffer, device: &wgpu::Device, resolution: Vec2) -> Vec<u8> {
+pub fn process_thumbnail(
+    buffer: &wgpu::Buffer,
+    device: &wgpu::Device,
+    resolution: Vec2,
+) -> Vec<u8> {
     // wait for screenshot buffer to complete
     let _ = device.poll(wgpu::PollType::Wait);
 
