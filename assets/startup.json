@@ -3,7 +3,7 @@
     {
       "code": "user_docs",
       "url_type": "UserDocs",
-      "url": "",
+      "url": "introduction.html",
       "items": [
         {
           "code": "starter_guide",
@@ -22,7 +22,7 @@
     {
       "code": "dev_docs",
       "url_type": "DevDocs",
-      "url": "",
+      "url": "introduction.html",
       "items": [
         {
           "code": "skf",

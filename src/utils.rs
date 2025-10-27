@@ -620,15 +620,9 @@ pub fn open_docs(is_dev: bool, mut _path: &str) {
     // open the local docs, or online if it can't be found on default path
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if _path == "" {
-            _path = "index.html";
-        }
         let url = bin_path() + docs_name + "/" + _path;
         match open::that(url) {
             Err(_) => {
-                if _path == "index.html" {
-                    _path = "";
-                }
                 let url =
                     "https://skelform.org/".to_string() + docs_name + "/" + &_path.to_string();
                 match open::that(url) {
