@@ -561,12 +561,12 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 .unwrap()
                 .size
                 .clone();
-            let str_center = &shared.loc("bone_panel.mesh_deformation.center");
-            let str_center_desc = &shared.loc("bone_panel.mesh_deformation.center_desc");
-            let button = ui.skf_button(str_center);
-            if button.on_hover_text(str_center_desc).clicked() {
-                center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
-            }
+            //let str_center = &shared.loc("bone_panel.mesh_deformation.center");
+            //let str_center_desc = &shared.loc("bone_panel.mesh_deformation.center_desc");
+            //let button = ui.skf_button(str_center);
+            //if button.on_hover_text(str_center_desc).clicked() {
+            //    center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
+            //}
             let str_reset = &shared.loc("bone_panel.mesh_deformation.reset");
             let str_reset_desc = &shared.loc("bone_panel.mesh_deformation.reset_desc");
             let button = ui.skf_button(str_reset);
