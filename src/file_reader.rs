@@ -379,12 +379,12 @@ pub fn read_psd(
         let target_name = start_eff_bone.name.to_owned() + " Target";
 
         // determine target's base position
-        let mut pos = Vec2::default();
         let effs = shared
             .armature
             .bones
             .iter()
             .filter(|bone| bone.ik_family_id == ik_id);
+        let mut pos = effs.clone().last().unwrap().pos;
         let parents = shared.armature.get_all_parents(effs.last().unwrap().id);
         for bone in parents {
             pos += bone.pos;
