@@ -20,7 +20,7 @@ macro_rules! con_vert {
             $tex_size,
             1.,
             1.,
-            Vec2::new(0.5, 0.5),
+            Vec2::default(),
         )
     };
 }
@@ -1117,20 +1117,25 @@ pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
+    let tex = *tex_size / 2.;
     let mut verts = vec![
-        Vertex::default(),
         Vertex {
-            pos: Vec2::new(tex_size.x, 0.),
+            pos: Vec2::new(-tex.x, tex.y),
+            uv: Vec2::new(0., 0.),
+            ..Default::default()
+        },
+        Vertex {
+            pos: Vec2::new(tex.x, tex.y),
             uv: Vec2::new(1., 0.),
             ..Default::default()
         },
         Vertex {
-            pos: Vec2::new(tex_size.x, -tex_size.y),
+            pos: Vec2::new(tex.x, -tex.y),
             uv: Vec2::new(1., 1.),
             ..Default::default()
         },
         Vertex {
-            pos: Vec2::new(0., -tex_size.y),
+            pos: Vec2::new(-tex.x, -tex.y),
             uv: Vec2::new(0., 1.),
             ..Default::default()
         },
