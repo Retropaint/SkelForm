@@ -132,6 +132,13 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                         ui.set_height(ui.available_height());
                         ui.set_width(ui.available_width());
+
+                        // The empty armature text should have blue hyperlinks to attract the user's
+                        // attention. The blue makes it clear of being a hyperlink, while also sticking
+                        // out (without being too jarring).
+                        ui.style_mut().visuals.hyperlink_color =
+                            egui::Color32::from_rgb(94, 156, 255);
+
                         if shared.armature.bones.len() != 0 {
                             draw_hierarchy(shared, ui);
                         } else {
