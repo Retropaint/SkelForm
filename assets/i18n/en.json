@@ -89,6 +89,7 @@
     "texture_index": "Tex. Index:",
     "texture_set_none": "None",
     "texture_set_setup": "[Setup]",
+    "empty_armature": "If you're new here, check out the [Starter Guide](user-docs/starter-guide/main.html) in the [User Documentation](user-docs/index.html).\n\nOnce you're ready, click New Bone above to get started with your armature!",
     "position": "Position:",
     "scale": "Scale:",
     "rotation": "Rotation:",

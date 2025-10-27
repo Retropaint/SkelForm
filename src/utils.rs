@@ -792,3 +792,12 @@ pub fn process_thumbnail(
 
     thumb_buf
 }
+
+pub fn markdown(str: String, local_doc_url: String) -> String {
+    let user_docs = if local_doc_url != "" {
+        local_doc_url.clone() + "user-docs"
+    } else {
+        "https://skelform.org/user-docs".to_string()
+    };
+    str.replace("user-docs", &user_docs)
+}

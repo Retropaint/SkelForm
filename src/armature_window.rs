@@ -5,6 +5,7 @@ use egui::*;
 use crate::{
     shared::{Shared, Vec2},
     ui::{self, EguiUi, TextInputOptions},
+    utils,
 };
 
 use crate::shared::*;
@@ -135,9 +136,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                             draw_hierarchy(shared, ui);
                         } else {
                             let mut cache = egui_commonmark::CommonMarkCache::default();
-                            let str = shared
-                                .loc("bone_panel.empty_armature")
-                                .replace("user-docs", "https://skelform.org/user-docs");
+                            let str = utils::markdown(
+                                shared.loc("bone_panel.empty_armature"),
+                                shared.local_doc_url.clone(),
+                            );
                             egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
                         }
                         ui.add_space(4.);

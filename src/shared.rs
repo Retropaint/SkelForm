@@ -1960,6 +1960,8 @@ pub struct Shared {
     pub save_contents: Arc<Mutex<Vec<u8>>>,
     pub import_contents: Arc<Mutex<Vec<u8>>>,
 
+    pub local_doc_url: String,
+
     loc_strings: std::collections::HashMap<String, String>,
 }
 
@@ -2051,10 +2053,7 @@ impl Shared {
     pub fn loc(&self, str: &str) -> String {
         let result = self.loc_strings.get(str);
         if let Some(string) = result {
-            let str = string
-                .clone()
-                .replace("user-docs", "https://skelform.org/user-docs");
-            return str;
+            return string.to_string();
         }
 
         self.loc_strings[""].to_string()

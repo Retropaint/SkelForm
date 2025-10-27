@@ -3,7 +3,7 @@
 #[cfg(not(target_arch = "wasm32"))]
 use skelform_lib::shared::config_path;
 
-use skelform_lib::shared::*;
+use skelform_lib::{shared::*, utils};
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Read;
@@ -79,6 +79,12 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.selected_tex_set_id = -1;
     shared.screenshot_res = Vec2::new(128., 128.);
 
+    let url = utils::bin_path() + "dev-docs";
+    match open::that(url) {
+        Ok(_) => shared.local_doc_url = utils::bin_path(),
+        _ => {}
+    };
+
     #[cfg(feature = "debug")]
     {
         shared.debug = true;
@@ -88,15 +94,15 @@ fn init_shared(shared: &mut Shared) {
     {
         // import config
         if config_path().exists() {
-            skelform_lib::utils::import_config(shared);
+            utils::import_config(shared);
         } else {
-            skelform_lib::utils::save_config(&shared.config);
+            utils::save_config(&shared.config);
         }
     }
     #[cfg(target_arch = "wasm32")]
     {
-        skelform_lib::utils::import_config(shared);
-        skelform_lib::utils::save_config(&shared.config);
+        utils::import_config(shared);
+        utils::save_config(&shared.config);
     }
 
     if !shared.config.skip_startup {
