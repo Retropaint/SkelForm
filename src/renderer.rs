@@ -158,11 +158,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
                 );
 
-                if !shared.ui.setting_weight_verts
-                    && shared.input.left_clicked
-                    && shared.ui.showing_mesh
-                    && new_vert == None
-                {
+                if shared.input.left_clicked && shared.ui.showing_mesh && new_vert == None {
                     new_vert = Some(Vertex {
                         pos: Vec2::new(pixel_pos.x, -pixel_pos.y),
                         uv,
@@ -325,17 +321,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
     }
 
-    if let Some(vert) = new_vert {
-        shared.undo_actions.push(Action {
-            action: ActionType::Bone,
-            id: shared.selected_bone().unwrap().id,
-            bones: vec![shared.selected_bone().unwrap().clone()],
-            ..Default::default()
-        });
-        let bone_mut = shared.selected_bone_mut().unwrap();
-        bone_mut.vertices.push(vert);
-        bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
-        bone_mut.indices = triangulate(&bone_mut.vertices);
+    if !shared.ui.setting_weight_verts {
+        if let Some(vert) = new_vert {
+            shared.undo_actions.push(Action {
+                action: ActionType::Bone,
+                id: shared.selected_bone().unwrap().id,
+                bones: vec![shared.selected_bone().unwrap().clone()],
+                ..Default::default()
+            });
+            let bone_mut = shared.selected_bone_mut().unwrap();
+            bone_mut.vertices.push(vert);
+            bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
+            bone_mut.indices = triangulate(&bone_mut.vertices);
+        }
     }
 
     if shared.config.gridline_front {
@@ -701,13 +699,14 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
     }
 
     macro_rules! edit {
-        ($element:expr, $value:expr) => {
+        ($bone:expr, $element:expr, $value:expr, $vert_id:expr) => {
             shared.armature.edit_bone(
-                shared.selected_bone().unwrap().id,
+                $bone.id,
                 &$element,
                 $value,
                 anim_id,
                 shared.ui.anim.selected_frame,
+                $vert_id,
             );
         };
     }
@@ -727,8 +726,49 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
                 pos /= parent.scale;
             }
 
-            edit!(AnimElement::PositionX, pos.x);
-            edit!(AnimElement::PositionY, pos.y);
+            edit!(bone, AnimElement::PositionX, pos.x, -1);
+            edit!(bone, AnimElement::PositionY, pos.y, -1);
+
+            // if this bone is a weight, move its verts
+            let mut weight = None;
+            let mut main_bone = None;
+            for other_bone in &shared.armature.bones {
+                if let Some(w) = other_bone
+                    .weights
+                    .iter()
+                    .find(|weight| weight.bone_id == bone.id)
+                {
+                    weight = Some(w.clone());
+                    main_bone = Some(other_bone.clone());
+                    break;
+                }
+            }
+
+            if weight == None {
+                return;
+            }
+
+            for v in &weight.unwrap().verts {
+                let vert = &main_bone.as_ref().unwrap().vertices[*v as usize];
+                let mut vel = shared.mouse_vel() * shared.camera.zoom;
+                let temp_bone = bones
+                    .iter()
+                    .find(|tb| tb.id == main_bone.as_ref().unwrap().id)
+                    .unwrap();
+                vel = utils::rotate(&vel, -temp_bone.rot);
+                edit!(
+                    main_bone.as_ref().unwrap(),
+                    AnimElement::VertPositionX,
+                    vert.pos.x - vel.x,
+                    *v
+                );
+                edit!(
+                    main_bone.as_ref().unwrap(),
+                    AnimElement::VertPositionY,
+                    vert.pos.y - vel.y,
+                    *v
+                );
+            }
         }
         shared::EditMode::Rotate => {
             shared.ui.set_state(UiState::Rotating, true);
@@ -751,7 +791,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
 
             let dir = mouse - bone_center.pos;
             let rot = dir.y.atan2(dir.x);
-            edit!(AnimElement::Rotation, rot);
+            edit!(bone, AnimElement::Rotation, rot, -1);
         }
         shared::EditMode::Scale => {
             shared.ui.set_state(UiState::Scaling, true);
@@ -766,8 +806,8 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
 
             scale -= shared.mouse_vel();
 
-            edit!(AnimElement::ScaleX, scale.x);
-            edit!(AnimElement::ScaleY, scale.y);
+            edit!(bone, AnimElement::ScaleX, scale.x, -1);
+            edit!(bone, AnimElement::ScaleY, scale.y, -1);
         }
     };
 }

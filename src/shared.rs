@@ -634,6 +634,9 @@ impl Ui {
         self.unselect_everything();
         self.anim.selected = selected_anim;
         self.selected_bone_idx = idx;
+        self.setting_weight_verts = false;
+        self.setting_weight_bone = false;
+        self.selected_weights = -1;
     }
 }
 
@@ -1156,6 +1159,7 @@ impl Armature {
         value: f32,
         anim_id: usize,
         anim_frame: i32,
+        vert_id: i32,
     ) {
         let bone = self.find_bone_mut(bone_id).unwrap();
         let mut init_value = 0.;
@@ -1179,8 +1183,12 @@ impl Armature {
                 init_value = bone.zindex as f32;
                 bone.zindex = value as i32
             }
-            AnimElement::VertPositionX => { /* do nothing */ }
-            AnimElement::VertPositionY => { /* do nothing */ }
+            AnimElement::VertPositionX => {
+                set!(bone.vertices[vert_id as usize].pos.x)
+            }
+            AnimElement::VertPositionY => {
+                set!(bone.vertices[vert_id as usize].pos.y)
+            }
             AnimElement::TextureIndex => { /* handled in set_bone_tex() */ }
         };
 

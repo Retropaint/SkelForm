@@ -198,6 +198,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                     $float,
                     anim_id,
                     shared.ui.anim.selected_frame,
+                    -1,
                 );
                 *shared.saving.lock().unwrap() = shared::Saving::Autosaving;
             }
@@ -568,8 +569,10 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             let button = ui.skf_button(str_reset);
             if button.on_hover_text(str_reset_desc).clicked() {
                 let (verts, indices) = renderer::create_tex_rect(&tex_size);
-                shared.selected_bone_mut().unwrap().vertices = verts;
-                shared.selected_bone_mut().unwrap().indices = indices;
+                let bone = shared.selected_bone_mut().unwrap();
+                bone.vertices = verts;
+                bone.indices = indices;
+                bone.weights = vec![];
             }
 
             if ui.skf_button("Trace").clicked() {
