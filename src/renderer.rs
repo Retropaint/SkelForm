@@ -180,14 +180,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         let mut click_on_hover_id = temp_bones[b].id;
         if !shared.config.exact_bone_select {
-            // QoL: select first untextured parent of this bone
+            // QoL: select parent of textured bone if it's called 'Texture'
             // this is because most textured bones are meant to represent their parents
             let parents = shared.armature.get_all_parents(temp_bones[b].id);
-            for parent in &parents {
-                if shared.armature.get_current_tex(parent.id) == None {
-                    click_on_hover_id = parent.id;
-                    break;
-                }
+            if temp_bones[b].name.to_lowercase() == "texture" {
+                click_on_hover_id = parents[0].id;
             }
         }
 

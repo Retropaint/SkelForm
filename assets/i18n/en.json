@@ -169,7 +169,7 @@
       "heading": "Miscellaneous",
       "autosave_frequency": "Autosave frequency (seconds):",
       "select_exact_bone": "Select exact bone in click ",
-      "select_exact_bone_desc": "When clicking a bone's texture, the first untextured parent of the bone will be selected.\n\nTick this to always select the textured bone directly.",
+      "select_exact_bone_desc": "Clicking on a bone that is named 'Texture' (any case) will select the parent. Tick this to directly select the texture.",
       "skip_startup_window": "Skip startup window",
       "clear_recent_files": "Clear recent files",
       "keep_bone_tex_idx": "Keep tex. index after moving ",
