@@ -550,10 +550,6 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     }
 
     ui.horizontal(|ui| {
-        if ui.skf_button(&mesh_label).clicked() {
-            shared.ui.editing_mesh = !shared.ui.editing_mesh;
-        }
-
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let tex_size = shared
                 .armature
@@ -584,6 +580,31 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 );
                 shared.selected_bone_mut().unwrap().vertices = verts;
                 shared.selected_bone_mut().unwrap().indices = indices;
+            }
+
+            if ui.skf_button(&mesh_label).clicked() {
+                shared.ui.editing_mesh = !shared.ui.editing_mesh;
+            }
+        });
+    });
+
+    ui.horizontal(|ui| {
+        ui.label("Weights:");
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            egui::ComboBox::new("bone_weights", "")
+                .selected_text("")
+                .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
+                .show_ui(ui, |ui| {});
+        });
+    });
+
+    ui.horizontal(|ui| {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if ui.skf_button("Set Bone").clicked() {
+                println!("test");
+            }
+            if ui.skf_button("Set Verts").clicked() {
+                println!("test");
             }
         });
     });

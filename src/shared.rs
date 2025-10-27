@@ -883,6 +883,8 @@ pub struct Bone {
     pub vertices: Vec<Vertex>,
     #[serde(default, skip_serializing_if = "are_indices_empty")]
     pub indices: Vec<u32>,
+    #[serde(default, skip_serializing_if = "are_weights_empty")]
+    pub weights: Vec<BoneWeight>,
 
     #[serde(skip)]
     pub folded: bool,
@@ -904,6 +906,14 @@ pub struct Bone {
     pub init_scale: Vec2,
     #[serde(default)]
     pub init_rot: f32,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
+pub struct BoneWeight {
+    #[serde(default)]
+    verts: Vec<i32>,
+    #[serde(default)]
+    bone_id: Vec<i32>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
@@ -2144,6 +2154,10 @@ fn are_verts_empty(value: &Vec<Vertex>) -> bool {
 }
 
 fn are_indices_empty<T: std::cmp::PartialEq<Vec<u32>>>(value: &T) -> bool {
+    *value == vec![]
+}
+
+fn are_weights_empty<T: std::cmp::PartialEq<Vec<BoneWeight>>>(value: &T) -> bool {
     *value == vec![]
 }
 
