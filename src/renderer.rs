@@ -158,7 +158,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
                 );
 
-                if shared.input.left_clicked && shared.ui.editing_mesh && new_vert == None {
+                if shared.input.left_clicked && shared.ui.showing_mesh && new_vert == None {
                     new_vert = Some(Vertex {
                         pos: Vec2::new(pixel_pos.x, -pixel_pos.y),
                         uv,
@@ -171,7 +171,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     .image
                     .get_pixel(pixel_pos.x as u32, pixel_pos.y as u32)
                     .0[3];
-                if pixel_alpha == 255 && !shared.ui.editing_mesh {
+                if pixel_alpha == 255 && !shared.ui.showing_mesh {
                     hover_bone_id = temp_bones[b].id;
                     break;
                 }
@@ -233,7 +233,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
 
-        if shared.ui.editing_mesh && shared.selected_bone().unwrap().id == bone.id {
+        if shared.ui.showing_mesh && shared.selected_bone().unwrap().id == bone.id {
             continue;
         }
 
@@ -294,7 +294,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    if shared.ui.editing_mesh {
+    if shared.ui.showing_mesh {
         let bone = temp_bones
             .iter_mut()
             .find(|bone| bone.id == shared.selected_bone().unwrap().id)
@@ -402,7 +402,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             || (bone.ik_disabled || shared.armature.bone_eff(bone.id) == JointEffector::None);
     }
 
-    if shared.ui.editing_mesh || !ik_disabled {
+    if shared.ui.showing_mesh || !ik_disabled {
         return;
     }
 

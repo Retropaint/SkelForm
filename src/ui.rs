@@ -889,7 +889,7 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
                         })
                     };
                 }
-                let ik_disabled = !shared.ui.editing_mesh && ik_disabled;
+                let ik_disabled = !shared.ui.showing_mesh && ik_disabled;
                 let rot = ik_disabled || is_end;
                 edit_mode_button!(&shared.loc("move"), EditMode::Move, ik_disabled);
                 edit_mode_button!(&shared.loc("rotate"), EditMode::Rotate, rot);

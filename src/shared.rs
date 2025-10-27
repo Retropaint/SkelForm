@@ -497,7 +497,7 @@ pub struct Ui {
 
     pub selected_bone_idx: usize,
     pub selected_bone_ids: Vec<i32>,
-    pub editing_mesh: bool,
+    pub showing_mesh: bool,
 
     pub rename_id: String,
     pub original_name: String,
@@ -611,7 +611,7 @@ impl Ui {
         self.selected_bone_idx = usize::MAX;
         self.selected_bone_ids = vec![];
         self.anim.selected_frame = -1;
-        self.editing_mesh = false;
+        self.showing_mesh = false;
         self.anim.selected = usize::MAX;
     }
 

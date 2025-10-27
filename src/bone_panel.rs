@@ -545,7 +545,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         .loc("bone_panel.mesh_deformation.finish_edit")
         .clone();
     let mut mesh_label = str_edit;
-    if shared.ui.editing_mesh {
+    if shared.ui.showing_mesh {
         mesh_label = str_finish_edit;
     }
 
@@ -583,7 +583,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             }
 
             if ui.skf_button(&mesh_label).clicked() {
-                shared.ui.editing_mesh = !shared.ui.editing_mesh;
+                shared.ui.showing_mesh = !shared.ui.showing_mesh;
             }
         });
     });
