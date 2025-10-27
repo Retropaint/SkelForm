@@ -77,6 +77,7 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.hovering_tex = -1;
     shared.ui.selected_style = -1;
     shared.ui.selected_tex_set_id = -1;
+    shared.ui.selected_weights = -1;
     shared.screenshot_res = Vec2::new(128., 128.);
 
     #[cfg(feature = "debug")]

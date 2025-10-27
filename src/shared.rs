@@ -548,6 +548,8 @@ pub struct Ui {
     pub selected_style: i32,
 
     pub styles_folded_bones: HashMap<i32, bool>,
+
+    pub selected_weights: i32,
 }
 
 impl Ui {

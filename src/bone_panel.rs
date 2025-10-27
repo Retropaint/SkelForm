@@ -592,9 +592,26 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         ui.label("Weights:");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             egui::ComboBox::new("bone_weights", "")
-                .selected_text("")
-                .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
-                .show_ui(ui, |ui| {});
+                .selected_text(shared.ui.selected_weights.to_string())
+                .show_ui(ui, |ui| {
+                    let mut selected_value: i32 = -1;
+                    for w in 0..bone.weights.len() {
+                        ui.selectable_value(&mut selected_value, w as i32, w.to_string());
+                    }
+                    ui.selectable_value(&mut selected_value, -2, "[New]");
+
+                    if selected_value == -2 {
+                        shared
+                            .selected_bone_mut()
+                            .unwrap()
+                            .weights
+                            .push(BoneWeight::default());
+                        shared.ui.selected_weights =
+                            shared.selected_bone().unwrap().weights.len() as i32 - 1;
+                    } else if selected_value != -1 {
+                        shared.ui.selected_weights = selected_value;
+                    }
+                });
         });
     });
 
