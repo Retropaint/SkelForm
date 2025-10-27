@@ -213,6 +213,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     .iter()
                     .position(|bone| bone.id == click_on_hover_id)
                     .unwrap();
+                shared.ui.selected_bone_ids = vec![];
 
                 // unfold all parents that lead to this bone, so it's visible in the hierarchy
                 let parents = shared.armature.get_all_parents(click_on_hover_id);
@@ -1117,7 +1118,7 @@ pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
     (verts, indices)
 }
 
-pub fn polygonate(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
+pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     let gap = 25.;
     let padding = 50.;
     let mut poi: Vec<Vec2> = vec![];
