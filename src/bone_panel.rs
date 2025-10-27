@@ -621,7 +621,8 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 println!("test");
             }
             if ui.skf_button("Set Verts").clicked() {
-                println!("test");
+                shared.ui.showing_mesh = true;
+                shared.ui.setting_weight_verts = true;
             }
         });
     });

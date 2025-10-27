@@ -231,6 +231,7 @@ impl VertexColor {
     }
 
     pub const GREEN: VertexColor = VertexColor::new(0., 1., 0., 1.);
+    pub const YELLOW: VertexColor = VertexColor::new(1., 1., 0., 1.);
     pub const WHITE: VertexColor = VertexColor::new(1., 1., 1., 1.);
 }
 
@@ -498,6 +499,7 @@ pub struct Ui {
     pub selected_bone_idx: usize,
     pub selected_bone_ids: Vec<i32>,
     pub showing_mesh: bool,
+    pub setting_weight_verts: bool,
 
     pub rename_id: String,
     pub original_name: String,
@@ -913,9 +915,9 @@ pub struct Bone {
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 pub struct BoneWeight {
     #[serde(default)]
-    verts: Vec<i32>,
+    pub verts: Vec<i32>,
     #[serde(default)]
-    bone_id: Vec<i32>,
+    pub bone_id: Vec<i32>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]

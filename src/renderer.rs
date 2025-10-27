@@ -158,7 +158,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
                 );
 
-                if shared.input.left_clicked && shared.ui.showing_mesh && new_vert == None {
+                if !shared.ui.setting_weight_verts
+                    && shared.input.left_clicked
+                    && shared.ui.showing_mesh
+                    && new_vert == None
+                {
                     new_vert = Some(Vertex {
                         pos: Vec2::new(pixel_pos.x, -pixel_pos.y),
                         uv,
@@ -845,7 +849,16 @@ pub fn bone_vertices(
     }
 
     for wv in 0..world_verts.len() {
-        let point = point!(wv, VertexColor::GREEN);
+        let idx = shared.ui.selected_weights as usize;
+        let col = if shared.selected_bone().unwrap().weights[idx]
+            .verts
+            .contains(&(wv as i32))
+        {
+            VertexColor::YELLOW
+        } else {
+            VertexColor::GREEN
+        };
+        let point = point!(wv, col);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
 
         if shared.input.on_ui || !mouse_on_it {
@@ -865,14 +878,22 @@ pub fn bone_vertices(
                 break;
             }
         }
-        if shared.input.left_pressed {
-            shared.undo_actions.push(Action {
-                action: ActionType::Bone,
-                bones: vec![shared.selected_bone().unwrap().clone()],
-                id: shared.selected_bone().unwrap().id,
-                ..Default::default()
-            });
-            shared.dragging_verts = vec![wv];
+        if !shared.ui.setting_weight_verts {
+            if shared.input.left_pressed {
+                shared.undo_actions.push(Action {
+                    action: ActionType::Bone,
+                    bones: vec![shared.selected_bone().unwrap().clone()],
+                    id: shared.selected_bone().unwrap().id,
+                    ..Default::default()
+                });
+                shared.dragging_verts = vec![wv];
+                break;
+            }
+        } else if shared.input.left_clicked {
+            let idx = shared.ui.selected_weights as usize;
+            shared.selected_bone_mut().unwrap().weights[idx]
+                .verts
+                .push(wv as i32);
             break;
         }
     }
