@@ -937,8 +937,6 @@ pub struct EditorBone {
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct IkFamily {
     #[serde(default)]
-    pub name: String,
-    #[serde(default)]
     pub constraint: JointConstraint,
     #[serde(default)]
     pub target_id: i32,
@@ -2050,13 +2048,16 @@ impl Shared {
     /// ex: `settings_modal.user_interface.general` -> "General"
     ///
     /// All localized text *must* be from this method, as edge cases and fallbacks must be handled as well.
-    pub fn loc(&self, str: &str) -> &String {
+    pub fn loc(&self, str: &str) -> String {
         let result = self.loc_strings.get(str);
         if let Some(string) = result {
-            return &string;
+            let str = string
+                .clone()
+                .replace("user-docs", "https://skelform.org/user-docs");
+            return str;
         }
 
-        &self.loc_strings[""]
+        self.loc_strings[""].to_string()
     }
     pub fn init_empty_loc(&mut self) {
         self.loc_strings.insert("".to_string(), "".to_string());

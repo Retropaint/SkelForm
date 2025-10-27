@@ -395,7 +395,7 @@ pub fn read_psd(
         target_bone.pos = pos;
     }
 
-    let str_psd = shared.loc("psd_imported");
+    let str_psd = &shared.loc("psd_imported");
     shared.ui.open_modal(str_psd.to_string(), false);
     shared.ui.set_state(UiState::StartupWindow, false);
 }
@@ -522,7 +522,7 @@ pub fn read_import(
             read_psd(file, shared, queue, device, bgl, context)
         }
         _ => {
-            let text = shared.loc("import_unrecognized");
+            let text = &shared.loc("import_unrecognized");
             shared.ui.open_modal(text.to_string(), false);
         }
     };

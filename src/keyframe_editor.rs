@@ -80,7 +80,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
         let str_anim = shared.loc("keyframe_editor.heading");
         ui.heading(str_anim);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
-            let str_new = shared.loc("new");
+            let str_new = &&shared.loc("new");
             let button = ui.skf_button(str_new);
 
             if !button.clicked() {
@@ -111,7 +111,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
 
                     // show input field if renaming
                     if shared.ui.rename_id == "animation ".to_string() + &i.to_string() {
-                        let str_new_anim = shared.loc("keyframe_editor.new_animation");
+                        let str_new_anim = &shared.loc("keyframe_editor.new_animation");
                         let (edited, value, _) = ui.text_input(
                             "animation ".to_string() + &i.to_string(),
                             shared,
@@ -216,7 +216,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                     shared.ui.context_menu.close();
                                 };
                                 if ui.clickable_label("Delete").clicked() {
-                                    let str_del = shared.loc("polar.delete_anim").clone();
+                                    let str_del = &shared.loc("polar.delete_anim").clone();
                                     shared.ui.open_polar_modal(PolarId::DeleteAnim, &str_del);
 
                                     // only hide the menu, as anim id is still needed for modal
@@ -361,7 +361,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
             ui.horizontal(|ui| {
                 ui.add_space(30.);
                 let label = ui.label(
-                    shared.loc(&("keyframe_editor.elements.".to_owned() + &kf.element.to_string())),
+                    &shared.loc(&("keyframe_editor.elements.".to_owned() + &kf.element.to_string())),
                 );
                 bone_tops.tops.push(BoneTop {
                     id: kf.bone_id,
@@ -545,9 +545,9 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
                 let play_str = if shared.selected_animation().unwrap().elapsed != None {
-                    shared.loc("keyframe_editor.pause")
+                    &shared.loc("keyframe_editor.pause")
                 } else {
-                    shared.loc("keyframe_editor.play")
+                    &shared.loc("keyframe_editor.play")
                 };
 
                 let play_text = egui::RichText::new(play_str).color(shared.config.colors.text);
@@ -587,13 +587,13 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
             ui.add_space(20.);
 
-            ui.label(shared.loc("keyframe_editor.frame"));
+            ui.label(&shared.loc("keyframe_editor.frame"));
             ui.add(egui::DragValue::new(&mut shared.ui.anim.selected_frame).speed(0.1));
 
             let fps = shared.selected_animation().unwrap().fps;
 
-            ui.label(shared.loc("keyframe_editor.fps"))
-                .on_hover_text(shared.loc("keyframe_editor.frames_per_second"));
+            ui.label(&shared.loc("keyframe_editor.fps"))
+                .on_hover_text(&shared.loc("keyframe_editor.frames_per_second"));
             let (edited, value, _) =
                 ui.float_input("fps".to_string(), shared, fps as f32, 1., None);
             if edited {
@@ -625,7 +625,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             }
             shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
 
-            if ui.skf_button(shared.loc("keyframe_editor.copy")).clicked() {
+            if ui.skf_button(&shared.loc("keyframe_editor.copy")).clicked() {
                 macro_rules! keyframes {
                     () => {
                         shared.selected_animation().unwrap().keyframes
@@ -638,7 +638,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 }
             }
 
-            if ui.skf_button(shared.loc("keyframe_editor.paste")).clicked() {
+            if ui.skf_button(&shared.loc("keyframe_editor.paste")).clicked() {
                 add_anim_action(shared);
 
                 let frame = shared.ui.anim.selected_frame;

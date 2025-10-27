@@ -480,7 +480,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     };
                 }
 
-                let str_settings = shared.loc("top_bar.settings");
+                let str_settings = &shared.loc("top_bar.settings");
                 if ui
                     .menu_button(title!(str_settings), |ui| ui.close())
                     .response
@@ -489,20 +489,20 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     shared.ui.set_state(UiState::SettingsModal, true);
                 }
 
-                ui.menu_button(title!(shared.loc("top_bar.help.heading")), |ui| {
+                ui.menu_button(title!(&shared.loc("top_bar.help.heading")), |ui| {
                     ui.set_width(90.);
-                    //let str_user_docs = shared.loc("top_bar.help.user_docs");
-                    let str_user_docs = shared.loc("top_bar.help.user_docs");
+                    //let str_user_docs = &shared.loc("top_bar.help.user_docs");
+                    let str_user_docs = &shared.loc("top_bar.help.user_docs");
                     if top_bar_button(ui, str_user_docs, None, &mut offset, shared).clicked() {
                         utils::open_docs(true, "");
                     }
-                    let str_dev_docs = shared.loc("top_bar.help.dev_docs");
+                    let str_dev_docs = &shared.loc("top_bar.help.dev_docs");
                     if top_bar_button(ui, str_dev_docs, None, &mut offset, shared).clicked() {
                         utils::open_docs(false, "");
                     }
                     #[cfg(not(target_arch = "wasm32"))]
                     {
-                        let str_binary = shared.loc("top_bar.help.binary_folder");
+                        let str_binary = &shared.loc("top_bar.help.binary_folder");
                         if top_bar_button(ui, str_binary, None, &mut offset, shared).clicked() {
                             match open::that(utils::bin_path()) {
                                 Err(_) => {}
@@ -513,7 +513,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
 
                     #[cfg(not(target_arch = "wasm32"))]
                     {
-                        let str_config = shared.loc("top_bar.help.config_folder");
+                        let str_config = &shared.loc("top_bar.help.config_folder");
                         if top_bar_button(ui, str_config, None, &mut offset, shared).clicked() {
                             match open::that(config_path().parent().unwrap()) {
                                 Err(_) => {}
@@ -726,7 +726,7 @@ pub fn create_ui_texture(
 fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
     let title =
-        egui::RichText::new(shared.loc("top_bar.file.heading")).color(shared.config.colors.text);
+        egui::RichText::new(&shared.loc("top_bar.file.heading")).color(shared.config.colors.text);
     ui.menu_button(title, |ui| {
         ui.set_width(125.);
 
@@ -736,7 +736,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             };
         }
 
-        let str_open = shared.loc("top_bar.file.open");
+        let str_open = &shared.loc("top_bar.file.open");
         if top_bar_button!(str_open, Some(&shared.config.keys.open)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog(&shared.file_name, &shared.import_contents);
@@ -744,7 +744,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             toggleElement(true, "file-dialog".to_string());
             ui.close();
         }
-        let str_save = shared.loc("top_bar.file.save");
+        let str_save = &shared.loc("top_bar.file.save");
         if top_bar_button!(str_save, Some(&shared.config.keys.save)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog(&shared.file_name, &shared.saving);
@@ -752,7 +752,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             utils::save_web(&shared);
             ui.close();
         }
-        let str_startup = shared.loc("top_bar.file.startup");
+        let str_startup = &shared.loc("top_bar.file.startup");
         if top_bar_button!(str_startup, None).clicked() {
             shared.ui.set_state(UiState::StartupWindow, true);
             ui.close();
@@ -815,7 +815,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
 fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
 
-    let str_view = shared.loc("top_bar.view.heading");
+    let str_view = &shared.loc("top_bar.view.heading");
     let title = egui::RichText::new(str_view).color(shared.config.colors.text);
     ui.menu_button(title, |ui| {
         macro_rules! tpb {
@@ -825,11 +825,11 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
         }
 
         ui.set_width(125.);
-        let str_zoom_in = shared.loc("top_bar.view.zoom_in");
+        let str_zoom_in = &shared.loc("top_bar.view.zoom_in");
         if tpb!(str_zoom_in, Some(&shared.config.keys.zoom_in_camera)).clicked() {
             set_zoom(shared.camera.zoom - 10., shared);
         }
-        let str_zoom_out = shared.loc("top_bar.view.zoom_out");
+        let str_zoom_out = &shared.loc("top_bar.view.zoom_out");
         if tpb!(str_zoom_out, Some(&shared.config.keys.zoom_out_camera)).clicked() {
             set_zoom(shared.camera.zoom + 10., shared);
         }
@@ -838,17 +838,17 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
 
 fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
     let mut offset = 0.;
-    let str_edit = shared.loc("top_bar.edit.heading");
+    let str_edit = &shared.loc("top_bar.edit.heading");
     let title = egui::RichText::new(str_edit).color(shared.config.colors.text);
     ui.menu_button(title, |ui| {
         ui.set_width(90.);
         let key_undo = Some(&shared.config.keys.undo);
-        let str_undo = shared.loc("top_bar.edit.undo");
+        let str_undo = &shared.loc("top_bar.edit.undo");
         if top_bar_button(ui, str_undo, key_undo, &mut offset, shared).clicked() {
             utils::undo_redo(true, shared);
             ui.close();
         }
-        let str_redo = shared.loc("top_bar.edit.redo");
+        let str_redo = &shared.loc("top_bar.edit.redo");
         let key_redo = Some(&shared.config.keys.redo);
         if top_bar_button(ui, str_redo, key_redo, &mut offset, shared).clicked() {
             utils::undo_redo(false, shared);
@@ -890,9 +890,9 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
                 }
                 let ik_disabled = !shared.ui.editing_mesh && ik_disabled;
                 let rot = ik_disabled || is_end;
-                edit_mode_button!(shared.loc("move"), EditMode::Move, ik_disabled);
-                edit_mode_button!(shared.loc("rotate"), EditMode::Rotate, rot);
-                edit_mode_button!(shared.loc("scale"), EditMode::Scale, ik_disabled);
+                edit_mode_button!(&shared.loc("move"), EditMode::Move, ik_disabled);
+                edit_mode_button!(&shared.loc("rotate"), EditMode::Rotate, rot);
+                edit_mode_button!(&shared.loc("scale"), EditMode::Scale, ik_disabled);
             });
         });
 }
@@ -909,14 +909,14 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
         ))
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
-                let str_armature = shared.loc("armature_panel.heading");
+                let str_armature = &shared.loc("armature_panel.heading");
                 if selection_button(str_armature, !shared.ui.anim.open, ui).clicked() {
                     shared.ui.anim.open = false;
                     for anim in &mut shared.armature.animations {
                         anim.elapsed = None;
                     }
                 }
-                let str_animation = shared.loc("keyframe_editor.heading");
+                let str_animation = &shared.loc("keyframe_editor.heading");
                 if selection_button(str_animation, shared.ui.anim.open, ui).clicked() {
                     shared.ui.anim.open = true;
                 }
@@ -950,7 +950,7 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
             macro_rules! input {
                 ($element:expr, $float:expr, $id:expr, $label:expr, $tip:expr) => {
                     ui.horizontal(|ui| {
-                        ui.label($label).on_hover_text(shared.loc($tip));
+                        ui.label($label).on_hover_text(&shared.loc($tip));
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             (_, $float, _) =
                                 ui.float_input($id.to_string(), shared, $float.round(), 1., None);
@@ -1029,10 +1029,12 @@ pub fn default_styling(context: &Context, shared: &Shared) {
     visuals.selection.bg_fill = colors.light_accent.into();
     visuals.selection.stroke = egui::Stroke::new(1., colors.text);
 
-    visuals.override_text_color = Some(colors.text.into());
-    let mut col = colors.text;
-    col -= Color::new(100, 100, 100, 0);
-    visuals.weak_text_color = Some(col.into());
+    //visuals.override_text_color = Some(colors.text.into());
+    //let mut col = colors.text;
+    //col -= Color::new(100, 100, 100, 0);
+    //visuals.weak_text_color = Some(col.into());
+
+    visuals.hyperlink_color = colors.link.into();
 
     context.set_visuals(visuals);
 }

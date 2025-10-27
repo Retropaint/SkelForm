@@ -48,13 +48,13 @@ fn startup_content(
     ui.vertical(|ui| {
         ui.set_width(133.);
         ui.add_space(10.);
-        if startup_leftside_button("+", shared.loc("new"), ui, shared, None, None).clicked() {
+        if startup_leftside_button("+", &shared.loc("new"), ui, shared, None, None).clicked() {
             shared.armature = Armature::default();
             shared.ui.set_state(UiState::StartupWindow, false);
         }
         ui.add_space(padding);
         let import_pos = Some(egui::Vec2::new(-5., 2.5));
-        let str_import = shared.loc("startup.import");
+        let str_import = &shared.loc("startup.import");
         if startup_leftside_button("🗋", str_import, ui, shared, import_pos, None).clicked() {
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
@@ -66,7 +66,7 @@ fn startup_content(
         {
             ui.add_space(padding);
             let samples_pos = Some(egui::Vec2::new(-5., 2.5));
-            let str_samples = shared.loc("startup.samples");
+            let str_samples = &shared.loc("startup.samples");
             if startup_leftside_button("🗊", str_samples, ui, shared, samples_pos, None).clicked()
             {
                 shared.ui.showing_samples = !shared.ui.showing_samples;
@@ -132,7 +132,7 @@ fn startup_content(
                     ui.set_width(available_width);
                     if shared.recent_file_paths.len() == 0 {
                         ui.add_space(10.);
-                        let msg = shared.loc("startup.empty_recent_files");
+                        let msg = &shared.loc("startup.empty_recent_files");
                         let text = egui::RichText::new(msg).size(14.);
                         ui.label(text);
                         return;
@@ -163,7 +163,7 @@ fn startup_content(
                 #[cfg(target_arch = "wasm32")]
                 ui.vertical(|ui| {
                     let available_width = ui.available_width();
-                    let msg = shared.loc("startup.web_note");
+                    let msg = &shared.loc("startup.web_note");
                     let text = egui::RichText::new(msg).size(14.);
                     ui.label(text);
                     ui.add_space(20.);
@@ -207,7 +207,7 @@ fn startup_content(
 
                     for item in &shared.startup.resources {
                         let heading_str =
-                            shared.loc(&("startup.resources.".to_owned() + &item.code));
+                            &shared.loc(&("startup.resources.".to_owned() + &item.code));
                         let heading = ui.clickable_label(
                             egui::RichText::new(heading_str)
                                 .color(link_color)
@@ -237,7 +237,7 @@ fn startup_content(
                                 );
                                 ui.add_space(sub_padding);
                                 let sub_str =
-                                    shared.loc(&("startup.resources.".to_owned() + &sub.code));
+                                    &shared.loc(&("startup.resources.".to_owned() + &sub.code));
 
                                 let sub_text = ui.clickable_label(
                                     egui::RichText::new(sub_str)
@@ -425,7 +425,7 @@ pub fn skf_file_button(
                     ui.painter().text(
                         heading_pos,
                         egui::Align2::LEFT_BOTTOM,
-                        shared.loc("startup.autosave_note"),
+                        &shared.loc("startup.autosave_note"),
                         egui::FontId::new(11., egui::FontFamily::Proportional),
                         col.into(),
                     );
@@ -466,7 +466,7 @@ pub fn skf_file_button(
 
         if file_button_icon("🗑", "Delete file", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
             shared.ui.selected_path = path.clone();
-            let str_del = shared.loc("polar.delete_file").replace("$", &filename);
+            let str_del = &shared.loc("polar.delete_file").replace("$", &filename);
             shared.ui.open_polar_modal(PolarId::DeleteFile, &str_del);
         }
         pos += egui::Vec2::new(-21., 0.);

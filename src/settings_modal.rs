@@ -127,10 +127,10 @@ fn settings_button(
 }
 
 fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
-    let str_general = shared.loc("settings_modal.user_interface.general");
+    let str_general = &shared.loc("settings_modal.user_interface.general");
     ui.heading(str_general);
     ui.horizontal(|ui| {
-        let str_ui_scale = shared.loc("settings_modal.user_interface.ui_scale");
+        let str_ui_scale = &shared.loc("settings_modal.user_interface.ui_scale");
         ui.label(str_ui_scale);
         let (edited, value, _) = ui.float_input(
             "ui_scale".to_string(),
@@ -151,10 +151,10 @@ fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
 fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
-        let str_heading = shared.loc("settings_modal.rendering.heading");
+        let str_heading = &shared.loc("settings_modal.rendering.heading");
         ui.heading(str_heading);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_default = shared.loc("settings_modal.default");
+            let str_default = &shared.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
                 shared.config.colors.background = crate::Config::default().colors.background;
                 shared.config.colors.gridline = crate::Config::default().colors.gridline;
@@ -165,7 +165,7 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     });
 
     ui.horizontal(|ui| {
-        let str_gridline_gap = shared.loc("settings_modal.rendering.gridline_gap");
+        let str_gridline_gap = &shared.loc("settings_modal.rendering.gridline_gap");
         ui.label(str_gridline_gap);
         let (edited, value, _) = ui.float_input(
             "grid_gap".to_string(),
@@ -180,7 +180,7 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     });
 
     ui.horizontal(|ui| {
-        let str_gridline_gap = shared.loc("settings_modal.rendering.gridline_front");
+        let str_gridline_gap = &shared.loc("settings_modal.rendering.gridline_front");
         ui.label(str_gridline_gap);
         ui.checkbox(&mut shared.config.gridline_front, "".into_atoms());
     });
@@ -216,7 +216,7 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     #[cfg(not(target_arch = "wasm32"))]
     ui.horizontal(|ui| {
-        let str_autosave_freq = shared.loc("settings_modal.miscellaneous.autosave_frequency");
+        let str_autosave_freq = &shared.loc("settings_modal.miscellaneous.autosave_frequency");
         ui.label(str_autosave_freq);
         let (edited, value, _) = ui.float_input(
             "autosave_freq".to_string(),
@@ -230,17 +230,18 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         }
     });
     ui.horizontal(|ui| {
-        let str_exact_bone = shared.loc("settings_modal.miscellaneous.select_exact_bone");
-        let str_exact_bone_desc = shared.loc("settings_modal.miscellaneous.select_exact_bone_desc");
+        let str_exact_bone = &shared.loc("settings_modal.miscellaneous.select_exact_bone");
+        let str_exact_bone_desc =
+            &shared.loc("settings_modal.miscellaneous.select_exact_bone_desc");
         ui.label(&(str_exact_bone.to_owned() + crate::ICON_INFO + ":"))
             .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_exact_bone_desc);
         ui.checkbox(&mut shared.config.exact_bone_select, "".into_atoms());
     });
     ui.horizontal(|ui| {
-        let str_keep_tex_idx = shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx");
+        let str_keep_tex_idx = &shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx");
         let str_keep_tex_idx_desc =
-            shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx_desc");
+            &shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx_desc");
         ui.label(&(str_keep_tex_idx.to_owned() + crate::ICON_INFO + ":"))
             .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_keep_tex_idx_desc);
@@ -249,10 +250,10 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
     ui.add_space(20.);
 
-    let str_startup = shared.loc("top_bar.file.startup");
+    let str_startup = &shared.loc("top_bar.file.startup");
     ui.heading(str_startup);
     ui.horizontal(|ui| {
-        let str_skip_startup = shared.loc("settings_modal.miscellaneous.skip_startup_window");
+        let str_skip_startup = &shared.loc("settings_modal.miscellaneous.skip_startup_window");
         ui.label(str_skip_startup);
         ui.checkbox(&mut shared.config.skip_startup, "".into_atoms());
     });
@@ -261,7 +262,7 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         if shared.recent_file_paths.len() == 0 {
             ui.disable();
         }
-        let str_clear_recents = shared.loc("settings_modal.miscellaneous.clear_recent_files");
+        let str_clear_recents = &shared.loc("settings_modal.miscellaneous.clear_recent_files");
         if ui.skf_button(str_clear_recents).clicked() {
             shared.recent_file_paths = vec![];
             utils::save_to_recent_files(&vec![]);
@@ -270,14 +271,14 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
     ui.add_space(20.);
 
-    let str_startup = shared.loc("settings_modal.miscellaneous.beta.heading");
+    let str_startup = &shared.loc("settings_modal.miscellaneous.beta.heading");
     ui.heading(str_startup);
     let text =
-        egui::RichText::new(shared.loc("settings_modal.miscellaneous.beta.warning")).italics();
+        egui::RichText::new(&shared.loc("settings_modal.miscellaneous.beta.warning")).italics();
     ui.label(text);
     ui.add_space(5.);
     ui.horizontal(|ui| {
-        let str_skip_startup = shared.loc("settings_modal.miscellaneous.beta.mesh_deformation");
+        let str_skip_startup = &shared.loc("settings_modal.miscellaneous.beta.mesh_deformation");
         ui.label(str_skip_startup);
         ui.checkbox(&mut shared.config.meshdef, "".into_atoms());
     });
@@ -294,10 +295,10 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     }
 
     ui.horizontal(|ui| {
-        let str_colors = shared.loc("settings_modal.user_interface.colors_heading");
+        let str_colors = &shared.loc("settings_modal.user_interface.colors_heading");
         ui.heading(str_colors);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_default = shared.loc("settings_modal.default");
+            let str_default = &shared.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
                 shared.config.colors = crate::ColorConfig::default();
             }
@@ -350,10 +351,10 @@ fn color_row(title: String, color: &mut shared::Color, bg: shared::Color, ui: &m
 
 fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
-        let str_heading = shared.loc("settings_modal.keyboard.heading");
+        let str_heading = &shared.loc("settings_modal.keyboard.heading");
         ui.heading(str_heading);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_default = shared.loc("settings_modal.default");
+            let str_default = &shared.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
                 shared.config.keys = crate::KeyboardConfig::default();
             }

@@ -601,7 +601,7 @@ impl Renderer {
             return;
         }
         if *shared.saving.lock().unwrap() == Saving::CustomPath {
-            let str_saving = shared.loc("saving");
+            let str_saving = &shared.loc("saving");
             shared.ui.open_modal(str_saving.to_string(), true);
         }
         self.take_screenshot(shared);

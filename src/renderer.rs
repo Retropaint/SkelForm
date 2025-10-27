@@ -854,7 +854,7 @@ pub fn bone_vertices(
         point!(wv, VertexColor::WHITE);
         if shared.input.right_clicked {
             if world_verts.len() <= 4 {
-                let str_vert_limit = shared.loc("vert_limit");
+                let str_vert_limit = &shared.loc("vert_limit");
                 shared.ui.open_modal(str_vert_limit.to_string(), false);
             } else {
                 let verts = &mut shared.selected_bone_mut().unwrap().vertices;

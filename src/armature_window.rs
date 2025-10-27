@@ -26,13 +26,13 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 shared.config.colors.gradient.into(),
             );
             ui.horizontal(|ui| {
-                ui.heading(shared.loc("armature_panel.heading"));
+                ui.heading(&shared.loc("armature_panel.heading"));
             });
 
             ui.separator();
 
             ui.horizontal(|ui| {
-                let button = ui.skf_button(shared.loc("armature_panel.new_bone_button"));
+                let button = ui.skf_button(&&shared.loc("armature_panel.new_bone_button"));
                 if button.clicked() {
                     let idx: usize;
 
@@ -53,7 +53,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     shared.ui.select_bone(idx);
 
                     shared.selected_bone_mut().unwrap().name =
-                        shared.loc("armature_panel.new_bone_name").to_string();
+                        shared.loc("armature_panel.new_bone_name");
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if shared.armature.bones.len() == 0 {
@@ -61,7 +61,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     }
                     let mut selected_style = -1;
                     let dropdown = egui::ComboBox::new("styles", "")
-                        .selected_text(shared.loc("armature_panel.styles"))
+                        .selected_text(&shared.loc("armature_panel.styles"))
                         .width(80.)
                         .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                         .show_ui(ui, |ui| {
@@ -95,7 +95,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                             }
                         })
                         .response
-                        .on_hover_text(shared.loc("armature_panel.styles_desc"));
+                        .on_hover_text(&shared.loc("armature_panel.styles_desc"));
 
                     if shared.ui.has_state(UiState::FocusStyleDropdown) {
                         dropdown.request_focus();
@@ -121,10 +121,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
             shared.ui.edit_bar_pos.x = ui.min_rect().right();
 
-            if shared.armature.bones.len() == 0 {
-                return;
-            }
-
             ui.add_space(3.);
 
             egui::ScrollArea::both()
@@ -133,7 +129,17 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     // hierarchy
                     let frame = Frame::default().inner_margin(5.);
                     ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-                        draw_hierarchy(shared, ui);
+                        ui.set_height(ui.available_height());
+                        ui.set_width(ui.available_width());
+                        if shared.armature.bones.len() != 0 {
+                            draw_hierarchy(shared, ui);
+                        } else {
+                            let mut cache = egui_commonmark::CommonMarkCache::default();
+                            let str = shared
+                                .loc("bone_panel.empty_armature")
+                                .replace("user-docs", "https://skelform.org/user-docs");
+                            egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
+                        }
                         ui.add_space(4.);
                     });
                 });
@@ -347,7 +353,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 if shared.ui.context_menu.is(ContextType::Bone, id) {
                     button.show_tooltip_ui(|ui| {
                         if ui.clickable_label("Delete").clicked() {
-                            let str_del = shared.loc("polar.delete_bone").clone();
+                            let str_del = &shared.loc("polar.delete_bone").clone();
                             shared.ui.open_polar_modal(PolarId::DeleteBone, &str_del);
                             shared.ui.context_menu.hide = true;
                         };

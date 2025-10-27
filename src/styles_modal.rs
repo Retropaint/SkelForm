@@ -68,11 +68,11 @@ pub fn draw_styles_list(
 
         ui.horizontal(|ui| {
             if shared.ui.hovering_tex != -1 {
-                ui.label(shared.loc("styles_modal.texture_preview"));
+                ui.label(&shared.loc("styles_modal.texture_preview"));
                 return;
             }
-            ui.label(shared.loc("styles_modal.sets"));
-            if !ui.skf_button(shared.loc("new")).clicked() {
+            ui.label(&shared.loc("styles_modal.sets"));
+            if !ui.skf_button(&shared.loc("new")).clicked() {
                 return;
             }
             let ids = shared.armature.styles.iter().map(|set| set.id).collect();
@@ -166,7 +166,7 @@ pub fn draw_styles_list(
                         }
                         shared.ui.selected_tex_set_id = set!().id;
                     }
-                    let str_style_active_desc = shared.loc("styles_modal.active_desc");
+                    let str_style_active_desc = &shared.loc("styles_modal.active_desc");
                     let visible_checkbox = ui
                         .allocate_rect(
                             egui::Rect::from_min_size(ui.cursor().left_top(), [20., 20.].into()),
@@ -235,10 +235,10 @@ pub fn draw_textures_list(
 
         ui.horizontal(|ui| {
             if shared.ui.hovering_set != -1 && !is_selected {
-                ui.label(shared.loc("styles_modal.style_preview"));
+                ui.label(&shared.loc("styles_modal.style_preview"));
                 return;
             }
-            ui.label(shared.loc("styles_modal.textures"));
+            ui.label(&shared.loc("styles_modal.textures"));
 
             // don't show import button if first created style is still being named
             let naming_first_style =
@@ -247,7 +247,7 @@ pub fn draw_textures_list(
             if naming_first_style
                 || set_idx == usize::MAX
                 || shared.ui.selected_tex_set_id == -1
-                || !ui.skf_button(shared.loc("styles_modal.import")).clicked()
+                || !ui.skf_button(&shared.loc("styles_modal.import")).clicked()
             {
                 return;
             }
@@ -309,7 +309,7 @@ pub fn draw_textures_list(
                         .len()
                         == 0;
                     if is_empty {
-                        let str_empty = shared.loc("styles_modal.style_preview_empty");
+                        let str_empty = &shared.loc("styles_modal.style_preview_empty");
                         ui.label(str_empty);
                         return;
                     }
@@ -343,8 +343,8 @@ pub fn draw_textures_list(
 fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, height: f32) {
     ui.vertical(|ui| {
         ui.horizontal(|ui| {
-            let str_heading = shared.loc("styles_modal.assigned_bones");
-            let str_desc = shared.loc("styles_modal.assigned_bones_desc");
+            let str_heading = &shared.loc("styles_modal.assigned_bones");
+            let str_desc = &shared.loc("styles_modal.assigned_bones_desc");
             ui.label(str_heading.to_owned() + " " + ICON_INFO)
                 .on_hover_text(str_desc)
         });
@@ -581,14 +581,14 @@ pub fn draw_tex_preview(shared: &Shared, ui: &mut egui::Ui) {
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         let mut name = egui::text::LayoutJob::default();
         ui::job_text(
-            shared.loc("styles_modal.img_name"),
+            &shared.loc("styles_modal.img_name"),
             Some(egui::Color32::WHITE),
             &mut name,
         );
         ui::job_text(&tex.name, None, &mut name);
         let mut size = egui::text::LayoutJob::default();
         ui::job_text(
-            shared.loc("styles_modal.img_size"),
+            &shared.loc("styles_modal.img_size"),
             Some(egui::Color32::WHITE),
             &mut size,
         );
@@ -634,7 +634,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         idx += 1;
         let name = set!().textures[i].name.clone();
 
-        let str_desc = shared.loc("styles_modal.texture_desc").clone();
+        let str_desc = &shared.loc("styles_modal.texture_desc").clone();
 
         let mut col = shared.config.colors.dark_accent;
         if i == shared.ui.hovering_tex as usize {
@@ -671,7 +671,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                         shared.ui.context_menu.close();
                     };
                     if ui.clickable_label("Delete").clicked() {
-                        let str_del = shared.loc("polar.delete_tex").clone();
+                        let str_del = &shared.loc("polar.delete_tex").clone();
                         shared.ui.open_polar_modal(PolarId::DeleteTex, &str_del);
 
                         // only hide the menu, as tex id is still needed for modal
