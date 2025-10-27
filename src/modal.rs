@@ -1,4 +1,6 @@
-use crate::{armature_window, ui::EguiUi, Action, ActionType, Config, PolarId, Shared, UiState};
+use crate::{
+    armature_window, ui::EguiUi, utils, Action, ActionType, Config, PolarId, Shared, UiState,
+};
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     ctx: &egui::Context,
@@ -130,7 +132,9 @@ pub fn modal(shared: &mut Shared, ctx: &egui::Context) {
         ctx,
         &shared.config,
         |ui| {
-            ui.label(headline);
+            let mut cache = egui_commonmark::CommonMarkCache::default();
+            let str = utils::markdown(headline, shared.local_doc_url.to_string());
+            egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
         },
         |ui| {
             if shared.ui.has_state(UiState::ForcedModal) || !ui.button("OK").clicked() {

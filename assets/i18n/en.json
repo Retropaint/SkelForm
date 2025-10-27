@@ -1,5 +1,5 @@
 {
-  "psd_imported": "PSD imported!\n\nIf the armature is incorrect, please check the PSD Rigging section in the user documentation.",
+  "psd_imported": "PSD imported!\n\nIf the armature is incorrect, please check out the [PSD Rigging](user-docs/psd.html) section in the user documentation.",
   "move": "Move",
   "rotate": "Rotate",
   "scale": "Scale",
