@@ -576,10 +576,8 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 shared.selected_bone_mut().unwrap().indices = indices;
             }
 
-            // disbaled: polygonation not great yet
-            //
-            if ui.skf_button("Generate").clicked() {
-                let (verts, indices) = renderer::polygonate(
+            if ui.skf_button("Trace").clicked() {
+                let (verts, indices) = renderer::trace_mesh(
                     &shared.armature.get_current_set(bone.id).unwrap().textures
                         [bone.tex_idx as usize]
                         .image,
