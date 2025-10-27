@@ -406,6 +406,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
             && modal!(UiState::PolarModal)
             && modal!(UiState::ForcedModal)
             && modal!(UiState::SettingsModal)
+            && !shared.ui.setting_ik_target
         {
             shared.ui.unselect_everything();
         }
