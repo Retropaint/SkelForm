@@ -931,6 +931,16 @@ pub struct BoneWeight {
     pub vert_ids: Vec<i32>,
     #[serde(default = "default_neg_one")]
     pub bone_id: i32,
+
+    // modifications to apply to all vertices of this weight.
+    // note that vertices themselves are immutable, and these mods only apply
+    // during construction.
+    #[serde(default)]
+    pub pos: Vec2,
+    #[serde(default)]
+    pub rot: Vec2,
+    #[serde(default)]
+    pub scale: Vec2,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]

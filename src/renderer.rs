@@ -119,6 +119,15 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         let tex_size = tex.unwrap().size;
         for v in 0..temp_bones[b].vertices.len() {
+            for weight in temp_bones[b].weights.clone() {
+                if weight
+                    .vert_ids
+                    .contains(&(temp_bones[b].vertices[v].id as i32))
+                {
+                    let rot = temp_bones[b].rot;
+                    temp_bones[b].vertices[v].pos -= utils::rotate(&weight.pos, -rot);
+                }
+            }
             let mut new_vert = con_vert!(
                 raw_to_world_vert,
                 temp_bones[b].vertices[v],
@@ -127,8 +136,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.camera.pos,
                 shared.camera.zoom
             );
-            new_vert.pos.x *= shared.aspect_ratio();
             new_vert.id = temp_bones[b].vertices[v].id;
+            new_vert.pos.x *= shared.aspect_ratio();
+
             temp_bones[b].world_verts.push(new_vert);
         }
 
@@ -184,7 +194,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             // QoL: select parent of textured bone if it's called 'Texture'
             // this is because most textured bones are meant to represent their parents
             let parents = shared.armature.get_all_parents(temp_bones[b].id);
-            if temp_bones[b].name.to_lowercase() == "texture" {
+            if parents.len() != 0 && temp_bones[b].name.to_lowercase() == "texture" {
                 click_on_hover_id = parents[0].id;
             }
         }
@@ -695,43 +705,40 @@ fn winding_sort(mut points: Vec<Vec2>) -> Vec<Vec2> {
 
 pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
     let mut anim_id = shared.ui.anim.selected;
+    let anim_frame = shared.ui.anim.selected_frame;
     if !shared.ui.is_animating() {
         anim_id = usize::MAX;
     }
 
     macro_rules! edit {
         ($bone:expr, $element:expr, $value:expr, $vert_id:expr) => {
-            shared.armature.edit_bone(
-                $bone.id,
-                &$element,
-                $value,
-                anim_id,
-                shared.ui.anim.selected_frame,
-                $vert_id,
-            );
+            shared
+                .armature
+                .edit_bone($bone.id, &$element, $value, anim_id, anim_frame, $vert_id);
         };
     }
 
-    let mut weight = None;
-    let mut main_bone = None;
-    for other_bone in &shared.armature.bones {
-        if let Some(w) = other_bone
-            .weights
-            .iter()
-            .find(|weight| weight.bone_id == bone.id)
-        {
-            weight = Some(w.clone());
-            main_bone = Some(other_bone.clone());
-            break;
-        }
-    }
+    let bone_center = raw_to_world_vert(
+        Vertex {
+            pos: bone.pos,
+            ..Default::default()
+        },
+        None,
+        &shared.camera.pos,
+        shared.camera.zoom,
+        Vec2::ZERO,
+        shared.aspect_ratio(),
+        1.,
+        Vec2::new(0.5, 0.5),
+    );
 
     match shared.edit_mode {
         shared::EditMode::Move => {
             let mut pos = bone.pos;
+            let mouse_vel = shared.mouse_vel() * shared.camera.zoom;
 
             // move position with mouse velocity
-            pos -= shared.mouse_vel() * shared.camera.zoom;
+            pos -= mouse_vel;
 
             // restore universal position by offsetting against parents' attributes
             if bone.parent_id != -1 {
@@ -744,47 +751,31 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             edit!(bone, AnimElement::PositionX, pos.x, -1);
             edit!(bone, AnimElement::PositionY, pos.y, -1);
 
+            let mut weight = None;
+            for other_bone in &mut shared.armature.bones {
+                let weights = &mut other_bone.weights;
+                if let Some(w) = weights.iter_mut().find(|weight| weight.bone_id == bone.id) {
+                    weight = Some(w);
+                    break;
+                }
+            }
+
             if weight == None {
                 return;
             }
 
-            for v in &weight.unwrap().vert_ids {
-                let mb = main_bone.as_ref().unwrap();
-                let verts = &mb.vertices;
-
-                let idx = verts.iter().position(|vert| vert.id == *v as u32).unwrap();
-                let vert = mb.vertices[idx];
-
-                let mut vel = shared.mouse_vel() * shared.camera.zoom;
-                let temp_bone = bones.iter().find(|tb| tb.id == mb.id).unwrap();
-                vel = utils::rotate(&vel, -temp_bone.rot);
-                let diff = vert.pos - vel;
-
-                edit!(mb, AnimElement::VertPositionX, diff.x, idx as i32);
-                edit!(mb, AnimElement::VertPositionY, diff.y, idx as i32);
-            }
+            weight.as_mut().unwrap().pos += mouse_vel;
+            println!("{}", weight.unwrap().pos);
         }
         shared::EditMode::Rotate => {
             shared.ui.set_state(UiState::Rotating, true);
 
-            let bone_center = raw_to_world_vert(
-                Vertex {
-                    pos: bone.pos,
-                    ..Default::default()
-                },
-                None,
-                &shared.camera.pos,
-                shared.camera.zoom,
-                Vec2::ZERO,
-                shared.aspect_ratio(),
-                1.,
-                Vec2::new(0.5, 0.5),
-            );
             let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
             mouse.x *= shared.aspect_ratio();
 
             let dir = mouse - bone_center.pos;
             let rot = dir.y.atan2(dir.x);
+
             edit!(bone, AnimElement::Rotation, rot, -1);
         }
         shared::EditMode::Scale => {
