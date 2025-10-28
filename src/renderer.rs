@@ -128,6 +128,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.camera.zoom
             );
             new_vert.pos.x *= shared.aspect_ratio();
+            new_vert.id = temp_bones[b].vertices[v].id;
             temp_bones[b].world_verts.push(new_vert);
         }
 
@@ -749,7 +750,14 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             }
 
             for v in &weight.unwrap().vert_ids {
-                let vert = &main_bone.as_ref().unwrap().vertices[*v as usize];
+                let idx = main_bone
+                    .as_ref()
+                    .unwrap()
+                    .vertices
+                    .iter()
+                    .position(|vert| vert.id == *v as u32)
+                    .unwrap();
+                let vert = main_bone.as_ref().unwrap().vertices[idx];
                 let mut vel = shared.mouse_vel() * shared.camera.zoom;
                 let temp_bone = bones
                     .iter()
@@ -760,13 +768,13 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
                     main_bone.as_ref().unwrap(),
                     AnimElement::VertPositionX,
                     vert.pos.x - vel.x,
-                    *v
+                    idx as i32
                 );
                 edit!(
                     main_bone.as_ref().unwrap(),
                     AnimElement::VertPositionY,
                     vert.pos.y - vel.y,
-                    *v
+                    idx as i32
                 );
             }
         }
@@ -893,7 +901,7 @@ pub fn bone_vertices(
         let col = if idx != -1
             && shared.selected_bone().unwrap().weights[idx as usize]
                 .vert_ids
-                .contains(&(wv as i32))
+                .contains(&(world_verts[wv].id as i32))
         {
             VertexColor::YELLOW
         } else {
@@ -932,11 +940,12 @@ pub fn bone_vertices(
             }
         } else if shared.input.left_clicked {
             let idx = shared.ui.selected_weights as usize;
+            let vert_id = world_verts[wv].id;
             let weight = &mut shared.selected_bone_mut().unwrap().weights[idx];
-            if let Some(idx) = weight.vert_ids.iter().position(|v| *v == wv as i32) {
+            if let Some(idx) = weight.vert_ids.iter().position(|v| *v == vert_id as i32) {
                 weight.vert_ids.remove(idx);
             } else {
-                weight.vert_ids.push(wv as i32);
+                weight.vert_ids.push(vert_id as i32);
             }
             break;
         }
@@ -1258,7 +1267,7 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
 
     // get last point that current one has light of sight on
     // if next point checked happens to be first and there's line of sight, tracing is over
-    let mut id = 0;
+    let mut id = 1;
     for p in curr_poi..poi.len() {
         if p == poi.len() - 1 {
             break;
@@ -1294,7 +1303,7 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     //}
 
     verts = sort_vertices(verts);
-    
+
     bone_panel::center_verts(&mut verts);
 
     (verts.clone(), triangulate(&verts))

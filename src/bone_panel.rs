@@ -591,6 +591,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 bone.vertices = verts;
                 bone.indices = indices;
                 bone.weights = vec![];
+                shared.ui.selected_weights = -1;
             }
 
             if ui.skf_button(&mesh_label).clicked() {
