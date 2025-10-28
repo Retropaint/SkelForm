@@ -898,7 +898,7 @@ pub fn bone_vertices(
 
     for wv in 0..world_verts.len() {
         let idx = shared.ui.selected_weights;
-        let col = if idx != -1
+        let mut col = if idx != -1
             && shared.selected_bone().unwrap().weights[idx as usize]
                 .vert_ids
                 .contains(&(world_verts[wv].id as i32))
@@ -907,6 +907,7 @@ pub fn bone_vertices(
         } else {
             VertexColor::GREEN
         };
+        col.a = 0.5;
         let point = point!(wv, col);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
 
@@ -997,6 +998,7 @@ pub fn vert_lines(
 
         let mut col = VertexColor::GREEN;
         col += VertexColor::new(-0.5, -0.5, -0.5, 0.);
+        col.a = 0.3;
 
         let mut v0_top = Vertex {
             pos: v0.pos + base,
@@ -1021,7 +1023,7 @@ pub fn vert_lines(
 
         let mut verts = vec![v0_top, v0_bot, v1_top, v1_bot];
         let indices = vec![0, 1, 2, 1, 2, 3];
-        let add_color = VertexColor::new(0.2, 0.2, 0.2, 0.);
+        let add_color = VertexColor::new(0.2, 0.2, 0.2, 1.);
 
         let mut is_hovering = false;
 
