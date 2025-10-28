@@ -326,6 +326,12 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
         }
 
         for w in 0..armature_copy.bones[b].weights.len() {
+            let bone_id = armature_copy.bones[b].weights[w].bone_id;
+            armature_copy.bones[b].weights[w].bone_id = armature_copy
+                .bones
+                .iter()
+                .position(|bone| bone.id == bone_id)
+                .unwrap() as i32;
             for v in 0..armature_copy.bones[b].weights[w].vert_ids.len() {
                 let vert_id = armature_copy.bones[b].weights[w].vert_ids[v];
                 armature_copy.bones[b].weights[w].vert_ids[v] = armature_copy.bones[b]
@@ -438,6 +444,12 @@ pub fn import<R: Read + std::io::Seek>(
         animations: root.animations,
         styles: root.styles,
     };
+
+    for bone in &mut shared.armature.bones {
+        for (i, vert) in bone.vertices.iter_mut().enumerate() {
+            vert.id = i as u32;
+        }
+    }
 
     // populate style ids
     for s in 0..shared.armature.styles.len() {
