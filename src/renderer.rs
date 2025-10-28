@@ -128,44 +128,40 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // check if cursor is on an opaque pixel of this bone's texture
         if hover_bone_id == -1 && !shared.input.left_down && !shared.input.on_ui {
-            let tb = temp_bones[b].clone();
-            for (_, chunk) in tb.indices.chunks_exact(3).enumerate() {
-                let bary = tri_point(
-                    &mouse_world_vert.pos,
-                    &tb.world_verts[chunk[0] as usize].pos,
-                    &tb.world_verts[chunk[1] as usize].pos,
-                    &tb.world_verts[chunk[2] as usize].pos,
-                );
+            let wv = &temp_bones[b].world_verts;
+            let tb = &temp_bones[b];
+            for (_, chunk) in temp_bones[b].indices.chunks_exact(3).enumerate() {
+                let c0 = chunk[0] as usize;
+                let c1 = chunk[1] as usize;
+                let c2 = chunk[2] as usize;
 
+                let bary = tri_point(&mouse_world_vert.pos, &wv[c0].pos, &wv[c1].pos, &wv[c2].pos);
                 if bary.0 == -1. {
                     continue;
                 }
 
-                let uv = temp_bones[b].world_verts[chunk[0] as usize].uv * bary.3
-                    + temp_bones[b].world_verts[chunk[1] as usize].uv * bary.1
-                    + temp_bones[b].world_verts[chunk[2] as usize].uv * bary.2;
-
-                let pixel_pos: Vec2;
+                let wv = &temp_bones[b].world_verts;
+                let uv = wv[c0].uv * bary.3 + wv[c1].uv * bary.1 + wv[c2].uv * bary.2;
 
                 let img = &tex.unwrap().image;
-                pixel_pos = Vec2::new(
+                let pos = Vec2::new(
                     (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
                 );
 
+                let vert_pos = tb.vertices[c0].pos * bary.3
+                    + tb.vertices[c1].pos * bary.1
+                    + tb.vertices[c2].pos * bary.2;
+
                 if shared.input.left_clicked && shared.ui.showing_mesh && new_vert == None {
                     new_vert = Some(Vertex {
-                        pos: Vec2::new(pixel_pos.x, -pixel_pos.y),
+                        pos: vert_pos,
                         uv,
                         ..Default::default()
                     });
                 }
 
-                let pixel_alpha = tex
-                    .unwrap()
-                    .image
-                    .get_pixel(pixel_pos.x as u32, pixel_pos.y as u32)
-                    .0[3];
+                let pixel_alpha = tex.unwrap().image.get_pixel(pos.x as u32, pos.y as u32).0[3];
                 if pixel_alpha == 255 && !shared.ui.showing_mesh {
                     hover_bone_id = temp_bones[b].id;
                     break;
@@ -326,7 +322,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             vert.id = bone_mut.vertices.len() as u32 + 1;
             bone_mut.vertices.push(vert);
             bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
-            println!("{:?}", bone_mut.vertices);
             bone_mut.indices = triangulate(&bone_mut.vertices);
         }
     }
