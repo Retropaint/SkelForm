@@ -936,11 +936,7 @@ pub struct BoneWeight {
     // note that vertices themselves are immutable, and these mods only apply
     // during construction.
     #[serde(default)]
-    pub pos: Vec2,
-    #[serde(default)]
-    pub rot: f32,
-    #[serde(default)]
-    pub scale: Vec2,
+    pub init_pos: Vec2,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
@@ -1326,14 +1322,9 @@ impl Armature {
 
             // restructure bone's verts to match texture
             if self.get_current_tex(b.id) != None {
-                (b.vertices, b.indices) = renderer::create_tex_rect(
-                    &self.get_current_set(b.id).unwrap().textures[b.tex_idx as usize].size,
-                );
-            }
-
-            for v in 0..b.vertices.len() {
-                b.vertices[v].pos.x += interpolate!(AnimElement::VertPositionX, 0., v as i32);
-                b.vertices[v].pos.y += interpolate!(AnimElement::VertPositionY, 0., v as i32);
+                //(b.vertices, b.indices) = renderer::create_tex_rect(
+                //    &self.get_current_set(b.id).unwrap().textures[b.tex_idx as usize].size,
+                //);
             }
         }
 

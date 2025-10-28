@@ -113,17 +113,18 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             let id = temp_bones[b].vertices[v].id as i32;
             for weight in temp_bones[b].weights.clone() {
                 if weight.vert_ids.contains(&id) {
-                    let rot = temp_bones[b].rot;
-                    temp_bones[b].vertices[v].pos -= utils::rotate(&weight.pos, -rot);
+                    let bones = &shared.armature.bones;
+                    let bone = bones.iter().find(|bone| bone.id == weight.bone_id).unwrap();
+                    temp_bones[b].vertices[v].pos +=
+                        utils::rotate(&(bone.pos - weight.init_pos), 0.);
                 }
             }
-            let tb = &temp_bones[b];
-            let camera = &shared.camera;
-            let mut new_vert = con_vert!(tb.vertices[v], tb, tex_size, camera.pos, camera.zoom);
-            new_vert.id = temp_bones[b].vertices[v].id;
-            new_vert.pos.x *= shared.aspect_ratio();
-
-            temp_bones[b].world_verts.push(new_vert);
+            let tb = temp_bones[b].clone();
+            let cam = &shared.camera;
+            let mut vert = con_vert!(tb.vertices[v], tb, tex_size, cam.pos, cam.zoom);
+            vert.id = temp_bones[b].vertices[v].id;
+            vert.pos.x *= shared.aspect_ratio();
+            temp_bones[b].world_verts.push(vert);
         }
 
         // check if cursor is on an opaque pixel of this bone's texture
@@ -717,13 +718,6 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
 
             edit!(bone, AnimElement::PositionX, pos.x, -1);
             edit!(bone, AnimElement::PositionY, pos.y, -1);
-
-            for other_bone in &mut shared.armature.bones {
-                let weights = &mut other_bone.weights;
-                if let Some(w) = weights.iter_mut().find(|weight| weight.bone_id == bone.id) {
-                    w.pos += mouse_vel;
-                }
-            }
         }
         shared::EditMode::Rotate => {
             shared.ui.set_state(UiState::Rotating, true);
@@ -735,13 +729,6 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             let rot = dir.y.atan2(dir.x);
 
             edit!(bone, AnimElement::Rotation, rot, -1);
-
-            for other_bone in &mut shared.armature.bones {
-                let weights = &mut other_bone.weights;
-                if let Some(w) = weights.iter_mut().find(|weight| weight.bone_id == bone.id) {
-                    w.rot = rot;
-                }
-            }
         }
         shared::EditMode::Scale => {
             shared.ui.set_state(UiState::Scaling, true);
@@ -1048,17 +1035,6 @@ fn draw_line(
 
 pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
     let mut vert = bone.vertices[vert_idx].clone();
-
-    // restore vertex's universal position by countering it's weight construction
-    let mut offset = Vec2::default();
-    for weight in bone.weights.clone() {
-        if weight.vert_ids.contains(&(vert.id as i32)) {
-            let rot = bone.rot;
-            offset = utils::rotate(&weight.pos, -rot);
-        }
-    }
-
-    vert.pos += offset;
     vert.pos -= utils::rotate(&(shared.mouse_vel() * shared.camera.zoom), -bone.rot);
 
     if !shared.ui.is_animating() {
