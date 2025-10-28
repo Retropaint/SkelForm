@@ -1101,6 +1101,16 @@ fn draw_line(
 pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
     let mut vert = bone.vertices[vert_idx].clone();
 
+    // restore vertex's universal position by countering it's weight construction
+    let mut offset = Vec2::default();
+    for weight in bone.weights.clone() {
+        if weight.vert_ids.contains(&(vert.id as i32)) {
+            let rot = bone.rot;
+            offset = utils::rotate(&weight.pos, -rot);
+        }
+    }
+
+    vert.pos += offset;
     vert.pos -= utils::rotate(&(shared.mouse_vel() * shared.camera.zoom), -bone.rot);
 
     if !shared.ui.is_animating() {
