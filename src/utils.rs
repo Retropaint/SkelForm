@@ -310,7 +310,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
     }
 
     for b in 0..armature_copy.bones.len() {
-        // if it is a regular rect, empty verts and indices
+        // if it's a regular rect, empty verts and indices
         if armature_copy.get_current_tex(armature_copy.bones[b].id) == None
             || !bone_meshes_edited(
                 armature_copy
@@ -322,6 +322,23 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
         {
             armature_copy.bones[b].vertices = vec![];
             armature_copy.bones[b].indices = vec![];
+            continue;
+        }
+
+        for w in 0..armature_copy.bones[b].weights.len() {
+            for v in 0..armature_copy.bones[b].weights[w].vert_ids.len() {
+                let vert_id = armature_copy.bones[b].weights[w].vert_ids[v];
+                armature_copy.bones[b].weights[w].vert_ids[v] = armature_copy.bones[b]
+                    .vertices
+                    .iter()
+                    .position(|vert| vert.id == vert_id as u32)
+                    .unwrap()
+                    as i32;
+            }
+        }
+
+        for (i, vert) in armature_copy.bones[b].vertices.iter_mut().enumerate() {
+            vert.id = i as u32;
         }
     }
 

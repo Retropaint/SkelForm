@@ -748,7 +748,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
                 return;
             }
 
-            for v in &weight.unwrap().verts {
+            for v in &weight.unwrap().vert_ids {
                 let vert = &main_bone.as_ref().unwrap().vertices[*v as usize];
                 let mut vel = shared.mouse_vel() * shared.camera.zoom;
                 let temp_bone = bones
@@ -892,7 +892,7 @@ pub fn bone_vertices(
         let idx = shared.ui.selected_weights;
         let col = if idx != -1
             && shared.selected_bone().unwrap().weights[idx as usize]
-                .verts
+                .vert_ids
                 .contains(&(wv as i32))
         {
             VertexColor::YELLOW
@@ -932,9 +932,12 @@ pub fn bone_vertices(
             }
         } else if shared.input.left_clicked {
             let idx = shared.ui.selected_weights as usize;
-            shared.selected_bone_mut().unwrap().weights[idx]
-                .verts
-                .push(wv as i32);
+            let weight = &mut shared.selected_bone_mut().unwrap().weights[idx];
+            if let Some(idx) = weight.vert_ids.iter().position(|v| *v == wv as i32) {
+                weight.vert_ids.remove(idx);
+            } else {
+                weight.vert_ids.push(wv as i32);
+            }
             break;
         }
     }

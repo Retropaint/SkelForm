@@ -203,6 +203,8 @@ pub struct Vertex {
     pub color: VertexColor,
     #[serde(skip)]
     pub add_color: VertexColor,
+    #[serde(skip)]
+    pub id: u32,
 }
 
 impl Default for Vertex {
@@ -212,6 +214,7 @@ impl Default for Vertex {
             uv: Vec2::default(),
             color: VertexColor::default(),
             add_color: VertexColor::new(0., 0., 0., 0.),
+            id: 0,
         }
     }
 }
@@ -919,7 +922,7 @@ pub struct Bone {
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 pub struct BoneWeight {
     #[serde(default)]
-    pub verts: Vec<i32>,
+    pub vert_ids: Vec<i32>,
     #[serde(default = "default_neg_one")]
     pub bone_id: i32,
 }
