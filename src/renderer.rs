@@ -1190,10 +1190,12 @@ pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
 
 pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     let gap = 25.;
-    let padding = 50.;
     let mut poi: Vec<Vec2> = vec![];
 
-    // create spaced-out points of interest
+    // used to create extra space across the image
+    let padding = 50.;
+
+    // place points across the image where it's own pixel is fully transparent
     let mut cursor = Vec2::default();
     while cursor.y < texture.height() as f32 + padding {
         let out_of_bounds = cursor.x > texture.width() as f32 || cursor.y > texture.height() as f32;
@@ -1207,8 +1209,8 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
         }
     }
 
-    // only keep points that are close to the image
-    // redundant points are determined if all 8 neighbouring coords have points (or is in bounds)
+    // remove points which have 8 neighbours, keeping only points
+    // that are closest to the image
     let poi_clone = poi.clone();
     poi.retain(|point| {
         let left = Vec2::new(point.x - gap, point.y);
@@ -1254,8 +1256,9 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     }];
     let mut curr_poi = 0;
 
-    // get last point that current one has line of sight one
+    // get last point that current one has light of sight on
     // if next point checked happens to be first and there's line of sight, tracing is over
+    let mut id = 0;
     for p in curr_poi..poi.len() {
         if p == poi.len() - 1 {
             break;
@@ -1268,14 +1271,14 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
             continue;
         }
 
+        let tex = Vec2::new(texture.width() as f32, texture.height() as f32);
         verts.push(Vertex {
             pos: Vec2::new(poi[p - 1].x, -poi[p - 1].y),
-            uv: Vec2::new(
-                poi[p - 1].x / texture.width() as f32,
-                poi[p - 1].y / texture.height() as f32,
-            ),
+            uv: poi[p - 1] / tex,
+            id,
             ..Default::default()
         });
+        id += 1;
         curr_poi = p - 1;
     }
 
@@ -1291,6 +1294,8 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     //}
 
     verts = sort_vertices(verts);
+    
+    bone_panel::center_verts(&mut verts);
 
     (verts.clone(), triangulate(&verts))
 }

@@ -49,6 +49,12 @@ impl From<egui::Vec2> for Vec2 {
     }
 }
 
+impl From<(u32, u32)> for Vec2 {
+    fn from(pos: (u32, u32)) -> Vec2 {
+        Vec2::new(pos.0 as f32, pos.1 as f32)
+    }
+}
+
 impl Into<egui::Pos2> for Vec2 {
     fn into(self) -> egui::Pos2 {
         egui::Pos2::new(self.x, self.y)

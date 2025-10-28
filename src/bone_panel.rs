@@ -558,21 +558,27 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 .unwrap()
                 .size
                 .clone();
-            //let str_center = &shared.loc("bone_panel.mesh_deformation.center");
-            //let str_center_desc = &shared.loc("bone_panel.mesh_deformation.center_desc");
-            //let button = ui.skf_button(str_center);
-            //if button.on_hover_text(str_center_desc).clicked() {
-            //    center_verts(&mut shared.selected_bone_mut().unwrap().vertices, &tex_size);
-            //}
+
             let str_reset = &shared.loc("bone_panel.mesh_deformation.reset");
-            let str_reset_desc = &shared.loc("bone_panel.mesh_deformation.reset_desc");
-            let button = ui.skf_button(str_reset);
-            if button.on_hover_text(str_reset_desc).clicked() {
+            //let str_reset_desc = &shared.loc("bone_panel.mesh_deformation.reset_desc");
+            let can_reset = !shared.ui.setting_weight_verts;
+            if ui
+                .add_enabled(can_reset, egui::Button::new(str_reset))
+                .clicked()
+            {
                 let (verts, indices) = renderer::create_tex_rect(&tex_size);
                 let bone = shared.selected_bone_mut().unwrap();
                 bone.vertices = verts;
                 bone.indices = indices;
                 bone.weights = vec![];
+                shared.ui.selected_weights = -1;
+            }
+
+            let str_center = &shared.loc("bone_panel.mesh_deformation.center");
+            let str_center_desc = &shared.loc("bone_panel.mesh_deformation.center_desc");
+            let button = ui.skf_button(str_center);
+            if button.on_hover_text(str_center_desc).clicked() {
+                center_verts(&mut shared.selected_bone_mut().unwrap().vertices);
             }
 
             if ui.skf_button("Trace").clicked() {
@@ -581,8 +587,10 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                         [bone.tex_idx as usize]
                         .image,
                 );
-                shared.selected_bone_mut().unwrap().vertices = verts;
-                shared.selected_bone_mut().unwrap().indices = indices;
+                let bone = &mut shared.selected_bone_mut().unwrap();
+                bone.vertices = verts;
+                bone.indices = indices;
+                bone.weights = vec![];
             }
 
             if ui.skf_button(&mesh_label).clicked() {
@@ -656,7 +664,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     }
 }
 
-pub fn center_verts(verts: &mut Vec<Vertex>, tex_size: &Vec2) {
+pub fn center_verts(verts: &mut Vec<Vertex>) {
     let mut min = Vec2::default();
     let mut max = Vec2::default();
     for v in &mut *verts {
@@ -677,8 +685,6 @@ pub fn center_verts(verts: &mut Vec<Vertex>, tex_size: &Vec2) {
     let avg = (min + max) / 2.;
     for v in verts {
         v.pos -= avg;
-        v.pos.x += tex_size.x / 2.;
-        v.pos.y -= tex_size.y / 2.;
     }
 }
 
