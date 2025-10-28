@@ -10,18 +10,10 @@ use winit::keyboard::KeyCode;
 
 // todo:
 // improve vert space conversions. This macro is starting to become the bane of my existence
+#[rustfmt::skip]
 macro_rules! con_vert {
-    ($func:expr, $vert:expr, $bone:expr, $tex_size:expr, $cam_pos:expr, $cam_zoom:expr) => {
-        $func(
-            $vert,
-            Some(&$bone),
-            &$cam_pos,
-            $cam_zoom,
-            $tex_size,
-            1.,
-            1.,
-            Vec2::default(),
-        )
+    ($vert:expr, $bone:expr, $tex_size:expr, $cam_pos:expr, $cam_zoom:expr) => {
+        raw_to_world_vert($vert, Some(&$bone), &$cam_pos, $cam_zoom, $tex_size, 1., Vec2::default())
     };
 }
 
@@ -119,23 +111,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         let tex_size = tex.unwrap().size;
         for v in 0..temp_bones[b].vertices.len() {
+            let id = temp_bones[b].vertices[v].id as i32;
             for weight in temp_bones[b].weights.clone() {
-                if weight
-                    .vert_ids
-                    .contains(&(temp_bones[b].vertices[v].id as i32))
-                {
+                if weight.vert_ids.contains(&id) {
                     let rot = temp_bones[b].rot;
                     temp_bones[b].vertices[v].pos -= utils::rotate(&weight.pos, -rot);
                 }
             }
-            let mut new_vert = con_vert!(
-                raw_to_world_vert,
-                temp_bones[b].vertices[v],
-                temp_bones[b],
-                tex_size,
-                shared.camera.pos,
-                shared.camera.zoom
-            );
+            let tb = &temp_bones[b];
+            let camera = &shared.camera;
+            let mut new_vert = con_vert!(tb.vertices[v], tb, tex_size, camera.pos, camera.zoom);
             new_vert.id = temp_bones[b].vertices[v].id;
             new_vert.pos.x *= shared.aspect_ratio();
 
@@ -287,11 +272,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     &shared.camera.pos,
                     shared.camera.zoom,
                     tex_size,
-                    1.,
-                    1.,
+                    shared.aspect_ratio(),
                     Vec2::new(0., 0.5),
                 );
-                new_vert.pos.x /= shared.window.x / shared.window.y;
                 new_vert.color = VertexColor::new(1., 1., 1., 0.2);
                 arrow.world_verts.push(new_vert);
             }
@@ -444,7 +427,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.camera.zoom,
                 Vec2::ZERO,
                 shared.aspect_ratio(),
-                1.,
                 Vec2::new(0.5, 0.5),
             );
             draw_line(center_world.pos, mouse, shared, render_pass, &device);
@@ -516,14 +498,8 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
 
         let tex_size = set.unwrap().textures[temp_bones[b].tex_idx as usize].size;
         for v in 0..temp_bones[b].vertices.len() {
-            let mut new_vert = con_vert!(
-                raw_to_world_vert,
-                temp_bones[b].vertices[v],
-                temp_bones[b],
-                tex_size,
-                Vec2::new(0., 0.),
-                zoom
-            );
+            let tb = &temp_bones[b];
+            let mut new_vert = con_vert!(tb.vertices[v], tb, tex_size, Vec2::default(), zoom);
             new_vert.pos.x /= shared.window.x / shared.window.y;
             new_vert.add_color = VertexColor::new(0., 0., 0., 0.);
             temp_bones[b].world_verts.push(new_vert);
@@ -730,7 +706,6 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
         shared.camera.zoom,
         Vec2::ZERO,
         shared.aspect_ratio(),
-        1.,
         Vec2::new(0.5, 0.5),
     );
 
@@ -1314,9 +1289,8 @@ fn draw_point(
             None,
             &camera,
             shared.camera.zoom,
-            Vec2::new(0., 0.),
+            Vec2::default(),
             shared.aspect_ratio(),
-            1.,
             Vec2::new(0.5, 0.5),
         ));
     }
@@ -1437,13 +1411,10 @@ fn raw_to_world_vert(
     zoom: f32,
     tex_size: Vec2,
     aspect_ratio: f32,
-    hard_scale: f32,
     pivot: Vec2,
 ) -> Vertex {
-    vert.pos *= hard_scale;
-
     if let Some(bone) = bone {
-        let pivot_offset = tex_size * pivot * hard_scale;
+        let pivot_offset = tex_size * pivot;
         vert.pos.x -= pivot_offset.x;
         vert.pos.y += pivot_offset.y;
 
@@ -1464,39 +1435,6 @@ fn raw_to_world_vert(
 
     // adjust verts for aspect ratio
     vert.pos.x *= aspect_ratio;
-
-    vert
-}
-
-fn world_to_raw_vert(
-    mut vert: Vertex,
-    bone: Option<&Bone>,
-    camera: &Vec2,
-    zoom: f32,
-    tex_size: Vec2,
-    aspect_ratio: f32,
-    hard_scale: f32,
-    pivot: Vec2,
-) -> Vertex {
-    vert.pos.x *= aspect_ratio;
-
-    vert.pos *= zoom;
-
-    vert.pos += *camera;
-
-    if let Some(bone) = bone {
-        vert.pos -= bone.pos;
-
-        vert.pos = utils::rotate(&vert.pos, -bone.rot);
-
-        vert.pos /= bone.scale;
-
-        let pivot_offset = tex_size * pivot * hard_scale;
-        vert.pos.x += pivot_offset.x;
-        vert.pos.y -= pivot_offset.y;
-    }
-
-    vert.pos /= hard_scale;
 
     vert
 }
