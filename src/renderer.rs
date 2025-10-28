@@ -712,6 +712,20 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
         };
     }
 
+    let mut weight = None;
+    let mut main_bone = None;
+    for other_bone in &shared.armature.bones {
+        if let Some(w) = other_bone
+            .weights
+            .iter()
+            .find(|weight| weight.bone_id == bone.id)
+        {
+            weight = Some(w.clone());
+            main_bone = Some(other_bone.clone());
+            break;
+        }
+    }
+
     match shared.edit_mode {
         shared::EditMode::Move => {
             let mut pos = bone.pos;
@@ -730,52 +744,24 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             edit!(bone, AnimElement::PositionX, pos.x, -1);
             edit!(bone, AnimElement::PositionY, pos.y, -1);
 
-            // if this bone is a weight, move its verts
-            let mut weight = None;
-            let mut main_bone = None;
-            for other_bone in &shared.armature.bones {
-                if let Some(w) = other_bone
-                    .weights
-                    .iter()
-                    .find(|weight| weight.bone_id == bone.id)
-                {
-                    weight = Some(w.clone());
-                    main_bone = Some(other_bone.clone());
-                    break;
-                }
-            }
-
             if weight == None {
                 return;
             }
 
             for v in &weight.unwrap().vert_ids {
-                let idx = main_bone
-                    .as_ref()
-                    .unwrap()
-                    .vertices
-                    .iter()
-                    .position(|vert| vert.id == *v as u32)
-                    .unwrap();
-                let vert = main_bone.as_ref().unwrap().vertices[idx];
+                let mb = main_bone.as_ref().unwrap();
+                let verts = &mb.vertices;
+
+                let idx = verts.iter().position(|vert| vert.id == *v as u32).unwrap();
+                let vert = mb.vertices[idx];
+
                 let mut vel = shared.mouse_vel() * shared.camera.zoom;
-                let temp_bone = bones
-                    .iter()
-                    .find(|tb| tb.id == main_bone.as_ref().unwrap().id)
-                    .unwrap();
+                let temp_bone = bones.iter().find(|tb| tb.id == mb.id).unwrap();
                 vel = utils::rotate(&vel, -temp_bone.rot);
-                edit!(
-                    main_bone.as_ref().unwrap(),
-                    AnimElement::VertPositionX,
-                    vert.pos.x - vel.x,
-                    idx as i32
-                );
-                edit!(
-                    main_bone.as_ref().unwrap(),
-                    AnimElement::VertPositionY,
-                    vert.pos.y - vel.y,
-                    idx as i32
-                );
+                let diff = vert.pos - vel;
+
+                edit!(mb, AnimElement::VertPositionX, diff.x, idx as i32);
+                edit!(mb, AnimElement::VertPositionY, diff.y, idx as i32);
             }
         }
         shared::EditMode::Rotate => {
