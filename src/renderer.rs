@@ -1106,10 +1106,26 @@ fn draw_line(
 
 pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
     let tex_size = shared.armature.get_current_tex(bone.id).unwrap().size;
-    // when moving a vertex, it must be interpreted in world coords first to align the with the mouse
+
+    // restore vertex's universal position by countering it's weight construction
+    let mut offset = Vec2::default();
+    for weight in bone.weights.clone() {
+        if weight
+            .vert_ids
+            .contains(&(bone.vertices[vert_idx].id as i32))
+        {
+            let rot = bone.rot;
+            offset = utils::rotate(&weight.pos, rot);
+        }
+    }
+
+    // when moving a vertex, it must be interpreted in world coords first to align the with the mouse.
     let mut world_vert = con_vert!(
         raw_to_world_vert,
-        bone.vertices[vert_idx],
+        Vertex {
+            pos: bone.vertices[vert_idx].pos + offset,
+            ..bone.vertices[vert_idx]
+        },
         bone,
         tex_size,
         shared.camera.pos,
