@@ -981,26 +981,9 @@ pub fn vert_lines(
             }
             is_hovering = true;
 
-            let mouse_line = mouse_world_vert.pos - v0.pos;
-            let whole_line = v1.pos - v0.pos;
-            let interp = mouse_line.mag() / whole_line.mag();
-            let uv = v0.uv + ((v1.uv - v0.uv) * interp);
-
             if shared.input.left_pressed {
                 shared.dragging_verts.push(i0 as usize);
                 shared.dragging_verts.push(i1 as usize);
-            } else if shared.input.left_clicked && !added_vert {
-                let img = &shared.armature.get_current_tex(bone.id).unwrap().image;
-                let pos = Vec2::new(
-                    (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
-                    -(uv.y * img.height() as f32).min(img.height() as f32 - 1.),
-                );
-                *new_vert = Some(Vertex {
-                    pos,
-                    uv,
-                    ..Default::default()
-                });
-                added_vert = true;
             }
         }
 
