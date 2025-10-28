@@ -236,7 +236,6 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let pos_y = &AnimElement::PositionY;
                 input!(bone.pos.y, "pos_y", pos_y, 1., ui, "Y");
-
                 let pos_x = &AnimElement::PositionX;
                 input!(bone.pos.x, "pos_x", pos_x, 1., ui, "X");
             })

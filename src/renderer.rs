@@ -333,7 +333,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     if !shared.ui.setting_weight_verts {
-        if let Some(vert) = new_vert {
+        if let Some(mut vert) = new_vert {
             shared.undo_actions.push(Action {
                 action: ActionType::Bone,
                 id: shared.selected_bone().unwrap().id,
@@ -341,8 +341,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 ..Default::default()
             });
             let bone_mut = shared.selected_bone_mut().unwrap();
+            vert.id = bone_mut.vertices.len() as u32 + 1;
             bone_mut.vertices.push(vert);
             bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
+            println!("{:?}", bone_mut.vertices);
             bone_mut.indices = triangulate(&bone_mut.vertices);
         }
     }
@@ -751,21 +753,12 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             edit!(bone, AnimElement::PositionX, pos.x, -1);
             edit!(bone, AnimElement::PositionY, pos.y, -1);
 
-            let mut weight = None;
             for other_bone in &mut shared.armature.bones {
                 let weights = &mut other_bone.weights;
                 if let Some(w) = weights.iter_mut().find(|weight| weight.bone_id == bone.id) {
-                    weight = Some(w);
-                    break;
+                    w.pos += mouse_vel;
                 }
             }
-
-            if weight == None {
-                return;
-            }
-
-            weight.as_mut().unwrap().pos += mouse_vel;
-            println!("{}", weight.unwrap().pos);
         }
         shared::EditMode::Rotate => {
             shared.ui.set_state(UiState::Rotating, true);
@@ -777,6 +770,13 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             let rot = dir.y.atan2(dir.x);
 
             edit!(bone, AnimElement::Rotation, rot, -1);
+
+            for other_bone in &mut shared.armature.bones {
+                let weights = &mut other_bone.weights;
+                if let Some(w) = weights.iter_mut().find(|weight| weight.bone_id == bone.id) {
+                    w.rot = rot;
+                }
+            }
         }
         shared::EditMode::Scale => {
             shared.ui.set_state(UiState::Scaling, true);
@@ -1075,28 +1075,22 @@ fn draw_line(
     let mut base = Vec2::new(width, width) / shared.camera.zoom;
     base = utils::rotate(&base, dir.y.atan2(dir.x));
 
-    let col = VertexColor::new(0., 1., 0., 1.);
+    let color = VertexColor::new(0., 1., 0., 1.);
 
-    let v0_top = Vertex {
-        pos: origin + base,
-        color: col,
-        ..Default::default()
-    };
-    let v0_bot = Vertex {
-        pos: origin - base,
-        color: col,
-        ..Default::default()
-    };
-    let v1_top = Vertex {
-        pos: target + base,
-        color: col,
-        ..Default::default()
-    };
-    let v1_bot = Vertex {
-        pos: target - base,
-        color: col,
-        ..Default::default()
-    };
+    macro_rules! vert {
+        ($pos:expr) => {
+            Vertex {
+                pos: origin + base,
+                color,
+                ..Default::default()
+            }
+        };
+    }
+
+    let v0_top = vert!(origin + base);
+    let v0_bot = vert!(origin - base);
+    let v1_top = vert!(target + base);
+    let v1_bot = vert!(target - base);
 
     let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
     let indices = vec![0, 1, 2, 1, 2, 3];
@@ -1105,54 +1099,17 @@ fn draw_line(
 }
 
 pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
-    let tex_size = shared.armature.get_current_tex(bone.id).unwrap().size;
+    let mut vert = bone.vertices[vert_idx].clone();
 
-    // restore vertex's universal position by countering it's weight construction
-    let mut offset = Vec2::default();
-    for weight in bone.weights.clone() {
-        if weight
-            .vert_ids
-            .contains(&(bone.vertices[vert_idx].id as i32))
-        {
-            let rot = bone.rot;
-            offset = utils::rotate(&weight.pos, rot);
-        }
-    }
-
-    // when moving a vertex, it must be interpreted in world coords first to align the with the mouse.
-    let mut world_vert = con_vert!(
-        raw_to_world_vert,
-        Vertex {
-            pos: bone.vertices[vert_idx].pos + offset,
-            ..bone.vertices[vert_idx]
-        },
-        bone,
-        tex_size,
-        shared.camera.pos,
-        shared.camera.zoom
-    );
-
-    // now that it's in world coords, it can follow the mouse
-    world_vert.pos -= shared.mouse_vel();
-
-    // convert back to normal coords
-    let vert_pos = con_vert!(
-        world_to_raw_vert,
-        world_vert,
-        bone,
-        tex_size,
-        shared.camera.pos,
-        shared.camera.zoom
-    )
-    .pos;
+    vert.pos -= utils::rotate(&(shared.mouse_vel() * shared.camera.zoom), -bone.rot);
 
     if !shared.ui.is_animating() {
-        shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = vert_pos;
+        shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = vert.pos;
         return;
     }
 
     let og_vert_pos = bone.vertices[vert_idx].pos;
-    let final_pos = vert_pos - og_vert_pos;
+    let final_pos = vert.pos - og_vert_pos;
 
     shared.armature.edit_vert(
         bone.id,
@@ -1164,28 +1121,21 @@ pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
+    macro_rules! vert {
+        ($pos:expr, $uv:expr) => {
+            Vertex {
+                pos: $pos,
+                uv: $uv,
+                ..Default::default()
+            }
+        };
+    }
     let tex = *tex_size / 2.;
     let mut verts = vec![
-        Vertex {
-            pos: Vec2::new(-tex.x, tex.y),
-            uv: Vec2::new(0., 0.),
-            ..Default::default()
-        },
-        Vertex {
-            pos: Vec2::new(tex.x, tex.y),
-            uv: Vec2::new(1., 0.),
-            ..Default::default()
-        },
-        Vertex {
-            pos: Vec2::new(tex.x, -tex.y),
-            uv: Vec2::new(1., 1.),
-            ..Default::default()
-        },
-        Vertex {
-            pos: Vec2::new(-tex.x, -tex.y),
-            uv: Vec2::new(0., 1.),
-            ..Default::default()
-        },
+        vert!(Vec2::new(-tex.x, tex.y), Vec2::new(0., 0.)),
+        vert!(Vec2::new(tex.x, tex.y), Vec2::new(1., 0.)),
+        vert!(Vec2::new(tex.x, -tex.y), Vec2::new(1., 1.)),
+        vert!(Vec2::new(-tex.x, -tex.y), Vec2::new(0., 1.)),
     ];
     verts = sort_vertices(verts.clone());
     let indices = triangulate(&verts);

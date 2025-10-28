@@ -938,7 +938,7 @@ pub struct BoneWeight {
     #[serde(default)]
     pub pos: Vec2,
     #[serde(default)]
-    pub rot: Vec2,
+    pub rot: f32,
     #[serde(default)]
     pub scale: Vec2,
 }
