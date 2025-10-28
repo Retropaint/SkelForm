@@ -2,10 +2,9 @@
 
 use crate::*;
 use armature_window::find_bone;
-use image::DynamicImage;
-use image::GenericImageView;
+use image::{DynamicImage, GenericImageView};
 use spade::Triangulation;
-use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
+use wgpu::{BindGroup, BindGroupLayout, Device, IndexFormat, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
 // todo:
@@ -345,19 +344,18 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             shared.config.colors.center_point.b as f32 / 255.,
             0.5,
         );
+        let bone = &find_bone(&temp_bones, shared.selected_bone().unwrap().id);
         draw_point(
             &Vec2::ZERO,
             &shared,
             render_pass,
             device,
-            &find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap(),
+            bone.unwrap(),
             color,
             shared.camera.pos,
             0.,
         );
-        shared.selected_temp_bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id)
-            .unwrap()
-            .clone();
+        shared.selected_temp_bone = bone.unwrap().clone();
     }
 
     if !shared.input.left_down {
@@ -370,11 +368,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             bone_id = bone.id
         }
         for vert in shared.dragging_verts.clone() {
-            drag_vertex(
-                shared,
-                &temp_bones.iter().find(|bone| bone.id == bone_id).unwrap(),
-                vert,
-            );
+            let bone = &temp_bones.iter().find(|bone| bone.id == bone_id).unwrap();
+            drag_vertex(shared, bone, vert);
         }
 
         return;
@@ -1299,11 +1294,9 @@ fn draw_point(
         vert.pos += *offset;
     }
 
+    let range = vec![0, 1, 2, 1, 2, 3];
     render_pass.set_vertex_buffer(0, vertex_buffer(&point_verts.to_vec(), device).slice(..));
-    render_pass.set_index_buffer(
-        index_buffer(vec![0, 1, 2, 1, 2, 3], &device).slice(..),
-        wgpu::IndexFormat::Uint32,
-    );
+    render_pass.set_index_buffer(index_buffer(range, &device).slice(..), IndexFormat::Uint32);
     render_pass.draw_indexed(0..6, 0, 0..1);
 
     point_verts
