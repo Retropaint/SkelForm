@@ -203,7 +203,10 @@ macro_rules! enum_string {
     Debug,
 )]
 pub struct Vertex {
+    #[serde(default)]
     pub pos: Vec2,
+
+    #[serde(default)]
     pub uv: Vec2,
     #[serde(skip)]
     pub color: VertexColor,
@@ -211,6 +214,8 @@ pub struct Vertex {
     pub add_color: VertexColor,
     #[serde(skip)]
     pub id: u32,
+    #[serde(default)]
+    pub init_pos: Vec2,
 }
 
 impl Default for Vertex {
@@ -221,6 +226,7 @@ impl Default for Vertex {
             color: VertexColor::default(),
             add_color: VertexColor::new(0., 0., 0., 0.),
             id: 0,
+            init_pos: Vec2::default(),
         }
     }
 }
@@ -931,12 +937,6 @@ pub struct BoneWeight {
     pub vert_ids: Vec<i32>,
     #[serde(default = "default_neg_one")]
     pub bone_id: i32,
-
-    // modifications to apply to all vertices of this weight.
-    // note that vertices themselves are immutable, and these mods only apply
-    // during construction.
-    #[serde(default)]
-    pub init_pos: Vec2,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]

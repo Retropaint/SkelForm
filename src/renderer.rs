@@ -559,8 +559,9 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
 
                 // all changes to vert below must be immutable
 
-                bones[b].vertices[v].pos = utils::rotate(&bones[b].vertices[v].pos, bone.rot);
-                bones[b].vertices[v].pos += bone.pos;
+                let vert = &mut bones[b].vertices[v];
+                vert.pos = utils::rotate(&vert.pos, bone.rot);
+                vert.pos += bone.pos;
             }
         }
     }

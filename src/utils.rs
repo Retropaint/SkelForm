@@ -325,6 +325,10 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
             continue;
         }
 
+        for vert in &mut armature_copy.bones[b].vertices {
+            vert.init_pos = vert.pos;
+        }
+
         for w in 0..armature_copy.bones[b].weights.len() {
             let bone_id = armature_copy.bones[b].weights[w].bone_id;
             armature_copy.bones[b].weights[w].bone_id = armature_copy
@@ -630,11 +634,11 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
 pub fn bone_meshes_edited(tex_size: Vec2, verts: &Vec<Vertex>) -> bool {
     let mut is_rect = true;
     for vert in verts {
-        if vert.pos.x != 0. && vert.pos.x.abs() != tex_size.x.abs() {
+        if vert.pos.x.abs() != tex_size.x / 2. {
             is_rect = false;
             break;
         }
-        if vert.pos.y != 0. && vert.pos.y.abs() != tex_size.y.abs() {
+        if vert.pos.y.abs() != tex_size.y / 2. {
             is_rect = false;
             break;
         }
