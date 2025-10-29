@@ -923,26 +923,19 @@ pub fn vert_lines(
         col += VertexColor::new(-0.5, -0.5, -0.5, 0.);
         col.a = 0.3;
 
-        let mut v0_top = Vertex {
-            pos: v0.pos + base,
-            color: col,
-            ..v0
-        };
-        let mut v0_bot = Vertex {
-            pos: v0.pos - base,
-            color: col,
-            ..v0
-        };
-        let mut v1_top = Vertex {
-            pos: v1.pos + base,
-            color: col,
-            ..v1
-        };
-        let mut v1_bot = Vertex {
-            pos: v1.pos - base,
-            color: col,
-            ..v1
-        };
+        macro_rules! vert {
+            ($pos:expr, $v:expr) => {
+                Vertex {
+                    pos: $pos,
+                    color: col,
+                    ..$v
+                }
+            };
+        }
+        let mut v0_top = vert!(v0.pos + base, v0);
+        let mut v0_bot = vert!(v0.pos - base, v0);
+        let mut v1_top = vert!(v1.pos + base, v1);
+        let mut v1_bot = vert!(v1.pos - base, v1);
 
         let mut verts = vec![v0_top, v0_bot, v1_top, v1_bot];
         let indices = vec![0, 1, 2, 1, 2, 3];
@@ -954,12 +947,8 @@ pub fn vert_lines(
             let c0 = chunk[0] as usize;
             let c1 = chunk[1] as usize;
             let c2 = chunk[2] as usize;
-            let bary = tri_point(
-                &mouse_world_vert.pos,
-                &verts[chunk[0] as usize].pos,
-                &verts[chunk[1] as usize].pos,
-                &verts[chunk[2] as usize].pos,
-            );
+            let mv = mouse_world_vert;
+            let bary = tri_point(&mv.pos, &verts[c0].pos, &verts[c1].pos, &verts[c2].pos);
             if bary.0 == -1. {
                 continue;
             }
@@ -1107,10 +1096,10 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
         let up = Vec2::new(point.x, point.y + gap);
         let down = Vec2::new(point.x, point.y - gap);
 
-        let left_top = Vec2::new(point.x - gap, point.y + gap);
-        let left_bot = Vec2::new(point.x - gap, point.y - gap);
-        let right_top = Vec2::new(point.x + gap, point.y + gap);
-        let right_bot = Vec2::new(point.x + gap, point.y - gap);
+        let lt = Vec2::new(point.x - gap, point.y + gap);
+        let lb = Vec2::new(point.x - gap, point.y - gap);
+        let rt = Vec2::new(point.x + gap, point.y + gap);
+        let rb = Vec2::new(point.x + gap, point.y - gap);
 
         macro_rules! p {
             ($dir:expr) => {
@@ -1122,14 +1111,7 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
             };
         }
 
-        p!(&left)
-            || p!(&right)
-            || p!(&up)
-            || p!(&down)
-            || p!(&left_top)
-            || p!(&left_bot)
-            || p!(&right_top)
-            || p!(&right_bot)
+        p!(&left) || p!(&right) || p!(&up) || p!(&down) || p!(&lt) || p!(&lb) || p!(&rt) || p!(&rb)
     });
 
     // sort points in any winding order
@@ -1200,31 +1182,21 @@ fn draw_point(
     rotation: f32,
 ) -> Vec<Vertex> {
     let point_size = 10.;
+    macro_rules! vert {
+        ($pos:expr, $uv:expr) => {
+            Vertex {
+                pos: $pos,
+                uv: $uv,
+                color,
+                ..Default::default()
+            }
+        };
+    }
     let mut temp_point_verts: [Vertex; 4] = [
-        Vertex {
-            pos: Vec2::new(-point_size, point_size),
-            uv: Vec2::new(1., 0.),
-            color,
-            ..Default::default()
-        },
-        Vertex {
-            pos: Vec2::new(point_size, point_size),
-            uv: Vec2::new(0., 1.),
-            color,
-            ..Default::default()
-        },
-        Vertex {
-            pos: Vec2::new(-point_size, -point_size),
-            uv: Vec2::new(0., 0.),
-            color,
-            ..Default::default()
-        },
-        Vertex {
-            pos: Vec2::new(point_size, -point_size),
-            uv: Vec2::new(1., 1.),
-            color,
-            ..Default::default()
-        },
+        vert!(Vec2::new(-point_size, point_size), Vec2::new(1., 0.)),
+        vert!(Vec2::new(point_size, point_size), Vec2::new(0., 1.)),
+        vert!(Vec2::new(-point_size, -point_size), Vec2::new(0., 0.)),
+        vert!(Vec2::new(point_size, -point_size), Vec2::new(1., 1.)),
     ];
 
     for v in &mut temp_point_verts {
@@ -1233,16 +1205,12 @@ fn draw_point(
     }
 
     let mut point_verts = vec![];
-    for i in 0..temp_point_verts.len() {
-        point_verts.push(raw_to_world_vert(
-            temp_point_verts[i],
-            None,
-            &camera,
-            shared.camera.zoom,
-            Vec2::default(),
-            shared.aspect_ratio(),
-            Vec2::new(0.5, 0.5),
-        ));
+    let ar = shared.aspect_ratio();
+    let cam = &shared.camera;
+    let pivot = Vec2::new(0.5, 0.5);
+    for vert in temp_point_verts {
+        let vert = raw_to_world_vert(vert, None, &camera, cam.zoom, Vec2::ZERO, ar, pivot);
+        point_verts.push(vert);
     }
 
     for vert in &mut point_verts {
