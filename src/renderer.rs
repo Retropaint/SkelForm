@@ -109,22 +109,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         let tex_size = tex.unwrap().size;
+        let cam = &shared.camera;
         for v in 0..temp_bones[b].vertices.len() {
-            let id = temp_bones[b].vertices[v].id as i32;
-            for weight in temp_bones[b].weights.clone() {
-                if weight.vert_ids.contains(&id) {
-                    let bones = &shared.armature.bones;
-                    let bone = bones.iter().find(|bone| bone.id == weight.bone_id).unwrap();
-                    temp_bones[b].vertices[v].pos +=
-                        utils::rotate(&(bone.pos - weight.init_pos), 0.);
-                }
-            }
-            let tb = temp_bones[b].clone();
-            let cam = &shared.camera;
+            let tb = &mut temp_bones[b];
             let mut vert = con_vert!(tb.vertices[v], tb, tex_size, cam.pos, cam.zoom);
-            vert.id = temp_bones[b].vertices[v].id;
             vert.pos.x *= shared.aspect_ratio();
-            temp_bones[b].world_verts.push(vert);
+            tb.world_verts.push(vert);
         }
 
         // check if cursor is on an opaque pixel of this bone's texture
@@ -519,10 +509,8 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
     let mut done_ids: Vec<i32> = vec![];
 
     for b in 0..bones.len() {
-        if bones[b].ik_disabled
-            || bones[b].ik_family_id == -1
-            || done_ids.contains(&bones[b].ik_family_id)
-        {
+        let ik_id = bones[b].ik_family_id;
+        if bones[b].ik_disabled || ik_id == -1 || done_ids.contains(&ik_id) {
             continue;
         }
 
@@ -533,10 +521,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
             continue;
         }
 
-        let family: Vec<&Bone> = bones
-            .iter()
-            .filter(|bone| bone.ik_family_id == bones[b].ik_family_id)
-            .collect();
+        let family: Vec<&Bone> = bones.iter().filter(|b| b.ik_family_id == ik_id).collect();
 
         let mut joints = vec![];
         for bone in family {
@@ -560,6 +545,26 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
 
     // re-construct bones, accounting for rotations saved from IK
     *bones = og_bones.clone();
+
+    for b in 0..bones.len() {
+        for v in 0..bones[b].vertices.len() {
+            let id = bones[b].vertices[v].id as i32;
+            for weight in bones[b].weights.clone() {
+                if !weight.vert_ids.contains(&id) {
+                    continue;
+                }
+
+                let bone_id = weight.bone_id;
+                let bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+
+                // all changes to vert below must be immutable
+
+                bones[b].vertices[v].pos = utils::rotate(&bones[b].vertices[v].pos, bone.rot);
+                bones[b].vertices[v].pos += bone.pos;
+            }
+        }
+    }
+
     inheritance(bones, ik_rot.clone());
 }
 
