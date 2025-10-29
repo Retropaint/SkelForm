@@ -11,7 +11,7 @@ mod web {
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
-use image::{GenericImage, ImageEncoder};
+use image::{ExtendedColorType::Rgb8, GenericImage, ImageEncoder};
 use std::sync::Mutex;
 
 use std::io::{Read, Write};
@@ -596,9 +596,8 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
         ActionType::Bones => {
             new_action.bones = shared.armature.bones.clone();
             shared.armature.bones = action.bones.clone();
-            if shared.armature.bones.len() == 0
-                || shared.ui.selected_bone_idx > shared.armature.bones.len() - 1
-            {
+            let bones = &mut shared.armature.bones;
+            if bones.len() == 0 || shared.ui.selected_bone_idx > bones.len() - 1 {
                 shared.ui.selected_bone_idx = usize::MAX;
             }
         }
@@ -609,9 +608,8 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
         ActionType::Animations => {
             new_action.animations = shared.armature.animations.clone();
             shared.armature.animations = action.animations.clone();
-            if shared.armature.animations.len() == 0
-                || shared.ui.anim.selected > shared.armature.animations.len() - 1
-            {
+            let animations = &mut shared.armature.animations;
+            if animations.len() == 0 || shared.ui.anim.selected > animations.len() - 1 {
                 shared.ui.anim.selected = usize::MAX;
             }
         }
@@ -795,12 +793,9 @@ pub fn process_thumbnail(
         rgb[offset + 2] = chunk[0];
     }
 
-    let img_buf = <image::ImageBuffer<image::Rgb<u8>, _>>::from_raw(
-        resolution.x as u32,
-        resolution.y as u32,
-        rgb.clone(),
-    )
-    .unwrap();
+    type ImgType = image::ImageBuffer<image::Rgb<u8>, Vec<u8>>;
+    let img_buf =
+        <ImgType>::from_raw(resolution.x as u32, resolution.y as u32, rgb.clone()).unwrap();
 
     let thumb_size = Vec2::new(128., 128.);
     let mut img = image::DynamicImage::ImageRgb8(img_buf);
@@ -809,12 +804,7 @@ pub fn process_thumbnail(
     let mut thumb_buf: Vec<u8> = Vec::new();
     let encoder = image::codecs::png::PngEncoder::new(&mut thumb_buf);
     encoder
-        .write_image(
-            img.to_rgb8().as_raw(),
-            img.width(),
-            img.height(),
-            image::ExtendedColorType::Rgb8,
-        )
+        .write_image(img.to_rgb8().as_raw(), img.width(), img.height(), Rgb8)
         .unwrap();
 
     thumb_buf
