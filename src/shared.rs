@@ -1986,8 +1986,6 @@ pub struct Shared {
 
     pub ik_arrow_bindgroup: Option<BindGroup>,
 
-    pub selected_temp_bone: Bone,
-
     pub file_name: Arc<Mutex<String>>,
     pub img_contents: Arc<Mutex<Vec<u8>>>,
     pub save_contents: Arc<Mutex<Vec<u8>>>,

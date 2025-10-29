@@ -275,29 +275,17 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     if shared.ui.showing_mesh {
-        let bone = temp_bones
-            .iter_mut()
-            .find(|bone| bone.id == shared.selected_bone().unwrap().id)
-            .unwrap();
+        let id = shared.selected_bone().unwrap().id;
+        let bone = temp_bones.iter_mut().find(|bone| bone.id == id).unwrap();
         let bind_group = &shared.armature.get_current_tex(bone.id).unwrap().bind_group;
-        draw(
-            &bind_group,
-            &bone.world_verts,
-            &bone.indices,
-            render_pass,
-            device,
-        );
+
+        let vert = &bone.world_verts;
+        draw(&bind_group, &vert, &bone.indices, render_pass, device);
 
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
-        vert_lines(
-            &bone,
-            shared,
-            &mouse_world_vert,
-            render_pass,
-            device,
-            &mut new_vert,
-        );
+        let vert = mouse_world_vert;
+        vert_lines(&bone, shared, &vert, render_pass, device, &mut new_vert);
         bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
     }
 
@@ -330,18 +318,18 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             shared.config.colors.center_point.b as f32 / 255.,
             0.5,
         );
-        let bone = &find_bone(&temp_bones, shared.selected_bone().unwrap().id);
+        let bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap();
+        let cam = shared.camera.pos;
         draw_point(
             &Vec2::ZERO,
             &shared,
             render_pass,
             device,
-            bone.unwrap(),
+            bone,
             color,
-            shared.camera.pos,
+            cam,
             0.,
         );
-        shared.selected_temp_bone = bone.unwrap().clone();
     }
 
     if !shared.input.left_down {
@@ -963,6 +951,9 @@ pub fn vert_lines(
         let mut is_hovering = false;
 
         for (_, chunk) in indices.chunks_exact(3).enumerate() {
+            let c0 = chunk[0] as usize;
+            let c1 = chunk[1] as usize;
+            let c2 = chunk[2] as usize;
             let bary = tri_point(
                 &mouse_world_vert.pos,
                 &verts[chunk[0] as usize].pos,
@@ -974,9 +965,27 @@ pub fn vert_lines(
             }
             is_hovering = true;
 
+            let mouse_line = mouse_world_vert.pos - v0.pos;
+            let whole_line = v1.pos - v0.pos;
+            let interp = mouse_line.mag() / whole_line.mag();
+            let uv = v0.uv + ((v1.uv - v0.uv) * interp);
+
             if shared.input.left_pressed {
                 shared.dragging_verts.push(i0 as usize);
                 shared.dragging_verts.push(i1 as usize);
+            } else if shared.input.left_clicked && !added_vert {
+                let img = &shared.armature.get_current_tex(bone.id).unwrap().image;
+                let pos = verts[c0].pos * bary.3 + verts[c1].pos * bary.1 + verts[c2].pos * bary.2;
+                let pos = Vec2::new(
+                    (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
+                    (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
+                );
+                *new_vert = Some(Vertex {
+                    pos,
+                    uv,
+                    ..Default::default()
+                });
+                added_vert = true;
             }
         }
 
@@ -1040,24 +1049,10 @@ fn draw_line(
 }
 
 pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
-    let mut vert = bone.vertices[vert_idx].clone();
-    vert.pos -= utils::rotate(&(shared.mouse_vel() * shared.camera.zoom), -bone.rot);
-
-    if !shared.ui.is_animating() {
-        shared.selected_bone_mut().unwrap().vertices[vert_idx].pos = vert.pos;
-        return;
-    }
-
-    let og_vert_pos = bone.vertices[vert_idx].pos;
-    let final_pos = vert.pos - og_vert_pos;
-
-    shared.armature.edit_vert(
-        bone.id,
-        vert_idx as i32,
-        &(final_pos),
-        shared.ui.anim.selected,
-        shared.ui.anim.selected_frame,
-    );
+    let mouse_vel = shared.mouse_vel();
+    let zoom = shared.camera.zoom;
+    let vert_mut = &mut shared.selected_bone_mut().unwrap().vertices[vert_idx];
+    vert_mut.pos -= utils::rotate(&(mouse_vel * zoom), -bone.rot);
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
