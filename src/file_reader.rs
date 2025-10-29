@@ -1,6 +1,8 @@
 //! Reading uploaded images to turn into textures.
 // test
 
+use std::sync::Mutex;
+
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 use wgpu::*;
@@ -162,21 +164,23 @@ pub fn read_psd(
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
 
     type ImageType = (ImageBuffer<Rgba<u8>, Vec<u8>>, Vec2);
-    let mut images: Vec<ImageType> = vec![];
+    let images: Arc<Mutex<Vec<ImageType>>> = Arc::new(vec![].into());
 
     #[cfg(not(target_arch = "wasm32"))]
     {
         let mut processes = vec![];
-        async_std::task::block_on(async {
-            for g in (0..group_ids.len()).rev() {
-                let group = psd.groups()[&group_ids[g]].clone();
+        let cgroup_ids = group_ids.clone();
+        let cimages = Arc::clone(&images);
+        processes.push(std::thread::spawn(move || {
+            for g in (0..cgroup_ids.len()).rev() {
                 let psd = psd::Psd::from_bytes(&bytes).unwrap();
-                processes.push(async_std::task::spawn(load_psd_tex_async(psd, group)));
+                let group = psd.groups()[&cgroup_ids[g]].clone();
+                cimages.lock().unwrap().push(load_psd_tex(psd, group));
             }
-            for process in processes {
-                images.push(process.await);
-            }
-        });
+        }));
+        for process in processes {
+            process.join().unwrap();
+        }
     }
 
     group_ids.reverse();
@@ -186,7 +190,7 @@ pub fn read_psd(
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            image = images[g].clone();
+            image = images.lock().unwrap()[g].clone();
         }
 
         #[cfg(target_arch = "wasm32")]
@@ -590,7 +594,7 @@ pub fn create_temp_file(name: &str, content: &str) {
     img_path.write_all(content.as_bytes()).unwrap();
 }
 
-#[cfg(target_arch = "wasm32")]
+//#[cfg(target_arch = "wasm32")]
 fn load_psd_tex(
     psd: psd::Psd,
     group: psd::PsdGroup,
