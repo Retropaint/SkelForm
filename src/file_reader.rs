@@ -588,34 +588,7 @@ pub fn load_image_wasm(id: String) -> Option<(Vec<u8>, Vec2)> {
     return Some((result, dimensions));
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-pub fn create_temp_file(name: &str, content: &str) {
-    let mut img_path = std::fs::File::create(name).unwrap();
-    img_path.write_all(content.as_bytes()).unwrap();
-}
-
-//#[cfg(target_arch = "wasm32")]
 fn load_psd_tex(
-    psd: psd::Psd,
-    group: psd::PsdGroup,
-) -> (image::ImageBuffer<Rgba<u8>, Vec<u8>>, Vec2) {
-    let (pixels, width, height, tl_x, tl_y) = psd
-        .flatten_layers_rgba(&|(_d, layer)| {
-            if layer.parent_id() == None || layer.name().contains("$") {
-                return false;
-            }
-            let parent_group = &psd.groups()[&layer.parent_id().unwrap()];
-            parent_group.id() == group.id()
-        })
-        .unwrap();
-
-    let img_buf =
-        <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(width, height, pixels).unwrap();
-
-    (img_buf, Vec2::new(tl_x as f32, tl_y as f32))
-}
-
-async fn load_psd_tex_async(
     psd: psd::Psd,
     group: psd::PsdGroup,
 ) -> (image::ImageBuffer<Rgba<u8>, Vec<u8>>, Vec2) {

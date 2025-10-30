@@ -9,8 +9,6 @@
 //! `todo:` - not important as of being written, but good to keep in mind.
 
 #[cfg(not(target_arch = "wasm32"))]
-use image::ImageEncoder;
-#[cfg(not(target_arch = "wasm32"))]
 use std::io::Write;
 
 use shared::*;

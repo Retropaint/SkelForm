@@ -323,7 +323,6 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                             shared.ui.setting_ik_target = false;
                         } else if shared.ui.setting_weight_bone {
                             let idx = shared.ui.selected_weights as usize;
-                            let bone = shared.armature.bones[b].clone();
                             let weight = &mut shared.selected_bone_mut().unwrap().weights[idx];
                             weight.bone_id = bone_id;
                             shared.ui.setting_weight_bone = false;

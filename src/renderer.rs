@@ -973,7 +973,6 @@ pub fn vert_lines(
                 shared.dragging_verts.push(i1 as usize);
             } else if shared.input.left_clicked && !added_vert {
                 let img = &shared.armature.get_current_tex(bone.id).unwrap().image;
-                let pos = verts[c0].pos * bary.3 + verts[c1].pos * bary.1 + verts[c2].pos * bary.2;
                 let pos = Vec2::new(
                     (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
