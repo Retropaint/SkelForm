@@ -818,3 +818,19 @@ pub fn markdown(str: String, local_doc_url: String) -> String {
     };
     str.replace("user-docs", &user_docs)
 }
+
+pub fn get_all_parents(bones: &Vec<Bone>, bone_id: i32) -> Vec<Bone> {
+    // add own bone temporarily
+    let bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+    let mut parents: Vec<Bone> = vec![bone];
+
+    while parents.last().unwrap().parent_id != -1 {
+        let pid = parents.last().unwrap().parent_id;
+        parents.push(bones.iter().find(|bone| bone.id == pid).unwrap().clone());
+    }
+
+    // remove own bone from list
+    parents.remove(0);
+
+    parents
+}

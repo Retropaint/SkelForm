@@ -191,15 +191,11 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                     anim_id = usize::MAX;
                 }
 
+                let frame = shared.ui.anim.selected_frame;
                 shared.save_edited_bone();
-                shared.armature.edit_bone(
-                    bone.id,
-                    $element,
-                    $float,
-                    anim_id,
-                    shared.ui.anim.selected_frame,
-                    -1,
-                );
+                shared
+                    .armature
+                    .edit_bone(bone.id, $element, $float, anim_id, frame);
                 *shared.saving.lock().unwrap() = shared::Saving::Autosaving;
             }
             if $label != "" {

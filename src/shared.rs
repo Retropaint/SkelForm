@@ -1068,7 +1068,6 @@ impl Armature {
                 bone_id as i32,
                 selected_frame,
                 AnimElement::TextureIndex,
-                -1,
             );
             self.animations[selected_anim].keyframes[kf].value = new_tex_idx as f32;
 
@@ -1077,7 +1076,6 @@ impl Armature {
                 bone_id as i32,
                 0,
                 AnimElement::TextureIndex,
-                -1,
             );
             self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
         }
@@ -1174,7 +1172,6 @@ impl Armature {
         value: f32,
         anim_id: usize,
         anim_frame: i32,
-        vert_id: i32,
     ) {
         let bone = self.find_bone_mut(bone_id).unwrap();
         let mut init_value = 0.;
@@ -1198,65 +1195,31 @@ impl Armature {
                 init_value = bone.zindex as f32;
                 bone.zindex = value as i32
             }
-            AnimElement::VertPositionX => {
-                set!(bone.vertices[vert_id as usize].pos.x)
-            }
-            AnimElement::VertPositionY => {
-                set!(bone.vertices[vert_id as usize].pos.y)
-            }
             AnimElement::TextureIndex => { /* handled in set_bone_tex() */ }
+            _ => {}
         };
 
         if anim_id == usize::MAX {
             return;
         }
 
-        let has_0th_frame = self.animations[anim_id]
-            .keyframes
-            .iter()
-            .find(|kf| kf.frame == 0 && kf.element == *element && kf.bone_id == bone_id)
-            != None;
-        if anim_frame != 0 && !has_0th_frame {
-            self.animations[anim_id].check_if_in_keyframe(bone_id, 0, element.clone(), -1);
-
-            self.animations[anim_id]
-                .keyframes
-                .iter_mut()
-                .find(|kf| kf.frame == 0 && kf.element == *element && kf.bone_id == bone_id)
-                .unwrap()
-                .value = init_value;
-        }
-        let frame =
-            self.animations[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone(), -1);
-        self.animations[anim_id].keyframes[frame].value = value;
-    }
-
-    pub fn edit_vert(
-        &mut self,
-        bone_id: i32,
-        vert_id: i32,
-        pos: &Vec2,
-        anim_id: usize,
-        anim_frame: i32,
-    ) {
-        let bone_id = self.bones[bone_id as usize].id;
-
-        macro_rules! animate {
-            ($element:expr, $value:expr) => {
-                // create 0th frame
-                let first_frame =
-                    self.animations[anim_id].check_if_in_keyframe(bone_id, 0, $element, vert_id);
-                self.animations[anim_id].keyframes[first_frame].vert_id = vert_id as i32;
-
-                let frame = self.animations[anim_id]
-                    .check_if_in_keyframe(bone_id, anim_frame, $element, vert_id);
-                self.animations[anim_id].keyframes[frame].value = $value;
-                self.animations[anim_id].keyframes[frame].vert_id = vert_id as i32;
+        macro_rules! check_kf {
+            ($kf:expr) => {
+                $kf.frame == 0 && $kf.element == *element && $kf.bone_id == bone_id
             };
         }
 
-        animate!(AnimElement::VertPositionX, pos.x);
-        animate!(AnimElement::VertPositionY, pos.y);
+        let anim = &mut self.animations;
+
+        let has_0th = anim[anim_id].keyframes.iter().find(|kf| check_kf!(kf)) != None;
+        if anim_frame != 0 && !has_0th {
+            anim[anim_id].check_if_in_keyframe(bone_id, 0, element.clone());
+            let oth_frame = anim[anim_id].keyframes.iter_mut().find(|kf| check_kf!(kf));
+            oth_frame.unwrap().value = init_value;
+        }
+        let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
+        println!("{}", value);
+        anim[anim_id].keyframes[frame].value = value;
     }
 
     // runtime: core animation logic
@@ -1279,16 +1242,10 @@ impl Armature {
         }
 
         for b in &mut bones {
-            if self.is_bone_hidden(b.id) {
-                continue;
-            }
-
             macro_rules! interpolate {
-                ($element:expr, $default:expr, $vert_id:expr) => {{
-                    let (prev, next, total_frames, current_frame, transition) = self
-                        .find_connecting_frames(
-                            anim_idx, b.id, $vert_id, $element, $default, anim_frame,
-                        );
+                ($element:expr, $default:expr) => {{
+                    let (prev, next, total_frames, current_frame, transition) =
+                        self.find_connecting_frames(anim_idx, b.id, $element, $default, anim_frame);
                     match (transition) {
                         Transition::SineIn => {
                             Tweener::sine_in(prev, next, total_frames).move_to(current_frame)
@@ -1303,7 +1260,7 @@ impl Armature {
 
             macro_rules! prev_frame {
                 ($element:expr, $default:expr) => {
-                    self.find_connecting_frames(anim_idx, b.id, -1, $element, $default, anim_frame)
+                    self.find_connecting_frames(anim_idx, b.id, $element, $default, anim_frame)
                         .0
                 };
             }
@@ -1311,11 +1268,11 @@ impl Armature {
             // iterable anim interps
             #[rustfmt::skip]
             {
-                b.pos.x   = interpolate!(AnimElement::PositionX,    b.pos.x,   -1);
-                b.pos.y   = interpolate!(AnimElement::PositionY,    b.pos.y,   -1);
-                b.rot     = interpolate!(AnimElement::Rotation,     b.rot,     -1);
-                b.scale.x = interpolate!(AnimElement::ScaleX,       b.scale.x, -1);
-                b.scale.y = interpolate!(AnimElement::ScaleY,       b.scale.y, -1);
+                b.pos.x   = interpolate!(AnimElement::PositionX,    b.pos.x  );
+                b.pos.y   = interpolate!(AnimElement::PositionY,    b.pos.y  );
+                b.rot     = interpolate!(AnimElement::Rotation,     b.rot    );
+                b.scale.x = interpolate!(AnimElement::ScaleX,       b.scale.x);
+                b.scale.y = interpolate!(AnimElement::ScaleY,       b.scale.y);
                 b.zindex  = prev_frame!( AnimElement::Zindex,       b.zindex  as f32) as i32;
                 b.tex_idx = prev_frame!( AnimElement::TextureIndex, b.tex_idx as f32) as i32;
             };
@@ -1335,7 +1292,6 @@ impl Armature {
         &self,
         anim_id: usize,
         bone_id: i32,
-        vert_id: i32,
         element: AnimElement,
         default: f32,
         frame: i32,
@@ -1353,7 +1309,7 @@ impl Armature {
                 break;
             }
 
-            if kf.bone_id != bone_id || kf.element != element || kf.vert_id != vert_id {
+            if kf.bone_id != bone_id || kf.element != element {
                 continue;
             }
 
@@ -1367,7 +1323,7 @@ impl Armature {
                 break;
             }
 
-            if kf.bone_id != bone_id || kf.element != element || kf.vert_id != vert_id {
+            if kf.bone_id != bone_id || kf.element != element {
                 continue;
             }
 
@@ -1635,19 +1591,10 @@ pub struct Animation {
 
 impl Animation {
     /// Return which frame has these attributes, or create a new one
-    pub fn check_if_in_keyframe(
-        &mut self,
-        id: i32,
-        frame: i32,
-        element: AnimElement,
-        vert_id: i32,
-    ) -> usize {
+    pub fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: AnimElement) -> usize {
         macro_rules! is_same_frame {
             ($kf:expr) => {
-                $kf.frame == frame
-                    && $kf.bone_id == id
-                    && $kf.element == element
-                    && $kf.vert_id == vert_id
+                $kf.frame == frame && $kf.bone_id == id && $kf.element == element
             };
         }
 
@@ -1670,7 +1617,6 @@ impl Animation {
             bone_id: id,
             element: element.clone(),
             element_id: element.clone() as i32,
-            vert_id,
             ..Default::default()
         });
 
@@ -1737,8 +1683,6 @@ pub struct Keyframe {
     pub frame: i32,
     #[serde(default)]
     pub bone_id: i32,
-    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
-    pub vert_id: i32,
 
     /// runtime: while the editor uses enums for elements, runtimes can use their numerical id
     /// for simplicity and performance
@@ -1838,9 +1782,9 @@ pub struct BoneTops {
 }
 
 impl BoneTops {
-    pub fn find(&self, id: i32, element: &AnimElement, vert_id: i32) -> Option<&BoneTop> {
+    pub fn find(&self, id: i32, element: &AnimElement) -> Option<&BoneTop> {
         for bt in &self.tops {
-            if bt.id == id && bt.element == *element && bt.vert_id == vert_id {
+            if bt.id == id && bt.element == *element {
                 return Some(bt);
             }
         }
@@ -1877,7 +1821,6 @@ pub enum EditMode {
 #[derive(Default, PartialEq, Debug)]
 pub struct BoneTop {
     pub id: i32,
-    pub vert_id: i32,
     pub element: AnimElement,
     pub height: f32,
 }

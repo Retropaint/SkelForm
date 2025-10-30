@@ -361,13 +361,13 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
             ui.horizontal(|ui| {
                 ui.add_space(30.);
                 let label = ui.label(
-                    &shared.loc(&("keyframe_editor.elements.".to_owned() + &kf.element.to_string())),
+                    &shared
+                        .loc(&("keyframe_editor.elements.".to_owned() + &kf.element.to_string())),
                 );
                 bone_tops.tops.push(BoneTop {
                     id: kf.bone_id,
                     element: kf.element.clone(),
                     height: label.rect.top(),
-                    vert_id: kf.vert_id,
                 });
             });
         }
@@ -638,7 +638,10 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 }
             }
 
-            if ui.skf_button(&shared.loc("keyframe_editor.paste")).clicked() {
+            if ui
+                .skf_button(&shared.loc("keyframe_editor.paste"))
+                .clicked()
+            {
                 add_anim_action(shared);
 
                 let frame = shared.ui.anim.selected_frame;
@@ -735,8 +738,7 @@ fn draw_frame_lines(
 
         // the Y position is based on this diamond's respective label
         let top: f32;
-        if let Some(bone_top) = bone_tops.find(kf!().bone_id, &kf!().element.clone(), kf!().vert_id)
-        {
+        if let Some(bone_top) = bone_tops.find(kf!().bone_id, &kf!().element.clone()) {
             top = bone_top.height;
         } else {
             return;

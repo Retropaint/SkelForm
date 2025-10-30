@@ -533,28 +533,37 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
 
     // re-construct bones, accounting for rotations saved from IK
     *bones = og_bones.clone();
+    inheritance(bones, ik_rot.clone());
 
     for b in 0..bones.len() {
+        let bone = bones[b].clone();
         for v in 0..bones[b].vertices.len() {
-            let id = bones[b].vertices[v].id as i32;
+            #[rustfmt::skip]
+            macro_rules! vert {() =>{ bones[b].vertices[v] }}
+
+            let init_pos = vert!().pos;
+
+            inherit_vert(&mut vert!(), &bone);
+
             for weight in bones[b].weights.clone() {
-                if !weight.vert_ids.contains(&id) {
+                if !weight.vert_ids.contains(&(vert!().id as i32)) {
                     continue;
                 }
 
                 let bone_id = weight.bone_id;
-                let bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+                let weight_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
 
-                // all changes to vert below must be immutable
-
-                let vert = &mut bones[b].vertices[v];
-                vert.pos = utils::rotate(&vert.pos, bone.rot);
-                vert.pos += bone.pos;
+                vert!().pos = init_pos;
+                inherit_vert(&mut vert!(), &weight_bone);
             }
         }
     }
+}
 
-    inheritance(bones, ik_rot.clone());
+pub fn inherit_vert(vert: &mut Vertex, bone: &Bone) {
+    vert.pos *= bone.scale;
+    vert.pos = utils::rotate(&vert.pos, bone.rot);
+    vert.pos += bone.pos;
 }
 
 // https://www.youtube.com/watch?v=NfuO66wsuRg
@@ -674,10 +683,10 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
     }
 
     macro_rules! edit {
-        ($bone:expr, $element:expr, $value:expr, $vert_id:expr) => {
+        ($bone:expr, $element:expr, $value:expr) => {
             shared
                 .armature
-                .edit_bone($bone.id, &$element, $value, anim_id, anim_frame, $vert_id);
+                .edit_bone($bone.id, &$element, $value, anim_id, anim_frame);
         };
     }
 
@@ -710,8 +719,8 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
                 pos /= parent.scale;
             }
 
-            edit!(bone, AnimElement::PositionX, pos.x, -1);
-            edit!(bone, AnimElement::PositionY, pos.y, -1);
+            edit!(bone, AnimElement::PositionX, pos.x);
+            edit!(bone, AnimElement::PositionY, pos.y);
         }
         shared::EditMode::Rotate => {
             shared.ui.set_state(UiState::Rotating, true);
@@ -722,7 +731,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             let dir = mouse - bone_center.pos;
             let rot = dir.y.atan2(dir.x);
 
-            edit!(bone, AnimElement::Rotation, rot, -1);
+            edit!(bone, AnimElement::Rotation, rot);
         }
         shared::EditMode::Scale => {
             shared.ui.set_state(UiState::Scaling, true);
@@ -737,8 +746,8 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
 
             scale -= shared.mouse_vel();
 
-            edit!(bone, AnimElement::ScaleX, scale.x, -1);
-            edit!(bone, AnimElement::ScaleY, scale.y, -1);
+            edit!(bone, AnimElement::ScaleX, scale.x);
+            edit!(bone, AnimElement::ScaleY, scale.y);
         }
     };
 }
@@ -1329,18 +1338,10 @@ fn raw_to_world_vert(
     aspect_ratio: f32,
     pivot: Vec2,
 ) -> Vertex {
-    if let Some(bone) = bone {
+    if bone != None {
         let pivot_offset = tex_size * pivot;
         vert.pos.x -= pivot_offset.x;
         vert.pos.y += pivot_offset.y;
-
-        vert.pos *= bone.scale;
-
-        // rotate verts
-        vert.pos = utils::rotate(&vert.pos, bone.rot);
-
-        // move verts with bone
-        vert.pos += bone.pos;
     }
 
     // offset bone with camera
