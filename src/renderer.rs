@@ -1048,8 +1048,15 @@ fn draw_line(
 pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
     let mouse_vel = shared.mouse_vel();
     let zoom = shared.camera.zoom;
+    let mut total_rot = bone.rot;
+    for weight in &bone.weights {
+        let bones = &shared.armature.bones;
+        let weight_bone = bones.iter().find(|b| b.id == weight.bone_id).unwrap();
+        total_rot += weight_bone.rot;
+    }
+    // offset weight rotations
     let vert_mut = &mut shared.selected_bone_mut().unwrap().vertices[vert_idx];
-    vert_mut.pos -= utils::rotate(&(mouse_vel * zoom), -bone.rot);
+    vert_mut.pos -= utils::rotate(&(mouse_vel * zoom), -total_rot);
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
