@@ -549,11 +549,16 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     }
     if mesh_parent_id != -1 {
         let str = &shared.loc("bone_panel.mesh_deformation.go_to_mesh").clone();
-        if ui.skf_button(str).clicked() {
-            let bones = &shared.armature.bones;
-            let idx = bones.iter().position(|b| b.id == mesh_parent_id).unwrap();
-            shared.ui.select_bone(idx);
-        }
+        ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.skf_button(str).clicked() {
+                    let bones = &shared.armature.bones;
+                    let idx = bones.iter().position(|b| b.id == mesh_parent_id).unwrap();
+                    shared.ui.select_bone(idx);
+                }
+            });
+        });
+
         return;
     }
 
