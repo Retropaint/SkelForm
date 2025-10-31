@@ -121,7 +121,8 @@
       "reset": "Reset",
       "reset_desc": "Reset mesh to image quad",
       "center": "Center",
-      "center_desc": "Adjust mesh to it's center"
+      "center_desc": "Adjust mesh to it's center",
+      "go_to_mesh": "Go to mesh"
     }
   },
   "polar": {

@@ -285,7 +285,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
         let vert = mouse_world_vert;
-        vert_lines(&bone, shared, &vert, render_pass, device, &mut new_vert);
+        vert_lines(bone, shared, &vert, render_pass, device, &mut new_vert);
         bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
     }
 
@@ -298,7 +298,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 ..Default::default()
             });
             let bone_mut = shared.selected_bone_mut().unwrap();
-            vert.id = bone_mut.vertices.len() as u32 + 1;
+            let ids = bone_mut.vertices.iter().map(|v| v.id as i32).collect();
+            vert.id = generate_id(ids) as u32;
             bone_mut.vertices.push(vert);
             bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
             bone_mut.indices = triangulate(&bone_mut.vertices);
@@ -993,10 +994,9 @@ pub fn vert_lines(
             v1_bot.add_color += add_color;
         }
 
-        if shared.dragging_verts.len() == 2
-            && shared.dragging_verts[0] == i0 as usize
-            && shared.dragging_verts[1] == i1 as usize
-        {
+        let mv = &shared.dragging_verts;
+
+        if mv.len() == 2 && mv[0] == i0 as usize && mv[1] == i1 as usize {
             v0_top.add_color += add_color;
             v0_bot.add_color += add_color;
             v1_top.add_color += add_color;

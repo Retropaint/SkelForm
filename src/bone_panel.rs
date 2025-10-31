@@ -536,6 +536,27 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         return;
     }
 
+    // check if this bone is a weight
+    let parents = shared.armature.get_all_parents(bone.id);
+    let mut mesh_parent_id = -1;
+    'parent: for parent in parents {
+        for weight in parent.weights {
+            if weight.bone_id == bone.id {
+                mesh_parent_id = parent.id;
+                break 'parent;
+            }
+        }
+    }
+    if mesh_parent_id != -1 {
+        let str = &shared.loc("bone_panel.mesh_deformation.go_to_mesh").clone();
+        if ui.skf_button(str).clicked() {
+            let bones = &shared.armature.bones;
+            let idx = bones.iter().position(|b| b.id == mesh_parent_id).unwrap();
+            shared.ui.select_bone(idx);
+        }
+        return;
+    }
+
     let str_edit = &shared.loc("bone_panel.mesh_deformation.edit").clone();
     let str_finish_edit = &shared
         .loc("bone_panel.mesh_deformation.finish_edit")
