@@ -344,7 +344,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
         for vert in shared.dragging_verts.clone() {
             let bone = &temp_bones.iter().find(|bone| bone.id == bone_id).unwrap();
-            drag_vertex(shared, bone, vert);
+            drag_vertex(shared, bone, &temp_bones, vert);
         }
 
         return;
@@ -972,7 +972,6 @@ pub fn vert_lines(
                 shared.dragging_verts.push(i0 as usize);
                 shared.dragging_verts.push(i1 as usize);
             } else if shared.input.left_clicked && !added_vert {
-                let img = &shared.armature.get_current_tex(bone.id).unwrap().image;
                 let wv0 = bone.vertices[i0 as usize].pos;
                 let wv1 = bone.vertices[i1 as usize].pos;
                 let pos = wv0 + (wv1 - wv0) * interp;
@@ -1043,12 +1042,15 @@ fn draw_line(
     draw(&None, &verts, &indices, render_pass, device);
 }
 
-pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
+pub fn drag_vertex(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>, vert_idx: usize) {
     let mouse_vel = shared.mouse_vel();
     let zoom = shared.camera.zoom;
+    let vert_id = bone.vertices[vert_idx].id;
     let mut total_rot = bone.rot;
     for weight in &bone.weights {
-        let bones = &shared.armature.bones;
+        if !weight.vert_ids.contains(&(vert_id as i32)) {
+            continue;
+        }
         let weight_bone = bones.iter().find(|b| b.id == weight.bone_id).unwrap();
         total_rot += weight_bone.rot;
     }
