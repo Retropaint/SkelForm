@@ -150,13 +150,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
                 if shared.ui.showing_mesh && shared.input.right_clicked && !removed_vert {
                     let bone = &mut shared.selected_bone_mut().unwrap();
-                    bone.blacklist
-                        .push(bone.vertices[bone.indices[i * 3] as usize].id);
-                    bone.blacklist
-                        .push(bone.vertices[bone.indices[i * 3 + 1] as usize].id);
-                    bone.blacklist
-                        .push(bone.vertices[bone.indices[i * 3 + 2] as usize].id);
-                    println!("{:?}", bone.blacklist);
+                    let mut ids = vec![];
+                    for i in &bone.indices {
+                        ids.push(bone.vertices[*i as usize].id);
+                    }
                     bone.indices.remove(i * 3);
                     bone.indices.remove(i * 3);
                     bone.indices.remove(i * 3);
@@ -322,25 +319,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             bone_mut.vertices.push(vert);
             bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
             bone_mut.indices = triangulate(&bone_mut.vertices);
-            let mut blacklist_indices = vec![];
-            for (i, chunk) in bone_mut.indices.chunks_exact(3).enumerate() {
-                let id0 = bone_mut.vertices[chunk[0] as usize].id;
-                let id1 = bone_mut.vertices[chunk[1] as usize].id;
-                let id2 = bone_mut.vertices[chunk[2] as usize].id;
-                for (_, bchunk) in bone_mut.blacklist.chunks_exact(3).enumerate() {
-                    if bchunk.contains(&id0) && bchunk.contains(&id1) && bchunk.contains(&id2) {
-                        blacklist_indices.push(i);
-                    }
-                }
-            }
-
-            blacklist_indices.reverse();
-
-            for i in blacklist_indices {
-                //bone_mut.indices.remove(i);
-                //bone_mut.indices.remove(i);
-                //bone_mut.indices.remove(i);
-            }
         }
     }
 
