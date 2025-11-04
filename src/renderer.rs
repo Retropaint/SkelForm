@@ -937,7 +937,7 @@ pub fn vert_lines(
         let v1 = bone.world_verts[i1 as usize];
         let dir = v0.pos - v1.pos;
 
-        let width = 2.5;
+        let width = 2. * (shared.camera.zoom / 500.);
         let mut base = Vec2::new(width, width) / shared.camera.zoom;
         base = utils::rotate(&base, dir.y.atan2(dir.x));
 
@@ -1209,7 +1209,7 @@ fn draw_point(
     camera: Vec2,
     rotation: f32,
 ) -> Vec<Vertex> {
-    let point_size = 10.;
+    let point_size = 6. * (shared.camera.zoom / 500.);
     macro_rules! vert {
         ($pos:expr, $uv:expr) => {
             Vertex {
