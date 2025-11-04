@@ -909,6 +909,10 @@ pub struct Bone {
     #[serde(default, skip_serializing_if = "are_weights_empty")]
     pub weights: Vec<BoneWeight>,
 
+    // indices of vert ids that can't form triangles
+    #[serde(default)]
+    pub blacklist: Vec<u32>,
+
     #[serde(skip)]
     pub folded: bool,
     #[serde(skip)]

@@ -136,35 +136,41 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
                 let uv = wv[c0].uv * bary.3 + wv[c1].uv * bary.1 + wv[c2].uv * bary.2;
 
-                let tex = shared.armature.get_current_tex(temp_bones[b].id);
-                let img = &tex.unwrap().image;
-                let pos = Vec2::new(
-                    (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
-                    (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
-                );
-
-                let vert_pos = tb.vertices[c0].pos * bary.3
-                    + tb.vertices[c1].pos * bary.1
-                    + tb.vertices[c2].pos * bary.2;
+                let bones = &shared.armature.bones;
+                let v = &bones.iter().find(|bone| bone.id == tb.id).unwrap().vertices;
+                let pos = v[c0].pos * bary.3 + v[c1].pos * bary.1 + v[c2].pos * bary.2;
 
                 if shared.input.left_clicked && shared.ui.showing_mesh && new_vert == None {
                     new_vert = Some(Vertex {
-                        pos: vert_pos,
+                        pos,
                         uv,
                         ..Default::default()
                     });
                 }
 
                 if shared.ui.showing_mesh && shared.input.right_clicked && !removed_vert {
-                    let indices = &mut shared.selected_bone_mut().unwrap().indices;
-                    indices.remove(i * 3);
-                    indices.remove(i * 3);
-                    indices.remove(i * 3);
+                    let bone = &mut shared.selected_bone_mut().unwrap();
+                    bone.blacklist
+                        .push(bone.vertices[bone.indices[i * 3] as usize].id);
+                    bone.blacklist
+                        .push(bone.vertices[bone.indices[i * 3 + 1] as usize].id);
+                    bone.blacklist
+                        .push(bone.vertices[bone.indices[i * 3 + 2] as usize].id);
+                    println!("{:?}", bone.blacklist);
+                    bone.indices.remove(i * 3);
+                    bone.indices.remove(i * 3);
+                    bone.indices.remove(i * 3);
                     removed_vert = true;
                     break;
                 }
 
                 let tex = shared.armature.get_current_tex(temp_bones[b].id);
+
+                let img = &tex.unwrap().image;
+                let pos = Vec2::new(
+                    (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
+                    (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
+                );
                 let pixel_alpha = tex.unwrap().image.get_pixel(pos.x as u32, pos.y as u32).0[3];
                 if pixel_alpha == 255 && !shared.ui.showing_mesh {
                     hover_bone_id = temp_bones[b].id;
@@ -316,6 +322,25 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             bone_mut.vertices.push(vert);
             bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
             bone_mut.indices = triangulate(&bone_mut.vertices);
+            let mut blacklist_indices = vec![];
+            for (i, chunk) in bone_mut.indices.chunks_exact(3).enumerate() {
+                let id0 = bone_mut.vertices[chunk[0] as usize].id;
+                let id1 = bone_mut.vertices[chunk[1] as usize].id;
+                let id2 = bone_mut.vertices[chunk[2] as usize].id;
+                for (_, bchunk) in bone_mut.blacklist.chunks_exact(3).enumerate() {
+                    if bchunk.contains(&id0) && bchunk.contains(&id1) && bchunk.contains(&id2) {
+                        blacklist_indices.push(i);
+                    }
+                }
+            }
+
+            blacklist_indices.reverse();
+
+            for i in blacklist_indices {
+                //bone_mut.indices.remove(i);
+                //bone_mut.indices.remove(i);
+                //bone_mut.indices.remove(i);
+            }
         }
     }
 
@@ -659,8 +684,8 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
 /// sort vertices in cw (or ccw?) order
 fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
     let mut center = Vec2::default();
-    for v in &verts {
-        center += v.pos;
+    for v in 0..verts.len() {
+        center += verts[v].pos;
     }
     center /= verts.len() as f32;
 
@@ -985,8 +1010,10 @@ pub fn vert_lines(
                 shared.dragging_verts.push(i0 as usize);
                 shared.dragging_verts.push(i1 as usize);
             } else if shared.input.left_clicked && !added_vert {
-                let wv0 = bone.vertices[i0 as usize].pos;
-                let wv1 = bone.vertices[i1 as usize].pos;
+                let bones = &shared.armature.bones;
+                let v = &bones.iter().find(|b| b.id == bone.id).unwrap().vertices;
+                let wv0 = v[i0 as usize].pos;
+                let wv1 = v[i1 as usize].pos;
                 let pos = wv0 + (wv1 - wv0) * interp;
                 *new_vert = Some(Vertex {
                     pos,
@@ -1074,20 +1101,21 @@ pub fn drag_vertex(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>, vert_idx
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
     macro_rules! vert {
-        ($pos:expr, $uv:expr) => {
+        ($pos:expr, $uv:expr, $id:expr) => {
             Vertex {
                 pos: $pos,
                 uv: $uv,
+                id: $id,
                 ..Default::default()
             }
         };
     }
     let tex = *tex_size / 2.;
     let mut verts = vec![
-        vert!(Vec2::new(-tex.x, tex.y), Vec2::new(0., 0.)),
-        vert!(Vec2::new(tex.x, tex.y), Vec2::new(1., 0.)),
-        vert!(Vec2::new(tex.x, -tex.y), Vec2::new(1., 1.)),
-        vert!(Vec2::new(-tex.x, -tex.y), Vec2::new(0., 1.)),
+        vert!(Vec2::new(-tex.x, tex.y), Vec2::new(0., 0.), 0),
+        vert!(Vec2::new(tex.x, tex.y), Vec2::new(1., 0.), 1),
+        vert!(Vec2::new(tex.x, -tex.y), Vec2::new(1., 1.), 2),
+        vert!(Vec2::new(-tex.x, -tex.y), Vec2::new(0., 1.), 3),
     ];
     verts = sort_vertices(verts.clone());
     let indices = triangulate(&verts);
