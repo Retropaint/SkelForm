@@ -100,6 +100,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // many fight for spot of newest vertex; only one will emerge victorious.
     let mut new_vert: Option<Vertex> = None;
+    let mut removed_vert = false;
 
     // pre-draw bone setup
     for b in 0..temp_bones.len() {
@@ -118,10 +119,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         // check if cursor is on an opaque pixel of this bone's texture
-        if hover_bone_id == -1 && !shared.input.left_down && !shared.input.on_ui {
+        let tb = &temp_bones[b];
+        let selected_mesh = !shared.ui.showing_mesh
+            || shared.ui.showing_mesh && shared.selected_bone().unwrap().id == tb.id;
+        if hover_bone_id == -1 && !shared.input.left_down && !shared.input.on_ui && selected_mesh {
             let wv = &temp_bones[b].world_verts;
-            let tb = &temp_bones[b];
-            for (_, chunk) in temp_bones[b].indices.chunks_exact(3).enumerate() {
+            for (i, chunk) in temp_bones[b].indices.chunks_exact(3).enumerate() {
                 let c0 = chunk[0] as usize;
                 let c1 = chunk[1] as usize;
                 let c2 = chunk[2] as usize;
@@ -131,9 +134,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     continue;
                 }
 
-                let wv = &temp_bones[b].world_verts;
                 let uv = wv[c0].uv * bary.3 + wv[c1].uv * bary.1 + wv[c2].uv * bary.2;
 
+                let tex = shared.armature.get_current_tex(temp_bones[b].id);
                 let img = &tex.unwrap().image;
                 let pos = Vec2::new(
                     (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
@@ -152,6 +155,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     });
                 }
 
+                if shared.ui.showing_mesh && shared.input.right_clicked && !removed_vert {
+                    let indices = &mut shared.selected_bone_mut().unwrap().indices;
+                    indices.remove(i * 3);
+                    indices.remove(i * 3);
+                    indices.remove(i * 3);
+                    removed_vert = true;
+                    break;
+                }
+
+                let tex = shared.armature.get_current_tex(temp_bones[b].id);
                 let pixel_alpha = tex.unwrap().image.get_pixel(pos.x as u32, pos.y as u32).0[3];
                 if pixel_alpha == 255 && !shared.ui.showing_mesh {
                     hover_bone_id = temp_bones[b].id;
