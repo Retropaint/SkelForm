@@ -577,6 +577,14 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
     ui.horizontal(|ui| {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if ui.skf_button(&mesh_label).clicked() {
+                shared.ui.showing_mesh = !shared.ui.showing_mesh;
+            }
+
+            if mesh_label != str_finish_edit {
+                return;
+            }
+
             let tex_size = shared
                 .armature
                 .get_current_tex(bone.id)
@@ -617,10 +625,6 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 bone.indices = indices;
                 bone.weights = vec![];
                 shared.ui.selected_weights = -1;
-            }
-
-            if ui.skf_button(&mesh_label).clicked() {
-                shared.ui.showing_mesh = !shared.ui.showing_mesh;
             }
         });
     });
@@ -681,7 +685,6 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     "Set Verts"
                 };
                 if ui.skf_button(str_set_verts).clicked() {
-                    shared.ui.showing_mesh = !shared.ui.setting_weight_verts;
                     shared.ui.setting_weight_verts = !shared.ui.setting_weight_verts;
                 }
             });

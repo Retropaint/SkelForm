@@ -118,6 +118,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             tb.world_verts.push(vert);
         }
 
+        if shared.ui.setting_weight_verts {
+            continue;
+        }
+
         // check if cursor is on an opaque pixel of this bone's texture
         let tb = &temp_bones[b];
         let selected_mesh = !shared.ui.showing_mesh
@@ -290,7 +294,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    if shared.ui.showing_mesh {
+    if shared.ui.showing_mesh || shared.ui.setting_weight_verts {
         let id = shared.selected_bone().unwrap().id;
         let bone = temp_bones.iter_mut().find(|bone| bone.id == id).unwrap();
         let bind_group = &shared.armature.get_current_tex(bone.id).unwrap().bind_group;
