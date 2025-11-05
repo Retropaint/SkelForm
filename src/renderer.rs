@@ -118,6 +118,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             tb.world_verts.push(vert);
         }
 
+        for vert in &mut temp_bones[b].world_verts {
+            vert.add_color = VertexColor::new(0., 0., 0., 0.);
+        }
         if shared.ui.setting_weight_verts {
             continue;
         }
