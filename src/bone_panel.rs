@@ -406,24 +406,15 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         return;
     }
 
-    let root_joint_id = shared
-        .armature
-        .bones
-        .iter()
-        .find(|other| other.ik_family_id == bone.ik_family_id)
-        .unwrap()
-        .id;
+    let bones = &mut shared.armature.bones.iter();
+    let ik_id = bone.ik_family_id;
+    let root_id = bones.find(|b| b.ik_family_id == ik_id).unwrap().id;
 
-    if root_joint_id != bone.id {
+    if root_id != bone.id {
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.button("Go to root joint").clicked() {
-                    shared.ui.selected_bone_idx = shared
-                        .armature
-                        .bones
-                        .iter()
-                        .position(|other| other.id == root_joint_id)
-                        .unwrap();
+                    shared.ui.selected_bone_idx = bones.position(|b| b.id == root_id).unwrap();
                     shared.ui.selected_bone_ids = vec![];
                 }
             });
@@ -435,7 +426,7 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         let ik = "bone_panel.inverse_kinematics.";
         ui.label(&shared.loc(&(ik.to_owned() + "constraint")));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_none = &shared.loc(&(ik.to_owned() + "None")).clone();
+            let str_none = &shared.loc("none").clone();
             let str_clockwise = shared.loc(&(ik.to_owned() + "Clockwise")).clone() + "  ⟳";
             let str_ccw = shared.loc(&(ik.to_owned() + "CounterClockwise")).clone() + "  ⟲";
             let str_desc = &shared.loc(&(ik.to_owned() + "constraint_desc")).clone();
@@ -471,7 +462,7 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     shared.armature.find_bone_idx(bone.ik_target_id).unwrap();
             };
         } else {
-            ui.label("None");
+            ui.label(shared.loc("none"));
         }
 
         is_target_newline = ui.available_width() < target_buttons_width;
