@@ -116,12 +116,12 @@
     "mesh_deformation": {
       "heading": "Mesh Deformation ",
       "desc": "As all textures are made up of triangles, vertices can be moved and created to make more dynamic and flexible rigs & animations.",
-      "edit": "Edit",
+      "edit": "Edit Vertices",
       "finish_edit": "Finish",
       "reset": "Reset",
       "reset_desc": "Reset mesh to image quad",
       "center": "Center",
-      "center_desc": "Adjust mesh to it's center",
+      "center_desc": "Adjust mesh to its center",
       "go_to_mesh": "Go to mesh"
     }
   },
