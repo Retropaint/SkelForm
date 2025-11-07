@@ -565,8 +565,13 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
             #[rustfmt::skip]
             macro_rules! vert {() =>{ bones[b].vertices[v] }}
 
-            vert!().pos = inherit_vert(vert!().pos, &bone);
+            // vert pos before inheritance
             let init_pos = vert!().pos;
+
+            vert!().pos = inherit_vert(vert!().pos, &bone);
+
+            // vert pos after inheriting base bone
+            let start_pos = vert!().pos;
 
             for weight in bones[b].weights.clone() {
                 let v_id = vert!().id as i32;
@@ -578,9 +583,9 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 let bone_id = weight.bone_id;
                 let weight_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
 
-                vert!().pos = init_pos;
-                let new_pos = inherit_vert(vert!().pos, &weight_bone) - init_pos;
-                vert!().pos += new_pos * weight.vert_weights[idx.unwrap()];
+                let weight = weight.vert_weights[idx.unwrap()];
+                let end_pos = inherit_vert(init_pos, &weight_bone) - start_pos;
+                vert!().pos += end_pos * weight;
             }
         }
     }
