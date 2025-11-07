@@ -935,6 +935,8 @@ pub struct Bone {
 pub struct BoneWeight {
     #[serde(default)]
     pub vert_ids: Vec<i32>,
+    #[serde(default)]
+    pub vert_weights: Vec<f32>,
     #[serde(default = "default_neg_one")]
     pub bone_id: i32,
 }

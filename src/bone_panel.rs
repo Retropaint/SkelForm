@@ -683,6 +683,12 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             }
         });
     });
+
+    let selected = shared.ui.selected_weights;
+    let weights = &mut shared.selected_bone_mut().unwrap().weights[selected as usize];
+    for weight in &mut weights.vert_weights {
+        ui.horizontal(|ui| ui.add(egui::Slider::new(weight, (0.)..=1.)));
+    }
 }
 
 pub fn center_verts(verts: &mut Vec<Vertex>) {
