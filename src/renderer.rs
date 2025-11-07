@@ -565,12 +565,13 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
             #[rustfmt::skip]
             macro_rules! vert {() =>{ bones[b].vertices[v] }}
 
+            vert!().pos = inherit_vert(vert!().pos, &bone);
             let init_pos = vert!().pos;
 
-            inherit_vert(&mut vert!(), &bone);
-
             for weight in bones[b].weights.clone() {
-                if !weight.vert_ids.contains(&(vert!().id as i32)) {
+                let v_id = vert!().id as i32;
+                let idx = weight.vert_ids.iter().position(|id| *id == v_id);
+                if idx == None {
                     continue;
                 }
 
@@ -578,16 +579,18 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 let weight_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
 
                 vert!().pos = init_pos;
-                inherit_vert(&mut vert!(), &weight_bone);
+                let new_pos = inherit_vert(vert!().pos, &weight_bone) - init_pos;
+                vert!().pos += new_pos * weight.vert_weights[idx.unwrap()];
             }
         }
     }
 }
 
-pub fn inherit_vert(vert: &mut Vertex, bone: &Bone) {
-    vert.pos *= bone.scale;
-    vert.pos = utils::rotate(&vert.pos, bone.rot);
-    vert.pos += bone.pos;
+pub fn inherit_vert(mut pos: Vec2, bone: &Bone) -> Vec2 {
+    pos *= bone.scale;
+    pos = utils::rotate(&pos, bone.rot);
+    pos += bone.pos;
+    pos
 }
 
 // https://www.youtube.com/watch?v=NfuO66wsuRg
@@ -887,8 +890,10 @@ pub fn bone_vertices(
             let weight = &mut shared.selected_bone_mut().unwrap().weights[idx];
             if let Some(idx) = weight.vert_ids.iter().position(|v| *v == vert_id as i32) {
                 weight.vert_ids.remove(idx);
+                weight.vert_weights.remove(idx);
             } else {
                 weight.vert_ids.push(vert_id as i32);
+                weight.vert_weights.push(1.);
             }
             break;
         }
