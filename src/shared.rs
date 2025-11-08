@@ -212,7 +212,7 @@ pub struct Vertex {
     pub color: VertexColor,
     #[serde(skip)]
     pub add_color: VertexColor,
-    #[serde(skip)]
+    #[serde(default)]
     pub id: u32,
     #[serde(default)]
     pub init_pos: Vec2,
