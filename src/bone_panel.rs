@@ -571,51 +571,55 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             if ui.skf_button(&mesh_label).clicked() {
                 shared.ui.showing_mesh = !shared.ui.showing_mesh;
             }
-
-            if mesh_label != str_finish_edit {
-                return;
-            }
-
-            let tex_size = shared
-                .armature
-                .get_current_tex(bone.id)
-                .unwrap()
-                .size
-                .clone();
-
-            let str_reset = &shared.loc("bone_panel.mesh_deformation.reset");
-            //let str_reset_desc = &shared.loc("bone_panel.mesh_deformation.reset_desc");
-            let can_reset = !shared.ui.setting_weight_verts;
-            if ui
-                .add_enabled(can_reset, egui::Button::new(str_reset))
-                .clicked()
-            {
-                let (verts, indices) = renderer::create_tex_rect(&tex_size);
-                let bone = shared.selected_bone_mut().unwrap();
-                bone.vertices = verts;
-                bone.indices = indices;
-                bone.weights = vec![];
-                shared.ui.selected_weights = -1;
-            }
-
-            let str_center = &shared.loc("bone_panel.mesh_deformation.center");
-            let str_center_desc = &shared.loc("bone_panel.mesh_deformation.center_desc");
-            let button = ui.skf_button(str_center);
-            if button.on_hover_text(str_center_desc).clicked() {
-                center_verts(&mut shared.selected_bone_mut().unwrap().vertices);
-            }
-
-            if ui.skf_button("Trace").clicked() {
-                let tex = &shared.armature.get_current_set(bone.id).unwrap().textures;
-                let (verts, indices) = renderer::trace_mesh(&tex[bone.tex_idx as usize].image);
-                let bone = &mut shared.selected_bone_mut().unwrap();
-                bone.vertices = verts;
-                bone.indices = indices;
-                bone.weights = vec![];
-                shared.ui.selected_weights = -1;
-            }
         });
     });
+
+    if mesh_label != str_finish_edit {
+        ui.add_space(21.);
+    } else {
+        ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let tex_size = shared
+                    .armature
+                    .get_current_tex(bone.id)
+                    .unwrap()
+                    .size
+                    .clone();
+
+                let str_reset = &shared.loc("bone_panel.mesh_deformation.reset");
+                //let str_reset_desc = &shared.loc("bone_panel.mesh_deformation.reset_desc");
+                let can_reset = !shared.ui.setting_weight_verts;
+                if ui
+                    .add_enabled(can_reset, egui::Button::new(str_reset))
+                    .clicked()
+                {
+                    let (verts, indices) = renderer::create_tex_rect(&tex_size);
+                    let bone = shared.selected_bone_mut().unwrap();
+                    bone.vertices = verts;
+                    bone.indices = indices;
+                    bone.weights = vec![];
+                    shared.ui.selected_weights = -1;
+                }
+
+                let str_center = &shared.loc("bone_panel.mesh_deformation.center");
+                let str_center_desc = &shared.loc("bone_panel.mesh_deformation.center_desc");
+                let button = ui.skf_button(str_center);
+                if button.on_hover_text(str_center_desc).clicked() {
+                    center_verts(&mut shared.selected_bone_mut().unwrap().vertices);
+                }
+
+                if ui.skf_button("Trace").clicked() {
+                    let tex = &shared.armature.get_current_set(bone.id).unwrap().textures;
+                    let (verts, indices) = renderer::trace_mesh(&tex[bone.tex_idx as usize].image);
+                    let bone = &mut shared.selected_bone_mut().unwrap();
+                    bone.vertices = verts;
+                    bone.indices = indices;
+                    bone.weights = vec![];
+                    shared.ui.selected_weights = -1;
+                }
+            });
+        });
+    }
 
     ui.horizontal(|ui| {
         ui.label("Weights:");
@@ -694,7 +698,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     let weights = &mut shared.selected_bone_mut().unwrap().weights[selected as usize];
     for w in 0..weights.vert_weights.len() {
         ui.horizontal(|ui| {
-            let str_label = weights.vert_ids[w].to_string() + ":"; 
+            let str_label = weights.vert_ids[w].to_string() + ":";
             ui.label(str_label);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.horizontal(|ui| {
