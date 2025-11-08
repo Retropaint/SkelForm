@@ -589,16 +589,12 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 }
 
                 let bone_id = weight.bone_id;
-                let weight_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+                let w_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
 
                 let weight_factor = weight.vert_weights[idx.unwrap()];
-                let end_pos = inherit_vert(
-                    init_pos,
-                    &weight_bone,
-                    weight.rest_pos,
-                    weight.rest_rot,
-                    weight.rest_scale,
-                ) - start_pos;
+                let w = weight;
+                let end_pos = inherit_vert(init_pos, &w_bone, w.rest_pos, w.rest_rot, w.rest_scale)
+                    - start_pos;
                 vert!().pos += end_pos * weight_factor;
             }
         }
@@ -612,9 +608,9 @@ pub fn inherit_vert(
     rest_rot: f32,
     rest_scale: Vec2,
 ) -> Vec2 {
-    pos *= bone.scale * rest_scale;
-    pos = utils::rotate(&pos, bone.rot - rest_rot);
-    pos += bone.pos - rest_pos;
+    pos *= bone.scale;
+    pos = utils::rotate(&pos, bone.rot);
+    pos += bone.pos;
     pos
 }
 
