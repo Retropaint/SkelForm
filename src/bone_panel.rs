@@ -284,7 +284,9 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     if children.len() > 0 || parents.len() > 0 {
         ui.add_space(section_spacing);
         inverse_kinematics(ui, shared, &bone);
-        ui.add_space(20.);
+        if !bone.ik_folded {
+            ui.add_space(20.);
+        }
     }
 
     // disabled: mesh deformation (not ready either)
