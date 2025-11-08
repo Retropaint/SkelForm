@@ -126,6 +126,8 @@
             <div class="box">
                 <p>
                     Use the slider below to adjust the UI scale.
+                    <br>
+                    The elements behind should be visible and readable.
                 </p>
                 <div class="horizontal">
                     <input id="ui-slider-input" type="range" min="0" max="2.5" step="0.01"></input>
@@ -190,7 +192,9 @@
 
             toggleElement(false, "image-dialog");
             toggleElement(false, "file-dialog");
-            toggleElement(false, "ui-slider");
+            toggleElement(true, "ui-slider");
+            toggleElement(false, "focus")
+            toggleElement(true, "canvas")
             toggleElement(false, "edit-input-modal");
             toggleElement(false, "resolution-message");
             toggleElement(false, "wait-message");

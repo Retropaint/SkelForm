@@ -240,7 +240,7 @@ impl ApplicationHandler for App {
             // disabled: web ui slider may be used to fix scaling issues,
             // but for now it's unneeded
 
-            // self.shared.ui.scale = getUiSliderValue();
+            self.shared.ui.scale = getUiSliderValue();
         }
 
         if self.shared.ui.scale <= 0. {
