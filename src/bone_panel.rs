@@ -621,6 +621,8 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         });
     }
 
+    ui.separator();
+
     ui.horizontal(|ui| {
         ui.label("Weights:");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -675,7 +677,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         return;
     }
 
-    ui.add_space(20.);
+    ui.add_space(5.);
 
     let selected = shared.ui.selected_weights;
     let vert_id_len = shared.selected_bone().unwrap().weights[selected as usize]
