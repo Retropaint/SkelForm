@@ -302,56 +302,68 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
 pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     let str_heading = &shared.loc("bone_panel.inverse_kinematics.heading").clone();
     let str_desc = &shared.loc("bone_panel.inverse_kinematics.desc").clone();
-    ui.separator();
-    ui.horizontal(|ui| {
-        ui.label(str_heading.to_owned() + ICON_INFO)
-            .on_hover_text(str_desc);
+    egui::Frame::new()
+        .fill(shared.config.colors.dark_accent.into())
+        .inner_margin(egui::Margin {
+            bottom: 5,
+            top: 5,
+            left: 5,
+            right: 5,
+        })
+        .show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(str_heading.to_owned() + ICON_INFO)
+                    .on_hover_text(str_desc);
 
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
-            let pointing_hand = egui::CursorIcon::PointingHand;
-            if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
-                shared.selected_bone_mut().unwrap().ik_folded =
-                    !shared.selected_bone_mut().unwrap().ik_folded;
-            }
-
-            if shared.armature.bone_eff(bone.id) == JointEffector::None {
-                return;
-            }
-
-            let mut enabled = !bone.ik_disabled;
-            let str_desc = &shared.loc("bone_panel.inverse_kinematics.enabled_desc");
-            let checkbox = ui
-                .checkbox(&mut enabled, "".into_atoms())
-                .on_hover_text(str_desc);
-            if checkbox.clicked() {
-                let mut bones = vec![];
-                armature_window::get_all_children(&shared.armature.bones, &mut bones, &bone);
-                bones.push(bone.clone());
-                for bone in bones {
-                    shared.armature.find_bone_mut(bone.id).unwrap().ik_disabled = !enabled;
-                }
-
-                if shared.armature.bone_eff(bone.id) == JointEffector::Start {
-                    return;
-                }
-
-                // emable parents IK as well
-
-                let parents = shared.armature.get_all_parents(bone.id);
-                for parent in parents {
-                    if shared.armature.bone_eff(parent.id) == JointEffector::None {
-                        continue;
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
+                    let pointing_hand = egui::CursorIcon::PointingHand;
+                    if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
+                        shared.selected_bone_mut().unwrap().ik_folded =
+                            !shared.selected_bone_mut().unwrap().ik_folded;
                     }
 
-                    let bone = shared.armature.find_bone_mut(parent.id).unwrap();
-                    bone.ik_disabled = !enabled;
-                }
-            }
-        })
-    });
+                    if shared.armature.bone_eff(bone.id) == JointEffector::None {
+                        return;
+                    }
 
-    ui.separator();
+                    let mut enabled = !bone.ik_disabled;
+                    let str_desc = &shared.loc("bone_panel.inverse_kinematics.enabled_desc");
+                    let checkbox = ui
+                        .checkbox(&mut enabled, "".into_atoms())
+                        .on_hover_text(str_desc);
+                    if checkbox.clicked() {
+                        let mut bones = vec![];
+                        armature_window::get_all_children(
+                            &shared.armature.bones,
+                            &mut bones,
+                            &bone,
+                        );
+                        bones.push(bone.clone());
+                        for bone in bones {
+                            shared.armature.find_bone_mut(bone.id).unwrap().ik_disabled = !enabled;
+                        }
+
+                        if shared.armature.bone_eff(bone.id) == JointEffector::Start {
+                            return;
+                        }
+
+                        // emable parents IK as well
+
+                        let parents = shared.armature.get_all_parents(bone.id);
+                        for parent in parents {
+                            if shared.armature.bone_eff(parent.id) == JointEffector::None {
+                                continue;
+                            }
+
+                            let bone = shared.armature.find_bone_mut(parent.id).unwrap();
+                            bone.ik_disabled = !enabled;
+                        }
+                    }
+                })
+            });
+        });
+    ui.add_space(2.5);
 
     if bone.ik_folded {
         return;
@@ -507,21 +519,31 @@ pub fn target_buttons(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     let str_heading = &shared.loc("bone_panel.mesh_deformation.heading").clone();
     let str_desc = &shared.loc("bone_panel.mesh_deformation.desc").clone();
-    ui.separator();
-    ui.horizontal(|ui| {
-        ui.label(str_heading.to_owned() + ICON_INFO)
-            .on_hover_text(str_desc);
 
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let fold_icon = if bone.meshdef_folded { "⏴" } else { "⏷" };
-            let pointing_hand = egui::CursorIcon::PointingHand;
-            if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
-                shared.selected_bone_mut().unwrap().meshdef_folded =
-                    !shared.selected_bone_mut().unwrap().meshdef_folded;
-            }
+    egui::Frame::new()
+        .fill(shared.config.colors.dark_accent.into())
+        .inner_margin(egui::Margin {
+            bottom: 5,
+            top: 5,
+            left: 5,
+            right: 5,
         })
-    });
-    ui.separator();
+        .show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(str_heading.to_owned() + ICON_INFO)
+                    .on_hover_text(str_desc);
+
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let fold_icon = if bone.meshdef_folded { "⏴" } else { "⏷" };
+                    let pointing_hand = egui::CursorIcon::PointingHand;
+                    if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
+                        shared.selected_bone_mut().unwrap().meshdef_folded =
+                            !shared.selected_bone_mut().unwrap().meshdef_folded;
+                    }
+                })
+            });
+        });
+    ui.add_space(2.5);
 
     if bone.meshdef_folded {
         return;
