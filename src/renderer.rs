@@ -359,6 +359,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     if !shared.input.left_down {
         shared.dragging_verts = vec![];
         shared.editing_bone = false;
+        shared.input.mouse_init = None;
         return;
     } else if shared.dragging_verts.len() > 0 {
         let mut bone_id = -1;
@@ -374,6 +375,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // mouse related stuff
+
+    if shared.input.mouse_init == None {
+        shared.input.mouse_init = Some(shared.input.mouse);
+        if let Some(bone) = shared.selected_bone() {
+            shared.bone_init_rot = bone.rot;
+        }
+    }
 
     // move camera
     if (shared.input.is_pressing(KeyCode::SuperLeft)
@@ -755,12 +763,18 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
         shared::EditMode::Rotate => {
             shared.ui.set_state(UiState::Rotating, true);
 
+            let mut mouse_init =
+                utils::screen_to_world_space(shared.input.mouse_init.unwrap(), shared.window);
+            mouse_init.x *= shared.aspect_ratio();
+            let dir_init = mouse_init - bone_center.pos;
+            let rot_init = dir_init.y.atan2(dir_init.x);
+
             let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
             mouse.x *= shared.aspect_ratio();
-
             let dir = mouse - bone_center.pos;
             let rot = dir.y.atan2(dir.x);
 
+            let rot = shared.bone_init_rot + (rot - rot_init);
             edit!(bone, AnimElement::Rotation, rot);
         }
         shared::EditMode::Scale => {

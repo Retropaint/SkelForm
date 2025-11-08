@@ -378,6 +378,7 @@ pub struct InputStates {
     pub down_dur: i32,
     pub holding_mod: bool,
     pub holding_shift: bool,
+    pub mouse_init: Option<Vec2>,
 
     // is mouse on UI?
     pub on_ui: bool,
@@ -1943,6 +1944,8 @@ pub struct Shared {
     pub import_contents: Arc<Mutex<Vec<u8>>>,
 
     pub local_doc_url: String,
+
+    pub bone_init_rot: f32,
 
     loc_strings: std::collections::HashMap<String, String>,
 }
