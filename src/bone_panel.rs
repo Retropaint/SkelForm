@@ -675,12 +675,21 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         return;
     }
 
+    ui.add_space(20.);
+
+    let selected = shared.ui.selected_weights;
+    let vert_id_len = shared.selected_bone().unwrap().weights[selected as usize]
+        .vert_ids
+        .len();
     ui.horizontal(|ui| {
+        if vert_id_len > 0 {
+            ui.label("Weights:");
+        }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let str_set_verts = if shared.ui.setting_weight_verts {
                 "Finish"
             } else {
-                "Set Verts"
+                "Bind Verts"
             };
             if ui.skf_button(str_set_verts).clicked() {
                 shared.ui.setting_weight_verts = !shared.ui.setting_weight_verts;
@@ -688,24 +697,22 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         });
     });
 
-    if weights[shared.ui.selected_weights as usize].vert_ids.len() == 0 {
-        return;
-    }
-
-    ui.label("Weights:");
-
     let selected = shared.ui.selected_weights;
     let weights = &mut shared.selected_bone_mut().unwrap().weights[selected as usize];
-    for w in 0..weights.vert_weights.len() {
-        ui.horizontal(|ui| {
-            let str_label = weights.vert_ids[w].to_string() + ":";
-            ui.label(str_label);
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.horizontal(|ui| {
-                    ui.add(egui::Slider::new(&mut weights.vert_weights[w], (0.)..=1.))
+    if weights.vert_ids.len() == 0 {
+        ui.label("Click `Bind Verts` to add vertices to this bind. Click again to stop adding.\n\nOnce added, their weights will be configurable here.\n\n");
+    } else {
+        for w in 0..weights.vert_weights.len() {
+            ui.horizontal(|ui| {
+                let str_label = weights.vert_ids[w].to_string() + ":";
+                ui.label(str_label);
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.horizontal(|ui| {
+                        ui.add(egui::Slider::new(&mut weights.vert_weights[w], (0.)..=1.))
+                    });
                 });
             });
-        });
+        }
     }
 }
 
