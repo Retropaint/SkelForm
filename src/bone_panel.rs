@@ -598,9 +598,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         });
     });
 
-    if mesh_label != str_finish_edit {
-        ui.add_space(21.);
-    } else {
+    ui.add_enabled_ui(shared.ui.showing_mesh, |ui| {
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let tex_size = shared
@@ -643,7 +641,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 }
             });
         });
-    }
+    });
 
     ui.separator();
 
@@ -700,8 +698,6 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     if weights[shared.ui.selected_weights as usize].bone_id == -1 {
         return;
     }
-
-    ui.add_space(5.);
 
     let selected = shared.ui.selected_weights;
     let vert_id_len = shared.selected_bone().unwrap().weights[selected as usize]
