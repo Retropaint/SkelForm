@@ -684,10 +684,24 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         });
     });
 
+    if weights[shared.ui.selected_weights as usize].vert_ids.len() == 0 {
+        return;
+    }
+
+    ui.label("Weights:");
+
     let selected = shared.ui.selected_weights;
     let weights = &mut shared.selected_bone_mut().unwrap().weights[selected as usize];
-    for weight in &mut weights.vert_weights {
-        ui.horizontal(|ui| ui.add(egui::Slider::new(weight, (0.)..=1.)));
+    for w in 0..weights.vert_weights.len() {
+        ui.horizontal(|ui| {
+            let str_label = weights.vert_ids[w].to_string() + ":"; 
+            ui.label(str_label);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.horizontal(|ui| {
+                    ui.add(egui::Slider::new(&mut weights.vert_weights[w], (0.)..=1.))
+                });
+            });
+        });
     }
 }
 
