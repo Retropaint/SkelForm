@@ -568,7 +568,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
             // vert pos before inheritance
             let init_pos = vert!().pos;
 
-            vert!().pos = inherit_vert(vert!().pos, &bone);
+            vert!().pos = inherit_vert(vert!().pos, &bone, Vec2::default(), 0., Vec2::new(1., 1.));
 
             // vert pos after inheriting base bone
             let start_pos = vert!().pos;
@@ -583,18 +583,30 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 let bone_id = weight.bone_id;
                 let weight_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
 
-                let weight = weight.vert_weights[idx.unwrap()];
-                let end_pos = inherit_vert(init_pos, &weight_bone) - start_pos;
-                vert!().pos += end_pos * weight;
+                let weight_factor = weight.vert_weights[idx.unwrap()];
+                let end_pos = inherit_vert(
+                    init_pos,
+                    &weight_bone,
+                    weight.rest_pos,
+                    weight.rest_rot,
+                    weight.rest_scale,
+                ) - start_pos;
+                vert!().pos += end_pos * weight_factor;
             }
         }
     }
 }
 
-pub fn inherit_vert(mut pos: Vec2, bone: &Bone) -> Vec2 {
-    pos *= bone.scale;
-    pos = utils::rotate(&pos, bone.rot);
-    pos += bone.pos;
+pub fn inherit_vert(
+    mut pos: Vec2,
+    bone: &Bone,
+    rest_pos: Vec2,
+    rest_rot: f32,
+    rest_scale: Vec2,
+) -> Vec2 {
+    pos *= bone.scale * rest_scale;
+    pos = utils::rotate(&pos, bone.rot - rest_rot);
+    pos += bone.pos - rest_pos;
     pos
 }
 

@@ -939,6 +939,12 @@ pub struct BoneWeight {
     pub vert_weights: Vec<f32>,
     #[serde(default = "default_neg_one")]
     pub bone_id: i32,
+    #[serde(default)]
+    pub rest_pos: Vec2,
+    #[serde(default)]
+    pub rest_rot: f32,
+    #[serde(default)]
+    pub rest_scale: Vec2,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
