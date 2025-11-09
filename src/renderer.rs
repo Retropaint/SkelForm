@@ -567,6 +567,12 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
 
     for b in 0..bones.len() {
         let bone = bones[b].clone();
+
+        let mut alternating = vec![];
+        for _ in &bones[b].weights {
+            alternating.push(false);
+        }
+
         for v in 0..bones[b].vertices.len() {
             #[rustfmt::skip]
             macro_rules! vert {() =>{ bones[b].vertices[v] }}
@@ -579,9 +585,8 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
             // vert pos after inheriting base bone
             let start_pos = vert!().pos;
 
-            let mut w_idx: i32 = -1;
-            for weight in bones[b].weights.clone() {
-                w_idx += 1;
+            // weights
+            for (w, weight) in bones[b].weights.clone().iter().enumerate() {
                 let v_id = vert!().id as i32;
                 let idx = weight.vert_ids.iter().position(|id| *id == v_id);
                 if idx == None {
@@ -589,12 +594,38 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 }
 
                 let bone_id = weight.bone_id;
-                let mut w_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+                let weight_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+
+                if weight.is_path && w != 0 && w != bones[b].weights.len() - 1 {
+                    let prev_weight_bone = bones
+                        .iter()
+                        .find(|bone| bone.id == bones[b].weights[w - 1].bone_id)
+                        .unwrap();
+                    let next_weight_bone = bones
+                        .iter()
+                        .find(|bone| bone.id == bones[b].weights[w + 1].bone_id)
+                        .unwrap();
+                    let prev_dir = weight_bone.pos - prev_weight_bone.pos;
+                    let next_dir = next_weight_bone.pos - weight_bone.pos;
+                    let prev_normal = Vec2::new(-prev_dir.y, prev_dir.x).normalize();
+                    let next_normal = Vec2::new(-next_dir.y, next_dir.x).normalize();
+                    let mut gap = weight.path_gap;
+                    if !alternating[w] {
+                        gap = -gap;
+                    }
+                    alternating[w] = !alternating[w];
+                    vert!().pos = weight_bone.pos + (prev_normal + next_normal) * gap;
+                    continue;
+                }
 
                 let weight_factor = weight.vert_weights[idx.unwrap()];
-                let w = weight;
-                let end_pos = inherit_vert(init_pos, &w_bone, w.rest_pos, w.rest_rot, w.rest_scale)
-                    - start_pos;
+                let end_pos = inherit_vert(
+                    init_pos,
+                    &weight_bone,
+                    weight.rest_pos,
+                    weight.rest_rot,
+                    weight.rest_scale,
+                ) - start_pos;
                 vert!().pos += end_pos * weight_factor;
             }
         }
@@ -614,7 +645,6 @@ pub fn inherit_vert(
     pos
 }
 
-// https://www.youtube.com/watch?v=NfuO66wsuRg
 pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
     let root = bones[0].pos;
 
@@ -676,7 +706,7 @@ pub fn arc_ik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
         let angle = 3.14 * dist[b];
         bones[b].pos = Vec2::new(
             bones[b].pos.x * valley,
-            root.y + (1. - peak) * angle.sin() * max_length / peak,
+            root.y + (1. - peak) * angle.sin() * max_length,
         );
 
         let rotated = utils::rotate(&(bones[b].pos - root), base_angle);
@@ -684,6 +714,7 @@ pub fn arc_ik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
     }
 }
 
+// https://www.youtube.com/watch?v=NfuO66wsuRg
 pub fn fabrik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
     // forward-reaching
     let mut next_pos: Vec2 = target;

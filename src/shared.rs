@@ -943,6 +943,10 @@ pub struct BoneWeight {
     #[serde(default = "default_neg_one")]
     pub bone_id: i32,
     #[serde(default)]
+    pub is_path: bool,
+    #[serde(default)]
+    pub path_gap: f32,
+    #[serde(default)]
     pub rest_pos: Vec2,
     #[serde(default)]
     pub rest_rot: f32,

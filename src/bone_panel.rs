@@ -687,11 +687,21 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         });
     });
 
-    let weights = shared.selected_bone().unwrap().weights.clone();
     if shared.ui.selected_weights == -1 {
         return;
     }
 
+    ui.horizontal(|ui| {
+        let selected = shared.ui.selected_weights as usize;
+        let weight = &mut shared.selected_bone_mut().unwrap().weights[selected];
+        ui.checkbox(
+            &mut weight.is_path,
+            "is path:",
+        );
+        ui.add(egui::DragValue::new(&mut weight.path_gap));
+    });
+
+    let weights = shared.selected_bone().unwrap().weights.clone();
     ui.horizontal(|ui| {
         let bone_id = weights[shared.ui.selected_weights as usize].bone_id;
         let mut bone_name = shared.loc("none").to_string();
