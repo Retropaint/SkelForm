@@ -114,7 +114,7 @@
     },
     "mesh_deformation": {
       "heading": "Mesh Deformation ",
-      "desc": "As all textures are made up of triangles, vertices can be moved and created to make more dynamic and flexible rigs & animations.",
+      "desc": "Turn this texture into a deformable mesh. Vertices can be bound to other bones with custom weights to influence them.",
       "edit": "Edit Vertices",
       "finish_edit": "Finish",
       "reset": "Reset",

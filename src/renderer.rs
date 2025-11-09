@@ -585,7 +585,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
             // vert pos after inheriting base bone
             let start_pos = vert!().pos;
 
-            // weights
+            // binds
             for (w, weight) in bones[b].weights.clone().iter().enumerate() {
                 let v_id = vert!().id as i32;
                 let idx = weight.vert_ids.iter().position(|id| *id == v_id);
@@ -597,12 +597,14 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 let weight_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
 
                 if !weight.is_path || w == 0 || w == bones[b].weights.len() - 1 {
+                    // weights
                     let weight_factor = weight.vert_weights[idx.unwrap()];
                     let end_pos = inherit_vert(init_pos, &weight_bone) - start_pos;
                     vert!().pos += end_pos * weight_factor;
                     continue;
                 }
 
+                // pathing
                 let pwb = bones
                     .iter()
                     .find(|bone| bone.id == bones[b].weights[w - 1].bone_id);
