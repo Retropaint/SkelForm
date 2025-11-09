@@ -580,7 +580,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
             // vert pos before inheritance
             let init_pos = vert!().pos;
 
-            vert!().pos = inherit_vert(vert!().pos, &bone, Vec2::default(), 0., Vec2::new(1., 1.));
+            vert!().pos = inherit_vert(vert!().pos, &bone);
 
             // vert pos after inheriting base bone
             let start_pos = vert!().pos;
@@ -596,49 +596,35 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 let bone_id = weight.bone_id;
                 let weight_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
 
-                if weight.is_path && w != 0 && w != bones[b].weights.len() - 1 {
-                    let prev_weight_bone = bones
-                        .iter()
-                        .find(|bone| bone.id == bones[b].weights[w - 1].bone_id)
-                        .unwrap();
-                    let next_weight_bone = bones
-                        .iter()
-                        .find(|bone| bone.id == bones[b].weights[w + 1].bone_id)
-                        .unwrap();
-                    let prev_dir = weight_bone.pos - prev_weight_bone.pos;
-                    let next_dir = next_weight_bone.pos - weight_bone.pos;
-                    let prev_normal = Vec2::new(-prev_dir.y, prev_dir.x).normalize();
-                    let next_normal = Vec2::new(-next_dir.y, next_dir.x).normalize();
-                    let mut gap = weight.path_gap;
-                    if !alternating[w] {
-                        gap = -gap;
-                    }
-                    alternating[w] = !alternating[w];
-                    vert!().pos = weight_bone.pos + (prev_normal + next_normal) * gap;
+                if !weight.is_path || w == 0 || w == bones[b].weights.len() - 1 {
+                    let weight_factor = weight.vert_weights[idx.unwrap()];
+                    let end_pos = inherit_vert(init_pos, &weight_bone) - start_pos;
+                    vert!().pos += end_pos * weight_factor;
                     continue;
                 }
 
-                let weight_factor = weight.vert_weights[idx.unwrap()];
-                let end_pos = inherit_vert(
-                    init_pos,
-                    &weight_bone,
-                    weight.rest_pos,
-                    weight.rest_rot,
-                    weight.rest_scale,
-                ) - start_pos;
-                vert!().pos += end_pos * weight_factor;
+                let pwb = bones
+                    .iter()
+                    .find(|bone| bone.id == bones[b].weights[w - 1].bone_id);
+                let nwb = bones
+                    .iter()
+                    .find(|bone| bone.id == bones[b].weights[w + 1].bone_id);
+                let prev_dir = weight_bone.pos - pwb.unwrap().pos;
+                let next_dir = nwb.unwrap().pos - weight_bone.pos;
+                let prev_normal = Vec2::new(-prev_dir.y, prev_dir.x).normalize();
+                let next_normal = Vec2::new(-next_dir.y, next_dir.x).normalize();
+                let mut gap = weight.path_gap;
+                if !alternating[w] {
+                    gap = -gap;
+                }
+                alternating[w] = !alternating[w];
+                vert!().pos = weight_bone.pos + (prev_normal + next_normal) * gap;
             }
         }
     }
 }
 
-pub fn inherit_vert(
-    mut pos: Vec2,
-    bone: &Bone,
-    rest_pos: Vec2,
-    rest_rot: f32,
-    rest_scale: Vec2,
-) -> Vec2 {
+pub fn inherit_vert(mut pos: Vec2, bone: &Bone) -> Vec2 {
     pos *= bone.scale;
     pos = utils::rotate(&pos, bone.rot);
     pos += bone.pos;
