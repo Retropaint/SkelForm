@@ -550,9 +550,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
 
         // IK is iterated multiple times over for accuracy
         // runtimes could adjust this, or make it customizable
-        for _ in 0..10 {
-            inverse_kinematics(&mut joints, target.unwrap().pos);
-        }
+        inverse_kinematics(&mut joints, target.unwrap().pos);
 
         // save rotations for the next forward kinematics call
         for j in 0..joints.len() {
@@ -581,7 +579,9 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
             // vert pos after inheriting base bone
             let start_pos = vert!().pos;
 
+            let mut w_idx: i32 = -1;
             for weight in bones[b].weights.clone() {
+                w_idx += 1;
                 let v_id = vert!().id as i32;
                 let idx = weight.vert_ids.iter().position(|id| *id == v_id);
                 if idx == None {
@@ -589,7 +589,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 }
 
                 let bone_id = weight.bone_id;
-                let w_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+                let mut w_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
 
                 let weight_factor = weight.vert_weights[idx.unwrap()];
                 let w = weight;
@@ -618,6 +618,70 @@ pub fn inherit_vert(
 pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
     let root = bones[0].pos;
 
+    for _ in 0..10 {
+        fabrik(bones, root, target);
+    }
+
+    //arc_ik(bones, root, target);
+
+    // rotating bones
+    let end_bone = bones.last().unwrap();
+    let mut tip_pos = end_bone.pos;
+    for b in (0..bones.len()).rev() {
+        if b == bones.len() - 1 {
+            continue;
+        }
+
+        let dir = tip_pos - bones[b].pos;
+        bones[b].rot = dir.y.atan2(dir.x);
+        tip_pos = bones[b].pos;
+    }
+
+    // apply constraints
+    let joint_dir = (bones[1].pos - bones[0].pos).normalize();
+    let base_dir = (target - root).normalize();
+    let dir = joint_dir.x * base_dir.y - base_dir.x * joint_dir.y;
+    let base_angle = base_dir.y.atan2(base_dir.x);
+
+    let cw = bones[0].constraint == JointConstraint::Clockwise && dir > 0.;
+    let ccw = bones[0].constraint == JointConstraint::CounterClockwise && dir < 0.;
+    if ccw || cw {
+        for b in 0..bones.len() {
+            bones[b].rot = -bones[b].rot + base_angle * 2.;
+        }
+    }
+}
+
+pub fn arc_ik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
+    // determine where bones will be on the arc line (ranging from 0 to 1)
+    let mut dist: Vec<f32> = vec![0.];
+
+    let max_length = (bones.last().unwrap().pos - root).mag();
+    let mut curr_length = 0.;
+    for b in 1..bones.len() {
+        let length = (bones[b].pos - bones[b - 1].pos).mag();
+        curr_length += length;
+        dist.push(curr_length / max_length);
+    }
+
+    let base = target - root;
+    let base_angle = base.y.atan2(base.x);
+    let peak = (max_length / base.mag()).max(1.);
+    let valley = base.mag() / max_length;
+
+    for b in 1..bones.len() {
+        let angle = 3.14 * dist[b];
+        bones[b].pos = Vec2::new(
+            bones[b].pos.x * valley,
+            root.y + (1. - peak) * angle.sin() * max_length / peak,
+        );
+
+        let rotated = utils::rotate(&(bones[b].pos - root), base_angle);
+        bones[b].pos = rotated + root;
+    }
+}
+
+pub fn fabrik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
     // forward-reaching
     let mut next_pos: Vec2 = target;
     let mut next_length = 0.;
@@ -646,33 +710,6 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
         }
         bones[b].pos = prev_pos - length;
         prev_pos = bones[b].pos;
-    }
-
-    // rotating bones
-    let end_bone = bones.last().unwrap();
-    let mut tip_pos = end_bone.pos;
-    for b in (0..bones.len()).rev() {
-        if b == bones.len() - 1 {
-            continue;
-        }
-
-        let dir = tip_pos - bones[b].pos;
-        bones[b].rot = dir.y.atan2(dir.x);
-        tip_pos = bones[b].pos;
-    }
-
-    // apply constraints
-    let joint_dir = (bones[1].pos - bones[0].pos).normalize();
-    let base_dir = (target - root).normalize();
-    let dir = joint_dir.x * base_dir.y - base_dir.x * joint_dir.y;
-    let base_angle = base_dir.y.atan2(base_dir.x);
-
-    let cw = bones[0].constraint == JointConstraint::Clockwise && dir > 0.;
-    let ccw = bones[0].constraint == JointConstraint::CounterClockwise && dir < 0.;
-    if ccw || cw {
-        for b in 0..bones.len() {
-            bones[b].rot = -bones[b].rot + base_angle * 2.;
-        }
     }
 }
 
