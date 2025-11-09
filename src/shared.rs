@@ -898,6 +898,8 @@ pub struct Bone {
     pub ik_family_id: i32,
     #[serde(skip)]
     pub constraint: JointConstraint,
+    #[serde(skip)]
+    pub ik_mode: InverseKinematicsMode,
     #[serde(skip, default = "default_neg_one")]
     pub ik_target_id: i32,
     #[serde(default, skip_serializing_if = "is_false")]
@@ -976,10 +978,20 @@ pub struct EditorBone {
     pub ik_disabled: bool,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Default, PartialEq, Debug)]
+pub enum InverseKinematicsMode {
+    #[default]
+    FABRIK,
+    Arc,
+}
+enum_string!(InverseKinematicsMode);
+
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct IkFamily {
     #[serde(default)]
     pub constraint: JointConstraint,
+    #[serde(default)]
+    pub mode: InverseKinematicsMode,
     #[serde(default)]
     pub target_id: i32,
     #[serde(default)]

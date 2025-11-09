@@ -291,10 +291,10 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
             .position(|bone| bone.id == joints[0].ik_target_id)
             .unwrap();
         let target_id = target_idx as i32;
-        let constraint = joints[0].constraint;
 
         armature_copy.ik_families.push(IkFamily {
-            constraint,
+            constraint: joints[0].constraint,
+            mode: joints[0].ik_mode,
             target_id,
             bone_ids,
         })
@@ -473,6 +473,7 @@ pub fn import<R: Read + std::io::Seek>(
             let bone = &mut shared.armature.bones[family.bone_ids[i] as usize];
             bone.ik_family_id = f as i32;
             bone.constraint = family.constraint;
+            bone.ik_mode = family.mode;
             bone.ik_target_id = target_id;
         }
     }

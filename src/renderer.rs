@@ -618,11 +618,14 @@ pub fn inherit_vert(
 pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
     let root = bones[0].pos;
 
-    for _ in 0..10 {
-        fabrik(bones, root, target);
+    match bones[0].ik_mode {
+        InverseKinematicsMode::FABRIK => {
+            for _ in 0..10 {
+                fabrik(bones, root, target);
+            }
+        }
+        InverseKinematicsMode::Arc => arc_ik(bones, root, target),
     }
-
-    //arc_ik(bones, root, target);
 
     // rotating bones
     let end_bone = bones.last().unwrap();

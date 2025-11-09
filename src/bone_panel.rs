@@ -437,6 +437,22 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     }
 
     ui.horizontal(|ui| {
+        ui.label("Mode: ");
+        let mode = &mut shared.selected_bone_mut().unwrap().ik_mode;
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            egui::ComboBox::new("ik_mode", "")
+                .selected_text(mode.to_string())
+                .width(40.)
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(mode, InverseKinematicsMode::FABRIK, "FABRIK");
+                    ui.selectable_value(mode, InverseKinematicsMode::Arc, "Arc");
+                })
+                .response
+                .on_hover_text(str_desc);
+        });
+    });
+
+    ui.horizontal(|ui| {
         let ik = "bone_panel.inverse_kinematics.";
         ui.label(&shared.loc(&(ik.to_owned() + "constraint")));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
