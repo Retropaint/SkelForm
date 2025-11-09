@@ -699,8 +699,9 @@ pub fn arc_ik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
 
     let base = target - root;
     let base_angle = base.y.atan2(base.x);
-    let peak = (max_length / base.mag()).max(1.);
-    let valley = base.mag() / max_length;
+    let base_mag = base.mag().min(max_length);
+    let peak = max_length / base_mag;
+    let valley = base_mag / max_length;
 
     for b in 1..bones.len() {
         let angle = 3.14 * dist[b];
