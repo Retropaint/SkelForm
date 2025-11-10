@@ -600,34 +600,33 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
     for b in 0..bones.len() {
         let bone = bones[b].clone();
 
-        for v in 0..bones[b].vertices.len() {
-            #[rustfmt::skip]
-            macro_rules! vert {() =>{ bones[b].vertices[v] }}
+        let mut init_vert_pos = vec![];
+        for vert in &mut bones[b].vertices {
+            init_vert_pos.push(vert.pos);
+            vert.pos = inherit_vert(vert.pos, &bone)
+        }
 
-            // vert pos before inheritance
-            let init_pos = vert!().pos;
-
-            vert!().pos = inherit_vert(vert!().pos, &bone);
-
-            // vert pos after inheriting base bone
-            let start_pos = vert!().pos;
-
-            // binds
-            for (w, weight) in bones[b].weights.clone().iter().enumerate() {
-                let v_id = vert!().id as i32;
-                let idx = weight.vert_ids.iter().position(|id| *id == v_id);
-                if idx == None {
-                    continue;
-                }
-
-                let bone_id = weight.bone_id;
-                let weight_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+        for w in 0..bones[b].weights.len() {
+            let bone_id = bones[b].weights[w].bone_id;
+            if bone_id == -1 {
+                continue;
+            }
+            let weight_bone = bones
+                .iter()
+                .find(|bone| bone.id == bone_id)
+                .unwrap()
+                .clone();
+            let weight = bones[b].weights[w].clone();
+            for v_id in 0..bones[b].weights[w].vert_ids.len() {
+                let id = bones[b].weights[w].vert_ids[v_id] as u32;
+                let idx = bones[b].vertices.iter().position(|vert| vert.id == id);
 
                 if !weight.is_path || w == 0 || w == bones[b].weights.len() - 1 {
                     // weights
-                    let weight_factor = weight.vert_weights[idx.unwrap()];
-                    let end_pos = inherit_vert(init_pos, &weight_bone) - start_pos;
-                    vert!().pos += end_pos * weight_factor;
+                    let weight_factor = weight.vert_weights[v_id];
+                    let end_pos = inherit_vert(init_vert_pos[idx.unwrap()], &weight_bone)
+                        - bones[b].vertices[idx.unwrap()].pos;
+                    bones[b].vertices[idx.unwrap()].pos += end_pos * weight_factor;
                     continue;
                 }
 
@@ -644,8 +643,8 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 let next_normal = Vec2::new(-next_dir.y, next_dir.x).normalize();
                 let average = prev_normal + next_normal;
                 let angle = average.y.atan2(average.x);
-                let rotated = utils::rotate(&weight.vert_gaps[idx.unwrap()], angle);
-                vert!().pos = weight_bone.pos + rotated;
+                let rotated = utils::rotate(&weight.vert_gaps[v_id], angle);
+                bones[b].vertices[idx.unwrap()].pos = weight_bone.pos + rotated;
             }
         }
     }
