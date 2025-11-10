@@ -631,7 +631,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 let diff = bones[b].vertices[idx.unwrap()].pos - bind_bone.pos;
                 let rotated = utils::rotate(&diff, normal_angle);
                 let weight = bind.verts[v_id].weight;
-                bones[b].vertices[idx.unwrap()].pos = bind_bone.pos + (rotated * weight);
+                bones[b].vertices[idx.unwrap()].pos = bind_bone.pos - (rotated * weight);
             }
         }
     }
