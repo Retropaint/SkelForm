@@ -332,9 +332,9 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
                 .iter()
                 .position(|bone| bone.id == bone_id)
                 .unwrap() as i32;
-            for v in 0..armature_copy.bones[b].binds[w].vert_ids.len() {
-                let vert_id = armature_copy.bones[b].binds[w].vert_ids[v];
-                armature_copy.bones[b].binds[w].vert_ids[v] = armature_copy.bones[b]
+            for v in 0..armature_copy.bones[b].binds[w].verts.len() {
+                let vert_id = armature_copy.bones[b].binds[w].verts[v].id;
+                armature_copy.bones[b].binds[w].verts[v].id = armature_copy.bones[b]
                     .vertices
                     .iter()
                     .position(|vert| vert.id == vert_id as u32)

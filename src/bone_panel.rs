@@ -729,7 +729,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
     let selected = shared.ui.selected_bind;
     let vert_id_len = shared.selected_bone().unwrap().binds[selected as usize]
-        .vert_ids
+        .verts
         .len();
     ui.horizontal(|ui| {
         if vert_id_len > 0 {
@@ -749,16 +749,16 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
     let selected = shared.ui.selected_bind;
     let binds = &mut shared.selected_bone_mut().unwrap().binds[selected as usize];
-    if binds.vert_ids.len() == 0 {
+    if binds.verts.len() == 0 {
         ui.label("Click `Bind Verts` to add vertices to this bind. Click again to stop adding.\n\nOnce added, their weights will be configurable here.\n\n");
     } else {
-        for w in 0..binds.vert_weights.len() {
+        for w in 0..binds.verts.len() {
             ui.horizontal(|ui| {
-                let str_label = binds.vert_ids[w].to_string() + ":";
+                let str_label = binds.verts[w].id.to_string() + ":";
                 ui.label(str_label);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(&mut binds.vert_weights[w], (0.)..=1.))
+                        ui.add(egui::Slider::new(&mut binds.verts[w].weight, (0.)..=1.))
                     });
                 });
             });

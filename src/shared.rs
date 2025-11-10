@@ -932,16 +932,22 @@ pub struct Bone {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 pub struct BoneBind {
-    #[serde(default)]
-    pub vert_ids: Vec<i32>,
-    #[serde(default)]
-    pub vert_weights: Vec<f32>,
     #[serde(default = "default_neg_one")]
     pub bone_id: i32,
     #[serde(default)]
     pub is_path: bool,
-    #[serde(skip)]
-    pub vert_gaps: Vec<Vec2>,
+    #[serde(default)]
+    pub verts: Vec<BoneBindVert>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
+pub struct BoneBindVert {
+    #[serde(default)]
+    pub id: i32,
+    #[serde(default)]
+    pub weight: f32,
+    #[serde(default, skip_serializing_if = "is_gap_empty")]
+    pub gap: Vec2,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
@@ -2148,6 +2154,10 @@ fn are_anims_empty(value: &Vec<Animation>) -> bool {
 
 fn are_styles_empty(value: &Vec<i32>) -> bool {
     value.len() == 0
+}
+
+fn is_gap_empty<T: std::cmp::PartialEq<Vec2>>(value: &T) -> bool {
+    *value == Vec2::default()
 }
 
 #[cfg(not(target_arch = "wasm32"))]
