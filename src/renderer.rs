@@ -599,7 +599,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>, shared_bones: &
 
                 if !bind.is_path || bi == 0 || bi == bones[b].binds.len() - 1 {
                     // weights
-                    let mut vert = bones[b].vertices[idx.unwrap()];
+                    let vert = &mut bones[b].vertices[idx.unwrap()];
                     let weight = bind.verts[v_id].weight;
                     let end_pos = inherit_vert(init_vert_pos[idx.unwrap()], &bind_bone) - vert.pos;
                     vert.pos += end_pos * weight;
@@ -622,7 +622,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>, shared_bones: &
                 let angle = average.y.atan2(average.x);
 
                 let rotated = utils::rotate(&bind.verts[v_id].gap, angle);
-                bones[b].vertices[idx.unwrap()].pos = bind_bone.pos + rotated;
+                bones[b].vertices[idx.unwrap()].pos = bind_bone.pos - rotated;
             }
         }
     }
