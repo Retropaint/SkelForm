@@ -611,12 +611,8 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 if let Some(new) = bi.checked_sub(1) {
                     prev = new;
                 }
-                let mut next = bi;
-                if let Some(new) = bi.checked_add(1) {
-                    next = new;
-                }
-
                 let binds = &bones[b].binds;
+                let next = (bi + 1).min(binds.len() - 1);
                 let pwb = bones.iter().find(|bone| bone.id == binds[prev].bone_id);
                 let nwb = bones.iter().find(|bone| bone.id == binds[next].bone_id);
 
