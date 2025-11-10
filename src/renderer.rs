@@ -600,11 +600,6 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
     for b in 0..bones.len() {
         let bone = bones[b].clone();
 
-        let mut alternating = vec![];
-        for _ in &bones[b].weights {
-            alternating.push(false);
-        }
-
         for v in 0..bones[b].vertices.len() {
             #[rustfmt::skip]
             macro_rules! vert {() =>{ bones[b].vertices[v] }}

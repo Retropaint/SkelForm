@@ -213,8 +213,6 @@ pub struct Vertex {
     pub add_color: VertexColor,
     #[serde(default)]
     pub id: u32,
-    #[serde(default)]
-    pub init_pos: Vec2,
 }
 
 impl Default for Vertex {
@@ -225,7 +223,6 @@ impl Default for Vertex {
             color: VertexColor::default(),
             add_color: VertexColor::new(0., 0., 0., 0.),
             id: 0,
-            init_pos: Vec2::default(),
         }
     }
 }

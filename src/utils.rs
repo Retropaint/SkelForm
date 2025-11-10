@@ -325,10 +325,6 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
             continue;
         }
 
-        for vert in &mut armature_copy.bones[b].vertices {
-            vert.init_pos = vert.pos;
-        }
-
         for w in 0..armature_copy.bones[b].weights.len() {
             let bone_id = armature_copy.bones[b].weights[w].bone_id;
             armature_copy.bones[b].weights[w].bone_id = armature_copy
