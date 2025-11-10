@@ -946,8 +946,6 @@ pub struct BoneBindVert {
     pub id: i32,
     #[serde(default)]
     pub weight: f32,
-    #[serde(default, skip_serializing_if = "is_gap_empty")]
-    pub gap: Vec2,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
@@ -2154,10 +2152,6 @@ fn are_anims_empty(value: &Vec<Animation>) -> bool {
 
 fn are_styles_empty(value: &Vec<i32>) -> bool {
     value.len() == 0
-}
-
-fn is_gap_empty<T: std::cmp::PartialEq<Vec2>>(value: &T) -> bool {
-    *value == Vec2::default()
 }
 
 #[cfg(not(target_arch = "wasm32"))]
