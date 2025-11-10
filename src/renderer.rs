@@ -576,9 +576,15 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
     for b in 0..bones.len() {
         let bone = bones[b].clone();
 
+        // track vertex init pos for binds
         let mut init_vert_pos = vec![];
         for vert in &mut bones[b].vertices {
             init_vert_pos.push(vert.pos);
+        }
+
+        // move vertex to main bone.
+        // this will be overridden if vertex has a bind.
+        for vert in &mut bones[b].vertices {
             vert.pos = inherit_vert(vert.pos, &bone)
         }
 
