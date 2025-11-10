@@ -721,13 +721,6 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         ui.label("Pathing:")
             .on_hover_text("Vertices will follow this bind like a line rather than a weight.");
         ui.checkbox(&mut weight.is_path, "".into_atoms());
-        if !weight.is_path {
-            return;
-        }
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            ui.add(egui::DragValue::new(&mut weight.path_gap));
-            ui.label("Gap:");
-        });
     });
 
     if weights[shared.ui.selected_weights as usize].is_path {

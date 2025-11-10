@@ -943,10 +943,8 @@ pub struct BoneWeight {
     pub bone_id: i32,
     #[serde(default)]
     pub is_path: bool,
-    #[serde(default)]
-    pub path_gap: f32,
-    #[serde(default)]
-    pub vert_gaps: Vec<Vec2>
+    #[serde(skip)]
+    pub vert_gaps: Vec<Vec2>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]

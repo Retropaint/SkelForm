@@ -524,10 +524,33 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
 pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
     inheritance(bones, std::collections::HashMap::new());
 
+    // keep track of vertex gaps from bone weights
+    for b in 0..bones.len() {
+        for v in 0..bones[b].vertices.len() {
+            for w in 0..bones[b].weights.len() {
+                let v_id = bones[b].vertices[v].id as i32;
+                let idx = bones[b].weights[w]
+                    .vert_ids
+                    .iter()
+                    .position(|id| *id == v_id);
+                if idx == None {
+                    continue;
+                }
+
+                let bone_id = bones[b].weights[w].bone_id;
+                let weight_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+
+                let vert_pos = inherit_vert(bones[b].vertices[v].pos, &bones[b]);
+                bones[b].weights[w]
+                    .vert_gaps
+                    .push(vert_pos - weight_bone.pos);
+            }
+        }
+    }
+
     let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
 
     let mut done_ids: Vec<i32> = vec![];
-
     for b in 0..bones.len() {
         let ik_id = bones[b].ik_family_id;
         if bones[b].ik_disabled || ik_id == -1 || done_ids.contains(&ik_id) {
@@ -548,8 +571,6 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
             joints.push(bone.clone());
         }
 
-        // IK is iterated multiple times over for accuracy
-        // runtimes could adjust this, or make it customizable
         inverse_kinematics(&mut joints, target.unwrap().pos);
 
         // save rotations for the next forward kinematics call
@@ -561,9 +582,20 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
         }
     }
 
+    // copy weights
+    let mut weights = vec![];
+    for b in 0..bones.len() {
+        weights.push(bones[b].weights.clone());
+    }
+
     // re-construct bones, accounting for rotations saved from IK
     *bones = og_bones.clone();
     inheritance(bones, ik_rot.clone());
+
+    // add weights back
+    for b in 0..bones.len() {
+        bones[b].weights = weights[b].clone();
+    }
 
     for b in 0..bones.len() {
         let bone = bones[b].clone();
@@ -615,12 +647,10 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 let next_dir = nwb.unwrap().pos - weight_bone.pos;
                 let prev_normal = Vec2::new(-prev_dir.y, prev_dir.x).normalize();
                 let next_normal = Vec2::new(-next_dir.y, next_dir.x).normalize();
-                let mut gap = weight.path_gap;
-                if !alternating[w] {
-                    gap = -gap;
-                }
-                alternating[w] = !alternating[w];
-                vert!().pos = weight_bone.pos + (prev_normal + next_normal) * gap;
+                let average = prev_normal + next_normal;
+                let angle = average.y.atan2(average.x);
+                let rotated = utils::rotate(&weight.vert_gaps[idx.unwrap()], angle);
+                vert!().pos = weight_bone.pos + rotated;
             }
         }
     }
