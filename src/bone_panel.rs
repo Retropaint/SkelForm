@@ -723,10 +723,6 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         ui.checkbox(&mut bind.is_path, "".into_atoms());
     });
 
-    if binds[shared.ui.selected_bind as usize].is_path {
-        return;
-    }
-
     let selected = shared.ui.selected_bind;
     let vert_id_len = shared.selected_bone().unwrap().binds[selected as usize]
         .verts

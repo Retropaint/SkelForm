@@ -80,6 +80,9 @@ impl Vec2 {
 
     pub fn normalize(&self) -> Vec2 {
         let mag = self.mag();
+        if mag == 0. {
+            return Vec2::default();
+        }
         Vec2::new(self.x / mag, self.y / mag)
     }
 }
