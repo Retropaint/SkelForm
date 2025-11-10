@@ -121,7 +121,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         for vert in &mut temp_bones[b].world_verts {
             vert.add_color = VertexColor::new(0., 0., 0., 0.);
         }
-        if shared.ui.setting_weight_verts {
+        if shared.ui.setting_bind_verts {
             continue;
         }
 
@@ -297,7 +297,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    if shared.ui.showing_mesh || shared.ui.setting_weight_verts {
+    if shared.ui.showing_mesh || shared.ui.setting_bind_verts {
         let id = shared.selected_bone().unwrap().id;
         let bone = temp_bones.iter_mut().find(|bone| bone.id == id).unwrap();
         let bind_group = &shared.armature.get_current_tex(bone.id).unwrap().bind_group;
@@ -312,7 +312,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
     }
 
-    if !shared.ui.setting_weight_verts {
+    if !shared.ui.setting_bind_verts {
         if let Some(mut vert) = new_vert {
             shared.undo_actions.push(Action {
                 action: ActionType::Bone,
@@ -527,9 +527,9 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
     // keep track of vertex gaps from bone weights
     for b in 0..bones.len() {
         for v in 0..bones[b].vertices.len() {
-            for w in 0..bones[b].weights.len() {
+            for bi in 0..bones[b].binds.len() {
                 let v_id = bones[b].vertices[v].id as i32;
-                let idx = bones[b].weights[w]
+                let idx = bones[b].binds[bi]
                     .vert_ids
                     .iter()
                     .position(|id| *id == v_id);
@@ -537,13 +537,11 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                     continue;
                 }
 
-                let bone_id = bones[b].weights[w].bone_id;
-                let weight_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+                let bone_id = bones[b].binds[bi].bone_id;
+                let bind_bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
 
                 let vert_pos = inherit_vert(bones[b].vertices[v].pos, &bones[b]);
-                bones[b].weights[w]
-                    .vert_gaps
-                    .push(vert_pos - weight_bone.pos);
+                bones[b].binds[bi].vert_gaps.push(vert_pos - bind_bone.pos);
             }
         }
     }
@@ -582,10 +580,10 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
         }
     }
 
-    // copy weights
-    let mut weights = vec![];
+    // copy binds
+    let mut binds = vec![];
     for b in 0..bones.len() {
-        weights.push(bones[b].weights.clone());
+        binds.push(bones[b].binds.clone());
     }
 
     // re-construct bones, accounting for rotations saved from IK
@@ -594,7 +592,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
 
     // add weights back
     for b in 0..bones.len() {
-        bones[b].weights = weights[b].clone();
+        bones[b].binds = binds[b].clone();
     }
 
     for b in 0..bones.len() {
@@ -606,45 +604,45 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
             vert.pos = inherit_vert(vert.pos, &bone)
         }
 
-        for w in 0..bones[b].weights.len() {
-            let bone_id = bones[b].weights[w].bone_id;
+        for bi in 0..bones[b].binds.len() {
+            let bone_id = bones[b].binds[bi].bone_id;
             if bone_id == -1 {
                 continue;
             }
-            let weight_bone = bones
+            let bind_bone = bones
                 .iter()
                 .find(|bone| bone.id == bone_id)
                 .unwrap()
                 .clone();
-            let weight = bones[b].weights[w].clone();
-            for v_id in 0..bones[b].weights[w].vert_ids.len() {
-                let id = bones[b].weights[w].vert_ids[v_id] as u32;
+            let bind = bones[b].binds[bi].clone();
+            for v_id in 0..bones[b].binds[bi].vert_ids.len() {
+                let id = bones[b].binds[bi].vert_ids[v_id] as u32;
                 let idx = bones[b].vertices.iter().position(|vert| vert.id == id);
 
-                if !weight.is_path || w == 0 || w == bones[b].weights.len() - 1 {
+                if !bind.is_path || bi == 0 || bi == bones[b].binds.len() - 1 {
                     // weights
-                    let weight_factor = weight.vert_weights[v_id];
-                    let end_pos = inherit_vert(init_vert_pos[idx.unwrap()], &weight_bone)
+                    let weight = bind.vert_weights[v_id];
+                    let end_pos = inherit_vert(init_vert_pos[idx.unwrap()], &bind_bone)
                         - bones[b].vertices[idx.unwrap()].pos;
-                    bones[b].vertices[idx.unwrap()].pos += end_pos * weight_factor;
+                    bones[b].vertices[idx.unwrap()].pos += end_pos * weight;
                     continue;
                 }
 
                 // pathing
                 let pwb = bones
                     .iter()
-                    .find(|bone| bone.id == bones[b].weights[w - 1].bone_id);
+                    .find(|bone| bone.id == bones[b].binds[bi - 1].bone_id);
                 let nwb = bones
                     .iter()
-                    .find(|bone| bone.id == bones[b].weights[w + 1].bone_id);
-                let prev_dir = weight_bone.pos - pwb.unwrap().pos;
-                let next_dir = nwb.unwrap().pos - weight_bone.pos;
+                    .find(|bone| bone.id == bones[b].binds[bi + 1].bone_id);
+                let prev_dir = bind_bone.pos - pwb.unwrap().pos;
+                let next_dir = nwb.unwrap().pos - bind_bone.pos;
                 let prev_normal = Vec2::new(-prev_dir.y, prev_dir.x).normalize();
                 let next_normal = Vec2::new(-next_dir.y, next_dir.x).normalize();
                 let average = prev_normal + next_normal;
                 let angle = average.y.atan2(average.x);
-                let rotated = utils::rotate(&weight.vert_gaps[v_id], angle);
-                bones[b].vertices[idx.unwrap()].pos = weight_bone.pos + rotated;
+                let rotated = utils::rotate(&bind.vert_gaps[v_id], angle);
+                bones[b].vertices[idx.unwrap()].pos = bind_bone.pos + rotated;
             }
         }
     }
@@ -953,9 +951,9 @@ pub fn bone_vertices(
     }
 
     for wv in 0..world_verts.len() {
-        let idx = shared.ui.selected_weights;
+        let idx = shared.ui.selected_bind;
         let mut col = if idx != -1
-            && shared.selected_bone().unwrap().weights[idx as usize]
+            && shared.selected_bone().unwrap().binds[idx as usize]
                 .vert_ids
                 .contains(&(world_verts[wv].id as i32))
         {
@@ -984,7 +982,7 @@ pub fn bone_vertices(
                 break;
             }
         }
-        if !shared.ui.setting_weight_verts {
+        if !shared.ui.setting_bind_verts {
             if shared.input.left_pressed {
                 shared.undo_actions.push(Action {
                     action: ActionType::Bone,
@@ -996,15 +994,15 @@ pub fn bone_vertices(
                 break;
             }
         } else if shared.input.left_clicked {
-            let idx = shared.ui.selected_weights as usize;
+            let idx = shared.ui.selected_bind as usize;
             let vert_id = world_verts[wv].id;
-            let weight = &mut shared.selected_bone_mut().unwrap().weights[idx];
-            if let Some(idx) = weight.vert_ids.iter().position(|v| *v == vert_id as i32) {
-                weight.vert_ids.remove(idx);
-                weight.vert_weights.remove(idx);
+            let bind = &mut shared.selected_bone_mut().unwrap().binds[idx];
+            if let Some(idx) = bind.vert_ids.iter().position(|v| *v == vert_id as i32) {
+                bind.vert_ids.remove(idx);
+                bind.vert_weights.remove(idx);
             } else {
-                weight.vert_ids.push(vert_id as i32);
-                weight.vert_weights.push(1.);
+                bind.vert_ids.push(vert_id as i32);
+                bind.vert_weights.push(1.);
             }
             break;
         }
@@ -1174,12 +1172,12 @@ pub fn drag_vertex(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>, vert_idx
     let zoom = shared.camera.zoom;
     let vert_id = bone.vertices[vert_idx].id;
     let mut total_rot = bone.rot;
-    for weight in &bone.weights {
-        if !weight.vert_ids.contains(&(vert_id as i32)) {
+    for bind in &bone.binds {
+        if !bind.vert_ids.contains(&(vert_id as i32)) {
             continue;
         }
-        let weight_bone = bones.iter().find(|b| b.id == weight.bone_id).unwrap();
-        total_rot += weight_bone.rot;
+        let bind_bone = bones.iter().find(|b| b.id == bind.bone_id).unwrap();
+        total_rot += bind_bone.rot;
     }
     // offset weight rotations
     let vert_mut = &mut shared.selected_bone_mut().unwrap().vertices[vert_idx];

@@ -511,8 +511,8 @@ pub struct Ui {
     pub selected_bone_idx: usize,
     pub selected_bone_ids: Vec<i32>,
     pub showing_mesh: bool,
-    pub setting_weight_verts: bool,
-    pub setting_weight_bone: bool,
+    pub setting_bind_verts: bool,
+    pub setting_bind_bone: bool,
 
     pub rename_id: String,
     pub original_name: String,
@@ -564,7 +564,7 @@ pub struct Ui {
 
     pub styles_folded_bones: HashMap<i32, bool>,
 
-    pub selected_weights: i32,
+    pub selected_bind: i32,
 }
 
 impl Ui {
@@ -646,9 +646,9 @@ impl Ui {
         self.unselect_everything();
         self.anim.selected = selected_anim;
         self.selected_bone_idx = idx;
-        self.setting_weight_verts = false;
-        self.setting_weight_bone = false;
-        self.selected_weights = -1;
+        self.setting_bind_verts = false;
+        self.setting_bind_bone = false;
+        self.selected_bind = -1;
     }
 }
 
@@ -906,7 +906,7 @@ pub struct Bone {
     #[serde(default, skip_serializing_if = "are_indices_empty")]
     pub indices: Vec<u32>,
     #[serde(default, skip_serializing_if = "are_weights_empty")]
-    pub weights: Vec<BoneWeight>,
+    pub binds: Vec<BoneBind>,
 
     #[serde(skip)]
     pub folded: bool,
@@ -931,7 +931,7 @@ pub struct Bone {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
-pub struct BoneWeight {
+pub struct BoneBind {
     #[serde(default)]
     pub vert_ids: Vec<i32>,
     #[serde(default)]
@@ -2138,7 +2138,7 @@ fn are_indices_empty<T: std::cmp::PartialEq<Vec<u32>>>(value: &T) -> bool {
     *value == vec![]
 }
 
-fn are_weights_empty<T: std::cmp::PartialEq<Vec<BoneWeight>>>(value: &T) -> bool {
+fn are_weights_empty<T: std::cmp::PartialEq<Vec<BoneBind>>>(value: &T) -> bool {
     *value == vec![]
 }
 

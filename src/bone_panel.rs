@@ -571,8 +571,8 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     let parents = shared.armature.get_all_parents(bone.id);
     let mut mesh_parent_id = -1;
     'parent: for parent in parents {
-        for weight in parent.weights {
-            if weight.bone_id == bone.id {
+        for bind in parent.binds {
+            if bind.bone_id == bone.id {
                 mesh_parent_id = parent.id;
                 break 'parent;
             }
@@ -626,7 +626,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
                 let str_reset = &shared.loc("bone_panel.mesh_deformation.reset");
                 //let str_reset_desc = &shared.loc("bone_panel.mesh_deformation.reset_desc");
-                let can_reset = !shared.ui.setting_weight_verts;
+                let can_reset = !shared.ui.setting_bind_verts;
                 if ui
                     .add_enabled(can_reset, egui::Button::new(str_reset))
                     .clicked()
@@ -635,8 +635,8 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     let bone = shared.selected_bone_mut().unwrap();
                     bone.vertices = verts;
                     bone.indices = indices;
-                    bone.weights = vec![];
-                    shared.ui.selected_weights = -1;
+                    bone.binds = vec![];
+                    shared.ui.selected_bind = -1;
                 }
 
                 let str_center = &shared.loc("bone_panel.mesh_deformation.center");
@@ -652,8 +652,8 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     let bone = &mut shared.selected_bone_mut().unwrap();
                     bone.vertices = verts;
                     bone.indices = indices;
-                    bone.weights = vec![];
-                    shared.ui.selected_weights = -1;
+                    bone.binds = vec![];
+                    shared.ui.selected_bind = -1;
                 }
             });
         });
@@ -665,70 +665,70 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         ui.label("Weights:");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             egui::ComboBox::new("bone_weights", "")
-                .selected_text(shared.ui.selected_weights.to_string())
+                .selected_text(shared.ui.selected_bind.to_string())
                 .show_ui(ui, |ui| {
                     let mut selected_value: i32 = -1;
-                    for w in 0..bone.weights.len() {
-                        ui.selectable_value(&mut selected_value, w as i32, w.to_string());
+                    for b in 0..bone.binds.len() {
+                        ui.selectable_value(&mut selected_value, b as i32, b.to_string());
                     }
                     ui.selectable_value(&mut selected_value, -2, "[New]");
 
                     if selected_value == -2 {
-                        let weights = &mut shared.selected_bone_mut().unwrap().weights;
-                        weights.push(BoneWeight {
+                        let binds = &mut shared.selected_bone_mut().unwrap().binds;
+                        binds.push(BoneBind {
                             bone_id: -1,
                             ..Default::default()
                         });
-                        shared.ui.selected_weights = weights.len() as i32 - 1;
+                        shared.ui.selected_bind = binds.len() as i32 - 1;
                     } else if selected_value != -1 {
-                        shared.ui.selected_weights = selected_value;
+                        shared.ui.selected_bind = selected_value;
                     }
                 });
         });
     });
 
-    if shared.ui.selected_weights == -1 {
+    if shared.ui.selected_bind == -1 {
         return;
     }
 
-    let weights = shared.selected_bone().unwrap().weights.clone();
+    let binds = shared.selected_bone().unwrap().binds.clone();
     ui.horizontal(|ui| {
-        let bone_id = weights[shared.ui.selected_weights as usize].bone_id;
+        let bone_id = binds[shared.ui.selected_bind as usize].bone_id;
         let mut bone_name = shared.loc("none").to_string();
         if let Some(bone) = shared.armature.bones.iter().find(|bone| bone.id == bone_id) {
             bone_name = bone.name.clone();
         }
         ui.label("Bone: ".to_owned() + &bone_name);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_set_bone = if shared.ui.setting_weight_bone {
+            let str_set_bone = if shared.ui.setting_bind_bone {
                 "Finish"
             } else {
                 "Set Bone"
             };
             if ui.skf_button(str_set_bone).clicked() {
-                shared.ui.setting_weight_bone = !shared.ui.setting_weight_bone;
+                shared.ui.setting_bind_bone = !shared.ui.setting_bind_bone;
             }
         });
     });
 
-    if weights[shared.ui.selected_weights as usize].bone_id == -1 {
+    if binds[shared.ui.selected_bind as usize].bone_id == -1 {
         return;
     }
 
     ui.horizontal(|ui| {
-        let selected = shared.ui.selected_weights as usize;
-        let weight = &mut shared.selected_bone_mut().unwrap().weights[selected];
+        let selected = shared.ui.selected_bind as usize;
+        let bind = &mut shared.selected_bone_mut().unwrap().binds[selected];
         ui.label("Pathing:")
             .on_hover_text("Vertices will follow this bind like a line rather than a weight.");
-        ui.checkbox(&mut weight.is_path, "".into_atoms());
+        ui.checkbox(&mut bind.is_path, "".into_atoms());
     });
 
-    if weights[shared.ui.selected_weights as usize].is_path {
+    if binds[shared.ui.selected_bind as usize].is_path {
         return;
     }
 
-    let selected = shared.ui.selected_weights;
-    let vert_id_len = shared.selected_bone().unwrap().weights[selected as usize]
+    let selected = shared.ui.selected_bind;
+    let vert_id_len = shared.selected_bone().unwrap().binds[selected as usize]
         .vert_ids
         .len();
     ui.horizontal(|ui| {
@@ -736,29 +736,29 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             ui.label("Weights:");
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_set_verts = if shared.ui.setting_weight_verts {
+            let str_set_verts = if shared.ui.setting_bind_verts {
                 "Finish"
             } else {
                 "Bind Verts"
             };
             if ui.skf_button(str_set_verts).clicked() {
-                shared.ui.setting_weight_verts = !shared.ui.setting_weight_verts;
+                shared.ui.setting_bind_verts = !shared.ui.setting_bind_verts;
             }
         });
     });
 
-    let selected = shared.ui.selected_weights;
-    let weights = &mut shared.selected_bone_mut().unwrap().weights[selected as usize];
-    if weights.vert_ids.len() == 0 {
+    let selected = shared.ui.selected_bind;
+    let binds = &mut shared.selected_bone_mut().unwrap().binds[selected as usize];
+    if binds.vert_ids.len() == 0 {
         ui.label("Click `Bind Verts` to add vertices to this bind. Click again to stop adding.\n\nOnce added, their weights will be configurable here.\n\n");
     } else {
-        for w in 0..weights.vert_weights.len() {
+        for w in 0..binds.vert_weights.len() {
             ui.horizontal(|ui| {
-                let str_label = weights.vert_ids[w].to_string() + ":";
+                let str_label = binds.vert_ids[w].to_string() + ":";
                 ui.label(str_label);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(&mut weights.vert_weights[w], (0.)..=1.))
+                        ui.add(egui::Slider::new(&mut binds.vert_weights[w], (0.)..=1.))
                     });
                 });
             });

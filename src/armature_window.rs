@@ -321,11 +321,11 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         if shared.ui.setting_ik_target {
                             shared.selected_bone_mut().unwrap().ik_target_id = bone_id;
                             shared.ui.setting_ik_target = false;
-                        } else if shared.ui.setting_weight_bone {
-                            let idx = shared.ui.selected_weights as usize;
-                            let weight = &mut shared.selected_bone_mut().unwrap().weights[idx];
-                            weight.bone_id = bone_id;
-                            shared.ui.setting_weight_bone = false;
+                        } else if shared.ui.setting_bind_bone {
+                            let idx = shared.ui.selected_bind as usize;
+                            let bind = &mut shared.selected_bone_mut().unwrap().binds[idx];
+                            bind.bone_id = bone_id;
+                            shared.ui.setting_bind_bone = false;
                         } else {
                             if !shared.input.holding_mod && !shared.input.holding_shift {
                                 shared.ui.selected_bone_ids = vec![];

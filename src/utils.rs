@@ -325,21 +325,20 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
             continue;
         }
 
-        for w in 0..armature_copy.bones[b].weights.len() {
-            let bone_id = armature_copy.bones[b].weights[w].bone_id;
-            armature_copy.bones[b].weights[w].bone_id = armature_copy
+        for w in 0..armature_copy.bones[b].binds.len() {
+            let bone_id = armature_copy.bones[b].binds[w].bone_id;
+            armature_copy.bones[b].binds[w].bone_id = armature_copy
                 .bones
                 .iter()
                 .position(|bone| bone.id == bone_id)
                 .unwrap() as i32;
-            for v in 0..armature_copy.bones[b].weights[w].vert_ids.len() {
-                let vert_id = armature_copy.bones[b].weights[w].vert_ids[v];
-                armature_copy.bones[b].weights[w].vert_ids[v] = armature_copy.bones[b]
+            for v in 0..armature_copy.bones[b].binds[w].vert_ids.len() {
+                let vert_id = armature_copy.bones[b].binds[w].vert_ids[v];
+                armature_copy.bones[b].binds[w].vert_ids[v] = armature_copy.bones[b]
                     .vertices
                     .iter()
                     .position(|vert| vert.id == vert_id as u32)
-                    .unwrap()
-                    as i32;
+                    .unwrap() as i32;
             }
         }
 
