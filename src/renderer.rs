@@ -589,8 +589,8 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
             }
             let bind_bone = bones.iter().find(|bone| bone.id == b_id).unwrap().clone();
             let bind = bones[b].binds[bi].clone();
-            for v_id in 0..bones[b].binds[bi].verts.len() {
-                let id = bones[b].binds[bi].verts[v_id].id as u32;
+            for v_id in 0..bind.verts.len() {
+                let id = bind.verts[v_id].id as u32;
                 let idx = bones[b].vertices.iter().position(|vert| vert.id == id);
 
                 if !bind.is_path {
@@ -607,31 +607,25 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 // Vertices will follow along this path.
 
                 // get previous and next bone
-                let mut prev = bi;
-                if let Some(new) = bi.checked_sub(1) {
-                    prev = new;
-                }
                 let binds = &bones[b].binds;
+                let prev = if bi > 0 { bi - 1 } else { bi };
                 let next = (bi + 1).min(binds.len() - 1);
-                let pwb = bones.iter().find(|bone| bone.id == binds[prev].bone_id);
-                let nwb = bones.iter().find(|bone| bone.id == binds[next].bone_id);
+                let prev_bone = bones.iter().find(|bone| bone.id == binds[prev].bone_id);
+                let next_bone = bones.iter().find(|bone| bone.id == binds[next].bone_id);
 
                 // get the average of normals between previous bone, this bone, and next bone
-                let prev_dir = bind_bone.pos - pwb.unwrap().pos;
-                let next_dir = nwb.unwrap().pos - bind_bone.pos;
+                let prev_dir = bind_bone.pos - prev_bone.unwrap().pos;
+                let next_dir = next_bone.unwrap().pos - bind_bone.pos;
                 let prev_normal = Vec2::new(-prev_dir.y, prev_dir.x).normalize();
                 let next_normal = Vec2::new(-next_dir.y, next_dir.x).normalize();
                 let average = prev_normal + next_normal;
                 let normal_angle = average.y.atan2(average.x);
 
-                // move vertex to bind bone...
-                bones[b].vertices[idx.unwrap()].pos += bind_bone.pos;
-
-                // ...then adjust it to 'bounce' off the normal line
-                let diff = bones[b].vertices[idx.unwrap()].pos - bind_bone.pos;
-                let rotated = utils::rotate(&diff, normal_angle);
-                let weight = bind.verts[v_id].weight;
-                bones[b].vertices[idx.unwrap()].pos = bind_bone.pos - (rotated * weight);
+                // move vertex to bind bone, then just adjust it to 'bounce' off the line's surface
+                let vert = &mut bones[b].vertices[idx.unwrap()];
+                vert.pos += bind_bone.pos;
+                let rotated = utils::rotate(&(vert.pos - bind_bone.pos), normal_angle);
+                vert.pos = bind_bone.pos - (rotated * bind.verts[v_id].weight);
             }
         }
     }
