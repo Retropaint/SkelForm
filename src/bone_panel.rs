@@ -691,16 +691,6 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         return;
     }
 
-    ui.horizontal(|ui| {
-        let selected = shared.ui.selected_weights as usize;
-        let weight = &mut shared.selected_bone_mut().unwrap().weights[selected];
-        ui.checkbox(
-            &mut weight.is_path,
-            "is path:",
-        );
-        ui.add(egui::DragValue::new(&mut weight.path_gap));
-    });
-
     let weights = shared.selected_bone().unwrap().weights.clone();
     ui.horizontal(|ui| {
         let bone_id = weights[shared.ui.selected_weights as usize].bone_id;
@@ -722,6 +712,25 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     });
 
     if weights[shared.ui.selected_weights as usize].bone_id == -1 {
+        return;
+    }
+
+    ui.horizontal(|ui| {
+        let selected = shared.ui.selected_weights as usize;
+        let weight = &mut shared.selected_bone_mut().unwrap().weights[selected];
+        ui.label("Pathing:")
+            .on_hover_text("Vertices will follow this bind like a line rather than a weight.");
+        ui.checkbox(&mut weight.is_path, "".into_atoms());
+        if !weight.is_path {
+            return;
+        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.add(egui::DragValue::new(&mut weight.path_gap));
+            ui.label("Gap:");
+        });
+    });
+
+    if weights[shared.ui.selected_weights as usize].is_path {
         return;
     }
 
