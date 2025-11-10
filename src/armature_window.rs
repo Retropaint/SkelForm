@@ -323,12 +323,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                             shared.ui.setting_ik_target = false;
                         } else if shared.ui.setting_weight_bone {
                             let idx = shared.ui.selected_weights as usize;
-                            let cbone = shared.armature.bones[b].clone();
                             let weight = &mut shared.selected_bone_mut().unwrap().weights[idx];
                             weight.bone_id = bone_id;
-                            weight.rest_pos = cbone.pos;
-                            weight.rest_rot = cbone.rot;
-                            weight.rest_scale = cbone.scale;
                             shared.ui.setting_weight_bone = false;
                         } else {
                             if !shared.input.holding_mod && !shared.input.holding_shift {

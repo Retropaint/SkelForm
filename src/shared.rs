@@ -205,7 +205,6 @@ macro_rules! enum_string {
 pub struct Vertex {
     #[serde(default)]
     pub pos: Vec2,
-
     #[serde(default)]
     pub uv: Vec2,
     #[serde(skip)]
@@ -947,11 +946,7 @@ pub struct BoneWeight {
     #[serde(default)]
     pub path_gap: f32,
     #[serde(default)]
-    pub rest_pos: Vec2,
-    #[serde(default)]
-    pub rest_rot: f32,
-    #[serde(default)]
-    pub rest_scale: Vec2,
+    pub vert_gaps: Vec<Vec2>
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
