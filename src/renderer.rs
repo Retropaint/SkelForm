@@ -558,20 +558,9 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
         }
     }
 
-    // copy binds
-    let mut binds = vec![];
-    for b in 0..bones.len() {
-        binds.push(bones[b].binds.clone());
-    }
-
     // re-construct bones, accounting for rotations saved from IK
     *bones = og_bones.clone();
     inheritance(bones, ik_rot.clone());
-
-    // add binds back
-    for b in 0..bones.len() {
-        bones[b].binds = binds[b].clone();
-    }
 
     for b in 0..bones.len() {
         let bone = bones[b].clone();
@@ -585,7 +574,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
         // move vertex to main bone.
         // this will be overridden if vertex has a bind.
         for vert in &mut bones[b].vertices {
-            vert.pos = inherit_vert(vert.pos, &bone)
+            vert.pos = inherit_vert(vert.pos, &bone);
         }
 
         for bi in 0..bones[b].binds.len() {
