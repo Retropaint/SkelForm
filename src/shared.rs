@@ -228,7 +228,7 @@ impl Default for Vertex {
             color: VertexColor::default(),
             add_color: VertexColor::new(0., 0., 0., 0.),
             id: 0,
-            offset_rot: 0.
+            offset_rot: 0.,
         }
     }
 }

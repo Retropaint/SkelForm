@@ -141,11 +141,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     continue;
                 }
 
-                let uv = wv[c0].uv * bary.3 + wv[c1].uv * bary.1 + wv[c2].uv * bary.2;
-
-                let bones = &shared.armature.bones;
+                let bones = &temp_bones;
                 let v = &bones.iter().find(|bone| bone.id == tb.id).unwrap().vertices;
-                let pos = v[c0].pos * bary.3 + v[c1].pos * bary.1 + v[c2].pos * bary.2;
+                let uv = v[c0].uv * bary.3 + v[c1].uv * bary.1 + v[c2].uv * bary.2;
+                let pos = (v[c0].pos - tb.pos) * bary.3
+                    + (v[c1].pos - tb.pos) * bary.1
+                    + (v[c2].pos - tb.pos) * bary.2;
 
                 if shared.input.left_clicked && shared.ui.showing_mesh && new_vert == None {
                     new_vert = Some(Vertex {
@@ -607,6 +608,9 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 let binds = &bones[b].binds;
                 let prev = if bi > 0 { bi - 1 } else { bi };
                 let next = (bi + 1).min(binds.len() - 1);
+                if binds[prev].bone_id == -1 || binds[next].bone_id == -1 {
+                    continue;
+                }
                 let prev_bone = bones.iter().find(|bone| bone.id == binds[prev].bone_id);
                 let next_bone = bones.iter().find(|bone| bone.id == binds[next].bone_id);
 
@@ -622,8 +626,8 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 let vert = &mut bones[b].vertices[idx.unwrap()];
                 vert.pos = init_vert_pos[idx.unwrap()] + bind_bone.pos;
                 let rotated = utils::rotate(&(vert.pos - bind_bone.pos), normal_angle);
-                vert.pos = bind_bone.pos - (rotated * bind.verts[v_id].weight);
-                vert.offset_rot = 3.14 - normal_angle;
+                vert.pos = bind_bone.pos + (rotated * bind.verts[v_id].weight);
+                vert.offset_rot = -normal_angle;
             }
         }
     }
