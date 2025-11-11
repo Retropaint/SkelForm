@@ -216,6 +216,8 @@ pub struct Vertex {
     pub add_color: VertexColor,
     #[serde(default)]
     pub id: u32,
+    #[serde(skip)]
+    pub offset_rot: f32,
 }
 
 impl Default for Vertex {
@@ -226,6 +228,7 @@ impl Default for Vertex {
             color: VertexColor::default(),
             add_color: VertexColor::new(0., 0., 0., 0.),
             id: 0,
+            offset_rot: 0.
         }
     }
 }

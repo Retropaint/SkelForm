@@ -575,6 +575,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
         // this will be overridden if vertex has a bind.
         for vert in &mut bones[b].vertices {
             vert.pos = inherit_vert(vert.pos, &bone);
+            vert.offset_rot = bone.rot;
         }
 
         for bi in 0..bones[b].binds.len() {
@@ -594,6 +595,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                     let weight = bind.verts[v_id].weight;
                     let end_pos = inherit_vert(init_vert_pos[idx.unwrap()], &bind_bone) - vert.pos;
                     vert.pos += end_pos * weight;
+                    vert.offset_rot = -bind_bone.rot;
                     continue;
                 }
 
@@ -618,9 +620,10 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
 
                 // move vertex to bind bone, then just adjust it to 'bounce' off the line's surface
                 let vert = &mut bones[b].vertices[idx.unwrap()];
-                vert.pos += bind_bone.pos;
+                vert.pos = init_vert_pos[idx.unwrap()] + bind_bone.pos;
                 let rotated = utils::rotate(&(vert.pos - bind_bone.pos), normal_angle);
                 vert.pos = bind_bone.pos - (rotated * bind.verts[v_id].weight);
+                vert.offset_rot = 3.14 - normal_angle;
             }
         }
     }
@@ -1153,24 +1156,9 @@ fn draw_line(
 pub fn drag_vertex(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>, vert_idx: usize) {
     let mouse_vel = shared.mouse_vel();
     let zoom = shared.camera.zoom;
-    let vert_id = bone.vertices[vert_idx].id;
-    let mut total_rot = bone.rot;
-    for bind in &bone.binds {
-        if !bind
-            .verts
-            .iter()
-            .map(|vert| vert.id)
-            .collect::<Vec<i32>>()
-            .contains(&(vert_id as i32))
-        {
-            continue;
-        }
-        let bind_bone = bones.iter().find(|b| b.id == bind.bone_id).unwrap();
-        total_rot += bind_bone.rot;
-    }
-    // offset weight rotations
+    let temp_vert = bone.vertices[vert_idx];
     let vert_mut = &mut shared.selected_bone_mut().unwrap().vertices[vert_idx];
-    vert_mut.pos -= utils::rotate(&(mouse_vel * zoom), -total_rot);
+    vert_mut.pos -= utils::rotate(&(mouse_vel * zoom), temp_vert.offset_rot);
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
