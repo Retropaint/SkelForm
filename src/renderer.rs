@@ -699,10 +699,9 @@ pub fn arc_ik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
     let valley = base_mag / max_length;
 
     for b in 1..bones.len() {
-        let angle = 3.14 * dist[b];
         bones[b].pos = Vec2::new(
             bones[b].pos.x * valley,
-            root.y + (1. - peak) * angle.sin() * max_length,
+            root.y + (1. - peak) * (dist[b] * 3.14).sin() * base_mag,
         );
 
         let rotated = utils::rotate(&(bones[b].pos - root), base_angle);
