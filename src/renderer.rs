@@ -332,7 +332,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
         let vert = mouse_world_vert;
-        vert_lines(bone, shared, &vert, render_pass, device, &mut new_vert);
+        let nw = &mut new_vert;
+        vert_lines(bone, &temp_bones, shared, &vert, render_pass, device, nw);
         let wv = bone.world_verts.clone();
         bone_vertices(&bone.clone(), &temp_bones, shared, render_pass, device, &wv);
     }
@@ -1048,6 +1049,7 @@ pub fn bone_vertices(
 
 pub fn vert_lines(
     bone: &Bone,
+    bones: &Vec<Bone>,
     shared: &mut Shared,
     mouse_world_vert: &Vertex,
     render_pass: &mut RenderPass,
@@ -1132,10 +1134,10 @@ pub fn vert_lines(
                 shared.dragging_verts.push(i0 as usize);
                 shared.dragging_verts.push(i1 as usize);
             } else if shared.input.left_clicked && !added_vert {
-                let bones = &shared.armature.bones;
+                let bones = &bones;
                 let v = &bones.iter().find(|b| b.id == bone.id).unwrap().vertices;
-                let wv0 = v[i0 as usize].pos;
-                let wv1 = v[i1 as usize].pos;
+                let wv0 = v[i0 as usize].pos - bone.pos;
+                let wv1 = v[i1 as usize].pos - bone.pos;
                 let pos = wv0 + (wv1 - wv0) * interp;
                 *new_vert = Some(Vertex {
                     pos,
