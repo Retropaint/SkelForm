@@ -715,18 +715,15 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         return;
     }
 
+    let selected = shared.ui.selected_bind as usize;
     ui.horizontal(|ui| {
-        let selected = shared.ui.selected_bind as usize;
         let bind = &mut shared.selected_bone_mut().unwrap().binds[selected];
         ui.label("Pathing:")
             .on_hover_text("Vertices will follow this bind like a line rather than a weight.");
         ui.checkbox(&mut bind.is_path, "".into_atoms());
     });
 
-    let selected = shared.ui.selected_bind;
-    let vert_id_len = shared.selected_bone().unwrap().binds[selected as usize]
-        .verts
-        .len();
+    let vert_id_len = shared.selected_bone().unwrap().binds[selected].verts.len();
     ui.horizontal(|ui| {
         if vert_id_len > 0 {
             ui.label("Weights:");
@@ -739,6 +736,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             };
             if ui.skf_button(str_set_verts).clicked() {
                 shared.ui.setting_bind_verts = !shared.ui.setting_bind_verts;
+                shared.selected_bone_mut().unwrap().binds[selected].is_path = false;
             }
         });
     });
