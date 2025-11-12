@@ -91,7 +91,30 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // runtime: armature bones should be immutable to rendering
     let mut temp_bones: Vec<Bone> = animated_bones.clone();
 
+    // store bound/unbound vert's pos before construction
+    let mut init_vert_pos = Vec2::default();
+    let vert_id = shared.changed_vert_id as usize;
+    if shared.changed_vert_id != -1 {
+        init_vert_pos = temp_bones[shared.ui.selected_bone_idx].vertices[vert_id].pos;
+    }
+
     construction(&mut temp_bones, &animated_bones);
+
+    // adjust bound/unbound vert's pos after construction
+    if shared.changed_vert_id != -1 {
+        let temp_vert = temp_bones[shared.ui.selected_bone_idx].vertices[vert_id];
+
+        let mut diff = temp_vert.pos - init_vert_pos;
+
+        // if unbound, vert needs to account for pos in the previous frame
+        if let Some(last_frame_pos) = shared.changed_vert_init_pos {
+            diff = temp_vert.pos - last_frame_pos;
+        }
+
+        let vert = &mut shared.selected_bone_mut().unwrap().vertices[vert_id];
+        vert.pos -= diff;
+        shared.changed_vert_id = -1;
+    }
 
     // sort bones by highest zindex first, so that hover logic will pick the top-most one
     temp_bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
@@ -310,7 +333,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         let vert = mouse_world_vert;
         vert_lines(bone, shared, &vert, render_pass, device, &mut new_vert);
-        bone_vertices(&bone, shared, render_pass, device, &bone.world_verts);
+        let wv = bone.world_verts.clone();
+        bone_vertices(&bone.clone(), &temp_bones, shared, render_pass, device, &wv);
     }
 
     if !shared.ui.setting_bind_verts {
@@ -369,7 +393,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
         for vert in shared.dragging_verts.clone() {
             let bone = &temp_bones.iter().find(|bone| bone.id == bone_id).unwrap();
-            drag_vertex(shared, bone, &temp_bones, vert);
+            drag_vertex(shared, bone, vert);
         }
 
         return;
@@ -911,6 +935,7 @@ pub fn draw(
 
 pub fn bone_vertices(
     bone: &Bone,
+    bones: &Vec<Bone>,
     shared: &mut Shared,
     render_pass: &mut RenderPass,
     device: &Device,
@@ -984,14 +1009,26 @@ pub fn bone_vertices(
         } else if shared.input.left_clicked {
             let idx = shared.ui.selected_bind as usize;
             let vert_id = world_verts[wv].id;
-            let bind = &mut shared.selected_bone_mut().unwrap().binds[idx];
-            if let Some(idx) = bind.verts.iter().position(|vert| vert.id == vert_id as i32) {
-                bind.verts.remove(idx);
+            let bone_mut = &mut shared.selected_bone_mut().unwrap();
+
+            let bind = &bone.binds[idx];
+            if let Some(v) = bind.verts.iter().position(|vert| vert.id == vert_id as i32) {
+                bone_mut.binds[idx].verts.remove(v);
+
+                let changed_vert_id = world_verts.iter().position(|v| v.id == vert_id).unwrap();
+                shared.changed_vert_id = changed_vert_id as i32;
+
+                // store this frame's vert pos for adjustment later
+                shared.changed_vert_init_pos = Some(bone.vertices[changed_vert_id].pos);
             } else {
-                bind.verts.push(BoneBindVert {
+                bone_mut.binds[idx].verts.push(BoneBindVert {
                     id: vert_id as i32,
                     weight: 1.,
                 });
+
+                let changed_vert_id = world_verts.iter().position(|v| v.id == vert_id).unwrap();
+                shared.changed_vert_init_pos = None;
+                shared.changed_vert_id = changed_vert_id as i32;
             }
             break;
         }
@@ -1156,7 +1193,7 @@ fn draw_line(
     draw(&None, &verts, &indices, render_pass, device);
 }
 
-pub fn drag_vertex(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>, vert_idx: usize) {
+pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
     let mouse_vel = shared.mouse_vel();
     let zoom = shared.camera.zoom;
     let temp_vert = bone.vertices[vert_idx];

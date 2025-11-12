@@ -1963,6 +1963,9 @@ pub struct Shared {
 
     pub bone_init_rot: f32,
 
+    pub changed_vert_id: i32,
+    pub changed_vert_init_pos: Option<Vec2>,
+
     loc_strings: std::collections::HashMap<String, String>,
 }
 
