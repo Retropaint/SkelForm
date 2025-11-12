@@ -323,7 +323,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     if shared.ui.showing_mesh || shared.ui.setting_bind_verts {
         let id = shared.selected_bone().unwrap().id;
-        let bone = temp_bones.iter_mut().find(|bone| bone.id == id).unwrap();
+        let bone = temp_bones.iter().find(|bone| bone.id == id).unwrap();
         let bind_group = &shared.armature.get_current_tex(bone.id).unwrap().bind_group;
 
         let vert = &bone.world_verts;
@@ -992,6 +992,17 @@ pub fn bone_vertices(
                 verts.remove(wv);
                 *verts = sort_vertices(verts.clone());
                 shared.selected_bone_mut().unwrap().indices = triangulate(&verts);
+
+                // remove this vert from its binds
+                'bind: for bind in &mut shared.selected_bone_mut().unwrap().binds {
+                    for v in 0..bind.verts.len() {
+                        if bind.verts[v].id == world_verts[wv].id as i32 {
+                            bind.verts.remove(v);
+                            break 'bind;
+                        }
+                    }
+                }
+
                 break;
             }
         }
