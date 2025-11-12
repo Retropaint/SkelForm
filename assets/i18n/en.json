@@ -59,7 +59,7 @@
     }
   },
   "styles_modal": {
-    "heading": "Styles",
+    "heading": "Styles ℹ",
     "heading_desc": "Styles allow hotswapping of textures to create multiple outfits/skins.\n\nKeep texture order in mind to ensure that the correct textures are used across styles.",
     "texture_preview": "Texture Preview",
     "style_preview": "Style Preview",
@@ -72,7 +72,7 @@
     "img_name": "Name: ",
     "img_size": "Size: ",
     "active_desc": "Should this style be active?",
-    "assigned_bones": "Assigned Bones",
+    "assigned_bones": "Assigned Bones ℹ",
     "assigned_bones_desc": "Click on bones in the list to assign/unassign them for this style.\n\nAssigned bones will use this style's textures based on the bone's texture index.\n\nIf this style and another above has the same bone(s) assigned, the higher style will be used.",
     "assigned_bones_tex_idx_desc": "Texture index for "
   },
@@ -95,7 +95,7 @@
     "rotation": "Rotation:",
     "zindex": "Z-Index:",
     "inverse_kinematics": {
-      "heading": "Inverse Kinematics ",
+      "heading": "Inverse Kinematics ℹ",
       "desc": "Automatically adjust and bend bones to reach a specified target.\nBest used for joints like shoulders and legs.\n\nAfter the joints have been set up, click the checkbox next to this header to activate IK.",
       "enabled_desc": "Should inverse kinematics be running for this set of joints?\n\nUntick this to allow setting up joint positions and rotations.",
       "effector": "Effector: ",
@@ -113,7 +113,7 @@
       "cant_edit": "Turn off inverse kinematics to edit"
     },
     "mesh_deformation": {
-      "heading": "Mesh Deformation ",
+      "heading": "Mesh Deformation ℹ",
       "desc": "Turn this texture into a deformable mesh. Vertices can be bound to other bones with custom weights to influence them.",
       "edit": "Edit Vertices",
       "finish_edit": "Finish",
@@ -169,11 +169,11 @@
     "miscellaneous": {
       "heading": "Miscellaneous",
       "autosave_frequency": "Autosave frequency (seconds):",
-      "select_exact_bone": "Select exact bone in click ",
+      "select_exact_bone": "Select exact bone in click ℹ:",
       "select_exact_bone_desc": "Clicking on a bone that is named 'Texture' (any case) will select the parent. Tick this to directly select the texture.",
       "skip_startup_window": "Skip startup window",
       "clear_recent_files": "Clear recent files",
-      "keep_bone_tex_idx": "Keep tex. index after moving ",
+      "keep_bone_tex_idx": "Keep tex. index after moving ℹ:",
       "keep_bone_tex_idx_desc": "After moving a texture in a style, all bones will automatically adjust their Tex. Index to match.\n\nTick this to preserve indexes after moving.",
       "beta": {
         "heading": "Beta",
