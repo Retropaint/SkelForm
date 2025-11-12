@@ -13,8 +13,6 @@ use tween::Tweener;
 use wgpu::BindGroup;
 use winit::keyboard::KeyCode;
 
-pub const ICON_INFO: &str = "ℹ";
-
 #[repr(C)]
 #[derive(
     Debug,

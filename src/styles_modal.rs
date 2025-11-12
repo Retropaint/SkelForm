@@ -29,8 +29,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             ui.set_height(modal_size.y);
             let str_desc = shared.loc("styles_modal.heading_desc");
             let str_heading = shared.loc(&("styles_modal.heading")).to_owned();
-            ui.heading(str_heading + " " + crate::ICON_INFO)
-                .on_hover_text(str_desc);
+            ui.heading(str_heading).on_hover_text(str_desc);
 
             ui.add_space(5.);
 
@@ -345,8 +344,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
         ui.horizontal(|ui| {
             let str_heading = &shared.loc("styles_modal.assigned_bones");
             let str_desc = &shared.loc("styles_modal.assigned_bones_desc");
-            ui.label(str_heading.to_owned() + " " + ICON_INFO)
-                .on_hover_text(str_desc)
+            ui.label(str_heading.to_owned()).on_hover_text(str_desc)
         });
 
         if shared.ui.selected_tex_set_id == -1 {

@@ -233,7 +233,7 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         let str_exact_bone = &shared.loc("settings_modal.miscellaneous.select_exact_bone");
         let str_exact_bone_desc =
             &shared.loc("settings_modal.miscellaneous.select_exact_bone_desc");
-        ui.label(&(str_exact_bone.to_owned() + crate::ICON_INFO + ":"))
+        ui.label(str_exact_bone.to_owned())
             .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_exact_bone_desc);
         ui.checkbox(&mut shared.config.exact_bone_select, "".into_atoms());
@@ -242,7 +242,7 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         let str_keep_tex_idx = &shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx");
         let str_keep_tex_idx_desc =
             &shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx_desc");
-        ui.label(&(str_keep_tex_idx.to_owned() + crate::ICON_INFO + ":"))
+        ui.label(&(str_keep_tex_idx.to_owned()))
             .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_keep_tex_idx_desc);
         ui.checkbox(&mut shared.config.keep_tex_idx_on_move, "".into_atoms());

@@ -314,8 +314,7 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         })
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.label(str_heading.to_owned() + ICON_INFO)
-                    .on_hover_text(str_desc);
+                ui.label(str_heading.to_owned()).on_hover_text(str_desc);
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
@@ -548,8 +547,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         })
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.label(str_heading.to_owned() + ICON_INFO)
-                    .on_hover_text(str_desc);
+                ui.label(str_heading.to_owned()).on_hover_text(str_desc);
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let fold_icon = if bone.meshdef_folded { "⏴" } else { "⏷" };
@@ -717,10 +715,13 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
     let selected = shared.ui.selected_bind as usize;
     ui.horizontal(|ui| {
-        let bind = &mut shared.selected_bone_mut().unwrap().binds[selected];
-        ui.label("Pathing:")
-            .on_hover_text("Vertices will follow this bind like a line rather than a weight.");
-        ui.checkbox(&mut bind.is_path, "".into_atoms());
+        ui.label("Pathing:").on_hover_text(
+            "Vertices will follow this bind along a path formed with adjacent binds.",
+        );
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let bind = &mut shared.selected_bone_mut().unwrap().binds[selected];
+            ui.checkbox(&mut bind.is_path, "".into_atoms());
+        });
     });
 
     let vert_id_len = shared.selected_bone().unwrap().binds[selected].verts.len();
