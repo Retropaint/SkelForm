@@ -104,7 +104,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     if shared.changed_vert_id != -1 {
         let temp_vert = temp_bones[shared.ui.selected_bone_idx].vertices[vert_id];
 
-        let mut diff = temp_vert.pos - init_vert_pos;
+        let mut diff = temp_vert.pos - init_vert_pos - temp_bones[shared.ui.selected_bone_idx].pos;
 
         // if unbound, vert needs to account for pos in the previous frame
         if let Some(last_frame_pos) = shared.changed_vert_init_pos {
