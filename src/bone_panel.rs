@@ -708,19 +708,26 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             }
         });
     });
+    let selected = shared.ui.selected_bind as usize;
 
-    if binds[shared.ui.selected_bind as usize].bone_id == -1 {
+    if binds[selected].bone_id == -1 {
         return;
     }
 
-    let selected = shared.ui.selected_bind as usize;
     ui.horizontal(|ui| {
         ui.label("Pathing:").on_hover_text(
             "Vertices will follow this bind along a path formed with adjacent binds.",
         );
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let binding_verts = shared.ui.setting_bind_verts;
             let bind = &mut shared.selected_bone_mut().unwrap().binds[selected];
-            ui.checkbox(&mut bind.is_path, "".into_atoms());
+            if binding_verts {
+                ui.add_enabled_ui(false, |ui| {
+                    ui.checkbox(&mut shared.was_editing_path, "".into_atoms());
+                });
+            } else {
+                ui.checkbox(&mut bind.is_path, "".into_atoms());
+            }
         });
     });
 
@@ -737,7 +744,13 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             };
             if ui.skf_button(str_set_verts).clicked() {
                 shared.ui.setting_bind_verts = !shared.ui.setting_bind_verts;
-                shared.selected_bone_mut().unwrap().binds[selected].is_path = false;
+                if shared.was_editing_path {
+                    shared.selected_bone_mut().unwrap().binds[selected].is_path = true;
+                    shared.was_editing_path = false;
+                } else {
+                    shared.was_editing_path = binds[selected].is_path;
+                    shared.selected_bone_mut().unwrap().binds[selected].is_path = false;
+                }
             }
         });
     });

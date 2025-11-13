@@ -1964,6 +1964,8 @@ pub struct Shared {
     pub changed_vert_id: i32,
     pub changed_vert_init_pos: Option<Vec2>,
 
+    pub was_editing_path: bool,
+
     loc_strings: std::collections::HashMap<String, String>,
 }
 
