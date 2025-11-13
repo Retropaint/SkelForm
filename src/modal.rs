@@ -71,6 +71,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
                 .armature
                 .find_bone(shared.ui.context_menu.id)
                 .unwrap();
+            let bone_id = bone.id;
 
             // remove all children of this bone as well
             let mut children = vec![bone.clone()];
@@ -83,10 +84,15 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             // remove all references to this bone and it's children from all animations
             for bone in &children {
                 for anim in &mut shared.armature.animations {
-                    for i in 0..anim.keyframes.len() {
-                        if anim.keyframes[i].bone_id == bone.id {
-                            anim.keyframes.remove(i);
-                        }
+                    anim.keyframes.retain(|kf| kf.bone_id != bone.id);
+                }
+            }
+
+            // remove this bone from binds
+            for bone in &mut shared.armature.bones {
+                for b in 0..bone.binds.len() {
+                    if bone.binds[b].bone_id == bone_id {
+                        bone.binds.remove(b);
                     }
                 }
             }
