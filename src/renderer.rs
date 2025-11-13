@@ -362,7 +362,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         vert_lines(bone, &temp_bones, shared, &mouse, render_pass, device, nw, true);
         let wv = bone.world_verts.clone();
         #[rustfmt::skip]
-        bone_vertices(&bone.clone(), &temp_bones, shared, render_pass, device, &wv, true);
+        bone_vertices(&bone.clone(), shared, render_pass, device, &wv, true);
     }
 
     if mesh_onion_id != -1 {
@@ -374,7 +374,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         #[rustfmt::skip]
         vert_lines(bone, &tp, shared, &vertex, render_pass, device, &mut None, false);
         #[rustfmt::skip]
-        bone_vertices(&bone.clone(), &temp_bones, shared, render_pass, device, &wv, false);
+        bone_vertices(&bone.clone(), shared, render_pass, device, &wv, false);
     }
 
     if !shared.ui.setting_bind_verts {
@@ -970,7 +970,6 @@ pub fn draw(
 
 pub fn bone_vertices(
     bone: &Bone,
-    bones: &Vec<Bone>,
     shared: &mut Shared,
     render_pass: &mut RenderPass,
     device: &Device,
@@ -1007,7 +1006,7 @@ pub fn bone_vertices(
         } else {
             VertexColor::GREEN
         };
-        col.a = if editable { 0.5 } else { 0.25 };
+        col.a = if editable { 0.5 } else { 0.15 };
         let point = point!(wv, col);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
 
