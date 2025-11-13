@@ -147,11 +147,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if selected_bone != None && selected_bone.unwrap().id == temp_bones[b].id {
             for parent in &parents {
                 let tex = shared.armature.get_current_tex(parent.id);
-                if tex == None || shared.armature.is_bone_hidden(parent.id) {
-                    continue;
+                if tex != None
+                    && !shared.armature.is_bone_hidden(parent.id)
+                    && utils::bone_meshes_edited(tex.unwrap().size, &parent.vertices)
+                {
+                    mesh_onion_id = parent.id;
+                    break;
                 }
-                mesh_onion_id = parent.id;
-                break;
             }
         }
 
@@ -398,16 +400,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
-    let color = VertexColor::new(
+    let mut color = VertexColor::new(
         shared.config.colors.center_point.r as f32 / 255.,
         shared.config.colors.center_point.g as f32 / 255.,
         shared.config.colors.center_point.b as f32 / 255.,
-        0.5,
+        0.75,
     );
     let cam = shared.camera.pos;
     let zero = Vec2::default();
-
-    for pos in selected_bones_pos {
+    for p in 0..selected_bones_pos.len() {
+        if p > 0 {
+            color.a = 0.25;
+        }
+        let pos = selected_bones_pos[p];
         draw_point(&zero, &shared, render_pass, device, &pos, color, cam, 0.);
     }
 
@@ -1002,7 +1007,7 @@ pub fn bone_vertices(
         } else {
             VertexColor::GREEN
         };
-        col.a = 0.5;
+        col.a = if editable { 0.5 } else { 0.25 };
         let point = point!(wv, col);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
 
@@ -1120,7 +1125,7 @@ pub fn vert_lines(
 
         let mut col = VertexColor::GREEN;
         col += VertexColor::new(-0.5, -0.5, -0.5, 0.);
-        col.a = 0.3;
+        col.a = if editable { 0.3 } else { 0.1 };
 
         macro_rules! vert {
             ($pos:expr, $v:expr) => {
