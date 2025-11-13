@@ -116,6 +116,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.changed_vert_id = -1;
     }
 
+    let mut mesh_onion_id = -1;
+
+    let mut selected_bones_pos = vec![];
+    if shared.selected_bone() != None {
+        let id = shared.selected_bone().unwrap().id;
+        let bone = temp_bones.iter().find(|bone| bone.id == id).unwrap();
+        let mut children = vec![bone.clone()];
+        armature_window::get_all_children(&temp_bones, &mut children, &bone);
+        for child in children {
+            selected_bones_pos.push(child.pos);
+        }
+    }
+
     // sort bones by highest zindex first, so that hover logic will pick the top-most one
     temp_bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
 
@@ -128,6 +141,20 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // pre-draw bone setup
     for b in 0..temp_bones.len() {
         let tex = shared.armature.get_current_tex(temp_bones[b].id);
+        let parents = shared.armature.get_all_parents(temp_bones[b].id);
+
+        let selected_bone = shared.selected_bone();
+        if selected_bone != None && selected_bone.unwrap().id == temp_bones[b].id {
+            for parent in &parents {
+                let tex = shared.armature.get_current_tex(parent.id);
+                if tex == None || shared.armature.is_bone_hidden(parent.id) {
+                    continue;
+                }
+                mesh_onion_id = parent.id;
+                break;
+            }
+        }
+
         if tex == None || shared.armature.is_bone_hidden(temp_bones[b].id) {
             continue;
         }
@@ -211,7 +238,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if !shared.config.exact_bone_select {
             // QoL: select parent of textured bone if it's called 'Texture'
             // this is because most textured bones are meant to represent their parents
-            let parents = shared.armature.get_all_parents(temp_bones[b].id);
             if parents.len() != 0 && temp_bones[b].name.to_lowercase() == "texture" {
                 click_on_hover_id = parents[0].id;
             }
@@ -245,7 +271,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.ui.selected_bone_ids = vec![];
 
                 // unfold all parents that lead to this bone, so it's visible in the hierarchy
-                let parents = shared.armature.get_all_parents(click_on_hover_id);
                 for parent in &parents {
                     shared.armature.find_bone_mut(parent.id).unwrap().folded = false;
                 }
@@ -256,7 +281,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // runtime: sort bones by z-index for drawing
     temp_bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
-    for bone in &mut temp_bones {
+    for bone in &temp_bones {
         let tex = shared.armature.get_current_tex(bone.id);
         if tex == None || shared.armature.is_bone_hidden(bone.id) {
             continue;
@@ -285,9 +310,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         && shared.armature.bone_eff(shared.selected_bone().unwrap().id) != JointEffector::None
     {
         for bone in &temp_bones {
-            if shared.armature.bone_eff(bone.id) == JointEffector::None
-                || shared.armature.bone_eff(bone.id) == JointEffector::End
-            {
+            let bone_eff = shared.armature.bone_eff(bone.id);
+            if bone_eff == JointEffector::None || bone_eff == JointEffector::End {
                 continue;
             }
             let mut arrow = Bone {
@@ -328,14 +352,27 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         let vert = &bone.world_verts;
         draw(&bind_group, &vert, &bone.indices, render_pass, device);
-
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
-        let vert = mouse_world_vert;
+        let mouse = mouse_world_vert;
         let nw = &mut new_vert;
-        vert_lines(bone, &temp_bones, shared, &vert, render_pass, device, nw);
+        #[rustfmt::skip]
+        vert_lines(bone, &temp_bones, shared, &mouse, render_pass, device, nw, true);
         let wv = bone.world_verts.clone();
-        bone_vertices(&bone.clone(), &temp_bones, shared, render_pass, device, &wv);
+        #[rustfmt::skip]
+        bone_vertices(&bone.clone(), &temp_bones, shared, render_pass, device, &wv, true);
+    }
+
+    if mesh_onion_id != -1 {
+        render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+        let tp = &temp_bones;
+        let bone = tp.iter().find(|bone| bone.id == mesh_onion_id).unwrap();
+        let wv = bone.world_verts.clone();
+        let vertex = Vertex::default();
+        #[rustfmt::skip]
+        vert_lines(bone, &tp, shared, &vertex, render_pass, device, &mut None, false);
+        #[rustfmt::skip]
+        bone_vertices(&bone.clone(), &temp_bones, shared, render_pass, device, &wv, false);
     }
 
     if !shared.ui.setting_bind_verts {
@@ -361,25 +398,17 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
-    if shared.selected_bone() != None {
-        let color = VertexColor::new(
-            shared.config.colors.center_point.r as f32 / 255.,
-            shared.config.colors.center_point.g as f32 / 255.,
-            shared.config.colors.center_point.b as f32 / 255.,
-            0.5,
-        );
-        let bone = find_bone(&temp_bones, shared.selected_bone().unwrap().id).unwrap();
-        let cam = shared.camera.pos;
-        draw_point(
-            &Vec2::ZERO,
-            &shared,
-            render_pass,
-            device,
-            bone,
-            color,
-            cam,
-            0.,
-        );
+    let color = VertexColor::new(
+        shared.config.colors.center_point.r as f32 / 255.,
+        shared.config.colors.center_point.g as f32 / 255.,
+        shared.config.colors.center_point.b as f32 / 255.,
+        0.5,
+    );
+    let cam = shared.camera.pos;
+    let zero = Vec2::default();
+
+    for pos in selected_bones_pos {
+        draw_point(&zero, &shared, render_pass, device, &pos, color, cam, 0.);
     }
 
     if !shared.input.left_down {
@@ -941,6 +970,7 @@ pub fn bone_vertices(
     render_pass: &mut RenderPass,
     device: &Device,
     world_verts: &Vec<Vertex>,
+    editable: bool,
 ) {
     macro_rules! point {
         ($idx:expr, $color:expr) => {
@@ -949,10 +979,7 @@ pub fn bone_vertices(
                 &shared,
                 render_pass,
                 device,
-                &Bone {
-                    pos: Vec2::ZERO,
-                    ..bone.clone()
-                },
+                &Vec2::ZERO,
                 $color,
                 Vec2::ZERO,
                 45. * 3.14 / 180.,
@@ -979,7 +1006,7 @@ pub fn bone_vertices(
         let point = point!(wv, col);
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
 
-        if shared.input.on_ui || !mouse_on_it {
+        if shared.input.on_ui || !mouse_on_it || !editable {
             continue;
         }
 
@@ -1055,6 +1082,7 @@ pub fn vert_lines(
     render_pass: &mut RenderPass,
     device: &Device,
     new_vert: &mut Option<Vertex>,
+    editable: bool,
 ) {
     let mut added_vert = false;
 
@@ -1114,54 +1142,56 @@ pub fn vert_lines(
 
         let mut is_hovering = false;
 
-        for (_, chunk) in indices.chunks_exact(3).enumerate() {
-            let c0 = chunk[0] as usize;
-            let c1 = chunk[1] as usize;
-            let c2 = chunk[2] as usize;
-            let mv = mouse_world_vert;
-            let bary = tri_point(&mv.pos, &verts[c0].pos, &verts[c1].pos, &verts[c2].pos);
-            if bary.0 == -1. {
-                continue;
+        if editable {
+            for (_, chunk) in indices.chunks_exact(3).enumerate() {
+                let c0 = chunk[0] as usize;
+                let c1 = chunk[1] as usize;
+                let c2 = chunk[2] as usize;
+                let mv = mouse_world_vert;
+                let bary = tri_point(&mv.pos, &verts[c0].pos, &verts[c1].pos, &verts[c2].pos);
+                if bary.0 == -1. {
+                    continue;
+                }
+                is_hovering = true;
+
+                let mouse_line = mouse_world_vert.pos - v0.pos;
+                let whole_line = v1.pos - v0.pos;
+                let interp = mouse_line.mag() / whole_line.mag();
+                let uv = v0.uv + (v1.uv - v0.uv) * interp;
+
+                if shared.input.left_pressed {
+                    shared.dragging_verts.push(i0 as usize);
+                    shared.dragging_verts.push(i1 as usize);
+                } else if shared.input.left_clicked && !added_vert {
+                    let bones = &bones;
+                    let v = &bones.iter().find(|b| b.id == bone.id).unwrap().vertices;
+                    let wv0 = v[i0 as usize].pos - bone.pos;
+                    let wv1 = v[i1 as usize].pos - bone.pos;
+                    let pos = wv0 + (wv1 - wv0) * interp;
+                    *new_vert = Some(Vertex {
+                        pos,
+                        uv,
+                        ..Default::default()
+                    });
+                    added_vert = true;
+                }
             }
-            is_hovering = true;
 
-            let mouse_line = mouse_world_vert.pos - v0.pos;
-            let whole_line = v1.pos - v0.pos;
-            let interp = mouse_line.mag() / whole_line.mag();
-            let uv = v0.uv + (v1.uv - v0.uv) * interp;
-
-            if shared.input.left_pressed {
-                shared.dragging_verts.push(i0 as usize);
-                shared.dragging_verts.push(i1 as usize);
-            } else if shared.input.left_clicked && !added_vert {
-                let bones = &bones;
-                let v = &bones.iter().find(|b| b.id == bone.id).unwrap().vertices;
-                let wv0 = v[i0 as usize].pos - bone.pos;
-                let wv1 = v[i1 as usize].pos - bone.pos;
-                let pos = wv0 + (wv1 - wv0) * interp;
-                *new_vert = Some(Vertex {
-                    pos,
-                    uv,
-                    ..Default::default()
-                });
-                added_vert = true;
+            if is_hovering {
+                v0_top.add_color += add_color;
+                v0_bot.add_color += add_color;
+                v1_top.add_color += add_color;
+                v1_bot.add_color += add_color;
             }
-        }
 
-        if is_hovering {
-            v0_top.add_color += add_color;
-            v0_bot.add_color += add_color;
-            v1_top.add_color += add_color;
-            v1_bot.add_color += add_color;
-        }
+            let mv = &shared.dragging_verts;
 
-        let mv = &shared.dragging_verts;
-
-        if mv.len() == 2 && mv[0] == i0 as usize && mv[1] == i1 as usize {
-            v0_top.add_color += add_color;
-            v0_bot.add_color += add_color;
-            v1_top.add_color += add_color;
-            v1_bot.add_color += add_color;
+            if mv.len() == 2 && mv[0] == i0 as usize && mv[1] == i1 as usize {
+                v0_top.add_color += add_color;
+                v0_bot.add_color += add_color;
+                v1_top.add_color += add_color;
+                v1_bot.add_color += add_color;
+            }
         }
 
         verts = vec![v0_top, v0_bot, v1_top, v1_bot];
@@ -1347,7 +1377,7 @@ fn draw_point(
     shared: &Shared,
     render_pass: &mut RenderPass,
     device: &Device,
-    bone: &Bone,
+    pos: &Vec2,
     color: VertexColor,
     camera: Vec2,
     rotation: f32,
@@ -1371,7 +1401,7 @@ fn draw_point(
     ];
 
     for v in &mut temp_point_verts {
-        v.pos += bone.pos;
+        v.pos += *pos;
         v.pos = utils::rotate(&v.pos, rotation);
     }
 
