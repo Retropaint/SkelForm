@@ -1241,7 +1241,6 @@ impl Armature {
             oth_frame.unwrap().value = init_value;
         }
         let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
-        println!("{}", value);
         anim[anim_id].keyframes[frame].value = value;
     }
 
