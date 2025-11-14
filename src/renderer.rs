@@ -351,18 +351,18 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let id = shared.selected_bone().unwrap().id;
         let bone = temp_bones.iter().find(|bone| bone.id == id).unwrap();
         let bind_group = &shared.armature.get_current_tex(bone.id).unwrap().bind_group;
-
-        let vert = &bone.world_verts;
-        draw(&bind_group, &vert, &bone.indices, render_pass, device);
+        let verts = &bone.world_verts;
+        draw(&bind_group, &verts, &bone.indices, render_pass, device);
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-
         let mouse = mouse_world_vert;
         let nw = &mut new_vert;
-        #[rustfmt::skip]
-        vert_lines(bone, &temp_bones, shared, &mouse, render_pass, device, nw, true);
+
+        let (verts, indices) = vert_lines(bone, &temp_bones, shared, &mouse, nw, true);
+        draw(&None, &verts, &indices, render_pass, device);
+
         let wv = bone.world_verts.clone();
-        #[rustfmt::skip]
-        bone_vertices(&bone.clone(), shared, render_pass, device, &wv, true);
+        let (verts, indices) = bone_vertices(&bone.clone(), shared, &wv, true);
+        draw(&None, &verts, &indices, render_pass, device);
     }
 
     if mesh_onion_id != -1 {
@@ -371,10 +371,12 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let bone = tp.iter().find(|bone| bone.id == mesh_onion_id).unwrap();
         let wv = bone.world_verts.clone();
         let vertex = Vertex::default();
-        #[rustfmt::skip]
-        vert_lines(bone, &tp, shared, &vertex, render_pass, device, &mut None, false);
-        #[rustfmt::skip]
-        bone_vertices(&bone.clone(), shared, render_pass, device, &wv, false);
+
+        let (verts, indices) = vert_lines(bone, &tp, shared, &vertex, &mut None, true);
+        draw(&None, &verts, &indices, render_pass, device);
+
+        let (verts, indices) = bone_vertices(&bone.clone(), shared, &wv, false);
+        draw(&None, &verts, &indices, render_pass, device);
     }
 
     if !shared.ui.setting_bind_verts {
@@ -413,7 +415,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             color.a = 0.25;
         }
         let pos = selected_bones_pos[p];
-        draw_point(&zero, &shared, render_pass, device, &pos, color, cam, 0.);
+        let (verts, indices) = draw_point(&zero, &shared, &pos, color, cam, 0.);
+        draw(&mut None, &verts, &indices, render_pass, device);
     }
 
     if !shared.input.left_down {
@@ -971,18 +974,16 @@ pub fn draw(
 pub fn bone_vertices(
     bone: &Bone,
     shared: &mut Shared,
-    render_pass: &mut RenderPass,
-    device: &Device,
     world_verts: &Vec<Vertex>,
     editable: bool,
-) {
+) -> (Vec<Vertex>, Vec<u32>) {
+    let mut all_verts = vec![];
+    let mut all_indices = vec![];
     macro_rules! point {
         ($idx:expr, $color:expr) => {
             draw_point(
                 &world_verts[$idx].pos,
                 &shared,
-                render_pass,
-                device,
                 &Vec2::ZERO,
                 $color,
                 Vec2::ZERO,
@@ -1007,8 +1008,13 @@ pub fn bone_vertices(
             VertexColor::GREEN
         };
         col.a = if editable { 0.5 } else { 0.15 };
-        let point = point!(wv, col);
-        let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &point, &shared.window).1;
+        let (mut verts, mut indices) = point!(wv, col);
+        for i in &mut indices {
+            *i += wv as u32 * 4;
+        }
+        let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &verts, &shared.window).1;
+        all_verts.append(&mut verts);
+        all_indices.append(&mut indices);
 
         if shared.input.on_ui || !mouse_on_it || !editable {
             continue;
@@ -1076,6 +1082,8 @@ pub fn bone_vertices(
             break;
         }
     }
+
+    (all_verts, all_indices)
 }
 
 pub fn vert_lines(
@@ -1083,12 +1091,15 @@ pub fn vert_lines(
     bones: &Vec<Bone>,
     shared: &mut Shared,
     mouse_world_vert: &Vertex,
-    render_pass: &mut RenderPass,
-    device: &Device,
     new_vert: &mut Option<Vertex>,
     editable: bool,
-) {
+) -> (Vec<Vertex>, Vec<u32>) {
     let mut added_vert = false;
+
+    let mut all_verts: Vec<Vertex> = vec![];
+    let mut all_indices: Vec<u32> = vec![];
+
+    let mut indices = vec![0, 1, 2, 1, 2, 3];
 
     // identify how many lines to create based on indices
     let mut lines: Vec<(u32, u32)> = vec![];
@@ -1140,14 +1151,13 @@ pub fn vert_lines(
         let mut v1_top = vert!(v1.pos + base, v1);
         let mut v1_bot = vert!(v1.pos - base, v1);
 
-        let mut verts = vec![v0_top, v0_bot, v1_top, v1_bot];
-        let indices = vec![0, 1, 2, 1, 2, 3];
+        let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
         let add_color = VertexColor::new(0.2, 0.2, 0.2, 1.);
 
         let mut is_hovering = false;
 
         if editable {
-            for (_, chunk) in indices.chunks_exact(3).enumerate() {
+            for (_, chunk) in vec![0, 1, 2, 1, 2, 3].chunks_exact(3).enumerate() {
                 let c0 = chunk[0] as usize;
                 let c1 = chunk[1] as usize;
                 let c2 = chunk[2] as usize;
@@ -1198,10 +1208,15 @@ pub fn vert_lines(
             }
         }
 
-        verts = vec![v0_top, v0_bot, v1_top, v1_bot];
+        all_verts.append(&mut vec![v0_top, v0_bot, v1_top, v1_bot]);
+        all_indices.append(&mut indices.clone());
 
-        draw(&None, &verts, &indices, render_pass, device);
+        for i in &mut indices {
+            *i += 4;
+        }
     }
+
+    (all_verts, all_indices)
 }
 
 fn draw_line(
@@ -1379,13 +1394,11 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
 fn draw_point(
     offset: &Vec2,
     shared: &Shared,
-    render_pass: &mut RenderPass,
-    device: &Device,
     pos: &Vec2,
     color: VertexColor,
     camera: Vec2,
     rotation: f32,
-) -> Vec<Vertex> {
+) -> (Vec<Vertex>, Vec<u32>) {
     let point_size = 6. * (shared.camera.zoom / 500.);
     macro_rules! vert {
         ($pos:expr, $uv:expr) => {
@@ -1422,12 +1435,9 @@ fn draw_point(
         vert.pos += *offset;
     }
 
-    let range = vec![0, 1, 2, 1, 2, 3];
-    render_pass.set_vertex_buffer(0, vertex_buffer(&point_verts.to_vec(), device).slice(..));
-    render_pass.set_index_buffer(index_buffer(range, &device).slice(..), IndexFormat::Uint32);
-    render_pass.draw_indexed(0..6, 0, 0..1);
+    let indices = vec![0, 1, 2, 1, 2, 3];
 
-    point_verts
+    (point_verts, indices)
 }
 
 /// Get bind group of a texture.
