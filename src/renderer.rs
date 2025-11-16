@@ -410,13 +410,22 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     );
     let cam = shared.camera.pos;
     let zero = Vec2::default();
+    let mut point_verts = vec![];
+    let mut point_indices = vec![];
     for p in 0..selected_bones_pos.len() {
         if p > 0 {
             color.a = 0.25;
         }
         let pos = selected_bones_pos[p];
-        let (verts, indices) = draw_point(&zero, &shared, &pos, color, cam, 0.);
-        draw(&mut None, &verts, &indices, render_pass, device);
+        let (mut this_verts, mut this_indices) = draw_point(&zero, &shared, &pos, color, cam, 0.);
+        for idx in &mut this_indices {
+            *idx += p as u32 * 4;
+        }
+        point_verts.append(&mut this_verts);
+        point_indices.append(&mut this_indices);
+    }
+    if point_indices.len() > 0 {
+        draw(&mut None, &point_verts, &point_indices, render_pass, device);
     }
 
     if !shared.input.left_down {
