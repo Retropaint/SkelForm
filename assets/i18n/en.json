@@ -177,7 +177,8 @@
       "keep_bone_tex_idx_desc": "After moving a texture in a style, all bones will automatically adjust their Tex. Index to match.\n\nTick this to preserve indexes after moving.",
       "beta": {
         "heading": "Beta",
-        "warning": "The following options will enable incomplete features.\nPlease save and backup your project before proceeding.",
+        "warning": "*The following options will enable incomplete features.\nPlease save and backup your project before proceeding.*",
+        "nothing": "*No beta features as of this version ($version) release! Keep an eye out for new versions at the [Main Site](https://skelform.org).*",
         "mesh_deformation": "Mesh Deformation:"
       }
     }
