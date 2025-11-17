@@ -1022,14 +1022,20 @@ pub fn bone_vertices(
             *i += wv as u32 * 4;
         }
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &verts, &shared.window).1;
-        all_verts.append(&mut verts);
-        all_indices.append(&mut indices);
 
         if shared.input.on_ui || !mouse_on_it || !editable {
+            all_verts.append(&mut verts);
+            all_indices.append(&mut indices);
             continue;
         }
 
-        point!(wv, VertexColor::WHITE);
+        let (mut verts, mut indices) = point!(wv, VertexColor::WHITE);
+        for i in &mut indices {
+            *i += wv as u32 * 4;
+        }
+
+        all_verts.append(&mut verts);
+        all_indices.append(&mut indices);
         if shared.input.right_clicked {
             if world_verts.len() <= 4 {
                 let str_vert_limit = &shared.loc("vert_limit");
