@@ -273,15 +273,13 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
     let str_startup = &shared.loc("settings_modal.miscellaneous.beta.heading");
     ui.heading(str_startup);
-    let text =
-        egui::RichText::new(&shared.loc("settings_modal.miscellaneous.beta.warning")).italics();
-    ui.label(text);
+    //let text = shared.loc("settings_modal.miscellaneous.beta.warning");
+    let mut text = shared.loc("settings_modal.miscellaneous.beta.nothing");
+    text = text.replace("$version", env!("CARGO_PKG_VERSION"));
+    let mut cache = egui_commonmark::CommonMarkCache::default();
+    let str = utils::markdown(text, shared.local_doc_url.to_string());
+    egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
     ui.add_space(5.);
-    ui.horizontal(|ui| {
-        let str_skip_startup = &shared.loc("settings_modal.miscellaneous.beta.mesh_deformation");
-        ui.label(str_skip_startup);
-        ui.checkbox(&mut shared.config.meshdef, "".into_atoms());
-    });
 }
 
 fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
