@@ -129,35 +129,37 @@ fn startup_content(
                 #[cfg(not(target_arch = "wasm32"))]
                 ui.vertical(|ui| {
                     let available_width = ui.available_width();
-                    ui.set_width(available_width);
-                    if shared.recent_file_paths.len() == 0 {
-                        ui.add_space(10.);
-                        let msg = &shared.loc("startup.empty_recent_files");
-                        let text = egui::RichText::new(msg).size(14.);
-                        ui.label(text);
-                        return;
-                    }
-
-                    for p in 0..shared.recent_file_paths.len() {
-                        // safeguard for deleting a path during iteration
-                        if p > shared.recent_file_paths.len() - 1 {
-                            break;
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        ui.set_width(available_width);
+                        if shared.recent_file_paths.len() == 0 {
+                            ui.add_space(10.);
+                            let msg = &shared.loc("startup.empty_recent_files");
+                            let text = egui::RichText::new(msg).size(14.);
+                            ui.label(text);
+                            return;
                         }
 
-                        let path = shared.recent_file_paths[p].to_string();
-                        if let Err(_) = std::fs::File::open(&path) {
-                            let idx = shared
-                                .recent_file_paths
-                                .iter()
-                                .position(|r_path| *r_path == path)
-                                .unwrap();
-                            shared.recent_file_paths.remove(idx);
-                            continue;
-                        }
+                        for p in 0..shared.recent_file_paths.len() {
+                            // safeguard for deleting a path during iteration
+                            if p > shared.recent_file_paths.len() - 1 {
+                                break;
+                            }
 
-                        skf_file_button(path, shared, ui, ctx, available_width);
-                        ui.add_space(5.);
-                    }
+                            let path = shared.recent_file_paths[p].to_string();
+                            if let Err(_) = std::fs::File::open(&path) {
+                                let idx = shared
+                                    .recent_file_paths
+                                    .iter()
+                                    .position(|r_path| *r_path == path)
+                                    .unwrap();
+                                shared.recent_file_paths.remove(idx);
+                                continue;
+                            }
+
+                            skf_file_button(path, shared, ui, ctx, available_width);
+                            ui.add_space(5.);
+                        }
+                    });
                 });
 
                 #[cfg(target_arch = "wasm32")]
@@ -382,7 +384,7 @@ pub fn skf_file_button(
             )
             .on_hover_cursor(egui::CursorIcon::PointingHand);
 
-        if button.contains_pointer() {
+        if button.hovered() {
             ui.gradient(
                 gradient_rect,
                 egui::Color32::TRANSPARENT,
@@ -448,11 +450,11 @@ pub fn skf_file_button(
             shared.config.colors.dark_accent,
         );
 
-        if !button.contains_pointer() {
+        if !button.hovered() {
             return;
         }
 
-        let mut pos = egui::Vec2::new(0., 0.);
+        let mut pos = egui::Vec2::new(-21., 0.);
         if file_button_icon("X", "Remove from list", egui::Vec2::new(-20., 8.), pos, ui).clicked() {
             let idx = shared
                 .recent_file_paths
