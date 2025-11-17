@@ -1000,6 +1000,15 @@ pub fn bone_vertices(
             )
         };
     }
+    macro_rules! add_point {
+        ($verts:expr, $indices:expr, $wv:expr) => {
+            for i in &mut $indices {
+                *i += $wv as u32 * 4;
+            }
+            all_verts.append(&mut $verts);
+            all_indices.append(&mut $indices);
+        };
+    }
 
     for wv in 0..world_verts.len() {
         let idx = shared.ui.selected_bind as usize;
@@ -1018,24 +1027,15 @@ pub fn bone_vertices(
         };
         col.a = if editable { 0.5 } else { 0.15 };
         let (mut verts, mut indices) = point!(wv, col);
-        for i in &mut indices {
-            *i += wv as u32 * 4;
-        }
         let mouse_on_it = utils::in_bounding_box(&shared.input.mouse, &verts, &shared.window).1;
 
         if shared.input.on_ui || !mouse_on_it || !editable {
-            all_verts.append(&mut verts);
-            all_indices.append(&mut indices);
+            add_point!(verts, indices, wv);
             continue;
         }
 
         let (mut verts, mut indices) = point!(wv, VertexColor::WHITE);
-        for i in &mut indices {
-            *i += wv as u32 * 4;
-        }
-
-        all_verts.append(&mut verts);
-        all_indices.append(&mut indices);
+        add_point!(verts, indices, wv);
         if shared.input.right_clicked {
             if world_verts.len() <= 4 {
                 let str_vert_limit = &shared.loc("vert_limit");
