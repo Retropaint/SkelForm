@@ -1,8 +1,8 @@
 # SkelForm
 
-[skelform.org](https://skelform.org)
-
 SkelForm is a 2D skeletal animator, designed for games.
+
+[skelform.org](https://skelform.org)
 
 ![example](assets/example.png)
 
