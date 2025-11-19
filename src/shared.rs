@@ -1136,12 +1136,23 @@ impl Armature {
             parent_id = self.find_bone(id).unwrap().parent_id;
         }
         let ids = self.bones.iter().map(|a| a.id).collect();
+
+        // set highest zindex so far
+        let mut highest_zindex = 0;
+        for bone in &self.bones {
+            if bone.style_ids.len() == 0 {
+                continue;
+            }
+
+            highest_zindex = highest_zindex.max(bone.zindex);
+        }
+
         let new_bone = Bone {
             name: "New Bone".to_string(),
             parent_id,
             id: generate_id(ids),
             scale: Vec2 { x: 1., y: 1. },
-            zindex: self.bones.len() as i32,
+            zindex: highest_zindex + 1,
             constraint: JointConstraint::None,
             ik_target_id: -1,
             ik_family_id: -1,

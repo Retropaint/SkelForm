@@ -4,7 +4,7 @@ use crate::*;
 use armature_window::find_bone;
 use image::{DynamicImage, GenericImageView};
 use spade::Triangulation;
-use wgpu::{BindGroup, BindGroupLayout, Device, IndexFormat, Queue, RenderPass};
+use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
 // todo:
