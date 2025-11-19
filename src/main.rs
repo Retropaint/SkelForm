@@ -89,10 +89,10 @@ fn init_shared(shared: &mut Shared) {
     #[cfg(not(target_arch = "wasm32"))]
     {
         let url = utils::bin_path() + "dev-docs";
-        match open::that(url) {
+        match std::fs::exists(utils::bin_path() + "dev-docs") {
             Ok(_) => shared.local_doc_url = utils::bin_path(),
             _ => {}
-        };
+        }
 
         // import config
         if config_path().exists() {
