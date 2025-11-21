@@ -450,7 +450,7 @@ pub fn skf_file_button(
             shared.config.colors.dark_accent,
         );
 
-        if !button.hovered() {
+        if !button.contains_pointer() {
             return;
         }
 

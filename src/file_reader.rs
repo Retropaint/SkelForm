@@ -303,9 +303,9 @@ pub fn read_psd(
             }
 
             if layer.name().contains("counterclockwise") {
-                bone.constraint = JointConstraint::CounterClockwise;
+                bone.ik_constraint = JointConstraint::CounterClockwise;
             } else if layer.name().contains("clockwise") {
-                bone.constraint = JointConstraint::Clockwise;
+                bone.ik_constraint = JointConstraint::Clockwise;
             } else {
                 let num = utils::without_unicode(utils::after_underscore(layer.name()));
                 match num.parse::<i32>() {

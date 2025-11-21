@@ -868,6 +868,7 @@ pub enum JointConstraint {
     None,
     Clockwise,
     CounterClockwise,
+    Skip,
 }
 
 enum_string!(JointConstraint);
@@ -880,13 +881,12 @@ pub struct Bone {
     pub id: i32,
     #[serde(default)]
     pub parent_id: i32,
-    #[serde(default, skip_serializing_if = "are_styles_empty")]
+    #[serde(default, skip_serializing_if = "is_i32_empty")]
     pub style_ids: Vec<i32>,
     #[serde(default, skip_serializing_if = "is_neg_one")]
     pub tex_idx: i32,
     #[serde(default, skip_serializing_if = "is_neg_one")]
     pub zindex: i32,
-
     #[serde(default)]
     pub pos: Vec2,
     #[serde(default)]
@@ -894,16 +894,21 @@ pub struct Bone {
     #[serde(default)]
     pub rot: f32,
 
-    #[serde(skip, default = "default_neg_one")]
+    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
     pub ik_family_id: i32,
-    #[serde(skip)]
-    pub constraint: JointConstraint,
-    #[serde(skip)]
+    #[rustfmt::skip]
+    #[serde(default, skip_serializing_if = "no_constraints", rename = "ik_constraint_str")]
+    pub ik_constraint: JointConstraint,
+    #[serde(default, skip_serializing_if = "is_neg_one", rename = "ik_constraint")]
+    pub ik_constraint_id: i32,
+    #[serde(default, skip_serializing_if = "no_ik_mode", rename = "ik_mode_str")]
     pub ik_mode: InverseKinematicsMode,
-    #[serde(skip, default = "default_neg_one")]
+    #[serde(default, skip_serializing_if = "is_neg_one", rename = "ik_mode")]
+    pub ik_mode_id: i32,
+    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
     pub ik_target_id: i32,
-    #[serde(default, skip_serializing_if = "is_false")]
-    pub hidden: bool,
+    #[serde(default, skip_serializing_if = "is_i32_empty")]
+    pub ik_bone_ids: Vec<i32>,
 
     #[serde(default, skip_serializing_if = "are_verts_empty")]
     pub vertices: Vec<Vertex>,
@@ -911,6 +916,21 @@ pub struct Bone {
     pub indices: Vec<u32>,
     #[serde(default, skip_serializing_if = "are_weights_empty")]
     pub binds: Vec<BoneBind>,
+
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub hidden: bool,
+
+    // todo:
+    // these should be private, but that upsets
+    // default constructor for some reason
+    #[serde(default)]
+    pub init_pos: Vec2,
+    #[serde(default)]
+    pub init_scale: Vec2,
+    #[serde(default)]
+    pub init_rot: f32,
+    #[serde(default, skip_serializing_if = "is_neg_one")]
+    pub init_constraint: i32,
 
     #[serde(skip)]
     pub folded: bool,
@@ -922,16 +942,6 @@ pub struct Bone {
     pub world_verts: Vec<Vertex>,
     #[serde(skip)]
     pub ik_disabled: bool,
-
-    // todo:
-    // these should be private, but that upsets
-    // default constructor for some reason
-    #[serde(default)]
-    pub init_pos: Vec2,
-    #[serde(default)]
-    pub init_scale: Vec2,
-    #[serde(default)]
-    pub init_rot: f32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
@@ -981,14 +991,16 @@ pub struct EditorBone {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Default, PartialEq, Debug)]
+#[repr(i32)] // Specify the underlying integer type
 pub enum InverseKinematicsMode {
     #[default]
     FABRIK,
     Arc,
+    Skip,
 }
 enum_string!(InverseKinematicsMode);
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq, Debug)]
 pub struct IkFamily {
     #[serde(default)]
     pub constraint: JointConstraint,
@@ -1002,8 +1014,6 @@ pub struct IkFamily {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Armature {
-    #[serde(default)]
-    pub ik_families: Vec<IkFamily>,
     #[serde(default)]
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
@@ -1153,7 +1163,8 @@ impl Armature {
             id: generate_id(ids),
             scale: Vec2 { x: 1., y: 1. },
             zindex: highest_zindex + 1,
-            constraint: JointConstraint::None,
+            ik_constraint: JointConstraint::None,
+            ik_mode: InverseKinematicsMode::FABRIK,
             ik_target_id: -1,
             ik_family_id: -1,
             ..Default::default()
@@ -1545,9 +1556,8 @@ impl Armature {
 pub struct Root {
     pub version: String,
     pub texture_size: Vec2I,
-
     #[serde(default)]
-    pub ik_families: Vec<IkFamily>,
+    pub ik_root_ids: Vec<i32>,
     #[serde(default)]
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
@@ -1719,9 +1729,9 @@ pub struct Keyframe {
 
     /// runtime: while the editor uses enums for elements, runtimes can use their numerical id
     /// for simplicity and performance
-    #[serde(default)]
+    #[serde(default, rename = "element")]
     pub element_id: i32,
-    #[serde(default)]
+    #[serde(default, rename = "element_str")]
     pub element: AnimElement,
 
     #[serde(default)]
@@ -2169,8 +2179,16 @@ fn are_anims_empty(value: &Vec<Animation>) -> bool {
     *value == vec![]
 }
 
-fn are_styles_empty(value: &Vec<i32>) -> bool {
+fn is_i32_empty(value: &Vec<i32>) -> bool {
     value.len() == 0
+}
+
+fn no_constraints(value: &JointConstraint) -> bool {
+    *value == JointConstraint::Skip
+}
+
+fn no_ik_mode(value: &InverseKinematicsMode) -> bool {
+    *value == InverseKinematicsMode::Skip
 }
 
 #[cfg(not(target_arch = "wasm32"))]

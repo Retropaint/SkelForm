@@ -721,6 +721,7 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
             }
         }
         InverseKinematicsMode::Arc => arc_ik(bones, root, target),
+        _ => {}
     }
 
     // rotating bones
@@ -742,8 +743,8 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
     let dir = joint_dir.x * base_dir.y - base_dir.x * joint_dir.y;
     let base_angle = base_dir.y.atan2(base_dir.x);
 
-    let cw = bones[0].constraint == JointConstraint::Clockwise && dir > 0.;
-    let ccw = bones[0].constraint == JointConstraint::CounterClockwise && dir < 0.;
+    let cw = bones[0].ik_constraint == JointConstraint::Clockwise && dir > 0.;
+    let ccw = bones[0].ik_constraint == JointConstraint::CounterClockwise && dir < 0.;
     if ccw || cw {
         for b in 0..bones.len() {
             bones[b].rot = -bones[b].rot + base_angle * 2.;
