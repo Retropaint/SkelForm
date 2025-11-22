@@ -338,13 +338,9 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                     .on_hover_cursor(egui::CursorIcon::PointingHand)
                     .interact(egui::Sense::click());
                 if label.clicked() {
-                    shared.ui.selected_bone_idx = shared
-                        .armature
-                        .bones
-                        .iter()
-                        .position(|b| b.id == kf.bone_id)
-                        .unwrap();
-
+                    let kf_id = kf.bone_id;
+                    let sel = shared.armature.bones.iter().position(|b| b.id == kf_id);
+                    shared.ui.selected_bone_idx = sel.unwrap();
                     shared.armature.unfold_to_bone(kf.bone_id);
                 }
                 last_bone_id = kf.bone_id;

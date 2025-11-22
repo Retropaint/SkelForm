@@ -469,10 +469,17 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 .selected_text(selected)
                 .width(40.)
                 .show_ui(ui, |ui| {
-                    let ik = &mut shared.selected_bone_mut().unwrap().ik_constraint;
-                    ui.selectable_value(ik, JointConstraint::None, str_none);
-                    ui.selectable_value(ik, JointConstraint::Clockwise, str_clockwise);
-                    ui.selectable_value(ik, JointConstraint::CounterClockwise, str_ccw);
+                    let mut ik = shared.selected_bone_mut().unwrap().ik_constraint.clone();
+                    ui.selectable_value(&mut ik, JointConstraint::None, str_none);
+                    ui.selectable_value(&mut ik, JointConstraint::Clockwise, str_clockwise);
+                    ui.selectable_value(&mut ik, JointConstraint::CounterClockwise, str_ccw);
+                    shared.armature.edit_bone(
+                        bone.id,
+                        &AnimElement::IkConstraint,
+                        (ik as usize) as f32,
+                        shared.ui.anim.selected,
+                        shared.ui.anim.selected_frame,
+                    );
                 })
                 .response
                 .on_hover_text(str_desc);

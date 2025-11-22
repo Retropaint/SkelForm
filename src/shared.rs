@@ -876,9 +876,9 @@ enum_string!(JointConstraint);
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 pub struct Bone {
     #[serde(default)]
-    pub name: String,
-    #[serde(default)]
     pub id: i32,
+    #[serde(default)]
+    pub name: String,
     #[serde(default)]
     pub parent_id: i32,
     #[serde(default, skip_serializing_if = "is_i32_empty")]
@@ -894,7 +894,7 @@ pub struct Bone {
     #[serde(default)]
     pub rot: f32,
 
-    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
+    #[serde(default = "default_neg_one")]
     pub ik_family_id: i32,
     #[rustfmt::skip]
     #[serde(default, skip_serializing_if = "no_constraints", rename = "ik_constraint_str")]
@@ -1238,10 +1238,21 @@ impl Armature {
             AnimElement::ScaleY => set!(bone.scale.y),
             AnimElement::Zindex => {
                 init_value = bone.zindex as f32;
-                bone.zindex = value as i32
+                if anim_id == usize::MAX {
+                    bone.zindex = value as i32
+                }
             }
             AnimElement::TextureIndex => { /* handled in set_bone_tex() */ }
-            _ => {}
+            AnimElement::IkConstraint => {
+                init_value = (bone.ik_constraint as usize) as f32;
+                if anim_id == usize::MAX {
+                    bone.ik_constraint = match value {
+                        1. => JointConstraint::Clockwise,
+                        2. => JointConstraint::CounterClockwise,
+                        _ => JointConstraint::None,
+                    }
+                }
+            }
         };
 
         if anim_id == usize::MAX {
@@ -1319,6 +1330,13 @@ impl Armature {
                 b.scale.y = interpolate!(AnimElement::ScaleY,       b.scale.y);
                 b.zindex  = prev_frame!( AnimElement::Zindex,       b.zindex  as f32) as i32;
                 b.tex_idx = prev_frame!( AnimElement::TextureIndex, b.tex_idx as f32) as i32;
+            };
+            let constraint =
+                prev_frame!(AnimElement::IkConstraint, (b.ik_constraint as usize) as f32);
+            b.ik_constraint = match constraint {
+                1. => JointConstraint::Clockwise,
+                2. => JointConstraint::CounterClockwise,
+                _ => JointConstraint::None,
             };
 
             // restructure bone's verts to match texture
@@ -1554,7 +1572,9 @@ impl Armature {
 // used for the json
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Root {
+    #[serde(default)]
     pub version: String,
+    #[serde(default)]
     pub texture_size: Vec2I,
     #[serde(default)]
     pub ik_root_ids: Vec<i32>,
@@ -1757,18 +1777,17 @@ enum_string!(Transition);
 #[derive(
     Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, Clone, Default, Debug,
 )]
+#[rustfmt::skip]
 pub enum AnimElement {
     #[default]
-    /* 0 */
-    PositionX,
+    /* 0 */ PositionX,
     /* 1 */ PositionY,
     /* 2 */ Rotation,
     /* 3 */ ScaleX,
     /* 4 */ ScaleY,
     /* 5 */ Zindex,
-    /* 6 */ VertPositionX,
-    /* 7 */ VertPositionY,
-    /* 8 */ TextureIndex,
+    /* 6 */ TextureIndex,
+    /* 7 */ IkConstraint,
 }
 
 // iterable anim change icons IDs
