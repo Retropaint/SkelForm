@@ -273,6 +273,7 @@ pub fn read_psd(
             pivot_bone.pos = pivot_pos - Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
             pivot_bone.name = utils::without_unicode(group.name()).to_string();
             pivot_bone.folded = true;
+            pivot_bone.zindex = 0;
         }
 
         // create texture bone
@@ -397,6 +398,7 @@ pub fn read_psd(
         let target_bone = shared.armature.find_bone_mut(target_id).unwrap();
         target_bone.name = target_name;
         target_bone.pos = pos;
+        target_bone.zindex = 0;
     }
 
     let str_psd = &shared.loc("psd_imported");
