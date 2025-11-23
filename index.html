@@ -321,12 +321,12 @@
                 localStorage.setItem("skelform_config", data);
             }
 
-            async function downloadSample() {
-                fetch('skellington.skf')
+            async function downloadSample(filename) {
+                fetch(filename)
                     .then(response => response.arrayBuffer())
                     .then(arrayBuffer => {
                         fileData = new Uint8Array(arrayBuffer);
-                        fileName = "skellington.skf"
+                        fileName = filename
                     })
             }
 
