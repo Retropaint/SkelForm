@@ -432,7 +432,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.dragging_verts = vec![];
         shared.editing_bone = false;
         shared.input.mouse_init = None;
-        return;
     } else if shared.dragging_verts.len() > 0 {
         let mut bone_id = -1;
         if let Some(bone) = shared.selected_bone() {
@@ -446,6 +445,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         return;
     }
 
+    if !shared.input.left_down && !shared.input.right_down {
+        return;
+    }
+
     // mouse related stuff
 
     if shared.input.mouse_init == None {
@@ -456,11 +459,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // move camera
-    if (shared.input.is_pressing(KeyCode::SuperLeft)
-        || shared.input.right_down
-        || shared.ui.selected_bone_idx == usize::MAX)
+    if (shared.input.is_pressing(KeyCode::SuperLeft) || shared.input.right_down)
         && !shared.input.on_ui
     {
+        shared.cursor_icon = egui::CursorIcon::Move;
         shared.camera.pos += shared.mouse_vel() * shared.camera.zoom;
         return;
     }
