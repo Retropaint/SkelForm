@@ -73,39 +73,41 @@ fn startup_content(
             }
             ui.add_space(padding);
             if shared.ui.showing_samples {
-                let skellington_pos = Some(egui::Vec2::new(-5., -10.));
-                if !shared.thumb_ui_tex.contains_key("skellington_sample.png") {
-                    shared.thumb_ui_tex.insert(
-                        "skellington_sample.png".to_string(),
-                        ui::create_ui_texture(
-                            include_bytes!("../assets/skellington_sample.png").to_vec(),
-                            true,
-                            ctx,
-                        )
-                        .unwrap(),
-                    );
+                let skel_pos = Some(egui::Vec2::new(-5., -10.));
+                macro_rules! add_thumb_tex {
+                    ($key:expr, $filename:expr) => {
+                        if !shared.thumb_ui_tex.contains_key($key) {
+                            let skel_file = include_bytes!($filename).to_vec();
+                            shared.thumb_ui_tex.insert(
+                                $key.to_string(),
+                                ui::create_ui_texture(skel_file, true, ctx).unwrap(),
+                            );
+                        }
+                    };
                 }
-                let thumb_tex = shared.thumb_ui_tex.get("skellington_sample.png");
-                if startup_leftside_button(
-                    "",
-                    "Skellington",
-                    ui,
-                    shared,
-                    skellington_pos,
-                    thumb_tex,
-                )
-                .clicked()
-                {
-                    let sample_path = "./samples/skellington.skf";
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
-                        *shared.file_name.lock().unwrap() = sample_path.to_string();
-                        *shared.import_contents.lock().unwrap() = vec![0];
-                    }
-                    shared.ui.set_state(UiState::StartupWindow, false);
-                    #[cfg(target_arch = "wasm32")]
-                    crate::downloadSample();
+
+                macro_rules! sample_button {
+                    ($key:expr, $name:expr, $filename:expr, $path:expr) => {
+                        let thumb_tex = shared.thumb_ui_tex.get($key);
+                        if startup_leftside_button("", $name, ui, shared, skel_pos, thumb_tex)
+                            .clicked()
+                        {
+                            *shared.file_name.lock().unwrap() = $path.to_string();
+                            *shared.import_contents.lock().unwrap() = vec![0];
+                            shared.ui.set_state(UiState::StartupWindow, false);
+                        }
+                    };
                 }
+
+                add_thumb_tex!("skellington_icon.png", "../assets/skellington_icon.png");
+                add_thumb_tex!("skellina_icon.png", "../assets/skellina_icon.png");
+
+                let key = "skellington_icon.png";
+                let sample = "./samples/skellington.skf";
+                sample_button!(key, "Skellington", "../assets/skellington_icon.png", sample);
+                let key = "skellina_icon.png";
+                let sample = "./samples/skellina.skf";
+                sample_button!(key, "Skellina", "../assets/skellina_icon.png", sample);
             }
         }
     });
@@ -164,19 +166,21 @@ fn startup_content(
 
                 #[cfg(target_arch = "wasm32")]
                 ui.vertical(|ui| {
-                    let available_width = ui.available_width();
+                    let width = ui.available_width();
                     let msg = &shared.loc("startup.web_note");
                     let text = egui::RichText::new(msg).size(14.);
                     ui.label(text);
                     ui.add_space(20.);
-                    web_sample_button(
-                        "Skellington Sample".to_owned(),
-                        include_bytes!(".././assets/skellington_sample.png").to_vec(),
-                        shared,
-                        ui,
-                        ctx,
-                        available_width,
-                    );
+
+                    let sample_name = "Skellington Sample".to_owned();
+                    let skf_name = "skellington.skf".to_string();
+                    let skel_file = include_bytes!(".././assets/skellington_icon.png").to_vec();
+                    web_sample_button(sample_name, skf_name, skel_file, shared, ui, ctx, width);
+
+                    let sample_name = "Skellina Sample".to_owned();
+                    let skf_name = "skellina.skf".to_string();
+                    let skel_file = include_bytes!(".././assets/skellina_icon.png").to_vec();
+                    web_sample_button(sample_name, skf_name, skel_file, shared, ui, ctx, width);
                 })
             },
         );
@@ -485,6 +489,7 @@ pub fn skf_file_button(
 #[cfg(target_arch = "wasm32")]
 pub fn web_sample_button(
     name: String,
+    filename: String,
     thumb_bytes: Vec<u8>,
     shared: &mut Shared,
     ui: &mut egui::Ui,
@@ -551,7 +556,7 @@ pub fn web_sample_button(
             });
 
         if button.clicked() {
-            crate::downloadSample();
+            crate::downloadSample(filename.to_string());
         }
 
         let bottom = egui::Rect::from_min_size(
