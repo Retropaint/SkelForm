@@ -10,6 +10,8 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         .iter()
         .filter(|a| a.frame == shared.ui.anim.selected_frame);
 
+    return;
+
     if keyframes_in_frame.count() == 0 {
         return;
     }
