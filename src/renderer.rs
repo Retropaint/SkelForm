@@ -1541,11 +1541,13 @@ fn index_buffer(indices: Vec<u32>, device: &Device) -> wgpu::Buffer {
 }
 
 fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
+    let gpu_verts: Vec<GpuVertex> = vertices.iter().map(|vert| (*vert).into()).collect();
+
     wgpu::util::DeviceExt::create_buffer_init(
         device,
         &wgpu::util::BufferInitDescriptor {
             label: Some("index Buffer"),
-            contents: bytemuck::cast_slice(&vertices),
+            contents: bytemuck::cast_slice(&gpu_verts),
             usage: wgpu::BufferUsages::VERTEX,
         },
     )

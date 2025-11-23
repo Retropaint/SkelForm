@@ -192,18 +192,33 @@ macro_rules! enum_string {
     };
 }
 
+// Higher-level vertex data, used for the SkF format.
+// See GpuVertex for actual vertex data supplied to wgpu
+#[rustfmt::skip]
 #[repr(C)]
-#[derive(
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-    Copy,
-    Clone,
-    bytemuck::Pod,
-    bytemuck::Zeroable,
-    Debug,
-)]
+#[derive(PartialEq,serde::Serialize,serde::Deserialize,Copy,Clone,bytemuck::Pod,bytemuck::Zeroable,Debug)]
 pub struct Vertex {
+    #[serde(default)]
+    pub id: u32,
+    #[serde(default)]
+    pub pos: Vec2,
+    #[serde(default)]
+    pub uv: Vec2,
+    #[serde(default)] 
+    pub init_pos: Vec2,
+    #[serde(skip)]
+    pub color: VertexColor,
+    #[serde(skip)]
+    pub add_color: VertexColor,
+    #[serde(skip)]
+    pub offset_rot: f32,
+}
+
+// The vertex data supplied to wgpu.
+#[rustfmt::skip]
+#[repr(C)]
+#[derive(PartialEq,serde::Serialize,serde::Deserialize,Copy,Clone,bytemuck::Pod,bytemuck::Zeroable,Debug)]
+pub struct GpuVertex {
     #[serde(default)]
     pub pos: Vec2,
     #[serde(default)]
@@ -212,21 +227,29 @@ pub struct Vertex {
     pub color: VertexColor,
     #[serde(skip)]
     pub add_color: VertexColor,
-    #[serde(default)]
-    pub id: u32,
-    #[serde(skip)]
-    pub offset_rot: f32,
 }
 
 impl Default for Vertex {
     fn default() -> Self {
         Vertex {
+            id: 0,
             pos: Vec2::default(),
             uv: Vec2::default(),
+            init_pos: Vec2::default(),
             color: VertexColor::default(),
             add_color: VertexColor::new(0., 0., 0., 0.),
-            id: 0,
             offset_rot: 0.,
+        }
+    }
+}
+
+impl From<Vertex> for GpuVertex {
+    fn from(vert: Vertex) -> GpuVertex {
+        GpuVertex {
+            pos: vert.pos,
+            uv: vert.uv,
+            color: vert.color,
+            add_color: vert.add_color,
         }
     }
 }
