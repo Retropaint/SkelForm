@@ -451,7 +451,8 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     shared
                         .selected_animation_mut()
                         .unwrap()
-                        .remove_all_keyframes_of_frame(frame);
+                        .keyframes
+                        .retain(|kf| kf.frame != frame);
                     // break loop to prevent OOB errors
                     break;
                 }
@@ -465,7 +466,8 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     shared
                         .selected_animation_mut()
                         .unwrap()
-                        .remove_all_keyframes_of_frame(j as i32);
+                        .keyframes
+                        .retain(|kf| kf.frame != j as i32);
                     for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
                         if kf.frame == frame as i32 {
                             kf.frame = j as i32;
@@ -622,6 +624,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
 
             if ui.skf_button(&shared.loc("keyframe_editor.copy")).clicked() {
+                shared.copy_buffer = CopyBuffer::default();
                 macro_rules! keyframes {
                     () => {
                         shared.selected_animation().unwrap().keyframes
@@ -629,7 +632,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 }
                 for kf in 0..keyframes!().len() {
                     if keyframes!()[kf].frame == shared.ui.anim.selected_frame {
-                        shared.copy_buffer.keyframes.push(keyframes!()[kf].clone())
+                        shared.copy_buffer.keyframes.push(keyframes!()[kf].clone());
                     }
                 }
             }
@@ -645,7 +648,8 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 shared
                     .selected_animation_mut()
                     .unwrap()
-                    .remove_all_keyframes_of_frame(frame);
+                    .keyframes
+                    .retain(|kf| kf.frame != frame);
 
                 for kf in 0..shared.copy_buffer.keyframes.len() {
                     let keyframe = shared.copy_buffer.keyframes[kf].clone();
