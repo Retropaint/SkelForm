@@ -340,6 +340,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
         }
 
         for (i, vert) in armature_copy.bones[b].vertices.iter_mut().enumerate() {
+            vert.init_pos = vert.pos;
             vert.id = i as u32;
         }
     }
