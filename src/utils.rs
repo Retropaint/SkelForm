@@ -705,6 +705,7 @@ pub fn save_config(config: &Config) {
     #[cfg(target_arch = "wasm32")]
     {
         saveConfig(serde_json::to_string(config).unwrap());
+        updateUiSlider();
     }
 }
 
