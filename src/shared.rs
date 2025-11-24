@@ -1106,18 +1106,6 @@ impl Armature {
 
         if selected_anim == usize::MAX {
             self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
-
-            // Set bone's verts to match texture.
-            // Original logic checks if verts were edited, but this is temporarily disabled
-            // for consistency with animations.
-            if tex_idx != -1 {
-                //let verts_edited = utils::bone_meshes_edited(
-                //    self.textures[tex_idx as usize].size,
-                //    &self.find_bone(bone_id).unwrap().vertices,
-                //);
-                //if !verts_edited {
-                //}
-            }
         } else {
             // record texture change in animation
             let kf = self.animations[selected_anim].check_if_in_keyframe(
@@ -1141,16 +1129,23 @@ impl Armature {
             return;
         }
 
-        if self.find_bone(bone_id).unwrap().tex_idx == -1 {
-            self.find_bone_mut(bone_id).unwrap().tex_idx = 0;
-        }
+        let bone = self
+            .bones
+            .iter()
+            .find(|bone| bone.id == bone_id)
+            .unwrap()
+            .clone();
 
-        (
-            self.find_bone_mut(bone_id).unwrap().vertices,
-            self.find_bone_mut(bone_id).unwrap().indices,
-        ) = renderer::create_tex_rect(
-            &self.get_current_set(bone_id).unwrap().textures[new_tex_idx].size,
-        );
+        let tex_size = self.get_current_set(bone_id).unwrap().textures[new_tex_idx].size;
+        if !utils::bone_meshes_edited(tex_size, &bone.vertices) {
+            let size = self.get_current_set(bone_id).unwrap().textures[new_tex_idx].size;
+            let bone_mut = self
+                .bones
+                .iter_mut()
+                .find(|bone| bone.id == bone_id)
+                .unwrap();
+            (bone_mut.vertices, bone_mut.indices) = renderer::create_tex_rect(&size);
+        }
     }
 
     pub fn delete_bone(&mut self, id: i32) {
