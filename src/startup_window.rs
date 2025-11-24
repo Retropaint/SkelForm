@@ -48,14 +48,16 @@ fn startup_content(
     ui.vertical(|ui| {
         ui.set_width(133.);
         ui.add_space(10.);
-        if startup_leftside_button("+", &shared.loc("new"), ui, shared, None, None).clicked() {
+        let empty = "".to_string();
+        if leftside_button("+", &shared.loc("new"), ui, shared, None, None, empty).clicked() {
             shared.armature = Armature::default();
             shared.ui.set_state(UiState::StartupWindow, false);
         }
         ui.add_space(padding);
         let import_pos = Some(egui::Vec2::new(-5., 2.5));
         let str_import = &shared.loc("startup.import");
-        if startup_leftside_button("🗋", str_import, ui, shared, import_pos, None).clicked() {
+        let empty = "".to_string();
+        if leftside_button("🗋", str_import, ui, shared, import_pos, None, empty).clicked() {
             #[cfg(target_arch = "wasm32")]
             toggleElement(true, "file-dialog".to_string());
             #[cfg(not(target_arch = "wasm32"))]
@@ -67,7 +69,8 @@ fn startup_content(
             ui.add_space(padding);
             let samples_pos = Some(egui::Vec2::new(-5., 2.5));
             let str_samples = &shared.loc("startup.samples");
-            if startup_leftside_button("🗊", str_samples, ui, shared, samples_pos, None).clicked()
+            let empty = "".to_string();
+            if leftside_button("🗊", str_samples, ui, shared, samples_pos, None, empty).clicked()
             {
                 shared.ui.showing_samples = !shared.ui.showing_samples;
             }
@@ -87,9 +90,9 @@ fn startup_content(
                 }
 
                 macro_rules! sample_button {
-                    ($key:expr, $name:expr, $filename:expr, $path:expr) => {
+                    ($key:expr, $name:expr, $filename:expr, $path:expr, $desc:expr) => {
                         let thumb_tex = shared.thumb_ui_tex.get($key);
-                        if startup_leftside_button("", $name, ui, shared, skel_pos, thumb_tex)
+                        if leftside_button("", $name, ui, shared, skel_pos, thumb_tex, $desc)
                             .clicked()
                         {
                             *shared.file_name.lock().unwrap() = $path.to_string();
@@ -104,10 +107,18 @@ fn startup_content(
 
                 let key = "skellington_icon.png";
                 let sample = "./samples/skellington.skf";
-                sample_button!(key, "Skellington", "../assets/skellington_icon.png", sample);
+                let desc = shared.loc("startup.skellington_sample_desc");
+                sample_button!(
+                    key,
+                    "Skellington",
+                    "../assets/skellington_icon.png",
+                    sample,
+                    desc
+                );
                 let key = "skellina_icon.png";
                 let sample = "./samples/skellina.skf";
-                sample_button!(key, "Skellina", "../assets/skellina_icon.png", sample);
+                let desc = shared.loc("startup.skellina_sample_desc");
+                sample_button!(key, "Skellina", "../assets/skellina_icon.png", sample, desc);
             }
         }
     });
@@ -172,15 +183,17 @@ fn startup_content(
                     ui.label(text);
                     ui.add_space(20.);
 
-                    let sample_name = "Skellington Sample".to_owned();
+                    let name = "Skellington Sample".to_owned();
                     let skf_name = "skellington.skf".to_string();
                     let skel_file = include_bytes!(".././assets/skellington_icon.png").to_vec();
-                    web_sample_button(sample_name, skf_name, skel_file, shared, ui, ctx, width);
+                    let desc = shared.loc("startup.skellington_sample_desc");
+                    web_sample_button(name, skf_name, skel_file, shared, ui, ctx, width, desc);
 
-                    let sample_name = "Skellina Sample".to_owned();
+                    let name = "Skellina Sample".to_owned();
                     let skf_name = "skellina.skf".to_string();
                     let skel_file = include_bytes!(".././assets/skellina_icon.png").to_vec();
-                    web_sample_button(sample_name, skf_name, skel_file, shared, ui, ctx, width);
+                    let desc = shared.loc("startup.skellina_sample_desc");
+                    web_sample_button(name, skf_name, skel_file, shared, ui, ctx, width, desc);
                 })
             },
         );
@@ -263,32 +276,38 @@ fn startup_content(
     });
 }
 
-pub fn startup_leftside_button(
+pub fn leftside_button(
     icon: &str,
     label: &str,
     ui: &mut egui::Ui,
     shared: &Shared,
     mut icon_offset: Option<egui::Vec2>,
     img: Option<&egui::TextureHandle>,
+    tooltip: String,
 ) -> egui::Response {
     if icon_offset == None {
         icon_offset = Some(egui::Vec2::new(0., 0.));
     }
 
-    let gradient_rect =
-        egui::Rect::from_min_size(ui.cursor().left_top(), egui::Vec2::new(133., 48.));
+    let gradient = egui::Rect::from_min_size(ui.cursor().left_top(), egui::Vec2::new(133., 48.));
 
-    let button = ui
-        .interact(
-            gradient_rect,
-            egui::Id::new("leftside".to_owned() + &label),
-            egui::Sense::click(),
-        )
-        .on_hover_cursor(egui::CursorIcon::PointingHand);
+    let button: egui::Response;
+    let id = egui::Id::new("leftside".to_owned() + &label);
+
+    if tooltip != "" {
+        button = ui
+            .interact(gradient, id, egui::Sense::click())
+            .on_hover_cursor(egui::CursorIcon::PointingHand)
+            .on_hover_text(tooltip);
+    } else {
+        button = ui
+            .interact(gradient, id, egui::Sense::click())
+            .on_hover_cursor(egui::CursorIcon::PointingHand);
+    }
 
     if button.contains_pointer() {
         ui.gradient(
-            gradient_rect,
+            gradient,
             egui::Color32::TRANSPARENT,
             shared.config.colors.dark_accent.into(),
         );
@@ -495,6 +514,7 @@ pub fn web_sample_button(
     ui: &mut egui::Ui,
     ctx: &egui::Context,
     width: f32,
+    tooltip: String,
 ) {
     let thumb_size = Vec2::new(64., 64.);
 
@@ -542,17 +562,20 @@ pub fn web_sample_button(
                 if let Some(thumb_tex) = shared.thumb_ui_tex.get(&name) {
                     egui::Image::new(thumb_tex).paint_at(ui, rect);
                 }
-                let heading_pos = egui::Pos2::new(
+                let mut pos = egui::Pos2::new(
                     ui.min_rect().left_top().x + 72.,
                     ui.min_rect().left_top().y + 18.,
                 );
-                ui.painter().text(
-                    heading_pos,
-                    egui::Align2::LEFT_BOTTOM,
-                    name.clone(),
-                    egui::FontId::new(16., egui::FontFamily::Proportional),
-                    shared.config.colors.text.into(),
-                );
+
+                let align = egui::Align2::LEFT_BOTTOM;
+                let font = egui::FontId::new(16., egui::FontFamily::Proportional);
+                let mut col = shared.config.colors.text;
+                ui.painter().text(pos, align, name, font, col.into());
+
+                pos.y += 18.;
+                let font = egui::FontId::new(11., egui::FontFamily::Proportional);
+                col -= Color::new(40, 40, 40, 0);
+                ui.painter().text(pos, align, tooltip, font, col.into());
             });
 
         if button.clicked() {
