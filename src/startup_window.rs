@@ -90,7 +90,7 @@ fn startup_content(
                 }
 
                 macro_rules! sample_button {
-                    ($key:expr, $name:expr, $filename:expr, $path:expr, $desc:expr) => {
+                    ($key:expr, $name:expr, $path:expr, $desc:expr) => {
                         let thumb_tex = shared.thumb_ui_tex.get($key);
                         if leftside_button("", $name, ui, shared, skel_pos, thumb_tex, $desc)
                             .clicked()
@@ -106,19 +106,15 @@ fn startup_content(
                 add_thumb_tex!("skellina_icon.png", "../assets/skellina_icon.png");
 
                 let key = "skellington_icon.png";
-                let sample = "./samples/skellington.skf";
+                let sample = utils::bin_path() + "samples/skellington.skf";
                 let desc = shared.loc("startup.skellington_sample_desc");
-                sample_button!(
-                    key,
-                    "Skellington",
-                    "../assets/skellington_icon.png",
-                    sample,
-                    desc
-                );
+                let name = "Skellington";
+                sample_button!(key, name, sample, desc);
+
                 let key = "skellina_icon.png";
-                let sample = "./samples/skellina.skf";
+                let sample = utils::bin_path() + "samples/skellina.skf";
                 let desc = shared.loc("startup.skellina_sample_desc");
-                sample_button!(key, "Skellina", "../assets/skellina_icon.png", sample, desc);
+                sample_button!(key, "Skellina", sample, desc);
             }
         }
     });
