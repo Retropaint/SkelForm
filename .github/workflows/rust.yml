@@ -25,10 +25,10 @@ jobs:
             ~/.cargo/git
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: build binary
-        run: cargo build --profile ${{ matrix.BUILD_TARGET }}
+        run: python3 release/release.py -nd
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
           name: binary
-          path: target/${{ matrix.BUILD_TARGET }}/SkelForm
+          path: release/SkelForm.app
           
