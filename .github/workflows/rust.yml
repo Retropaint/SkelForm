@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build-macos:
     runs-on: macos-latest
     strategy:
       matrix:
@@ -29,6 +29,29 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: binary
+          name: skelform-macos
           path: release/SkelForm.app
+          
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\Users\runneradmin\.cargo\registry
+            C:\Users\runneradmin\.cargo\git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: build windows binary
+        shell: bash
+        run: cd release && python release.py -nd
+
+      - name: upload windows binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: skelform-windows
+          path: release/skelform_windows_v0.2.0
           
