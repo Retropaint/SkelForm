@@ -14,19 +14,21 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        BUILD_TARGET: [release] 
-    outputs:
-      release_built: ${{ steps.set-output.outputs.release_built }}
+        BUILD_TARGET: [release]
     steps:
       - uses: actions/checkout@v5
-      - name: build binary
-        run: cargo build --profile ${{ matrix.BUILD_TARGET }}
       - name: Cache
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: build binary
+        run: cargo build --profile ${{ matrix.BUILD_TARGET }}
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary
+          path: target/${{ matrix.BUILD_TARGET }}/SkelForm
           
