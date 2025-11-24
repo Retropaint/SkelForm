@@ -22,6 +22,7 @@ parser.add_argument("-v", "--verbose", action="store_true", help="Print output o
 parser.add_argument("-dmg", "--dmg", action="store_true", help="Attempt to create Mac dmg (requires create-dmg)")
 parser.add_argument("-dbg", "--debug", action="store_true", help="Create debug build")
 parser.add_argument("-d", "--docs", type=str, help=f"Build and move user & dev docs here. `user_docs` and `dev_docs` will be appended to the input dir.\n{CYAN}Example{RESET}: -docs ../../skelform_")
+parser.add_argument("-nd", "--nodocs", action="store_true", help="Ignore docs for packaging")
 args = parser.parse_args()
 
 stdout = "" if args.verbose else " &> /dev/null"
@@ -43,10 +44,10 @@ def require_docs(header, doc_name):
 can_build = True
 user_docs = "user-docs"
 dev_docs = "dev-docs"
-if not os.path.exists(user_docs):
+if not os.path.exists(user_docs) and not args.nodocs:
     require_docs("USER", user_docs)
     can_build = False
-if not os.path.exists(user_docs):
+if not os.path.exists(user_docs) and not args.nodocs:
     require_docs("DEV", user_docs)
     can_build = False
 
@@ -93,8 +94,9 @@ if args.debug:
 # yapf: disable
 subprocess.run (f"cargo build {mode}", shell=True)
 shutil.copy    (f"../target/{path}/SkelForm{binExt}", f"./{dirname}")
-shutil.copytree(f"./{user_docs}", f"./{dirname}/{user_docs}")
-shutil.copytree(f"./{dev_docs}",  f"./{dirname}/{dev_docs}")
+if not args.nodocs:
+    shutil.copytree(f"./{user_docs}", f"./{dirname}/{user_docs}")
+    shutil.copytree(f"./{dev_docs}",  f"./{dirname}/{dev_docs}")
 shutil.copytree("../assets",      f"./{dirname}/assets")
 shutil.copytree("../samples",     f"./{dirname}/samples")
 
