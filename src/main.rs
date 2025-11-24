@@ -1,4 +1,4 @@
-//#![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 
 #[cfg(not(target_arch = "wasm32"))]
 use skelform_lib::shared::config_path;
