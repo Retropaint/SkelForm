@@ -774,7 +774,7 @@ pub fn arc_ik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
 
     for b in 1..bones.len() {
         bones[b].pos = Vec2::new(
-            bones[b].pos.x * valley,
+            root.x - (root.x - bones[b].pos.x) * valley,
             root.y + (1. - peak) * (dist[b] * 3.14).sin() * base_mag,
         );
 
