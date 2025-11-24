@@ -25,7 +25,7 @@ jobs:
             ~/.cargo/git
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: build binary
-        run: cd release && python3 release/release.py -nd
+        run: cd release && python3 release.py -nd
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
