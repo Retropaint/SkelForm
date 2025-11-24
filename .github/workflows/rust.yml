@@ -24,6 +24,10 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: install python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13.6"
       - name: build binary
         run: cd release && python3 release.py -nd
       - name: Upload binary
