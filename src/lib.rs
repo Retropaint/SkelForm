@@ -285,11 +285,11 @@ impl ApplicationHandler for App {
             WindowEvent::HoveredFileCancelled => {
                 self.shared.ui.set_state(UiState::Modal, false);
             }
-            WindowEvent::DroppedFile(path_buf) => {
+            WindowEvent::DroppedFile(_path_buf) => {
                 self.shared.ui.set_state(UiState::Modal, false);
-                let file_path = path_buf.into_os_string().into_string().unwrap();
                 #[cfg(not(target_arch = "wasm32"))]
                 {
+                    let file_path = _path_buf.into_os_string().into_string().unwrap();
                     *self.shared.file_name.lock().unwrap() = file_path;
                     *self.shared.import_contents.lock().unwrap() = vec![0];
                 }

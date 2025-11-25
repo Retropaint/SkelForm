@@ -3,8 +3,6 @@
 
 use std::sync::Mutex;
 
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen_futures::spawn_local;
 use wgpu::*;
 
 use crate::*;
@@ -164,13 +162,13 @@ pub fn read_psd(
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
 
     type ImageType = (ImageBuffer<Rgba<u8>, Vec<u8>>, Vec2);
-    let images: Arc<Mutex<Vec<ImageType>>> = Arc::new(vec![].into());
+    let _images: Arc<Mutex<Vec<ImageType>>> = Arc::new(vec![].into());
 
     #[cfg(not(target_arch = "wasm32"))]
     {
         let mut processes = vec![];
         let cgroup_ids = group_ids.clone();
-        let cimages = Arc::clone(&images);
+        let cimages = Arc::clone(&_images);
         processes.push(std::thread::spawn(move || {
             for g in (0..cgroup_ids.len()).rev() {
                 let psd = psd::Psd::from_bytes(&bytes).unwrap();
@@ -190,7 +188,7 @@ pub fn read_psd(
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            image = images.lock().unwrap()[g].clone();
+            image = _images.lock().unwrap()[g].clone();
         }
 
         #[cfg(target_arch = "wasm32")]

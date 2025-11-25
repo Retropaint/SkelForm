@@ -12,6 +12,7 @@ mod web {
 pub use web::*;
 
 use image::{ExtendedColorType::Rgb8, GenericImage, ImageEncoder};
+#[cfg(not(target_arch = "wasm32"))]
 use std::sync::Mutex;
 
 use std::io::{Read, Write};
