@@ -2222,10 +2222,6 @@ fn is_neg_one(value: &i32) -> bool {
     *value == -1
 }
 
-fn is_two(value: &i32) -> bool {
-    *value == 2
-}
-
 fn are_verts_empty(value: &Vec<Vertex>) -> bool {
     *value == vec![]
 }
