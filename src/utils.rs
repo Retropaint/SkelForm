@@ -351,6 +351,9 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
         bone.init_rot = bone.rot;
         bone.init_scale = bone.scale;
         bone.init_constraint = bone.ik_constraint_id;
+        if bone.style_ids.len() == 0 {
+            bone.hidden = -1;
+        }
         bone.init_hidden = bone.hidden;
 
         if bone.ik_bone_ids.len() == 0 {

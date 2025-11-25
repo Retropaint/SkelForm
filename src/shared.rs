@@ -940,7 +940,7 @@ pub struct Bone {
     #[serde(default, skip_serializing_if = "are_weights_empty")]
     pub binds: Vec<BoneBind>,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_neg_one")]
     pub hidden: i32,
 
     // todo:
@@ -954,7 +954,7 @@ pub struct Bone {
     pub init_rot: f32,
     #[serde(default, skip_serializing_if = "is_neg_one")]
     pub init_constraint: i32,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_neg_one")]
     pub init_hidden: i32,
 
     #[serde(skip)]
@@ -2222,8 +2222,8 @@ fn is_neg_one(value: &i32) -> bool {
     *value == -1
 }
 
-fn is_zero(value: &i32) -> bool {
-    *value == 0
+fn is_two(value: &i32) -> bool {
+    *value == 2
 }
 
 fn are_verts_empty(value: &Vec<Vertex>) -> bool {
