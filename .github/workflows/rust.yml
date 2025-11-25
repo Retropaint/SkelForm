@@ -7,14 +7,12 @@ on:
     branches: [ "master" ]
 
 env:
-  CARGO_TERM_COLOR: always
+  USER_DOCS: https://github.com/Retropaint/skelform_user_docs
+  DEV_DOCS: https://github.com/Retropaint/skelform_dev_docs
 
 jobs:
   build-macos:
     runs-on: macos-latest
-    strategy:
-      matrix:
-        BUILD_TARGET: [release]
     steps:
       - uses: actions/checkout@v5
       - name: Cache
@@ -29,9 +27,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.13.6"
+
+      - name: docs
+        run: cd release
           
       - name: build binary
-        run: cd release && python3 release.py -nd
+        run: cd release && python3 release.py
         
       - name: upload to release
         uses: softprops/action-gh-release@v2
@@ -65,7 +66,7 @@ jobs:
 
       - name: build windows binary
         shell: bash
-        run: cd release && python release.py -nd
+        run: cd release && python release.py
 
       - name: upload to release
         uses: softprops/action-gh-release@v2
