@@ -25,7 +25,7 @@ args = parser.parse_args()
 
 stdout = "" if args.verbose else " &> /dev/null"
 
-subprocess.run("cargo install mdbook", shell=True)
+subprocess.run("cargo install mdbook@0.5.1", shell=True)
 subprocess.run("git clone https://github.com/Retropaint/skelform_dev_docs", shell=True)
 subprocess.run("git clone https://github.com/Retropaint/skelform_user_docs", shell=True)
 subprocess.run("mdbook build skelform_dev_docs", shell=True)
