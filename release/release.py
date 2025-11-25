@@ -100,10 +100,6 @@ if not args.nodocs:
 shutil.copytree("../assets",      f"./{dirname}/assets")
 shutil.copytree("../samples",     f"./{dirname}/samples")
 
-# make zip
-
-shutil.make_archive(dirname, 'zip', ".", dirname)
-
 # Platform-specific distribution
 
 if platform.system() == "Darwin":
@@ -112,7 +108,6 @@ if platform.system() == "Darwin":
     if os.path.exists(bin_path):
         shutil.rmtree(bin_path)
     shutil.copytree(dirname, bin_path)
-    shutil.make_archive("SkelForm.app", "zip", ".", "SkelForm.app")
 
     # sign the app in any way, so the OS doesn't show 'this app is damaged'
     subprocess.run("codesign --force --deep --sign - SkelForm.app", shell=True)
