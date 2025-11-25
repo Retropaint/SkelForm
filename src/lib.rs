@@ -651,6 +651,9 @@ impl Renderer {
             zip.write(editor_json.as_bytes()).unwrap();
             zip.start_file("thumbnail.png", options.clone()).unwrap();
             zip.write(&thumb_buf).unwrap();
+            zip.start_file("readme.md", options.clone()).unwrap();
+            zip.write(include_bytes!("../assets/skf_readme.md"))
+                .unwrap();
             if size != Vec2::ZERO {
                 zip.start_file("textures.png", options).unwrap();
                 zip.write(&png_buf).unwrap();
