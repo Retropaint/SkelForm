@@ -470,7 +470,7 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 
             let name = bone!().name.to_string();
             let mut text_col = shared.config.colors.text;
-            if shared.armature.is_bone_hidden(bone!().id) {
+            if bone!().hidden == 1 {
                 text_col = shared.config.colors.dark_accent;
                 text_col += crate::Color::new(40, 40, 40, 0)
             }

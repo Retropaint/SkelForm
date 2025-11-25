@@ -204,7 +204,8 @@
       "ScaleY": "Scale H",
       "Zindex": "Zindex",
       "TextureIndex": "Texture",
-      "IkConstraint": "Constraint"
+      "IkConstraint": "Constraint",
+      "Hidden": "Hidden"
     }
   },
   "polar": {

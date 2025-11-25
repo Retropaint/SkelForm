@@ -351,6 +351,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
         bone.init_rot = bone.rot;
         bone.init_scale = bone.scale;
         bone.init_constraint = bone.ik_constraint_id;
+        bone.init_hidden = bone.hidden;
 
         if bone.ik_bone_ids.len() == 0 {
             bone.ik_constraint = JointConstraint::Skip;
@@ -660,6 +661,7 @@ pub fn open_docs(is_dev: bool, mut _path: &str) {
     #[cfg(not(target_arch = "wasm32"))]
     {
         let url = bin_path() + docs_name + "/" + _path;
+        println!("{}", url);
         match open::that(url) {
             Err(_) => {
                 let url =

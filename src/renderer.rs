@@ -55,41 +55,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         (bone!().vertices, bone!().indices) = create_tex_rect(&tex.unwrap().size);
     }
 
-    // runtime:
-    // armature bones should normally be mutable to animation for blending,
-    // but that's not ideal when editing
-    let mut animated_bones = shared.armature.bones.clone();
-
-    let is_any_anim_playing = shared
-        .armature
-        .animations
-        .iter()
-        .find(|anim| anim.elapsed != None)
-        != None;
-
-    if is_any_anim_playing {
-        // runtime: playing animations (single & simultaneous)
-        for a in 0..shared.armature.animations.len() {
-            let anim = &mut shared.armature.animations[a];
-            if anim.elapsed == None {
-                continue;
-            }
-            let frame = anim.set_frame();
-            animated_bones = shared.armature.animate(a, frame, Some(&animated_bones));
-        }
-    } else if shared.ui.anim.open
-        && shared.ui.anim.selected != usize::MAX
-        && shared.ui.anim.selected_frame != -1
-    {
-        // display the selected animation's frame
-        animated_bones =
-            shared
-                .armature
-                .animate(shared.ui.anim.selected, shared.ui.anim.selected_frame, None);
-    }
-
-    // runtime: armature bones should be immutable to rendering
-    let mut temp_bones: Vec<Bone> = animated_bones.clone();
+    let anim_bones = shared.animate_bones();
+    let mut temp_bones = anim_bones.clone();
 
     // store bound/unbound vert's pos before construction
     let mut init_vert_pos = Vec2::default();
@@ -98,7 +65,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         init_vert_pos = temp_bones[shared.ui.selected_bone_idx].vertices[vert_id].pos;
     }
 
-    construction(&mut temp_bones, &animated_bones);
+    construction(&mut temp_bones, &anim_bones);
 
     // adjust bound/unbound vert's pos after construction
     if shared.changed_vert_id != -1 {
@@ -147,17 +114,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if selected_bone != None && selected_bone.unwrap().id == temp_bones[b].id {
             for parent in &parents {
                 let tex = shared.armature.get_current_tex(parent.id);
-                if tex != None
-                    && !shared.armature.is_bone_hidden(parent.id)
-                    && utils::bone_meshes_edited(tex.unwrap().size, &parent.vertices)
-                {
+                if tex != None && utils::bone_meshes_edited(tex.unwrap().size, &parent.vertices) {
                     mesh_onion_id = parent.id;
                     break;
                 }
             }
         }
 
-        if tex == None || shared.armature.is_bone_hidden(temp_bones[b].id) {
+        if tex == None || temp_bones[b].hidden == 1 {
             continue;
         }
 
@@ -285,7 +249,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     for bone in &temp_bones {
         let tex = shared.armature.get_current_tex(bone.id);
-        if tex == None || shared.armature.is_bone_hidden(bone.id) {
+        if tex == None || bone.hidden == 1 {
             continue;
         }
 
@@ -566,7 +530,7 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
         let set = shared.armature.get_current_set(temp_bones[b].id);
         if set == None
             || temp_bones[b].tex_idx > set.unwrap().textures.len() as i32 - 1
-            || shared.armature.is_bone_hidden(temp_bones[b].id)
+            || temp_bones[b].hidden == 1
         {
             continue;
         }

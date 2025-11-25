@@ -940,8 +940,8 @@ pub struct Bone {
     #[serde(default, skip_serializing_if = "are_weights_empty")]
     pub binds: Vec<BoneBind>,
 
-    #[serde(default, skip_serializing_if = "is_false")]
-    pub hidden: bool,
+    #[serde(default)]
+    pub hidden: i32,
 
     // todo:
     // these should be private, but that upsets
@@ -954,6 +954,8 @@ pub struct Bone {
     pub init_rot: f32,
     #[serde(default, skip_serializing_if = "is_neg_one")]
     pub init_constraint: i32,
+    #[serde(default)]
+    pub init_hidden: i32,
 
     #[serde(skip)]
     pub folded: bool,
@@ -1271,6 +1273,12 @@ impl Armature {
                     }
                 }
             }
+            AnimElement::Hidden => {
+                init_value = bone.hidden as f32;
+                if anim_id == usize::MAX {
+                    bone.hidden = value as i32
+                }
+            }
         };
 
         if anim_id == usize::MAX {
@@ -1348,7 +1356,9 @@ impl Armature {
                 b.scale.y = interpolate!(AnimElement::ScaleY,       b.scale.y);
                 b.zindex  = prev_frame!( AnimElement::Zindex,       b.zindex  as f32) as i32;
                 b.tex_idx = prev_frame!( AnimElement::TextureIndex, b.tex_idx as f32) as i32;
+                b.hidden  = prev_frame!( AnimElement::Hidden,       b.hidden  as f32) as i32;
             };
+
             let constraint =
                 prev_frame!(AnimElement::IkConstraint, (b.ik_constraint as usize) as f32);
             b.ik_constraint = match constraint {
@@ -1498,26 +1508,6 @@ impl Armature {
             fps: 60,
             ..Default::default()
         });
-    }
-
-    pub fn is_bone_hidden(&self, bone_id: i32) -> bool {
-        if self.find_bone(bone_id) == None {
-            return false;
-        }
-
-        if self.find_bone(bone_id).unwrap().hidden {
-            return true;
-        }
-
-        let parents = self.get_all_parents(bone_id);
-
-        for parent in &parents {
-            if parent.hidden {
-                return true;
-            }
-        }
-
-        false
     }
 
     pub fn get_current_set(&self, bone_id: i32) -> Option<&Style> {
@@ -1806,6 +1796,7 @@ pub enum AnimElement {
     /* 5 */ Zindex,
     /* 6 */ TextureIndex,
     /* 7 */ IkConstraint,
+    /* 8 */ Hidden,
 }
 
 // iterable anim change icons IDs
@@ -2158,6 +2149,41 @@ impl Shared {
         }
         self.ui.set_state(UiState::StylesModal, true);
     }
+
+    pub fn animate_bones(&mut self) -> Vec<Bone> {
+        // runtime:
+        // armature bones should normally be mutable to animation for blending,
+        // but that's not ideal when editing
+        let mut animated_bones = self.armature.bones.clone();
+
+        let is_any_anim_playing = self
+            .armature
+            .animations
+            .iter()
+            .find(|anim| anim.elapsed != None)
+            != None;
+
+        let anim = &self.ui.anim;
+        if is_any_anim_playing {
+            // runtime: playing animations (single & simultaneous)
+            for a in 0..self.armature.animations.len() {
+                let anim = &mut self.armature.animations[a];
+                if anim.elapsed == None {
+                    continue;
+                }
+                let frame = anim.set_frame();
+                animated_bones = self.armature.animate(a, frame, Some(&animated_bones));
+            }
+        } else if anim.open && anim.selected != usize::MAX && anim.selected_frame != -1 {
+            // display the selected animation's frame
+            animated_bones = self
+                .armature
+                .animate(anim.selected, anim.selected_frame, None);
+        }
+
+        // runtime: armature bones should be immutable to rendering
+        animated_bones
+    }
 }
 
 // generate non-clashing id
@@ -2196,8 +2222,8 @@ fn is_neg_one(value: &i32) -> bool {
     *value == -1
 }
 
-fn is_false(value: &bool) -> bool {
-    !*value
+fn is_zero(value: &i32) -> bool {
+    *value == 0
 }
 
 fn are_verts_empty(value: &Vec<Vertex>) -> bool {
