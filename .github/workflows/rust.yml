@@ -24,17 +24,26 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          
       - name: install python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13.6"
+          
       - name: build binary
         run: cd release && python3 release.py -nd
-      - name: Upload binary
-        uses: actions/upload-artifact@v4
+        
+      - name: upload to release
+        uses: softprops/action-gh-release@v2
         with:
-          name: skelform-macos
-          path: release/SkelForm.app
+          tag_name: nightly
+          name: Nightly Build
+          draft: false
+          prerelease: false
+          files: |
+            release/SkelForm*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
   build-windows:
     runs-on: windows-latest
@@ -58,9 +67,15 @@ jobs:
         shell: bash
         run: cd release && python release.py -nd
 
-      - name: upload windows binary
-        uses: actions/upload-artifact@v4
+      - name: upload to release
+        uses: softprops/action-gh-release@v2
         with:
-          name: skelform-windows
-          path: release/skelform_windows_v0.2.0
+          tag_name: nightly
+          name: Nightly Build
+          draft: false
+          prerelease: false
+          files: |
+            release/skelform_windows*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
