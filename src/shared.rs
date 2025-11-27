@@ -946,15 +946,15 @@ pub struct Bone {
     // todo:
     // these should be private, but that upsets
     // default constructor for some reason
-    #[serde(default)]
+    #[serde(default, skip_deserializing)]
     pub init_pos: Vec2,
-    #[serde(default)]
+    #[serde(default, skip_deserializing)]
     pub init_scale: Vec2,
-    #[serde(default)]
+    #[serde(default, skip_deserializing)]
     pub init_rot: f32,
-    #[serde(default, skip_serializing_if = "is_neg_one")]
+    #[serde(default, skip_serializing_if = "is_neg_one", skip_deserializing)]
     pub init_constraint: i32,
-    #[serde(default, skip_serializing_if = "is_neg_one")]
+    #[serde(default, skip_serializing_if = "is_neg_one", skip_deserializing)]
     pub init_hidden: i32,
 
     #[serde(skip)]
