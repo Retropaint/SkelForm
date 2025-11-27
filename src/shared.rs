@@ -1341,13 +1341,17 @@ impl Armature {
                 b.hidden  = prev_frame!( AnimElement::Hidden,       b.hidden  as f32) as i32;
             };
 
-            let constraint =
-                prev_frame!(AnimElement::IkConstraint, (b.ik_constraint as usize) as f32);
-            b.ik_constraint = match constraint {
-                1. => JointConstraint::Clockwise,
-                2. => JointConstraint::CounterClockwise,
-                _ => JointConstraint::None,
-            };
+            let kfs = &self.animations[anim_idx].keyframes;
+            let constraint_frame =
+                self.get_prev_frame(anim_frame, kfs, b.id, &AnimElement::IkConstraint);
+            if constraint_frame != usize::MAX {
+                let constraint = kfs[constraint_frame].value;
+                b.ik_constraint = match constraint {
+                    1. => JointConstraint::Clockwise,
+                    2. => JointConstraint::CounterClockwise,
+                    _ => JointConstraint::None,
+                };
+            }
 
             // restructure bone's verts to match texture
             if self.get_current_tex(b.id) != None {
@@ -1360,6 +1364,22 @@ impl Armature {
         bones
     }
 
+    fn get_prev_frame(
+        &self,
+        frame: i32,
+        kfs: &Vec<Keyframe>,
+        b_id: i32,
+        el: &AnimElement,
+    ) -> usize {
+        let mut prev = usize::MAX;
+        for (i, kf) in kfs.iter().enumerate() {
+            if kf.frame <= frame && kf.bone_id == b_id && kf.element == *el {
+                prev = i;
+            }
+        }
+        prev
+    }
+
     pub fn interpolate_keyframes(
         &self,
         anim_id: usize,
@@ -1368,34 +1388,15 @@ impl Armature {
         default: f32,
         frame: i32,
     ) -> f32 {
-        let mut prev = usize::MAX;
+        let keyframes = &self.animations[anim_id].keyframes;
+        let mut prev = self.get_prev_frame(frame, keyframes, bone_id, &element);
         let mut next = usize::MAX;
 
-        // get most previous frame with this element
-        let keyframes = &self.animations[anim_id].keyframes;
         for (i, kf) in keyframes.iter().enumerate() {
-            if self.animations[anim_id].keyframes[i].frame > frame {
+            if kf.frame > frame && kf.bone_id == bone_id && kf.element == element {
+                next = i;
                 break;
             }
-
-            if kf.bone_id != bone_id || kf.element != element {
-                continue;
-            }
-
-            prev = i;
-        }
-
-        // get first next frame with this element
-        for (i, kf) in keyframes.iter().enumerate().rev() {
-            if self.animations[anim_id].keyframes[i].frame < frame {
-                break;
-            }
-
-            if kf.bone_id != bone_id || kf.element != element {
-                continue;
-            }
-
-            next = i;
         }
 
         // ensure prev and next are pointing somewhere
