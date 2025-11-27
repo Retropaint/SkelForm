@@ -9,7 +9,6 @@ use std::{
 };
 
 use std::sync::Mutex;
-use tween::Tweener;
 use wgpu::BindGroup;
 use winit::keyboard::KeyCode;
 
@@ -1325,24 +1324,13 @@ impl Armature {
         for b in &mut bones {
             macro_rules! interpolate {
                 ($element:expr, $default:expr) => {{
-                    let (prev, next, total_frames, current_frame, transition) =
-                        self.find_connecting_frames(anim_idx, b.id, $element, $default, anim_frame);
-                    match (transition) {
-                        Transition::SineIn => {
-                            Tweener::sine_in(prev, next, total_frames).move_to(current_frame)
-                        }
-                        Transition::SineOut => {
-                            Tweener::sine_out(prev, next, total_frames).move_to(current_frame)
-                        }
-                        _ => Tweener::linear(prev, next, total_frames).move_to(current_frame),
-                    }
+                    self.interpolate_keyframes(anim_idx, b.id, $element, $default, anim_frame)
                 }};
             }
 
             macro_rules! prev_frame {
                 ($element:expr, $default:expr) => {
-                    self.find_connecting_frames(anim_idx, b.id, $element, $default, anim_frame)
-                        .0
+                    self.interpolate_keyframes(anim_idx, b.id, $element, $default, anim_frame)
                 };
             }
 
@@ -1378,19 +1366,16 @@ impl Armature {
         bones
     }
 
-    pub fn find_connecting_frames(
+    pub fn interpolate_keyframes(
         &self,
         anim_id: usize,
         bone_id: i32,
         element: AnimElement,
         default: f32,
         frame: i32,
-    ) -> (f32, f32, i32, i32, Transition) {
-        let mut prev: Option<f32> = None;
-        let mut next: Option<f32> = None;
-        let mut start_frame = 0;
-        let mut end_frame = 0;
-        let mut transition: Transition = Transition::Linear;
+    ) -> f32 {
+        let mut prev = usize::MAX;
+        let mut next = usize::MAX;
 
         // get most previous frame with this element
         let keyframes = &self.animations[anim_id].keyframes;
@@ -1403,8 +1388,7 @@ impl Armature {
                 continue;
             }
 
-            prev = Some(kf.value);
-            start_frame = kf.frame;
+            prev = i;
         }
 
         // get first next frame with this element
@@ -1417,42 +1401,38 @@ impl Armature {
                 continue;
             }
 
-            next = Some(kf.value);
-            end_frame = kf.frame;
-            transition = kf.transition.clone();
+            next = i;
         }
 
         // ensure prev and next are pointing somewhere
-        if prev == None {
-            if next != None {
-                prev = next
-            } else {
-                prev = Some(default)
-            }
+        if prev == usize::MAX {
+            prev = next;
         }
-        if next == None {
-            if prev != None {
-                next = prev;
-            } else {
-                next = Some(default);
-            }
+        if next == usize::MAX {
+            next = prev;
         }
 
-        let mut total_frames = end_frame - start_frame;
-        // Tweener doesn't accept 0 duration
-        if total_frames == 0 {
-            total_frames = 1;
+        if prev == usize::MAX && next == usize::MAX {
+            return default;
         }
 
-        let current_frame = frame - start_frame;
-
-        (
-            prev.unwrap(),
-            next.unwrap(),
-            total_frames,
+        let total_frames = keyframes[next].frame - keyframes[prev].frame;
+        let current_frame = frame - keyframes[prev].frame;
+        self.interpolate(
             current_frame,
-            transition,
+            total_frames,
+            keyframes[prev].value,
+            keyframes[next].value,
         )
+    }
+
+    fn interpolate(&self, current: i32, max: i32, start_val: f32, end_val: f32) -> f32 {
+        if max == 0 || current >= max {
+            return end_val;
+        }
+        let interp = current as f32 / max as f32;
+        let end = end_val - start_val;
+        start_val + (end * interp)
     }
 
     /// unfold this bone's parents so it can be seen in the armature window
