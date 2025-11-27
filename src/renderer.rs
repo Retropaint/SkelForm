@@ -1238,6 +1238,9 @@ fn draw_line(
 }
 
 pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
+    if bone.vertices.len() == 0 || vert_idx > bone.vertices.len() - 1 {
+        return;
+    }
     let mouse_vel = shared.mouse_vel();
     let zoom = shared.camera.zoom;
     let temp_vert = bone.vertices[vert_idx];
