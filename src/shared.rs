@@ -1763,6 +1763,8 @@ pub struct Keyframe {
     pub element: AnimElement,
 
     #[serde(default)]
+    pub value_str: f32,
+    #[serde(default, skip_serializing_if = "is_max")]
     pub value: f32,
 
     #[serde(default)]
@@ -2220,6 +2222,10 @@ fn gridline_default() -> i32 {
 
 fn is_neg_one(value: &i32) -> bool {
     *value == -1
+}
+
+fn is_max(value: &f32) -> bool {
+    *value == f32::MAX
 }
 
 fn are_verts_empty(value: &Vec<Vertex>) -> bool {
