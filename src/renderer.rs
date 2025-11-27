@@ -12,7 +12,7 @@ use winit::keyboard::KeyCode;
 #[rustfmt::skip]
 macro_rules! con_vert {
     ($vert:expr, $bone:expr, $tex_size:expr, $cam_pos:expr, $cam_zoom:expr) => {
-        raw_to_world_vert($vert, Some(&$bone), &$cam_pos, $cam_zoom, $tex_size, 1., Vec2::default())
+        world_vert($vert, Some(&$bone), &$cam_pos, $cam_zoom, $tex_size, 1., Vec2::default())
     };
 }
 
@@ -56,7 +56,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     let anim_bones = shared.animate_bones();
-
     let mut temp_arm = shared.armature.clone();
     temp_arm.bones = anim_bones.clone();
 
@@ -231,12 +230,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.selected_bone_mut().unwrap().ik_target_id = click_on_hover_id;
                 shared.ui.setting_ik_target = false;
             } else {
-                shared.ui.selected_bone_idx = shared
-                    .armature
-                    .bones
-                    .iter()
-                    .position(|bone| bone.id == click_on_hover_id)
-                    .unwrap();
+                let idx = &mut shared.ui.selected_bone_idx;
+                let bones = &shared.armature.bones;
+                let id = click_on_hover_id;
+                *idx = bones.iter().position(|bone| bone.id == id).unwrap();
                 shared.ui.selected_bone_ids = vec![];
 
                 // unfold all parents that lead to this bone, so it's visible in the hierarchy
@@ -250,24 +247,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // runtime: sort bones by z-index for drawing
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
-    for bone in &temp_arm.bones {
-        let tex = temp_arm.get_current_tex(bone.id);
-        if tex == None || bone.hidden == 1 {
+    for b in 0..temp_arm.bones.len() {
+        let tex = temp_arm.get_current_tex(temp_arm.bones[b].id);
+        if tex == None || temp_arm.bones[b].hidden == 1 {
             continue;
         }
 
-        if shared.ui.showing_mesh && shared.selected_bone().unwrap().id == bone.id {
+        if shared.ui.showing_mesh && shared.selected_bone().unwrap().id == temp_arm.bones[b].id {
             continue;
         }
 
-        let bind_group = &tex.unwrap().bind_group;
-        draw(
-            &bind_group,
-            &bone.world_verts,
-            &bone.indices,
-            render_pass,
-            device,
-        );
+        let bg = tex.unwrap().bind_group.clone();
+        let bone = &temp_arm.bones[b];
+        draw(&bg, &bone.world_verts, &bone.indices, render_pass, device);
     }
 
     // draw inverse kinematics arrows
@@ -289,28 +281,20 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 scale: Vec2::new(2., 2.),
                 ..Default::default()
             };
-            let tex_size = Vec2::new(61., 48.);
-            (arrow.vertices, arrow.indices) = create_tex_rect(&tex_size);
+            let size = Vec2::new(61., 48.);
+            (arrow.vertices, arrow.indices) = create_tex_rect(&size);
+            let cam = &shared.camera;
+            let ratio = shared.aspect_ratio();
+            let pivot = Vec2::new(0., 0.5);
             for v in 0..4 {
-                let mut new_vert = raw_to_world_vert(
-                    arrow.vertices[v],
-                    Some(&arrow),
-                    &shared.camera.pos,
-                    shared.camera.zoom,
-                    tex_size,
-                    shared.aspect_ratio(),
-                    Vec2::new(0., 0.5),
-                );
+                let verts = arrow.vertices[v];
+                let mut new_vert =
+                    world_vert(verts, Some(&arrow), &cam.pos, cam.zoom, size, ratio, pivot);
                 new_vert.color = VertexColor::new(1., 1., 1., 0.2);
                 arrow.world_verts.push(new_vert);
             }
-            draw(
-                &shared.ik_arrow_bindgroup,
-                &arrow.world_verts,
-                &arrow.indices,
-                render_pass,
-                device,
-            );
+            let bg = &shared.ik_arrow_bindgroup;
+            draw(bg, &arrow.world_verts, &arrow.indices, render_pass, device);
         }
     }
 
@@ -405,11 +389,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             bone_id = bone.id
         }
         for vert in shared.dragging_verts.clone() {
-            let bone = &temp_arm
-                .bones
-                .iter()
-                .find(|bone| bone.id == bone_id)
-                .unwrap();
+            let bones = &temp_arm.bones;
+            let bone = bones.iter().find(|bone| bone.id == bone_id).unwrap();
             drag_vertex(shared, bone, vert);
         }
 
@@ -466,16 +447,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 pos: bone.pos,
                 ..Default::default()
             };
-            let center_world = raw_to_world_vert(
-                center,
-                None,
-                &shared.camera.pos,
-                shared.camera.zoom,
-                Vec2::ZERO,
-                shared.aspect_ratio(),
-                Vec2::new(0.5, 0.5),
-            );
-            draw_line(center_world.pos, mouse, shared, render_pass, &device);
+            let cam = &shared.camera;
+            let pivot = Vec2::new(0.5, 0.5);
+            let ratio = shared.aspect_ratio();
+            let cw = world_vert(center, None, &cam.pos, cam.zoom, Vec2::ZERO, ratio, pivot);
+            draw_line(cw.pos, mouse, shared, render_pass, &device);
         }
 
         // save bone/animation for undo
@@ -836,18 +812,14 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
         };
     }
 
-    let bone_center = raw_to_world_vert(
-        Vertex {
-            pos: bone.pos,
-            ..Default::default()
-        },
-        None,
-        &shared.camera.pos,
-        shared.camera.zoom,
-        Vec2::ZERO,
-        shared.aspect_ratio(),
-        Vec2::new(0.5, 0.5),
-    );
+    let vert = Vertex {
+        pos: bone.pos,
+        ..Default::default()
+    };
+    let cam = &shared.camera;
+    let ratio = shared.aspect_ratio();
+    let pivot = Vec2::new(0.5, 0.5);
+    let bone_center = world_vert(vert, None, &cam.pos, cam.zoom, Vec2::ZERO, ratio, pivot);
 
     match shared.edit_mode {
         shared::EditMode::Move => {
@@ -1420,7 +1392,7 @@ fn draw_point(
     let cam = &shared.camera;
     let pivot = Vec2::new(0.5, 0.5);
     for vert in temp_point_verts {
-        let vert = raw_to_world_vert(vert, None, &camera, cam.zoom, Vec2::ZERO, ar, pivot);
+        let vert = world_vert(vert, None, &camera, cam.zoom, Vec2::ZERO, ar, pivot);
         point_verts.push(vert);
     }
 
@@ -1530,7 +1502,7 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
     )
 }
 
-fn raw_to_world_vert(
+fn world_vert(
     mut vert: Vertex,
     bone: Option<&Bone>,
     camera: &Vec2,
@@ -1632,21 +1604,20 @@ pub fn draw_horizontal_line(
     color: VertexColor,
 ) -> Vec<Vertex> {
     let edge = shared.camera.zoom * 5.;
-    let camera_pos = shared.camera.pos;
-    let camera_zoom = shared.camera.zoom;
+    let cam = &shared.camera;
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: (Vec2::new(camera_pos.x - edge, y) - camera_pos) / camera_zoom,
+            pos: (Vec2::new(cam.pos.x - edge, y) - cam.pos) / cam.zoom,
             color,
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(camera_pos.x, width + y) - camera_pos) / camera_zoom,
+            pos: (Vec2::new(cam.pos.x, width + y) - cam.pos) / cam.zoom,
             color,
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(camera_pos.x + edge, y) - camera_pos) / camera_zoom,
+            pos: (Vec2::new(cam.pos.x + edge, y) - cam.pos) / cam.zoom,
             color,
             ..Default::default()
         },
@@ -1656,24 +1627,21 @@ pub fn draw_horizontal_line(
 
 pub fn draw_vertical_line(x: f32, width: f32, shared: &Shared, color: VertexColor) -> Vec<Vertex> {
     let edge = shared.camera.zoom * 5.;
-    let camera_pos = shared.camera.pos;
-    let camera_zoom = shared.camera.zoom;
+    let cam = &shared.camera;
+    let ratio = shared.aspect_ratio();
     let vertices: Vec<Vertex> = vec![
         Vertex {
-            pos: (Vec2::new(x, camera_pos.y - edge) - camera_pos) / camera_zoom
-                * shared.aspect_ratio(),
+            pos: (Vec2::new(x, cam.pos.y - edge) - cam.pos) / cam.zoom * ratio,
             color,
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(width + x, camera_pos.y) - camera_pos) / camera_zoom
-                * shared.aspect_ratio(),
+            pos: (Vec2::new(width + x, cam.pos.y) - cam.pos) / cam.zoom * ratio,
             color,
             ..Default::default()
         },
         Vertex {
-            pos: (Vec2::new(x, camera_pos.y + edge) - camera_pos) / camera_zoom
-                * shared.aspect_ratio(),
+            pos: (Vec2::new(x, cam.pos.y + edge) - cam.pos) / cam.zoom * ratio,
             color,
             ..Default::default()
         },

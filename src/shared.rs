@@ -1100,46 +1100,26 @@ impl Armature {
         }
 
         if selected_anim == usize::MAX {
+            let og_size = self.get_current_tex(bone_id).unwrap().size;
             self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
+            let new_size = self.get_current_tex(bone_id).unwrap().size;
+
+            let bone = self.bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+            if !utils::bone_meshes_edited(og_size, &bone.vertices) {
+                let bone_mut = self.bones.iter_mut().find(|b| b.id == bone_id).unwrap();
+                (bone_mut.vertices, bone_mut.indices) = renderer::create_tex_rect(&new_size);
+            }
         } else {
+            let tx = AnimElement::TextureIndex;
+
             // record texture change in animation
-            let kf = self.animations[selected_anim].check_if_in_keyframe(
-                bone_id as i32,
-                selected_frame,
-                AnimElement::TextureIndex,
-            );
-            self.animations[selected_anim].keyframes[kf].value = new_tex_idx as f32;
+            let anim = &mut self.animations[selected_anim];
+            let kf = anim.check_if_in_keyframe(bone_id as i32, selected_frame, tx.clone());
+            anim.keyframes[kf].value = new_tex_idx as f32;
 
             // add 0th keyframe
-            let first = self.animations[selected_anim].check_if_in_keyframe(
-                bone_id as i32,
-                0,
-                AnimElement::TextureIndex,
-            );
-            self.animations[selected_anim].keyframes[first].value = tex_idx as f32;
-        }
-
-        let style = self.get_current_set(bone_id).unwrap();
-        if style.textures.len() == 0 || new_tex_idx > style.textures.len() - 1 {
-            return;
-        }
-
-        let bone = self
-            .bones
-            .iter()
-            .find(|bone| bone.id == bone_id)
-            .unwrap()
-            .clone();
-
-        let tex_size = self.get_current_set(bone_id).unwrap().textures[new_tex_idx].size;
-        if !utils::bone_meshes_edited(tex_size, &bone.vertices) {
-            let size = self.get_current_set(bone_id).unwrap().textures[new_tex_idx].size;
-            let bone_mut = self
-                .bones
-                .iter_mut()
-                .find(|bone| bone.id == bone_id)
-                .unwrap();
-            (bone_mut.vertices, bone_mut.indices) = renderer::create_tex_rect(&size);
+            let first = anim.check_if_in_keyframe(bone_id as i32, 0, tx.clone());
+            anim.keyframes[first].value = tex_idx as f32;
         }
     }
 
@@ -1358,13 +1338,6 @@ impl Armature {
                     2. => JointConstraint::CounterClockwise,
                     _ => JointConstraint::None,
                 };
-            }
-
-            // restructure bone's verts to match texture
-            if self.get_current_tex(b.id) != None {
-                //(b.vertices, b.indices) = renderer::create_tex_rect(
-                //    &self.get_current_set(b.id).unwrap().textures[b.tex_idx as usize].size,
-                //);
             }
         }
 
