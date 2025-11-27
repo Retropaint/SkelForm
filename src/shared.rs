@@ -1763,7 +1763,7 @@ pub struct Keyframe {
     pub element: AnimElement,
 
     #[serde(default)]
-    pub value_str: f32,
+    pub value_str: String,
     #[serde(default, skip_serializing_if = "is_max")]
     pub value: f32,
 
