@@ -28,12 +28,6 @@ pub struct Vec2 {
     pub y: f32,
 }
 
-impl tween::TweenValue for Vec2 {
-    fn scale(self, scale: f32) -> Self {
-        self * scale
-    }
-}
-
 impl From<egui::Pos2> for Vec2 {
     fn from(pos: egui::Pos2) -> Vec2 {
         Vec2::new(pos.x, pos.y)
