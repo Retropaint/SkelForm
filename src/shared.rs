@@ -1315,6 +1315,8 @@ impl Armature {
             return bones;
         }
 
+        let kfs = &self.animations[anim_idx].keyframes;
+
         for b in &mut bones {
             macro_rules! interpolate {
                 ($element:expr, $default:expr) => {{
@@ -1323,9 +1325,14 @@ impl Armature {
             }
 
             macro_rules! prev_frame {
-                ($element:expr, $default:expr) => {
-                    self.interpolate_keyframes(anim_idx, b.id, $element, $default, anim_frame)
-                };
+                ($element:expr, $default:expr) => {{
+                    let prev = self.get_prev_frame(anim_frame, kfs, b.id, &$element);
+                    if prev != usize::MAX {
+                        kfs[prev].value
+                    } else {
+                        $default
+                    }
+                }};
             }
 
             // iterable anim interps
