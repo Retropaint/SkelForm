@@ -353,7 +353,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
         bone.init_pos = bone.pos;
         bone.init_rot = bone.rot;
         bone.init_scale = bone.scale;
-        bone.init_constraint = bone.ik_constraint_id;
+        bone.init_ik_constraint = bone.ik_constraint_id;
         if bone.style_ids.len() == 0 {
             bone.hidden = -1;
         }
@@ -365,7 +365,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
             bone.ik_mode = InverseKinematicsMode::Skip;
             bone.ik_mode_id = -1;
             bone.ik_family_id = -1;
-            bone.init_constraint = -1;
+            bone.init_ik_constraint = -1;
         }
     }
 

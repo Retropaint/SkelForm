@@ -953,7 +953,7 @@ pub struct Bone {
     #[serde(default, skip_deserializing)]
     pub init_rot: f32,
     #[serde(default, skip_serializing_if = "is_neg_one", skip_deserializing)]
-    pub init_constraint: i32,
+    pub init_ik_constraint: i32,
     #[serde(default, skip_serializing_if = "is_neg_one", skip_deserializing)]
     pub init_hidden: i32,
 
