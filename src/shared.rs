@@ -1247,14 +1247,14 @@ impl Armature {
             // iterable anim interps
             #[rustfmt::skip]
             {
-                b.pos.x   = interpolate!(AnimElement::PositionX,    b.pos.x  );
-                b.pos.y   = interpolate!(AnimElement::PositionY,    b.pos.y  );
-                b.rot     = interpolate!(AnimElement::Rotation,     b.rot    );
-                b.scale.x = interpolate!(AnimElement::ScaleX,       b.scale.x);
-                b.scale.y = interpolate!(AnimElement::ScaleY,       b.scale.y);
-                b.zindex  = prev_frame!( AnimElement::Zindex,       b.zindex  as f32) as i32;
-                b.hidden  = prev_frame!( AnimElement::Hidden,       b.hidden  as f32) as i32;
-                b.tex = prev_str!(   AnimElement::Texture, b.tex.clone());
+                b.pos.x   = interpolate!(AnimElement::PositionX, b.pos.x  );
+                b.pos.y   = interpolate!(AnimElement::PositionY, b.pos.y  );
+                b.rot     = interpolate!(AnimElement::Rotation,  b.rot    );
+                b.scale.x = interpolate!(AnimElement::ScaleX,    b.scale.x);
+                b.scale.y = interpolate!(AnimElement::ScaleY,    b.scale.y);
+                b.zindex  = prev_frame!( AnimElement::Zindex,    b.zindex  as f32) as i32;
+                b.hidden  = prev_frame!( AnimElement::Hidden,    b.hidden  as f32) as i32;
+                b.tex     = prev_str!(   AnimElement::Texture,   b.tex.clone());
             };
 
             let kfs = &self.animations[anim_idx].keyframes;
@@ -1680,15 +1680,15 @@ pub enum AnimElement {
 // iterable anim change icons IDs
 #[rustfmt::skip]
 pub const ANIM_ICON_ID: [usize; 9] = [
-    /* 1 */ 0,
-    /* 2 */ 1,
-    /* 3 */ 2,
-    /* 4 */ 3,
+    /* 0 */ 0,
+    /* 1 */ 1,
+    /* 2 */ 2,
+    /* 3 */ 3,
     /* 5 */ 4,
-    /* 6 */ 5,
+    /* 5 */ 5,
+    /* 6 */ 6,
     /* 7 */ 5,
     /* 8 */ 5,
-    /* 9 */ 5,
 ];
 
 #[derive(Default, Clone, PartialEq)]
