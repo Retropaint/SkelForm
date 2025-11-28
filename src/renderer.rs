@@ -30,6 +30,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         draw_gridline(render_pass, device, shared);
     }
 
+    // create rect textures for all textured bones with no verts
     for b in 0..shared.armature.bones.len() {
         let tex = shared.armature.get_current_tex(shared.armature.bones[b].id);
         if tex != None && shared.armature.bones[b].vertices.len() == 0 {

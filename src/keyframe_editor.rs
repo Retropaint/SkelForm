@@ -341,7 +341,11 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                     let kf_id = kf.bone_id;
                     let sel = shared.armature.bones.iter().position(|b| b.id == kf_id);
                     shared.ui.selected_bone_idx = sel.unwrap();
-                    shared.armature.unfold_to_bone(kf.bone_id);
+
+                    let parents = shared.armature.get_all_parents(kf.bone_id);
+                    for parent in &parents {
+                        shared.armature.find_bone_mut(parent.id).unwrap().folded = false;
+                    }
                 }
                 last_bone_id = kf.bone_id;
 

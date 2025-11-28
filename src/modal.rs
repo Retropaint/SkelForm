@@ -78,7 +78,8 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             armature_window::get_all_children(&shared.armature.bones, &mut children, bone);
             children.reverse();
             for bone in &children {
-                shared.armature.delete_bone(bone.id);
+                let idx = shared.armature.bones.iter().position(|b| b.id == bone.id);
+                shared.armature.bones.remove(idx.unwrap());
             }
 
             // remove all references to this bone and it's children from all animations

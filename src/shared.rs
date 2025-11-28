@@ -1070,24 +1070,6 @@ impl Armature {
         None
     }
 
-    pub fn find_anim(&self, id: i32) -> Option<&Animation> {
-        for a in &self.animations {
-            if a.id == id {
-                return Some(&a);
-            }
-        }
-        None
-    }
-
-    pub fn find_anim_mut(&mut self, id: i32) -> Option<&mut Animation> {
-        for a in &mut self.animations {
-            if a.id == id {
-                return Some(a);
-            }
-        }
-        None
-    }
-
     pub fn set_bone_tex(
         &mut self,
         bone_id: i32,
@@ -1120,16 +1102,6 @@ impl Armature {
             // add 0th keyframe
             let first = anim.check_if_in_keyframe(bone_id as i32, 0, tx.clone());
             anim.keyframes[first].value = tex_idx as f32;
-        }
-    }
-
-    pub fn delete_bone(&mut self, id: i32) {
-        for i in 0..self.bones.len() {
-            let bone_id = self.bones[i].id;
-            if bone_id == id {
-                self.bones.remove(i);
-                break;
-            }
         }
     }
 
@@ -1183,24 +1155,6 @@ impl Armature {
             }
         }
         (new_bone, self.bones.len() - 1)
-    }
-
-    // generate non-clashing id
-    pub fn generate_id(&self) -> i32 {
-        let mut idx = 0;
-        while idx == self.does_id_exist(idx) {
-            idx += 1;
-        }
-        return idx;
-    }
-
-    pub fn does_id_exist(&self, id: i32) -> i32 {
-        for b in &self.bones {
-            if b.id == id {
-                return id;
-            }
-        }
-        return -1;
     }
 
     pub fn edit_bone(
@@ -1408,14 +1362,6 @@ impl Armature {
         let interp = current as f32 / max as f32;
         let end = end_val - start_val;
         start_val + (end * interp)
-    }
-
-    /// unfold this bone's parents so it can be seen in the armature window
-    pub fn unfold_to_bone(&mut self, bone_id: i32) {
-        let parents = self.get_all_parents(bone_id);
-        for parent in &parents {
-            self.find_bone_mut(parent.id).unwrap().folded = false;
-        }
     }
 
     pub fn get_all_parents(&self, bone_id: i32) -> Vec<Bone> {
