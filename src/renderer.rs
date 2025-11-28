@@ -496,7 +496,8 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
     construction(&mut temp_arm.bones, &shared.armature.bones);
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
-    let cam = &shared.camera;
+    let mut cam = shared.camera.clone();
+    cam.zoom /= 2.;
 
     for b in 0..temp_arm.bones.len() {
         if shared.armature.get_current_tex(temp_arm.bones[b].id) == None {
@@ -515,11 +516,9 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
             temp_arm.bones[b].world_verts.push(new_vert);
         }
 
-        let bind_group = &shared
-            .armature
-            .get_current_tex(temp_arm.bones[b].id)
-            .unwrap()
-            .bind_group;
+        let arm = &shared.armature;
+        let id = temp_arm.bones[b].id;
+        let bind_group = &arm.get_current_tex(id).unwrap().bind_group;
         draw(
             bind_group,
             &temp_arm.bones[b].world_verts,
