@@ -12,17 +12,9 @@ use std::sync::Mutex;
 use wgpu::BindGroup;
 use winit::keyboard::KeyCode;
 
+#[rustfmt::skip]
 #[repr(C)]
-#[derive(
-    Debug,
-    serde::Serialize,
-    serde::Deserialize,
-    Default,
-    Copy,
-    Clone,
-    bytemuck::Pod,
-    bytemuck::Zeroable,
-)]
+#[derive(Debug,serde::Serialize,serde::Deserialize,Default,Copy,Clone,bytemuck::Pod,bytemuck::Zeroable)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
@@ -282,17 +274,9 @@ impl Default for VertexColor {
     }
 }
 
+#[rustfmt::skip]
 #[repr(C)]
-#[derive(
-    PartialEq,
-    Copy,
-    Clone,
-    bytemuck::Pod,
-    bytemuck::Zeroable,
-    Debug,
-    serde::Deserialize,
-    serde::Serialize,
-)]
+#[derive(PartialEq,Copy,Clone,bytemuck::Pod,bytemuck::Zeroable,Debug,serde::Deserialize,serde::Serialize)]
 pub struct Color {
     pub r: u8,
     pub g: u8,
