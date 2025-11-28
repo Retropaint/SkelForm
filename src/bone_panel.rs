@@ -140,7 +140,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
 
     let mut selected_tex = bone.tex_idx;
     let tex_name = if tex != None {
-        &tex.unwrap().name
+        &set.unwrap().textures[bone.tex_idx as usize].name
     } else {
         &"None".to_string()
     };
