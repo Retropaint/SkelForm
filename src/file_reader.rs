@@ -363,9 +363,12 @@ pub fn read_psd(
             shared.armature.bones[b].folded = true;
 
             // since child pos is relative to parent, offset against it
-            let mut nb = shared.armature.find_bone(bone_id).unwrap().clone();
+            let bones = &shared.armature.bones;
+            let mut nb = bones.iter().find(|bo| bo.id == bone_id).unwrap().clone();
             while nb.parent_id != -1 {
-                nb = shared.armature.find_bone(nb.parent_id).unwrap().clone();
+                let bones = &shared.armature.bones;
+                let id = nb.parent_id;
+                nb = bones.iter().find(|bo| bo.id == id).unwrap().clone();
                 shared.armature.find_bone_mut(bone_id).unwrap().pos -= nb.pos;
             }
             break;

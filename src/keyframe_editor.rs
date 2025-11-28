@@ -333,8 +333,10 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
             let kf = &keyframes[i];
 
             if last_bone_id != kf.bone_id {
+                let bones = &shared.armature.bones;
+                let bone = bones.iter().find(|b| b.id == kf.bone_id).unwrap();
                 let label = ui
-                    .label(shared.armature.find_bone(kf.bone_id).unwrap().name.clone())
+                    .label(bone.name.clone())
                     .on_hover_cursor(egui::CursorIcon::PointingHand)
                     .interact(egui::Sense::click());
                 if label.clicked() {

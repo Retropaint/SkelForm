@@ -413,7 +413,8 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
         let mut visible = true;
         let mut nb = &bone!();
         while nb.parent_id != -1 {
-            nb = shared.armature.find_bone(nb.parent_id).unwrap();
+            let id = nb.parent_id;
+            nb = shared.armature.bones.iter().find(|bo| bo.id == id).unwrap();
             if *folded!().get(&nb.id).unwrap() {
                 visible = false;
                 break;

@@ -1043,24 +1043,6 @@ pub struct Armature {
 }
 
 impl Armature {
-    pub fn find_bone(&self, id: i32) -> Option<&Bone> {
-        for b in &self.bones {
-            if b.id == id {
-                return Some(&b);
-            }
-        }
-        None
-    }
-
-    pub fn find_bone_idx(&self, id: i32) -> Option<usize> {
-        for i in 0..self.bones.len() {
-            if self.bones[i].id == id {
-                return Some(i);
-            }
-        }
-        None
-    }
-
     pub fn find_bone_mut(&mut self, id: i32) -> Option<&mut Bone> {
         for b in &mut self.bones {
             if b.id == id {
@@ -1082,7 +1064,8 @@ impl Armature {
         }
 
         if selected_anim == usize::MAX {
-            self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
+            let bone_mut = self.bones.iter_mut().find(|b| b.id == bone_id).unwrap();
+            bone_mut.tex_idx = new_tex_idx as i32;
             let new_size = self.get_current_tex(bone_id).unwrap().size;
 
             let bone = self.bones.iter().find(|b| b.id == bone_id).unwrap().clone();
@@ -1092,7 +1075,7 @@ impl Armature {
             }
         } else {
             let tx = AnimElement::TextureIndex;
-            let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
+            let tex_idx = self.bones.iter().find(|b| b.id == bone_id).unwrap().tex_idx;
 
             // record texture change in animation
             let anim = &mut self.animations[selected_anim];
@@ -1107,8 +1090,8 @@ impl Armature {
 
     pub fn new_bone(&mut self, id: i32) -> (Bone, usize) {
         let mut parent_id = -1;
-        if self.find_bone(id) != None {
-            parent_id = self.find_bone(id).unwrap().parent_id;
+        if self.bones.iter().find(|b| b.id == id) != None {
+            parent_id = self.bones.iter().find(|b| b.id == id).unwrap().parent_id;
         }
         let ids = self.bones.iter().map(|a| a.id).collect();
 
@@ -1365,15 +1348,15 @@ impl Armature {
     }
 
     pub fn get_all_parents(&self, bone_id: i32) -> Vec<Bone> {
+        let bone = self.bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+
         // add own bone temporarily
-        let mut parents: Vec<Bone> = vec![self.find_bone(bone_id).unwrap().clone()];
+        let mut parents: Vec<Bone> = vec![bone];
 
         while parents.last().unwrap().parent_id != -1 {
-            parents.push(
-                self.find_bone(parents.last().unwrap().parent_id)
-                    .unwrap()
-                    .clone(),
-            );
+            let id = parents.last().unwrap().parent_id;
+            let parent = self.bones.iter().find(|b| b.id == id);
+            parents.push(parent.unwrap().clone());
         }
 
         // remove own bone from list

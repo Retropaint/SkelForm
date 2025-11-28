@@ -63,19 +63,17 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
 
             shared.ui.selected_bone_idx = usize::MAX;
 
-            if shared.armature.find_bone(shared.ui.context_menu.id) == None {
+            let id = shared.ui.context_menu.id;
+            let bone = shared.armature.bones.iter().find(|b| b.id == id);
+            if bone == None {
                 return;
             }
 
-            let bone = shared
-                .armature
-                .find_bone(shared.ui.context_menu.id)
-                .unwrap();
-            let bone_id = bone.id;
+            let bone_id = bone.unwrap().id;
 
             // remove all children of this bone as well
-            let mut children = vec![bone.clone()];
-            armature_window::get_all_children(&shared.armature.bones, &mut children, bone);
+            let mut children = vec![bone.unwrap().clone()];
+            armature_window::get_all_children(&shared.armature.bones, &mut children, bone.unwrap());
             children.reverse();
             for bone in &children {
                 let idx = shared.armature.bones.iter().position(|b| b.id == bone.id);

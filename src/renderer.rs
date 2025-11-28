@@ -1378,7 +1378,8 @@ fn draw_point(
 
     let mut point_verts = vec![];
     let ar = shared.aspect_ratio();
-    let cam = &shared.camera;
+    let mut cam = shared.camera.clone();
+    cam.pos = camera;
     let pivot = Vec2::new(0.5, 0.5);
     for vert in temp_point_verts {
         let vert = world_vert(vert, &cam, ar, pivot);

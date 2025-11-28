@@ -492,10 +492,12 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     ui.horizontal(|ui| {
         ui.label(&shared.loc("bone_panel.inverse_kinematics.target"));
 
-        if let Some(target) = shared.armature.find_bone(bone.ik_target_id) {
+        let bone_id = bone.ik_target_id;
+        if let Some(target) = shared.armature.bones.iter().find(|b| b.id == bone_id) {
             if ui.selectable_label(false, target.name.clone()).clicked() {
-                shared.ui.selected_bone_idx =
-                    shared.armature.find_bone_idx(bone.ik_target_id).unwrap();
+                let bones = &mut shared.armature.bones;
+                let ik_id = bone.ik_target_id;
+                shared.ui.selected_bone_idx = bones.iter().position(|b| b.id == ik_id).unwrap();
             };
         } else {
             ui.label(shared.loc("none"));
