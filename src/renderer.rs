@@ -32,7 +32,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     for b in 0..shared.armature.bones.len() {
         let tex = shared.armature.get_current_tex(shared.armature.bones[b].id);
-
         if tex != None && shared.armature.bones[b].vertices.len() == 0 {
             let size = tex.unwrap().size;
             let bone = &mut shared.armature.bones[b];
@@ -42,17 +41,18 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     let mut temp_arm = shared.armature.clone();
-    let anim_bones = shared.animate_bones();
-    temp_arm.bones = anim_bones.clone();
+    let mut anim_bones = shared.animate_bones();
 
+    // adjust anim_bones' verts for new textrues mid-animations
     for b in 0..temp_arm.bones.len() {
         let tex = temp_arm.get_current_tex(temp_arm.bones[b].id);
         if !temp_arm.bones[b].verts_edited && tex != None {
             let size = tex.unwrap().size;
-            let bone = &mut temp_arm.bones[b];
-            (bone.vertices, bone.indices) = create_tex_rect(&size);
+            (anim_bones[b].vertices, anim_bones[b].indices) = create_tex_rect(&size);
         }
     }
+
+    temp_arm.bones = anim_bones.clone();
 
     // store bound/unbound vert's pos before construction
     let mut init_vert_pos = Vec2::default();
@@ -292,7 +292,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     if shared.ui.showing_mesh || shared.ui.setting_bind_verts {
         let id = shared.selected_bone().unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
-        let bind_group = &shared.armature.get_current_tex(bone.id).unwrap().bind_group;
+        let bind_group = &temp_arm.get_current_tex(bone.id).unwrap().bind_group;
         let verts = &bone.world_verts;
         draw(&bind_group, &verts, &bone.indices, render_pass, device);
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
@@ -512,7 +512,6 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
             let tb = &temp_arm.bones[b];
             let mut new_vert =
                 world_vert(tb.vertices[v], &cam, shared.aspect_ratio(), Vec2::default());
-            new_vert.pos.x /= shared.window.x / shared.window.y;
             new_vert.add_color = VertexColor::new(0., 0., 0., 0.);
             temp_arm.bones[b].world_verts.push(new_vert);
         }
