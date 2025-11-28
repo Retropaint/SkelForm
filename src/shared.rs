@@ -884,7 +884,7 @@ pub struct Bone {
     #[serde(default, skip_serializing_if = "is_i32_empty")]
     pub style_ids: Vec<i32>,
     #[serde(default, skip_serializing_if = "is_str_empty")]
-    pub tex_str: String,
+    pub tex: String,
     #[serde(default, skip_serializing_if = "is_neg_one")]
     pub zindex: i32,
     #[serde(default)]
@@ -935,6 +935,8 @@ pub struct Bone {
     pub init_ik_constraint: i32,
     #[serde(default, skip_serializing_if = "is_neg_one", skip_deserializing)]
     pub init_hidden: i32,
+    #[serde(default, skip_serializing_if = "is_str_empty", skip_deserializing)]
+    pub init_tex: String,
 
     #[serde(skip)]
     pub folded: bool,
@@ -1044,7 +1046,7 @@ impl Armature {
 
         if selected_anim == usize::MAX {
             let bone_mut = self.bones.iter_mut().find(|b| b.id == bone_id).unwrap();
-            bone_mut.tex_str = new_tex_str;
+            bone_mut.tex = new_tex_str;
             let new_size = self.get_current_tex(bone_id).unwrap().size;
 
             let bone = self.bones.iter().find(|b| b.id == bone_id).unwrap().clone();
@@ -1063,7 +1065,7 @@ impl Armature {
 
             // add 0th keyframe
             let first = anim.check_if_in_keyframe(bone_id as i32, 0, tx.clone());
-            anim.keyframes[first].value_str = bone.tex_str.clone();
+            anim.keyframes[first].value_str = bone.tex.clone();
         }
     }
 
@@ -1252,7 +1254,7 @@ impl Armature {
                 b.scale.y = interpolate!(AnimElement::ScaleY,       b.scale.y);
                 b.zindex  = prev_frame!( AnimElement::Zindex,       b.zindex  as f32) as i32;
                 b.hidden  = prev_frame!( AnimElement::Hidden,       b.hidden  as f32) as i32;
-                b.tex_str = prev_str!(   AnimElement::Texture, b.tex_str.clone());
+                b.tex = prev_str!(   AnimElement::Texture, b.tex.clone());
             };
 
             let kfs = &self.animations[anim_idx].keyframes;
@@ -1411,7 +1413,7 @@ impl Armature {
         set.unwrap()
             .textures
             .iter()
-            .find(|t| t.name == bone.unwrap().tex_str)
+            .find(|t| t.name == bone.unwrap().tex)
     }
 
     pub fn bone_eff(&self, bone_id: i32) -> JointEffector {

@@ -120,7 +120,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                         }
                         shared
                             .armature
-                            .set_bone_tex(bone.id, bone.tex_str.clone(), usize::MAX, -1);
+                            .set_bone_tex(bone.id, bone.tex.clone(), usize::MAX, -1);
                     }
                 });
         });
@@ -135,9 +135,9 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         shared.config.colors.light_accent + Color::new(60, 60, 60, 0)
     };
 
-    let mut selected_tex = bone.tex_str.clone();
+    let mut selected_tex = bone.tex.clone();
     let tex_name = if tex != None {
-        &bone.tex_str
+        &bone.tex
     } else {
         &"None".to_string()
     };
@@ -162,7 +162,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
-    if set != None && selected_tex != bone.tex_str {
+    if set != None && selected_tex != bone.tex {
         let mut anim_id = shared.ui.anim.selected;
         if !shared.ui.is_animating() {
             anim_id = usize::MAX;

@@ -195,7 +195,7 @@ pub fn draw_styles_list(
                             if shared.armature.bones[b].style_ids.contains(&(s as i32)) {
                                 shared.armature.set_bone_tex(
                                     shared.armature.bones[b].id,
-                                    shared.armature.bones[b].tex_str.clone(),
+                                    shared.armature.bones[b].tex.clone(),
                                     shared.ui.anim.selected,
                                     shared.ui.anim.selected_frame,
                                 );
@@ -496,12 +496,12 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 
                 ui.add_space(15.);
 
-                let str_idx = "  ".to_owned() + &bone!().tex_str.to_string() + "  ";
+                let str_idx = "  ".to_owned() + &bone!().tex.to_string() + "  ";
                 egui::containers::menu::MenuButton::new(str_idx).ui(ui, |ui| {
                     let style_id = shared.ui.selected_tex_set_id;
                     let styles = &shared.armature.styles;
                     let set = styles.iter().find(|style| style.id == style_id).unwrap();
-                    let mut tex_str = bone!().tex_str.clone();
+                    let mut tex_str = bone!().tex.clone();
                     for t in 0..set.textures.len() {
                         let str_idx = t.to_string() + ") ";
                         let name = set.textures[t].name.clone().to_string();
@@ -531,7 +531,7 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                 } else {
                     styles.push(set_idx as i32);
                     let style = shared.armature.get_current_set(bone!().id).unwrap();
-                    bone!().tex_str = style.textures[0].name.clone();
+                    bone!().tex = style.textures[0].name.clone();
                 }
             }
 
