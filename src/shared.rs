@@ -1040,14 +1040,14 @@ impl Armature {
         selected_anim: usize,
         selected_frame: i32,
     ) {
-        if self.get_current_set(bone_id) == None {
+        if self.style_of(bone_id) == None {
             return;
         }
 
         if selected_anim == usize::MAX {
             let bone_mut = self.bones.iter_mut().find(|b| b.id == bone_id).unwrap();
             bone_mut.tex = new_tex_str;
-            let new_size = self.get_current_tex(bone_id).unwrap().size;
+            let new_size = self.tex_of(bone_id).unwrap().size;
 
             let bone = self.bones.iter().find(|b| b.id == bone_id).unwrap().clone();
             if !bone.verts_edited {
@@ -1386,7 +1386,7 @@ impl Armature {
         });
     }
 
-    pub fn get_current_set(&self, bone_id: i32) -> Option<&Style> {
+    pub fn style_of(&self, bone_id: i32) -> Option<&Style> {
         let bone = self.bones.iter().find(|bone| bone.id == bone_id);
         if bone == None {
             return None;
@@ -1400,8 +1400,8 @@ impl Armature {
         None
     }
 
-    pub fn get_current_tex(&self, bone_id: i32) -> Option<&Texture> {
-        let set = self.get_current_set(bone_id);
+    pub fn tex_of(&self, bone_id: i32) -> Option<&Texture> {
+        let set = self.style_of(bone_id);
         if set == None {
             return None;
         }

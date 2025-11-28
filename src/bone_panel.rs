@@ -69,7 +69,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label(&shared.loc("bone_panel.style"));
 
-        let name = if let Some(set) = shared.armature.get_current_set(bone.id) {
+        let name = if let Some(set) = shared.armature.style_of(bone.id) {
             set.name.clone()
         } else {
             "None".to_string()
@@ -123,16 +123,14 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                                 .clone();
                             shared.armature.find_bone_mut(bone.id).unwrap().tex = tex.clone();
                         }
-                        shared
-                            .armature
-                            .set_bone_tex(bone.id, tex, usize::MAX, -1);
+                        shared.armature.set_bone_tex(bone.id, tex, usize::MAX, -1);
                     }
                 });
         });
     });
 
-    let tex = shared.armature.get_current_tex(bone.id);
-    let set = shared.armature.get_current_set(bone.id);
+    let tex = shared.armature.tex_of(bone.id);
+    let set = shared.armature.style_of(bone.id);
 
     let tex_name_col = if tex != None {
         shared.config.colors.text
@@ -153,7 +151,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                 egui::ComboBox::new("tex_selector", "")
                     .selected_text(egui::RichText::new(tex_name).color(tex_name_col))
                     .show_ui(ui, |ui| {
-                        let set = &shared.armature.get_current_set(bone.id).unwrap();
+                        let set = &shared.armature.style_of(bone.id).unwrap();
                         for t in 0..set.textures.len() {
                             ui.selectable_value(
                                 &mut selected_tex,
@@ -600,7 +598,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         return;
     }
 
-    if shared.armature.get_current_tex(bone.id) == None {
+    if shared.armature.tex_of(bone.id) == None {
         return;
     }
 
@@ -624,12 +622,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     ui.add_enabled_ui(shared.ui.showing_mesh, |ui| {
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let tex_size = shared
-                    .armature
-                    .get_current_tex(bone.id)
-                    .unwrap()
-                    .size
-                    .clone();
+                let tex_size = shared.armature.tex_of(bone.id).unwrap().size.clone();
 
                 let str_reset = &shared.loc("bone_panel.mesh_deformation.reset");
                 //let str_reset_desc = &shared.loc("bone_panel.mesh_deformation.reset_desc");
@@ -655,7 +648,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 }
 
                 if ui.skf_button("Trace").clicked() {
-                    let tex = &shared.armature.get_current_tex(bone.id).unwrap();
+                    let tex = &shared.armature.tex_of(bone.id).unwrap();
                     let (verts, indices) = renderer::trace_mesh(&tex.image);
                     let bone = &mut shared.selected_bone_mut().unwrap();
                     bone.vertices = verts;

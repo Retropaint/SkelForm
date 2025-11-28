@@ -312,7 +312,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
 
     for b in 0..armature_copy.bones.len() {
         // if it's a regular rect, empty verts and indices
-        if armature_copy.get_current_tex(armature_copy.bones[b].id) == None
+        if armature_copy.tex_of(armature_copy.bones[b].id) == None
             || !armature_copy.bones[b].verts_edited
         {
             armature_copy.bones[b].vertices = vec![];

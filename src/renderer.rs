@@ -32,7 +32,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // create rect textures for all textured bones with no verts
     for b in 0..shared.armature.bones.len() {
-        let tex = shared.armature.get_current_tex(shared.armature.bones[b].id);
+        let tex = shared.armature.tex_of(shared.armature.bones[b].id);
         if tex != None && shared.armature.bones[b].vertices.len() == 0 {
             let size = tex.unwrap().size;
             let bone = &mut shared.armature.bones[b];
@@ -47,7 +47,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // adjust anim_bones' verts for new textrues mid-animations
     temp_arm.bones = anim_bones.clone();
     for b in 0..shared.armature.bones.len() {
-        let tex = temp_arm.get_current_tex(shared.armature.bones[b].id);
+        let tex = temp_arm.tex_of(shared.armature.bones[b].id);
         if !shared.armature.bones[b].verts_edited && tex != None {
             let size = tex.unwrap().size;
             (anim_bones[b].vertices, anim_bones[b].indices) = create_tex_rect(&size);
@@ -106,13 +106,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // pre-draw bone setup
     for b in 0..temp_arm.bones.len() {
-        let tex = temp_arm.get_current_tex(temp_arm.bones[b].id);
+        let tex = temp_arm.tex_of(temp_arm.bones[b].id);
         let parents = shared.armature.get_all_parents(temp_arm.bones[b].id);
 
         let selected_bone = shared.selected_bone();
         if selected_bone != None && selected_bone.unwrap().id == temp_arm.bones[b].id {
             for parent in &parents {
-                let tex = temp_arm.get_current_tex(parent.id);
+                let tex = temp_arm.tex_of(parent.id);
                 if tex != None && parent.verts_edited {
                     mesh_onion_id = parent.id;
                     break;
@@ -182,7 +182,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     break;
                 }
 
-                let tex = temp_arm.get_current_tex(temp_arm.bones[b].id);
+                let tex = temp_arm.tex_of(temp_arm.bones[b].id);
 
                 let img = &tex.unwrap().image;
                 let pos = Vec2::new(
@@ -243,7 +243,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
     for b in 0..temp_arm.bones.len() {
-        let tex = temp_arm.get_current_tex(temp_arm.bones[b].id);
+        let tex = temp_arm.tex_of(temp_arm.bones[b].id);
         if tex == None || temp_arm.bones[b].hidden == 1 {
             continue;
         }
@@ -294,7 +294,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     if shared.ui.showing_mesh || shared.ui.setting_bind_verts {
         let id = shared.selected_bone().unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
-        let bind_group = &temp_arm.get_current_tex(bone.id).unwrap().bind_group;
+        let bind_group = &temp_arm.tex_of(bone.id).unwrap().bind_group;
         let verts = &bone.world_verts;
         draw(&bind_group, &verts, &bone.indices, render_pass, device);
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
@@ -500,10 +500,10 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
     cam.zoom /= 2.;
 
     for b in 0..temp_arm.bones.len() {
-        if shared.armature.get_current_tex(temp_arm.bones[b].id) == None {
+        if shared.armature.tex_of(temp_arm.bones[b].id) == None {
             continue;
         }
-        let set = shared.armature.get_current_set(temp_arm.bones[b].id);
+        let set = shared.armature.style_of(temp_arm.bones[b].id);
         if set == None || temp_arm.bones[b].hidden == 1 {
             continue;
         }
@@ -518,7 +518,7 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
 
         let arm = &shared.armature;
         let id = temp_arm.bones[b].id;
-        let bind_group = &arm.get_current_tex(id).unwrap().bind_group;
+        let bind_group = &arm.tex_of(id).unwrap().bind_group;
         draw(
             bind_group,
             &temp_arm.bones[b].world_verts,

@@ -530,7 +530,7 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                     styles.retain(|style| *style != set_idx as i32);
                 } else {
                     styles.push(set_idx as i32);
-                    let style = shared.armature.get_current_set(bone!().id).unwrap();
+                    let style = shared.armature.style_of(bone!().id).unwrap();
                     bone!().tex = style.textures[0].name.clone();
                 }
             }
