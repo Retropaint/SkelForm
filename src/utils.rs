@@ -379,7 +379,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
     for b in 0..armature_copy.bones.len() {
         let bone = &mut armature_copy.bones[b];
         if bone.style_ids.len() == 0 {
-            bone.tex_idx = -1;
+            bone.tex_str = "".to_string();
             bone.zindex = -1;
         }
 

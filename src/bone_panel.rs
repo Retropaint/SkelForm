@@ -118,12 +118,9 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                         } else {
                             styles.push(selected_value);
                         }
-                        shared.armature.set_bone_tex(
-                            bone.id,
-                            bone.tex_idx as usize,
-                            usize::MAX,
-                            -1,
-                        );
+                        shared
+                            .armature
+                            .set_bone_tex(bone.id, bone.tex_str.clone(), usize::MAX, -1);
                     }
                 });
         });
@@ -138,27 +135,25 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         shared.config.colors.light_accent + Color::new(60, 60, 60, 0)
     };
 
-    let mut selected_tex = bone.tex_idx;
+    let mut selected_tex = bone.tex_str.clone();
     let tex_name = if tex != None {
-        &set.unwrap().textures[bone.tex_idx as usize].name
+        &bone.tex_str
     } else {
         &"None".to_string()
     };
-    let str_idx = bone.tex_idx.to_string() + ") ";
     ui.add_enabled_ui(set != None, |ui| {
         ui.horizontal(|ui| {
             ui.label(&shared.loc("bone_panel.texture_index"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 egui::ComboBox::new("tex_selector", "")
-                    .selected_text(egui::RichText::new(str_idx + tex_name).color(tex_name_col))
+                    .selected_text(egui::RichText::new(tex_name).color(tex_name_col))
                     .show_ui(ui, |ui| {
                         let set = &shared.armature.get_current_set(bone.id).unwrap();
                         for t in 0..set.textures.len() {
-                            let str_idx = t.to_string() + ") ";
                             ui.selectable_value(
                                 &mut selected_tex,
-                                t as i32,
-                                str_idx + &set.textures[t].name.clone(),
+                                set.textures[t].name.clone(),
+                                &set.textures[t].name.clone(),
                             );
                         }
                     })
@@ -167,14 +162,14 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
 
-    if set != None && selected_tex != bone.tex_idx {
+    if set != None && selected_tex != bone.tex_str {
         let mut anim_id = shared.ui.anim.selected;
         if !shared.ui.is_animating() {
             anim_id = usize::MAX;
         }
         shared.armature.set_bone_tex(
             bone.id,
-            selected_tex as usize,
+            selected_tex,
             anim_id,
             shared.ui.anim.selected_frame,
         );
@@ -655,8 +650,8 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 }
 
                 if ui.skf_button("Trace").clicked() {
-                    let tex = &shared.armature.get_current_set(bone.id).unwrap().textures;
-                    let (verts, indices) = renderer::trace_mesh(&tex[bone.tex_idx as usize].image);
+                    let tex = &shared.armature.get_current_tex(bone.id).unwrap();
+                    let (verts, indices) = renderer::trace_mesh(&tex.image);
                     let bone = &mut shared.selected_bone_mut().unwrap();
                     bone.vertices = verts;
                     bone.indices = indices;

@@ -195,7 +195,7 @@ pub fn draw_styles_list(
                             if shared.armature.bones[b].style_ids.contains(&(s as i32)) {
                                 shared.armature.set_bone_tex(
                                     shared.armature.bones[b].id,
-                                    shared.armature.bones[b].tex_idx as usize,
+                                    shared.armature.bones[b].tex_str.clone(),
                                     shared.ui.anim.selected,
                                     shared.ui.anim.selected_frame,
                                 );
@@ -496,20 +496,24 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 
                 ui.add_space(15.);
 
-                let str_idx = "  ".to_owned() + &bone!().tex_idx.to_string() + "  ";
+                let str_idx = "  ".to_owned() + &bone!().tex_str.to_string() + "  ";
                 egui::containers::menu::MenuButton::new(str_idx).ui(ui, |ui| {
                     let style_id = shared.ui.selected_tex_set_id;
                     let styles = &shared.armature.styles;
                     let set = styles.iter().find(|style| style.id == style_id).unwrap();
-                    let mut tex_idx = bone!().tex_idx;
+                    let mut tex_str = bone!().tex_str.clone();
                     for t in 0..set.textures.len() {
                         let str_idx = t.to_string() + ") ";
                         let name = set.textures[t].name.clone().to_string();
-                        ui.selectable_value(&mut tex_idx, t as i32, str_idx + &name);
+                        ui.selectable_value(
+                            &mut tex_str,
+                            set.textures[t].name.clone(),
+                            str_idx + &name,
+                        );
                     }
                     shared.armature.set_bone_tex(
                         bone!().id,
-                        tex_idx as usize,
+                        tex_str,
                         shared.ui.anim.selected,
                         shared.ui.anim.selected_frame,
                     );
@@ -526,6 +530,8 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                     styles.retain(|style| *style != set_idx as i32);
                 } else {
                     styles.push(set_idx as i32);
+                    let style = shared.armature.get_current_set(bone!().id).unwrap();
+                    bone!().tex_str = style.textures[0].name.clone();
                 }
             }
 
@@ -554,9 +560,13 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                 bone.style_ids.push(shared.ui.selected_tex_set_id);
             }
             let id = bone.id;
+            let tex_str = shared.armature.styles[shared.ui.selected_tex_set_id as usize].textures
+                [*dragged_payload.unwrap() as usize]
+                .name
+                .clone();
             shared.armature.set_bone_tex(
                 id,
-                *dragged_payload.unwrap() as usize,
+                tex_str,
                 shared.ui.anim.selected,
                 shared.ui.anim.selected_frame,
             );
@@ -649,10 +659,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                             ui.set_width(width - bin_width);
                             ui.set_height(21.);
                             ui.add_space(5.);
-                            ui.label(
-                                egui::RichText::new(i.to_string() + ") " + &name)
-                                    .color(shared.config.colors.text),
-                            );
+                            ui.label(egui::RichText::new(&name).color(shared.config.colors.text));
                         });
                     });
                 })
@@ -732,28 +739,6 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             let tex = textures[dp].clone();
             textures.remove(dp);
             textures.insert(new_idx, tex);
-
-            if shared.config.keep_tex_idx_on_move {
-                return;
-            }
-
-            // adjust bones to use the new texture indices that matched prior
-            #[allow(unreachable_code)]
-            for b in 0..shared.armature.bones.len() {
-                macro_rules! bone {
-                    () => {
-                        shared.armature.bones[b]
-                    };
-                }
-
-                if bone!().tex_idx == -1 {
-                    continue;
-                }
-
-                let old_name = &old_name_order[bone!().tex_idx as usize];
-                let tex = &shared.selected_set().unwrap().textures;
-                bone!().tex_idx = tex.iter().position(|tex| tex.name == *old_name).unwrap() as i32;
-            }
         });
     }
 

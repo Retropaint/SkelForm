@@ -110,7 +110,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                             if shared.armature.bones[b].style_ids.contains(&selected_style) {
                                 shared.armature.set_bone_tex(
                                     shared.armature.bones[b].id,
-                                    shared.armature.bones[b].tex_idx as usize,
+                                    shared.armature.bones[b].tex_str.clone(),
                                     shared.ui.anim.selected,
                                     shared.ui.anim.selected_frame,
                                 );

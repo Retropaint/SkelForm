@@ -883,8 +883,8 @@ pub struct Bone {
     pub parent_id: i32,
     #[serde(default, skip_serializing_if = "is_i32_empty")]
     pub style_ids: Vec<i32>,
-    #[serde(default, skip_serializing_if = "is_neg_one")]
-    pub tex_idx: i32,
+    #[serde(default, skip_serializing_if = "is_str_empty")]
+    pub tex_str: String,
     #[serde(default, skip_serializing_if = "is_neg_one")]
     pub zindex: i32,
     #[serde(default)]
@@ -1034,7 +1034,7 @@ impl Armature {
     pub fn set_bone_tex(
         &mut self,
         bone_id: i32,
-        new_tex_idx: usize,
+        new_tex_str: String,
         selected_anim: usize,
         selected_frame: i32,
     ) {
@@ -1044,7 +1044,7 @@ impl Armature {
 
         if selected_anim == usize::MAX {
             let bone_mut = self.bones.iter_mut().find(|b| b.id == bone_id).unwrap();
-            bone_mut.tex_idx = new_tex_idx as i32;
+            bone_mut.tex_str = new_tex_str;
             let new_size = self.get_current_tex(bone_id).unwrap().size;
 
             let bone = self.bones.iter().find(|b| b.id == bone_id).unwrap().clone();
@@ -1053,17 +1053,17 @@ impl Armature {
                 (bone_mut.vertices, bone_mut.indices) = renderer::create_tex_rect(&new_size);
             }
         } else {
-            let tx = AnimElement::TextureIndex;
-            let tex_idx = self.bones.iter().find(|b| b.id == bone_id).unwrap().tex_idx;
+            let tx = AnimElement::Texture;
+            let bone = self.bones.iter().find(|b| b.id == bone_id).unwrap();
 
             // record texture change in animation
             let anim = &mut self.animations[selected_anim];
             let kf = anim.check_if_in_keyframe(bone_id as i32, selected_frame, tx.clone());
-            anim.keyframes[kf].value = new_tex_idx as f32;
+            anim.keyframes[kf].value_str = new_tex_str;
 
             // add 0th keyframe
             let first = anim.check_if_in_keyframe(bone_id as i32, 0, tx.clone());
-            anim.keyframes[first].value = tex_idx as f32;
+            anim.keyframes[first].value_str = bone.tex_str.clone();
         }
     }
 
@@ -1151,7 +1151,7 @@ impl Armature {
                     bone.zindex = value as i32
                 }
             }
-            AnimElement::TextureIndex => { /* handled in set_bone_tex() */ }
+            AnimElement::Texture => { /* handled in set_bone_tex() */ }
             AnimElement::IkConstraint => {
                 init_value = (bone.ik_constraint as usize) as f32;
                 if anim_id == usize::MAX {
@@ -1231,6 +1231,17 @@ impl Armature {
                 }};
             }
 
+            macro_rules! prev_str {
+                ($element:expr, $default:expr) => {{
+                    let prev = self.get_prev_frame(anim_frame, kfs, b.id, &$element);
+                    if prev != usize::MAX {
+                        kfs[prev].value_str.clone()
+                    } else {
+                        $default
+                    }
+                }};
+            }
+
             // iterable anim interps
             #[rustfmt::skip]
             {
@@ -1240,8 +1251,8 @@ impl Armature {
                 b.scale.x = interpolate!(AnimElement::ScaleX,       b.scale.x);
                 b.scale.y = interpolate!(AnimElement::ScaleY,       b.scale.y);
                 b.zindex  = prev_frame!( AnimElement::Zindex,       b.zindex  as f32) as i32;
-                b.tex_idx = prev_frame!( AnimElement::TextureIndex, b.tex_idx as f32) as i32;
                 b.hidden  = prev_frame!( AnimElement::Hidden,       b.hidden  as f32) as i32;
+                b.tex_str = prev_str!(   AnimElement::Texture, b.tex_str.clone());
             };
 
             let kfs = &self.animations[anim_idx].keyframes;
@@ -1394,13 +1405,13 @@ impl Armature {
         }
 
         let bone = self.bones.iter().find(|bone| bone.id == bone_id);
-        if bone == None
-            || set.unwrap().textures.len() == 0
-            || bone.unwrap().tex_idx as usize > set.unwrap().textures.len() - 1
-        {
+        if bone == None || set.unwrap().textures.len() == 0 {
             return None;
         }
-        Some(&set.unwrap().textures[bone.unwrap().tex_idx as usize])
+        set.unwrap()
+            .textures
+            .iter()
+            .find(|t| t.name == bone.unwrap().tex_str)
     }
 
     pub fn bone_eff(&self, bone_id: i32) -> JointEffector {
@@ -1625,7 +1636,7 @@ pub struct Keyframe {
     #[serde(default, rename = "element_str")]
     pub element: AnimElement,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_str_empty")]
     pub value_str: String,
     #[serde(default, skip_serializing_if = "is_max")]
     pub value: f32,
@@ -1659,7 +1670,7 @@ pub enum AnimElement {
     /* 3 */ ScaleX,
     /* 4 */ ScaleY,
     /* 5 */ Zindex,
-    /* 6 */ TextureIndex,
+    /* 6 */ Texture,
     /* 7 */ IkConstraint,
     /* 8 */ Hidden,
 }
@@ -1930,21 +1941,6 @@ impl Shared {
         }
     }
 
-    pub fn remove_texture(&mut self, set_idx: i32, tex_idx: i32) {
-        self.armature.styles[set_idx as usize]
-            .textures
-            .remove(tex_idx as usize);
-        //self.armature.bind_groups.remove(tex_idx as usize);
-        for bone in &mut self.armature.bones {
-            if bone.tex_idx == tex_idx {
-                bone.tex_idx = -1;
-            }
-            if bone.tex_idx > tex_idx {
-                bone.tex_idx -= 1;
-            }
-        }
-    }
-
     pub fn mouse_vel(&self) -> Vec2 {
         let mouse_world = utils::screen_to_world_space(self.input.mouse, self.window);
         let mouse_prev_world = utils::screen_to_world_space(self.input.mouse_prev, self.window);
@@ -2094,6 +2090,10 @@ fn are_anims_empty(value: &Vec<Animation>) -> bool {
 
 fn is_i32_empty(value: &Vec<i32>) -> bool {
     value.len() == 0
+}
+
+fn is_str_empty(value: &String) -> bool {
+    value == ""
 }
 
 fn no_constraints(value: &JointConstraint) -> bool {

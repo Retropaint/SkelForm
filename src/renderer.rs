@@ -45,9 +45,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     let mut anim_bones = shared.animate_bones();
 
     // adjust anim_bones' verts for new textrues mid-animations
-    for b in 0..temp_arm.bones.len() {
-        let tex = temp_arm.get_current_tex(temp_arm.bones[b].id);
-        if !temp_arm.bones[b].verts_edited && tex != None {
+    temp_arm.bones = anim_bones.clone();
+    for b in 0..shared.armature.bones.len() {
+        let tex = temp_arm.get_current_tex(shared.armature.bones[b].id);
+        if !shared.armature.bones[b].verts_edited && tex != None {
             let size = tex.unwrap().size;
             (anim_bones[b].vertices, anim_bones[b].indices) = create_tex_rect(&size);
         }
@@ -502,10 +503,7 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
             continue;
         }
         let set = shared.armature.get_current_set(temp_arm.bones[b].id);
-        if set == None
-            || temp_arm.bones[b].tex_idx > set.unwrap().textures.len() as i32 - 1
-            || temp_arm.bones[b].hidden == 1
-        {
+        if set == None || temp_arm.bones[b].hidden == 1 {
             continue;
         }
 

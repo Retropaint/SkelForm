@@ -285,7 +285,7 @@ pub fn read_psd(
         bone.style_ids = vec![0];
         shared
             .armature
-            .set_bone_tex(new_bone_id, tex_idx, usize::MAX, 0);
+            .set_bone_tex(new_bone_id, tex_name.clone(), usize::MAX, 0);
 
         // process inverse kinematics layers ($ik_)
         for l in 0..psd.layers().len() {
