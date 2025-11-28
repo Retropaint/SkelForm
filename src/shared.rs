@@ -928,6 +928,8 @@ pub struct Bone {
 
     #[serde(default, skip_serializing_if = "are_verts_empty")]
     pub vertices: Vec<Vertex>,
+    #[serde(skip)]
+    pub verts_edited: bool,
     #[serde(default, skip_serializing_if = "are_indices_empty")]
     pub indices: Vec<u32>,
     #[serde(default, skip_serializing_if = "are_weights_empty")]
@@ -1100,12 +1102,11 @@ impl Armature {
         }
 
         if selected_anim == usize::MAX {
-            let og_size = self.get_current_tex(bone_id).unwrap().size;
             self.find_bone_mut(bone_id).unwrap().tex_idx = new_tex_idx as i32;
             let new_size = self.get_current_tex(bone_id).unwrap().size;
 
             let bone = self.bones.iter().find(|b| b.id == bone_id).unwrap().clone();
-            if !utils::bone_meshes_edited(og_size, &bone.vertices) {
+            if !bone.verts_edited {
                 let bone_mut = self.bones.iter_mut().find(|b| b.id == bone_id).unwrap();
                 (bone_mut.vertices, bone_mut.indices) = renderer::create_tex_rect(&new_size);
             }

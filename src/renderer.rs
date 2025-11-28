@@ -116,7 +116,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if selected_bone != None && selected_bone.unwrap().id == temp_arm.bones[b].id {
             for parent in &parents {
                 let tex = shared.armature.get_current_tex(parent.id);
-                if tex != None && utils::bone_meshes_edited(tex.unwrap().size, &parent.vertices) {
+                if tex != None && parent.verts_edited {
                     mesh_onion_id = parent.id;
                     break;
                 }
@@ -1224,7 +1224,9 @@ pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
     let mouse_vel = shared.mouse_vel();
     let zoom = shared.camera.zoom;
     let temp_vert = bone.vertices[vert_idx];
-    let vert_mut = &mut shared.selected_bone_mut().unwrap().vertices[vert_idx];
+    let og_bone = &mut shared.selected_bone_mut().unwrap();
+    og_bone.verts_edited = true;
+    let vert_mut = &mut og_bone.vertices[vert_idx];
     vert_mut.pos -= utils::rotate(&(mouse_vel * zoom), temp_vert.offset_rot);
 }
 

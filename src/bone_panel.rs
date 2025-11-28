@@ -641,6 +641,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     bone.vertices = verts;
                     bone.indices = indices;
                     bone.binds = vec![];
+                    bone.verts_edited = false;
                     shared.ui.selected_bind = -1;
                 }
 

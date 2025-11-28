@@ -313,13 +313,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
     for b in 0..armature_copy.bones.len() {
         // if it's a regular rect, empty verts and indices
         if armature_copy.get_current_tex(armature_copy.bones[b].id) == None
-            || !bone_meshes_edited(
-                armature_copy
-                    .get_current_tex(armature_copy.bones[b].id)
-                    .unwrap()
-                    .size,
-                &armature_copy.bones[b].vertices,
-            )
+            || !armature_copy.bones[b].verts_edited
         {
             armature_copy.bones[b].vertices = vec![];
             armature_copy.bones[b].indices = vec![];
@@ -469,6 +463,8 @@ pub fn import<R: Read + std::io::Seek>(
         for (i, vert) in bone.vertices.iter_mut().enumerate() {
             vert.id = i as u32;
         }
+
+        bone.verts_edited = bone.vertices.len() > 0;
     }
 
     // populate style ids
@@ -480,14 +476,10 @@ pub fn import<R: Read + std::io::Seek>(
     for b in 0..shared.armature.bones.len() {
         if shared.armature.bones[b].ik_bone_ids.len() > 0 {
             for i in 0..shared.armature.bones[b].ik_bone_ids.len() {
-                let id = shared.armature.bones[b].ik_bone_ids[i];
-                shared
-                    .armature
-                    .bones
-                    .iter_mut()
-                    .find(|bone| bone.id == id as i32)
-                    .unwrap()
-                    .ik_family_id = shared.armature.bones[b].ik_family_id;
+                let id = shared.armature.bones[b].ik_bone_ids[i] as i32;
+                let fam_id = shared.armature.bones[b].ik_family_id;
+                let bones = &mut shared.armature.bones;
+                bones.iter_mut().find(|b| b.id == id).unwrap().ik_family_id = fam_id;
             }
         }
     }
@@ -644,6 +636,7 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
     }
 }
 
+// unused: use `bone.verts_edited` instead
 pub fn bone_meshes_edited(tex_size: Vec2, verts: &Vec<Vertex>) -> bool {
     let mut is_rect = true;
     for vert in verts {
