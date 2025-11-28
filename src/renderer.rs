@@ -7,15 +7,6 @@ use spade::Triangulation;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 use winit::keyboard::KeyCode;
 
-// todo:
-// improve vert space conversions. This macro is starting to become the bane of my existence
-#[rustfmt::skip]
-macro_rules! con_vert {
-    ($vert:expr, $bone:expr, $tex_size:expr, $cam_pos:expr, $cam_zoom:expr) => {
-        world_vert($vert, Some(&$bone), &$cam_pos, $cam_zoom, $tex_size, 1., Vec2::default())
-    };
-}
-
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
     if shared.window == Vec2::ZERO {
@@ -40,24 +31,28 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     for b in 0..shared.armature.bones.len() {
-        macro_rules! bone {
-            () => {
-                shared.armature.bones[b]
-            };
+        let tex = shared.armature.get_current_tex(shared.armature.bones[b].id);
+
+        if tex != None && shared.armature.bones[b].vertices.len() == 0 {
+            let size = tex.unwrap().size;
+            let bone = &mut shared.armature.bones[b];
+            (bone.vertices, bone.indices) = create_tex_rect(&size);
+            shared.armature.bones[b].verts_edited = false;
         }
-
-        let tex = shared.armature.get_current_tex(bone!().id);
-
-        if tex == None || bone!().vertices.len() != 0 {
-            continue;
-        }
-
-        (bone!().vertices, bone!().indices) = create_tex_rect(&tex.unwrap().size);
     }
 
-    let anim_bones = shared.animate_bones();
     let mut temp_arm = shared.armature.clone();
+    let anim_bones = shared.animate_bones();
     temp_arm.bones = anim_bones.clone();
+
+    for b in 0..temp_arm.bones.len() {
+        let tex = temp_arm.get_current_tex(temp_arm.bones[b].id);
+        if !temp_arm.bones[b].verts_edited && tex != None {
+            let size = tex.unwrap().size;
+            let bone = &mut temp_arm.bones[b];
+            (bone.vertices, bone.indices) = create_tex_rect(&size);
+        }
+    }
 
     // store bound/unbound vert's pos before construction
     let mut init_vert_pos = Vec2::default();
@@ -109,13 +104,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // pre-draw bone setup
     for b in 0..temp_arm.bones.len() {
-        let tex = shared.armature.get_current_tex(temp_arm.bones[b].id);
+        let tex = temp_arm.get_current_tex(temp_arm.bones[b].id);
         let parents = shared.armature.get_all_parents(temp_arm.bones[b].id);
 
         let selected_bone = shared.selected_bone();
         if selected_bone != None && selected_bone.unwrap().id == temp_arm.bones[b].id {
             for parent in &parents {
-                let tex = shared.armature.get_current_tex(parent.id);
+                let tex = temp_arm.get_current_tex(parent.id);
                 if tex != None && parent.verts_edited {
                     mesh_onion_id = parent.id;
                     break;
@@ -127,12 +122,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
 
-        let tex_size = tex.unwrap().size;
         let cam = &shared.camera;
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &mut temp_arm.bones[b];
-            let mut vert = con_vert!(tb.vertices[v], tb, tex_size, cam.pos, cam.zoom);
-            vert.pos.x *= shared.aspect_ratio();
+            let vert = world_vert(tb.vertices[v], cam, shared.aspect_ratio(), Vec2::default());
             tb.world_verts.push(vert);
         }
 
@@ -187,7 +180,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     break;
                 }
 
-                let tex = shared.armature.get_current_tex(temp_arm.bones[b].id);
+                let tex = temp_arm.get_current_tex(temp_arm.bones[b].id);
 
                 let img = &tex.unwrap().image;
                 let pos = Vec2::new(
@@ -283,13 +276,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             };
             let size = Vec2::new(61., 48.);
             (arrow.vertices, arrow.indices) = create_tex_rect(&size);
-            let cam = &shared.camera;
             let ratio = shared.aspect_ratio();
             let pivot = Vec2::new(0., 0.5);
             for v in 0..4 {
                 let verts = arrow.vertices[v];
-                let mut new_vert =
-                    world_vert(verts, Some(&arrow), &cam.pos, cam.zoom, size, ratio, pivot);
+                let mut new_vert = world_vert(verts, &shared.camera, ratio, pivot);
                 new_vert.color = VertexColor::new(1., 1., 1., 0.2);
                 arrow.world_verts.push(new_vert);
             }
@@ -448,9 +439,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 ..Default::default()
             };
             let cam = &shared.camera;
-            let pivot = Vec2::new(0.5, 0.5);
-            let ratio = shared.aspect_ratio();
-            let cw = world_vert(center, None, &cam.pos, cam.zoom, Vec2::ZERO, ratio, pivot);
+            let cw = world_vert(center, cam, shared.aspect_ratio(), Vec2::new(0.5, 0.5));
             draw_line(cw.pos, mouse, shared, render_pass, &device);
         }
 
@@ -505,7 +494,7 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
     construction(&mut temp_arm.bones, &shared.armature.bones);
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
-    let zoom = 1000.;
+    let cam = &shared.camera;
 
     for b in 0..temp_arm.bones.len() {
         if shared.armature.get_current_tex(temp_arm.bones[b].id) == None {
@@ -519,10 +508,10 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
             continue;
         }
 
-        let tex_size = set.unwrap().textures[temp_arm.bones[b].tex_idx as usize].size;
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &temp_arm.bones[b];
-            let mut new_vert = con_vert!(tb.vertices[v], tb, tex_size, Vec2::default(), zoom);
+            let mut new_vert =
+                world_vert(tb.vertices[v], &cam, shared.aspect_ratio(), Vec2::default());
             new_vert.pos.x /= shared.window.x / shared.window.y;
             new_vert.add_color = VertexColor::new(0., 0., 0., 0.);
             temp_arm.bones[b].world_verts.push(new_vert);
@@ -817,9 +806,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
         ..Default::default()
     };
     let cam = &shared.camera;
-    let ratio = shared.aspect_ratio();
-    let pivot = Vec2::new(0.5, 0.5);
-    let bone_center = world_vert(vert, None, &cam.pos, cam.zoom, Vec2::ZERO, ratio, pivot);
+    let bone_center = world_vert(vert, cam, shared.aspect_ratio(), Vec2::new(0.5, 0.5));
 
     match shared.edit_mode {
         shared::EditMode::Move => {
@@ -1394,7 +1381,7 @@ fn draw_point(
     let cam = &shared.camera;
     let pivot = Vec2::new(0.5, 0.5);
     for vert in temp_point_verts {
-        let vert = world_vert(vert, None, &camera, cam.zoom, Vec2::ZERO, ar, pivot);
+        let vert = world_vert(vert, &cam, ar, pivot);
         point_verts.push(vert);
     }
 
@@ -1504,26 +1491,15 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
     )
 }
 
-fn world_vert(
-    mut vert: Vertex,
-    bone: Option<&Bone>,
-    camera: &Vec2,
-    zoom: f32,
-    tex_size: Vec2,
-    aspect_ratio: f32,
-    pivot: Vec2,
-) -> Vertex {
-    if bone != None {
-        let pivot_offset = tex_size * pivot;
-        vert.pos.x -= pivot_offset.x;
-        vert.pos.y += pivot_offset.y;
-    }
+fn world_vert(mut vert: Vertex, camera: &Camera, aspect_ratio: f32, pivot: Vec2) -> Vertex {
+    vert.pos.x -= pivot.x;
+    vert.pos.y += pivot.y;
 
     // offset bone with camera
-    vert.pos -= *camera;
+    vert.pos -= camera.pos;
 
     // adjust for zoom level
-    vert.pos /= zoom;
+    vert.pos /= camera.zoom;
 
     // adjust verts for aspect ratio
     vert.pos.x *= aspect_ratio;

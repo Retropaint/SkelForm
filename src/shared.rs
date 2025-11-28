@@ -1095,8 +1095,6 @@ impl Armature {
         selected_anim: usize,
         selected_frame: i32,
     ) {
-        let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
-
         if self.get_current_set(bone_id) == None {
             return;
         }
@@ -1112,6 +1110,7 @@ impl Armature {
             }
         } else {
             let tx = AnimElement::TextureIndex;
+            let tex_idx = self.find_bone(bone_id).unwrap().tex_idx;
 
             // record texture change in animation
             let anim = &mut self.animations[selected_anim];
@@ -2114,12 +2113,8 @@ impl Shared {
         // but that's not ideal when editing
         let mut animated_bones = self.armature.bones.clone();
 
-        let is_any_anim_playing = self
-            .armature
-            .animations
-            .iter()
-            .find(|anim| anim.elapsed != None)
-            != None;
+        let anims = &self.armature.animations;
+        let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
 
         let anim = &self.ui.anim;
         if is_any_anim_playing {
@@ -2133,10 +2128,10 @@ impl Shared {
                 animated_bones = self.armature.animate(a, frame, Some(&animated_bones));
             }
         } else if anim.open && anim.selected != usize::MAX && anim.selected_frame != -1 {
+            let frame = anim.selected_frame;
+
             // display the selected animation's frame
-            animated_bones = self
-                .armature
-                .animate(anim.selected, anim.selected_frame, None);
+            animated_bones = self.armature.animate(anim.selected, frame, None);
         }
 
         // runtime: armature bones should be immutable to rendering
