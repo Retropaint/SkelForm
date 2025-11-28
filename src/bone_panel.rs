@@ -109,6 +109,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                         ui.close();
                     } else if selected_value != -1 {
                         let styles = &mut shared.armature.find_bone_mut(bone.id).unwrap().style_ids;
+                        let mut tex = "".to_string();
                         if styles.contains(&selected_value) {
                             let idx = styles
                                 .iter()
@@ -117,10 +118,14 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                             styles.remove(idx);
                         } else {
                             styles.push(selected_value);
+                            tex = shared.armature.styles[selected_value as usize].textures[0]
+                                .name
+                                .clone();
+                            shared.armature.find_bone_mut(bone.id).unwrap().tex = tex.clone();
                         }
                         shared
                             .armature
-                            .set_bone_tex(bone.id, bone.tex.clone(), usize::MAX, -1);
+                            .set_bone_tex(bone.id, tex, usize::MAX, -1);
                     }
                 });
         });
