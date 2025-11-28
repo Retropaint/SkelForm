@@ -1044,12 +1044,7 @@ pub struct Armature {
 
 impl Armature {
     pub fn find_bone_mut(&mut self, id: i32) -> Option<&mut Bone> {
-        for b in &mut self.bones {
-            if b.id == id {
-                return Some(b);
-            }
-        }
-        None
+        self.bones.iter_mut().find(|b| b.id == id)
     }
 
     pub fn set_bone_tex(
@@ -1740,30 +1735,19 @@ pub struct BoneTops {
 
 impl BoneTops {
     pub fn find(&self, id: i32, element: &AnimElement) -> Option<&BoneTop> {
-        for bt in &self.tops {
-            if bt.id == id && bt.element == *element {
-                return Some(bt);
-            }
-        }
-        None
+        self.tops
+            .iter()
+            .find(|bt| bt.id == id && bt.element == *element)
     }
 
     pub fn find_mut(&mut self, id: i32, element: &AnimElement) -> Option<&mut BoneTop> {
-        for bt in &mut self.tops {
-            if bt.id == id && bt.element == *element {
-                return Some(bt);
-            }
-        }
-        None
+        self.tops
+            .iter_mut()
+            .find(|bt| bt.id == id && bt.element == *element)
     }
 
     pub fn find_bone(&self, id: i32) -> bool {
-        for bt in &self.tops {
-            if bt.id == id {
-                return true;
-            }
-        }
-        false
+        self.tops.iter().find(|bt| bt.id == id) != None
     }
 }
 
