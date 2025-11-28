@@ -1573,6 +1573,16 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
     render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
 }
 
+macro_rules! vert {
+    ($pos:expr, $color:expr) => {
+        Vertex {
+            pos: $pos,
+            color: $color,
+            ..Default::default()
+        }
+    };
+}
+
 pub fn draw_horizontal_line(
     y: f32,
     width: f32,
@@ -1580,47 +1590,23 @@ pub fn draw_horizontal_line(
     color: VertexColor,
 ) -> Vec<Vertex> {
     let edge = shared.camera.zoom * 5.;
-    let cam = &shared.camera;
+    let c = &shared.camera;
     let vertices: Vec<Vertex> = vec![
-        Vertex {
-            pos: (Vec2::new(cam.pos.x - edge, y) - cam.pos) / cam.zoom,
-            color,
-            ..Default::default()
-        },
-        Vertex {
-            pos: (Vec2::new(cam.pos.x, width + y) - cam.pos) / cam.zoom,
-            color,
-            ..Default::default()
-        },
-        Vertex {
-            pos: (Vec2::new(cam.pos.x + edge, y) - cam.pos) / cam.zoom,
-            color,
-            ..Default::default()
-        },
+        vert!((Vec2::new(c.pos.x - edge, y) - c.pos) / c.zoom, color),
+        vert!((Vec2::new(c.pos.x, width + y) - c.pos) / c.zoom, color),
+        vert!((Vec2::new(c.pos.x + edge, y) - c.pos) / c.zoom, color),
     ];
     vertices
 }
 
 pub fn draw_vertical_line(x: f32, width: f32, shared: &Shared, color: VertexColor) -> Vec<Vertex> {
     let edge = shared.camera.zoom * 5.;
-    let cam = &shared.camera;
-    let ratio = shared.aspect_ratio();
+    let c = &shared.camera;
+    let r = shared.aspect_ratio();
     let vertices: Vec<Vertex> = vec![
-        Vertex {
-            pos: (Vec2::new(x, cam.pos.y - edge) - cam.pos) / cam.zoom * ratio,
-            color,
-            ..Default::default()
-        },
-        Vertex {
-            pos: (Vec2::new(width + x, cam.pos.y) - cam.pos) / cam.zoom * ratio,
-            color,
-            ..Default::default()
-        },
-        Vertex {
-            pos: (Vec2::new(x, cam.pos.y + edge) - cam.pos) / cam.zoom * ratio,
-            color,
-            ..Default::default()
-        },
+        vert!((Vec2::new(x, c.pos.y - edge) - c.pos) / c.zoom * r, color),
+        vert!((Vec2::new(width + x, c.pos.y) - c.pos) / c.zoom * r, color),
+        vert!((Vec2::new(x, c.pos.y + edge) - c.pos) / c.zoom * r, color),
     ];
     vertices
 }
