@@ -349,9 +349,6 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
         bone.init_scale = bone.scale;
         bone.init_ik_constraint = bone.ik_constraint_id;
         bone.init_tex = bone.tex.clone();
-        if bone.style_ids.len() == 0 {
-            bone.hidden = -1;
-        }
         bone.init_hidden = bone.hidden;
 
         if bone.ik_bone_ids.len() == 0 {
@@ -379,8 +376,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
     // restructure bone ids
     for b in 0..armature_copy.bones.len() {
         let bone = &mut armature_copy.bones[b];
-        if bone.style_ids.len() == 0 {
-            bone.tex = "".to_string();
+        if bone.tex == "" {
             bone.zindex = -1;
         }
 

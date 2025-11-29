@@ -820,8 +820,6 @@ pub struct Bone {
     pub name: String,
     #[serde(default)]
     pub parent_id: i32,
-    #[serde(default, skip_serializing_if = "is_i32_empty")]
-    pub style_ids: Vec<i32>,
     #[serde(default, skip_serializing_if = "is_str_empty")]
     pub tex: String,
     #[serde(default, skip_serializing_if = "is_neg_one")]
@@ -979,10 +977,6 @@ impl Armature {
         selected_anim: usize,
         selected_frame: i32,
     ) {
-        if self.style_of(bone_id) == None {
-            return;
-        }
-
         if selected_anim == usize::MAX {
             let bone_mut = self.bones.iter_mut().find(|b| b.id == bone_id).unwrap();
             bone_mut.tex = new_tex_str;
@@ -1018,10 +1012,6 @@ impl Armature {
         // set highest zindex so far
         let mut highest_zindex = 0;
         for bone in &self.bones {
-            if bone.style_ids.len() == 0 {
-                continue;
-            }
-
             highest_zindex = highest_zindex.max(bone.zindex);
         }
 
@@ -1325,34 +1315,17 @@ impl Armature {
         });
     }
 
-    pub fn style_of(&self, bone_id: i32) -> Option<&Style> {
+    pub fn tex_of(&self, bone_id: i32) -> Option<&Texture> {
         let bone = self.bones.iter().find(|bone| bone.id == bone_id);
         if bone == None {
             return None;
         }
-        for s in 0..self.styles.len() {
-            if self.styles[s].active && bone.unwrap().style_ids.contains(&(s as i32)) {
-                return Some(&self.styles[s]);
+        for style in &self.styles {
+            if let Some(tex) = style.textures.iter().find(|t| t.name == bone.unwrap().tex) {
+                return Some(tex);
             }
         }
-
         None
-    }
-
-    pub fn tex_of(&self, bone_id: i32) -> Option<&Texture> {
-        let set = self.style_of(bone_id);
-        if set == None {
-            return None;
-        }
-
-        let bone = self.bones.iter().find(|bone| bone.id == bone_id);
-        if bone == None || set.unwrap().textures.len() == 0 {
-            return None;
-        }
-        set.unwrap()
-            .textures
-            .iter()
-            .find(|t| t.name == bone.unwrap().tex)
     }
 
     pub fn bone_eff(&self, bone_id: i32) -> JointEffector {

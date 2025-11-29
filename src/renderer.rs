@@ -503,8 +503,7 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
         if shared.armature.tex_of(temp_arm.bones[b].id) == None {
             continue;
         }
-        let set = shared.armature.style_of(temp_arm.bones[b].id);
-        if set == None || temp_arm.bones[b].hidden == 1 {
+        if temp_arm.bones[b].hidden == 1 {
             continue;
         }
 

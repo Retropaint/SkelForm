@@ -282,7 +282,6 @@ pub fn read_psd(
         let tex_name = shared.armature.styles[0].textures[tex_idx].name.clone();
         let bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
         bone.parent_id = 0;
-        bone.style_ids = vec![0];
         shared
             .armature
             .set_bone_tex(new_bone_id, tex_name.clone(), usize::MAX, 0);
