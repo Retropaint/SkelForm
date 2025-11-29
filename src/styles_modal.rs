@@ -648,7 +648,8 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                     }),
                 );
                 if edited {
-                    shared.selected_set_mut().unwrap().textures[i].name = value;
+                    let trimmed = value.trim_start().trim_end().to_string();
+                    shared.selected_set_mut().unwrap().textures[i].name = trimmed;
                 }
                 return;
             }
@@ -670,6 +671,12 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
 
             if button.secondary_clicked() {
                 shared.ui.context_menu.show(ContextType::Texture, i as i32)
+            }
+            if button.clicked() {
+                if shared.ui.selected_tex == i as i32 {
+                    shared.ui.rename_id = rename_id.clone();
+                }
+                shared.ui.selected_tex = i as i32;
             }
 
             if shared.ui.context_menu.is(ContextType::Texture, i as i32) {

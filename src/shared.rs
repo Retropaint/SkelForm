@@ -523,6 +523,9 @@ pub struct Ui {
 
     pub selected_style: i32,
 
+    // not visually indicated; just used for `double click > rename` logic
+    pub selected_tex: i32,
+
     pub styles_folded_bones: HashMap<i32, bool>,
 
     pub selected_bind: i32,
