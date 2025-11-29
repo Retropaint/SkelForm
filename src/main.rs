@@ -78,6 +78,7 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.selected_style = -1;
     shared.ui.selected_style = -1;
     shared.ui.selected_bind = -1;
+    shared.ui.styles_modal_size = Vec2::new(500., 500.);
     shared.screenshot_res = Vec2::new(128., 128.);
     shared.changed_vert_id = -1;
 

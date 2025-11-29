@@ -7,7 +7,7 @@ pub const FOLD_ERR: &str =
     "Please use `shared.open_style_modal()` to populate the shared.styles_folded_bones array.";
 
 pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
-    let modal_size = Vec2::new(550., 400.);
+    let modal_size = Vec2::new(500., 400.);
     let padding = 10.;
     let center = egui::Pos2::new(
         (shared.window.x / 2. - shared.ui.styles_modal_size.x) / 2. - padding,
@@ -462,7 +462,7 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                 .fill(selected_col.into())
                 .show(ui, |ui| {
                     ui.horizontal(|ui| {
-                        ui.set_width(width - idx_input_width);
+                        ui.set_width((width - idx_input_width).max(0.));
                         ui.set_height(21.);
                         ui.add_space(5.);
                         ui.label(egui::RichText::new(name).color(text_col));
@@ -480,6 +480,8 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
             let pointer = ui.input(|i| i.pointer.interact_pos());
             let hovered_payload = button.dnd_hover_payload::<i32>();
             let dragged_payload = button.dnd_release_payload::<i32>();
+
+            ui.add_space(7.);
 
             if pointer == None || hovered_payload == None {
                 return;
