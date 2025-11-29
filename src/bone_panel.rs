@@ -25,7 +25,7 @@ mod web {
 pub use web::*;
 
 pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
-    if shared.ui.has_state(UiState::DraggingBone) {
+    if shared.ui.dragging_bone {
         ui.disable();
         return;
     }

@@ -700,8 +700,7 @@ fn draw_frame_lines(
 
         let above_scrollbar = cursor.y < ui.min_rect().height() - 13.;
         let in_ui = cursor.y > 0.;
-        let in_modal =
-            shared.ui.has_state(UiState::Modal) || shared.ui.has_state(UiState::SettingsModal);
+        let in_modal = shared.ui.modal || shared.ui.settings_modal;
 
         if shared.ui.anim.selected_frame == i {
             color = egui::Color32::WHITE;

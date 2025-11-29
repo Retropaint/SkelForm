@@ -570,7 +570,7 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     shared.ui.unselect_everything();
-    shared.ui.set_state(UiState::StartupWindow, false);
+    shared.ui.startup_window = false;
 }
 
 #[cfg(not(target_arch = "wasm32"))]

@@ -404,7 +404,7 @@ pub fn read_psd(
 
     let str_psd = &shared.loc("psd_imported");
     shared.ui.open_modal(str_psd.to_string(), false);
-    shared.ui.set_state(UiState::StartupWindow, false);
+    shared.ui.startup_window = false;
 }
 
 /// add texture to style, including it's bind group and UI image.

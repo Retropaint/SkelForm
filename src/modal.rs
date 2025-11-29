@@ -40,7 +40,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
         |ui| {
             let pressed_no = ui.input_mut(|i| i.consume_shortcut(&shared.config.keys.cancel));
             if ui.skf_button("No").clicked() || pressed_no {
-                shared.ui.set_state(UiState::PolarModal, false);
+                shared.ui.polar_modal = false;
             }
             if ui.skf_button("Yes").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                 yes = true;
@@ -52,7 +52,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
         return;
     }
 
-    shared.ui.set_state(UiState::PolarModal, false);
+    shared.ui.polar_modal = false;
     match shared.ui.polar_id {
         PolarId::DeleteBone => {
             shared.undo_actions.push(Action {
@@ -106,7 +106,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
                 bone.ik_target_id = -1;
             }
         }
-        PolarId::Exiting => shared.ui.set_state(UiState::Exiting, true),
+        PolarId::Exiting => shared.ui.exiting = true,
         PolarId::DeleteAnim => {
             shared.ui.anim.selected = usize::MAX;
             shared.undo_actions.push(Action {
@@ -142,11 +142,11 @@ pub fn modal(shared: &mut Shared, ctx: &egui::Context) {
             egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
         },
         |ui| {
-            if shared.ui.has_state(UiState::ForcedModal) || !ui.button("OK").clicked() {
+            if shared.ui.forced_modal || !ui.button("OK").clicked() {
                 return;
             }
 
-            shared.ui.set_state(UiState::Modal, false);
+            shared.ui.modal = false;
             shared.ui.headline = "".to_string();
         },
     )

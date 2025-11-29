@@ -149,7 +149,6 @@ impl PartialEq for Vec2 {
 impl fmt::Display for Vec2 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let decimal_places = 3;
-
         let mut p = 0;
         let mut dp = 1.;
         while p < decimal_places {
@@ -157,12 +156,9 @@ impl fmt::Display for Vec2 {
             p += 1;
         }
 
-        write!(
-            f,
-            "{}, {}",
-            (self.x * dp).trunc() / dp,
-            (self.y * dp).trunc() / dp
-        )
+        let x = (self.x * dp).trunc() / dp;
+        let y = (self.y * dp).trunc() / dp;
+        write!(f, "{}, {}", x, y)
     }
 }
 
@@ -383,53 +379,14 @@ pub struct InputStates {
     // is mouse on UI?
     pub on_ui: bool,
 
-    pressed: Vec<KeyCode>,
+    pub pressed: Vec<KeyCode>,
     pub last_pressed: Option<egui::Key>,
 }
 
 impl InputStates {
-    pub fn add_key(&mut self, key: &KeyCode) {
-        let mut add = true;
-        for pressed_key in &mut self.pressed {
-            if key == pressed_key {
-                add = false;
-                break;
-            }
-        }
-        if add {
-            self.pressed.push(*key);
-        }
-    }
-
-    pub fn remove_key(&mut self, key: &KeyCode) {
-        for i in 0..self.pressed.len() {
-            if *key == self.pressed[i] {
-                self.pressed.remove(i);
-                break;
-            }
-        }
-    }
     /// Check if this key is being held down.
     pub fn is_pressing(&self, key: KeyCode) -> bool {
-        for k in &self.pressed {
-            if *k == key {
-                return true;
-            }
-        }
-
-        false
-    }
-
-    /// Check if this key was pressed.
-    pub fn pressed(&mut self, key: KeyCode) -> bool {
-        for i in 0..self.pressed.len() {
-            if self.pressed[i] == key {
-                self.pressed.remove(i);
-                return true;
-            }
-        }
-
-        false
+        self.pressed.iter().find(|k| **k == key) != None
     }
 }
 
@@ -569,6 +526,19 @@ pub struct Ui {
     pub styles_folded_bones: HashMap<i32, bool>,
 
     pub selected_bind: i32,
+
+    pub styles_modal: bool,
+    pub exiting: bool,
+    pub dragging_bone: bool,
+    pub removing_textures: bool,
+    pub forced_modal: bool,
+    pub modal: bool,
+    pub polar_modal: bool,
+    pub settings_modal: bool,
+    pub startup_window: bool,
+    pub scaling: bool,
+    pub rotating: bool,
+    pub focus_style_dropdown: bool,
 }
 
 impl Ui {
@@ -583,45 +553,14 @@ impl Ui {
         (cursor_pos - ui.min_rect().left_top()).into()
     }
 
-    pub fn set_state(&mut self, state: UiState, add: bool) {
-        if add {
-            let mut already_added = false;
-            for s in 0..self.states.len() {
-                if self.states[s] == state {
-                    already_added = true;
-                    break;
-                }
-            }
-            if !already_added {
-                self.states.push(state);
-            }
-        } else {
-            for s in 0..self.states.len() {
-                if self.states[s] == state {
-                    self.states.remove(s);
-                    break;
-                }
-            }
-        }
-    }
-
-    pub fn has_state(&self, state: UiState) -> bool {
-        for s in 0..self.states.len() {
-            if self.states[s] == state {
-                return true;
-            }
-        }
-        false
-    }
-
     pub fn open_modal(&mut self, headline: String, forced: bool) {
-        self.set_state(UiState::Modal, true);
-        self.set_state(UiState::ForcedModal, forced);
+        self.modal = true;
+        self.forced_modal = forced;
         self.headline = headline;
     }
 
     pub fn open_polar_modal(&mut self, id: PolarId, headline: &str) {
-        self.set_state(UiState::PolarModal, true);
+        self.polar_modal = true;
         self.polar_id = id;
         self.headline = headline.to_string();
     }
@@ -1981,7 +1920,7 @@ impl Shared {
         for bone in &self.armature.bones {
             self.ui.styles_folded_bones.insert(bone.id, bone.folded);
         }
-        self.ui.set_state(UiState::StylesModal, true);
+        self.ui.styles_modal = true;
     }
 
     pub fn animate_bones(&mut self) -> Vec<Bone> {

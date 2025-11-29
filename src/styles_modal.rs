@@ -47,7 +47,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             });
 
             modal::modal_x(ui, egui::Vec2::new(-5., 0.), || {
-                shared.ui.set_state(UiState::StylesModal, false);
+                shared.ui.styles_modal = false;
             });
         });
 }

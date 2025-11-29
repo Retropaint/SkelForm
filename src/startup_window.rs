@@ -51,7 +51,7 @@ fn startup_content(
         let empty = "".to_string();
         if leftside_button("+", &shared.loc("new"), ui, shared, None, None, empty).clicked() {
             shared.armature = Armature::default();
-            shared.ui.set_state(UiState::StartupWindow, false);
+            shared.ui.startup_window = false;
         }
         ui.add_space(padding);
         let import_pos = Some(egui::Vec2::new(-5., 2.5));
@@ -97,7 +97,7 @@ fn startup_content(
                         {
                             *shared.file_name.lock().unwrap() = $path.to_string();
                             *shared.import_contents.lock().unwrap() = vec![0];
-                            shared.ui.set_state(UiState::StartupWindow, false);
+                            shared.ui.startup_window = false;
                         }
                     };
                 }
@@ -456,7 +456,7 @@ pub fn skf_file_button(
         if button.clicked() {
             *shared.file_name.lock().unwrap() = path.clone();
             *shared.import_contents.lock().unwrap() = vec![0];
-            shared.ui.set_state(UiState::StartupWindow, false);
+            shared.ui.startup_window = false;
         }
 
         let bottom = egui::Rect::from_min_size(

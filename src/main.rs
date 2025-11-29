@@ -107,7 +107,7 @@ fn init_shared(shared: &mut Shared) {
     }
 
     if !shared.config.skip_startup {
-        shared.ui.set_state(UiState::StartupWindow, true);
+        shared.ui.startup_window = true;
     }
 
     shared.ui.scale = shared.config.ui_scale;

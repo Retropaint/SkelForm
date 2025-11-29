@@ -98,9 +98,9 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         .response
                         .on_hover_text(&shared.loc("armature_panel.styles_desc"));
 
-                    if shared.ui.has_state(UiState::FocusStyleDropdown) {
+                    if shared.ui.focus_style_dropdown {
                         dropdown.request_focus();
-                        shared.ui.set_state(UiState::FocusStyleDropdown, false);
+                        shared.ui.focus_style_dropdown = false;
                     }
                     if selected_style == -2 {
                         shared.open_style_modal();

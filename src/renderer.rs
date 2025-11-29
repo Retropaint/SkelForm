@@ -13,8 +13,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         return;
     }
 
-    shared.ui.set_state(UiState::Scaling, false);
-    shared.ui.set_state(UiState::Rotating, false);
+    shared.ui.scaling = false;
+    shared.ui.rotating = false;
 
     #[cfg(target_arch = "wasm32")]
     loaded();
@@ -425,7 +425,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // editing bone
-    if shared.input.on_ui || shared.ui.has_state(UiState::PolarModal) {
+    if shared.input.on_ui || shared.ui.polar_modal {
         shared.editing_bone = false;
     } else if shared.ui.selected_bone_idx != usize::MAX
         && shared.input.left_down
@@ -825,7 +825,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             edit!(bone, AnimElement::PositionY, pos.y);
         }
         shared::EditMode::Rotate => {
-            shared.ui.set_state(UiState::Rotating, true);
+            shared.ui.rotating = true;
 
             let mut mouse_init =
                 utils::screen_to_world_space(shared.input.mouse_init.unwrap(), shared.window);
@@ -842,7 +842,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
             edit!(bone, AnimElement::Rotation, rot);
         }
         shared::EditMode::Scale => {
-            shared.ui.set_state(UiState::Scaling, true);
+            shared.ui.scaling = true;
 
             let mut scale = bone.scale;
 

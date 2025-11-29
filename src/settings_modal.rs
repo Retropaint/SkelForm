@@ -78,11 +78,11 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                     shared.ui.scale = shared.config.ui_scale;
                     shared.gridline_gap = shared.config.gridline_gap;
                     crate::utils::save_config(&shared.config);
-                    shared.ui.set_state(shared::UiState::SettingsModal, false);
+                    shared.ui.settings_modal = false;
                 }
                 if ui.skf_button("Cancel").clicked() {
                     crate::utils::import_config(shared);
-                    shared.ui.set_state(shared::UiState::SettingsModal, false);
+                    shared.ui.settings_modal = false;
                 }
             })
         });

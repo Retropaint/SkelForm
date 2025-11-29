@@ -273,9 +273,23 @@ impl ApplicationHandler for App {
                 ..
             } => {
                 if state == winit::event::ElementState::Pressed {
-                    self.shared.input.add_key(&key_code);
+                    let mut add = true;
+                    for pressed_key in &mut self.shared.input.pressed {
+                        if &key_code == pressed_key {
+                            add = false;
+                            break;
+                        }
+                    }
+                    if add {
+                        self.shared.input.pressed.push(key_code);
+                    }
                 } else {
-                    self.shared.input.remove_key(&key_code);
+                    for i in 0..self.shared.input.pressed.len() {
+                        if key_code == self.shared.input.pressed[i] {
+                            self.shared.input.pressed.remove(i);
+                            break;
+                        }
+                    }
                 }
             }
             WindowEvent::HoveredFile(_) => {
@@ -283,10 +297,10 @@ impl ApplicationHandler for App {
                 self.shared.ui.open_modal(str_drop_file, true);
             }
             WindowEvent::HoveredFileCancelled => {
-                self.shared.ui.set_state(UiState::Modal, false);
+                self.shared.ui.modal = false;
             }
             WindowEvent::DroppedFile(_path_buf) => {
-                self.shared.ui.set_state(UiState::Modal, false);
+                self.shared.ui.modal = false;
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     let file_path = _path_buf.into_os_string().into_string().unwrap();
@@ -368,7 +382,7 @@ impl ApplicationHandler for App {
             _ => (),
         }
 
-        if self.shared.ui.has_state(UiState::Exiting) {
+        if self.shared.ui.exiting {
             event_loop.exit();
         }
 
@@ -477,7 +491,7 @@ impl Renderer {
             ));
         }
         if *shared.save_finished.lock().unwrap() {
-            shared.ui.set_state(UiState::Modal, false);
+            shared.ui.modal = false;
             *shared.save_finished.lock().unwrap() = false;
         }
         if *shared.saving.lock().unwrap() != shared::Saving::None {

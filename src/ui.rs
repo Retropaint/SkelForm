@@ -130,19 +130,19 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     }
     camera_bar(context, shared);
 
-    if shared.ui.has_state(UiState::PolarModal) {
+    if shared.ui.polar_modal {
         modal::polar_modal(shared, context);
     }
-    if shared.ui.has_state(UiState::Modal) {
+    if shared.ui.modal {
         modal::modal(shared, context);
     }
-    if shared.ui.has_state(UiState::StylesModal) {
+    if shared.ui.styles_modal {
         styles_modal::draw(shared, context);
     }
-    if shared.ui.has_state(UiState::SettingsModal) {
+    if shared.ui.settings_modal {
         settings_modal::draw(shared, context);
     }
-    if shared.ui.has_state(UiState::StartupWindow) {
+    if shared.ui.startup_window {
         startup_window::startup_modal(shared, context);
     }
     style_once!(top_panel(context, shared));
@@ -258,13 +258,13 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         return;
     }
 
-    if shared.ui.has_state(UiState::Rotating) {
+    if shared.ui.rotating {
         let offset = Vec2::new(50., 0.);
         let rot = selected_bone.rot / 3.14 * 180.;
         let formatted = (rot * 100.).round() / 100.;
         helper_text!(formatted.to_string() + "°", offset);
     }
-    if shared.ui.has_state(UiState::Scaling) {
+    if shared.ui.scaling {
         let offset = Vec2::new(50., 0.);
         let formatted = (selected_bone.scale.x * 100.).round() / 100.;
         let mut padding = "";
@@ -397,16 +397,11 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
     }
 
     if input.consume_shortcut(&shared.config.keys.cancel) {
-        macro_rules! modal {
-            ($modal:expr) => {
-                !shared.ui.has_state($modal)
-            };
-        }
-        if modal!(UiState::StylesModal)
-            && modal!(UiState::Modal)
-            && modal!(UiState::PolarModal)
-            && modal!(UiState::ForcedModal)
-            && modal!(UiState::SettingsModal)
+        if !shared.ui.styles_modal
+            && !shared.ui.modal
+            && !shared.ui.polar_modal
+            && !shared.ui.forced_modal
+            && !shared.ui.settings_modal
             && !shared.ui.setting_ik_target
         {
             shared.ui.unselect_everything();
@@ -419,11 +414,11 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
             toggleElement(false, "ui-slider".to_string());
         }
 
-        shared.ui.set_state(UiState::StylesModal, false);
-        shared.ui.set_state(UiState::Modal, false);
-        shared.ui.set_state(UiState::PolarModal, false);
-        shared.ui.set_state(UiState::ForcedModal, false);
-        shared.ui.set_state(UiState::SettingsModal, false);
+        shared.ui.styles_modal = false;
+        shared.ui.modal = false;
+        shared.ui.polar_modal = false;
+        shared.ui.forced_modal = false;
+        shared.ui.settings_modal = false;
 
         shared.ui.setting_ik_target = false;
     }
@@ -488,7 +483,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
                     .response
                     .clicked()
                 {
-                    shared.ui.set_state(UiState::SettingsModal, true);
+                    shared.ui.settings_modal = true;
                 }
 
                 ui.menu_button(title!(&shared.loc("top_bar.help.heading")), |ui| {
@@ -756,7 +751,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
         }
         let str_startup = &shared.loc("top_bar.file.startup");
         if top_bar_button!(str_startup, None).clicked() {
-            shared.ui.set_state(UiState::StartupWindow, true);
+            shared.ui.startup_window = true;
             ui.close();
         }
         // disabled: export video is unstable and not really necessary (focus on sprite export instead!)
