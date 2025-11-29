@@ -588,6 +588,7 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                                             .find(|style| style.id == style_id)
                                             .unwrap();
                                         let mut tex_str = bone.tex.clone();
+                                        ui.selectable_value(&mut tex_str, "".to_string(), "[None]");
                                         for t in 0..set.textures.len() {
                                             let str_idx = t.to_string() + ") ";
                                             let name = set.textures[t].name.clone().to_string();
@@ -603,7 +604,6 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                                             shared.ui.anim.selected,
                                             shared.ui.anim.selected_frame,
                                         );
-                                        ui.set_height(20.);
                                     });
                                     ui.add_space(10.);
                                 });
