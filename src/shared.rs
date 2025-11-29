@@ -528,6 +528,8 @@ pub struct Ui {
 
     pub selected_bind: i32,
 
+    pub styles_modal_size: Vec2,
+
     pub styles_modal: bool,
     pub exiting: bool,
     pub dragging_bone: bool,

@@ -9,8 +9,8 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
     let modal_size = Vec2::new(550., 400.);
     let padding = 10.;
     let center = egui::Pos2::new(
-        (shared.window.x / 2. - modal_size.x) / 2. - padding,
-        (shared.window.y / 2. - modal_size.y) / 2. - padding,
+        (shared.window.x / 2. - shared.ui.styles_modal_size.x) / 2. - padding,
+        (shared.window.y / 2. - shared.ui.styles_modal_size.y) / 2. - padding,
     );
     egui::Modal::new("styles_modal".into())
         // set modal render order so that tex idx dropdown can be rendered above
@@ -51,6 +51,8 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             modal::modal_x(ui, egui::Vec2::new(-5., 0.), || {
                 shared.ui.styles_modal = false;
             });
+
+            shared.ui.styles_modal_size = ui.min_rect().size().into();
         });
 }
 
