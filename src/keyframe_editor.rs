@@ -744,8 +744,12 @@ fn draw_frame_lines(
 
         // the Y position is based on this diamond's respective label
         let top: f32;
-        if let Some(bone_top) = bone_tops.find(kf!().bone_id, &kf!().element.clone()) {
-            top = bone_top.height;
+
+        let el = kf!().element.clone();
+        let b_id = kf!().bone_id;
+        let tops = &bone_tops.tops;
+        if let Some(b_top) = tops.iter().find(|bt| bt.id == b_id && bt.element == el) {
+            top = b_top.height;
         } else {
             return;
         }

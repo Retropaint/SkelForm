@@ -1730,24 +1730,6 @@ pub struct BoneTops {
     pub tops: Vec<BoneTop>,
 }
 
-impl BoneTops {
-    pub fn find(&self, id: i32, element: &AnimElement) -> Option<&BoneTop> {
-        self.tops
-            .iter()
-            .find(|bt| bt.id == id && bt.element == *element)
-    }
-
-    pub fn find_mut(&mut self, id: i32, element: &AnimElement) -> Option<&mut BoneTop> {
-        self.tops
-            .iter_mut()
-            .find(|bt| bt.id == id && bt.element == *element)
-    }
-
-    pub fn find_bone(&self, id: i32) -> bool {
-        self.tops.iter().find(|bt| bt.id == id) != None
-    }
-}
-
 #[derive(Default, PartialEq)]
 pub enum EditMode {
     #[default]
