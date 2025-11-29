@@ -348,9 +348,8 @@ pub fn draw_textures_list(
 fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, height: f32) {
     ui.vertical(|ui| {
         ui.horizontal(|ui| {
-            let str_heading = &shared.loc("styles_modal.assigned_bones");
-            let str_desc = &shared.loc("styles_modal.assigned_bones_desc");
-            ui.label(str_heading.to_owned()).on_hover_text(str_desc)
+            let str_heading = &shared.loc("styles_modal.bones");
+            ui.label(str_heading.to_owned())
         });
 
         if shared.ui.selected_style == -1 {
@@ -361,7 +360,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                 .inner_margin(5.)
                 .fill(darker.into())
                 .show(ui, |ui| {
-                    ui.set_width(size.x);
+                    ui.set_width(size.x - 50.);
                     ui.set_height(size.y - 10.);
                 });
             return;
@@ -521,8 +520,8 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
     ui.vertical(|ui| {
         ui.horizontal(|ui| {
-            let str_heading = &shared.loc("styles_modal.assigned_bones");
-            let str_desc = &shared.loc("styles_modal.assigned_bones_desc");
+            let str_heading = &shared.loc("styles_modal.assigned_textures");
+            let str_desc = &shared.loc("styles_modal.assigned_textures_desc");
             ui.label(str_heading.to_owned()).on_hover_text(str_desc)
         });
 
@@ -534,7 +533,7 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                 .inner_margin(5.)
                 .fill(darker.into())
                 .show(ui, |ui| {
-                    ui.set_width(100.);
+                    ui.set_width(150.);
                     ui.set_height(size.y - 10.);
                 });
             return;
@@ -573,11 +572,14 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                                 }
                                 let bone = shared.armature.bones[b].clone();
                                 let mut raw_str = bone.tex.to_string();
-                                if raw_str.len() > 7 {
-                                    raw_str = raw_str[0..8.min(raw_str.len())].to_string() + "...";
+                                let max_letters = 13;
+                                if raw_str.len() > max_letters - 1 {
+                                    raw_str = raw_str[0..max_letters.min(raw_str.len())]
+                                        .to_string()
+                                        + "...";
                                 }
                                 if raw_str == "" {
-                                    raw_str = "           ".to_string();
+                                    raw_str = " ".repeat(max_letters + 3);
                                 }
                                 let str_idx = egui::RichText::new(raw_str).monospace();
                                 ui.add_space(1.5);
