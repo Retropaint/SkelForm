@@ -107,7 +107,7 @@ pub fn read_image_loaders(
 
     add_texture(
         image,
-        shared.ui.selected_tex_set_id,
+        shared.ui.selected_style,
         dimensions,
         &name,
         &mut shared.armature,

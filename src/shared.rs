@@ -506,7 +506,7 @@ pub struct Ui {
 
     pub changing_key: String,
 
-    pub selected_tex_set_id: i32,
+    pub selected_style: i32,
 
     pub hovering_tex: i32,
     pub hovering_bone: i32,
@@ -520,8 +520,6 @@ pub struct Ui {
     pub selected_path: String,
 
     pub setting_ik_target: bool,
-
-    pub selected_style: i32,
 
     // not visually indicated; just used for `double click > rename` logic
     pub selected_tex: i32,
@@ -1888,14 +1886,14 @@ impl Shared {
         self.armature
             .styles
             .iter()
-            .find(|set| set.id == self.ui.selected_tex_set_id)
+            .find(|set| set.id == self.ui.selected_style)
     }
 
     pub fn selected_set_mut(&mut self) -> Option<&mut Style> {
         self.armature
             .styles
             .iter_mut()
-            .find(|set| set.id == self.ui.selected_tex_set_id)
+            .find(|set| set.id == self.ui.selected_style)
     }
 
     pub fn open_style_modal(&mut self) {

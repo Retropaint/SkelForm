@@ -124,7 +124,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             std::fs::remove_file(&shared.ui.selected_path).unwrap();
         }
         PolarId::DeleteTex => {
-            shared.armature.styles[shared.ui.selected_tex_set_id as usize]
+            shared.armature.styles[shared.ui.selected_style as usize]
                 .textures
                 .remove(shared.ui.context_menu.id as usize);
         }
