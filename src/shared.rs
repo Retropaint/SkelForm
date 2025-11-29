@@ -3,7 +3,6 @@
 use crate::*;
 
 use std::{
-    collections::HashMap,
     fmt,
     ops::{DivAssign, MulAssign},
 };

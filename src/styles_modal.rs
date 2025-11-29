@@ -1,4 +1,3 @@
-use egui::containers::menu::{menu_style, MenuConfig};
 use ui::TextInputOptions;
 
 use crate::{ui::EguiUi, *};
@@ -198,14 +197,12 @@ pub fn draw_styles_list(
                     if visible_checkbox.clicked() {
                         shared.armature.styles[s].active = !shared.armature.styles[s].active;
                         for b in 0..shared.armature.bones.len() {
-                            //if shared.armature.bones[b].style_ids.contains(&(s as i32)) {
-                            //    shared.armature.set_bone_tex(
-                            //        shared.armature.bones[b].id,
-                            //        shared.armature.bones[b].tex.clone(),
-                            //        shared.ui.anim.selected,
-                            //        shared.ui.anim.selected_frame,
-                            //    );
-                            //}
+                            shared.armature.set_bone_tex(
+                                shared.armature.bones[b].id,
+                                shared.armature.bones[b].tex.clone(),
+                                shared.ui.anim.selected,
+                                shared.ui.anim.selected_frame,
+                            );
                         }
                     }
                 });
@@ -468,8 +465,7 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                     });
                 })
                 .response
-                .interact(egui::Sense::click())
-                .on_hover_cursor(egui::CursorIcon::PointingHand);
+                .interact(egui::Sense::click());
 
             if button.contains_pointer() {
                 shared.ui.hovering_style_bone = b as i32;

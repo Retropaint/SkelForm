@@ -1,6 +1,4 @@
-use crate::{
-    armature_window, ui::EguiUi, utils, Action, ActionType, Config, PolarId, Shared, UiState,
-};
+use crate::{armature_window, ui::EguiUi, utils, Action, ActionType, Config, PolarId, Shared};
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     ctx: &egui::Context,
