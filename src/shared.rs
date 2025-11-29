@@ -524,11 +524,10 @@ pub struct Ui {
     // not visually indicated; just used for `double click > rename` logic
     pub selected_tex: i32,
 
-    pub styles_folded_bones: HashMap<i32, bool>,
-
     pub selected_bind: i32,
 
     pub styles_modal_size: Vec2,
+    pub bones_assigned_scroll: f32,
 
     pub styles_modal: bool,
     pub exiting: bool,
@@ -1373,6 +1372,19 @@ impl Armature {
 
         JointEffector::None
     }
+
+    pub fn is_bone_folded(&self, bone_id: i32) -> bool {
+        let mut nb = self.bones.iter().find(|b| b.id == bone_id).unwrap();
+        while nb.parent_id != -1 {
+            let id = nb.parent_id;
+            nb = self.bones.iter().find(|bo| bo.id == id).unwrap();
+            if nb.folded {
+                return true;
+            }
+        }
+
+        false
+    }
 }
 
 // used for the json
@@ -1899,10 +1911,6 @@ impl Shared {
     }
 
     pub fn open_style_modal(&mut self) {
-        self.ui.styles_folded_bones = HashMap::new();
-        for bone in &self.armature.bones {
-            self.ui.styles_folded_bones.insert(bone.id, bone.folded);
-        }
         self.ui.styles_modal = true;
     }
 

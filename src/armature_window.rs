@@ -164,18 +164,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
     for b in 0..shared.armature.bones.len() {
         idx += 1;
-        // if this bone's parent is folded, skip drawing
-        let mut visible = true;
-        let mut nb = &shared.armature.bones[b];
-        while nb.parent_id != -1 {
-            let id = nb.parent_id;
-            nb = shared.armature.bones.iter().find(|bo| bo.id == id).unwrap();
-            if nb.folded {
-                visible = false;
-                break;
-            }
-        }
-        if !visible {
+        if shared.armature.is_bone_folded(shared.armature.bones[b].id) {
             continue;
         }
         let bone_id = shared.armature.bones[b].id;
