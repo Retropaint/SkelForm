@@ -107,14 +107,12 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     } else if selected_style != -1 {
                         shared.ui.selected_style = selected_style;
                         for b in 0..shared.armature.bones.len() {
-                            //if shared.armature.bones[b].style_ids.contains(&selected_style) {
-                            //    shared.armature.set_bone_tex(
-                            //        shared.armature.bones[b].id,
-                            //        shared.armature.bones[b].tex.clone(),
-                            //        shared.ui.anim.selected,
-                            //        shared.ui.anim.selected_frame,
-                            //    );
-                            //}
+                            shared.armature.set_bone_tex(
+                                shared.armature.bones[b].id,
+                                shared.armature.bones[b].tex.clone(),
+                                shared.ui.anim.selected,
+                                shared.ui.anim.selected_frame,
+                            );
                         }
                     }
                 });

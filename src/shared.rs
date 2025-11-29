@@ -980,7 +980,11 @@ impl Armature {
         if selected_anim == usize::MAX {
             let bone_mut = self.bones.iter_mut().find(|b| b.id == bone_id).unwrap();
             bone_mut.tex = new_tex_str;
-            let new_size = self.tex_of(bone_id).unwrap().size;
+            let new_tex = self.tex_of(bone_id);
+            if new_tex == None {
+                return;
+            }
+            let new_size = new_tex.unwrap().size;
 
             let bone = self.bones.iter().find(|b| b.id == bone_id).unwrap().clone();
             if !bone.verts_edited {
@@ -1321,6 +1325,9 @@ impl Armature {
             return None;
         }
         for style in &self.styles {
+            if !style.active {
+                continue;
+            }
             if let Some(tex) = style.textures.iter().find(|t| t.name == bone.unwrap().tex) {
                 return Some(tex);
             }

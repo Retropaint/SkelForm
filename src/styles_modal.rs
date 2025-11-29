@@ -1,3 +1,5 @@
+use ui::TextInputOptions;
+
 use crate::{ui::EguiUi, *};
 
 pub const FOLD_ERR: &str =
@@ -632,6 +634,24 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         }
 
         ui.horizontal(|ui| {
+            let rename_id = "texture_".to_owned() + &i.to_string();
+            if shared.ui.rename_id == rename_id {
+                let (edited, value, _) = ui.text_input(
+                    rename_id.clone(),
+                    shared,
+                    name.to_string(),
+                    Some(TextInputOptions {
+                        focus: true,
+                        placeholder: "Texture".to_string(),
+                        default: "Texture".to_string(),
+                        ..Default::default()
+                    }),
+                );
+                if edited {
+                    shared.selected_set_mut().unwrap().textures[i].name = value;
+                }
+                return;
+            }
             let bin_width = 13.;
             let button = ui
                 .dnd_drag_source(egui::Id::new(("tex", idx, 0)), idx, |ui| {
@@ -655,6 +675,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             if shared.ui.context_menu.is(ContextType::Texture, i as i32) {
                 button.show_tooltip_ui(|ui| {
                     if ui.clickable_label("Rename").clicked() {
+                        shared.ui.rename_id = rename_id;
                         shared.ui.context_menu.close();
                     };
                     if ui.clickable_label("Delete").clicked() {
