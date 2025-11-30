@@ -1771,9 +1771,6 @@ pub struct Shared {
 
     pub startup: Startup,
 
-    /// triggers debug stuff. Set in main.rs
-    pub debug: bool,
-
     pub time: f32,
 
     pub last_autosave: f32,
@@ -1940,7 +1937,6 @@ impl Shared {
             animated_bones = self.armature.animate(anim.selected, frame, None);
         }
 
-        // runtime: armature bones should be immutable to rendering
         animated_bones
     }
 }

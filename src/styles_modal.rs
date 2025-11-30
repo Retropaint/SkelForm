@@ -6,7 +6,7 @@ pub const FOLD_ERR: &str =
     "Please use `shared.open_style_modal()` to populate the shared.styles_folded_bones array.";
 
 pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
-    let modal_size = Vec2::new(500., 400.);
+    let modal_size = Vec2::new(500., 500.);
     let padding = 10.;
     let center = egui::Pos2::new(
         (shared.window.x / 2. - shared.ui.styles_modal_size.x) / 2. - padding,
@@ -599,7 +599,7 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                                             shared.ui.anim.selected_frame,
                                         );
                                     });
-                                    ui.add_space(10.);
+                                    ui.add_space(7.);
                                 });
                                 ui.add_space(1.5);
                             }
