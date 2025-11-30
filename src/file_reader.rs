@@ -320,7 +320,8 @@ pub fn read_psd(
         }
 
         let new_bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
-        new_bone.name = tex_name;
+        new_bone.name = tex_name.clone();
+        new_bone.tex = tex_name;
 
         // layers start from top-left, so push bone down and right to reflect that
         new_bone.pos = Vec2::new(dims.x / 2., -dims.y / 2.);
