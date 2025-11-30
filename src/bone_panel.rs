@@ -84,19 +84,21 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         ui.horizontal(|ui| {
             ui.label(&shared.loc("bone_panel.texture"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let mut texes = vec![];
-                for style in &shared.armature.styles {
-                    let mut names = style
-                        .textures
-                        .iter()
-                        .map(|t| t.name.clone())
-                        .collect::<Vec<String>>();
-                    texes.append(&mut names);
-                }
-                texes.dedup();
                 egui::ComboBox::new("tex_selector", "")
                     .selected_text(egui::RichText::new(tex_name).color(tex_name_col))
                     .show_ui(ui, |ui| {
+                        let mut texes = vec![];
+                        for style in &shared.armature.styles {
+                            let textures = style.textures.iter();
+                            let mut names =
+                                textures.map(|t| t.name.clone()).collect::<Vec<String>>();
+                            texes.append(&mut names);
+                        }
+
+                        // remove duplicates
+                        texes.sort_unstable();
+                        texes.dedup();
+
                         ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
                         for tex in texes {
                             ui.selectable_value(&mut selected_tex, tex.clone(), &tex.clone());
