@@ -521,6 +521,8 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
             ui.label(str_heading.to_owned()).on_hover_text(str_desc)
         });
 
+        let default_width = 150.;
+
         if shared.ui.selected_style == -1 {
             let size = ui.available_size();
             let mut darker = shared.config.colors.dark_accent;
@@ -529,7 +531,7 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                 .inner_margin(5.)
                 .fill(darker.into())
                 .show(ui, |ui| {
-                    ui.set_width(150.);
+                    ui.set_width(default_width);
                     ui.set_height(size.y - 10.);
                 });
             return;
@@ -541,7 +543,7 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                 .fill(shared.config.colors.dark_accent.into())
                 .inner_margin(6.)
                 .show(ui, |ui| {
-                    ui.set_width(100.);
+                    ui.set_width(default_width);
                     let padding = Vec2::new(20., 33.);
                     ui.set_height(height - padding.y);
 
@@ -574,29 +576,21 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                                         .to_string()
                                         + "...";
                                 }
-                                if raw_str == "" {
-                                    raw_str = " ".repeat(max_letters + 3);
-                                }
+                                let len: i32 =
+                                    (max_letters as i32 - raw_str.len() as i32 + 5).max(0);
+                                raw_str += &" ".repeat(len as usize);
                                 let str_idx = egui::RichText::new(raw_str).monospace();
                                 ui.add_space(1.5);
                                 ui.horizontal(|ui| {
                                     egui::containers::menu::MenuButton::new(str_idx).ui(ui, |ui| {
                                         let style_id = shared.ui.selected_style;
                                         let styles = &shared.armature.styles;
-                                        let set = styles
-                                            .iter()
-                                            .find(|style| style.id == style_id)
-                                            .unwrap();
+                                        let set = styles.iter().find(|s| s.id == style_id).unwrap();
                                         let mut tex_str = bone.tex.clone();
                                         ui.selectable_value(&mut tex_str, "".to_string(), "[None]");
                                         for t in 0..set.textures.len() {
-                                            let str_idx = t.to_string() + ") ";
                                             let name = set.textures[t].name.clone().to_string();
-                                            ui.selectable_value(
-                                                &mut tex_str,
-                                                set.textures[t].name.clone(),
-                                                str_idx + &name,
-                                            );
+                                            ui.selectable_value(&mut tex_str, name.clone(), name);
                                         }
                                         shared.armature.set_bone_tex(
                                             bone.id,
