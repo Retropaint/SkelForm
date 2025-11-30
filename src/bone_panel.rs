@@ -82,7 +82,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     };
     ui.add_enabled_ui(shared.armature.styles.len() != 0, |ui| {
         ui.horizontal(|ui| {
-            ui.label(&shared.loc("bone_panel.texture_index"));
+            ui.label(&shared.loc("bone_panel.texture"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let mut texes = vec![];
                 for style in &shared.armature.styles {
@@ -97,16 +97,20 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                 egui::ComboBox::new("tex_selector", "")
                     .selected_text(egui::RichText::new(tex_name).color(tex_name_col))
                     .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
                         for tex in texes {
                             ui.selectable_value(&mut selected_tex, tex.clone(), &tex.clone());
                         }
+                        ui.selectable_value(&mut selected_tex, "[Setup]".to_string(), "[Setup]");
                     })
                     .response;
             });
         });
     });
 
-    if selected_tex != bone.tex {
+    if selected_tex == "[Setup]" {
+        shared.ui.styles_modal = true;
+    } else if selected_tex != bone.tex {
         let mut anim_id = shared.ui.anim.selected;
         if !shared.ui.is_animating() {
             anim_id = usize::MAX;
