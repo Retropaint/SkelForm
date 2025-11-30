@@ -88,9 +88,8 @@
   "bone_panel": {
     "heading": "Bone",
     "name": "Name:",
-    "style": "Styles:",
-    "texture_index": "Tex. Index:",
-    "texture_set_setup": "[Setup]",
+    "texture": "Texture:",
+    "texture_setup": "[Setup]",
     "empty_armature": "Don't forget - if in doubt, consult the [User Documentation](user-docs/index.html).\n\nIf you're new here, check out the [Starter Guide](user-docs/starter-guide/main.html).\n\nYou may import a PSD (File > Import), provided it has the [right structure](user-docs/psd.html).\n\nClick **New Bone** above to get started with your armature.",
     "position": "Position:",
     "scale": "Scale:",
