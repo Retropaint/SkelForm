@@ -7,10 +7,9 @@ pub const FOLD_ERR: &str =
 
 pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
     let modal_size = Vec2::new(500., 500.);
-    let padding = 10.;
     let center = egui::Pos2::new(
-        (shared.window.x / 2. - shared.ui.styles_modal_size.x) / 2. - padding,
-        (shared.window.y / 2. - shared.ui.styles_modal_size.y) / 2. - padding,
+        (shared.window.x / shared.ui.scale / 2. - shared.ui.styles_modal_size.x) / 2.,
+        (shared.window.y / shared.ui.scale / 2. - shared.ui.styles_modal_size.y) / 2.,
     );
     egui::Modal::new("styles_modal".into())
         // set modal render order so that tex idx dropdown can be rendered above
