@@ -62,7 +62,7 @@
   },
   "styles_modal": {
     "heading": "Styles ℹ",
-    "heading_desc": "Styles allow hotswapping of textures to create multiple outfits/skins.\n\nKeep texture order in mind to ensure that the correct textures are used across styles.",
+    "heading_desc": "Styles allow hotswapping of textures to create multiple outfits/skins.\n\nThe first active style containing the bone's texture name will be used.",
     "texture_preview": "Texture Preview",
     "style_preview": "Style Preview",
     "style_preview_empty": "No textures in this style.\n\nClick to select and add to it.",
@@ -74,9 +74,9 @@
     "img_name": "Name: ",
     "img_size": "Size: ",
     "active_desc": "Should this style be active?",
-    "assigned_bones": "Assigned Bones ℹ",
-    "assigned_bones_desc": "Click on bones in the list to assign/unassign them for this style.\n\nAssigned bones will use this style's textures based on the bone's texture index.\n\nIf this style and another above has the same bone(s) assigned, the higher style will be used.",
-    "assigned_bones_tex_idx_desc": "Texture index for "
+    "bones": "Bones",
+    "assigned_textures": "Assigned Textures ℹ",
+    "assigned_textures_desc": "Assign textures to bones here.\n\nIf this style is inactive, bones will switch to a texture of the same name from the first active style top-down."
   },
   "armature_panel": {
     "heading": "Armature",
@@ -88,9 +88,8 @@
   "bone_panel": {
     "heading": "Bone",
     "name": "Name:",
-    "style": "Styles:",
-    "texture_index": "Tex. Index:",
-    "texture_set_setup": "[Setup]",
+    "texture": "Texture:",
+    "texture_setup": "[Setup]",
     "empty_armature": "Don't forget - if in doubt, consult the [User Documentation](user-docs/index.html).\n\nIf you're new here, check out the [Starter Guide](user-docs/starter-guide/main.html).\n\nYou may import a PSD (File > Import), provided it has the [right structure](user-docs/psd.html).\n\nClick **New Bone** above to get started with your armature.",
     "position": "Position:",
     "scale": "Scale:",

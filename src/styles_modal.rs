@@ -1,14 +1,16 @@
+use ui::TextInputOptions;
+
 use crate::{ui::EguiUi, *};
 
 pub const FOLD_ERR: &str =
     "Please use `shared.open_style_modal()` to populate the shared.styles_folded_bones array.";
 
 pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
-    let modal_size = Vec2::new(550., 400.);
+    let modal_size = Vec2::new(500., 500.);
     let padding = 10.;
     let center = egui::Pos2::new(
-        (shared.window.x / 2. - modal_size.x) / 2. - padding,
-        (shared.window.y / 2. - modal_size.y) / 2. - padding,
+        (shared.window.x / 2. - shared.ui.styles_modal_size.x) / 2. - padding,
+        (shared.window.y / 2. - shared.ui.styles_modal_size.y) / 2. - padding,
     );
     egui::Modal::new("styles_modal".into())
         // set modal render order so that tex idx dropdown can be rendered above
@@ -44,11 +46,14 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                 draw_styles_list(ui, shared, modal_width, height, frame_padding);
                 draw_textures_list(ui, shared, modal_width, height, frame_padding);
                 draw_bones_list(ui, shared, modal_width, height);
+                draw_assigned_list(ui, shared, height);
             });
 
             modal::modal_x(ui, egui::Vec2::new(-5., 0.), || {
                 shared.ui.styles_modal = false;
             });
+
+            shared.ui.styles_modal_size = ui.min_rect().size().into();
         });
 }
 
@@ -96,19 +101,16 @@ pub fn draw_styles_list(
             }
 
             let mut hovered = false;
+            let mut idx = -1;
 
             for s in 0..shared.armature.styles.len() {
-                macro_rules! set {
-                    () => {
-                        shared.armature.styles[s]
-                    };
-                }
+                idx += 1;
 
                 if shared.ui.rename_id == "tex_set ".to_string() + &s.to_string() {
                     let (edited, value, _) = ui.text_input(
                         shared.ui.rename_id.clone(),
                         shared,
-                        set!().name.clone(),
+                        shared.armature.styles[s].name.clone(),
                         Some(crate::ui::TextInputOptions {
                             size: Vec2::new(ui.available_width(), 20.),
                             focus: true,
@@ -118,53 +120,52 @@ pub fn draw_styles_list(
                         }),
                     );
                     if edited {
-                        set!().name = value;
-                        shared.ui.selected_tex_set_id = set!().id;
+                        shared.armature.styles[s].name = value;
+                        shared.ui.selected_style = shared.armature.styles[s].id;
                     }
                     continue;
                 }
 
                 let mut col = shared.config.colors.dark_accent;
-                if set!().id == shared.ui.selected_tex_set_id {
+                if shared.armature.styles[s].id == shared.ui.selected_style {
                     col += crate::Color::new(20, 20, 20, 0);
                 }
                 if s == shared.ui.hovering_set as usize {
                     col += crate::Color::new(20, 20, 20, 0);
                 }
-                let cursor_icon = if shared.ui.selected_tex_set_id != set!().id {
+                let cursor_icon = if shared.ui.selected_style != shared.armature.styles[s].id {
                     egui::CursorIcon::PointingHand
                 } else {
                     egui::CursorIcon::Default
                 };
                 let width = ui.available_width();
-                let checkbox_width = 28.;
+                let checkbox_width = 30.;
                 ui.horizontal(|ui| {
-                    let button = egui::Frame::new()
-                        .fill(col.into())
-                        .show(ui, |ui| {
-                            ui.horizontal(|ui| {
+                    let button = ui
+                        .dnd_drag_source(egui::Id::new(("style", idx, 0)), idx, |ui| {
+                            egui::Frame::new().fill(col.into()).show(ui, |ui| {
                                 ui.set_width(width - checkbox_width);
                                 ui.set_height(21.);
-                                ui.add_space(5.);
                                 ui.label(
-                                    egui::RichText::new(set!().name.clone())
+                                    egui::RichText::new(shared.armature.styles[s].name.clone())
                                         .color(shared.config.colors.text),
                                 );
                             });
                         })
                         .response
-                        .interact(egui::Sense::click())
-                        .on_hover_cursor(cursor_icon);
-                    if button.contains_pointer() {
+                        .on_hover_cursor(cursor_icon)
+                        .interact(egui::Sense::click());
+                    if button.contains_pointer() && !shared.ui.dragging_tex {
                         shared.ui.hovering_set = s as i32;
                         hovered = true;
                     }
                     if button.clicked() {
-                        if shared.ui.selected_tex_set_id == set!().id {
+                        if shared.ui.selected_style == shared.armature.styles[s].id {
                             shared.ui.rename_id = "tex_set ".to_string() + &s.to_string()
                         }
-                        shared.ui.selected_tex_set_id = set!().id;
+                        shared.ui.selected_style = shared.armature.styles[s].id;
                     }
+
                     let str_style_active_desc = &shared.loc("styles_modal.active_desc");
                     let visible_checkbox = ui
                         .allocate_rect(
@@ -192,15 +193,46 @@ pub fn draw_styles_list(
                     if visible_checkbox.clicked() {
                         shared.armature.styles[s].active = !shared.armature.styles[s].active;
                         for b in 0..shared.armature.bones.len() {
-                            if shared.armature.bones[b].style_ids.contains(&(s as i32)) {
-                                shared.armature.set_bone_tex(
-                                    shared.armature.bones[b].id,
-                                    shared.armature.bones[b].tex.clone(),
-                                    shared.ui.anim.selected,
-                                    shared.ui.anim.selected_frame,
-                                );
-                            }
+                            shared.armature.set_bone_tex(
+                                shared.armature.bones[b].id,
+                                shared.armature.bones[b].tex.clone(),
+                                shared.ui.anim.selected,
+                                shared.ui.anim.selected_frame,
+                            );
                         }
+                    }
+
+                    let pointer = ui.input(|i| i.pointer.interact_pos());
+                    let hovered_payload = button.dnd_hover_payload::<i32>();
+                    let dragged_payload = button.dnd_release_payload::<i32>();
+
+                    if pointer == None || hovered_payload == None {
+                        return;
+                    }
+
+                    let rect = button.rect;
+                    let stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
+
+                    ui.painter().hline(rect.x_range(), rect.top(), stroke);
+                    if shared.ui.dragging_tex {
+                        ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
+                        ui.painter().vline(rect.right(), rect.y_range(), stroke);
+                        ui.painter().vline(rect.left(), rect.y_range(), stroke);
+                    }
+
+                    if dragged_payload == None {
+                        return;
+                    }
+
+                    let hov = *hovered_payload.clone().unwrap() as usize;
+                    if !shared.ui.dragging_tex {
+                        shared.armature.styles.swap(hov, idx as usize);
+                    } else if idx != shared.ui.selected_style {
+                        let style = &mut shared.armature.styles[shared.ui.selected_style as usize];
+                        let tex = style.textures[hov].clone();
+                        style.textures.remove(hov);
+                        shared.armature.styles[idx as usize].textures.push(tex);
+                        shared.ui.dragging_tex = false;
                     }
                 });
             }
@@ -222,7 +254,7 @@ pub fn draw_textures_list(
     let frame = egui::Frame::default().inner_margin(5.);
     let mut set_idx: usize = usize::MAX;
     let styles = &shared.armature.styles;
-    let tex_id = shared.ui.selected_tex_set_id;
+    let tex_id = shared.ui.selected_style;
     if let Some(idx) = styles.iter().position(|set| set.id == tex_id) {
         set_idx = idx;
     }
@@ -245,7 +277,7 @@ pub fn draw_textures_list(
 
             if naming_first_style
                 || set_idx == usize::MAX
-                || shared.ui.selected_tex_set_id == -1
+                || shared.ui.selected_style == -1
                 || !ui.skf_button(&shared.loc("styles_modal.import")).clicked()
             {
                 return;
@@ -263,7 +295,7 @@ pub fn draw_textures_list(
         let size = ui.available_size();
         let tex_frame_padding = Vec2::new(10., 15.);
 
-        if shared.ui.selected_tex_set_id == -1 {
+        if shared.ui.selected_style == -1 {
             let mut darker = shared.config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
             egui::Frame::new()
@@ -278,7 +310,7 @@ pub fn draw_textures_list(
 
         ui.dnd_drop_zone::<i32, _>(frame, |ui| {
             let mut darker = shared.config.colors.dark_accent;
-            if shared.ui.selected_tex_set_id == -1 {
+            if shared.ui.selected_style == -1 {
                 darker -= Color::new(5, 5, 5, 0);
             }
             egui::Frame::new()
@@ -293,7 +325,7 @@ pub fn draw_textures_list(
                     }
 
                     if shared.ui.hovering_set == -1 || is_selected {
-                        if shared.ui.selected_tex_set_id != -1 {
+                        if shared.ui.selected_style != -1 {
                             egui::ScrollArea::vertical()
                                 .id_salt("tex_list")
                                 .show(ui, |ui| {
@@ -331,7 +363,8 @@ pub fn draw_textures_list(
                             ui.min_rect().left_top() + offset.into(),
                             size.into(),
                         );
-                        egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
+                        let data = shared.armature.tex_data(tex).unwrap();
+                        egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, rect);
                         offset.x += size.x;
                     }
                 });
@@ -342,12 +375,11 @@ pub fn draw_textures_list(
 fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, height: f32) {
     ui.vertical(|ui| {
         ui.horizontal(|ui| {
-            let str_heading = &shared.loc("styles_modal.assigned_bones");
-            let str_desc = &shared.loc("styles_modal.assigned_bones_desc");
-            ui.label(str_heading.to_owned()).on_hover_text(str_desc)
+            let str_heading = &shared.loc("styles_modal.bones");
+            ui.label(str_heading.to_owned())
         });
 
-        if shared.ui.selected_tex_set_id == -1 {
+        if shared.ui.selected_style == -1 {
             let size = ui.available_size();
             let mut darker = shared.config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
@@ -355,7 +387,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                 .inner_margin(5.)
                 .fill(darker.into())
                 .show(ui, |ui| {
-                    ui.set_width(size.x);
+                    ui.set_width(size.x - 50.);
                     ui.set_height(size.y - 10.);
                 });
             return;
@@ -367,17 +399,16 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                 .fill(shared.config.colors.dark_accent.into())
                 .inner_margin(6.)
                 .show(ui, |ui| {
-                    let padding = Vec2::new(20., 33.);
-                    let extra = 50.;
-                    ui.set_width((modal_width / 3.) - padding.x + extra);
+                    let padding = Vec2::new(0., 33.);
+                    ui.set_width((modal_width / 3.) - padding.x);
                     ui.set_height(height - padding.y);
 
-                    if shared.ui.selected_tex_set_id == -1 {
+                    if shared.ui.selected_style == -1 {
                         return;
                     }
 
                     let styles = &shared.armature.styles;
-                    let tex_id = shared.ui.selected_tex_set_id;
+                    let tex_id = shared.ui.selected_style;
 
                     let set = styles.iter().find(|style| style.id == tex_id).unwrap();
 
@@ -385,46 +416,27 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                         return;
                     }
 
-                    egui::ScrollArea::both().show(ui, |ui| {
-                        draw_bone_buttons(ui, shared);
-                    });
+                    let scroll = egui::ScrollArea::both()
+                        .vertical_scroll_offset(shared.ui.bones_assigned_scroll)
+                        .show(ui, |ui| {
+                            draw_bone_buttons(ui, shared);
+                        });
+                    shared.ui.bones_assigned_scroll = scroll.state.offset.y;
                 })
         });
     });
 }
 
 pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
-    let style_id = shared.ui.selected_tex_set_id;
     let mut hovered = false;
-    macro_rules! folded {
-        () => {
-            shared.ui.styles_folded_bones
-        };
-    }
     let mut idx = -1;
     for b in 0..shared.armature.bones.len() {
         idx += 1;
-        macro_rules! bone {
-            () => {
-                shared.armature.bones[b]
-            };
-        }
-        // if this bone's parent is folded, skip drawing
-        let mut visible = true;
-        let mut nb = &bone!();
-        while nb.parent_id != -1 {
-            let id = nb.parent_id;
-            nb = shared.armature.bones.iter().find(|bo| bo.id == id).unwrap();
-            if *folded!().get(&nb.id).unwrap() {
-                visible = false;
-                break;
-            }
-        }
-        if !visible {
+        if shared.armature.is_bone_folded(shared.armature.bones[b].id) {
             continue;
         }
         ui.horizontal(|ui| {
-            let parents = shared.armature.get_all_parents(bone!().id);
+            let parents = shared.armature.get_all_parents(shared.armature.bones[b].id);
             // add space to the left if this is a child
             for _ in 0..parents.len() {
                 armature_window::vert_line(0., ui, shared);
@@ -433,33 +445,26 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 
             // show folding button if this bone has children
             let mut children = vec![];
-            armature_window::get_all_children(&shared.armature.bones, &mut children, &bone!());
+            let bone = &shared.armature.bones[b];
+            armature_window::get_all_children(&shared.armature.bones, &mut children, bone);
             if children.len() == 0 {
                 armature_window::hor_line(11., ui, shared);
             } else {
-                let bone_id = bone!().id;
-                let is_folded = *folded!().get(&bone_id).expect(FOLD_ERR);
-                let fold_icon = if is_folded { "⏵" } else { "⏷" };
-
-                let id = "style_bone_fold".to_owned() + &b.to_string();
+                let fold_icon = if shared.armature.bones[b].folded {
+                    "⏵"
+                } else {
+                    "⏷"
+                };
+                let id = "bone_style_fold".to_owned() + &b.to_string();
                 if armature_window::bone_label(fold_icon, ui, id, shared, Vec2::new(-2., 18.))
                     .clicked()
                 {
-                    *folded!().get_mut(&bone_id).unwrap() = !folded!().get(&bone_id).unwrap();
+                    shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
                 }
             }
             ui.add_space(13.);
 
             let mut selected_col = shared.config.colors.dark_accent;
-
-            let mut set_idx: usize = usize::MAX;
-            let styles = &shared.armature.styles;
-            if let Some(idx) = styles.iter().position(|set| set.id == style_id) {
-                set_idx = idx;
-            }
-            if bone!().style_ids.contains(&(set_idx as i32)) {
-                selected_col += crate::Color::new(20, 20, 20, 0);
-            }
 
             if shared.ui.hovering_style_bone == b as i32 {
                 selected_col += crate::Color::new(20, 20, 20, 0);
@@ -469,9 +474,9 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 
             let idx_input_width = 15.;
 
-            let name = bone!().name.to_string();
+            let name = shared.armature.bones[b].name.to_string();
             let mut text_col = shared.config.colors.text;
-            if bone!().hidden == 1 {
+            if shared.armature.bones[b].hidden == 1 {
                 text_col = shared.config.colors.dark_accent;
                 text_col += crate::Color::new(40, 40, 40, 0)
             }
@@ -479,65 +484,25 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                 .fill(selected_col.into())
                 .show(ui, |ui| {
                     ui.horizontal(|ui| {
-                        ui.set_width(width - idx_input_width);
+                        ui.set_width((width - idx_input_width).max(0.));
                         ui.set_height(21.);
                         ui.add_space(5.);
                         ui.label(egui::RichText::new(name).color(text_col));
                     });
                 })
                 .response
-                .interact(egui::Sense::click())
-                .on_hover_cursor(egui::CursorIcon::PointingHand);
-
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if !bone!().style_ids.contains(&(set_idx as i32)) {
-                    return;
-                }
-
-                ui.add_space(15.);
-
-                let str_idx = "  ".to_owned() + &bone!().tex.to_string() + "  ";
-                egui::containers::menu::MenuButton::new(str_idx).ui(ui, |ui| {
-                    let style_id = shared.ui.selected_tex_set_id;
-                    let styles = &shared.armature.styles;
-                    let set = styles.iter().find(|style| style.id == style_id).unwrap();
-                    let mut tex_str = bone!().tex.clone();
-                    for t in 0..set.textures.len() {
-                        let str_idx = t.to_string() + ") ";
-                        let name = set.textures[t].name.clone().to_string();
-                        ui.selectable_value(
-                            &mut tex_str,
-                            set.textures[t].name.clone(),
-                            str_idx + &name,
-                        );
-                    }
-                    shared.armature.set_bone_tex(
-                        bone!().id,
-                        tex_str,
-                        shared.ui.anim.selected,
-                        shared.ui.anim.selected_frame,
-                    );
-                });
-            });
+                .interact(egui::Sense::click());
 
             if button.contains_pointer() {
                 shared.ui.hovering_style_bone = b as i32;
                 hovered = true;
             }
-            if button.clicked() {
-                let styles = &mut bone!().style_ids;
-                if styles.contains(&(set_idx as i32)) {
-                    styles.retain(|style| *style != set_idx as i32);
-                } else {
-                    styles.push(set_idx as i32);
-                    let style = shared.armature.style_of(bone!().id).unwrap();
-                    bone!().tex = style.textures[0].name.clone();
-                }
-            }
 
             let pointer = ui.input(|i| i.pointer.interact_pos());
             let hovered_payload = button.dnd_hover_payload::<i32>();
             let dragged_payload = button.dnd_release_payload::<i32>();
+
+            ui.add_space(7.);
 
             if pointer == None || hovered_payload == None {
                 return;
@@ -556,11 +521,8 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             let bone = &mut shared.armature.bones[idx as usize];
-            if !bone.style_ids.contains(&shared.ui.selected_tex_set_id) {
-                bone.style_ids.push(shared.ui.selected_tex_set_id);
-            }
             let id = bone.id;
-            let tex_str = shared.armature.styles[shared.ui.selected_tex_set_id as usize].textures
+            let tex_str = shared.armature.styles[shared.ui.selected_style as usize].textures
                 [*dragged_payload.unwrap() as usize]
                 .name
                 .clone();
@@ -577,6 +539,103 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
     }
 }
 
+fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
+    ui.vertical(|ui| {
+        ui.horizontal(|ui| {
+            let str_heading = &shared.loc("styles_modal.assigned_textures");
+            let str_desc = &shared.loc("styles_modal.assigned_textures_desc");
+            ui.label(str_heading.to_owned()).on_hover_text(str_desc)
+        });
+
+        let default_width = 150.;
+
+        if shared.ui.selected_style == -1 {
+            let size = ui.available_size();
+            let mut darker = shared.config.colors.dark_accent;
+            darker -= Color::new(5, 5, 5, 0);
+            egui::Frame::new()
+                .inner_margin(5.)
+                .fill(darker.into())
+                .show(ui, |ui| {
+                    ui.set_width(default_width);
+                    ui.set_height(size.y - 10.);
+                });
+            return;
+        }
+
+        let frame = egui::Frame::default();
+        ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+            egui::Frame::new()
+                .fill(shared.config.colors.dark_accent.into())
+                .inner_margin(6.)
+                .show(ui, |ui| {
+                    ui.set_width(default_width);
+                    let padding = Vec2::new(20., 33.);
+                    ui.set_height(height - padding.y);
+
+                    if shared.ui.selected_style == -1 {
+                        return;
+                    }
+
+                    let styles = &shared.armature.styles;
+                    let tex_id = shared.ui.selected_style;
+
+                    let set = styles.iter().find(|style| style.id == tex_id).unwrap();
+
+                    if set.textures.len() == 0 {
+                        return;
+                    }
+
+                    let scroll = egui::ScrollArea::vertical()
+                        .id_salt("assigned")
+                        .vertical_scroll_offset(shared.ui.bones_assigned_scroll)
+                        .show(ui, |ui| {
+                            for b in 0..shared.armature.bones.len() {
+                                if shared.armature.is_bone_folded(shared.armature.bones[b].id) {
+                                    continue;
+                                }
+                                let bone = shared.armature.bones[b].clone();
+                                let mut raw_str = bone.tex.to_string();
+                                let max_letters = 13;
+                                if raw_str.len() > max_letters - 1 {
+                                    raw_str = raw_str[0..max_letters.min(raw_str.len())]
+                                        .to_string()
+                                        + "...";
+                                }
+                                let len: i32 =
+                                    (max_letters as i32 - raw_str.len() as i32 + 5).max(0);
+                                raw_str += &" ".repeat(len as usize);
+                                let str_idx = egui::RichText::new(raw_str).monospace();
+                                ui.add_space(1.5);
+                                ui.horizontal(|ui| {
+                                    egui::containers::menu::MenuButton::new(str_idx).ui(ui, |ui| {
+                                        let style_id = shared.ui.selected_style;
+                                        let styles = &shared.armature.styles;
+                                        let set = styles.iter().find(|s| s.id == style_id).unwrap();
+                                        let mut tex_str = bone.tex.clone();
+                                        ui.selectable_value(&mut tex_str, "".to_string(), "[None]");
+                                        for t in 0..set.textures.len() {
+                                            let name = set.textures[t].name.clone().to_string();
+                                            ui.selectable_value(&mut tex_str, name.clone(), name);
+                                        }
+                                        shared.armature.set_bone_tex(
+                                            bone.id,
+                                            tex_str,
+                                            shared.ui.anim.selected,
+                                            shared.ui.anim.selected_frame,
+                                        );
+                                    });
+                                    ui.add_space(7.);
+                                });
+                                ui.add_space(1.5);
+                            }
+                        });
+                    shared.ui.bones_assigned_scroll = scroll.state.offset.y;
+                })
+        });
+    });
+}
+
 pub fn draw_tex_preview(shared: &Shared, ui: &mut egui::Ui) {
     let tex = &shared.selected_set().unwrap().textures[shared.ui.hovering_tex as usize];
     let size = resize_tex_img(tex.size, ui.available_width() as usize);
@@ -585,7 +644,8 @@ pub fn draw_tex_preview(shared: &Shared, ui: &mut egui::Ui) {
         ui.min_rect().center().y - size.y / 2. - 40.,
     );
     let rect = egui::Rect::from_min_size(left_top, size.into());
-    egui::Image::new(tex.ui_img.as_ref().unwrap()).paint_at(ui, rect);
+    let data = shared.armature.tex_data(tex).unwrap();
+    egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, rect);
 
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         let mut name = egui::text::LayoutJob::default();
@@ -630,18 +690,14 @@ fn resize_tex_img(mut size: Vec2, max: usize) -> Vec2 {
 
 pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
     let mut idx: i32 = -1;
-    macro_rules! set {
-        () => {
-            shared.selected_set().unwrap()
-        };
-    }
 
     let width = ui.available_width();
 
     let mut hovered = false;
-    for i in 0..set!().textures.len() {
+    let mut dragged = false;
+    for i in 0..shared.selected_set().unwrap().textures.len() {
         idx += 1;
-        let name = set!().textures[i].name.clone();
+        let name = shared.selected_set().unwrap().textures[i].name.clone();
 
         let str_desc = &shared.loc("styles_modal.texture_desc").clone();
 
@@ -651,9 +707,29 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         }
 
         ui.horizontal(|ui| {
+            let rename_id = "texture_".to_owned() + &i.to_string();
+            if shared.ui.rename_id == rename_id {
+                let (edited, value, _) = ui.text_input(
+                    rename_id.clone(),
+                    shared,
+                    name.to_string(),
+                    Some(TextInputOptions {
+                        focus: true,
+                        placeholder: "Texture".to_string(),
+                        default: "Texture".to_string(),
+                        ..Default::default()
+                    }),
+                );
+                if edited {
+                    let trimmed = value.trim_start().trim_end().to_string();
+                    shared.selected_set_mut().unwrap().textures[i].name = trimmed;
+                }
+                return;
+            }
             let bin_width = 13.;
+            let button_id = egui::Id::new(("tex", idx));
             let button = ui
-                .dnd_drag_source(egui::Id::new(("tex", idx, 0)), idx, |ui| {
+                .dnd_drag_source(button_id, idx, |ui| {
                     egui::Frame::new().fill(col.into()).show(ui, |ui| {
                         ui.horizontal(|ui| {
                             ui.set_width(width - bin_width);
@@ -667,13 +743,25 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 .on_hover_text(str_desc)
                 .interact(egui::Sense::click());
 
+            let drag_id = ui.ctx().dragged_id();
+            if drag_id != None && drag_id.unwrap() == button_id {
+                dragged = true;
+            }
+
             if button.secondary_clicked() {
                 shared.ui.context_menu.show(ContextType::Texture, i as i32)
+            }
+            if button.clicked() {
+                if shared.ui.selected_tex == i as i32 {
+                    shared.ui.rename_id = rename_id.clone();
+                }
+                shared.ui.selected_tex = i as i32;
             }
 
             if shared.ui.context_menu.is(ContextType::Texture, i as i32) {
                 button.show_tooltip_ui(|ui| {
                     if ui.clickable_label("Rename").clicked() {
+                        shared.ui.rename_id = rename_id;
                         shared.ui.context_menu.close();
                     };
                     if ui.clickable_label("Delete").clicked() {
@@ -728,7 +816,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
 
             shared.undo_actions.push(Action {
                 action: ActionType::TextureSet,
-                id: shared.ui.selected_tex_set_id as i32,
+                id: shared.ui.selected_style as i32,
                 tex_sets: vec![shared.selected_set().unwrap().clone()],
                 ..Default::default()
             });
@@ -742,7 +830,8 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         });
     }
 
-    if !hovered {
+    if !hovered || dragged {
         shared.ui.hovering_tex = -1;
     }
+    shared.ui.dragging_tex = dragged;
 }

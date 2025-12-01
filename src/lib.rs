@@ -386,13 +386,6 @@ impl ApplicationHandler for App {
             event_loop.exit();
         }
 
-        #[cfg(not(target_arch = "wasm32"))]
-        #[cfg(feature = "debug")]
-        if self.shared.debug {
-            // macro-type debug stuff goes here
-            self.shared.debug = false;
-        }
-
         window.request_redraw();
     }
 }

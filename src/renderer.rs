@@ -182,14 +182,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     break;
                 }
 
-                let tex = temp_arm.tex_of(temp_arm.bones[b].id);
+                let tex = temp_arm.tex_of(temp_arm.bones[b].id).unwrap();
 
-                let img = &tex.unwrap().image;
+                let img = &shared.armature.tex_data(tex).unwrap().image;
                 let pos = Vec2::new(
                     (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
                 );
-                let pixel_alpha = tex.unwrap().image.get_pixel(pos.x as u32, pos.y as u32).0[3];
+                let pixel_alpha = img.get_pixel(pos.x as u32, pos.y as u32).0[3];
                 if pixel_alpha == 255 && !shared.ui.showing_mesh {
                     hover_bone_id = temp_arm.bones[b].id;
                     break;
@@ -252,7 +252,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
 
-        let bg = tex.unwrap().bind_group.clone();
+        let t = tex.unwrap();
+        let bg = shared.armature.tex_data(t).unwrap().bind_group.clone();
         let bone = &temp_arm.bones[b];
         draw(&bg, &bone.world_verts, &bone.indices, render_pass, device);
     }
@@ -294,7 +295,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     if shared.ui.showing_mesh || shared.ui.setting_bind_verts {
         let id = shared.selected_bone().unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
-        let bind_group = &temp_arm.tex_of(bone.id).unwrap().bind_group;
+        let tex = temp_arm.tex_of(bone.id).unwrap();
+        let bind_group = &shared.armature.tex_data(tex).unwrap().bind_group;
         let verts = &bone.world_verts;
         draw(&bind_group, &verts, &bone.indices, render_pass, device);
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
@@ -503,8 +505,7 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
         if shared.armature.tex_of(temp_arm.bones[b].id) == None {
             continue;
         }
-        let set = shared.armature.style_of(temp_arm.bones[b].id);
-        if set == None || temp_arm.bones[b].hidden == 1 {
+        if temp_arm.bones[b].hidden == 1 {
             continue;
         }
 
@@ -518,14 +519,10 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
 
         let arm = &shared.armature;
         let id = temp_arm.bones[b].id;
-        let bind_group = &arm.tex_of(id).unwrap().bind_group;
-        draw(
-            bind_group,
-            &temp_arm.bones[b].world_verts,
-            &temp_arm.bones[b].indices,
-            render_pass,
-            device,
-        );
+        let tex = arm.tex_of(id).unwrap();
+        let bg = &shared.armature.tex_data(tex).unwrap().bind_group;
+        let bones = &temp_arm.bones[b];
+        draw(bg, &bones.world_verts, &bones.indices, render_pass, device);
     }
 }
 

@@ -3,7 +3,6 @@
 use crate::*;
 
 use std::{
-    collections::HashMap,
     fmt,
     ops::{DivAssign, MulAssign},
 };
@@ -506,7 +505,7 @@ pub struct Ui {
 
     pub changing_key: String,
 
-    pub selected_tex_set_id: i32,
+    pub selected_style: i32,
 
     pub hovering_tex: i32,
     pub hovering_bone: i32,
@@ -521,11 +520,14 @@ pub struct Ui {
 
     pub setting_ik_target: bool,
 
-    pub selected_style: i32,
-
-    pub styles_folded_bones: HashMap<i32, bool>,
+    // not visually indicated; just used for `double click > rename` logic
+    pub selected_tex: i32,
 
     pub selected_bind: i32,
+
+    pub styles_modal_size: Vec2,
+    pub bones_assigned_scroll: f32,
+    pub dragging_tex: bool,
 
     pub styles_modal: bool,
     pub exiting: bool,
@@ -820,8 +822,6 @@ pub struct Bone {
     pub name: String,
     #[serde(default)]
     pub parent_id: i32,
-    #[serde(default, skip_serializing_if = "is_i32_empty")]
-    pub style_ids: Vec<i32>,
     #[serde(default, skip_serializing_if = "is_str_empty")]
     pub tex: String,
     #[serde(default, skip_serializing_if = "is_neg_one")]
@@ -965,6 +965,8 @@ pub struct Armature {
     pub animations: Vec<Animation>,
     #[serde(default)]
     pub styles: Vec<Style>,
+    #[serde(skip)]
+    pub tex_data: Vec<TextureData>,
 }
 
 impl Armature {
@@ -979,14 +981,14 @@ impl Armature {
         selected_anim: usize,
         selected_frame: i32,
     ) {
-        if self.style_of(bone_id) == None {
-            return;
-        }
-
         if selected_anim == usize::MAX {
             let bone_mut = self.bones.iter_mut().find(|b| b.id == bone_id).unwrap();
             bone_mut.tex = new_tex_str;
-            let new_size = self.tex_of(bone_id).unwrap().size;
+            let new_tex = self.tex_of(bone_id);
+            if new_tex == None {
+                return;
+            }
+            let new_size = new_tex.unwrap().size;
 
             let bone = self.bones.iter().find(|b| b.id == bone_id).unwrap().clone();
             if !bone.verts_edited {
@@ -1018,10 +1020,6 @@ impl Armature {
         // set highest zindex so far
         let mut highest_zindex = 0;
         for bone in &self.bones {
-            if bone.style_ids.len() == 0 {
-                continue;
-            }
-
             highest_zindex = highest_zindex.max(bone.zindex);
         }
 
@@ -1325,34 +1323,20 @@ impl Armature {
         });
     }
 
-    pub fn style_of(&self, bone_id: i32) -> Option<&Style> {
+    pub fn tex_of(&self, bone_id: i32) -> Option<&Texture> {
         let bone = self.bones.iter().find(|bone| bone.id == bone_id);
         if bone == None {
             return None;
         }
-        for s in 0..self.styles.len() {
-            if self.styles[s].active && bone.unwrap().style_ids.contains(&(s as i32)) {
-                return Some(&self.styles[s]);
+        for style in &self.styles {
+            if !style.active {
+                continue;
+            }
+            if let Some(tex) = style.textures.iter().find(|t| t.name == bone.unwrap().tex) {
+                return Some(tex);
             }
         }
-
         None
-    }
-
-    pub fn tex_of(&self, bone_id: i32) -> Option<&Texture> {
-        let set = self.style_of(bone_id);
-        if set == None {
-            return None;
-        }
-
-        let bone = self.bones.iter().find(|bone| bone.id == bone_id);
-        if bone == None || set.unwrap().textures.len() == 0 {
-            return None;
-        }
-        set.unwrap()
-            .textures
-            .iter()
-            .find(|t| t.name == bone.unwrap().tex)
     }
 
     pub fn bone_eff(&self, bone_id: i32) -> JointEffector {
@@ -1389,6 +1373,23 @@ impl Armature {
         }
 
         JointEffector::None
+    }
+
+    pub fn is_bone_folded(&self, bone_id: i32) -> bool {
+        let mut nb = self.bones.iter().find(|b| b.id == bone_id).unwrap();
+        while nb.parent_id != -1 {
+            let id = nb.parent_id;
+            nb = self.bones.iter().find(|bo| bo.id == id).unwrap();
+            if nb.folded {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn tex_data(&self, tex: &Texture) -> Option<&TextureData> {
+        self.tex_data.iter().find(|d| d.id == tex.data_id)
     }
 }
 
@@ -1449,10 +1450,14 @@ pub struct Texture {
     #[serde(default, rename = "size")]
     pub ser_size: Vec2I,
 
-    // todo:
-    // Make a global texture list that keeps track of these separately.
-    // Texture sets are cloned for the undo actions list, which bloats mem usage
-    // if the user adds or edits texture sets frequently.
+    #[serde(skip)]
+    pub data_id: i32,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
+pub struct TextureData {
+    #[serde(skip)]
+    pub id: i32,
     #[serde(skip)]
     pub image: image::DynamicImage,
     #[serde(skip)]
@@ -1777,9 +1782,6 @@ pub struct Shared {
 
     pub startup: Startup,
 
-    /// triggers debug stuff. Set in main.rs
-    pub debug: bool,
-
     pub time: f32,
 
     pub last_autosave: f32,
@@ -1905,21 +1907,17 @@ impl Shared {
         self.armature
             .styles
             .iter()
-            .find(|set| set.id == self.ui.selected_tex_set_id)
+            .find(|set| set.id == self.ui.selected_style)
     }
 
     pub fn selected_set_mut(&mut self) -> Option<&mut Style> {
         self.armature
             .styles
             .iter_mut()
-            .find(|set| set.id == self.ui.selected_tex_set_id)
+            .find(|set| set.id == self.ui.selected_style)
     }
 
     pub fn open_style_modal(&mut self) {
-        self.ui.styles_folded_bones = HashMap::new();
-        for bone in &self.armature.bones {
-            self.ui.styles_folded_bones.insert(bone.id, bone.folded);
-        }
         self.ui.styles_modal = true;
     }
 
@@ -1950,7 +1948,6 @@ impl Shared {
             animated_bones = self.armature.animate(anim.selected, frame, None);
         }
 
-        // runtime: armature bones should be immutable to rendering
         animated_bones
     }
 }

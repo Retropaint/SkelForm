@@ -208,8 +208,8 @@ pub fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
     for set in &armature.styles {
         for tex in &set.textures {
             boxes.push(max_rects::packing_box::PackingBox::new(
-                tex.image.width() as i32,
-                tex.image.height() as i32,
+                armature.tex_data(tex).unwrap().image.width() as i32,
+                armature.tex_data(tex).unwrap().image.height() as i32,
             ));
             tex_len += 1;
         }
@@ -224,8 +224,9 @@ pub fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
 
     let mut raw_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size as u32, size as u32);
 
-    for set in &mut armature.styles {
-        for tex in &mut set.textures {
+    for s in 0..armature.styles.len() {
+        for t in 0..armature.styles[s].textures.len() {
+            let tex = &armature.styles[s].textures[t];
             let p = placed
                 .iter()
                 .position(|pl| pl.width == tex.size.x as i32 && pl.height == tex.size.y as i32)
@@ -237,9 +238,11 @@ pub fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
             // ensure another tex of the same size won't overwrite this one
             placed.remove(p);
 
-            raw_buf.copy_from(&tex.image, offset_x, offset_y).unwrap();
+            raw_buf
+                .copy_from(&armature.tex_data(tex).unwrap().image, offset_x, offset_y)
+                .unwrap();
 
-            tex.offset = Vec2::new(offset_x as f32, offset_y as f32);
+            armature.styles[s].textures[t].offset = Vec2::new(offset_x as f32, offset_y as f32);
         }
     }
 
@@ -349,9 +352,6 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
         bone.init_scale = bone.scale;
         bone.init_ik_constraint = bone.ik_constraint_id;
         bone.init_tex = bone.tex.clone();
-        if bone.style_ids.len() == 0 {
-            bone.hidden = -1;
-        }
         bone.init_hidden = bone.hidden;
 
         if bone.ik_bone_ids.len() == 0 {
@@ -379,8 +379,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
     // restructure bone ids
     for b in 0..armature_copy.bones.len() {
         let bone = &mut armature_copy.bones[b];
-        if bone.style_ids.len() == 0 {
-            bone.tex = "".to_string();
+        if bone.tex == "" {
             bone.zindex = -1;
         }
 
@@ -458,6 +457,7 @@ pub fn import<R: Read + std::io::Seek>(
         bones: root.bones,
         animations: root.animations,
         styles: root.styles,
+        tex_data: vec![],
     };
 
     for bone in &mut shared.armature.bones {
@@ -527,16 +527,17 @@ pub fn import<R: Read + std::io::Seek>(
                 tex.offset = Vec2::new(tex.ser_offset.x as f32, tex.ser_offset.y as f32);
                 tex.size = Vec2::new(tex.ser_size.x as f32, tex.ser_size.y as f32);
 
-                tex.image = img.crop(
+                let image = img.crop(
                     tex.offset.x as u32,
                     tex.offset.y as u32,
                     tex.size.x as u32,
                     tex.size.y as u32,
                 );
+                let mut bind_group: Option<wgpu::BindGroup> = None;
 
                 if queue != None && device != None && bind_group_layout != None {
-                    tex.bind_group = Some(renderer::create_texture_bind_group(
-                        tex.image.clone().into_rgba8().to_vec(),
+                    bind_group = Some(renderer::create_texture_bind_group(
+                        image.clone().into_rgba8().to_vec(),
                         tex.size,
                         queue.unwrap(),
                         device.unwrap(),
@@ -560,11 +561,19 @@ pub fn import<R: Read + std::io::Seek>(
                     .to_vec();
 
                 let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &pixels);
-                let ui_tex =
+                let ui_img =
                     context
                         .unwrap()
                         .load_texture("anim_icons", color_image, Default::default());
-                tex.ui_img = Some(ui_tex);
+
+                let data_id = shared.armature.tex_data.len() as i32;
+                tex.data_id = data_id;
+                shared.armature.tex_data.push(TextureData {
+                    id: data_id,
+                    image,
+                    bind_group,
+                    ui_img: Some(ui_img),
+                });
             }
         }
     }

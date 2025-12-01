@@ -55,7 +55,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     }
 
     let event_loop = winit::event_loop::EventLoop::builder().build()?;
-    event_loop.set_control_flow(winit::event_loop::ControlFlow::Poll);
+    event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
 
     event_loop.run_app(&mut app)
 }
@@ -76,8 +76,9 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.context_menu.close();
     shared.ui.hovering_tex = -1;
     shared.ui.selected_style = -1;
-    shared.ui.selected_tex_set_id = -1;
+    shared.ui.selected_style = -1;
     shared.ui.selected_bind = -1;
+    shared.ui.styles_modal_size = Vec2::new(500., 500.);
     shared.screenshot_res = Vec2::new(128., 128.);
     shared.changed_vert_id = -1;
 

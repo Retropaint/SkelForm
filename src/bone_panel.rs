@@ -66,71 +66,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         }
     });
 
-    ui.horizontal(|ui| {
-        ui.label(&shared.loc("bone_panel.style"));
-
-        let name = if let Some(set) = shared.armature.style_of(bone.id) {
-            set.name.clone()
-        } else {
-            "None".to_string()
-        };
-
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            egui::ComboBox::new("bone_style_drop", "")
-                .selected_text(name.clone())
-                .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
-                .show_ui(ui, |ui| {
-                    let mut selected_value = -1;
-                    for s in 0..shared.armature.styles.len() {
-                        let label = ui.selectable_value(
-                            &mut selected_value,
-                            s as i32,
-                            shared.armature.styles[s].name.to_string(),
-                        );
-
-                        if bone.style_ids.contains(&(s as i32)) {
-                            ui.painter().text(
-                                label.rect.right_center(),
-                                egui::Align2::RIGHT_CENTER,
-                                "✅",
-                                egui::FontId::default(),
-                                shared.config.colors.text.into(),
-                            );
-                        }
-                    }
-                    ui.selectable_value(
-                        &mut selected_value,
-                        -2,
-                        &shared.loc("bone_panel.texture_set_setup"),
-                    );
-
-                    if selected_value == -2 {
-                        shared.open_style_modal();
-                        ui.close();
-                    } else if selected_value != -1 {
-                        let styles = &mut shared.armature.find_bone_mut(bone.id).unwrap().style_ids;
-                        let mut tex = "".to_string();
-                        if styles.contains(&selected_value) {
-                            let idx = styles
-                                .iter()
-                                .position(|style| *style == selected_value)
-                                .unwrap();
-                            styles.remove(idx);
-                        } else {
-                            styles.push(selected_value);
-                            tex = shared.armature.styles[selected_value as usize].textures[0]
-                                .name
-                                .clone();
-                            shared.armature.find_bone_mut(bone.id).unwrap().tex = tex.clone();
-                        }
-                        shared.armature.set_bone_tex(bone.id, tex, usize::MAX, -1);
-                    }
-                });
-        });
-    });
-
     let tex = shared.armature.tex_of(bone.id);
-    let set = shared.armature.style_of(bone.id);
 
     let tex_name_col = if tex != None {
         shared.config.colors.text
@@ -144,28 +80,39 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     } else {
         &"None".to_string()
     };
-    ui.add_enabled_ui(set != None, |ui| {
+    ui.add_enabled_ui(shared.armature.styles.len() != 0, |ui| {
         ui.horizontal(|ui| {
-            ui.label(&shared.loc("bone_panel.texture_index"));
+            ui.label(&shared.loc("bone_panel.texture"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 egui::ComboBox::new("tex_selector", "")
                     .selected_text(egui::RichText::new(tex_name).color(tex_name_col))
                     .show_ui(ui, |ui| {
-                        let set = &shared.armature.style_of(bone.id).unwrap();
-                        for t in 0..set.textures.len() {
-                            ui.selectable_value(
-                                &mut selected_tex,
-                                set.textures[t].name.clone(),
-                                &set.textures[t].name.clone(),
-                            );
+                        let mut texes = vec![];
+                        for style in &shared.armature.styles {
+                            let textures = style.textures.iter();
+                            let mut names =
+                                textures.map(|t| t.name.clone()).collect::<Vec<String>>();
+                            texes.append(&mut names);
                         }
+
+                        // remove duplicates
+                        texes.sort_unstable();
+                        texes.dedup();
+
+                        ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
+                        for tex in texes {
+                            ui.selectable_value(&mut selected_tex, tex.clone(), &tex.clone());
+                        }
+                        ui.selectable_value(&mut selected_tex, "[Setup]".to_string(), "[Setup]");
                     })
                     .response;
             });
         });
     });
 
-    if set != None && selected_tex != bone.tex {
+    if selected_tex == "[Setup]" {
+        shared.ui.styles_modal = true;
+    } else if selected_tex != bone.tex {
         let mut anim_id = shared.ui.anim.selected;
         if !shared.ui.is_animating() {
             anim_id = usize::MAX;
@@ -649,7 +596,9 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
 
                 if ui.skf_button("Trace").clicked() {
                     let tex = &shared.armature.tex_of(bone.id).unwrap();
-                    let (verts, indices) = renderer::trace_mesh(&tex.image);
+                    let tex_data = &shared.armature.tex_data;
+                    let data = tex_data.iter().find(|d| tex.data_id == d.id).unwrap();
+                    let (verts, indices) = renderer::trace_mesh(&data.image);
                     let bone = &mut shared.selected_bone_mut().unwrap();
                     bone.vertices = verts;
                     bone.indices = indices;

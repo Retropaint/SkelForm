@@ -100,14 +100,14 @@ pub fn read_image_loaders(
 
     // check if this texture already exists
     for tex in &shared.selected_set().unwrap().textures {
-        if image == tex.image {
+        if image == shared.armature.tex_data(tex).unwrap().image {
             return;
         }
     }
 
     add_texture(
         image,
-        shared.ui.selected_tex_set_id,
+        shared.ui.selected_style,
         dimensions,
         &name,
         &mut shared.armature,
@@ -203,7 +203,8 @@ pub fn read_psd(
         // add tex if not a duplicate
         let mut tex_idx = usize::MAX;
         for t in 0..shared.armature.styles[0].textures.len() {
-            let img = &shared.armature.styles[0].textures[t].image;
+            let tex = &shared.armature.styles[0].textures[t];
+            let img = &shared.armature.tex_data(tex).unwrap().image;
             if img.to_rgba8().to_vec() == image.0.to_vec() {
                 tex_idx = t;
                 break;
@@ -282,7 +283,6 @@ pub fn read_psd(
         let tex_name = shared.armature.styles[0].textures[tex_idx].name.clone();
         let bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
         bone.parent_id = 0;
-        bone.style_ids = vec![0];
         shared
             .armature
             .set_bone_tex(new_bone_id, tex_name.clone(), usize::MAX, 0);
@@ -321,7 +321,8 @@ pub fn read_psd(
         }
 
         let new_bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
-        new_bone.name = tex_name;
+        new_bone.name = tex_name.clone();
+        new_bone.tex = tex_name;
 
         // layers start from top-left, so push bone down and right to reflect that
         new_bone.pos = Vec2::new(dims.x / 2., -dims.y / 2.);
@@ -447,6 +448,14 @@ pub fn add_texture(
         ));
     }
 
+    let id = armature.tex_data.len() as i32;
+    armature.tex_data.push(TextureData {
+        id,
+        image,
+        bind_group,
+        ui_img,
+    });
+
     armature
         .styles
         .iter_mut()
@@ -456,12 +465,10 @@ pub fn add_texture(
         .push(crate::Texture {
             offset: Vec2::ZERO,
             size: dimensions,
-            image,
             name: tex_name.to_string(),
-            bind_group,
-            ui_img,
             ser_offset: Vec2I::new(0, 0),
             ser_size: Vec2I::new(0, 0),
+            data_id: id,
         });
 }
 
