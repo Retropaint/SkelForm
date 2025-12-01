@@ -202,7 +202,7 @@
       "ScaleX": "Scale W",
       "ScaleY": "Scale H",
       "Zindex": "Zindex",
-      "TextureIndex": "Texture",
+      "Texture": "Texture",
       "IkConstraint": "Constraint",
       "Hidden": "Hidden"
     }
