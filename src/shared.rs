@@ -612,7 +612,7 @@ pub struct Config {
     #[serde(default)]
     pub gridline_front: bool,
     #[serde(default)]
-    pub keep_tex_idx_on_move: bool,
+    pub keep_tex_str: bool,
     #[serde(default)]
     pub meshdef: bool,
 
@@ -647,7 +647,7 @@ impl Default for Config {
             autosave_frequency: 5,
             exact_bone_select: false,
             gridline_front: false,
-            keep_tex_idx_on_move: false,
+            keep_tex_str: false,
             meshdef: false,
         }
     }
@@ -1923,7 +1923,7 @@ impl Shared {
 
     pub fn animate_bones(&mut self) -> Vec<Bone> {
         // runtime:
-        // armature bones should normally be mutable to animation for blending,
+        // armature bones should normally be mutable to animation for smoothing,
         // but that's not ideal when editing
         let mut animated_bones = self.armature.bones.clone();
 

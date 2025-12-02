@@ -94,7 +94,7 @@ pub fn read_image_loaders(
     }
 
     if image.clone().into_rgba8().to_vec().len() == 0 {
-        shared.ui.open_modal(IMPORT_IMG_ERR.to_string(), false);
+        shared.ui.open_modal(shared.loc("img_err"), false);
         return;
     }
 
@@ -219,10 +219,8 @@ pub fn read_psd(
                     utils::without_unicode(utils::after_underscore(group.name())).to_string();
                 let styles = &shared.armature.styles;
                 let names: Vec<String> = styles.iter().map(|style| style.name.clone()).collect();
-                if let Some(idx) = names
-                    .iter()
-                    .position(|name| name.to_lowercase() == style_name.to_lowercase())
-                {
+                let snl = style_name.to_lowercase();
+                if let Some(idx) = names.iter().position(|name| name.to_lowercase() == snl) {
                     style_idx = idx as i32;
                 } else {
                     let new_idx = shared.armature.styles.len() as i32;

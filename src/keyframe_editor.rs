@@ -131,13 +131,6 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                         continue;
                     }
 
-                    macro_rules! activate_renaming {
-                        () => {
-                            shared.ui.rename_id = "animation ".to_string() + &i.to_string();
-                            shared.ui.edit_value = Some(name.to_string());
-                        };
-                    }
-
                     ui.horizontal(|ui| {
                         let button_padding = if shared.armature.animations[i].keyframes.len() > 0 {
                             25.
@@ -182,7 +175,8 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                 shared.ui.anim.selected = i;
                                 shared.ui.select_anim_frame(0);
                             } else {
-                                activate_renaming!();
+                                shared.ui.rename_id = "animation ".to_string() + &i.to_string();
+                                shared.ui.edit_value = Some(name.to_string());
                             }
                         }
                         if button.secondary_clicked() {
@@ -211,11 +205,12 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
 
                         if shared.ui.context_menu.is(ContextType::Animation, i as i32) {
                             button.show_tooltip_ui(|ui| {
-                                if ui.clickable_label("Rename").clicked() {
-                                    activate_renaming!();
+                                if ui.clickable_label(shared.loc("rename")).clicked() {
+                                    shared.ui.rename_id = "animation ".to_string() + &i.to_string();
+                                    shared.ui.edit_value = Some(name.to_string());
                                     shared.ui.context_menu.close();
                                 };
-                                if ui.clickable_label("Delete").clicked() {
+                                if ui.clickable_label(shared.loc("delete")).clicked() {
                                     let str_del = &shared.loc("polar.delete_anim").clone();
                                     shared.ui.open_polar_modal(PolarId::DeleteAnim, &str_del);
 
@@ -631,22 +626,17 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
             if ui.skf_button(&shared.loc("keyframe_editor.copy")).clicked() {
                 shared.copy_buffer = CopyBuffer::default();
-                macro_rules! keyframes {
-                    () => {
-                        shared.selected_animation().unwrap().keyframes
-                    };
-                }
-                for kf in 0..keyframes!().len() {
-                    if keyframes!()[kf].frame == shared.ui.anim.selected_frame {
-                        shared.copy_buffer.keyframes.push(keyframes!()[kf].clone());
+                for kf in 0..shared.selected_animation().unwrap().keyframes.len() {
+                    let frame = shared.ui.anim.selected_frame;
+                    if shared.selected_animation().unwrap().keyframes[kf].frame == frame {
+                        let keyframe = shared.selected_animation().unwrap().keyframes[kf].clone();
+                        shared.copy_buffer.keyframes.push(keyframe);
                     }
                 }
             }
 
-            if ui
-                .skf_button(&shared.loc("keyframe_editor.paste"))
-                .clicked()
-            {
+            let paste_str = &shared.loc("keyframe_editor.paste");
+            if ui.skf_button(paste_str).clicked() {
                 add_anim_action(shared);
 
                 let frame = shared.ui.anim.selected_frame;
@@ -734,25 +724,21 @@ fn draw_frame_lines(
 
     // draw per-change icons
     for i in 0..shared.selected_animation().unwrap().keyframes.len() {
-        macro_rules! kf {
-            () => {
-                shared.selected_animation().unwrap().keyframes[i]
-            };
-        }
+        let kf = shared.selected_animation().unwrap().keyframes[i].clone();
         let size = Vec2::new(17., 17.);
 
         // the Y position is based on this diamond's respective label
         let top: f32;
 
-        let el = kf!().element.clone();
-        let b_id = kf!().bone_id;
+        let el = kf.element.clone();
+        let b_id = kf.bone_id;
         let tops = &bone_tops.tops;
         if let Some(b_top) = tops.iter().find(|bt| bt.id == b_id && bt.element == el) {
             top = b_top.height;
         } else {
             return;
         }
-        let x = shared.ui.anim.lines_x[kf!().frame as usize] + ui.min_rect().left();
+        let x = shared.ui.anim.lines_x[kf.frame as usize] + ui.min_rect().left();
         let pos = Vec2::new(x, top + size.y / 2.);
         let offset = size / 2.;
 
@@ -761,14 +747,14 @@ fn draw_frame_lines(
         }
 
         let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
-        let mut idx = kf!().element.clone().clone() as usize;
+        let mut idx = kf.element.clone().clone() as usize;
         if idx > shared::ANIM_ICON_ID.len() - 1 {
             idx = shared::ANIM_ICON_ID.len() - 1;
         }
 
         let dkf = &shared.ui.anim.dragged_keyframe;
         let mut color = egui::Color32::WHITE;
-        if *dkf == kf!() {
+        if *dkf == kf {
             color = egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30);
         }
 
@@ -784,7 +770,7 @@ fn draw_frame_lines(
         }
 
         if response.dragged() {
-            shared.ui.anim.dragged_keyframe = kf!().clone();
+            shared.ui.anim.dragged_keyframe = kf.clone();
             if let Some(cursor) = ui.ctx().pointer_latest_pos() {
                 let pos = egui::Pos2::new(cursor.x - offset.x, cursor.y - offset.y);
                 let drag_rect = egui::Rect::from_min_size(pos, size.into());

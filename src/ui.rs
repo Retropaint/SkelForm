@@ -55,6 +55,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         shared.input.mouse_prev = shared.input.mouse;
         if let Some(mouse) = i.pointer.latest_pos() {
             shared.input.mouse = mouse.into();
+            shared.input.mouse *= shared.ui.scale;
             shared.input.mouse *= shared.window_factor;
         }
 

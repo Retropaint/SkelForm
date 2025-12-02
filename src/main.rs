@@ -55,6 +55,9 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     }
 
     let event_loop = winit::event_loop::EventLoop::builder().build()?;
+    #[cfg(not(target_arch = "wasm32"))]
+    event_loop.set_control_flow(winit::event_loop::ControlFlow::Poll);
+    #[cfg(target_arch = "wasm32")]
     event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
 
     event_loop.run_app(&mut app)

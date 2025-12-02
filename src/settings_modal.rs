@@ -238,13 +238,12 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         ui.checkbox(&mut shared.config.exact_bone_select, "".into_atoms());
     });
     ui.horizontal(|ui| {
-        let str_keep_tex_idx = &shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx");
-        let str_keep_tex_idx_desc =
-            &shared.loc("settings_modal.miscellaneous.keep_bone_tex_idx_desc");
-        ui.label(&(str_keep_tex_idx.to_owned()))
+        let str_keep_tex_str = &shared.loc("settings_modal.miscellaneous.keep_tex_str");
+        let str_keep_tex_str_desc = &shared.loc("settings_modal.miscellaneous.keep_tex_str_desc");
+        ui.label(&(str_keep_tex_str.to_owned()))
             .on_hover_cursor(egui::CursorIcon::Default)
-            .on_hover_text(str_keep_tex_idx_desc);
-        ui.checkbox(&mut shared.config.keep_tex_idx_on_move, "".into_atoms());
+            .on_hover_text(str_keep_tex_str_desc);
+        ui.checkbox(&mut shared.config.keep_tex_str, "".into_atoms());
     });
 
     ui.add_space(20.);

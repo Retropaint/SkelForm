@@ -2,9 +2,6 @@ use ui::TextInputOptions;
 
 use crate::{ui::EguiUi, *};
 
-pub const FOLD_ERR: &str =
-    "Please use `shared.open_style_modal()` to populate the shared.styles_folded_bones array.";
-
 pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
     let modal_size = Vec2::new(500., 500.);
     let center = egui::Pos2::new(
@@ -612,7 +609,8 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                                         let styles = &shared.armature.styles;
                                         let set = styles.iter().find(|s| s.id == style_id).unwrap();
                                         let mut tex_str = bone.tex.clone();
-                                        ui.selectable_value(&mut tex_str, "".to_string(), "[None]");
+                                        let none_str = shared.loc("none_option");
+                                        ui.selectable_value(&mut tex_str, "".to_string(), none_str);
                                         for t in 0..set.textures.len() {
                                             let name = set.textures[t].name.clone().to_string();
                                             ui.selectable_value(&mut tex_str, name.clone(), name);
@@ -720,8 +718,27 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                     }),
                 );
                 if edited {
+                    let og_name = shared.selected_set_mut().unwrap().textures[i].name.clone();
                     let trimmed = value.trim_start().trim_end().to_string();
-                    shared.selected_set_mut().unwrap().textures[i].name = trimmed;
+                    shared.selected_set_mut().unwrap().textures[i].name = trimmed.clone();
+                    let style = shared.selected_set().unwrap();
+                    let tex_names: Vec<String> =
+                        style.textures.iter().map(|t| t.name.clone()).collect();
+
+                    let filter = tex_names.iter().filter(|name| **name == trimmed);
+                    if filter.count() > 1 {
+                        shared.selected_set_mut().unwrap().textures[i].name = og_name.clone();
+                        let same_name_str = shared.loc("styles_modal.same_name");
+                        shared.ui.open_modal(same_name_str, false);
+                    }
+
+                    if !shared.config.keep_tex_str {
+                        for bone in &mut shared.armature.bones {
+                            if bone.tex == og_name {
+                                bone.tex = trimmed.clone();
+                            }
+                        }
+                    }
                 }
                 return;
             }
@@ -759,11 +776,11 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
 
             if shared.ui.context_menu.is(ContextType::Texture, i as i32) {
                 button.show_tooltip_ui(|ui| {
-                    if ui.clickable_label("Rename").clicked() {
+                    if ui.clickable_label(shared.loc("rename")).clicked() {
                         shared.ui.rename_id = rename_id;
                         shared.ui.context_menu.close();
                     };
-                    if ui.clickable_label("Delete").clicked() {
+                    if ui.clickable_label(shared.loc("delete")).clicked() {
                         let str_del = &shared.loc("polar.delete_tex").clone();
                         shared.ui.open_polar_modal(PolarId::DeleteTex, &str_del);
 
