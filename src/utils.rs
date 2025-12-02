@@ -672,7 +672,6 @@ pub fn open_docs(is_dev: bool, mut _path: &str) {
     #[cfg(not(target_arch = "wasm32"))]
     {
         let url = bin_path() + docs_name + "/" + _path;
-        println!("{}", url);
         match open::that(url) {
             Err(_) => {
                 let url =

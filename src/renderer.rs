@@ -1515,8 +1515,6 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
         1.,
     );
 
-    println!("{}", cam.pos);
-
     let width = 0.005 * cam.zoom;
     let regular_color = VertexColor::new(col.r, col.g, col.b, 0.15);
     let highlight_color = VertexColor::new(col.r, col.g, col.b, 1.);

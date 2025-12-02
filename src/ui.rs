@@ -70,6 +70,11 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
                 shared.camera.zoom - (i.smooth_scroll_delta.y as f32),
                 shared,
             );
+            match shared.config.layout {
+                UiLayout::Right => shared.camera.pos.x -= i.smooth_scroll_delta.y * 0.5,
+                UiLayout::Left => shared.camera.pos.x += i.smooth_scroll_delta.y * 0.5,
+                _ => {}
+            }
         }
 
         shared.time = i.time as f32;
