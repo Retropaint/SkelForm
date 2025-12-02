@@ -44,7 +44,6 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                     egui::Color32::TRANSPARENT,
                     shared.config.colors.gradient.into(),
                 );
-                shared.ui.camera_bar_pos.y = ui.min_rect().top();
 
                 let full_height = ui.available_height();
                 ui.horizontal(|ui| {
@@ -69,6 +68,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                         timeline_editor(ui, shared);
                     }
                 });
+                shared.ui.keyframe_panel_rect = Some(ui.min_rect());
             }),
         &mut shared.input.on_ui,
         &egui_ctx,

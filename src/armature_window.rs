@@ -138,8 +138,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 });
             });
 
-            shared.ui.edit_bar_pos.x = ui.min_rect().right();
-
             ui.add_space(3.);
 
             egui::ScrollArea::both()
@@ -170,6 +168,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         ui.add_space(4.);
                     });
                 });
+            shared.ui.armature_panel_rect = Some(ui.min_rect());
         }),
         &mut shared.input.on_ui,
         &egui_ctx,
