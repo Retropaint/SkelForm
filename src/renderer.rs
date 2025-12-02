@@ -124,7 +124,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
 
-        let cam = &shared.camera;
+        let cam = &shared.world_camera();
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &mut temp_arm.bones[b];
             let vert = world_vert(tb.vertices[v], cam, shared.aspect_ratio(), Vec2::default());
@@ -283,7 +283,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             let pivot = Vec2::new(0., 0.5);
             for v in 0..4 {
                 let verts = arrow.vertices[v];
-                let mut new_vert = world_vert(verts, &shared.camera, ratio, pivot);
+                let mut new_vert = world_vert(verts, &shared.world_camera(), ratio, pivot);
                 new_vert.color = VertexColor::new(1., 1., 1., 0.2);
                 arrow.world_verts.push(new_vert);
             }
@@ -354,7 +354,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         shared.config.colors.center_point.b as f32 / 255.,
         0.75,
     );
-    let cam = shared.camera.pos;
+    let cam = shared.world_camera();
     let zero = Vec2::default();
     let mut point_verts = vec![];
     let mut point_indices = vec![];
@@ -363,7 +363,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             color.a = 0.25;
         }
         let pos = selected_bones_pos[p];
-        let (mut this_verts, mut this_indices) = draw_point(&zero, &shared, &pos, color, cam, 0.);
+        let (mut this_verts, mut this_indices) =
+            draw_point(&zero, &shared, &pos, color, cam.pos, 0.);
         for idx in &mut this_indices {
             *idx += p as u32 * 4;
         }
@@ -442,7 +443,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 pos: bone.pos,
                 ..Default::default()
             };
-            let cam = &shared.camera;
+            let cam = &shared.world_camera();
             let cw = world_vert(center, cam, shared.aspect_ratio(), Vec2::new(0.5, 0.5));
             draw_line(cw.pos, mouse, shared, render_pass, &device);
         }
@@ -498,7 +499,7 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
     construction(&mut temp_arm.bones, &shared.armature.bones);
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
-    let mut cam = shared.camera.clone();
+    let mut cam = shared.world_camera().clone();
     cam.zoom /= 2.;
 
     for b in 0..temp_arm.bones.len() {
@@ -799,7 +800,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
         pos: bone.pos,
         ..Default::default()
     };
-    let cam = &shared.camera;
+    let cam = &shared.world_camera();
     let bone_center = world_vert(vert, cam, shared.aspect_ratio(), Vec2::new(0.5, 0.5));
 
     match shared.edit_mode {
@@ -1372,7 +1373,7 @@ fn draw_point(
 
     let mut point_verts = vec![];
     let ar = shared.aspect_ratio();
-    let mut cam = shared.camera.clone();
+    let mut cam = shared.world_camera().clone();
     cam.pos = camera;
     let pivot = Vec2::new(0.5, 0.5);
     for vert in temp_point_verts {
@@ -1505,6 +1506,8 @@ fn world_vert(mut vert: Vertex, camera: &Camera, aspect_ratio: f32, pivot: Vec2)
 fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared) {
     render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
 
+    let cam = shared.world_camera();
+
     let col = VertexColor::new(
         shared.config.colors.gridline.r as f32 / 255.,
         shared.config.colors.gridline.g as f32 / 255.,
@@ -1512,7 +1515,9 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
         1.,
     );
 
-    let width = 0.005 * shared.camera.zoom;
+    println!("{}", cam.pos);
+
+    let width = 0.005 * cam.zoom;
     let regular_color = VertexColor::new(col.r, col.g, col.b, 0.15);
     let highlight_color = VertexColor::new(col.r, col.g, col.b, 1.);
 
@@ -1521,8 +1526,8 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
     let mut i: u32 = 0;
 
     // draw vertical lines
-    let mut x = (shared.camera.pos.x - shared.camera.zoom / shared.aspect_ratio()).round();
-    let right_side = shared.camera.pos.x + shared.camera.zoom / shared.aspect_ratio();
+    let mut x = (cam.pos.x - cam.zoom / shared.aspect_ratio()).round();
+    let right_side = cam.pos.x + cam.zoom / shared.aspect_ratio();
     while x < right_side {
         if x % shared.gridline_gap as f32 != 0. {
             x += 1.;
@@ -1540,8 +1545,8 @@ fn draw_gridline(render_pass: &mut RenderPass, device: &Device, shared: &Shared)
     }
 
     // draw horizontal lines
-    let mut y = (shared.camera.pos.y - shared.camera.zoom).round();
-    let top_side = shared.camera.pos.y + shared.camera.zoom;
+    let mut y = (cam.pos.y - cam.zoom).round();
+    let top_side = cam.pos.y + cam.zoom;
     while y < top_side {
         if y % shared.gridline_gap as f32 != 0. {
             y += 1.;
@@ -1587,7 +1592,7 @@ pub fn draw_horizontal_line(
     color: VertexColor,
 ) -> Vec<Vertex> {
     let edge = shared.camera.zoom * 5.;
-    let c = &shared.camera;
+    let c = &shared.world_camera();
     let vertices: Vec<Vertex> = vec![
         vert!((Vec2::new(c.pos.x - edge, y) - c.pos) / c.zoom, color),
         vert!((Vec2::new(c.pos.x, width + y) - c.pos) / c.zoom, color),
@@ -1598,7 +1603,7 @@ pub fn draw_horizontal_line(
 
 pub fn draw_vertical_line(x: f32, width: f32, shared: &Shared, color: VertexColor) -> Vec<Vertex> {
     let edge = shared.camera.zoom * 5.;
-    let c = &shared.camera;
+    let c = &shared.world_camera();
     let r = shared.aspect_ratio();
     let vertices: Vec<Vertex> = vec![
         vert!((Vec2::new(x, c.pos.y - edge) - c.pos) / c.zoom * r, color),

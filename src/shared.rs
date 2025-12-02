@@ -1967,6 +1967,16 @@ impl Shared {
 
         animated_bones
     }
+
+    pub fn world_camera(&self) -> Camera {
+        let mut cam = self.camera.clone();
+        match self.config.layout {
+            UiLayout::Right => cam.pos.x += 1500. * self.aspect_ratio(),
+            UiLayout::Left => cam.pos.x -= 1500. * self.aspect_ratio(),
+            _ => {}
+        };
+        cam
+    }
 }
 
 // generate non-clashing id
