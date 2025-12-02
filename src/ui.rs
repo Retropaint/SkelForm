@@ -243,7 +243,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             } else {
                 shared.ui.camera_bar.pos.y = context.screen_rect().bottom();
             }
-            shared.ui.camera_bar.pos.y -= shared.ui.camera_bar.scale.y - 15.;
+            shared.ui.camera_bar.pos.y -= shared.ui.camera_bar.scale.y + 15.;
         }
         UiLayout::Right => {
             shared.ui.edit_bar.pos.x = bone_panel.left() - shared.ui.edit_bar.scale.x - 28.;
@@ -258,6 +258,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             } else {
                 shared.ui.camera_bar.pos.y = context.screen_rect().bottom();
             }
+            shared.ui.camera_bar.pos.y -= shared.ui.camera_bar.scale.y + 15.;
         }
         UiLayout::Left => {
             shared.ui.edit_bar.pos.x = bone_panel.right();
@@ -272,6 +273,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             } else {
                 shared.ui.camera_bar.pos.y = context.screen_rect().bottom();
             }
+            shared.ui.camera_bar.pos.y -= shared.ui.camera_bar.scale.y + 15.;
         }
     }
 
