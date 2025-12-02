@@ -211,9 +211,8 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
                 {
                     keyframe_panel::draw(ui, shared);
                 }
-
-                shared.ui.bone_panel_rect = Some(ui.min_rect());
-            })
+            });
+            shared.ui.bone_panel_rect = Some(ui.min_rect());
         }),
         &mut shared.input.on_ui,
         context,
@@ -226,34 +225,49 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     let keyframe_panel = shared.ui.keyframe_panel_rect;
     match shared.config.layout {
         UiLayout::Split => {
-            shared.ui.anim_bar.pos.x = bone_panel.left();
-            shared.ui.anim_bar.pos.y = top_panel.bottom();
+            shared.ui.anim_bar.pos.x = bone_panel.left() - shared.ui.anim_bar.scale.x - 21.;
+            shared.ui.anim_bar.pos.y = top_panel.bottom() - 1.;
 
             shared.ui.edit_bar.pos.x = armature_panel.right();
             shared.ui.edit_bar.pos.y = top_panel.bottom();
 
-            shared.ui.camera_bar.pos.x = bone_panel.left();
+            shared.ui.camera_bar.pos.x =
+                bone_panel.left() - shared.ui.camera_bar.scale.x - ((6. * 3.3) as f32).ceil();
+            if keyframe_panel != None && shared.ui.anim.open {
+                shared.ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
+            } else {
+                shared.ui.camera_bar.pos.y = context.screen_rect().bottom();
+            }
+            shared.ui.camera_bar.pos.y -= shared.ui.camera_bar.scale.y - 15.;
+        }
+        UiLayout::Right => {
+            shared.ui.edit_bar.pos.x = bone_panel.left() - shared.ui.edit_bar.scale.x - 28.;
+            shared.ui.edit_bar.pos.y = top_panel.bottom();
+
+            shared.ui.anim_bar.pos.x = 0.;
+            shared.ui.anim_bar.pos.y = top_panel.bottom();
+
+            shared.ui.camera_bar.pos.x = bone_panel.left() - shared.ui.camera_bar.scale.x - 21.;
             if keyframe_panel != None && shared.ui.anim.open {
                 shared.ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
                 shared.ui.camera_bar.pos.y = context.screen_rect().bottom();
             }
         }
-        UiLayout::Right => {
-            shared.ui.edit_bar.pos.x = bone_panel.left();
+        UiLayout::Left => {
+            shared.ui.edit_bar.pos.x = bone_panel.right();
             shared.ui.edit_bar.pos.y = top_panel.bottom();
 
-            shared.ui.anim_bar.pos.x = 0.;
+            shared.ui.anim_bar.pos.x = context.screen_rect().right() - shared.ui.anim_bar.scale.x;
             shared.ui.anim_bar.pos.y = top_panel.bottom();
 
-            shared.ui.camera_bar.pos.x = bone_panel.left();
-            if keyframe_panel != None {
+            shared.ui.camera_bar.pos.x = bone_panel.right() + 7.;
+            if keyframe_panel != None && shared.ui.anim.open {
                 shared.ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
                 shared.ui.camera_bar.pos.y = context.screen_rect().bottom();
             }
         }
-        _ => {}
     }
 
     if shared.ui.selected_bone_idx != usize::MAX {
@@ -931,6 +945,7 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
                 edit_mode_button!(&shared.loc("rotate"), EditMode::Rotate, rot);
                 edit_mode_button!(&shared.loc("scale"), EditMode::Scale, ik_disabled);
             });
+            shared.ui.edit_bar.scale = ui.min_rect().size().into();
         });
 }
 
@@ -941,8 +956,8 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
         .max_width(100.)
         .movable(false)
         .current_pos(egui::Pos2::new(
-            shared.ui.anim_bar.pos.x - shared.ui.anim_bar.scale.x - 21.,
-            shared.ui.anim_bar.pos.y - 1.,
+            shared.ui.anim_bar.pos.x,
+            shared.ui.anim_bar.pos.y,
         ))
         .show(egui_ctx, |ui| {
             ui.horizontal(|ui| {
@@ -959,6 +974,7 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
                 }
                 shared.ui.anim_bar.scale = ui.min_rect().size().into();
             });
+            shared.ui.anim_bar.scale = ui.min_rect().size().into();
         });
 }
 
@@ -980,12 +996,12 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
             ..Default::default()
         })
         .current_pos(egui::Pos2::new(
-            shared.ui.camera_bar.pos.x - shared.ui.camera_bar.scale.x - (margin * 3.3).ceil(),
-            shared.ui.camera_bar.pos.y - shared.ui.camera_bar.scale.y - 15.,
+            shared.ui.camera_bar.pos.x,
+            shared.ui.camera_bar.pos.y,
         ))
         .show(egui_ctx, |ui| {
             macro_rules! input {
-                ($element:expr, $float:expr, $id:expr, $label:expr, $tip:expr) => {
+                ($float:expr, $id:expr, $label:expr, $tip:expr) => {
                     ui.horizontal(|ui| {
                         ui.label($label).on_hover_text(&shared.loc($tip));
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -996,27 +1012,9 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
                 };
             }
 
-            input!(
-                shared.camera.pos,
-                shared.camera.pos.x,
-                "cam_pos_x",
-                "X",
-                "cam_x"
-            );
-            input!(
-                shared.camera.pos,
-                shared.camera.pos.y,
-                "cam_pos_y",
-                "Y",
-                "cam_y"
-            );
-            input!(
-                shared.camera.zoom,
-                shared.camera.zoom,
-                "cam_zoom",
-                "🔍",
-                "cam_zoom"
-            );
+            input!(shared.camera.pos.x, "cam_pos_x", "X", "cam_x");
+            input!(shared.camera.pos.y, "cam_pos_y", "Y", "cam_y");
+            input!(shared.camera.zoom, "cam_zoom", "🔍", "cam_zoom");
 
             shared.ui.camera_bar.scale = ui.min_rect().size().into();
         })
