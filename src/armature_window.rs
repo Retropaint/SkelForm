@@ -13,11 +13,31 @@ use crate::shared::*;
 pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     let min_default_size = 175.;
     let panel_id = "Armature";
-    let side_panel = egui::SidePanel::left(panel_id)
-        .default_width(min_default_size)
-        .min_width(min_default_size)
-        .max_width(min_default_size + 100.)
-        .resizable(true);
+    let side_panel: egui::SidePanel;
+    match shared.config.layout {
+        UiLayout::Split => {
+            side_panel = egui::SidePanel::left(panel_id)
+                .default_width(min_default_size)
+                .min_width(min_default_size)
+                .max_width(min_default_size + 100.)
+                .resizable(true);
+        }
+        UiLayout::Left => {
+            side_panel = egui::SidePanel::left(panel_id)
+                .default_width(min_default_size)
+                .min_width(min_default_size)
+                .max_width(min_default_size + 100.)
+                .resizable(true);
+        }
+        UiLayout::Right => {
+            side_panel = egui::SidePanel::right(panel_id)
+                .default_width(min_default_size)
+                .min_width(min_default_size)
+                .max_width(min_default_size + 100.)
+                .resizable(true);
+        }
+    }
+
     ui::draw_resizable_panel(
         panel_id,
         side_panel.resizable(true).show(egui_ctx, |ui| {
@@ -118,8 +138,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 });
             });
 
-            shared.ui.edit_bar_pos.x = ui.min_rect().right();
-
             ui.add_space(3.);
 
             egui::ScrollArea::both()
@@ -150,6 +168,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         ui.add_space(4.);
                     });
                 });
+            shared.ui.armature_panel_rect = Some(ui.min_rect());
         }),
         &mut shared.input.on_ui,
         &egui_ctx,

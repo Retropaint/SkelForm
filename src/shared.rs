@@ -461,12 +461,23 @@ impl ContextMenu {
 }
 
 #[derive(Clone, Default)]
+pub struct UiBar {
+    pub pos: Vec2,
+    pub scale: Vec2,
+}
+
+#[derive(Clone, Default)]
 pub struct Ui {
     pub anim: UiAnim,
 
-    pub edit_bar_pos: Vec2,
-    pub animate_mode_bar_pos: Vec2,
-    pub animate_mode_bar_scale: Vec2,
+    pub edit_bar: UiBar,
+    pub anim_bar: UiBar,
+    pub camera_bar: UiBar,
+
+    pub bone_panel_rect: Option<egui::Rect>,
+    pub armature_panel_rect: Option<egui::Rect>,
+    pub keyframe_panel_rect: Option<egui::Rect>,
+    pub top_panel_rect: Option<egui::Rect>,
 
     pub selected_bone_idx: usize,
     pub selected_bone_ids: Vec<i32>,
@@ -491,10 +502,6 @@ pub struct Ui {
 
     /// Ensures that auto-focused behaviour only runs once
     pub input_focused: bool,
-
-    // camera bar stuff
-    pub camera_bar_pos: Vec2,
-    pub camera_bar_scale: Vec2,
 
     // context menu stuff
 
@@ -597,6 +604,16 @@ impl Ui {
     }
 }
 
+#[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug)]
+pub enum UiLayout {
+    #[default]
+    Split,
+    Right,
+    Left,
+}
+
+enum_string!(UiLayout);
+
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
     #[serde(default = "default_one")]
@@ -614,7 +631,7 @@ pub struct Config {
     #[serde(default)]
     pub keep_tex_str: bool,
     #[serde(default)]
-    pub meshdef: bool,
+    pub layout: UiLayout,
 
     #[serde(default)]
     pub colors: ColorConfig,
@@ -648,7 +665,7 @@ impl Default for Config {
             exact_bone_select: false,
             gridline_front: false,
             keep_tex_str: false,
-            meshdef: false,
+            layout: UiLayout::Split,
         }
     }
 }
@@ -1949,6 +1966,16 @@ impl Shared {
         }
 
         animated_bones
+    }
+
+    pub fn world_camera(&self) -> Camera {
+        let mut cam = self.camera.clone();
+        match self.config.layout {
+            UiLayout::Right => cam.pos.x += 1500. * self.aspect_ratio(),
+            UiLayout::Left => cam.pos.x -= 1500. * self.aspect_ratio(),
+            _ => {}
+        };
+        cam
     }
 }
 
