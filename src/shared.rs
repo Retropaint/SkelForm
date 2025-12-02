@@ -597,6 +597,16 @@ impl Ui {
     }
 }
 
+#[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug)]
+pub enum UiLayout {
+    #[default]
+    Split,
+    Right,
+    Left,
+}
+
+enum_string!(UiLayout);
+
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
     #[serde(default = "default_one")]
@@ -614,7 +624,7 @@ pub struct Config {
     #[serde(default)]
     pub keep_tex_str: bool,
     #[serde(default)]
-    pub meshdef: bool,
+    pub layout: UiLayout,
 
     #[serde(default)]
     pub colors: ColorConfig,
@@ -648,7 +658,7 @@ impl Default for Config {
             exact_bone_select: false,
             gridline_front: false,
             keep_tex_str: false,
-            meshdef: false,
+            layout: UiLayout::Split,
         }
     }
 }

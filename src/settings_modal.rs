@@ -131,16 +131,22 @@ fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         let str_ui_scale = &shared.loc("settings_modal.user_interface.ui_scale");
         ui.label(str_ui_scale);
-        let (edited, value, _) = ui.float_input(
-            "ui_scale".to_string(),
-            shared,
-            shared.config.ui_scale,
-            1.,
-            None,
-        );
+        let scale = shared.config.ui_scale;
+        let (edited, value, _) = ui.float_input("ui_scale".to_string(), shared, scale, 1., None);
         if edited {
             shared.config.ui_scale = value;
         }
+    });
+
+    ui.horizontal(|ui| {
+        ui.label("Layout:");
+        egui::ComboBox::new("layout", "")
+            .selected_text(shared.config.layout.to_string())
+            .show_ui(ui, |ui| {
+                ui.selectable_value(&mut shared.config.layout, shared::UiLayout::Split, "Split");
+                ui.selectable_value(&mut shared.config.layout, shared::UiLayout::Right, "Right");
+                ui.selectable_value(&mut shared.config.layout, shared::UiLayout::Left, "Left");
+            });
     });
 
     ui.add_space(20.);

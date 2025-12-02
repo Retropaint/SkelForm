@@ -185,33 +185,39 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     }
 
     let bone_panel_id = "Bone";
-    draw_resizable_panel(
-        bone_panel_id,
-        egui::SidePanel::right(bone_panel_id)
+    let mut side_panel = egui::SidePanel::right(bone_panel_id)
+        .resizable(true)
+        .max_width(max_size)
+        .min_width(min_default_size)
+        .default_width(min_default_size);
+    if shared.config.layout == UiLayout::Left {
+        side_panel = egui::SidePanel::left(bone_panel_id)
             .resizable(true)
             .max_width(max_size)
             .min_width(min_default_size)
-            .default_width(min_default_size)
-            .show(context, |ui| {
-                ui.add_enabled_ui(enable_bone_panel, |ui| {
-                    ui.gradient(
-                        ui.ctx().screen_rect(),
-                        Color32::TRANSPARENT,
-                        shared.config.colors.gradient.into(),
-                    );
+            .default_width(min_default_size);
+    }
+    draw_resizable_panel(
+        bone_panel_id,
+        side_panel.show(context, |ui| {
+            ui.add_enabled_ui(enable_bone_panel, |ui| {
+                ui.gradient(
+                    ui.ctx().screen_rect(),
+                    Color32::TRANSPARENT,
+                    shared.config.colors.gradient.into(),
+                );
 
-                    if shared.ui.selected_bone_idx != usize::MAX {
-                        bone_panel::draw(selected_bone.clone(), ui, shared);
-                    } else if shared.selected_animation() != None
-                        && shared.ui.anim.selected_frame != -1
-                    {
-                        keyframe_panel::draw(ui, shared);
-                    }
+                if shared.ui.selected_bone_idx != usize::MAX {
+                    bone_panel::draw(selected_bone.clone(), ui, shared);
+                } else if shared.selected_animation() != None && shared.ui.anim.selected_frame != -1
+                {
+                    keyframe_panel::draw(ui, shared);
+                }
 
-                    shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
-                    shared.ui.camera_bar_pos.x = ui.min_rect().left();
-                })
-            }),
+                shared.ui.animate_mode_bar_pos.x = ui.min_rect().left();
+                shared.ui.camera_bar_pos.x = ui.min_rect().left();
+            })
+        }),
         &mut shared.input.on_ui,
         context,
     );
