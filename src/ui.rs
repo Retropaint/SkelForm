@@ -233,8 +233,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             shared.ui.anim_bar.pos.x = bone_panel.left() - shared.ui.anim_bar.scale.x - 21.;
             shared.ui.anim_bar.pos.y = top_panel.bottom() - 1.;
 
-            shared.ui.edit_bar.pos.x = armature_panel.right();
-            shared.ui.edit_bar.pos.y = top_panel.bottom();
+            shared.ui.edit_bar.pos = Vec2::new(armature_panel.right(), top_panel.bottom());
 
             shared.ui.camera_bar.pos.x =
                 bone_panel.left() - shared.ui.camera_bar.scale.x - ((6. * 3.3) as f32).ceil();
@@ -249,8 +248,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             shared.ui.edit_bar.pos.x = bone_panel.left() - shared.ui.edit_bar.scale.x - 28.;
             shared.ui.edit_bar.pos.y = top_panel.bottom();
 
-            shared.ui.anim_bar.pos.x = 0.;
-            shared.ui.anim_bar.pos.y = top_panel.bottom();
+            shared.ui.anim_bar.pos = Vec2::new(0., top_panel.bottom());
 
             shared.ui.camera_bar.pos.x = bone_panel.left() - shared.ui.camera_bar.scale.x - 21.;
             if keyframe_panel != None && shared.ui.anim.open {

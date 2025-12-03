@@ -131,7 +131,7 @@
                 </p>
                 <div class="horizontal">
                     <input id="ui-slider-input" type="range" min="0" max="2.5" step="0.01"></input>
-                    <label class="button" onclick="saveFontScale(); toggleElement(false, 'ui-slider');">Done</label>
+                    <label id="ui-slider-done" class="button" onclick="saveFontScale(); toggleElement(false, 'ui-slider'); toggleElement(false, 'ui-slider-done');">Wait</label>
                 </div>
             </div>
         </div>
@@ -199,16 +199,6 @@
             toggleElement(false, "resolution-message");
             toggleElement(false, "wait-message");
 
-            function hideFocus() {
-                toggleElement(false, "focus")
-                toggleElement(true, "canvas")
-                toggleElement(true, "wait-message")
-                setTimeout(() => {
-                    toggleElement(false, "wait-message"); 
-                    toggleElement(true, "resolution-message")
-                }, 5000)
-            }
-
             async function loadConfig() {
                 let data = await localStorage.getItem("skelform_config");
                 if (data === undefined) {
@@ -223,7 +213,6 @@
                 let pointer = open ? "auto" : "none";
                 document.getElementById(id).style.visibility = str;
                 document.getElementById(id).style.pointerEvents = pointer;
-                updateUiSlider();
             }
 
             async function updateUiSlider() {
@@ -232,6 +221,7 @@
                 if(config) {
                     ui_scale = config.ui_scale;
                 }
+                console.trace()
                 document.getElementById("ui-slider-input").value = ui_scale;
             }
 
@@ -303,6 +293,7 @@
 
             function loaded() {
                 hasLoaded = true;
+                document.getElementById("ui-slider-done").innerText = "Done";
             }
 
             function getUiSliderValue() {
