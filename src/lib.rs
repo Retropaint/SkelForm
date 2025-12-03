@@ -79,6 +79,7 @@ extern "C" {
     pub fn updateUiSlider();
     pub fn downloadSample(filename: String);
     pub fn openLink(url: String);
+    pub fn isMobile() -> bool;
 }
 
 #[derive(Default)]
@@ -241,6 +242,8 @@ impl ApplicationHandler for App {
             // but for now it's unneeded
 
             self.shared.ui.scale = getUiSliderValue();
+
+            self.shared.mobile = isMobile();
         }
 
         if self.shared.ui.scale <= 0. {

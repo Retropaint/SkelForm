@@ -51,7 +51,9 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         } else {
             shared.input.down_dur = -1;
         }
-
+        if shared.mobile {
+            shared.input.left_clicked = i.pointer.any_pressed();
+        }
         shared.input.mouse_prev = shared.input.mouse;
         if let Some(mouse) = i.pointer.latest_pos() {
             shared.input.mouse = mouse.into();
@@ -108,11 +110,12 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     }
 
     if let Some(_pos) = context.pointer_latest_pos() {
-        #[cfg(feature = "mobile")]
-        #[cfg(feature = "debug")]
-        context
-            .debug_painter()
-            .circle_filled(_pos, 2., egui::Color32::GREEN);
+        if shared.mobile {
+            #[cfg(feature = "debug")]
+            context
+                .debug_painter()
+                .circle_filled(_pos, 2., egui::Color32::GREEN);
+        }
     }
 
     let anim_icon_size = 18;
@@ -638,8 +641,9 @@ impl EguiUi for egui::Ui {
         }
 
         if options.as_ref().unwrap().focus && !shared.ui.input_focused {
-            #[cfg(feature = "mobile")]
-            open_mobile_input(shared.ui.edit_value.clone().unwrap());
+            if shared.mobile {
+                open_mobile_input(shared.ui.edit_value.clone().unwrap());
+            }
 
             shared.ui.input_focused = true;
             shared.ui.edit_value = Some(value.clone());
@@ -655,8 +659,9 @@ impl EguiUi for egui::Ui {
             if input.has_focus() {
                 shared.ui.edit_value = Some(value.clone());
                 shared.ui.rename_id = id.to_string();
-                #[cfg(feature = "mobile")]
-                open_mobile_input(shared.ui.edit_value.clone().unwrap());
+                if shared.mobile {
+                    open_mobile_input(shared.ui.edit_value.clone().unwrap());
+                }
             }
         } else {
             input = self.add_sized(
@@ -668,11 +673,13 @@ impl EguiUi for egui::Ui {
             let mut entered = false;
 
             // if input modal is closed, consider the value entered
-            #[cfg(feature = "mobile")]
-            {
-                shared.ui.edit_value = Some(getEditInput());
-                if !isModalActive("edit-input-modal".to_string()) {
-                    entered = true;
+            if shared.mobile {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    shared.ui.edit_value = Some(getEditInput());
+                    if !isModalActive("edit-input-modal".to_string()) {
+                        entered = true;
+                    }
                 }
             }
 
@@ -1118,14 +1125,6 @@ pub fn top_bar_button(
     shared: &Shared,
 ) -> egui::Response {
     let height = 20.;
-    #[allow(unused_variables)]
-    #[allow(unused_mut)]
-    let mut width = 100.;
-
-    #[cfg(feature = "mobile")]
-    {
-        width *= 0.8;
-    }
 
     let rect = egui::Rect::from_min_size(
         egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() + *offset),
@@ -1161,15 +1160,16 @@ pub fn top_bar_button(
     };
 
     // kb key text
-    #[cfg(not(feature = "mobile"))]
-    painter.text(
-        egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset)
-            + egui::vec2(-5., 2.5),
-        egui::Align2::RIGHT_TOP,
-        key_str,
-        font.clone(),
-        egui::Color32::DARK_GRAY,
-    );
+    if !shared.mobile {
+        painter.text(
+            egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset)
+                + egui::vec2(-5., 2.5),
+            egui::Align2::RIGHT_TOP,
+            key_str,
+            font.clone(),
+            egui::Color32::DARK_GRAY,
+        );
+    }
 
     // set next button's Y to below this one
     *offset += height + 2.;
@@ -1225,11 +1225,13 @@ impl Default for TextInputOptions {
     }
 }
 
-#[cfg(feature = "mobile")]
-fn open_mobile_input(value: String) {
-    setEditInput(value);
-    toggleElement(true, "edit-input-modal".to_string());
-    focusEditInput();
+fn open_mobile_input(_value: String) {
+    #[cfg(target_arch = "wasm32")]
+    {
+        crate::setEditInput(_value);
+        crate::toggleElement(true, "edit-input-modal".to_string());
+        crate::focusEditInput();
+    }
 }
 
 // Wrapper for resizable panels.

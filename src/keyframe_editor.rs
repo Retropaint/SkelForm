@@ -419,22 +419,16 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     } else {
                         egui::Color32::WHITE
                     };
-                    draw_diamond(
-                        &ui.ctx().debug_painter(),
-                        cursor + ui.min_rect().left_top().into(),
-                        color,
-                    );
+                    let pos = cursor + ui.min_rect().left_top().into();
+                    draw_diamond(&ui.ctx().debug_painter(), pos, color);
                 }
 
                 let kf = &shared.ui.anim.dragged_keyframe;
                 if kf.frame != frame || kf.bone_id != -1 {
                     draw_diamond(ui.painter(), pos, egui::Color32::WHITE);
                 } else if !drew_drag {
-                    draw_diamond(
-                        ui.painter(),
-                        pos,
-                        egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30),
-                    );
+                    let white = egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30);
+                    draw_diamond(ui.painter(), pos, white);
                     drew_drag = true;
                 }
 
@@ -448,12 +442,9 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
 
                 // remove keyframe if dragged out
                 if cursor.y < 0. {
-                    let frame = shared.selected_animation_mut().unwrap().keyframes[i].frame;
-                    shared
-                        .selected_animation_mut()
-                        .unwrap()
-                        .keyframes
-                        .retain(|kf| kf.frame != frame);
+                    let anim = shared.selected_animation_mut().unwrap();
+                    let frame = anim.keyframes[i].frame;
+                    anim.keyframes.retain(|kf| kf.frame != frame);
                     // break loop to prevent OOB errors
                     break;
                 }
@@ -550,14 +541,12 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 };
 
                 let play_text = egui::RichText::new(play_str).color(shared.config.colors.text);
+                let button = egui::Button::new(play_text)
+                    .fill(shared.config.colors.light_accent)
+                    .corner_radius(0.);
 
                 let button = ui
-                    .add_sized(
-                        [50., 20.],
-                        egui::Button::new(play_text)
-                            .fill(shared.config.colors.light_accent)
-                            .corner_radius(0.),
-                    )
+                    .add_sized([50., 20.], button)
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
 
                 let mut pressed = ui.input(|i| i.key_pressed(egui::Key::Space));
@@ -640,20 +629,14 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 add_anim_action(shared);
 
                 let frame = shared.ui.anim.selected_frame;
+                let buffer_frames = shared.copy_buffer.keyframes.clone();
+                let anim = &mut shared.selected_animation_mut().unwrap();
 
-                shared
-                    .selected_animation_mut()
-                    .unwrap()
-                    .keyframes
-                    .retain(|kf| kf.frame != frame);
+                anim.keyframes.retain(|kf| kf.frame != frame);
 
-                for kf in 0..shared.copy_buffer.keyframes.len() {
-                    let keyframe = shared.copy_buffer.keyframes[kf].clone();
-                    shared
-                        .selected_animation_mut()
-                        .unwrap()
-                        .keyframes
-                        .push(Keyframe { frame, ..keyframe })
+                for kf in 0..buffer_frames.len() {
+                    let keyframe = buffer_frames[kf].clone();
+                    anim.keyframes.push(Keyframe { frame, ..keyframe })
                 }
 
                 shared.selected_animation_mut().unwrap().sort_keyframes();
@@ -688,24 +671,21 @@ fn draw_frame_lines(
             color = color + egui::Color32::from_rgb(60, 60, 60);
         }
 
-        let above_scrollbar = cursor.y < ui.min_rect().height() - 13.;
+        let above_bar = cursor.y < ui.min_rect().height() - 13.;
         let in_ui = cursor.y > 0.;
         let in_modal = shared.ui.modal || shared.ui.settings_modal;
+        let cur = cursor;
 
         if shared.ui.anim.selected_frame == i {
             color = egui::Color32::WHITE;
-        } else if !in_modal
-            && in_ui
-            && cursor.x < x + hitbox
-            && cursor.x > x - hitbox
-            && above_scrollbar
-        {
+        } else if !in_modal && in_ui && cur.x < x + hitbox && cur.x > x - hitbox && above_bar {
             shared.cursor_icon = egui::CursorIcon::PointingHand;
             color = egui::Color32::WHITE;
 
             // select this frame if clicked
             if shared.input.left_clicked {
                 shared.ui.anim.selected_frame = i;
+                shared.input.on_ui = true;
             }
         }
 
@@ -804,23 +784,16 @@ fn draw_frame_lines(
             }
 
             // remove keyframe that is the same as this
-            let k = shared
-                .selected_animation()
-                .unwrap()
-                .keyframes
-                .iter()
-                .position(|kf| {
-                    kf.bone_id == curr_kf.bone_id
-                        && kf.element == curr_kf.element
-                        && kf.frame == j as i32
-                });
+            let keyframes = shared.selected_animation().unwrap().keyframes.clone();
+            let k = keyframes.iter().position(|kf| {
+                kf.bone_id == curr_kf.bone_id
+                    && kf.element == curr_kf.element
+                    && kf.frame == j as i32
+            });
             let mut curr = i;
             if k != None {
-                shared
-                    .selected_animation_mut()
-                    .unwrap()
-                    .keyframes
-                    .remove(k.unwrap());
+                let keyframes = &mut shared.selected_animation_mut().unwrap().keyframes;
+                keyframes.remove(k.unwrap());
                 curr -= 1;
             }
 

@@ -1821,6 +1821,8 @@ pub struct Shared {
 
     pub was_editing_path: bool,
 
+    pub mobile: bool,
+
     loc_strings: std::collections::HashMap<String, String>,
 }
 
