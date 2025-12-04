@@ -1410,19 +1410,27 @@ impl Armature {
     }
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+pub struct TexAtlas {
+    #[serde(skip_deserializing)]
+    pub filename: String,
+    #[serde(skip_deserializing)]
+    pub size: Vec2I,
+}
+
 // used for the json
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct Root {
     #[serde(default)]
     pub version: String,
     #[serde(default)]
-    pub texture_size: Vec2I,
-    #[serde(default)]
     pub ik_root_ids: Vec<i32>,
     #[serde(default)]
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
+    #[serde(default)]
+    pub atlases: Vec<TexAtlas>,
     #[serde(default)]
     pub styles: Vec<Style>,
 }
@@ -1466,6 +1474,8 @@ pub struct Texture {
     pub ser_offset: Vec2I,
     #[serde(default, rename = "size")]
     pub ser_size: Vec2I,
+    #[serde(default)]
+    pub atlas_idx: i32,
 
     #[serde(skip)]
     pub data_id: i32,

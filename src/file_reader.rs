@@ -467,6 +467,7 @@ pub fn add_texture(
             ser_offset: Vec2I::new(0, 0),
             ser_size: Vec2I::new(0, 0),
             data_id: id,
+            atlas_idx: 0,
         });
 }
 
