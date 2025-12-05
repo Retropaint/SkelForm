@@ -75,16 +75,18 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     };
 
     let mut selected_tex = bone.tex.clone();
-    let tex_name = if tex != None {
-        &bone.tex
+    let mut tex_name = if tex != None {
+        bone.tex.clone()
     } else {
-        &shared.loc("none")
+        shared.loc("none")
     };
     ui.add_enabled_ui(shared.armature.styles.len() != 0, |ui| {
         ui.horizontal(|ui| {
             ui.label(&shared.loc("bone_panel.texture"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                tex_name = utils::trunc_str(ui, &tex_name, 100.);
                 egui::ComboBox::new("tex_selector", "")
+                    .width(100.)
                     .selected_text(egui::RichText::new(tex_name).color(tex_name_col))
                     .show_ui(ui, |ui| {
                         let mut texes = vec![];
@@ -101,7 +103,8 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
 
                         ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
                         for tex in texes {
-                            ui.selectable_value(&mut selected_tex, tex.clone(), &tex.clone());
+                            let name = utils::trunc_str(ui, &tex.clone(), ui.min_rect().width());
+                            ui.selectable_value(&mut selected_tex, tex.clone(), &name);
                         }
                         ui.selectable_value(&mut selected_tex, "[Setup]".to_string(), "[Setup]");
                     })
@@ -427,15 +430,16 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         });
     });
 
-    let mut is_target_newline = false;
-    let target_buttons_width = 40.;
+    let target_buttons_width = 60.;
 
     ui.horizontal(|ui| {
         ui.label(&shared.loc("bone_panel.inverse_kinematics.target"));
 
         let bone_id = bone.ik_target_id;
         if let Some(target) = shared.armature.bones.iter().find(|b| b.id == bone_id) {
-            if ui.selectable_label(false, target.name.clone()).clicked() {
+            let width = ui.available_width();
+            let tr_name = utils::trunc_str(ui, &target.name.clone(), width - target_buttons_width);
+            if ui.selectable_label(false, tr_name).clicked() {
                 let bones = &mut shared.armature.bones;
                 let ik_id = bone.ik_target_id;
                 shared.ui.selected_bone_idx = bones.iter().position(|b| b.id == ik_id).unwrap();
@@ -444,42 +448,26 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             ui.label(shared.loc("none"));
         }
 
-        is_target_newline = ui.available_width() < target_buttons_width;
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let str_set_target = shared
+                .loc("bone_panel.inverse_kinematics.set_target")
+                .clone();
+            let str_remove_target = shared
+                .loc("bone_panel.inverse_kinematics.remove_target")
+                .clone();
 
-        if is_target_newline {
-            return;
-        }
+            let remove_enabled = bone.ik_target_id != -1;
+            ui.add_enabled_ui(remove_enabled, |ui| {
+                let button = ui.skf_button("🗑");
+                if button.on_hover_text(str_remove_target).clicked() {
+                    shared.selected_bone_mut().unwrap().ik_target_id = -1;
+                }
+            });
 
-        target_buttons(ui, shared, bone);
-    });
-
-    if is_target_newline {
-        ui.horizontal(|ui| {
-            target_buttons(ui, shared, bone);
-        });
-    }
-}
-
-pub fn target_buttons(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
-    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-        let str_set_target = shared
-            .loc("bone_panel.inverse_kinematics.set_target")
-            .clone();
-        let str_remove_target = shared
-            .loc("bone_panel.inverse_kinematics.remove_target")
-            .clone();
-
-        let remove_enabled = bone.ik_target_id != -1;
-        ui.add_enabled_ui(remove_enabled, |ui| {
-            let button = ui.skf_button("🗑");
-            if button.on_hover_text(str_remove_target).clicked() {
-                shared.selected_bone_mut().unwrap().ik_target_id = -1;
+            if ui.skf_button("⌖").on_hover_text(str_set_target).clicked() {
+                shared.ui.setting_ik_target = true;
             }
         });
-
-        if ui.skf_button("⌖").on_hover_text(str_set_target).clicked() {
-            shared.ui.setting_ik_target = true;
-        }
     });
 }
 

@@ -142,9 +142,10 @@ pub fn draw_styles_list(
                             egui::Frame::new().fill(col.into()).show(ui, |ui| {
                                 ui.set_width(width - checkbox_width);
                                 ui.set_height(21.);
+                                let mut name = shared.armature.styles[s].name.clone();
+                                name = utils::trunc_str(ui, &name, ui.min_rect().width());
                                 ui.label(
-                                    egui::RichText::new(shared.armature.styles[s].name.clone())
-                                        .color(shared.config.colors.text),
+                                    egui::RichText::new(name).color(shared.config.colors.text),
                                 );
                             });
                         })
@@ -694,7 +695,8 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
     let mut dragged = false;
     for i in 0..shared.selected_set().unwrap().textures.len() {
         idx += 1;
-        let name = shared.selected_set().unwrap().textures[i].name.clone();
+        let mut name = shared.selected_set().unwrap().textures[i].name.clone();
+        name = utils::trunc_str(ui, &name, width - 10.);
 
         let str_desc = &shared.loc("styles_modal.texture_desc").clone();
 
