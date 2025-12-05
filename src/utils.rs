@@ -8,9 +8,7 @@ mod web {
     pub use web_sys::*;
     pub use zip::write::FileOptions;
 }
-use egui::FontId;
 use max_rects::packing_box::PackingBox;
-use serde::Serialize;
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
