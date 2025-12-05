@@ -210,27 +210,31 @@ pub fn read_psd(
                 break;
             }
         }
+
         if tex_idx == usize::MAX {
             let mut style_idx: i32 = 0;
-            let tex_name = group.name();
+            let mut tex_name = group.name();
 
-            if group.name().contains("$style") {
-                let style_name =
-                    utils::without_unicode(utils::after_underscore(group.name())).to_string();
+            if group.name().contains("$\"") {
+                let split: Vec<&str> = group.name().split('"').collect();
                 let styles = &shared.armature.styles;
-                let names: Vec<String> = styles.iter().map(|style| style.name.clone()).collect();
-                let snl = style_name.to_lowercase();
-                if let Some(idx) = names.iter().position(|name| name.to_lowercase() == snl) {
+
+                let p_id = &group.parent_id().unwrap();
+                tex_name = psd.groups().get(p_id).unwrap().name();
+
+                let low = split[1].to_lowercase();
+
+                // find this style. Create if it doesn't exist
+                if let Some(idx) = styles.iter().position(|s| s.name.to_lowercase() == low) {
                     style_idx = idx as i32;
                 } else {
-                    let new_idx = shared.armature.styles.len() as i32;
                     shared.armature.styles.push(Style {
                         id: shared.armature.styles.len() as i32,
-                        name: style_name.to_string(),
+                        name: split[1].to_string(),
                         active: true,
                         textures: vec![],
                     });
-                    style_idx = new_idx;
+                    style_idx = shared.armature.styles.len() as i32 - 1;
                 }
             }
 
@@ -249,7 +253,7 @@ pub fn read_psd(
             tex_idx = shared.armature.styles[0].textures.len() - 1;
         }
 
-        if group.name().contains("$style") {
+        if group.name().contains("$\"") {
             continue;
         }
 
