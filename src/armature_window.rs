@@ -93,11 +93,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 } else {
                                     ""
                                 };
-                                let label = ui.selectable_value(
-                                    &mut selected_style,
-                                    s as i32,
-                                    shared.armature.styles[s].name.to_string(),
-                                );
+                                let mut name = shared.armature.styles[s].name.to_string();
+                                name = utils::trunc_str(ui, &name, ui.min_rect().width() - 20.);
+                                let label =
+                                    ui.selectable_value(&mut selected_style, s as i32, name);
                                 ui.painter().text(
                                     label.rect.right_center(),
                                     egui::Align2::RIGHT_CENTER,
