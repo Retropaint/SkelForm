@@ -8,7 +8,9 @@ mod web {
     pub use web_sys::*;
     pub use zip::write::FileOptions;
 }
+use egui::FontId;
 use max_rects::packing_box::PackingBox;
+use serde::Serialize;
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
@@ -886,6 +888,31 @@ pub fn markdown(str: String, local_doc_url: String) -> String {
         "https://skelform.org/user-docs".to_string()
     };
     str.replace("user-docs", &user_docs)
+}
+
+// Simulate text being added to egui and truncate it to fit the max width
+pub fn trunc_str(ui: &egui::Ui, text: &str, max_width: f32) -> String {
+    let mut trunc = 0;
+    let f_id = egui::FontId::proportional(14.0);
+    let col = egui::Color32::WHITE;
+    let mut width = ui.ctx().fonts(|fonts| {
+        let galley = fonts.layout_no_wrap(text.to_string(), f_id.clone(), col);
+        galley.size().x
+    });
+    let mut ctext = text.to_string();
+    let elipsis_margin = 7.;
+    while width + elipsis_margin > max_width {
+        width = ui.ctx().fonts(|fonts| {
+            ctext = ctext[0..ctext.len() - trunc].to_string();
+            let galley = fonts.layout_no_wrap(ctext.to_string(), f_id.clone(), col);
+            trunc += 1;
+            galley.size().x
+        });
+    }
+    if trunc > 0 {
+        ctext += "...";
+    }
+    ctext
 }
 
 pub fn get_all_parents(bones: &Vec<Bone>, bone_id: i32) -> Vec<Bone> {
