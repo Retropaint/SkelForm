@@ -428,13 +428,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // editing bone
+    let sel = shared.ui.selected_bone_idx;
+    let input = &shared.input;
     if shared.input.on_ui || shared.ui.polar_modal {
         shared.editing_bone = false;
-    } else if shared.ui.selected_bone_idx != usize::MAX
-        && shared.input.left_down
-        && hover_bone_id == -1
-        && shared.input.down_dur > 5
-    {
+    } else if sel != usize::MAX && input.left_down && hover_bone_id == -1 && input.down_dur > 5 {
         if shared.edit_mode == EditMode::Rotate {
             let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
             mouse.x *= shared.aspect_ratio();
@@ -481,12 +479,8 @@ fn tri_point(p: &Vec2, a: &Vec2, b: &Vec2, c: &Vec2) -> (f32, f32, f32, f32) {
     let t_normalized = t / area;
 
     if s_normalized >= 0.0 && t_normalized >= 0.0 && (s_normalized + t_normalized) <= 1.0 {
-        return (
-            area,
-            s_normalized,
-            t_normalized,
-            1. - (s_normalized + t_normalized),
-        );
+        let third = 1. - (s_normalized + t_normalized);
+        return (area, s_normalized, t_normalized, third);
     }
 
     (-1., -1., -1., -1.)
@@ -917,16 +911,11 @@ pub fn bone_vertices(
 ) -> (Vec<Vertex>, Vec<u32>) {
     let mut all_verts = vec![];
     let mut all_indices = vec![];
+    let v2z = Vec2::ZERO;
+    let rotated = 45. * 3.14 / 180.;
     macro_rules! point {
         ($idx:expr, $color:expr) => {
-            draw_point(
-                &world_verts[$idx].pos,
-                &shared,
-                &Vec2::ZERO,
-                $color,
-                Vec2::ZERO,
-                45. * 3.14 / 180.,
-            )
+            draw_point(&world_verts[$idx].pos, &shared, &v2z, $color, v2z, rotated)
         };
     }
     macro_rules! add_point {

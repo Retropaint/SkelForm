@@ -8,6 +8,7 @@ mod web {
     pub use web_sys::*;
     pub use zip::write::FileOptions;
 }
+use max_rects::packing_box::PackingBox;
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
@@ -164,15 +165,16 @@ pub fn open_import_dialog(file_name: &Arc<Mutex<String>>, file_contents: &Arc<Mu
 
 #[cfg(target_arch = "wasm32")]
 pub fn save_web(shared: &Shared) {
-    let mut size = Vec2::default();
-    let mut png_buf = vec![];
+    let mut png_bufs = vec![];
+    let mut sizes = vec![];
     let mut carmature = shared.armature.clone();
 
-    if shared.armature.styles.len() > 0 && shared.armature.styles[0].textures.len() > 0 {
-        (png_buf, size) = utils::create_tex_sheet(&mut carmature);
+    if carmature.styles.len() > 0 && carmature.styles[0].textures.len() > 0 {
+        (png_bufs, sizes) = utils::create_tex_sheet(&mut carmature);
     }
 
-    let (armatures_json, editor_json) = prepare_files(&carmature, shared.camera.clone(), size);
+    let (armatures_json, editor_json) =
+        prepare_files(&carmature, shared.camera.clone(), sizes.clone());
 
     // create zip file
     let mut buf: Vec<u8> = Vec::new();
@@ -190,78 +192,116 @@ pub fn save_web(shared: &Shared) {
     zip.start_file("readme.md", options.clone()).unwrap();
     zip.write(include_bytes!("../assets/skf_readme.md"))
         .unwrap();
-    if size != Vec2::ZERO {
-        zip.start_file("textures.png", options).unwrap();
-        zip.write(&png_buf).unwrap();
+    for i in 0..png_bufs.len() {
+        zip.start_file(
+            "atlas".to_owned() + &i.to_string() + ".png",
+            options.clone(),
+        )
+        .unwrap();
+        zip.write(&png_bufs[i]).unwrap();
     }
 
     let bytes = zip.finish().unwrap().into_inner().to_vec();
     downloadZip(bytes);
 }
 
-pub fn create_tex_sheet(armature: &mut Armature) -> (std::vec::Vec<u8>, Vec2) {
+pub fn create_tex_sheet(armature: &mut Armature) -> (Vec<Vec<u8>>, Vec<i32>) {
+    let mut atlases: Vec<Vec<PackingBox>> = vec![];
+    let mut sizes: Vec<i32> = vec![];
     let mut boxes = vec![];
-    let mut size = 0;
-    let mut placed = vec![];
-    let mut tex_len = 0;
+    let max = 2048;
 
-    for set in &armature.styles {
-        for tex in &set.textures {
-            boxes.push(max_rects::packing_box::PackingBox::new(
-                armature.tex_data(tex).unwrap().image.width() as i32,
-                armature.tex_data(tex).unwrap().image.height() as i32,
-            ));
-            tex_len += 1;
-        }
-    }
-
-    while placed.len() != tex_len {
-        size += 128;
-        let bins = vec![max_rects::bucket::Bucket::new(size - 1, size - 1, 0, 0, 1)];
-        let mut problem = max_rects::max_rects::MaxRects::new(boxes.clone(), bins.clone());
-        (placed, _, _) = problem.place();
-    }
-
-    let mut raw_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::new(size as u32, size as u32);
+    atlases.push(vec![]);
+    sizes.push(0);
 
     for s in 0..armature.styles.len() {
+        let mut style_boxes = vec![];
         for t in 0..armature.styles[s].textures.len() {
             let tex = &armature.styles[s].textures[t];
-            let p = placed
-                .iter()
-                .position(|pl| pl.width == tex.size.x as i32 && pl.height == tex.size.y as i32)
-                .unwrap();
+            let image = &armature.tex_data(tex).unwrap().image;
+            boxes.push(PackingBox::new(image.width() as i32, image.height() as i32));
+            style_boxes.push(PackingBox::new(image.width() as i32, image.height() as i32));
+        }
 
-            let offset_x = placed[p].get_coords().0 as u32;
-            let offset_y = placed[p].get_coords().2 as u32;
+        'atlas_maker: loop {
+            let first_style_in_atlas = *sizes.last().unwrap() == 0;
+            loop {
+                // if this is the first style in the atlas, ignore max limit
+                if *sizes.last().unwrap() >= max && !first_style_in_atlas {
+                    break;
+                }
+                *sizes.last_mut().unwrap() += 128;
+                let size = *sizes.last().unwrap();
+                let bins = vec![max_rects::bucket::Bucket::new(size - 1, size - 1, 0, 0, 1)];
+                let mut problem = max_rects::max_rects::MaxRects::new(boxes.clone(), bins.clone());
+                let (placed, _, _) = problem.place();
+                if placed.len() == boxes.len() {
+                    for tex in &mut armature.styles[s].textures {
+                        tex.atlas_idx = atlases.len() as i32 - 1;
+                    }
+                    *atlases.last_mut().unwrap() = placed;
+                    break 'atlas_maker;
+                }
+            }
 
-            // ensure another tex of the same size won't overwrite this one
-            placed.remove(p);
+            // create new atlas if current is beyond max limit
+            if *sizes.last().unwrap() >= max {
+                atlases.push(vec![]);
+                sizes.push(0);
 
-            raw_buf
-                .copy_from(&armature.tex_data(tex).unwrap().image, offset_x, offset_y)
-                .unwrap();
-
-            armature.styles[s].textures[t].offset = Vec2::new(offset_x as f32, offset_y as f32);
+                // since this is a new atlas, keep only this style's textures
+                boxes = style_boxes.clone();
+            }
         }
     }
 
-    // encode buffer to png
-    let mut png_buf: Vec<u8> = vec![];
-    let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
-    encoder
-        .write_image(
-            &raw_buf,
-            raw_buf.width(),
-            raw_buf.height(),
-            image::ColorType::Rgba8.into(),
-        )
-        .unwrap();
+    let mut bufs = vec![];
 
-    (png_buf, Vec2::new(size as f32, size as f32))
+    for i in 0..atlases.len() {
+        let mut raw_buf =
+            <image::ImageBuffer<image::Rgba<u8>, _>>::new(sizes[i] as u32, sizes[i] as u32);
+
+        for s in 0..armature.styles.len() {
+            for t in 0..armature.styles[s].textures.len() {
+                let tex = &armature.styles[s].textures[t];
+                if tex.atlas_idx != i as i32 {
+                    continue;
+                }
+
+                let p = atlases[i]
+                    .iter()
+                    .position(|pl| pl.width == tex.size.x as i32 && pl.height == tex.size.y as i32)
+                    .unwrap();
+
+                let offset_x = atlases[i][p].get_coords().0 as u32;
+                let offset_y = atlases[i][p].get_coords().2 as u32;
+
+                // ensure another tex of the same size won't overwrite this one
+                atlases[i].remove(p);
+
+                raw_buf
+                    .copy_from(&armature.tex_data(tex).unwrap().image, offset_x, offset_y)
+                    .unwrap();
+
+                armature.styles[s].textures[t].offset = Vec2::new(offset_x as f32, offset_y as f32);
+            }
+        }
+
+        // encode buffer to png
+        let mut png_buf: Vec<u8> = vec![];
+        let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
+        let img = image::ColorType::Rgba8.into();
+        encoder
+            .write_image(&raw_buf, raw_buf.width(), raw_buf.height(), img)
+            .unwrap();
+
+        bufs.push(png_buf);
+    }
+
+    (bufs, sizes)
 }
 
-pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (String, String) {
+pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (String, String) {
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
@@ -401,13 +441,21 @@ pub fn prepare_files(armature: &Armature, camera: Camera, tex_size: Vec2) -> (St
         }
     }
 
+    let mut atlases = vec![];
+    for s in 0..sizes.len() {
+        atlases.push(TexAtlas {
+            filename: "atlas".to_owned() + &s.to_string() + ".png",
+            size: Vec2I::new(sizes[s], sizes[s]),
+        });
+    }
+
     let root = Root {
         version: env!("CARGO_PKG_VERSION").to_string(),
-        texture_size: Vec2I::new(tex_size.x as i32, tex_size.y as i32),
         ik_root_ids,
         bones: armature_copy.bones,
         animations: armature_copy.animations,
         styles: armature_copy.styles,
+        atlases,
     };
 
     let armatures_json = serde_json::to_string(&root).unwrap();
@@ -514,25 +562,32 @@ pub fn import<R: Read + std::io::Seek>(
     let styles = &shared.armature.styles;
     let has_tex = styles.iter().find(|set| set.textures.len() > 0) != None;
     if styles.len() > 0 && has_tex {
-        let texture_file = zip.as_mut().unwrap().by_name("textures.png").unwrap();
+        let mut imgs = vec![];
+        for a in 0..root.atlases.len() {
+            let texture_file = zip
+                .as_mut()
+                .unwrap()
+                .by_name(&("atlas".to_owned() + &a.to_string() + ".png"))
+                .unwrap();
 
-        let mut bytes = vec![];
-        for byte in texture_file.bytes() {
-            bytes.push(byte.unwrap());
+            let mut bytes = vec![];
+            for byte in texture_file.bytes() {
+                bytes.push(byte.unwrap());
+            }
+            imgs.push(image::load_from_memory(&bytes).unwrap());
         }
-        let mut img = image::load_from_memory(&bytes).unwrap();
 
         for set in &mut shared.armature.styles {
             for tex in &mut set.textures {
                 tex.offset = Vec2::new(tex.ser_offset.x as f32, tex.ser_offset.y as f32);
                 tex.size = Vec2::new(tex.ser_size.x as f32, tex.ser_size.y as f32);
+                let u_offset_x = tex.offset.x as u32;
+                let u_offset_y = tex.offset.y as u32;
+                let u_size_x = tex.size.x as u32;
+                let u_size_y = tex.size.y as u32;
 
-                let image = img.crop(
-                    tex.offset.x as u32,
-                    tex.offset.y as u32,
-                    tex.size.x as u32,
-                    tex.size.y as u32,
-                );
+                let image =
+                    imgs[tex.atlas_idx as usize].crop(u_offset_x, u_offset_y, u_size_x, u_size_y);
                 let mut bind_group: Option<wgpu::BindGroup> = None;
 
                 if queue != None && device != None && bind_group_layout != None {
@@ -549,22 +604,15 @@ pub fn import<R: Read + std::io::Seek>(
                     continue;
                 }
 
-                let pixels = img
-                    .crop(
-                        tex.offset.x as u32,
-                        tex.offset.y as u32,
-                        tex.size.x as u32,
-                        tex.size.y as u32,
-                    )
+                let pixels = imgs[tex.atlas_idx as usize]
+                    .crop(u_offset_x, u_offset_y, u_size_x, u_size_y)
                     .resize_exact(300, 300, image::imageops::FilterType::Nearest)
                     .into_rgba8()
                     .to_vec();
 
-                let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &pixels);
-                let ui_img =
-                    context
-                        .unwrap()
-                        .load_texture("anim_icons", color_image, Default::default());
+                let col = egui::ColorImage::from_rgba_unmultiplied([300, 300], &pixels);
+                let file = "anim_icons";
+                let ui_img = context.unwrap().load_texture(file, col, Default::default());
 
                 let data_id = shared.armature.tex_data.len() as i32;
                 tex.data_id = data_id;

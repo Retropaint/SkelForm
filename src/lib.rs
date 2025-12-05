@@ -637,14 +637,15 @@ impl Renderer {
         *shared.saving.lock().unwrap() = Saving::None;
         let save_finished = Arc::clone(&shared.save_finished);
         std::thread::spawn(move || {
-            let mut size = Vec2::default();
-            let mut png_buf = vec![];
+            let mut png_bufs = vec![];
+            let mut sizes = vec![];
 
             if armature.styles.len() > 0 && armature.styles[0].textures.len() > 0 {
-                (png_buf, size) = utils::create_tex_sheet(&mut armature);
+                (png_bufs, sizes) = utils::create_tex_sheet(&mut armature);
             }
 
-            let (armatures_json, editor_json) = utils::prepare_files(&armature, camera, size);
+            let (armatures_json, editor_json) =
+                utils::prepare_files(&armature, camera, sizes.clone());
 
             // create zip file
             let mut zip = zip::ZipWriter::new(std::fs::File::create(save_path.clone()).unwrap());
@@ -664,9 +665,13 @@ impl Renderer {
             zip.start_file("readme.md", options.clone()).unwrap();
             zip.write(include_bytes!("../assets/skf_readme.md"))
                 .unwrap();
-            if size != Vec2::ZERO {
-                zip.start_file("textures.png", options).unwrap();
-                zip.write(&png_buf).unwrap();
+            for i in 0..png_bufs.len() {
+                zip.start_file(
+                    "atlas".to_owned() + &i.to_string() + ".png",
+                    options.clone(),
+                )
+                .unwrap();
+                zip.write(&png_bufs[i]).unwrap();
             }
 
             zip.finish().unwrap();
