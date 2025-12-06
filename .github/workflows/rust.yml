@@ -10,6 +10,10 @@ env:
   USER_DOCS: https://github.com/Retropaint/skelform_user_docs
   DEV_DOCS: https://github.com/Retropaint/skelform_dev_docs
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-macos:
     runs-on: macos-latest
