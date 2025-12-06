@@ -80,36 +80,33 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     } else {
         shared.loc("none")
     };
-    ui.add_enabled_ui(shared.armature.styles.len() != 0, |ui| {
-        ui.horizontal(|ui| {
-            ui.label(&shared.loc("bone_panel.texture"));
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                tex_name = utils::trunc_str(ui, &tex_name, 100.);
-                egui::ComboBox::new("tex_selector", "")
-                    .width(100.)
-                    .selected_text(egui::RichText::new(tex_name).color(tex_name_col))
-                    .show_ui(ui, |ui| {
-                        let mut texes = vec![];
-                        for style in &shared.armature.styles {
-                            let textures = style.textures.iter();
-                            let mut names =
-                                textures.map(|t| t.name.clone()).collect::<Vec<String>>();
-                            texes.append(&mut names);
-                        }
+    ui.horizontal(|ui| {
+        ui.label(&shared.loc("bone_panel.texture"));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            tex_name = utils::trunc_str(ui, &tex_name, 100.);
+            egui::ComboBox::new("tex_selector", "")
+                .width(100.)
+                .selected_text(egui::RichText::new(tex_name).color(tex_name_col))
+                .show_ui(ui, |ui| {
+                    let mut texes = vec![];
+                    for style in &shared.armature.styles {
+                        let textures = style.textures.iter();
+                        let mut names = textures.map(|t| t.name.clone()).collect::<Vec<String>>();
+                        texes.append(&mut names);
+                    }
 
-                        // remove duplicates
-                        texes.sort_unstable();
-                        texes.dedup();
+                    // remove duplicates
+                    texes.sort_unstable();
+                    texes.dedup();
 
-                        ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
-                        for tex in texes {
-                            let name = utils::trunc_str(ui, &tex.clone(), ui.min_rect().width());
-                            ui.selectable_value(&mut selected_tex, tex.clone(), &name);
-                        }
-                        ui.selectable_value(&mut selected_tex, "[Setup]".to_string(), "[Setup]");
-                    })
-                    .response;
-            });
+                    ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
+                    for tex in texes {
+                        let name = utils::trunc_str(ui, &tex.clone(), ui.min_rect().width());
+                        ui.selectable_value(&mut selected_tex, tex.clone(), &name);
+                    }
+                    ui.selectable_value(&mut selected_tex, "[Setup]".to_string(), "[Setup]");
+                })
+                .response;
         });
     });
 

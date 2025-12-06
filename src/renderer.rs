@@ -302,12 +302,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
         let mouse = mouse_world_vert;
         let nw = &mut new_vert;
-
-        let (verts, indices) = vert_lines(bone, &temp_arm.bones, shared, &mouse, nw, true);
-        draw(&None, &verts, &indices, render_pass, device);
-
         let wv = bone.world_verts.clone();
-        let (verts, indices) = bone_vertices(&bone.clone(), shared, &wv, true);
+
+        let (verts, indices, on_vert) = bone_vertices(&bone.clone(), shared, &wv, true);
+        let (lines_v, lines_i) =
+            vert_lines(bone, &temp_arm.bones, shared, &mouse, nw, true, on_vert);
+
+        draw(&None, &lines_v, &lines_i, render_pass, device);
         draw(&None, &verts, &indices, render_pass, device);
     }
 
@@ -318,10 +319,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let wv = bone.world_verts.clone();
         let vertex = Vertex::default();
 
-        let (verts, indices) = vert_lines(bone, &tp, shared, &vertex, &mut None, true);
+        let (verts, indices) = vert_lines(bone, &tp, shared, &vertex, &mut None, true, false);
         draw(&None, &verts, &indices, render_pass, device);
 
-        let (verts, indices) = bone_vertices(&bone.clone(), shared, &wv, false);
+        let (verts, indices, _) = bone_vertices(&bone.clone(), shared, &wv, false);
         draw(&None, &verts, &indices, render_pass, device);
     }
 
@@ -908,9 +909,10 @@ pub fn bone_vertices(
     shared: &mut Shared,
     world_verts: &Vec<Vertex>,
     editable: bool,
-) -> (Vec<Vertex>, Vec<u32>) {
+) -> (Vec<Vertex>, Vec<u32>, bool) {
     let mut all_verts = vec![];
     let mut all_indices = vec![];
+    let mut hovering_vert = false;
     let v2z = Vec2::ZERO;
     let rotated = 45. * 3.14 / 180.;
     macro_rules! point {
@@ -951,6 +953,8 @@ pub fn bone_vertices(
             add_point!(verts, indices, wv);
             continue;
         }
+
+        hovering_vert = true;
 
         let (mut verts, mut indices) = point!(wv, VertexColor::WHITE);
         add_point!(verts, indices, wv);
@@ -1016,7 +1020,7 @@ pub fn bone_vertices(
         }
     }
 
-    (all_verts, all_indices)
+    (all_verts, all_indices, hovering_vert)
 }
 
 pub fn vert_lines(
@@ -1026,6 +1030,7 @@ pub fn vert_lines(
     mouse_world_vert: &Vertex,
     new_vert: &mut Option<Vertex>,
     editable: bool,
+    hovering_vert: bool,
 ) -> (Vec<Vertex>, Vec<u32>) {
     let mut added_vert = false;
 
@@ -1089,7 +1094,7 @@ pub fn vert_lines(
 
         let mut is_hovering = false;
 
-        if editable {
+        if editable && !hovering_vert {
             for (_, chunk) in vec![0, 1, 2, 1, 2, 3].chunks_exact(3).enumerate() {
                 let c0 = chunk[0] as usize;
                 let c1 = chunk[1] as usize;
