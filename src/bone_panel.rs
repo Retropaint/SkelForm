@@ -138,9 +138,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
 
                 let frame = shared.ui.anim.selected_frame;
                 shared.save_edited_bone();
-                shared
-                    .armature
-                    .edit_bone(bone.id, $element, $float, anim_id, frame);
+                shared.edit_bone(bone.id, $element, $float, anim_id, frame);
                 *shared.saving.lock().unwrap() = shared::Saving::Autosaving;
             }
             if $label != "" {
@@ -414,13 +412,10 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     ui.selectable_value(&mut ik, JointConstraint::None, str_none);
                     ui.selectable_value(&mut ik, JointConstraint::Clockwise, str_clockwise);
                     ui.selectable_value(&mut ik, JointConstraint::CounterClockwise, str_ccw);
-                    shared.armature.edit_bone(
-                        bone.id,
-                        &AnimElement::IkConstraint,
-                        (ik as usize) as f32,
-                        shared.ui.anim.selected,
-                        shared.ui.anim.selected_frame,
-                    );
+                    let sel = shared.ui.anim.selected;
+                    let frame = shared.ui.anim.selected_frame;
+                    let constraint = AnimElement::IkConstraint;
+                    shared.edit_bone(bone.id, &constraint, (ik as usize) as f32, sel, frame);
                 })
                 .response
                 .on_hover_text(str_desc);

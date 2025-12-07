@@ -785,9 +785,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
 
     macro_rules! edit {
         ($bone:expr, $element:expr, $value:expr) => {
-            shared
-                .armature
-                .edit_bone($bone.id, &$element, $value, anim_id, anim_frame);
+            shared.edit_bone($bone.id, &$element, $value, anim_id, anim_frame);
         };
     }
 

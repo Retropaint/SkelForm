@@ -44,6 +44,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
 
                             let str_ui =
                                 shared.loc("settings_modal.user_interface.heading").clone();
+                            let str_anim = shared.loc("settings_modal.animation.heading").clone();
                             let str_rendering =
                                 shared.loc("settings_modal.rendering.heading").clone();
                             let str_keyboard =
@@ -51,6 +52,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                             let str_misc =
                                 shared.loc("settings_modal.miscellaneous.heading").clone();
                             tab!(str_ui, shared::SettingsState::Ui);
+                            tab!(str_anim, shared::SettingsState::Animation);
                             tab!(str_rendering, shared::SettingsState::Rendering);
                             tab!(str_keyboard, shared::SettingsState::Keyboard);
                             tab!(str_misc, shared::SettingsState::Misc);
@@ -66,6 +68,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                     let layout = egui::Layout::top_down(egui::Align::Min);
                     ui.with_layout(layout, |ui| match shared.ui.settings_state {
                         shared::SettingsState::Ui => user_interface(ui, shared),
+                        shared::SettingsState::Animation => animation(ui, shared),
                         shared::SettingsState::Rendering => rendering(ui, shared),
                         shared::SettingsState::Keyboard => keyboard(ui, shared),
                         shared::SettingsState::Misc => misc(ui, shared),
@@ -152,6 +155,17 @@ fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.add_space(20.);
 
     colors(ui, shared);
+}
+
+fn animation(ui: &mut egui::Ui, shared: &mut shared::Shared) {
+    let str_heading = &shared.loc("settings_modal.animation.heading");
+    ui.heading(str_heading);
+    ui.horizontal(|ui| {
+        let str_edit = &shared.loc("settings_modal.animation.edit_while_playing");
+        let str_edit_desc = &shared.loc("settings_modal.animation.edit_while_playing_desc");
+        ui.label(str_edit).on_hover_text(str_edit_desc);
+        ui.checkbox(&mut shared.config.edit_while_playing, "".into_atoms());
+    });
 }
 
 fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {

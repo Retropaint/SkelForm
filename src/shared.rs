@@ -410,6 +410,7 @@ pub enum UiState {
 pub enum SettingsState {
     #[default]
     Ui,
+    Animation,
     Rendering,
     Keyboard,
     Misc,
@@ -631,6 +632,8 @@ pub struct Config {
     #[serde(default)]
     pub keep_tex_str: bool,
     #[serde(default)]
+    pub edit_while_playing: bool,
+    #[serde(default)]
     pub layout: UiLayout,
 
     #[serde(default)]
@@ -666,6 +669,7 @@ impl Default for Config {
             gridline_front: false,
             keep_tex_str: false,
             layout: UiLayout::Split,
+            edit_while_playing: false,
         }
     }
 }
@@ -1073,79 +1077,6 @@ impl Armature {
             }
         }
         (new_bone, self.bones.len() - 1)
-    }
-
-    pub fn edit_bone(
-        &mut self,
-        bone_id: i32,
-        element: &AnimElement,
-        value: f32,
-        anim_id: usize,
-        anim_frame: i32,
-    ) {
-        let bone = self.find_bone_mut(bone_id).unwrap();
-        let mut init_value = 0.;
-
-        macro_rules! set {
-            ($field:expr) => {{
-                init_value = $field;
-                if anim_id == usize::MAX {
-                    $field = value;
-                }
-            }};
-        }
-
-        match element {
-            AnimElement::PositionX => set!(bone.pos.x),
-            AnimElement::PositionY => set!(bone.pos.y),
-            AnimElement::Rotation => set!(bone.rot),
-            AnimElement::ScaleX => set!(bone.scale.x),
-            AnimElement::ScaleY => set!(bone.scale.y),
-            AnimElement::Zindex => {
-                init_value = bone.zindex as f32;
-                if anim_id == usize::MAX {
-                    bone.zindex = value as i32
-                }
-            }
-            AnimElement::Texture => { /* handled in set_bone_tex() */ }
-            AnimElement::IkConstraint => {
-                init_value = (bone.ik_constraint as usize) as f32;
-                if anim_id == usize::MAX {
-                    bone.ik_constraint = match value {
-                        1. => JointConstraint::Clockwise,
-                        2. => JointConstraint::CounterClockwise,
-                        _ => JointConstraint::None,
-                    }
-                }
-            }
-            AnimElement::Hidden => {
-                init_value = bone.hidden as f32;
-                if anim_id == usize::MAX {
-                    bone.hidden = value as i32
-                }
-            }
-        };
-
-        if anim_id == usize::MAX {
-            return;
-        }
-
-        macro_rules! check_kf {
-            ($kf:expr) => {
-                $kf.frame == 0 && $kf.element == *element && $kf.bone_id == bone_id
-            };
-        }
-
-        let anim = &mut self.animations;
-
-        let has_0th = anim[anim_id].keyframes.iter().find(|kf| check_kf!(kf)) != None;
-        if anim_frame != 0 && !has_0th {
-            anim[anim_id].check_if_in_keyframe(bone_id, 0, element.clone());
-            let oth_frame = anim[anim_id].keyframes.iter_mut().find(|kf| check_kf!(kf));
-            oth_frame.unwrap().value = init_value;
-        }
-        let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
-        anim[anim_id].keyframes[frame].value = value;
     }
 
     // runtime: core animation logic
@@ -1988,6 +1919,87 @@ impl Shared {
             _ => {}
         };
         cam
+    }
+
+    pub fn edit_bone(
+        &mut self,
+        bone_id: i32,
+        element: &AnimElement,
+        value: f32,
+        anim_id: usize,
+        anim_frame: i32,
+    ) {
+        let bones = &mut self.armature.bones;
+        let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
+        let mut init_value = 0.;
+
+        // do nothing if anim is playing and edit_while_playing config is false
+        let anims = &self.armature.animations;
+        let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
+        if !self.config.edit_while_playing && is_any_anim_playing {
+            return;
+        }
+
+        macro_rules! set {
+            ($field:expr) => {{
+                init_value = $field;
+                if anim_id == usize::MAX {
+                    $field = value;
+                }
+            }};
+        }
+
+        match element {
+            AnimElement::PositionX => set!(bone.pos.x),
+            AnimElement::PositionY => set!(bone.pos.y),
+            AnimElement::Rotation => set!(bone.rot),
+            AnimElement::ScaleX => set!(bone.scale.x),
+            AnimElement::ScaleY => set!(bone.scale.y),
+            AnimElement::Zindex => {
+                init_value = bone.zindex as f32;
+                if anim_id == usize::MAX {
+                    bone.zindex = value as i32
+                }
+            }
+            AnimElement::Texture => { /* handled in set_bone_tex() */ }
+            AnimElement::IkConstraint => {
+                init_value = (bone.ik_constraint as usize) as f32;
+                if anim_id == usize::MAX {
+                    bone.ik_constraint = match value {
+                        1. => JointConstraint::Clockwise,
+                        2. => JointConstraint::CounterClockwise,
+                        _ => JointConstraint::None,
+                    }
+                }
+            }
+            AnimElement::Hidden => {
+                init_value = bone.hidden as f32;
+                if anim_id == usize::MAX {
+                    bone.hidden = value as i32
+                }
+            }
+        };
+
+        if anim_id == usize::MAX {
+            return;
+        }
+
+        macro_rules! check_kf {
+            ($kf:expr) => {
+                $kf.frame == 0 && $kf.element == *element && $kf.bone_id == bone_id
+            };
+        }
+
+        let anim = &mut self.armature.animations;
+
+        let has_0th = anim[anim_id].keyframes.iter().find(|kf| check_kf!(kf)) != None;
+        if anim_frame != 0 && !has_0th {
+            anim[anim_id].check_if_in_keyframe(bone_id, 0, element.clone());
+            let oth_frame = anim[anim_id].keyframes.iter_mut().find(|kf| check_kf!(kf));
+            oth_frame.unwrap().value = init_value;
+        }
+        let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
+        anim[anim_id].keyframes[frame].value = value;
     }
 }
 

@@ -215,14 +215,9 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     if anim_bones[b].hidden == 0 {
                         hidden = 1;
                     }
-                    let anim = &shared.ui.anim;
-                    shared.armature.edit_bone(
-                        bone_id,
-                        &AnimElement::Hidden,
-                        hidden as f32,
-                        anim.selected,
-                        anim.selected_frame,
-                    );
+                    let sel = shared.ui.anim.selected;
+                    let frame = shared.ui.anim.selected_frame;
+                    shared.edit_bone(bone_id, &AnimElement::Hidden, hidden as f32, sel, frame);
                 }
                 ui.add_space(17.);
 

@@ -165,6 +165,11 @@
         "link": "Link"
       }
     },
+    "animation": {
+      "heading": "Animation",
+      "edit_while_playing": "Edit while playing:",
+      "edit_while_playing_desc": "By default, edits won't be recorded if an animation is playing to prevent accidents.\n\nTick this allow editing while an animation is playing."
+    },
     "rendering": {
       "heading": "Rendering",
       "gridline_gap": "Gridline gap (pixels): ",
