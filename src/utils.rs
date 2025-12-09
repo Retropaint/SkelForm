@@ -392,7 +392,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
         bone.init_scale = bone.scale;
         bone.init_ik_constraint = bone.ik_constraint_id;
         bone.init_tex = bone.tex.clone();
-        bone.init_hidden = bone.hidden;
+        bone.init_is_hidden = bone.is_hidden;
 
         if bone.ik_bone_ids.len() == 0 {
             bone.ik_constraint = JointConstraint::Skip;

@@ -880,7 +880,7 @@ pub struct Bone {
     pub binds: Vec<BoneBind>,
 
     #[serde(default, skip_serializing_if = "is_neg_one")]
-    pub hidden: i32,
+    pub is_hidden: i32,
 
     // todo:
     // these should be private, but that upsets
@@ -894,7 +894,7 @@ pub struct Bone {
     #[serde(default, skip_serializing_if = "is_neg_one", skip_deserializing)]
     pub init_ik_constraint: i32,
     #[serde(default, skip_serializing_if = "is_neg_one", skip_deserializing)]
-    pub init_hidden: i32,
+    pub init_is_hidden: i32,
     #[serde(default, skip_serializing_if = "is_str_empty", skip_deserializing)]
     pub init_tex: String,
 
@@ -1138,7 +1138,7 @@ impl Armature {
                 b.scale.x = interpolate!(AnimElement::ScaleX,    b.scale.x);
                 b.scale.y = interpolate!(AnimElement::ScaleY,    b.scale.y);
                 b.zindex  = prev_frame!( AnimElement::Zindex,    b.zindex  as f32) as i32;
-                b.hidden  = prev_frame!( AnimElement::Hidden,    b.hidden  as f32) as i32;
+                b.is_hidden  = prev_frame!( AnimElement::Hidden, b.is_hidden  as f32) as i32;
                 b.tex     = prev_str!(   AnimElement::Texture,   b.tex.clone());
             };
 
@@ -1973,9 +1973,9 @@ impl Shared {
                 }
             }
             AnimElement::Hidden => {
-                init_value = bone.hidden as f32;
+                init_value = bone.is_hidden as f32;
                 if anim_id == usize::MAX {
-                    bone.hidden = value as i32
+                    bone.is_hidden = value as i32
                 }
             }
         };
