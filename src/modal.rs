@@ -107,7 +107,11 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             }
         }
         PolarId::Exiting => {
-            shared.ui.donating_modal = true;
+            if shared.config.ignore_donate {
+                shared.ui.confirmed_exit = true;
+            } else {
+                shared.ui.donating_modal = true;
+            }
         }
         PolarId::DeleteAnim => {
             shared.ui.anim.selected = usize::MAX;
