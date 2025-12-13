@@ -154,6 +154,9 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.ui.startup_window {
         startup_window::startup_modal(shared, context);
     }
+    if shared.ui.donating_modal {
+        modal::donating_modal(shared, context);
+    }
     style_once!(top_panel(context, shared));
 
     if shared.ui.anim.open {

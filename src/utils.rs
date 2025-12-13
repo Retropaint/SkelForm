@@ -928,3 +928,11 @@ pub fn get_all_parents(bones: &Vec<Bone>, bone_id: i32) -> Vec<Bone> {
 
     parents
 }
+
+pub fn exit(shared: &mut Shared) {
+    if shared.undo_actions.len() == 0 && !shared.config.ignore_donate {
+        shared.ui.donating_modal = true;
+    } else if !shared.ui.donating_modal {
+        shared.ui.exiting = true;
+    }
+}

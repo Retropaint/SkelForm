@@ -283,7 +283,7 @@ impl ApplicationHandler for App {
                 }
             }
             WindowEvent::CloseRequested => {
-                self.shared.ui.exiting = true;
+                utils::exit(&mut self.shared);
             }
             #[allow(unused_mut)]
             WindowEvent::Resized(PhysicalSize {
@@ -355,7 +355,7 @@ impl ApplicationHandler for App {
         if let Ok(event) = global_hotkey::GlobalHotKeyEvent::receiver().try_recv() {
             if event.id() == self.shared.input.id_cmd_w || event.id() == self.shared.input.id_cmd_q
             {
-                self.shared.ui.exiting = true;
+                utils::exit(&mut self.shared);
             }
         }
 

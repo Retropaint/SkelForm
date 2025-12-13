@@ -2,11 +2,12 @@ use crate::{armature_window, ui::EguiUi, utils, Action, ActionType, Config, Pola
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     ctx: &egui::Context,
+    id: String,
     config: &Config,
     content: T,
     buttons: E,
 ) {
-    egui::Modal::new("test".into())
+    egui::Modal::new(id.into())
         .frame(egui::Frame {
             corner_radius: 0.into(),
             fill: config.colors.main.into(),
@@ -31,6 +32,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
 
     modal_template(
         ctx,
+        "polar".to_string(),
         &shared.config,
         |ui| {
             ui.label(headline);
@@ -104,7 +106,9 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
                 bone.ik_target_id = -1;
             }
         }
-        PolarId::Exiting => shared.ui.confirmed_exit = true,
+        PolarId::Exiting => {
+            shared.ui.donating_modal = true;
+        }
         PolarId::DeleteAnim => {
             shared.ui.anim.selected = usize::MAX;
             shared.undo_actions.push(Action {
@@ -133,6 +137,7 @@ pub fn modal(shared: &mut Shared, ctx: &egui::Context) {
     let headline = shared.ui.headline.to_string();
     modal_template(
         ctx,
+        "modal".to_string(),
         &shared.config,
         |ui| {
             let mut cache = egui_commonmark::CommonMarkCache::default();
@@ -145,6 +150,50 @@ pub fn modal(shared: &mut Shared, ctx: &egui::Context) {
             }
 
             shared.ui.modal = false;
+            shared.ui.headline = "".to_string();
+        },
+    )
+}
+
+pub fn donating_modal(shared: &mut Shared, ctx: &egui::Context) {
+    let headline = shared.loc("donating");
+    let config = shared.config.clone();
+    modal_template(
+        ctx,
+        "donate".to_string(),
+        &config,
+        |ui| {
+            let mut cache = egui_commonmark::CommonMarkCache::default();
+            let str = utils::markdown(headline, "".to_string());
+            egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
+        },
+        |ui| {
+            let mut pressed = false;
+            if ui.button("Donate").clicked() {
+                _ = open::that("https://ko-fi.com/retropaintt");
+
+                // wait a second before closing
+                // oddly specific but it's for those with 'selector' default
+                // browsers like browserosaurus
+                std::thread::sleep(std::time::Duration::from_secs(1));
+
+                pressed = true;
+            }
+            if ui.button("Later").clicked() {
+                pressed = true;
+            }
+            if ui.button("Never").clicked() {
+                shared.config.ignore_donate = true;
+                utils::save_config(&shared.config);
+                pressed = true;
+            }
+
+            if !pressed {
+                return;
+            }
+
+            shared.ui.modal = false;
+            shared.ui.confirmed_exit = true;
             shared.ui.headline = "".to_string();
         },
     )

@@ -237,13 +237,9 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         let str_autosave_freq = &shared.loc("settings_modal.miscellaneous.autosave_frequency");
         ui.label(str_autosave_freq);
-        let (edited, value, _) = ui.float_input(
-            "autosave_freq".to_string(),
-            shared,
-            shared.config.autosave_frequency as f32,
-            1.,
-            None,
-        );
+        let id = "autosave_freq".to_string();
+        let auto_freq = shared.config.autosave_frequency as f32;
+        let (edited, value, _) = ui.float_input(id, shared, auto_freq, 1., None);
         if edited && value > 0. {
             shared.config.autosave_frequency = value as i32;
         }

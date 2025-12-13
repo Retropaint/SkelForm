@@ -19,6 +19,7 @@
   "rename": "Rename",
   "delete": "Delete",
   "img_err": "Could not extract image data.",
+  "donating": "If you liked using SkelForm, a [donation](https://ko-fi.com/retropaintt) is highly appreciated!\n\nThe donation will be through Kofi.com.\n\nThank you for using SkelForm!",
   "startup": {
     "import": "Import",
     "samples": "Samples",
@@ -90,14 +91,14 @@
     "new_bone_button": "New Bone",
     "new_bone_name": "New Bone",
     "styles": "👕 Styles",
-    "styles_desc": "Create a style, add textures, then assign bones to use it. Click on styles in the dropdown to toggle them.\n\nBones use textures based on their index. To change it, select a bone > 'Tex Index'.\n\nMultiple styles can be active at once. Bones assinged to multiple active styles will use the top-most first."
+    "styles_desc": "Create a style, add textures, then assign bones to use it. Click on styles in the dropdown to toggle them.\n\nBones use textures based on their index. To change it, select a bone > 'Tex Index'.\n\nMultiple styles can be active at once. Bones assinged to multiple active styles will use the top-most first.",
+    "empty_armature": "Don't forget - if in doubt, consult the [User Documentation](user-docs/index.html).\n\nIf you're new here, check out the [Starter Guide](user-docs/starter-guide/main.html).\n\nYou may import a PSD (File > Import), provided it has the [right structure](user-docs/psd.html).\n\nClick **New Bone** above to get started with your armature."
   },
   "bone_panel": {
     "heading": "Bone",
     "name": "Name:",
     "texture": "Texture:",
     "texture_setup": "[Setup]",
-    "empty_armature": "Don't forget - if in doubt, consult the [User Documentation](user-docs/index.html).\n\nIf you're new here, check out the [Starter Guide](user-docs/starter-guide/main.html).\n\nYou may import a PSD (File > Import), provided it has the [right structure](user-docs/psd.html).\n\nClick **New Bone** above to get started with your armature.",
     "position": "Position:",
     "scale": "Scale:",
     "rotation": "Rotation:",

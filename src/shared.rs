@@ -543,6 +543,7 @@ pub struct Ui {
     pub scaling: bool,
     pub rotating: bool,
     pub focus_style_dropdown: bool,
+    pub donating_modal: bool,
 }
 
 impl Ui {
@@ -599,7 +600,7 @@ impl Ui {
     }
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug)]
+#[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
 pub enum UiLayout {
     #[default]
     Split,
@@ -609,7 +610,7 @@ pub enum UiLayout {
 
 enum_string!(UiLayout);
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Clone)]
 pub struct Config {
     #[serde(default = "default_one")]
     pub ui_scale: f32,
@@ -629,6 +630,8 @@ pub struct Config {
     pub edit_while_playing: bool,
     #[serde(default)]
     pub layout: UiLayout,
+    #[serde(default)]
+    pub ignore_donate: bool,
 
     #[serde(default)]
     pub colors: ColorConfig,
@@ -636,7 +639,7 @@ pub struct Config {
     pub keys: KeyboardConfig,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Clone)]
 pub struct ColorConfig {
     pub main: Color,
     pub light_accent: Color,
@@ -664,6 +667,7 @@ impl Default for Config {
             keep_tex_str: false,
             layout: UiLayout::Split,
             edit_while_playing: false,
+            ignore_donate: false,
         }
     }
 }
@@ -685,7 +689,7 @@ impl Default for ColorConfig {
     }
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Clone)]
 pub struct KeyboardConfig {
     pub next_anim_frame: egui::KeyboardShortcut,
     pub prev_anim_frame: egui::KeyboardShortcut,

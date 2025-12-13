@@ -159,7 +159,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         } else {
                             let mut cache = egui_commonmark::CommonMarkCache::default();
                             let str = utils::markdown(
-                                shared.loc("bone_panel.empty_armature"),
+                                shared.loc("armature_panel.empty_armature"),
                                 shared.local_doc_url.clone(),
                             );
                             egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
