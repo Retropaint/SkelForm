@@ -173,7 +173,7 @@ pub fn donating_modal(shared: &mut Shared, ctx: &egui::Context) {
         },
         |ui| {
             let mut pressed = false;
-            if ui.button("Donate").clicked() {
+            if ui.skf_button("Donate").clicked() {
                 _ = open::that("https://ko-fi.com/retropaintt");
 
                 // wait a second before closing
@@ -183,10 +183,10 @@ pub fn donating_modal(shared: &mut Shared, ctx: &egui::Context) {
 
                 pressed = true;
             }
-            if ui.button("Later").clicked() {
+            if ui.skf_button("Later").clicked() {
                 pressed = true;
             }
-            if ui.button("Never").clicked() {
+            if ui.skf_button("Never").clicked() {
                 shared.config.ignore_donate = true;
                 utils::save_config(&shared.config);
                 pressed = true;
