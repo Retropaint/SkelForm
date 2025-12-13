@@ -353,7 +353,7 @@ impl ApplicationHandler for App {
 
         // read system shortcuts (defined in main.rs with global_hotkey)
         if let Ok(event) = global_hotkey::GlobalHotKeyEvent::receiver().try_recv() {
-            if event.id() == self.shared.input.id_cmd_w || event.id() == self.shared.input.id_cmd_q
+            if event.id() == self.shared.input.id_mod_w || event.id() == self.shared.input.id_mod_q
             {
                 utils::exit(&mut self.shared);
             }

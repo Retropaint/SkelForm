@@ -373,8 +373,8 @@ pub struct InputStates {
     pub holding_shift: bool,
     pub mouse_init: Option<Vec2>,
 
-    pub id_cmd_q: u32,
-    pub id_cmd_w: u32,
+    pub id_mod_q: u32,
+    pub id_mod_w: u32,
 
     // is mouse on UI?
     pub on_ui: bool,
