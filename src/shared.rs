@@ -9,7 +9,6 @@ use std::{
 
 use std::sync::Mutex;
 use wgpu::BindGroup;
-use winit::keyboard::KeyCode;
 
 #[rustfmt::skip]
 #[repr(C)]
@@ -362,7 +361,6 @@ pub struct Camera {
 /// Input-related fields.
 #[derive(Clone, Default)]
 pub struct InputStates {
-    // mouse stuff
     pub mouse: Vec2,
     pub mouse_prev: Vec2,
     pub left_clicked: bool,
@@ -375,21 +373,13 @@ pub struct InputStates {
     pub holding_shift: bool,
     pub mouse_init: Option<Vec2>,
 
-    pub idCmdQ: u32,
-    pub idCmdW: u32,
+    pub id_cmd_q: u32,
+    pub id_cmd_w: u32,
 
     // is mouse on UI?
     pub on_ui: bool,
 
-    pub pressed: Vec<KeyCode>,
     pub last_pressed: Option<egui::Key>,
-}
-
-impl InputStates {
-    /// Check if this key is being held down.
-    pub fn is_pressing(&self, key: KeyCode) -> bool {
-        self.pressed.iter().find(|k| **k == key) != None
-    }
 }
 
 #[derive(Clone, Default, PartialEq)]

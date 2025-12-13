@@ -63,14 +63,14 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 
     let manager = global_hotkey::GlobalHotKeyManager::new().unwrap();
 
-    let cmdQ = global_hotkey::hotkey::HotKey::new(Some(Modifiers::SUPER), Code::KeyQ);
-    let cmdW = global_hotkey::hotkey::HotKey::new(Some(Modifiers::SUPER), Code::KeyW);
+    let cmd_q = global_hotkey::hotkey::HotKey::new(Some(Modifiers::SUPER), Code::KeyQ);
+    let cmd_w = global_hotkey::hotkey::HotKey::new(Some(Modifiers::SUPER), Code::KeyW);
 
-    app.shared.input.idCmdQ = cmdQ.id();
-    app.shared.input.idCmdW = cmdW.id();
+    app.shared.input.id_cmd_q = cmd_q.id();
+    app.shared.input.id_cmd_w = cmd_w.id();
 
-    _ = manager.register(cmdQ);
-    _ = manager.register(cmdW);
+    _ = manager.register(cmd_q);
+    _ = manager.register(cmd_w);
 
     event_loop.run_app(&mut app)
 }

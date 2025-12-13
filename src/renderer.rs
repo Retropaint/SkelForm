@@ -5,7 +5,6 @@ use armature_window::find_bone;
 use image::{DynamicImage, GenericImageView};
 use spade::Triangulation;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
-use winit::keyboard::KeyCode;
 
 /// The `main` of this module.
 pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared) {
@@ -408,9 +407,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // move camera
-    if (shared.input.is_pressing(KeyCode::SuperLeft) || shared.input.right_down)
-        && !shared.input.on_ui
-    {
+    if (shared.input.holding_mod || shared.input.right_down) && !shared.input.on_ui {
         shared.cursor_icon = egui::CursorIcon::Move;
         shared.camera.pos += shared.mouse_vel() * shared.camera.zoom;
         return;

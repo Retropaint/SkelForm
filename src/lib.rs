@@ -266,35 +266,6 @@ impl ApplicationHandler for App {
 
         // If the gui didn't consume the event, handle it
         match event {
-            WindowEvent::KeyboardInput {
-                event:
-                    winit::event::KeyEvent {
-                        physical_key: winit::keyboard::PhysicalKey::Code(key_code),
-                        state,
-                        ..
-                    },
-                ..
-            } => {
-                if state == winit::event::ElementState::Pressed {
-                    let mut add = true;
-                    for pressed_key in &mut self.shared.input.pressed {
-                        if &key_code == pressed_key {
-                            add = false;
-                            break;
-                        }
-                    }
-                    if add {
-                        self.shared.input.pressed.push(key_code);
-                    }
-                } else {
-                    for i in 0..self.shared.input.pressed.len() {
-                        if key_code == self.shared.input.pressed[i] {
-                            self.shared.input.pressed.remove(i);
-                            break;
-                        }
-                    }
-                }
-            }
             WindowEvent::HoveredFile(_) => {
                 let str_drop_file = self.shared.loc("drop_file").to_string();
                 self.shared.ui.open_modal(str_drop_file, true);
@@ -382,7 +353,8 @@ impl ApplicationHandler for App {
 
         // read system shortcuts (defined in main.rs with global_hotkey)
         if let Ok(event) = global_hotkey::GlobalHotKeyEvent::receiver().try_recv() {
-            if event.id() == self.shared.input.idCmdW || event.id() == self.shared.input.idCmdQ {
+            if event.id() == self.shared.input.id_cmd_w || event.id() == self.shared.input.id_cmd_q
+            {
                 self.shared.ui.exiting = true;
             }
         }
