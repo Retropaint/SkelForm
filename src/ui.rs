@@ -686,6 +686,12 @@ impl EguiUi for egui::Ui {
                 }
             }
 
+            if self.input(|i| i.key_pressed(egui::Key::Escape)) {
+                shared.ui.input_focused = false;
+                shared.ui.rename_id = "".to_string();
+                return (false, value, input);
+            }
+
             if self.input(|i| i.key_pressed(egui::Key::Enter)) || input.lost_focus() {
                 entered = true;
             }
