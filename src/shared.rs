@@ -359,7 +359,7 @@ pub struct Camera {
 }
 
 /// Input-related fields.
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct InputStates {
     pub mouse: Vec2,
     pub mouse_prev: Vec2,
@@ -373,8 +373,9 @@ pub struct InputStates {
     pub holding_shift: bool,
     pub mouse_init: Option<Vec2>,
 
-    pub id_mod_q: u32,
-    pub id_mod_w: u32,
+    pub mod_q: Option<global_hotkey::hotkey::HotKey>,
+    pub mod_w: Option<global_hotkey::hotkey::HotKey>,
+    pub hotkey_manager: Option<global_hotkey::GlobalHotKeyManager>,
 
     // is mouse on UI?
     pub on_ui: bool,

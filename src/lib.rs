@@ -11,6 +11,7 @@
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Write;
 
+use global_hotkey::hotkey::{Code, HotKey, Modifiers};
 use shared::*;
 use wgpu::{BindGroupLayout, InstanceDescriptor};
 
@@ -285,6 +286,19 @@ impl ApplicationHandler for App {
             WindowEvent::CloseRequested => {
                 utils::exit(&mut self.shared);
             }
+            WindowEvent::Focused(is_focused) => {
+                let manager = &mut self.shared.input.hotkey_manager;
+                let mod_q = &mut self.shared.input.mod_q;
+                let mod_w = &mut self.shared.input.mod_w;
+                if is_focused {
+                    _ = manager.as_mut().unwrap().register(mod_q.unwrap());
+                    _ = manager.as_mut().unwrap().register(mod_w.unwrap());
+                } else {
+                    let manager = &mut self.shared.input.hotkey_manager;
+                    _ = manager.as_mut().unwrap().unregister(mod_q.unwrap());
+                    _ = manager.as_mut().unwrap().unregister(mod_w.unwrap());
+                }
+            }
             #[allow(unused_mut)]
             WindowEvent::Resized(PhysicalSize {
                 mut width,
@@ -353,7 +367,8 @@ impl ApplicationHandler for App {
 
         // read system shortcuts (defined in main.rs with global_hotkey)
         if let Ok(event) = global_hotkey::GlobalHotKeyEvent::receiver().try_recv() {
-            if event.id() == self.shared.input.id_mod_w || event.id() == self.shared.input.id_mod_q
+            if event.id() == self.shared.input.mod_w.unwrap().id()
+                || event.id() == self.shared.input.mod_q.unwrap().id()
             {
                 utils::exit(&mut self.shared);
             }
