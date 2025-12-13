@@ -1,5 +1,6 @@
 #![windows_subsystem = "windows"]
 
+use global_hotkey::hotkey::{Code, Modifiers};
 #[cfg(not(target_arch = "wasm32"))]
 use skelform_lib::shared::config_path;
 
@@ -59,6 +60,17 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     event_loop.set_control_flow(winit::event_loop::ControlFlow::Poll);
     #[cfg(target_arch = "wasm32")]
     event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
+
+    let manager = global_hotkey::GlobalHotKeyManager::new().unwrap();
+
+    let cmdQ = global_hotkey::hotkey::HotKey::new(Some(Modifiers::SUPER), Code::KeyQ);
+    let cmdW = global_hotkey::hotkey::HotKey::new(Some(Modifiers::SUPER), Code::KeyW);
+
+    app.shared.input.idCmdQ = cmdQ.id();
+    app.shared.input.idCmdW = cmdW.id();
+
+    _ = manager.register(cmdQ);
+    _ = manager.register(cmdW);
 
     event_loop.run_app(&mut app)
 }

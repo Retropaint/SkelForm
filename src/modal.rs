@@ -104,7 +104,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
                 bone.ik_target_id = -1;
             }
         }
-        PolarId::Exiting => shared.ui.exiting = true,
+        PolarId::Exiting => shared.ui.confirmed_exit = true,
         PolarId::DeleteAnim => {
             shared.ui.anim.selected = usize::MAX;
             shared.undo_actions.push(Action {

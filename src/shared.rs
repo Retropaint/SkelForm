@@ -375,6 +375,9 @@ pub struct InputStates {
     pub holding_shift: bool,
     pub mouse_init: Option<Vec2>,
 
+    pub idCmdQ: u32,
+    pub idCmdW: u32,
+
     // is mouse on UI?
     pub on_ui: bool,
 
@@ -539,6 +542,7 @@ pub struct Ui {
 
     pub styles_modal: bool,
     pub exiting: bool,
+    pub confirmed_exit: bool,
     pub dragging_bone: bool,
     pub removing_textures: bool,
     pub forced_modal: bool,

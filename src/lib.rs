@@ -312,12 +312,7 @@ impl ApplicationHandler for App {
                 }
             }
             WindowEvent::CloseRequested => {
-                if self.shared.undo_actions.len() > 0 {
-                    let str_del = self.shared.loc("polar.unsaved").clone();
-                    self.shared.ui.open_polar_modal(PolarId::Exiting, &str_del);
-                } else {
-                    event_loop.exit();
-                }
+                self.shared.ui.exiting = true;
             }
             #[allow(unused_mut)]
             WindowEvent::Resized(PhysicalSize {
@@ -385,7 +380,24 @@ impl ApplicationHandler for App {
             _ => (),
         }
 
+        // read system shortcuts (defined in main.rs with global_hotkey)
+        if let Ok(event) = global_hotkey::GlobalHotKeyEvent::receiver().try_recv() {
+            if event.id() == self.shared.input.idCmdW || event.id() == self.shared.input.idCmdQ {
+                self.shared.ui.exiting = true;
+            }
+        }
+
         if self.shared.ui.exiting {
+            if self.shared.undo_actions.len() > 0 {
+                let str_del = self.shared.loc("polar.unsaved").clone();
+                self.shared.ui.open_polar_modal(PolarId::Exiting, &str_del);
+            } else {
+                event_loop.exit();
+            }
+            self.shared.ui.exiting = false;
+        }
+
+        if self.shared.ui.confirmed_exit {
             event_loop.exit();
         }
 
