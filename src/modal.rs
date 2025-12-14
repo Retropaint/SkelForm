@@ -174,7 +174,15 @@ pub fn donating_modal(shared: &mut Shared, ctx: &egui::Context) {
         |ui| {
             let mut pressed = false;
             if ui.skf_button("Donate").clicked() {
-                _ = open::that("https://ko-fi.com/retropaintt");
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    _ = open::that("https://ko-fi.com/retropaintt");
+                }
+
+                #[cfg(target_arch = "wasm32")]
+                {
+                    crate::openLink("https://ko-fi.com/retropaintt".to_string());
+                }
 
                 // wait a second before closing
                 // oddly specific but it's for those with 'selector' default
