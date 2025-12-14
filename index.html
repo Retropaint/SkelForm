@@ -368,9 +368,24 @@
               const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
               return regex.test(navigator.userAgent);
             }            
+            
+            https://stackoverflow.com/a/10311375
+            function beforeUnload(e) {
+                e = e || window.event;
+                let text = "Are you sure you want to quit and discard unsaved changes?";
+            
+                // for IE and Firefox prior to version 4
+                if (e) {
+                    e.returnValue = text;
+                }
+            
+                // for Safari
+                return text;
+            }
 
             window.addEventListener("resize", resizeCanvas);
             window.addEventListener("load", resizeCanvas);
+            window.addEventListener("beforeunload", beforeUnload);
         </script>
 
         <script>
