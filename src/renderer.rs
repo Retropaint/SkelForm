@@ -97,6 +97,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // sort bones by highest zindex first, so that hover logic will pick the top-most one
     temp_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
 
+    let mut hovering_tri = vec![];
+
     let mut hover_bone_id = -1;
 
     // many fight for spot of newest vertex; only one will emerge victorious.
@@ -160,25 +162,33 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     + (v[c1].pos - tb.pos) * bary.1
                     + (v[c2].pos - tb.pos) * bary.2;
 
-                if shared.input.left_clicked && shared.ui.showing_mesh && new_vert == None {
-                    new_vert = Some(Vertex {
-                        pos,
-                        uv,
-                        ..Default::default()
-                    });
-                }
-
-                if shared.ui.showing_mesh && shared.input.right_clicked && !removed_vert {
+                if shared.ui.showing_mesh {
                     let bone = &mut shared.selected_bone_mut().unwrap();
-                    let mut ids = vec![];
-                    for i in &bone.indices {
-                        ids.push(bone.vertices[*i as usize].id);
+                    hovering_tri.push(tb.world_verts[bone.indices[i * 3 + 0] as usize]);
+                    hovering_tri.push(tb.world_verts[bone.indices[i * 3 + 1] as usize]);
+                    hovering_tri.push(tb.world_verts[bone.indices[i * 3 + 2] as usize]);
+
+                    if shared.input.right_clicked && !removed_vert {
+                        let bone = &mut shared.selected_bone_mut().unwrap();
+                        if bone.indices.len() == 6 {
+                            shared.ui.open_modal(shared.loc("indices_limit"), false);
+                            break;
+                        }
+                        bone.indices.remove(i * 3);
+                        bone.indices.remove(i * 3);
+                        bone.indices.remove(i * 3);
+                        removed_vert = true;
+                        break;
                     }
-                    bone.indices.remove(i * 3);
-                    bone.indices.remove(i * 3);
-                    bone.indices.remove(i * 3);
-                    removed_vert = true;
-                    break;
+
+                    if shared.input.left_clicked && new_vert == None {
+                        new_vert = Some(Vertex {
+                            pos,
+                            uv,
+                            ..Default::default()
+                        });
+                        break;
+                    }
                 }
 
                 let tex = temp_arm.tex_of(temp_arm.bones[b].id).unwrap();
@@ -291,6 +301,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
+    let mut hovering_vert = false;
+    let mut hovering_line = false;
+
     if shared.ui.showing_mesh || shared.ui.setting_bind_verts {
         let id = shared.selected_bone().unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
@@ -303,12 +316,17 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let nw = &mut new_vert;
         let wv = bone.world_verts.clone();
 
+        println!("{}", bone.world_verts.len());
+
         let (verts, indices, on_vert) = bone_vertices(&bone.clone(), shared, &wv, true);
-        let (lines_v, lines_i) =
+        let (lines_v, lines_i, on_line) =
             vert_lines(bone, &temp_arm.bones, shared, &mouse, nw, true, on_vert);
 
         draw(&None, &lines_v, &lines_i, render_pass, device);
         draw(&None, &verts, &indices, render_pass, device);
+
+        hovering_vert = on_vert;
+        hovering_line = on_line;
     }
 
     if mesh_onion_id != -1 {
@@ -318,11 +336,19 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let wv = bone.world_verts.clone();
         let vertex = Vertex::default();
 
-        let (verts, indices) = vert_lines(bone, &tp, shared, &vertex, &mut None, true, false);
+        let (verts, indices, _) = vert_lines(bone, &tp, shared, &vertex, &mut None, true, false);
         draw(&None, &verts, &indices, render_pass, device);
 
         let (verts, indices, _) = bone_vertices(&bone.clone(), shared, &wv, false);
         draw(&None, &verts, &indices, render_pass, device);
+    }
+
+    if hovering_tri.len() > 0 && !hovering_vert && !hovering_line {
+        render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+        hovering_tri[0].add_color = VertexColor::new(-255., 0., -255., -0.75);
+        hovering_tri[1].add_color = VertexColor::new(-255., 0., -255., -0.75);
+        hovering_tri[2].add_color = VertexColor::new(-255., 0., -255., -0.75);
+        draw(&None, &hovering_tri, &vec![0, 1, 2], render_pass, device);
     }
 
     if !shared.ui.setting_bind_verts {
@@ -339,6 +365,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             bone_mut.vertices.push(vert);
             bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
             bone_mut.indices = triangulate(&bone_mut.vertices);
+            bone_mut.verts_edited = true;
         }
     }
 
@@ -1026,13 +1053,15 @@ pub fn vert_lines(
     new_vert: &mut Option<Vertex>,
     editable: bool,
     hovering_vert: bool,
-) -> (Vec<Vertex>, Vec<u32>) {
+) -> (Vec<Vertex>, Vec<u32>, bool) {
     let mut added_vert = false;
 
     let mut all_verts: Vec<Vertex> = vec![];
     let mut all_indices: Vec<u32> = vec![];
 
     let mut indices = vec![0, 1, 2, 1, 2, 3];
+
+    let mut hovered_once = false;
 
     // identify how many lines to create based on indices
     let mut lines: Vec<(u32, u32)> = vec![];
@@ -1147,9 +1176,13 @@ pub fn vert_lines(
         for i in &mut indices {
             *i += 4;
         }
+
+        if is_hovering {
+            hovered_once = true;
+        }
     }
 
-    (all_verts, all_indices)
+    (all_verts, all_indices, hovered_once)
 }
 
 fn draw_line(

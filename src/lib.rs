@@ -11,7 +11,6 @@
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Write;
 
-use global_hotkey::hotkey::{Code, HotKey, Modifiers};
 use shared::*;
 use wgpu::{BindGroupLayout, InstanceDescriptor};
 
