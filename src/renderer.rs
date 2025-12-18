@@ -97,8 +97,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // sort bones by highest zindex first, so that hover logic will pick the top-most one
     temp_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
 
-    let mut hovering_tri = vec![];
-
     let mut hover_bone_id = -1;
 
     // many fight for spot of newest vertex; only one will emerge victorious.
@@ -163,11 +161,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     + (v[c2].pos - tb.pos) * bary.2;
 
                 if shared.ui.showing_mesh {
-                    let bone = &mut shared.selected_bone_mut().unwrap();
-                    hovering_tri.push(tb.world_verts[bone.indices[i * 3 + 0] as usize]);
-                    hovering_tri.push(tb.world_verts[bone.indices[i * 3 + 1] as usize]);
-                    hovering_tri.push(tb.world_verts[bone.indices[i * 3 + 2] as usize]);
-
                     if shared.input.right_clicked && !removed_vert {
                         let bone = &mut shared.selected_bone_mut().unwrap();
                         if bone.indices.len() == 6 {
@@ -301,9 +294,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    let mut hovering_vert = false;
-    let mut hovering_line = false;
-
     if shared.ui.showing_mesh || shared.ui.setting_bind_verts {
         let id = shared.selected_bone().unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
@@ -316,8 +306,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let nw = &mut new_vert;
         let wv = bone.world_verts.clone();
 
-        println!("{}", bone.world_verts.len());
-
         let (verts, indices, on_vert) = bone_vertices(&bone.clone(), shared, &wv, true);
         let (lines_v, lines_i, on_line) =
             vert_lines(bone, &temp_arm.bones, shared, &mouse, nw, true, on_vert);
@@ -325,8 +313,15 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         draw(&None, &lines_v, &lines_i, render_pass, device);
         draw(&None, &verts, &indices, render_pass, device);
 
-        hovering_vert = on_vert;
-        hovering_line = on_line;
+        let mut hovering_tri = bone_triangle(&bone, &mouse, wv);
+        if hovering_tri.len() > 0 && !on_vert && !on_line {
+            render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
+            hovering_tri[0].add_color = VertexColor::new(-255., 0., -255., -0.75);
+            hovering_tri[1].add_color = VertexColor::new(-255., 0., -255., -0.75);
+            hovering_tri[2].add_color = VertexColor::new(-255., 0., -255., -0.75);
+            shared.dragging_verts = hovering_tri.iter().map(|v| v.id as usize).collect();
+            draw(&None, &hovering_tri, &vec![0, 1, 2], render_pass, device);
+        }
     }
 
     if mesh_onion_id != -1 {
@@ -341,14 +336,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         let (verts, indices, _) = bone_vertices(&bone.clone(), shared, &wv, false);
         draw(&None, &verts, &indices, render_pass, device);
-    }
-
-    if hovering_tri.len() > 0 && !hovering_vert && !hovering_line {
-        render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
-        hovering_tri[0].add_color = VertexColor::new(-255., 0., -255., -0.75);
-        hovering_tri[1].add_color = VertexColor::new(-255., 0., -255., -0.75);
-        hovering_tri[2].add_color = VertexColor::new(-255., 0., -255., -0.75);
-        draw(&None, &hovering_tri, &vec![0, 1, 2], render_pass, device);
     }
 
     if !shared.ui.setting_bind_verts {
@@ -1043,6 +1030,26 @@ pub fn bone_vertices(
     }
 
     (all_verts, all_indices, hovering_vert)
+}
+
+fn bone_triangle(tb: &Bone, mouse_world_vert: &Vertex, wv: Vec<Vertex>) -> Vec<Vertex> {
+    let mut hovering_tri = vec![];
+    for (i, chunk) in tb.indices.chunks_exact(3).enumerate() {
+        let c0 = chunk[0] as usize;
+        let c1 = chunk[1] as usize;
+        let c2 = chunk[2] as usize;
+
+        let bary = tri_point(&mouse_world_vert.pos, &wv[c0].pos, &wv[c1].pos, &wv[c2].pos);
+        if bary.0 == -1. {
+            continue;
+        }
+
+        hovering_tri.push(tb.world_verts[tb.indices[i * 3 + 0] as usize]);
+        hovering_tri.push(tb.world_verts[tb.indices[i * 3 + 1] as usize]);
+        hovering_tri.push(tb.world_verts[tb.indices[i * 3 + 2] as usize]);
+    }
+
+    hovering_tri
 }
 
 pub fn vert_lines(
