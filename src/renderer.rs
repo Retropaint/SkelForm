@@ -313,14 +313,16 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         draw(&None, &lines_v, &lines_i, render_pass, device);
         draw(&None, &verts, &indices, render_pass, device);
 
+        // draw hovered triangle if neither a vertex nor a line is hovered
         let mut hovering_tri = bone_triangle(&bone, &mouse, wv);
         if hovering_tri.len() > 0 && !on_vert && !on_line {
-            render_pass.set_bind_group(0, &shared.generic_bindgroup, &[]);
             hovering_tri[0].add_color = VertexColor::new(-255., 0., -255., -0.75);
             hovering_tri[1].add_color = VertexColor::new(-255., 0., -255., -0.75);
             hovering_tri[2].add_color = VertexColor::new(-255., 0., -255., -0.75);
-            shared.dragging_verts = hovering_tri.iter().map(|v| v.id as usize).collect();
             draw(&None, &hovering_tri, &vec![0, 1, 2], render_pass, device);
+
+            // verts of this triangle will be dragged
+            shared.dragging_verts = hovering_tri.iter().map(|v| v.id as usize).collect();
         }
     }
 
