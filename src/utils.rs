@@ -317,11 +317,14 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
 
     for fid in family_ids {
         let ac = &mut armature_copy;
-        let joints: Vec<&Bone> = ac
-            .bones
-            .iter()
-            .filter(|bone| bone.ik_family_id == fid)
-            .collect();
+        let mut joints: Vec<&Bone> = vec![];
+        for bone in &ac.bones {
+            let family_ids = joints.iter().map(|j| j.ik_family_id).collect::<Vec<i32>>();
+            if !family_ids.contains(&bone.ik_family_id) {
+                joints.push(&bone);
+            }
+        }
+        let joints: Vec<&Bone> = ac.bones.iter().filter(|b| b.ik_family_id == fid).collect();
 
         let mut bone_ids = vec![];
         for joint in &joints {
