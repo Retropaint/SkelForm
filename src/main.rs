@@ -1,6 +1,6 @@
 #![windows_subsystem = "windows"]
 
-use global_hotkey::hotkey::{Code, Modifiers, HotKey};
+use global_hotkey::hotkey::{Code, HotKey, Modifiers};
 #[cfg(not(target_arch = "wasm32"))]
 use skelform_lib::shared::config_path;
 

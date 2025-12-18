@@ -580,6 +580,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     bone.vertices = verts;
                     bone.indices = indices;
                     bone.binds = vec![];
+                    bone.verts_edited = true;
                     shared.ui.selected_bind = -1;
                 }
             });
@@ -643,27 +644,8 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         return;
     }
 
-    ui.horizontal(|ui| {
-        ui.label(shared.loc("bone_panel.mesh_deformation.pathing_label"))
-            .on_hover_text(shared.loc("bone_panel.mesh_deformation.pathing_desc"));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let binding_verts = shared.ui.setting_bind_verts;
-            let bind = &mut shared.selected_bone_mut().unwrap().binds[selected];
-            if binding_verts {
-                ui.add_enabled_ui(false, |ui| {
-                    ui.checkbox(&mut shared.was_editing_path, "".into_atoms());
-                });
-            } else {
-                ui.checkbox(&mut bind.is_path, "".into_atoms());
-            }
-        });
-    });
-
     let vert_id_len = shared.selected_bone().unwrap().binds[selected].verts.len();
     ui.horizontal(|ui| {
-        if vert_id_len > 0 {
-            ui.label(shared.loc("bone_panel.mesh_deformation.weights_label"));
-        }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let str_set_verts = if shared.ui.setting_bind_verts {
                 shared.loc("bone_panel.mesh_deformation.finish")
@@ -680,6 +662,26 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     shared.selected_bone_mut().unwrap().binds[selected].is_path = false;
                 }
             }
+        });
+    });
+
+    ui.horizontal(|ui| {
+        if vert_id_len > 0 {
+            ui.label(shared.loc("bone_panel.mesh_deformation.weights_label"));
+        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let binding_verts = shared.ui.setting_bind_verts;
+            let bind = &mut shared.selected_bone_mut().unwrap().binds[selected];
+            if binding_verts {
+                ui.add_enabled_ui(false, |ui| {
+                    ui.checkbox(&mut shared.was_editing_path, "".into_atoms());
+                });
+            } else {
+                ui.checkbox(&mut bind.is_path, "".into_atoms());
+            }
+
+            ui.label(shared.loc("bone_panel.mesh_deformation.pathing_label"))
+                .on_hover_text(shared.loc("bone_panel.mesh_deformation.pathing_desc"));
         });
     });
 
