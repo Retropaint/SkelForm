@@ -508,7 +508,8 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
     let mut cam = shared.world_camera().clone();
-    cam.zoom /= 2.;
+    cam.pos = Vec2::new(0., 0.);
+    cam.zoom = 1500.;
 
     for b in 0..temp_arm.bones.len() {
         if shared.armature.tex_of(temp_arm.bones[b].id) == None {
