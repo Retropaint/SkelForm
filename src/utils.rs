@@ -316,35 +316,39 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
     let mut ik_root_ids = vec![];
 
     for fid in family_ids {
+        let ac_c = armature_copy.clone();
         let ac = &mut armature_copy;
-        let mut joints: Vec<&Bone> = vec![];
-        for bone in &ac.bones {
-            let family_ids = joints.iter().map(|j| j.ik_family_id).collect::<Vec<i32>>();
-            if !family_ids.contains(&bone.ik_family_id) {
-                joints.push(&bone);
-            }
-        }
-        let joints: Vec<&Bone> = ac.bones.iter().filter(|b| b.ik_family_id == fid).collect();
+        let mut joints: Vec<&mut Bone> = ac
+            .bones
+            .iter_mut()
+            .filter(|b| b.ik_family_id == fid)
+            .collect();
 
+        // get all bone ids (sequentially) of this family in one array
         let mut bone_ids = vec![];
         for joint in &joints {
-            let idx = ac.bones.iter().position(|bone| bone.id == joint.id);
+            let idx = ac_c.bones.iter().position(|bone| bone.id == joint.id);
             bone_ids.push(idx.unwrap() as i32);
         }
 
+        // get target id (sequentially)
         let mut target_id = -1;
         let joint_target_id = joints[0].ik_target_id;
-        let target_idx = ac.bones.iter().position(|bone| bone.id == joint_target_id);
+        let target_idx = ac_c.bones.iter().position(|b| b.id == joint_target_id);
         if target_idx != None {
             target_id = target_idx.unwrap() as i32;
         }
 
-        let mut root_bone = ac.bones.iter_mut().find(|bone| bone.id == bone_ids[0]);
-        root_bone.as_mut().unwrap().ik_bone_ids = bone_ids;
-        root_bone.as_mut().unwrap().ik_target_id = target_id;
-        root_bone.as_mut().unwrap().ik_constraint_id =
-            root_bone.as_ref().unwrap().ik_constraint as i32;
-        root_bone.as_mut().unwrap().ik_mode_id = root_bone.as_ref().unwrap().ik_mode as i32;
+        // clear ik_bone_ids of al joints to mark them as 'non-root'
+        for joint in &mut joints {
+            joint.ik_bone_ids = vec![];
+        }
+
+        // populate IK data to root bone
+        joints[0].ik_bone_ids = bone_ids;
+        joints[0].ik_target_id = target_id;
+        joints[0].ik_constraint_id = joints[0].ik_constraint as i32;
+        joints[0].ik_mode_id = joints[0].ik_mode as i32;
     }
 
     // populate keyframe bone_idx
@@ -403,6 +407,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
             bone.ik_mode = InverseKinematicsMode::Skip;
             bone.ik_mode_id = -1;
             bone.ik_family_id = -1;
+            bone.ik_bone_ids = vec![];
             bone.init_ik_constraint = -1;
         }
     }

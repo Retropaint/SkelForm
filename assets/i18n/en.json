@@ -138,12 +138,12 @@
       "center_desc": "Adjust mesh to its center",
       "go_to_mesh": "Go to mesh",
       "trace": "Trace",
-      "bone_label": "Bone:",
+      "bone_label": "Bone: ",
       "bone_set": "Set Bone",
       "binds_label": "Binds:",
       "pathing_label": "Pathing:",
       "pathing_desc": "Vertices will follow this bind along a path formed with adjacent binds.",
-      "weights_label": "Weights:",
+      "weights_label": "Weights",
       "bind_verts": "Bind Verts",
       "no_bound_verts": "Click `Bind Verts` to add vertices to this bind. Click again to stop adding.\n\nOnce added, their weights will be configurable here.\n\n"
     }
