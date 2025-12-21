@@ -680,7 +680,10 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
         tip_pos = bones[b].pos;
     }
 
-    // apply constraints
+    // apply constraints if this IK has more than 1 bone
+    if bones.len() == 1 {
+        return;
+    }
     let joint_dir = (bones[1].pos - bones[0].pos).normalize();
     let base_dir = (target - root).normalize();
     let dir = joint_dir.x * base_dir.y - base_dir.x * joint_dir.y;
