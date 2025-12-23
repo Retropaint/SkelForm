@@ -87,7 +87,6 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.styles_modal_size = Vec2::new(500., 500.);
     shared.screenshot_res = Vec2::new(128., 128.);
     shared.changed_vert_id = -1;
-    //shared.ui.atlas_modal = true;
 
     #[cfg(feature = "debug")]
     {

@@ -156,6 +156,11 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
                         if ui.skf_button("Done").clicked() {
+                            for (t, tex) in shared.ui.pending_textures.iter_mut().enumerate() {
+                                if tex.name == "" {
+                                    tex.name = "Texture ".to_owned() + &t.to_string();
+                                }
+                            }
                             shared.ui.done_pending = shared.ui.pending_textures.len() > 0;
                             shared.ui.atlas_modal = false;
                         }
