@@ -157,6 +157,9 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.ui.donating_modal {
         modal::donating_modal(shared, context);
     }
+    if shared.ui.atlas_modal {
+        atlas_modal::draw(shared, context);
+    }
     style_once!(top_panel(context, shared));
 
     if shared.ui.anim.open {
@@ -485,6 +488,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         shared.ui.polar_modal = false;
         shared.ui.forced_modal = false;
         shared.ui.settings_modal = false;
+        shared.ui.atlas_modal = false;
 
         shared.ui.setting_ik_target = false;
     }

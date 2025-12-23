@@ -66,6 +66,10 @@ impl Vec2 {
         }
         Vec2::new(self.x / mag, self.y / mag)
     }
+
+    pub fn floor(&self) -> Self {
+        Vec2::new(self.x.floor(), self.y.floor())
+    }
 }
 
 impl MulAssign<f32> for Vec2 {
@@ -531,6 +535,10 @@ pub struct Ui {
     pub bones_assigned_scroll: f32,
     pub dragging_tex: bool,
 
+    pub pending_textures: Vec<Texture>,
+    pub done_pending: bool,
+
+    // states
     pub styles_modal: bool,
     pub exiting: bool,
     pub confirmed_exit: bool,
@@ -545,6 +553,7 @@ pub struct Ui {
     pub rotating: bool,
     pub focus_style_dropdown: bool,
     pub donating_modal: bool,
+    pub atlas_modal: bool,
 }
 
 impl Ui {

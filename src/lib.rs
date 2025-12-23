@@ -43,6 +43,7 @@ use winit::{
 };
 
 pub mod armature_window;
+pub mod atlas_modal;
 pub mod bone_panel;
 pub mod file_reader;
 pub mod keyframe_editor;

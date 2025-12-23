@@ -44,7 +44,12 @@ pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Co
 
     func!(read_image_loaders);
     func!(read_import);
+    if shared.ui.done_pending {
+        func!(add_pending_textures);
+        shared.ui.done_pending = false;
+    }
 }
+
 /// read temporary files created from file dialogs (native & WASM)
 pub fn read_image_loaders(
     shared: &mut Shared,
@@ -116,6 +121,51 @@ pub fn read_image_loaders(
         bind_group_layout,
         ctx,
     );
+
+    shared.ui.atlas_modal = true;
+}
+
+pub fn add_pending_textures(
+    shared: &mut Shared,
+    queue: Option<&Queue>,
+    device: Option<&Device>,
+    bind_group_layout: Option<&BindGroupLayout>,
+    ctx: Option<&egui::Context>,
+) {
+    // get last texture of selected style (will be the atlas)
+    let textures = shared.armature.styles[shared.ui.selected_style as usize]
+        .textures
+        .last()
+        .unwrap();
+    let image = shared.armature.tex_data(textures).unwrap().image.clone();
+
+    // now that we have the atlas, remove it from the list
+    shared.armature.styles[shared.ui.selected_style as usize]
+        .textures
+        .pop();
+    shared.armature.tex_data.pop();
+
+    for tex in &shared.ui.pending_textures {
+        let crop = image.crop_imm(
+            tex.offset.x as u32,
+            tex.offset.y as u32,
+            tex.size.x as u32,
+            tex.size.y as u32,
+        );
+        add_texture(
+            crop.clone(),
+            shared.ui.selected_style,
+            Vec2::new(crop.width() as f32, crop.height() as f32),
+            &tex.name,
+            &mut shared.armature,
+            queue,
+            device,
+            bind_group_layout,
+            ctx,
+        );
+    }
+
+    shared.ui.pending_textures = vec![];
 }
 
 pub fn read_psd(
