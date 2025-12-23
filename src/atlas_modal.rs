@@ -35,9 +35,9 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                     let size_interp = tex.size / atlas.size;
                     let size: Vec2 = ui.min_rect().size().into();
                     let left_top = ui.min_rect().left_top() + (size * interp).into();
-                    let right_bot = size * size_interp;
-                    let rb: egui::Vec2 = [right_bot.x, right_bot.y].into();
-                    let rect = egui::Rect::from_min_size(left_top, rb);
+                    let rb = size * size_interp;
+                    let right_bottom: egui::Vec2 = [rb.x, rb.y].into();
+                    let rect = egui::Rect::from_min_size(left_top, right_bottom);
                     ui.painter().rect_stroke(
                         rect,
                         egui::CornerRadius::ZERO,
@@ -54,41 +54,87 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                     (pointer.y - image.response.rect.min.y) / image.response.rect.size().y,
                 );
 
-                // if left clicked, initiate new texture
-                if shared.input.left_pressed && image.response.contains_pointer() {
-                    shared.ui.init_pending_mouse = pointer.into();
-                    shared.ui.pending_textures.push(Texture {
-                        offset: (atlas.size * interp).floor(),
-                        ..Default::default()
-                    });
-                }
-
-                if shared.input.left_down && shared.ui.pending_textures.len() > 0 {
-                    let tex = &mut shared.ui.pending_textures.last_mut().unwrap();
-                    let init_pending = shared.ui.init_pending_mouse;
-                    let init_interp = Vec2::new(
-                        (init_pending.x - image.response.rect.min.x) / image.response.rect.size().x,
-                        (init_pending.y - image.response.rect.min.y) / image.response.rect.size().y,
-                    );
-
-                    // dragging (horizontal)
-                    if pointer.x < shared.ui.init_pending_mouse.x {
-                        tex.offset.x = (atlas.size.x * interp.x).floor().max(0.);
-                        tex.size.x = (atlas.size.x * init_interp.x - tex.offset.x).floor();
-                    } else {
-                        tex.offset.x = (atlas.size.x * init_interp.x).floor();
-                        tex.size.x = (atlas.size.x * interp.x - tex.offset.x).floor();
+                // drag rects if mouse is on them
+                let mut dragging = false;
+                for tex in &mut shared.ui.pending_textures {
+                    let pixel = atlas.size * interp;
+                    if !(pixel.x > tex.offset.x
+                        && pixel.y > tex.offset.y
+                        && pixel.x < tex.offset.x + tex.size.x
+                        && pixel.y < tex.offset.y + tex.size.y)
+                        || shared.ui.is_dragging_pending
+                    {
+                        continue;
                     }
 
-                    // dragging (vertical)
-                    if pointer.y < shared.ui.init_pending_mouse.y {
-                        tex.offset.y = (atlas.size.y * interp.y).floor().max(0.);
-                        tex.size.y = (atlas.size.y * init_interp.y - tex.offset.y).floor();
-                    } else {
-                        tex.offset.y = (atlas.size.y * init_interp.y).floor();
-                        tex.size.y = (atlas.size.y * interp.y - tex.offset.y).floor();
+                    shared.cursor_icon = egui::CursorIcon::Grab;
+                    if shared.input.left_down {
+                        dragging = true;
+                        tex.offset += atlas.size * (interp - shared.ui.prev_pending_interp);
+                        if tex.offset.x < 0. {
+                            tex.offset.x = 0.;
+                        }
+                        if tex.offset.y < 0. {
+                            tex.offset.y = 0.;
+                        }
+
+                        if tex.offset.x + tex.size.x > atlas.size.x {
+                            tex.offset.x = atlas.size.x - tex.size.x;
+                        }
+                        if tex.offset.y + tex.size.y > atlas.size.y {
+                            tex.offset.y = atlas.size.y - tex.size.y;
+                        }
+                    }
+
+                    break;
+                }
+
+                if !dragging {
+                    // if left clicked, initiate new texture
+                    if shared.input.left_pressed && image.response.contains_pointer() {
+                        shared.ui.init_pending_mouse = pointer.into();
+                        shared.ui.pending_textures.push(Texture {
+                            offset: (atlas.size * interp).floor(),
+                            ..Default::default()
+                        });
+                    }
+
+                    if shared.input.left_down && image.response.contains_pointer() {
+                        shared.ui.is_dragging_pending = true;
+                        let tex = &mut shared.ui.pending_textures.last_mut().unwrap();
+                        let init_pending = shared.ui.init_pending_mouse;
+                        let init_interp = Vec2::new(
+                            (init_pending.x - image.response.rect.min.x)
+                                / image.response.rect.size().x,
+                            (init_pending.y - image.response.rect.min.y)
+                                / image.response.rect.size().y,
+                        );
+
+                        // dragging (horizontal)
+                        if pointer.x < shared.ui.init_pending_mouse.x {
+                            tex.offset.x = (atlas.size.x * interp.x).floor().max(0.);
+                            tex.size.x = (atlas.size.x * init_interp.x - tex.offset.x).floor();
+                        } else {
+                            tex.offset.x = (atlas.size.x * init_interp.x).floor();
+                            tex.size.x = (atlas.size.x * interp.x - tex.offset.x).floor();
+                        }
+
+                        // dragging (vertical)
+                        if pointer.y < shared.ui.init_pending_mouse.y {
+                            tex.offset.y = (atlas.size.y * interp.y).floor().max(0.);
+                            tex.size.y = (atlas.size.y * init_interp.y - tex.offset.y).floor();
+                        } else {
+                            tex.offset.y = (atlas.size.y * init_interp.y).floor();
+                            tex.size.y = (atlas.size.y * interp.y - tex.offset.y).floor();
+                        }
                     }
                 }
+
+                shared.ui.prev_pending_interp = interp;
+            }
+
+            if !shared.input.left_down {
+                shared.ui.is_dragging_pending = false;
             }
 
             ui.add_space(40.);
