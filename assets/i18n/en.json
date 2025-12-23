@@ -88,6 +88,9 @@
     "assigned_textures_desc": "Assign textures to bones here.\n\nIf this style is inactive, bones will switch to a texture of the same name from the first active style top-down.",
     "same_name": "There is already a texture with the same name in this style."
   },
+  "atlas_modal": {
+    "no_pending": "If the imported image is a single texture, simply click 'Done'.\n\nIf it's a texture atlas, drag the image or click 'Add Texture' to add a new slice of texture.\n\nThe atlas will be discarded once done, and will need to be re-imported to add more textures."
+  },
   "armature_panel": {
     "heading": "Armature",
     "new_bone_button": "New Bone",

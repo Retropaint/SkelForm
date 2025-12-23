@@ -12,7 +12,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             ..Default::default()
         })
         .show(ctx, |ui| {
-            let height = 300.;
+            let height = 400.;
             ui.set_height(height);
             ui.set_width(475.);
             ui.heading("Importing Texture(s)");
@@ -26,7 +26,9 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         ui.set_width(300.);
                         ui.set_height(300.);
                         let data = shared.armature.tex_data(&atlas).unwrap();
-                        egui::Image::new(data.ui_img.as_ref().unwrap()).uv(egui::Rect::from_min_size([0., 0.].into(), [1., 1.].into())).paint_at(ui, ui.min_rect());
+                        egui::Image::new(data.ui_img.as_ref().unwrap())
+                            .uv(egui::Rect::from_min_size([0., 0.].into(), [1., 1.].into()))
+                            .paint_at(ui, ui.min_rect());
                         for t in 0..shared.ui.pending_textures.len() {
                             let tex = &shared.ui.pending_textures[t];
                             let interp = tex.offset / atlas.size;
@@ -48,22 +50,45 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                     .interact(egui::Sense::hover());
 
                 // adding texture by dragging on atlas
-                if image.contains_pointer() {
-                    if let Some(pointer) = ui.input(|i| i.pointer.hover_pos()) {
-                        let interp = Vec2::new(
-                            (pointer.x - image.rect.min.x) / image.rect.size().x,
-                            (pointer.y - image.rect.min.y) / image.rect.size().y,
+                if let Some(pointer) = ui.input(|i| i.pointer.hover_pos()) {
+                    let interp = Vec2::new(
+                        (pointer.x - image.rect.min.x) / image.rect.size().x,
+                        (pointer.y - image.rect.min.y) / image.rect.size().y,
+                    );
+
+                    // if left clicked, initiate new texture
+                    if shared.input.left_pressed && image.contains_pointer() {
+                        shared.ui.init_pending_mouse = pointer.into();
+                        shared.ui.pending_textures.push(Texture {
+                            offset: (atlas.size * interp).floor(),
+                            ..Default::default()
+                        });
+                    }
+
+                    if shared.input.left_down && shared.ui.pending_textures.len() > 0 {
+                        let tex = &mut shared.ui.pending_textures.last_mut().unwrap();
+                        let init_pending = shared.ui.init_pending_mouse;
+                        let init_interp = Vec2::new(
+                            (init_pending.x - image.rect.min.x) / image.rect.size().x,
+                            (init_pending.y - image.rect.min.y) / image.rect.size().y,
                         );
-                        if shared.input.left_pressed {
-                            shared.ui.pending_textures.push(Texture {
-                                offset: (atlas.size * interp).floor(),
-                                ..Default::default()
-                            });
+
+                        // dragging (horizontal)
+                        if pointer.x < shared.ui.init_pending_mouse.x {
+                            tex.offset.x = (atlas.size.x * interp.x).floor().max(0.);
+                            tex.size.x = (atlas.size.x * init_interp.x - tex.offset.x).floor();
+                        } else {
+                            tex.offset.x = (atlas.size.x * init_interp.x).floor();
+                            tex.size.x = (atlas.size.x * interp.x - tex.offset.x).floor();
                         }
 
-                        if shared.input.left_down {
-                            let tex = &mut shared.ui.pending_textures.last_mut().unwrap();
-                            tex.size = (atlas.size * interp - tex.offset).floor();
+                        // dragging (vertical)
+                        if pointer.y < shared.ui.init_pending_mouse.y {
+                            tex.offset.y = (atlas.size.y * interp.y).floor().max(0.);
+                            tex.size.y = (atlas.size.y * init_interp.y - tex.offset.y).floor();
+                        } else {
+                            tex.offset.y = (atlas.size.y * init_interp.y).floor();
+                            tex.size.y = (atlas.size.y * interp.y - tex.offset.y).floor();
                         }
                     }
                 }
@@ -80,7 +105,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         });
                     });
                     if shared.ui.pending_textures.len() == 0 {
-                        ui.label("If the imported image is a single texture, simply click 'Done'.\n\nIf it's a texture atlas, drag the image or click 'Add Texture' to add a new slice of texture.\n\nThe atlas will be discarded once done, and will need to be re-imported to add more textures.");
+                        ui.label(shared.loc("atlas_modal.no_pending"));
                     } else {
                         textures_list(shared, ui, atlas, height);
                     }
@@ -164,6 +189,7 @@ fn textures_list(shared: &mut Shared, ui: &mut egui::Ui, atlas: Texture, height:
                 tex.size.x = tex.size.x.min(atlas.size.x - tex.offset.x);
                 tex.size.y = tex.size.y.min(atlas.size.y - tex.offset.y);
             });
+            ui.add_space(10.);
             shared.ui.pending_textures[t] = tex;
         }
     });

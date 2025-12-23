@@ -537,6 +537,7 @@ pub struct Ui {
 
     pub pending_textures: Vec<Texture>,
     pub done_pending: bool,
+    pub init_pending_mouse: Vec2,
 
     // states
     pub styles_modal: bool,
