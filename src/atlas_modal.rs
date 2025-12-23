@@ -164,6 +164,13 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                             shared.ui.done_pending = shared.ui.pending_textures.len() > 0;
                             shared.ui.atlas_modal = false;
                         }
+                        if ui.skf_button("Cancel").clicked() {
+                            shared.ui.pending_textures = vec![];
+                            shared.ui.atlas_modal = false;
+                            shared.armature.styles[shared.ui.selected_style as usize]
+                                .textures
+                                .pop();
+                        }
                     });
                 });
             })
