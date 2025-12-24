@@ -49,8 +49,6 @@ web-time = "1.1.0"
 
 [features]
 default = ["wgpu/default"]
-webgl = ["wgpu/webgl"]
-webgpu = ["wgpu/webgpu"]
 mobile = []
 debug = []
 

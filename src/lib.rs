@@ -367,9 +367,9 @@ impl ApplicationHandler for App {
 
         // read system shortcuts (defined in main.rs with global_hotkey)
         if let Ok(event) = global_hotkey::GlobalHotKeyEvent::receiver().try_recv() {
-            if event.id() == self.shared.input.mod_w.unwrap().id()
-                || event.id() == self.shared.input.mod_q.unwrap().id()
-            {
+            let pressing_w = event.id() == self.shared.input.mod_w.unwrap().id();
+            let pressing_q = event.id() == self.shared.input.mod_q.unwrap().id();
+            if pressing_w || pressing_q {
                 utils::exit(&mut self.shared);
             }
         }
@@ -968,11 +968,8 @@ impl Gpu {
                     required_features: wgpu::Features::default(),
                     #[cfg(not(target_arch = "wasm32"))]
                     required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
-                    #[cfg(all(target_arch = "wasm32", feature = "webgpu"))]
+                    #[cfg(target_arch = "wasm32")]
                     required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
-                    #[cfg(all(target_arch = "wasm32", feature = "webgl"))]
-                    required_limits: wgpu::Limits::downlevel_webgl2_defaults()
-                        .using_resolution(adapter.limits()),
                     trace: wgpu::Trace::Off,
                 })
                 .await

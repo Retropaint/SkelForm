@@ -13,7 +13,7 @@ if not shutil.which("trunk"):
     exit()
 
 # build params (to be combined later)
-features = '"webgpu'
+features = '"'
 generic = " --filehash false"
 default_build = features + generic
 
@@ -28,7 +28,6 @@ parser.add_argument("-s",   "--serve",   action="store_true", help="automaticall
 parser.add_argument("-r",   "--release", action="store_true", help="build for release/production")
 parser.add_argument("-m",   "--mobile",  action="store_true", help="build for mobile")
 parser.add_argument("-d",   "--debug",   action="store_true", help="build with debug flag. Ignored if --release is present",)
-parser.add_argument("-wgl", "--webgl",   action="store_true", help="use webgl instead of webgpu")
 
 args = parser.parse_args()
 
@@ -36,8 +35,6 @@ if args.release and not args.mobile:
     generic += " --release"
     if not args.serve:
         generic += " --public-url=/editor"
-if args.webgl:
-    features = '"webgl'
 if args.mobile:
     features += " mobile"
 if args.debug and not args.release:
