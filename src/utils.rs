@@ -225,9 +225,12 @@ pub fn create_tex_sheet(armature: &mut Armature) -> (Vec<Vec<u8>>, Vec<i32>) {
 
         'atlas_maker: loop {
             let first_style_in_atlas = *sizes.last().unwrap() == 0;
+            let og_size = sizes.last().unwrap().clone();
+            let new_atlas;
             loop {
                 // if this is the first style in the atlas, ignore max limit
                 if *sizes.last().unwrap() >= max && !first_style_in_atlas {
+                    new_atlas = true;
                     break;
                 }
                 *sizes.last_mut().unwrap() += 128;
@@ -246,6 +249,9 @@ pub fn create_tex_sheet(armature: &mut Armature) -> (Vec<Vec<u8>>, Vec<i32>) {
 
             // create new atlas if current is beyond max limit
             if *sizes.last().unwrap() >= max {
+                if new_atlas {
+                    *sizes.last_mut().unwrap() = og_size;
+                }
                 atlases.push(vec![]);
                 sizes.push(0);
 
