@@ -831,12 +831,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 old_name_order.push(tex.name.clone());
             }
 
-            shared.undo_actions.push(Action {
-                action: ActionType::TextureSet,
-                id: shared.ui.selected_style as i32,
-                tex_sets: vec![shared.selected_set().unwrap().clone()],
-                ..Default::default()
-            });
+            shared.new_undo_sel_style();
 
             let new_idx = idx as usize + is_below as usize;
 

@@ -57,11 +57,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 if button.clicked() {
                     let idx: usize;
 
-                    shared.undo_actions.push(Action {
-                        action: ActionType::Bones,
-                        bones: shared.armature.bones.clone(),
-                        ..Default::default()
-                    });
+                    shared.new_undo_bones();
 
                     if shared.selected_bone() == None {
                         (_, idx) = shared.armature.new_bone(-1);
@@ -501,11 +497,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
 
     shared.ui.selected_bone_idx = usize::MAX;
 
-    shared.undo_actions.push(Action {
-        action: ActionType::Bones,
-        bones: shared.armature.bones.clone(),
-        ..Default::default()
-    });
+    shared.new_undo_bones();
 
     // sort dragged bones so they'll appear in the same order when dropped
     let mut sorted_ids = shared.ui.selected_bone_ids.clone();

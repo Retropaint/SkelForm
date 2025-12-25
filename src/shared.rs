@@ -1727,6 +1727,7 @@ pub struct Shared {
 
     pub undo_actions: Vec<Action>,
     pub redo_actions: Vec<Action>,
+    pub prev_undo_actions: Vec<Action>,
 
     pub edit_mode: EditMode,
 
@@ -1821,19 +1822,9 @@ impl Shared {
 
     pub fn save_edited_bone(&mut self) {
         if self.ui.is_animating() {
-            self.undo_actions.push(Action {
-                action: ActionType::Animation,
-                id: self.selected_animation().unwrap().id as i32,
-                animations: vec![self.selected_animation().unwrap().clone()],
-                ..Default::default()
-            });
+            self.new_undo_sel_anim();
         } else {
-            self.undo_actions.push(Action {
-                action: ActionType::Bone,
-                id: self.selected_bone().unwrap().id,
-                bones: vec![self.selected_bone().unwrap().clone()],
-                ..Default::default()
-            });
+            self.new_undo_sel_bone();
         }
     }
 
@@ -2011,6 +2002,49 @@ impl Shared {
         }
         let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
         anim[anim_id].keyframes[frame].value = value;
+    }
+
+    pub fn new_undo_sel_bone(&mut self) {
+        self.undo_actions.push(Action {
+            action: ActionType::Bone,
+            id: self.selected_bone().unwrap().id,
+            bones: vec![self.selected_bone().unwrap().clone()],
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_sel_anim(&mut self) {
+        self.undo_actions.push(Action {
+            action: ActionType::Animation,
+            id: self.selected_animation().unwrap().id,
+            animations: vec![self.selected_animation().unwrap().clone()],
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_sel_style(&mut self) {
+        self.undo_actions.push(Action {
+            action: ActionType::TextureSet,
+            id: self.selected_set().unwrap().id,
+            tex_sets: vec![self.selected_set().unwrap().clone()],
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_bones(&mut self) {
+        self.undo_actions.push(Action {
+            action: ActionType::Bones,
+            bones: self.armature.bones.clone(),
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_anims(&mut self) {
+        self.undo_actions.push(Action {
+            action: ActionType::Animations,
+            animations: self.armature.animations.clone(),
+            ..Default::default()
+        });
     }
 }
 

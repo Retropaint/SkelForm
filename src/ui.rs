@@ -421,11 +421,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
     if input.consume_shortcut(&shared.config.keys.paste) {
         if shared.copy_buffer.keyframes.len() > 0 {
         } else if shared.copy_buffer.bones.len() > 0 {
-            shared.undo_actions.push(Action {
-                action: ActionType::Bones,
-                bones: shared.armature.bones.clone(),
-                ..Default::default()
-            });
+            shared.new_undo_bones();
             let ids: Vec<i32> = shared.armature.bones.iter().map(|bone| bone.id).collect();
             let mut highest_id = 0;
             for id in ids {

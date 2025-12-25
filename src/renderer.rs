@@ -342,12 +342,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     if !shared.ui.setting_bind_verts {
         if let Some(mut vert) = new_vert {
-            shared.undo_actions.push(Action {
-                action: ActionType::Bone,
-                id: shared.selected_bone().unwrap().id,
-                bones: vec![shared.selected_bone().unwrap().clone()],
-                ..Default::default()
-            });
+            shared.new_undo_sel_bone();
             let bone_mut = shared.selected_bone_mut().unwrap();
             let ids = bone_mut.vertices.iter().map(|v| v.id as i32).collect();
             vert.id = generate_id(ids) as u32;
@@ -998,12 +993,7 @@ pub fn bone_vertices(
         }
         if !shared.ui.setting_bind_verts {
             if shared.input.left_pressed {
-                shared.undo_actions.push(Action {
-                    action: ActionType::Bone,
-                    bones: vec![shared.selected_bone().unwrap().clone()],
-                    id: shared.selected_bone().unwrap().id,
-                    ..Default::default()
-                });
+                shared.new_undo_sel_bone();
                 shared.dragging_verts = vec![wv];
                 break;
             }

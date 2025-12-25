@@ -55,11 +55,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
     shared.ui.polar_modal = false;
     match shared.ui.polar_id {
         PolarId::DeleteBone => {
-            shared.undo_actions.push(Action {
-                action: ActionType::Bones,
-                bones: shared.armature.bones.clone(),
-                ..Default::default()
-            });
+            shared.new_undo_bones();
 
             shared.ui.selected_bone_idx = usize::MAX;
 
@@ -115,15 +111,9 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
         }
         PolarId::DeleteAnim => {
             shared.ui.anim.selected = usize::MAX;
-            shared.undo_actions.push(Action {
-                action: ActionType::Animations,
-                animations: shared.armature.animations.clone(),
-                ..Default::default()
-            });
-            shared
-                .armature
-                .animations
-                .remove(shared.ui.context_menu.id as usize);
+            shared.new_undo_anims();
+            let id = shared.ui.context_menu.id as usize;
+            shared.armature.animations.remove(id);
             shared.ui.context_menu.close();
         }
         PolarId::DeleteFile => {

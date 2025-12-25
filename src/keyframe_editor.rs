@@ -87,11 +87,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                 return;
             }
 
-            shared.undo_actions.push(Action {
-                action: ActionType::Animations,
-                animations: shared.armature.animations.clone(),
-                ..Default::default()
-            });
+            shared.new_undo_anims();
 
             shared.armature.new_animation();
             let idx = shared.armature.animations.len() - 1;
@@ -436,7 +432,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     continue;
                 }
 
-                add_anim_action(shared);
+                shared.new_undo_sel_anim();
 
                 shared.cursor_icon = egui::CursorIcon::Grabbing;
 
@@ -626,7 +622,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
             let paste_str = &shared.loc("keyframe_editor.paste");
             if ui.skf_button(paste_str).clicked() {
-                add_anim_action(shared);
+                shared.new_undo_sel_anim();
 
                 let frame = shared.ui.anim.selected_frame;
                 let buffer_frames = shared.copy_buffer.keyframes.clone();
@@ -824,13 +820,4 @@ pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32) {
         egui::Color32::TRANSPARENT,
         egui::Stroke::new(2.0, color),
     ));
-}
-
-pub fn add_anim_action(shared: &mut Shared) {
-    shared.undo_actions.push(shared::Action {
-        action: ActionType::Animation,
-        id: shared.selected_animation().unwrap().id as i32,
-        animations: vec![shared.selected_animation().unwrap().clone()],
-        ..Default::default()
-    });
 }
