@@ -17,7 +17,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
         ui.set_width(475.);
         ui.heading("Importing Texture(s)");
         ui.add_space(10.);
-        let style = &shared.armature.styles[shared.ui.selected_style as usize];
+        let style = &shared.selected_set().unwrap();
         let atlas = style.textures.last().unwrap().clone();
         ui.horizontal(|ui| {
             // draw atlas
@@ -167,9 +167,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         if ui.skf_button("Cancel").clicked() {
                             shared.ui.pending_textures = vec![];
                             shared.ui.atlas_modal = false;
-                            shared.armature.styles[shared.ui.selected_style as usize]
-                                .textures
-                                .pop();
+                            shared.selected_set_mut().unwrap().textures.pop();
                         }
                     });
                 });

@@ -225,9 +225,8 @@ pub fn draw_styles_list(
                     if !shared.ui.dragging_tex {
                         shared.armature.styles.swap(hov, idx as usize);
                     } else if idx != shared.ui.selected_style {
-                        let style = &mut shared.armature.styles[shared.ui.selected_style as usize];
-                        let tex = style.textures[hov].clone();
-                        style.textures.remove(hov);
+                        let tex = shared.selected_set().unwrap().textures[hov].clone();
+                        shared.selected_set_mut().unwrap().textures.remove(hov);
                         shared.armature.styles[idx as usize].textures.push(tex);
                         shared.ui.dragging_tex = false;
                     }
@@ -519,7 +518,7 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 
             let bone = &mut shared.armature.bones[idx as usize];
             let id = bone.id;
-            let tex_str = shared.armature.styles[shared.ui.selected_style as usize].textures
+            let tex_str = shared.selected_set().unwrap().textures
                 [*dragged_payload.unwrap() as usize]
                 .name
                 .clone();
