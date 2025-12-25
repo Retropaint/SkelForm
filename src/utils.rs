@@ -276,14 +276,17 @@ pub fn create_tex_sheet(armature: &mut Armature) -> (Vec<Vec<u8>>, Vec<i32>) {
 
                 let p = atlases[i]
                     .iter()
-                    .position(|pl| pl.width == tex.size.x as i32 && pl.height == tex.size.y as i32)
-                    .unwrap();
+                    .position(|pl| pl.width == tex.size.x as i32 && pl.height == tex.size.y as i32);
 
-                let offset_x = atlases[i][p].get_coords().0 as u32;
-                let offset_y = atlases[i][p].get_coords().2 as u32;
+                if p == None {
+                    continue;
+                }
+
+                let offset_x = atlases[i][p.unwrap()].get_coords().0 as u32;
+                let offset_y = atlases[i][p.unwrap()].get_coords().2 as u32;
 
                 // ensure another tex of the same size won't overwrite this one
-                atlases[i].remove(p);
+                atlases[i].remove(p.unwrap());
 
                 raw_buf
                     .copy_from(&armature.tex_data(tex).unwrap().image, offset_x, offset_y)
