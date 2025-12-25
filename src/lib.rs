@@ -375,7 +375,7 @@ impl ApplicationHandler for App {
         }
 
         if self.shared.ui.exiting {
-            if self.shared.undo_actions.len() > 0 {
+            if self.shared.prev_undo_actions != self.shared.undo_actions {
                 let str_del = self.shared.loc("polar.unsaved").clone();
                 self.shared.ui.open_polar_modal(PolarId::Exiting, &str_del);
             } else {
@@ -486,6 +486,7 @@ impl Renderer {
             ));
         }
         if *shared.save_finished.lock().unwrap() {
+            shared.prev_undo_actions = shared.undo_actions.clone();
             shared.ui.modal = false;
             *shared.save_finished.lock().unwrap() = false;
         }
@@ -620,12 +621,8 @@ impl Renderer {
         let camera = shared.camera.clone();
         let mut save_path = shared.file_name.lock().unwrap().clone();
         if *shared.saving.lock().unwrap() == shared::Saving::Autosaving {
-            let dir = directories_next::ProjectDirs::from("com", "retropaint", "skelform")
-                .unwrap()
-                .data_dir()
-                .to_str()
-                .unwrap()
-                .to_string();
+            let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
+            let dir = dir_init.unwrap().data_dir().to_str().unwrap().to_string();
             save_path = dir + "/autosave.skf";
             shared.last_autosave = shared.time;
         }
@@ -634,6 +631,7 @@ impl Renderer {
         }
         utils::save_to_recent_files(&shared.recent_file_paths);
         *shared.saving.lock().unwrap() = Saving::None;
+        let autosaving = *shared.saving.lock().unwrap() == Saving::Autosaving;
         let save_finished = Arc::clone(&shared.save_finished);
         std::thread::spawn(move || {
             let mut png_bufs = vec![];
@@ -665,18 +663,19 @@ impl Renderer {
             zip.write(include_bytes!("../assets/skf_readme.md"))
                 .unwrap();
             for i in 0..png_bufs.len() {
-                zip.start_file(
-                    "atlas".to_owned() + &i.to_string() + ".png",
-                    options.clone(),
-                )
-                .unwrap();
+                let atlas_name = "atlas".to_owned() + &i.to_string() + ".png";
+                zip.start_file(atlas_name, options.clone()).unwrap();
                 zip.write(&png_bufs[i]).unwrap();
             }
 
             zip.finish().unwrap();
 
             let _ = std::fs::copy(save_path.clone(), save_path + "~");
-            *save_finished.lock().unwrap() = true;
+
+            // trigger saving modal if manually saving
+            if !autosaving {
+                *save_finished.lock().unwrap() = true;
+            }
         });
     }
 
