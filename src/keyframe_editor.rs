@@ -174,24 +174,27 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
 
                         if shared.armature.animations[i].keyframes.len() > 0 {
                             let anim = &mut shared.armature.animations[i];
-                            ui.with_layout(
-                                egui::Layout::right_to_left(egui::Align::Center),
-                                |ui| {
-                                    let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
-                                    if ui.skf_button(icon).clicked() {
-                                        anim.elapsed = if anim.elapsed == None {
-                                            Some(Instant::now())
-                                        } else {
-                                            None
-                                        };
-                                    }
-                                },
-                            );
+                            let align = egui::Layout::right_to_left(egui::Align::Center);
+                            ui.with_layout(align, |ui| {
+                                let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
+                                if ui.skf_button(icon).clicked() {
+                                    anim.elapsed = if anim.elapsed == None {
+                                        Some(Instant::now())
+                                    } else {
+                                        None
+                                    };
+                                }
+                            });
                         }
 
                         context_menu!(button, shared, context_id, |ui: &mut egui::Ui| {
                             ui.context_rename(shared, context_id);
                             ui.context_delete(shared, "delete_anim", PolarId::DeleteAnim);
+                            if ui.context_button("Duplicate", shared).clicked() {
+                                let anims = &mut shared.armature.animations;
+                                anims.push(anims[i].clone());
+                                shared.ui.context_menu.close();
+                            }
                         });
                     });
                 }

@@ -768,12 +768,8 @@ impl EguiUi for egui::Ui {
                 shared.ui.edit_value = Some("0".to_string());
             }
             match shared.ui.edit_value.as_mut().unwrap().parse::<f32>() {
-                Ok(output) => {
-                    return (true, output / modifier, input);
-                }
-                Err(_) => {
-                    return (false, value, input);
-                }
+                Ok(output) => return (true, output / modifier, input),
+                Err(_) => return (false, value, input),
             }
         }
 
@@ -897,21 +893,17 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             // complain if there's no proper animation to export
+            let str = "No animation available.".to_string();
             if shared.ui.anim.selected == usize::MAX {
-                if shared.armature.animations.len() == 0
-                    || shared.armature.animations[0].keyframes.len() == 0
-                {
-                    shared
-                        .ui
-                        .open_modal("No animation available.".to_string(), false);
+                let anims = &shared.armature.animations;
+                if anims.len() == 0 || anims[0].keyframes.len() == 0 {
+                    shared.ui.open_modal(str, false);
                     return;
                 } else {
                     shared.ui.anim.selected = 0;
                 }
             } else if shared.last_keyframe() == None {
-                shared
-                    .ui
-                    .open_modal("No animation available.".to_string(), false);
+                shared.ui.open_modal(str, false);
                 return;
             }
 

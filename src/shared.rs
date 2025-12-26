@@ -1657,6 +1657,7 @@ pub struct RenderedFrame {
 #[derive(Default)]
 pub struct CopyBuffer {
     pub keyframes: Vec<Keyframe>,
+    pub anims: Vec<Animation>,
     pub bones: Vec<Bone>,
 }
 

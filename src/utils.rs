@@ -362,6 +362,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
 
     // populate keyframe bone_idx
     for a in 0..armature_copy.animations.len() {
+        armature_copy.animations[a].id = a as i32;
         for kf in 0..armature_copy.animations[a].keyframes.len() {
             let keyframe = &mut armature_copy.animations[a].keyframes[kf];
             let bones = &mut armature_copy.bones.iter();
@@ -371,28 +372,21 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
 
     for b in 0..armature_copy.bones.len() {
         // if it's a regular rect, empty verts and indices
-        if armature_copy.tex_of(armature_copy.bones[b].id) == None
-            || !armature_copy.bones[b].verts_edited
-        {
+        let bone = &armature_copy.bones[b];
+        if armature_copy.tex_of(bone.id) == None || !bone.verts_edited {
             armature_copy.bones[b].vertices = vec![];
             armature_copy.bones[b].indices = vec![];
             continue;
         }
 
         for w in 0..armature_copy.bones[b].binds.len() {
-            let bone_id = armature_copy.bones[b].binds[w].bone_id;
-            armature_copy.bones[b].binds[w].bone_id = armature_copy
-                .bones
-                .iter()
-                .position(|bone| bone.id == bone_id)
-                .unwrap() as i32;
+            let bones = armature_copy.bones.clone();
+            let bone_id = &mut armature_copy.bones[b].binds[w].bone_id;
+            *bone_id = bones.iter().position(|bone| bone.id == *bone_id).unwrap() as i32;
             for v in 0..armature_copy.bones[b].binds[w].verts.len() {
-                let vert_id = armature_copy.bones[b].binds[w].verts[v].id;
-                armature_copy.bones[b].binds[w].verts[v].id = armature_copy.bones[b]
-                    .vertices
-                    .iter()
-                    .position(|vert| vert.id == vert_id as u32)
-                    .unwrap() as i32;
+                let vertices = armature_copy.bones[b].vertices.clone();
+                let v_id = &mut armature_copy.bones[b].binds[w].verts[v].id;
+                *v_id = vertices.iter().position(|v| v.id == *v_id as u32).unwrap() as i32;
             }
         }
 
@@ -426,11 +420,9 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
             continue;
         }
 
-        armature_copy.bones[b].parent_id = armature_copy
-            .bones
-            .iter()
-            .position(|bone| bone.id == armature_copy.bones[b].parent_id)
-            .unwrap() as i32;
+        let bones = armature_copy.bones.clone();
+        let parent_id = &mut armature_copy.bones[b].parent_id;
+        *parent_id = bones.iter().position(|bone| bone.id == *parent_id).unwrap() as i32;
     }
 
     // restructure bone ids
