@@ -32,6 +32,8 @@ pub trait EguiUi {
     fn context_delete(&mut self, shared: &mut Shared, loc_code: &str, polar_id: PolarId);
 }
 
+// all context menus must be opened through this.
+// `content` is a closure with a `&mut egui::Ui` parameter.
 #[macro_export]
 macro_rules! context_menu {
     ($button:expr, $shared:expr, $id:expr, $content:expr) => {
@@ -442,32 +444,39 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
     }
 
     if input.consume_shortcut(&shared.config.keys.cancel) {
-        if !shared.ui.styles_modal
-            && !shared.ui.modal
-            && !shared.ui.polar_modal
-            && !shared.ui.forced_modal
-            && !shared.ui.settings_modal
-            && !shared.ui.setting_ik_target
-        {
-            shared.ui.unselect_everything();
-        }
-
-        #[cfg(target_arch = "wasm32")]
-        {
-            toggleElement(false, "image-dialog".to_string());
-            toggleElement(false, "file-dialog".to_string());
-            toggleElement(false, "ui-slider".to_string());
-        }
-
-        shared.ui.styles_modal = false;
-        shared.ui.modal = false;
-        shared.ui.polar_modal = false;
-        shared.ui.forced_modal = false;
-        shared.ui.settings_modal = false;
-        shared.ui.atlas_modal = false;
-
-        shared.ui.setting_ik_target = false;
+        cancel_shortcut(shared);
     }
+}
+
+pub fn cancel_shortcut(shared: &mut Shared) {
+    // if a context menu is open, cancel that instead
+    if shared.ui.context_menu.id != "" {
+        shared.ui.context_menu.id = "".to_string();
+        return;
+    }
+
+    let ui = &shared.ui;
+    let no_modals =
+        !ui.styles_modal && !ui.modal && !ui.polar_modal && !ui.forced_modal && !ui.settings_modal;
+    if no_modals && !ui.setting_ik_target {
+        shared.ui.unselect_everything();
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        toggleElement(false, "image-dialog".to_string());
+        toggleElement(false, "file-dialog".to_string());
+        toggleElement(false, "ui-slider".to_string());
+    }
+
+    shared.ui.styles_modal = false;
+    shared.ui.modal = false;
+    shared.ui.polar_modal = false;
+    shared.ui.forced_modal = false;
+    shared.ui.settings_modal = false;
+    shared.ui.atlas_modal = false;
+
+    shared.ui.setting_ik_target = false;
 }
 
 pub fn mouse_button_as_key(
