@@ -477,8 +477,6 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         }
     }
 
-    shared.ui.selected_bone_idx = usize::MAX;
-
     shared.new_undo_bones();
 
     // sort dragged bones so they'll appear in the same order when dropped
@@ -500,6 +498,10 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         drag_bone(shared, is_above, id, pointing_id);
         shared.armature.offset_pos_by_parent(old_parents, id as i32);
     }
+
+    let sel_bone_id = shared.ui.selected_bone_ids[0];
+    let bones = &mut shared.armature.bones;
+    shared.ui.selected_bone_idx = bones.iter().position(|b| b.id == sel_bone_id).unwrap();
 
     return true;
 }
