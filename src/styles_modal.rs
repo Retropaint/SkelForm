@@ -156,11 +156,34 @@ pub fn draw_styles_list(
                         shared.ui.hovering_set = s as i32;
                         hovered = true;
                     }
+
+                    if button.secondary_clicked() {
+                        shared.ui.context_menu.show(ContextType::Texture, s as i32)
+                    }
                     if button.clicked() {
                         if shared.ui.selected_style == shared.armature.styles[s].id {
                             shared.ui.rename_id = "tex_set ".to_string() + &s.to_string()
                         }
                         shared.ui.selected_style = shared.armature.styles[s].id;
+                    }
+
+                    if shared.ui.context_menu.is(ContextType::Texture, s as i32) {
+                        button.show_tooltip_ui(|ui| {
+                            if ui.clickable_label(shared.loc("rename")).clicked() {
+                                shared.ui.rename_id = "style_".to_owned() + &s.to_string();
+                                shared.ui.context_menu.close();
+                            };
+                            if ui.clickable_label(shared.loc("delete")).clicked() {
+                                let str_del = &shared.loc("polar.delete_style").clone();
+                                shared.ui.open_polar_modal(PolarId::DeleteStyle, &str_del);
+
+                                // only hide the menu, as tex id is still needed for modal
+                                shared.ui.context_menu.hide = true;
+                            }
+                            if ui.ui_contains_pointer() {
+                                shared.ui.context_menu.keep = true;
+                            }
+                        });
                     }
 
                     let str_style_active_desc = &shared.loc("styles_modal.active_desc");

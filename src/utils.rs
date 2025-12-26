@@ -451,6 +451,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
 
     // populate texture ser_offset and ser_size
     for s in 0..armature.styles.len() {
+        armature_copy.styles[s].id = s as i32;
         for t in 0..armature.styles[s].textures.len() {
             let tex = &mut armature_copy.styles[s].textures[t];
             tex.ser_offset = Vec2I::new(tex.offset.x as i32, tex.offset.y as i32);

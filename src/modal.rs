@@ -1,4 +1,6 @@
-use crate::{armature_window, ui::EguiUi, utils, Action, ActionType, Config, PolarId, Shared};
+use crate::{
+    armature_window, ui::EguiUi, utils, Action, ActionType, Config, ContextType, PolarId, Shared,
+};
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     ctx: &egui::Context,
@@ -123,6 +125,12 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             let id = shared.ui.context_menu.id as usize;
             shared.selected_set_mut().unwrap().textures.remove(id);
         }
+        PolarId::DeleteStyle => {
+            let id = shared.ui.context_menu.id;
+            let styles = &mut shared.armature.styles;
+            let idx = styles.iter().position(|s| s.id == id).unwrap();
+            styles.remove(idx);
+        }
     }
 }
 
@@ -209,5 +217,19 @@ pub fn modal_x<T: FnOnce()>(ui: &mut egui::Ui, offset: egui::Vec2, after_close: 
         .clicked()
     {
         after_close();
+    }
+}
+
+pub fn context_menu<T: FnOnce(&mut egui::Ui)>(
+    shared: &Shared,
+    response: &egui::Response,
+    ctx_type: ContextType,
+    id: i32,
+    content: T,
+) {
+    if shared.ui.context_menu.is(ctx_type, id) {
+        response.show_tooltip_ui(|ui| {
+            content(ui);
+        });
     }
 }

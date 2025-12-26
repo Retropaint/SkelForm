@@ -422,6 +422,7 @@ pub enum PolarId {
     DeleteAnim,
     DeleteFile,
     DeleteTex,
+    DeleteStyle,
 }
 enum_string!(PolarId);
 
