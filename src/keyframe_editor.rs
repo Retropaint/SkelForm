@@ -234,18 +234,16 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
 
         // calculate how far apart each keyframe should visually be
         let gap = 400.;
-        let hitbox = gap
-            / shared.ui.anim.timeline_zoom
-            / shared.selected_animation().unwrap().fps as f32
-            / 2.;
+        let fps = shared.selected_animation().unwrap().fps as f32;
+        let hitbox = gap / shared.ui.anim.timeline_zoom / fps / 2.;
 
         // add 1 second worth of frames after the last keyframe
         let frames: i32;
+        let extra = shared.selected_animation().unwrap().fps * 5;
         if shared.last_keyframe() != None {
-            frames =
-                shared.last_keyframe().unwrap().frame + shared.selected_animation().unwrap().fps;
+            frames = shared.last_keyframe().unwrap().frame + extra;
         } else {
-            frames = shared.selected_animation().unwrap().fps
+            frames = extra
         }
 
         let width: f32;
@@ -262,11 +260,9 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
                 ui.cursor().left_top(),
                 egui::vec2(ui.available_width(), 20.),
             );
-            ui.painter().rect_filled(
-                rect,
-                egui::CornerRadius::ZERO,
-                shared.config.colors.light_accent,
-            );
+            let light_accent = shared.config.colors.light_accent;
+            let zero_corner = egui::CornerRadius::ZERO;
+            ui.painter().rect_filled(rect, zero_corner, light_accent);
 
             if shared.ui.anim.lines_x.len() > 0 {
                 draw_top_bar(ui, shared, width, hitbox);
@@ -350,10 +346,26 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
     let scroll_area = egui::ScrollArea::horizontal()
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
         .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset.x, 0.));
+
     scroll_area.show(ui, |ui| {
         egui::Frame::new().show(ui, |ui| {
             ui.set_width(width);
             ui.set_height(20.);
+
+            let mut second = 0;
+            for (i, x) in shared.ui.anim.lines_x.iter().enumerate() {
+                if i as i32 % shared.selected_animation().unwrap().fps != 0 {
+                    continue;
+                }
+                second += 1;
+                let pos = Vec2::new(ui.min_rect().left() + x, ui.min_rect().top() + 10.);
+                let center = egui::Align2::CENTER_CENTER;
+                let fontid = egui::FontId::default();
+                let col = shared.config.colors.text;
+                let painter = ui.painter_at(ui.min_rect());
+                let str = second.to_string() + "s";
+                painter.text(pos.into(), center, str, fontid, col.into());
+            }
 
             for i in 0..shared.selected_animation().unwrap().keyframes.len() {
                 let frame = shared.selected_animation().unwrap().keyframes[i].frame;
@@ -429,11 +441,8 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
                         continue;
                     }
-                    shared
-                        .selected_animation_mut()
-                        .unwrap()
-                        .keyframes
-                        .retain(|kf| kf.frame != j as i32);
+                    let selected_anim = &mut shared.selected_animation_mut().unwrap();
+                    selected_anim.keyframes.retain(|kf| kf.frame != j as i32);
                     for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
                         if kf.frame == frame as i32 {
                             kf.frame = j as i32;
@@ -469,10 +478,8 @@ pub fn draw_timeline_graph(
                 cursor.y -= shared.ui.anim.timeline_offset.y;
 
                 // render darkened background after last keyframe
-                if shared.last_keyframe() != None
-                    && (shared.last_keyframe().unwrap().frame as usize)
-                        < shared.ui.anim.lines_x.len()
-                {
+                let lkf = shared.last_keyframe();
+                if lkf != None && (lkf.unwrap().frame as usize) < shared.ui.anim.lines_x.len() {
                     let left_top_rect = egui::vec2(
                         shared.ui.anim.lines_x[shared.last_keyframe().unwrap().frame as usize],
                         -3.,
