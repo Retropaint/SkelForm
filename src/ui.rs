@@ -28,6 +28,25 @@ pub trait EguiUi {
         options: Option<TextInputOptions>,
     ) -> (bool, f32, egui::Response);
     fn debug_rect(&mut self, rect: egui::Rect);
+    fn context_rename(&mut self, shared: &mut Shared, id: String);
+    fn context_delete(&mut self, shared: &mut Shared, loc_code: &str, polar_id: PolarId);
+}
+
+#[macro_export]
+macro_rules! context_menu {
+    ($button:expr, $shared:expr, $id:expr, $content:expr) => {
+        if $button.secondary_clicked() {
+            $shared.ui.context_menu.show(&$id)
+        }
+        if $shared.ui.context_menu.is(&$id) {
+            $button.show_tooltip_ui(|ui| {
+                $content(ui);
+                if ui.ui_contains_pointer() {
+                    $shared.ui.context_menu.keep = true;
+                }
+            });
+        }
+    };
 }
 
 /// The `main` of this module.
@@ -402,62 +421,23 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         toggleElement(true, "file-dialog".to_string());
     }
 
+    // copy shortcut
     if input.consume_shortcut(&shared.config.keys.copy) {
-        // copy bone(s)
         shared.copy_buffer = CopyBuffer::default();
+
+        // copy bone(s)
         let idx = shared.ui.selected_bone_idx;
         if idx != usize::MAX {
-            let mut bones = vec![];
-            armature_window::get_all_children(
-                &shared.armature.bones,
-                &mut bones,
-                &shared.armature.bones[idx],
-            );
-            bones.insert(0, shared.armature.bones[idx].clone());
-            shared.copy_buffer.bones = bones;
+            copy_bone(shared, idx);
         }
     }
 
+    // paste shortcut
     if input.consume_shortcut(&shared.config.keys.paste) {
         if shared.copy_buffer.keyframes.len() > 0 {
         } else if shared.copy_buffer.bones.len() > 0 {
             shared.new_undo_bones();
-            let ids: Vec<i32> = shared.armature.bones.iter().map(|bone| bone.id).collect();
-            let mut highest_id = 0;
-            for id in ids {
-                highest_id = id.max(highest_id);
-            }
-            highest_id += 1;
-
-            let mut insert_idx = usize::MAX;
-            let mut id_refs: HashMap<i32, i32> = HashMap::new();
-
-            for b in 0..shared.copy_buffer.bones.len() {
-                let bone = &mut shared.copy_buffer.bones[b];
-
-                highest_id += 1;
-                let new_id = highest_id;
-
-                id_refs.insert(bone.id, new_id);
-                bone.id = highest_id;
-
-                if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
-                    bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
-                } else if shared.ui.selected_bone_idx != usize::MAX {
-                    insert_idx = shared.ui.selected_bone_idx + 1;
-                    bone.parent_id = shared.armature.bones[shared.ui.selected_bone_idx].id;
-                } else {
-                    bone.parent_id = -1;
-                }
-            }
-            if insert_idx == usize::MAX {
-                shared.armature.bones.append(&mut shared.copy_buffer.bones);
-            } else {
-                for bone in &shared.copy_buffer.bones {
-                    shared.armature.bones.insert(insert_idx, bone.clone());
-                    insert_idx += 1;
-                }
-            }
+            paste_bone(shared, shared.ui.selected_bone_idx);
         }
     }
 
@@ -763,6 +743,23 @@ impl EguiUi for egui::Ui {
             egui::Stroke::new(1., egui::Color32::RED),
             egui::StrokeKind::Outside,
         );
+    }
+
+    fn context_rename(&mut self, shared: &mut Shared, id: String) {
+        if self.clickable_label(shared.loc("rename")).clicked() {
+            shared.ui.rename_id = id;
+            shared.ui.context_menu.close();
+        };
+    }
+
+    fn context_delete(&mut self, shared: &mut Shared, loc_code: &str, polar_id: PolarId) {
+        if self.clickable_label(shared.loc("delete")).clicked() {
+            let str_del = &shared.loc(&("polar.".to_owned() + &loc_code)).clone();
+            shared.ui.open_polar_modal(polar_id, &str_del);
+
+            // only hide the menu, as anim id is still needed for modal
+            shared.ui.context_menu.hide = true;
+        }
     }
 }
 
@@ -1254,6 +1251,54 @@ pub fn draw_resizable_panel<T>(
     if let Some(resize) = context.read_response(egui::Id::new(id).with("__resize")) {
         if resize.hovered() || panel.response.hovered() {
             *on_ui = true;
+        }
+    }
+}
+
+pub fn copy_bone(shared: &mut Shared, idx: usize) {
+    let arm_bones = &shared.armature.bones;
+    let mut bones = vec![];
+    armature_window::get_all_children(&arm_bones, &mut bones, &arm_bones[idx]);
+    bones.insert(0, shared.armature.bones[idx].clone());
+    shared.copy_buffer.bones = bones;
+}
+
+pub fn paste_bone(shared: &mut Shared, idx: usize) {
+    // determine which id to give the new bone(s), based on the highest current id
+    let ids: Vec<i32> = shared.armature.bones.iter().map(|bone| bone.id).collect();
+    let mut highest_id = 0;
+    for id in ids {
+        highest_id = id.max(highest_id);
+    }
+    highest_id += 1;
+
+    let mut insert_idx = usize::MAX;
+    let mut id_refs: HashMap<i32, i32> = HashMap::new();
+
+    for b in 0..shared.copy_buffer.bones.len() {
+        let bone = &mut shared.copy_buffer.bones[b];
+
+        highest_id += 1;
+        let new_id = highest_id;
+
+        id_refs.insert(bone.id, new_id);
+        bone.id = highest_id;
+
+        if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
+            bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
+        } else if idx != usize::MAX {
+            insert_idx = idx + 1;
+            bone.parent_id = shared.armature.bones[idx].id;
+        } else {
+            bone.parent_id = -1;
+        }
+    }
+    if insert_idx == usize::MAX {
+        shared.armature.bones.append(&mut shared.copy_buffer.bones);
+    } else {
+        for bone in &shared.copy_buffer.bones {
+            shared.armature.bones.insert(insert_idx, bone.clone());
+            insert_idx += 1;
         }
     }
 }

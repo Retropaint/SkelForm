@@ -426,37 +426,26 @@ pub enum PolarId {
 }
 enum_string!(PolarId);
 
-#[derive(Clone, Default, PartialEq)]
-pub enum ContextType {
-    #[default]
-    None,
-    Animation,
-    Bone,
-    Texture,
-}
-
 #[derive(Clone, Default)]
 pub struct ContextMenu {
-    pub context_type: ContextType,
-    pub id: i32,
+    pub id: String,
     pub hide: bool,
     pub keep: bool,
 }
 
 impl ContextMenu {
-    pub fn show(&mut self, context_type: ContextType, id: i32) {
-        self.context_type = context_type;
-        self.id = id;
+    pub fn show(&mut self, id: &String) {
+        self.id = id.clone();
         self.hide = false;
     }
 
     pub fn close(&mut self) {
-        self.context_type = ContextType::None;
+        self.id = "".to_string();
         self.keep = false;
     }
 
-    pub fn is(&self, context_type: ContextType, id: i32) -> bool {
-        self.context_type == context_type && self.id == id && !self.hide
+    pub fn is(&self, id: &String) -> bool {
+        self.id == *id && !self.hide
     }
 }
 
@@ -2046,6 +2035,11 @@ impl Shared {
             animations: self.armature.animations.clone(),
             ..Default::default()
         });
+    }
+
+    pub fn context_id_parsed(&self) -> i32 {
+        let raw_id = self.ui.context_menu.id.split('_').collect::<Vec<_>>()[1];
+        raw_id.parse::<i32>().unwrap()
     }
 }
 

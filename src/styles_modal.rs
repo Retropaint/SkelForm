@@ -101,10 +101,11 @@ pub fn draw_styles_list(
 
             for s in 0..shared.armature.styles.len() {
                 idx += 1;
+                let context_id = "style_".to_owned() + &s.to_string();
 
-                if shared.ui.rename_id == "tex_set ".to_string() + &s.to_string() {
+                if shared.ui.rename_id == context_id {
                     let (edited, value, _) = ui.text_input(
-                        shared.ui.rename_id.clone(),
+                        context_id,
                         shared,
                         shared.armature.styles[s].name.clone(),
                         Some(crate::ui::TextInputOptions {
@@ -157,34 +158,17 @@ pub fn draw_styles_list(
                         hovered = true;
                     }
 
-                    if button.secondary_clicked() {
-                        shared.ui.context_menu.show(ContextType::Texture, s as i32)
-                    }
                     if button.clicked() {
                         if shared.ui.selected_style == shared.armature.styles[s].id {
-                            shared.ui.rename_id = "tex_set ".to_string() + &s.to_string()
+                            shared.ui.rename_id = context_id.clone();
                         }
                         shared.ui.selected_style = shared.armature.styles[s].id;
                     }
 
-                    if shared.ui.context_menu.is(ContextType::Texture, s as i32) {
-                        button.show_tooltip_ui(|ui| {
-                            if ui.clickable_label(shared.loc("rename")).clicked() {
-                                shared.ui.rename_id = "style_".to_owned() + &s.to_string();
-                                shared.ui.context_menu.close();
-                            };
-                            if ui.clickable_label(shared.loc("delete")).clicked() {
-                                let str_del = &shared.loc("polar.delete_style").clone();
-                                shared.ui.open_polar_modal(PolarId::DeleteStyle, &str_del);
-
-                                // only hide the menu, as tex id is still needed for modal
-                                shared.ui.context_menu.hide = true;
-                            }
-                            if ui.ui_contains_pointer() {
-                                shared.ui.context_menu.keep = true;
-                            }
-                        });
-                    }
+                    context_menu!(button, shared, context_id, |ui: &mut egui::Ui| {
+                        ui.context_rename(shared, context_id);
+                        ui.context_delete(shared, "delete_style", PolarId::DeleteStyle);
+                    });
 
                     let str_style_active_desc = &shared.loc("styles_modal.active_desc");
                     let visible_checkbox = ui
@@ -719,6 +703,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         idx += 1;
         let mut name = shared.selected_set().unwrap().textures[i].name.clone();
         name = utils::trunc_str(ui, &name, width - 10.);
+        let context_id = "tex_".to_owned() + &i.to_string();
 
         let str_desc = &shared.loc("styles_modal.texture_desc").clone();
 
@@ -728,10 +713,9 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
         }
 
         ui.horizontal(|ui| {
-            let rename_id = "texture_".to_owned() + &i.to_string();
-            if shared.ui.rename_id == rename_id {
+            if shared.ui.rename_id == context_id {
                 let (edited, value, _) = ui.text_input(
-                    rename_id.clone(),
+                    context_id.clone(),
                     shared,
                     name.to_string(),
                     Some(TextInputOptions {
@@ -788,34 +772,18 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 dragged = true;
             }
 
-            if button.secondary_clicked() {
-                shared.ui.context_menu.show(ContextType::Texture, i as i32)
-            }
             if button.clicked() {
                 if shared.ui.selected_tex == i as i32 {
-                    shared.ui.rename_id = rename_id.clone();
+                    shared.ui.rename_id = context_id.clone();
                 }
                 shared.ui.selected_tex = i as i32;
             }
 
-            if shared.ui.context_menu.is(ContextType::Texture, i as i32) {
-                button.show_tooltip_ui(|ui| {
-                    if ui.clickable_label(shared.loc("rename")).clicked() {
-                        shared.ui.rename_id = rename_id;
-                        shared.ui.context_menu.close();
-                    };
-                    if ui.clickable_label(shared.loc("delete")).clicked() {
-                        let str_del = &shared.loc("polar.delete_tex").clone();
-                        shared.ui.open_polar_modal(PolarId::DeleteTex, &str_del);
+            context_menu!(button, shared, context_id, |ui: &mut egui::Ui| {
+                ui.context_rename(shared, context_id);
+                ui.context_delete(shared, "delete_tex", PolarId::DeleteTex);
+            });
 
-                        // only hide the menu, as tex id is still needed for modal
-                        shared.ui.context_menu.hide = true;
-                    }
-                    if ui.ui_contains_pointer() {
-                        shared.ui.context_menu.keep = true;
-                    }
-                });
-            }
             if button.contains_pointer() {
                 shared.ui.hovering_tex = i as i32;
                 hovered = true;

@@ -1,6 +1,4 @@
-use crate::{
-    armature_window, ui::EguiUi, utils, Action, ActionType, Config, ContextType, PolarId, Shared,
-};
+use crate::{armature_window, ui::EguiUi, utils, Config, PolarId, Shared};
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     ctx: &egui::Context,
@@ -61,8 +59,11 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
 
             shared.ui.selected_bone_idx = usize::MAX;
 
-            let id = shared.ui.context_menu.id;
-            let bone = shared.armature.bones.iter().find(|b| b.id == id);
+            let bone = shared
+                .armature
+                .bones
+                .iter()
+                .find(|b| b.id == shared.context_id_parsed());
             if bone == None {
                 return;
             }
@@ -95,11 +96,9 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             }
 
             // IK bones that target this are now -1
-            let targeters = shared
-                .armature
-                .bones
-                .iter_mut()
-                .filter(|bone| bone.ik_target_id == shared.ui.context_menu.id);
+            let context_id = shared.context_id_parsed();
+            let bones = &mut shared.armature.bones;
+            let targeters = bones.iter_mut().filter(|b| b.ik_target_id == context_id);
             for bone in targeters {
                 bone.ik_target_id = -1;
             }
@@ -114,7 +113,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
         PolarId::DeleteAnim => {
             shared.ui.anim.selected = usize::MAX;
             shared.new_undo_anims();
-            let id = shared.ui.context_menu.id as usize;
+            let id = shared.context_id_parsed() as usize;
             shared.armature.animations.remove(id);
             shared.ui.context_menu.close();
         }
@@ -122,13 +121,13 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             std::fs::remove_file(&shared.ui.selected_path).unwrap();
         }
         PolarId::DeleteTex => {
-            let id = shared.ui.context_menu.id as usize;
+            let id = shared.context_id_parsed() as usize;
             shared.selected_set_mut().unwrap().textures.remove(id);
         }
         PolarId::DeleteStyle => {
-            let id = shared.ui.context_menu.id;
+            let context_id = shared.context_id_parsed();
             let styles = &mut shared.armature.styles;
-            let idx = styles.iter().position(|s| s.id == id).unwrap();
+            let idx = styles.iter().position(|s| s.id == context_id).unwrap();
             styles.remove(idx);
         }
     }
@@ -217,19 +216,5 @@ pub fn modal_x<T: FnOnce()>(ui: &mut egui::Ui, offset: egui::Vec2, after_close: 
         .clicked()
     {
         after_close();
-    }
-}
-
-pub fn context_menu<T: FnOnce(&mut egui::Ui)>(
-    shared: &Shared,
-    response: &egui::Response,
-    ctx_type: ContextType,
-    id: i32,
-    content: T,
-) {
-    if shared.ui.context_menu.is(ctx_type, id) {
-        response.show_tooltip_ui(|ui| {
-            content(ui);
-        });
     }
 }

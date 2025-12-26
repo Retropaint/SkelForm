@@ -104,21 +104,19 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                 let mut hovered = false;
                 for i in 0..shared.armature.animations.len() {
                     let name = &mut shared.armature.animations[i].name.clone();
+                    let context_id = "anim_".to_owned() + &i.to_string();
 
                     // show input field if renaming
-                    if shared.ui.rename_id == "animation ".to_string() + &i.to_string() {
+                    if shared.ui.rename_id == context_id {
                         let str_new_anim = &shared.loc("keyframe_editor.new_animation");
-                        let (edited, value, _) = ui.text_input(
-                            "animation ".to_string() + &i.to_string(),
-                            shared,
-                            name.to_string(),
-                            Some(TextInputOptions {
-                                focus: true,
-                                placeholder: str_new_anim.to_string(),
-                                default: str_new_anim.to_string(),
-                                ..Default::default()
-                            }),
-                        );
+                        let options = Some(TextInputOptions {
+                            focus: true,
+                            placeholder: str_new_anim.to_string(),
+                            default: str_new_anim.to_string(),
+                            ..Default::default()
+                        });
+                        let (edited, value, _) =
+                            ui.text_input(context_id, shared, name.to_string(), options);
                         if edited {
                             shared.armature.animations[i].name = value;
                             shared.ui.anim.selected = i;
@@ -153,10 +151,8 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                     ui.set_width(width - button_padding);
                                     ui.set_height(21.);
                                     ui.add_space(5.);
-                                    ui.label(
-                                        egui::RichText::new(name.clone())
-                                            .color(shared.config.colors.text),
-                                    );
+                                    let col = shared.config.colors.text;
+                                    ui.label(egui::RichText::new(name.clone()).color(col));
                                 });
                             })
                             .response
@@ -171,15 +167,9 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                                 shared.ui.anim.selected = i;
                                 shared.ui.select_anim_frame(0);
                             } else {
-                                shared.ui.rename_id = "animation ".to_string() + &i.to_string();
+                                shared.ui.rename_id = context_id.clone();
                                 shared.ui.edit_value = Some(name.to_string());
                             }
-                        }
-                        if button.secondary_clicked() {
-                            shared
-                                .ui
-                                .context_menu
-                                .show(ContextType::Animation, i as i32);
                         }
 
                         if shared.armature.animations[i].keyframes.len() > 0 {
@@ -199,25 +189,10 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                             );
                         }
 
-                        if shared.ui.context_menu.is(ContextType::Animation, i as i32) {
-                            button.show_tooltip_ui(|ui| {
-                                if ui.clickable_label(shared.loc("rename")).clicked() {
-                                    shared.ui.rename_id = "animation ".to_string() + &i.to_string();
-                                    shared.ui.edit_value = Some(name.to_string());
-                                    shared.ui.context_menu.close();
-                                };
-                                if ui.clickable_label(shared.loc("delete")).clicked() {
-                                    let str_del = &shared.loc("polar.delete_anim").clone();
-                                    shared.ui.open_polar_modal(PolarId::DeleteAnim, &str_del);
-
-                                    // only hide the menu, as anim id is still needed for modal
-                                    shared.ui.context_menu.hide = true;
-                                }
-                                if ui.ui_contains_pointer() {
-                                    shared.ui.context_menu.keep = true;
-                                }
-                            });
-                        }
+                        context_menu!(button, shared, context_id, |ui: &mut egui::Ui| {
+                            ui.context_rename(shared, context_id);
+                            ui.context_delete(shared, "delete_anim", PolarId::DeleteAnim);
+                        });
                     });
                 }
 

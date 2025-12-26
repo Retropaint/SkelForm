@@ -267,13 +267,13 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 }
 
                 let width = ui.available_width();
-                let rename_str = "bone_".to_string() + &idx.to_string();
+                let context_id = "bone_".to_string() + &idx.to_string();
 
-                if shared.ui.rename_id == rename_str {
+                if shared.ui.rename_id == context_id {
                     let (edited, value, _) = ui.text_input(
-                        shared.ui.rename_id.clone(),
+                        context_id,
                         shared,
-                        shared.ui.edit_value.clone().unwrap(),
+                        shared.armature.bones[b].name.clone(),
                         Some(TextInputOptions {
                             size: Vec2::new(ui.available_width(), 21.),
                             focus: true,
@@ -324,7 +324,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 if button.clicked() {
                     if shared.ui.selected_bone_idx == idx as usize {
-                        shared.ui.rename_id = rename_str;
+                        shared.ui.rename_id = context_id.clone();
                         shared.ui.edit_value = Some(shared.armature.bones[b].name.clone());
                     } else {
                         if shared.ui.setting_ik_target {
@@ -367,38 +367,20 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     }
                 }
 
-                let id = shared.armature.bones[b].id;
+                crate::context_menu!(button, shared, context_id, |ui: &mut egui::Ui| {
+                    ui.context_rename(shared, context_id);
+                    ui.context_delete(shared, "delete_bone", PolarId::DeleteBone);
 
-                if button.secondary_clicked() {
-                    shared.ui.context_menu.show(ContextType::Bone, id);
-                }
+                    if ui.clickable_label("Copy").clicked() {
+                        ui::copy_bone(shared, b);
+                        shared.ui.context_menu.close();
+                    }
 
-                if shared.ui.context_menu.is(ContextType::Bone, id) {
-                    button.show_tooltip_ui(|ui| {
-                        if ui.clickable_label("Delete").clicked() {
-                            let str_del = &shared.loc("polar.delete_bone").clone();
-                            shared.ui.open_polar_modal(PolarId::DeleteBone, &str_del);
-                            shared.ui.context_menu.hide = true;
-                        };
-
-                        if ui.clickable_label("Copy").clicked() {
-                            shared.copy_buffer = CopyBuffer::default();
-                            let mut bones = vec![];
-                            get_all_children(
-                                &shared.armature.bones,
-                                &mut bones,
-                                &shared.armature.bones[b],
-                            );
-                            bones.insert(0, shared.armature.bones[b].clone());
-                            shared.copy_buffer.bones = bones;
-                            shared.ui.context_menu.close();
-                        }
-
-                        if ui.ui_contains_pointer() {
-                            shared.ui.context_menu.keep = true;
-                        }
-                    });
-                }
+                    if ui.clickable_label("Paste").clicked() {
+                        ui::paste_bone(shared, b);
+                        shared.ui.context_menu.close();
+                    }
+                });
 
                 if check_bone_dragging(shared, ui, button, idx as usize) {
                     dragged = true;
