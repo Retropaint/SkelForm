@@ -30,6 +30,11 @@ pub trait EguiUi {
     fn debug_rect(&mut self, rect: egui::Rect);
     fn context_rename(&mut self, shared: &mut Shared, id: String);
     fn context_delete(&mut self, shared: &mut Shared, loc_code: &str, polar_id: PolarId);
+    fn context_button(
+        &mut self,
+        text: impl Into<egui::WidgetText>,
+        shared: &mut Shared,
+    ) -> egui::Response;
 }
 
 // all context menus must be opened through this.
@@ -615,6 +620,36 @@ impl EguiUi for egui::Ui {
         label
     }
 
+    fn context_button(
+        &mut self,
+        text: impl Into<egui::WidgetText>,
+        shared: &mut Shared,
+    ) -> egui::Response {
+        let button = self
+            .allocate_ui([0., 0.].into(), |ui| {
+                ui.set_width(70.);
+                ui.set_height(20.);
+                let width = ui.available_width();
+                let mut col = shared.config.colors.main;
+                if ui.ui_contains_pointer() {
+                    col = shared.config.colors.light_accent;
+                }
+                egui::Frame::new().fill(col.into()).show(ui, |ui| {
+                    ui.style_mut().interaction.selectable_labels = false;
+                    ui.set_width(width);
+                    ui.set_height(20.);
+                    ui.horizontal(|ui| {
+                        ui.add_space(5.);
+                        ui.label(text)
+                    });
+                });
+            })
+            .response
+            .interact(egui::Sense::click());
+
+        button
+    }
+
     fn text_input(
         &mut self,
         id: String,
@@ -755,14 +790,14 @@ impl EguiUi for egui::Ui {
     }
 
     fn context_rename(&mut self, shared: &mut Shared, id: String) {
-        if self.clickable_label(shared.loc("rename")).clicked() {
+        if self.context_button(shared.loc("rename"), shared).clicked() {
             shared.ui.rename_id = id;
             shared.ui.context_menu.close();
         };
     }
 
     fn context_delete(&mut self, shared: &mut Shared, loc_code: &str, polar_id: PolarId) {
-        if self.clickable_label(shared.loc("delete")).clicked() {
+        if self.context_button(shared.loc("delete"), shared).clicked() {
             let str_del = &shared.loc(&("polar.".to_owned() + &loc_code)).clone();
             shared.ui.open_polar_modal(polar_id, &str_del);
 

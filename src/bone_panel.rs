@@ -35,14 +35,11 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
 
         // delete label
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let text = egui::RichText::new("X")
-                .size(15.)
-                .color(egui::Color32::DARK_RED);
-            if ui
-                .label(text)
-                .on_hover_cursor(egui::CursorIcon::PointingHand)
-                .clicked()
-            {
+            let mut col = shared.config.colors.text;
+            col -= Color::new(60, 60, 60, 0);
+            let text = egui::RichText::new("🗑").size(15.).color(col);
+            let hand = egui::CursorIcon::PointingHand;
+            if ui.label(text).on_hover_cursor(hand).clicked() {
                 let str = &shared.loc("polar.delete_bone").clone();
                 let context_id =
                     "bone_".to_owned() + &shared.selected_bone().unwrap().id.to_string();
@@ -57,12 +54,8 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
 
     ui.horizontal(|ui| {
         ui.label(&shared.loc("bone_panel.name"));
-        let (edited, value, _) = ui.text_input(
-            "Name".to_string(),
-            shared,
-            shared.selected_bone().unwrap().name.clone(),
-            None,
-        );
+        let sel_bone_name = shared.selected_bone().unwrap().name.clone();
+        let (edited, value, _) = ui.text_input("Name".to_string(), shared, sel_bone_name, None);
         if edited {
             shared.selected_bone_mut().unwrap().name = value;
         }

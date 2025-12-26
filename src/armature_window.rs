@@ -371,12 +371,12 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     ui.context_rename(shared, context_id);
                     ui.context_delete(shared, "delete_bone", PolarId::DeleteBone);
 
-                    if ui.clickable_label("Copy").clicked() {
+                    if ui.context_button("Copy", shared).clicked() {
                         ui::copy_bone(shared, b);
                         shared.ui.context_menu.close();
                     }
 
-                    if ui.clickable_label("Paste").clicked() {
+                    if ui.context_button("Paste", shared).clicked() {
                         ui::paste_bone(shared, b);
                         shared.ui.context_menu.close();
                     }
