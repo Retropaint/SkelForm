@@ -318,14 +318,12 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 .show_ui(ui, |ui| {
                     let mut selected = -1;
 
-                    let mut ik_family_ids: Vec<i32> = shared
-                        .armature
-                        .bones
-                        .iter()
-                        .map(|bone| bone.ik_family_id)
-                        .filter(|id| *id != -1)
-                        .collect();
-                    ik_family_ids.dedup();
+                    let mut ik_family_ids = vec![];
+                    for bone in &shared.armature.bones {
+                        if !ik_family_ids.contains(&bone.ik_family_id) && bone.ik_family_id != -1 {
+                            ik_family_ids.push(bone.ik_family_id);
+                        }
+                    }
 
                     ui.selectable_value(&mut selected, -3, "None");
                     for id in &ik_family_ids {
