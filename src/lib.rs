@@ -1115,7 +1115,18 @@ mod tests {
     #[test]
     fn import_skf() {
         let mut shared = init_shared();
-        *shared.file_name.lock().unwrap() = "./samples/Untitled.skf".to_string();
+        *shared.file_name.lock().unwrap() = "./samples/skellington.skf".to_string();
+        *shared.import_contents.lock().unwrap() = vec![0];
+        file_reader::read_import(&mut shared, None, None, None, None);
+        assert_eq!(shared.armature.bones[0].name != "New Bone", true);
+        assert_eq!(shared.armature.styles.len() > 0, true);
+    }
+
+    // check if exported skf is same as imported
+    #[test]
+    fn export_skf() {
+        let mut shared = init_shared();
+        *shared.file_name.lock().unwrap() = "./samples/skellington.skf".to_string();
         *shared.import_contents.lock().unwrap() = vec![0];
         file_reader::read_import(&mut shared, None, None, None, None);
         assert_eq!(shared.armature.bones[0].name != "New Bone", true);
@@ -1130,5 +1141,25 @@ mod tests {
         file_reader::read_import(&mut shared, None, None, None, None);
         assert_eq!(shared.armature.bones[0].name != "New Bone", true);
         assert_eq!(shared.armature.styles.len() > 0, true);
+    }
+
+    #[test]
+    fn drag_bone_above() {
+        let mut shared = init_shared();
+        shared.armature.bones[0].name = "Bone0".to_string();
+        shared.armature.bones[1].name = "Bone1".to_string();
+        shared.armature.bones[2].name = "Bone2".to_string();
+        armature_window::drag_bone(&mut shared, true, 2, 1);
+        assert_eq!(shared.armature.bones[1].name, "Bone2");
+    }
+
+    #[test]
+    fn drag_bone_directly() {
+        let mut shared = init_shared();
+        shared.armature.bones[0].name = "Bone0".to_string();
+        shared.armature.bones[1].name = "Bone1".to_string();
+        shared.armature.bones[2].name = "Bone2".to_string();
+        armature_window::drag_bone(&mut shared, false, 2, 1);
+        assert_eq!(shared.armature.bones[2].parent_id, 1);
     }
 }
