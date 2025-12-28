@@ -61,7 +61,6 @@ pub fn draw_styles_list(
     padding: f32,
 ) {
     let smaller = 25.;
-    let frame = egui::Frame::default().inner_margin(5.);
     ui.vertical(|ui| {
         ui.set_height(height);
         ui.set_width((width / 3.) - padding - smaller);
@@ -83,21 +82,29 @@ pub fn draw_styles_list(
                 active: true,
             });
             shared.ui.rename_id =
-                "tex_set ".to_string() + &(shared.armature.styles.len() - 1).to_string();
+                "style_".to_string() + &(shared.armature.styles.len() - 1).to_string();
         });
 
         let size = ui.available_size();
+        let frame = egui::Frame::default().inner_margin(5.);
         ui.dnd_drop_zone::<i32, _>(frame, |ui| {
             ui.set_width(size.x);
             ui.set_height(size.y - 10.);
+
+            let mut hovered = false;
+            let mut idx = -1;
 
             if shared.ui.hovering_tex != -1 {
                 draw_tex_preview(shared, ui);
                 return;
             }
 
-            let mut hovered = false;
-            let mut idx = -1;
+            if shared.armature.styles.len() == 0 {
+                let mut cache = egui_commonmark::CommonMarkCache::default();
+                let loc = shared.loc("styles_modal.assigned_empty").to_string();
+                let str = utils::markdown(loc.to_string(), shared.local_doc_url.to_string());
+                egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
+            }
 
             for s in 0..shared.armature.styles.len() {
                 idx += 1;
@@ -322,6 +329,15 @@ pub fn draw_textures_list(
                 ui.set_height(size.y - tex_frame_padding.y);
 
                 if set_idx == usize::MAX {
+                    return;
+                }
+
+                let style = &shared.armature.styles[shared.ui.selected_style as usize];
+                if style.textures.len() == 0 {
+                    let mut cache = egui_commonmark::CommonMarkCache::default();
+                    let loc = shared.loc("styles_modal.textures_empty").to_string();
+                    let str = utils::markdown(loc, shared.local_doc_url.to_string());
+                    egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
                     return;
                 }
 
@@ -582,6 +598,10 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                 let set = styles.iter().find(|style| style.id == tex_id).unwrap();
 
                 if set.textures.len() == 0 {
+                    let mut cache = egui_commonmark::CommonMarkCache::default();
+                    let loc = shared.loc("styles_modal.assigned_empty").to_string();
+                    let str = utils::markdown(loc, shared.local_doc_url.to_string());
+                    egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
                     return;
                 }
 
