@@ -6,89 +6,77 @@ use crate::{shared, ui::EguiUi, Display};
 pub const DIRECT_BONE: &str = "When clicking a bone's texture, the first untextured parent of the bone will be selected. Checkmark this to always select the textured bone directly.";
 
 pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
-    egui::Modal::new("test".into())
-        .frame(egui::Frame {
-            corner_radius: 0.into(),
-            fill: shared.config.colors.main.into(),
-            inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., shared.config.colors.light_accent),
-            ..Default::default()
-        })
-        .show(ctx, |modal_ui| {
-            let window = shared::Vec2::new(shared.window.x / 3., shared.window.y / 3.);
-            modal_ui.set_width(window.x.min(500.));
-            modal_ui.set_height(window.y.min(500.));
+    let modal = egui::Modal::new("test".into()).frame(egui::Frame {
+        corner_radius: 0.into(),
+        fill: shared.config.colors.main.into(),
+        inner_margin: egui::Margin::same(5),
+        stroke: egui::Stroke::new(1., shared.config.colors.light_accent),
+        ..Default::default()
+    });
+    modal.show(ctx, |modal_ui| {
+        let window = shared::Vec2::new(shared.window.x / 3., shared.window.y / 3.);
+        modal_ui.set_width(window.x.min(500.));
+        modal_ui.set_height(window.y.min(500.));
 
-            modal_ui.horizontal(|ui| {
-                egui::Frame::new()
-                    .fill(shared.config.colors.dark_accent.into())
-                    .inner_margin(egui::Margin::same(5))
-                    .show(ui, |ui| {
-                        ui.set_width(window.x.min(100.));
-                        ui.set_height(window.y.min(475.));
-                        let width = ui.min_rect().width();
-                        ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
-                            let mut is_hovered = false;
-                            macro_rules! tab {
-                                ($name:expr, $state:expr) => {
-                                    settings_button(
-                                        $name,
-                                        $state,
-                                        ui,
-                                        shared,
-                                        width,
-                                        &mut is_hovered,
-                                    )
-                                };
-                            }
+        modal_ui.horizontal(|ui| {
+            let frame = egui::Frame::new()
+                .fill(shared.config.colors.dark_accent.into())
+                .inner_margin(egui::Margin::same(5));
+            frame.show(ui, |ui| {
+                ui.set_width(window.x.min(100.));
+                ui.set_height(window.y.min(475.));
+                let width = ui.min_rect().width();
+                ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
+                    let mut is_hovered = false;
+                    macro_rules! tab {
+                        ($name:expr, $state:expr) => {
+                            settings_button($name, $state, ui, shared, width, &mut is_hovered)
+                        };
+                    }
 
-                            let str_ui =
-                                shared.loc("settings_modal.user_interface.heading").clone();
-                            let str_anim = shared.loc("settings_modal.animation.heading").clone();
-                            let str_rendering =
-                                shared.loc("settings_modal.rendering.heading").clone();
-                            let str_keyboard =
-                                shared.loc("settings_modal.keyboard.heading").clone();
-                            let str_misc =
-                                shared.loc("settings_modal.miscellaneous.heading").clone();
-                            tab!(str_ui, shared::SettingsState::Ui);
-                            tab!(str_anim, shared::SettingsState::Animation);
-                            tab!(str_rendering, shared::SettingsState::Rendering);
-                            tab!(str_keyboard, shared::SettingsState::Keyboard);
-                            tab!(str_misc, shared::SettingsState::Misc);
+                    let str_ui = shared.loc("settings_modal.user_interface.heading").clone();
+                    let str_anim = shared.loc("settings_modal.animation.heading").clone();
+                    let str_rendering = shared.loc("settings_modal.rendering.heading").clone();
+                    let str_keyboard = shared.loc("settings_modal.keyboard.heading").clone();
+                    let str_misc = shared.loc("settings_modal.miscellaneous.heading").clone();
+                    tab!(str_ui, shared::SettingsState::Ui);
+                    tab!(str_anim, shared::SettingsState::Animation);
+                    tab!(str_rendering, shared::SettingsState::Rendering);
+                    tab!(str_keyboard, shared::SettingsState::Keyboard);
+                    tab!(str_misc, shared::SettingsState::Misc);
 
-                            if !is_hovered {
-                                shared.ui.hovering_setting = None;
-                            }
-                        });
-                    });
-                egui::Frame::new().show(ui, |ui| {
-                    ui.set_width(window.x.min(400.));
-                    ui.set_height(window.y.min(475.));
-                    let layout = egui::Layout::top_down(egui::Align::Min);
-                    ui.with_layout(layout, |ui| match shared.ui.settings_state {
-                        shared::SettingsState::Ui => user_interface(ui, shared),
-                        shared::SettingsState::Animation => animation(ui, shared),
-                        shared::SettingsState::Rendering => rendering(ui, shared),
-                        shared::SettingsState::Keyboard => keyboard(ui, shared),
-                        shared::SettingsState::Misc => misc(ui, shared),
-                    });
-                })
+                    if !is_hovered {
+                        shared.ui.hovering_setting = None;
+                    }
+                });
             });
-
-            modal_ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.skf_button("Apply").clicked() {
-                    shared.ui.scale = shared.config.ui_scale;
-                    shared.gridline_gap = shared.config.gridline_gap;
-                    crate::utils::save_config(&shared.config);
-                    shared.ui.settings_modal = false;
-                }
-                if ui.skf_button("Cancel").clicked() {
-                    crate::utils::import_config(shared);
-                    shared.ui.settings_modal = false;
-                }
+            egui::Frame::new().show(ui, |ui| {
+                ui.set_width(window.x.min(400.));
+                ui.set_height(window.y.min(475.));
+                let layout = egui::Layout::top_down(egui::Align::Min);
+                ui.with_layout(layout, |ui| match shared.ui.settings_state {
+                    shared::SettingsState::Ui => user_interface(ui, shared),
+                    shared::SettingsState::Animation => animation(ui, shared),
+                    shared::SettingsState::Rendering => rendering(ui, shared),
+                    shared::SettingsState::Keyboard => keyboard(ui, shared),
+                    shared::SettingsState::Misc => misc(ui, shared),
+                });
             })
         });
+
+        modal_ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if ui.skf_button("Apply").clicked() {
+                shared.ui.scale = shared.config.ui_scale;
+                shared.gridline_gap = shared.config.gridline_gap;
+                crate::utils::save_config(&shared.config);
+                shared.ui.settings_modal = false;
+            }
+            if ui.skf_button("Cancel").clicked() {
+                crate::utils::import_config(shared);
+                shared.ui.settings_modal = false;
+            }
+        })
+    });
 }
 
 fn settings_button(
@@ -143,13 +131,13 @@ fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
     ui.horizontal(|ui| {
         ui.label("Layout:");
-        egui::ComboBox::new("layout", "")
-            .selected_text(shared.config.layout.to_string())
-            .show_ui(ui, |ui| {
-                ui.selectable_value(&mut shared.config.layout, shared::UiLayout::Split, "Split");
-                ui.selectable_value(&mut shared.config.layout, shared::UiLayout::Right, "Right");
-                ui.selectable_value(&mut shared.config.layout, shared::UiLayout::Left, "Left");
-            });
+        let combo_box =
+            egui::ComboBox::new("layout", "").selected_text(shared.config.layout.to_string());
+        combo_box.show_ui(ui, |ui| {
+            ui.selectable_value(&mut shared.config.layout, shared::UiLayout::Split, "Split");
+            ui.selectable_value(&mut shared.config.layout, shared::UiLayout::Right, "Right");
+            ui.selectable_value(&mut shared.config.layout, shared::UiLayout::Left, "Left");
+        });
     });
 
     ui.add_space(20.);
@@ -186,13 +174,8 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
         let str_gridline_gap = &shared.loc("settings_modal.rendering.gridline_gap");
         ui.label(str_gridline_gap);
-        let (edited, value, _) = ui.float_input(
-            "grid_gap".to_string(),
-            shared,
-            shared.config.gridline_gap as f32,
-            1.,
-            None,
-        );
+        let gap = shared.config.gridline_gap as f32;
+        let (edited, value, _) = ui.float_input("grid_gap".to_string(), shared, gap, 1., None);
         if edited {
             shared.config.gridline_gap = value as i32;
         }
@@ -215,20 +198,13 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         };
     }
 
-    color_row!(
-        "background",
-        shared.config.colors.background,
-        shared.config.colors.dark_accent
-    );
-    color_row!(
-        "gridline",
-        shared.config.colors.gridline,
-        shared.config.colors.main
-    );
+    let dark_accent = &shared.config.colors.dark_accent;
+    color_row!("background", shared.config.colors.background, *dark_accent);
+    color_row!("gridline", shared.config.colors.gridline, *dark_accent);
     color_row!(
         "center_point",
         shared.config.colors.center_point,
-        shared.config.colors.dark_accent
+        *dark_accent
     );
 }
 
@@ -431,64 +407,54 @@ fn key(
 ) {
     macro_rules! dd_mod {
         ($ui:expr, $modifier:expr, $field:expr) => {
-            $ui.selectable_value(
-                &mut $field,
-                $modifier,
-                egui::RichText::new(modifier_name($modifier)).color(text_color),
-            );
+            let text = egui::RichText::new(modifier_name($modifier)).color(text_color);
+            $ui.selectable_value(&mut $field, $modifier, text);
         };
     }
 
     ui.horizontal(|ui| {
-        egui::Frame::show(
-            egui::Frame {
-                fill: color.into(),
-                ..Default::default()
-            },
-            ui,
-            |ui| {
-                ui.label(name.clone());
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let button_str = if *changing_key == name {
-                        "...".to_string()
-                    } else {
-                        field.logical_key.display()
+        egui::Frame::new().fill(color.into()).show(ui, |ui| {
+            ui.label(name.clone());
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let button_str = if *changing_key == name {
+                    "...".to_string()
+                } else {
+                    field.logical_key.display()
+                };
+
+                let button_rich_text = egui::RichText::new(button_str).color(text_color);
+                if ui
+                    .add_sized([80., 20.], egui::Button::new(button_rich_text))
+                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                    .clicked()
+                {
+                    *changing_key = name.to_string();
+                }
+
+                egui::ComboBox::new(name.to_string() + "mod", "")
+                    .selected_text(
+                        egui::RichText::new(modifier_name(field.modifiers)).color(text_color),
+                    )
+                    .show_ui(ui, |ui| {
+                        dd_mod!(ui, egui::Modifiers::NONE, field.modifiers);
+                        dd_mod!(ui, egui::Modifiers::COMMAND, field.modifiers);
+                        dd_mod!(ui, egui::Modifiers::CTRL, field.modifiers);
+                        dd_mod!(ui, egui::Modifiers::ALT, field.modifiers);
+                        dd_mod!(ui, egui::Modifiers::SHIFT, field.modifiers);
+                    })
+                    .response;
+
+                // use shift-equivalent keys if the modifier is shift
+                if field.modifiers == egui::Modifiers::SHIFT {
+                    field.logical_key = match field.logical_key {
+                        egui::Key::Equals => egui::Key::Plus,
+                        egui::Key::Slash => egui::Key::Questionmark,
+                        egui::Key::Semicolon => egui::Key::Colon,
+                        _ => field.logical_key,
                     };
-
-                    let button_rich_text = egui::RichText::new(button_str).color(text_color);
-                    if ui
-                        .add_sized([80., 20.], egui::Button::new(button_rich_text))
-                        .on_hover_cursor(egui::CursorIcon::PointingHand)
-                        .clicked()
-                    {
-                        *changing_key = name.to_string();
-                    }
-
-                    egui::ComboBox::new(name.to_string() + "mod", "")
-                        .selected_text(
-                            egui::RichText::new(modifier_name(field.modifiers)).color(text_color),
-                        )
-                        .show_ui(ui, |ui| {
-                            dd_mod!(ui, egui::Modifiers::NONE, field.modifiers);
-                            dd_mod!(ui, egui::Modifiers::COMMAND, field.modifiers);
-                            dd_mod!(ui, egui::Modifiers::CTRL, field.modifiers);
-                            dd_mod!(ui, egui::Modifiers::ALT, field.modifiers);
-                            dd_mod!(ui, egui::Modifiers::SHIFT, field.modifiers);
-                        })
-                        .response;
-
-                    // use shift-equivalent keys if the modifier is shift
-                    if field.modifiers == egui::Modifiers::SHIFT {
-                        field.logical_key = match field.logical_key {
-                            egui::Key::Equals => egui::Key::Plus,
-                            egui::Key::Slash => egui::Key::Questionmark,
-                            egui::Key::Semicolon => egui::Key::Colon,
-                            _ => field.logical_key,
-                        };
-                    }
-                });
-            },
-        );
+                }
+            });
+        });
     });
 
     if *changing_key == name && *last_pressed != None {

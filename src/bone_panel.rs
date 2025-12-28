@@ -79,29 +79,28 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         ui.label(&shared.loc("bone_panel.texture"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             tex_name = utils::trunc_str(ui, &tex_name, 100.);
-            egui::ComboBox::new("tex_selector", "")
+            let combo_box = egui::ComboBox::new("tex_selector", "")
                 .width(100.)
-                .selected_text(egui::RichText::new(tex_name).color(tex_name_col))
-                .show_ui(ui, |ui| {
-                    let mut texes = vec![];
-                    for style in &shared.armature.styles {
-                        let textures = style.textures.iter();
-                        let mut names = textures.map(|t| t.name.clone()).collect::<Vec<String>>();
-                        texes.append(&mut names);
-                    }
+                .selected_text(egui::RichText::new(tex_name).color(tex_name_col));
+            combo_box.show_ui(ui, |ui| {
+                let mut texes = vec![];
+                for style in &shared.armature.styles {
+                    let textures = style.textures.iter();
+                    let mut names = textures.map(|t| t.name.clone()).collect::<Vec<String>>();
+                    texes.append(&mut names);
+                }
 
-                    // remove duplicates
-                    texes.sort_unstable();
-                    texes.dedup();
+                // remove duplicates
+                texes.sort_unstable();
+                texes.dedup();
 
-                    ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
-                    for tex in texes {
-                        let name = utils::trunc_str(ui, &tex.clone(), ui.min_rect().width());
-                        ui.selectable_value(&mut selected_tex, tex.clone(), &name);
-                    }
-                    ui.selectable_value(&mut selected_tex, "[Setup]".to_string(), "[Setup]");
-                })
-                .response;
+                ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
+                for tex in texes {
+                    let name = utils::trunc_str(ui, &tex.clone(), ui.min_rect().width());
+                    ui.selectable_value(&mut selected_tex, tex.clone(), &name);
+                }
+                ui.selectable_value(&mut selected_tex, "[Setup]".to_string(), "[Setup]");
+            });
         });
     });
 
@@ -237,66 +236,62 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
 pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     let str_heading = &shared.loc("bone_panel.inverse_kinematics.heading").clone();
     let str_desc = &shared.loc("bone_panel.inverse_kinematics.desc").clone();
-    egui::Frame::new()
+    let frame = egui::Frame::new()
         .fill(shared.config.colors.dark_accent.into())
         .inner_margin(egui::Margin {
             bottom: 5,
             top: 5,
             left: 5,
             right: 5,
-        })
-        .show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.label(str_heading.to_owned()).on_hover_text(str_desc);
+        });
+    frame.show(ui, |ui| {
+        ui.horizontal(|ui| {
+            ui.label(str_heading.to_owned()).on_hover_text(str_desc);
 
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
-                    let pointing_hand = egui::CursorIcon::PointingHand;
-                    if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
-                        shared.selected_bone_mut().unwrap().ik_folded =
-                            !shared.selected_bone_mut().unwrap().ik_folded;
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
+                let pointing_hand = egui::CursorIcon::PointingHand;
+                if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
+                    shared.selected_bone_mut().unwrap().ik_folded =
+                        !shared.selected_bone_mut().unwrap().ik_folded;
+                }
+
+                if shared.armature.bone_eff(bone.id) == JointEffector::None {
+                    return;
+                }
+
+                let mut enabled = !bone.ik_disabled;
+                let str_desc = &shared.loc("bone_panel.inverse_kinematics.enabled_desc");
+                let checkbox = ui
+                    .checkbox(&mut enabled, "".into_atoms())
+                    .on_hover_text(str_desc);
+                if checkbox.clicked() {
+                    let mut bones = vec![];
+                    armature_window::get_all_children(&shared.armature.bones, &mut bones, &bone);
+                    bones.push(bone.clone());
+                    for bone in bones {
+                        shared.armature.find_bone_mut(bone.id).unwrap().ik_disabled = !enabled;
                     }
 
-                    if shared.armature.bone_eff(bone.id) == JointEffector::None {
+                    if shared.armature.bone_eff(bone.id) == JointEffector::Start {
                         return;
                     }
 
-                    let mut enabled = !bone.ik_disabled;
-                    let str_desc = &shared.loc("bone_panel.inverse_kinematics.enabled_desc");
-                    let checkbox = ui
-                        .checkbox(&mut enabled, "".into_atoms())
-                        .on_hover_text(str_desc);
-                    if checkbox.clicked() {
-                        let mut bones = vec![];
-                        armature_window::get_all_children(
-                            &shared.armature.bones,
-                            &mut bones,
-                            &bone,
-                        );
-                        bones.push(bone.clone());
-                        for bone in bones {
-                            shared.armature.find_bone_mut(bone.id).unwrap().ik_disabled = !enabled;
+                    // emable parents IK as well
+
+                    let parents = shared.armature.get_all_parents(bone.id);
+                    for parent in parents {
+                        if shared.armature.bone_eff(parent.id) == JointEffector::None {
+                            continue;
                         }
 
-                        if shared.armature.bone_eff(bone.id) == JointEffector::Start {
-                            return;
-                        }
-
-                        // emable parents IK as well
-
-                        let parents = shared.armature.get_all_parents(bone.id);
-                        for parent in parents {
-                            if shared.armature.bone_eff(parent.id) == JointEffector::None {
-                                continue;
-                            }
-
-                            let bone = shared.armature.find_bone_mut(parent.id).unwrap();
-                            bone.ik_disabled = !enabled;
-                        }
+                        let bone = shared.armature.find_bone_mut(parent.id).unwrap();
+                        bone.ik_disabled = !enabled;
                     }
-                })
-            });
+                }
+            })
         });
+    });
     ui.add_space(2.5);
 
     if bone.ik_folded {
@@ -460,28 +455,23 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     let str_heading = &shared.loc("bone_panel.mesh_deformation.heading").clone();
     let str_desc = &shared.loc("bone_panel.mesh_deformation.desc").clone();
 
-    egui::Frame::new()
+    let frame = egui::Frame::new()
         .fill(shared.config.colors.dark_accent.into())
-        .inner_margin(egui::Margin {
-            bottom: 5,
-            top: 5,
-            left: 5,
-            right: 5,
-        })
-        .show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.label(str_heading.to_owned()).on_hover_text(str_desc);
+        .inner_margin(egui::Margin::same(5));
+    frame.show(ui, |ui| {
+        ui.horizontal(|ui| {
+            ui.label(str_heading.to_owned()).on_hover_text(str_desc);
 
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let fold_icon = if bone.meshdef_folded { "⏴" } else { "⏷" };
-                    let pointing_hand = egui::CursorIcon::PointingHand;
-                    if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
-                        shared.selected_bone_mut().unwrap().meshdef_folded =
-                            !shared.selected_bone_mut().unwrap().meshdef_folded;
-                    }
-                })
-            });
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let fold_icon = if bone.meshdef_folded { "⏴" } else { "⏷" };
+                let pointing_hand = egui::CursorIcon::PointingHand;
+                if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
+                    shared.selected_bone_mut().unwrap().meshdef_folded =
+                        !shared.selected_bone_mut().unwrap().meshdef_folded;
+                }
+            })
         });
+    });
     ui.add_space(2.5);
 
     if bone.meshdef_folded {
@@ -585,26 +575,26 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     ui.horizontal(|ui| {
         ui.label(shared.loc("bone_panel.mesh_deformation.binds_label"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            egui::ComboBox::new("bone_weights", "")
-                .selected_text(shared.ui.selected_bind.to_string())
-                .show_ui(ui, |ui| {
-                    let mut selected_value: i32 = -1;
-                    for b in 0..bone.binds.len() {
-                        ui.selectable_value(&mut selected_value, b as i32, b.to_string());
-                    }
-                    ui.selectable_value(&mut selected_value, -2, shared.loc("new_option"));
+            let combo_box = egui::ComboBox::new("bone_weights", "")
+                .selected_text(shared.ui.selected_bind.to_string());
+            combo_box.show_ui(ui, |ui| {
+                let mut selected_value: i32 = -1;
+                for b in 0..bone.binds.len() {
+                    ui.selectable_value(&mut selected_value, b as i32, b.to_string());
+                }
+                ui.selectable_value(&mut selected_value, -2, shared.loc("new_option"));
 
-                    if selected_value == -2 {
-                        let binds = &mut shared.selected_bone_mut().unwrap().binds;
-                        binds.push(BoneBind {
-                            bone_id: -1,
-                            ..Default::default()
-                        });
-                        shared.ui.selected_bind = binds.len() as i32 - 1;
-                    } else if selected_value != -1 {
-                        shared.ui.selected_bind = selected_value;
-                    }
-                });
+                if selected_value == -2 {
+                    let binds = &mut shared.selected_bone_mut().unwrap().binds;
+                    binds.push(BoneBind {
+                        bone_id: -1,
+                        ..Default::default()
+                    });
+                    shared.ui.selected_bind = binds.len() as i32 - 1;
+                } else if selected_value != -1 {
+                    shared.ui.selected_bind = selected_value;
+                }
+            });
         });
     });
 

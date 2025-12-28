@@ -7,22 +7,21 @@ pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     content: T,
     buttons: E,
 ) {
-    egui::Modal::new(id.into())
-        .frame(egui::Frame {
-            corner_radius: 0.into(),
-            fill: config.colors.main.into(),
-            inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., config.colors.light_accent),
-            ..Default::default()
+    let modal = egui::Modal::new(id.into()).frame(egui::Frame {
+        corner_radius: 0.into(),
+        fill: config.colors.main.into(),
+        inner_margin: egui::Margin::same(5),
+        stroke: egui::Stroke::new(1., config.colors.light_accent),
+        ..Default::default()
+    });
+    modal.show(ctx, |ui| {
+        ui.set_width(250.);
+        content(ui);
+        ui.add_space(20.);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+            buttons(ui);
         })
-        .show(ctx, |ui| {
-            ui.set_width(250.);
-            content(ui);
-            ui.add_space(20.);
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                buttons(ui);
-            })
-        });
+    });
 }
 
 pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
@@ -59,11 +58,8 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
 
             shared.ui.selected_bone_idx = usize::MAX;
 
-            let bone = shared
-                .armature
-                .bones
-                .iter()
-                .find(|b| b.id == shared.context_id_parsed());
+            let parsed_id = shared.context_id_parsed();
+            let bone = shared.armature.bones.iter().find(|b| b.id == parsed_id);
             if bone == None {
                 return;
             }
@@ -210,11 +206,9 @@ pub fn donating_modal(shared: &mut Shared, ctx: &egui::Context) {
 // top-right X label for modals
 pub fn modal_x<T: FnOnce()>(ui: &mut egui::Ui, offset: egui::Vec2, after_close: T) {
     let x_rect = egui::Rect::from_min_size(ui.min_rect().right_top() + offset, egui::Vec2::ZERO);
-    if ui
-        .put(x_rect, egui::Label::new(egui::RichText::new("X").size(18.)))
-        .on_hover_cursor(egui::CursorIcon::PointingHand)
-        .clicked()
-    {
+    let label = egui::Label::new(egui::RichText::new("X").size(18.));
+    let hand = egui::CursorIcon::PointingHand;
+    if ui.put(x_rect, label).on_hover_cursor(hand).clicked() {
         after_close();
     }
 }

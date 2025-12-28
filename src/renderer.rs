@@ -461,9 +461,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
 fn vert(pos: Option<Vec2>, col: Option<VertexColor>, uv: Option<Vec2>) -> Vertex {
     Vertex {
-        pos: pos.unwrap(),
-        color: col.unwrap(),
-        uv: uv.unwrap(),
+        pos: pos.unwrap_or_default(),
+        color: col.unwrap_or_default(),
+        uv: uv.unwrap_or_default(),
         ..Default::default()
     }
 }

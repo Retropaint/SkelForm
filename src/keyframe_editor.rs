@@ -33,43 +33,43 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
     }
 
     let panel_id = "Keyframe";
+    let panel = egui::TopBottomPanel::bottom(panel_id)
+        .min_height(150.)
+        .resizable(true);
     ui::draw_resizable_panel(
         panel_id,
-        egui::TopBottomPanel::bottom(panel_id)
-            .min_height(150.)
-            .resizable(true)
-            .show(egui_ctx, |ui| {
-                ui.gradient(
-                    ui.ctx().screen_rect(),
-                    egui::Color32::TRANSPARENT,
-                    shared.config.colors.gradient.into(),
-                );
+        panel.show(egui_ctx, |ui| {
+            ui.gradient(
+                ui.ctx().screen_rect(),
+                egui::Color32::TRANSPARENT,
+                shared.config.colors.gradient.into(),
+            );
 
-                let full_height = ui.available_height();
-                ui.horizontal(|ui| {
-                    ui.set_height(full_height);
+            let full_height = ui.available_height();
+            ui.horizontal(|ui| {
+                ui.set_height(full_height);
 
-                    // animations list
-                    egui::Resize::default()
-                        .min_height(full_height) // make height unadjustable
-                        .max_height(full_height) //
-                        .default_width(150.)
-                        .max_width(200.)
-                        .with_stroke(false)
-                        .show(ui, |ui| {
-                            egui::Frame::new().show(ui, |ui| {
-                                ui.vertical(|ui| {
-                                    draw_animations_list(ui, shared);
-                                })
-                            });
-                        });
-
-                    if shared.ui.anim.selected != usize::MAX {
-                        timeline_editor(ui, shared);
-                    }
+                // animations list
+                let resize = egui::Resize::default()
+                    .min_height(full_height) // make height unadjustable
+                    .max_height(full_height) //
+                    .default_width(150.)
+                    .max_width(200.)
+                    .with_stroke(false);
+                resize.show(ui, |ui| {
+                    egui::Frame::new().show(ui, |ui| {
+                        ui.vertical(|ui| {
+                            draw_animations_list(ui, shared);
+                        })
+                    });
                 });
-                shared.ui.keyframe_panel_rect = Some(ui.min_rect());
-            }),
+
+                if shared.ui.anim.selected != usize::MAX {
+                    timeline_editor(ui, shared);
+                }
+            });
+            shared.ui.keyframe_panel_rect = Some(ui.min_rect());
+        }),
         &mut shared.input.on_ui,
         &egui_ctx,
     );
@@ -97,112 +97,111 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
         });
     });
     egui::ScrollArea::vertical().show(ui, |ui| {
-        egui::Frame::new()
-            .fill(shared.config.colors.dark_accent.into())
-            .show(ui, |ui| {
-                let width = ui.available_width();
-                let mut hovered = false;
-                for i in 0..shared.armature.animations.len() {
-                    let name = &mut shared.armature.animations[i].name.clone();
-                    let context_id = "anim_".to_owned() + &i.to_string();
+        let frame = egui::Frame::new().fill(shared.config.colors.dark_accent.into());
+        frame.show(ui, |ui| {
+            let width = ui.available_width();
+            let mut hovered = false;
+            for i in 0..shared.armature.animations.len() {
+                let name = &mut shared.armature.animations[i].name.clone();
+                let context_id = "anim_".to_owned() + &i.to_string();
 
-                    // show input field if renaming
-                    if shared.ui.rename_id == context_id {
-                        let str_new_anim = &shared.loc("keyframe_editor.new_animation");
-                        let options = Some(TextInputOptions {
-                            focus: true,
-                            placeholder: str_new_anim.to_string(),
-                            default: str_new_anim.to_string(),
-                            ..Default::default()
-                        });
-                        let (edited, value, _) =
-                            ui.text_input(context_id, shared, name.to_string(), options);
-                        if edited {
-                            shared.armature.animations[i].name = value;
+                // show input field if renaming
+                if shared.ui.rename_id == context_id {
+                    let str_new_anim = &shared.loc("keyframe_editor.new_animation");
+                    let options = Some(TextInputOptions {
+                        focus: true,
+                        placeholder: str_new_anim.to_string(),
+                        default: str_new_anim.to_string(),
+                        ..Default::default()
+                    });
+                    let (edited, value, _) =
+                        ui.text_input(context_id, shared, name.to_string(), options);
+                    if edited {
+                        shared.armature.animations[i].name = value;
+                        shared.ui.anim.selected = i;
+                        shared.ui.anim.selected_frame = 0;
+                    }
+                    continue;
+                }
+
+                ui.horizontal(|ui| {
+                    let button_padding = if shared.armature.animations[i].keyframes.len() > 0 {
+                        25.
+                    } else {
+                        0.
+                    };
+                    let mut col = shared.config.colors.dark_accent;
+                    if i == shared.ui.hovering_anim as usize {
+                        col += crate::Color::new(20, 20, 20, 0);
+                    }
+                    if i == shared.ui.anim.selected {
+                        col += crate::Color::new(20, 20, 20, 0);
+                    }
+                    let cursor_icon = if shared.ui.anim.selected != i {
+                        egui::CursorIcon::PointingHand
+                    } else {
+                        egui::CursorIcon::Default
+                    };
+                    //let button = ui::selection_button(&name, i == shared.ui.anim.selected, ui);
+                    let button = egui::Frame::new()
+                        .fill(col.into())
+                        .show(ui, |ui| {
+                            ui.horizontal(|ui| {
+                                ui.set_width(width - button_padding);
+                                ui.set_height(21.);
+                                ui.add_space(5.);
+                                let col = shared.config.colors.text;
+                                ui.label(egui::RichText::new(name.clone()).color(col));
+                            });
+                        })
+                        .response
+                        .interact(egui::Sense::click())
+                        .on_hover_cursor(cursor_icon);
+                    if button.contains_pointer() {
+                        shared.ui.hovering_anim = i as i32;
+                        hovered = true;
+                    }
+                    if button.clicked() {
+                        if shared.ui.anim.selected != i {
                             shared.ui.anim.selected = i;
-                            shared.ui.anim.selected_frame = 0;
+                            shared.ui.select_anim_frame(0);
+                        } else {
+                            shared.ui.rename_id = context_id.clone();
+                            shared.ui.edit_value = Some(name.to_string());
                         }
-                        continue;
                     }
 
-                    ui.horizontal(|ui| {
-                        let button_padding = if shared.armature.animations[i].keyframes.len() > 0 {
-                            25.
-                        } else {
-                            0.
-                        };
-                        let mut col = shared.config.colors.dark_accent;
-                        if i == shared.ui.hovering_anim as usize {
-                            col += crate::Color::new(20, 20, 20, 0);
-                        }
-                        if i == shared.ui.anim.selected {
-                            col += crate::Color::new(20, 20, 20, 0);
-                        }
-                        let cursor_icon = if shared.ui.anim.selected != i {
-                            egui::CursorIcon::PointingHand
-                        } else {
-                            egui::CursorIcon::Default
-                        };
-                        //let button = ui::selection_button(&name, i == shared.ui.anim.selected, ui);
-                        let button = egui::Frame::new()
-                            .fill(col.into())
-                            .show(ui, |ui| {
-                                ui.horizontal(|ui| {
-                                    ui.set_width(width - button_padding);
-                                    ui.set_height(21.);
-                                    ui.add_space(5.);
-                                    let col = shared.config.colors.text;
-                                    ui.label(egui::RichText::new(name.clone()).color(col));
-                                });
-                            })
-                            .response
-                            .interact(egui::Sense::click())
-                            .on_hover_cursor(cursor_icon);
-                        if button.contains_pointer() {
-                            shared.ui.hovering_anim = i as i32;
-                            hovered = true;
-                        }
-                        if button.clicked() {
-                            if shared.ui.anim.selected != i {
-                                shared.ui.anim.selected = i;
-                                shared.ui.select_anim_frame(0);
-                            } else {
-                                shared.ui.rename_id = context_id.clone();
-                                shared.ui.edit_value = Some(name.to_string());
-                            }
-                        }
-
-                        if shared.armature.animations[i].keyframes.len() > 0 {
-                            let anim = &mut shared.armature.animations[i];
-                            let align = egui::Layout::right_to_left(egui::Align::Center);
-                            ui.with_layout(align, |ui| {
-                                let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
-                                if ui.skf_button(icon).clicked() {
-                                    anim.elapsed = if anim.elapsed == None {
-                                        Some(Instant::now())
-                                    } else {
-                                        None
-                                    };
-                                }
-                            });
-                        }
-
-                        context_menu!(button, shared, context_id, |ui: &mut egui::Ui| {
-                            ui.context_rename(shared, context_id);
-                            ui.context_delete(shared, "delete_anim", PolarId::DeleteAnim);
-                            if ui.context_button("Duplicate", shared).clicked() {
-                                let anims = &mut shared.armature.animations;
-                                anims.push(anims[i].clone());
-                                shared.ui.context_menu.close();
+                    if shared.armature.animations[i].keyframes.len() > 0 {
+                        let anim = &mut shared.armature.animations[i];
+                        let align = egui::Layout::right_to_left(egui::Align::Center);
+                        ui.with_layout(align, |ui| {
+                            let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
+                            if ui.skf_button(icon).clicked() {
+                                anim.elapsed = if anim.elapsed == None {
+                                    Some(Instant::now())
+                                } else {
+                                    None
+                                };
                             }
                         });
-                    });
-                }
+                    }
 
-                if !hovered {
-                    shared.ui.hovering_anim = -1;
-                }
-            });
+                    context_menu!(button, shared, context_id, |ui: &mut egui::Ui| {
+                        ui.context_rename(shared, context_id);
+                        ui.context_delete(shared, "delete_anim", PolarId::DeleteAnim);
+                        if ui.context_button("Duplicate", shared).clicked() {
+                            let anims = &mut shared.armature.animations;
+                            anims.push(anims[i].clone());
+                            shared.ui.context_menu.close();
+                        }
+                    });
+                });
+            }
+
+            if !hovered {
+                shared.ui.hovering_anim = -1;
+            }
+        });
     });
 }
 
@@ -463,11 +462,11 @@ pub fn draw_timeline_graph(
     bone_tops: BoneTops,
     hitbox: f32,
 ) {
-    let frame = egui::Frame::new()
-        .fill(shared.config.colors.light_accent.into())
-        .inner_margin(3);
     let layout = egui::Layout::left_to_right(egui::Align::Center);
     ui.with_layout(layout, |ui| {
+        let frame = egui::Frame::new()
+            .fill(shared.config.colors.light_accent.into())
+            .inner_margin(3);
         frame.show(ui, |ui| {
             let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
                 ui.set_width(width);

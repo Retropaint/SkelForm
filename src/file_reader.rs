@@ -433,11 +433,8 @@ pub fn read_psd(
         let target_name = start_eff_bone.name.to_owned() + " Target";
 
         // determine target's base position
-        let effs = shared
-            .armature
-            .bones
-            .iter()
-            .filter(|bone| bone.ik_family_id == ik_id);
+        let bones = &shared.armature.bones;
+        let effs = bones.iter().filter(|bone| bone.ik_family_id == ik_id);
         let mut pos = effs.clone().last().unwrap().pos;
         let parents = shared.armature.get_all_parents(effs.last().unwrap().id);
         for bone in parents {
@@ -503,21 +500,16 @@ pub fn add_texture(
         ui_img,
     });
 
-    armature
-        .styles
-        .iter_mut()
-        .find(|set| set.id == style_id)
-        .unwrap()
-        .textures
-        .push(crate::Texture {
-            offset: Vec2::ZERO,
-            size: dimensions,
-            name: tex_name.to_string(),
-            ser_offset: Vec2I::new(0, 0),
-            ser_size: Vec2I::new(0, 0),
-            data_id: id,
-            atlas_idx: 0,
-        });
+    let style = &mut armature.styles.iter_mut().find(|set| set.id == style_id);
+    style.as_mut().unwrap().textures.push(crate::Texture {
+        offset: Vec2::ZERO,
+        size: dimensions,
+        name: tex_name.to_string(),
+        ser_offset: Vec2I::new(0, 0),
+        ser_size: Vec2I::new(0, 0),
+        data_id: id,
+        atlas_idx: 0,
+    });
 }
 
 pub fn read_import(

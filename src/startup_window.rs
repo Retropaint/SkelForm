@@ -2,37 +2,32 @@ use crate::ui::EguiUi;
 use crate::*;
 
 pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
-    egui::Window::new("startup")
+    let window = egui::Window::new("startup")
         .title_bar(false)
         .resizable(false)
-        .movable(false)
-        .show(ctx, |ui| {
-            ui.gradient(
-                ui.ctx().screen_rect(),
-                egui::Color32::TRANSPARENT,
-                shared.config.colors.gradient.into(),
-            );
-            let width = ui.ctx().screen_rect().width();
-            let height = ui.ctx().screen_rect().height();
-            ui.set_width(width.max(0.));
-            ui.set_height(height.max(0.));
+        .movable(false);
+    window.show(ctx, |ui| {
+        let gradient = shared.config.colors.gradient.into();
+        ui.gradient(ui.ctx().screen_rect(), egui::Color32::TRANSPARENT, gradient);
+        let width = ui.ctx().screen_rect().width();
+        let height = ui.ctx().screen_rect().height();
+        ui.set_width(width.max(0.));
+        ui.set_height(height.max(0.));
 
-            let available_size = ui.available_size();
+        let available_size = ui.available_size();
 
-            ui.with_layout(
-                egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
-                |ui| {
-                    let padding = 600.;
-                    ui.set_width((available_size.x - padding).max(800.));
-                    let size = ui.available_size();
-                    ui.horizontal(|ui| {
-                        ui.set_width(size.x);
-                        ui.set_height(size.y);
-                        startup_content(&ctx, ui, shared, size);
-                    });
-                },
-            )
-        });
+        let layout = egui::Layout::centered_and_justified(egui::Direction::LeftToRight);
+        ui.with_layout(layout, |ui| {
+            let padding = 600.;
+            ui.set_width((available_size.x - padding).max(800.));
+            let size = ui.available_size();
+            ui.horizontal(|ui| {
+                ui.set_width(size.x);
+                ui.set_height(size.y);
+                startup_content(&ctx, ui, shared, size);
+            });
+        })
+    });
 }
 
 fn startup_content(
@@ -156,11 +151,8 @@ fn startup_content(
 
                             let path = shared.recent_file_paths[p].to_string();
                             if let Err(_) = std::fs::File::open(&path) {
-                                let idx = shared
-                                    .recent_file_paths
-                                    .iter()
-                                    .position(|r_path| *r_path == path)
-                                    .unwrap();
+                                let recent = &shared.recent_file_paths;
+                                let idx = recent.iter().position(|r_path| *r_path == path).unwrap();
                                 shared.recent_file_paths.remove(idx);
                                 continue;
                             }
@@ -205,69 +197,63 @@ fn startup_content(
             ui.set_width(width);
             let available_size = ui.available_size();
             ui.add_space(10.);
-            egui::Frame::new()
-                //.fill(shared.config.colors.dark_accent.into())
-                .inner_margin(egui::Margin::same(5))
-                .show(ui, |ui| {
-                    ui.set_width(available_size.x);
-                    ui.set_height(available_size.y - 55.);
+            let frame = egui::Frame::new().inner_margin(egui::Margin::same(5));
+            frame.show(ui, |ui| {
+                ui.set_width(available_size.x);
+                ui.set_height(available_size.y - 55.);
 
-                    let header_size = 15.;
-                    let sub_size = 13.;
-                    let sub_padding = 20.;
-                    let sub_line_height = 2.;
-                    let separator = 15.;
+                let header_size = 15.;
+                let sub_size = 13.;
+                let sub_padding = 20.;
+                let sub_line_height = 2.;
+                let separator = 15.;
 
-                    let link_color = shared.config.colors.link;
+                let link_color = shared.config.colors.link;
 
-                    for item in &shared.startup.resources {
-                        let heading_str =
-                            &shared.loc(&("startup.resources.".to_owned() + &item.code));
-                        let heading = ui.clickable_label(
-                            egui::RichText::new(heading_str)
-                                .color(link_color)
-                                .size(header_size),
-                        );
-                        if heading.clicked() {
-                            open_link(&item, &item.url_type);
-                        }
-                        ui.add_space(5.);
-
-                        for sub in &item.items {
-                            ui.horizontal(|ui| {
-                                let left_top = egui::Pos2::new(
-                                    ui.min_rect().left_top().x + 5.,
-                                    ui.min_rect().left_top().y - 10.,
-                                );
-                                let mut line_color = link_color;
-                                let darker = 105;
-                                line_color -= Color::new(darker, darker, darker, 0);
-                                ui.painter().rect_filled(
-                                    egui::Rect::from_min_size(
-                                        left_top,
-                                        egui::Vec2::new(2., sub_size + 8. + sub_line_height),
-                                    ),
-                                    egui::CornerRadius::ZERO,
-                                    line_color,
-                                );
-                                ui.add_space(sub_padding);
-                                let sub_str =
-                                    &shared.loc(&("startup.resources.".to_owned() + &sub.code));
-
-                                let sub_text = ui.clickable_label(
-                                    egui::RichText::new(sub_str)
-                                        .color(link_color)
-                                        .size(sub_size),
-                                );
-                                if sub_text.clicked() {
-                                    open_link(&sub, &item.url_type);
-                                }
-                            });
-                            ui.add_space(sub_line_height);
-                        }
-                        ui.add_space(separator);
+                for item in &shared.startup.resources {
+                    let str = &shared.loc(&("startup.resources.".to_owned() + &item.code));
+                    let text = egui::RichText::new(str).color(link_color).size(header_size);
+                    let heading = ui.clickable_label(text);
+                    if heading.clicked() {
+                        open_link(&item, &item.url_type);
                     }
-                })
+                    ui.add_space(5.);
+
+                    for sub in &item.items {
+                        ui.horizontal(|ui| {
+                            let left_top = egui::Pos2::new(
+                                ui.min_rect().left_top().x + 5.,
+                                ui.min_rect().left_top().y - 10.,
+                            );
+                            let mut line_color = link_color;
+                            let darker = 105;
+                            line_color -= Color::new(darker, darker, darker, 0);
+                            ui.painter().rect_filled(
+                                egui::Rect::from_min_size(
+                                    left_top,
+                                    egui::Vec2::new(2., sub_size + 8. + sub_line_height),
+                                ),
+                                egui::CornerRadius::ZERO,
+                                line_color,
+                            );
+                            ui.add_space(sub_padding);
+                            let sub_str =
+                                &shared.loc(&("startup.resources.".to_owned() + &sub.code));
+
+                            let sub_text = ui.clickable_label(
+                                egui::RichText::new(sub_str)
+                                    .color(link_color)
+                                    .size(sub_size),
+                            );
+                            if sub_text.clicked() {
+                                open_link(&sub, &item.url_type);
+                            }
+                        });
+                        ui.add_space(sub_line_height);
+                    }
+                    ui.add_space(separator);
+                }
+            })
         });
     });
 }
@@ -323,24 +309,20 @@ pub fn leftside_button(
                 .fit_to_exact_size(size)
                 .paint_at(ui, rect);
         }
-        ui.painter().text(
-            icon_pos,
-            egui::Align2::LEFT_CENTER,
-            icon.to_string(),
-            egui::FontId::new(25., egui::FontFamily::default()),
-            egui::Color32::WHITE,
-        );
+        let align = egui::Align2::LEFT_CENTER;
+        let white = egui::Color32::WHITE;
+        let font25 = egui::FontId::new(25., egui::FontFamily::default());
+        ui.painter()
+            .text(icon_pos, align, icon.to_string(), font25, white);
+
         let label_pos = egui::Pos2::new(
             ui.min_rect().left_center().x + 50.,
             ui.min_rect().left_center().y,
         );
-        ui.painter().text(
-            label_pos,
-            egui::Align2::LEFT_CENTER,
-            label,
-            egui::FontId::new(17., egui::FontFamily::default()),
-            shared.config.colors.text.into(),
-        );
+
+        let text_col = shared.config.colors.text.into();
+        let font27 = egui::FontId::new(27., egui::FontFamily::default());
+        ui.painter().text(label_pos, align, label, font27, text_col);
     });
 
     let bottom = egui::Rect::from_min_size(
@@ -411,47 +393,47 @@ pub fn skf_file_button(
             );
         }
 
-        egui::Frame::new()
+        let frame = egui::Frame::new()
             .inner_margin(egui::Margin::same(10))
-            .fill(egui::Color32::TRANSPARENT)
-            .show(ui, |ui| {
-                ui.set_width(width);
-                ui.set_height(65.);
+            .fill(egui::Color32::TRANSPARENT);
+        frame.show(ui, |ui| {
+            ui.set_width(width);
+            ui.set_height(65.);
 
-                let rect = egui::Rect::from_min_size(
-                    egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
-                    thumb_size.into(),
-                );
-                if let Some(thumb_tex) = shared.thumb_ui_tex.get(&filename) {
-                    egui::Image::new(thumb_tex).paint_at(ui, rect);
-                }
+            let rect = egui::Rect::from_min_size(
+                egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
+                thumb_size.into(),
+            );
+            if let Some(thumb_tex) = shared.thumb_ui_tex.get(&filename) {
+                egui::Image::new(thumb_tex).paint_at(ui, rect);
+            }
+            let heading_pos = egui::Pos2::new(
+                ui.min_rect().left_top().x + 72.,
+                ui.min_rect().left_top().y + 18.,
+            );
+            ui.painter().text(
+                heading_pos,
+                egui::Align2::LEFT_BOTTOM,
+                filename.clone(),
+                egui::FontId::new(16., egui::FontFamily::Proportional),
+                shared.config.colors.text.into(),
+            );
+            if filename == "autosave.skf" {
                 let heading_pos = egui::Pos2::new(
-                    ui.min_rect().left_top().x + 72.,
-                    ui.min_rect().left_top().y + 18.,
+                    ui.min_rect().left_bottom().x + 72.,
+                    ui.min_rect().left_bottom().y,
                 );
+                let mut col = shared.config.colors.text;
+                col -= Color::new(40, 40, 40, 0);
                 ui.painter().text(
                     heading_pos,
                     egui::Align2::LEFT_BOTTOM,
-                    filename.clone(),
-                    egui::FontId::new(16., egui::FontFamily::Proportional),
-                    shared.config.colors.text.into(),
+                    &shared.loc("startup.autosave_note"),
+                    egui::FontId::new(11., egui::FontFamily::Proportional),
+                    col.into(),
                 );
-                if filename == "autosave.skf" {
-                    let heading_pos = egui::Pos2::new(
-                        ui.min_rect().left_bottom().x + 72.,
-                        ui.min_rect().left_bottom().y,
-                    );
-                    let mut col = shared.config.colors.text;
-                    col -= Color::new(40, 40, 40, 0);
-                    ui.painter().text(
-                        heading_pos,
-                        egui::Align2::LEFT_BOTTOM,
-                        &shared.loc("startup.autosave_note"),
-                        egui::FontId::new(11., egui::FontFamily::Proportional),
-                        col.into(),
-                    );
-                }
-            });
+            }
+        });
 
         if button.clicked() {
             *shared.file_name.lock().unwrap() = path.clone();
@@ -475,11 +457,8 @@ pub fn skf_file_button(
 
         let mut pos = egui::Vec2::new(-21., 0.);
         if file_button_icon("X", "Remove from list", egui::Vec2::new(-20., 8.), pos, ui).clicked() {
-            let idx = shared
-                .recent_file_paths
-                .iter()
-                .position(|rfp| *rfp == path)
-                .unwrap();
+            let recent = &shared.recent_file_paths;
+            let idx = recent.iter().position(|rfp| *rfp == path).unwrap();
             shared.recent_file_paths.remove(idx);
             utils::save_to_recent_files(&shared.recent_file_paths);
         }
@@ -544,35 +523,35 @@ pub fn web_sample_button(
             );
         }
 
-        egui::Frame::new()
+        let frame = egui::Frame::new()
             .inner_margin(egui::Margin::same(10))
-            .fill(egui::Color32::TRANSPARENT)
-            .show(ui, |ui| {
-                ui.set_width(width);
-                ui.set_height(65.);
+            .fill(egui::Color32::TRANSPARENT);
+        frame.show(ui, |ui| {
+            ui.set_width(width);
+            ui.set_height(65.);
 
-                let rect = egui::Rect::from_min_size(
-                    egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
-                    thumb_size.into(),
-                );
-                if let Some(thumb_tex) = shared.thumb_ui_tex.get(&name) {
-                    egui::Image::new(thumb_tex).paint_at(ui, rect);
-                }
-                let mut pos = egui::Pos2::new(
-                    ui.min_rect().left_top().x + 72.,
-                    ui.min_rect().left_top().y + 18.,
-                );
+            let rect = egui::Rect::from_min_size(
+                egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
+                thumb_size.into(),
+            );
+            if let Some(thumb_tex) = shared.thumb_ui_tex.get(&name) {
+                egui::Image::new(thumb_tex).paint_at(ui, rect);
+            }
+            let mut pos = egui::Pos2::new(
+                ui.min_rect().left_top().x + 72.,
+                ui.min_rect().left_top().y + 18.,
+            );
 
-                let align = egui::Align2::LEFT_BOTTOM;
-                let font = egui::FontId::new(16., egui::FontFamily::Proportional);
-                let mut col = shared.config.colors.text;
-                ui.painter().text(pos, align, name, font, col.into());
+            let align = egui::Align2::LEFT_BOTTOM;
+            let font = egui::FontId::new(16., egui::FontFamily::Proportional);
+            let mut col = shared.config.colors.text;
+            ui.painter().text(pos, align, name, font, col.into());
 
-                pos.y += 18.;
-                let font = egui::FontId::new(11., egui::FontFamily::Proportional);
-                col -= Color::new(40, 40, 40, 0);
-                ui.painter().text(pos, align, tooltip, font, col.into());
-            });
+            pos.y += 18.;
+            let font = egui::FontId::new(11., egui::FontFamily::Proportional);
+            col -= Color::new(40, 40, 40, 0);
+            ui.painter().text(pos, align, tooltip, font, col.into());
+        });
 
         if button.clicked() {
             crate::downloadSample(filename.to_string());
@@ -603,12 +582,9 @@ pub fn file_button_icon(
         egui::Vec2::splat(20.),
     );
 
+    let id = egui::Id::new("filebutton".to_owned() + icon);
     let hovered = ui
-        .interact(
-            rect,
-            egui::Id::new("filebutton".to_owned() + icon),
-            egui::Sense::hover(),
-        )
+        .interact(rect, id, egui::Sense::hover())
         .contains_pointer();
 
     let col = if hovered {
