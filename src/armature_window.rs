@@ -69,8 +69,9 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     // immediately select new bone upon creating it
                     shared.ui.select_bone(idx);
 
-                    shared.selected_bone_mut().unwrap().name =
-                        shared.loc("armature_panel.new_bone_name");
+                    shared.ui.rename_id = "bone_".to_string() + &idx.to_string();
+
+                    shared.selected_bone_mut().unwrap().name = "".to_string();
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if shared.armature.bones.len() == 0 {
@@ -270,6 +271,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 let context_id = "bone_".to_string() + &idx.to_string();
 
                 if shared.ui.rename_id == context_id {
+                    let bone_name = shared.loc("armature_panel.new_bone_name").to_string();
                     let (edited, value, _) = ui.text_input(
                         context_id,
                         shared,
@@ -277,6 +279,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         Some(TextInputOptions {
                             size: Vec2::new(ui.available_width(), 21.),
                             focus: true,
+                            placeholder: bone_name.clone(),
+                            default: bone_name,
                             ..Default::default()
                         }),
                     );

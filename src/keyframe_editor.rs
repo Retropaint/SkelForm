@@ -92,7 +92,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
             shared.armature.new_animation();
             let idx = shared.armature.animations.len() - 1;
             shared.ui.original_name = "".to_string();
-            shared.ui.rename_id = "animation ".to_owned() + &idx.to_string();
+            shared.ui.rename_id = "anim_".to_owned() + &idx.to_string();
             shared.ui.edit_value = Some("".to_string());
         });
     });
