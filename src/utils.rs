@@ -129,19 +129,13 @@ pub fn open_save_dialog(file_name: &Arc<Mutex<String>>, saving: &Arc<Mutex<Savin
     let filename = Arc::clone(&file_name);
     let csaving = Arc::clone(&saving);
     std::thread::spawn(move || {
-        let task = rfd::FileDialog::new()
-            .add_filter("SkelForm Armature", &["skf"])
-            .save_file();
+        let fil = "SkelForm Armature";
+        let task = rfd::FileDialog::new().add_filter(fil, &["skf"]).save_file();
         if task == None {
             return;
         }
-        *filename.lock().unwrap() = task
-            .as_ref()
-            .unwrap()
-            .as_path()
-            .to_str()
-            .unwrap()
-            .to_string();
+        let task_path = task.as_ref().unwrap().as_path().to_str().unwrap();
+        *filename.lock().unwrap() = task_path.to_string();
         *csaving.lock().unwrap() = shared::Saving::CustomPath;
     });
 }

@@ -160,28 +160,26 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     + (v[c1].pos - tb.pos) * bary.1
                     + (v[c2].pos - tb.pos) * bary.2;
 
-                if shared.ui.showing_mesh {
-                    if shared.input.right_clicked && !removed_vert {
-                        let bone = &mut shared.selected_bone_mut().unwrap();
-                        if bone.indices.len() == 6 {
-                            shared.ui.open_modal(shared.loc("indices_limit"), false);
-                            break;
-                        }
-                        bone.indices.remove(i * 3);
-                        bone.indices.remove(i * 3);
-                        bone.indices.remove(i * 3);
-                        removed_vert = true;
+                if shared.ui.showing_mesh && shared.input.right_clicked && !removed_vert {
+                    let bone = &mut shared.selected_bone_mut().unwrap();
+                    if bone.indices.len() == 6 {
+                        shared.ui.open_modal(shared.loc("indices_limit"), false);
                         break;
                     }
+                    bone.indices.remove(i * 3);
+                    bone.indices.remove(i * 3);
+                    bone.indices.remove(i * 3);
+                    removed_vert = true;
+                    break;
+                }
 
-                    if shared.input.left_clicked && new_vert == None {
-                        new_vert = Some(Vertex {
-                            pos,
-                            uv,
-                            ..Default::default()
-                        });
-                        break;
-                    }
+                if shared.ui.showing_mesh && shared.input.left_clicked && new_vert == None {
+                    new_vert = Some(Vertex {
+                        pos,
+                        uv,
+                        ..Default::default()
+                    });
+                    break;
                 }
 
                 let tex = temp_arm.tex_of(temp_arm.bones[b].id).unwrap();
@@ -265,9 +263,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // todo:
     // only draw arrows for the selected set of bones.
     // currently it shows all when any are selected.
-    if shared.selected_bone() != None
-        && shared.armature.bone_eff(shared.selected_bone().unwrap().id) != JointEffector::None
-    {
+    let sel_bone = shared.selected_bone();
+    if sel_bone != None && shared.armature.bone_eff(sel_bone.unwrap().id) != JointEffector::None {
         for bone in &temp_arm.bones {
             let bone_eff = shared.armature.bone_eff(bone.id);
             if bone_eff == JointEffector::None || bone_eff == JointEffector::End {
