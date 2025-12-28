@@ -86,7 +86,10 @@
     "bones": "Bones",
     "assigned_textures": "Assigned Textures ℹ",
     "assigned_textures_desc": "Assign textures to bones here.\n\nIf this style is inactive, bones will switch to a texture of the same name from the first active style top-down.",
-    "same_name": "There is already a texture with the same name in this style."
+    "same_name": "There is already a texture with the same name in this style.",
+    "styles_empty": "All textures must be in a style.\n\nStyles are batches of textures, used to represent outfits or skins.\n\nTo add a style, click 'New' above.",
+    "textures_empty": "This style's textures will appear here.\n\nClick 'Import' above to import an image to add as a texture.",
+    "assigned_empty": "Once a texture is added, the bone hierarchy will be shown on the left.\n\nAll bones' assigned textures will be shown here."
   },
   "atlas_modal": {
     "no_pending": "If the imported image is a single texture, simply click 'Done'.\n\nIf it's a texture atlas, drag the image or click 'Add Texture' to add a new slice of texture.\n\nThe atlas will be discarded once done, and will need to be re-imported to add more textures."
