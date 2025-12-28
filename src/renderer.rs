@@ -19,10 +19,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     loaded();
 
     // create vert on cursor
-    let mut mouse_world_vert = Vertex {
-        pos: utils::screen_to_world_space(shared.input.mouse, shared.window),
-        ..Default::default()
-    };
+    let space = utils::screen_to_world_space(shared.input.mouse, shared.window);
+    let mut mouse_world_vert = vert(Some(space), None, None);
     mouse_world_vert.pos.x *= shared.window.y / shared.window.x;
 
     if !shared.config.gridline_front {
@@ -174,11 +172,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 }
 
                 if shared.ui.showing_mesh && shared.input.left_clicked && new_vert == None {
-                    new_vert = Some(Vertex {
-                        pos,
-                        uv,
-                        ..Default::default()
-                    });
+                    new_vert = Some(vert(Some(pos), None, Some(uv)));
                     break;
                 }
 
@@ -443,10 +437,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
             mouse.x *= shared.aspect_ratio();
             let bone = find_bone(&temp_arm.bones, shared.selected_bone().unwrap().id).unwrap();
-            let center = Vertex {
-                pos: bone.pos,
-                ..Default::default()
-            };
+            let center = vert(Some(bone.pos), None, None);
             let cam = &shared.world_camera();
             let cw = world_vert(center, cam, shared.aspect_ratio(), Vec2::new(0.5, 0.5));
             draw_line(cw.pos, mouse, shared, render_pass, &device);
@@ -465,6 +456,15 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let bone = find_bone(&temp_arm.bones, shared.selected_bone().unwrap().id).unwrap();
 
         edit_bone(shared, bone, &temp_arm.bones);
+    }
+}
+
+fn vert(pos: Option<Vec2>, col: Option<VertexColor>, uv: Option<Vec2>) -> Vertex {
+    Vertex {
+        pos: pos.unwrap(),
+        color: col.unwrap(),
+        uv: uv.unwrap(),
+        ..Default::default()
     }
 }
 
@@ -798,10 +798,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
         };
     }
 
-    let vert = Vertex {
-        pos: bone.pos,
-        ..Default::default()
-    };
+    let vert = vert(Some(bone.pos), None, None);
     let cam = &shared.world_camera();
     let bone_center = world_vert(vert, cam, shared.aspect_ratio(), Vec2::new(0.5, 0.5));
 
@@ -1144,11 +1141,7 @@ pub fn vert_lines(
                     let wv0 = v[i0 as usize].pos - bone.pos;
                     let wv1 = v[i1 as usize].pos - bone.pos;
                     let pos = wv0 + (wv1 - wv0) * interp;
-                    *new_vert = Some(Vertex {
-                        pos,
-                        uv,
-                        ..Default::default()
-                    });
+                    *new_vert = Some(vert(Some(pos), None, Some(uv)));
                     added_vert = true;
                 }
             }
@@ -1202,11 +1195,7 @@ fn draw_line(
 
     macro_rules! vert {
         ($pos:expr) => {
-            Vertex {
-                pos: origin + base,
-                color,
-                ..Default::default()
-            }
+            vert(Some(origin + base), Some(color), None)
         };
     }
 
@@ -1308,14 +1297,10 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     // sort points in any winding order
     poi = winding_sort(poi);
 
-    let mut verts = vec![Vertex {
-        pos: Vec2::new(poi[0].x, -poi[0].y),
-        uv: Vec2::new(
-            poi[0].x / texture.width() as f32,
-            poi[0].y / texture.height() as f32,
-        ),
-        ..Default::default()
-    }];
+    let uv_x = poi[0].x / texture.width() as f32;
+    let uv_y = poi[0].y / texture.height() as f32;
+    let pos = Vec2::new(poi[0].x, -poi[0].y);
+    let mut verts = vec![vert(Some(pos), None, Some(Vec2::new(uv_x, uv_y)))];
     let mut curr_poi = 0;
 
     // get last point that current one has light of sight on
@@ -1356,9 +1341,7 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     //}
 
     verts = sort_vertices(verts);
-
     bone_panel::center_verts(&mut verts);
-
     (verts.clone(), triangulate(&verts))
 }
 
@@ -1373,12 +1356,7 @@ fn draw_point(
     let point_size = 6. * (shared.camera.zoom / 500.);
     macro_rules! vert {
         ($pos:expr, $uv:expr) => {
-            Vertex {
-                pos: $pos,
-                uv: $uv,
-                color,
-                ..Default::default()
-            }
+            vert(Some($pos), Some(color), Some($uv))
         };
     }
     let mut temp_point_verts: [Vertex; 4] = [
