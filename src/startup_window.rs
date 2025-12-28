@@ -313,7 +313,7 @@ pub fn leftside_button(
         let white = egui::Color32::WHITE;
         let font25 = egui::FontId::new(25., egui::FontFamily::default());
         ui.painter()
-            .text(icon_pos, align, icon.to_string(), font25, white);
+            .text(icon_pos, align, icon.to_string(), font25.clone(), white);
 
         let label_pos = egui::Pos2::new(
             ui.min_rect().left_center().x + 50.,
@@ -321,8 +321,8 @@ pub fn leftside_button(
         );
 
         let text_col = shared.config.colors.text.into();
-        let font27 = egui::FontId::new(27., egui::FontFamily::default());
-        ui.painter().text(label_pos, align, label, font27, text_col);
+        let font17 = egui::FontId::new(17., egui::FontFamily::default());
+        ui.painter().text(label_pos, align, label, font17, text_col);
     });
 
     let bottom = egui::Rect::from_min_size(

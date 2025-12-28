@@ -649,14 +649,12 @@ pub fn inherit_vert(mut pos: Vec2, bone: &Bone) -> Vec2 {
 pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
     let root = bones[0].pos;
 
-    match bones[0].ik_mode {
-        InverseKinematicsMode::FABRIK => {
-            for _ in 0..10 {
-                fabrik(bones, root, target);
-            }
+    if bones[0].ik_mode == InverseKinematicsMode::FABRIK {
+        for _ in 0..10 {
+            fabrik(bones, root, target);
         }
-        InverseKinematicsMode::Arc => arc_ik(bones, root, target),
-        _ => {}
+    } else {
+        arc_ik(bones, root, target)
     }
 
     // rotating bones
@@ -802,59 +800,55 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
     let cam = &shared.world_camera();
     let bone_center = world_vert(vert, cam, shared.aspect_ratio(), Vec2::new(0.5, 0.5));
 
-    match shared.edit_mode {
-        shared::EditMode::Move => {
-            let mut pos = bone.pos;
-            let mouse_vel = shared.mouse_vel() * shared.camera.zoom;
+    if shared.edit_mode == shared::EditMode::Move {
+        let mut pos = bone.pos;
+        let mouse_vel = shared.mouse_vel() * shared.camera.zoom;
 
-            // move position with mouse velocity
-            pos -= mouse_vel;
+        // move position with mouse velocity
+        pos -= mouse_vel;
 
-            // restore universal position by offsetting against parents' attributes
-            if bone.parent_id != -1 {
-                let parent = find_bone(bones, bone.parent_id).unwrap();
-                pos -= parent.pos;
-                pos = utils::rotate(&pos, -parent.rot);
-                pos /= parent.scale;
-            }
-
-            edit!(bone, AnimElement::PositionX, pos.x);
-            edit!(bone, AnimElement::PositionY, pos.y);
+        // restore universal position by offsetting against parents' attributes
+        if bone.parent_id != -1 {
+            let parent = find_bone(bones, bone.parent_id).unwrap();
+            pos -= parent.pos;
+            pos = utils::rotate(&pos, -parent.rot);
+            pos /= parent.scale;
         }
-        shared::EditMode::Rotate => {
-            shared.ui.rotating = true;
 
-            let mut mouse_init =
-                utils::screen_to_world_space(shared.input.mouse_init.unwrap(), shared.window);
-            mouse_init.x *= shared.aspect_ratio();
-            let dir_init = mouse_init - bone_center.pos;
-            let rot_init = dir_init.y.atan2(dir_init.x);
+        edit!(bone, AnimElement::PositionX, pos.x);
+        edit!(bone, AnimElement::PositionY, pos.y);
+    } else if shared.edit_mode == shared::EditMode::Rotate {
+        shared.ui.rotating = true;
 
-            let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
-            mouse.x *= shared.aspect_ratio();
-            let dir = mouse - bone_center.pos;
-            let rot = dir.y.atan2(dir.x);
+        let mut mouse_init =
+            utils::screen_to_world_space(shared.input.mouse_init.unwrap(), shared.window);
+        mouse_init.x *= shared.aspect_ratio();
+        let dir_init = mouse_init - bone_center.pos;
+        let rot_init = dir_init.y.atan2(dir_init.x);
 
-            let rot = shared.bone_init_rot + (rot - rot_init);
-            edit!(bone, AnimElement::Rotation, rot);
+        let mut mouse = utils::screen_to_world_space(shared.input.mouse, shared.window);
+        mouse.x *= shared.aspect_ratio();
+        let dir = mouse - bone_center.pos;
+        let rot = dir.y.atan2(dir.x);
+
+        let rot = shared.bone_init_rot + (rot - rot_init);
+        edit!(bone, AnimElement::Rotation, rot);
+    } else if shared.edit_mode == shared::EditMode::Scale {
+        shared.ui.scaling = true;
+
+        let mut scale = bone.scale;
+
+        // restore universal scale, by offsetting against parent's
+        if bone.parent_id != -1 {
+            let parent = find_bone(bones, bone.parent_id).unwrap();
+            scale /= parent.scale;
         }
-        shared::EditMode::Scale => {
-            shared.ui.scaling = true;
 
-            let mut scale = bone.scale;
+        scale -= shared.mouse_vel();
 
-            // restore universal scale, by offsetting against parent's
-            if bone.parent_id != -1 {
-                let parent = find_bone(bones, bone.parent_id).unwrap();
-                scale /= parent.scale;
-            }
-
-            scale -= shared.mouse_vel();
-
-            edit!(bone, AnimElement::ScaleX, scale.x);
-            edit!(bone, AnimElement::ScaleY, scale.y);
-        }
-    };
+        edit!(bone, AnimElement::ScaleX, scale.x);
+        edit!(bone, AnimElement::ScaleY, scale.y);
+    }
 }
 
 pub fn inheritance(bones: &mut Vec<Bone>, ik_rot: std::collections::HashMap<i32, f32>) {
