@@ -441,6 +441,13 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
 }
 
 pub fn cancel_shortcut(shared: &mut Shared) {
+    shared.ui.styles_modal = false;
+    shared.ui.modal = false;
+    shared.ui.polar_modal = false;
+    shared.ui.forced_modal = false;
+    shared.ui.settings_modal = false;
+    shared.ui.atlas_modal = false;
+    
     // if a context menu is open, cancel that instead
     if shared.ui.context_menu.id != "" {
         shared.ui.context_menu.id = "".to_string();
@@ -460,13 +467,6 @@ pub fn cancel_shortcut(shared: &mut Shared) {
         toggleElement(false, "file-dialog".to_string());
         toggleElement(false, "ui-slider".to_string());
     }
-
-    shared.ui.styles_modal = false;
-    shared.ui.modal = false;
-    shared.ui.polar_modal = false;
-    shared.ui.forced_modal = false;
-    shared.ui.settings_modal = false;
-    shared.ui.atlas_modal = false;
 
     shared.ui.setting_ik_target = false;
 }
