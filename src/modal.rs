@@ -41,8 +41,19 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             if ui.skf_button("No").clicked() || pressed_no {
                 shared.ui.polar_modal = false;
             }
-            if ui.skf_button("Yes").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+            if ui.skf_button("Yes").clicked() {
                 yes = true;
+            }
+
+            // Proceeding with kb shortcut will only emulate 'yes' if modal isn't for discarding changes.
+            // This is to prevent users with muscle memory from accidentally exiting
+            // upon pressing 'enter' upon seeing a modal.
+            if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                if shared.ui.polar_id != PolarId::Exiting {
+                    yes = true;
+                } else {
+                    shared.ui.polar_modal = false;
+                }
             }
         },
     );
