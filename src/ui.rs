@@ -384,7 +384,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
     if input.consume_shortcut(&shared.config.keys.undo) {
         utils::undo_redo(true, shared);
     }
-    if input.consume_shortcut(&shared.config.keys.undo) {
+    if input.consume_shortcut(&shared.config.keys.redo) {
         utils::undo_redo(false, shared);
     }
 
