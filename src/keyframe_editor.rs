@@ -117,6 +117,7 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                     let (edited, value, _) =
                         ui.text_input(context_id, shared, name.to_string(), options);
                     if edited {
+                        shared.new_undo_anims();
                         shared.armature.animations[i].name = value;
                         shared.ui.anim.selected = i;
                         shared.ui.anim.selected_frame = 0;
@@ -189,7 +190,9 @@ fn draw_animations_list(ui: &mut egui::Ui, shared: &mut Shared) {
                     context_menu!(button, shared, context_id, |ui: &mut egui::Ui| {
                         ui.context_rename(shared, context_id);
                         ui.context_delete(shared, "delete_anim", PolarId::DeleteAnim);
-                        if ui.context_button("Duplicate", shared).clicked() {
+                        let duplicate_str = shared.loc("keyframe_editor.duplicate");
+                        if ui.context_button(duplicate_str, shared).clicked() {
+                            shared.new_undo_anims();
                             let anims = &mut shared.armature.animations;
                             anims.push(anims[i].clone());
                             shared.ui.context_menu.close();

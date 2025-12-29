@@ -285,6 +285,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         }),
                     );
                     if edited {
+                        shared.new_undo_sel_bone();
                         shared.selected_bone_mut().unwrap().name = value;
                         shared.ui.just_made_new_bone = false;
                     }

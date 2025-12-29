@@ -447,7 +447,7 @@ pub fn cancel_shortcut(shared: &mut Shared) {
     shared.ui.forced_modal = false;
     shared.ui.settings_modal = false;
     shared.ui.atlas_modal = false;
-    
+
     // if a context menu is open, cancel that instead
     if shared.ui.context_menu.id != "" {
         shared.ui.context_menu.id = "".to_string();
@@ -1242,6 +1242,8 @@ pub fn copy_bone(shared: &mut Shared, idx: usize) {
 }
 
 pub fn paste_bone(shared: &mut Shared, idx: usize) {
+    shared.new_undo_bones();
+
     // determine which id to give the new bone(s), based on the highest current id
     let ids: Vec<i32> = shared.armature.bones.iter().map(|bone| bone.id).collect();
     let mut highest_id = 0;
