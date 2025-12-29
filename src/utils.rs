@@ -665,9 +665,16 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
         ActionType::Bones => {
             new_action.bones = shared.armature.bones.clone();
             shared.armature.bones = action.bones.clone();
-            let bones = &mut shared.armature.bones;
-            if bones.len() == 0 || shared.ui.selected_bone_idx > bones.len() - 1 {
+            if shared.ui.selected_bone_ids.len() == 0 {
                 shared.ui.selected_bone_idx = usize::MAX;
+            } else {
+                let sel_id = shared.ui.selected_bone_ids[0];
+                let sel_idx = shared.armature.bones.iter().position(|b| b.id == sel_id);
+                if sel_idx != None {
+                    shared.ui.selected_bone_idx = sel_idx.unwrap();
+                } else {
+                    shared.ui.selected_bone_idx = usize::MAX
+                }
             }
         }
         ActionType::Animation => {
