@@ -473,6 +473,7 @@ pub struct Ui {
     pub showing_mesh: bool,
     pub setting_bind_verts: bool,
     pub setting_bind_bone: bool,
+    pub just_made_new_bone: bool,
 
     pub rename_id: String,
     pub original_name: String,

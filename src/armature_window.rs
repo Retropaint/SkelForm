@@ -68,9 +68,9 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
                     // immediately select new bone upon creating it
                     shared.ui.select_bone(idx);
+                    shared.ui.just_made_new_bone = true;
 
                     shared.ui.rename_id = "bone_".to_string() + &idx.to_string();
-
                     shared.selected_bone_mut().unwrap().name = "".to_string();
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -286,6 +286,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     );
                     if edited {
                         shared.selected_bone_mut().unwrap().name = value;
+                        shared.ui.just_made_new_bone = false;
                     }
                     return;
                 }
