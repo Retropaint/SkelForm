@@ -1606,13 +1606,14 @@ pub enum ActionType {
     Keyframe,
     Style,
     Styles,
+    Texture,
+    Textures,
 }
 
 #[derive(Default, Clone, PartialEq)]
 pub struct Action {
     pub action: ActionType,
 
-    pub id: i32,
     pub bones: Vec<Bone>,
     pub animations: Vec<Animation>,
     pub styles: Vec<Style>,
@@ -2001,7 +2002,6 @@ impl Shared {
     pub fn new_undo_sel_bone(&mut self) {
         self.undo_actions.push(Action {
             action: ActionType::Bone,
-            id: self.selected_bone().unwrap().id,
             bones: vec![self.selected_bone().unwrap().clone()],
             ..Default::default()
         });
@@ -2010,7 +2010,6 @@ impl Shared {
     pub fn new_undo_sel_anim(&mut self) {
         self.undo_actions.push(Action {
             action: ActionType::Animation,
-            id: self.selected_animation().unwrap().id,
             animations: vec![self.selected_animation().unwrap().clone()],
             ..Default::default()
         });
@@ -2019,7 +2018,6 @@ impl Shared {
     pub fn new_undo_sel_style(&mut self) {
         self.undo_actions.push(Action {
             action: ActionType::Style,
-            id: self.selected_set().unwrap().id,
             styles: vec![self.selected_set().unwrap().clone()],
             ..Default::default()
         });

@@ -659,8 +659,8 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
 
     match &action.action {
         ActionType::Bone => {
-            new_action.bones = vec![shared.armature.bones[action.id as usize].clone()];
-            *shared.armature.find_bone_mut(action.id).unwrap() = action.bones[0].clone();
+            new_action.bones = action.bones.clone();
+            *shared.armature.find_bone_mut(action.bones[0].id).unwrap() = action.bones[0].clone();
         }
         ActionType::Bones => {
             new_action.bones = shared.armature.bones.clone();
@@ -678,9 +678,9 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
             }
         }
         ActionType::Animation => {
-            new_action.animations = vec![shared.armature.animations[action.id as usize].clone()];
+            new_action.animations = action.animations.clone();
             let anims = &mut shared.armature.animations;
-            let anim = anims.iter_mut().find(|a| a.id == action.id);
+            let anim = anims.iter_mut().find(|a| a.id == action.animations[0].id);
             *anim.unwrap() = action.animations[0].clone();
         }
         ActionType::Animations => {
@@ -692,8 +692,11 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
             }
         }
         ActionType::Style => {
-            new_action.styles = vec![shared.armature.styles[action.id as usize].clone()];
-            shared.armature.styles[action.id as usize] = action.styles[0].clone();
+            new_action.styles = action.styles.clone();
+            let styles = &mut shared.armature.styles;
+            let id = action.styles[0].id;
+            let style = styles.iter_mut().find(|a| a.id == id).unwrap();
+            *style = action.styles[0].clone();
         }
         ActionType::Styles => {
             new_action.styles = shared.armature.styles.clone();
