@@ -74,6 +74,7 @@ pub fn draw_styles_list(
             if !ui.skf_button(&shared.loc("new")).clicked() {
                 return;
             }
+            shared.new_undo_styles();
             let ids = shared.armature.styles.iter().map(|set| set.id).collect();
             shared.armature.styles.push(crate::Style {
                 id: generate_id(ids),
@@ -124,6 +125,7 @@ pub fn draw_styles_list(
                         }),
                     );
                     if edited {
+                        shared.new_undo_styles();
                         shared.armature.styles[s].name = value;
                         shared.ui.selected_style = shared.armature.styles[s].id;
                     }

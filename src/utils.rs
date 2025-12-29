@@ -691,9 +691,17 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
                 shared.ui.anim.selected = usize::MAX;
             }
         }
-        ActionType::TextureSet => {
-            new_action.tex_sets = vec![shared.armature.styles[action.id as usize].clone()];
-            shared.armature.styles[action.id as usize] = action.tex_sets[0].clone();
+        ActionType::Style => {
+            new_action.styles = vec![shared.armature.styles[action.id as usize].clone()];
+            shared.armature.styles[action.id as usize] = action.styles[0].clone();
+        }
+        ActionType::Styles => {
+            new_action.styles = shared.armature.styles.clone();
+            shared.armature.styles = action.styles.clone();
+            let style_ids: Vec<i32> = shared.armature.styles.iter().map(|s| s.id).collect();
+            if !style_ids.contains(&shared.ui.selected_style) {
+                shared.ui.selected_style = -1;
+            }
         }
         _ => {}
     }
