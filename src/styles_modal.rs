@@ -166,6 +166,7 @@ pub fn draw_styles_list(
                     }
 
                     if button.clicked() {
+                        shared.ui.rename_id = "".to_string();
                         if shared.ui.selected_style == shared.armature.styles[s].id {
                             shared.ui.rename_id = context_id.clone();
                         }

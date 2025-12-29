@@ -601,6 +601,7 @@ impl Ui {
         self.setting_bind_verts = false;
         self.setting_bind_bone = false;
         self.selected_bind = -1;
+        self.rename_id = "".to_string();
     }
 }
 
