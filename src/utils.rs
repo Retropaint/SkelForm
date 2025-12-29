@@ -655,6 +655,9 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
         }
         action = shared.redo_actions.last().unwrap().clone();
     }
+
+    // store the state prior to undoing/redoing the action,
+    // to add to the opposite stack later
     let mut new_action = action.clone();
 
     match &action.action {
@@ -709,12 +712,29 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
         _ => {}
     }
 
+    // add action(s) to opposing stack
+    shared.temp_actions.push(new_action);
     if undo {
-        shared.redo_actions.push(new_action);
         shared.undo_actions.pop();
+        if !action.continued {
+            // reverse list to restore order of actions
+            shared.temp_actions.reverse();
+            shared.redo_actions.append(&mut shared.temp_actions);
+            shared.temp_actions = vec![];
+        }
     } else {
-        shared.undo_actions.push(new_action);
         shared.redo_actions.pop();
+        if !action.continued {
+            // ditto
+            shared.temp_actions.reverse();
+            shared.undo_actions.append(&mut shared.temp_actions);
+            shared.temp_actions = vec![];
+        }
+    }
+
+    // actions tagged with `continue` are part of an action chain
+    if action.continued {
+        undo_redo(undo, shared);
     }
 }
 

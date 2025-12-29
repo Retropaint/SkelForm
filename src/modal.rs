@@ -68,16 +68,13 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             shared.ui.selected_bone_idx = usize::MAX;
 
             let parsed_id = shared.context_id_parsed();
-            let bone = shared.armature.bones.iter().find(|b| b.id == parsed_id);
-            if bone == None {
-                return;
-            }
+            let bone = &shared.armature.bones[parsed_id as usize];
 
-            let bone_id = bone.unwrap().id;
+            let bone_id = bone.id;
 
             // remove all children of this bone as well
-            let mut children = vec![bone.unwrap().clone()];
-            armature_window::get_all_children(&shared.armature.bones, &mut children, bone.unwrap());
+            let mut children = vec![bone.clone()];
+            armature_window::get_all_children(&shared.armature.bones, &mut children, &bone);
             children.reverse();
             for bone in &children {
                 let idx = shared.armature.bones.iter().position(|b| b.id == bone.id);
@@ -85,9 +82,22 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             }
 
             // remove all references to this bone and it's children from all animations
+            let mut set_undo_bone_continued = false;
             for bone in &children {
-                for anim in &mut shared.armature.animations {
-                    anim.keyframes.retain(|kf| kf.bone_id != bone.id);
+                for a in 0..shared.armature.animations.len() {
+                    let anim = &mut shared.armature.animations[a];
+                    let last_len = anim.keyframes.len();
+
+                    // if an animation has this bone, save it in undo data
+                    let mut temp_kfs = anim.keyframes.clone();
+                    temp_kfs.retain(|kf| kf.bone_id != bone.id);
+                    if last_len != temp_kfs.len() && !set_undo_bone_continued {
+                        shared.new_undo_anims();
+                        shared.undo_actions.last_mut().unwrap().continued = true;
+                        set_undo_bone_continued = true;
+                    }
+
+                    shared.armature.animations[a].keyframes = temp_kfs;
                 }
             }
 
@@ -126,13 +136,18 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             std::fs::remove_file(&shared.ui.selected_path).unwrap();
         }
         PolarId::DeleteTex => {
+            shared.new_undo_sel_style();
             let id = shared.context_id_parsed() as usize;
             shared.selected_set_mut().unwrap().textures.remove(id);
         }
         PolarId::DeleteStyle => {
+            shared.new_undo_styles();
             let context_id = shared.context_id_parsed();
             let styles = &mut shared.armature.styles;
             let idx = styles.iter().position(|s| s.id == context_id).unwrap();
+            if shared.ui.selected_style == context_id {
+                shared.ui.selected_style = -1;
+            }
             styles.remove(idx);
         }
     }

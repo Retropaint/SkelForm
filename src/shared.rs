@@ -1613,10 +1613,10 @@ pub enum ActionType {
 #[derive(Default, Clone, PartialEq)]
 pub struct Action {
     pub action: ActionType,
-
     pub bones: Vec<Bone>,
     pub animations: Vec<Animation>,
     pub styles: Vec<Style>,
+    pub continued: bool,
 }
 
 impl AnimElement {
@@ -1723,6 +1723,7 @@ pub struct Shared {
     pub undo_actions: Vec<Action>,
     pub redo_actions: Vec<Action>,
     pub prev_undo_actions: Vec<Action>,
+    pub temp_actions: Vec<Action>,
 
     pub edit_mode: EditMode,
 

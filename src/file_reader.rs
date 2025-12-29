@@ -110,6 +110,8 @@ pub fn read_image_loaders(
         }
     }
 
+    shared.new_undo_sel_style();
+
     add_texture(
         image,
         shared.ui.selected_style,

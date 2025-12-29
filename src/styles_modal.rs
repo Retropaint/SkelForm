@@ -633,15 +633,19 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                                 let styles = &shared.armature.styles;
                                 let set = styles.iter().find(|s| s.id == style_id).unwrap();
                                 let mut tex_str = bone.tex.clone();
+                                let last_tex = tex_str.clone();
                                 let none_str = shared.loc("none_option");
                                 ui.selectable_value(&mut tex_str, "".to_string(), none_str);
                                 for t in 0..set.textures.len() {
                                     let name = set.textures[t].name.clone().to_string();
                                     ui.selectable_value(&mut tex_str, name.clone(), name);
                                 }
+                                if last_tex != tex_str {
+                                    shared.new_undo_bones();
+                                }
                                 shared.armature.set_bone_tex(
                                     bone.id,
-                                    tex_str,
+                                    tex_str.clone(),
                                     shared.ui.anim.selected,
                                     shared.ui.anim.selected_frame,
                                 );
@@ -743,6 +747,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                     }),
                 );
                 if edited {
+                    shared.new_undo_sel_style();
                     let og_name = shared.selected_set_mut().unwrap().textures[i].name.clone();
                     let trimmed = value.trim_start().trim_end().to_string();
                     shared.selected_set_mut().unwrap().textures[i].name = trimmed.clone();
