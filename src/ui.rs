@@ -441,22 +441,23 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
 }
 
 pub fn cancel_shortcut(shared: &mut Shared) {
-    shared.ui.styles_modal = false;
-    shared.ui.modal = false;
-    shared.ui.polar_modal = false;
-    shared.ui.forced_modal = false;
-    shared.ui.settings_modal = false;
-    shared.ui.atlas_modal = false;
+    let ui = &mut shared.ui;
+    let no_modals =
+        !ui.styles_modal && !ui.modal && !ui.polar_modal && !ui.forced_modal && !ui.settings_modal;
+
+    ui.styles_modal = false;
+    ui.modal = false;
+    ui.polar_modal = false;
+    ui.forced_modal = false;
+    ui.settings_modal = false;
+    ui.atlas_modal = false;
 
     // if a context menu is open, cancel that instead
-    if shared.ui.context_menu.id != "" {
+    if ui.context_menu.id != "" {
         shared.ui.context_menu.id = "".to_string();
         return;
     }
 
-    let ui = &shared.ui;
-    let no_modals =
-        !ui.styles_modal && !ui.modal && !ui.polar_modal && !ui.forced_modal && !ui.settings_modal;
     if no_modals && !ui.setting_ik_target {
         shared.ui.unselect_everything();
     }
