@@ -101,7 +101,7 @@ pub fn draw_styles_list(
 
             if shared.armature.styles.len() == 0 {
                 let mut cache = egui_commonmark::CommonMarkCache::default();
-                let loc = shared.loc("styles_modal.assigned_empty").to_string();
+                let loc = shared.loc("styles_modal.styles_empty").to_string();
                 let str = utils::markdown(loc.to_string(), shared.local_doc_url.to_string());
                 egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
             }

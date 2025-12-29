@@ -218,6 +218,18 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
 
     let section_spacing = 10.;
 
+    if children.len() == 0
+        && parents.len() == 0
+        && bone.vertices.len() == 0
+        && shared.armature.tex_of(bone.id) == None
+    {
+        ui.add_space(10.);
+        let mut cache = egui_commonmark::CommonMarkCache::default();
+        let loc = shared.loc("bone_panel.bone_empty").to_string();
+        let str = utils::markdown(loc, shared.local_doc_url.to_string());
+        egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
+    }
+
     if children.len() > 0 || parents.len() > 0 {
         ui.add_space(section_spacing);
         inverse_kinematics(ui, shared, &bone);
@@ -226,7 +238,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
         }
     }
 
-    if bone.vertices.len() == 0 {
+    if shared.armature.tex_of(bone.id) == None || bone.vertices.len() == 0 {
         return;
     }
 
