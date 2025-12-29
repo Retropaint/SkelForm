@@ -51,8 +51,6 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                 if shared.ui.polar_id != PolarId::Exiting {
                     yes = true;
-                } else {
-                    shared.ui.polar_modal = false;
                 }
             }
         },
