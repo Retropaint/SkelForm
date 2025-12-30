@@ -216,7 +216,20 @@ fn startup_content(
 
                 let link_color = shared.config.colors.link;
 
+                let web;
+                #[cfg(target_arch = "wasm32")]
+                {
+                    web = true;
+                }
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    web = false;
+                }
+
                 for item in &shared.startup.resources {
+                    if item.update_checker && web {
+                        continue;
+                    }
                     let str = &shared.loc(&("startup.resources.".to_owned() + &item.code));
                     let text = egui::RichText::new(str).color(link_color).size(header_size);
                     let heading = ui.clickable_label(text);

@@ -188,6 +188,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     if shared.ui.atlas_modal {
         atlas_modal::draw(shared, context);
     }
+    #[cfg(not(target_arch = "wasm32"))]
     if shared.ui.checking_update {
         modal::modal(shared, context);
         let url = "https://skelform.org/data/version";
