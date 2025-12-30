@@ -201,7 +201,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
         ui.add_enabled_ui(!setting_ik_target, |ui| {
             ui.horizontal(|ui| {
-                let hidden_icon = if anim_bones[b].is_hidden == 1 {
+                let hidden_icon = if anim_bones[b].is_hidden {
                     "---"
                 } else {
                     "👁"
@@ -209,7 +209,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 let id = "bone_hidden".to_owned() + &b.to_string();
                 if bone_label(hidden_icon, ui, id, shared, Vec2::new(-2., 18.)).clicked() {
                     let mut hidden: i32 = 0;
-                    if anim_bones[b].is_hidden == 0 {
+                    if !anim_bones[b].is_hidden {
                         hidden = 1;
                     }
                     let sel = shared.ui.anim.selected;
@@ -249,7 +249,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 let mut selected_col = shared.config.colors.dark_accent;
                 let mut cursor = egui::CursorIcon::PointingHand;
 
-                if anim_bones[b].is_hidden == 1 {
+                if anim_bones[b].is_hidden {
                     selected_col = shared.config.colors.dark_accent;
                 }
 
@@ -299,7 +299,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                         let name = shared.armature.bones[b].name.to_string();
                         let mut text_col = shared.config.colors.text;
-                        if anim_bones[b].is_hidden == 1 {
+                        if anim_bones[b].is_hidden {
                             text_col = shared.config.colors.dark_accent;
                             text_col += Color::new(40, 40, 40, 0)
                         }

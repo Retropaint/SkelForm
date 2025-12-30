@@ -361,6 +361,14 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
             let keyframe = &mut armature_copy.animations[a].keyframes[kf];
             let bones = &mut armature_copy.bones.iter();
             keyframe.bone_id = bones.position(|bone| bone.id == keyframe.bone_id).unwrap() as i32;
+
+            if keyframe.element == AnimElement::IkConstraint {
+                keyframe.value_str = match keyframe.value {
+                    1. => "Clockwise".to_string(),
+                    2. => "CounterClockwise".to_string(),
+                    _ => "None".to_string(),
+                };
+            }
         }
     }
 
@@ -394,17 +402,17 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
         bone.init_pos = bone.pos;
         bone.init_rot = bone.rot;
         bone.init_scale = bone.scale;
-        bone.init_ik_constraint = bone.ik_constraint_id;
         bone.init_tex = bone.tex.clone();
         bone.init_is_hidden = bone.is_hidden;
+        bone.init_ik_constraint = bone.ik_constraint_id;
 
         if bone.ik_bone_ids.len() == 0 {
             bone.ik_constraint = JointConstraint::Skip;
-            bone.ik_constraint_id = -1;
             bone.ik_mode = InverseKinematicsMode::Skip;
-            bone.ik_mode_id = -1;
             bone.ik_family_id = -1;
             bone.ik_bone_ids = vec![];
+            bone.ik_mode_id = -1;
+            bone.ik_constraint_id = -1;
             bone.init_ik_constraint = -1;
         }
     }
@@ -568,11 +576,8 @@ pub fn import<R: Read + std::io::Seek>(
     if styles.len() > 0 && has_tex {
         let mut imgs = vec![];
         for a in 0..root.atlases.len() {
-            let texture_file = zip
-                .as_mut()
-                .unwrap()
-                .by_name(&("atlas".to_owned() + &a.to_string() + ".png"))
-                .unwrap();
+            let name = &("atlas".to_owned() + &a.to_string() + ".png");
+            let texture_file = zip.as_mut().unwrap().by_name(name).unwrap();
 
             let mut bytes = vec![];
             for byte in texture_file.bytes() {
@@ -608,11 +613,10 @@ pub fn import<R: Read + std::io::Seek>(
                     continue;
                 }
 
-                let pixels = imgs[tex.atlas_idx as usize]
-                    .crop(u_offset_x, u_offset_y, u_size_x, u_size_y)
-                    .resize_exact(300, 300, image::imageops::FilterType::Nearest)
-                    .into_rgba8()
-                    .to_vec();
+                let img =
+                    imgs[tex.atlas_idx as usize].crop(u_offset_x, u_offset_y, u_size_x, u_size_y);
+                let filter = image::imageops::FilterType::Nearest;
+                let pixels = img.resize_exact(300, 300, filter).into_rgba8().to_vec();
 
                 let col = egui::ColorImage::from_rgba_unmultiplied([300, 300], &pixels);
                 let file = "anim_icons";

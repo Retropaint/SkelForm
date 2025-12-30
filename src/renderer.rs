@@ -117,7 +117,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             }
         }
 
-        if tex == None || temp_arm.bones[b].is_hidden == 1 {
+        if tex == None || temp_arm.bones[b].is_hidden {
             continue;
         }
 
@@ -238,7 +238,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     for b in 0..temp_arm.bones.len() {
         let tex = temp_arm.tex_of(temp_arm.bones[b].id);
-        if tex == None || temp_arm.bones[b].is_hidden == 1 {
+        if tex == None || temp_arm.bones[b].is_hidden {
             continue;
         }
 
@@ -507,7 +507,7 @@ pub fn render_screenshot(render_pass: &mut RenderPass, device: &Device, shared: 
         if shared.armature.tex_of(temp_arm.bones[b].id) == None {
             continue;
         }
-        if temp_arm.bones[b].is_hidden == 1 {
+        if temp_arm.bones[b].is_hidden {
             continue;
         }
 

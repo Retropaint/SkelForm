@@ -856,6 +856,8 @@ pub struct Bone {
     pub scale: Vec2,
     #[serde(default)]
     pub rot: f32,
+    #[serde(default)]
+    pub is_hidden: bool,
 
     #[serde(default = "default_neg_one")]
     pub ik_family_id: i32,
@@ -873,18 +875,6 @@ pub struct Bone {
     #[serde(default, skip_serializing_if = "is_i32_empty")]
     pub ik_bone_ids: Vec<i32>,
 
-    #[serde(default, skip_serializing_if = "are_verts_empty")]
-    pub vertices: Vec<Vertex>,
-    #[serde(skip)]
-    pub verts_edited: bool,
-    #[serde(default, skip_serializing_if = "are_indices_empty")]
-    pub indices: Vec<u32>,
-    #[serde(default, skip_serializing_if = "are_weights_empty")]
-    pub binds: Vec<BoneBind>,
-
-    #[serde(default, skip_serializing_if = "is_neg_one")]
-    pub is_hidden: i32,
-
     // todo:
     // these should be private, but that upsets
     // default constructor for some reason
@@ -896,10 +886,19 @@ pub struct Bone {
     pub init_rot: f32,
     #[serde(default, skip_serializing_if = "is_neg_one", skip_deserializing)]
     pub init_ik_constraint: i32,
-    #[serde(default, skip_serializing_if = "is_neg_one", skip_deserializing)]
-    pub init_is_hidden: i32,
+    #[serde(default, skip_serializing_if = "is_false", skip_deserializing)]
+    pub init_is_hidden: bool,
     #[serde(default, skip_serializing_if = "is_str_empty", skip_deserializing)]
     pub init_tex: String,
+
+    #[serde(default, skip_serializing_if = "are_verts_empty")]
+    pub vertices: Vec<Vertex>,
+    #[serde(skip)]
+    pub verts_edited: bool,
+    #[serde(default, skip_serializing_if = "are_indices_empty")]
+    pub indices: Vec<u32>,
+    #[serde(default, skip_serializing_if = "are_weights_empty")]
+    pub binds: Vec<BoneBind>,
 
     #[serde(skip)]
     pub folded: bool,
@@ -1141,7 +1140,7 @@ impl Armature {
                 b.scale.x = interpolate!(AnimElement::ScaleX,    b.scale.x);
                 b.scale.y = interpolate!(AnimElement::ScaleY,    b.scale.y);
                 b.zindex  = prev_frame!( AnimElement::Zindex,    b.zindex  as f32) as i32;
-                b.is_hidden  = prev_frame!( AnimElement::Hidden, b.is_hidden  as f32) as i32;
+                b.is_hidden  = prev_frame!( AnimElement::Hidden, bool_as_f32(b.is_hidden)) != 0.;
                 b.tex     = prev_str!(   AnimElement::Texture,   b.tex.clone());
             };
 
@@ -1971,9 +1970,9 @@ impl Shared {
                 }
             }
             AnimElement::Hidden => {
-                init_value = bone.is_hidden as f32;
+                init_value = bool_as_f32(bone.is_hidden);
                 if anim_id == usize::MAX {
-                    bone.is_hidden = value as i32
+                    bone.is_hidden = f32_as_bool(value)
                 }
             }
         };
@@ -2124,6 +2123,22 @@ fn no_constraints(value: &JointConstraint) -> bool {
 
 fn no_ik_mode(value: &InverseKinematicsMode) -> bool {
     *value == InverseKinematicsMode::Skip
+}
+
+fn is_false(value: &bool) -> bool {
+    *value == false
+}
+
+fn f32_as_bool(value: f32) -> bool {
+    value == 1.
+}
+
+fn bool_as_f32(value: bool) -> f32 {
+    if value {
+        1.
+    } else {
+        0.
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
