@@ -142,7 +142,8 @@ fn startup_content(
                         ui.label(text);
 
                         let msg = &shared.loc("startup.early_access_warning");
-                        let orange = egui::Color32::ORANGE;
+                        let mut orange: crate::Color = egui::Color32::ORANGE.into();
+                        orange -= crate::Color::new(30, 30, 30, 0);
                         let text = egui::RichText::new(msg).size(14.).color(orange);
                         ui.label(text);
 
@@ -464,7 +465,9 @@ pub fn skf_file_button(
         if file_button_icon("🗑", "Delete file", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
             shared.ui.selected_path = path.clone();
             let str_del = &shared.loc("polar.delete_file").replace("$", &filename);
-            shared.ui.open_polar_modal(PolarId::DeleteFile, str_del.to_string());
+            shared
+                .ui
+                .open_polar_modal(PolarId::DeleteFile, str_del.to_string());
         }
         pos += egui::Vec2::new(-21., 0.);
 

@@ -42,7 +42,8 @@
       "main_site": "Main Site",
       "discord": "Discord",
       "donate": "Donate ♥",
-      "forum": "Forum"
+      "forum": "Forum",
+      "check_update": "Check for Update"
     }
   },
   "top_bar": {

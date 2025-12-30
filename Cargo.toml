@@ -25,6 +25,7 @@ egui_commonmark = { version = "0.21.1", default-features = false} # egui markdow
 # Handle system shortcuts (cmd+q, cmd+w, etc) since winit can't
 # https://github.com/rust-windowing/winit/issues/2776#issuecomment-2477222703
 global-hotkey = "0.7.0"
+ureq = "3.1.4"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 pollster = "0.4.0"
