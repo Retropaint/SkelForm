@@ -1,5 +1,3 @@
-use pollster::FutureExt;
-
 use crate::ui::EguiUi;
 use crate::*;
 
