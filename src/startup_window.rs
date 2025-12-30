@@ -122,76 +122,74 @@ fn startup_content(
         let reserved_for_resources = 420.;
         ui.set_width((available_size.x - reserved_for_resources).max(1.));
         let width = ui.available_width();
-        ui.with_layout(
-            egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
-            |ui| {
-                let max_width = 600.;
-                let right_margin = 50.;
-                ui.set_max_width((width.min(max_width) - right_margin).max(1.));
-                ui.set_min_width(0.);
+        let layout = egui::Layout::centered_and_justified(egui::Direction::LeftToRight);
+        ui.with_layout(layout, |ui| {
+            let max_width = 600.;
+            let right_margin = 50.;
+            ui.set_max_width((width.min(max_width) - right_margin).max(1.));
+            ui.set_min_width(0.);
 
-                #[cfg(not(target_arch = "wasm32"))]
-                ui.vertical(|ui| {
-                    let available_width = ui.available_width();
-                    egui::ScrollArea::vertical().show(ui, |ui| {
-                        ui.set_width(available_width);
-                        if shared.recent_file_paths.len() == 0 {
-                            ui.add_space(10.);
+            #[cfg(not(target_arch = "wasm32"))]
+            ui.vertical(|ui| {
+                let available_width = ui.available_width();
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.set_width(available_width);
+                    if shared.recent_file_paths.len() == 0 {
+                        ui.add_space(10.);
 
-                            let msg = &shared.loc("startup.empty_recent_files");
-                            let text = egui::RichText::new(msg).size(14.);
-                            ui.label(text);
+                        let msg = &shared.loc("startup.empty_recent_files");
+                        let text = egui::RichText::new(msg).size(14.);
+                        ui.label(text);
 
-                            let msg = &shared.loc("startup.early_access_warning");
-                            let orange = egui::Color32::ORANGE;
-                            let text = egui::RichText::new(msg).size(14.).color(orange);
-                            ui.label(text);
+                        let msg = &shared.loc("startup.early_access_warning");
+                        let orange = egui::Color32::ORANGE;
+                        let text = egui::RichText::new(msg).size(14.).color(orange);
+                        ui.label(text);
 
-                            return;
+                        return;
+                    }
+
+                    for p in 0..shared.recent_file_paths.len() {
+                        // safeguard for deleting a path during iteration
+                        if p > shared.recent_file_paths.len() - 1 {
+                            break;
                         }
 
-                        for p in 0..shared.recent_file_paths.len() {
-                            // safeguard for deleting a path during iteration
-                            if p > shared.recent_file_paths.len() - 1 {
-                                break;
-                            }
-
-                            let path = shared.recent_file_paths[p].to_string();
-                            if let Err(_) = std::fs::File::open(&path) {
-                                let recent = &shared.recent_file_paths;
-                                let idx = recent.iter().position(|r_path| *r_path == path).unwrap();
-                                shared.recent_file_paths.remove(idx);
-                                continue;
-                            }
-
-                            skf_file_button(path, shared, ui, ctx, available_width);
-                            ui.add_space(5.);
+                        let path = shared.recent_file_paths[p].to_string();
+                        if let Err(_) = std::fs::File::open(&path) {
+                            let recent = &shared.recent_file_paths;
+                            let idx = recent.iter().position(|r_path| *r_path == path).unwrap();
+                            shared.recent_file_paths.remove(idx);
+                            continue;
                         }
-                    });
+
+                        skf_file_button(path, shared, ui, ctx, available_width);
+                        ui.add_space(5.);
+                    }
                 });
+            });
 
-                #[cfg(target_arch = "wasm32")]
-                ui.vertical(|ui| {
-                    let width = ui.available_width();
-                    let msg = &shared.loc("startup.web_note");
-                    let text = egui::RichText::new(msg).size(14.);
-                    ui.label(text);
-                    ui.add_space(20.);
+            #[cfg(target_arch = "wasm32")]
+            ui.vertical(|ui| {
+                let width = ui.available_width();
+                let msg = &shared.loc("startup.web_note");
+                let text = egui::RichText::new(msg).size(14.);
+                ui.label(text);
+                ui.add_space(20.);
 
-                    let name = "Skellington Sample".to_owned();
-                    let skf_name = "skellington.skf".to_string();
-                    let skel_file = include_bytes!(".././assets/skellington_icon.png").to_vec();
-                    let desc = shared.loc("startup.skellington_sample_desc");
-                    web_sample_button(name, skf_name, skel_file, shared, ui, ctx, width, desc);
+                let name = "Skellington Sample".to_owned();
+                let skf_name = "skellington.skf".to_string();
+                let skel_file = include_bytes!(".././assets/skellington_icon.png").to_vec();
+                let desc = shared.loc("startup.skellington_sample_desc");
+                web_sample_button(name, skf_name, skel_file, shared, ui, ctx, width, desc);
 
-                    let name = "Skellina Sample".to_owned();
-                    let skf_name = "skellina.skf".to_string();
-                    let skel_file = include_bytes!(".././assets/skellina_icon.png").to_vec();
-                    let desc = shared.loc("startup.skellina_sample_desc");
-                    web_sample_button(name, skf_name, skel_file, shared, ui, ctx, width, desc);
-                })
-            },
-        );
+                let name = "Skellina Sample".to_owned();
+                let skf_name = "skellina.skf".to_string();
+                let skel_file = include_bytes!(".././assets/skellina_icon.png").to_vec();
+                let desc = shared.loc("startup.skellina_sample_desc");
+                web_sample_button(name, skf_name, skel_file, shared, ui, ctx, width, desc);
+            })
+        });
     });
 
     ui.separator();
@@ -235,11 +233,9 @@ fn startup_content(
                             let mut line_color = link_color;
                             let darker = 105;
                             line_color -= Color::new(darker, darker, darker, 0);
+                            let right_bot = egui::Vec2::new(2., sub_size + 8. + sub_line_height);
                             ui.painter().rect_filled(
-                                egui::Rect::from_min_size(
-                                    left_top,
-                                    egui::Vec2::new(2., sub_size + 8. + sub_line_height),
-                                ),
+                                egui::Rect::from_min_size(left_top, right_bot),
                                 egui::CornerRadius::ZERO,
                                 line_color,
                             );
@@ -295,11 +291,8 @@ pub fn leftside_button(
     }
 
     if button.contains_pointer() {
-        ui.gradient(
-            gradient,
-            egui::Color32::TRANSPARENT,
-            shared.config.colors.dark_accent.into(),
-        );
+        let dark_accent = shared.config.colors.dark_accent.into();
+        ui.gradient(gradient, egui::Color32::TRANSPARENT, dark_accent);
     }
 
     egui::Frame::new().show(ui, |ui| {
@@ -384,20 +377,14 @@ pub fn skf_file_button(
             egui::Pos2::new(ui.min_rect().right() + 25., ui.min_rect().bottom()),
         );
 
+        let id = egui::Id::new("frame rect".to_owned() + &path);
         let button = ui
-            .interact(
-                gradient_rect,
-                egui::Id::new("frame rect".to_owned() + &path),
-                egui::Sense::click(),
-            )
+            .interact(gradient_rect, id, egui::Sense::click())
             .on_hover_cursor(egui::CursorIcon::PointingHand);
 
         if button.hovered() {
-            ui.gradient(
-                gradient_rect,
-                egui::Color32::TRANSPARENT,
-                shared.config.colors.dark_accent.into(),
-            );
+            let dark_accent = shared.config.colors.dark_accent.into();
+            ui.gradient(gradient_rect, egui::Color32::TRANSPARENT, dark_accent);
         }
 
         let frame = egui::Frame::new()
@@ -514,20 +501,14 @@ pub fn web_sample_button(
             egui::Pos2::new(ui.min_rect().right() + 25., ui.min_rect().bottom()),
         );
 
+        let id = egui::Id::new("frame rect".to_owned() + &name);
         let button = ui
-            .interact(
-                gradient_rect,
-                egui::Id::new("frame rect".to_owned() + &name),
-                egui::Sense::click(),
-            )
+            .interact(gradient_rect, id, egui::Sense::click())
             .on_hover_cursor(egui::CursorIcon::PointingHand);
 
         if button.contains_pointer() {
-            ui.gradient(
-                gradient_rect,
-                egui::Color32::TRANSPARENT,
-                shared.config.colors.dark_accent.into(),
-            );
+            let dark_accent = shared.config.colors.dark_accent.into();
+            ui.gradient(gradient_rect, egui::Color32::TRANSPARENT, dark_accent);
         }
 
         let frame = egui::Frame::new()
