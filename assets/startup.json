@@ -22,19 +22,19 @@
     {
       "code": "dev_docs",
       "url_type": "DevDocs",
-      "url": "introduction.html",
+      "url": "how-to-read-this.html",
       "items": [
         {
           "code": "skf",
-          "url": "file_specs.html"
+          "url": "file-specs.html"
         },
         {
           "code": "generic_runtime",
-          "url": "generic_runtimes.html"
+          "url": "generic-runtimes.html"
         },
         {
           "code": "engine_runtime",
-          "url": "engine_runtimes.html"
+          "url": "engine-runtimes.html"
         }
       ]
     },
