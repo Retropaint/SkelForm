@@ -137,9 +137,16 @@ fn startup_content(
                         ui.set_width(available_width);
                         if shared.recent_file_paths.len() == 0 {
                             ui.add_space(10.);
+
                             let msg = &shared.loc("startup.empty_recent_files");
                             let text = egui::RichText::new(msg).size(14.);
                             ui.label(text);
+
+                            let msg = &shared.loc("startup.early_access_warning");
+                            let orange = egui::Color32::ORANGE;
+                            let text = egui::RichText::new(msg).size(14.).color(orange);
+                            ui.label(text);
+
                             return;
                         }
 

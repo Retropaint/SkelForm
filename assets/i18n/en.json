@@ -24,7 +24,8 @@
   "startup": {
     "import": "Import",
     "samples": "Samples",
-    "empty_recent_files": "Start from scratch, import an SKF/PSD file, or try a sample from the options on the left.\n\nNew here? Please check out the Starter Guide on the right to be guided on your first rig.",
+    "empty_recent_files": "Start from scratch, import an SKF/PSD file, or try a sample from the options on the left.\n\nNew here? Check out the Starter Guide on the right to be guided on your first rig.",
+    "early_access_warning": "\nWARNING:\nSkelForm is a work in progress.\nExpect bugs, crashes, and breaking changes on newer versions.",
     "web_note": "Start from scratch, import an SKF/PSD file, or try a sample below:",
     "autosave_note": "Auto-generated backup file",
     "skellington_sample_desc": "A character with rubberhose-style limbs, utilizing mesh deformation.",
