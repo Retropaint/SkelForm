@@ -150,6 +150,10 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             }
             styles.remove(idx);
         }
+        PolarId::NewUpdate => {
+            let base_url = "https://github.com/Retropaint/SkelForm/releases/tag/v";
+            _ = open::that(base_url.to_owned() + &shared.ui.new_version.to_string());
+        }
     }
 }
 

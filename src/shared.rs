@@ -423,6 +423,7 @@ pub enum PolarId {
     DeleteFile,
     DeleteTex,
     DeleteStyle,
+    NewUpdate
 }
 enum_string!(PolarId);
 
@@ -548,6 +549,9 @@ pub struct Ui {
     pub focus_style_dropdown: bool,
     pub donating_modal: bool,
     pub atlas_modal: bool,
+    pub checking_update: bool,
+    pub update_request_sent: bool,
+    pub new_version: String
 }
 
 impl Ui {
@@ -568,7 +572,7 @@ impl Ui {
         self.headline = headline;
     }
 
-    pub fn open_polar_modal(&mut self, id: PolarId, headline: &str) {
+    pub fn open_polar_modal(&mut self, id: PolarId, headline: String) {
         self.polar_modal = true;
         self.polar_id = id;
         self.headline = headline.to_string();
@@ -1684,6 +1688,8 @@ pub struct StartupResourceItem {
     pub is_dev: bool,
     #[serde(default)]
     pub items: Vec<StartupResourceItem>,
+    #[serde(default)]
+    pub update_checker: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default, PartialEq)]

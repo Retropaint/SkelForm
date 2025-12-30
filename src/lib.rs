@@ -14,6 +14,8 @@ use std::io::Write;
 use shared::*;
 use wgpu::{BindGroupLayout, InstanceDescriptor};
 
+pub const VERSION_IDX: i32 = 1;
+
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
@@ -112,7 +114,8 @@ impl ApplicationHandler for App {
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            attributes = attributes.with_title("SkelForm");
+            let title = "SkelForm v".to_owned() + &env!("CARGO_PKG_VERSION").to_string();
+            attributes = attributes.with_title(title);
         }
 
         #[allow(unused_assignments)]
@@ -376,8 +379,8 @@ impl ApplicationHandler for App {
 
         if self.shared.ui.exiting {
             if self.shared.prev_undo_actions != self.shared.undo_actions {
-                let str_del = self.shared.loc("polar.unsaved").clone();
-                self.shared.ui.open_polar_modal(PolarId::Exiting, &str_del);
+                let str_del = self.shared.loc("polar.unsaved").clone().to_string();
+                self.shared.ui.open_polar_modal(PolarId::Exiting, str_del);
             } else {
                 event_loop.exit();
             }

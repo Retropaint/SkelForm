@@ -44,7 +44,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                 let context_id =
                     "bone_".to_owned() + &shared.selected_bone().unwrap().id.to_string();
                 shared.ui.context_menu.id = context_id;
-                shared.ui.open_polar_modal(PolarId::DeleteBone, &str);
+                shared.ui.open_polar_modal(PolarId::DeleteBone, str.to_string());
             }
         });
     });

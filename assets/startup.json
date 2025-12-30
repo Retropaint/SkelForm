@@ -53,6 +53,10 @@
     {
       "code": "donate",
       "url": "https://ko-fi.com/retropaintt"
+    },
+    {
+      "code": "check_update",
+      "update_checker": true
     }
   ]
 }

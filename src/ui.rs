@@ -8,6 +8,8 @@ use crate::*;
 const FFMPEG_ERR: &str =
     "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.";
 
+const UPDATE_ERR: &str = "Something went wrong.\n\nPlease check your internet connection and try again.\n\nIf the problem persists, it might be on SkelForm's side.\n\n[All Versions Page](https://github.com/Retropaint/SkelForm/releases)";
+
 pub trait EguiUi {
     fn skf_button(&mut self, text: &str) -> egui::Response;
     fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32);
@@ -185,6 +187,35 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     }
     if shared.ui.atlas_modal {
         atlas_modal::draw(shared, context);
+    }
+    if shared.ui.checking_update {
+        modal::modal(shared, context);
+        let url = "https://skelform.org/data/version";
+        let request = ureq::get(url).header("Example-Header", "header value");
+        let raw_ver = match request.call() {
+            Ok(mut data) => data.body_mut().read_to_string().unwrap(),
+            Err(_) => "err".to_string(),
+        };
+
+        if raw_ver == "err" {
+            shared.ui.open_modal(UPDATE_ERR.to_string(), false);
+        } else if raw_ver != "" {
+            let ver_str = raw_ver.split(' ').collect::<Vec<_>>();
+            let ver_idx = ver_str[0].parse::<i32>().unwrap();
+            let ver_name = ver_str[1];
+            if ver_idx > crate::VERSION_IDX {
+                shared.ui.new_version = ver_name.to_string();
+                let str = "New version available: ".to_owned()
+                    + &ver_name
+                    + "\nGo to version page and download manually?";
+                shared.ui.open_polar_modal(PolarId::NewUpdate, str);
+            } else {
+                let str = "No updates available. This is the latest version.".to_string();
+                shared.ui.open_modal(str, false);
+            }
+        }
+
+        shared.ui.checking_update = false;
     }
     style_once!(top_panel(context, shared));
 
@@ -765,7 +796,7 @@ impl EguiUi for egui::Ui {
     fn context_delete(&mut self, shared: &mut Shared, loc_code: &str, polar_id: PolarId) {
         if self.context_button(shared.loc("delete"), shared).clicked() {
             let str_del = &shared.loc(&("polar.".to_owned() + &loc_code)).clone();
-            shared.ui.open_polar_modal(polar_id, &str_del);
+            shared.ui.open_polar_modal(polar_id, str_del.to_string());
 
             // only hide the menu, as anim id is still needed for modal
             shared.ui.context_menu.hide = true;
