@@ -4,10 +4,12 @@
 /dev_docs
 #/release/dev_docs
 #/release/user_docs
-#/release/dev-docs
-#/release/user-docs
-#/release/SkelForm.app/Contents/MacOS
-#/release/SkelForm.app.zip
+/release/dev-docs
+/release/user-docs
+/release/SkelForm.app/Contents/MacOS/user-docs
+/release/SkelForm.app/Contents/MacOS/dev-docs
+/release/skelform_*
+/release/SkelForm.app.zip
 #skelform_*v0*
 autosave.skf
 armature.json
