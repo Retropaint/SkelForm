@@ -543,32 +543,36 @@ pub fn web_sample_button(
         let frame = egui::Frame::new()
             .inner_margin(egui::Margin::same(10))
             .fill(egui::Color32::TRANSPARENT);
-        frame.show(ui, |ui| {
-            ui.set_width(width);
-            ui.set_height(65.);
+        frame
+            .show(ui, |ui| {
+                ui.set_width(width);
+                ui.set_height(65.);
 
-            let rect = egui::Rect::from_min_size(
-                egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
-                thumb_size.into(),
-            );
-            if let Some(thumb_tex) = shared.thumb_ui_tex.get(&name) {
-                egui::Image::new(thumb_tex).paint_at(ui, rect);
-            }
-            let mut pos = egui::Pos2::new(
-                ui.min_rect().left_top().x + 72.,
-                ui.min_rect().left_top().y + 18.,
-            );
+                let rect = egui::Rect::from_min_size(
+                    egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
+                    thumb_size.into(),
+                );
+                if let Some(thumb_tex) = shared.thumb_ui_tex.get(&name) {
+                    egui::Image::new(thumb_tex).paint_at(ui, rect);
+                }
+                let mut pos = egui::Pos2::new(
+                    ui.min_rect().left_top().x + 72.,
+                    ui.min_rect().left_top().y + 18.,
+                );
 
-            let align = egui::Align2::LEFT_BOTTOM;
-            let font = egui::FontId::new(16., egui::FontFamily::Proportional);
-            let mut col = shared.config.colors.text;
-            ui.painter().text(pos, align, name, font, col.into());
+                let align = egui::Align2::LEFT_BOTTOM;
+                let font = egui::FontId::new(16., egui::FontFamily::Proportional);
+                let mut col = shared.config.colors.text;
+                ui.painter().text(pos, align, name, font, col.into());
 
-            pos.y += 18.;
-            let font = egui::FontId::new(11., egui::FontFamily::Proportional);
-            col -= Color::new(40, 40, 40, 0);
-            ui.painter().text(pos, align, tooltip, font, col.into());
-        });
+                pos.y += 18.;
+                let font = egui::FontId::new(11., egui::FontFamily::Proportional);
+                col -= Color::new(40, 40, 40, 0);
+                let trunc = utils::trunc_str(ui, &tooltip, ui.min_rect().width());
+                ui.painter().text(pos, align, trunc, font, col.into());
+            })
+            .response
+            .on_hover_text(tooltip);
 
         if button.clicked() {
             crate::downloadSample(filename.to_string());

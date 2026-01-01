@@ -50,8 +50,8 @@ subprocess.run(build_command, shell=True)
 
 # copy assets over to /dist
 shutil.copy("assets/skf_icon.ico", "dist/favicon.ico")
-shutil.copy("samples/skellington.skf", "dist/skellington.skf")
-shutil.copy("samples/skellina.skf", "dist/skellina.skf")
+shutil.copy("samples/_skellington.skf", "dist/_skellington.skf")
+shutil.copy("samples/_skellina.skf", "dist/_skellina.skf")
 
 if args.serve:
     # automatically serve via python http
