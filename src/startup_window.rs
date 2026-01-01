@@ -1,6 +1,9 @@
 use crate::ui::EguiUi;
 use crate::*;
 
+const SKEL_SKF: &str = "_skellington.skf";
+const SKELA_SKF: &str = "_skellina.skf";
+
 pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
     let window = egui::Window::new("startup")
         .title_bar(false)
@@ -101,13 +104,13 @@ fn startup_content(
                 add_thumb_tex!("skellina_icon.png", "../assets/skellina_icon.png");
 
                 let key = "skellington_icon.png";
-                let sample = utils::bin_path() + "samples/skellington.skf";
+                let sample = utils::bin_path() + "samples/" + SKEL_SKF;
                 let desc = shared.loc("startup.skellington_sample_desc");
                 let name = "Skellington";
                 sample_button!(key, name, sample, desc);
 
                 let key = "skellina_icon.png";
-                let sample = utils::bin_path() + "samples/skellina.skf";
+                let sample = utils::bin_path() + "samples/" + SKELA_SKF;
                 let desc = shared.loc("startup.skellina_sample_desc");
                 sample_button!(key, "Skellina", sample, desc);
             }
@@ -157,6 +160,13 @@ fn startup_content(
                         }
 
                         let path = shared.recent_file_paths[p].to_string();
+
+                        // ignore filenames starting with _
+                        let filename = path.split('/').collect::<Vec<_>>();
+                        if filename.last().unwrap().chars().nth(0).unwrap() == '_' {
+                            continue;
+                        }
+
                         if let Err(_) = std::fs::File::open(&path) {
                             let recent = &shared.recent_file_paths;
                             let idx = recent.iter().position(|r_path| *r_path == path).unwrap();
@@ -179,13 +189,13 @@ fn startup_content(
                 ui.add_space(20.);
 
                 let name = "Skellington Sample".to_owned();
-                let skf_name = "skellington.skf".to_string();
+                let skf_name = SKEL_SKF.to_string();
                 let skel_file = include_bytes!(".././assets/skellington_icon.png").to_vec();
                 let desc = shared.loc("startup.skellington_sample_desc");
                 web_sample_button(name, skf_name, skel_file, shared, ui, ctx, width, desc);
 
                 let name = "Skellina Sample".to_owned();
-                let skf_name = "skellina.skf".to_string();
+                let skf_name = SKELA_SKF.to_string();
                 let skel_file = include_bytes!(".././assets/skellina_icon.png").to_vec();
                 let desc = shared.loc("startup.skellina_sample_desc");
                 web_sample_button(name, skf_name, skel_file, shared, ui, ctx, width, desc);
