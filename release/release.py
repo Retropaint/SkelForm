@@ -76,6 +76,10 @@ if args.debug:
     mode = ""
     path = "debug"
 
+if platform.system() == "Linux":
+    subprocess.run("sudo apt-get install libglib2.0-dev", shell=True)
+    subprocess.run("sudo apt-get install libgtk-3-dev", shell=True)
+
 # yapf: disable
 subprocess.run (f"cargo build {mode}", shell=True)
 shutil.copy    (f"../target/{path}/SkelForm{binExt}", f"./{dirname}")
@@ -87,10 +91,7 @@ shutil.copytree("../samples",     f"./{dirname}/samples")
 
 # Platform-specific distribution
 
-if platform.system() == "Linux" and args.ubuntudeps:
-    subprocess.run("sudo apt-get install libglib2.0-dev", shell=True)
-    subprocess.run("sudo apt-get install libgtk-3-dev", shell=True)
-elif platform.system() == "Darwin":
+if platform.system() == "Darwin":
     print(">>> Preparing Mac app...")
     bin_path = "./SkelForm.app/Contents/MacOS/"
     if os.path.exists(bin_path):
