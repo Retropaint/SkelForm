@@ -105,7 +105,7 @@ jobs:
         run: cd release
           
       - name: build binary
-        run: cd release && python3 release.py --ubuntudeps && ls -g
+        run: cd release && python3 release.py --ubuntudeps
         
       - name: upload to release
         uses: softprops/action-gh-release@v2
@@ -115,7 +115,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            release/skelform_linux*
+            skelform_linux*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
