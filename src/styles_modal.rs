@@ -11,9 +11,9 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
         stroke: egui::Stroke::new(1., shared.config.colors.light_accent),
         ..Default::default()
     };
-    let modal;
 
-    #[cfg(target_os = "macos")]
+    let modal;
+    #[cfg(any(target_os = "macos", target_arch = "wasm32"))]
     {
         let center = egui::Pos2::new(
             (shared.window.x / shared.ui.scale / 2. - shared.ui.styles_modal_size.x) / 2.,
@@ -28,8 +28,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             )
             .frame(frame);
     }
-
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(all(not(target_os = "macos"), not(target_arch = "wasm32")))]
     {
         modal = egui::Modal::new("styles_modal".into()).frame(frame);
     }

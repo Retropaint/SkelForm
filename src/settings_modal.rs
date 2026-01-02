@@ -199,8 +199,9 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     }
 
     let dark_accent = &shared.config.colors.dark_accent;
+    let main = &shared.config.colors.main;
     color_row!("background", shared.config.colors.background, *dark_accent);
-    color_row!("gridline", shared.config.colors.gridline, *dark_accent);
+    color_row!("gridline", shared.config.colors.gridline, *main);
     color_row!(
         "center_point",
         shared.config.colors.center_point,
