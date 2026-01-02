@@ -115,7 +115,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            skelform_linux*
+            release/skelform_linux*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
