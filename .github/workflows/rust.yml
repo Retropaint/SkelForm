@@ -105,7 +105,7 @@ jobs:
         run: cd release
           
       - name: build binary
-        run: cd release && python3 release.py
+        run: cd release && python3 release.py --ubuntudeps
         
       - name: upload to release
         uses: softprops/action-gh-release@v2
