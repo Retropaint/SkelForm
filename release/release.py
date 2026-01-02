@@ -92,7 +92,9 @@ shutil.copytree("../samples",     f"./{dirname}/samples")
 
 # Platform-specific distribution
 
-if platform.system() == "Darwin":
+if platform.system() != "Darwin":
+    shutil.make_archive(dirname, 'zip', ".", dirname)
+else:
     print(">>> Preparing Mac app...")
     bin_path = "./SkelForm.app/Contents/MacOS/"
     if os.path.exists(bin_path):
