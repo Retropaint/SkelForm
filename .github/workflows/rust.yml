@@ -83,4 +83,39 @@ jobs:
             release/skelform_windows*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          
+      - name: install python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13.6"
+
+      - name: docs
+        run: cd release
+          
+      - name: build binary
+        run: cd release && python3 release.py
+        
+      - name: upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nightly
+          name: Nightly Build
+          draft: false
+          prerelease: false
+          files: |
+            release/SkelForm*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
