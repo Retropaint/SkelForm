@@ -137,21 +137,8 @@ fn startup_content(
                 let available_width = ui.available_width();
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     ui.set_width(available_width);
-                    if shared.recent_file_paths.len() == 0 {
-                        ui.add_space(10.);
 
-                        let msg = &shared.loc("startup.empty_recent_files");
-                        let text = egui::RichText::new(msg).size(14.);
-                        ui.label(text);
-
-                        let msg = &shared.loc("startup.early_access_warning");
-                        let mut orange: crate::Color = egui::Color32::ORANGE.into();
-                        orange -= crate::Color::new(30, 30, 30, 0);
-                        let text = egui::RichText::new(msg).size(14.).color(orange);
-                        ui.label(text);
-
-                        return;
-                    }
+                    let mut has_files = false;
 
                     for p in 0..shared.recent_file_paths.len() {
                         // safeguard for deleting a path during iteration
@@ -167,6 +154,8 @@ fn startup_content(
                             continue;
                         }
 
+                        has_files = true;
+
                         if let Err(_) = std::fs::File::open(&path) {
                             let recent = &shared.recent_file_paths;
                             let idx = recent.iter().position(|r_path| *r_path == path).unwrap();
@@ -176,6 +165,22 @@ fn startup_content(
 
                         skf_file_button(path, shared, ui, ctx, available_width);
                         ui.add_space(5.);
+                    }
+
+                    if !has_files {
+                        ui.add_space(10.);
+
+                        let msg = &shared.loc("startup.empty_recent_files");
+                        let text = egui::RichText::new(msg).size(14.);
+                        ui.label(text);
+
+                        let msg = &shared.loc("startup.early_access_warning");
+                        let mut orange: crate::Color = egui::Color32::ORANGE.into();
+                        orange -= crate::Color::new(30, 30, 30, 0);
+                        let text = egui::RichText::new(msg).size(14.).color(orange);
+                        ui.label(text);
+
+                        return;
                     }
                 });
             });
