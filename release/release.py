@@ -77,8 +77,8 @@ if args.debug:
     path = "debug"
 
 if platform.system() == "Linux":
-    subprocess.run("sudo apt-get install libglib2.0-dev", shell=True)
-    subprocess.run("sudo apt-get install libgtk-3-dev", shell=True)
+    subprocess.run("sudo apt-get -y install libglib2.0-dev", shell=True)
+    subprocess.run("sudo apt-get -y install libgtk-3-dev", shell=True)
 
 # yapf: disable
 subprocess.run (f"cargo build {mode}", shell=True)
