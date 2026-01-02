@@ -22,6 +22,7 @@ parser.add_argument("-v", "--verbose", action="store_true", help="Print output o
 parser.add_argument("-dmg", "--dmg", action="store_true", help="Attempt to create Mac dmg (requires create-dmg)")
 parser.add_argument("-dbg", "--debug", action="store_true", help="Create debug build")
 parser.add_argument("-nd", "--nodocs", action="store_true", help="Skip user docs & dev docs")
+parser.add_argument("-up", "--ubuntudeps", action="store_true", help="Install glib2 and gtk3 for Ubuntu (used for CI/CD)")
 args = parser.parse_args()
 
 stdout = "" if args.verbose else " &> /dev/null"
@@ -86,9 +87,10 @@ shutil.copytree("../samples",     f"./{dirname}/samples")
 
 # Platform-specific distribution
 
-if platform.system() != "Darwin":
-    shutil.make_archive(dirname, 'zip', ".", dirname)
-else:
+if platform.system() == "Linux" and args.ubuntudeps:
+    subprocess.run("sudo apt-get install libglib2.0-dev", shell=True)
+    subprocess.run("sudo apt-get install libgtk-3-dev", shell=True)
+elif platform.system() == "Darwin":
     print(">>> Preparing Mac app...")
     bin_path = "./SkelForm.app/Contents/MacOS/"
     if os.path.exists(bin_path):
