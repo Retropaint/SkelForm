@@ -8,6 +8,15 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
         (shared.window.x / shared.ui.scale / 2. - shared.ui.styles_modal_size.x) / 2.,
         (shared.window.y / shared.ui.scale / 2. - shared.ui.styles_modal_size.y) / 2.,
     );
+    let frame = egui::Frame {
+        corner_radius: 0.into(),
+        fill: shared.config.colors.main.into(),
+        inner_margin: egui::Margin::same(5),
+        stroke: egui::Stroke::new(1., shared.config.colors.light_accent),
+        ..Default::default()
+    };
+
+    #[cfg(target_os = "macos")]
     let modal = egui::Modal::new("styles_modal".into())
         // set modal render order so that tex idx dropdown can be rendered above
         .area(
@@ -15,13 +24,10 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                 .fixed_pos(center)
                 .order(egui::Order::Middle),
         )
-        .frame(egui::Frame {
-            corner_radius: 0.into(),
-            fill: shared.config.colors.main.into(),
-            inner_margin: egui::Margin::same(5),
-            stroke: egui::Stroke::new(1., shared.config.colors.light_accent),
-            ..Default::default()
-        });
+        .frame(frame);
+    #[cfg(not(target_os = "macos"))]
+    let modal = egui::Modal::new("styles_modal".into()).frame(frame);
+
     modal.show(ctx, |ui| {
         ui.set_width(modal_size.x);
         ui.set_height(modal_size.y);
@@ -50,6 +56,36 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
         });
 
         shared.ui.styles_modal_size = ui.min_rect().size().into();
+    });
+}
+
+pub fn new_raw_modal(shared: &Shared) {
+    let center = egui::Pos2::new(
+        (shared.window.x / shared.ui.scale / 2. - shared.ui.styles_modal_size.x) / 2.,
+        (shared.window.y / shared.ui.scale / 2. - shared.ui.styles_modal_size.y) / 2.,
+    );
+    #[cfg(target_os = "macos")]
+    let modal = egui::Modal::new("styles_modal".into())
+        // set modal render order so that tex idx dropdown can be rendered above
+        .area(
+            egui::Area::new("styles_modal_area".into())
+                .fixed_pos(center)
+                .order(egui::Order::Middle),
+        )
+        .frame(egui::Frame {
+            corner_radius: 0.into(),
+            fill: shared.config.colors.main.into(),
+            inner_margin: egui::Margin::same(5),
+            stroke: egui::Stroke::new(1., shared.config.colors.light_accent),
+            ..Default::default()
+        });
+    #[cfg(target_os = "macos")]
+    let modal = egui::Modal::new("styles_modal".into()).frame(egui::Frame {
+        corner_radius: 0.into(),
+        fill: shared.config.colors.main.into(),
+        inner_margin: egui::Margin::same(5),
+        stroke: egui::Stroke::new(1., shared.config.colors.light_accent),
+        ..Default::default()
     });
 }
 
