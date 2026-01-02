@@ -76,7 +76,7 @@ if args.debug:
     mode = ""
     path = "debug"
 
-if platform.system() == "Linux":
+if args.ubuntudeps:
     subprocess.run("sudo apt-get -y install libglib2.0-dev", shell=True)
     subprocess.run("sudo apt-get -y install libgtk-3-dev", shell=True)
 
