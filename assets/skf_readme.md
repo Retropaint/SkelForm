@@ -23,6 +23,3 @@ The only files necessary for parsing are `armature.json` and `textures.png`.
 
 - Bone init fields (`init_*`) should be immutable, and are used to reset their
   respective fields if animation blending is implemented (more info in dev docs)
-
-- Bone `hidden` field is an integer for animation support purposes, but should
-  be treated like a bool (`0` = false, `1` = true)
