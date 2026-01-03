@@ -687,6 +687,12 @@ impl Renderer {
         let width = shared.screenshot_res.x as u32;
         let height = shared.screenshot_res.y as u32;
 
+        #[cfg(target_os = "linux")]
+        let format = wgpu::TextureFormat::Rgba8Unorm;
+
+        #[cfg(not(target_os = "linux"))]
+        let format = wgpu::TextureFormat::Bgra8Unorm;
+
         let capture_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
                 width,
@@ -696,7 +702,7 @@ impl Renderer {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Unorm,
+            format,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
             label: Some("Capture Texture"),
             view_formats: &[],
