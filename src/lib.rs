@@ -397,7 +397,6 @@ impl ApplicationHandler for App {
 
 pub struct Renderer {
     gpu: Gpu,
-    depth_texture_view: wgpu::TextureView,
     egui_renderer: egui_wgpu::Renderer,
     scene: Scene,
     bind_group_layout: BindGroupLayout,
@@ -410,7 +409,6 @@ impl Renderer {
         height: u32,
     ) -> Self {
         let gpu = Gpu::new_async(window, width, height).await;
-        let depth_texture_view = gpu.create_depth_texture(width, height);
 
         let egui_renderer =
             egui_wgpu::Renderer::new(&gpu.device, gpu.surface_config.format, None, 1, false);
@@ -443,7 +441,6 @@ impl Renderer {
 
         Self {
             gpu,
-            depth_texture_view,
             egui_renderer,
             scene,
             bind_group_layout,
@@ -452,7 +449,6 @@ impl Renderer {
 
     pub fn resize(&mut self, width: u32, height: u32) {
         self.gpu.resize(width, height);
-        self.depth_texture_view = self.gpu.create_depth_texture(width, height);
     }
 
     pub fn render_frame(
@@ -689,7 +685,6 @@ impl Renderer {
         });
 
         let capture_view = capture_texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let depth_texture_view = self.gpu.create_depth_texture(width, height);
         let clear_color = shared.config.colors.background;
 
         let mut encoder = self
@@ -873,37 +868,6 @@ impl Gpu {
         self.surface_config.width = width;
         self.surface_config.height = height;
         self.surface.configure(&self.device, &self.surface_config);
-    }
-
-    pub fn create_depth_texture(&self, width: u32, height: u32) -> wgpu::TextureView {
-        let texture = self.device.create_texture(
-            &(wgpu::TextureDescriptor {
-                label: Some("Depth Texture"),
-                size: wgpu::Extent3d {
-                    width,
-                    height,
-                    depth_or_array_layers: 1,
-                },
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Depth32Float,
-                usage: wgpu::TextureUsages::RENDER_ATTACHMENT
-                    | wgpu::TextureUsages::TEXTURE_BINDING,
-                view_formats: &[],
-            }),
-        );
-        texture.create_view(&wgpu::TextureViewDescriptor {
-            label: None,
-            format: Some(wgpu::TextureFormat::Depth32Float),
-            dimension: Some(wgpu::TextureViewDimension::D2),
-            aspect: wgpu::TextureAspect::All,
-            base_mip_level: 0,
-            base_array_layer: 0,
-            array_layer_count: None,
-            mip_level_count: None,
-            usage: None,
-        })
     }
 
     pub async fn new_async(
