@@ -404,8 +404,6 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
-
     pub async fn new(
         window: impl Into<wgpu::SurfaceTarget<'static>>,
         width: u32,
@@ -414,13 +412,8 @@ impl Renderer {
         let gpu = Gpu::new_async(window, width, height).await;
         let depth_texture_view = gpu.create_depth_texture(width, height);
 
-        let egui_renderer = egui_wgpu::Renderer::new(
-            &gpu.device,
-            gpu.surface_config.format,
-            Some(Self::DEPTH_FORMAT),
-            1,
-            false,
-        );
+        let egui_renderer =
+            egui_wgpu::Renderer::new(&gpu.device, gpu.surface_config.format, None, 1, false);
 
         let bind_group_layout =
             gpu.device
@@ -564,14 +557,7 @@ impl Renderer {
                     store: wgpu::StoreOp::Store,
                 },
             })],
-            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                view: &self.depth_texture_view,
-                depth_ops: Some(wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(1.0),
-                    store: wgpu::StoreOp::Store,
-                }),
-                stencil_ops: None,
-            }),
+            depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
         });
@@ -729,14 +715,7 @@ impl Renderer {
                         store: wgpu::StoreOp::Store,
                     },
                 })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: &depth_texture_view,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(1.0),
-                        store: wgpu::StoreOp::Store,
-                    }),
-                    stencil_ops: None,
-                }),
+                depth_stencil_attachment: None,
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
@@ -1069,13 +1048,7 @@ impl Scene {
                 conservative: false,
                 unclipped_depth: false,
             },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: Renderer::DEPTH_FORMAT,
-                depth_write_enabled: false, // disabled for transparency
-                depth_compare: wgpu::CompareFunction::Less,
-                stencil: wgpu::StencilState::default(),
-                bias: wgpu::DepthBiasState::default(),
-            }),
+            depth_stencil: None,
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
