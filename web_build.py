@@ -29,6 +29,7 @@ parser.add_argument("-r",   "--release", action="store_true", help="build for re
 parser.add_argument("-m",   "--mobile",  action="store_true", help="build for mobile")
 parser.add_argument("-d",   "--debug",   action="store_true", help="build with debug flag. Ignored if --release is present",)
 parser.add_argument("-u",   "--baseurl", action="store", help="Sets the base url. Overrides url from --release",)
+parser.add_argument("-wg",   "--webgpu", action="store", help="Builds with webgpu feature instead of webgl",)
 
 args = parser.parse_args()
 
@@ -42,6 +43,10 @@ if args.mobile:
     features += " mobile"
 if args.debug and not args.release:
     features += " debug"
+if args.webgpu:
+    features += "webgpu"
+else:
+    features += "webgl"
 
 features += '"'
 
