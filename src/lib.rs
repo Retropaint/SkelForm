@@ -93,7 +93,6 @@ pub struct App {
     last_render_time: Option<Instant>,
     #[cfg(target_arch = "wasm32")]
     pub renderer_receiver: Option<futures::channel::oneshot::Receiver<Renderer>>,
-    last_size: (u32, u32),
     pub shared: shared::Shared,
 }
 
@@ -118,10 +117,6 @@ impl ApplicationHandler for App {
             attributes = attributes.with_title(title);
         }
 
-        #[allow(unused_assignments)]
-        #[cfg(target_arch = "wasm32")]
-        let (mut canvas_width, mut canvas_height) = (0, 0);
-
         #[cfg(target_arch = "wasm32")]
         {
             use winit::platform::web::WindowAttributesExtWebSys;
@@ -133,10 +128,7 @@ impl ApplicationHandler for App {
                 .unwrap()
                 .dyn_into::<wgpu::web_sys::HtmlCanvasElement>()
                 .unwrap();
-            canvas_width = canvas.width();
-            canvas_height = canvas.height();
-            self.shared.window = Vec2::new(canvas_width as f32, canvas_height as f32);
-            self.last_size = (canvas_width, canvas_height);
+            self.shared.window = Vec2::new(canvas.width() as f32, canvas.height() as f32);
             attributes = attributes.with_canvas(Some(canvas));
         }
 
@@ -156,18 +148,10 @@ impl ApplicationHandler for App {
                 op.zoom_with_keyboard = false;
             });
 
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                let inner_size = window_handle.inner_size();
-                self.last_size = (inner_size.width, inner_size.height);
-            }
-
             #[cfg(target_arch = "wasm32")]
             {
                 gui_context.set_pixels_per_point(window_handle.scale_factor() as f32);
             }
-
-            self.shared.window_factor = window_handle.scale_factor() as f32;
 
             let viewport_id = gui_context.viewport_id();
             let gui_state = egui_winit::State::new(
@@ -199,10 +183,11 @@ impl ApplicationHandler for App {
                 self.renderer_receiver = Some(receiver);
                 std::panic::set_hook(Box::new(console_error_panic_hook::hook));
                 console_log::init().expect("Failed to initialize logger!");
-                log::info!("Canvas dimensions: ({canvas_width} x {canvas_height})");
+                //log::info!("Canvas dimensions: ({canvas_width} x {canvas_height})");
+                let size = self.shared.window.clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     let renderer =
-                        Renderer::new(window_handle.clone(), canvas_width, canvas_height).await;
+                        Renderer::new(window_handle.clone(), size.x as u32, size.y as u32).await;
                     if sender.send(renderer).is_err() {
                         log::error!("Failed to create and send renderer!");
                     }
@@ -307,17 +292,11 @@ impl ApplicationHandler for App {
                 mut width,
                 mut height,
             }) => {
-                // Force window to be the properly reported canvas size,
-                // otherwise it expands itself to infinity... and beyond!
-                #[cfg(target_arch = "wasm32")]
-                {
-                    width = getCanvasWidth();
-                    height = getCanvasHeight();
-                    log::info!("Resizing renderer surface to: ({width}, {height})");
+                if width == 0 || height == 0 {
+                    return;
                 }
-                self.last_size = (width, height);
-                self.shared.window = Vec2::new(self.last_size.0 as f32, self.last_size.1 as f32);
-                renderer.resize(self.shared.window.x as u32, self.shared.window.y as u32);
+                self.shared.window = Vec2::new(width as f32, height as f32);
+                renderer.resize(width as u32, height as u32);
             }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
@@ -342,20 +321,24 @@ impl ApplicationHandler for App {
                 } = gui_state.egui_ctx().end_pass();
 
                 gui_state.handle_platform_output(window, platform_output);
-
                 let paint_jobs = gui_state.egui_ctx().tessellate(shapes, pixels_per_point);
-
                 if self.shared.ui.scale <= 0. {
                     self.shared.ui.scale = 1.;
                 }
 
+                let size = window.inner_size();
                 let screen_descriptor = {
-                    let (width, height) = self.last_size;
                     egui_wgpu::ScreenDescriptor {
-                        size_in_pixels: [width, height],
-                        pixels_per_point: window.scale_factor() as f32 * self.shared.ui.scale,
+                        size_in_pixels: [size.width, size.height],
+                        pixels_per_point,
                     }
                 };
+
+                if !self.shared.initialized_window {
+                    self.shared.window = Vec2::new(size.width as f32, size.height as f32);
+                    renderer.resize(size.width as u32, size.height as u32);
+                    self.shared.initialized_window = true;
+                }
 
                 renderer.render_frame(
                     screen_descriptor,
@@ -363,7 +346,8 @@ impl ApplicationHandler for App {
                     textures_delta,
                     &mut self.shared,
                 );
-                self.shared.window_factor = window.scale_factor() as f32;
+                let scale = self.shared.ui.scale;
+                gui_state.egui_ctx().set_pixels_per_point(scale);
             }
             _ => (),
         }
@@ -935,7 +919,7 @@ impl Gpu {
             format: surface_format,
             width,
             height,
-            present_mode: surface_capabilities.present_modes[0],
+            present_mode: wgpu::PresentMode::Fifo,
             alpha_mode: surface_capabilities.alpha_modes[0],
             view_formats: vec![],
             desired_maximum_frame_latency: 2,

@@ -86,7 +86,6 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         if let Some(mouse) = i.pointer.latest_pos() {
             shared.input.mouse = mouse.into();
             shared.input.mouse *= shared.ui.scale;
-            shared.input.mouse *= shared.window_factor;
         }
 
         // don't record prev mouse on first frame of touch as it
@@ -114,20 +113,6 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
     shared.cursor_icon = egui::CursorIcon::Default;
 
     default_styling(context, shared);
-
-    let scale_mod: f32;
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        scale_mod = 1.;
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        scale_mod = _window_factor;
-    }
-
-    context.set_zoom_factor(shared.ui.scale * scale_mod);
 
     // apply individual element styling once, then immediately go back to default
     macro_rules! style_once {
@@ -361,7 +346,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         ($text:expr, $offset:expr) => {
             let align = egui::Align2::CENTER_CENTER;
             let font = egui::FontId::default();
-            let mouse_pos = shared.input.mouse / shared.window_factor + $offset;
+            let mouse_pos = shared.input.mouse + $offset;
             let painter = context.debug_painter();
 
             let pos = (mouse_pos + Vec2::new(1., 1.)).into();

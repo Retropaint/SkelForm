@@ -423,7 +423,7 @@ pub enum PolarId {
     DeleteFile,
     DeleteTex,
     DeleteStyle,
-    NewUpdate
+    NewUpdate,
 }
 enum_string!(PolarId);
 
@@ -551,7 +551,7 @@ pub struct Ui {
     pub atlas_modal: bool,
     pub checking_update: bool,
     pub update_request_sent: bool,
-    pub new_version: String
+    pub new_version: String,
 }
 
 impl Ui {
@@ -665,7 +665,7 @@ pub struct ColorConfig {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            ui_scale: default_one(),
+            ui_scale: 2.,
             colors: ColorConfig::default(),
             keys: KeyboardConfig::default(),
             gridline_gap: gridline_default(),
@@ -1709,7 +1709,6 @@ pub struct Startup {
 #[derive(Default)]
 pub struct Shared {
     pub window: Vec2,
-    pub window_factor: f32,
     pub armature: Armature,
     pub camera: Camera,
     pub input: InputStates,
@@ -1776,6 +1775,8 @@ pub struct Shared {
     pub was_editing_path: bool,
 
     pub mobile: bool,
+
+    pub initialized_window: bool,
 
     loc_strings: std::collections::HashMap<String, String>,
 }

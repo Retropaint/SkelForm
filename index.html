@@ -37,6 +37,8 @@
             .main-canvas {
                 display: block;
                 z-index: 1;
+                width: 100vw;
+                height: 100vh;
             }
 
             .resolution-message {
@@ -175,7 +177,7 @@
             data-target-name="SkelForm"
         />
         <div class="root">
-            <canvas class="main-canvas" id="canvas" style="visibility: hidden" width="100px" height="100px"></canvas>
+            <canvas class="main-canvas" id="canvas" style="visibility: hidden"></canvas>
         </div>
 
         <form></form>
@@ -277,9 +279,9 @@
             function resizeCanvas() {
                 const canvas = document.getElementById("canvas");
                
-                canvas.width = Math.ceil(window.innerWidth * 2);
-                canvas.height = Math.ceil(window.innerHeight * 2);
-                canvas.style.transform = "scale(0.5, 0.5)";
+                //canvas.width = Math.ceil(window.innerWidth * 2);
+                //canvas.height = Math.ceil(window.innerHeight * 2);
+                //canvas.style.transform = "scale(0.5, 0.5)";
             }
 
             function getCanvasWidth() {
