@@ -665,7 +665,7 @@ pub struct ColorConfig {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            ui_scale: 2.,
+            ui_scale: default_one(),
             colors: ColorConfig::default(),
             keys: KeyboardConfig::default(),
             gridline_gap: gridline_default(),
