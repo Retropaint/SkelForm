@@ -892,9 +892,6 @@ pub fn process_thumbnail(
     device: &wgpu::Device,
     resolution: Vec2,
 ) -> Vec<u8> {
-    // wait for screenshot buffer to complete
-    let _ = device.poll(wgpu::PollType::Wait);
-
     let view = buffer.slice(..).get_mapped_range();
 
     let mut rgb = vec![0u8; (resolution.x * resolution.y * 3.) as usize];
@@ -939,14 +936,14 @@ pub fn trunc_str(ui: &egui::Ui, text: &str, max_width: f32) -> String {
     let mut trunc = 0;
     let f_id = egui::FontId::proportional(14.0);
     let col = egui::Color32::WHITE;
-    let mut width = ui.ctx().fonts(|fonts| {
+    let mut width = ui.ctx().fonts_mut(|fonts| {
         let galley = fonts.layout_no_wrap(text.to_string(), f_id.clone(), col);
         galley.size().x
     });
     let mut ctext = text.to_string();
     let elipsis_margin = 7.;
     while width + elipsis_margin > max_width {
-        width = ui.ctx().fonts(|fonts| {
+        width = ui.ctx().fonts_mut(|fonts| {
             ctext = ctext[0..ctext.len() - trunc].to_string();
             let galley = fonts.layout_no_wrap(ctext.to_string(), f_id.clone(), col);
             trunc += 1;

@@ -11,6 +11,7 @@
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Write;
 
+use egui_wgpu::wgpu::ExperimentalFeatures;
 use shared::*;
 use wgpu::{BindGroupLayout, InstanceDescriptor};
 
@@ -394,8 +395,15 @@ impl Renderer {
     ) -> Self {
         let gpu = Gpu::new_async(window, width, height).await;
 
-        let egui_renderer =
-            egui_wgpu::Renderer::new(&gpu.device, gpu.surface_config.format, None, 1, false);
+        let egui_renderer = egui_wgpu::Renderer::new(
+            &gpu.device,
+            gpu.surface_config.format,
+            egui_wgpu::RendererOptions {
+                depth_stencil_format: None,
+                msaa_samples: 1,
+                ..Default::default()
+            },
+        );
 
         let bind_group_layout =
             gpu.device
@@ -536,6 +544,7 @@ impl Renderer {
                     }),
                     store: wgpu::StoreOp::Store,
                 },
+                depth_slice: None,
             })],
             depth_stencil_attachment: None,
             timestamp_writes: None,
@@ -684,6 +693,7 @@ impl Renderer {
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &capture_view,
                     resolve_target: None,
+                    depth_slice: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
                             r: clear_color.r as f64 / 255.,
@@ -898,8 +908,10 @@ impl Gpu {
                     #[cfg(not(target_arch = "wasm32"))]
                     required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
                     #[cfg(target_arch = "wasm32")]
-                    required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
+                    required_limits: wgpu::Limits::downlevel_webgl2_defaults()
+                        .using_resolution(adapter.limits()),
                     trace: wgpu::Trace::Off,
+                    experimental_features: ExperimentalFeatures::disabled(),
                 })
                 .await
                 .expect("Failed to request a device!")

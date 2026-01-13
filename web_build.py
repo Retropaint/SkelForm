@@ -28,13 +28,16 @@ parser.add_argument("-s",   "--serve",   action="store_true", help="automaticall
 parser.add_argument("-r",   "--release", action="store_true", help="build for release/production")
 parser.add_argument("-m",   "--mobile",  action="store_true", help="build for mobile")
 parser.add_argument("-d",   "--debug",   action="store_true", help="build with debug flag. Ignored if --release is present",)
+parser.add_argument("-u",   "--baseurl", action="store", help="Sets the base url. Overrides url from --release",)
 
 args = parser.parse_args()
 
 if args.release and not args.mobile:
     generic += " --release"
-    if not args.serve:
+    if not args.serve and not args.baseurl:
         generic += " --public-url=/editor"
+    elif args.baseurl:
+        generic += " --public-url=/" + args.baseurl
 if args.mobile:
     features += " mobile"
 if args.debug and not args.release:
