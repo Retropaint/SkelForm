@@ -11,9 +11,9 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
         .movable(false);
     window.show(ctx, |ui| {
         let gradient = shared.config.colors.gradient.into();
-        ui.gradient(ui.ctx().screen_rect(), egui::Color32::TRANSPARENT, gradient);
-        let width = ui.ctx().screen_rect().width();
-        let height = ui.ctx().screen_rect().height();
+        ui.gradient(ui.ctx().content_rect(), egui::Color32::TRANSPARENT, gradient);
+        let width = ui.ctx().content_rect().width();
+        let height = ui.ctx().content_rect().height();
         ui.set_width(width.max(0.));
         ui.set_height(height.max(0.));
 

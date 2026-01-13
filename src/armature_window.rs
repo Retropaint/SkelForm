@@ -42,7 +42,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         panel_id,
         side_panel.resizable(true).show(egui_ctx, |ui| {
             ui.gradient(
-                ui.ctx().screen_rect(),
+                ui.ctx().content_rect(),
                 Color32::TRANSPARENT,
                 shared.config.colors.gradient.into(),
             );

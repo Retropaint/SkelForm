@@ -255,7 +255,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         side_panel.show(context, |ui| {
             ui.add_enabled_ui(enable_bone_panel, |ui| {
                 let gradient = shared.config.colors.gradient.into();
-                ui.gradient(ui.ctx().screen_rect(), Color32::TRANSPARENT, gradient);
+                ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
 
                 if shared.ui.selected_bone_idx != usize::MAX {
                     bone_panel::draw(selected_bone.clone(), ui, shared);
@@ -287,7 +287,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             if keyframe_panel != None && shared.ui.anim.open {
                 shared.ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
-                shared.ui.camera_bar.pos.y = context.screen_rect().bottom();
+                shared.ui.camera_bar.pos.y = context.content_rect().bottom();
             }
             shared.ui.camera_bar.pos.y -= shared.ui.camera_bar.scale.y + 15.;
         }
@@ -301,7 +301,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             if keyframe_panel != None && shared.ui.anim.open {
                 shared.ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
-                shared.ui.camera_bar.pos.y = context.screen_rect().bottom();
+                shared.ui.camera_bar.pos.y = context.content_rect().bottom();
             }
             shared.ui.camera_bar.pos.y -= shared.ui.camera_bar.scale.y + 15.;
         }
@@ -309,14 +309,14 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
             shared.ui.edit_bar.pos.x = bone_panel.right();
             shared.ui.edit_bar.pos.y = top_panel.bottom();
 
-            shared.ui.anim_bar.pos.x = context.screen_rect().right() - shared.ui.anim_bar.scale.x;
+            shared.ui.anim_bar.pos.x = context.content_rect().right() - shared.ui.anim_bar.scale.x;
             shared.ui.anim_bar.pos.y = top_panel.bottom();
 
             shared.ui.camera_bar.pos.x = bone_panel.right() + 7.;
             if keyframe_panel != None && shared.ui.anim.open {
                 shared.ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
-                shared.ui.camera_bar.pos.y = context.screen_rect().bottom();
+                shared.ui.camera_bar.pos.y = context.content_rect().bottom();
             }
             shared.ui.camera_bar.pos.y -= shared.ui.camera_bar.scale.y + 15.;
         }

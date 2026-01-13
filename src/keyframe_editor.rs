@@ -40,7 +40,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         panel_id,
         panel.show(egui_ctx, |ui| {
             ui.gradient(
-                ui.ctx().screen_rect(),
+                ui.ctx().content_rect(),
                 egui::Color32::TRANSPARENT,
                 shared.config.colors.gradient.into(),
             );

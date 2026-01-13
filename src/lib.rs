@@ -907,9 +907,8 @@ impl Gpu {
                     required_features: wgpu::Features::default(),
                     #[cfg(not(target_arch = "wasm32"))]
                     required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
-                    #[cfg(target_arch = "wasm32")]
-                    required_limits: wgpu::Limits::downlevel_webgl2_defaults()
-                        .using_resolution(adapter.limits()),
+                    #[cfg(all(target_arch = "wasm32"))]
+                    required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
                     trace: wgpu::Trace::Off,
                     experimental_features: ExperimentalFeatures::disabled(),
                 })
