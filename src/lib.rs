@@ -347,7 +347,7 @@ impl ApplicationHandler for App {
                     textures_delta,
                     &mut self.shared,
                 );
-                let scale = self.shared.ui.scale * 2.;
+                let scale = self.shared.ui.scale * window.scale_factor() as f32;
                 gui_state.egui_ctx().set_pixels_per_point(scale);
             }
             _ => (),
