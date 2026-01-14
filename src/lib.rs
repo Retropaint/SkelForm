@@ -880,7 +880,7 @@ impl Gpu {
         #[cfg(target_arch = "wasm32")]
         {
             instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-                backends: wgpu::Backends::BROWSER_WEBGPU | wgpu::Backends::GL,
+                backends: wgpu::Backends::GL,
                 ..Default::default()
             });
         }
