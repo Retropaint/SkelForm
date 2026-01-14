@@ -239,12 +239,6 @@ impl ApplicationHandler for App {
             return;
         };
 
-        #[cfg(target_arch = "wasm32")]
-        {
-            self.shared.ui.scale = getUiSliderValue() * window.scale_factor() as f32;
-            self.shared.mobile = isMobile();
-        }
-
         // Receive gui window event
         if gui_state.on_window_event(window, &event).consumed {
             //return;
@@ -340,7 +334,17 @@ impl ApplicationHandler for App {
                     textures_delta,
                     &mut self.shared,
                 );
-                self.shared.ui.scale = self.shared.config.ui_scale * window.scale_factor() as f32;
+
+                #[cfg(target_arch = "wasm32")]
+                {
+                    self.shared.ui.scale = getUiSliderValue() * window.scale_factor() as f32;
+                    self.shared.mobile = isMobile();
+                }
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    self.shared.ui.scale =
+                        self.shared.config.ui_scale * window.scale_factor() as f32;
+                }
                 gui_state
                     .egui_ctx()
                     .set_pixels_per_point(self.shared.ui.scale);
