@@ -226,16 +226,6 @@ impl ApplicationHandler for App {
             self.gui_state.as_ref().unwrap().egui_ctx(),
         );
 
-        #[cfg(target_arch = "wasm32")]
-        {
-            // disabled: web ui slider may be used to fix scaling issues,
-            // but for now it's unneeded
-
-            self.shared.ui.scale = getUiSliderValue();
-
-            self.shared.mobile = isMobile();
-        }
-
         if self.shared.ui.scale <= 0. {
             self.shared.ui.scale = 1.;
         }
@@ -248,6 +238,12 @@ impl ApplicationHandler for App {
         ) else {
             return;
         };
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            self.shared.ui.scale = getUiSliderValue() * window.scale_factor() as f32;
+            self.shared.mobile = isMobile();
+        }
 
         // Receive gui window event
         if gui_state.on_window_event(window, &event).consumed {
@@ -323,9 +319,6 @@ impl ApplicationHandler for App {
 
                 gui_state.handle_platform_output(window, platform_output);
                 let paint_jobs = gui_state.egui_ctx().tessellate(shapes, pixels_per_point);
-                if self.shared.ui.scale <= 0. {
-                    self.shared.ui.scale = 1.;
-                }
 
                 let size = window.inner_size();
                 let screen_descriptor = {
@@ -347,8 +340,10 @@ impl ApplicationHandler for App {
                     textures_delta,
                     &mut self.shared,
                 );
-                let scale = self.shared.ui.scale * window.scale_factor() as f32;
-                gui_state.egui_ctx().set_pixels_per_point(scale);
+                self.shared.ui.scale = self.shared.config.ui_scale * window.scale_factor() as f32;
+                gui_state
+                    .egui_ctx()
+                    .set_pixels_per_point(self.shared.ui.scale);
             }
             _ => (),
         }
@@ -870,7 +865,7 @@ impl Gpu {
         height: u32,
     ) -> Self {
         let surface: wgpu::Surface;
-        let instance: wgpu::Instance;
+        let mut instance = wgpu::Instance::new(&InstanceDescriptor::default());
 
         // force DX12 on Windows
         #[cfg(target_os = "windows")]
@@ -882,24 +877,25 @@ impl Gpu {
             });
         }
 
-        #[cfg(not(target_os = "windows"))]
+        #[cfg(target_arch = "wasm32")]
         {
-            instance = wgpu::Instance::new(&InstanceDescriptor::default());
+            instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+                backends: wgpu::Backends::BROWSER_WEBGPU | wgpu::Backends::GL,
+                ..Default::default()
+            });
         }
 
         surface = instance.create_surface(window).unwrap();
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
+                power_preference: wgpu::PowerPreference::HighPerformance,
                 compatible_surface: Some(&surface),
                 force_fallback_adapter: false,
             })
             .await
-            .expect("Failed to request adapter!");
+            .unwrap();
         let (device, queue) = {
-            #[cfg(target_arch = "wasm32")]
-            log::info!("WGPU Adapter Features: {:#?}", adapter.features());
             adapter
                 .request_device(&wgpu::DeviceDescriptor {
                     label: Some("WGPU Device"),
@@ -907,9 +903,7 @@ impl Gpu {
                     required_features: wgpu::Features::default(),
                     #[cfg(not(target_arch = "wasm32"))]
                     required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
-                    #[cfg(all(target_arch = "wasm32", feature = "webgpu"))]
-                    required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
-                    #[cfg(all(target_arch = "wasm32", feature = "webgl"))]
+                    #[cfg(all(target_arch = "wasm32"))]
                     required_limits: wgpu::Limits::downlevel_webgl2_defaults()
                         .using_resolution(adapter.limits()),
                     trace: wgpu::Trace::Off,
