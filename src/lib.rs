@@ -589,7 +589,6 @@ impl Renderer {
         let buffer = shared.rendered_frames[0].buffer.clone();
         shared.rendered_frames = vec![];
         let screenshot_res = shared.screenshot_res;
-        let device = self.gpu.device.clone();
         let mut armature = shared.armature.clone();
         let camera = shared.camera.clone();
         let mut save_path = shared.file_name.lock().unwrap().clone();
@@ -623,7 +622,7 @@ impl Renderer {
             let options = zip::write::FullFileOptions::default()
                 .compression_method(zip::CompressionMethod::Stored);
 
-            let thumb_buf = utils::process_thumbnail(&buffer, &device, screenshot_res);
+            let thumb_buf = utils::process_thumbnail(&buffer, screenshot_res);
 
             // save relevant files into the zip
             zip.start_file("armature.json", options.clone()).unwrap();
@@ -865,6 +864,7 @@ impl Gpu {
         height: u32,
     ) -> Self {
         let surface: wgpu::Surface;
+        #[allow(unused_mut)]
         let mut instance = wgpu::Instance::new(&InstanceDescriptor::default());
 
         // force DX12 on Windows

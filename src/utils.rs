@@ -887,11 +887,7 @@ pub fn without_unicode(str: &str) -> &str {
     str.split('\u{0000}').collect::<Vec<_>>()[0]
 }
 
-pub fn process_thumbnail(
-    buffer: &wgpu::Buffer,
-    device: &wgpu::Device,
-    resolution: Vec2,
-) -> Vec<u8> {
+pub fn process_thumbnail(buffer: &wgpu::Buffer, resolution: Vec2) -> Vec<u8> {
     let view = buffer.slice(..).get_mapped_range();
 
     let mut rgb = vec![0u8; (resolution.x * resolution.y * 3.) as usize];

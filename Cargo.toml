@@ -8,13 +8,17 @@ crate-type = ["cdylib", "rlib"]
 path = "src/lib.rs"
 name = "skelform_lib"
 
+[profile.release]
+opt-level = "s"   # or "s"
+lto = true
+
 [dependencies]
 bytemuck = { version = "1.24.0", features = ["derive"] }
 egui = { version = "0.33.0", features=["serde"] }
 egui-wgpu = { version = "0.33.0", features = ["winit"] }
 serde = { version = "1.0.219", features = ["serde_derive"] } 
 serde_json = "1.0.140"
-wgpu = { version = "27.0.1", default-features = false }
+wgpu = { version = "27.0.1", features=["webgl"]}
 winit = "0.30.12"
 image = { version = "0.25.5", default-features = false, features = ["png"] }
 psd = { "path" = "./vendor_deps/psd"}  # vendored for faster layer flattening algorithm
@@ -42,7 +46,7 @@ log = "0.4.26"
 console_error_panic_hook = "0.1.7"
 console_log = "1.0.0"
 egui-winit = { version = "0.33.0", default-features = false }
-wasm-bindgen = "0.2.100"
+wasm-bindgen = { version = "0.2.100", default-features = false }
 wasm-bindgen-futures = "0.4.50"
 zip = { version = "4.0.0", default-features = false, features = ["deflate"] }
 flate2 = { version = "1.0", default-features = false, features = ["rust_backend"] }
@@ -52,6 +56,7 @@ web-time = "1.1.0"
 default = ["wgpu/default"]
 webgl = ["wgpu/webgl"]
 webgpu = ["wgpu/webgpu"]
+debug = []
 
 [build-dependencies]
 winresource = "0.1.23"
