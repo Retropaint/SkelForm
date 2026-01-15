@@ -133,7 +133,7 @@
                 </p>
                 <div class="horizontal">
                     <input id="ui-slider-input" type="range" min="0" max="2.5" step="0.01"></input>
-                    <label id="ui-slider-done" class="button" onclick="turnOffSlider()">Wait</label>
+                    <label id="ui-slider-done" class="button" onclick="turnOffSlider()">Done</label>
                 </div>
             </div>
         </div>
@@ -194,12 +194,12 @@
 
             toggleElement(false, "image-dialog");
             toggleElement(false, "file-dialog");
-            toggleElement(true, "ui-slider");
+            toggleElement(false, "ui-slider");
             toggleElement(false, "focus")
             toggleElement(true, "canvas")
             toggleElement(false, "edit-input-modal");
             toggleElement(false, "resolution-message");
-            toggleElement(false, "wait-message");
+            toggleElement(true, "wait-message");
 
             async function loadConfig() {
                 let data = await localStorage.getItem("skelform_config");
@@ -293,7 +293,7 @@
 
             function loaded() {
                 hasLoaded = true;
-                document.getElementById("ui-slider-done").innerText = "Done";
+                toggleElement(true, 'ui-slider');
             }
 
             function turnOffSlider() {

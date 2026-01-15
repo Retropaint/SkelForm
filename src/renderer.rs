@@ -16,7 +16,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     shared.ui.rotating = false;
 
     #[cfg(target_arch = "wasm32")]
-    loaded();
+    if !shared.has_loaded {
+        loaded();
+        shared.has_loaded = true;
+    }
 
     // create vert on cursor
     let space = utils::screen_to_world_space(shared.input.mouse, shared.window);

@@ -1778,6 +1778,8 @@ pub struct Shared {
 
     pub initialized_window: bool,
 
+    pub has_loaded: bool,
+
     loc_strings: std::collections::HashMap<String, String>,
 }
 
