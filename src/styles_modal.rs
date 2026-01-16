@@ -16,9 +16,10 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
     #[cfg(any(target_os = "macos", target_arch = "wasm32"))]
     {
         let center = egui::Pos2::new(
-            (shared.window.x / shared.ui.scale / 2. - shared.ui.styles_modal_size.x) / 2.,
-            (shared.window.y / shared.ui.scale / 2. - shared.ui.styles_modal_size.y) / 2.,
+            (shared.window.x / shared.ui.scale - shared.ui.styles_modal_size.x) / 2.,
+            (shared.window.y / shared.ui.scale - shared.ui.styles_modal_size.y) / 2.,
         );
+        println!("{}", center);
         modal = egui::Modal::new("styles_modal".into())
             // set modal render order so that tex idx dropdown can be rendered above
             .area(
@@ -313,7 +314,7 @@ pub fn draw_textures_list(
                 bone_panel::open_file_dialog(file_name, file_contents);
             }
             #[cfg(target_arch = "wasm32")]
-            crate::toggleElement(true, "image-dialog".to_string());
+            crate::clickFileInput(true);
         });
 
         let size = ui.available_size();

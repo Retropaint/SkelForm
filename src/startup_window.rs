@@ -57,7 +57,7 @@ fn startup_content(
         let empty = "".to_string();
         if leftside_button("🗋", str_import, ui, shared, import_pos, None, empty).clicked() {
             #[cfg(target_arch = "wasm32")]
-            toggleElement(true, "file-dialog".to_string());
+            crate::clickFileInput(true);
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog(&shared.file_name, &shared.import_contents);
         }
@@ -576,8 +576,8 @@ pub fn web_sample_button(
                 let trunc = utils::trunc_str(ui, &tooltip, ui.min_rect().width());
                 ui.painter().text(pos, align, trunc, font, col.into());
             })
-            .response
-            .on_hover_text(tooltip);
+            .response;
+            //.on_hover_text(tooltip);
 
         if button.clicked() {
             crate::downloadSample(filename.to_string());

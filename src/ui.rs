@@ -429,7 +429,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         #[cfg(not(target_arch = "wasm32"))]
         utils::open_import_dialog(&shared.file_name, &shared.import_contents);
         #[cfg(target_arch = "wasm32")]
-        toggleElement(true, "file-dialog".to_string());
+        crate::clickFileInput(false);
     }
 
     // copy shortcut
@@ -837,7 +837,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog(&shared.file_name, &shared.import_contents);
             #[cfg(target_arch = "wasm32")]
-            toggleElement(true, "file-dialog".to_string());
+            crate::clickFileInput(false);
             ui.close();
         }
         let str_save = &shared.loc("top_bar.file.save");

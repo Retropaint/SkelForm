@@ -84,6 +84,7 @@ extern "C" {
     pub fn downloadSample(filename: String);
     pub fn openLink(url: String);
     pub fn isMobile() -> bool;
+    pub fn clickFileInput(isImage: bool);
 }
 
 #[derive(Default)]
@@ -323,11 +324,11 @@ impl ApplicationHandler for App {
                 };
 
                 if !self.shared.initialized_window {
-                    self.shared.window = Vec2::new(size.width as f32, size.height as f32);
                     renderer.resize(size.width as u32, size.height as u32);
                     self.shared.initialized_window = true;
                 }
 
+                self.shared.window = Vec2::new(size.width as f32, size.height as f32);
                 renderer.render_frame(
                     screen_descriptor,
                     paint_jobs,
