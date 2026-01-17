@@ -24,7 +24,7 @@ image = { version = "0.25.5", default-features = false, features = ["png"] }
 psd = { "path" = "./vendor_deps/psd"}  # vendored for faster layer flattening algorithm
 max_rects = { "path" = "./vendor_deps/max_rects"}  # vendored to remove visualizer
 spade = "2.15.0" # Delaunay triangulation for meshes
-egui_commonmark = { version = "0.22.0", default-features = false} # egui markdown support
+egui_commonmark = { version = "0.22.0" } # egui markdown support
 
 # Handle system shortcuts (cmd+q, cmd+w, etc) since winit can't
 # https://github.com/rust-windowing/winit/issues/2776#issuecomment-2477222703
