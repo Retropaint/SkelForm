@@ -323,7 +323,7 @@ impl ApplicationHandler for App {
                     }
                 };
 
-                if !self.shared.initialized_window {
+                if !self.shared.initialized_window && size.width != 0 && size.height != 0 {
                     renderer.resize(size.width as u32, size.height as u32);
                     self.shared.initialized_window = true;
                 }

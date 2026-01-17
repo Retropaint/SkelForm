@@ -19,7 +19,6 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             (shared.window.x / shared.ui.scale - shared.ui.styles_modal_size.x) / 2.,
             (shared.window.y / shared.ui.scale - shared.ui.styles_modal_size.y) / 2.,
         );
-        println!("{}", center);
         modal = egui::Modal::new("styles_modal".into())
             // set modal render order so that tex idx dropdown can be rendered above
             .area(
