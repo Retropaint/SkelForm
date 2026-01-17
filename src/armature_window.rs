@@ -38,137 +38,130 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         }
     }
 
-    ui::draw_resizable_panel(
-        panel_id,
-        side_panel.resizable(true).show(egui_ctx, |ui| {
-            ui.gradient(
-                ui.ctx().content_rect(),
-                Color32::TRANSPARENT,
-                shared.config.colors.gradient.into(),
-            );
-            ui.horizontal(|ui| {
-                ui.heading(&shared.loc("armature_panel.heading"));
-            });
+    let panel = side_panel.resizable(true).show(egui_ctx, |ui| {
+        ui.gradient(
+            ui.ctx().content_rect(),
+            Color32::TRANSPARENT,
+            shared.config.colors.gradient.into(),
+        );
+        ui.horizontal(|ui| {
+            ui.heading(&shared.loc("armature_panel.heading"));
+        });
 
-            ui.separator();
+        ui.separator();
 
-            ui.horizontal(|ui| {
-                let button = ui.skf_button(&&shared.loc("armature_panel.new_bone_button"));
-                if button.clicked() {
-                    let idx: usize;
+        ui.horizontal(|ui| {
+            let button = ui.skf_button(&&shared.loc("armature_panel.new_bone_button"));
+            if button.clicked() {
+                let idx: usize;
 
-                    shared.new_undo_bones();
+                shared.new_undo_bones();
 
-                    if shared.selected_bone() == None {
-                        (_, idx) = shared.armature.new_bone(-1);
-                    } else {
-                        let id = shared.selected_bone().unwrap().id;
-                        (_, idx) = shared.armature.new_bone(id);
-                    }
-
-                    // immediately select new bone upon creating it
-                    shared.ui.select_bone(idx);
-                    shared.ui.just_made_new_bone = true;
-
-                    shared.ui.rename_id = "bone_".to_string() + &idx.to_string();
-                    shared.selected_bone_mut().unwrap().name = "".to_string();
+                if shared.selected_bone() == None {
+                    (_, idx) = shared.armature.new_bone(-1);
+                } else {
+                    let id = shared.selected_bone().unwrap().id;
+                    (_, idx) = shared.armature.new_bone(id);
                 }
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if shared.armature.bones.len() == 0 {
-                        return;
-                    }
-                    let mut selected_style = -1;
-                    let dropdown = egui::ComboBox::new("styles", "")
-                        .selected_text(&shared.loc("armature_panel.styles"))
-                        .width(80.)
-                        .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
-                        .show_ui(ui, |ui| {
-                            for s in 0..shared.armature.styles.len() {
-                                ui.set_width(80.);
-                                let tick = if shared.armature.styles[s].active {
-                                    " 👁"
-                                } else {
-                                    ""
-                                };
-                                let mut name = shared.armature.styles[s].name.to_string();
-                                name = utils::trunc_str(ui, &name, ui.min_rect().width() - 20.);
-                                let label =
-                                    ui.selectable_value(&mut selected_style, s as i32, name);
-                                ui.painter().text(
-                                    label.rect.right_center(),
-                                    egui::Align2::RIGHT_CENTER,
-                                    tick,
-                                    egui::FontId::default(),
-                                    shared.config.colors.text.into(),
-                                );
-                                if label.clicked() {
-                                    shared.armature.styles[s].active =
-                                        !shared.armature.styles[s].active;
-                                }
-                            }
-                            let label = ui.selectable_value(&mut selected_style, -2, "[Setup]");
+
+                // immediately select new bone upon creating it
+                shared.ui.select_bone(idx);
+                shared.ui.just_made_new_bone = true;
+
+                shared.ui.rename_id = "bone_".to_string() + &idx.to_string();
+                shared.selected_bone_mut().unwrap().name = "".to_string();
+            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if shared.armature.bones.len() == 0 {
+                    return;
+                }
+                let mut selected_style = -1;
+                let dropdown = egui::ComboBox::new("styles", "")
+                    .selected_text(&shared.loc("armature_panel.styles"))
+                    .width(80.)
+                    .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
+                    .show_ui(ui, |ui| {
+                        for s in 0..shared.armature.styles.len() {
+                            ui.set_width(80.);
+                            let tick = if shared.armature.styles[s].active {
+                                " 👁"
+                            } else {
+                                ""
+                            };
+                            let mut name = shared.armature.styles[s].name.to_string();
+                            name = utils::trunc_str(ui, &name, ui.min_rect().width() - 20.);
+                            let label = ui.selectable_value(&mut selected_style, s as i32, name);
+                            ui.painter().text(
+                                label.rect.right_center(),
+                                egui::Align2::RIGHT_CENTER,
+                                tick,
+                                egui::FontId::default(),
+                                shared.config.colors.text.into(),
+                            );
                             if label.clicked() {
-                                ui.close();
+                                shared.new_undo_styles();
+                                shared.armature.styles[s].active =
+                                    !shared.armature.styles[s].active;
                             }
-                        })
-                        .response
-                        .on_hover_text(&shared.loc("armature_panel.styles_desc"));
-
-                    if shared.ui.focus_style_dropdown {
-                        dropdown.request_focus();
-                        shared.ui.focus_style_dropdown = false;
-                    }
-                    if selected_style == -2 {
-                        shared.open_style_modal();
-                    } else if selected_style != -1 {
-                        shared.ui.selected_style = selected_style;
-                        for b in 0..shared.armature.bones.len() {
-                            shared.armature.set_bone_tex(
-                                shared.armature.bones[b].id,
-                                shared.armature.bones[b].tex.clone(),
-                                shared.ui.anim.selected,
-                                shared.ui.anim.selected_frame,
-                            );
                         }
+                        let label = ui.selectable_value(&mut selected_style, -2, "[Setup]");
+                        if label.clicked() {
+                            ui.close();
+                        }
+                    })
+                    .response
+                    .on_hover_text(&shared.loc("armature_panel.styles_desc"));
+
+                if shared.ui.focus_style_dropdown {
+                    dropdown.request_focus();
+                    shared.ui.focus_style_dropdown = false;
+                }
+                if selected_style == -2 {
+                    shared.open_style_modal();
+                } else if selected_style != -1 {
+                    shared.ui.selected_style = selected_style;
+                    shared.new_undo_bones();
+                    shared.undo_actions.last_mut().unwrap().continued = true;
+                    for b in 0..shared.armature.bones.len() {
+                        shared.armature.set_bone_tex(
+                            shared.armature.bones[b].id,
+                            shared.armature.bones[b].tex.clone(),
+                            usize::MAX,
+                            -1,
+                        );
                     }
-                });
+                }
             });
+        });
+        ui.add_space(3.);
+        let scroll_area = egui::ScrollArea::both().max_height(ui.available_height() - 10.);
+        scroll_area.show(ui, |ui| {
+            // hierarchy
+            let frame = Frame::default().inner_margin(5.);
+            ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                ui.set_min_height(ui.available_height());
+                ui.set_width(ui.available_width());
 
-            ui.add_space(3.);
+                // The empty armature text should have blue hyperlinks to attract the user's
+                // attention. The blue makes it clear of being a hyperlink, while also sticking
+                // out (without being too jarring).
+                ui.style_mut().visuals.hyperlink_color = egui::Color32::from_rgb(94, 156, 255);
 
-            egui::ScrollArea::both()
-                .max_height(ui.available_height() - 10.)
-                .show(ui, |ui| {
-                    // hierarchy
-                    let frame = Frame::default().inner_margin(5.);
-                    ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-                        ui.set_min_height(ui.available_height());
-                        ui.set_width(ui.available_width());
+                if shared.armature.bones.len() != 0 {
+                    draw_hierarchy(shared, ui);
+                } else {
+                    let mut cache = egui_commonmark::CommonMarkCache::default();
+                    let armature_str = shared.loc("armature_panel.empty_armature");
+                    let str = utils::markdown(armature_str, shared.local_doc_url.clone());
+                    egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
+                }
+                ui.add_space(4.);
+            });
+        });
+        shared.ui.armature_panel_rect = Some(ui.min_rect());
+    });
 
-                        // The empty armature text should have blue hyperlinks to attract the user's
-                        // attention. The blue makes it clear of being a hyperlink, while also sticking
-                        // out (without being too jarring).
-                        ui.style_mut().visuals.hyperlink_color =
-                            egui::Color32::from_rgb(94, 156, 255);
-
-                        if shared.armature.bones.len() != 0 {
-                            draw_hierarchy(shared, ui);
-                        } else {
-                            let mut cache = egui_commonmark::CommonMarkCache::default();
-                            let str = utils::markdown(
-                                shared.loc("armature_panel.empty_armature"),
-                                shared.local_doc_url.clone(),
-                            );
-                            egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
-                        }
-                        ui.add_space(4.);
-                    });
-                });
-            shared.ui.armature_panel_rect = Some(ui.min_rect());
-        }),
-        &mut shared.input.on_ui,
-        &egui_ctx,
-    );
+    ui::draw_resizable_panel(panel_id, panel, &mut shared.input.on_ui, &egui_ctx);
 }
 
 pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
