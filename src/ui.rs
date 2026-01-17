@@ -483,7 +483,6 @@ pub fn cancel_shortcut(shared: &mut Shared) {
     {
         toggleElement(false, "image-dialog".to_string());
         toggleElement(false, "file-dialog".to_string());
-        toggleElement(false, "ui-slider".to_string());
     }
 
     shared.ui.setting_ik_target = false;
