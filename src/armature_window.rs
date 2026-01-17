@@ -39,11 +39,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     }
 
     let panel = side_panel.resizable(true).show(egui_ctx, |ui| {
-        ui.gradient(
-            ui.ctx().content_rect(),
-            Color32::TRANSPARENT,
-            shared.config.colors.gradient.into(),
-        );
+        let gradient = shared.config.colors.gradient.into();
+        ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
         ui.horizontal(|ui| {
             ui.heading(&shared.loc("armature_panel.heading"));
         });
@@ -83,11 +80,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     .show_ui(ui, |ui| {
                         for s in 0..shared.armature.styles.len() {
                             ui.set_width(80.);
-                            let tick = if shared.armature.styles[s].active {
-                                " 👁"
-                            } else {
-                                ""
-                            };
+                            let active = shared.armature.styles[s].active;
+                            let tick = if active { " 👁" } else { "" };
                             let mut name = shared.armature.styles[s].name.to_string();
                             name = utils::trunc_str(ui, &name, ui.min_rect().width() - 20.);
                             let label = ui.selectable_value(&mut selected_style, s as i32, name);
@@ -123,12 +117,9 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     shared.new_undo_bones();
                     shared.undo_actions.last_mut().unwrap().continued = true;
                     for b in 0..shared.armature.bones.len() {
-                        shared.armature.set_bone_tex(
-                            shared.armature.bones[b].id,
-                            shared.armature.bones[b].tex.clone(),
-                            usize::MAX,
-                            -1,
-                        );
+                        let bone = shared.armature.bones[b].clone();
+                        let armature = &mut shared.armature;
+                        armature.set_bone_tex(bone.id, bone.tex.clone(), usize::MAX, -1);
                     }
                 }
             });
@@ -194,11 +185,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
         ui.add_enabled_ui(!setting_ik_target, |ui| {
             ui.horizontal(|ui| {
-                let hidden_icon = if anim_bones[b].is_hidden {
-                    "---"
-                } else {
-                    "👁"
-                };
+                let hidden = anim_bones[b].is_hidden;
+                let hidden_icon = if hidden { "---" } else { "👁" };
                 let id = "bone_hidden".to_owned() + &b.to_string();
                 if bone_label(hidden_icon, ui, id, shared, Vec2::new(-2., 18.)).clicked() {
                     let mut hidden: i32 = 0;
@@ -219,19 +207,13 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 // show folding button if this bone has children
                 let mut children = vec![];
-                get_all_children(
-                    &shared.armature.bones,
-                    &mut children,
-                    &shared.armature.bones[b],
-                );
+                let bone = &shared.armature.bones[b];
+                get_all_children(&shared.armature.bones, &mut children, bone);
                 if children.len() == 0 {
                     hor_line(11., ui, shared);
                 } else {
-                    let fold_icon = if shared.armature.bones[b].folded {
-                        "⏵"
-                    } else {
-                        "⏷"
-                    };
+                    let folded = shared.armature.bones[b].folded;
+                    let fold_icon = if folded { "⏵" } else { "⏷" };
                     let id = "bone_fold".to_owned() + &b.to_string();
                     if bone_label(fold_icon, ui, id, shared, Vec2::new(-2., 18.)).clicked() {
                         shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
@@ -265,18 +247,15 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 if shared.ui.rename_id == context_id {
                     let bone_name = shared.loc("armature_panel.new_bone_name").to_string();
-                    let (edited, value, _) = ui.text_input(
-                        context_id,
-                        shared,
-                        shared.armature.bones[b].name.clone(),
-                        Some(TextInputOptions {
-                            size: Vec2::new(ui.available_width(), 21.),
-                            focus: true,
-                            placeholder: bone_name.clone(),
-                            default: bone_name,
-                            ..Default::default()
-                        }),
-                    );
+                    let bone = shared.armature.bones[b].name.clone();
+                    let options = Some(TextInputOptions {
+                        size: Vec2::new(ui.available_width(), 21.),
+                        focus: true,
+                        placeholder: bone_name.clone(),
+                        default: bone_name,
+                        ..Default::default()
+                    });
+                    let (edited, value, _) = ui.text_input(context_id, shared, bone, options);
                     if edited {
                         shared.new_undo_sel_bone();
                         shared.selected_bone_mut().unwrap().name = value;
@@ -354,10 +333,9 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                                 }
                                 for i in first..second as usize {
                                     let bone = &shared.armature.bones[i];
-                                    if !shared.ui.selected_bone_ids.contains(&bone.id)
-                                        && bone.parent_id
-                                            == shared.selected_bone().unwrap().parent_id
-                                    {
+                                    let this_id = shared.ui.selected_bone_ids.contains(&bone.id);
+                                    let sel_bone = shared.selected_bone().unwrap();
+                                    if !this_id && bone.parent_id == sel_bone.parent_id {
                                         shared.ui.selected_bone_ids.push(bone.id);
                                     }
                                 }
@@ -506,38 +484,21 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
 }
 
 pub fn drag_bone(shared: &mut Shared, is_above: bool, drag_id: i32, point_id: i32) {
-    macro_rules! dragged {
-        () => {
-            shared.armature.find_bone_mut(drag_id).unwrap()
-        };
-    }
-    macro_rules! pointing {
-        () => {
-            shared.armature.find_bone_mut(point_id).unwrap()
-        };
-    }
+    #[rustfmt::skip] macro_rules! dragged { () => { shared.armature.find_bone_mut(drag_id).unwrap() } }
+    #[rustfmt::skip] macro_rules! pointing { () => { shared.armature.find_bone_mut(point_id).unwrap() } }
+    #[rustfmt::skip] macro_rules! bones { () => { &mut shared.armature.bones } }
 
-    let drag_idx = shared.armature.bones.iter().position(|b| b.id == drag_id);
-    let point_idx = shared.armature.bones.iter().position(|b| b.id == point_id);
+    let drag_idx = bones!().iter().position(|b| b.id == drag_id).unwrap() as i32;
+    let point_idx = bones!().iter().position(|b| b.id == point_id).unwrap() as i32;
 
     if is_above {
         // set pointed bone's parent as dragged bone's parent
         dragged!().parent_id = pointing!().parent_id;
-        move_bone(
-            &mut shared.armature.bones,
-            drag_idx.unwrap() as i32,
-            point_idx.unwrap() as i32,
-            false,
-        );
+        move_bone(bones!(), drag_idx, point_idx, false);
     } else {
         // set pointed bone as dragged bone's parent
         dragged!().parent_id = pointing!().id;
-        move_bone(
-            &mut shared.armature.bones,
-            drag_idx.unwrap() as i32,
-            point_idx.unwrap() as i32,
-            true,
-        );
+        move_bone(bones!(), drag_idx, point_idx, true);
 
         pointing!().folded = false;
     }
