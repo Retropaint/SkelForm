@@ -584,8 +584,8 @@ pub fn web_sample_button(
                 let trunc = utils::trunc_str(ui, &tooltip, ui.min_rect().width());
                 ui.painter().text(pos, align, trunc, font, col.into());
             })
-            .response;
-        //.on_hover_text(tooltip);
+            .response
+            .on_hover_text(tooltip);
 
         if button.clicked() {
             crate::downloadSample(filename.to_string());
