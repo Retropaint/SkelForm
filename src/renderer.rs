@@ -389,10 +389,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         if let Some(bone) = shared.selected_bone() {
             bone_id = bone.id
         }
-        for vert in shared.dragging_verts.clone() {
+        for vert_id in shared.dragging_verts.clone() {
             let bones = &temp_arm.bones;
             let bone = bones.iter().find(|bone| bone.id == bone_id).unwrap();
-            drag_vertex(shared, bone, vert);
+            drag_vertex(shared, bone, vert_id as u32);
         }
 
         return;
@@ -1207,17 +1207,17 @@ fn draw_line(
     draw(&None, &verts, &indices, render_pass, device);
 }
 
-pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_idx: usize) {
-    if bone.vertices.len() == 0 || vert_idx > bone.vertices.len() - 1 {
+pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_id: u32) {
+    let temp_vert = bone.vertices.iter().find(|v| v.id == vert_id);
+    if bone.vertices.len() == 0 || temp_vert == None {
         return;
     }
     let mouse_vel = shared.mouse_vel();
     let zoom = shared.camera.zoom;
-    let temp_vert = bone.vertices[vert_idx];
     let og_bone = &mut shared.selected_bone_mut().unwrap();
     og_bone.verts_edited = true;
-    let vert_mut = &mut og_bone.vertices[vert_idx];
-    vert_mut.pos -= utils::rotate(&(mouse_vel * zoom), temp_vert.offset_rot);
+    let vert_mut = og_bone.vertices.iter_mut().find(|v| v.id == vert_id);
+    vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), temp_vert.unwrap().offset_rot);
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
