@@ -11,7 +11,11 @@ pub fn startup_modal(shared: &mut Shared, ctx: &egui::Context) {
         .movable(false);
     window.show(ctx, |ui| {
         let gradient = shared.config.colors.gradient.into();
-        ui.gradient(ui.ctx().content_rect(), egui::Color32::TRANSPARENT, gradient);
+        ui.gradient(
+            ui.ctx().content_rect(),
+            egui::Color32::TRANSPARENT,
+            gradient,
+        );
         let width = ui.ctx().content_rect().width();
         let height = ui.ctx().content_rect().height();
         ui.set_width(width.max(0.));
@@ -48,8 +52,10 @@ fn startup_content(
         ui.add_space(10.);
         let empty = "".to_string();
         if leftside_button("+", &shared.loc("new"), ui, shared, None, None, empty).clicked() {
-            shared.ui.selected_bone_idx = usize::MAX;
-            shared.ui.selected_bone_ids = vec![];
+            shared.ui.unselect_everything();
+            shared.ui.anim.open = false;
+            shared.camera.pos = Vec2::new(0., 0.);
+            shared.camera.zoom = 2000.;
             shared.armature = Armature::default();
             shared.ui.startup_window = false;
         }
@@ -579,7 +585,7 @@ pub fn web_sample_button(
                 ui.painter().text(pos, align, trunc, font, col.into());
             })
             .response;
-            //.on_hover_text(tooltip);
+        //.on_hover_text(tooltip);
 
         if button.clicked() {
             crate::downloadSample(filename.to_string());
