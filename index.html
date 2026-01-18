@@ -92,6 +92,10 @@
                     display: flex;
                     justify-content: space-between;
                 }
+
+                .button-container {
+                    display: flex
+                }
             }
         </style>
     </head>
@@ -134,7 +138,10 @@
                 </p>
                 <div class="horizontal">
                     <input id="ui-slider-input" type="range" min="0" max="2.5" step="0.01"></input>
-                    <label id="ui-slider-done" class="button" onclick="turnOffSlider()">Done</label>
+                    <div class="button-container">
+                        <label id="fullscreenButton" class="button" onclick="goFullscreen()">Fullscreen</label>
+                        <label id="ui-slider-done" class="button" onclick="turnOffSlider()">Done</label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -180,10 +187,10 @@
         <div class="root">
             <canvas class="main-canvas" id="canvas" style="visibility: hidden"></canvas>
         </div>
-
-        <form></form>
-
+        
         <img src="" id="last-image" />
+
+        <button id="fullscreenTest"></button>
 
         <script>
             let fileData = [];
@@ -367,12 +374,13 @@
                 window.open(url)
             }
 
+            // https://medium.com/geekculture/detecting-mobile-vs-desktop-browsers-in-javascript-ad46e8d23ce5
             function isMobile() {
               const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
               return regex.test(navigator.userAgent);
-            }            
-            
-            https://stackoverflow.com/a/10311375
+            }
+
+            // https://stackoverflow.com/a/10311375
             function beforeUnload(e) {
                 e = e || window.event;
                 let text = "Are you sure you want to quit and discard unsaved changes?";
@@ -386,6 +394,20 @@
                 return text;
             }
 
+            async function goFullscreen() {
+                el = document.documentElement; 
+                if (document.fullscreenEnabled) { 
+                    el.requestFullscreen();
+                } else if (document.webkitFullscreenEnabled) {
+                  el.webkitRequestFullscreen();
+                } else if (document.mozFullScreenEnabled) {
+                  el.mozRequestFullScreen();
+                } else if (document.msFullscreenEnabled) {
+                  el.msRequestFullscreen();
+                }
+                await screen.orientation.lock('landscape');
+            }
+
             function clickFileInput(isImage) {
                 document.getElementById((isImage ? "img-input" : "file-input")).click();
             }
@@ -393,6 +415,10 @@
             window.addEventListener("resize", resizeCanvas);
             window.addEventListener("load", resizeCanvas);
             window.addEventListener("beforeunload", beforeUnload);
+
+            if(!isMobile()) {
+                fullscreenButton.style.display = "none";
+            }
         </script>
 
         <script>
