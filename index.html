@@ -305,12 +305,8 @@
             }
 
             function turnOffSlider() {
-                if(document.getElementById("ui-slider-done").innerText == "Wait") {
-                    return;
-                }
                 saveFontScale();
                 toggleElement(false, 'ui-slider');
-                toggleElement(false, 'ui-slider-done');
             }
 
             function getUiSliderValue() {

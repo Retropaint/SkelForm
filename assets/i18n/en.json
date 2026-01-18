@@ -167,6 +167,7 @@
       "heading": "User Interface",
       "general": "General",
       "ui_scale": "UI Scale: ",
+      "ui_slider": "Open UI Slider",
       "colors_heading": "Colors",
       "colors": {
         "main": "Main",
