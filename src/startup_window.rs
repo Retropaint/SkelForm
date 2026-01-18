@@ -65,7 +65,7 @@ fn startup_content(
         let empty = "".to_string();
         if leftside_button("🗋", str_import, ui, shared, import_pos, None, empty).clicked() {
             #[cfg(target_arch = "wasm32")]
-            crate::clickFileInput(true);
+            crate::clickFileInput(false);
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog(&shared.file_name, &shared.import_contents);
         }
