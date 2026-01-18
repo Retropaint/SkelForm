@@ -48,6 +48,8 @@ fn startup_content(
         ui.add_space(10.);
         let empty = "".to_string();
         if leftside_button("+", &shared.loc("new"), ui, shared, None, None, empty).clicked() {
+            shared.ui.selected_bone_idx = usize::MAX;
+            shared.ui.selected_bone_ids = vec![];
             shared.armature = Armature::default();
             shared.ui.startup_window = false;
         }
