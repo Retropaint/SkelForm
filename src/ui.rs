@@ -346,7 +346,7 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         ($text:expr, $offset:expr) => {
             let align = egui::Align2::CENTER_CENTER;
             let font = egui::FontId::default();
-            let mouse_pos = shared.input.mouse + $offset;
+            let mouse_pos = shared.input.mouse / shared.ui.scale + $offset;
             let painter = context.debug_painter();
 
             let pos = (mouse_pos + Vec2::new(1., 1.)).into();
