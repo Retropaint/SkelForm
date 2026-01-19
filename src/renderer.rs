@@ -316,7 +316,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             draw(&None, &hovering_tri, &vec![0, 1, 2], render_pass, device);
 
             // verts of this triangle will be dragged
-            shared.dragging_verts = hovering_tri.iter().map(|v| v.id as usize).collect();
+            if shared.input.left_pressed {
+                shared.dragging_verts = hovering_tri.iter().map(|v| v.id as usize).collect();
+            }
         }
     }
 
