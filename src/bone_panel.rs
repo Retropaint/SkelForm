@@ -40,11 +40,11 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
             let text = egui::RichText::new("🗑").size(15.).color(col);
             let hand = egui::CursorIcon::PointingHand;
             if ui.label(text).on_hover_cursor(hand).clicked() {
-                let str = &shared.loc("polar.delete_bone").clone();
+                let str = shared.loc("polar.delete_bone").clone().to_string();
                 let context_id =
                     "bone_".to_owned() + &shared.selected_bone().unwrap().id.to_string();
                 shared.ui.context_menu.id = context_id;
-                shared.ui.open_polar_modal(PolarId::DeleteBone, str.to_string());
+                shared.ui.open_polar_modal(PolarId::DeleteBone, str);
             }
         });
     });
@@ -587,8 +587,12 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     ui.horizontal(|ui| {
         ui.label(shared.loc("bone_panel.mesh_deformation.binds_label"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let combo_box = egui::ComboBox::new("bone_weights", "")
-                .selected_text(shared.ui.selected_bind.to_string());
+            let headline = if shared.ui.selected_bind == -1 {
+                shared.loc("none").to_string()
+            } else {
+                shared.ui.selected_bind.to_string()
+            };
+            let combo_box = egui::ComboBox::new("bone_weights", "").selected_text(headline);
             combo_box.show_ui(ui, |ui| {
                 let mut selected_value: i32 = -1;
                 for b in 0..bone.binds.len() {
