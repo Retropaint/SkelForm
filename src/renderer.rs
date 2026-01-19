@@ -985,7 +985,7 @@ pub fn bone_vertices(
         if !shared.ui.setting_bind_verts {
             if shared.input.left_pressed {
                 shared.new_undo_sel_bone();
-                shared.dragging_verts = vec![wv];
+                shared.dragging_verts = vec![world_verts[wv].id as usize];
                 break;
             }
         } else if shared.input.left_clicked {
