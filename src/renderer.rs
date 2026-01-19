@@ -1132,8 +1132,9 @@ pub fn vert_lines(
                 let uv = v0.uv + (v1.uv - v0.uv) * interp;
 
                 if shared.input.left_pressed {
-                    shared.dragging_verts.push(i0 as usize);
-                    shared.dragging_verts.push(i1 as usize);
+                    let verts = &bone.vertices;
+                    shared.dragging_verts.push(verts[i0 as usize].id as usize);
+                    shared.dragging_verts.push(verts[i1 as usize].id as usize);
                 } else if shared.input.left_clicked && !added_vert {
                     let bones = &bones;
                     let v = &bones.iter().find(|b| b.id == bone.id).unwrap().vertices;
