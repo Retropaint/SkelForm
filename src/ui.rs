@@ -5,38 +5,17 @@ use egui::{Color32, Context, Shadow, Stroke};
 
 use crate::*;
 
-const FFMPEG_ERR: &str =
-    "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.";
-
-const UPDATE_ERR: &str = "Something went wrong.\n\nPlease check your internet connection and try again.\n\nIf the problem persists, it might be on SkelForm's side.\n\n[All Versions Page](https://github.com/Retropaint/SkelForm/releases)";
-
+#[rustfmt::skip]
 pub trait EguiUi {
     fn skf_button(&mut self, text: &str) -> egui::Response;
     fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32);
     fn clickable_label(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response;
-    fn text_input(
-        &mut self,
-        id: String,
-        shared: &mut Shared,
-        value: String,
-        options: Option<TextInputOptions>,
-    ) -> (bool, String, egui::Response);
-    fn float_input(
-        &mut self,
-        id: String,
-        shared: &mut Shared,
-        value: f32,
-        modifier: f32,
-        options: Option<TextInputOptions>,
-    ) -> (bool, f32, egui::Response);
+    fn text_input(&mut self,id: String,shared: &mut Shared,value: String,options: Option<TextInputOptions>) -> (bool, String, egui::Response);
+    fn float_input(&mut self,id: String,shared: &mut Shared,value: f32,modifier: f32,options: Option<TextInputOptions>) -> (bool, f32, egui::Response);
     fn debug_rect(&mut self, rect: egui::Rect);
     fn context_rename(&mut self, shared: &mut Shared, id: String);
     fn context_delete(&mut self, shared: &mut Shared, loc_code: &str, polar_id: PolarId);
-    fn context_button(
-        &mut self,
-        text: impl Into<egui::WidgetText>,
-        shared: &mut Shared,
-    ) -> egui::Response;
+    fn context_button(&mut self,text: impl Into<egui::WidgetText>,shared: &mut Shared) -> egui::Response;
 }
 
 // all context menus must be opened through this.
@@ -184,7 +163,8 @@ pub fn draw(context: &Context, shared: &mut Shared, _window_factor: f32) {
         };
 
         if raw_ver == "err" {
-            shared.ui.open_modal(UPDATE_ERR.to_string(), false);
+            let str = shared.loc("startup.error_update");
+            shared.ui.open_modal(str.to_string(), false);
         } else if raw_ver != "" {
             let ver_str = raw_ver.split(' ').collect::<Vec<_>>();
             let ver_idx = ver_str[0].parse::<i32>().unwrap();
@@ -656,12 +636,12 @@ impl EguiUi for egui::Ui {
         }
 
         if options.as_ref().unwrap().focus && !shared.ui.input_focused {
+            shared.ui.input_focused = true;
+            shared.ui.edit_value = Some(value.clone());
+
             if shared.mobile {
                 open_mobile_input(shared.ui.edit_value.clone().unwrap());
             }
-
-            shared.ui.input_focused = true;
-            shared.ui.edit_value = Some(value.clone());
         }
 
         if shared.ui.rename_id != id {
@@ -873,7 +853,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
                 }
             }
             if !ffmpeg {
-                let headline = FFMPEG_ERR;
+                let headline = shared.loc("startup.error_ffmpeg");
                 shared.ui.open_modal(headline.to_string(), false);
                 return;
             }
