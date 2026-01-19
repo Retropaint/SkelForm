@@ -549,6 +549,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     .add_enabled(can_reset, egui::Button::new(str_reset))
                     .clicked()
                 {
+                    shared.new_undo_sel_bone();
                     let (verts, indices) = renderer::create_tex_rect(&tex_size);
                     let bone = shared.selected_bone_mut().unwrap();
                     bone.vertices = verts;
@@ -562,11 +563,13 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 let str_center_desc = &shared.loc("bone_panel.mesh_deformation.center_desc");
                 let button = ui.skf_button(str_center);
                 if button.on_hover_text(str_center_desc).clicked() {
+                    shared.new_undo_sel_bone();
                     center_verts(&mut shared.selected_bone_mut().unwrap().vertices);
                 }
 
                 let trace_str = &shared.loc("bone_panel.mesh_deformation.trace");
                 if ui.skf_button(trace_str).clicked() {
+                    shared.new_undo_sel_bone();
                     let tex = &shared.armature.tex_of(bone.id).unwrap();
                     let tex_data = &shared.armature.tex_data;
                     let data = tex_data.iter().find(|d| tex.data_id == d.id).unwrap();

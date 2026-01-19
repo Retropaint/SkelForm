@@ -666,7 +666,7 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
 
     match &action.action {
         ActionType::Bone => {
-            new_action.bones = action.bones.clone();
+            new_action.bones = shared.armature.bones.clone();
             *shared.armature.find_bone_mut(action.bones[0].id).unwrap() = action.bones[0].clone();
         }
         ActionType::Bones => {
@@ -685,7 +685,7 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
             }
         }
         ActionType::Animation => {
-            new_action.animations = action.animations.clone();
+            new_action.animations = shared.armature.animations.clone();
             let anims = &mut shared.armature.animations;
             let anim = anims.iter_mut().find(|a| a.id == action.animations[0].id);
             *anim.unwrap() = action.animations[0].clone();
@@ -699,7 +699,7 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
             }
         }
         ActionType::Style => {
-            new_action.styles = action.styles.clone();
+            new_action.styles = shared.armature.styles.clone();
             let styles = &mut shared.armature.styles;
             let id = action.styles[0].id;
             let style = styles.iter_mut().find(|a| a.id == id).unwrap();
