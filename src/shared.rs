@@ -2008,6 +2008,12 @@ impl Shared {
         anim[anim_id].keyframes[frame].value = value;
     }
 
+    pub fn sel_tex_img(&self) -> image::DynamicImage {
+        let sel_id = self.selected_bone().unwrap().id;
+        let tex = self.armature.tex_of(sel_id).unwrap();
+        self.armature.tex_data(tex).unwrap().image.clone()
+    }
+
     pub fn new_undo_sel_bone(&mut self) {
         self.undo_actions.push(Action {
             action: ActionType::Bone,

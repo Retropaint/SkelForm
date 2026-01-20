@@ -180,7 +180,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 }
 
                 let tex = temp_arm.tex_of(temp_arm.bones[b].id).unwrap();
-
                 let img = &shared.armature.tex_data(tex).unwrap().image;
                 let pos = Vec2::new(
                     (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
@@ -339,12 +338,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     if !shared.ui.setting_bind_verts {
         if let Some(mut vert) = new_vert {
             shared.new_undo_sel_bone();
+            let tex_img = shared.sel_tex_img();
             let bone_mut = shared.selected_bone_mut().unwrap();
             let ids = bone_mut.vertices.iter().map(|v| v.id as i32).collect();
             vert.id = generate_id(ids) as u32;
             bone_mut.vertices.push(vert);
             bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
-            bone_mut.indices = triangulate(&bone_mut.vertices);
+            bone_mut.indices = triangulate(&bone_mut.vertices, &tex_img);
             bone_mut.verts_edited = true;
         }
     }
@@ -966,10 +966,11 @@ pub fn bone_vertices(
                 let str_vert_limit = &shared.loc("vert_limit");
                 shared.ui.open_modal(str_vert_limit.to_string(), false);
             } else {
+                let tex_img = shared.sel_tex_img();
                 let verts = &mut shared.selected_bone_mut().unwrap().vertices;
                 verts.remove(wv);
                 *verts = sort_vertices(verts.clone());
-                shared.selected_bone_mut().unwrap().indices = triangulate(&verts);
+                shared.selected_bone_mut().unwrap().indices = triangulate(&verts, &tex_img);
 
                 // remove this vert from its binds
                 'bind: for bind in &mut shared.selected_bone_mut().unwrap().binds {
@@ -1342,7 +1343,7 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
 
     verts = sort_vertices(verts);
     bone_panel::center_verts(&mut verts);
-    (verts.clone(), triangulate(&verts))
+    (verts.clone(), triangulate(&verts, texture))
 }
 
 fn draw_point(
@@ -1611,7 +1612,7 @@ pub fn draw_vertical_line(x: f32, width: f32, shared: &Shared, color: VertexColo
     vertices
 }
 
-pub fn triangulate(verts: &Vec<Vertex>) -> Vec<u32> {
+pub fn triangulate(verts: &Vec<Vertex>, tex: &image::DynamicImage) -> Vec<u32> {
     let mut triangulation: spade::DelaunayTriangulation<_> = spade::DelaunayTriangulation::new();
 
     for vert in verts {
@@ -1621,11 +1622,38 @@ pub fn triangulate(verts: &Vec<Vertex>) -> Vec<u32> {
     let mut indices: Vec<u32> = Vec::new();
     for face in triangulation.inner_faces() {
         let tri_indices = face.vertices().map(|v| v.index()).to_vec();
+        if tri_indices.len() != 3 {
+            continue;
+        }
 
-        if tri_indices.len() == 3 {
-            indices.push(tri_indices[0] as u32);
-            indices.push(tri_indices[1] as u32);
-            indices.push(tri_indices[2] as u32);
+        // check if this triangle is part of the texture, and ignore if not
+        let v1 = verts[tri_indices[0]];
+        let v2 = verts[tri_indices[1]];
+        let v3 = verts[tri_indices[2]];
+        let blt = Vec2::new(
+            v1.pos.x.min(v2.pos.x).min(v3.pos.x),
+            v1.pos.y.min(v2.pos.y).min(v3.pos.y),
+        );
+        let brb = Vec2::new(
+            v1.pos.x.max(v2.pos.x).max(v3.pos.x),
+            v1.pos.y.max(v2.pos.y).max(v3.pos.y),
+        );
+        'pixel_check: for x in (blt.x as i32)..(brb.x as i32) {
+            for y in (blt.y as i32)..(brb.y as i32) {
+                let bary = tri_point(&Vec2::new(x as f32, y as f32), &v1.pos, &v2.pos, &v3.pos);
+                let uv = v1.uv * bary.3 + v2.uv * bary.1 + v3.uv * bary.2;
+                let pos = Vec2::new(
+                    (uv.x * tex.width() as f32).min(tex.width() as f32 - 1.),
+                    (uv.y * tex.height() as f32).min(tex.height() as f32 - 1.),
+                );
+                let pixel_alpha = tex.get_pixel(pos.x as u32, pos.y as u32).0[3];
+                if pixel_alpha > 125 {
+                    indices.push(tri_indices[0] as u32);
+                    indices.push(tri_indices[1] as u32);
+                    indices.push(tri_indices[2] as u32);
+                    break 'pixel_check;
+                }
+            }
         }
     }
 
