@@ -538,8 +538,6 @@ pub fn read_import(
             shared.ui.open_modal(text.to_string(), false);
             return;
         }
-
-        shared.save_path = filename.clone();
     }
 
     #[cfg(target_arch = "wasm32")]

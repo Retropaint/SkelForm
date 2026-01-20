@@ -474,7 +474,6 @@ pub struct Ui {
     pub showing_mesh: bool,
     pub setting_bind_verts: bool,
     pub setting_bind_bone: bool,
-    pub just_made_new_bone: bool,
 
     pub rename_id: String,
     pub original_name: String,
@@ -532,6 +531,9 @@ pub struct Ui {
     pub init_pending_mouse: Vec2,
     pub is_dragging_pending: bool,
     pub prev_pending_interp: Vec2,
+    pub just_made_bone: bool,
+    pub just_made_anim: bool,
+    pub just_made_style: bool,
 
     // states
     pub styles_modal: bool,
@@ -1686,8 +1688,6 @@ pub struct StartupResourceItem {
     #[serde(default)]
     pub url: String,
     #[serde(default)]
-    pub is_dev: bool,
-    #[serde(default)]
     pub items: Vec<StartupResourceItem>,
     #[serde(default)]
     pub update_checker: bool,
@@ -1719,7 +1719,6 @@ pub struct Shared {
 
     pub dragging_verts: Vec<usize>,
 
-    pub frame: i32,
     pub recording: bool,
     pub done_recording: bool,
     // mainly used for video, but can also be used for screenshots
@@ -1734,11 +1733,7 @@ pub struct Shared {
 
     pub generic_bindgroup: Option<BindGroup>,
 
-    pub save_path: String,
-
     pub recent_file_paths: Vec<String>,
-
-    pub has_temp: bool,
 
     pub config: Config,
 
@@ -1763,7 +1758,6 @@ pub struct Shared {
 
     pub file_name: Arc<Mutex<String>>,
     pub img_contents: Arc<Mutex<Vec<u8>>>,
-    pub save_contents: Arc<Mutex<Vec<u8>>>,
     pub import_contents: Arc<Mutex<Vec<u8>>>,
 
     pub local_doc_url: String,
@@ -1778,8 +1772,6 @@ pub struct Shared {
     pub mobile: bool,
 
     pub initialized_window: bool,
-
-    pub has_loaded: bool,
 
     loc_strings: std::collections::HashMap<String, String>,
 }
@@ -1936,6 +1928,7 @@ impl Shared {
         anim_id: usize,
         anim_frame: i32,
     ) {
+        self.save_edited_bone();
         let bones = &mut self.armature.bones;
         let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
         let mut init_value = 0.;
@@ -2019,6 +2012,15 @@ impl Shared {
         self.undo_actions.push(Action {
             action: ActionType::Bone,
             bones: vec![self.selected_bone().unwrap().clone()],
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_bone(&mut self, bone_id: i32) {
+        let bones = &self.armature.bones;
+        self.undo_actions.push(Action {
+            action: ActionType::Bone,
+            bones: vec![bones.iter().find(|b| b.id == bone_id).unwrap().clone()],
             ..Default::default()
         });
     }

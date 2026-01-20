@@ -63,7 +63,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
 
                 // immediately select new bone upon creating it
                 shared.ui.select_bone(idx);
-                shared.ui.just_made_new_bone = true;
+                shared.ui.just_made_bone = true;
 
                 shared.ui.rename_id = "bone_".to_string() + &idx.to_string();
                 shared.selected_bone_mut().unwrap().name = "".to_string();
@@ -216,6 +216,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     let fold_icon = if folded { "⏵" } else { "⏷" };
                     let id = "bone_fold".to_owned() + &b.to_string();
                     if bone_label(fold_icon, ui, id, shared, Vec2::new(-2., 18.)).clicked() {
+                        shared.new_undo_bones();
                         shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
                     }
                 }
@@ -232,11 +233,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     selected_col += Color::new(20, 20, 20, 0);
                 }
 
-                let is_multi_selected = shared
-                    .ui
-                    .selected_bone_ids
-                    .contains(&(shared.armature.bones[idx as usize].id));
-
+                let id = &shared.armature.bones[idx as usize].id;
+                let is_multi_selected = shared.ui.selected_bone_ids.contains(id);
                 if shared.ui.selected_bone_idx == idx as usize || is_multi_selected {
                     selected_col += Color::new(20, 20, 20, 0);
                     cursor = egui::CursorIcon::Default;
@@ -244,7 +242,6 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 let width = ui.available_width();
                 let context_id = "bone_".to_string() + &idx.to_string();
-
                 if shared.ui.rename_id == context_id {
                     let bone_name = shared.loc("armature_panel.new_bone_name").to_string();
                     let bone = shared.armature.bones[b].name.clone();
@@ -259,7 +256,10 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     if edited {
                         shared.new_undo_sel_bone();
                         shared.selected_bone_mut().unwrap().name = value;
-                        shared.ui.just_made_new_bone = false;
+                        if shared.ui.just_made_bone {
+                            shared.undo_actions.last_mut().unwrap().continued = true;
+                        }
+                        shared.ui.just_made_bone = false;
                     }
                     return;
                 }
