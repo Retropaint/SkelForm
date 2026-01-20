@@ -42,17 +42,17 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         let gradient = shared.config.colors.gradient.into();
         ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
         ui.horizontal(|ui| {
-            ui.heading(&shared.loc("armature_panel.heading"));
+            ui.heading(&shared.ui.loc("armature_panel.heading"));
         });
 
         ui.separator();
 
         ui.horizontal(|ui| {
-            let button = ui.skf_button(&&shared.loc("armature_panel.new_bone_button"));
+            let button = ui.skf_button(&&shared.ui.loc("armature_panel.new_bone_button"));
             if button.clicked() {
                 let idx: usize;
 
-                shared.new_undo_bones();
+                shared.undo_states.new_undo_bones(&shared.armature.bones);
 
                 if shared.selected_bone() == None {
                     (_, idx) = shared.armature.new_bone(-1);
@@ -74,7 +74,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 }
                 let mut selected_style = -1;
                 let dropdown = egui::ComboBox::new("styles", "")
-                    .selected_text(&shared.loc("armature_panel.styles"))
+                    .selected_text(&shared.ui.loc("armature_panel.styles"))
                     .width(80.)
                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                     .show_ui(ui, |ui| {
@@ -93,7 +93,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 shared.config.colors.text.into(),
                             );
                             if label.clicked() {
-                                shared.new_undo_styles();
+                                shared.undo_states.new_undo_styles(&shared.armature.styles);
                                 shared.armature.styles[s].active =
                                     !shared.armature.styles[s].active;
                             }
@@ -104,7 +104,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         }
                     })
                     .response
-                    .on_hover_text(&shared.loc("armature_panel.styles_desc"));
+                    .on_hover_text(&shared.ui.loc("armature_panel.styles_desc"));
 
                 if shared.ui.focus_style_dropdown {
                     dropdown.request_focus();
@@ -114,8 +114,13 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     shared.open_style_modal();
                 } else if selected_style != -1 {
                     shared.ui.selected_style = selected_style;
-                    shared.new_undo_bones();
-                    shared.undo_actions.last_mut().unwrap().continued = true;
+                    shared.undo_states.new_undo_bones(&shared.armature.bones);
+                    shared
+                        .undo_states
+                        .undo_actions
+                        .last_mut()
+                        .unwrap()
+                        .continued = true;
                     for b in 0..shared.armature.bones.len() {
                         let bone = shared.armature.bones[b].clone();
                         let armature = &mut shared.armature;
@@ -142,8 +147,8 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     draw_hierarchy(shared, ui);
                 } else {
                     let mut cache = egui_commonmark::CommonMarkCache::default();
-                    let armature_str = shared.loc("armature_panel.empty_armature");
-                    let str = utils::markdown(armature_str, shared.local_doc_url.clone());
+                    let armature_str = shared.ui.loc("armature_panel.empty_armature");
+                    let str = utils::markdown(armature_str, shared.ui.local_doc_url.clone());
                     egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
                 }
                 ui.add_space(4.);
@@ -216,7 +221,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     let fold_icon = if folded { "⏵" } else { "⏷" };
                     let id = "bone_fold".to_owned() + &b.to_string();
                     if bone_label(fold_icon, ui, id, shared, Vec2::new(-2., 18.)).clicked() {
-                        shared.new_undo_bones();
+                        shared.undo_states.new_undo_bones(&shared.armature.bones);
                         shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
                     }
                 }
@@ -243,7 +248,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 let width = ui.available_width();
                 let context_id = "bone_".to_string() + &idx.to_string();
                 if shared.ui.rename_id == context_id {
-                    let bone_name = shared.loc("armature_panel.new_bone_name").to_string();
+                    let bone_name = shared.ui.loc("armature_panel.new_bone_name").to_string();
                     let bone = shared.armature.bones[b].name.clone();
                     let options = Some(TextInputOptions {
                         size: Vec2::new(ui.available_width(), 21.),
@@ -252,12 +257,19 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         default: bone_name,
                         ..Default::default()
                     });
-                    let (edited, value, _) = ui.text_input(context_id, shared, bone, options);
+                    let (edited, value, _) =
+                        ui.text_input(context_id, &mut shared.ui, bone, options);
                     if edited {
-                        shared.new_undo_sel_bone();
+                        let sel_bone = shared.selected_bone().unwrap().clone();
+                        shared.undo_states.new_undo_bone(&sel_bone);
                         shared.selected_bone_mut().unwrap().name = value;
                         if shared.ui.just_made_bone {
-                            shared.undo_actions.last_mut().unwrap().continued = true;
+                            shared
+                                .undo_states
+                                .undo_actions
+                                .last_mut()
+                                .unwrap()
+                                .continued = true;
                         }
                         shared.ui.just_made_bone = false;
                     }
@@ -306,11 +318,13 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         shared.ui.edit_value = Some(shared.armature.bones[b].name.clone());
                     } else {
                         if shared.ui.setting_ik_target {
-                            shared.new_undo_sel_bone();
+                            let sel_bone = shared.selected_bone().unwrap().clone();
+                            shared.undo_states.new_undo_bone(&sel_bone);
                             shared.selected_bone_mut().unwrap().ik_target_id = bone_id;
                             shared.ui.setting_ik_target = false;
                         } else if shared.ui.setting_bind_bone {
-                            shared.new_undo_sel_bone();
+                            let sel_bone = shared.selected_bone().unwrap().clone();
+                            shared.undo_states.new_undo_bone(&sel_bone);
                             let idx = shared.ui.selected_bind as usize;
                             let bind = &mut shared.selected_bone_mut().unwrap().binds[idx];
                             bind.bone_id = bone_id;
@@ -346,16 +360,21 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     }
                 }
 
-                crate::context_menu!(button, shared, context_id, |ui: &mut egui::Ui| {
-                    ui.context_rename(shared, context_id);
-                    ui.context_delete(shared, "delete_bone", PolarId::DeleteBone);
+                crate::context_menu!(button, shared.ui, context_id, |ui: &mut egui::Ui| {
+                    ui.context_rename(&mut shared.ui, &shared.config, context_id);
+                    ui.context_delete(
+                        &mut shared.ui,
+                        &shared.config,
+                        "delete_bone",
+                        PolarId::DeleteBone,
+                    );
 
-                    if ui.context_button("Copy", shared).clicked() {
+                    if ui.context_button("Copy", &shared.config).clicked() {
                         ui::copy_bone(shared, b);
                         shared.ui.context_menu.close();
                     }
 
-                    if ui.context_button("Paste", shared).clicked() {
+                    if ui.context_button("Paste", &shared.config).clicked() {
                         ui::paste_bone(shared, b);
                         shared.ui.context_menu.close();
                     }
@@ -456,7 +475,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         }
     }
 
-    shared.new_undo_bones();
+    shared.undo_states.new_undo_bones(&shared.armature.bones);
 
     // sort dragged bones so they'll appear in the same order when dropped
     let mut sorted_ids = shared.ui.selected_bone_ids.clone();

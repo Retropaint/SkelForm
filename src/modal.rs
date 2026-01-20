@@ -24,22 +24,28 @@ pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     });
 }
 
-pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
+pub fn polar_modal(
+    ctx: &egui::Context,
+    config: &Config,
+    shared_ui: &mut crate::Ui,
+    undo_states: &mut crate::UndoStates,
+    armature: &mut crate::Armature,
+) {
     let mut yes = false;
 
-    let headline = shared.ui.headline.to_string();
+    let headline = shared_ui.headline.to_string();
 
     modal_template(
         ctx,
         "polar".to_string(),
-        &shared.config,
+        &config,
         |ui| {
             ui.label(headline);
         },
         |ui| {
-            let pressed_no = ui.input_mut(|i| i.consume_shortcut(&shared.config.keys.cancel));
+            let pressed_no = ui.input_mut(|i| i.consume_shortcut(&config.keys.cancel));
             if ui.skf_button("No").clicked() || pressed_no {
-                shared.ui.polar_modal = false;
+                shared_ui.polar_modal = false;
             }
             if ui.skf_button("Yes").clicked() {
                 yes = true;
@@ -49,7 +55,7 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             // This is to prevent users with muscle memory from accidentally exiting
             // upon pressing 'enter' upon seeing a modal.
             if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                if shared.ui.polar_id != PolarId::Exiting {
+                if shared_ui.polar_id != PolarId::Exiting {
                     yes = true;
                 }
             }
@@ -60,49 +66,49 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
         return;
     }
 
-    shared.ui.polar_modal = false;
-    match shared.ui.polar_id {
+    shared_ui.polar_modal = false;
+    match shared_ui.polar_id {
         PolarId::DeleteBone => {
-            shared.new_undo_bones();
+            undo_states.new_undo_bones(&armature.bones);
 
-            shared.ui.selected_bone_idx = usize::MAX;
+            shared_ui.selected_bone_idx = usize::MAX;
 
-            let parsed_id = shared.context_id_parsed();
-            let bone = &shared.armature.bones[parsed_id as usize];
+            let parsed_id = shared_ui.context_id_parsed();
+            let bone = &armature.bones[parsed_id as usize];
 
             let bone_id = bone.id;
 
             // remove all children of this bone as well
             let mut children = vec![bone.clone()];
-            armature_window::get_all_children(&shared.armature.bones, &mut children, &bone);
+            armature_window::get_all_children(&armature.bones, &mut children, &bone);
             children.reverse();
             for bone in &children {
-                let idx = shared.armature.bones.iter().position(|b| b.id == bone.id);
-                shared.armature.bones.remove(idx.unwrap());
+                let idx = armature.bones.iter().position(|b| b.id == bone.id);
+                armature.bones.remove(idx.unwrap());
             }
 
             // remove all references to this bone and it's children from all animations
             let mut set_undo_bone_continued = false;
             for bone in &children {
-                for a in 0..shared.armature.animations.len() {
-                    let anim = &mut shared.armature.animations[a];
+                for a in 0..armature.animations.len() {
+                    let anim = &mut armature.animations[a];
                     let last_len = anim.keyframes.len();
 
                     // if an animation has this bone, save it in undo data
                     let mut temp_kfs = anim.keyframes.clone();
                     temp_kfs.retain(|kf| kf.bone_id != bone.id);
                     if last_len != temp_kfs.len() && !set_undo_bone_continued {
-                        shared.new_undo_anims();
-                        shared.undo_actions.last_mut().unwrap().continued = true;
+                        undo_states.new_undo_anims(&armature.animations);
+                        undo_states.undo_actions.last_mut().unwrap().continued = true;
                         set_undo_bone_continued = true;
                     }
 
-                    shared.armature.animations[a].keyframes = temp_kfs;
+                    armature.animations[a].keyframes = temp_kfs;
                 }
             }
 
             // remove this bone from binds
-            for bone in &mut shared.armature.bones {
+            for bone in &mut armature.bones {
                 for b in 0..bone.binds.len() {
                     if bone.binds[b].bone_id == bone_id {
                         bone.binds.remove(b);
@@ -111,42 +117,43 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             }
 
             // IK bones that target this are now -1
-            let context_id = shared.context_id_parsed();
-            let bones = &mut shared.armature.bones;
+            let context_id = shared_ui.context_id_parsed();
+            let bones = &mut armature.bones;
             let targeters = bones.iter_mut().filter(|b| b.ik_target_id == context_id);
             for bone in targeters {
                 bone.ik_target_id = -1;
             }
         }
         PolarId::Exiting => {
-            if shared.config.ignore_donate {
-                shared.ui.confirmed_exit = true;
+            if config.ignore_donate {
+                shared_ui.confirmed_exit = true;
             } else {
-                shared.ui.donating_modal = true;
+                shared_ui.donating_modal = true;
             }
         }
         PolarId::DeleteAnim => {
-            shared.ui.anim.selected = usize::MAX;
-            shared.new_undo_anims();
-            let id = shared.context_id_parsed() as usize;
-            shared.armature.animations.remove(id);
-            shared.ui.context_menu.close();
+            shared_ui.anim.selected = usize::MAX;
+            undo_states.new_undo_anims(&armature.animations);
+            let id = shared_ui.context_id_parsed() as usize;
+            armature.animations.remove(id);
+            shared_ui.context_menu.close();
         }
         PolarId::DeleteFile => {
-            std::fs::remove_file(&shared.ui.selected_path).unwrap();
+            std::fs::remove_file(&shared_ui.selected_path).unwrap();
         }
         PolarId::DeleteTex => {
-            shared.new_undo_sel_style();
-            let id = shared.context_id_parsed() as usize;
-            shared.selected_set_mut().unwrap().textures.remove(id);
+            let style = &mut armature.styles[shared_ui.selected_style as usize];
+            undo_states.new_undo_style(&style);
+            let id = shared_ui.context_id_parsed() as usize;
+            style.textures.remove(id);
         }
         PolarId::DeleteStyle => {
-            shared.new_undo_styles();
-            let context_id = shared.context_id_parsed();
-            let styles = &mut shared.armature.styles;
+            undo_states.new_undo_styles(&armature.styles);
+            let context_id = shared_ui.context_id_parsed();
+            let styles = &mut armature.styles;
             let idx = styles.iter().position(|s| s.id == context_id).unwrap();
-            if shared.ui.selected_style == context_id {
-                shared.ui.selected_style = -1;
+            if shared_ui.selected_style == context_id {
+                shared_ui.selected_style = -1;
             }
             styles.remove(idx);
         }
@@ -154,36 +161,36 @@ pub fn polar_modal(shared: &mut Shared, ctx: &egui::Context) {
             #[cfg(not(target_arch = "wasm32"))]
             {
                 let base_url = "https://github.com/Retropaint/SkelForm/releases/tag/v";
-                _ = open::that(base_url.to_owned() + &shared.ui.new_version.to_string());
+                _ = open::that(base_url.to_owned() + &shared_ui.new_version.to_string());
             }
         }
     }
 }
 
-pub fn modal(shared: &mut Shared, ctx: &egui::Context) {
-    let headline = shared.ui.headline.to_string();
+pub fn modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &Config) {
+    let headline = shared_ui.headline.to_string();
     modal_template(
         ctx,
         "modal".to_string(),
-        &shared.config,
+        &config,
         |ui| {
             let mut cache = egui_commonmark::CommonMarkCache::default();
-            let str = utils::markdown(headline, shared.local_doc_url.to_string());
+            let str = utils::markdown(headline, shared_ui.local_doc_url.to_string());
             egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
         },
         |ui| {
-            if shared.ui.forced_modal || !ui.button("OK").clicked() {
+            if shared_ui.forced_modal || !ui.button("OK").clicked() {
                 return;
             }
 
-            shared.ui.modal = false;
-            shared.ui.headline = "".to_string();
+            shared_ui.modal = false;
+            shared_ui.headline = "".to_string();
         },
     )
 }
 
 pub fn donating_modal(shared: &mut Shared, ctx: &egui::Context) {
-    let headline = shared.loc("donating");
+    let headline = shared.ui.loc("donating");
     let config = shared.config.clone();
     modal_template(
         ctx,

@@ -168,7 +168,7 @@ pub fn save_web(shared: &Shared) {
     }
 
     let (armatures_json, editor_json) =
-        prepare_files(&carmature, shared.camera.clone(), sizes.clone());
+        prepare_files(&carmature, shared.renderer.camera.clone(), sizes.clone());
 
     // create zip file
     let mut buf: Vec<u8> = Vec::new();
@@ -546,7 +546,7 @@ pub fn import<R: Read + std::io::Seek>(
     if let Ok(editor_file) = zip.as_mut().unwrap().by_name("editor.json") {
         let editor: crate::EditorOptions = serde_json::from_reader(editor_file).unwrap();
 
-        shared.camera = editor.camera;
+        shared.renderer.camera = editor.camera;
 
         for b in 0..shared.armature.bones.len() {
             let bone = &mut shared.armature.bones[b];
@@ -643,18 +643,18 @@ pub fn save_to_recent_files(paths: &Vec<String>) {
         .unwrap();
 }
 
-pub fn undo_redo(undo: bool, shared: &mut Shared) {
+pub fn undo_redo(undo: bool, undo_states: &mut UndoStates, armature: &mut Armature, ui: &mut Ui) {
     let action: Action;
     if undo {
-        if shared.undo_actions.last() == None {
+        if undo_states.undo_actions.last() == None {
             return;
         }
-        action = shared.undo_actions.last().unwrap().clone();
+        action = undo_states.undo_actions.last().unwrap().clone();
     } else {
-        if shared.redo_actions.last() == None {
+        if undo_states.redo_actions.last() == None {
             return;
         }
-        action = shared.redo_actions.last().unwrap().clone();
+        action = undo_states.redo_actions.last().unwrap().clone();
     }
 
     // store the state prior to undoing/redoing the action,
@@ -663,79 +663,83 @@ pub fn undo_redo(undo: bool, shared: &mut Shared) {
 
     match &action.action {
         ActionType::Bone => {
-            new_action.bones = shared.armature.bones.clone();
-            *shared.armature.find_bone_mut(action.bones[0].id).unwrap() = action.bones[0].clone();
+            new_action.bones = armature.bones.clone();
+            *armature.find_bone_mut(action.bones[0].id).unwrap() = action.bones[0].clone();
         }
         ActionType::Bones => {
-            new_action.bones = shared.armature.bones.clone();
-            shared.armature.bones = action.bones.clone();
-            if shared.ui.selected_bone_ids.len() == 0 {
-                shared.ui.selected_bone_idx = usize::MAX;
+            new_action.bones = armature.bones.clone();
+            armature.bones = action.bones.clone();
+            if ui.selected_bone_ids.len() == 0 {
+                ui.selected_bone_idx = usize::MAX;
             } else {
-                let sel_id = shared.ui.selected_bone_ids[0];
-                let sel_idx = shared.armature.bones.iter().position(|b| b.id == sel_id);
+                let sel_id = ui.selected_bone_ids[0];
+                let sel_idx = armature.bones.iter().position(|b| b.id == sel_id);
                 if sel_idx != None {
-                    shared.ui.selected_bone_idx = sel_idx.unwrap();
+                    ui.selected_bone_idx = sel_idx.unwrap();
                 } else {
-                    shared.ui.selected_bone_idx = usize::MAX
+                    ui.selected_bone_idx = usize::MAX
                 }
             }
         }
         ActionType::Animation => {
-            new_action.animations = shared.armature.animations.clone();
-            let anims = &mut shared.armature.animations;
+            new_action.animations = armature.animations.clone();
+            let anims = &mut armature.animations;
             let anim = anims.iter_mut().find(|a| a.id == action.animations[0].id);
             *anim.unwrap() = action.animations[0].clone();
         }
         ActionType::Animations => {
-            new_action.animations = shared.armature.animations.clone();
-            shared.armature.animations = action.animations.clone();
-            let animations = &mut shared.armature.animations;
-            if animations.len() == 0 || shared.ui.anim.selected > animations.len() - 1 {
-                shared.ui.anim.selected = usize::MAX;
+            new_action.animations = armature.animations.clone();
+            armature.animations = action.animations.clone();
+            let animations = &mut armature.animations;
+            if animations.len() == 0 || ui.anim.selected > animations.len() - 1 {
+                ui.anim.selected = usize::MAX;
             }
         }
         ActionType::Style => {
-            new_action.styles = shared.armature.styles.clone();
-            let styles = &mut shared.armature.styles;
+            new_action.styles = armature.styles.clone();
+            let styles = &mut armature.styles;
             let id = action.styles[0].id;
             let style = styles.iter_mut().find(|a| a.id == id).unwrap();
             *style = action.styles[0].clone();
         }
         ActionType::Styles => {
-            new_action.styles = shared.armature.styles.clone();
-            shared.armature.styles = action.styles.clone();
-            let style_ids: Vec<i32> = shared.armature.styles.iter().map(|s| s.id).collect();
-            if !style_ids.contains(&shared.ui.selected_style) {
-                shared.ui.selected_style = -1;
+            new_action.styles = armature.styles.clone();
+            armature.styles = action.styles.clone();
+            let style_ids: Vec<i32> = armature.styles.iter().map(|s| s.id).collect();
+            if !style_ids.contains(&ui.selected_style) {
+                ui.selected_style = -1;
             }
         }
         _ => {}
     }
 
     // add action(s) to opposing stack
-    shared.temp_actions.push(new_action);
+    undo_states.temp_actions.push(new_action);
     if undo {
-        shared.undo_actions.pop();
+        undo_states.undo_actions.pop();
         if !action.continued {
             // reverse list to restore order of actions
-            shared.temp_actions.reverse();
-            shared.redo_actions.append(&mut shared.temp_actions);
-            shared.temp_actions = vec![];
+            undo_states.temp_actions.reverse();
+            undo_states
+                .redo_actions
+                .append(&mut undo_states.temp_actions);
+            undo_states.temp_actions = vec![];
         }
     } else {
-        shared.redo_actions.pop();
+        undo_states.redo_actions.pop();
         if !action.continued {
             // ditto
-            shared.temp_actions.reverse();
-            shared.undo_actions.append(&mut shared.temp_actions);
-            shared.temp_actions = vec![];
+            undo_states.temp_actions.reverse();
+            undo_states
+                .undo_actions
+                .append(&mut undo_states.temp_actions);
+            undo_states.temp_actions = vec![];
         }
     }
 
     // actions tagged with `continue` are part of an action chain
     if action.continued {
-        undo_redo(undo, shared);
+        undo_redo(undo, undo_states, armature, ui);
     }
 }
 
@@ -813,7 +817,7 @@ pub fn save_config(config: &Config) {
     }
 }
 
-pub fn import_config(shared: &mut Shared) {
+pub fn config_str() -> String {
     #[cfg(not(target_arch = "wasm32"))]
     {
         let mut str = String::new();
@@ -821,13 +825,11 @@ pub fn import_config(shared: &mut Shared) {
             .unwrap()
             .read_to_string(&mut str)
             .unwrap();
-        shared.config = serde_json::from_str(&str).unwrap_or_default();
+        return str;
     }
     #[cfg(target_arch = "wasm32")]
     {
-        if let Ok(data) = serde_json::from_str(&getConfig()) {
-            shared.config = data;
-        }
+        return getConfig();
     }
 }
 
@@ -965,10 +967,10 @@ pub fn get_all_parents(bones: &Vec<Bone>, bone_id: i32) -> Vec<Bone> {
     parents
 }
 
-pub fn exit(shared: &mut Shared) {
-    if shared.undo_actions.len() == 0 && !shared.config.ignore_donate {
-        shared.ui.donating_modal = true;
-    } else if !shared.ui.donating_modal {
-        shared.ui.exiting = true;
+pub fn exit(undo_states: &mut UndoStates, config: &Config, ui: &mut Ui) {
+    if undo_states.undo_actions.len() == 0 && !config.ignore_donate {
+        ui.donating_modal = true;
+    } else if !ui.donating_modal {
+        ui.exiting = true;
     }
 }

@@ -51,17 +51,17 @@ fn startup_content(
         ui.set_width(133.);
         ui.add_space(10.);
         let empty = "".to_string();
-        if leftside_button("+", &shared.loc("new"), ui, shared, None, None, empty).clicked() {
+        if leftside_button("+", &shared.ui.loc("new"), ui, shared, None, None, empty).clicked() {
             shared.ui.unselect_everything();
             shared.ui.anim.open = false;
-            shared.camera.pos = Vec2::new(0., 0.);
-            shared.camera.zoom = 2000.;
+            shared.renderer.camera.pos = Vec2::new(0., 0.);
+            shared.renderer.camera.zoom = 2000.;
             shared.armature = Armature::default();
             shared.ui.startup_window = false;
         }
         ui.add_space(padding);
         let import_pos = Some(egui::Vec2::new(-5., 2.5));
-        let str_import = &shared.loc("startup.import");
+        let str_import = &shared.ui.loc("startup.import");
         let empty = "".to_string();
         if leftside_button("🗋", str_import, ui, shared, import_pos, None, empty).clicked() {
             #[cfg(target_arch = "wasm32")]
@@ -74,7 +74,7 @@ fn startup_content(
         {
             ui.add_space(padding);
             let samples_pos = Some(egui::Vec2::new(-5., 2.5));
-            let str_samples = &shared.loc("startup.samples");
+            let str_samples = &shared.ui.loc("startup.samples");
             let empty = "".to_string();
             if leftside_button("🗊", str_samples, ui, shared, samples_pos, None, empty).clicked()
             {
@@ -85,9 +85,9 @@ fn startup_content(
                 let skel_pos = Some(egui::Vec2::new(-5., -10.));
                 macro_rules! add_thumb_tex {
                     ($key:expr, $filename:expr) => {
-                        if !shared.thumb_ui_tex.contains_key($key) {
+                        if !shared.ui.thumb_ui_tex.contains_key($key) {
                             let skel_file = include_bytes!($filename).to_vec();
-                            shared.thumb_ui_tex.insert(
+                            shared.ui.thumb_ui_tex.insert(
                                 $key.to_string(),
                                 ui::create_ui_texture(skel_file, true, ctx).unwrap(),
                             );
@@ -97,7 +97,7 @@ fn startup_content(
 
                 macro_rules! sample_button {
                     ($key:expr, $name:expr, $path:expr, $desc:expr) => {
-                        let thumb_tex = shared.thumb_ui_tex.get($key);
+                        let thumb_tex = shared.ui.thumb_ui_tex.get($key);
                         if leftside_button("", $name, ui, shared, skel_pos, thumb_tex, $desc)
                             .clicked()
                         {
@@ -113,13 +113,13 @@ fn startup_content(
 
                 let key = "skellington_icon.png";
                 let sample = utils::bin_path() + "samples/" + SKEL_SKF;
-                let desc = shared.loc("startup.skellington_sample_desc");
+                let desc = shared.ui.loc("startup.skellington_sample_desc");
                 let name = "Skellington";
                 sample_button!(key, name, sample, desc);
 
                 let key = "skellina_icon.png";
                 let sample = utils::bin_path() + "samples/" + SKELA_SKF;
-                let desc = shared.loc("startup.skellina_sample_desc");
+                let desc = shared.ui.loc("startup.skellina_sample_desc");
                 sample_button!(key, "Skellina", sample, desc);
             }
         }
@@ -178,11 +178,11 @@ fn startup_content(
                     if !has_files {
                         ui.add_space(10.);
 
-                        let msg = &shared.loc("startup.empty_recent_files");
+                        let msg = &shared.ui.loc("startup.empty_recent_files");
                         let text = egui::RichText::new(msg).size(14.);
                         ui.label(text);
 
-                        let msg = &shared.loc("startup.early_access_warning");
+                        let msg = &shared.ui.loc("startup.early_access_warning");
                         let mut orange: crate::Color = egui::Color32::ORANGE.into();
                         orange -= crate::Color::new(30, 30, 30, 0);
                         let text = egui::RichText::new(msg).size(14.).color(orange);
@@ -196,7 +196,7 @@ fn startup_content(
             #[cfg(target_arch = "wasm32")]
             ui.vertical(|ui| {
                 let width = ui.available_width();
-                let msg = &shared.loc("startup.web_note");
+                let msg = &shared.ui.loc("startup.web_note");
                 let text = egui::RichText::new(msg).size(14.);
                 ui.label(text);
                 ui.add_space(20.);
@@ -204,13 +204,13 @@ fn startup_content(
                 let name = "Skellington Sample".to_owned();
                 let skf_name = SKEL_SKF.to_string();
                 let skel_file = include_bytes!(".././assets/skellington_icon.png").to_vec();
-                let desc = shared.loc("startup.skellington_sample_desc");
+                let desc = shared.ui.loc("startup.skellington_sample_desc");
                 web_sample_button(name, skf_name, skel_file, shared, ui, ctx, width, desc);
 
                 let name = "Skellina Sample".to_owned();
                 let skf_name = SKELA_SKF.to_string();
                 let skel_file = include_bytes!(".././assets/skellina_icon.png").to_vec();
-                let desc = shared.loc("startup.skellina_sample_desc");
+                let desc = shared.ui.loc("startup.skellina_sample_desc");
                 web_sample_button(name, skf_name, skel_file, shared, ui, ctx, width, desc);
             })
         });
@@ -249,11 +249,11 @@ fn startup_content(
                     web = false;
                 }
 
-                for item in &shared.startup.resources {
+                for item in &shared.ui.startup.resources {
                     if item.update_checker && web {
                         continue;
                     }
-                    let str = &shared.loc(&("startup.resources.".to_owned() + &item.code));
+                    let str = &shared.ui.loc(&("startup.resources.".to_owned() + &item.code));
                     let text = egui::RichText::new(str).color(link_color).size(header_size);
                     let heading = ui.clickable_label(text);
                     if heading.clicked() {
@@ -282,7 +282,7 @@ fn startup_content(
                             );
                             ui.add_space(sub_padding);
                             let sub_str =
-                                &shared.loc(&("startup.resources.".to_owned() + &sub.code));
+                                &shared.ui.loc(&("startup.resources.".to_owned() + &sub.code));
 
                             let text = egui::RichText::new(sub_str)
                                 .color(link_color)
@@ -394,7 +394,7 @@ pub fn skf_file_button(
     }
 
     // generate thumbnail UI texture
-    if !shared.thumb_ui_tex.contains_key(&filename) {
+    if !shared.ui.thumb_ui_tex.contains_key(&filename) {
         let mut thumb_bytes = vec![];
         let file = zip.as_mut().unwrap().by_name("thumbnail.png");
         if let Ok(_) = file {
@@ -402,7 +402,7 @@ pub fn skf_file_button(
                 thumb_bytes.push(byte.unwrap());
             }
             let ui_tex = ui::create_ui_texture(thumb_bytes, false, ctx).unwrap();
-            shared.thumb_ui_tex.insert(filename.clone(), ui_tex.clone());
+            shared.ui.thumb_ui_tex.insert(filename.clone(), ui_tex.clone());
         }
     }
 
@@ -438,7 +438,7 @@ pub fn skf_file_button(
                 egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
                 thumb_size.into(),
             );
-            if let Some(thumb_tex) = shared.thumb_ui_tex.get(&filename) {
+            if let Some(thumb_tex) = shared.ui.thumb_ui_tex.get(&filename) {
                 egui::Image::new(thumb_tex).paint_at(ui, rect);
             }
             let heading_pos = egui::Pos2::new(
@@ -462,7 +462,7 @@ pub fn skf_file_button(
                 ui.painter().text(
                     heading_pos,
                     egui::Align2::LEFT_BOTTOM,
-                    &shared.loc("startup.autosave_note"),
+                    &shared.ui.loc("startup.autosave_note"),
                     egui::FontId::new(11., egui::FontFamily::Proportional),
                     col.into(),
                 );
@@ -500,7 +500,7 @@ pub fn skf_file_button(
 
         if file_button_icon("🗑", "Delete file", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
             shared.ui.selected_path = path.clone();
-            let str_del = &shared.loc("polar.delete_file").replace("$", &filename);
+            let str_del = &shared.ui.loc("polar.delete_file").replace("$", &filename);
             shared
                 .ui
                 .open_polar_modal(PolarId::DeleteFile, str_del.to_string());
@@ -529,9 +529,9 @@ pub fn web_sample_button(
 ) {
     let thumb_size = Vec2::new(64., 64.);
 
-    if !shared.thumb_ui_tex.contains_key(&name) {
+    if !shared.ui.thumb_ui_tex.contains_key(&name) {
         let ui_tex = ui::create_ui_texture(thumb_bytes, true, ctx).unwrap();
-        shared.thumb_ui_tex.insert(name.clone(), ui_tex.clone());
+        shared.ui.thumb_ui_tex.insert(name.clone(), ui_tex.clone());
     }
 
     ui.horizontal(|ui| {
@@ -565,7 +565,7 @@ pub fn web_sample_button(
                     egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
                     thumb_size.into(),
                 );
-                if let Some(thumb_tex) = shared.thumb_ui_tex.get(&name) {
+                if let Some(thumb_tex) = shared.ui.thumb_ui_tex.get(&name) {
                     egui::Image::new(thumb_tex).paint_at(ui, rect);
                 }
                 let mut pos = egui::Pos2::new(

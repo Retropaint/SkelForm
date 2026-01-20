@@ -90,11 +90,11 @@ extern "C" {
 #[derive(Default)]
 pub struct App {
     window: Option<Arc<Window>>,
-    renderer: Option<Renderer>,
+    renderer: Option<BackendRenderer>,
     gui_state: Option<egui_winit::State>,
     last_render_time: Option<Instant>,
     #[cfg(target_arch = "wasm32")]
-    pub renderer_receiver: Option<futures::channel::oneshot::Receiver<Renderer>>,
+    pub renderer_receiver: Option<futures::channel::oneshot::Receiver<BackendRenderer>>,
     pub shared: shared::Shared,
 }
 
@@ -130,7 +130,7 @@ impl ApplicationHandler for App {
                 .unwrap()
                 .dyn_into::<wgpu::web_sys::HtmlCanvasElement>()
                 .unwrap();
-            self.shared.window = Vec2::new(canvas.width() as f32, canvas.height() as f32);
+            self.shared.renderer.window = Vec2::new(canvas.width() as f32, canvas.height() as f32);
             attributes = attributes.with_canvas(Some(canvas));
         }
 
@@ -174,7 +174,7 @@ impl ApplicationHandler for App {
             #[cfg(not(target_arch = "wasm32"))]
             {
                 let renderer = pollster::block_on(async move {
-                    Renderer::new(window_handle.clone(), width, height).await
+                    BackendRenderer::new(window_handle.clone(), width, height).await
                 });
                 self.renderer = Some(renderer);
             }
@@ -186,10 +186,11 @@ impl ApplicationHandler for App {
                 std::panic::set_hook(Box::new(console_error_panic_hook::hook));
                 console_log::init().expect("Failed to initialize logger!");
                 //log::info!("Canvas dimensions: ({canvas_width} x {canvas_height})");
-                let size = self.shared.window.clone();
+                let size = self.shared.renderer.window.clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     let renderer =
-                        Renderer::new(window_handle.clone(), size.x as u32, size.y as u32).await;
+                        BackendRenderer::new(window_handle.clone(), size.x as u32, size.y as u32)
+                            .await;
                     if sender.send(renderer).is_err() {
                         log::error!("Failed to create and send renderer!");
                     }
@@ -248,7 +249,7 @@ impl ApplicationHandler for App {
         // If the gui didn't consume the event, handle it
         match event {
             WindowEvent::HoveredFile(_) => {
-                let str_drop_file = self.shared.loc("drop_file").to_string();
+                let str_drop_file = self.shared.ui.loc("drop_file").to_string();
                 self.shared.ui.open_modal(str_drop_file, true);
             }
             WindowEvent::HoveredFileCancelled => {
@@ -264,7 +265,11 @@ impl ApplicationHandler for App {
                 }
             }
             WindowEvent::CloseRequested => {
-                utils::exit(&mut self.shared);
+                utils::exit(
+                    &mut self.shared.undo_states,
+                    &self.shared.config,
+                    &mut self.shared.ui,
+                );
             }
             WindowEvent::Focused(is_focused) => {
                 let manager = &mut self.shared.input.hotkey_manager;
@@ -287,7 +292,7 @@ impl ApplicationHandler for App {
                 if width == 0 || height == 0 {
                     return;
                 }
-                self.shared.window = Vec2::new(width as f32, height as f32);
+                self.shared.renderer.window = Vec2::new(width as f32, height as f32);
                 renderer.resize(width as u32, height as u32);
             }
             WindowEvent::RedrawRequested => {
@@ -298,11 +303,7 @@ impl ApplicationHandler for App {
                 gui_state.egui_ctx().begin_pass(input);
 
                 // ui logic handled in ui.rs
-                ui::draw(
-                    gui_state.egui_ctx(),
-                    &mut self.shared,
-                    window.scale_factor() as f32,
-                );
+                ui::draw(gui_state.egui_ctx(), &mut self.shared);
 
                 let egui_winit::egui::FullOutput {
                     textures_delta,
@@ -323,12 +324,12 @@ impl ApplicationHandler for App {
                     }
                 };
 
-                if !self.shared.initialized_window && size.width != 0 && size.height != 0 {
+                if !self.shared.renderer.initialized_window && size.width != 0 && size.height != 0 {
                     renderer.resize(size.width as u32, size.height as u32);
-                    self.shared.initialized_window = true;
+                    self.shared.renderer.initialized_window = true;
                 }
 
-                self.shared.window = Vec2::new(size.width as f32, size.height as f32);
+                self.shared.renderer.window = Vec2::new(size.width as f32, size.height as f32);
                 renderer.render_frame(
                     screen_descriptor,
                     paint_jobs,
@@ -339,7 +340,7 @@ impl ApplicationHandler for App {
                 #[cfg(target_arch = "wasm32")]
                 {
                     self.shared.ui.scale = getUiSliderValue() * window.scale_factor() as f32;
-                    self.shared.mobile = isMobile();
+                    self.shared.ui.mobile = isMobile();
                 }
                 #[cfg(not(target_arch = "wasm32"))]
                 {
@@ -358,13 +359,17 @@ impl ApplicationHandler for App {
             let pressing_w = event.id() == self.shared.input.mod_w.unwrap().id();
             let pressing_q = event.id() == self.shared.input.mod_q.unwrap().id();
             if pressing_w || pressing_q {
-                utils::exit(&mut self.shared);
+                utils::exit(
+                    &mut self.shared.undo_states,
+                    &self.shared.config,
+                    &mut self.shared.ui,
+                );
             }
         }
 
         if self.shared.ui.exiting {
-            if self.shared.prev_undo_actions != self.shared.undo_actions {
-                let str_del = self.shared.loc("polar.unsaved").clone().to_string();
+            if self.shared.undo_states.prev_undo_actions != self.shared.undo_states.undo_actions {
+                let str_del = self.shared.ui.loc("polar.unsaved").clone().to_string();
                 self.shared.ui.open_polar_modal(PolarId::Exiting, str_del);
             } else {
                 event_loop.exit();
@@ -380,14 +385,14 @@ impl ApplicationHandler for App {
     }
 }
 
-pub struct Renderer {
+pub struct BackendRenderer {
     gpu: Gpu,
     egui_renderer: egui_wgpu::Renderer,
     scene: Scene,
     bind_group_layout: BindGroupLayout,
 }
 
-impl Renderer {
+impl BackendRenderer {
     pub async fn new(
         window: impl Into<wgpu::SurfaceTarget<'static>>,
         width: u32,
@@ -450,8 +455,8 @@ impl Renderer {
         textures_delta: egui::TexturesDelta,
         shared: &mut shared::Shared,
     ) {
-        if shared.generic_bindgroup == None {
-            shared.generic_bindgroup = Some(renderer::create_texture_bind_group(
+        if shared.renderer.generic_bindgroup == None {
+            shared.renderer.generic_bindgroup = Some(renderer::create_texture_bind_group(
                 vec![255, 255, 255, 255],
                 Vec2::new(1., 1.),
                 &self.gpu.queue,
@@ -459,9 +464,9 @@ impl Renderer {
                 &self.bind_group_layout,
             ));
         }
-        if shared.ik_arrow_bindgroup == None {
+        if shared.renderer.ik_arrow_bindgroup == None {
             let img = image::load_from_memory(include_bytes!(".././assets/ik_arrow.png")).unwrap();
-            shared.ik_arrow_bindgroup = Some(renderer::create_texture_bind_group(
+            shared.renderer.ik_arrow_bindgroup = Some(renderer::create_texture_bind_group(
                 img.clone().into_rgba8().to_vec(),
                 Vec2::new(img.width() as f32, img.height() as f32),
                 &self.gpu.queue,
@@ -470,7 +475,7 @@ impl Renderer {
             ));
         }
         if *shared.save_finished.lock().unwrap() {
-            shared.prev_undo_actions = shared.undo_actions.clone();
+            shared.undo_states.prev_undo_actions = shared.undo_states.undo_actions.clone();
             shared.ui.modal = false;
             *shared.save_finished.lock().unwrap() = false;
         }
@@ -571,7 +576,7 @@ impl Renderer {
             #[cfg(not(target_arch = "wasm32"))]
             {
                 let frames = shared.rendered_frames.clone();
-                let window = shared.window.clone();
+                let window = shared.renderer.window.clone();
                 std::thread::spawn(move || {
                     Self::export_video(frames, window);
                 });
@@ -587,7 +592,7 @@ impl Renderer {
             return;
         }
         if *shared.saving.lock().unwrap() == Saving::CustomPath {
-            let str_saving = &shared.loc("saving");
+            let str_saving = &shared.ui.loc("saving");
             shared.ui.open_modal(str_saving.to_string(), true);
         }
         self.take_screenshot(shared);
@@ -595,7 +600,7 @@ impl Renderer {
         shared.rendered_frames = vec![];
         let screenshot_res = shared.screenshot_res;
         let mut armature = shared.armature.clone();
-        let camera = shared.camera.clone();
+        let camera = shared.renderer.camera.clone();
         let mut save_path = shared.file_name.lock().unwrap().clone();
         if *shared.saving.lock().unwrap() == shared::Saving::Autosaving {
             let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");

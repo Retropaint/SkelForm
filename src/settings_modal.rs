@@ -14,7 +14,8 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
         ..Default::default()
     });
     modal.show(ctx, |modal_ui| {
-        let window = shared::Vec2::new(shared.window.x / 3., shared.window.y / 3.);
+        let window =
+            shared::Vec2::new(shared.renderer.window.x / 3., shared.renderer.window.y / 3.);
         modal_ui.set_width(window.x.min(500.));
         modal_ui.set_height(window.y.min(500.));
 
@@ -34,11 +35,17 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
                         };
                     }
 
-                    let str_ui = shared.loc("settings_modal.user_interface.heading").clone();
-                    let str_anim = shared.loc("settings_modal.animation.heading").clone();
-                    let str_rendering = shared.loc("settings_modal.rendering.heading").clone();
-                    let str_keyboard = shared.loc("settings_modal.keyboard.heading").clone();
-                    let str_misc = shared.loc("settings_modal.miscellaneous.heading").clone();
+                    let str_ui = shared
+                        .ui
+                        .loc("settings_modal.user_interface.heading")
+                        .clone();
+                    let str_anim = shared.ui.loc("settings_modal.animation.heading").clone();
+                    let str_rendering = shared.ui.loc("settings_modal.rendering.heading").clone();
+                    let str_keyboard = shared.ui.loc("settings_modal.keyboard.heading").clone();
+                    let str_misc = shared
+                        .ui
+                        .loc("settings_modal.miscellaneous.heading")
+                        .clone();
                     tab!(str_ui, shared::SettingsState::Ui);
                     tab!(str_anim, shared::SettingsState::Animation);
                     tab!(str_rendering, shared::SettingsState::Rendering);
@@ -67,12 +74,12 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
         modal_ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if ui.skf_button("Apply").clicked() {
                 shared.ui.scale = shared.config.ui_scale;
-                shared.gridline_gap = shared.config.gridline_gap;
+                shared.renderer.gridline_gap = shared.config.gridline_gap;
                 crate::utils::save_config(&shared.config);
                 shared.ui.settings_modal = false;
             }
             if ui.skf_button("Cancel").clicked() {
-                crate::utils::import_config(shared);
+                shared.config = serde_json::from_str(&utils::config_str()).unwrap();
                 shared.ui.settings_modal = false;
             }
         })
@@ -117,20 +124,21 @@ fn settings_button(
 }
 
 fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
-    let str_general = &shared.loc("settings_modal.user_interface.general");
+    let str_general = &shared.ui.loc("settings_modal.user_interface.general");
     ui.heading(str_general);
     ui.horizontal(|ui| {
-        let str_ui_scale = &shared.loc("settings_modal.user_interface.ui_scale");
+        let str_ui_scale = &shared.ui.loc("settings_modal.user_interface.ui_scale");
         ui.label(str_ui_scale);
         let scale = shared.config.ui_scale;
-        let (edited, value, _) = ui.float_input("ui_scale".to_string(), shared, scale, 1., None);
+        let (edited, value, _) =
+            ui.float_input("ui_scale".to_string(), &mut shared.ui, scale, 1., None);
         if edited {
             shared.config.ui_scale = value;
         }
 
         #[cfg(target_arch = "wasm32")]
         {
-            let str = shared.loc("settings_modal.user_interface.ui_slider");
+            let str = shared.ui.loc("settings_modal.user_interface.ui_slider");
             if ui.skf_button(&str).clicked() {
                 crate::toggleElement(true, "ui-slider".to_string())
             }
@@ -154,11 +162,13 @@ fn user_interface(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 }
 
 fn animation(ui: &mut egui::Ui, shared: &mut shared::Shared) {
-    let str_heading = &shared.loc("settings_modal.animation.heading");
+    let str_heading = &shared.ui.loc("settings_modal.animation.heading");
     ui.heading(str_heading);
     ui.horizontal(|ui| {
-        let str_edit = &shared.loc("settings_modal.animation.edit_while_playing");
-        let str_edit_desc = &shared.loc("settings_modal.animation.edit_while_playing_desc");
+        let str_edit = &shared.ui.loc("settings_modal.animation.edit_while_playing");
+        let str_edit_desc = &shared
+            .ui
+            .loc("settings_modal.animation.edit_while_playing_desc");
         ui.label(str_edit).on_hover_text(str_edit_desc);
         ui.checkbox(&mut shared.config.edit_while_playing, "".into_atoms());
     });
@@ -166,10 +176,10 @@ fn animation(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
 fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
-        let str_heading = &shared.loc("settings_modal.rendering.heading");
+        let str_heading = &shared.ui.loc("settings_modal.rendering.heading");
         ui.heading(str_heading);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_default = &shared.loc("settings_modal.default");
+            let str_default = &shared.ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
                 shared.config.colors.background = crate::Config::default().colors.background;
                 shared.config.colors.gridline = crate::Config::default().colors.gridline;
@@ -180,17 +190,18 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     });
 
     ui.horizontal(|ui| {
-        let str_gridline_gap = &shared.loc("settings_modal.rendering.gridline_gap");
+        let str_gridline_gap = &shared.ui.loc("settings_modal.rendering.gridline_gap");
         ui.label(str_gridline_gap);
         let gap = shared.config.gridline_gap as f32;
-        let (edited, value, _) = ui.float_input("grid_gap".to_string(), shared, gap, 1., None);
+        let (edited, value, _) =
+            ui.float_input("grid_gap".to_string(), &mut shared.ui, gap, 1., None);
         if edited {
             shared.config.gridline_gap = value as i32;
         }
     });
 
     ui.horizontal(|ui| {
-        let str_gridline_gap = &shared.loc("settings_modal.rendering.gridline_front");
+        let str_gridline_gap = &shared.ui.loc("settings_modal.rendering.gridline_front");
         ui.label(str_gridline_gap);
         ui.checkbox(&mut shared.config.gridline_front, "".into_atoms());
     });
@@ -198,6 +209,7 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     macro_rules! color_row {
         ($title:expr, $color:expr, $bg_color:expr) => {
             let str_color = shared
+                .ui
                 .loc(&("settings_modal.rendering.".to_owned() + $title))
                 .clone();
             let mut col = $color.clone();
@@ -220,27 +232,34 @@ fn rendering(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     #[cfg(not(target_arch = "wasm32"))]
     ui.horizontal(|ui| {
-        let str_autosave_freq = &shared.loc("settings_modal.miscellaneous.autosave_frequency");
+        let str_autosave_freq = &shared
+            .ui
+            .loc("settings_modal.miscellaneous.autosave_frequency");
         ui.label(str_autosave_freq);
         let id = "autosave_freq".to_string();
         let auto_freq = shared.config.autosave_frequency as f32;
-        let (edited, value, _) = ui.float_input(id, shared, auto_freq, 1., None);
+        let (edited, value, _) = ui.float_input(id, &mut shared.ui, auto_freq, 1., None);
         if edited && value > 0. {
             shared.config.autosave_frequency = value as i32;
         }
     });
     ui.horizontal(|ui| {
-        let str_exact_bone = &shared.loc("settings_modal.miscellaneous.select_exact_bone");
-        let str_exact_bone_desc =
-            &shared.loc("settings_modal.miscellaneous.select_exact_bone_desc");
+        let str_exact_bone = &shared
+            .ui
+            .loc("settings_modal.miscellaneous.select_exact_bone");
+        let str_exact_bone_desc = &shared
+            .ui
+            .loc("settings_modal.miscellaneous.select_exact_bone_desc");
         ui.label(str_exact_bone.to_owned())
             .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_exact_bone_desc);
         ui.checkbox(&mut shared.config.exact_bone_select, "".into_atoms());
     });
     ui.horizontal(|ui| {
-        let str_keep_tex_str = &shared.loc("settings_modal.miscellaneous.keep_tex_str");
-        let str_keep_tex_str_desc = &shared.loc("settings_modal.miscellaneous.keep_tex_str_desc");
+        let str_keep_tex_str = &shared.ui.loc("settings_modal.miscellaneous.keep_tex_str");
+        let str_keep_tex_str_desc = &shared
+            .ui
+            .loc("settings_modal.miscellaneous.keep_tex_str_desc");
         ui.label(&(str_keep_tex_str.to_owned()))
             .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_keep_tex_str_desc);
@@ -249,10 +268,12 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
     ui.add_space(20.);
 
-    let str_startup = &shared.loc("top_bar.file.startup");
+    let str_startup = &shared.ui.loc("top_bar.file.startup");
     ui.heading(str_startup);
     ui.horizontal(|ui| {
-        let str_skip_startup = &shared.loc("settings_modal.miscellaneous.skip_startup_window");
+        let str_skip_startup = &shared
+            .ui
+            .loc("settings_modal.miscellaneous.skip_startup_window");
         ui.label(str_skip_startup);
         ui.checkbox(&mut shared.config.skip_startup, "".into_atoms());
     });
@@ -261,7 +282,9 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
         if shared.recent_file_paths.len() == 0 {
             ui.disable();
         }
-        let str_clear_recents = &shared.loc("settings_modal.miscellaneous.clear_recent_files");
+        let str_clear_recents = &shared
+            .ui
+            .loc("settings_modal.miscellaneous.clear_recent_files");
         if ui.skf_button(str_clear_recents).clicked() {
             shared.recent_file_paths = vec![];
             utils::save_to_recent_files(&vec![]);
@@ -270,13 +293,13 @@ fn misc(ui: &mut egui::Ui, shared: &mut shared::Shared) {
 
     ui.add_space(20.);
 
-    let str_startup = &shared.loc("settings_modal.miscellaneous.beta.heading");
+    let str_startup = &shared.ui.loc("settings_modal.miscellaneous.beta.heading");
     ui.heading(str_startup);
-    //let text = shared.loc("settings_modal.miscellaneous.beta.warning");
-    let mut text = shared.loc("settings_modal.miscellaneous.beta.nothing");
+    //let text = shared.ui.loc("settings_modal.miscellaneous.beta.warning");
+    let mut text = shared.ui.loc("settings_modal.miscellaneous.beta.nothing");
     text = text.replace("$version", env!("CARGO_PKG_VERSION"));
     let mut cache = egui_commonmark::CommonMarkCache::default();
-    let str = utils::markdown(text, shared.local_doc_url.to_string());
+    let str = utils::markdown(text, shared.ui.local_doc_url.to_string());
     egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
     ui.add_space(5.);
 }
@@ -285,6 +308,7 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     macro_rules! color_row {
         ($title:expr, $color:expr, $bg_color:expr) => {
             let str_color = shared
+                .ui
                 .loc(&("settings_modal.user_interface.colors.".to_owned() + $title))
                 .clone();
             color_row(str_color, $color, $bg_color, ui);
@@ -292,10 +316,12 @@ fn colors(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     }
 
     ui.horizontal(|ui| {
-        let str_colors = &shared.loc("settings_modal.user_interface.colors_heading");
+        let str_colors = &shared
+            .ui
+            .loc("settings_modal.user_interface.colors_heading");
         ui.heading(str_colors);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_default = &shared.loc("settings_modal.default");
+            let str_default = &shared.ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
                 shared.config.colors = crate::ColorConfig::default();
             }
@@ -348,10 +374,10 @@ fn color_row(title: String, color: &mut shared::Color, bg: shared::Color, ui: &m
 
 fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     ui.horizontal(|ui| {
-        let str_heading = &shared.loc("settings_modal.keyboard.heading");
+        let str_heading = &shared.ui.loc("settings_modal.keyboard.heading");
         ui.heading(str_heading);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_default = &shared.loc("settings_modal.default");
+            let str_default = &shared.ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
                 shared.config.keys = crate::KeyboardConfig::default();
             }
@@ -375,6 +401,7 @@ fn keyboard(ui: &mut egui::Ui, shared: &mut shared::Shared) {
     macro_rules! loc {
         ($label:expr) => {
             shared
+                .ui
                 .loc(&("settings_modal.keyboard.".to_owned() + $label))
                 .clone()
         };

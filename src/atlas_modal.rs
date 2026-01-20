@@ -149,7 +149,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                     });
                 });
                 if shared.ui.pending_textures.len() == 0 {
-                    ui.label(shared.loc("atlas_modal.no_pending"));
+                    ui.label(shared.ui.loc("atlas_modal.no_pending"));
                 } else {
                     textures_list(shared, ui, atlas, height);
                 }
@@ -183,7 +183,7 @@ fn textures_list(shared: &mut Shared, ui: &mut egui::Ui, atlas: Texture, height:
             let mut tex = shared.ui.pending_textures[t].clone();
             macro_rules! input {
                 ($id:expr, $field:expr, $ui:expr) => {
-                    let (edited, value, _) = $ui.float_input($id, shared, $field, 1., None);
+                    let (edited, value, _) = $ui.float_input($id, &mut shared.ui, $field, 1., None);
                     if edited {
                         $field = value;
                     }
@@ -207,7 +207,7 @@ fn textures_list(shared: &mut Shared, ui: &mut egui::Ui, atlas: Texture, height:
                     }
                     let (edited, value, _) = ui.text_input(
                         t.to_string() + "name",
-                        shared,
+                        &mut shared.ui,
                         tex.name.clone(),
                         Some(TextInputOptions {
                             placeholder: "Texture Name...".to_string(),

@@ -42,7 +42,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
         let bytes = include_bytes!("../assets/startup.json").as_slice();
         startup = serde_json::from_slice(bytes).unwrap();
     }
-    app.shared.startup = startup;
+    app.shared.ui.startup = startup;
 
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -68,7 +68,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 
 fn init_shared(shared: &mut Shared) {
     shared.ui.selected_bone_idx = usize::MAX;
-    shared.camera.zoom = 2000.;
+    shared.renderer.camera.zoom = 2000.;
     shared.ui.anim.selected = usize::MAX;
     shared.ui.anim.timeline_zoom = 1.;
     shared.ui.anim.exported_frame = "".to_string();
@@ -77,7 +77,7 @@ fn init_shared(shared: &mut Shared) {
         frame: -1,
         ..Default::default()
     };
-    shared.dragging_verts = vec![];
+    shared.renderer.dragging_verts = vec![];
     shared.ui.scale = 1.;
     shared.ui.context_menu.close();
     shared.ui.hovering_tex = -1;
@@ -86,7 +86,7 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.selected_bind = -1;
     shared.ui.styles_modal_size = Vec2::new(500., 500.);
     shared.screenshot_res = Vec2::new(128., 128.);
-    shared.changed_vert_id = -1;
+    shared.renderer.changed_vert_id = -1;
 
     #[cfg(feature = "debug")]
     {
@@ -96,20 +96,20 @@ fn init_shared(shared: &mut Shared) {
     #[cfg(not(target_arch = "wasm32"))]
     {
         match std::fs::exists(utils::bin_path() + "dev-docs") {
-            Ok(_) => shared.local_doc_url = utils::bin_path(),
+            Ok(_) => shared.ui.local_doc_url = utils::bin_path(),
             _ => {}
         }
 
         // import config
         if config_path().exists() {
-            utils::import_config(shared);
+            shared.config = serde_json::from_str(&utils::config_str()).unwrap();
         } else {
             utils::save_config(&shared.config);
         }
     }
     #[cfg(target_arch = "wasm32")]
     {
-        utils::import_config(shared);
+        shared.config = serde_json::from_str(&utils::config_str()).unwrap();
         utils::save_config(&shared.config);
     }
 
@@ -118,7 +118,7 @@ fn init_shared(shared: &mut Shared) {
     }
 
     shared.ui.scale = shared.config.ui_scale;
-    shared.gridline_gap = shared.config.gridline_gap;
+    shared.renderer.gridline_gap = shared.config.gridline_gap;
 
     // if this were false, the first click would always
     // be considered non-UI
@@ -136,5 +136,5 @@ fn init_shared(shared: &mut Shared) {
 
     let bytes = include_bytes!("../assets/i18n/en.json").as_slice();
     let en: serde_json::Value = serde_json::from_slice(bytes).unwrap();
-    shared.init_lang(en);
+    shared.ui.init_lang(en);
 }

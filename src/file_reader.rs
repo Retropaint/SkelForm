@@ -24,7 +24,7 @@ pub use web::*;
 pub const EXPORT_VID_DONE: &str = "Done!";
 pub const IMPORT_IMG_ERR: &str = "Could not extract image data.";
 
-pub fn read(shared: &mut Shared, renderer: &Option<Renderer>, context: &egui::Context) {
+pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &egui::Context) {
     macro_rules! func {
         ($func:expr) => {
             $func(
@@ -99,7 +99,7 @@ pub fn read_image_loaders(
     }
 
     if image.clone().into_rgba8().to_vec().len() == 0 {
-        shared.ui.open_modal(shared.loc("img_err"), false);
+        shared.ui.open_modal(shared.ui.loc("img_err"), false);
         return;
     }
 
@@ -110,7 +110,8 @@ pub fn read_image_loaders(
         }
     }
 
-    shared.new_undo_sel_style();
+    let style = shared.selected_set().unwrap().clone();
+    shared.undo_states.new_undo_style(&style);
 
     add_texture(
         image,
@@ -449,7 +450,7 @@ pub fn read_psd(
         target_bone.zindex = 0;
     }
 
-    let str_psd = &shared.loc("psd_imported");
+    let str_psd = &shared.ui.loc("psd_imported");
     shared.ui.open_modal(str_psd.to_string(), false);
     shared.ui.startup_window = false;
 }
@@ -534,7 +535,7 @@ pub fn read_import(
 
         file = std::fs::File::open(shared.file_name.lock().unwrap().to_string());
         if let Err(err) = file {
-            let text = shared.loc("import_err").to_owned() + &err.to_string();
+            let text = shared.ui.loc("import_err").to_owned() + &err.to_string();
             shared.ui.open_modal(text.to_string(), false);
             return;
         }
@@ -576,7 +577,7 @@ pub fn read_import(
             read_psd(file, shared, queue, device, bgl, context)
         }
         _ => {
-            let text = &shared.loc("import_unrecognized");
+            let text = &shared.ui.loc("import_unrecognized");
             shared.ui.open_modal(text.to_string(), false);
         }
     };

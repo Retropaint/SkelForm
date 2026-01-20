@@ -459,6 +459,7 @@ pub struct UiBar {
 #[derive(Clone, Default)]
 pub struct Ui {
     pub anim: UiAnim,
+    pub startup: Startup,
 
     pub edit_bar: UiBar,
     pub anim_bar: UiBar,
@@ -522,6 +523,12 @@ pub struct Ui {
 
     pub selected_bind: i32,
 
+    pub local_doc_url: String,
+
+    pub mobile: bool,
+    pub was_editing_path: bool,
+    pub thumb_ui_tex: std::collections::HashMap<String, egui::TextureHandle>,
+
     pub styles_modal_size: Vec2,
     pub bones_assigned_scroll: f32,
     pub dragging_tex: bool,
@@ -554,6 +561,9 @@ pub struct Ui {
     pub checking_update: bool,
     pub update_request_sent: bool,
     pub new_version: String,
+
+    loc_strings: std::collections::HashMap<String, String>,
+    pub cursor_icon: egui::CursorIcon,
 }
 
 impl Ui {
@@ -609,6 +619,38 @@ impl Ui {
         self.setting_bind_bone = false;
         self.selected_bind = -1;
         self.rename_id = "".to_string();
+    }
+
+    pub fn context_id_parsed(&self) -> i32 {
+        let raw_id = self.context_menu.id.split('_').collect::<Vec<_>>()[1];
+        raw_id.parse::<i32>().unwrap()
+    }
+
+    /// Localization
+    /// Extracts the specified text from the current language.
+    /// ex: `settings_modal.user_interface.general` -> "General"
+    ///
+    /// All localized text *must* be from this method, as edge cases and fallbacks must be handled as well.
+    pub fn loc(&self, str: &str) -> String {
+        let result = self.loc_strings.get(str);
+        if let Some(string) = result {
+            return string.to_string();
+        }
+
+        self.loc_strings[""].to_string()
+    }
+    pub fn init_empty_loc(&mut self) {
+        self.loc_strings.insert("".to_string(), "".to_string());
+    }
+
+    pub fn init_lang(&mut self, lang_json: serde_json::Value) {
+        utils::flatten_json(
+            &lang_json,
+            "".to_string(),
+            &mut self.loc_strings,
+            "".to_string(),
+        );
+        self.loc_strings.insert("".to_string(), "".to_string());
     }
 }
 
@@ -1679,7 +1721,7 @@ pub enum Saving {
     Autosaving,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
 pub struct StartupResourceItem {
     #[serde(default)]
     pub code: String,
@@ -1693,7 +1735,7 @@ pub struct StartupResourceItem {
     pub update_checker: bool,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Default, PartialEq, Clone)]
 pub enum StartupItemType {
     #[default]
     Custom,
@@ -1701,37 +1743,107 @@ pub enum StartupItemType {
     UserDocs,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
 pub struct Startup {
     #[serde(default)]
     pub resources: Vec<StartupResourceItem>,
 }
 
 #[derive(Default)]
-pub struct Shared {
+pub struct UndoStates {
+    pub undo_actions: Vec<Action>,
+    pub redo_actions: Vec<Action>,
+    pub prev_undo_actions: Vec<Action>,
+    pub temp_actions: Vec<Action>,
+}
+
+impl UndoStates {
+    pub fn new_undo_bone(&mut self, bone: &Bone) {
+        self.undo_actions.push(Action {
+            action: ActionType::Bone,
+            bones: vec![bone.clone()],
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_anim(&mut self, anims: &Animation) {
+        self.undo_actions.push(Action {
+            action: ActionType::Animation,
+            animations: vec![anims.clone()],
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_style(&mut self, style: &Style) {
+        self.undo_actions.push(Action {
+            action: ActionType::Style,
+            styles: vec![style.clone()],
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_bones(&mut self, bones: &Vec<Bone>) {
+        self.undo_actions.push(Action {
+            action: ActionType::Bones,
+            bones: bones.clone(),
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_anims(&mut self, animations: &Vec<Animation>) {
+        self.undo_actions.push(Action {
+            action: ActionType::Animations,
+            animations: animations.clone(),
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_styles(&mut self, styles: &Vec<Style>) {
+        self.undo_actions.push(Action {
+            action: ActionType::Styles,
+            styles: styles.clone(),
+            ..Default::default()
+        });
+    }
+}
+
+#[derive(Default)]
+pub struct Renderer {
     pub window: Vec2,
-    pub armature: Armature,
     pub camera: Camera,
+    pub editing_bone: bool,
+    pub dragging_verts: Vec<usize>,
+    pub generic_bindgroup: Option<BindGroup>,
+    pub ik_arrow_bindgroup: Option<BindGroup>,
+    pub changed_vert_id: i32,
+    pub changed_vert_init_pos: Option<Vec2>,
+    pub initialized_window: bool,
+    pub has_loaded: bool,
+    pub bone_init_rot: f32,
+    pub gridline_gap: i32,
+}
+
+impl Renderer {
+    pub fn aspect_ratio(&self) -> f32 {
+        self.window.y / self.window.x
+    }
+}
+
+#[derive(Default)]
+pub struct Shared {
+    pub armature: Armature,
     pub input: InputStates,
     pub cursor_icon: egui::CursorIcon,
     pub ui: Ui,
-    pub editing_bone: bool,
-
-    pub dragging_verts: Vec<usize>,
+    pub undo_states: UndoStates,
+    pub renderer: Renderer,
 
     pub recording: bool,
     pub done_recording: bool,
     // mainly used for video, but can also be used for screenshots
     pub rendered_frames: Vec<RenderedFrame>,
 
-    pub undo_actions: Vec<Action>,
-    pub redo_actions: Vec<Action>,
-    pub prev_undo_actions: Vec<Action>,
-    pub temp_actions: Vec<Action>,
-
     pub edit_mode: EditMode,
-
-    pub generic_bindgroup: Option<BindGroup>,
 
     pub recent_file_paths: Vec<String>,
 
@@ -1739,14 +1851,8 @@ pub struct Shared {
 
     pub copy_buffer: CopyBuffer,
 
-    pub gridline_gap: i32,
-
     pub saving: Arc<Mutex<Saving>>,
     pub save_finished: Arc<Mutex<bool>>,
-
-    pub thumb_ui_tex: std::collections::HashMap<String, egui::TextureHandle>,
-
-    pub startup: Startup,
 
     pub time: f32,
 
@@ -1754,26 +1860,9 @@ pub struct Shared {
 
     pub screenshot_res: Vec2,
 
-    pub ik_arrow_bindgroup: Option<BindGroup>,
-
     pub file_name: Arc<Mutex<String>>,
     pub img_contents: Arc<Mutex<Vec<u8>>>,
     pub import_contents: Arc<Mutex<Vec<u8>>>,
-
-    pub local_doc_url: String,
-
-    pub bone_init_rot: f32,
-
-    pub changed_vert_id: i32,
-    pub changed_vert_init_pos: Option<Vec2>,
-
-    pub was_editing_path: bool,
-
-    pub mobile: bool,
-
-    pub initialized_window: bool,
-
-    loc_strings: std::collections::HashMap<String, String>,
 }
 
 impl Shared {
@@ -1819,47 +1908,11 @@ impl Shared {
 
     pub fn save_edited_bone(&mut self) {
         if self.ui.is_animating() {
-            self.new_undo_sel_anim();
+            let anim = self.selected_animation().unwrap().clone();
+            self.undo_states.new_undo_anim(&anim);
         } else {
-            self.new_undo_sel_bone();
+            self.undo_states.new_undo_anims(&self.armature.animations);
         }
-    }
-
-    pub fn mouse_vel(&self) -> Vec2 {
-        let mouse_world = utils::screen_to_world_space(self.input.mouse, self.window);
-        let mouse_prev_world = utils::screen_to_world_space(self.input.mouse_prev, self.window);
-        mouse_prev_world - mouse_world
-    }
-
-    /// Localization
-    /// Extracts the specified text from the current language.
-    /// ex: `settings_modal.user_interface.general` -> "General"
-    ///
-    /// All localized text *must* be from this method, as edge cases and fallbacks must be handled as well.
-    pub fn loc(&self, str: &str) -> String {
-        let result = self.loc_strings.get(str);
-        if let Some(string) = result {
-            return string.to_string();
-        }
-
-        self.loc_strings[""].to_string()
-    }
-    pub fn init_empty_loc(&mut self) {
-        self.loc_strings.insert("".to_string(), "".to_string());
-    }
-
-    pub fn init_lang(&mut self, lang_json: serde_json::Value) {
-        utils::flatten_json(
-            &lang_json,
-            "".to_string(),
-            &mut self.loc_strings,
-            "".to_string(),
-        );
-        self.loc_strings.insert("".to_string(), "".to_string());
-    }
-
-    pub fn aspect_ratio(&self) -> f32 {
-        self.window.y / self.window.x
     }
 
     pub fn selected_set(&self) -> Option<&Style> {
@@ -1911,10 +1964,10 @@ impl Shared {
     }
 
     pub fn world_camera(&self) -> Camera {
-        let mut cam = self.camera.clone();
+        let mut cam = self.renderer.camera.clone();
         match self.config.layout {
-            UiLayout::Right => cam.pos.x += 1500. * self.aspect_ratio(),
-            UiLayout::Left => cam.pos.x -= 1500. * self.aspect_ratio(),
+            UiLayout::Right => cam.pos.x += 1500. * self.renderer.aspect_ratio(),
+            UiLayout::Left => cam.pos.x -= 1500. * self.renderer.aspect_ratio(),
             _ => {}
         };
         cam
@@ -2006,68 +2059,6 @@ impl Shared {
         let sel_id = self.selected_bone().unwrap().id;
         let tex = self.armature.tex_of(sel_id).unwrap();
         self.armature.tex_data(tex).unwrap().image.clone()
-    }
-
-    pub fn new_undo_sel_bone(&mut self) {
-        self.undo_actions.push(Action {
-            action: ActionType::Bone,
-            bones: vec![self.selected_bone().unwrap().clone()],
-            ..Default::default()
-        });
-    }
-
-    pub fn new_undo_bone(&mut self, bone_id: i32) {
-        let bones = &self.armature.bones;
-        self.undo_actions.push(Action {
-            action: ActionType::Bone,
-            bones: vec![bones.iter().find(|b| b.id == bone_id).unwrap().clone()],
-            ..Default::default()
-        });
-    }
-
-    pub fn new_undo_sel_anim(&mut self) {
-        self.undo_actions.push(Action {
-            action: ActionType::Animation,
-            animations: vec![self.selected_animation().unwrap().clone()],
-            ..Default::default()
-        });
-    }
-
-    pub fn new_undo_sel_style(&mut self) {
-        self.undo_actions.push(Action {
-            action: ActionType::Style,
-            styles: vec![self.selected_set().unwrap().clone()],
-            ..Default::default()
-        });
-    }
-
-    pub fn new_undo_bones(&mut self) {
-        self.undo_actions.push(Action {
-            action: ActionType::Bones,
-            bones: self.armature.bones.clone(),
-            ..Default::default()
-        });
-    }
-
-    pub fn new_undo_anims(&mut self) {
-        self.undo_actions.push(Action {
-            action: ActionType::Animations,
-            animations: self.armature.animations.clone(),
-            ..Default::default()
-        });
-    }
-
-    pub fn new_undo_styles(&mut self) {
-        self.undo_actions.push(Action {
-            action: ActionType::Styles,
-            styles: self.armature.styles.clone(),
-            ..Default::default()
-        });
-    }
-
-    pub fn context_id_parsed(&self) -> i32 {
-        let raw_id = self.ui.context_menu.id.split('_').collect::<Vec<_>>()[1];
-        raw_id.parse::<i32>().unwrap()
     }
 }
 
