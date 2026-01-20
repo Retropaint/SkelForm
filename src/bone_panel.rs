@@ -604,6 +604,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 ui.selectable_value(&mut selected_value, -2, shared.loc("new_option"));
 
                 if selected_value == -2 {
+                    shared.new_undo_sel_bone();
                     let binds = &mut shared.selected_bone_mut().unwrap().binds;
                     binds.push(BoneBind {
                         bone_id: -1,
@@ -622,6 +623,11 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     }
 
     let binds = shared.selected_bone().unwrap().binds.clone();
+    if shared.ui.selected_bind as usize > binds.len() - 1 {
+        shared.ui.selected_bind = -1;
+        return;
+    }
+
     ui.horizontal(|ui| {
         let bone_id = binds[shared.ui.selected_bind as usize].bone_id;
         let mut bone_name = shared.loc("none").to_string();
@@ -673,13 +679,19 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let binding_verts = shared.ui.setting_bind_verts;
-            let bind = &mut shared.selected_bone_mut().unwrap().binds[selected];
             if binding_verts {
                 ui.add_enabled_ui(false, |ui| {
                     ui.checkbox(&mut shared.was_editing_path, "".into_atoms());
                 });
             } else {
-                ui.checkbox(&mut bind.is_path, "".into_atoms());
+                let bind = shared.selected_bone_mut().unwrap().binds[selected].clone();
+                let og_path = bind.is_path;
+                let mut new_path = bind.is_path;
+                ui.checkbox(&mut new_path, "".into_atoms());
+                if shared.input.left_pressed && og_path != new_path {
+                    shared.new_undo_sel_bone();
+                }
+                shared.selected_bone_mut().unwrap().binds[selected].is_path = new_path;
             }
 
             ui.label(shared.loc("bone_panel.mesh_deformation.pathing_label"))
@@ -688,18 +700,24 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     });
 
     let selected = shared.ui.selected_bind;
-    let binds = &mut shared.selected_bone_mut().unwrap().binds[selected as usize];
-    if binds.verts.len() == 0 {
+    let pressed = shared.input.left_pressed;
+    let bind = shared.selected_bone().unwrap().binds[selected as usize].clone();
+    if bind.verts.len() == 0 {
         ui.label(shared.loc("bone_panel.mesh_deformation.no_bound_verts"));
     } else {
-        for w in 0..binds.verts.len() {
+        for w in 0..bind.verts.len() {
             ui.horizontal(|ui| {
-                let str_label = binds.verts[w].id.to_string() + ":";
+                let str_label = bind.verts[w].id.to_string() + ":";
                 ui.label(str_label);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(&mut binds.verts[w].weight, (0.)..=1.))
-                    });
+                    let og_weight = bind.verts[w].weight;
+                    let mut new_weight = bind.verts[w].weight;
+                    ui.add(egui::Slider::new(&mut new_weight, (0.)..=1.));
+                    if pressed && og_weight != new_weight {
+                        shared.new_undo_sel_bone();
+                    }
+                    let bind = &mut shared.selected_bone_mut().unwrap().binds[selected as usize];
+                    bind.verts[w].weight = new_weight;
                 });
             });
         }

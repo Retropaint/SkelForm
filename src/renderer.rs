@@ -316,6 +316,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
             // verts of this triangle will be dragged
             if shared.input.left_pressed {
+                shared.new_undo_sel_bone();
                 shared.dragging_verts = hovering_tri.iter().map(|v| v.id as usize).collect();
             }
         }
@@ -451,7 +452,6 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         // save bone/animation for undo
         if !shared.editing_bone {
             shared.save_edited_bone();
-            //shared.armature.autosave();
             *shared.saving.lock().unwrap() = Saving::Autosaving;
             shared.editing_bone = true;
         }
@@ -992,6 +992,7 @@ pub fn bone_vertices(
                 break;
             }
         } else if shared.input.left_clicked {
+            shared.new_undo_sel_bone();
             let idx = shared.ui.selected_bind as usize;
             let vert_id = world_verts[wv].id;
             let bone_mut = &mut shared.selected_bone_mut().unwrap();
@@ -1133,6 +1134,7 @@ pub fn vert_lines(
                 let uv = v0.uv + (v1.uv - v0.uv) * interp;
 
                 if shared.input.left_pressed {
+                    shared.new_undo_sel_bone();
                     let verts = &bone.vertices;
                     shared.dragging_verts.push(verts[i0 as usize].id as usize);
                     shared.dragging_verts.push(verts[i1 as usize].id as usize);
@@ -1225,15 +1227,9 @@ pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_id: u32) {
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
+    #[rustfmt::skip]
     macro_rules! vert {
-        ($pos:expr, $uv:expr, $id:expr) => {
-            Vertex {
-                pos: $pos,
-                uv: $uv,
-                id: $id,
-                ..Default::default()
-            }
-        };
+        ($pos:expr, $uv:expr, $id:expr) => { Vertex { pos: $pos, uv: $uv, id: $id, ..Default::default() } };
     }
     let tex = *tex_size / 2.;
     let mut verts = vec![

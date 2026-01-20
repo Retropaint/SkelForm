@@ -187,11 +187,8 @@ pub fn save_web(shared: &Shared) {
     zip.write(include_bytes!("../assets/skf_readme.md"))
         .unwrap();
     for i in 0..png_bufs.len() {
-        zip.start_file(
-            "atlas".to_owned() + &i.to_string() + ".png",
-            options.clone(),
-        )
-        .unwrap();
+        let name = "atlas".to_owned() + &i.to_string() + ".png";
+        zip.start_file(name, options.clone()).unwrap();
         zip.write(&png_bufs[i]).unwrap();
     }
 

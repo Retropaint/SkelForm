@@ -584,6 +584,7 @@ impl Ui {
         self.anim.selected_frame = -1;
         self.showing_mesh = false;
         self.anim.selected = usize::MAX;
+        self.selected_bind = -1;
     }
 
     pub fn is_animating(&self) -> bool {

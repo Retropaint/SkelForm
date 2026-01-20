@@ -306,9 +306,11 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         shared.ui.edit_value = Some(shared.armature.bones[b].name.clone());
                     } else {
                         if shared.ui.setting_ik_target {
+                            shared.new_undo_sel_bone();
                             shared.selected_bone_mut().unwrap().ik_target_id = bone_id;
                             shared.ui.setting_ik_target = false;
                         } else if shared.ui.setting_bind_bone {
+                            shared.new_undo_sel_bone();
                             let idx = shared.ui.selected_bind as usize;
                             let bind = &mut shared.selected_bone_mut().unwrap().binds[idx];
                             bind.bone_id = bone_id;
