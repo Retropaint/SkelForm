@@ -1243,7 +1243,7 @@ pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
         vert!(Vec2::new(-tex.x, -tex.y), Vec2::new(0., 1.), 3),
     ];
     verts = sort_vertices(verts.clone());
-    let indices = triangulate(&verts);
+    let indices = vec![0, 1, 2, 0, 2, 3];
     (verts, indices)
 }
 
