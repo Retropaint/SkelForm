@@ -54,8 +54,8 @@ fn startup_content(
         if leftside_button("+", &shared.ui.loc("new"), ui, shared, None, None, empty).clicked() {
             shared.ui.unselect_everything();
             shared.ui.anim.open = false;
-            shared.renderer.camera.pos = Vec2::new(0., 0.);
-            shared.renderer.camera.zoom = 2000.;
+            shared.camera.pos = Vec2::new(0., 0.);
+            shared.camera.zoom = 2000.;
             shared.armature = Armature::default();
             shared.ui.startup_window = false;
         }

@@ -27,7 +27,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     mouse_world_vert.pos.x *= shared.renderer.window.y / shared.renderer.window.x;
 
     if !shared.config.gridline_front {
-        draw_gridline(render_pass, device, &shared.renderer, &shared.config);
+        draw_gridline(
+            render_pass,
+            device,
+            &shared.renderer,
+            &shared.camera,
+            &shared.config,
+        );
     }
 
     // create rect textures for all textured bones with no verts
@@ -359,7 +365,13 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     if shared.config.gridline_front {
-        draw_gridline(render_pass, device, &shared.renderer, &shared.config);
+        draw_gridline(
+            render_pass,
+            device,
+            &shared.renderer,
+            &shared.camera,
+            &shared.config,
+        );
     }
 
     render_pass.set_bind_group(0, &shared.renderer.generic_bindgroup, &[]);
@@ -425,8 +437,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // move camera
     if (shared.input.holding_mod || shared.input.right_down) && !shared.input.on_ui {
         shared.cursor_icon = egui::CursorIcon::Move;
-        shared.renderer.camera.pos +=
-            mouse_vel(&shared.input, &shared.renderer) * shared.renderer.camera.zoom;
+        shared.camera.pos += mouse_vel(&shared.input, &shared.renderer) * shared.camera.zoom;
         return;
     }
 
@@ -469,7 +480,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             shared.renderer.editing_bone = true;
         }
 
-        shared.cursor_icon = egui::CursorIcon::Crosshair;
+        shared.ui.cursor_icon = egui::CursorIcon::Crosshair;
 
         let bone = find_bone(&temp_arm.bones, shared.selected_bone().unwrap().id).unwrap();
 
@@ -483,8 +494,8 @@ pub fn mouse_vel(input: &InputStates, renderer: &Renderer) -> Vec2 {
     mouse_prev_world - mouse_world
 }
 
-pub fn world_camera(renderer: &Renderer, config: &Config) -> Camera {
-    let mut cam = renderer.camera.clone();
+pub fn world_camera(renderer: &Renderer, camera: &Camera, config: &Config) -> Camera {
+    let mut cam = camera.clone();
     match config.layout {
         UiLayout::Right => cam.pos.x += 1500. * renderer.aspect_ratio(),
         UiLayout::Left => cam.pos.x -= 1500. * renderer.aspect_ratio(),
@@ -845,7 +856,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
 
     if shared.edit_mode == shared::EditMode::Move {
         let mut pos = bone.pos;
-        let mouse_vel = mouse_vel(&shared.input, &shared.renderer) * shared.renderer.camera.zoom;
+        let mouse_vel = mouse_vel(&shared.input, &shared.renderer) * shared.camera.zoom;
 
         // move position with mouse velocity
         pos -= mouse_vel;
@@ -1130,8 +1141,8 @@ pub fn vert_lines(
         let v1 = bone.world_verts[i1 as usize];
         let dir = v0.pos - v1.pos;
 
-        let width = 2. * (shared.renderer.camera.zoom / 500.);
-        let mut base = Vec2::new(width, width) / shared.renderer.camera.zoom;
+        let width = 2. * (shared.camera.zoom / 500.);
+        let mut base = Vec2::new(width, width) / shared.camera.zoom;
         base = utils::rotate(&base, dir.y.atan2(dir.x));
 
         let mut col = VertexColor::GREEN;
@@ -1239,7 +1250,7 @@ fn draw_line(
     let dir = target - origin;
 
     let width = 2.5;
-    let mut base = Vec2::new(width, width) / shared.renderer.camera.zoom;
+    let mut base = Vec2::new(width, width) / shared.camera.zoom;
     base = utils::rotate(&base, dir.y.atan2(dir.x));
 
     let color = VertexColor::new(0., 1., 0., 1.);
@@ -1267,7 +1278,7 @@ pub fn drag_vertex(shared: &mut Shared, bone: &Bone, vert_id: u32) {
         return;
     }
     let mouse_vel = mouse_vel(&shared.input, &shared.renderer);
-    let zoom = shared.renderer.camera.zoom;
+    let zoom = shared.camera.zoom;
     let og_bone = &mut shared.selected_bone_mut().unwrap();
     og_bone.verts_edited = true;
     let vert_mut = og_bone.vertices.iter_mut().find(|v| v.id == vert_id);
@@ -1398,7 +1409,7 @@ fn draw_point(
     camera: Vec2,
     rotation: f32,
 ) -> (Vec<Vertex>, Vec<u32>) {
-    let point_size = 6. * (shared.renderer.camera.zoom / 500.);
+    let point_size = 6. * (shared.camera.zoom / 500.);
     macro_rules! vert {
         ($pos:expr, $uv:expr) => {
             vert(Some($pos), Some(color), Some($uv))
@@ -1552,11 +1563,12 @@ fn draw_gridline(
     render_pass: &mut RenderPass,
     device: &Device,
     renderer: &Renderer,
+    camera: &Camera,
     config: &Config,
 ) {
     render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
 
-    let cam = world_camera(renderer, config);
+    let cam = world_camera(renderer, camera, config);
 
     let col = VertexColor::new(
         config.colors.gridline.r as f32 / 255.,
@@ -1586,7 +1598,9 @@ fn draw_gridline(
         } else {
             regular_color
         };
-        verts.append(&mut draw_vertical_line(x, width, renderer, config, color));
+        verts.append(&mut draw_vertical_line(
+            x, width, renderer, camera, config, color,
+        ));
         indices.append(&mut vec![i, i + 1, i + 2]);
         i += 3;
         x += 1.;
@@ -1605,7 +1619,9 @@ fn draw_gridline(
         } else {
             regular_color
         };
-        verts.append(&mut draw_horizontal_line(y, width, renderer, config, color));
+        verts.append(&mut draw_horizontal_line(
+            y, width, renderer, camera, config, color,
+        ));
         indices.append(&mut vec![i, i + 1, i + 2]);
         i += 3;
         y += 1.;
@@ -1637,11 +1653,12 @@ pub fn draw_horizontal_line(
     y: f32,
     width: f32,
     renderer: &Renderer,
+    camera: &Camera,
     config: &Config,
     color: VertexColor,
 ) -> Vec<Vertex> {
-    let edge = renderer.camera.zoom * 5.;
-    let c = &world_camera(renderer, config);
+    let edge = camera.zoom * 5.;
+    let c = &world_camera(renderer, camera, config);
     let vertices: Vec<Vertex> = vec![
         vert!((Vec2::new(c.pos.x - edge, y) - c.pos) / c.zoom, color),
         vert!((Vec2::new(c.pos.x, width + y) - c.pos) / c.zoom, color),
@@ -1654,11 +1671,12 @@ pub fn draw_vertical_line(
     x: f32,
     width: f32,
     renderer: &Renderer,
+    camera: &Camera,
     config: &Config,
     color: VertexColor,
 ) -> Vec<Vertex> {
-    let edge = renderer.camera.zoom * 5.;
-    let c = &world_camera(renderer, config);
+    let edge = camera.zoom * 5.;
+    let c = &world_camera(renderer, camera, config);
     let r = renderer.aspect_ratio();
     let vertices: Vec<Vertex> = vec![
         vert!((Vec2::new(x, c.pos.y - edge) - c.pos) / c.zoom * r, color),

@@ -462,7 +462,7 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                 let scroll = egui::ScrollArea::both()
                     .vertical_scroll_offset(shared.ui.bones_assigned_scroll)
                     .show(ui, |ui| {
-                        draw_bone_buttons(ui, shared);
+                        draw_bone_buttons(ui, &mut shared.armature, &shared.config, &mut shared.ui);
                     });
                 shared.ui.bones_assigned_scroll = scroll.state.offset.y;
             })
@@ -470,46 +470,51 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
     });
 }
 
-pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
+pub fn draw_bone_buttons(
+    ui: &mut egui::Ui,
+    armature: &mut Armature,
+    config: &crate::Config,
+    shared_ui: &mut crate::Ui,
+) {
     let mut hovered = false;
     let mut idx = -1;
-    for b in 0..shared.armature.bones.len() {
+    for b in 0..armature.bones.len() {
         idx += 1;
-        if shared.armature.is_bone_folded(shared.armature.bones[b].id) {
+        if armature.is_bone_folded(armature.bones[b].id) {
             continue;
         }
         ui.horizontal(|ui| {
-            let parents = shared.armature.get_all_parents(shared.armature.bones[b].id);
+            let parents = armature.get_all_parents(armature.bones[b].id);
             // add space to the left if this is a child
             for _ in 0..parents.len() {
-                armature_window::vert_line(0., ui, shared);
+                armature_window::vert_line(0., ui, &config);
                 ui.add_space(15.);
             }
 
             // show folding button if this bone has children
             let mut children = vec![];
-            let bone = &shared.armature.bones[b];
-            armature_window::get_all_children(&shared.armature.bones, &mut children, bone);
+            let bone = &armature.bones[b];
+            armature_window::get_all_children(&armature.bones, &mut children, bone);
             if children.len() == 0 {
-                armature_window::hor_line(11., ui, shared);
+                armature_window::hor_line(11., ui, &config);
             } else {
-                let fold_icon = if shared.armature.bones[b].folded {
+                let fold_icon = if armature.bones[b].folded {
                     "⏵"
                 } else {
                     "⏷"
                 };
                 let id = "bone_style_fold".to_owned() + &b.to_string();
-                if armature_window::bone_label(fold_icon, ui, id, shared, Vec2::new(-2., 18.))
+                if armature_window::bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), config)
                     .clicked()
                 {
-                    shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
+                    armature.bones[b].folded = !armature.bones[b].folded;
                 }
             }
             ui.add_space(13.);
 
-            let mut selected_col = shared.config.colors.dark_accent;
+            let mut selected_col = config.colors.dark_accent;
 
-            if shared.ui.hovering_style_bone == b as i32 {
+            if shared_ui.hovering_style_bone == b as i32 {
                 selected_col += crate::Color::new(20, 20, 20, 0);
             }
 
@@ -517,10 +522,10 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
 
             let idx_input_width = 15.;
 
-            let name = shared.armature.bones[b].name.to_string();
-            let mut text_col = shared.config.colors.text;
-            if shared.armature.bones[b].is_hidden {
-                text_col = shared.config.colors.dark_accent;
+            let name = armature.bones[b].name.to_string();
+            let mut text_col = config.colors.text;
+            if armature.bones[b].is_hidden {
+                text_col = config.colors.dark_accent;
                 text_col += crate::Color::new(40, 40, 40, 0)
             }
             let button = egui::Frame::new()
@@ -537,7 +542,7 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                 .interact(egui::Sense::click());
 
             if button.contains_pointer() {
-                shared.ui.hovering_style_bone = b as i32;
+                shared_ui.hovering_style_bone = b as i32;
                 hovered = true;
             }
 
@@ -563,22 +568,22 @@ pub fn draw_bone_buttons(ui: &mut egui::Ui, shared: &mut Shared) {
                 return;
             }
 
-            let bone = &mut shared.armature.bones[idx as usize];
+            let bone = &mut armature.bones[idx as usize];
             let id = bone.id;
-            let tex_str = shared.selected_set().unwrap().textures
-                [*dragged_payload.unwrap() as usize]
+            let style = &armature.styles[shared_ui.selected_style as usize];
+            let tex_str = style.textures[*dragged_payload.unwrap() as usize]
                 .name
                 .clone();
-            shared.armature.set_bone_tex(
+            armature.set_bone_tex(
                 id,
                 tex_str,
-                shared.ui.anim.selected,
-                shared.ui.anim.selected_frame,
+                shared_ui.anim.selected,
+                shared_ui.anim.selected_frame,
             );
         });
     }
     if !hovered {
-        shared.ui.hovering_style_bone = -1;
+        shared_ui.hovering_style_bone = -1;
     }
 }
 

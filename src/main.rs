@@ -68,7 +68,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 
 fn init_shared(shared: &mut Shared) {
     shared.ui.selected_bone_idx = usize::MAX;
-    shared.renderer.camera.zoom = 2000.;
+    shared.camera.zoom = 2000.;
     shared.ui.anim.selected = usize::MAX;
     shared.ui.anim.timeline_zoom = 1.;
     shared.ui.anim.exported_frame = "".to_string();

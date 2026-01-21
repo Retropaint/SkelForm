@@ -168,7 +168,7 @@ pub fn save_web(shared: &Shared) {
     }
 
     let (armatures_json, editor_json) =
-        prepare_files(&carmature, shared.renderer.camera.clone(), sizes.clone());
+        prepare_files(&carmature, shared.camera.clone(), sizes.clone());
 
     // create zip file
     let mut buf: Vec<u8> = Vec::new();
@@ -546,7 +546,7 @@ pub fn import<R: Read + std::io::Seek>(
     if let Ok(editor_file) = zip.as_mut().unwrap().by_name("editor.json") {
         let editor: crate::EditorOptions = serde_json::from_reader(editor_file).unwrap();
 
-        shared.renderer.camera = editor.camera;
+        shared.camera = editor.camera;
 
         for b in 0..shared.armature.bones.len() {
             let bone = &mut shared.armature.bones[b];

@@ -59,6 +59,7 @@ pub mod startup_window;
 pub mod styles_modal;
 pub mod ui;
 pub mod utils;
+pub mod editor;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
@@ -583,6 +584,8 @@ impl BackendRenderer {
                 shared.done_recording = false;
             }
         }
+
+        editor::process(&mut shared.events, &mut shared.camera);
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -600,7 +603,7 @@ impl BackendRenderer {
         shared.rendered_frames = vec![];
         let screenshot_res = shared.screenshot_res;
         let mut armature = shared.armature.clone();
-        let camera = shared.renderer.camera.clone();
+        let camera = shared.camera.clone();
         let mut save_path = shared.file_name.lock().unwrap().clone();
         if *shared.saving.lock().unwrap() == shared::Saving::Autosaving {
             let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
@@ -1046,9 +1049,9 @@ mod tests {
         shared.armature.new_bone(-1);
         shared.armature.new_bone(-1);
         shared.armature.new_bone(-1);
-        armature_window::drag_bone(&mut shared, false, 2, 1);
-        armature_window::drag_bone(&mut shared, false, 1, 0);
-        shared.init_empty_loc();
+        armature_window::drag_bone(&mut shared.armature, false, 2, 1);
+        armature_window::drag_bone(&mut shared.armature, false, 1, 0);
+        shared.ui.init_empty_loc();
         shared
     }
 

@@ -193,7 +193,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 let hidden = anim_bones[b].is_hidden;
                 let hidden_icon = if hidden { "---" } else { "👁" };
                 let id = "bone_hidden".to_owned() + &b.to_string();
-                if bone_label(hidden_icon, ui, id, shared, Vec2::new(-2., 18.)).clicked() {
+                if bone_label(hidden_icon, ui, id, Vec2::new(-2., 18.), &shared.config).clicked() {
                     let mut hidden: i32 = 0;
                     if !anim_bones[b].is_hidden {
                         hidden = 1;
@@ -206,7 +206,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 // add space to the left if this is a child
                 for _ in 0..parents.len() {
-                    vert_line(0., ui, shared);
+                    vert_line(0., ui, &shared.config);
                     ui.add_space(15.);
                 }
 
@@ -215,12 +215,13 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 let bone = &shared.armature.bones[b];
                 get_all_children(&shared.armature.bones, &mut children, bone);
                 if children.len() == 0 {
-                    hor_line(11., ui, shared);
+                    hor_line(11., ui, &shared.config);
                 } else {
                     let folded = shared.armature.bones[b].folded;
                     let fold_icon = if folded { "⏵" } else { "⏷" };
                     let id = "bone_fold".to_owned() + &b.to_string();
-                    if bone_label(fold_icon, ui, id, shared, Vec2::new(-2., 18.)).clicked() {
+                    if bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), &shared.config).clicked()
+                    {
                         shared.undo_states.new_undo_bones(&shared.armature.bones);
                         shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
                     }
@@ -400,15 +401,15 @@ pub fn bone_label(
     icon: &str,
     ui: &mut egui::Ui,
     id: String,
-    shared: &Shared,
     offset: Vec2,
+    config: &Config,
 ) -> egui::Response {
     let rect = ui.painter().text(
         ui.cursor().min + Vec2::new(offset.x, offset.y).into(),
         egui::Align2::LEFT_BOTTOM,
         icon,
         egui::FontId::default(),
-        shared.config.colors.text.into(),
+        config.colors.text.into(),
     );
     ui.interact(rect, id.into(), egui::Sense::CLICK)
         .on_hover_cursor(egui::CursorIcon::PointingHand)
@@ -493,7 +494,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
 
     for id in sorted_ids {
         let old_parents = shared.armature.get_all_parents(id as i32);
-        drag_bone(shared, is_above, id, pointing_id);
+        drag_bone(&mut shared.armature, is_above, id, pointing_id);
         shared.armature.offset_pos_by_parent(old_parents, id as i32);
     }
 
@@ -504,10 +505,10 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     return true;
 }
 
-pub fn drag_bone(shared: &mut Shared, is_above: bool, drag_id: i32, point_id: i32) {
-    #[rustfmt::skip] macro_rules! dragged { () => { shared.armature.find_bone_mut(drag_id).unwrap() } }
-    #[rustfmt::skip] macro_rules! pointing { () => { shared.armature.find_bone_mut(point_id).unwrap() } }
-    #[rustfmt::skip] macro_rules! bones { () => { &mut shared.armature.bones } }
+pub fn drag_bone(armature: &mut Armature, is_above: bool, drag_id: i32, point_id: i32) {
+    #[rustfmt::skip] macro_rules! dragged { () => { armature.find_bone_mut(drag_id).unwrap() } }
+    #[rustfmt::skip] macro_rules! pointing { () => { armature.find_bone_mut(point_id).unwrap() } }
+    #[rustfmt::skip] macro_rules! bones { () => { &mut armature.bones } }
 
     let drag_idx = bones!().iter().position(|b| b.id == drag_id).unwrap() as i32;
     let point_idx = bones!().iter().position(|b| b.id == point_id).unwrap() as i32;
@@ -550,23 +551,23 @@ pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_p
     }
 }
 
-pub fn vert_line(offset: f32, ui: &mut egui::Ui, shared: &mut Shared) {
+pub fn vert_line(offset: f32, ui: &mut egui::Ui, config: &Config) {
     let rect = egui::Rect::from_min_size(
         ui.cursor().left_top() + [3., -1.5 + offset].into(),
         [2., 24.].into(),
     );
-    let mut line_col = shared.config.colors.dark_accent;
+    let mut line_col = config.colors.dark_accent;
     line_col += Color::new(20, 20, 20, 0);
     ui.painter()
         .rect_filled(rect, egui::CornerRadius::ZERO, line_col);
 }
 
-pub fn hor_line(offset: f32, ui: &mut egui::Ui, shared: &mut Shared) {
+pub fn hor_line(offset: f32, ui: &mut egui::Ui, config: &Config) {
     let rect = egui::Rect::from_min_size(
         ui.cursor().left_top() + [-2., -1.5 + offset].into(),
         [12., 2.].into(),
     );
-    let mut line_col = shared.config.colors.dark_accent;
+    let mut line_col = config.colors.dark_accent;
     line_col += Color::new(20, 20, 20, 0);
     ui.painter()
         .rect_filled(rect, egui::CornerRadius::ZERO, line_col);

@@ -1810,7 +1810,6 @@ impl UndoStates {
 #[derive(Default)]
 pub struct Renderer {
     pub window: Vec2,
-    pub camera: Camera,
     pub editing_bone: bool,
     pub dragging_verts: Vec<usize>,
     pub generic_bindgroup: Option<BindGroup>,
@@ -1830,6 +1829,19 @@ impl Renderer {
 }
 
 #[derive(Default)]
+pub enum Events {
+    #[default]
+    None,
+    CamZoomIn,
+    CamZoomOut,
+}
+
+#[derive(Default)]
+pub struct Event {
+    pub id: Events,
+}
+
+#[derive(Default)]
 pub struct Shared {
     pub armature: Armature,
     pub input: InputStates,
@@ -1837,6 +1849,8 @@ pub struct Shared {
     pub ui: Ui,
     pub undo_states: UndoStates,
     pub renderer: Renderer,
+    pub events: Vec<Event>,
+    pub camera: Camera,
 
     pub recording: bool,
     pub done_recording: bool,
@@ -1964,7 +1978,7 @@ impl Shared {
     }
 
     pub fn world_camera(&self) -> Camera {
-        let mut cam = self.renderer.camera.clone();
+        let mut cam = self.camera.clone();
         match self.config.layout {
             UiLayout::Right => cam.pos.x += 1500. * self.renderer.aspect_ratio(),
             UiLayout::Left => cam.pos.x -= 1500. * self.renderer.aspect_ratio(),

@@ -74,13 +74,9 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         }
 
         if i.smooth_scroll_delta.y != 0. && !shared.input.on_ui {
-            ui::set_zoom(
-                shared.renderer.camera.zoom - (i.smooth_scroll_delta.y as f32),
-                shared,
-            );
             match shared.config.layout {
-                UiLayout::Right => shared.renderer.camera.pos.x -= i.smooth_scroll_delta.y * 0.5,
-                UiLayout::Left => shared.renderer.camera.pos.x += i.smooth_scroll_delta.y * 0.5,
+                UiLayout::Right => shared.camera.pos.x -= i.smooth_scroll_delta.y * 0.5,
+                UiLayout::Left => shared.camera.pos.x += i.smooth_scroll_delta.y * 0.5,
                 _ => {}
             }
         }
@@ -402,10 +398,14 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
     }
 
     if input.consume_shortcut(&shared.config.keys.zoom_in_camera) {
-        ui::set_zoom(shared.renderer.camera.zoom - 10., shared);
+        shared.events.push(Event {
+            id: Events::CamZoomIn,
+        });
     }
     if input.consume_shortcut(&shared.config.keys.zoom_out_camera) {
-        ui::set_zoom(shared.renderer.camera.zoom + 10., shared);
+        shared.events.push(Event {
+            id: Events::CamZoomOut,
+        });
     }
 
     if input.consume_shortcut(&shared.config.keys.save) {
@@ -926,11 +926,15 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.set_width(125.);
         let str_zoom_in = &shared.ui.loc("top_bar.view.zoom_in");
         if tpb!(str_zoom_in, Some(&shared.config.keys.zoom_in_camera)).clicked() {
-            set_zoom(shared.renderer.camera.zoom - 10., shared);
+            shared.events.push(Event {
+                id: Events::CamZoomIn,
+            })
         }
         let str_zoom_out = &shared.ui.loc("top_bar.view.zoom_out");
         if tpb!(str_zoom_out, Some(&shared.config.keys.zoom_out_camera)).clicked() {
-            set_zoom(shared.renderer.camera.zoom + 10., shared);
+            shared.events.push(Event {
+                id: Events::CamZoomOut,
+            })
         }
     });
 }
@@ -1073,9 +1077,9 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
             };
         }
 
-        input!(shared.renderer.camera.pos.x, "cam_pos_x", "X", "cam_x");
-        input!(shared.renderer.camera.pos.y, "cam_pos_y", "Y", "cam_y");
-        input!(shared.renderer.camera.zoom, "cam_zoom", "🔍", "cam_zoom");
+        input!(shared.camera.pos.x, "cam_pos_x", "X", "cam_x");
+        input!(shared.camera.pos.y, "cam_pos_y", "Y", "cam_y");
+        input!(shared.camera.zoom, "cam_zoom", "🔍", "cam_zoom");
 
         shared.ui.camera_bar.scale = ui.min_rect().size().into();
     });
@@ -1131,13 +1135,6 @@ pub fn default_styling(context: &Context, shared: &Shared) {
     visuals.hyperlink_color = colors.link.into();
 
     context.set_visuals(visuals);
-}
-
-pub fn set_zoom(mut zoom: f32, shared: &mut Shared) {
-    if zoom < 10. {
-        zoom = 10.;
-    }
-    shared.renderer.camera.zoom = zoom;
 }
 
 pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::Response {
