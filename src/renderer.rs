@@ -175,7 +175,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 if shared.ui.showing_mesh && shared.input.right_clicked && !removed_vert {
                     let bone = &mut shared.selected_bone_mut().unwrap();
                     if bone.indices.len() == 6 {
-                        shared.ui.open_modal(shared.ui.loc("indices_limit"), false);
+                        shared.events.open_modal(shared.ui.loc("indices_limit"), false);
                         break;
                     }
                     bone.indices.remove(i * 3);
@@ -1015,7 +1015,7 @@ pub fn bone_vertices(
         if shared.input.right_clicked {
             if world_verts.len() <= 4 {
                 let str_vert_limit = &shared.ui.loc("vert_limit");
-                shared.ui.open_modal(str_vert_limit.to_string(), false);
+                shared.events.open_modal(str_vert_limit.to_string(), false);
             } else {
                 let tex_img = shared.sel_tex_img();
                 let verts = &mut shared.selected_bone_mut().unwrap().vertices;

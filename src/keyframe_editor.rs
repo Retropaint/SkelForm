@@ -323,9 +323,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                 if label.clicked() {
                     let kf_id = kf.bone_id;
                     let sel = shared.armature.bones.iter().position(|b| b.id == kf_id);
-                    shared
-                        .events
-                        .new_valued(Events::SelectBone, sel.unwrap() as f32);
+                    shared.events.select_bone(sel.unwrap());
 
                     let parents = shared.armature.get_all_parents(kf.bone_id);
                     for parent in &parents {
@@ -618,7 +616,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     anim_mut.keyframes = anim_clone.keyframes;
                 } else {
                     let str_invalid = shared.ui.loc("keyframe_editor.invalid_fps").to_string();
-                    shared.ui.open_modal(str_invalid, false);
+                    shared.events.open_modal(str_invalid, false);
                 }
             }
             shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;

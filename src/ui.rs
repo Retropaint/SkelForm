@@ -169,7 +169,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
         if raw_ver == "err" {
             let str = shared.ui.loc("startup.error_update");
-            shared.ui.open_modal(str.to_string(), false);
+            shared.events.open_modal(str.to_string(), false);
         } else if raw_ver != "" {
             let ver_str = raw_ver.split(' ').collect::<Vec<_>>();
             let ver_idx = ver_str[0].parse::<i32>().unwrap();
@@ -182,7 +182,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
                 shared.ui.open_polar_modal(PolarId::NewUpdate, str);
             } else {
                 let str = "No updates available. This is the latest version.".to_string();
-                shared.ui.open_modal(str, false);
+                shared.events.open_modal(str, false);
             }
         }
 
@@ -871,7 +871,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             }
             if !ffmpeg {
                 let headline = shared.ui.loc("startup.error_ffmpeg");
-                shared.ui.open_modal(headline.to_string(), false);
+                shared.events.open_modal(headline.to_string(), false);
                 return;
             }
 
@@ -880,13 +880,13 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             if shared.ui.anim.selected == usize::MAX {
                 let anims = &shared.armature.animations;
                 if anims.len() == 0 || anims[0].keyframes.len() == 0 {
-                    shared.ui.open_modal(str, false);
+                    shared.events.open_modal(str, false);
                     return;
                 } else {
                     shared.ui.anim.selected = 0;
                 }
             } else if shared.last_keyframe() == None {
-                shared.ui.open_modal(str, false);
+                shared.events.open_modal(str, false);
                 return;
             }
 

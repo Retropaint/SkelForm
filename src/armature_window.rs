@@ -62,7 +62,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 }
 
                 // immediately select new bone upon creating it
-                shared.events.new_valued(Events::SelectBone, idx as f32);
+                shared.events.select_bone(idx);
                 shared.ui.just_made_bone = true;
 
                 shared.ui.rename_id = "bone_".to_string() + &idx.to_string();
@@ -335,7 +335,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                             if !shared.input.holding_mod && !shared.input.holding_shift {
                                 shared.selections.bone_ids = vec![];
                                 let anim_frame = shared.ui.anim.selected_frame;
-                                shared.events.new_valued(Events::SelectBone, idx as f32);
+                                shared.events.select_bone(idx as usize);
                                 shared.ui.anim.selected_frame = anim_frame;
                             }
 
@@ -503,9 +503,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     let bones = &mut shared.armature.bones;
 
     let bone_idx = bones.iter().position(|b| b.id == sel_bone_id).unwrap();
-    shared
-        .events
-        .new_valued(Events::SelectBone, bone_idx as f32);
+    shared.events.select_bone(bone_idx);
 
     return true;
 }
