@@ -360,6 +360,14 @@ impl Default for Color {
 pub struct Camera {
     pub pos: Vec2,
     pub zoom: f32,
+    #[serde(skip)]
+    pub window: Vec2,
+}
+
+impl Camera {
+    pub fn aspect_ratio(&self) -> f32 {
+        self.window.y / self.window.x
+    }
 }
 
 /// Input-related fields.
@@ -1793,7 +1801,6 @@ impl UndoStates {
 
 #[derive(Default)]
 pub struct Renderer {
-    pub window: Vec2,
     pub editing_bone: bool,
     pub dragging_verts: Vec<usize>,
     pub generic_bindgroup: Option<BindGroup>,
@@ -1804,12 +1811,6 @@ pub struct Renderer {
     pub has_loaded: bool,
     pub bone_init_rot: f32,
     pub gridline_gap: i32,
-}
-
-impl Renderer {
-    pub fn aspect_ratio(&self) -> f32 {
-        self.window.y / self.window.x
-    }
 }
 
 #[derive(Default)]
@@ -2003,16 +2004,6 @@ impl Shared {
         animated_bones
     }
 
-    pub fn world_camera(&self) -> Camera {
-        let mut cam = self.camera.clone();
-        match self.config.layout {
-            UiLayout::Right => cam.pos.x += 1500. * self.renderer.aspect_ratio(),
-            UiLayout::Left => cam.pos.x -= 1500. * self.renderer.aspect_ratio(),
-            _ => {}
-        };
-        cam
-    }
-
     pub fn edit_bone(
         &mut self,
         bone_id: i32,
@@ -2092,12 +2083,6 @@ impl Shared {
         }
         let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
         anim[anim_id].keyframes[frame].value = value;
-    }
-
-    pub fn sel_tex_img(&self) -> image::DynamicImage {
-        let sel_id = self.selected_bone().unwrap().id;
-        let tex = self.armature.tex_of(sel_id).unwrap();
-        self.armature.tex_data(tex).unwrap().image.clone()
     }
 }
 

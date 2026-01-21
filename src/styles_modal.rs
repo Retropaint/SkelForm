@@ -16,8 +16,8 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
     #[cfg(any(target_os = "macos", target_arch = "wasm32"))]
     {
         let center = egui::Pos2::new(
-            (shared.renderer.window.x / shared.ui.scale - shared.ui.styles_modal_size.x) / 2.,
-            (shared.renderer.window.y / shared.ui.scale - shared.ui.styles_modal_size.y) / 2.,
+            (shared.camera.window.x / shared.ui.scale - shared.ui.styles_modal_size.x) / 2.,
+            (shared.camera.window.y / shared.ui.scale - shared.ui.styles_modal_size.y) / 2.,
         );
         modal = egui::Modal::new("styles_modal".into())
             // set modal render order so that tex idx dropdown can be rendered above

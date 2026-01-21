@@ -131,7 +131,7 @@ impl ApplicationHandler for App {
                 .unwrap()
                 .dyn_into::<wgpu::web_sys::HtmlCanvasElement>()
                 .unwrap();
-            self.shared.renderer.window = Vec2::new(canvas.width() as f32, canvas.height() as f32);
+            self.shared.camera.window = Vec2::new(canvas.width() as f32, canvas.height() as f32);
             attributes = attributes.with_canvas(Some(canvas));
         }
 
@@ -187,7 +187,7 @@ impl ApplicationHandler for App {
                 std::panic::set_hook(Box::new(console_error_panic_hook::hook));
                 console_log::init().expect("Failed to initialize logger!");
                 //log::info!("Canvas dimensions: ({canvas_width} x {canvas_height})");
-                let size = self.shared.renderer.window.clone();
+                let size = self.shared.camera.window.clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     let renderer =
                         BackendRenderer::new(window_handle.clone(), size.x as u32, size.y as u32)
@@ -293,7 +293,7 @@ impl ApplicationHandler for App {
                 if width == 0 || height == 0 {
                     return;
                 }
-                self.shared.renderer.window = Vec2::new(width as f32, height as f32);
+                self.shared.camera.window = Vec2::new(width as f32, height as f32);
                 renderer.resize(width as u32, height as u32);
             }
             WindowEvent::RedrawRequested => {
@@ -330,7 +330,7 @@ impl ApplicationHandler for App {
                     self.shared.renderer.initialized_window = true;
                 }
 
-                self.shared.renderer.window = Vec2::new(size.width as f32, size.height as f32);
+                self.shared.camera.window = Vec2::new(size.width as f32, size.height as f32);
                 renderer.render_frame(
                     screen_descriptor,
                     paint_jobs,
@@ -577,7 +577,7 @@ impl BackendRenderer {
             #[cfg(not(target_arch = "wasm32"))]
             {
                 let frames = shared.rendered_frames.clone();
-                let window = shared.renderer.window.clone();
+                let window = shared.camera.window.clone();
                 std::thread::spawn(move || {
                     Self::export_video(frames, window);
                 });
