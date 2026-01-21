@@ -618,9 +618,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     anim_mut.keyframes = anim_clone.keyframes;
                 } else {
                     let str_invalid = shared.ui.loc("keyframe_editor.invalid_fps").to_string();
-                    shared
-                        .events
-                        .new_stringed(Events::OpenModal, 0., str_invalid);
+                    shared.ui.open_modal(str_invalid, false);
                 }
             }
             shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;

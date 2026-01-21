@@ -802,9 +802,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                     if filter.count() > 1 {
                         shared.selected_set_mut().unwrap().textures[i].name = og_name.clone();
                         let same_name_str = shared.ui.loc("styles_modal.same_name");
-                        shared
-                            .events
-                            .new_stringed(Events::OpenModal, 0., same_name_str);
+                        shared.ui.open_modal(same_name_str, false);
                     }
 
                     if !shared.config.keep_tex_str {

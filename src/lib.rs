@@ -251,9 +251,7 @@ impl ApplicationHandler for App {
         match event {
             WindowEvent::HoveredFile(_) => {
                 let str_drop_file = self.shared.ui.loc("drop_file").to_string();
-                self.shared
-                    .events
-                    .new_stringed(Events::OpenModal, 1., str_drop_file);
+                self.shared.ui.open_modal(str_drop_file, true);
             }
             WindowEvent::HoveredFileCancelled => {
                 self.shared.ui.modal = false;
@@ -591,18 +589,15 @@ impl BackendRenderer {
             editor::process_event(
                 shared.events.events.last().unwrap(),
                 shared.events.values.last().unwrap().clone(),
-                shared.events.str_values.last().unwrap().clone(),
                 &mut shared.camera,
                 &shared.input,
                 &mut shared.edit_mode,
                 &mut shared.selections,
                 &mut shared.undo_states,
                 &mut shared.armature,
-                &mut shared.ui,
             );
             shared.events.events.pop();
             shared.events.values.pop();
-            shared.events.str_values.pop();
         }
     }
 
@@ -614,9 +609,7 @@ impl BackendRenderer {
         }
         if *shared.saving.lock().unwrap() == Saving::CustomPath {
             let str_saving = &shared.ui.loc("saving");
-            shared
-                .events
-                .new_stringed(Events::OpenModal, 1., str_saving.to_string());
+            shared.ui.open_modal(str_saving.to_string(), true);
         }
         self.take_screenshot(shared);
         let buffer = shared.rendered_frames[0].buffer.clone();
