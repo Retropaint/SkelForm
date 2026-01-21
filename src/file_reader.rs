@@ -104,13 +104,14 @@ pub fn read_image_loaders(
     }
 
     // check if this texture already exists
-    for tex in &shared.selected_set().unwrap().textures {
+    let sel = &shared.selections;
+    for tex in &shared.armature.sel_style(sel).unwrap().clone().textures {
         if image == shared.armature.tex_data(tex).unwrap().image {
             return;
         }
     }
 
-    let style = shared.selected_set().unwrap().clone();
+    let style = shared.armature.sel_style(sel).unwrap().clone();
     shared.undo_states.new_undo_style(&style);
 
     add_texture(
@@ -136,11 +137,13 @@ pub fn add_pending_textures(
     ctx: Option<&egui::Context>,
 ) {
     // get last texture of selected style (will be the atlas)
-    let textures = shared.selected_set().unwrap().textures.last().unwrap();
-    let image = shared.armature.tex_data(textures).unwrap().image.clone();
+    let sel = &shared.selections;
+    let style = shared.armature.sel_style(sel).unwrap();
+    let textures = style.textures.last().unwrap().clone();
+    let image = shared.armature.tex_data(&textures).unwrap().image.clone();
 
     // now that we have the atlas, remove it from the list
-    shared.selected_set_mut().unwrap().textures.pop();
+    shared.armature.sel_style(sel).unwrap().textures.pop();
     shared.armature.tex_data.pop();
 
     for tex in &shared.ui.pending_textures {

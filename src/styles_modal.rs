@@ -762,9 +762,12 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
 
     let mut hovered = false;
     let mut dragged = false;
-    for i in 0..shared.selected_set().unwrap().textures.len() {
+    let sel = shared.selections.clone();
+    for i in 0..shared.armature.sel_style(&sel).unwrap().textures.len() {
         idx += 1;
-        let mut name = shared.selected_set().unwrap().textures[i].name.clone();
+        let mut name = shared.armature.sel_style(&sel).unwrap().textures[i]
+            .name
+            .clone();
         name = utils::trunc_str(ui, &name, width - 10.);
         let context_id = "tex_".to_owned() + &i.to_string();
 
@@ -789,18 +792,18 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                     }),
                 );
                 if edited {
-                    let style = &shared.selected_set().unwrap().clone();
+                    let sel = &shared.selections;
+                    let style = shared.armature.sel_style(sel).unwrap();
                     shared.undo_states.new_undo_style(style);
-                    let og_name = shared.selected_set_mut().unwrap().textures[i].name.clone();
+                    let og_name = style.textures[i].name.clone();
                     let trimmed = value.trim_start().trim_end().to_string();
-                    shared.selected_set_mut().unwrap().textures[i].name = trimmed.clone();
-                    let style = shared.selected_set().unwrap();
+                    style.textures[i].name = trimmed.clone();
                     let tex_names: Vec<String> =
                         style.textures.iter().map(|t| t.name.clone()).collect();
 
                     let filter = tex_names.iter().filter(|name| **name == trimmed);
                     if filter.count() > 1 {
-                        shared.selected_set_mut().unwrap().textures[i].name = og_name.clone();
+                        style.textures[i].name = og_name.clone();
                         let same_name_str = shared.ui.loc("styles_modal.same_name");
                         shared.events.open_modal(same_name_str, false);
                     }
@@ -888,7 +891,8 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             };
 
             let mut old_name_order: Vec<String> = vec![];
-            for tex in &shared.selected_set().unwrap().textures {
+            let sel = shared.selections.clone();
+            for tex in &shared.armature.sel_style(&sel).unwrap().textures {
                 old_name_order.push(tex.name.clone());
             }
 
@@ -897,7 +901,8 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
 
             let new_idx = idx as usize + is_below as usize;
 
-            let textures = &mut shared.selected_set_mut().unwrap().textures;
+            let sel = &shared.selections;
+            let textures = &mut shared.armature.sel_style(sel).unwrap().textures;
             let tex = textures[dp].clone();
             textures.remove(dp);
             textures.insert(new_idx, tex);

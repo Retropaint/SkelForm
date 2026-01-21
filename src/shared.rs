@@ -1374,6 +1374,10 @@ impl Armature {
     pub fn tex_data(&self, tex: &Texture) -> Option<&TextureData> {
         self.tex_data.iter().find(|d| d.id == tex.data_id)
     }
+
+    pub fn sel_style(&mut self, selection: &SelectionState) -> Option<&mut Style> {
+        self.styles.iter_mut().find(|s| s.id == selection.style)
+    }
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -1855,7 +1859,7 @@ impl EventState {
         self.str_values.push(headline);
     }
 }
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct SelectionState {
     pub bone_idx: usize,
     pub bone_ids: Vec<i32>,
@@ -1954,24 +1958,6 @@ impl Shared {
             self.undo_states
                 .new_undo_bone(&self.selected_bone().unwrap().clone());
         }
-    }
-
-    pub fn selected_set(&self) -> Option<&Style> {
-        self.armature
-            .styles
-            .iter()
-            .find(|set| set.id == self.selections.style)
-    }
-
-    pub fn selected_set_mut(&mut self) -> Option<&mut Style> {
-        self.armature
-            .styles
-            .iter_mut()
-            .find(|set| set.id == self.selections.style)
-    }
-
-    pub fn open_style_modal(&mut self) {
-        self.ui.styles_modal = true;
     }
 
     pub fn animate_bones(&mut self) -> Vec<Bone> {

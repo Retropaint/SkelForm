@@ -111,7 +111,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                     shared.ui.focus_style_dropdown = false;
                 }
                 if selected_style == -2 {
-                    shared.open_style_modal();
+                    shared.ui.styles_modal = true;
                 } else if selected_style != -1 {
                     shared.selections.style = selected_style;
                     shared.undo_states.new_undo_bones(&shared.armature.bones);
