@@ -67,7 +67,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         continue;
                     }
 
-                    shared.cursor_icon = egui::CursorIcon::Grab;
+                    shared.ui.cursor_icon = egui::CursorIcon::Grab;
                     if shared.input.left_down {
                         dragging = true;
                         tex.offset += atlas.size * (interp - shared.ui.prev_pending_interp);

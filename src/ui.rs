@@ -86,8 +86,8 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         shared.time = i.time as f32;
     });
 
-    context.set_cursor_icon(shared.cursor_icon);
-    shared.cursor_icon = egui::CursorIcon::Default;
+    context.set_cursor_icon(shared.ui.cursor_icon);
+    shared.ui.cursor_icon = egui::CursorIcon::Default;
 
     default_styling(context, shared);
 
@@ -346,13 +346,13 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         return;
     }
 
-    if shared.ui.rotating {
+    if shared.edit_mode.is_rotating {
         let offset = Vec2::new(50., 0.);
         let rot = selected_bone.rot / 3.14 * 180.;
         let formatted = (rot * 100.).round() / 100.;
         helper_text!(formatted.to_string() + "°", offset);
     }
-    if shared.ui.scaling {
+    if shared.edit_mode.is_scaling {
         let offset = Vec2::new(50., 0.);
         let formatted = (selected_bone.scale.x * 100.).round() / 100.;
         let mut padding = "";
@@ -968,7 +968,9 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
             macro_rules! edit_mode_button {
                 ($label:expr, $edit_mode:expr, $event:expr, $check:expr) => {
                     ui.add_enabled_ui($check, |ui| {
-                        if selection_button($label, shared.edit_mode == $edit_mode, ui).clicked() {
+                        if selection_button($label, shared.edit_mode.current == $edit_mode, ui)
+                            .clicked()
+                        {
                             shared.events.new($event)
                         };
                     })
@@ -978,19 +980,19 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
             let rot = ik_disabled || is_end;
             edit_mode_button!(
                 &shared.ui.loc("move"),
-                EditMode::Move,
+                EditModes::Move,
                 Events::EditModeMove,
                 ik_disabled
             );
             edit_mode_button!(
                 &shared.ui.loc("rotate"),
-                EditMode::Rotate,
+                EditModes::Rotate,
                 Events::EditModeRotate,
                 rot
             );
             edit_mode_button!(
                 &shared.ui.loc("scale"),
-                EditMode::Scale,
+                EditModes::Scale,
                 Events::EditModeScale,
                 ik_disabled
             );

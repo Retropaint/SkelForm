@@ -548,8 +548,6 @@ pub struct Ui {
     pub polar_modal: bool,
     pub settings_modal: bool,
     pub startup_window: bool,
-    pub scaling: bool,
-    pub rotating: bool,
     pub focus_style_dropdown: bool,
     pub donating_modal: bool,
     pub atlas_modal: bool,
@@ -1670,11 +1668,19 @@ pub struct BoneTops {
 }
 
 #[derive(Default, PartialEq)]
-pub enum EditMode {
+pub enum EditModes {
     #[default]
     Move,
     Rotate,
     Scale,
+}
+
+#[derive(Default)]
+pub struct EditMode {
+    pub current: EditModes,
+    pub is_moving: bool,
+    pub is_scaling: bool,
+    pub is_rotating: bool,
 }
 
 #[derive(Default, PartialEq, Debug)]
@@ -1858,7 +1864,6 @@ pub struct SelectionState {
 pub struct Shared {
     pub armature: Armature,
     pub input: InputStates,
-    pub cursor_icon: egui::CursorIcon,
     pub ui: Ui,
     pub undo_states: UndoStates,
     pub renderer: Renderer,

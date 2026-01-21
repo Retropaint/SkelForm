@@ -14,9 +14,9 @@ pub fn process_event(
         Events::CamZoomIn => camera.zoom -= 10.,
         Events::CamZoomOut => camera.zoom += 10.,
         Events::CamZoomScroll => camera.zoom -= input.scroll_delta,
-        Events::EditModeMove => *edit_mode = EditMode::Move,
-        Events::EditModeRotate => *edit_mode = EditMode::Rotate,
-        Events::EditModeScale => *edit_mode = EditMode::Scale,
+        Events::EditModeMove => edit_mode.current = EditModes::Move,
+        Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
+        Events::EditModeScale => edit_mode.current = EditModes::Scale,
         Events::SelectBone => {
             selections.bone_idx = if value == -1. {
                 usize::MAX

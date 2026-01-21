@@ -408,7 +408,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                 }
 
                 if response.hovered() {
-                    shared.cursor_icon = egui::CursorIcon::Grab;
+                    shared.ui.cursor_icon = egui::CursorIcon::Grab;
                 }
 
                 let cursor = shared.ui.get_cursor(ui);
@@ -444,7 +444,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                 let anim = shared.selected_animation().unwrap().clone();
                 shared.undo_states.new_undo_anim(&anim);
 
-                shared.cursor_icon = egui::CursorIcon::Grabbing;
+                shared.ui.cursor_icon = egui::CursorIcon::Grabbing;
 
                 // remove keyframe if dragged out
                 if cursor.y < 0. {

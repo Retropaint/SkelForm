@@ -12,8 +12,8 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         return;
     }
 
-    shared.ui.scaling = false;
-    shared.ui.rotating = false;
+    shared.edit_mode.is_scaling = false;
+    shared.edit_mode.is_rotating = false;
 
     #[cfg(target_arch = "wasm32")]
     if !shared.renderer.has_loaded {
@@ -436,14 +436,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // move camera
     if (shared.input.holding_mod || shared.input.right_down) && !shared.input.on_ui {
-        shared.cursor_icon = egui::CursorIcon::Move;
+        shared.ui.cursor_icon = egui::CursorIcon::Move;
         shared.camera.pos += mouse_vel(&shared.input, &shared.renderer) * shared.camera.zoom;
         return;
     }
 
     let mut ik_disabled = true;
     if let Some(bone) = shared.selected_bone() {
-        let is_end = shared.edit_mode == EditMode::Rotate
+        let is_end = shared.edit_mode.current == EditModes::Rotate
             && shared.armature.bone_eff(bone.id) == JointEffector::End;
         ik_disabled = is_end
             || (bone.ik_disabled || shared.armature.bone_eff(bone.id) == JointEffector::None);
@@ -459,7 +459,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     if shared.input.on_ui || shared.ui.polar_modal {
         shared.renderer.editing_bone = false;
     } else if sel != usize::MAX && input.left_down && hover_bone_id == -1 && input.down_dur > 5 {
-        if shared.edit_mode == EditMode::Rotate {
+        if shared.edit_mode.current == EditModes::Rotate {
             let mut mouse =
                 utils::screen_to_world_space(shared.input.mouse, shared.renderer.window);
             mouse.x *= shared.renderer.aspect_ratio();
@@ -855,7 +855,7 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
         Vec2::new(0.5, 0.5),
     );
 
-    if shared.edit_mode == shared::EditMode::Move {
+    if shared.edit_mode.current == shared::EditModes::Move {
         let mut pos = bone.pos;
         let mouse_vel = mouse_vel(&shared.input, &shared.renderer) * shared.camera.zoom;
 
@@ -872,8 +872,8 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
 
         edit!(bone, AnimElement::PositionX, pos.x);
         edit!(bone, AnimElement::PositionY, pos.y);
-    } else if shared.edit_mode == shared::EditMode::Rotate {
-        shared.ui.rotating = true;
+    } else if shared.edit_mode.current == shared::EditModes::Rotate {
+        shared.edit_mode.is_rotating = true;
 
         let mut mouse_init =
             utils::screen_to_world_space(shared.input.mouse_init.unwrap(), shared.renderer.window);
@@ -888,8 +888,8 @@ pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
 
         let rot = shared.renderer.bone_init_rot + (rot - rot_init);
         edit!(bone, AnimElement::Rotation, rot);
-    } else if shared.edit_mode == shared::EditMode::Scale {
-        shared.ui.scaling = true;
+    } else if shared.edit_mode.current == shared::EditModes::Scale {
+        shared.edit_mode.is_scaling = true;
 
         let mut scale = bone.scale;
 
