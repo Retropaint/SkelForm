@@ -137,6 +137,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             &mut shared.undo_states,
             &mut shared.armature,
             &mut shared.selections,
+            &mut shared.events,
         );
     }
     if shared.ui.modal {
@@ -211,7 +212,9 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     // get current properties of selected bone, including animations
     let mut selected_bone = Bone::default();
-    if shared.selections.bone_idx != usize::MAX {
+    if shared.selections.bone_idx != usize::MAX
+        && shared.selections.bone_idx < shared.armature.bones.len()
+    {
         selected_bone = shared.selected_bone().unwrap().clone();
 
         if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {

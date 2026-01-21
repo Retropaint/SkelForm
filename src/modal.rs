@@ -31,6 +31,7 @@ pub fn polar_modal(
     undo_states: &mut crate::UndoStates,
     armature: &mut crate::Armature,
     selections: &mut crate::SelectionState,
+    events: &mut crate::EventState
 ) {
     let mut yes = false;
 
@@ -72,7 +73,7 @@ pub fn polar_modal(
         PolarId::DeleteBone => {
             undo_states.new_undo_bones(&armature.bones);
 
-            selections.bone_idx = usize::MAX;
+            events.select_bone(usize::MAX);
 
             let parsed_id = shared_ui.context_id_parsed();
             let bone = &armature.bones[parsed_id as usize];

@@ -1922,7 +1922,9 @@ impl Shared {
     }
 
     pub fn selected_bone(&self) -> Option<&Bone> {
-        if self.selections.bone_idx != usize::MAX {
+        if self.selections.bone_idx != usize::MAX
+            && self.selections.bone_idx < self.armature.bones.len()
+        {
             return Some(&self.armature.bones[self.selections.bone_idx]);
         }
         None

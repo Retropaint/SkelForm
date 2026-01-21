@@ -25,7 +25,10 @@ mod web {
 pub use web::*;
 
 pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
-    if shared.ui.dragging_bone || shared.ui.just_made_bone {
+    if shared.ui.dragging_bone
+        || shared.ui.just_made_bone
+        || shared.selections.bone_idx > shared.armature.bones.len() - 1
+    {
         ui.disable();
         return;
     }
