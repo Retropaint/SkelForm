@@ -568,41 +568,14 @@ pub struct Ui {
 }
 
 impl Ui {
-    pub fn get_cursor(&self, ui: &egui::Ui) -> Vec2 {
-        let cursor_pos = ui.ctx().input(|i| {
-            if let Some(result) = i.pointer.hover_pos() {
-                result
-            } else {
-                egui::Pos2::new(0., 0.)
-            }
-        });
-        (cursor_pos - ui.min_rect().left_top()).into()
-    }
-
     pub fn open_polar_modal(&mut self, id: PolarId, headline: String) {
         self.polar_modal = true;
         self.polar_id = id;
         self.headline = headline.to_string();
     }
 
-    pub fn unselect_everything(&mut self, selections: &mut SelectionState) {
-        selections.bone_idx = usize::MAX;
-        selections.bone_ids = vec![];
-        selections.anim_frame = -1;
-        self.showing_mesh = false;
-        selections.anim = usize::MAX;
-        selections.bind = -1;
-    }
-
     pub fn is_animating(&self, selections: &SelectionState) -> bool {
         self.anim.open && selections.anim != usize::MAX
-    }
-
-    pub fn select_anim_frame(&mut self, idx: i32, selections: &mut SelectionState) {
-        let selected_anim = selections.anim;
-        self.unselect_everything(selections);
-        selections.anim = selected_anim;
-        selections.anim_frame = idx;
     }
 
     pub fn context_id_parsed(&self) -> i32 {
@@ -1829,6 +1802,8 @@ pub enum Events {
     Undo,
     Redo,
     OpenModal,
+    UnselectAll,
+    SelectAnimFrame,
 }
 
 #[derive(Default)]
@@ -1848,6 +1823,12 @@ impl EventState {
     pub fn select_bone(&mut self, bone_id: usize) {
         self.events.push(Events::SelectBone);
         self.values.push(bone_id as f32);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn select_anim_frame(&mut self, frame: usize) {
+        self.events.push(Events::SelectAnimFrame);
+        self.values.push(frame as f32);
         self.str_values.push("".to_string());
     }
 

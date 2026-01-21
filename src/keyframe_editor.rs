@@ -66,6 +66,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                                 &mut shared.undo_states,
                                 &shared.config,
                                 &mut shared.selections,
+                                &mut shared.events,
                             );
                         })
                     });
@@ -89,6 +90,7 @@ fn draw_animations_list(
     undo_states: &mut UndoStates,
     config: &Config,
     selections: &mut crate::SelectionState,
+    events: &mut EventState,
 ) {
     ui.horizontal(|ui| {
         let str_anim = shared_ui.loc("keyframe_editor.heading");
@@ -179,7 +181,7 @@ fn draw_animations_list(
                     if button.clicked() {
                         if selections.anim != i {
                             selections.anim = i;
-                            shared_ui.select_anim_frame(0, selections);
+                            events.select_anim_frame(0);
                         } else {
                             shared_ui.rename_id = context_id.clone();
                             shared_ui.edit_value = Some(name.to_string());
@@ -402,14 +404,14 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                 let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
                 if response.drag_started() {
-                    shared.ui.select_anim_frame(frame, &mut shared.selections);
+                    shared.events.select_anim_frame(frame as usize);
                 }
 
                 if response.hovered() {
                     shared.ui.cursor_icon = egui::CursorIcon::Grab;
                 }
 
-                let cursor = shared.ui.get_cursor(ui);
+                let cursor = get_cursor(ui);
 
                 if response.dragged() {
                     shared.ui.anim.dragged_keyframe = Keyframe {
@@ -491,7 +493,7 @@ pub fn draw_timeline_graph(
                 ui.set_width(width);
                 ui.set_height(ui.available_height());
 
-                let mut cursor = shared.ui.get_cursor(ui);
+                let mut cursor = get_cursor(ui);
                 // keep cursor on the frame
                 cursor.y -= shared.ui.anim.timeline_offset.y;
 
@@ -842,4 +844,15 @@ pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32) {
         egui::Color32::TRANSPARENT,
         egui::Stroke::new(2.0, color),
     ));
+}
+
+pub fn get_cursor(ui: &egui::Ui) -> Vec2 {
+    let cursor_pos = ui.ctx().input(|i| {
+        if let Some(result) = i.pointer.hover_pos() {
+            result
+        } else {
+            egui::Pos2::new(0., 0.)
+        }
+    });
+    (cursor_pos - ui.min_rect().left_top()).into()
 }

@@ -463,7 +463,7 @@ pub fn cancel_shortcut(shared: &mut Shared) {
     }
 
     if no_modals && !ui.setting_ik_target {
-        shared.ui.unselect_everything(&mut shared.selections);
+        shared.events.new(Events::UnselectAll);
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -895,7 +895,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             shared.recording = true;
             shared.ui.anim.open = true;
             shared.done_recording = true;
-            shared.ui.select_anim_frame(0, &mut shared.selections);
+            shared.events.select_anim_frame(0);
             shared.ui.anim.loops = 1;
             ui.close();
         }

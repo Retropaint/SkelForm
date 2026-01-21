@@ -13,6 +13,7 @@ pub fn process_event(
     ui: &mut crate::Ui,
 ) {
     match event {
+        Events::None => {}
         Events::CamZoomIn => camera.zoom -= 10.,
         Events::CamZoomOut => camera.zoom += 10.,
         Events::CamZoomScroll => camera.zoom -= input.scroll_delta,
@@ -33,8 +34,23 @@ pub fn process_event(
             ui.forced_modal = value == 1.;
             ui.headline = str_value;
         }
-        Events::None => {}
+        Events::UnselectAll => unselect_all(selections, ui),
+        Events::SelectAnimFrame => {
+            let selected_anim = selections.anim;
+            unselect_all(selections, ui);
+            selections.anim = selected_anim;
+            selections.anim_frame = value as i32;
+        }
     }
+}
+
+fn unselect_all(selections: &mut SelectionState, ui: &mut crate::Ui) {
+    selections.bone_idx = usize::MAX;
+    selections.bone_ids = vec![];
+    selections.anim_frame = -1;
+    selections.anim = usize::MAX;
+    selections.bind = -1;
+    ui.showing_mesh = false;
 }
 
 pub fn undo_redo(

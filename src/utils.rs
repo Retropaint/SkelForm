@@ -631,7 +631,7 @@ pub fn import<R: Read + std::io::Seek>(
         }
     }
 
-    shared.ui.unselect_everything(&mut shared.selections);
+    shared.events.new(Events::UnselectAll);
     shared.ui.startup_window = false;
 }
 
