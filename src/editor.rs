@@ -1,5 +1,78 @@
 use crate::*;
 
+pub fn iterate_events(
+    events: &mut EventState,
+    camera: &mut Camera,
+    input: &InputStates,
+    edit_mode: &mut EditMode,
+    selections: &mut SelectionState,
+    undo_states: &mut UndoStates,
+    armature: &mut Armature,
+    ui: &mut crate::Ui,
+) {
+    let mut last_event = Events::None;
+    while events.events.len() > 0 {
+        // for every new event, create a new undo state
+        if last_event != events.events[0] {
+            last_event = events.events[0].clone();
+            match last_event {
+                Events::DragBone => undo_states.new_undo_bones(&armature.bones),
+                _ => {}
+            }
+        }
+
+        if events.events[0] == Events::DragBone {
+            // dropping dragged bone and moving it (or setting it as child)
+
+            let old_parents = armature.get_all_parents(events.values[1] as i32);
+
+            #[rustfmt::skip] macro_rules! dragged {()=>{armature.find_bone_mut(events.values[1] as i32).unwrap()}}
+            #[rustfmt::skip] macro_rules! pointing{()=>{armature.find_bone_mut(events.values[0] as i32).unwrap()}}
+            #[rustfmt::skip] macro_rules! bones   {()=>{&mut armature.bones}}
+
+            #[rustfmt::skip] let drag_idx = bones!().iter().position(|b| b.id == events.values[1] as i32).unwrap() as i32;
+            #[rustfmt::skip] let point_idx = bones!().iter().position(|b| b.id == events.values[0] as i32).unwrap() as i32;
+
+            if events.values[2] == 1. {
+                // set pointed bone's parent as dragged bone's parent
+                dragged!().parent_id = pointing!().parent_id;
+                move_bone(bones!(), drag_idx, point_idx, false);
+            } else {
+                // set pointed bone as dragged bone's parent
+                dragged!().parent_id = pointing!().id;
+                move_bone(bones!(), drag_idx, point_idx, true);
+                pointing!().folded = false;
+            }
+
+            // keep bone selected in new dragged position
+            let bones = &mut armature.bones;
+            let sel_bone = events.values[1] as i32;
+            let bone_idx = bones.iter().position(|b| b.id == sel_bone).unwrap();
+            selections.bone_ids = vec![events.values[1] as i32];
+            selections.bone_idx = bone_idx;
+
+            // adjust dragged bone so it stays in place
+            armature.offset_pos_by_parent(old_parents, events.values[1] as i32);
+
+            events.events.remove(0);
+            events.values.drain(0..=2);
+        } else {
+            // normal events: 1 event ID, 1 set of value(s)
+
+            let event = &events.events[0].clone();
+            let value = events.values[0];
+            let str_value = events.str_values[0].clone().to_string();
+
+            #[rustfmt::skip]
+            editor::process_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, ui);
+
+            events.events.remove(0);
+            events.values.remove(0);
+            events.str_values.remove(0);
+        }
+    }
+}
+
 pub fn process_event(
     event: &crate::Events,
     value: f32,
@@ -27,7 +100,8 @@ pub fn process_event(
                 usize::MAX
             } else {
                 value as usize
-            }
+            };
+            selections.bone_ids = vec![armature.bones[value as usize].id];
         }
         Events::OpenModal => {
             ui.modal = true;
@@ -172,5 +246,30 @@ pub fn undo_redo(
     // actions tagged with `continue` are part of an action chain
     if action.continued {
         undo_redo(undo, undo_states, armature, selections);
+    }
+}
+
+pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_parent: bool) {
+    let main = &bones[old_idx as usize];
+    let anchor = bones[new_idx as usize].clone();
+
+    // gather all bones to be moved (this and its children)
+    let mut to_move: Vec<Bone> = vec![main.clone()];
+    armature_window::get_all_children(bones, &mut to_move, main);
+
+    // remove them
+    for _ in &to_move {
+        bones.remove(old_idx as usize);
+    }
+
+    // re-add them in the new positions
+    if is_setting_parent {
+        to_move.reverse();
+    }
+    for bone in to_move {
+        bones.insert(
+            armature_window::find_bone_idx(bones, anchor.id) as usize + is_setting_parent as usize,
+            bone.clone(),
+        );
     }
 }
