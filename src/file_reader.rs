@@ -99,7 +99,9 @@ pub fn read_image_loaders(
     }
 
     if image.clone().into_rgba8().to_vec().len() == 0 {
-        shared.ui.open_modal(shared.ui.loc("img_err"), false);
+        shared
+            .events
+            .new_stringed(Events::OpenModal, 0., shared.ui.loc("img_err"));
         return;
     }
 
@@ -451,7 +453,10 @@ pub fn read_psd(
     }
 
     let str_psd = &shared.ui.loc("psd_imported");
-    shared.ui.open_modal(str_psd.to_string(), false);
+
+    shared
+        .events
+        .new_stringed(Events::OpenModal, 0., str_psd.to_string());
     shared.ui.startup_window = false;
 }
 
@@ -536,7 +541,10 @@ pub fn read_import(
         file = std::fs::File::open(shared.file_name.lock().unwrap().to_string());
         if let Err(err) = file {
             let text = shared.ui.loc("import_err").to_owned() + &err.to_string();
-            shared.ui.open_modal(text.to_string(), false);
+
+            shared
+                .events
+                .new_stringed(Events::OpenModal, 0., text.to_string());
             return;
         }
     }
@@ -578,7 +586,9 @@ pub fn read_import(
         }
         _ => {
             let text = &shared.ui.loc("import_unrecognized");
-            shared.ui.open_modal(text.to_string(), false);
+            shared
+                .events
+                .new_stringed(Events::OpenModal, 0., text.to_string());
         }
     };
 

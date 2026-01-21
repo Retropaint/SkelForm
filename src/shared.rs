@@ -571,12 +571,6 @@ impl Ui {
         (cursor_pos - ui.min_rect().left_top()).into()
     }
 
-    pub fn open_modal(&mut self, headline: String, forced: bool) {
-        self.modal = true;
-        self.forced_modal = forced;
-        self.headline = headline;
-    }
-
     pub fn open_polar_modal(&mut self, id: PolarId, headline: String) {
         self.polar_modal = true;
         self.polar_id = id;
@@ -1831,23 +1825,33 @@ pub enum Events {
     SelectBone,
     Undo,
     Redo,
+    OpenModal,
 }
 
 #[derive(Default)]
 pub struct EventState {
     pub events: Vec<Events>,
     pub values: Vec<f32>,
+    pub str_values: Vec<String>,
 }
 
 impl EventState {
     pub fn new(&mut self, id: Events) {
         self.events.push(id);
         self.values.push(-1.);
+        self.str_values.push("".to_string());
     }
 
     pub fn new_valued(&mut self, id: Events, value: f32) {
         self.events.push(id);
         self.values.push(value);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn new_stringed(&mut self, id: Events, value: f32, str_value: String) {
+        self.events.push(id);
+        self.values.push(value);
+        self.str_values.push(str_value);
     }
 }
 #[derive(Default)]
