@@ -597,6 +597,7 @@ impl BackendRenderer {
             &mut shared.armature,
             &mut shared.copy_buffer,
             &mut shared.ui,
+            &shared.config
         );
     }
 

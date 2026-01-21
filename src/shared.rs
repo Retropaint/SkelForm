@@ -1339,7 +1339,11 @@ impl Armature {
         self.tex_data.iter().find(|d| d.id == tex.data_id)
     }
 
-    pub fn sel_style(&mut self, selection: &SelectionState) -> Option<&mut Style> {
+    pub fn sel_style(&self, selection: &SelectionState) -> Option<&Style> {
+        self.styles.iter().find(|s| s.id == selection.style)
+    }
+
+    pub fn sel_style_mut(&mut self, selection: &SelectionState) -> Option<&mut Style> {
         self.styles.iter_mut().find(|s| s.id == selection.style)
     }
 }
@@ -1781,10 +1785,12 @@ pub struct Renderer {
     pub gridline_gap: i32,
 }
 
-#[derive(Default, PartialEq, Clone)]
+#[derive(Default, PartialEq, Clone, Debug)]
 pub enum Events {
     #[default]
     None,
+    Undo,
+    Redo,
     CamZoomIn,
     CamZoomOut,
     CamZoomScroll,
@@ -1795,8 +1801,6 @@ pub enum Events {
     SelectAnimFrame,
     SelectAnim,
     SelectStyle,
-    Undo,
-    Redo,
     OpenModal,
     UnselectAll,
     OpenPolarModal,
@@ -1806,9 +1810,23 @@ pub enum Events {
     DeleteAnim,
     DeleteTex,
     DeleteStyle,
+    DeleteKeyframe,
     CopyBone,
     PasteBone,
+    SetKeyframeFrame,
+    NewAnimation,
+    RenameAnimation,
+    RenameStyle,
+    RenameTexture,
+    ToggleAnimPlaying,
+    NewStyle,
+    ToggleStyleActive,
+    MoveStyle,
+    MigrateTexture,
+    MoveTexture,
 }
+
+enum_string!(Events);
 
 #[derive(Default)]
 pub struct EventState {
@@ -1842,9 +1860,9 @@ impl EventState {
         self.str_values.push("".to_string());
     }
 
-    pub fn select_style(&mut self, style_id: usize) {
+    pub fn select_style(&mut self, style_idx: usize) {
         self.events.push(Events::SelectStyle);
-        self.values.push(style_id as f32);
+        self.values.push(style_idx as f32);
         self.str_values.push("".to_string());
     }
 
@@ -1869,6 +1887,12 @@ impl EventState {
     pub fn delete_style(&mut self, style_id: usize) {
         self.events.push(Events::DeleteStyle);
         self.values.push(style_id as f32);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn delete_keyframe(&mut self, kf_idx: usize) {
+        self.events.push(Events::DeleteKeyframe);
+        self.values.push(kf_idx as f32);
         self.str_values.push("".to_string());
     }
 
@@ -1908,7 +1932,74 @@ impl EventState {
         self.values.push(bone_id as f32);
         self.str_values.push("".to_string());
     }
+
+    pub fn set_keyframe_frame(&mut self, keyframe: usize, frame: usize) {
+        self.events.push(Events::SetKeyframeFrame);
+        self.values.push(keyframe as f32);
+        self.values.push(frame as f32);
+    }
+
+    pub fn new_animation(&mut self) {
+        self.events.push(Events::NewAnimation);
+        self.values.push(-1.);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn rename_animation(&mut self, anim_idx: usize, name: String) {
+        self.events.push(Events::RenameAnimation);
+        self.values.push(anim_idx as f32);
+        self.str_values.push(name);
+    }
+
+    pub fn rename_style(&mut self, style_idx: usize, name: String) {
+        self.events.push(Events::RenameStyle);
+        self.values.push(style_idx as f32);
+        self.str_values.push(name);
+    }
+
+    pub fn toggle_anim_playing(&mut self, anim_idx: usize, playing: bool) {
+        self.events.push(Events::ToggleAnimPlaying);
+        self.values.push(anim_idx as f32);
+        self.values.push(if playing { 1. } else { 0. });
+    }
+
+    pub fn new_style(&mut self) {
+        self.events.push(Events::NewStyle);
+        self.values.push(-1.);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn toggle_style_active(&mut self, style_idx: usize, toggle: bool) {
+        self.events.push(Events::ToggleStyleActive);
+        self.values.push(style_idx as f32);
+        self.values.push(if toggle { 1. } else { 0. });
+    }
+
+    pub fn move_style(&mut self, point_idx: usize, drag_idx: usize) {
+        self.events.push(Events::MoveStyle);
+        self.values.push(point_idx as f32);
+        self.values.push(drag_idx as f32);
+    }
+
+    pub fn migrate_texture(&mut self, point_idx: usize, drag_idx: usize) {
+        self.events.push(Events::MigrateTexture);
+        self.values.push(point_idx as f32);
+        self.values.push(drag_idx as f32);
+    }
+
+    pub fn rename_texture(&mut self, tex_idx: usize, new_name: String) {
+        self.events.push(Events::RenameTexture);
+        self.values.push(tex_idx as f32);
+        self.str_values.push(new_name);
+    }
+
+    pub fn move_texture(&mut self, old_idx: usize, new_idx: usize) {
+        self.events.push(Events::MoveTexture);
+        self.values.push(new_idx as f32);
+        self.values.push(old_idx as f32);
+    }
 }
+
 #[derive(Default, Clone)]
 pub struct SelectionState {
     pub bone_idx: usize,
@@ -1969,7 +2060,7 @@ impl Shared {
         if self.selections.anim > self.armature.animations.len() {
             return None;
         }
-        Some(&mut self.armature.animations[self.selections.anim_frame as usize])
+        Some(&mut self.armature.animations[self.selections.anim as usize])
     }
 
     pub fn last_keyframe(&self) -> Option<&Keyframe> {

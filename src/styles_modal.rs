@@ -52,11 +52,10 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             let height = ui.available_height();
             draw_styles_list(
                 ui,
-                &mut shared.armature,
+                &shared.armature,
                 &mut shared.ui,
-                &mut shared.undo_states,
-                &mut shared.config,
-                &mut shared.selections,
+                &shared.config,
+                &shared.selections,
                 &mut shared.events,
                 modal_width,
                 height,
@@ -77,11 +76,10 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
 
 pub fn draw_styles_list(
     ui: &mut egui::Ui,
-    armature: &mut Armature,
+    armature: &Armature,
     shared_ui: &mut crate::Ui,
-    undo_states: &mut crate::UndoStates,
-    config: &mut crate::Config,
-    selections: &mut crate::SelectionState,
+    config: &crate::Config,
+    selections: &crate::SelectionState,
     events: &mut crate::EventState,
     width: f32,
     height: f32,
@@ -101,14 +99,7 @@ pub fn draw_styles_list(
             if !ui.skf_button(&shared_ui.loc("new")).clicked() {
                 return;
             }
-            undo_states.new_undo_styles(&armature.styles);
-            let ids = armature.styles.iter().map(|set| set.id).collect();
-            armature.styles.push(crate::Style {
-                id: generate_id(ids),
-                name: "".to_string(),
-                textures: vec![],
-                active: true,
-            });
+            events.new_style();
             shared_ui.rename_id = "style_".to_string() + &(armature.styles.len() - 1).to_string();
         });
 
@@ -151,9 +142,8 @@ pub fn draw_styles_list(
                         }),
                     );
                     if edited {
-                        undo_states.new_undo_styles(&armature.styles);
-                        armature.styles[s].name = value;
-                        selections.style = armature.styles[s].id;
+                        events.rename_style(s, value);
+                        events.select_style(s);
                     }
                     continue;
                 }
@@ -196,7 +186,7 @@ pub fn draw_styles_list(
                         if selections.style == armature.styles[s].id {
                             shared_ui.rename_id = context_id.clone();
                         }
-                        selections.style = armature.styles[s].id;
+                        events.select_style(s);
                     }
 
                     context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {
@@ -230,15 +220,7 @@ pub fn draw_styles_list(
                         visible_col.into(),
                     );
                     if visible_checkbox.clicked() {
-                        armature.styles[s].active = !armature.styles[s].active;
-                        for b in 0..armature.bones.len() {
-                            armature.set_bone_tex(
-                                armature.bones[b].id,
-                                armature.bones[b].tex.clone(),
-                                selections.anim,
-                                selections.anim_frame,
-                            );
-                        }
+                        events.toggle_style_active(s, false);
                     }
 
                     let pointer = ui.input(|i| i.pointer.interact_pos());
@@ -265,13 +247,9 @@ pub fn draw_styles_list(
 
                     let hov = *hovered_payload.clone().unwrap() as usize;
                     if !shared_ui.dragging_tex {
-                        armature.styles.swap(hov, idx as usize);
+                        events.move_style(hov as usize, idx as usize);
                     } else if idx != selections.style {
-                        let style = &mut armature.styles[selections.style as usize];
-                        let tex = style.textures[hov].clone();
-                        style.textures.remove(hov);
-                        armature.styles[idx as usize].textures.push(tex);
-                        shared_ui.dragging_tex = false;
+                        events.migrate_texture(hov, idx as usize);
                     }
                 });
             }
@@ -377,7 +355,14 @@ pub fn draw_textures_list(
                         egui::ScrollArea::vertical()
                             .id_salt("tex_list")
                             .show(ui, |ui| {
-                                draw_tex_buttons(shared, ui);
+                                draw_tex_buttons(
+                                    &mut shared.ui,
+                                    &shared.armature,
+                                    &shared.selections,
+                                    &shared.config,
+                                    &mut shared.events,
+                                    ui,
+                                );
                             });
                     }
                     return;
@@ -697,7 +682,7 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
 }
 
 pub fn draw_tex_preview(
-    armature: &mut Armature,
+    armature: &Armature,
     shared_ui: &mut crate::Ui,
     selections: &crate::SelectionState,
     ui: &mut egui::Ui,
@@ -753,34 +738,39 @@ fn resize_tex_img(mut size: Vec2, max: usize) -> Vec2 {
     size
 }
 
-pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
+pub fn draw_tex_buttons(
+    shared_ui: &mut crate::Ui,
+    armature: &Armature,
+    selections: &crate::SelectionState,
+    config: &crate::Config,
+    events: &mut crate::EventState,
+    ui: &mut egui::Ui,
+) {
     let mut idx: i32 = -1;
 
     let width = ui.available_width();
 
     let mut hovered = false;
     let mut dragged = false;
-    let sel = shared.selections.clone();
-    for i in 0..shared.armature.sel_style(&sel).unwrap().textures.len() {
+    let sel = selections.clone();
+    for i in 0..armature.sel_style(&sel).unwrap().textures.len() {
         idx += 1;
-        let mut name = shared.armature.sel_style(&sel).unwrap().textures[i]
-            .name
-            .clone();
+        let mut name = armature.sel_style(&sel).unwrap().textures[i].name.clone();
         name = utils::trunc_str(ui, &name, width - 10.);
         let context_id = "tex_".to_owned() + &i.to_string();
 
-        let str_desc = &shared.ui.loc("styles_modal.texture_desc").clone();
+        let str_desc = &shared_ui.loc("styles_modal.texture_desc").clone();
 
-        let mut col = shared.config.colors.dark_accent;
-        if i == shared.ui.hovering_tex as usize {
+        let mut col = config.colors.dark_accent;
+        if i == shared_ui.hovering_tex as usize {
             col += crate::Color::new(20, 20, 20, 0);
         }
 
         ui.horizontal(|ui| {
-            if shared.ui.rename_id == context_id {
+            if shared_ui.rename_id == context_id {
                 let (edited, value, _) = ui.text_input(
                     context_id.clone(),
-                    &mut shared.ui,
+                    shared_ui,
                     name.to_string(),
                     Some(TextInputOptions {
                         focus: true,
@@ -790,29 +780,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                     }),
                 );
                 if edited {
-                    let sel = &shared.selections;
-                    let style = shared.armature.sel_style(sel).unwrap();
-                    shared.undo_states.new_undo_style(style);
-                    let og_name = style.textures[i].name.clone();
-                    let trimmed = value.trim_start().trim_end().to_string();
-                    style.textures[i].name = trimmed.clone();
-                    let tex_names: Vec<String> =
-                        style.textures.iter().map(|t| t.name.clone()).collect();
-
-                    let filter = tex_names.iter().filter(|name| **name == trimmed);
-                    if filter.count() > 1 {
-                        style.textures[i].name = og_name.clone();
-                        let same_name_str = shared.ui.loc("styles_modal.same_name");
-                        shared.events.open_modal(same_name_str, false);
-                    }
-
-                    if !shared.config.keep_tex_str {
-                        for bone in &mut shared.armature.bones {
-                            if bone.tex == og_name {
-                                bone.tex = trimmed.clone();
-                            }
-                        }
-                    }
+                    events.rename_texture(i, value);
                 }
                 return;
             }
@@ -825,7 +793,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                             ui.set_width(width - bin_width);
                             ui.set_height(21.);
                             ui.add_space(5.);
-                            ui.label(egui::RichText::new(&name).color(shared.config.colors.text));
+                            ui.label(egui::RichText::new(&name).color(config.colors.text));
                         });
                     });
                 })
@@ -839,25 +807,19 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             }
 
             if button.clicked() {
-                if shared.ui.selected_tex == i as i32 {
-                    shared.ui.rename_id = context_id.clone();
+                if shared_ui.selected_tex == i as i32 {
+                    shared_ui.rename_id = context_id.clone();
                 }
-                shared.ui.selected_tex = i as i32;
+                shared_ui.selected_tex = i as i32;
             }
 
-            context_menu!(button, shared.ui, context_id, |ui: &mut egui::Ui| {
-                ui.context_rename(&mut shared.ui, &shared.config, context_id);
-                ui.context_delete(
-                    &mut shared.ui,
-                    &shared.config,
-                    &mut shared.events,
-                    "delete_tex",
-                    PolarId::DeleteTex,
-                );
+            context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {
+                ui.context_rename(shared_ui, &config, context_id);
+                ui.context_delete(shared_ui, &config, events, "delete_tex", PolarId::DeleteTex);
             });
 
             if button.contains_pointer() {
-                shared.ui.hovering_tex = i as i32;
+                shared_ui.hovering_tex = i as i32;
                 hovered = true;
             }
 
@@ -890,26 +852,17 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
             };
 
             let mut old_name_order: Vec<String> = vec![];
-            let sel = shared.selections.clone();
-            for tex in &shared.armature.sel_style(&sel).unwrap().textures {
+            let sel = selections.clone();
+            for tex in &armature.sel_style(&sel).unwrap().textures {
                 old_name_order.push(tex.name.clone());
             }
 
-            let sel_bone = shared.selected_bone().unwrap().clone();
-            shared.undo_states.new_undo_bone(&sel_bone);
-
-            let new_idx = idx as usize + is_below as usize;
-
-            let sel = &shared.selections;
-            let textures = &mut shared.armature.sel_style(sel).unwrap().textures;
-            let tex = textures[dp].clone();
-            textures.remove(dp);
-            textures.insert(new_idx, tex);
+            events.move_texture(dp as usize, idx as usize + is_below as usize);
         });
     }
 
     if !hovered || dragged {
-        shared.ui.hovering_tex = -1;
+        shared_ui.hovering_tex = -1;
     }
-    shared.ui.dragging_tex = dragged;
+    shared_ui.dragging_tex = dragged;
 }

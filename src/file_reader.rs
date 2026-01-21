@@ -143,7 +143,7 @@ pub fn add_pending_textures(
     let image = shared.armature.tex_data(&textures).unwrap().image.clone();
 
     // now that we have the atlas, remove it from the list
-    shared.armature.sel_style(sel).unwrap().textures.pop();
+    shared.armature.sel_style_mut(sel).unwrap().textures.pop();
     shared.armature.tex_data.pop();
 
     for tex in &shared.ui.pending_textures {

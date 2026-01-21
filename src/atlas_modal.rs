@@ -169,7 +169,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                             shared.ui.pending_textures = vec![];
                             shared.ui.atlas_modal = false;
                             let sel = &shared.selections;
-                            shared.armature.sel_style(sel).unwrap().textures.pop();
+                            shared.armature.sel_style_mut(sel).unwrap().textures.pop();
                         }
                     });
                 });

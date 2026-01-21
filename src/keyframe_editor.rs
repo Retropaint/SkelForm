@@ -62,10 +62,9 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                             draw_animations_list(
                                 ui,
                                 &mut shared.ui,
-                                &mut shared.armature,
-                                &mut shared.undo_states,
+                                &shared.armature,
                                 &shared.config,
-                                &mut shared.selections,
+                                &shared.selections,
                                 &mut shared.events,
                             );
                         })
@@ -86,8 +85,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
 fn draw_animations_list(
     ui: &mut egui::Ui,
     shared_ui: &mut crate::Ui,
-    armature: &mut Armature,
-    undo_states: &mut UndoStates,
+    armature: &Armature,
     config: &Config,
     selections: &crate::SelectionState,
     events: &mut EventState,
@@ -103,13 +101,7 @@ fn draw_animations_list(
                 return;
             }
 
-            undo_states.new_undo_anims(&armature.animations);
-
-            armature.new_animation();
-            let idx = armature.animations.len() - 1;
-            shared_ui.original_name = "".to_string();
-            shared_ui.rename_id = "anim_".to_owned() + &idx.to_string();
-            shared_ui.edit_value = Some("".to_string());
+            events.new_animation();
         });
     });
     egui::ScrollArea::vertical().show(ui, |ui| {
@@ -133,8 +125,7 @@ fn draw_animations_list(
                     let (edited, value, _) =
                         ui.text_input(context_id, shared_ui, name.to_string(), options);
                     if edited {
-                        undo_states.new_undo_anims(&armature.animations);
-                        armature.animations[i].name = value;
+                        events.rename_animation(i, value);
                         events.select_anim(i);
                     }
                     continue;
@@ -184,14 +175,12 @@ fn draw_animations_list(
                     }
 
                     if armature.animations[i].keyframes.len() > 0 {
-                        let anim = &mut armature.animations[i];
+                        let anim = &armature.animations[i];
                         let align = egui::Layout::right_to_left(egui::Align::Center);
                         ui.with_layout(align, |ui| {
                             let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
                             if ui.skf_button(icon).clicked() {
-                                let now = Some(Instant::now());
-                                let paused = anim.elapsed == None;
-                                anim.elapsed = if paused { now } else { None };
+                                events.toggle_anim_playing(i, anim.elapsed == None);
                             }
                         });
                     }
@@ -202,9 +191,8 @@ fn draw_animations_list(
                         ui.context_delete(shared_ui, config, events, "delete_anim", del_anim);
                         let duplicate_str = shared_ui.loc("keyframe_editor.duplicate");
                         if ui.context_button(duplicate_str, config).clicked() {
-                            undo_states.new_undo_anims(&armature.animations);
-                            let anims = &mut armature.animations;
-                            anims.push(anims[i].clone());
+                            let anims = &armature.animations;
+                            //anims.push(anims[i].clone());
                             shared_ui.context_menu.close();
                         }
                     });
@@ -659,7 +647,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 fn draw_frame_lines(
     ui: &mut egui::Ui,
     shared_ui: &mut crate::Ui,
-    armature: &mut Armature,
+    armature: &Armature,
     config: &Config,
     input: &InputStates,
     selections: &SelectionState,
@@ -682,7 +670,7 @@ fn draw_frame_lines(
         if last_keyframe != None && i > last_keyframe.unwrap().frame {
             color = config.colors.dark_accent.into();
         }
-        let anim = &mut armature.animations[selections.anim];
+        let anim = &armature.animations[selections.anim];
         if i == anim.get_frame() && anim.elapsed != None {
             color = color + egui::Color32::from_rgb(60, 60, 60);
         }
@@ -718,7 +706,7 @@ fn draw_frame_lines(
     let mut height = 0.;
 
     // draw per-change icons
-    let sel_anim = &mut armature.animations[selections.anim];
+    let sel_anim = &armature.animations[selections.anim];
     for i in 0..sel_anim.keyframes.len() {
         let kf = sel_anim.keyframes[i].clone();
         let size = Vec2::new(17., 17.);
@@ -780,8 +768,7 @@ fn draw_frame_lines(
         }
 
         if cursor.y < 0. {
-            sel_anim.keyframes.remove(i);
-
+            events.delete_keyframe(i);
             // break the loop to prevent OOB errors
             break;
         }
@@ -808,13 +795,11 @@ fn draw_frame_lines(
             });
             let mut curr = i;
             if k != None {
-                sel_anim.keyframes.remove(k.unwrap());
+                events.delete_keyframe(k.unwrap());
                 curr -= 1;
             }
 
-            sel_anim.keyframes[curr].frame = j as i32;
-
-            sel_anim.sort_keyframes();
+            events.set_keyframe_frame(curr, j);
             return;
         }
     }

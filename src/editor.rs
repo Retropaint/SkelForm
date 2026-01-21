@@ -12,6 +12,7 @@ pub fn iterate_events(
     armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
+    config: &Config,
 ) {
     let mut last_event = Events::None;
     while events.events.len() > 0 {
@@ -24,7 +25,86 @@ pub fn iterate_events(
             }
         }
 
-        if events.events[0] == Events::DragBone {
+        if events.events[0] == Events::MoveTexture {
+            let new_idx = events.values[0] as usize;
+            let sel = &selections;
+            let textures = &mut armature.sel_style_mut(sel).unwrap().textures;
+            let tex = textures[events.values[1] as usize].clone();
+            textures.remove(events.values[1] as usize);
+            textures.insert(new_idx, tex);
+
+            events.events.remove(0);
+            events.values.drain(0..=1);
+        } else if events.events[0] == Events::RenameTexture {
+            let style = armature.sel_style_mut(&selections).unwrap();
+            let t = events.values[0] as usize;
+            let og_name = style.textures[t].name.clone();
+            let trimmed = events.str_values[0].trim_start().trim_end().to_string();
+            style.textures[t].name = trimmed.clone();
+            let tex_names: Vec<String> = style.textures.iter().map(|t| t.name.clone()).collect();
+
+            let filter = tex_names.iter().filter(|name| **name == trimmed);
+            if filter.count() > 1 {
+                style.textures[t].name = og_name.clone();
+                let same_name_str = ui.loc("styles_modal.same_name");
+                events.open_modal(same_name_str, false);
+            }
+
+            if !config.keep_tex_str {
+                for bone in &mut armature.bones {
+                    if bone.tex == og_name {
+                        bone.tex = trimmed.clone();
+                    }
+                }
+            }
+
+            events.events.remove(0);
+            events.values.drain(0..=1);
+            events.str_values.remove(0);
+        } else if events.events[0] == Events::MigrateTexture {
+            let style = &mut armature.styles[selections.style as usize];
+            let tex = style.textures[events.values[0] as usize].clone();
+            style.textures.remove(events.values[0] as usize);
+            armature.styles[events.values[1] as usize]
+                .textures
+                .push(tex);
+            ui.dragging_tex = false;
+
+            events.events.remove(0);
+            events.values.drain(0..=1);
+        } else if events.events[0] == Events::MoveStyle {
+            armature
+                .styles
+                .swap(events.values[0] as usize, events.values[1] as usize);
+            events.events.remove(0);
+            events.values.drain(0..=1);
+        } else if events.events[0] == Events::ToggleStyleActive {
+            armature.styles[events.values[0] as usize].active =
+                !armature.styles[events.values[0] as usize].active;
+            for b in 0..armature.bones.len() {
+                armature.set_bone_tex(
+                    armature.bones[b].id,
+                    armature.bones[b].tex.clone(),
+                    selections.anim,
+                    selections.anim_frame,
+                );
+            }
+            events.events.remove(0);
+            events.values.drain(0..=1);
+        } else if events.events[0] == Events::ToggleAnimPlaying {
+            let anim = &mut armature.animations[events.values[0] as usize];
+            let playing = events.values[1] == 1.;
+            anim.elapsed = if playing { Some(Instant::now()) } else { None };
+            events.events.remove(0);
+            events.values.drain(0..=1);
+        } else if events.events[0] == Events::SetKeyframeFrame {
+            armature.animations[selections.anim].keyframes[events.values[0] as usize].frame =
+                events.values[1] as i32;
+            armature.animations[selections.anim].sort_keyframes();
+
+            events.events.remove(0);
+            events.values.drain(0..=1);
+        } else if events.events[0] == Events::DragBone {
             // dropping dragged bone and moving it (or setting it as child)
 
             let old_parents = armature.get_all_parents(events.values[1] as i32);
@@ -100,6 +180,22 @@ pub fn process_event(
         Events::Undo => undo_redo(true, undo_states, armature, selections),
         Events::Redo => undo_redo(false, undo_states, armature, selections),
         Events::DeleteAnim => _ = armature.animations.remove(value as usize),
+        Events::RenameAnimation => armature.animations[value as usize].name = str_value,
+        Events::RenameStyle => armature.styles[value as usize].name = str_value,
+        Events::NewStyle => {
+            let ids = armature.styles.iter().map(|set| set.id).collect();
+            armature.styles.push(crate::Style {
+                id: generate_id(ids),
+                name: "".to_string(),
+                textures: vec![],
+                active: true,
+            });
+        }
+        Events::DeleteKeyframe => {
+            _ = armature.animations[selections.anim]
+                .keyframes
+                .remove(value as usize)
+        }
         Events::SelectBone => {
             let val = value as usize;
             selections.bone_idx = if value == f32::MAX { usize::MAX } else { val };
@@ -248,6 +344,13 @@ pub fn process_event(
                     insert_idx += 1;
                 }
             }
+        }
+        Events::NewAnimation => {
+            armature.new_animation();
+            let idx = armature.animations.len() - 1;
+            ui.original_name = "".to_string();
+            ui.rename_id = "anim_".to_owned() + &idx.to_string();
+            ui.edit_value = Some("".to_string());
         }
         _ => {}
     }
