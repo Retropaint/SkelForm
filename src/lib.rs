@@ -585,7 +585,7 @@ impl BackendRenderer {
             }
         }
 
-        editor::process(&mut shared.events, &mut shared.camera);
+        editor::process(&mut shared.events, &mut shared.camera, &shared.input);
     }
 
     #[cfg(not(target_arch = "wasm32"))]

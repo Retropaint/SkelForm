@@ -376,6 +376,7 @@ pub struct InputStates {
     pub holding_mod: bool,
     pub holding_shift: bool,
     pub mouse_init: Option<Vec2>,
+    pub scroll_delta: f32,
 
     pub mod_q: Option<global_hotkey::hotkey::HotKey>,
     pub mod_w: Option<global_hotkey::hotkey::HotKey>,
@@ -1834,6 +1835,7 @@ pub enum Events {
     None,
     CamZoomIn,
     CamZoomOut,
+    CamZoomScroll
 }
 
 #[derive(Default)]

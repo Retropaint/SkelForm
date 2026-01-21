@@ -74,6 +74,10 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         }
 
         if i.smooth_scroll_delta.y != 0. && !shared.input.on_ui {
+            shared.events.push(Event {
+                id: Events::CamZoomScroll
+            });
+            shared.input.scroll_delta = i.smooth_scroll_delta.y;
             match shared.config.layout {
                 UiLayout::Right => shared.camera.pos.x -= i.smooth_scroll_delta.y * 0.5,
                 UiLayout::Left => shared.camera.pos.x += i.smooth_scroll_delta.y * 0.5,
