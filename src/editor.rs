@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::*;
 
 pub fn iterate_events(
@@ -8,6 +10,7 @@ pub fn iterate_events(
     selections: &mut SelectionState,
     undo_states: &mut UndoStates,
     armature: &mut Armature,
+    copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
 ) {
     let mut last_event = Events::None;
@@ -64,7 +67,7 @@ pub fn iterate_events(
             let str_value = events.str_values[0].clone().to_string();
 
             #[rustfmt::skip]
-            editor::process_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, ui);
+            editor::process_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, copy_buffer, ui);
 
             events.events.remove(0);
             events.values.remove(0);
@@ -83,6 +86,7 @@ pub fn process_event(
     selections: &mut SelectionState,
     undo_states: &mut UndoStates,
     armature: &mut Armature,
+    copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
 ) {
     match event {
@@ -197,6 +201,53 @@ pub fn process_event(
                 selections.style = i32::MAX;
             }
             styles.remove(idx);
+        }
+        Events::CopyBone => {
+            let arm_bones = &armature.bones;
+            let mut bones = vec![];
+            armature_window::get_all_children(&arm_bones, &mut bones, &arm_bones[value as usize]);
+            bones.insert(0, armature.bones[value as usize].clone());
+            copy_buffer.bones = bones;
+        }
+        Events::PasteBone => {
+            // determine which id to give the new bone(s), based on the highest current id
+            let ids: Vec<i32> = armature.bones.iter().map(|bone| bone.id).collect();
+            let mut highest_id = 0;
+            for id in ids {
+                highest_id = id.max(highest_id);
+            }
+            highest_id += 1;
+
+            let mut insert_idx = usize::MAX;
+            let mut id_refs: HashMap<i32, i32> = HashMap::new();
+
+            for b in 0..copy_buffer.bones.len() {
+                let bone = &mut copy_buffer.bones[b];
+
+                highest_id += 1;
+                let new_id = highest_id;
+
+                id_refs.insert(bone.id, new_id);
+                bone.id = highest_id;
+
+                let val = value as usize;
+                if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
+                    bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
+                } else if val != usize::MAX {
+                    insert_idx = val + 1;
+                    bone.parent_id = armature.bones[val].id;
+                } else {
+                    bone.parent_id = -1;
+                }
+            }
+            if insert_idx == usize::MAX {
+                armature.bones.append(&mut copy_buffer.bones);
+            } else {
+                for bone in &copy_buffer.bones {
+                    armature.bones.insert(insert_idx, bone.clone());
+                    insert_idx += 1;
+                }
+            }
         }
         _ => {}
     }

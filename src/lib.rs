@@ -595,6 +595,7 @@ impl BackendRenderer {
             &mut shared.selections,
             &mut shared.undo_states,
             &mut shared.armature,
+            &mut shared.copy_buffer,
             &mut shared.ui,
         );
     }

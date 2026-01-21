@@ -1806,6 +1806,8 @@ pub enum Events {
     DeleteAnim,
     DeleteTex,
     DeleteStyle,
+    CopyBone,
+    PasteBone,
 }
 
 #[derive(Default)]
@@ -1893,6 +1895,18 @@ impl EventState {
         self.values.push(point_id as f32);
         self.values.push(drag_id as f32);
         self.values.push(if is_above { 1. } else { 0. });
+    }
+
+    pub fn copy_bone(&mut self, bone_id: usize) {
+        self.events.push(Events::CopyBone);
+        self.values.push(bone_id as f32);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn paste_bone(&mut self, bone_id: usize) {
+        self.events.push(Events::PasteBone);
+        self.values.push(bone_id as f32);
+        self.str_values.push("".to_string());
     }
 }
 #[derive(Default, Clone)]

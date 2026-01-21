@@ -370,12 +370,12 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     );
 
                     if ui.context_button("Copy", &shared.config).clicked() {
-                        ui::copy_bone(shared, b);
+                        shared.events.copy_bone(b);
                         shared.ui.context_menu.close();
                     }
 
                     if ui.context_button("Paste", &shared.config).clicked() {
-                        ui::paste_bone(shared, b);
+                        shared.events.paste_bone(b);
                         shared.ui.context_menu.close();
                     }
                 });

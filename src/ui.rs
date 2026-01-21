@@ -43,6 +43,8 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     shared.ui.context_menu.keep = false;
 
     context.input_mut(|i| {
+        shared.input.holding_mod = i.modifiers.command;
+        shared.input.holding_shift = i.modifiers.shift;
         if shared.ui.rename_id == "" {
             kb_inputs(i, shared);
         }
@@ -374,9 +376,6 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
     mouse_button_as_key(input, egui::PointerButton::Extra1, egui::Key::F34);
     mouse_button_as_key(input, egui::PointerButton::Extra2, egui::Key::F35);
 
-    shared.input.holding_mod = input.modifiers.command;
-    shared.input.holding_shift = input.modifiers.shift;
-
     if input.consume_shortcut(&shared.config.keys.undo) {
         shared.events.new(Events::Undo);
     }
@@ -418,53 +417,48 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         // copy bone(s)
         let idx = shared.selections.bone_idx;
         if idx != usize::MAX {
-            copy_bone(shared, idx);
+            shared.events.copy_bone(idx);
         }
     }
 
     // paste shortcut
     if input.consume_shortcut(&shared.config.keys.paste) {
-        if shared.copy_buffer.keyframes.len() > 0 {
-        } else if shared.copy_buffer.bones.len() > 0 {
-            shared.undo_states.new_undo_bones(&shared.armature.bones);
-            paste_bone(shared, shared.selections.bone_idx);
-        }
+        shared.events.paste_bone(shared.selections.bone_idx);
     }
 
     if input.consume_shortcut(&shared.config.keys.cancel) {
-        cancel_shortcut(shared);
+        let ui = &mut shared.ui;
+        let no_modals = !ui.styles_modal
+            && !ui.modal
+            && !ui.polar_modal
+            && !ui.forced_modal
+            && !ui.settings_modal;
+
+        ui.styles_modal = false;
+        ui.modal = false;
+        ui.polar_modal = false;
+        ui.forced_modal = false;
+        ui.settings_modal = false;
+        ui.atlas_modal = false;
+
+        // if a context menu is open, cancel that instead
+        if ui.context_menu.id != "" {
+            shared.ui.context_menu.id = "".to_string();
+            return;
+        }
+
+        if no_modals && !ui.setting_ik_target {
+            shared.events.new(Events::UnselectAll);
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            toggleElement(false, "image-dialog".to_string());
+            toggleElement(false, "file-dialog".to_string());
+        }
+
+        shared.ui.setting_ik_target = false;
     }
-}
-
-pub fn cancel_shortcut(shared: &mut Shared) {
-    let ui = &mut shared.ui;
-    let no_modals =
-        !ui.styles_modal && !ui.modal && !ui.polar_modal && !ui.forced_modal && !ui.settings_modal;
-
-    ui.styles_modal = false;
-    ui.modal = false;
-    ui.polar_modal = false;
-    ui.forced_modal = false;
-    ui.settings_modal = false;
-    ui.atlas_modal = false;
-
-    // if a context menu is open, cancel that instead
-    if ui.context_menu.id != "" {
-        shared.ui.context_menu.id = "".to_string();
-        return;
-    }
-
-    if no_modals && !ui.setting_ik_target {
-        shared.events.new(Events::UnselectAll);
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        toggleElement(false, "image-dialog".to_string());
-        toggleElement(false, "file-dialog".to_string());
-    }
-
-    shared.ui.setting_ik_target = false;
 }
 
 pub fn mouse_button_as_key(
@@ -1253,56 +1247,6 @@ pub fn draw_resizable_panel<T>(
     if let Some(resize) = context.read_response(egui::Id::new(id).with("__resize")) {
         if resize.hovered() || panel.response.hovered() {
             *on_ui = true;
-        }
-    }
-}
-
-pub fn copy_bone(shared: &mut Shared, idx: usize) {
-    let arm_bones = &shared.armature.bones;
-    let mut bones = vec![];
-    armature_window::get_all_children(&arm_bones, &mut bones, &arm_bones[idx]);
-    bones.insert(0, shared.armature.bones[idx].clone());
-    shared.copy_buffer.bones = bones;
-}
-
-pub fn paste_bone(shared: &mut Shared, idx: usize) {
-    shared.undo_states.new_undo_bones(&shared.armature.bones);
-
-    // determine which id to give the new bone(s), based on the highest current id
-    let ids: Vec<i32> = shared.armature.bones.iter().map(|bone| bone.id).collect();
-    let mut highest_id = 0;
-    for id in ids {
-        highest_id = id.max(highest_id);
-    }
-    highest_id += 1;
-
-    let mut insert_idx = usize::MAX;
-    let mut id_refs: HashMap<i32, i32> = HashMap::new();
-
-    for b in 0..shared.copy_buffer.bones.len() {
-        let bone = &mut shared.copy_buffer.bones[b];
-
-        highest_id += 1;
-        let new_id = highest_id;
-
-        id_refs.insert(bone.id, new_id);
-        bone.id = highest_id;
-
-        if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
-            bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
-        } else if idx != usize::MAX {
-            insert_idx = idx + 1;
-            bone.parent_id = shared.armature.bones[idx].id;
-        } else {
-            bone.parent_id = -1;
-        }
-    }
-    if insert_idx == usize::MAX {
-        shared.armature.bones.append(&mut shared.copy_buffer.bones);
-    } else {
-        for bone in &shared.copy_buffer.bones {
-            shared.armature.bones.insert(insert_idx, bone.clone());
-            insert_idx += 1;
         }
     }
 }
