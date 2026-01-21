@@ -31,7 +31,7 @@ pub fn polar_modal(
     undo_states: &mut crate::UndoStates,
     armature: &mut crate::Armature,
     selections: &mut crate::SelectionState,
-    events: &mut crate::EventState
+    events: &mut crate::EventState,
 ) {
     let mut yes = false;
 
@@ -134,7 +134,7 @@ pub fn polar_modal(
             }
         }
         PolarId::DeleteAnim => {
-            shared_ui.anim.selected = usize::MAX;
+            selections.anim = usize::MAX;
             undo_states.new_undo_anims(&armature.animations);
             let id = shared_ui.context_id_parsed() as usize;
             armature.animations.remove(id);

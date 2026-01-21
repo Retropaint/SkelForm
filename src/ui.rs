@@ -201,7 +201,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     let mut max_size = min_default_size;
     if shared.selections.bone_idx != usize::MAX {
         max_size = 250.;
-    } else if shared.ui.anim.selected_frame != -1 {
+    } else if shared.selections.anim_frame != -1 {
         max_size = 250.;
     }
 
@@ -217,10 +217,9 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     {
         selected_bone = shared.selected_bone().unwrap().clone();
 
-        if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
-            let anim = &shared.ui.anim;
-            let frame = anim.selected_frame;
-            let animated_bones = shared.armature.animate(anim.selected, frame, None);
+        if shared.ui.anim.open && shared.selections.anim != usize::MAX {
+            let frame = shared.selections.anim_frame;
+            let animated_bones = shared.armature.animate(shared.selections.anim, frame, None);
             selected_bone = animated_bones[shared.selections.bone_idx].clone();
         }
     }
@@ -247,7 +246,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
                 if shared.selections.bone_idx != usize::MAX {
                     bone_panel::draw(selected_bone.clone(), ui, shared);
-                } else if shared.selected_animation() != None && shared.ui.anim.selected_frame != -1
+                } else if shared.selected_animation() != None && shared.selections.anim_frame != -1
                 {
                     keyframe_panel::draw(ui, shared);
                 }
@@ -880,13 +879,13 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
 
             // complain if there's no proper animation to export
             let str = "No animation available.".to_string();
-            if shared.ui.anim.selected == usize::MAX {
+            if shared.selections.anim == usize::MAX {
                 let anims = &shared.armature.animations;
                 if anims.len() == 0 || anims[0].keyframes.len() == 0 {
                     shared.events.open_modal(str, false);
                     return;
                 } else {
-                    shared.ui.anim.selected = 0;
+                    shared.selections.anim = 0;
                 }
             } else if shared.last_keyframe() == None {
                 shared.events.open_modal(str, false);

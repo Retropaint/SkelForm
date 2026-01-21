@@ -1,7 +1,7 @@
 use crate::*;
 
 pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
-    ui.heading("Keyframe (".to_owned() + &shared.ui.anim.selected_frame.to_string() + ")");
+    ui.heading("Keyframe (".to_owned() + &shared.selections.anim_frame.to_string() + ")");
 
     return;
 
@@ -11,7 +11,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         .unwrap()
         .keyframes
         .iter()
-        .filter(|a| a.frame == shared.ui.anim.selected_frame);
+        .filter(|a| a.frame == shared.selections.anim_frame);
 
     if keyframes_in_frame.count() == 0 {
         return;
@@ -20,7 +20,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label("Transition:");
 
-        if shared.ui.anim.selected_frame == -1
+        if shared.selections.anim_frame == -1
             || shared.selected_animation() == None
             || shared.selected_animation().unwrap().keyframes.len() == 0
         {
@@ -28,7 +28,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
         }
 
         let mut transition = Transition::default();
-        let frame = shared.ui.anim.selected_frame;
+        let frame = shared.selections.anim_frame;
         for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
             if kf.frame == frame {
                 transition = kf.transition.clone();
@@ -55,7 +55,7 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
         // change all fields to use new transition
         if og_transition != transition {
-            let selected_frame = shared.ui.anim.selected_frame;
+            let selected_frame = shared.selections.anim_frame;
             for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
                 if kf.frame == selected_frame {
                     kf.transition = transition.clone();

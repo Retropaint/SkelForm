@@ -198,8 +198,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     if !anim_bones[b].is_hidden {
                         hidden = 1;
                     }
-                    let sel = shared.ui.anim.selected;
-                    let frame = shared.ui.anim.selected_frame;
+                    let sel = shared.selections.anim;
+                    let frame = shared.selections.anim_frame;
                     shared.save_edited_bone();
                     shared.edit_bone(bone_id, &AnimElement::Hidden, hidden as f32, sel, frame);
                 }
@@ -334,9 +334,9 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         } else {
                             if !shared.input.holding_mod && !shared.input.holding_shift {
                                 shared.selections.bone_ids = vec![];
-                                let anim_frame = shared.ui.anim.selected_frame;
+                                let anim_frame = shared.selections.anim_frame;
                                 shared.events.select_bone(idx as usize);
-                                shared.ui.anim.selected_frame = anim_frame;
+                                shared.selections.anim_frame = anim_frame;
                             }
 
                             let id = shared.armature.bones[idx as usize].id;

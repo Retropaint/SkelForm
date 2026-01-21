@@ -232,8 +232,8 @@ pub fn draw_styles_list(
                             armature.set_bone_tex(
                                 armature.bones[b].id,
                                 armature.bones[b].tex.clone(),
-                                shared_ui.anim.selected,
-                                shared_ui.anim.selected_frame,
+                                selections.anim,
+                                selections.anim_frame,
                             );
                         }
                     }
@@ -583,12 +583,7 @@ pub fn draw_bone_buttons(
             let tex_str = style.textures[*dragged_payload.unwrap() as usize]
                 .name
                 .clone();
-            armature.set_bone_tex(
-                id,
-                tex_str,
-                shared_ui.anim.selected,
-                shared_ui.anim.selected_frame,
-            );
+            armature.set_bone_tex(id, tex_str, selections.anim, selections.anim_frame);
         });
     }
     if !hovered {
@@ -683,8 +678,8 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                                 shared.armature.set_bone_tex(
                                     bone.id,
                                     tex_str.clone(),
-                                    shared.ui.anim.selected,
-                                    shared.ui.anim.selected_frame,
+                                    shared.selections.anim,
+                                    shared.selections.anim_frame,
                                 );
                             });
                             ui.add_space(7.);

@@ -18,16 +18,16 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         let right = egui_ctx.input_mut(|i| i.consume_shortcut(&shared.config.keys.next_anim_frame));
         let left = egui_ctx.input_mut(|i| i.consume_shortcut(&shared.config.keys.prev_anim_frame));
         if right {
-            shared.ui.anim.selected_frame += 1;
+            shared.selections.anim_frame += 1;
             let last_frame = shared.last_keyframe();
-            if last_frame != None && shared.ui.anim.selected_frame > last_frame.unwrap().frame {
-                shared.ui.anim.selected_frame = 0;
+            if last_frame != None && shared.selections.anim_frame > last_frame.unwrap().frame {
+                shared.selections.anim_frame = 0;
             }
         } else if left {
-            shared.ui.anim.selected_frame -= 1;
+            shared.selections.anim_frame -= 1;
             let last_frame = shared.last_keyframe();
-            if last_frame != None && shared.ui.anim.selected_frame < 0 {
-                shared.ui.anim.selected_frame = last_frame.unwrap().frame;
+            if last_frame != None && shared.selections.anim_frame < 0 {
+                shared.selections.anim_frame = last_frame.unwrap().frame;
             }
         }
     }
@@ -71,7 +71,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                     });
                 });
 
-                if shared.ui.anim.selected != usize::MAX {
+                if shared.selections.anim != usize::MAX {
                     timeline_editor(ui, shared);
                 }
             });
@@ -133,8 +133,8 @@ fn draw_animations_list(
                     if edited {
                         undo_states.new_undo_anims(&armature.animations);
                         armature.animations[i].name = value;
-                        shared_ui.anim.selected = i;
-                        shared_ui.anim.selected_frame = 0;
+                        selections.anim = i;
+                        selections.anim_frame = 0;
                     }
                     continue;
                 }
@@ -149,15 +149,15 @@ fn draw_animations_list(
                     if i == shared_ui.hovering_anim as usize {
                         col += crate::Color::new(20, 20, 20, 0);
                     }
-                    if i == shared_ui.anim.selected {
+                    if i == selections.anim {
                         col += crate::Color::new(20, 20, 20, 0);
                     }
-                    let cursor_icon = if shared_ui.anim.selected != i {
+                    let cursor_icon = if selections.anim != i {
                         egui::CursorIcon::PointingHand
                     } else {
                         egui::CursorIcon::Default
                     };
-                    //let button = ui::selection_button(&name, i == shared.ui.anim.selected, ui);
+                    //let button = ui::selection_button(&name, i == shared.selections.anim, ui);
                     let button = egui::Frame::new()
                         .fill(col.into())
                         .show(ui, |ui| {
@@ -177,8 +177,8 @@ fn draw_animations_list(
                         hovered = true;
                     }
                     if button.clicked() {
-                        if shared_ui.anim.selected != i {
-                            shared_ui.anim.selected = i;
+                        if selections.anim != i {
+                            selections.anim = i;
                             shared_ui.select_anim_frame(0, selections);
                         } else {
                             shared_ui.rename_id = context_id.clone();
@@ -519,6 +519,7 @@ pub fn draw_timeline_graph(
                     &mut shared.armature,
                     &mut shared.config,
                     &mut shared.input,
+                    &mut shared.selections,
                     &bone_tops,
                     hitbox,
                     cursor,
@@ -571,7 +572,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 } else {
                     None
                 };
-                shared.ui.anim.played_frame = shared.ui.anim.selected_frame;
+                shared.ui.anim.played_frame = shared.selections.anim_frame;
             });
 
             if ui.skf_button("+").clicked() {
@@ -584,7 +585,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             ui.add_space(20.);
 
             ui.label(&shared.ui.loc("keyframe_editor.frame"));
-            ui.add(egui::DragValue::new(&mut shared.ui.anim.selected_frame).speed(0.1));
+            ui.add(egui::DragValue::new(&mut shared.selections.anim_frame).speed(0.1));
 
             let fps = shared.selected_animation().unwrap().fps;
 
@@ -627,7 +628,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             {
                 shared.copy_buffer = CopyBuffer::default();
                 for kf in 0..shared.selected_animation().unwrap().keyframes.len() {
-                    let frame = shared.ui.anim.selected_frame;
+                    let frame = shared.selections.anim_frame;
                     if shared.selected_animation().unwrap().keyframes[kf].frame == frame {
                         let keyframe = shared.selected_animation().unwrap().keyframes[kf].clone();
                         shared.copy_buffer.keyframes.push(keyframe);
@@ -640,7 +641,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 let anim = shared.selected_animation().unwrap().clone();
                 shared.undo_states.new_undo_anim(&anim);
 
-                let frame = shared.ui.anim.selected_frame;
+                let frame = shared.selections.anim_frame;
                 let buffer_frames = shared.copy_buffer.keyframes.clone();
                 let anim = &mut shared.selected_animation_mut().unwrap();
 
@@ -664,6 +665,7 @@ fn draw_frame_lines(
     armature: &mut Armature,
     config: &Config,
     input: &mut InputStates,
+    selections: &mut SelectionState,
     bone_tops: &BoneTops,
     hitbox: f32,
     cursor: Vec2,
@@ -678,13 +680,11 @@ fn draw_frame_lines(
         shared_ui.anim.lines_x.push(x);
 
         let mut color: egui::Color32 = config.colors.frameline.into();
-        let last_keyframe = armature.animations[shared_ui.anim.selected]
-            .keyframes
-            .last();
+        let last_keyframe = armature.animations[selections.anim].keyframes.last();
         if last_keyframe != None && i > last_keyframe.unwrap().frame {
             color = config.colors.dark_accent.into();
         }
-        let anim = &mut armature.animations[shared_ui.anim.selected];
+        let anim = &mut armature.animations[selections.anim];
         if i == anim.get_frame() && anim.elapsed != None {
             color = color + egui::Color32::from_rgb(60, 60, 60);
         }
@@ -694,7 +694,7 @@ fn draw_frame_lines(
         let in_modal = shared_ui.modal || shared_ui.settings_modal;
         let cur = cursor;
 
-        if shared_ui.anim.selected_frame == i {
+        if selections.anim_frame == i {
             color = egui::Color32::WHITE;
         } else if !in_modal && in_ui && cur.x < x + hitbox && cur.x > x - hitbox && above_bar {
             shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
@@ -702,7 +702,7 @@ fn draw_frame_lines(
 
             // select this frame if clicked
             if input.left_clicked {
-                shared_ui.anim.selected_frame = i;
+                selections.anim_frame = i;
                 input.on_ui = true;
             }
         }
@@ -721,7 +721,7 @@ fn draw_frame_lines(
     let mut height = 0.;
 
     // draw per-change icons
-    let sel_anim = &mut armature.animations[shared_ui.anim.selected];
+    let sel_anim = &mut armature.animations[selections.anim];
     for i in 0..sel_anim.keyframes.len() {
         let kf = sel_anim.keyframes[i].clone();
         let size = Vec2::new(17., 17.);

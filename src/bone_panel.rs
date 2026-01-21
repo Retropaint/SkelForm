@@ -111,16 +111,13 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     if selected_tex == "[Setup]" {
         shared.ui.styles_modal = true;
     } else if selected_tex != bone.tex {
-        let mut anim_id = shared.ui.anim.selected;
-        if !shared.ui.is_animating() {
+        let mut anim_id = shared.selections.anim;
+        if !shared.ui.is_animating(&shared.selections) {
             anim_id = usize::MAX;
         }
-        shared.armature.set_bone_tex(
-            bone.id,
-            selected_tex,
-            anim_id,
-            shared.ui.anim.selected_frame,
-        );
+        shared
+            .armature
+            .set_bone_tex(bone.id, selected_tex, anim_id, shared.selections.anim_frame);
     }
 
     let mut edited = false;
@@ -129,12 +126,12 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     macro_rules! check_input_edit {
         ($float:expr, $element:expr, $ui:expr, $label:expr) => {
             if edited {
-                let mut anim_id = shared.ui.anim.selected;
-                if !shared.ui.is_animating() {
+                let mut anim_id = shared.selections.anim;
+                if !shared.ui.is_animating(&shared.selections) {
                     anim_id = usize::MAX;
                 }
 
-                let frame = shared.ui.anim.selected_frame;
+                let frame = shared.selections.anim_frame;
                 shared.save_edited_bone();
                 shared.edit_bone(bone.id, $element, $float, anim_id, frame);
                 *shared.saving.lock().unwrap() = shared::Saving::Autosaving;
@@ -424,8 +421,8 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     ui.selectable_value(&mut ik, JointConstraint::None, str_none);
                     ui.selectable_value(&mut ik, JointConstraint::Clockwise, str_clockwise);
                     ui.selectable_value(&mut ik, JointConstraint::CounterClockwise, str_ccw);
-                    let sel = shared.ui.anim.selected;
-                    let frame = shared.ui.anim.selected_frame;
+                    let sel = shared.selections.anim;
+                    let frame = shared.selections.anim_frame;
                     let constraint = AnimElement::IkConstraint;
                     shared.edit_bone(bone.id, &constraint, (ik as usize) as f32, sel, frame);
                 })

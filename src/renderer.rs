@@ -840,9 +840,9 @@ fn winding_sort(mut points: Vec<Vec2>) -> Vec<Vec2> {
 }
 
 pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
-    let mut anim_id = shared.ui.anim.selected;
-    let anim_frame = shared.ui.anim.selected_frame;
-    if !shared.ui.is_animating() {
+    let mut anim_id = shared.selections.anim;
+    let anim_frame = shared.selections.anim_frame;
+    if !shared.ui.is_animating(&shared.selections) {
         anim_id = usize::MAX;
     }
 

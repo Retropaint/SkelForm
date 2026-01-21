@@ -590,19 +590,19 @@ impl Ui {
         selections.bone_ids = vec![];
         selections.anim_frame = -1;
         self.showing_mesh = false;
-        self.anim.selected = usize::MAX;
+        selections.anim = usize::MAX;
         selections.bind = -1;
     }
 
-    pub fn is_animating(&self) -> bool {
-        self.anim.open && self.anim.selected != usize::MAX
+    pub fn is_animating(&self, selections: &SelectionState) -> bool {
+        self.anim.open && selections.anim != usize::MAX
     }
 
     pub fn select_anim_frame(&mut self, idx: i32, selections: &mut SelectionState) {
-        let selected_anim = self.anim.selected;
+        let selected_anim = selections.anim;
         self.unselect_everything(selections);
-        self.anim.selected = selected_anim;
-        self.anim.selected_frame = idx;
+        selections.anim = selected_anim;
+        selections.anim_frame = idx;
     }
 
     pub fn context_id_parsed(&self) -> i32 {
@@ -831,9 +831,7 @@ pub enum Keys {
 #[derive(Clone, Default)]
 pub struct UiAnim {
     pub open: bool,
-    pub selected: usize,
     pub hovering_frame: i32,
-    pub selected_frame: i32,
     pub timeline_zoom: f32,
     pub lines_x: Vec<f32>,
 
@@ -1909,17 +1907,17 @@ pub struct Shared {
 
 impl Shared {
     pub fn selected_animation(&self) -> Option<&Animation> {
-        if self.ui.anim.selected > self.armature.animations.len() {
+        if self.selections.anim > self.armature.animations.len() {
             return None;
         }
-        Some(&self.armature.animations[self.ui.anim.selected])
+        Some(&self.armature.animations[self.selections.anim])
     }
 
     pub fn selected_animation_mut(&mut self) -> Option<&mut Animation> {
-        if self.ui.anim.selected > self.armature.animations.len() {
+        if self.selections.anim > self.armature.animations.len() {
             return None;
         }
-        Some(&mut self.armature.animations[self.ui.anim.selected])
+        Some(&mut self.armature.animations[self.selections.anim_frame as usize])
     }
 
     pub fn last_keyframe(&self) -> Option<&Keyframe> {
@@ -1951,7 +1949,7 @@ impl Shared {
     }
 
     pub fn save_edited_bone(&mut self) {
-        if self.ui.is_animating() {
+        if self.ui.is_animating(&self.selections) {
             let anim = self.selected_animation().unwrap().clone();
             self.undo_states.new_undo_anim(&anim);
         } else {
@@ -1980,11 +1978,14 @@ impl Shared {
                 let frame = anim.set_frame();
                 animated_bones = self.armature.animate(a, frame, Some(&animated_bones));
             }
-        } else if anim.open && anim.selected != usize::MAX && anim.selected_frame != -1 {
-            let frame = anim.selected_frame;
-
+        } else if anim.open
+            && self.selections.anim != usize::MAX
+            && self.selections.anim_frame != -1
+        {
             // display the selected animation's frame
-            animated_bones = self.armature.animate(anim.selected, frame, None);
+            animated_bones =
+                self.armature
+                    .animate(self.selections.anim, self.selections.anim_frame, None);
         }
 
         animated_bones
