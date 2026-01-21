@@ -74,9 +74,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         }
 
         if i.smooth_scroll_delta.y != 0. && !shared.input.on_ui {
-            shared.events.push(Event {
-                id: Events::CamZoomScroll
-            });
+            shared.events.new(Events::CamZoomScroll);
             shared.input.scroll_delta = i.smooth_scroll_delta.y;
             match shared.config.layout {
                 UiLayout::Right => shared.camera.pos.x -= i.smooth_scroll_delta.y * 0.5,
@@ -402,14 +400,10 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
     }
 
     if input.consume_shortcut(&shared.config.keys.zoom_in_camera) {
-        shared.events.push(Event {
-            id: Events::CamZoomIn,
-        });
+        shared.events.new(Events::CamZoomIn);
     }
     if input.consume_shortcut(&shared.config.keys.zoom_out_camera) {
-        shared.events.push(Event {
-            id: Events::CamZoomOut,
-        });
+        shared.events.new(Events::CamZoomOut);
     }
 
     if input.consume_shortcut(&shared.config.keys.save) {
@@ -930,15 +924,11 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.set_width(125.);
         let str_zoom_in = &shared.ui.loc("top_bar.view.zoom_in");
         if tpb!(str_zoom_in, Some(&shared.config.keys.zoom_in_camera)).clicked() {
-            shared.events.push(Event {
-                id: Events::CamZoomIn,
-            })
+            shared.events.new(Events::CamZoomIn);
         }
         let str_zoom_out = &shared.ui.loc("top_bar.view.zoom_out");
         if tpb!(str_zoom_out, Some(&shared.config.keys.zoom_out_camera)).clicked() {
-            shared.events.push(Event {
-                id: Events::CamZoomOut,
-            })
+            shared.events.new(Events::CamZoomOut);
         }
     });
 }
@@ -995,19 +985,34 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
     window.show(egui_ctx, |ui| {
         ui.horizontal(|ui| {
             macro_rules! edit_mode_button {
-                ($label:expr, $edit_mode:expr, $check:expr) => {
+                ($label:expr, $edit_mode:expr, $event:expr, $check:expr) => {
                     ui.add_enabled_ui($check, |ui| {
                         if selection_button($label, shared.edit_mode == $edit_mode, ui).clicked() {
-                            shared.edit_mode = $edit_mode;
+                            shared.events.new($event)
                         };
                     })
                 };
             }
             let ik_disabled = !shared.ui.showing_mesh && ik_disabled;
             let rot = ik_disabled || is_end;
-            edit_mode_button!(&shared.ui.loc("move"), EditMode::Move, ik_disabled);
-            edit_mode_button!(&shared.ui.loc("rotate"), EditMode::Rotate, rot);
-            edit_mode_button!(&shared.ui.loc("scale"), EditMode::Scale, ik_disabled);
+            edit_mode_button!(
+                &shared.ui.loc("move"),
+                EditMode::Move,
+                Events::EditModeMove,
+                ik_disabled
+            );
+            edit_mode_button!(
+                &shared.ui.loc("rotate"),
+                EditMode::Rotate,
+                Events::EditModeRotate,
+                rot
+            );
+            edit_mode_button!(
+                &shared.ui.loc("scale"),
+                EditMode::Scale,
+                Events::EditModeScale,
+                ik_disabled
+            );
         });
         shared.ui.edit_bar.scale = ui.min_rect().size().into();
     });

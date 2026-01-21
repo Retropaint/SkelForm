@@ -1835,12 +1835,28 @@ pub enum Events {
     None,
     CamZoomIn,
     CamZoomOut,
-    CamZoomScroll
+    CamZoomScroll,
+    EditModeMove,
+    EditModeRotate,
+    EditModeScale,
 }
 
 #[derive(Default)]
-pub struct Event {
-    pub id: Events,
+pub struct EventState {
+    pub events: Vec<Events>,
+    pub values: Vec<f32>,
+}
+
+impl EventState {
+    pub fn new(&mut self, id: Events) {
+        self.events.push(id);
+        self.values.push(0.);
+    }
+
+    pub fn new_valued(&mut self, id: Events, value: f32) {
+        self.events.push(id);
+        self.values.push(value);
+    }
 }
 
 #[derive(Default)]
@@ -1851,7 +1867,7 @@ pub struct Shared {
     pub ui: Ui,
     pub undo_states: UndoStates,
     pub renderer: Renderer,
-    pub events: Vec<Event>,
+    pub events: EventState,
     pub camera: Camera,
 
     pub recording: bool,

@@ -48,6 +48,7 @@ use winit::{
 pub mod armature_window;
 pub mod atlas_modal;
 pub mod bone_panel;
+pub mod editor;
 pub mod file_reader;
 pub mod keyframe_editor;
 pub mod keyframe_panel;
@@ -59,7 +60,6 @@ pub mod startup_window;
 pub mod styles_modal;
 pub mod ui;
 pub mod utils;
-pub mod editor;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
@@ -585,7 +585,12 @@ impl BackendRenderer {
             }
         }
 
-        editor::process(&mut shared.events, &mut shared.camera, &shared.input);
+        editor::process_events(
+            &mut shared.events,
+            &mut shared.camera,
+            &shared.input,
+            &mut shared.edit_mode,
+        );
     }
 
     #[cfg(not(target_arch = "wasm32"))]
