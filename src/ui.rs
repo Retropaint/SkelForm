@@ -134,7 +134,6 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             context,
             &shared.config,
             &mut shared.ui,
-            &mut shared.undo_states,
             &mut shared.armature,
             &mut shared.selections,
             &mut shared.events,

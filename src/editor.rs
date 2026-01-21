@@ -95,13 +95,20 @@ pub fn process_event(
         Events::UnselectAll => unselect_all(selections, ui),
         Events::Undo => undo_redo(true, undo_states, armature, selections),
         Events::Redo => undo_redo(false, undo_states, armature, selections),
+        Events::DeleteAnim => _ = armature.animations.remove(value as usize),
         Events::SelectBone => {
-            selections.bone_idx = if value == f32::MAX {
-                usize::MAX
-            } else {
-                value as usize
-            };
+            let val = value as usize;
+            selections.bone_idx = if value == f32::MAX { usize::MAX } else { val };
             selections.bone_ids = vec![armature.bones[value as usize].id];
+        }
+        Events::SelectAnim => {
+            let val = value as usize;
+            selections.anim = if value == f32::MAX { usize::MAX } else { val };
+            selections.anim_frame = 0;
+        }
+        Events::SelectStyle => {
+            let val = value as i32;
+            selections.style = if value == f32::MAX { i32::MAX } else { val };
         }
         Events::OpenModal => {
             ui.modal = true;
@@ -130,6 +137,54 @@ pub fn process_event(
         }
         Events::PointerOnUi => {
             camera.on_ui = value == 1.;
+        }
+        Events::DeleteBone => {
+            let bone = &armature.bones[value as usize];
+            let bone_id = bone.id;
+
+            // remove all children of this bone as well
+            let mut children = vec![bone.clone()];
+            armature_window::get_all_children(&armature.bones, &mut children, &bone);
+            children.reverse();
+            for bone in &children {
+                let idx = armature.bones.iter().position(|b| b.id == bone.id);
+                armature.bones.remove(idx.unwrap());
+            }
+
+            // remove all references to this bone and it's children from all animations
+            let mut set_undo_bone_continued = false;
+            for bone in &children {
+                for a in 0..armature.animations.len() {
+                    let anim = &mut armature.animations[a];
+                    let last_len = anim.keyframes.len();
+
+                    // if an animation has this bone, save it in undo data
+                    let mut temp_kfs = anim.keyframes.clone();
+                    temp_kfs.retain(|kf| kf.bone_id != bone.id);
+                    if last_len != temp_kfs.len() && !set_undo_bone_continued {
+                        set_undo_bone_continued = true;
+                    }
+
+                    armature.animations[a].keyframes = temp_kfs;
+                }
+            }
+
+            // remove this bone from binds
+            for bone in &mut armature.bones {
+                for b in 0..bone.binds.len() {
+                    if bone.binds[b].bone_id == bone_id {
+                        bone.binds.remove(b);
+                    }
+                }
+            }
+
+            // IK bones that target this are now -1
+            let context_id = ui.context_id_parsed();
+            let bones = &mut armature.bones;
+            let targeters = bones.iter_mut().filter(|b| b.ik_target_id == context_id);
+            for bone in targeters {
+                bone.ik_target_id = -1;
+            }
         }
         _ => {}
     }

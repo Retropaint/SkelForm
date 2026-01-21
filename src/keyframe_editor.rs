@@ -89,7 +89,7 @@ fn draw_animations_list(
     armature: &mut Armature,
     undo_states: &mut UndoStates,
     config: &Config,
-    selections: &mut crate::SelectionState,
+    selections: &crate::SelectionState,
     events: &mut EventState,
 ) {
     ui.horizontal(|ui| {
@@ -135,18 +135,14 @@ fn draw_animations_list(
                     if edited {
                         undo_states.new_undo_anims(&armature.animations);
                         armature.animations[i].name = value;
-                        selections.anim = i;
-                        selections.anim_frame = 0;
+                        events.select_anim(i);
                     }
                     continue;
                 }
 
                 ui.horizontal(|ui| {
-                    let button_padding = if armature.animations[i].keyframes.len() > 0 {
-                        25.
-                    } else {
-                        0.
-                    };
+                    let has_kf = armature.animations[i].keyframes.len() > 0;
+                    let button_padding = if has_kf { 25. } else { 0. };
                     let mut col = config.colors.dark_accent;
                     if i == shared_ui.hovering_anim as usize {
                         col += crate::Color::new(20, 20, 20, 0);
@@ -180,8 +176,7 @@ fn draw_animations_list(
                     }
                     if button.clicked() {
                         if selections.anim != i {
-                            selections.anim = i;
-                            events.select_anim_frame(0);
+                            events.select_anim(i);
                         } else {
                             shared_ui.rename_id = context_id.clone();
                             shared_ui.edit_value = Some(name.to_string());
@@ -194,24 +189,17 @@ fn draw_animations_list(
                         ui.with_layout(align, |ui| {
                             let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
                             if ui.skf_button(icon).clicked() {
-                                anim.elapsed = if anim.elapsed == None {
-                                    Some(Instant::now())
-                                } else {
-                                    None
-                                };
+                                let now = Some(Instant::now());
+                                let paused = anim.elapsed == None;
+                                anim.elapsed = if paused { now } else { None };
                             }
                         });
                     }
 
                     context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {
                         ui.context_rename(shared_ui, config, context_id);
-                        ui.context_delete(
-                            shared_ui,
-                            config,
-                            events,
-                            "delete_anim",
-                            PolarId::DeleteAnim,
-                        );
+                        let del_anim = PolarId::DeleteAnim;
+                        ui.context_delete(shared_ui, config, events, "delete_anim", del_anim);
                         let duplicate_str = shared_ui.loc("keyframe_editor.duplicate");
                         if ui.context_button(duplicate_str, config).clicked() {
                             undo_states.new_undo_anims(&armature.animations);
@@ -529,7 +517,6 @@ pub fn draw_timeline_graph(
                     &mut shared.input,
                     &mut shared.selections,
                     &mut shared.events,
-                    &mut shared.camera,
                     &bone_tops,
                     hitbox,
                     cursor,
@@ -677,7 +664,6 @@ fn draw_frame_lines(
     input: &InputStates,
     selections: &SelectionState,
     events: &mut EventState,
-    camera: &mut Camera,
     bone_tops: &BoneTops,
     hitbox: f32,
     cursor: Vec2,
@@ -715,7 +701,6 @@ fn draw_frame_lines(
             // select this frame if clicked
             if input.left_clicked {
                 events.select_anim_frame(i as usize);
-                camera.on_ui = true;
             }
         }
 

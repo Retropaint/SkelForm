@@ -28,9 +28,8 @@ pub fn polar_modal(
     ctx: &egui::Context,
     config: &Config,
     shared_ui: &mut crate::Ui,
-    undo_states: &mut crate::UndoStates,
     armature: &mut crate::Armature,
-    selections: &mut crate::SelectionState,
+    selections: &crate::SelectionState,
     events: &mut crate::EventState,
 ) {
     let mut yes = false;
@@ -71,60 +70,7 @@ pub fn polar_modal(
     shared_ui.polar_modal = false;
     match shared_ui.polar_id {
         PolarId::DeleteBone => {
-            undo_states.new_undo_bones(&armature.bones);
-
-            events.select_bone(usize::MAX);
-
-            let parsed_id = shared_ui.context_id_parsed();
-            let bone = &armature.bones[parsed_id as usize];
-
-            let bone_id = bone.id;
-
-            // remove all children of this bone as well
-            let mut children = vec![bone.clone()];
-            armature_window::get_all_children(&armature.bones, &mut children, &bone);
-            children.reverse();
-            for bone in &children {
-                let idx = armature.bones.iter().position(|b| b.id == bone.id);
-                armature.bones.remove(idx.unwrap());
-            }
-
-            // remove all references to this bone and it's children from all animations
-            let mut set_undo_bone_continued = false;
-            for bone in &children {
-                for a in 0..armature.animations.len() {
-                    let anim = &mut armature.animations[a];
-                    let last_len = anim.keyframes.len();
-
-                    // if an animation has this bone, save it in undo data
-                    let mut temp_kfs = anim.keyframes.clone();
-                    temp_kfs.retain(|kf| kf.bone_id != bone.id);
-                    if last_len != temp_kfs.len() && !set_undo_bone_continued {
-                        undo_states.new_undo_anims(&armature.animations);
-                        undo_states.undo_actions.last_mut().unwrap().continued = true;
-                        set_undo_bone_continued = true;
-                    }
-
-                    armature.animations[a].keyframes = temp_kfs;
-                }
-            }
-
-            // remove this bone from binds
-            for bone in &mut armature.bones {
-                for b in 0..bone.binds.len() {
-                    if bone.binds[b].bone_id == bone_id {
-                        bone.binds.remove(b);
-                    }
-                }
-            }
-
-            // IK bones that target this are now -1
-            let context_id = shared_ui.context_id_parsed();
-            let bones = &mut armature.bones;
-            let targeters = bones.iter_mut().filter(|b| b.ik_target_id == context_id);
-            for bone in targeters {
-                bone.ik_target_id = -1;
-            }
+            events.delete_bone(shared_ui.context_id_parsed() as usize);
         }
         PolarId::Exiting => {
             if config.ignore_donate {
@@ -134,10 +80,8 @@ pub fn polar_modal(
             }
         }
         PolarId::DeleteAnim => {
-            selections.anim = usize::MAX;
-            undo_states.new_undo_anims(&armature.animations);
-            let id = shared_ui.context_id_parsed() as usize;
-            armature.animations.remove(id);
+            events.select_anim(usize::MAX);
+            events.delete_anim(shared_ui.context_id_parsed() as usize);
             shared_ui.context_menu.close();
         }
         PolarId::DeleteFile => {
@@ -145,17 +89,15 @@ pub fn polar_modal(
         }
         PolarId::DeleteTex => {
             let style = &mut armature.styles[selections.style as usize];
-            undo_states.new_undo_style(&style);
             let id = shared_ui.context_id_parsed() as usize;
             style.textures.remove(id);
         }
         PolarId::DeleteStyle => {
-            undo_states.new_undo_styles(&armature.styles);
             let context_id = shared_ui.context_id_parsed();
             let styles = &mut armature.styles;
             let idx = styles.iter().position(|s| s.id == context_id).unwrap();
             if selections.style == context_id {
-                selections.style = -1;
+                events.select_style(usize::MAX);
             }
             styles.remove(idx);
         }

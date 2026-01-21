@@ -1792,14 +1792,18 @@ pub enum Events {
     EditModeRotate,
     EditModeScale,
     SelectBone,
+    SelectAnimFrame,
+    SelectAnim,
+    SelectStyle,
     Undo,
     Redo,
     OpenModal,
     UnselectAll,
-    SelectAnimFrame,
     OpenPolarModal,
     PointerOnUi,
     DragBone,
+    DeleteBone,
+    DeleteAnim,
 }
 
 #[derive(Default)]
@@ -1822,9 +1826,33 @@ impl EventState {
         self.str_values.push("".to_string());
     }
 
+    pub fn select_anim(&mut self, anim_id: usize) {
+        self.events.push(Events::SelectAnim);
+        self.values.push(anim_id as f32);
+        self.str_values.push("".to_string());
+    }
+
     pub fn select_anim_frame(&mut self, frame: usize) {
         self.events.push(Events::SelectAnimFrame);
         self.values.push(frame as f32);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn select_style(&mut self, style_id: usize) {
+        self.events.push(Events::SelectStyle);
+        self.values.push(style_id as f32);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn delete_bone(&mut self, bone_id: usize) {
+        self.events.push(Events::DeleteBone);
+        self.values.push(bone_id as f32);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn delete_anim(&mut self, anim_id: usize) {
+        self.events.push(Events::DeleteAnim);
+        self.values.push(anim_id as f32);
         self.str_values.push("".to_string());
     }
 
