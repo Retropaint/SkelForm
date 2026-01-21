@@ -30,7 +30,7 @@ pub fn polar_modal(
     shared_ui: &mut crate::Ui,
     undo_states: &mut crate::UndoStates,
     armature: &mut crate::Armature,
-    selections: &mut crate::SelectionState
+    selections: &mut crate::SelectionState,
 ) {
     let mut yes = false;
 

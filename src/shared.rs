@@ -605,17 +605,6 @@ impl Ui {
         self.anim.selected_frame = idx;
     }
 
-    pub fn select_bone(&mut self, idx: usize, selections: &mut SelectionState) {
-        let selected_anim = self.anim.selected;
-        self.unselect_everything(selections);
-        self.anim.selected = selected_anim;
-        selections.bone_idx = idx;
-        self.setting_bind_verts = false;
-        self.setting_bind_bone = false;
-        selections.bind = -1;
-        self.rename_id = "".to_string();
-    }
-
     pub fn context_id_parsed(&self) -> i32 {
         let raw_id = self.context_menu.id.split('_').collect::<Vec<_>>()[1];
         raw_id.parse::<i32>().unwrap()
