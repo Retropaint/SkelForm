@@ -67,7 +67,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 }
 
 fn init_shared(shared: &mut Shared) {
-    shared.ui.selected_bone_idx = usize::MAX;
+    shared.selections.bone_idx = usize::MAX;
     shared.camera.zoom = 2000.;
     shared.ui.anim.selected = usize::MAX;
     shared.ui.anim.timeline_zoom = 1.;
@@ -81,9 +81,9 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.scale = 1.;
     shared.ui.context_menu.close();
     shared.ui.hovering_tex = -1;
-    shared.ui.selected_style = -1;
-    shared.ui.selected_style = -1;
-    shared.ui.selected_bind = -1;
+    shared.selections.style = -1;
+    shared.selections.style = -1;
+    shared.selections.bind = -1;
     shared.ui.styles_modal_size = Vec2::new(500., 500.);
     shared.screenshot_res = Vec2::new(128., 128.);
     shared.renderer.changed_vert_id = -1;

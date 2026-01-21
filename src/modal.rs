@@ -30,6 +30,7 @@ pub fn polar_modal(
     shared_ui: &mut crate::Ui,
     undo_states: &mut crate::UndoStates,
     armature: &mut crate::Armature,
+    selections: &mut crate::SelectionState
 ) {
     let mut yes = false;
 
@@ -71,7 +72,7 @@ pub fn polar_modal(
         PolarId::DeleteBone => {
             undo_states.new_undo_bones(&armature.bones);
 
-            shared_ui.selected_bone_idx = usize::MAX;
+            selections.bone_idx = usize::MAX;
 
             let parsed_id = shared_ui.context_id_parsed();
             let bone = &armature.bones[parsed_id as usize];
@@ -142,7 +143,7 @@ pub fn polar_modal(
             std::fs::remove_file(&shared_ui.selected_path).unwrap();
         }
         PolarId::DeleteTex => {
-            let style = &mut armature.styles[shared_ui.selected_style as usize];
+            let style = &mut armature.styles[selections.style as usize];
             undo_states.new_undo_style(&style);
             let id = shared_ui.context_id_parsed() as usize;
             style.textures.remove(id);
@@ -152,8 +153,8 @@ pub fn polar_modal(
             let context_id = shared_ui.context_id_parsed();
             let styles = &mut armature.styles;
             let idx = styles.iter().position(|s| s.id == context_id).unwrap();
-            if shared_ui.selected_style == context_id {
-                shared_ui.selected_style = -1;
+            if selections.style == context_id {
+                selections.style = -1;
             }
             styles.remove(idx);
         }

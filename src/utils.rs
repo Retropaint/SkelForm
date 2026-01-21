@@ -631,7 +631,7 @@ pub fn import<R: Read + std::io::Seek>(
         }
     }
 
-    shared.ui.unselect_everything();
+    shared.ui.unselect_everything(&mut shared.selections);
     shared.ui.startup_window = false;
 }
 
@@ -643,7 +643,12 @@ pub fn save_to_recent_files(paths: &Vec<String>) {
         .unwrap();
 }
 
-pub fn undo_redo(undo: bool, undo_states: &mut UndoStates, armature: &mut Armature, ui: &mut Ui) {
+pub fn undo_redo(
+    undo: bool,
+    undo_states: &mut UndoStates,
+    armature: &mut Armature,
+    selections: &mut SelectionState,
+) {
     let action: Action;
     if undo {
         if undo_states.undo_actions.last() == None {
@@ -669,15 +674,15 @@ pub fn undo_redo(undo: bool, undo_states: &mut UndoStates, armature: &mut Armatu
         ActionType::Bones => {
             new_action.bones = armature.bones.clone();
             armature.bones = action.bones.clone();
-            if ui.selected_bone_ids.len() == 0 {
-                ui.selected_bone_idx = usize::MAX;
+            if selections.bone_ids.len() == 0 {
+                selections.bone_idx = usize::MAX;
             } else {
-                let sel_id = ui.selected_bone_ids[0];
+                let sel_id = selections.bone_ids[0];
                 let sel_idx = armature.bones.iter().position(|b| b.id == sel_id);
                 if sel_idx != None {
-                    ui.selected_bone_idx = sel_idx.unwrap();
+                    selections.bone_idx = sel_idx.unwrap();
                 } else {
-                    ui.selected_bone_idx = usize::MAX
+                    selections.bone_idx = usize::MAX
                 }
             }
         }
@@ -691,8 +696,8 @@ pub fn undo_redo(undo: bool, undo_states: &mut UndoStates, armature: &mut Armatu
             new_action.animations = armature.animations.clone();
             armature.animations = action.animations.clone();
             let animations = &mut armature.animations;
-            if animations.len() == 0 || ui.anim.selected > animations.len() - 1 {
-                ui.anim.selected = usize::MAX;
+            if animations.len() == 0 || selections.anim > animations.len() - 1 {
+                selections.anim = usize::MAX;
             }
         }
         ActionType::Style => {
@@ -706,8 +711,8 @@ pub fn undo_redo(undo: bool, undo_states: &mut UndoStates, armature: &mut Armatu
             new_action.styles = armature.styles.clone();
             armature.styles = action.styles.clone();
             let style_ids: Vec<i32> = armature.styles.iter().map(|s| s.id).collect();
-            if !style_ids.contains(&ui.selected_style) {
-                ui.selected_style = -1;
+            if !style_ids.contains(&selections.style) {
+                selections.style = -1;
             }
         }
         _ => {}
@@ -739,7 +744,7 @@ pub fn undo_redo(undo: bool, undo_states: &mut UndoStates, armature: &mut Armatu
 
     // actions tagged with `continue` are part of an action chain
     if action.continued {
-        undo_redo(undo, undo_states, armature, ui);
+        undo_redo(undo, undo_states, armature, selections);
     }
 }
 

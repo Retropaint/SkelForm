@@ -471,8 +471,6 @@ pub struct Ui {
     pub keyframe_panel_rect: Option<egui::Rect>,
     pub top_panel_rect: Option<egui::Rect>,
 
-    pub selected_bone_idx: usize,
-    pub selected_bone_ids: Vec<i32>,
     pub showing_mesh: bool,
     pub setting_bind_verts: bool,
     pub setting_bind_bone: bool,
@@ -504,8 +502,6 @@ pub struct Ui {
 
     pub changing_key: String,
 
-    pub selected_style: i32,
-
     pub hovering_tex: i32,
     pub hovering_bone: i32,
     pub hovering_set: i32,
@@ -521,8 +517,6 @@ pub struct Ui {
 
     // not visually indicated; just used for `double click > rename` logic
     pub selected_tex: i32,
-
-    pub selected_bind: i32,
 
     pub local_doc_url: String,
 
@@ -591,34 +585,34 @@ impl Ui {
         self.headline = headline.to_string();
     }
 
-    pub fn unselect_everything(&mut self) {
-        self.selected_bone_idx = usize::MAX;
-        self.selected_bone_ids = vec![];
-        self.anim.selected_frame = -1;
+    pub fn unselect_everything(&mut self, selections: &mut SelectionState) {
+        selections.bone_idx = usize::MAX;
+        selections.bone_ids = vec![];
+        selections.anim_frame = -1;
         self.showing_mesh = false;
         self.anim.selected = usize::MAX;
-        self.selected_bind = -1;
+        selections.bind = -1;
     }
 
     pub fn is_animating(&self) -> bool {
         self.anim.open && self.anim.selected != usize::MAX
     }
 
-    pub fn select_anim_frame(&mut self, idx: i32) {
+    pub fn select_anim_frame(&mut self, idx: i32, selections: &mut SelectionState) {
         let selected_anim = self.anim.selected;
-        self.unselect_everything();
+        self.unselect_everything(selections);
         self.anim.selected = selected_anim;
         self.anim.selected_frame = idx;
     }
 
-    pub fn select_bone(&mut self, idx: usize) {
+    pub fn select_bone(&mut self, idx: usize, selections: &mut SelectionState) {
         let selected_anim = self.anim.selected;
-        self.unselect_everything();
+        self.unselect_everything(selections);
         self.anim.selected = selected_anim;
-        self.selected_bone_idx = idx;
+        selections.bone_idx = idx;
         self.setting_bind_verts = false;
         self.setting_bind_bone = false;
-        self.selected_bind = -1;
+        selections.bind = -1;
         self.rename_id = "".to_string();
     }
 
@@ -1858,6 +1852,15 @@ impl EventState {
         self.values.push(value);
     }
 }
+#[derive(Default)]
+pub struct SelectionState {
+    pub bone_idx: usize,
+    pub bone_ids: Vec<i32>,
+    pub style: i32,
+    pub bind: i32,
+    pub anim: usize,
+    pub anim_frame: i32,
+}
 
 #[derive(Default)]
 pub struct Shared {
@@ -1869,6 +1872,7 @@ pub struct Shared {
     pub renderer: Renderer,
     pub events: EventState,
     pub camera: Camera,
+    pub selections: SelectionState,
 
     pub recording: bool,
     pub done_recording: bool,
@@ -1917,8 +1921,8 @@ impl Shared {
     }
 
     pub fn selected_bone(&self) -> Option<&Bone> {
-        if self.ui.selected_bone_idx != usize::MAX {
-            return Some(&self.armature.bones[self.ui.selected_bone_idx]);
+        if self.selections.bone_idx != usize::MAX {
+            return Some(&self.armature.bones[self.selections.bone_idx]);
         }
         None
     }
@@ -1932,8 +1936,8 @@ impl Shared {
     }
 
     pub fn selected_bone_mut(&mut self) -> Option<&mut Bone> {
-        if self.ui.selected_bone_idx != usize::MAX {
-            return Some(&mut self.armature.bones[self.ui.selected_bone_idx]);
+        if self.selections.bone_idx != usize::MAX {
+            return Some(&mut self.armature.bones[self.selections.bone_idx]);
         }
         None
     }
@@ -1951,14 +1955,14 @@ impl Shared {
         self.armature
             .styles
             .iter()
-            .find(|set| set.id == self.ui.selected_style)
+            .find(|set| set.id == self.selections.style)
     }
 
     pub fn selected_set_mut(&mut self) -> Option<&mut Style> {
         self.armature
             .styles
             .iter_mut()
-            .find(|set| set.id == self.ui.selected_style)
+            .find(|set| set.id == self.selections.style)
     }
 
     pub fn open_style_modal(&mut self) {

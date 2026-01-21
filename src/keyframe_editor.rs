@@ -65,6 +65,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                                 &mut shared.armature,
                                 &mut shared.undo_states,
                                 &shared.config,
+                                &mut shared.selections,
                             );
                         })
                     });
@@ -87,6 +88,7 @@ fn draw_animations_list(
     armature: &mut Armature,
     undo_states: &mut UndoStates,
     config: &Config,
+    selections: &mut crate::SelectionState,
 ) {
     ui.horizontal(|ui| {
         let str_anim = shared_ui.loc("keyframe_editor.heading");
@@ -177,7 +179,7 @@ fn draw_animations_list(
                     if button.clicked() {
                         if shared_ui.anim.selected != i {
                             shared_ui.anim.selected = i;
-                            shared_ui.select_anim_frame(0);
+                            shared_ui.select_anim_frame(0, selections);
                         } else {
                             shared_ui.rename_id = context_id.clone();
                             shared_ui.edit_value = Some(name.to_string());
@@ -321,7 +323,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                 if label.clicked() {
                     let kf_id = kf.bone_id;
                     let sel = shared.armature.bones.iter().position(|b| b.id == kf_id);
-                    shared.ui.selected_bone_idx = sel.unwrap();
+                    shared.selections.bone_idx = sel.unwrap();
 
                     let parents = shared.armature.get_all_parents(kf.bone_id);
                     for parent in &parents {
@@ -400,7 +402,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                 let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
                 if response.drag_started() {
-                    shared.ui.select_anim_frame(frame);
+                    shared.ui.select_anim_frame(frame, &mut shared.selections);
                 }
 
                 if response.hovered() {

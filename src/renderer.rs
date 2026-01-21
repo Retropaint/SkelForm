@@ -66,17 +66,17 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     let mut init_vert_pos = Vec2::default();
     let vert_id = shared.renderer.changed_vert_id as usize;
     if shared.renderer.changed_vert_id != -1 {
-        init_vert_pos = temp_arm.bones[shared.ui.selected_bone_idx].vertices[vert_id].pos;
+        init_vert_pos = temp_arm.bones[shared.selections.bone_idx].vertices[vert_id].pos;
     }
 
     construction(&mut temp_arm.bones, &anim_bones);
 
     // adjust bound/unbound vert's pos after construction
     if shared.renderer.changed_vert_id != -1 {
-        let temp_vert = temp_arm.bones[shared.ui.selected_bone_idx].vertices[vert_id];
+        let temp_vert = temp_arm.bones[shared.selections.bone_idx].vertices[vert_id];
 
         let mut diff =
-            temp_vert.pos - init_vert_pos - temp_arm.bones[shared.ui.selected_bone_idx].pos;
+            temp_vert.pos - init_vert_pos - temp_arm.bones[shared.selections.bone_idx].pos;
 
         // if unbound, vert needs to account for pos in the previous frame
         if let Some(last_frame_pos) = shared.renderer.changed_vert_init_pos {
@@ -232,11 +232,11 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                 shared.selected_bone_mut().unwrap().ik_target_id = click_on_hover_id;
                 shared.ui.setting_ik_target = false;
             } else {
-                let idx = &mut shared.ui.selected_bone_idx;
+                let idx = &mut shared.selections.bone_idx;
                 let bones = &shared.armature.bones;
                 let id = click_on_hover_id;
                 *idx = bones.iter().position(|bone| bone.id == id).unwrap();
-                shared.ui.selected_bone_ids = vec![];
+                shared.selections.bone_ids = vec![];
 
                 // unfold all parents that lead to this bone, so it's visible in the hierarchy
                 for parent in &parents {
@@ -454,7 +454,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // editing bone
-    let sel = shared.ui.selected_bone_idx;
+    let sel = shared.selections.bone_idx;
     let input = &shared.input;
     if shared.input.on_ui || shared.ui.polar_modal {
         shared.renderer.editing_bone = false;
@@ -983,7 +983,7 @@ pub fn bone_vertices(
     }
 
     for wv in 0..world_verts.len() {
-        let idx = shared.ui.selected_bind as usize;
+        let idx = shared.selections.bind as usize;
         let verts: Vec<i32>;
         if idx == usize::MAX {
             verts = vec![];
@@ -1045,7 +1045,7 @@ pub fn bone_vertices(
         } else if shared.input.left_clicked {
             let sel_bone = shared.selected_bone().unwrap().clone();
             shared.undo_states.new_undo_bone(&sel_bone);
-            let idx = shared.ui.selected_bind as usize;
+            let idx = shared.selections.bind as usize;
             let vert_id = world_verts[wv].id;
             let bone_mut = &mut shared.selected_bone_mut().unwrap();
 

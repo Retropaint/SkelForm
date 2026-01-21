@@ -115,7 +115,7 @@ pub fn read_image_loaders(
 
     add_texture(
         image,
-        shared.ui.selected_style,
+        shared.selections.style,
         dimensions,
         &name,
         &mut shared.armature,
@@ -152,7 +152,7 @@ pub fn add_pending_textures(
         );
         add_texture(
             crop.clone(),
-            shared.ui.selected_style,
+            shared.selections.style,
             Vec2::new(crop.width() as f32, crop.height() as f32),
             &tex.name,
             &mut shared.armature,

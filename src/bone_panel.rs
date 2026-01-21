@@ -373,8 +373,8 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.button(go_to_root_str).clicked() {
-                    shared.ui.selected_bone_idx = bones.position(|b| b.id == root_id).unwrap();
-                    shared.ui.selected_bone_ids = vec![];
+                    shared.selections.bone_idx = bones.position(|b| b.id == root_id).unwrap();
+                    shared.selections.bone_ids = vec![];
                 }
             });
         });
@@ -441,7 +441,7 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             if ui.selectable_label(false, tr_name).clicked() {
                 let bones = &mut shared.armature.bones;
                 let ik_id = bone.ik_target_id;
-                shared.ui.selected_bone_idx = bones.iter().position(|b| b.id == ik_id).unwrap();
+                shared.selections.bone_idx = bones.iter().position(|b| b.id == ik_id).unwrap();
             };
         } else {
             ui.label(shared.ui.loc("none"));
@@ -520,7 +520,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 if ui.skf_button(str).clicked() {
                     let bones = &shared.armature.bones;
                     let idx = bones.iter().position(|b| b.id == mesh_parent_id).unwrap();
-                    shared.ui.select_bone(idx);
+                    shared.ui.select_bone(idx, &mut shared.selections);
                 }
             });
         });
@@ -570,7 +570,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     bone.indices = indices;
                     bone.binds = vec![];
                     bone.verts_edited = false;
-                    shared.ui.selected_bind = -1;
+                    shared.selections.bind = -1;
                 }
 
                 let str_center = &shared.ui.loc("bone_panel.mesh_deformation.center");
@@ -595,7 +595,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                     bone.indices = indices;
                     bone.binds = vec![];
                     bone.verts_edited = true;
-                    shared.ui.selected_bind = -1;
+                    shared.selections.bind = -1;
                 }
             });
         });
@@ -606,10 +606,10 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
     ui.horizontal(|ui| {
         ui.label(shared.ui.loc("bone_panel.mesh_deformation.binds_label"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let headline = if shared.ui.selected_bind == -1 {
+            let headline = if shared.selections.bind == -1 {
                 shared.ui.loc("none").to_string()
             } else {
-                shared.ui.selected_bind.to_string()
+                shared.selections.bind.to_string()
             };
             let combo_box = egui::ComboBox::new("bone_weights", "").selected_text(headline);
             combo_box.show_ui(ui, |ui| {
@@ -627,26 +627,26 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                         bone_id: -1,
                         ..Default::default()
                     });
-                    shared.ui.selected_bind = binds.len() as i32 - 1;
+                    shared.selections.bind = binds.len() as i32 - 1;
                 } else if selected_value != -1 {
-                    shared.ui.selected_bind = selected_value;
+                    shared.selections.bind = selected_value;
                 }
             });
         });
     });
 
-    if shared.ui.selected_bind == -1 {
+    if shared.selections.bind == -1 {
         return;
     }
 
     let binds = shared.selected_bone().unwrap().binds.clone();
-    if shared.ui.selected_bind as usize > binds.len() - 1 {
-        shared.ui.selected_bind = -1;
+    if shared.selections.bind as usize > binds.len() - 1 {
+        shared.selections.bind = -1;
         return;
     }
 
     ui.horizontal(|ui| {
-        let bone_id = binds[shared.ui.selected_bind as usize].bone_id;
+        let bone_id = binds[shared.selections.bind as usize].bone_id;
         let mut bone_name = shared.ui.loc("none").to_string();
         if let Some(bone) = shared.armature.bones.iter().find(|bone| bone.id == bone_id) {
             bone_name = bone.name.clone();
@@ -663,7 +663,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             }
         });
     });
-    let selected = shared.ui.selected_bind as usize;
+    let selected = shared.selections.bind as usize;
 
     if binds[selected].bone_id == -1 {
         return;
@@ -717,7 +717,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         });
     });
 
-    let selected = shared.ui.selected_bind;
+    let selected = shared.selections.bind;
     let pressed = shared.input.left_pressed;
     let bind = shared.selected_bone().unwrap().binds[selected as usize].clone();
     if bind.verts.len() == 0 {

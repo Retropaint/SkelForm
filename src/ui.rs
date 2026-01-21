@@ -136,6 +136,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             &mut shared.ui,
             &mut shared.undo_states,
             &mut shared.armature,
+            &mut shared.selections
         );
     }
     if shared.ui.modal {
@@ -197,7 +198,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     let min_default_size = 210.;
     let mut max_size = min_default_size;
-    if shared.ui.selected_bone_idx != usize::MAX {
+    if shared.selections.bone_idx != usize::MAX {
         max_size = 250.;
     } else if shared.ui.anim.selected_frame != -1 {
         max_size = 250.;
@@ -210,14 +211,14 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     // get current properties of selected bone, including animations
     let mut selected_bone = Bone::default();
-    if shared.ui.selected_bone_idx != usize::MAX {
+    if shared.selections.bone_idx != usize::MAX {
         selected_bone = shared.selected_bone().unwrap().clone();
 
         if shared.ui.anim.open && shared.ui.anim.selected != usize::MAX {
             let anim = &shared.ui.anim;
             let frame = anim.selected_frame;
             let animated_bones = shared.armature.animate(anim.selected, frame, None);
-            selected_bone = animated_bones[shared.ui.selected_bone_idx].clone();
+            selected_bone = animated_bones[shared.selections.bone_idx].clone();
         }
     }
 
@@ -241,7 +242,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
                 let gradient = shared.config.colors.gradient.into();
                 ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
 
-                if shared.ui.selected_bone_idx != usize::MAX {
+                if shared.selections.bone_idx != usize::MAX {
                     bone_panel::draw(selected_bone.clone(), ui, shared);
                 } else if shared.selected_animation() != None && shared.ui.anim.selected_frame != -1
                 {
@@ -306,7 +307,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         }
     }
 
-    if shared.ui.selected_bone_idx != usize::MAX {
+    if shared.selections.bone_idx != usize::MAX {
         edit_mode_bar(context, shared);
     }
 
@@ -387,7 +388,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
             true,
             &mut shared.undo_states,
             &mut shared.armature,
-            &mut shared.ui,
+            &mut shared.selections,
         );
     }
     if input.consume_shortcut(&shared.config.keys.redo) {
@@ -395,7 +396,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
             false,
             &mut shared.undo_states,
             &mut shared.armature,
-            &mut shared.ui,
+            &mut shared.selections,
         );
     }
 
@@ -431,7 +432,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         shared.copy_buffer = CopyBuffer::default();
 
         // copy bone(s)
-        let idx = shared.ui.selected_bone_idx;
+        let idx = shared.selections.bone_idx;
         if idx != usize::MAX {
             copy_bone(shared, idx);
         }
@@ -442,7 +443,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         if shared.copy_buffer.keyframes.len() > 0 {
         } else if shared.copy_buffer.bones.len() > 0 {
             shared.undo_states.new_undo_bones(&shared.armature.bones);
-            paste_bone(shared, shared.ui.selected_bone_idx);
+            paste_bone(shared, shared.selections.bone_idx);
         }
     }
 
@@ -470,7 +471,7 @@ pub fn cancel_shortcut(shared: &mut Shared) {
     }
 
     if no_modals && !ui.setting_ik_target {
-        shared.ui.unselect_everything();
+        shared.ui.unselect_everything(&mut shared.selections);
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -902,7 +903,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             shared.recording = true;
             shared.ui.anim.open = true;
             shared.done_recording = true;
-            shared.ui.select_anim_frame(0);
+            shared.ui.select_anim_frame(0, &mut shared.selections);
             shared.ui.anim.loops = 1;
             ui.close();
         }
@@ -946,7 +947,7 @@ fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
                 true,
                 &mut shared.undo_states,
                 &mut shared.armature,
-                &mut shared.ui,
+                &mut shared.selections,
             );
             ui.close();
         }
@@ -957,7 +958,7 @@ fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
                 false,
                 &mut shared.undo_states,
                 &mut shared.armature,
-                &mut shared.ui,
+                &mut shared.selections,
             );
             ui.close();
         }

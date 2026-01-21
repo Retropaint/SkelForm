@@ -62,7 +62,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 }
 
                 // immediately select new bone upon creating it
-                shared.ui.select_bone(idx);
+                shared.ui.select_bone(idx, &mut shared.selections);
                 shared.ui.just_made_bone = true;
 
                 shared.ui.rename_id = "bone_".to_string() + &idx.to_string();
@@ -113,7 +113,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 if selected_style == -2 {
                     shared.open_style_modal();
                 } else if selected_style != -1 {
-                    shared.ui.selected_style = selected_style;
+                    shared.selections.style = selected_style;
                     shared.undo_states.new_undo_bones(&shared.armature.bones);
                     shared
                         .undo_states
@@ -240,8 +240,8 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 }
 
                 let id = &shared.armature.bones[idx as usize].id;
-                let is_multi_selected = shared.ui.selected_bone_ids.contains(id);
-                if shared.ui.selected_bone_idx == idx as usize || is_multi_selected {
+                let is_multi_selected = shared.selections.bone_ids.contains(id);
+                if shared.selections.bone_idx == idx as usize || is_multi_selected {
                     selected_col += Color::new(20, 20, 20, 0);
                     cursor = egui::CursorIcon::Default;
                 }
@@ -314,7 +314,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 }
 
                 if button.clicked() {
-                    if shared.ui.selected_bone_idx == idx as usize {
+                    if shared.selections.bone_idx == idx as usize {
                         shared.ui.rename_id = context_id.clone();
                         shared.ui.edit_value = Some(shared.armature.bones[b].name.clone());
                     } else {
@@ -326,34 +326,34 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         } else if shared.ui.setting_bind_bone {
                             let sel_bone = shared.selected_bone().unwrap().clone();
                             shared.undo_states.new_undo_bone(&sel_bone);
-                            let idx = shared.ui.selected_bind as usize;
+                            let idx = shared.selections.bind as usize;
                             let bind = &mut shared.selected_bone_mut().unwrap().binds[idx];
                             bind.bone_id = bone_id;
                             shared.ui.setting_bind_bone = false;
                         } else {
                             if !shared.input.holding_mod && !shared.input.holding_shift {
-                                shared.ui.selected_bone_ids = vec![];
+                                shared.selections.bone_ids = vec![];
                                 let anim_frame = shared.ui.anim.selected_frame;
-                                shared.ui.select_bone(idx as usize);
+                                shared.ui.select_bone(idx as usize, &mut shared.selections);
                                 shared.ui.anim.selected_frame = anim_frame;
                             }
 
                             let id = shared.armature.bones[idx as usize].id;
-                            shared.ui.selected_bone_ids.push(id);
+                            shared.selections.bone_ids.push(id);
 
                             if shared.input.holding_shift {
-                                let mut first = shared.ui.selected_bone_idx;
+                                let mut first = shared.selections.bone_idx;
                                 let mut second = idx as usize;
                                 if first > second {
                                     first = idx as usize;
-                                    second = shared.ui.selected_bone_idx;
+                                    second = shared.selections.bone_idx;
                                 }
                                 for i in first..second as usize {
                                     let bone = &shared.armature.bones[i];
-                                    let this_id = shared.ui.selected_bone_ids.contains(&bone.id);
+                                    let this_id = shared.selections.bone_ids.contains(&bone.id);
                                     let sel_bone = shared.selected_bone().unwrap();
                                     if !this_id && bone.parent_id == sel_bone.parent_id {
-                                        shared.ui.selected_bone_ids.push(bone.id);
+                                        shared.selections.bone_ids.push(bone.id);
                                     }
                                 }
                             }
@@ -454,20 +454,20 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     // set only this one to be dragged.
     // prevents edge case of dragging bones while another is selected.
     let drag_id = shared.armature.bones[*drag_idx as usize].id;
-    if !shared.ui.selected_bone_ids.contains(&drag_id) {
-        shared.ui.selected_bone_ids = vec![drag_id];
+    if !shared.selections.bone_ids.contains(&drag_id) {
+        shared.selections.bone_ids = vec![drag_id];
     }
 
     let pointing_id = shared.armature.bones[idx].id;
 
     // ignore if pointing bone is also selected
-    if shared.ui.selected_bone_ids.contains(&pointing_id) {
+    if shared.selections.bone_ids.contains(&pointing_id) {
         return false;
     }
 
     // ignore if pointing bone is a child of this
     let mut children: Vec<Bone> = vec![];
-    let id = shared.ui.selected_bone_ids[0];
+    let id = shared.selections.bone_ids[0];
     let dragged_bone = shared.armature.bones.iter().find(|b| b.id == id).unwrap();
     get_all_children(&shared.armature.bones, &mut children, &dragged_bone);
     for c in children {
@@ -479,7 +479,7 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
     shared.undo_states.new_undo_bones(&shared.armature.bones);
 
     // sort dragged bones so they'll appear in the same order when dropped
-    let mut sorted_ids = shared.ui.selected_bone_ids.clone();
+    let mut sorted_ids = shared.selections.bone_ids.clone();
     sorted_ids.sort_by(|a, b| {
         let mut first = *b;
         let mut second = *a;
@@ -498,9 +498,9 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
         shared.armature.offset_pos_by_parent(old_parents, id as i32);
     }
 
-    let sel_bone_id = shared.ui.selected_bone_ids[0];
+    let sel_bone_id = shared.selections.bone_ids[0];
     let bones = &mut shared.armature.bones;
-    shared.ui.selected_bone_idx = bones.iter().position(|b| b.id == sel_bone_id).unwrap();
+    shared.selections.bone_idx = bones.iter().position(|b| b.id == sel_bone_id).unwrap();
 
     return true;
 }
