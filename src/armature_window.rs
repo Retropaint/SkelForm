@@ -200,6 +200,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     }
                     let sel = shared.ui.anim.selected;
                     let frame = shared.ui.anim.selected_frame;
+                    shared.save_edited_bone();
                     shared.edit_bone(bone_id, &AnimElement::Hidden, hidden as f32, sel, frame);
                 }
                 ui.add_space(17.);

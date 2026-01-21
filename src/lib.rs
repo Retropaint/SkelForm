@@ -590,6 +590,9 @@ impl BackendRenderer {
             &mut shared.camera,
             &shared.input,
             &mut shared.edit_mode,
+            &mut shared.selections,
+            &mut shared.undo_states,
+            &mut shared.armature
         );
     }
 

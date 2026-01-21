@@ -476,6 +476,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
 
         if !shared.renderer.editing_bone {
+            shared.save_edited_bone();
             *shared.saving.lock().unwrap() = Saving::Autosaving;
             shared.renderer.editing_bone = true;
         }

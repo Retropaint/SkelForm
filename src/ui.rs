@@ -136,7 +136,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             &mut shared.ui,
             &mut shared.undo_states,
             &mut shared.armature,
-            &mut shared.selections
+            &mut shared.selections,
         );
     }
     if shared.ui.modal {
@@ -384,20 +384,10 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
     shared.input.holding_shift = input.modifiers.shift;
 
     if input.consume_shortcut(&shared.config.keys.undo) {
-        utils::undo_redo(
-            true,
-            &mut shared.undo_states,
-            &mut shared.armature,
-            &mut shared.selections,
-        );
+        shared.events.new(Events::Undo);
     }
     if input.consume_shortcut(&shared.config.keys.redo) {
-        utils::undo_redo(
-            false,
-            &mut shared.undo_states,
-            &mut shared.armature,
-            &mut shared.selections,
-        );
+        shared.events.new(Events::Redo);
     }
 
     if input.consume_shortcut(&shared.config.keys.zoom_in_camera) {
@@ -943,23 +933,13 @@ fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
         let key_undo = Some(&shared.config.keys.undo);
         let str_undo = &shared.ui.loc("top_bar.edit.undo");
         if top_bar_button(ui, str_undo, key_undo, &mut offset, shared).clicked() {
-            utils::undo_redo(
-                true,
-                &mut shared.undo_states,
-                &mut shared.armature,
-                &mut shared.selections,
-            );
+            shared.events.new(Events::Undo);
             ui.close();
         }
         let str_redo = &shared.ui.loc("top_bar.edit.redo");
         let key_redo = Some(&shared.config.keys.redo);
         if top_bar_button(ui, str_redo, key_redo, &mut offset, shared).clicked() {
-            utils::undo_redo(
-                false,
-                &mut shared.undo_states,
-                &mut shared.armature,
-                &mut shared.selections,
-            );
+            shared.events.new(Events::Redo);
             ui.close();
         }
     });

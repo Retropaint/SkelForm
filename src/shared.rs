@@ -1833,6 +1833,9 @@ pub enum Events {
     EditModeMove,
     EditModeRotate,
     EditModeScale,
+    SelectBone,
+    Undo,
+    Redo,
 }
 
 #[derive(Default)]
@@ -1844,7 +1847,7 @@ pub struct EventState {
 impl EventState {
     pub fn new(&mut self, id: Events) {
         self.events.push(id);
-        self.values.push(0.);
+        self.values.push(-1.);
     }
 
     pub fn new_valued(&mut self, id: Events, value: f32) {
@@ -1947,7 +1950,8 @@ impl Shared {
             let anim = self.selected_animation().unwrap().clone();
             self.undo_states.new_undo_anim(&anim);
         } else {
-            self.undo_states.new_undo_anims(&self.armature.animations);
+            self.undo_states
+                .new_undo_bone(&self.selected_bone().unwrap().clone());
         }
     }
 
@@ -2017,7 +2021,6 @@ impl Shared {
         anim_id: usize,
         anim_frame: i32,
     ) {
-        self.save_edited_bone();
         let bones = &mut self.armature.bones;
         let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
         let mut init_value = 0.;
