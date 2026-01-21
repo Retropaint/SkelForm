@@ -1804,6 +1804,8 @@ pub enum Events {
     DragBone,
     DeleteBone,
     DeleteAnim,
+    DeleteTex,
+    DeleteStyle,
 }
 
 #[derive(Default)]
@@ -1853,6 +1855,18 @@ impl EventState {
     pub fn delete_anim(&mut self, anim_id: usize) {
         self.events.push(Events::DeleteAnim);
         self.values.push(anim_id as f32);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn delete_tex(&mut self, tex_id: usize) {
+        self.events.push(Events::DeleteTex);
+        self.values.push(tex_id as f32);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn delete_style(&mut self, style_id: usize) {
+        self.events.push(Events::DeleteStyle);
+        self.values.push(style_id as f32);
         self.str_values.push("".to_string());
     }
 

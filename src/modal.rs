@@ -1,4 +1,4 @@
-use crate::{armature_window, ui::EguiUi, utils, Config, PolarId, Shared};
+use crate::{ui::EguiUi, utils, Config, PolarId, Shared};
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     ctx: &egui::Context,
@@ -28,87 +28,75 @@ pub fn polar_modal(
     ctx: &egui::Context,
     config: &Config,
     shared_ui: &mut crate::Ui,
-    armature: &mut crate::Armature,
-    selections: &crate::SelectionState,
     events: &mut crate::EventState,
 ) {
-    let mut yes = false;
-
     let headline = shared_ui.headline.to_string();
-
     modal_template(
         ctx,
         "polar".to_string(),
         &config,
+        |ui| _ = ui.label(headline),
         |ui| {
-            ui.label(headline);
-        },
-        |ui| {
-            let pressed_no = ui.input_mut(|i| i.consume_shortcut(&config.keys.cancel));
-            if ui.skf_button("No").clicked() || pressed_no {
-                shared_ui.polar_modal = false;
-            }
-            if ui.skf_button("Yes").clicked() {
-                yes = true;
-            }
+            let mut yes = false;
 
             // Proceeding with kb shortcut will only emulate 'yes' if modal isn't for discarding changes.
             // This is to prevent users with muscle memory from accidentally exiting
             // upon pressing 'enter' upon seeing a modal.
             if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                 if shared_ui.polar_id != PolarId::Exiting {
+                    shared_ui.polar_modal = false;
                     yes = true;
+                }
+            }
+
+            let pressed_no = ui.input_mut(|i| i.consume_shortcut(&config.keys.cancel));
+            if ui.skf_button("No").clicked() || pressed_no {
+                shared_ui.polar_modal = false;
+            }
+            if ui.skf_button("Yes").clicked() {
+                shared_ui.polar_modal = false;
+                yes = true
+            }
+
+            if !yes {
+                return;
+            }
+
+            match shared_ui.polar_id {
+                PolarId::DeleteBone => {
+                    events.delete_bone(shared_ui.context_id_parsed() as usize);
+                }
+                PolarId::Exiting => {
+                    if config.ignore_donate {
+                        shared_ui.confirmed_exit = true;
+                    } else {
+                        shared_ui.donating_modal = true;
+                    }
+                }
+                PolarId::DeleteAnim => {
+                    events.select_anim(usize::MAX);
+                    events.delete_anim(shared_ui.context_id_parsed() as usize);
+                    shared_ui.context_menu.close();
+                }
+                PolarId::DeleteFile => {
+                    std::fs::remove_file(&shared_ui.selected_path).unwrap();
+                }
+                PolarId::DeleteTex => {
+                    events.delete_tex(shared_ui.context_id_parsed() as usize);
+                }
+                PolarId::DeleteStyle => {
+                    events.delete_style(shared_ui.context_id_parsed() as usize);
+                }
+                PolarId::NewUpdate => {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        let base_url = "https://github.com/Retropaint/SkelForm/releases/tag/v";
+                        _ = open::that(base_url.to_owned() + &shared_ui.new_version.to_string());
+                    }
                 }
             }
         },
     );
-
-    if !yes {
-        return;
-    }
-
-    shared_ui.polar_modal = false;
-    match shared_ui.polar_id {
-        PolarId::DeleteBone => {
-            events.delete_bone(shared_ui.context_id_parsed() as usize);
-        }
-        PolarId::Exiting => {
-            if config.ignore_donate {
-                shared_ui.confirmed_exit = true;
-            } else {
-                shared_ui.donating_modal = true;
-            }
-        }
-        PolarId::DeleteAnim => {
-            events.select_anim(usize::MAX);
-            events.delete_anim(shared_ui.context_id_parsed() as usize);
-            shared_ui.context_menu.close();
-        }
-        PolarId::DeleteFile => {
-            std::fs::remove_file(&shared_ui.selected_path).unwrap();
-        }
-        PolarId::DeleteTex => {
-            let style = &mut armature.styles[selections.style as usize];
-            let id = shared_ui.context_id_parsed() as usize;
-            style.textures.remove(id);
-        }
-        PolarId::DeleteStyle => {
-            let context_id = shared_ui.context_id_parsed();
-            let styles = &mut armature.styles;
-            let idx = styles.iter().position(|s| s.id == context_id).unwrap();
-            if selections.style == context_id {
-                events.select_style(usize::MAX);
-            }
-            styles.remove(idx);
-        }
-        PolarId::NewUpdate => {
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                let base_url = "https://github.com/Retropaint/SkelForm/releases/tag/v";
-                _ = open::that(base_url.to_owned() + &shared_ui.new_version.to_string());
-            }
-        }
-    }
 }
 
 pub fn modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &Config) {

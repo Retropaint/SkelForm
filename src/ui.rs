@@ -130,14 +130,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     camera_bar(context, shared);
 
     if shared.ui.polar_modal {
-        modal::polar_modal(
-            context,
-            &shared.config,
-            &mut shared.ui,
-            &mut shared.armature,
-            &mut shared.selections,
-            &mut shared.events,
-        );
+        modal::polar_modal(context, &shared.config, &mut shared.ui, &mut shared.events);
     }
     if shared.ui.modal {
         modal::modal(context, &mut shared.ui, &shared.config);

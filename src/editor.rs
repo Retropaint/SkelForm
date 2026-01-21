@@ -186,6 +186,18 @@ pub fn process_event(
                 bone.ik_target_id = -1;
             }
         }
+        Events::DeleteTex => {
+            let style = &mut armature.styles[selections.style as usize];
+            style.textures.remove(value as usize);
+        }
+        Events::DeleteStyle => {
+            let styles = &mut armature.styles;
+            let idx = styles.iter().position(|s| s.id == value as i32).unwrap();
+            if selections.style == value as i32 {
+                selections.style = i32::MAX;
+            }
+            styles.remove(idx);
+        }
         _ => {}
     }
 }
