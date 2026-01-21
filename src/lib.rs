@@ -585,15 +585,20 @@ impl BackendRenderer {
             }
         }
 
-        editor::process_events(
-            &mut shared.events,
-            &mut shared.camera,
-            &shared.input,
-            &mut shared.edit_mode,
-            &mut shared.selections,
-            &mut shared.undo_states,
-            &mut shared.armature
-        );
+        while shared.events.events.len() > 0 {
+            editor::process_event(
+                shared.events.events.last().unwrap(),
+                shared.events.values.last().unwrap().clone(),
+                &mut shared.camera,
+                &shared.input,
+                &mut shared.edit_mode,
+                &mut shared.selections,
+                &mut shared.undo_states,
+                &mut shared.armature,
+            );
+            shared.events.events.pop();
+            shared.events.values.pop();
+        }
     }
 
     #[cfg(not(target_arch = "wasm32"))]
