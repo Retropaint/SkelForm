@@ -14,7 +14,7 @@ pub trait EguiUi {
     fn float_input(&mut self,id: String,shared: &mut crate::Ui,value: f32,modifier: f32,options: Option<TextInputOptions>) -> (bool, f32, egui::Response);
     fn debug_rect(&mut self, rect: egui::Rect);
     fn context_rename(&mut self, shared_ui: &mut crate::Ui, config: &Config, id: String);
-    fn context_delete(&mut self, shared_ui: &mut crate::Ui, config: &Config, loc_code: &str, polar_id: PolarId,);
+    fn context_delete(&mut self, shared_ui: &mut crate::Ui, config: &Config, events: &mut EventState, loc_code: &str, polar_id: PolarId);
     fn context_button(&mut self, text: impl Into<egui::WidgetText>, config: &Config) -> egui::Response;
 }
 
@@ -73,7 +73,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             shared.input.mouse_prev = shared.input.mouse;
         }
 
-        if i.smooth_scroll_delta.y != 0. && !shared.input.on_ui {
+        if i.smooth_scroll_delta.y != 0. && !shared.camera.on_ui {
             shared.events.new(Events::CamZoomScroll);
             shared.input.scroll_delta = i.smooth_scroll_delta.y;
             match shared.config.layout {
@@ -180,7 +180,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
                 let str = "New version available: ".to_owned()
                     + &ver_name
                     + "\nGo to version page and download manually?";
-                shared.ui.open_polar_modal(PolarId::NewUpdate, str);
+                shared.events.open_polar_modal(PolarId::NewUpdate, str);
             } else {
                 let str = "No updates available. This is the latest version.".to_string();
                 shared.events.open_modal(str, false);
@@ -253,7 +253,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             });
             shared.ui.bone_panel_rect = Some(ui.min_rect());
         }),
-        &mut shared.input.on_ui,
+        &mut shared.camera.on_ui,
         context,
     );
 
@@ -321,7 +321,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     //
     // this check always returns false on mouse click, so it's only checked when the mouse isn't clicked
     if !shared.input.left_down {
-        shared.input.on_ui = context.is_pointer_over_area();
+        shared.camera.on_ui = context.is_pointer_over_area();
     }
 
     // close all context menus if clicking outside of them
@@ -772,6 +772,7 @@ impl EguiUi for egui::Ui {
         &mut self,
         shared_ui: &mut crate::Ui,
         config: &Config,
+        events: &mut EventState,
         loc_code: &str,
         polar_id: PolarId,
     ) {
@@ -780,7 +781,7 @@ impl EguiUi for egui::Ui {
             .clicked()
         {
             let str_del = &shared_ui.loc(&("polar.".to_owned() + &loc_code)).clone();
-            shared_ui.open_polar_modal(polar_id, str_del.to_string());
+            events.open_polar_modal(polar_id, str_del.to_string());
 
             // only hide the menu, as anim id is still needed for modal
             shared_ui.context_menu.hide = true;

@@ -371,7 +371,9 @@ impl ApplicationHandler for App {
         if self.shared.ui.exiting {
             if self.shared.undo_states.prev_undo_actions != self.shared.undo_states.undo_actions {
                 let str_del = self.shared.ui.loc("polar.unsaved").clone().to_string();
-                self.shared.ui.open_polar_modal(PolarId::Exiting, str_del);
+                self.shared
+                    .events
+                    .open_polar_modal(PolarId::Exiting, str_del);
             } else {
                 event_loop.exit();
             }

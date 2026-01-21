@@ -361,6 +361,8 @@ pub struct Camera {
     pub pos: Vec2,
     pub zoom: f32,
     #[serde(skip)]
+    pub on_ui: bool,
+    #[serde(skip)]
     pub window: Vec2,
 }
 
@@ -389,9 +391,6 @@ pub struct InputStates {
     pub mod_q: Option<global_hotkey::hotkey::HotKey>,
     pub mod_w: Option<global_hotkey::hotkey::HotKey>,
     pub hotkey_manager: Option<global_hotkey::GlobalHotKeyManager>,
-
-    // is mouse on UI?
-    pub on_ui: bool,
 
     pub last_pressed: Option<egui::Key>,
 }
@@ -568,12 +567,6 @@ pub struct Ui {
 }
 
 impl Ui {
-    pub fn open_polar_modal(&mut self, id: PolarId, headline: String) {
-        self.polar_modal = true;
-        self.polar_id = id;
-        self.headline = headline.to_string();
-    }
-
     pub fn is_animating(&self, selections: &SelectionState) -> bool {
         self.anim.open && selections.anim != usize::MAX
     }
@@ -1804,6 +1797,9 @@ pub enum Events {
     OpenModal,
     UnselectAll,
     SelectAnimFrame,
+    OpenPolarModal,
+    PointerOnUi,
+    DragBone,
 }
 
 #[derive(Default)]
@@ -1837,6 +1833,19 @@ impl EventState {
         self.values.push(if forced { 1. } else { 0. });
         self.str_values.push(headline);
     }
+
+    pub fn open_polar_modal(&mut self, polar_id: PolarId, headline: String) {
+        self.events.push(Events::OpenPolarModal);
+        self.values.push((polar_id as usize) as f32);
+        self.str_values.push(headline);
+    }
+
+    pub fn toggle_pointer_on_ui(&mut self, toggle: bool) {
+        self.events.push(Events::PointerOnUi);
+        self.values.push(if toggle { 1. } else { 0. });
+        self.str_values.push("".to_string());
+    }
+
 }
 #[derive(Default, Clone)]
 pub struct SelectionState {

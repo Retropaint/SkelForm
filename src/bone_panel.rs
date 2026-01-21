@@ -27,6 +27,7 @@ pub use web::*;
 pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
     if shared.ui.dragging_bone
         || shared.ui.just_made_bone
+        || shared.armature.bones.len() == 0
         || shared.selections.bone_idx > shared.armature.bones.len() - 1
     {
         ui.disable();
@@ -47,7 +48,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                 let context_id =
                     "bone_".to_owned() + &shared.selected_bone().unwrap().id.to_string();
                 shared.ui.context_menu.id = context_id;
-                shared.ui.open_polar_modal(PolarId::DeleteBone, str);
+                shared.events.open_polar_modal(PolarId::DeleteBone, str);
             }
         });
     });

@@ -13,13 +13,15 @@ pub fn process_event(
     ui: &mut crate::Ui,
 ) {
     match event {
-        Events::None => {}
         Events::CamZoomIn => camera.zoom -= 10.,
         Events::CamZoomOut => camera.zoom += 10.,
         Events::CamZoomScroll => camera.zoom -= input.scroll_delta,
         Events::EditModeMove => edit_mode.current = EditModes::Move,
         Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
         Events::EditModeScale => edit_mode.current = EditModes::Scale,
+        Events::UnselectAll => unselect_all(selections, ui),
+        Events::Undo => undo_redo(true, undo_states, armature, selections),
+        Events::Redo => undo_redo(false, undo_states, armature, selections),
         Events::SelectBone => {
             selections.bone_idx = if value == f32::MAX {
                 usize::MAX
@@ -27,20 +29,35 @@ pub fn process_event(
                 value as usize
             }
         }
-        Events::Undo => undo_redo(true, undo_states, armature, selections),
-        Events::Redo => undo_redo(false, undo_states, armature, selections),
         Events::OpenModal => {
             ui.modal = true;
             ui.forced_modal = value == 1.;
             ui.headline = str_value;
         }
-        Events::UnselectAll => unselect_all(selections, ui),
         Events::SelectAnimFrame => {
             let selected_anim = selections.anim;
             unselect_all(selections, ui);
             selections.anim = selected_anim;
             selections.anim_frame = value as i32;
         }
+        Events::OpenPolarModal => {
+            ui.polar_id = match value {
+                0. => PolarId::DeleteBone,
+                1. => PolarId::Exiting,
+                2. => PolarId::DeleteAnim,
+                3. => PolarId::DeleteFile,
+                4. => PolarId::DeleteTex,
+                5. => PolarId::DeleteStyle,
+                6. => PolarId::NewUpdate,
+                _ => return,
+            };
+            ui.polar_modal = true;
+            ui.headline = str_value.to_string();
+        }
+        Events::PointerOnUi => {
+            camera.on_ui = value == 1.;
+        }
+        _ => {}
     }
 }
 

@@ -253,7 +253,9 @@ fn startup_content(
                     if item.update_checker && web {
                         continue;
                     }
-                    let str = &shared.ui.loc(&("startup.resources.".to_owned() + &item.code));
+                    let str = &shared
+                        .ui
+                        .loc(&("startup.resources.".to_owned() + &item.code));
                     let text = egui::RichText::new(str).color(link_color).size(header_size);
                     let heading = ui.clickable_label(text);
                     if heading.clicked() {
@@ -281,8 +283,9 @@ fn startup_content(
                                 line_color,
                             );
                             ui.add_space(sub_padding);
-                            let sub_str =
-                                &shared.ui.loc(&("startup.resources.".to_owned() + &sub.code));
+                            let sub_str = &shared
+                                .ui
+                                .loc(&("startup.resources.".to_owned() + &sub.code));
 
                             let text = egui::RichText::new(sub_str)
                                 .color(link_color)
@@ -402,7 +405,10 @@ pub fn skf_file_button(
                 thumb_bytes.push(byte.unwrap());
             }
             let ui_tex = ui::create_ui_texture(thumb_bytes, false, ctx).unwrap();
-            shared.ui.thumb_ui_tex.insert(filename.clone(), ui_tex.clone());
+            shared
+                .ui
+                .thumb_ui_tex
+                .insert(filename.clone(), ui_tex.clone());
         }
     }
 
@@ -502,7 +508,7 @@ pub fn skf_file_button(
             shared.ui.selected_path = path.clone();
             let str_del = &shared.ui.loc("polar.delete_file").replace("$", &filename);
             shared
-                .ui
+                .events
                 .open_polar_modal(PolarId::DeleteFile, str_del.to_string());
         }
         pos += egui::Vec2::new(-21., 0.);

@@ -57,6 +57,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                 &mut shared.undo_states,
                 &mut shared.config,
                 &mut shared.selections,
+                &mut shared.events,
                 modal_width,
                 height,
                 frame_padding,
@@ -81,6 +82,7 @@ pub fn draw_styles_list(
     undo_states: &mut crate::UndoStates,
     config: &mut crate::Config,
     selections: &mut crate::SelectionState,
+    events: &mut crate::EventState,
     width: f32,
     height: f32,
     padding: f32,
@@ -199,7 +201,8 @@ pub fn draw_styles_list(
 
                     context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {
                         ui.context_rename(shared_ui, config, context_id);
-                        ui.context_delete(shared_ui, config, "delete_style", PolarId::DeleteStyle);
+                        let str = "delete_style";
+                        ui.context_delete(shared_ui, config, events, str, PolarId::DeleteStyle);
                     });
 
                     let str_style_active_desc = &shared_ui.loc("styles_modal.active_desc");
@@ -847,6 +850,7 @@ pub fn draw_tex_buttons(shared: &mut Shared, ui: &mut egui::Ui) {
                 ui.context_delete(
                     &mut shared.ui,
                     &shared.config,
+                    &mut shared.events,
                     "delete_tex",
                     PolarId::DeleteTex,
                 );

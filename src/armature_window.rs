@@ -157,7 +157,7 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         shared.ui.armature_panel_rect = Some(ui.min_rect());
     });
 
-    ui::draw_resizable_panel(panel_id, panel, &mut shared.input.on_ui, &egui_ctx);
+    ui::draw_resizable_panel(panel_id, panel, &mut shared.camera.on_ui, &egui_ctx);
 }
 
 pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
@@ -367,6 +367,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     ui.context_delete(
                         &mut shared.ui,
                         &shared.config,
+                        &mut shared.events,
                         "delete_bone",
                         PolarId::DeleteBone,
                     );
@@ -509,9 +510,9 @@ fn check_bone_dragging(shared: &mut Shared, ui: &mut egui::Ui, drag: Response, i
 }
 
 pub fn drag_bone(armature: &mut Armature, is_above: bool, drag_id: i32, point_id: i32) {
-    #[rustfmt::skip] macro_rules! dragged { () => { armature.find_bone_mut(drag_id).unwrap() } }
+    #[rustfmt::skip] macro_rules! dragged  { () => { armature.find_bone_mut(drag_id).unwrap()  } }
     #[rustfmt::skip] macro_rules! pointing { () => { armature.find_bone_mut(point_id).unwrap() } }
-    #[rustfmt::skip] macro_rules! bones { () => { &mut armature.bones } }
+    #[rustfmt::skip] macro_rules! bones    { () => { &mut armature.bones } }
 
     let drag_idx = bones!().iter().position(|b| b.id == drag_id).unwrap() as i32;
     let point_idx = bones!().iter().position(|b| b.id == point_id).unwrap() as i32;

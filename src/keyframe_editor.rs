@@ -78,7 +78,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
             });
             shared.ui.keyframe_panel_rect = Some(ui.min_rect());
         }),
-        &mut shared.input.on_ui,
+        &mut shared.camera.on_ui,
         &egui_ctx,
     );
 }
@@ -205,7 +205,13 @@ fn draw_animations_list(
 
                     context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {
                         ui.context_rename(shared_ui, config, context_id);
-                        ui.context_delete(shared_ui, config, "delete_anim", PolarId::DeleteAnim);
+                        ui.context_delete(
+                            shared_ui,
+                            config,
+                            events,
+                            "delete_anim",
+                            PolarId::DeleteAnim,
+                        );
                         let duplicate_str = shared_ui.loc("keyframe_editor.duplicate");
                         if ui.context_button(duplicate_str, config).clicked() {
                             undo_states.new_undo_anims(&armature.animations);
@@ -522,6 +528,8 @@ pub fn draw_timeline_graph(
                     &mut shared.config,
                     &mut shared.input,
                     &mut shared.selections,
+                    &mut shared.events,
+                    &mut shared.camera,
                     &bone_tops,
                     hitbox,
                     cursor,
@@ -666,8 +674,10 @@ fn draw_frame_lines(
     shared_ui: &mut crate::Ui,
     armature: &mut Armature,
     config: &Config,
-    input: &mut InputStates,
-    selections: &mut SelectionState,
+    input: &InputStates,
+    selections: &SelectionState,
+    events: &mut EventState,
+    camera: &mut Camera,
     bone_tops: &BoneTops,
     hitbox: f32,
     cursor: Vec2,
@@ -704,8 +714,8 @@ fn draw_frame_lines(
 
             // select this frame if clicked
             if input.left_clicked {
-                selections.anim_frame = i;
-                input.on_ui = true;
+                events.select_anim_frame(i as usize);
+                camera.on_ui = true;
             }
         }
 

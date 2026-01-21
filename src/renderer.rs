@@ -153,7 +153,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         let tb = &temp_arm.bones[b];
         let selected_mesh = !shared.ui.showing_mesh
             || shared.ui.showing_mesh && shared.selected_bone().unwrap().id == tb.id;
-        if hover_bone_id == -1 && !shared.input.left_down && !shared.input.on_ui && selected_mesh {
+        if hover_bone_id == -1 && !shared.input.left_down && !shared.camera.on_ui && selected_mesh {
             let wv = &temp_arm.bones[b].world_verts;
             for (i, chunk) in temp_arm.bones[b].indices.chunks_exact(3).enumerate() {
                 let c0 = chunk[0] as usize;
@@ -437,7 +437,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     // move camera
-    if (shared.input.holding_mod || shared.input.right_down) && !shared.input.on_ui {
+    if (shared.input.holding_mod || shared.input.right_down) && !shared.camera.on_ui {
         shared.ui.cursor_icon = egui::CursorIcon::Move;
         shared.camera.pos += mouse_vel(&shared.input, &shared.camera) * shared.camera.zoom;
         return;
@@ -458,7 +458,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     // editing bone
     let sel = shared.selections.bone_idx;
     let input = &shared.input;
-    if shared.input.on_ui || shared.ui.polar_modal {
+    if shared.camera.on_ui || shared.ui.polar_modal {
         shared.renderer.editing_bone = false;
     } else if sel != usize::MAX && input.left_down && hover_bone_id == -1 && input.down_dur > 5 {
         if shared.edit_mode.current == EditModes::Rotate {
@@ -1004,7 +1004,7 @@ pub fn bone_vertices(
         let mouse_on_it =
             utils::in_bounding_box(&shared.input.mouse, &verts, &shared.camera.window).1;
 
-        if shared.input.on_ui || !mouse_on_it || !editable {
+        if shared.camera.on_ui || !mouse_on_it || !editable {
             add_point!(verts, indices, wv);
             continue;
         }
