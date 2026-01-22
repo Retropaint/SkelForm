@@ -10,6 +10,8 @@ use std::{
 use std::sync::Mutex;
 use wgpu::BindGroup;
 
+use strum::FromRepr;
+
 #[rustfmt::skip]
 #[repr(C)]
 #[derive(Debug,serde::Serialize,serde::Deserialize,Default,Copy,Clone,bytemuck::Pod,bytemuck::Zeroable)]
@@ -422,7 +424,7 @@ pub enum SettingsState {
     Misc,
 }
 
-#[derive(Clone, Default, PartialEq, Debug)]
+#[derive(Clone, Default, PartialEq, Debug, FromRepr)]
 pub enum PolarId {
     #[default]
     DeleteBone,
@@ -1341,6 +1343,34 @@ impl Armature {
     pub fn sel_style_mut(&mut self, selection: &SelectionState) -> Option<&mut Style> {
         self.styles.iter_mut().find(|s| s.id == selection.style)
     }
+
+    pub fn sel_anim(&self, selection: &SelectionState) -> Option<&Animation> {
+        if selection.anim > self.animations.len() {
+            return None;
+        }
+        Some(&self.animations[selection.anim as usize])
+    }
+
+    pub fn sel_anim_mut(&mut self, selections: &SelectionState) -> Option<&mut Animation> {
+        if selections.anim > self.animations.len() {
+            return None;
+        }
+        Some(&mut self.animations[selections.anim as usize])
+    }
+
+    pub fn sel_bone(&self, selections: &SelectionState) -> Option<&Bone> {
+        if selections.bone_idx != usize::MAX && selections.bone_idx < self.bones.len() {
+            return Some(&self.bones[selections.bone_idx]);
+        }
+        None
+    }
+
+    pub fn sel_bone_mut(&mut self, selections: &SelectionState) -> Option<&mut Bone> {
+        if selections.bone_idx != usize::MAX && selections.bone_idx < self.bones.len() {
+            return Some(&mut self.bones[selections.bone_idx]);
+        }
+        None
+    }
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -1565,7 +1595,7 @@ pub enum Transition {
 enum_string!(Transition);
 
 #[derive(
-    Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, Clone, Default, Debug,
+    Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, Clone, Default, Debug, FromRepr
 )]
 #[rustfmt::skip]
 pub enum AnimElement {
@@ -1827,6 +1857,8 @@ pub enum Events {
     CursorIcon,
     DuplicateAnim,
     ToggleBoneFolded,
+    EditBone,
+    SaveEditedBone,
 }
 
 enum_string!(Events);
@@ -2019,6 +2051,28 @@ impl EventState {
         self.values.push(bone_idx as f32);
         self.values.push(if folded { 1. } else { 0. });
     }
+
+    pub fn edit_bone(
+        &mut self,
+        bone_id: i32,
+        element: &AnimElement,
+        value: f32,
+        anim_id: usize,
+        anim_frame: i32,
+    ) {
+        self.events.push(Events::EditBone);
+        self.values.push(bone_id as f32);
+        self.values.push((element.clone() as usize) as f32);
+        self.values.push(value as f32);
+        self.values.push(anim_id as f32);
+        self.values.push(anim_frame as f32);
+    }
+
+    pub fn save_edited_bone(&mut self) {
+        self.events.push(Events::SaveEditedBone);
+        self.values.push(-1.);
+        self.str_values.push("".to_string());
+    }
 }
 
 #[derive(Default, Clone)]
@@ -2067,141 +2121,6 @@ pub struct Shared {
     pub file_name: Arc<Mutex<String>>,
     pub img_contents: Arc<Mutex<Vec<u8>>>,
     pub import_contents: Arc<Mutex<Vec<u8>>>,
-}
-
-impl Shared {
-    pub fn selected_animation(&self) -> Option<&Animation> {
-        if self.selections.anim > self.armature.animations.len() {
-            return None;
-        }
-        Some(&self.armature.animations[self.selections.anim])
-    }
-
-    pub fn selected_animation_mut(&mut self) -> Option<&mut Animation> {
-        if self.selections.anim > self.armature.animations.len() {
-            return None;
-        }
-        Some(&mut self.armature.animations[self.selections.anim as usize])
-    }
-
-    pub fn last_keyframe(&self) -> Option<&Keyframe> {
-        self.selected_animation().unwrap().keyframes.last()
-    }
-
-    pub fn selected_bone(&self) -> Option<&Bone> {
-        if self.selections.bone_idx != usize::MAX
-            && self.selections.bone_idx < self.armature.bones.len()
-        {
-            return Some(&self.armature.bones[self.selections.bone_idx]);
-        }
-        None
-    }
-
-    pub fn selected_bone_id(&self) -> i32 {
-        if let Some(bone) = self.selected_bone() {
-            return bone.id;
-        }
-
-        -1
-    }
-
-    pub fn selected_bone_mut(&mut self) -> Option<&mut Bone> {
-        if self.selections.bone_idx != usize::MAX {
-            return Some(&mut self.armature.bones[self.selections.bone_idx]);
-        }
-        None
-    }
-
-    pub fn save_edited_bone(&mut self) {
-        if self.ui.is_animating(&self.edit_mode, &self.selections) {
-            let anim = self.selected_animation().unwrap().clone();
-            self.undo_states.new_undo_anim(&anim);
-        } else {
-            self.undo_states
-                .new_undo_bone(&self.selected_bone().unwrap().clone());
-        }
-    }
-
-    pub fn edit_bone(
-        &mut self,
-        bone_id: i32,
-        element: &AnimElement,
-        value: f32,
-        anim_id: usize,
-        anim_frame: i32,
-    ) {
-        let bones = &mut self.armature.bones;
-        let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
-        let mut init_value = 0.;
-
-        // do nothing if anim is playing and edit_while_playing config is false
-        let anims = &self.armature.animations;
-        let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
-        if !self.config.edit_while_playing && is_any_anim_playing {
-            return;
-        }
-
-        macro_rules! set {
-            ($field:expr) => {{
-                init_value = $field;
-                if anim_id == usize::MAX {
-                    $field = value;
-                }
-            }};
-        }
-
-        match element {
-            AnimElement::PositionX => set!(bone.pos.x),
-            AnimElement::PositionY => set!(bone.pos.y),
-            AnimElement::Rotation => set!(bone.rot),
-            AnimElement::ScaleX => set!(bone.scale.x),
-            AnimElement::ScaleY => set!(bone.scale.y),
-            AnimElement::Zindex => {
-                init_value = bone.zindex as f32;
-                if anim_id == usize::MAX {
-                    bone.zindex = value as i32
-                }
-            }
-            AnimElement::Texture => { /* handled in set_bone_tex() */ }
-            AnimElement::IkConstraint => {
-                init_value = (bone.ik_constraint as usize) as f32;
-                if anim_id == usize::MAX {
-                    bone.ik_constraint = match value {
-                        1. => JointConstraint::Clockwise,
-                        2. => JointConstraint::CounterClockwise,
-                        _ => JointConstraint::None,
-                    }
-                }
-            }
-            AnimElement::Hidden => {
-                init_value = bool_as_f32(bone.is_hidden);
-                if anim_id == usize::MAX {
-                    bone.is_hidden = f32_as_bool(value)
-                }
-            }
-        };
-
-        if anim_id == usize::MAX {
-            return;
-        }
-
-        macro_rules! check_kf {
-            ($kf:expr) => {
-                $kf.frame == 0 && $kf.element == *element && $kf.bone_id == bone_id
-            };
-        }
-
-        let anim = &mut self.armature.animations;
-
-        let has_0th = anim[anim_id].keyframes.iter().find(|kf| check_kf!(kf)) != None;
-        if anim_frame != 0 && !has_0th {
-            anim[anim_id].check_if_in_keyframe(bone_id, 0, element.clone());
-            let oth_frame = anim[anim_id].keyframes.iter_mut().find(|kf| check_kf!(kf));
-            oth_frame.unwrap().value = init_value;
-        }
-        let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
-        anim[anim_id].keyframes[frame].value = value;
-    }
 }
 
 // generate non-clashing id
@@ -2280,11 +2199,11 @@ fn is_false(value: &bool) -> bool {
     *value == false
 }
 
-fn f32_as_bool(value: f32) -> bool {
+pub fn f32_as_bool(value: f32) -> bool {
     value == 1.
 }
 
-fn bool_as_f32(value: bool) -> f32 {
+pub fn bool_as_f32(value: bool) -> f32 {
     if value {
         1.
     } else {

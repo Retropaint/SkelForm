@@ -29,6 +29,7 @@ egui_commonmark = { version = "0.22.0" } # egui markdown support
 # Handle system shortcuts (cmd+q, cmd+w, etc) since winit can't
 # https://github.com/rust-windowing/winit/issues/2776#issuecomment-2477222703
 global-hotkey = "0.7.0"
+strum = { version = "0.27.2", features = ["derive"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 pollster = "0.4.0"

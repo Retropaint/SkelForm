@@ -40,6 +40,8 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     shared.input.last_pressed = None;
     shared.ui.context_menu.keep = false;
 
+    let sel = shared.selections.clone();
+
     context.input_mut(|i| {
         shared.input.holding_mod = i.modifiers.command;
         shared.input.holding_shift = i.modifiers.shift;
@@ -198,7 +200,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     }
 
     let mut enable_bone_panel = true;
-    if let Some(_) = shared.selected_bone() {
+    if let Some(_) = shared.armature.sel_bone(&sel) {
         enable_bone_panel = !shared.edit_mode.setting_ik_target;
     }
 
@@ -207,7 +209,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     if shared.selections.bone_idx != usize::MAX
         && shared.selections.bone_idx < shared.armature.bones.len()
     {
-        selected_bone = shared.selected_bone().unwrap().clone();
+        selected_bone = shared.armature.sel_bone(&sel).unwrap().clone();
 
         if shared.edit_mode.anim_open && shared.selections.anim != usize::MAX {
             let frame = shared.selections.anim_frame;
@@ -238,7 +240,8 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
                 if shared.selections.bone_idx != usize::MAX {
                     bone_panel::draw(selected_bone.clone(), ui, shared);
-                } else if shared.selected_animation() != None && shared.selections.anim_frame != -1
+                } else if shared.armature.sel_anim(&shared.selections) != None
+                    && shared.selections.anim_frame != -1
                 {
                     keyframe_panel::draw(ui, shared);
                 }
@@ -336,7 +339,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         };
     }
 
-    if shared.selected_bone() == None {
+    if shared.armature.sel_bone(&sel) == None {
         return;
     }
 
@@ -862,6 +865,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
             }
 
             // complain if there's no proper animation to export
+            let sel = shared.selections.clone();
             if shared.selections.anim == usize::MAX {
                 let anims = &shared.armature.animations;
                 if anims.len() == 0 || anims[0].keyframes.len() == 0 {
@@ -870,7 +874,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
                 } else {
                     shared.selections.anim = 0;
                 }
-            } else if shared.last_keyframe() == None {
+            } else if shared.armature.sel_anim(&sel).unwrap().keyframes.last() == None {
                 shared.events.open_modal("No animation available.", false);
                 return;
             }
@@ -933,7 +937,8 @@ fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
 fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
     let mut ik_disabled = true;
     let mut is_end = false;
-    if let Some(bone) = shared.selected_bone() {
+    let sel = shared.selections.clone();
+    if let Some(bone) = shared.armature.sel_bone(&sel) {
         ik_disabled = bone.ik_disabled || shared.armature.bone_eff(bone.id) == JointEffector::None;
         is_end = shared.armature.bone_eff(bone.id) == JointEffector::End;
     }

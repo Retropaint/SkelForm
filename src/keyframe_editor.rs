@@ -13,19 +13,21 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
         shared.ui.anim.dragged_keyframe.frame = -1;
     }
 
+    let sel = shared.selections.clone();
+
     // navigating frames with kb input
     if shared.ui.rename_id == "" {
         let right = egui_ctx.input_mut(|i| i.consume_shortcut(&shared.config.keys.next_anim_frame));
         let left = egui_ctx.input_mut(|i| i.consume_shortcut(&shared.config.keys.prev_anim_frame));
         if right {
             shared.selections.anim_frame += 1;
-            let last_frame = shared.last_keyframe();
+            let last_frame = shared.armature.sel_anim(&sel).unwrap().keyframes.last();
             if last_frame != None && shared.selections.anim_frame > last_frame.unwrap().frame {
                 shared.selections.anim_frame = 0;
             }
         } else if left {
             shared.selections.anim_frame -= 1;
-            let last_frame = shared.last_keyframe();
+            let last_frame = shared.armature.sel_anim(&sel).unwrap().keyframes.last();
             if last_frame != None && shared.selections.anim_frame < 0 {
                 shared.selections.anim_frame = last_frame.unwrap().frame;
             }
@@ -217,7 +219,9 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
         // track the Y of bone change labels for their diamonds
         let mut bone_tops = BoneTops::default();
 
-        if shared.selected_animation().unwrap().keyframes.len() > 0 {
+        let sel = shared.selections.clone();
+
+        if shared.armature.sel_anim(&sel).unwrap().keyframes.len() > 0 {
             let frame = egui::Frame::new().inner_margin(egui::Margin {
                 top: 27,
                 bottom: 27,
@@ -233,14 +237,15 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
 
         // calculate how far apart each keyframe should visually be
         let gap = 400.;
-        let fps = shared.selected_animation().unwrap().fps as f32;
+        let fps = shared.armature.sel_anim(&sel).unwrap().fps as f32;
         let hitbox = gap / shared.ui.anim.timeline_zoom / fps / 2.;
 
         // add 1 second worth of frames after the last keyframe
         let frames: i32;
-        let extra = shared.selected_animation().unwrap().fps * 5;
-        if shared.last_keyframe() != None {
-            frames = shared.last_keyframe().unwrap().frame + extra;
+        let extra = shared.armature.sel_anim(&sel).unwrap().fps * 5;
+        if shared.armature.sel_anim(&sel).unwrap().keyframes.last() != None {
+            let sel_anim = shared.armature.sel_anim(&sel).unwrap();
+            frames = sel_anim.keyframes.last().unwrap().frame + extra;
         } else {
             frames = extra
         }
@@ -278,13 +283,14 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
 }
 
 pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut BoneTops) {
+    let sel = &shared.selections;
     let scroll_area = egui::ScrollArea::vertical()
         .id_salt("bones_list")
         .vertical_scroll_offset(shared.ui.anim.timeline_offset.y)
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
     scroll_area.show(ui, |ui| {
         // sort keyframes by element & bone
-        let mut keyframes = shared.selected_animation().unwrap().keyframes.clone();
+        let mut keyframes = shared.armature.sel_anim(sel).unwrap().keyframes.clone();
         keyframes.sort_by(|a, b| (a.element.clone() as i32).cmp(&(b.element.clone() as i32)));
         keyframes.sort_by(|a, b| a.bone_id.cmp(&b.bone_id));
 
@@ -349,6 +355,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
     let scroll_area = egui::ScrollArea::horizontal()
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
         .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset.x, 0.));
+    let sel = shared.selections.clone();
 
     scroll_area.show(ui, |ui| {
         egui::Frame::new().show(ui, |ui| {
@@ -357,7 +364,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
 
             let mut second = 0;
             for (i, x) in shared.ui.anim.lines_x.iter().enumerate() {
-                if i as i32 % shared.selected_animation().unwrap().fps != 0 {
+                if i as i32 % shared.armature.sel_anim(&sel).unwrap().fps != 0 {
                     continue;
                 }
                 second += 1;
@@ -370,8 +377,8 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                 painter.text(pos.into(), center, str, fontid, col.into());
             }
 
-            for i in 0..shared.selected_animation().unwrap().keyframes.len() {
-                let frame = shared.selected_animation().unwrap().keyframes[i].frame;
+            for i in 0..shared.armature.sel_anim(&sel).unwrap().keyframes.len() {
+                let frame = shared.armature.sel_anim(&sel).unwrap().keyframes[i].frame;
 
                 // don't draw diamond if it's beyond the recorded lines
                 if shared.ui.anim.lines_x.len() - 1 < frame as usize {
@@ -425,14 +432,14 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     continue;
                 }
 
-                let anim = shared.selected_animation().unwrap().clone();
+                let anim = shared.armature.sel_anim(&sel).unwrap().clone();
                 shared.undo_states.new_undo_anim(&anim);
 
                 shared.ui.cursor_icon = egui::CursorIcon::Grabbing;
 
                 // remove keyframe if dragged out
                 if cursor.y < 0. {
-                    let anim = shared.selected_animation_mut().unwrap();
+                    let anim = shared.armature.sel_anim_mut(&sel).unwrap();
                     let frame = anim.keyframes[i].frame;
                     anim.keyframes.retain(|kf| kf.frame != frame);
                     // break loop to prevent OOB errors
@@ -445,14 +452,14 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
                         continue;
                     }
-                    let selected_anim = &mut shared.selected_animation_mut().unwrap();
+                    let selected_anim = &mut shared.armature.sel_anim_mut(&sel).unwrap();
                     selected_anim.keyframes.retain(|kf| kf.frame != j as i32);
-                    for kf in &mut shared.selected_animation_mut().unwrap().keyframes {
+                    for kf in &mut shared.armature.sel_anim_mut(&sel).unwrap().keyframes {
                         if kf.frame == frame as i32 {
                             kf.frame = j as i32;
                         }
                     }
-                    shared.selected_animation_mut().unwrap().sort_keyframes();
+                    shared.armature.sel_anim_mut(&sel).unwrap().sort_keyframes();
                     return;
                 }
             }
@@ -482,12 +489,11 @@ pub fn draw_timeline_graph(
                 cursor.y -= shared.ui.anim.timeline_offset.y;
 
                 // render darkened background after last keyframe
-                let lkf = shared.last_keyframe();
-                if lkf != None && (lkf.unwrap().frame as usize) < shared.ui.anim.lines_x.len() {
-                    let left_top_rect = egui::vec2(
-                        shared.ui.anim.lines_x[shared.last_keyframe().unwrap().frame as usize],
-                        -3.,
-                    );
+                let sel = shared.selections.clone();
+                let lkf = shared.armature.sel_anim(&sel).unwrap().keyframes.last();
+                let frame = lkf.unwrap().frame as usize;
+                if lkf != None && frame < shared.ui.anim.lines_x.len() {
+                    let left_top_rect = egui::vec2(shared.ui.anim.lines_x[frame], -3.);
                     let right_bottom_rect = egui::vec2(0., 999.);
 
                     let rect_to_fill = egui::Rect::from_min_size(
@@ -519,6 +525,7 @@ pub fn draw_timeline_graph(
 }
 
 pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
+    let sel = shared.selections.clone();
     egui::Frame::new().show(ui, |ui| {
         ui.set_width(ui.available_width());
         ui.set_height(20.);
@@ -530,7 +537,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             );
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
-                let play_str = if shared.selected_animation().unwrap().elapsed != None {
+                let play_str = if shared.armature.sel_anim(&sel).unwrap().elapsed != None {
                     &shared.ui.loc("keyframe_editor.pause")
                 } else {
                     &shared.ui.loc("keyframe_editor.play")
@@ -549,11 +556,11 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 if button.clicked() {
                     pressed = true;
                 }
-                if !pressed || shared.selected_animation().unwrap().keyframes.len() == 0 {
+                if !pressed || shared.armature.sel_anim(&sel).unwrap().keyframes.len() == 0 {
                     return;
                 }
 
-                let anim = shared.selected_animation_mut().unwrap();
+                let anim = shared.armature.sel_anim_mut(&sel).unwrap();
                 anim.elapsed = if anim.elapsed == None {
                     Some(Instant::now())
                 } else {
@@ -574,14 +581,14 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             ui.label(&shared.ui.loc("keyframe_editor.frame"));
             ui.add(egui::DragValue::new(&mut shared.selections.anim_frame).speed(0.1));
 
-            let fps = shared.selected_animation().unwrap().fps;
+            let fps = shared.armature.sel_anim(&sel).unwrap().fps;
 
             ui.label(&shared.ui.loc("keyframe_editor.fps"))
                 .on_hover_text(&shared.ui.loc("keyframe_editor.frames_per_second"));
             let (edited, value, _) =
                 ui.float_input("fps".to_string(), &mut shared.ui, fps as f32, 1., None);
             if edited {
-                let anim_mut = shared.selected_animation_mut().unwrap();
+                let anim_mut = shared.armature.sel_anim_mut(&sel).unwrap();
 
                 let mut old_unique_keyframes: Vec<i32> =
                     anim_mut.keyframes.iter().map(|kf| kf.frame).collect();
@@ -615,10 +622,11 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 .clicked()
             {
                 shared.copy_buffer = CopyBuffer::default();
-                for kf in 0..shared.selected_animation().unwrap().keyframes.len() {
+                for kf in 0..shared.armature.sel_anim(&sel).unwrap().keyframes.len() {
                     let frame = shared.selections.anim_frame;
-                    if shared.selected_animation().unwrap().keyframes[kf].frame == frame {
-                        let keyframe = shared.selected_animation().unwrap().keyframes[kf].clone();
+                    if shared.armature.sel_anim(&sel).unwrap().keyframes[kf].frame == frame {
+                        let keyframe =
+                            shared.armature.sel_anim(&sel).unwrap().keyframes[kf].clone();
                         shared.copy_buffer.keyframes.push(keyframe);
                     }
                 }
@@ -626,12 +634,12 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
 
             let paste_str = &shared.ui.loc("keyframe_editor.paste");
             if ui.skf_button(paste_str).clicked() {
-                let anim = shared.selected_animation().unwrap().clone();
+                let anim = shared.armature.sel_anim(&sel).unwrap().clone();
                 shared.undo_states.new_undo_anim(&anim);
 
                 let frame = shared.selections.anim_frame;
                 let buffer_frames = shared.copy_buffer.keyframes.clone();
-                let anim = &mut shared.selected_animation_mut().unwrap();
+                let anim = &mut shared.armature.sel_anim_mut(&sel).unwrap();
 
                 anim.keyframes.retain(|kf| kf.frame != frame);
 
@@ -640,7 +648,7 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     anim.keyframes.push(Keyframe { frame, ..keyframe })
                 }
 
-                shared.selected_animation_mut().unwrap().sort_keyframes();
+                shared.armature.sel_anim_mut(&sel).unwrap().sort_keyframes();
             }
         });
     });

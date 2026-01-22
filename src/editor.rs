@@ -25,7 +25,90 @@ pub fn iterate_events(
             }
         }
 
-        if events.events[0] == Events::ToggleBoneFolded {
+        if events.events[0] == Events::SaveEditedBone {}
+        if events.events[0] == Events::EditBone {
+            let bone_id = events.values[0] as i32;
+            let element = AnimElement::from_repr(events.values[1] as usize).unwrap();
+            let value = events.values[2] as f32;
+            let anim_id = events.values[3] as usize;
+            let anim_frame = events.values[4] as i32;
+
+            // drain event sooner, to allow `continue` to work here
+            events.events.remove(0);
+            events.values.drain(0..=4);
+
+            let bones = &mut armature.bones;
+            let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
+            let mut init_value = 0.;
+
+            // do nothing if anim is playing and edit_while_playing config is false
+            let anims = &armature.animations;
+            let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
+            if !config.edit_while_playing && is_any_anim_playing {
+                continue;
+            }
+
+            macro_rules! set {
+                ($field:expr) => {{
+                    init_value = $field;
+                    if anim_id == usize::MAX {
+                        $field = value;
+                    }
+                }};
+            }
+
+            match element {
+                AnimElement::PositionX => set!(bone.pos.x),
+                AnimElement::PositionY => set!(bone.pos.y),
+                AnimElement::Rotation => set!(bone.rot),
+                AnimElement::ScaleX => set!(bone.scale.x),
+                AnimElement::ScaleY => set!(bone.scale.y),
+                AnimElement::Zindex => {
+                    init_value = bone.zindex as f32;
+                    if anim_id == usize::MAX {
+                        bone.zindex = value as i32
+                    }
+                }
+                AnimElement::Texture => { /* handled in set_bone_tex() */ }
+                AnimElement::IkConstraint => {
+                    init_value = (bone.ik_constraint as usize) as f32;
+                    if anim_id == usize::MAX {
+                        bone.ik_constraint = match value {
+                            1. => JointConstraint::Clockwise,
+                            2. => JointConstraint::CounterClockwise,
+                            _ => JointConstraint::None,
+                        }
+                    }
+                }
+                AnimElement::Hidden => {
+                    init_value = shared::bool_as_f32(bone.is_hidden);
+                    if anim_id == usize::MAX {
+                        bone.is_hidden = shared::f32_as_bool(value)
+                    }
+                }
+            };
+
+            if anim_id == usize::MAX {
+                continue;
+            }
+
+            macro_rules! check_kf {
+                ($kf:expr) => {
+                    $kf.frame == 0 && $kf.element == element && $kf.bone_id == bone_id
+                };
+            }
+
+            let anim = &mut armature.animations;
+
+            let has_0th = anim[anim_id].keyframes.iter().find(|kf| check_kf!(kf)) != None;
+            if anim_frame != 0 && !has_0th {
+                anim[anim_id].check_if_in_keyframe(bone_id, 0, element.clone());
+                let oth_frame = anim[anim_id].keyframes.iter_mut().find(|kf| check_kf!(kf));
+                oth_frame.unwrap().value = init_value;
+            }
+            let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
+            anim[anim_id].keyframes[frame].value = value;
+        } else if events.events[0] == Events::ToggleBoneFolded {
             armature.bones[events.values[0] as usize].folded = events.values[1] == 1.;
 
             events.events.remove(0);
@@ -235,16 +318,7 @@ pub fn process_event(
             selections.anim_frame = value as i32;
         }
         Events::OpenPolarModal => {
-            ui.polar_id = match value {
-                0. => PolarId::DeleteBone,
-                1. => PolarId::Exiting,
-                2. => PolarId::DeleteAnim,
-                3. => PolarId::DeleteFile,
-                4. => PolarId::DeleteTex,
-                5. => PolarId::DeleteStyle,
-                6. => PolarId::NewUpdate,
-                _ => return,
-            };
+            ui.polar_id = PolarId::from_repr(value as usize).unwrap();
             ui.polar_modal = true;
             ui.headline = str_value.to_string();
         }
@@ -368,6 +442,16 @@ pub fn process_event(
         Events::DuplicateAnim => armature
             .animations
             .push(armature.animations[value as usize].clone()),
+        Events::SaveEditedBone => {
+            if ui.is_animating(&edit_mode, &selections) {
+                let anim = armature.animations[selections.anim as usize].clone();
+                undo_states.new_undo_anim(&anim);
+            } else {
+                let bone = armature.bones[selections.bone_idx as usize].clone();
+                undo_states.new_undo_bone(&bone);
+            }
+        }
+
         _ => {}
     }
 }

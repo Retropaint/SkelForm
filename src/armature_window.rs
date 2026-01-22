@@ -53,11 +53,12 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 let idx: usize;
 
                 shared.undo_states.new_undo_bones(&shared.armature.bones);
+                let sel = shared.selections.clone();
 
-                if shared.selected_bone() == None {
+                if shared.armature.sel_bone(&sel) == None {
                     (_, idx) = shared.armature.new_bone(-1);
                 } else {
-                    let id = shared.selected_bone().unwrap().id;
+                    let id = shared.armature.sel_bone(&sel).unwrap().id;
                     (_, idx) = shared.armature.new_bone(id);
                 }
 
@@ -164,6 +165,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
     ui.set_min_width(ui.available_width());
     let mut idx: i32 = -1;
     let mut is_hovering = false;
+    let sel = shared.selections.clone();
 
     for b in 0..shared.armature.bones.len() {
         idx += 1;
@@ -175,7 +177,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
         let mut dragged = false;
 
         let parents = shared.armature.get_all_parents(shared.armature.bones[b].id);
-        let selected_bone_id = if let Some(bone) = shared.selected_bone() {
+        let selected_bone_id = if let Some(bone) = shared.armature.sel_bone(&sel) {
             bone.id
         } else {
             -1
@@ -199,8 +201,14 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     }
                     let sel = shared.selections.anim;
                     let frame = shared.selections.anim_frame;
-                    shared.save_edited_bone();
-                    shared.edit_bone(bone_id, &AnimElement::Hidden, hidden as f32, sel, frame);
+                    shared.events.save_edited_bone();
+                    shared.events.edit_bone(
+                        bone_id,
+                        &AnimElement::Hidden,
+                        hidden as f32,
+                        sel,
+                        frame,
+                    );
                 }
                 ui.add_space(17.);
 
@@ -261,9 +269,9 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     let (edited, value, _) =
                         ui.text_input(context_id, &mut shared.ui, bone, options);
                     if edited {
-                        let sel_bone = shared.selected_bone().unwrap().clone();
+                        let sel_bone = shared.armature.sel_bone(&sel).unwrap().clone();
                         shared.undo_states.new_undo_bone(&sel_bone);
-                        shared.selected_bone_mut().unwrap().name = value;
+                        shared.armature.sel_bone_mut(&sel).unwrap().name = value;
                         if shared.ui.just_made_bone {
                             shared
                                 .undo_states
@@ -319,15 +327,15 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         shared.ui.edit_value = Some(shared.armature.bones[b].name.clone());
                     } else {
                         if shared.edit_mode.setting_ik_target {
-                            let sel_bone = shared.selected_bone().unwrap().clone();
+                            let sel_bone = shared.armature.sel_bone(&sel).unwrap().clone();
                             shared.undo_states.new_undo_bone(&sel_bone);
-                            shared.selected_bone_mut().unwrap().ik_target_id = bone_id;
+                            shared.armature.sel_bone_mut(&sel).unwrap().ik_target_id = bone_id;
                             shared.edit_mode.setting_ik_target = false;
                         } else if shared.edit_mode.setting_bind_bone {
-                            let sel_bone = shared.selected_bone().unwrap().clone();
+                            let sel_bone = shared.armature.sel_bone(&sel).unwrap().clone();
                             shared.undo_states.new_undo_bone(&sel_bone);
                             let idx = shared.selections.bind as usize;
-                            let bind = &mut shared.selected_bone_mut().unwrap().binds[idx];
+                            let bind = &mut shared.armature.sel_bone_mut(&sel).unwrap().binds[idx];
                             bind.bone_id = bone_id;
                             shared.edit_mode.setting_bind_bone = false;
                         } else {
@@ -348,7 +356,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                                 for i in first..second as usize {
                                     let bone = &shared.armature.bones[i];
                                     let this_id = shared.selections.bone_ids.contains(&bone.id);
-                                    let sel_bone = shared.selected_bone().unwrap();
+                                    let sel_bone = shared.armature.sel_bone(&sel).unwrap();
                                     if !this_id && bone.parent_id == sel_bone.parent_id {
                                         shared.selections.bone_ids.push(bone.id);
                                     }
