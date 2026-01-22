@@ -1,10 +1,12 @@
+use serde::{Deserialize, Serialize};
+use serde_json::Deserializer;
 use std::collections::HashMap;
 
 use crate::*;
 
 pub fn iterate_events(
     input: &InputStates,
-    config: &Config,
+    config: &mut Config,
     events: &mut EventState,
     camera: &mut Camera,
     edit_mode: &mut EditMode,
@@ -13,6 +15,7 @@ pub fn iterate_events(
     armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
+    renderer: &mut crate::Renderer,
 ) {
     let mut last_event = Events::None;
     while events.events.len() > 0 {
@@ -234,7 +237,7 @@ pub fn iterate_events(
             let str_value = events.str_values[0].clone().to_string();
 
             #[rustfmt::skip]
-            editor::process_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, copy_buffer, ui);
+            editor::process_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, copy_buffer, ui, renderer, config);
 
             events.events.remove(0);
             events.values.remove(0);
@@ -255,6 +258,8 @@ pub fn process_event(
     armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
+    renderer: &mut crate::Renderer,
+    config: &mut crate::Config,
 ) {
     match event {
         Events::CamZoomIn => camera.zoom -= 10.,
@@ -269,6 +274,7 @@ pub fn process_event(
         Events::DeleteAnim => _ = armature.animations.remove(value as usize),
         Events::RenameAnimation => armature.animations[value as usize].name = str_value,
         Events::RenameStyle => armature.styles[value as usize].name = str_value,
+        Events::ResetConfig => *config = serde_json::from_str(&utils::config_str()).unwrap(),
         Events::CursorIcon => match value {
             0. => ui.cursor_icon = egui::CursorIcon::Default,
             1. => ui.cursor_icon = egui::CursorIcon::Move,
@@ -451,7 +457,11 @@ pub fn process_event(
                 undo_states.new_undo_bone(&bone);
             }
         }
-
+        Events::ApplySettings => {
+            ui.scale = config.ui_scale;
+            renderer.gridline_gap = config.gridline_gap;
+            crate::utils::save_config(&config);
+        }
         _ => {}
     }
 }

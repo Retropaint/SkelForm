@@ -2,10 +2,9 @@ use crate::*;
 
 pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.heading("Keyframe (".to_owned() + &shared.selections.anim_frame.to_string() + ")");
+    let sel = shared.selections.clone();
 
     return;
-
-    let sel = shared.selections.clone();
 
     #[allow(unreachable_code)]
     let keyframes_in_frame = shared

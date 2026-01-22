@@ -12,9 +12,11 @@ use wgpu::BindGroup;
 
 use strum::FromRepr;
 
+use serde::{Deserialize, Serialize};
+
 #[rustfmt::skip]
 #[repr(C)]
-#[derive(Debug,serde::Serialize,serde::Deserialize,Default,Copy,Clone,bytemuck::Pod,bytemuck::Zeroable)]
+#[derive(Debug,Serialize,Deserialize,Default,Copy,Clone,bytemuck::Pod,bytemuck::Zeroable)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
@@ -393,8 +395,6 @@ pub struct InputStates {
     pub mod_q: Option<global_hotkey::hotkey::HotKey>,
     pub mod_w: Option<global_hotkey::hotkey::HotKey>,
     pub hotkey_manager: Option<global_hotkey::GlobalHotKeyManager>,
-
-    pub last_pressed: Option<egui::Key>,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -560,6 +560,8 @@ pub struct Ui {
 
     loc_strings: std::collections::HashMap<String, String>,
     pub cursor_icon: egui::CursorIcon,
+    pub last_pressed: Option<egui::Key>,
+    pub recent_file_paths: Vec<String>,
 }
 
 impl Ui {
@@ -610,7 +612,7 @@ pub enum UiLayout {
 
 enum_string!(UiLayout);
 
-#[derive(serde::Deserialize, serde::Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Config {
     #[serde(default = "default_one")]
     pub ui_scale: f32,
@@ -639,7 +641,7 @@ pub struct Config {
     pub keys: KeyboardConfig,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct ColorConfig {
     pub main: Color,
     pub light_accent: Color,
@@ -1859,6 +1861,8 @@ pub enum Events {
     ToggleBoneFolded,
     EditBone,
     SaveEditedBone,
+    ApplySettings,
+    ResetConfig,
 }
 
 enum_string!(Events);
@@ -2073,6 +2077,18 @@ impl EventState {
         self.values.push(-1.);
         self.str_values.push("".to_string());
     }
+
+    pub fn apply_settings(&mut self) {
+        self.events.push(Events::ApplySettings);
+        self.values.push(-1.);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn reset_config(&mut self) {
+        self.events.push(Events::ResetConfig);
+        self.values.push(-1.);
+        self.str_values.push("".to_string());
+    }
 }
 
 #[derive(Default, Clone)]
@@ -2102,8 +2118,6 @@ pub struct Shared {
     pub rendered_frames: Vec<RenderedFrame>,
 
     pub edit_mode: EditMode,
-
-    pub recent_file_paths: Vec<String>,
 
     pub config: Config,
 

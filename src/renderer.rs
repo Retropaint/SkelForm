@@ -218,7 +218,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         // hovering glow animation
         let idx = shared.selections.bone_idx;
         if hover_bone_id == temp_arm.bones[b].id
-            && shared.armature.bones[idx].id != click_on_hover_id
+            && (idx == usize::MAX || shared.armature.bones[idx].id != click_on_hover_id)
         {
             let fade = 0.25 * ((shared.time * 3.).sin()).abs() as f32;
             let min = 0.1;

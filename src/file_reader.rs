@@ -563,10 +563,10 @@ pub fn read_import(
             #[cfg(not(target_arch = "wasm32"))]
             {
                 utils::import(file.unwrap(), shared, queue, device, bgl, context);
-                if !shared.recent_file_paths.contains(&filename) {
-                    shared.recent_file_paths.push(filename);
+                if !shared.ui.recent_file_paths.contains(&filename) {
+                    shared.ui.recent_file_paths.push(filename);
                 }
-                utils::save_to_recent_files(&shared.recent_file_paths);
+                utils::save_to_recent_files(&shared.ui.recent_file_paths);
             }
         }
         "psd" => {

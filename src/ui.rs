@@ -37,7 +37,7 @@ macro_rules! context_menu {
 
 /// The `main` of this module.
 pub fn draw(context: &Context, shared: &mut Shared) {
-    shared.input.last_pressed = None;
+    shared.ui.last_pressed = None;
     shared.ui.context_menu.keep = false;
 
     let sel = shared.selections.clone();
@@ -48,7 +48,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         if shared.ui.rename_id == "" {
             kb_inputs(i, shared);
         }
-        shared.input.last_pressed = i.keys_down.iter().last().copied();
+        shared.ui.last_pressed = i.keys_down.iter().last().copied();
 
         shared.input.left_clicked = i.pointer.primary_clicked();
         shared.input.right_clicked = i.pointer.secondary_clicked();
@@ -141,7 +141,13 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         styles_modal::draw(shared, context);
     }
     if shared.ui.settings_modal {
-        settings_modal::draw(shared, context);
+        settings_modal::draw(
+            &mut shared.ui,
+            &mut shared.config,
+            &shared.camera,
+            &mut shared.events,
+            context,
+        );
     }
     if shared.ui.startup_window {
         startup_window::startup_modal(shared, context);

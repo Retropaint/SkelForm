@@ -61,14 +61,8 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                 resize.show(ui, |ui| {
                     egui::Frame::new().show(ui, |ui| {
                         ui.vertical(|ui| {
-                            draw_animations_list(
-                                ui,
-                                &mut shared.ui,
-                                &shared.armature,
-                                &shared.config,
-                                &shared.selections,
-                                &mut shared.events,
-                            );
+                            #[rustfmt::skip]
+                            draw_animations_list(ui, &mut shared.ui, &shared.armature, &shared.config, &shared.selections, &mut shared.events);
                         })
                     });
                 });
@@ -98,11 +92,9 @@ fn draw_animations_list(
         ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
             let str_new = &&shared_ui.loc("new");
             let button = ui.skf_button(str_new);
-
             if !button.clicked() {
                 return;
             }
-
             events.new_animation();
         });
     });
@@ -318,7 +310,6 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                     for parent in &parents {
                         let bones = &shared.armature.bones;
                         let idx = bones.iter().position(|b| b.id == parent.id).unwrap();
-                        let folded = shared.armature.bones[idx].folded;
                         shared.events.toggle_bone_folded(idx, false);
                     }
                 }
@@ -335,11 +326,8 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
             added_elements.push(kf.element.clone());
             ui.horizontal(|ui| {
                 ui.add_space(30.);
-                let label = ui.label(
-                    &shared
-                        .ui
-                        .loc(&("keyframe_editor.elements.".to_owned() + &kf.element.to_string())),
-                );
+                let str = &("keyframe_editor.elements.".to_owned() + &kf.element.to_string());
+                let label = ui.label(&shared.ui.loc(str));
                 bone_tops.tops.push(BoneTop {
                     id: kf.bone_id,
                     element: kf.element.clone(),
@@ -505,18 +493,8 @@ pub fn draw_timeline_graph(
                         .rect_filled(rect_to_fill, 0., shared.config.colors.dark_accent);
                 }
 
-                draw_frame_lines(
-                    ui,
-                    &mut shared.ui,
-                    &mut shared.armature,
-                    &mut shared.config,
-                    &mut shared.input,
-                    &mut shared.selections,
-                    &mut shared.events,
-                    &bone_tops,
-                    hitbox,
-                    cursor,
-                );
+                #[rustfmt::skip]
+                draw_frame_lines(ui, &mut shared.ui, &mut shared.armature, &mut shared.config, &mut shared.input, &mut shared.selections, &mut shared.events, &bone_tops, hitbox, cursor);
             });
             shared.ui.anim.timeline_offset = response.state.offset.into();
             shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;

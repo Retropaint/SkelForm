@@ -131,7 +131,7 @@ fn init_shared(shared: &mut Shared) {
             .unwrap()
             .read_to_string(&mut str)
             .unwrap();
-        shared.recent_file_paths = serde_json::from_str(&str).unwrap();
+        shared.ui.recent_file_paths = serde_json::from_str(&str).unwrap();
     }
 
     let bytes = include_bytes!("../assets/i18n/en.json").as_slice();

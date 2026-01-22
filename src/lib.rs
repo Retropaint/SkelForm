@@ -594,7 +594,7 @@ impl BackendRenderer {
 
         editor::iterate_events(
             &shared.input,
-            &shared.config,
+            &mut shared.config,
             &mut shared.events,
             &mut shared.camera,
             &mut shared.edit_mode,
@@ -603,6 +603,7 @@ impl BackendRenderer {
             &mut shared.armature,
             &mut shared.copy_buffer,
             &mut shared.ui,
+            &mut shared.renderer,
         );
     }
 
@@ -628,10 +629,10 @@ impl BackendRenderer {
             save_path = dir + "/autosave.skf";
             shared.last_autosave = shared.time;
         }
-        if !shared.recent_file_paths.contains(&save_path) {
-            shared.recent_file_paths.push(save_path.clone());
+        if !shared.ui.recent_file_paths.contains(&save_path) {
+            shared.ui.recent_file_paths.push(save_path.clone());
         }
-        utils::save_to_recent_files(&shared.recent_file_paths);
+        utils::save_to_recent_files(&shared.ui.recent_file_paths);
         *shared.saving.lock().unwrap() = Saving::None;
         let autosaving = *shared.saving.lock().unwrap() == Saving::Autosaving;
         let save_finished = Arc::clone(&shared.save_finished);

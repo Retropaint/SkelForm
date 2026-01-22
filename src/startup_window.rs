@@ -148,13 +148,13 @@ fn startup_content(
 
                     let mut has_files = false;
 
-                    for p in 0..shared.recent_file_paths.len() {
+                    for p in 0..shared.ui.recent_file_paths.len() {
                         // safeguard for deleting a path during iteration
-                        if p > shared.recent_file_paths.len() - 1 {
+                        if p > shared.ui.recent_file_paths.len() - 1 {
                             break;
                         }
 
-                        let path = shared.recent_file_paths[p].to_string();
+                        let path = shared.ui.recent_file_paths[p].to_string();
 
                         // ignore filenames starting with _
                         let filename = path.split('/').collect::<Vec<_>>();
@@ -165,9 +165,9 @@ fn startup_content(
                         has_files = true;
 
                         if let Err(_) = std::fs::File::open(&path) {
-                            let recent = &shared.recent_file_paths;
+                            let recent = &shared.ui.recent_file_paths;
                             let idx = recent.iter().position(|r_path| *r_path == path).unwrap();
-                            shared.recent_file_paths.remove(idx);
+                            shared.ui.recent_file_paths.remove(idx);
                             continue;
                         }
 
@@ -497,10 +497,10 @@ pub fn skf_file_button(
 
         let mut pos = egui::Vec2::new(-21., 0.);
         if file_button_icon("X", "Remove from list", egui::Vec2::new(-20., 8.), pos, ui).clicked() {
-            let recent = &shared.recent_file_paths;
+            let recent = &shared.ui.recent_file_paths;
             let idx = recent.iter().position(|rfp| *rfp == path).unwrap();
-            shared.recent_file_paths.remove(idx);
-            utils::save_to_recent_files(&shared.recent_file_paths);
+            shared.ui.recent_file_paths.remove(idx);
+            utils::save_to_recent_files(&shared.ui.recent_file_paths);
         }
         pos += egui::Vec2::new(-21., 0.);
 
