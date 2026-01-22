@@ -53,7 +53,7 @@ fn startup_content(
         let empty = "".to_string();
         if leftside_button("+", &shared.ui.loc("new"), ui, shared, None, None, empty).clicked() {
             shared.events.new(Events::UnselectAll);
-            shared.ui.anim.open = false;
+            shared.edit_mode.anim_open = false;
             shared.camera.pos = Vec2::new(0., 0.);
             shared.camera.zoom = 2000.;
             shared.armature = Armature::default();

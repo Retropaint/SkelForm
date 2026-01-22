@@ -48,7 +48,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
     }
 
     let mut temp_arm = shared.armature.clone();
-    let mut anim_bones = shared.animate_bones();
+    let mut anim_bones = shared.armature.animated_bones.clone();
 
     // adjust anim_bones' verts for new textrues mid-animations
     temp_arm.bones = anim_bones.clone();
@@ -145,14 +145,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         for vert in &mut temp_arm.bones[b].world_verts {
             vert.add_color = VertexColor::new(0., 0., 0., 0.);
         }
-        if shared.ui.setting_bind_verts {
+        if shared.edit_mode.setting_bind_verts {
             continue;
         }
 
         // check if cursor is on an opaque pixel of this bone's texture
         let tb = &temp_arm.bones[b];
-        let selected_mesh = !shared.ui.showing_mesh
-            || shared.ui.showing_mesh && shared.selected_bone().unwrap().id == tb.id;
+        let selected_mesh = !shared.edit_mode.showing_mesh
+            || shared.edit_mode.showing_mesh && shared.selected_bone().unwrap().id == tb.id;
         if hover_bone_id == -1 && !shared.input.left_down && !shared.camera.on_ui && selected_mesh {
             let wv = &temp_arm.bones[b].world_verts;
             for (i, chunk) in temp_arm.bones[b].indices.chunks_exact(3).enumerate() {
@@ -172,12 +172,10 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     + (v[c1].pos - tb.pos) * bary.1
                     + (v[c2].pos - tb.pos) * bary.2;
 
-                if shared.ui.showing_mesh && shared.input.right_clicked && !removed_vert {
+                if shared.edit_mode.showing_mesh && shared.input.right_clicked && !removed_vert {
                     let bone = &mut shared.selected_bone_mut().unwrap();
                     if bone.indices.len() == 6 {
-                        shared
-                            .events
-                            .open_modal(shared.ui.loc("indices_limit"), false);
+                        shared.events.open_modal("indices_limit", false);
                         break;
                     }
                     bone.indices.remove(i * 3);
@@ -187,7 +185,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     break;
                 }
 
-                if shared.ui.showing_mesh && shared.input.left_clicked && new_vert == None {
+                if shared.edit_mode.showing_mesh && shared.input.left_clicked && new_vert == None {
                     new_vert = Some(vert(Some(pos), None, Some(uv)));
                     break;
                 }
@@ -199,7 +197,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
                 );
                 let pixel_alpha = img.get_pixel(pos.x as u32, pos.y as u32).0[3];
-                if pixel_alpha == 255 && !shared.ui.showing_mesh {
+                if pixel_alpha == 255 && !shared.edit_mode.showing_mesh {
                     hover_bone_id = temp_arm.bones[b].id;
                     break;
                 }
@@ -230,9 +228,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
         // select bone on click
         if shared.input.left_clicked && hover_bone_id == temp_arm.bones[b].id {
-            if shared.ui.setting_ik_target {
+            if shared.edit_mode.setting_ik_target {
                 shared.selected_bone_mut().unwrap().ik_target_id = click_on_hover_id;
-                shared.ui.setting_ik_target = false;
+                shared.edit_mode.setting_ik_target = false;
             } else {
                 let idx = &mut shared.selections.bone_idx;
                 let bones = &shared.armature.bones;
@@ -257,7 +255,9 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             continue;
         }
 
-        if shared.ui.showing_mesh && shared.selected_bone().unwrap().id == temp_arm.bones[b].id {
+        if shared.edit_mode.showing_mesh
+            && shared.selected_bone().unwrap().id == temp_arm.bones[b].id
+        {
             continue;
         }
 
@@ -300,7 +300,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         }
     }
 
-    if shared.ui.showing_mesh || shared.ui.setting_bind_verts {
+    if shared.edit_mode.showing_mesh || shared.edit_mode.setting_bind_verts {
         let id = shared.selected_bone().unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
         let tex = temp_arm.tex_of(bone.id).unwrap();
@@ -351,7 +351,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
         draw(&None, &verts, &indices, render_pass, device);
     }
 
-    if !shared.ui.setting_bind_verts {
+    if !shared.edit_mode.setting_bind_verts {
         if let Some(mut vert) = new_vert {
             let sel_bone = shared.selected_bone().unwrap().clone();
             shared.undo_states.new_undo_bone(&sel_bone);
@@ -438,7 +438,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
 
     // move camera
     if (shared.input.holding_mod || shared.input.right_down) && !shared.camera.on_ui {
-        shared.ui.cursor_icon = egui::CursorIcon::Move;
+        shared.events.cursor_icon(egui::CursorIcon::Move);
         shared.camera.pos += mouse_vel(&shared.input, &shared.camera) * shared.camera.zoom;
         return;
     }
@@ -451,14 +451,14 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             || (bone.ik_disabled || shared.armature.bone_eff(bone.id) == JointEffector::None);
     }
 
-    if shared.ui.showing_mesh || !ik_disabled {
+    if shared.edit_mode.showing_mesh || !ik_disabled {
         return;
     }
 
     // editing bone
     let sel = shared.selections.bone_idx;
     let input = &shared.input;
-    if shared.camera.on_ui || shared.ui.polar_modal {
+    if shared.camera.on_ui {
         shared.renderer.editing_bone = false;
     } else if sel != usize::MAX && input.left_down && hover_bone_id == -1 && input.down_dur > 5 {
         if shared.edit_mode.current == EditModes::Rotate {
@@ -482,7 +482,7 @@ pub fn render(render_pass: &mut RenderPass, device: &Device, shared: &mut Shared
             shared.renderer.editing_bone = true;
         }
 
-        shared.ui.cursor_icon = egui::CursorIcon::Crosshair;
+        shared.events.cursor_icon(egui::CursorIcon::Crosshair);
 
         let bone = find_bone(&temp_arm.bones, shared.selected_bone().unwrap().id).unwrap();
 
@@ -842,7 +842,7 @@ fn winding_sort(mut points: Vec<Vec2>) -> Vec<Vec2> {
 pub fn edit_bone(shared: &mut Shared, bone: &Bone, bones: &Vec<Bone>) {
     let mut anim_id = shared.selections.anim;
     let anim_frame = shared.selections.anim_frame;
-    if !shared.ui.is_animating(&shared.selections) {
+    if !shared.edit_mode.anim_open {
         anim_id = usize::MAX;
     }
 
@@ -1015,8 +1015,7 @@ pub fn bone_vertices(
         add_point!(verts, indices, wv);
         if shared.input.right_clicked {
             if world_verts.len() <= 4 {
-                let str_vert_limit = &shared.ui.loc("vert_limit");
-                shared.events.open_modal(str_vert_limit.to_string(), false);
+                shared.events.open_modal("vert_limit", false);
             } else {
                 let tex_img = sel_tex_img(&shared.selected_bone().unwrap(), &shared.armature);
                 let verts = &mut shared.selected_bone_mut().unwrap().vertices;
@@ -1037,7 +1036,7 @@ pub fn bone_vertices(
                 break;
             }
         }
-        if !shared.ui.setting_bind_verts {
+        if !shared.edit_mode.setting_bind_verts {
             if shared.input.left_pressed {
                 let sel_bone = shared.selected_bone().unwrap().clone();
                 shared.undo_states.new_undo_bone(&sel_bone);

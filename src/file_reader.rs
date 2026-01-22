@@ -99,7 +99,7 @@ pub fn read_image_loaders(
     }
 
     if image.clone().into_rgba8().to_vec().len() == 0 {
-        shared.events.open_modal(shared.ui.loc("img_err"), false);
+        shared.events.open_modal("img_err", false);
         return;
     }
 
@@ -453,8 +453,7 @@ pub fn read_psd(
         target_bone.zindex = 0;
     }
 
-    let str_psd = &shared.ui.loc("psd_imported");
-    shared.events.open_modal(str_psd.to_string(), false);
+    shared.events.open_modal("psd_imported", false);
     shared.ui.startup_window = false;
 }
 
@@ -537,9 +536,9 @@ pub fn read_import(
         *shared.import_contents.lock().unwrap() = vec![];
 
         file = std::fs::File::open(shared.file_name.lock().unwrap().to_string());
-        if let Err(err) = file {
-            let text = shared.ui.loc("import_err").to_owned() + &err.to_string();
-            shared.events.open_modal(text.to_string(), false);
+        if let Err(_) = file {
+            //let text = shared.ui.loc("import_err").to_owned() + &err.to_string();
+            shared.events.open_modal("import_err", false);
             return;
         }
     }
@@ -580,8 +579,7 @@ pub fn read_import(
             read_psd(file, shared, queue, device, bgl, context)
         }
         _ => {
-            let text = &shared.ui.loc("import_unrecognized");
-            shared.events.open_modal(text.to_string(), false);
+            shared.events.open_modal("import_unrecognized", false);
         }
     };
 

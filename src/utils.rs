@@ -515,6 +515,7 @@ pub fn import<R: Read + std::io::Seek>(
         animations: root.animations,
         styles: root.styles,
         tex_data: vec![],
+        animated_bones: vec![],
     };
 
     for bone in &mut shared.armature.bones {
@@ -786,7 +787,17 @@ pub fn without_unicode(str: &str) -> &str {
     str.split('\u{0000}').collect::<Vec<_>>()[0]
 }
 
-pub fn process_thumbnail(buffer: &wgpu::Buffer, resolution: Vec2) -> Vec<u8> {
+pub fn process_thumbnail(
+    buffer: &wgpu::Buffer,
+    device: &wgpu::Device,
+    resolution: Vec2,
+) -> Vec<u8> {
+    device
+        .poll(wgpu::PollType::Wait {
+            submission_index: None,
+            timeout: None,
+        })
+        .unwrap();
     let view = buffer.slice(..).get_mapped_range();
 
     let mut rgb = vec![0u8; (resolution.x * resolution.y * 3.) as usize];
@@ -872,5 +883,31 @@ pub fn exit(undo_states: &mut UndoStates, config: &Config, ui: &mut Ui) {
         ui.donating_modal = true;
     } else if !ui.donating_modal {
         ui.exiting = true;
+    }
+}
+
+pub fn animate_bones(armature: &mut Armature, selection: &SelectionState, edit_mode: &EditMode) {
+    // runtime:
+    // armature bones should normally be mutable to animation for smoothing,
+    // but that's not ideal when editing
+    armature.animated_bones = armature.bones.clone();
+
+    let anims = &armature.animations;
+    let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
+
+    if is_any_anim_playing {
+        // runtime: playing animations (single & simultaneous)
+        for a in 0..armature.animations.len() {
+            let anim = &mut armature.animations[a];
+            if anim.elapsed == None {
+                continue;
+            }
+            let frame = anim.set_frame();
+            let anim_bones = armature.animated_bones.clone();
+            armature.animated_bones = armature.animate(a, frame, Some(&anim_bones));
+        }
+    } else if edit_mode.anim_open && selection.anim != usize::MAX && selection.anim_frame != -1 {
+        // display the selected animation's frame
+        armature.animated_bones = armature.animate(selection.anim, selection.anim_frame, None);
     }
 }

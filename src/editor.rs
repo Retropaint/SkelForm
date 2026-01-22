@@ -3,16 +3,16 @@ use std::collections::HashMap;
 use crate::*;
 
 pub fn iterate_events(
+    input: &InputStates,
+    config: &Config,
     events: &mut EventState,
     camera: &mut Camera,
-    input: &InputStates,
     edit_mode: &mut EditMode,
     selections: &mut SelectionState,
     undo_states: &mut UndoStates,
     armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
-    config: &Config,
 ) {
     let mut last_event = Events::None;
     while events.events.len() > 0 {
@@ -25,7 +25,12 @@ pub fn iterate_events(
             }
         }
 
-        if events.events[0] == Events::MoveTexture {
+        if events.events[0] == Events::ToggleBoneFolded {
+            armature.bones[events.values[0] as usize].folded = events.values[1] == 1.;
+
+            events.events.remove(0);
+            events.values.drain(0..=1);
+        } else if events.events[0] == Events::MoveTexture {
             let new_idx = events.values[0] as usize;
             let sel = &selections;
             let textures = &mut armature.sel_style_mut(sel).unwrap().textures;
@@ -46,8 +51,7 @@ pub fn iterate_events(
             let filter = tex_names.iter().filter(|name| **name == trimmed);
             if filter.count() > 1 {
                 style.textures[t].name = og_name.clone();
-                let same_name_str = ui.loc("styles_modal.same_name");
-                events.open_modal(same_name_str, false);
+                events.open_modal("styles_modal.same_name", false);
             }
 
             if !config.keep_tex_str {
@@ -176,12 +180,21 @@ pub fn process_event(
         Events::EditModeMove => edit_mode.current = EditModes::Move,
         Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
         Events::EditModeScale => edit_mode.current = EditModes::Scale,
-        Events::UnselectAll => unselect_all(selections, ui),
+        Events::UnselectAll => unselect_all(selections, edit_mode),
         Events::Undo => undo_redo(true, undo_states, armature, selections),
         Events::Redo => undo_redo(false, undo_states, armature, selections),
         Events::DeleteAnim => _ = armature.animations.remove(value as usize),
         Events::RenameAnimation => armature.animations[value as usize].name = str_value,
         Events::RenameStyle => armature.styles[value as usize].name = str_value,
+        Events::CursorIcon => match value {
+            0. => ui.cursor_icon = egui::CursorIcon::Default,
+            1. => ui.cursor_icon = egui::CursorIcon::Move,
+            2. => ui.cursor_icon = egui::CursorIcon::Crosshair,
+            3. => ui.cursor_icon = egui::CursorIcon::Grab,
+            4. => ui.cursor_icon = egui::CursorIcon::Grabbing,
+            5. => ui.cursor_icon = egui::CursorIcon::PointingHand,
+            _ => {}
+        },
         Events::NewStyle => {
             let ids = armature.styles.iter().map(|set| set.id).collect();
             armature.styles.push(crate::Style {
@@ -213,11 +226,11 @@ pub fn process_event(
         Events::OpenModal => {
             ui.modal = true;
             ui.forced_modal = value == 1.;
-            ui.headline = str_value;
+            ui.headline = ui.loc(&str_value);
         }
         Events::SelectAnimFrame => {
             let selected_anim = selections.anim;
-            unselect_all(selections, ui);
+            unselect_all(selections, edit_mode);
             selections.anim = selected_anim;
             selections.anim_frame = value as i32;
         }
@@ -352,17 +365,20 @@ pub fn process_event(
             ui.rename_id = "anim_".to_owned() + &idx.to_string();
             ui.edit_value = Some("".to_string());
         }
+        Events::DuplicateAnim => armature
+            .animations
+            .push(armature.animations[value as usize].clone()),
         _ => {}
     }
 }
 
-fn unselect_all(selections: &mut SelectionState, ui: &mut crate::Ui) {
+fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode) {
     selections.bone_idx = usize::MAX;
     selections.bone_ids = vec![];
     selections.anim_frame = -1;
     selections.anim = usize::MAX;
     selections.bind = -1;
-    ui.showing_mesh = false;
+    edit_mode.showing_mesh = false;
 }
 
 pub fn undo_redo(

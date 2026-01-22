@@ -14,8 +14,7 @@ pub fn draw(shared: &mut shared::Shared, ctx: &egui::Context) {
         ..Default::default()
     });
     modal.show(ctx, |modal_ui| {
-        let window =
-            shared::Vec2::new(shared.camera.window.x / 3., shared.camera.window.y / 3.);
+        let window = shared::Vec2::new(shared.camera.window.x / 3., shared.camera.window.y / 3.);
         modal_ui.set_width(window.x.min(500.));
         modal_ui.set_height(window.y.min(500.));
 

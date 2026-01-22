@@ -191,8 +191,7 @@ fn draw_animations_list(
                         ui.context_delete(shared_ui, config, events, "delete_anim", del_anim);
                         let duplicate_str = shared_ui.loc("keyframe_editor.duplicate");
                         if ui.context_button(duplicate_str, config).clicked() {
-                            let anims = &armature.animations;
-                            //anims.push(anims[i].clone());
+                            events.duplicate_anim(i);
                             shared_ui.context_menu.close();
                         }
                     });
@@ -311,7 +310,10 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
 
                     let parents = shared.armature.get_all_parents(kf.bone_id);
                     for parent in &parents {
-                        shared.armature.find_bone_mut(parent.id).unwrap().folded = false;
+                        let bones = &shared.armature.bones;
+                        let idx = bones.iter().position(|b| b.id == parent.id).unwrap();
+                        let folded = shared.armature.bones[idx].folded;
+                        shared.events.toggle_bone_folded(idx, false);
                     }
                 }
                 last_bone_id = kf.bone_id;
@@ -601,8 +603,9 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                     anim_mut.fps = value as i32;
                     anim_mut.keyframes = anim_clone.keyframes;
                 } else {
-                    let str_invalid = shared.ui.loc("keyframe_editor.invalid_fps").to_string();
-                    shared.events.open_modal(str_invalid, false);
+                    shared
+                        .events
+                        .open_modal("keyframe_editor.invalid_fps", false);
                 }
             }
             shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;

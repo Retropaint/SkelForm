@@ -164,7 +164,6 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
     ui.set_min_width(ui.available_width());
     let mut idx: i32 = -1;
     let mut is_hovering = false;
-    let anim_bones = shared.animate_bones();
 
     for b in 0..shared.armature.bones.len() {
         idx += 1;
@@ -184,18 +183,18 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
         // disable selected bone and it's children from armature if setting IK target,
         // since IK target cannot be itself
-        let setting_ik_target = shared.ui.setting_ik_target
+        let setting_ik_target = shared.edit_mode.setting_ik_target
             && (bone_id == selected_bone_id
                 || parents.iter().find(|bone| bone.id == selected_bone_id) != None);
 
         ui.add_enabled_ui(!setting_ik_target, |ui| {
             ui.horizontal(|ui| {
-                let hidden = anim_bones[b].is_hidden;
+                let hidden = shared.armature.animated_bones[b].is_hidden;
                 let hidden_icon = if hidden { "---" } else { "👁" };
                 let id = "bone_hidden".to_owned() + &b.to_string();
                 if bone_label(hidden_icon, ui, id, Vec2::new(-2., 18.), &shared.config).clicked() {
                     let mut hidden: i32 = 0;
-                    if !anim_bones[b].is_hidden {
+                    if !shared.armature.animated_bones[b].is_hidden {
                         hidden = 1;
                     }
                     let sel = shared.selections.anim;
@@ -232,7 +231,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                 let mut selected_col = shared.config.colors.dark_accent;
                 let mut cursor = egui::CursorIcon::PointingHand;
 
-                if anim_bones[b].is_hidden {
+                if shared.armature.animated_bones[b].is_hidden {
                     selected_col = shared.config.colors.dark_accent;
                 }
 
@@ -285,7 +284,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                         let name = shared.armature.bones[b].name.to_string();
                         let mut text_col = shared.config.colors.text;
-                        if anim_bones[b].is_hidden {
+                        if shared.armature.animated_bones[b].is_hidden {
                             text_col = shared.config.colors.dark_accent;
                             text_col += Color::new(40, 40, 40, 0)
                         }
@@ -319,18 +318,18 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         shared.ui.rename_id = context_id.clone();
                         shared.ui.edit_value = Some(shared.armature.bones[b].name.clone());
                     } else {
-                        if shared.ui.setting_ik_target {
+                        if shared.edit_mode.setting_ik_target {
                             let sel_bone = shared.selected_bone().unwrap().clone();
                             shared.undo_states.new_undo_bone(&sel_bone);
                             shared.selected_bone_mut().unwrap().ik_target_id = bone_id;
-                            shared.ui.setting_ik_target = false;
-                        } else if shared.ui.setting_bind_bone {
+                            shared.edit_mode.setting_ik_target = false;
+                        } else if shared.edit_mode.setting_bind_bone {
                             let sel_bone = shared.selected_bone().unwrap().clone();
                             shared.undo_states.new_undo_bone(&sel_bone);
                             let idx = shared.selections.bind as usize;
                             let bind = &mut shared.selected_bone_mut().unwrap().binds[idx];
                             bind.bone_id = bone_id;
-                            shared.ui.setting_bind_bone = false;
+                            shared.edit_mode.setting_bind_bone = false;
                         } else {
                             if !shared.input.holding_mod && !shared.input.holding_shift {
                                 shared.events.select_bone(idx as usize);

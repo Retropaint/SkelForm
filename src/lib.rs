@@ -250,8 +250,7 @@ impl ApplicationHandler for App {
         // If the gui didn't consume the event, handle it
         match event {
             WindowEvent::HoveredFile(_) => {
-                let str_drop_file = self.shared.ui.loc("drop_file").to_string();
-                self.shared.events.open_modal(str_drop_file, true);
+                self.shared.events.open_modal("drop_file", true);
             }
             WindowEvent::HoveredFileCancelled => {
                 self.shared.ui.modal = false;
@@ -302,6 +301,12 @@ impl ApplicationHandler for App {
 
                 let input = gui_state.take_egui_input(&window);
                 gui_state.egui_ctx().begin_pass(input);
+
+                utils::animate_bones(
+                    &mut self.shared.armature,
+                    &self.shared.selections,
+                    &self.shared.edit_mode,
+                );
 
                 // ui logic handled in ui.rs
                 ui::draw(gui_state.egui_ctx(), &mut self.shared);
@@ -588,16 +593,16 @@ impl BackendRenderer {
         }
 
         editor::iterate_events(
+            &shared.input,
+            &shared.config,
             &mut shared.events,
             &mut shared.camera,
-            &shared.input,
             &mut shared.edit_mode,
             &mut shared.selections,
             &mut shared.undo_states,
             &mut shared.armature,
             &mut shared.copy_buffer,
             &mut shared.ui,
-            &shared.config
         );
     }
 
@@ -608,8 +613,7 @@ impl BackendRenderer {
             return;
         }
         if *shared.saving.lock().unwrap() == Saving::CustomPath {
-            let str_saving = &shared.ui.loc("saving");
-            shared.events.open_modal(str_saving.to_string(), true);
+            shared.events.open_modal("saving", true);
         }
         self.take_screenshot(shared);
         let buffer = shared.rendered_frames[0].buffer.clone();
@@ -631,6 +635,7 @@ impl BackendRenderer {
         *shared.saving.lock().unwrap() = Saving::None;
         let autosaving = *shared.saving.lock().unwrap() == Saving::Autosaving;
         let save_finished = Arc::clone(&shared.save_finished);
+        let device = self.gpu.device.clone();
         std::thread::spawn(move || {
             let mut png_bufs = vec![];
             let mut sizes = vec![];
@@ -648,7 +653,7 @@ impl BackendRenderer {
             let options = zip::write::FullFileOptions::default()
                 .compression_method(zip::CompressionMethod::Stored);
 
-            let thumb_buf = utils::process_thumbnail(&buffer, screenshot_res);
+            let thumb_buf = utils::process_thumbnail(&buffer, &device, screenshot_res);
 
             // save relevant files into the zip
             zip.start_file("armature.json", options.clone()).unwrap();

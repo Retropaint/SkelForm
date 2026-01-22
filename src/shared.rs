@@ -478,10 +478,6 @@ pub struct Ui {
     pub keyframe_panel_rect: Option<egui::Rect>,
     pub top_panel_rect: Option<egui::Rect>,
 
-    pub showing_mesh: bool,
-    pub setting_bind_verts: bool,
-    pub setting_bind_bone: bool,
-
     pub rename_id: String,
     pub original_name: String,
 
@@ -519,8 +515,6 @@ pub struct Ui {
     pub showing_samples: bool,
 
     pub selected_path: String,
-
-    pub setting_ik_target: bool,
 
     // not visually indicated; just used for `double click > rename` logic
     pub selected_tex: i32,
@@ -567,8 +561,8 @@ pub struct Ui {
 }
 
 impl Ui {
-    pub fn is_animating(&self, selections: &SelectionState) -> bool {
-        self.anim.open && selections.anim != usize::MAX
+    pub fn is_animating(&self, edit_mode: &EditMode, selections: &SelectionState) -> bool {
+        edit_mode.anim_open && selections.anim != usize::MAX
     }
 
     pub fn context_id_parsed(&self) -> i32 {
@@ -796,7 +790,6 @@ pub enum Keys {
 
 #[derive(Clone, Default)]
 pub struct UiAnim {
-    pub open: bool,
     pub hovering_frame: i32,
     pub timeline_zoom: f32,
     pub lines_x: Vec<f32>,
@@ -987,6 +980,8 @@ pub struct Armature {
     pub styles: Vec<Style>,
     #[serde(skip)]
     pub tex_data: Vec<TextureData>,
+    #[serde(skip)]
+    pub animated_bones: Vec<Bone>,
 }
 
 impl Armature {
@@ -1655,6 +1650,11 @@ pub struct EditMode {
     pub is_moving: bool,
     pub is_scaling: bool,
     pub is_rotating: bool,
+    pub showing_mesh: bool,
+    pub setting_bind_verts: bool,
+    pub setting_bind_bone: bool,
+    pub setting_ik_target: bool,
+    pub anim_open: bool,
 }
 
 #[derive(Default, PartialEq, Debug)]
@@ -1824,6 +1824,9 @@ pub enum Events {
     MoveStyle,
     MigrateTexture,
     MoveTexture,
+    CursorIcon,
+    DuplicateAnim,
+    ToggleBoneFolded,
 }
 
 enum_string!(Events);
@@ -1896,10 +1899,10 @@ impl EventState {
         self.str_values.push("".to_string());
     }
 
-    pub fn open_modal(&mut self, headline: String, forced: bool) {
+    pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
         self.values.push(if forced { 1. } else { 0. });
-        self.str_values.push(headline);
+        self.str_values.push(loc_headline.to_string());
     }
 
     pub fn open_polar_modal(&mut self, polar_id: PolarId, headline: String) {
@@ -1998,6 +2001,24 @@ impl EventState {
         self.values.push(new_idx as f32);
         self.values.push(old_idx as f32);
     }
+
+    pub fn cursor_icon(&mut self, new_icon: egui::CursorIcon) {
+        self.events.push(Events::CursorIcon);
+        self.values.push((new_icon as usize) as f32);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn duplicate_anim(&mut self, anim_idx: usize) {
+        self.events.push(Events::DuplicateAnim);
+        self.values.push(anim_idx as f32);
+        self.str_values.push("".to_string());
+    }
+
+    pub fn toggle_bone_folded(&mut self, bone_idx: usize, folded: bool) {
+        self.events.push(Events::ToggleBoneFolded);
+        self.values.push(bone_idx as f32);
+        self.values.push(if folded { 1. } else { 0. });
+    }
 }
 
 #[derive(Default, Clone)]
@@ -2092,46 +2113,13 @@ impl Shared {
     }
 
     pub fn save_edited_bone(&mut self) {
-        if self.ui.is_animating(&self.selections) {
+        if self.ui.is_animating(&self.edit_mode, &self.selections) {
             let anim = self.selected_animation().unwrap().clone();
             self.undo_states.new_undo_anim(&anim);
         } else {
             self.undo_states
                 .new_undo_bone(&self.selected_bone().unwrap().clone());
         }
-    }
-
-    pub fn animate_bones(&mut self) -> Vec<Bone> {
-        // runtime:
-        // armature bones should normally be mutable to animation for smoothing,
-        // but that's not ideal when editing
-        let mut animated_bones = self.armature.bones.clone();
-
-        let anims = &self.armature.animations;
-        let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
-
-        let anim = &self.ui.anim;
-        if is_any_anim_playing {
-            // runtime: playing animations (single & simultaneous)
-            for a in 0..self.armature.animations.len() {
-                let anim = &mut self.armature.animations[a];
-                if anim.elapsed == None {
-                    continue;
-                }
-                let frame = anim.set_frame();
-                animated_bones = self.armature.animate(a, frame, Some(&animated_bones));
-            }
-        } else if anim.open
-            && self.selections.anim != usize::MAX
-            && self.selections.anim_frame != -1
-        {
-            // display the selected animation's frame
-            animated_bones =
-                self.armature
-                    .animate(self.selections.anim, self.selections.anim_frame, None);
-        }
-
-        animated_bones
     }
 
     pub fn edit_bone(

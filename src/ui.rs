@@ -1,6 +1,4 @@
 //! Core user interface (UI) logic.
-use std::collections::HashMap;
-
 use egui::{Color32, Context, Shadow, Stroke};
 
 use crate::*;
@@ -163,8 +161,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         };
 
         if raw_ver == "err" {
-            let str = shared.ui.loc("startup.error_update");
-            shared.events.open_modal(str.to_string(), false);
+            shared.events.open_modal("startup.error_update", false);
         } else if raw_ver != "" {
             let ver_str = raw_ver.split(' ').collect::<Vec<_>>();
             let ver_idx = ver_str[0].parse::<i32>().unwrap();
@@ -176,8 +173,9 @@ pub fn draw(context: &Context, shared: &mut Shared) {
                     + "\nGo to version page and download manually?";
                 shared.events.open_polar_modal(PolarId::NewUpdate, str);
             } else {
-                let str = "No updates available. This is the latest version.".to_string();
-                shared.events.open_modal(str, false);
+                shared
+                    .events
+                    .open_modal("No updates available. This is the latest version.", false);
             }
         }
 
@@ -185,7 +183,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     }
     style_once!(top_panel(context, shared));
 
-    if shared.ui.anim.open {
+    if shared.edit_mode.anim_open {
         style_once!(keyframe_editor::draw(context, shared));
     }
 
@@ -201,7 +199,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
     let mut enable_bone_panel = true;
     if let Some(_) = shared.selected_bone() {
-        enable_bone_panel = !shared.ui.setting_ik_target;
+        enable_bone_panel = !shared.edit_mode.setting_ik_target;
     }
 
     // get current properties of selected bone, including animations
@@ -211,7 +209,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     {
         selected_bone = shared.selected_bone().unwrap().clone();
 
-        if shared.ui.anim.open && shared.selections.anim != usize::MAX {
+        if shared.edit_mode.anim_open && shared.selections.anim != usize::MAX {
             let frame = shared.selections.anim_frame;
             let animated_bones = shared.armature.animate(shared.selections.anim, frame, None);
             selected_bone = animated_bones[shared.selections.bone_idx].clone();
@@ -265,7 +263,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
             shared.ui.camera_bar.pos.x =
                 bone_panel.left() - shared.ui.camera_bar.scale.x - ((6. * 3.3) as f32).ceil();
-            if keyframe_panel != None && shared.ui.anim.open {
+            if keyframe_panel != None && shared.edit_mode.anim_open {
                 shared.ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
                 shared.ui.camera_bar.pos.y = context.content_rect().bottom();
@@ -279,7 +277,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             shared.ui.anim_bar.pos = Vec2::new(0., top_panel.bottom());
 
             shared.ui.camera_bar.pos.x = bone_panel.left() - shared.ui.camera_bar.scale.x - 21.;
-            if keyframe_panel != None && shared.ui.anim.open {
+            if keyframe_panel != None && shared.edit_mode.anim_open {
                 shared.ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
                 shared.ui.camera_bar.pos.y = context.content_rect().bottom();
@@ -294,7 +292,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             shared.ui.anim_bar.pos.y = top_panel.bottom();
 
             shared.ui.camera_bar.pos.x = bone_panel.right() + 7.;
-            if keyframe_panel != None && shared.ui.anim.open {
+            if keyframe_panel != None && shared.edit_mode.anim_open {
                 shared.ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
                 shared.ui.camera_bar.pos.y = context.content_rect().bottom();
@@ -447,7 +445,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
             return;
         }
 
-        if no_modals && !ui.setting_ik_target {
+        if no_modals && !shared.edit_mode.setting_ik_target {
             shared.events.new(Events::UnselectAll);
         }
 
@@ -457,7 +455,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
             toggleElement(false, "file-dialog".to_string());
         }
 
-        shared.ui.setting_ik_target = false;
+        shared.edit_mode.setting_ik_target = false;
     }
 }
 
@@ -859,28 +857,26 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
                 }
             }
             if !ffmpeg {
-                let headline = shared.ui.loc("startup.error_ffmpeg");
-                shared.events.open_modal(headline.to_string(), false);
+                shared.events.open_modal("startup.error_ffmpeg", false);
                 return;
             }
 
             // complain if there's no proper animation to export
-            let str = "No animation available.".to_string();
             if shared.selections.anim == usize::MAX {
                 let anims = &shared.armature.animations;
                 if anims.len() == 0 || anims[0].keyframes.len() == 0 {
-                    shared.events.open_modal(str, false);
+                    shared.events.open_modal("No animation available.", false);
                     return;
                 } else {
                     shared.selections.anim = 0;
                 }
             } else if shared.last_keyframe() == None {
-                shared.events.open_modal(str, false);
+                shared.events.open_modal("No animation available.", false);
                 return;
             }
 
             shared.recording = true;
-            shared.ui.anim.open = true;
+            shared.edit_mode.anim_open = true;
             shared.done_recording = true;
             shared.events.select_anim_frame(0);
             shared.ui.anim.loops = 1;
@@ -965,7 +961,7 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
                     })
                 };
             }
-            let ik_disabled = !shared.ui.showing_mesh && ik_disabled;
+            let ik_disabled = !shared.edit_mode.showing_mesh && ik_disabled;
             let rot = ik_disabled || is_end;
             edit_mode_button!(
                 &shared.ui.loc("move"),
@@ -1003,15 +999,15 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
     window.show(egui_ctx, |ui| {
         ui.horizontal(|ui| {
             let str_armature = &shared.ui.loc("armature_panel.heading");
-            if selection_button(str_armature, !shared.ui.anim.open, ui).clicked() {
-                shared.ui.anim.open = false;
+            if selection_button(str_armature, !shared.edit_mode.anim_open, ui).clicked() {
+                shared.edit_mode.anim_open = false;
                 for anim in &mut shared.armature.animations {
                     anim.elapsed = None;
                 }
             }
             let str_animation = &shared.ui.loc("keyframe_editor.heading");
-            if selection_button(str_animation, shared.ui.anim.open, ui).clicked() {
-                shared.ui.anim.open = true;
+            if selection_button(str_animation, shared.edit_mode.anim_open, ui).clicked() {
+                shared.edit_mode.anim_open = true;
             }
             shared.ui.anim_bar.scale = ui.min_rect().size().into();
         });
