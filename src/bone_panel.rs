@@ -144,7 +144,7 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
                 shared
                     .events
                     .edit_bone(bone.id, $element, $float, anim_id, frame);
-                *shared.saving.lock().unwrap() = shared::Saving::Autosaving;
+                *shared.ui.saving.lock().unwrap() = shared::Saving::Autosaving;
             }
             if $label != "" {
                 $ui.label($label);

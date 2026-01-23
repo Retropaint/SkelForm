@@ -39,6 +39,7 @@ pub fn iterate_events(
         }
 
         if events.events[0] == Events::EditBone {
+            ui.cursor_icon = egui::CursorIcon::Crosshair;
             let bone_id = events.values[0] as i32;
             let element = AnimElement::from_repr(events.values[1] as usize).unwrap();
             let value = events.values[2] as f32;
@@ -298,15 +299,6 @@ pub fn process_event(
             camera.zoom = 2000.;
             *armature = Armature::default();
         }
-        Events::CursorIcon => match value {
-            0. => ui.cursor_icon = egui::CursorIcon::Default,
-            1. => ui.cursor_icon = egui::CursorIcon::Move,
-            2. => ui.cursor_icon = egui::CursorIcon::Crosshair,
-            3. => ui.cursor_icon = egui::CursorIcon::Grab,
-            4. => ui.cursor_icon = egui::CursorIcon::Grabbing,
-            5. => ui.cursor_icon = egui::CursorIcon::PointingHand,
-            _ => {}
-        },
         Events::NewStyle => {
             let ids = armature.styles.iter().map(|set| set.id).collect();
             armature.styles.push(crate::Style {
@@ -479,6 +471,7 @@ pub fn process_event(
                 let bone = armature.bones[selections.bone_idx as usize].clone();
                 undo_states.new_undo_bone(&bone);
             }
+            *ui.saving.lock().unwrap() = Saving::Autosaving;
         }
         Events::ApplySettings => {
             ui.scale = config.ui_scale;
@@ -504,6 +497,31 @@ pub fn process_event(
                 selections.anim,
                 selections.anim_frame,
             );
+        }
+        Events::MoveCamera => {
+            camera.pos += renderer::mouse_vel(&input, &camera) * camera.zoom;
+        }
+        Events::RemoveVertex => {
+            let sel = &selections;
+            #[rustfmt::skip]
+            macro_rules! verts {() => { armature.sel_bone_mut(&sel).unwrap().vertices }}
+
+            let tex_img = renderer::sel_tex_img(&armature.sel_bone(&sel).unwrap(), &armature);
+            verts!().remove(value as usize);
+            verts!() = renderer::sort_vertices(verts!().clone());
+            armature.sel_bone_mut(&sel).unwrap().indices =
+                renderer::triangulate(&verts!(), &tex_img);
+
+            // remove this vert from its binds
+            let verts = verts!().clone();
+            'bind: for bind in &mut armature.sel_bone_mut(&sel).unwrap().binds {
+                for v in 0..bind.verts.len() {
+                    if bind.verts[v].id == verts[value as usize].id as i32 {
+                        bind.verts.remove(v);
+                        break 'bind;
+                    }
+                }
+            }
         }
         _ => {}
     }

@@ -496,14 +496,14 @@ impl BackendRenderer {
                 &self.bind_group_layout,
             ));
         }
-        if *shared.save_finished.lock().unwrap() {
+        if *shared.ui.save_finished.lock().unwrap() {
             shared.undo_states.prev_undo_actions = shared.undo_states.undo_actions.clone();
             shared.ui.modal = false;
-            *shared.save_finished.lock().unwrap() = false;
+            *shared.ui.save_finished.lock().unwrap() = false;
         }
-        if *shared.saving.lock().unwrap() != shared::Saving::None {
+        if *shared.ui.saving.lock().unwrap() != shared::Saving::None {
             #[cfg(target_arch = "wasm32")]
-            if *shared.saving.lock().unwrap() == shared::Saving::CustomPath {
+            if *shared.ui.saving.lock().unwrap() == shared::Saving::CustomPath {
                 utils::save_web(&shared);
             }
             #[cfg(not(target_arch = "wasm32"))]
@@ -581,7 +581,18 @@ impl BackendRenderer {
         render_pass.set_pipeline(&self.scene.pipeline);
 
         // core rendering logic handled in renderer.rs
-        renderer::render(&mut render_pass, &self.gpu.device, shared);
+        renderer::render(
+            &mut render_pass,
+            &self.gpu.device,
+            &shared.camera,
+            &shared.input,
+            &mut shared.armature,
+            &shared.config,
+            &shared.edit_mode,
+            &mut shared.selections,
+            &mut shared.renderer,
+            &mut shared.events,
+        );
 
         self.egui_renderer.render(
             &mut render_pass.forget_lifetime(),
@@ -609,11 +620,11 @@ impl BackendRenderer {
 
     #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&mut self, shared: &mut Shared) {
-        if shared.time - shared.last_autosave < shared.config.autosave_frequency as f32 {
-            *shared.saving.lock().unwrap() = Saving::None;
+        if shared.edit_mode.time - shared.last_autosave < shared.config.autosave_frequency as f32 {
+            *shared.ui.saving.lock().unwrap() = Saving::None;
             return;
         }
-        if *shared.saving.lock().unwrap() == Saving::CustomPath {
+        if *shared.ui.saving.lock().unwrap() == Saving::CustomPath {
             shared.events.open_modal("saving", true);
         }
         self.take_screenshot(shared);
@@ -623,19 +634,19 @@ impl BackendRenderer {
         let mut armature = shared.armature.clone();
         let camera = shared.camera.clone();
         let mut save_path = shared.ui.file_name.lock().unwrap().clone();
-        if *shared.saving.lock().unwrap() == shared::Saving::Autosaving {
+        if *shared.ui.saving.lock().unwrap() == shared::Saving::Autosaving {
             let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
             let dir = dir_init.unwrap().data_dir().to_str().unwrap().to_string();
             save_path = dir + "/autosave.skf";
-            shared.last_autosave = shared.time;
+            shared.last_autosave = shared.edit_mode.time;
         }
         if !shared.ui.recent_file_paths.contains(&save_path) {
             shared.ui.recent_file_paths.push(save_path.clone());
         }
         utils::save_to_recent_files(&shared.ui.recent_file_paths);
-        *shared.saving.lock().unwrap() = Saving::None;
-        let autosaving = *shared.saving.lock().unwrap() == Saving::Autosaving;
-        let save_finished = Arc::clone(&shared.save_finished);
+        *shared.ui.saving.lock().unwrap() = Saving::None;
+        let autosaving = *shared.ui.saving.lock().unwrap() == Saving::Autosaving;
+        let save_finished = Arc::clone(&shared.ui.save_finished);
         let device = self.gpu.device.clone();
         std::thread::spawn(move || {
             let mut png_bufs = vec![];

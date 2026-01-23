@@ -566,6 +566,9 @@ pub struct Ui {
     pub file_name: Arc<Mutex<String>>,
     pub img_contents: Arc<Mutex<Vec<u8>>>,
     pub import_contents: Arc<Mutex<Vec<u8>>>,
+
+    pub saving: Arc<Mutex<Saving>>,
+    pub save_finished: Arc<Mutex<bool>>,
 }
 
 impl Ui {
@@ -1691,6 +1694,7 @@ pub struct EditMode {
     pub setting_bind_bone: bool,
     pub setting_ik_target: bool,
     pub anim_open: bool,
+    pub time: f32,
 }
 
 #[derive(Default, PartialEq, Debug)]
@@ -1873,13 +1877,14 @@ pub enum Events {
     MoveStyle,
     MigrateTexture,
     MoveTexture,
-    CursorIcon,
     DuplicateAnim,
     ToggleBoneFolded,
     EditBone,
     SaveEditedBone,
     ApplySettings,
     ResetConfig,
+    MoveCamera,
+    RemoveVertex,
 }
 
 enum_string!(Events);
@@ -1928,6 +1933,7 @@ impl EventState {
     generic_event!(edit_mode_rotate, Events::EditModeRotate);
     generic_event!(edit_mode_scale, Events::EditModeScale);
     generic_event!(new_armature, Events::NewArmature);
+    generic_event!(move_camera, Events::MoveCamera);
     event_with_value!(select_bone, Events::SelectBone, bone_id, usize);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_anim_frame, Events::SelectAnimFrame, frame, usize);
@@ -1940,6 +1946,7 @@ impl EventState {
     event_with_value!(duplicate_anim, Events::DuplicateAnim, anim_idx, usize);
     event_with_value!(copy_bone, Events::CopyBone, bone_id, usize);
     event_with_value!(paste_bone, Events::PasteBone, bone_id, usize);
+    event_with_value!(remove_vertex, Events::RemoveVertex, vert_idx, usize);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -2026,12 +2033,6 @@ impl EventState {
         self.values.push(old_idx as f32);
     }
 
-    pub fn cursor_icon(&mut self, new_icon: egui::CursorIcon) {
-        self.events.push(Events::CursorIcon);
-        self.values.push((new_icon as usize) as f32);
-        self.str_values.push("".to_string());
-    }
-
     pub fn toggle_bone_folded(&mut self, bone_idx: usize, folded: bool) {
         self.events.push(Events::ToggleBoneFolded);
         self.values.push(bone_idx as f32);
@@ -2092,11 +2093,6 @@ pub struct Shared {
     pub config: Config,
 
     pub copy_buffer: CopyBuffer,
-
-    pub saving: Arc<Mutex<Saving>>,
-    pub save_finished: Arc<Mutex<bool>>,
-
-    pub time: f32,
 
     pub last_autosave: f32,
 

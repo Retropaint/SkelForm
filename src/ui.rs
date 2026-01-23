@@ -55,6 +55,9 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         shared.input.left_down = i.pointer.primary_down();
         shared.input.left_pressed = i.pointer.primary_pressed();
         shared.input.right_down = i.pointer.secondary_down();
+        if shared.input.left_pressed {
+            shared.input.mouse_init = Some(shared.input.mouse);
+        }
         if shared.input.left_down {
             shared.input.down_dur += 1;
         } else {
@@ -85,7 +88,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             }
         }
 
-        shared.time = i.time as f32;
+        shared.edit_mode.time = i.time as f32;
     });
 
     context.set_cursor_icon(shared.ui.cursor_icon);
@@ -403,7 +406,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         utils::save_web(shared);
 
         #[cfg(not(target_arch = "wasm32"))]
-        utils::open_save_dialog(&shared.ui.file_name, &shared.saving);
+        utils::open_save_dialog(&shared.ui.file_name, &shared.ui.saving);
         //if shared.save_path == "" {
         //    utils::open_save_dialog();
         //} else {
@@ -836,7 +839,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
         let str_save = &shared.ui.loc("top_bar.file.save");
         if top_bar_button!(str_save, Some(&shared.config.keys.save)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(&shared.ui.file_name, &shared.saving);
+            utils::open_save_dialog(&shared.ui.file_name, &shared.ui.saving);
             #[cfg(target_arch = "wasm32")]
             utils::save_web(&shared);
             ui.close();
