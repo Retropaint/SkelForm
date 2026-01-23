@@ -50,24 +50,9 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
         ui.horizontal(|ui| {
             let button = ui.skf_button(&&shared.ui.loc("armature_panel.new_bone_button"));
             if button.clicked() {
-                let idx: usize;
-
                 shared.undo_states.new_undo_bones(&shared.armature.bones);
-                let sel = shared.selections.clone();
-
-                if shared.armature.sel_bone(&sel) == None {
-                    (_, idx) = shared.armature.new_bone(-1);
-                } else {
-                    let id = shared.armature.sel_bone(&sel).unwrap().id;
-                    (_, idx) = shared.armature.new_bone(id);
-                }
-
-                // immediately select new bone upon creating it
-                shared.events.select_bone(idx);
+                shared.events.new_bone();
                 shared.ui.just_made_bone = true;
-
-                shared.ui.rename_id = "bone_".to_string() + &idx.to_string();
-                shared.armature.bones[idx].name = "".to_string();
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if shared.armature.bones.len() == 0 {

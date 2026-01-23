@@ -52,7 +52,7 @@ fn startup_content(
         ui.add_space(10.);
         let empty = "".to_string();
         if leftside_button("+", &shared.ui.loc("new"), ui, shared, None, None, empty).clicked() {
-            shared.events.new(Events::UnselectAll);
+            shared.events.unselect_all();
             shared.edit_mode.anim_open = false;
             shared.camera.pos = Vec2::new(0., 0.);
             shared.camera.zoom = 2000.;

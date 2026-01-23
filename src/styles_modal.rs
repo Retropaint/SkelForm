@@ -100,7 +100,6 @@ pub fn draw_styles_list(
                 return;
             }
             events.new_style();
-            shared_ui.rename_id = "style_".to_string() + &(armature.styles.len() - 1).to_string();
         });
 
         let size = ui.available_size();

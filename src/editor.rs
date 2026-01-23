@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-use serde_json::Deserializer;
 use std::collections::HashMap;
 
 use crate::*;
@@ -28,7 +26,6 @@ pub fn iterate_events(
             }
         }
 
-        if events.events[0] == Events::SaveEditedBone {}
         if events.events[0] == Events::EditBone {
             let bone_id = events.values[0] as i32;
             let element = AnimElement::from_repr(events.values[1] as usize).unwrap();
@@ -292,6 +289,7 @@ pub fn process_event(
                 textures: vec![],
                 active: true,
             });
+            ui.rename_id = "style_".to_string() + &(armature.styles.len() - 1).to_string();
         }
         Events::DeleteKeyframe => {
             _ = armature.animations[selections.anim]
@@ -299,9 +297,7 @@ pub fn process_event(
                 .remove(value as usize)
         }
         Events::SelectBone => {
-            let val = value as usize;
-            selections.bone_idx = if value == f32::MAX { usize::MAX } else { val };
-            selections.bone_ids = vec![armature.bones[value as usize].id];
+            select_bone(value, selections, armature);
         }
         Events::SelectAnim => {
             let val = value as usize;
@@ -462,8 +458,26 @@ pub fn process_event(
             renderer.gridline_gap = config.gridline_gap;
             crate::utils::save_config(&config);
         }
+        Events::NewBone => {
+            let idx;
+            if armature.sel_bone(&selections) == None {
+                (_, idx) = armature.new_bone(-1);
+            } else {
+                let id = armature.sel_bone(&selections).unwrap().id;
+                (_, idx) = armature.new_bone(id);
+            }
+            armature.bones[idx].name = "".to_string();
+            select_bone(idx as f32, selections, armature);
+            ui.rename_id = "bone_".to_string() + &idx.to_string();
+        }
         _ => {}
     }
+}
+
+fn select_bone(value: f32, selections: &mut SelectionState, armature: &mut Armature) {
+    let val = value as usize;
+    selections.bone_idx = if value == f32::MAX { usize::MAX } else { val };
+    selections.bone_ids = vec![armature.bones[value as usize].id];
 }
 
 fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode) {

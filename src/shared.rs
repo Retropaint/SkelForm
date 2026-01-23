@@ -1863,6 +1863,7 @@ pub enum Events {
     SaveEditedBone,
     ApplySettings,
     ResetConfig,
+    NewBone,
 }
 
 enum_string!(Events);
@@ -1874,66 +1875,54 @@ pub struct EventState {
     pub str_values: Vec<String>,
 }
 
+macro_rules! generic_event {
+    ($name:ident, $enum:expr) => {
+        pub fn $name(&mut self) {
+            self.events.push($enum);
+            self.values.push(-1.);
+            self.str_values.push("".to_string());
+        }
+    };
+}
+
+macro_rules! event_with_value {
+    ($name:ident, $enum:expr, $id_name:ident, $id_type:ident) => {
+        pub fn $name(&mut self, $id_name: $id_type) {
+            self.events.push($enum);
+            self.values.push($id_name as f32);
+            self.str_values.push("".to_string());
+        }
+    };
+}
+
 impl EventState {
-    pub fn new(&mut self, id: Events) {
-        self.events.push(id);
-        self.values.push(-1.);
-        self.str_values.push("".to_string());
-    }
-
-    pub fn select_bone(&mut self, bone_id: usize) {
-        self.events.push(Events::SelectBone);
-        self.values.push(bone_id as f32);
-        self.str_values.push("".to_string());
-    }
-
-    pub fn select_anim(&mut self, anim_id: usize) {
-        self.events.push(Events::SelectAnim);
-        self.values.push(anim_id as f32);
-        self.str_values.push("".to_string());
-    }
-
-    pub fn select_anim_frame(&mut self, frame: usize) {
-        self.events.push(Events::SelectAnimFrame);
-        self.values.push(frame as f32);
-        self.str_values.push("".to_string());
-    }
-
-    pub fn select_style(&mut self, style_idx: usize) {
-        self.events.push(Events::SelectStyle);
-        self.values.push(style_idx as f32);
-        self.str_values.push("".to_string());
-    }
-
-    pub fn delete_bone(&mut self, bone_id: usize) {
-        self.events.push(Events::DeleteBone);
-        self.values.push(bone_id as f32);
-        self.str_values.push("".to_string());
-    }
-
-    pub fn delete_anim(&mut self, anim_id: usize) {
-        self.events.push(Events::DeleteAnim);
-        self.values.push(anim_id as f32);
-        self.str_values.push("".to_string());
-    }
-
-    pub fn delete_tex(&mut self, tex_id: usize) {
-        self.events.push(Events::DeleteTex);
-        self.values.push(tex_id as f32);
-        self.str_values.push("".to_string());
-    }
-
-    pub fn delete_style(&mut self, style_id: usize) {
-        self.events.push(Events::DeleteStyle);
-        self.values.push(style_id as f32);
-        self.str_values.push("".to_string());
-    }
-
-    pub fn delete_keyframe(&mut self, kf_idx: usize) {
-        self.events.push(Events::DeleteKeyframe);
-        self.values.push(kf_idx as f32);
-        self.str_values.push("".to_string());
-    }
+    generic_event!(new_animation, Events::NewAnimation);
+    generic_event!(save_edited_bone, Events::SaveEditedBone);
+    generic_event!(apply_settings, Events::ApplySettings);
+    generic_event!(reset_config, Events::ResetConfig);
+    generic_event!(new_bone, Events::NewBone);
+    generic_event!(new_style, Events::NewStyle);
+    generic_event!(unselect_all, Events::UnselectAll);
+    generic_event!(cam_zoom_scroll, Events::CamZoomScroll);
+    generic_event!(undo, Events::Undo);
+    generic_event!(redo, Events::Redo);
+    generic_event!(cam_zoom_in, Events::CamZoomIn);
+    generic_event!(cam_zoom_out, Events::CamZoomOut);
+    generic_event!(edit_mode_move, Events::EditModeMove);
+    generic_event!(edit_mode_rotate, Events::EditModeRotate);
+    generic_event!(edit_mode_scale, Events::EditModeScale);
+    event_with_value!(select_bone, Events::SelectBone, bone_id, usize);
+    event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
+    event_with_value!(select_anim_frame, Events::SelectAnimFrame, frame, usize);
+    event_with_value!(select_style, Events::SelectStyle, style_idx, usize);
+    event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
+    event_with_value!(delete_anim, Events::DeleteAnim, anim_id, usize);
+    event_with_value!(delete_tex, Events::DeleteTex, tex_id, usize);
+    event_with_value!(delete_style, Events::DeleteStyle, style_id, usize);
+    event_with_value!(delete_keyframe, Events::DeleteKeyframe, kf_idx, usize);
+    event_with_value!(duplicate_anim, Events::DuplicateAnim, anim_idx, usize);
+    event_with_value!(copy_bone, Events::CopyBone, bone_id, usize);
+    event_with_value!(paste_bone, Events::PasteBone, bone_id, usize);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -1960,28 +1949,10 @@ impl EventState {
         self.values.push(if is_above { 1. } else { 0. });
     }
 
-    pub fn copy_bone(&mut self, bone_id: usize) {
-        self.events.push(Events::CopyBone);
-        self.values.push(bone_id as f32);
-        self.str_values.push("".to_string());
-    }
-
-    pub fn paste_bone(&mut self, bone_id: usize) {
-        self.events.push(Events::PasteBone);
-        self.values.push(bone_id as f32);
-        self.str_values.push("".to_string());
-    }
-
     pub fn set_keyframe_frame(&mut self, keyframe: usize, frame: usize) {
         self.events.push(Events::SetKeyframeFrame);
         self.values.push(keyframe as f32);
         self.values.push(frame as f32);
-    }
-
-    pub fn new_animation(&mut self) {
-        self.events.push(Events::NewAnimation);
-        self.values.push(-1.);
-        self.str_values.push("".to_string());
     }
 
     pub fn rename_animation(&mut self, anim_idx: usize, name: String) {
@@ -2000,12 +1971,6 @@ impl EventState {
         self.events.push(Events::ToggleAnimPlaying);
         self.values.push(anim_idx as f32);
         self.values.push(if playing { 1. } else { 0. });
-    }
-
-    pub fn new_style(&mut self) {
-        self.events.push(Events::NewStyle);
-        self.values.push(-1.);
-        self.str_values.push("".to_string());
     }
 
     pub fn toggle_style_active(&mut self, style_idx: usize, toggle: bool) {
@@ -2044,12 +2009,6 @@ impl EventState {
         self.str_values.push("".to_string());
     }
 
-    pub fn duplicate_anim(&mut self, anim_idx: usize) {
-        self.events.push(Events::DuplicateAnim);
-        self.values.push(anim_idx as f32);
-        self.str_values.push("".to_string());
-    }
-
     pub fn toggle_bone_folded(&mut self, bone_idx: usize, folded: bool) {
         self.events.push(Events::ToggleBoneFolded);
         self.values.push(bone_idx as f32);
@@ -2070,24 +2029,6 @@ impl EventState {
         self.values.push(value as f32);
         self.values.push(anim_id as f32);
         self.values.push(anim_frame as f32);
-    }
-
-    pub fn save_edited_bone(&mut self) {
-        self.events.push(Events::SaveEditedBone);
-        self.values.push(-1.);
-        self.str_values.push("".to_string());
-    }
-
-    pub fn apply_settings(&mut self) {
-        self.events.push(Events::ApplySettings);
-        self.values.push(-1.);
-        self.str_values.push("".to_string());
-    }
-
-    pub fn reset_config(&mut self) {
-        self.events.push(Events::ResetConfig);
-        self.values.push(-1.);
-        self.str_values.push("".to_string());
     }
 }
 

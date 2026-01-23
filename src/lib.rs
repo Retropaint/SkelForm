@@ -356,6 +356,20 @@ impl ApplicationHandler for App {
                 gui_state
                     .egui_ctx()
                     .set_pixels_per_point(self.shared.ui.scale);
+
+                editor::iterate_events(
+                    &self.shared.input,
+                    &mut self.shared.config,
+                    &mut self.shared.events,
+                    &mut self.shared.camera,
+                    &mut self.shared.edit_mode,
+                    &mut self.shared.selections,
+                    &mut self.shared.undo_states,
+                    &mut self.shared.armature,
+                    &mut self.shared.copy_buffer,
+                    &mut self.shared.ui,
+                    &mut self.shared.renderer,
+                );
             }
             _ => (),
         }
@@ -591,20 +605,6 @@ impl BackendRenderer {
                 shared.done_recording = false;
             }
         }
-
-        editor::iterate_events(
-            &shared.input,
-            &mut shared.config,
-            &mut shared.events,
-            &mut shared.camera,
-            &mut shared.edit_mode,
-            &mut shared.selections,
-            &mut shared.undo_states,
-            &mut shared.armature,
-            &mut shared.copy_buffer,
-            &mut shared.ui,
-            &mut shared.renderer,
-        );
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -738,7 +738,13 @@ impl BackendRenderer {
             capture_pass.set_pipeline(&self.scene.pipeline);
 
             // core rendering logic handled in renderer.rs
-            renderer::render_screenshot(&mut capture_pass, &self.gpu.device, shared);
+            renderer::render_screenshot(
+                &mut capture_pass,
+                &self.gpu.device,
+                &shared.armature,
+                &shared.camera,
+                &shared.config,
+            );
         }
 
         let buffer_size = (width * height * 4) as u64;

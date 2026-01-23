@@ -632,7 +632,7 @@ pub fn import<R: Read + std::io::Seek>(
         }
     }
 
-    shared.events.new(Events::UnselectAll);
+    shared.events.unselect_all();
     shared.ui.startup_window = false;
 }
 

@@ -479,9 +479,8 @@ pub fn draw_timeline_graph(
                 // render darkened background after last keyframe
                 let sel = shared.selections.clone();
                 let lkf = shared.armature.sel_anim(&sel).unwrap().keyframes.last();
-                let frame = lkf.unwrap().frame as usize;
-                if lkf != None && frame < shared.ui.anim.lines_x.len() {
-                    let left_top_rect = egui::vec2(shared.ui.anim.lines_x[frame], -3.);
+                if lkf != None && (lkf.unwrap().frame as usize) < shared.ui.anim.lines_x.len() {
+                    let left_top_rect = egui::vec2(shared.ui.anim.lines_x[lkf.unwrap().frame as usize], -3.);
                     let right_bottom_rect = egui::vec2(0., 999.);
 
                     let rect_to_fill = egui::Rect::from_min_size(

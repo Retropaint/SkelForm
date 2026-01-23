@@ -76,7 +76,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         }
 
         if i.smooth_scroll_delta.y != 0. && !shared.camera.on_ui {
-            shared.events.new(Events::CamZoomScroll);
+            shared.events.cam_zoom_scroll();
             shared.input.scroll_delta = i.smooth_scroll_delta.y;
             match shared.config.layout {
                 UiLayout::Right => shared.camera.pos.x -= i.smooth_scroll_delta.y * 0.5,
@@ -384,17 +384,17 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
     mouse_button_as_key(input, egui::PointerButton::Extra2, egui::Key::F35);
 
     if input.consume_shortcut(&shared.config.keys.undo) {
-        shared.events.new(Events::Undo);
+        shared.events.undo();
     }
     if input.consume_shortcut(&shared.config.keys.redo) {
-        shared.events.new(Events::Redo);
+        shared.events.redo();
     }
 
     if input.consume_shortcut(&shared.config.keys.zoom_in_camera) {
-        shared.events.new(Events::CamZoomIn);
+        shared.events.cam_zoom_in();
     }
     if input.consume_shortcut(&shared.config.keys.zoom_out_camera) {
-        shared.events.new(Events::CamZoomOut);
+        shared.events.cam_zoom_out();
     }
 
     if input.consume_shortcut(&shared.config.keys.save) {
@@ -455,7 +455,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         }
 
         if no_modals && !shared.edit_mode.setting_ik_target {
-            shared.events.new(Events::UnselectAll);
+            shared.events.unselect_all();
         }
 
         #[cfg(target_arch = "wasm32")]
@@ -910,11 +910,11 @@ fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
         ui.set_width(125.);
         let str_zoom_in = &shared.ui.loc("top_bar.view.zoom_in");
         if tpb!(str_zoom_in, Some(&shared.config.keys.zoom_in_camera)).clicked() {
-            shared.events.new(Events::CamZoomIn);
+            shared.events.cam_zoom_in();
         }
         let str_zoom_out = &shared.ui.loc("top_bar.view.zoom_out");
         if tpb!(str_zoom_out, Some(&shared.config.keys.zoom_out_camera)).clicked() {
-            shared.events.new(Events::CamZoomOut);
+            shared.events.cam_zoom_out();
         }
     });
 }
@@ -928,13 +928,13 @@ fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
         let key_undo = Some(&shared.config.keys.undo);
         let str_undo = &shared.ui.loc("top_bar.edit.undo");
         if top_bar_button(ui, str_undo, key_undo, &mut offset, shared).clicked() {
-            shared.events.new(Events::Undo);
+            shared.events.undo();
             ui.close();
         }
         let str_redo = &shared.ui.loc("top_bar.edit.redo");
         let key_redo = Some(&shared.config.keys.redo);
         if top_bar_button(ui, str_redo, key_redo, &mut offset, shared).clicked() {
-            shared.events.new(Events::Redo);
+            shared.events.redo();
             ui.close();
         }
     });
@@ -962,12 +962,12 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
     window.show(egui_ctx, |ui| {
         ui.horizontal(|ui| {
             macro_rules! edit_mode_button {
-                ($label:expr, $edit_mode:expr, $event:expr, $check:expr) => {
+                ($label:expr, $edit_mode:expr, $event:ident, $check:expr) => {
                     ui.add_enabled_ui($check, |ui| {
                         if selection_button($label, shared.edit_mode.current == $edit_mode, ui)
                             .clicked()
                         {
-                            shared.events.new($event)
+                            shared.events.$event()
                         };
                     })
                 };
@@ -977,19 +977,19 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
             edit_mode_button!(
                 &shared.ui.loc("move"),
                 EditModes::Move,
-                Events::EditModeMove,
+                edit_mode_move,
                 ik_disabled
             );
             edit_mode_button!(
                 &shared.ui.loc("rotate"),
                 EditModes::Rotate,
-                Events::EditModeRotate,
+                edit_mode_rotate,
                 rot
             );
             edit_mode_button!(
                 &shared.ui.loc("scale"),
                 EditModes::Scale,
-                Events::EditModeScale,
+                edit_mode_scale,
                 ik_disabled
             );
         });
