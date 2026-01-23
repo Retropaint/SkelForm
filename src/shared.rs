@@ -562,6 +562,10 @@ pub struct Ui {
     pub cursor_icon: egui::CursorIcon,
     pub last_pressed: Option<egui::Key>,
     pub recent_file_paths: Vec<String>,
+
+    pub file_name: Arc<Mutex<String>>,
+    pub img_contents: Arc<Mutex<Vec<u8>>>,
+    pub import_contents: Arc<Mutex<Vec<u8>>>,
 }
 
 impl Ui {
@@ -1864,6 +1868,7 @@ pub enum Events {
     ApplySettings,
     ResetConfig,
     NewBone,
+    NewArmature,
 }
 
 enum_string!(Events);
@@ -1911,6 +1916,7 @@ impl EventState {
     generic_event!(edit_mode_move, Events::EditModeMove);
     generic_event!(edit_mode_rotate, Events::EditModeRotate);
     generic_event!(edit_mode_scale, Events::EditModeScale);
+    generic_event!(new_armature, Events::NewArmature);
     event_with_value!(select_bone, Events::SelectBone, bone_id, usize);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_anim_frame, Events::SelectAnimFrame, frame, usize);
@@ -2072,10 +2078,6 @@ pub struct Shared {
     pub last_autosave: f32,
 
     pub screenshot_res: Vec2,
-
-    pub file_name: Arc<Mutex<String>>,
-    pub img_contents: Arc<Mutex<Vec<u8>>>,
-    pub import_contents: Arc<Mutex<Vec<u8>>>,
 }
 
 // generate non-clashing id

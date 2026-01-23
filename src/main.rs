@@ -50,8 +50,8 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 
         // load .skf based on first arg
         if args.len() > 1 {
-            *app.shared.file_name.lock().unwrap() = args[1].to_string();
-            *app.shared.import_contents.lock().unwrap() = vec![0];
+            *app.shared.ui.file_name.lock().unwrap() = args[1].to_string();
+            *app.shared.ui.import_contents.lock().unwrap() = vec![0];
         }
     }
 

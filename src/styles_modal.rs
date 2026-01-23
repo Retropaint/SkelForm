@@ -302,8 +302,8 @@ pub fn draw_textures_list(
             }
             #[cfg(not(target_arch = "wasm32"))]
             {
-                let file_name = Arc::clone(&shared.file_name);
-                let file_contents = Arc::clone(&shared.img_contents);
+                let file_name = Arc::clone(&shared.ui.file_name);
+                let file_contents = Arc::clone(&shared.ui.img_contents);
                 bone_panel::open_file_dialog(file_name, file_contents);
             }
             #[cfg(target_arch = "wasm32")]

@@ -139,7 +139,7 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut cra
 
         #[cfg(target_arch = "wasm32")]
         {
-            let str = shared.ui.loc("settings_modal.user_interface.ui_slider");
+            let str = shared_ui.loc("settings_modal.user_interface.ui_slider");
             if ui.skf_button(&str).clicked() {
                 crate::toggleElement(true, "ui-slider".to_string())
             }

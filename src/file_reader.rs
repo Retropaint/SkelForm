@@ -66,20 +66,20 @@ pub fn read_image_loaders(
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if shared.img_contents.lock().unwrap().len() == 0 {
+        if shared.ui.img_contents.lock().unwrap().len() == 0 {
             return;
         }
 
         // extract name
-        let raw_filename = shared.file_name.lock().unwrap();
+        let raw_filename = shared.ui.file_name.lock().unwrap();
         let filename = raw_filename.split('/').last().unwrap().to_string();
         name = filename.split('.').collect::<Vec<_>>()[0].to_string();
 
         // read image pixels and dimensions
-        image = image::load_from_memory(&shared.img_contents.lock().unwrap()).unwrap();
+        image = image::load_from_memory(&shared.ui.img_contents.lock().unwrap()).unwrap();
         dimensions = Vec2::new(image.width() as f32, image.height() as f32);
 
-        *shared.img_contents.lock().unwrap() = vec![];
+        *shared.ui.img_contents.lock().unwrap() = vec![];
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -529,13 +529,13 @@ pub fn read_import(
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        filename = shared.file_name.lock().unwrap().to_string();
-        if shared.import_contents.lock().unwrap().len() == 0 {
+        filename = shared.ui.file_name.lock().unwrap().to_string();
+        if shared.ui.import_contents.lock().unwrap().len() == 0 {
             return;
         }
-        *shared.import_contents.lock().unwrap() = vec![];
+        *shared.ui.import_contents.lock().unwrap() = vec![];
 
-        file = std::fs::File::open(shared.file_name.lock().unwrap().to_string());
+        file = std::fs::File::open(shared.ui.file_name.lock().unwrap().to_string());
         if let Err(_) = file {
             //let text = shared.ui.loc("import_err").to_owned() + &err.to_string();
             shared.events.open_modal("import_err", false);
@@ -583,7 +583,7 @@ pub fn read_import(
         }
     };
 
-    *shared.import_contents.lock().unwrap() = vec![];
+    *shared.ui.import_contents.lock().unwrap() = vec![];
     #[cfg(target_arch = "wasm32")]
     removeFile();
 }

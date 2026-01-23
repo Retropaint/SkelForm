@@ -150,7 +150,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         );
     }
     if shared.ui.startup_window {
-        startup_window::startup_modal(shared, context);
+        startup_window::startup_modal(context, &mut shared.ui, &mut shared.events, &shared.config);
     }
     if shared.ui.donating_modal {
         modal::donating_modal(shared, context);
@@ -402,7 +402,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         utils::save_web(shared);
 
         #[cfg(not(target_arch = "wasm32"))]
-        utils::open_save_dialog(&shared.file_name, &shared.saving);
+        utils::open_save_dialog(&shared.ui.file_name, &shared.saving);
         //if shared.save_path == "" {
         //    utils::open_save_dialog();
         //} else {
@@ -412,7 +412,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
 
     if input.consume_shortcut(&shared.config.keys.open) {
         #[cfg(not(target_arch = "wasm32"))]
-        utils::open_import_dialog(&shared.file_name, &shared.import_contents);
+        utils::open_import_dialog(&shared.ui.file_name, &shared.ui.import_contents);
         #[cfg(target_arch = "wasm32")]
         crate::clickFileInput(false);
     }
@@ -827,7 +827,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
         let str_open = &shared.ui.loc("top_bar.file.open");
         if top_bar_button!(str_open, Some(&shared.config.keys.open)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_import_dialog(&shared.file_name, &shared.import_contents);
+            utils::open_import_dialog(&shared.ui.file_name, &shared.ui.import_contents);
             #[cfg(target_arch = "wasm32")]
             crate::clickFileInput(false);
             ui.close();
@@ -835,7 +835,7 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
         let str_save = &shared.ui.loc("top_bar.file.save");
         if top_bar_button!(str_save, Some(&shared.config.keys.save)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(&shared.file_name, &shared.saving);
+            utils::open_save_dialog(&shared.ui.file_name, &shared.saving);
             #[cfg(target_arch = "wasm32")]
             utils::save_web(&shared);
             ui.close();

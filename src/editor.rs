@@ -272,6 +272,13 @@ pub fn process_event(
         Events::RenameAnimation => armature.animations[value as usize].name = str_value,
         Events::RenameStyle => armature.styles[value as usize].name = str_value,
         Events::ResetConfig => *config = serde_json::from_str(&utils::config_str()).unwrap(),
+        Events::NewArmature => {
+            unselect_all(selections, edit_mode);
+            edit_mode.anim_open = false;
+            camera.pos = Vec2::new(0., 0.);
+            camera.zoom = 2000.;
+            *armature = Armature::default();
+        }
         Events::CursorIcon => match value {
             0. => ui.cursor_icon = egui::CursorIcon::Default,
             1. => ui.cursor_icon = egui::CursorIcon::Move,

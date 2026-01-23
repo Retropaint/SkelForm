@@ -260,8 +260,8 @@ impl ApplicationHandler for App {
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     let file_path = _path_buf.into_os_string().into_string().unwrap();
-                    *self.shared.file_name.lock().unwrap() = file_path;
-                    *self.shared.import_contents.lock().unwrap() = vec![0];
+                    *self.shared.ui.file_name.lock().unwrap() = file_path;
+                    *self.shared.ui.import_contents.lock().unwrap() = vec![0];
                 }
             }
             WindowEvent::CloseRequested => {
@@ -622,7 +622,7 @@ impl BackendRenderer {
         let screenshot_res = shared.screenshot_res;
         let mut armature = shared.armature.clone();
         let camera = shared.camera.clone();
-        let mut save_path = shared.file_name.lock().unwrap().clone();
+        let mut save_path = shared.ui.file_name.lock().unwrap().clone();
         if *shared.saving.lock().unwrap() == shared::Saving::Autosaving {
             let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
             let dir = dir_init.unwrap().data_dir().to_str().unwrap().to_string();
@@ -1085,8 +1085,8 @@ mod tests {
     #[test]
     fn import_skf() {
         let mut shared = init_shared();
-        *shared.file_name.lock().unwrap() = "./samples/skellington.skf".to_string();
-        *shared.import_contents.lock().unwrap() = vec![0];
+        *shared.ui.file_name.lock().unwrap() = "./samples/skellington.skf".to_string();
+        *shared.ui.import_contents.lock().unwrap() = vec![0];
         file_reader::read_import(&mut shared, None, None, None, None);
         assert_eq!(shared.armature.bones[0].name != "New Bone", true);
         assert_eq!(shared.armature.styles.len() > 0, true);
@@ -1096,8 +1096,8 @@ mod tests {
     #[test]
     fn export_skf() {
         let mut shared = init_shared();
-        *shared.file_name.lock().unwrap() = "./samples/skellington.skf".to_string();
-        *shared.import_contents.lock().unwrap() = vec![0];
+        *shared.ui.file_name.lock().unwrap() = "./samples/skellington.skf".to_string();
+        *shared.ui.import_contents.lock().unwrap() = vec![0];
         file_reader::read_import(&mut shared, None, None, None, None);
         assert_eq!(shared.armature.bones[0].name != "New Bone", true);
         assert_eq!(shared.armature.styles.len() > 0, true);
@@ -1106,8 +1106,8 @@ mod tests {
     #[test]
     fn import_psd() {
         let mut shared = init_shared();
-        *shared.file_name.lock().unwrap() = "./samples/skellington.psd".to_string();
-        *shared.import_contents.lock().unwrap() = vec![0];
+        *shared.ui.file_name.lock().unwrap() = "./samples/skellington.psd".to_string();
+        *shared.ui.import_contents.lock().unwrap() = vec![0];
         file_reader::read_import(&mut shared, None, None, None, None);
         assert_eq!(shared.armature.bones[0].name != "New Bone", true);
         assert_eq!(shared.armature.styles.len() > 0, true);
