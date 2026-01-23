@@ -18,12 +18,24 @@ pub fn iterate_events(
     let mut last_event = Events::None;
     while events.events.len() > 0 {
         // for every new event, create a new undo state
+        // note: `edit_bone` is not included as its undo is conditional (see `save_edited_bone`)
         if last_event != events.events[0] {
             last_event = events.events[0].clone();
+
+            type E = Events;
+            #[rustfmt::skip]
             match last_event {
-                Events::DragBone => undo_states.new_undo_bones(&armature.bones),
+                E::NewBone | E::DragBone | E::DeleteBone => undo_states.new_undo_bones(&armature.bones),
+                E::NewAnimation | E::DeleteAnim => undo_states.new_undo_anims(&armature.animations),
+                E::DeleteKeyframe => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
+                E::ToggleBoneFolded | E::SetBoneTexture => undo_states.new_undo_bone(&armature.bones[selections.bone_idx]),
+                E::DeleteTex => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
+                E::DeleteStyle | E::NewStyle => undo_states.new_undo_styles(&armature.styles),
+                E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
+                E::RenameBone =>  if !ui.just_made_bone  { undo_states.new_undo_bone( &armature.sel_bone( &selections).unwrap());  ui.just_made_bone  = false }
+                E::RenameAnim =>  if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap());  ui.just_made_anim  = false }
                 _ => {}
-            }
+            };
         }
 
         if events.events[0] == Events::EditBone {
@@ -123,7 +135,7 @@ pub fn iterate_events(
 
             events.events.remove(0);
             events.values.drain(0..=1);
-        } else if events.events[0] == Events::RenameTexture {
+        } else if events.events[0] == Events::RenameTex {
             let style = armature.sel_style_mut(&selections).unwrap();
             let t = events.values[0] as usize;
             let og_name = style.textures[t].name.clone();
@@ -268,10 +280,17 @@ pub fn process_event(
         Events::UnselectAll => unselect_all(selections, edit_mode),
         Events::Undo => undo_redo(true, undo_states, armature, selections),
         Events::Redo => undo_redo(false, undo_states, armature, selections),
-        Events::DeleteAnim => _ = armature.animations.remove(value as usize),
-        Events::RenameAnimation => armature.animations[value as usize].name = str_value,
-        Events::RenameStyle => armature.styles[value as usize].name = str_value,
+        Events::DeleteAnim => {
+            _ = armature.animations.remove(value as usize);
+            selections.anim = usize::MAX
+        }
+        Events::RenameAnim => armature.animations[value as usize].name = str_value,
+        Events::RenameStyle => {
+            armature.sel_style_mut(&selections).unwrap().name = str_value;
+            ui.just_made_style = false
+        }
         Events::ResetConfig => *config = serde_json::from_str(&utils::config_str()).unwrap(),
+        Events::RenameBone => armature.bones[value as usize].name = str_value,
         Events::NewArmature => {
             unselect_all(selections, edit_mode);
             edit_mode.anim_open = false;
@@ -297,6 +316,7 @@ pub fn process_event(
                 active: true,
             });
             ui.rename_id = "style_".to_string() + &(armature.styles.len() - 1).to_string();
+            ui.just_made_style = true;
         }
         Events::DeleteKeyframe => {
             _ = armature.animations[selections.anim]
@@ -476,6 +496,14 @@ pub fn process_event(
             armature.bones[idx].name = "".to_string();
             select_bone(idx as f32, selections, armature);
             ui.rename_id = "bone_".to_string() + &idx.to_string();
+        }
+        Events::SetBoneTexture => {
+            armature.set_bone_tex(
+                value as i32,
+                str_value.clone(),
+                selections.anim,
+                selections.anim_frame,
+            );
         }
         _ => {}
     }

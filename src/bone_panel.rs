@@ -428,7 +428,12 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 .selected_text(selected)
                 .width(40.)
                 .show_ui(ui, |ui| {
-                    let mut ik = shared.armature.sel_bone_mut(&sel).unwrap().ik_constraint.clone();
+                    let mut ik = shared
+                        .armature
+                        .sel_bone_mut(&sel)
+                        .unwrap()
+                        .ik_constraint
+                        .clone();
                     ui.selectable_value(&mut ik, JointConstraint::None, str_none);
                     ui.selectable_value(&mut ik, JointConstraint::Clockwise, str_clockwise);
                     ui.selectable_value(&mut ik, JointConstraint::CounterClockwise, str_ccw);
@@ -688,7 +693,9 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         return;
     }
 
-    let vert_id_len = shared.armature.sel_bone(&sel).unwrap().binds[selected].verts.len();
+    let vert_id_len = shared.armature.sel_bone(&sel).unwrap().binds[selected]
+        .verts
+        .len();
     ui.horizontal(|ui| {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let str_set_verts = if shared.edit_mode.setting_bind_verts {
@@ -754,7 +761,8 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                         let sel_bone = shared.armature.sel_bone(&sel).unwrap().clone();
                         shared.undo_states.new_undo_bone(&sel_bone);
                     }
-                    let bind = &mut shared.armature.sel_bone_mut(&sel).unwrap().binds[selected as usize];
+                    let bind =
+                        &mut shared.armature.sel_bone_mut(&sel).unwrap().binds[selected as usize];
                     bind.verts[w].weight = new_weight;
                 });
             });

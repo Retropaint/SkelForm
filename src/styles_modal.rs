@@ -2,13 +2,21 @@ use ui::TextInputOptions;
 
 use crate::{ui::EguiUi, *};
 
-pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
+pub fn draw(
+    ctx: &egui::Context,
+    shared_ui: &mut crate::Ui,
+    config: &Config,
+    camera: &Camera,
+    armature: &Armature,
+    selections: &SelectionState,
+    events: &mut EventState,
+) {
     let modal_size = Vec2::new(500., 500.);
     let frame = egui::Frame {
         corner_radius: 0.into(),
-        fill: shared.config.colors.main.into(),
+        fill: config.colors.main.into(),
         inner_margin: egui::Margin::same(5),
-        stroke: egui::Stroke::new(1., shared.config.colors.light_accent),
+        stroke: egui::Stroke::new(1., config.colors.light_accent),
         ..Default::default()
     };
 
@@ -16,8 +24,8 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
     #[cfg(any(target_os = "macos", target_arch = "wasm32"))]
     {
         let center = egui::Pos2::new(
-            (shared.camera.window.x / shared.ui.scale - shared.ui.styles_modal_size.x) / 2.,
-            (shared.camera.window.y / shared.ui.scale - shared.ui.styles_modal_size.y) / 2.,
+            (camera.window.x / shared_ui.scale - shared_ui.styles_modal_size.x) / 2.,
+            (camera.window.y / shared_ui.scale - shared_ui.styles_modal_size.y) / 2.,
         );
         modal = egui::Modal::new("styles_modal".into())
             // set modal render order so that tex idx dropdown can be rendered above
@@ -36,8 +44,8 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
     modal.show(ctx, |ui| {
         ui.set_width(modal_size.x);
         ui.set_height(modal_size.y);
-        let str_desc = shared.ui.loc("styles_modal.heading_desc");
-        let str_heading = shared.ui.loc(&("styles_modal.heading")).to_owned();
+        let str_desc = shared_ui.loc("styles_modal.heading_desc");
+        let str_heading = shared_ui.loc(&("styles_modal.heading")).to_owned();
         ui.heading(str_heading).on_hover_text(str_desc);
 
         ui.add_space(5.);
@@ -50,27 +58,18 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             ui.set_height(height);
             let modal_width = ui.max_rect().width();
             let height = ui.available_height();
-            draw_styles_list(
-                ui,
-                &shared.armature,
-                &mut shared.ui,
-                &shared.config,
-                &shared.selections,
-                &mut shared.events,
-                modal_width,
-                height,
-                frame_padding,
-            );
-            draw_textures_list(ui, shared, modal_width, height, frame_padding);
-            draw_bones_list(ui, shared, modal_width, height);
-            draw_assigned_list(ui, shared, height);
+            #[rustfmt::skip]
+            draw_styles_list(ui, armature, shared_ui, config, selections, events, modal_width, height, frame_padding);
+            draw_textures_list(ui, modal_width, height, frame_padding, shared_ui, events, armature, selections, config);
+            draw_bones_list(ui, modal_width, height, armature, config, shared_ui, selections, events);
+            draw_assigned_list(ui, height, shared_ui, config, selections, armature, events);
         });
 
         modal::modal_x(ui, egui::Vec2::new(-5., 0.), || {
-            shared.ui.styles_modal = false;
+            shared_ui.styles_modal = false;
         });
 
-        shared.ui.styles_modal_size = ui.min_rect().size().into();
+        shared_ui.styles_modal_size = ui.min_rect().size().into();
     });
 }
 
@@ -141,8 +140,8 @@ pub fn draw_styles_list(
                         }),
                     );
                     if edited {
-                        events.rename_style(s, value);
-                        events.select_style(s);
+                        events.select_style(armature.styles[s].id as usize);
+                        events.rename_style(armature.styles[s].id as usize, value);
                     }
                     continue;
                 }
@@ -185,7 +184,7 @@ pub fn draw_styles_list(
                         if selections.style == armature.styles[s].id {
                             shared_ui.rename_id = context_id.clone();
                         }
-                        events.select_style(s);
+                        events.select_style(armature.styles[s].id as usize);
                     }
 
                     context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {
@@ -262,48 +261,52 @@ pub fn draw_styles_list(
 
 pub fn draw_textures_list(
     ui: &mut egui::Ui,
-    shared: &mut Shared,
     modal_width: f32,
     height: f32,
     padding: f32,
+    shared_ui: &mut crate::Ui,
+    events: &mut EventState,
+    armature: &Armature,
+    selections: &SelectionState,
+    config: &Config,
 ) {
     let frame = egui::Frame::default().inner_margin(5.);
     let mut set_idx: usize = usize::MAX;
-    let styles = &shared.armature.styles;
-    let tex_id = shared.selections.style;
+    let styles = &armature.styles;
+    let tex_id = selections.style;
     if let Some(idx) = styles.iter().position(|set| set.id == tex_id) {
         set_idx = idx;
     }
-    let is_selected = set_idx == shared.ui.hovering_set as usize;
+    let is_selected = set_idx == shared_ui.hovering_set as usize;
     let smaller = 25.;
     ui.vertical(|ui| {
         ui.set_width((modal_width / 3.) - padding - smaller);
         ui.set_height(height);
 
         ui.horizontal(|ui| {
-            if shared.ui.hovering_set != -1 && !is_selected {
-                ui.label(&shared.ui.loc("styles_modal.style_preview"));
+            if shared_ui.hovering_set != -1 && !is_selected {
+                ui.label(&shared_ui.loc("styles_modal.style_preview"));
                 return;
             }
-            ui.label(&shared.ui.loc("styles_modal.textures"));
+            ui.label(&shared_ui.loc("styles_modal.textures"));
 
             // don't show import button if first created style is still being named
             let naming_first_style =
-                shared.armature.styles.len() == 1 && shared.ui.rename_id == "tex_set 0";
+                armature.styles.len() == 1 && shared_ui.rename_id == "tex_set 0";
 
             if naming_first_style
                 || set_idx == usize::MAX
-                || shared.selections.style == -1
+                || selections.style == -1
                 || !ui
-                    .skf_button(&shared.ui.loc("styles_modal.import"))
+                    .skf_button(&shared_ui.loc("styles_modal.import"))
                     .clicked()
             {
                 return;
             }
             #[cfg(not(target_arch = "wasm32"))]
             {
-                let file_name = Arc::clone(&shared.ui.file_name);
-                let file_contents = Arc::clone(&shared.ui.img_contents);
+                let file_name = Arc::clone(&shared_ui.file_name);
+                let file_contents = Arc::clone(&shared_ui.img_contents);
                 bone_panel::open_file_dialog(file_name, file_contents);
             }
             #[cfg(target_arch = "wasm32")]
@@ -313,8 +316,8 @@ pub fn draw_textures_list(
         let size = ui.available_size();
         let tex_frame_padding = Vec2::new(10., 15.);
 
-        if shared.selections.style == -1 {
-            let mut darker = shared.config.colors.dark_accent;
+        if selections.style == -1 {
+            let mut darker = config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
             egui::Frame::new()
                 .inner_margin(5.)
@@ -327,8 +330,8 @@ pub fn draw_textures_list(
         }
 
         ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-            let mut darker = shared.config.colors.dark_accent;
-            if shared.selections.style == -1 {
+            let mut darker = config.colors.dark_accent;
+            if selections.style == -1 {
                 darker -= Color::new(5, 5, 5, 0);
             }
             let frame = egui::Frame::new().fill(darker.into()).inner_margin(2.);
@@ -340,26 +343,26 @@ pub fn draw_textures_list(
                     return;
                 }
 
-                let style = &shared.armature.styles[shared.selections.style as usize];
+                let style = &armature.styles[selections.style as usize];
                 if style.textures.len() == 0 {
                     let mut cache = egui_commonmark::CommonMarkCache::default();
-                    let loc = shared.ui.loc("styles_modal.textures_empty").to_string();
-                    let str = utils::markdown(loc, shared.ui.local_doc_url.to_string());
+                    let loc = shared_ui.loc("styles_modal.textures_empty").to_string();
+                    let str = utils::markdown(loc, shared_ui.local_doc_url.to_string());
                     egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
                     return;
                 }
 
-                if shared.ui.hovering_set == -1 || is_selected {
-                    if shared.selections.style != -1 {
+                if shared_ui.hovering_set == -1 || is_selected {
+                    if selections.style != -1 {
                         egui::ScrollArea::vertical()
                             .id_salt("tex_list")
                             .show(ui, |ui| {
                                 draw_tex_buttons(
-                                    &mut shared.ui,
-                                    &shared.armature,
-                                    &shared.selections,
-                                    &shared.config,
-                                    &mut shared.events,
+                                    shared_ui,
+                                    &armature,
+                                    &selections,
+                                    &config,
+                                    events,
                                     ui,
                                 );
                             });
@@ -367,19 +370,19 @@ pub fn draw_textures_list(
                     return;
                 }
 
-                let is_empty = shared.armature.styles[shared.ui.hovering_set as usize]
+                let is_empty = armature.styles[shared_ui.hovering_set as usize]
                     .textures
                     .len()
                     == 0;
                 if is_empty {
-                    let str_empty = &shared.ui.loc("styles_modal.style_preview_empty");
+                    let str_empty = &shared_ui.loc("styles_modal.style_preview_empty");
                     ui.label(str_empty);
                     return;
                 }
 
                 let mut offset = Vec2::new(0., 0.);
                 let mut row_height = 0.;
-                for tex in &shared.armature.styles[shared.ui.hovering_set as usize].textures {
+                for tex in &armature.styles[shared_ui.hovering_set as usize].textures {
                     let size = resize_tex_img(tex.size, 50);
 
                     if offset.x + size.x > ui.available_width() {
@@ -395,7 +398,7 @@ pub fn draw_textures_list(
                         ui.min_rect().left_top() + offset.into(),
                         size.into(),
                     );
-                    let data = shared.armature.tex_data(tex).unwrap();
+                    let data = armature.tex_data(tex).unwrap();
                     egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, rect);
                     offset.x += size.x;
                 }
@@ -404,16 +407,25 @@ pub fn draw_textures_list(
     });
 }
 
-fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, height: f32) {
+fn draw_bones_list(
+    ui: &mut egui::Ui,
+    modal_width: f32,
+    height: f32,
+    armature: &Armature,
+    config: &Config,
+    shared_ui: &mut crate::Ui,
+    selections: &SelectionState,
+    events: &mut EventState,
+) {
     ui.vertical(|ui| {
         ui.horizontal(|ui| {
-            let str_heading = &shared.ui.loc("styles_modal.bones");
+            let str_heading = &shared_ui.loc("styles_modal.bones");
             ui.label(str_heading.to_owned())
         });
 
-        if shared.selections.style == -1 {
+        if selections.style == -1 {
             let size = ui.available_size();
-            let mut darker = shared.config.colors.dark_accent;
+            let mut darker = config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
             egui::Frame::new()
                 .inner_margin(5.)
@@ -428,19 +440,19 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
         let frame = egui::Frame::default();
         ui.dnd_drop_zone::<i32, _>(frame, |ui| {
             let frame = egui::Frame::new()
-                .fill(shared.config.colors.dark_accent.into())
+                .fill(config.colors.dark_accent.into())
                 .inner_margin(6.);
             frame.show(ui, |ui| {
                 let padding = Vec2::new(0., 33.);
                 ui.set_width((modal_width / 3.) - padding.x);
                 ui.set_height(height - padding.y);
 
-                if shared.selections.style == -1 {
+                if selections.style == -1 {
                     return;
                 }
 
-                let styles = &shared.armature.styles;
-                let tex_id = shared.selections.style;
+                let styles = &armature.styles;
+                let tex_id = selections.style;
 
                 let set = styles.iter().find(|style| style.id == tex_id).unwrap();
 
@@ -449,17 +461,11 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
                 }
 
                 let scroll = egui::ScrollArea::both()
-                    .vertical_scroll_offset(shared.ui.bones_assigned_scroll)
+                    .vertical_scroll_offset(shared_ui.bones_assigned_scroll)
                     .show(ui, |ui| {
-                        draw_bone_buttons(
-                            ui,
-                            &mut shared.armature,
-                            &shared.config,
-                            &mut shared.ui,
-                            &shared.selections,
-                        );
+                        draw_bone_buttons(ui, armature, &config, shared_ui, &selections, events);
                     });
-                shared.ui.bones_assigned_scroll = scroll.state.offset.y;
+                shared_ui.bones_assigned_scroll = scroll.state.offset.y;
             })
         });
     });
@@ -467,10 +473,11 @@ fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, modal_width: f32, hei
 
 pub fn draw_bone_buttons(
     ui: &mut egui::Ui,
-    armature: &mut Armature,
+    armature: &Armature,
     config: &crate::Config,
     shared_ui: &mut crate::Ui,
     selections: &crate::SelectionState,
+    events: &mut EventState,
 ) {
     let mut hovered = false;
     let mut idx = -1;
@@ -503,7 +510,7 @@ pub fn draw_bone_buttons(
                 if armature_window::bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), config)
                     .clicked()
                 {
-                    armature.bones[b].folded = !armature.bones[b].folded;
+                    events.toggle_bone_folded(b, !armature.bones[b].folded);
                 }
             }
             ui.add_space(13.);
@@ -564,13 +571,13 @@ pub fn draw_bone_buttons(
                 return;
             }
 
-            let bone = &mut armature.bones[idx as usize];
+            let bone = &armature.bones[idx as usize];
             let id = bone.id;
             let style = &armature.styles[selections.style as usize];
             let tex_str = style.textures[*dragged_payload.unwrap() as usize]
                 .name
                 .clone();
-            armature.set_bone_tex(id, tex_str, selections.anim, selections.anim_frame);
+            events.set_bone_texture(id as usize, tex_str);
         });
     }
     if !hovered {
@@ -578,19 +585,27 @@ pub fn draw_bone_buttons(
     }
 }
 
-fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
+fn draw_assigned_list(
+    ui: &mut egui::Ui,
+    height: f32,
+    shared_ui: &mut crate::Ui,
+    config: &Config,
+    selections: &SelectionState,
+    armature: &Armature,
+    events: &mut EventState,
+) {
     ui.vertical(|ui| {
         ui.horizontal(|ui| {
-            let str_heading = &shared.ui.loc("styles_modal.assigned_textures");
-            let str_desc = &shared.ui.loc("styles_modal.assigned_textures_desc");
+            let str_heading = &shared_ui.loc("styles_modal.assigned_textures");
+            let str_desc = &shared_ui.loc("styles_modal.assigned_textures_desc");
             ui.label(str_heading.to_owned()).on_hover_text(str_desc)
         });
 
         let default_width = 150.;
 
-        if shared.selections.style == -1 {
+        if selections.style == -1 {
             let size = ui.available_size();
-            let mut darker = shared.config.colors.dark_accent;
+            let mut darker = config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
             let frame = egui::Frame::new().inner_margin(5.).fill(darker.into());
             frame.show(ui, |ui| {
@@ -603,39 +618,39 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
         let frame = egui::Frame::default();
         ui.dnd_drop_zone::<i32, _>(frame, |ui| {
             let frame = egui::Frame::new()
-                .fill(shared.config.colors.dark_accent.into())
+                .fill(config.colors.dark_accent.into())
                 .inner_margin(6.);
             frame.show(ui, |ui| {
                 ui.set_width(default_width);
                 let padding = Vec2::new(20., 33.);
                 ui.set_height(height - padding.y);
 
-                if shared.selections.style == -1 {
+                if selections.style == -1 {
                     return;
                 }
 
-                let styles = &shared.armature.styles;
-                let tex_id = shared.selections.style;
+                let styles = &armature.styles;
+                let tex_id = selections.style;
 
                 let set = styles.iter().find(|style| style.id == tex_id).unwrap();
 
                 if set.textures.len() == 0 {
                     let mut cache = egui_commonmark::CommonMarkCache::default();
-                    let loc = shared.ui.loc("styles_modal.assigned_empty").to_string();
-                    let str = utils::markdown(loc, shared.ui.local_doc_url.to_string());
+                    let loc = shared_ui.loc("styles_modal.assigned_empty").to_string();
+                    let str = utils::markdown(loc, shared_ui.local_doc_url.to_string());
                     egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
                     return;
                 }
 
                 let scroll_area = egui::ScrollArea::vertical()
                     .id_salt("assigned")
-                    .vertical_scroll_offset(shared.ui.bones_assigned_scroll);
+                    .vertical_scroll_offset(shared_ui.bones_assigned_scroll);
                 let scroll = scroll_area.show(ui, |ui| {
-                    for b in 0..shared.armature.bones.len() {
-                        if shared.armature.is_bone_folded(shared.armature.bones[b].id) {
+                    for b in 0..armature.bones.len() {
+                        if armature.is_bone_folded(armature.bones[b].id) {
                             continue;
                         }
-                        let bone = shared.armature.bones[b].clone();
+                        let bone = armature.bones[b].clone();
                         let mut raw_str = bone.tex.to_string();
                         let max_letters = 13;
                         if raw_str.len() > max_letters - 1 {
@@ -648,33 +663,28 @@ fn draw_assigned_list(ui: &mut egui::Ui, shared: &mut Shared, height: f32) {
                         ui.add_space(1.5);
                         ui.horizontal(|ui| {
                             egui::containers::menu::MenuButton::new(str_idx).ui(ui, |ui| {
-                                let style_id = shared.selections.style;
-                                let styles = &shared.armature.styles;
+                                let style_id = selections.style;
+                                let styles = &armature.styles;
                                 let set = styles.iter().find(|s| s.id == style_id).unwrap();
                                 let mut tex_str = bone.tex.clone();
                                 let last_tex = tex_str.clone();
-                                let none_str = shared.ui.loc("none_option");
+                                let none_str = shared_ui.loc("none_option");
                                 ui.selectable_value(&mut tex_str, "".to_string(), none_str);
                                 for t in 0..set.textures.len() {
                                     let name = set.textures[t].name.clone().to_string();
                                     ui.selectable_value(&mut tex_str, name.clone(), name);
                                 }
                                 if last_tex != tex_str {
-                                    shared.undo_states.new_undo_bones(&shared.armature.bones);
+                                    //shared.undo_states.new_undo_bones(&shared.armature.bones);
                                 }
-                                shared.armature.set_bone_tex(
-                                    bone.id,
-                                    tex_str.clone(),
-                                    shared.selections.anim,
-                                    shared.selections.anim_frame,
-                                );
+                                events.set_bone_texture(bone.id as usize, tex_str.clone());
                             });
                             ui.add_space(7.);
                         });
                         ui.add_space(1.5);
                     }
                 });
-                shared.ui.bones_assigned_scroll = scroll.state.offset.y;
+                shared_ui.bones_assigned_scroll = scroll.state.offset.y;
             })
         });
     });

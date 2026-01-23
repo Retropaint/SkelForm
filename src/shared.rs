@@ -1827,35 +1827,48 @@ pub enum Events {
     None,
     Undo,
     Redo,
+
     CamZoomIn,
     CamZoomOut,
     CamZoomScroll,
+
     EditModeMove,
     EditModeRotate,
     EditModeScale,
+
     SelectBone,
     SelectAnimFrame,
     SelectAnim,
     SelectStyle,
-    OpenModal,
-    UnselectAll,
-    OpenPolarModal,
-    PointerOnUi,
-    DragBone,
+
     DeleteBone,
     DeleteAnim,
     DeleteTex,
     DeleteStyle,
     DeleteKeyframe,
+
     CopyBone,
     PasteBone,
-    SetKeyframeFrame,
+
     NewAnimation,
-    RenameAnimation,
-    RenameStyle,
-    RenameTexture,
-    ToggleAnimPlaying,
     NewStyle,
+    NewBone,
+    NewArmature,
+
+    RenameAnim,
+    RenameStyle,
+    RenameTex,
+    RenameBone,
+
+    SetKeyframeFrame,
+    SetBoneTexture,
+
+    OpenModal,
+    UnselectAll,
+    OpenPolarModal,
+    PointerOnUi,
+    DragBone,
+    ToggleAnimPlaying,
     ToggleStyleActive,
     MoveStyle,
     MigrateTexture,
@@ -1867,8 +1880,6 @@ pub enum Events {
     SaveEditedBone,
     ApplySettings,
     ResetConfig,
-    NewBone,
-    NewArmature,
 }
 
 enum_string!(Events);
@@ -1920,7 +1931,7 @@ impl EventState {
     event_with_value!(select_bone, Events::SelectBone, bone_id, usize);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_anim_frame, Events::SelectAnimFrame, frame, usize);
-    event_with_value!(select_style, Events::SelectStyle, style_idx, usize);
+    event_with_value!(select_style, Events::SelectStyle, style_id, usize);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
     event_with_value!(delete_anim, Events::DeleteAnim, anim_id, usize);
     event_with_value!(delete_tex, Events::DeleteTex, tex_id, usize);
@@ -1934,6 +1945,12 @@ impl EventState {
         self.events.push(Events::OpenModal);
         self.values.push(if forced { 1. } else { 0. });
         self.str_values.push(loc_headline.to_string());
+    }
+
+    pub fn rename_bone(&mut self, bone_idx: usize, new_name: String) {
+        self.events.push(Events::RenameBone);
+        self.values.push(bone_idx as f32);
+        self.str_values.push(new_name);
     }
 
     pub fn open_polar_modal(&mut self, polar_id: PolarId, headline: String) {
@@ -1962,7 +1979,7 @@ impl EventState {
     }
 
     pub fn rename_animation(&mut self, anim_idx: usize, name: String) {
-        self.events.push(Events::RenameAnimation);
+        self.events.push(Events::RenameAnim);
         self.values.push(anim_idx as f32);
         self.str_values.push(name);
     }
@@ -1998,7 +2015,7 @@ impl EventState {
     }
 
     pub fn rename_texture(&mut self, tex_idx: usize, new_name: String) {
-        self.events.push(Events::RenameTexture);
+        self.events.push(Events::RenameTex);
         self.values.push(tex_idx as f32);
         self.str_values.push(new_name);
     }
@@ -2035,6 +2052,12 @@ impl EventState {
         self.values.push(value as f32);
         self.values.push(anim_id as f32);
         self.values.push(anim_frame as f32);
+    }
+
+    pub fn set_bone_texture(&mut self, bone_id: usize, tex: String) {
+        self.events.push(Events::SetBoneTexture);
+        self.values.push(bone_id as f32);
+        self.str_values.push(tex);
     }
 }
 

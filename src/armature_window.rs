@@ -52,7 +52,6 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
             if button.clicked() {
                 shared.undo_states.new_undo_bones(&shared.armature.bones);
                 shared.events.new_bone();
-                shared.ui.just_made_bone = true;
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if shared.armature.bones.len() == 0 {
@@ -254,18 +253,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     let (edited, value, _) =
                         ui.text_input(context_id, &mut shared.ui, bone, options);
                     if edited {
-                        let sel_bone = shared.armature.sel_bone(&sel).unwrap().clone();
-                        shared.undo_states.new_undo_bone(&sel_bone);
-                        shared.armature.sel_bone_mut(&sel).unwrap().name = value;
-                        if shared.ui.just_made_bone {
-                            shared
-                                .undo_states
-                                .undo_actions
-                                .last_mut()
-                                .unwrap()
-                                .continued = true;
-                        }
-                        shared.ui.just_made_bone = false;
+                        shared.events.rename_bone(sel.bone_idx, value);
                     }
                     return;
                 }

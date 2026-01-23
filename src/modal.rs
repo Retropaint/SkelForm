@@ -74,7 +74,6 @@ pub fn polar_modal(
                     }
                 }
                 PolarId::DeleteAnim => {
-                    events.select_anim(usize::MAX);
                     events.delete_anim(shared_ui.context_id_parsed() as usize);
                     shared_ui.context_menu.close();
                 }

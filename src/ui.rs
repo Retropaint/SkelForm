@@ -9,7 +9,7 @@ pub trait EguiUi {
     fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32);
     fn clickable_label(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response;
     fn text_input(&mut self,id: String, shared_ui: &mut crate::Ui, value: String, options: Option<TextInputOptions>) -> (bool, String, egui::Response);
-    fn float_input(&mut self,id: String,shared: &mut crate::Ui,value: f32,modifier: f32,options: Option<TextInputOptions>) -> (bool, f32, egui::Response);
+    fn float_input(&mut self,id: String,shared_ui: &mut crate::Ui,value: f32,modifier: f32,options: Option<TextInputOptions>) -> (bool, f32, egui::Response);
     fn debug_rect(&mut self, rect: egui::Rect);
     fn context_rename(&mut self, shared_ui: &mut crate::Ui, config: &Config, id: String);
     fn context_delete(&mut self, shared_ui: &mut crate::Ui, config: &Config, events: &mut EventState, loc_code: &str, polar_id: PolarId);
@@ -138,7 +138,8 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         modal::modal(context, &mut shared.ui, &shared.config);
     }
     if shared.ui.styles_modal {
-        styles_modal::draw(shared, context);
+        #[rustfmt::skip]
+        styles_modal::draw(context, &mut shared.ui, &shared.config, &shared.camera, &shared.armature, &shared.selections, &mut shared.events);
     }
     if shared.ui.settings_modal {
         settings_modal::draw(
