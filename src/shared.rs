@@ -577,8 +577,8 @@ impl Ui {
     }
 
     pub fn context_id_parsed(&self) -> i32 {
-        let raw_id = self.context_menu.id.split('_').collect::<Vec<_>>()[1];
-        raw_id.parse::<i32>().unwrap()
+        let raw_id = self.context_menu.id.split('_').collect::<Vec<_>>();
+        raw_id[1].parse::<i32>().unwrap()
     }
 
     /// Localization
@@ -1823,6 +1823,7 @@ pub struct Renderer {
     pub has_loaded: bool,
     pub bone_init_rot: f32,
     pub gridline_gap: i32,
+    pub sel_bone_temp_verts: Vec<Vertex>,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]
@@ -1885,6 +1886,8 @@ pub enum Events {
     ResetConfig,
     MoveCamera,
     RemoveVertex,
+    DragVertex,
+    ClickVertex,
 }
 
 enum_string!(Events);
@@ -1946,6 +1949,8 @@ impl EventState {
     event_with_value!(copy_bone, Events::CopyBone, bone_id, usize);
     event_with_value!(paste_bone, Events::PasteBone, bone_id, usize);
     event_with_value!(remove_vertex, Events::RemoveVertex, vert_idx, usize);
+    event_with_value!(drag_vertex, Events::DragVertex, vert_id, usize);
+    event_with_value!(click_vertex, Events::ClickVertex, vert_id, usize);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -1981,10 +1986,9 @@ impl EventState {
         self.str_values.push("".to_string());
     }
 
-    pub fn drag_bone(&mut self, is_above: bool, point_id: usize, drag_id: usize) {
+    pub fn drag_bone(&mut self, is_above: bool, point_id: usize) {
         self.events.push(Events::DragBone);
         self.values.push(point_id as f32);
-        self.values.push(drag_id as f32);
         self.values.push(if is_above { 1. } else { 0. });
     }
 

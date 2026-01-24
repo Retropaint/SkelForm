@@ -47,8 +47,9 @@ pub fn draw(mut bone: Bone, ui: &mut egui::Ui, shared: &mut Shared) {
             if ui.label(text).on_hover_cursor(hand).clicked() {
                 let str = shared.ui.loc("polar.delete_bone").clone().to_string();
                 let context_id =
-                    "bone_".to_owned() + &shared.armature.sel_bone(&sel).unwrap().id.to_string();
+                    "b_".to_owned() + &shared.armature.sel_bone(&sel).unwrap().id.to_string();
                 shared.ui.context_menu.id = context_id;
+                shared.ui.context_menu.keep = true;
                 shared.events.open_polar_modal(PolarId::DeleteBone, str);
             }
         });

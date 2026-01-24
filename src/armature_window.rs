@@ -129,7 +129,15 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 ui.style_mut().visuals.hyperlink_color = egui::Color32::from_rgb(94, 156, 255);
 
                 if shared.armature.bones.len() != 0 {
-                    draw_hierarchy(shared, ui);
+                    draw_hierarchy(
+                        ui,
+                        &mut shared.ui,
+                        &shared.selections,
+                        &shared.armature,
+                        &shared.config,
+                        &shared.edit_mode,
+                        &mut shared.events,
+                    );
                 } else {
                     let mut cache = egui_commonmark::CommonMarkCache::default();
                     let armature_str = shared.ui.loc("armature_panel.empty_armature");
@@ -145,104 +153,99 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     ui::draw_resizable_panel(panel_id, panel, &mut shared.camera.on_ui, &egui_ctx);
 }
 
-pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
+pub fn draw_hierarchy(
+    ui: &mut egui::Ui,
+    shared_ui: &mut crate::Ui,
+    selections: &SelectionState,
+    armature: &Armature,
+    config: &Config,
+    edit_mode: &EditMode,
+    events: &mut EventState,
+) {
     ui.set_min_width(ui.available_width());
     let mut idx: i32 = -1;
     let mut is_hovering = false;
-    let sel = shared.selections.clone();
+    let sel = selections.clone();
 
-    for b in 0..shared.armature.bones.len() {
+    for b in 0..armature.bones.len() {
         idx += 1;
-        if shared.armature.is_bone_folded(shared.armature.bones[b].id) {
+        if armature.is_bone_folded(armature.bones[b].id) {
             continue;
         }
-        let bone_id = shared.armature.bones[b].id;
+        let bone_id = armature.bones[b].id;
 
         let mut dragged = false;
 
-        let parents = shared.armature.get_all_parents(shared.armature.bones[b].id);
-        let selected_bone_id = if let Some(bone) = shared.armature.sel_bone(&sel) {
-            bone.id
-        } else {
-            -1
-        };
+        let parents = armature.get_all_parents(armature.bones[b].id);
+        let bone = armature.sel_bone(&sel);
+        let selected_bone_id = if bone != None { bone.unwrap().id } else { -1 };
 
         // disable selected bone and it's children from armature if setting IK target,
         // since IK target cannot be itself
-        let setting_ik_target = shared.edit_mode.setting_ik_target
+        let setting_ik_target = edit_mode.setting_ik_target
             && (bone_id == selected_bone_id
                 || parents.iter().find(|bone| bone.id == selected_bone_id) != None);
 
         ui.add_enabled_ui(!setting_ik_target, |ui| {
             ui.horizontal(|ui| {
-                let hidden = shared.armature.animated_bones[b].is_hidden;
+                let hidden = armature.animated_bones[b].is_hidden;
                 let hidden_icon = if hidden { "---" } else { "👁" };
                 let id = "bone_hidden".to_owned() + &b.to_string();
-                if bone_label(hidden_icon, ui, id, Vec2::new(-2., 18.), &shared.config).clicked() {
-                    let mut hidden: i32 = 0;
-                    if !shared.armature.animated_bones[b].is_hidden {
-                        hidden = 1;
-                    }
-                    let sel = shared.selections.anim;
-                    let frame = shared.selections.anim_frame;
-                    shared.events.save_edited_bone();
-                    shared.events.edit_bone(
-                        bone_id,
-                        &AnimElement::Hidden,
-                        hidden as f32,
-                        sel,
-                        frame,
-                    );
+                if bone_label(hidden_icon, ui, id, Vec2::new(-2., 18.), &config).clicked() {
+                    let is_hidden = armature.animated_bones[b].is_hidden;
+                    let hidden = if !is_hidden { 1. } else { 0. };
+                    let sel = selections.anim;
+                    let frame = selections.anim_frame;
+                    events.save_edited_bone();
+                    events.edit_bone(bone_id, &AnimElement::Hidden, hidden as f32, sel, frame);
                 }
                 ui.add_space(17.);
 
                 // add space to the left if this is a child
                 for _ in 0..parents.len() {
-                    vert_line(0., ui, &shared.config);
+                    vert_line(0., ui, &config);
                     ui.add_space(15.);
                 }
 
                 // show folding button if this bone has children
                 let mut children = vec![];
-                let bone = &shared.armature.bones[b];
-                get_all_children(&shared.armature.bones, &mut children, bone);
+                let bone = &armature.bones[b];
+                get_all_children(&armature.bones, &mut children, bone);
                 if children.len() == 0 {
-                    hor_line(11., ui, &shared.config);
+                    hor_line(11., ui, &config);
                 } else {
-                    let folded = shared.armature.bones[b].folded;
+                    let folded = armature.bones[b].folded;
                     let fold_icon = if folded { "⏵" } else { "⏷" };
                     let id = "bone_fold".to_owned() + &b.to_string();
-                    if bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), &shared.config).clicked()
-                    {
-                        shared.undo_states.new_undo_bones(&shared.armature.bones);
-                        shared.armature.bones[b].folded = !shared.armature.bones[b].folded;
+                    if bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), &config).clicked() {
+                        events.toggle_bone_folded(idx as usize, !armature.bones[b].folded);
                     }
                 }
                 ui.add_space(13.);
 
-                let mut selected_col = shared.config.colors.dark_accent;
+                let mut selected_col = config.colors.dark_accent;
                 let mut cursor = egui::CursorIcon::PointingHand;
 
-                if shared.armature.animated_bones[b].is_hidden {
-                    selected_col = shared.config.colors.dark_accent;
+                if armature.animated_bones[b].is_hidden {
+                    selected_col = config.colors.dark_accent;
                 }
 
-                if shared.ui.hovering_bone == idx {
+                if shared_ui.hovering_bone == idx {
                     selected_col += Color::new(20, 20, 20, 0);
                 }
 
-                let id = &shared.armature.bones[idx as usize].id;
-                let is_multi_selected = shared.selections.bone_ids.contains(id);
-                if shared.selections.bone_idx == idx as usize || is_multi_selected {
+                let id = &armature.bones[idx as usize].id;
+                let is_multi_selected = selections.bone_ids.contains(id);
+                if selections.bone_idx == idx as usize || is_multi_selected {
                     selected_col += Color::new(20, 20, 20, 0);
                     cursor = egui::CursorIcon::Default;
                 }
 
                 let width = ui.available_width();
                 let context_id = "bone_".to_string() + &idx.to_string();
-                if shared.ui.rename_id == context_id {
-                    let bone_name = shared.ui.loc("armature_panel.new_bone_name").to_string();
-                    let bone = shared.armature.bones[b].name.clone();
+                if shared_ui.rename_id == context_id {
+                    let bone_name = shared_ui.loc("armature_panel.new_bone_name").to_string();
+                    let bone = armature.bones[b].name.clone();
                     let options = Some(TextInputOptions {
                         size: Vec2::new(ui.available_width(), 21.),
                         focus: true,
@@ -250,10 +253,9 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                         default: bone_name,
                         ..Default::default()
                     });
-                    let (edited, value, _) =
-                        ui.text_input(context_id, &mut shared.ui, bone, options);
+                    let (edited, value, _) = ui.text_input(context_id, shared_ui, bone, options);
                     if edited {
-                        shared.events.rename_bone(sel.bone_idx, value);
+                        events.rename_bone(sel.bone_idx, value);
                     }
                     return;
                 }
@@ -263,10 +265,10 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                     .dnd_drag_source(id, idx, |ui| {
                         ui.set_width(width);
 
-                        let name = shared.armature.bones[b].name.to_string();
-                        let mut text_col = shared.config.colors.text;
-                        if shared.armature.animated_bones[b].is_hidden {
-                            text_col = shared.config.colors.dark_accent;
+                        let name = armature.bones[b].name.to_string();
+                        let mut text_col = config.colors.text;
+                        if armature.animated_bones[b].is_hidden {
+                            text_col = config.colors.dark_accent;
                             text_col += Color::new(40, 40, 40, 0)
                         }
                         egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
@@ -276,10 +278,10 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                                 ui.add_space(5.);
                                 ui.label(egui::RichText::new(name).color(text_col));
 
-                                let has_tex = shared.armature.tex_of(bone_id) != None;
+                                let has_tex = armature.tex_of(bone_id) != None;
 
                                 let pic = if has_tex { "🖻  " } else { "" };
-                                let mut pic_col = shared.config.colors.dark_accent;
+                                let mut pic_col = config.colors.dark_accent;
                                 pic_col += Color::new(40, 40, 40, 0);
                                 ui.label(egui::RichText::new(pic).color(pic_col))
                             });
@@ -291,83 +293,30 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
 
                 if button.contains_pointer() {
                     is_hovering = true;
-                    shared.ui.hovering_bone = idx;
+                    shared_ui.hovering_bone = idx;
                 }
 
                 if button.clicked() {
-                    if shared.selections.bone_idx == idx as usize {
-                        shared.ui.rename_id = context_id.clone();
-                        shared.ui.edit_value = Some(shared.armature.bones[b].name.clone());
-                    } else {
-                        if shared.edit_mode.setting_ik_target {
-                            let sel_bone = shared.armature.sel_bone(&sel).unwrap().clone();
-                            shared.undo_states.new_undo_bone(&sel_bone);
-                            shared.armature.sel_bone_mut(&sel).unwrap().ik_target_id = bone_id;
-                            shared.edit_mode.setting_ik_target = false;
-                        } else if shared.edit_mode.setting_bind_bone {
-                            let sel_bone = shared.armature.sel_bone(&sel).unwrap().clone();
-                            shared.undo_states.new_undo_bone(&sel_bone);
-                            let idx = shared.selections.bind as usize;
-                            let bind = &mut shared.armature.sel_bone_mut(&sel).unwrap().binds[idx];
-                            bind.bone_id = bone_id;
-                            shared.edit_mode.setting_bind_bone = false;
-                        } else {
-                            if !shared.input.holding_mod && !shared.input.holding_shift {
-                                shared.events.select_bone(idx as usize, false);
-                            }
-
-                            let id = shared.armature.bones[idx as usize].id;
-                            shared.selections.bone_ids.push(id);
-
-                            if shared.input.holding_shift {
-                                let mut first = shared.selections.bone_idx;
-                                let mut second = idx as usize;
-                                if first > second {
-                                    first = idx as usize;
-                                    second = shared.selections.bone_idx;
-                                }
-                                for i in first..second as usize {
-                                    let bone = &shared.armature.bones[i];
-                                    let this_id = shared.selections.bone_ids.contains(&bone.id);
-                                    let sel_bone = shared.armature.sel_bone(&sel).unwrap();
-                                    if !this_id && bone.parent_id == sel_bone.parent_id {
-                                        shared.selections.bone_ids.push(bone.id);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    events.select_bone(idx as usize, false);
                 }
 
-                crate::context_menu!(button, shared.ui, context_id, |ui: &mut egui::Ui| {
-                    ui.context_rename(&mut shared.ui, &shared.config, context_id);
-                    ui.context_delete(
-                        &mut shared.ui,
-                        &shared.config,
-                        &mut shared.events,
-                        "delete_bone",
-                        PolarId::DeleteBone,
-                    );
+                crate::context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {
+                    ui.context_rename(shared_ui, &config, context_id);
+                    let delete_bone = PolarId::DeleteBone;
+                    ui.context_delete(shared_ui, &config, events, "delete_bone", delete_bone);
 
-                    if ui.context_button("Copy", &shared.config).clicked() {
-                        shared.events.copy_bone(b);
-                        shared.ui.context_menu.close();
+                    if ui.context_button("Copy", &config).clicked() {
+                        events.copy_bone(b);
+                        shared_ui.context_menu.close();
                     }
 
-                    if ui.context_button("Paste", &shared.config).clicked() {
-                        shared.events.paste_bone(b);
-                        shared.ui.context_menu.close();
+                    if ui.context_button("Paste", &config).clicked() {
+                        events.paste_bone(b);
+                        shared_ui.context_menu.close();
                     }
                 });
 
-                if check_bone_dragging(
-                    &mut shared.events,
-                    &shared.armature,
-                    &shared.selections,
-                    ui,
-                    button,
-                    idx as usize,
-                ) {
+                if check_bone_dragging(events, &armature, ui, button, idx as usize) {
                     dragged = true;
                 }
             });
@@ -379,7 +328,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
     }
 
     if !is_hovering {
-        shared.ui.hovering_bone = -1;
+        shared_ui.hovering_bone = -1;
     }
 }
 
@@ -404,7 +353,6 @@ pub fn bone_label(
 fn check_bone_dragging(
     events: &mut EventState,
     armature: &Armature,
-    selections: &SelectionState,
     ui: &mut egui::Ui,
     drag: Response,
     idx: usize,
@@ -442,43 +390,7 @@ fn check_bone_dragging(
         return false;
     };
 
-    let pointing_id = armature.bones[idx].id;
-
-    // ignore if pointing bone is also selected
-    if selections.bone_ids.contains(&pointing_id) {
-        return false;
-    }
-
-    // ignore if pointing bone is a child of this
-    let mut children: Vec<Bone> = vec![];
-    let id = selections.bone_ids[0];
-    let dragged_bone = armature.bones.iter().find(|b| b.id == id).unwrap();
-    get_all_children(&armature.bones, &mut children, &dragged_bone);
-    for c in children {
-        if armature.bones[idx as usize].id == c.id {
-            return false;
-        }
-    }
-
-    // sort dragged bones so they'll appear in the same order when dropped
-    let mut sorted_ids = selections.bone_ids.clone();
-    sorted_ids.sort_by(|a, b| {
-        let mut first = *b;
-        let mut second = *a;
-        if is_above {
-            first = *a;
-            second = *b;
-        }
-        let first_idx = armature.bones.iter().position(|b| b.id == first);
-        let second_idx = armature.bones.iter().position(|b| b.id == second);
-        first_idx.unwrap().cmp(&second_idx.unwrap())
-    });
-
-    for id in sorted_ids {
-        let pointing_id = pointing_id as usize;
-        events.drag_bone(is_above, pointing_id, id as usize);
-    }
-
+    events.drag_bone(is_above, armature.bones[idx].id as usize);
     return true;
 }
 
@@ -506,7 +418,7 @@ pub fn hor_line(offset: f32, ui: &mut egui::Ui, config: &Config) {
 
 /// Retrieve all children of this bone (recursive)
 pub fn get_all_children(bones: &Vec<Bone>, children_vec: &mut Vec<Bone>, parent: &Bone) {
-    let idx = find_bone_idx(bones, parent.id) as usize;
+    let idx = bones.iter().position(|b| b.id == parent.id).unwrap();
 
     for j in 1..(bones.len() - idx) {
         if bones[idx + j].parent_id != parent.id {
@@ -515,22 +427,4 @@ pub fn get_all_children(bones: &Vec<Bone>, children_vec: &mut Vec<Bone>, parent:
         children_vec.push(bones[idx + j].clone());
         get_all_children(bones, children_vec, &bones[idx + j]);
     }
-}
-
-pub fn find_bone_idx(bones: &Vec<Bone>, id: i32) -> i32 {
-    for (i, b) in bones.iter().enumerate() {
-        if b.id == id {
-            return i as i32;
-        }
-    }
-    -1
-}
-
-pub fn find_bone(bones: &Vec<Bone>, id: i32) -> Option<&Bone> {
-    for b in bones {
-        if b.id == id {
-            return Some(&b);
-        }
-    }
-    None
 }

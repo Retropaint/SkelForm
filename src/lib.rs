@@ -580,6 +580,16 @@ impl BackendRenderer {
 
         render_pass.set_pipeline(&self.scene.pipeline);
 
+        for b in 0..shared.armature.bones.len() {
+            let tex = shared.armature.tex_of(shared.armature.bones[b].id);
+            if tex != None && shared.armature.bones[b].vertices.len() == 0 {
+                let size = tex.unwrap().size;
+                let bone = &mut shared.armature.bones[b];
+                (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
+                shared.armature.bones[b].verts_edited = false;
+            }
+        }
+
         // core rendering logic handled in renderer.rs
         renderer::render(
             &mut render_pass,

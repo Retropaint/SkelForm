@@ -1,7 +1,6 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
 use crate::*;
-use armature_window::find_bone;
 use image::{DynamicImage, GenericImageView};
 use spade::Triangulation;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
@@ -40,17 +39,6 @@ pub fn render(
         draw_gridline(render_pass, device, &renderer, &camera, &config);
     }
 
-    // create rect textures for all textured bones with no verts
-    for b in 0..armature.bones.len() {
-        let tex = armature.tex_of(armature.bones[b].id);
-        if tex != None && armature.bones[b].vertices.len() == 0 {
-            let size = tex.unwrap().size;
-            let bone = &mut armature.bones[b];
-            (bone.vertices, bone.indices) = create_tex_rect(&size);
-            armature.bones[b].verts_edited = false;
-        }
-    }
-
     let mut temp_arm = armature.clone();
     let mut anim_bones = armature.animated_bones.clone();
 
@@ -82,11 +70,11 @@ pub fn render(
         let mut diff = temp_vert.pos - init_vert_pos - temp_arm.bones[selections.bone_idx].pos;
 
         // if unbound, vert needs to account for pos in the previous frame
+        let vert = &mut armature.sel_bone_mut(&sel).unwrap().vertices[vert_id];
         if let Some(last_frame_pos) = renderer.changed_vert_init_pos {
             diff = temp_vert.pos - last_frame_pos;
         }
 
-        let vert = &mut armature.sel_bone_mut(&sel).unwrap().vertices[vert_id];
         vert.pos -= diff;
         renderer.changed_vert_id = -1;
     }
@@ -131,6 +119,13 @@ pub fn render(
 
         if tex == None || temp_arm.bones[b].is_hidden {
             continue;
+        }
+
+        // save constructed vertices for the ClickVertex event
+        if selections.bone_idx != usize::MAX
+            && temp_arm.bones[b].id == armature.bones[selections.bone_idx].id
+        {
+            renderer.sel_bone_temp_verts = temp_arm.bones[b].vertices.clone();
         }
 
         let cam = world_camera(&camera, &config);
@@ -229,14 +224,7 @@ pub fn render(
 
         // select bone on click
         if input.left_clicked && hover_bone_id == temp_arm.bones[b].id {
-            if edit_mode.setting_ik_target {
-                armature.sel_bone_mut(&sel).unwrap().ik_target_id = click_on_hover_id;
-                //edit_mode.setting_ik_target = false;
-            } else {
-                let id = click_on_hover_id;
-                let idx = armature.bones.iter().position(|b| b.id == id).unwrap();
-                events.select_bone(idx, true);
-            }
+            events.select_bone(idx, true);
         }
     }
 
@@ -393,14 +381,8 @@ pub fn render(
         renderer.dragging_verts = vec![];
         renderer.editing_bone = false;
     } else if renderer.dragging_verts.len() > 0 {
-        let mut bone_id = -1;
-        if let Some(bone) = armature.sel_bone(&sel) {
-            bone_id = bone.id
-        }
         for vert_id in renderer.dragging_verts.clone() {
-            let bones = &temp_arm.bones;
-            let bone = bones.iter().find(|bone| bone.id == bone_id).unwrap();
-            drag_vertex(&selections, &input, &camera, armature, bone, vert_id as u32);
+            events.drag_vertex(vert_id);
         }
 
         return;
@@ -445,7 +427,8 @@ pub fn render(
         if edit_mode.current == EditModes::Rotate {
             let mut mouse = utils::screen_to_world_space(input.mouse, camera.window);
             mouse.x *= camera.aspect_ratio();
-            let bone = find_bone(&temp_arm.bones, armature.sel_bone(&sel).unwrap().id).unwrap();
+            let id = armature.sel_bone(&sel).unwrap().id;
+            let bone = temp_arm.bones.iter().find(|b| b.id == id).unwrap();
             let center = vert(Some(bone.pos), None, None);
             let cam = &world_camera(&camera, &config);
             let aspect_ratio = camera.aspect_ratio();
@@ -458,7 +441,8 @@ pub fn render(
             renderer.editing_bone = true;
         }
 
-        let bone = find_bone(&temp_arm.bones, armature.sel_bone(&sel).unwrap().id).unwrap();
+        let id = armature.sel_bone(&sel).unwrap().id;
+        let bone = temp_arm.bones.iter().find(|b| b.id == id).unwrap();
 
         #[rustfmt::skip]
         edit_bone(events, edit_mode, &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones);
@@ -852,7 +836,7 @@ pub fn edit_bone(
 
         // restore universal position by offsetting against parents' attributes
         if bone.parent_id != -1 {
-            let parent = find_bone(bones, bone.parent_id).unwrap();
+            let parent = bones.iter().find(|b| b.id == bone.parent_id).unwrap();
             pos -= parent.pos;
             pos = utils::rotate(&pos, -parent.rot);
             pos /= parent.scale;
@@ -878,7 +862,7 @@ pub fn edit_bone(
 
         // restore universal scale, by offsetting against parent's
         if bone.parent_id != -1 {
-            let parent = find_bone(bones, bone.parent_id).unwrap();
+            let parent = bones.iter().find(|b| b.id == bone.parent_id).unwrap();
             scale /= parent.scale;
         }
 
@@ -950,7 +934,7 @@ pub fn bone_vertices(
     config: &Config,
     edit_mode: &EditMode,
     events: &mut EventState,
-    armature: &mut Armature,
+    armature: &Armature,
     renderer: &mut Renderer,
 ) -> (Vec<Vertex>, Vec<u32>, bool) {
     let mut all_verts = vec![];
@@ -1017,29 +1001,7 @@ pub fn bone_vertices(
                 break;
             }
         } else if input.left_clicked {
-            let idx = selections.bind as usize;
-            let vert_id = world_verts[wv].id;
-            let bone_mut = &mut armature.sel_bone_mut(&sel).unwrap();
-
-            let bind = &bone.binds[idx];
-            if let Some(v) = bind.verts.iter().position(|vert| vert.id == vert_id as i32) {
-                bone_mut.binds[idx].verts.remove(v);
-
-                let changed_vert_id = world_verts.iter().position(|v| v.id == vert_id).unwrap();
-                renderer.changed_vert_id = changed_vert_id as i32;
-
-                // store this frame's vert pos for adjustment later
-                renderer.changed_vert_init_pos = Some(bone.vertices[changed_vert_id].pos);
-            } else {
-                bone_mut.binds[idx].verts.push(BoneBindVert {
-                    id: vert_id as i32,
-                    weight: 1.,
-                });
-
-                let changed_vert_id = world_verts.iter().position(|v| v.id == vert_id).unwrap();
-                renderer.changed_vert_init_pos = None;
-                renderer.changed_vert_id = changed_vert_id as i32;
-            }
+            events.click_vertex(wv);
             break;
         }
     }
@@ -1238,27 +1200,6 @@ fn draw_line(
     let indices = vec![0, 1, 2, 1, 2, 3];
 
     draw(&None, &verts, &indices, render_pass, device);
-}
-
-pub fn drag_vertex(
-    selections: &SelectionState,
-    input: &InputStates,
-    camera: &Camera,
-    armature: &mut Armature,
-    bone: &Bone,
-    vert_id: u32,
-) {
-    let sel = selections.clone();
-    let temp_vert = bone.vertices.iter().find(|v| v.id == vert_id);
-    if bone.vertices.len() == 0 || temp_vert == None {
-        return;
-    }
-    let mouse_vel = mouse_vel(&input, &camera);
-    let zoom = camera.zoom;
-    let og_bone = &mut armature.sel_bone_mut(&sel).unwrap();
-    og_bone.verts_edited = true;
-    let vert_mut = og_bone.vertices.iter_mut().find(|v| v.id == vert_id);
-    vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), temp_vert.unwrap().offset_rot);
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
