@@ -10,11 +10,19 @@ use crate::{
 
 use crate::shared::*;
 
-pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
+pub fn draw(
+    egui_ctx: &Context,
+    events: &mut EventState,
+    config: &Config,
+    armature: &Armature,
+    selections: &SelectionState,
+    edit_mode: &EditMode,
+    shared_ui: &mut crate::Ui,
+) {
     let min_default_size = 175.;
     let panel_id = "Armature";
     let side_panel: egui::SidePanel;
-    match shared.config.layout {
+    match config.layout {
         UiLayout::Split => {
             side_panel = egui::SidePanel::left(panel_id)
                 .default_width(min_default_size)
@@ -39,35 +47,34 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
     }
 
     let panel = side_panel.resizable(true).show(egui_ctx, |ui| {
-        let gradient = shared.config.colors.gradient.into();
+        let gradient = config.colors.gradient.into();
         ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
         ui.horizontal(|ui| {
-            ui.heading(&shared.ui.loc("armature_panel.heading"));
+            ui.heading(&shared_ui.loc("armature_panel.heading"));
         });
 
         ui.separator();
 
         ui.horizontal(|ui| {
-            let button = ui.skf_button(&&shared.ui.loc("armature_panel.new_bone_button"));
+            let button = ui.skf_button(&&shared_ui.loc("armature_panel.new_bone_button"));
             if button.clicked() {
-                shared.undo_states.new_undo_bones(&shared.armature.bones);
-                shared.events.new_bone();
+                events.new_bone();
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if shared.armature.bones.len() == 0 {
+                if armature.bones.len() == 0 {
                     return;
                 }
                 let mut selected_style = -1;
                 let dropdown = egui::ComboBox::new("styles", "")
-                    .selected_text(&shared.ui.loc("armature_panel.styles"))
+                    .selected_text(&shared_ui.loc("armature_panel.styles"))
                     .width(80.)
                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                     .show_ui(ui, |ui| {
-                        for s in 0..shared.armature.styles.len() {
+                        for s in 0..armature.styles.len() {
                             ui.set_width(80.);
-                            let active = shared.armature.styles[s].active;
+                            let active = armature.styles[s].active;
                             let tick = if active { " 👁" } else { "" };
-                            let mut name = shared.armature.styles[s].name.to_string();
+                            let mut name = armature.styles[s].name.to_string();
                             name = utils::trunc_str(ui, &name, ui.min_rect().width() - 20.);
                             let label = ui.selectable_value(&mut selected_style, s as i32, name);
                             ui.painter().text(
@@ -75,12 +82,10 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                                 egui::Align2::RIGHT_CENTER,
                                 tick,
                                 egui::FontId::default(),
-                                shared.config.colors.text.into(),
+                                config.colors.text.into(),
                             );
                             if label.clicked() {
-                                shared.undo_states.new_undo_styles(&shared.armature.styles);
-                                shared.armature.styles[s].active =
-                                    !shared.armature.styles[s].active;
+                                events.toggle_style_active(s, !armature.styles[s].active);
                             }
                         }
                         let label = ui.selectable_value(&mut selected_style, -2, "[Setup]");
@@ -89,27 +94,19 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                         }
                     })
                     .response
-                    .on_hover_text(&shared.ui.loc("armature_panel.styles_desc"));
+                    .on_hover_text(&shared_ui.loc("armature_panel.styles_desc"));
 
-                if shared.ui.focus_style_dropdown {
+                if shared_ui.focus_style_dropdown {
                     dropdown.request_focus();
-                    shared.ui.focus_style_dropdown = false;
+                    shared_ui.focus_style_dropdown = false;
                 }
                 if selected_style == -2 {
-                    shared.ui.styles_modal = true;
+                    shared_ui.styles_modal = true;
                 } else if selected_style != -1 {
-                    shared.selections.style = selected_style;
-                    shared.undo_states.new_undo_bones(&shared.armature.bones);
-                    shared
-                        .undo_states
-                        .undo_actions
-                        .last_mut()
-                        .unwrap()
-                        .continued = true;
-                    for b in 0..shared.armature.bones.len() {
-                        let bone = shared.armature.bones[b].clone();
-                        let armature = &mut shared.armature;
-                        armature.set_bone_tex(bone.id, bone.tex.clone(), usize::MAX, -1);
+                    events.select_style(selected_style as usize);
+                    for b in 0..armature.bones.len() {
+                        let bone = armature.bones[b].clone();
+                        events.set_bone_texture(bone.id as usize, bone.tex.clone());
                     }
                 }
             });
@@ -128,29 +125,29 @@ pub fn draw(egui_ctx: &Context, shared: &mut Shared) {
                 // out (without being too jarring).
                 ui.style_mut().visuals.hyperlink_color = egui::Color32::from_rgb(94, 156, 255);
 
-                if shared.armature.bones.len() != 0 {
+                if armature.bones.len() != 0 {
                     draw_hierarchy(
                         ui,
-                        &mut shared.ui,
-                        &shared.selections,
-                        &shared.armature,
-                        &shared.config,
-                        &shared.edit_mode,
-                        &mut shared.events,
+                        shared_ui,
+                        &selections,
+                        &armature,
+                        &config,
+                        &edit_mode,
+                        events,
                     );
                 } else {
                     let mut cache = egui_commonmark::CommonMarkCache::default();
-                    let armature_str = shared.ui.loc("armature_panel.empty_armature");
-                    let str = utils::markdown(armature_str, shared.ui.local_doc_url.clone());
+                    let armature_str = shared_ui.loc("armature_panel.empty_armature");
+                    let str = utils::markdown(armature_str, shared_ui.local_doc_url.clone());
                     egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
                 }
                 ui.add_space(4.);
             });
         });
-        shared.ui.armature_panel_rect = Some(ui.min_rect());
+        shared_ui.armature_panel_rect = Some(ui.min_rect());
     });
 
-    ui::draw_resizable_panel(panel_id, panel, &mut shared.camera.on_ui, &egui_ctx);
+    ui::draw_resizable_panel(panel_id, panel, events, &egui_ctx);
 }
 
 pub fn draw_hierarchy(

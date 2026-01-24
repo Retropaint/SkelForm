@@ -2,12 +2,20 @@ use ui::{EguiUi, TextInputOptions};
 
 use crate::*;
 
-pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
+pub fn draw(
+    ctx: &egui::Context,
+    config: &Config,
+    selections: &SelectionState,
+    armature: &Armature,
+    shared_ui: &mut crate::Ui,
+    input: &InputStates,
+    events: &mut EventState,
+) {
     let frame = egui::Frame {
         corner_radius: 0.into(),
-        fill: shared.config.colors.main.into(),
+        fill: config.colors.main.into(),
         inner_margin: egui::Margin::same(5),
-        stroke: egui::Stroke::new(1., shared.config.colors.light_accent),
+        stroke: egui::Stroke::new(1., config.colors.light_accent),
         ..Default::default()
     };
     let id = "atlas_modal".into();
@@ -17,8 +25,8 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
         ui.set_width(475.);
         ui.heading("Importing Texture(s)");
         ui.add_space(10.);
-        let sel = &shared.selections;
-        let style = &shared.armature.sel_style(sel).unwrap();
+        let sel = &selections;
+        let style = &armature.sel_style(sel).unwrap();
         let atlas = style.textures.last().unwrap().clone();
         ui.horizontal(|ui| {
             // draw atlas
@@ -26,12 +34,12 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
             let image = frame.show(ui, |ui| {
                 ui.set_width(300.);
                 ui.set_height(300.);
-                let data = shared.armature.tex_data(&atlas).unwrap();
+                let data = armature.tex_data(&atlas).unwrap();
                 egui::Image::new(data.ui_img.as_ref().unwrap())
                     .uv(egui::Rect::from_min_size([0., 0.].into(), [1., 1.].into()))
                     .paint_at(ui, ui.min_rect());
-                for t in 0..shared.ui.pending_textures.len() {
-                    let tex = &shared.ui.pending_textures[t];
+                for t in 0..shared_ui.pending_textures.len() {
+                    let tex = &shared_ui.pending_textures[t];
                     let interp = tex.offset / atlas.size;
                     let size_interp = tex.size / atlas.size;
                     let size: Vec2 = ui.min_rect().size().into();
@@ -57,21 +65,21 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
 
                 // drag rects if mouse is on them
                 let mut dragging = false;
-                for tex in &mut shared.ui.pending_textures {
+                for tex in &mut shared_ui.pending_textures {
                     let pixel = atlas.size * interp;
                     if !(pixel.x > tex.offset.x
                         && pixel.y > tex.offset.y
                         && pixel.x < tex.offset.x + tex.size.x
                         && pixel.y < tex.offset.y + tex.size.y)
-                        || shared.ui.is_dragging_pending
+                        || shared_ui.is_dragging_pending
                     {
                         continue;
                     }
 
-                    shared.ui.cursor_icon = egui::CursorIcon::Grab;
-                    if shared.input.left_down {
+                    shared_ui.cursor_icon = egui::CursorIcon::Grab;
+                    if input.left_down {
                         dragging = true;
-                        tex.offset += atlas.size * (interp - shared.ui.prev_pending_interp);
+                        tex.offset += atlas.size * (interp - shared_ui.prev_pending_interp);
                         if tex.offset.x < 0. {
                             tex.offset.x = 0.;
                         }
@@ -92,18 +100,18 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
 
                 if !dragging {
                     // if left clicked, initiate new texture
-                    if shared.input.left_pressed && image.response.contains_pointer() {
-                        shared.ui.init_pending_mouse = pointer.into();
-                        shared.ui.pending_textures.push(Texture {
+                    if input.left_pressed && image.response.contains_pointer() {
+                        shared_ui.init_pending_mouse = pointer.into();
+                        shared_ui.pending_textures.push(Texture {
                             offset: (atlas.size * interp).floor(),
                             ..Default::default()
                         });
                     }
 
-                    if shared.input.left_down && image.response.contains_pointer() {
-                        shared.ui.is_dragging_pending = true;
-                        let tex = &mut shared.ui.pending_textures.last_mut().unwrap();
-                        let init_pending = shared.ui.init_pending_mouse;
+                    if input.left_down && image.response.contains_pointer() {
+                        shared_ui.is_dragging_pending = true;
+                        let tex = &mut shared_ui.pending_textures.last_mut().unwrap();
+                        let init_pending = shared_ui.init_pending_mouse;
                         let init_interp = Vec2::new(
                             (init_pending.x - image.response.rect.min.x)
                                 / image.response.rect.size().x,
@@ -112,7 +120,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         );
 
                         // dragging (horizontal)
-                        if pointer.x < shared.ui.init_pending_mouse.x {
+                        if pointer.x < shared_ui.init_pending_mouse.x {
                             tex.offset.x = (atlas.size.x * interp.x).floor().max(0.);
                             tex.size.x = (atlas.size.x * init_interp.x - tex.offset.x).floor();
                         } else {
@@ -121,7 +129,7 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                         }
 
                         // dragging (vertical)
-                        if pointer.y < shared.ui.init_pending_mouse.y {
+                        if pointer.y < shared_ui.init_pending_mouse.y {
                             tex.offset.y = (atlas.size.y * interp.y).floor().max(0.);
                             tex.size.y = (atlas.size.y * init_interp.y - tex.offset.y).floor();
                         } else {
@@ -131,11 +139,11 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                     }
                 }
 
-                shared.ui.prev_pending_interp = interp;
+                shared_ui.prev_pending_interp = interp;
             }
 
-            if !shared.input.left_down {
-                shared.ui.is_dragging_pending = false;
+            if !input.left_down {
+                shared_ui.is_dragging_pending = false;
             }
 
             ui.add_space(40.);
@@ -145,31 +153,31 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
                 ui.horizontal(|ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
                         if ui.skf_button("Add Texture").clicked() {
-                            shared.ui.pending_textures.push(Texture::default());
+                            shared_ui.pending_textures.push(Texture::default());
                         };
                     });
                 });
-                if shared.ui.pending_textures.len() == 0 {
-                    ui.label(shared.ui.loc("atlas_modal.no_pending"));
+                if shared_ui.pending_textures.len() == 0 {
+                    ui.label(shared_ui.loc("atlas_modal.no_pending"));
                 } else {
-                    textures_list(shared, ui, atlas, height);
+                    textures_list(ui, atlas, height, shared_ui);
                 }
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
                         if ui.skf_button("Done").clicked() {
-                            for (t, tex) in shared.ui.pending_textures.iter_mut().enumerate() {
+                            for (t, tex) in shared_ui.pending_textures.iter_mut().enumerate() {
                                 if tex.name == "" {
                                     tex.name = "Texture ".to_owned() + &t.to_string();
                                 }
                             }
-                            shared.ui.done_pending = shared.ui.pending_textures.len() > 0;
-                            shared.ui.atlas_modal = false;
+                            shared_ui.done_pending = shared_ui.pending_textures.len() > 0;
+                            shared_ui.atlas_modal = false;
                         }
                         if ui.skf_button("Cancel").clicked() {
-                            shared.ui.pending_textures = vec![];
-                            shared.ui.atlas_modal = false;
-                            let sel = &shared.selections;
-                            shared.armature.sel_style_mut(sel).unwrap().textures.pop();
+                            shared_ui.pending_textures = vec![];
+                            shared_ui.atlas_modal = false;
+                            let sel = &selections;
+                            events.cancel_pending_texture();
                         }
                     });
                 });
@@ -178,14 +186,14 @@ pub fn draw(shared: &mut Shared, ctx: &egui::Context) {
     });
 }
 
-fn textures_list(shared: &mut Shared, ui: &mut egui::Ui, atlas: Texture, height: f32) {
+fn textures_list(ui: &mut egui::Ui, atlas: Texture, height: f32, shared_ui: &mut crate::Ui) {
     let h = height - 45.;
     egui::ScrollArea::vertical().max_height(h).show(ui, |ui| {
-        for t in 0..shared.ui.pending_textures.len() {
-            let mut tex = shared.ui.pending_textures[t].clone();
+        for t in 0..shared_ui.pending_textures.len() {
+            let mut tex = shared_ui.pending_textures[t].clone();
             macro_rules! input {
                 ($id:expr, $field:expr, $ui:expr) => {
-                    let (edited, value, _) = $ui.float_input($id, &mut shared.ui, $field, 1., None);
+                    let (edited, value, _) = $ui.float_input($id, shared_ui, $field, 1., None);
                     if edited {
                         $field = value;
                     }
@@ -203,13 +211,13 @@ fn textures_list(shared: &mut Shared, ui: &mut egui::Ui, atlas: Texture, height:
                         .label("🗑")
                         .on_hover_cursor(egui::CursorIcon::PointingHand);
                     if trash.clicked() {
-                        shared.ui.pending_textures.remove(t);
+                        shared_ui.pending_textures.remove(t);
                         removed = true;
                         return;
                     }
                     let (edited, value, _) = ui.text_input(
                         t.to_string() + "name",
-                        &mut shared.ui,
+                        shared_ui,
                         tex.name.clone(),
                         Some(TextInputOptions {
                             placeholder: "Texture Name...".to_string(),
@@ -246,7 +254,7 @@ fn textures_list(shared: &mut Shared, ui: &mut egui::Ui, atlas: Texture, height:
                 tex.size.y = tex.size.y.min(atlas.size.y - tex.offset.y);
             });
             ui.add_space(10.);
-            shared.ui.pending_textures[t] = tex;
+            shared_ui.pending_textures[t] = tex;
         }
     });
 }

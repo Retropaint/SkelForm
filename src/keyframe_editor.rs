@@ -61,19 +61,34 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                 resize.show(ui, |ui| {
                     egui::Frame::new().show(ui, |ui| {
                         ui.vertical(|ui| {
-                            #[rustfmt::skip]
-                            draw_animations_list(ui, &mut shared.ui, &shared.armature, &shared.config, &shared.selections, &mut shared.events);
+                            draw_animations_list(
+                                ui,
+                                &mut shared.ui,
+                                &shared.armature,
+                                &shared.config,
+                                &shared.selections,
+                                &mut shared.events,
+                            );
                         })
                     });
                 });
 
                 if shared.selections.anim != usize::MAX {
-                    timeline_editor(ui, shared);
+                    timeline_editor(
+                        ui,
+                        &mut shared.selections,
+                        &mut shared.armature,
+                        &mut shared.events,
+                        &mut shared.ui,
+                        &shared.config,
+                        &mut shared.input,
+                        &mut shared.copy_buffer,
+                    );
                 }
             });
             shared.ui.keyframe_panel_rect = Some(ui.min_rect());
         }),
-        &mut shared.camera.on_ui,
+        &mut shared.events,
         &egui_ctx,
     );
 }
@@ -96,6 +111,7 @@ fn draw_animations_list(
                 return;
             }
             events.new_animation();
+            shared_ui.just_made_anim = true;
         });
     });
     egui::ScrollArea::vertical().show(ui, |ui| {
@@ -199,7 +215,16 @@ fn draw_animations_list(
     });
 }
 
-fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
+fn timeline_editor(
+    ui: &mut egui::Ui,
+    selections: &mut SelectionState,
+    armature: &mut Armature,
+    events: &mut EventState,
+    shared_ui: &mut crate::Ui,
+    config: &Config,
+    input: &mut InputStates,
+    copy_buffer: &mut CopyBuffer,
+) {
     let frame = egui::Frame::new().outer_margin(egui::Margin {
         left: 0,
         ..Default::default()
@@ -211,9 +236,9 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
         // track the Y of bone change labels for their diamonds
         let mut bone_tops = BoneTops::default();
 
-        let sel = shared.selections.clone();
+        let sel = selections.clone();
 
-        if shared.armature.sel_anim(&sel).unwrap().keyframes.len() > 0 {
+        if armature.sel_anim(&sel).unwrap().keyframes.len() > 0 {
             let frame = egui::Frame::new().inner_margin(egui::Margin {
                 top: 27,
                 bottom: 27,
@@ -222,21 +247,21 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
             });
             frame.show(ui, |ui| {
                 ui.vertical(|ui| {
-                    draw_bones_list(ui, shared, &mut bone_tops);
+                    draw_bones_list(ui, &mut bone_tops, selections, armature, shared_ui, events);
                 });
             });
         }
 
         // calculate how far apart each keyframe should visually be
         let gap = 400.;
-        let fps = shared.armature.sel_anim(&sel).unwrap().fps as f32;
-        let hitbox = gap / shared.ui.anim.timeline_zoom / fps / 2.;
+        let fps = armature.sel_anim(&sel).unwrap().fps as f32;
+        let hitbox = gap / shared_ui.anim.timeline_zoom / fps / 2.;
 
         // add 1 second worth of frames after the last keyframe
         let frames: i32;
-        let extra = shared.armature.sel_anim(&sel).unwrap().fps * 5;
-        if shared.armature.sel_anim(&sel).unwrap().keyframes.last() != None {
-            let sel_anim = shared.armature.sel_anim(&sel).unwrap();
+        let extra = armature.sel_anim(&sel).unwrap().fps * 5;
+        if armature.sel_anim(&sel).unwrap().keyframes.last() != None {
+            let sel_anim = armature.sel_anim(&sel).unwrap();
             frames = sel_anim.keyframes.last().unwrap().frame + extra;
         } else {
             frames = extra
@@ -256,33 +281,53 @@ fn timeline_editor(ui: &mut egui::Ui, shared: &mut Shared) {
                 ui.cursor().left_top(),
                 egui::vec2(ui.available_width(), 20.),
             );
-            let light_accent = shared.config.colors.light_accent;
+            let light_accent = config.colors.light_accent;
             let zero_corner = egui::CornerRadius::ZERO;
             ui.painter().rect_filled(rect, zero_corner, light_accent);
 
-            if shared.ui.anim.lines_x.len() > 0 {
-                draw_top_bar(ui, shared, width, hitbox);
+            if shared_ui.anim.lines_x.len() > 0 {
+                draw_top_bar(
+                    ui, width, hitbox, shared_ui, selections, armature, input, config, events,
+                );
             }
 
             // The options bar has to be at the bottom, but it needs to be created first
             // so that the remaining height can be taken up by timeline graph.
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-                draw_bottom_bar(ui, shared);
-                draw_timeline_graph(ui, shared, width, bone_tops, hitbox);
+                draw_bottom_bar(
+                    ui,
+                    selections,
+                    &config,
+                    &armature,
+                    shared_ui,
+                    events,
+                    copy_buffer,
+                );
+                draw_timeline_graph(
+                    ui, width, bone_tops, hitbox, shared_ui, config, selections, armature, events,
+                    input,
+                );
             });
         });
     });
 }
 
-pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut BoneTops) {
-    let sel = &shared.selections;
+pub fn draw_bones_list(
+    ui: &mut egui::Ui,
+    bone_tops: &mut BoneTops,
+    selections: &SelectionState,
+    armature: &Armature,
+    shared_ui: &mut crate::Ui,
+    events: &mut EventState,
+) {
+    let sel = &selections;
     let scroll_area = egui::ScrollArea::vertical()
         .id_salt("bones_list")
-        .vertical_scroll_offset(shared.ui.anim.timeline_offset.y)
+        .vertical_scroll_offset(shared_ui.anim.timeline_offset.y)
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
     scroll_area.show(ui, |ui| {
         // sort keyframes by element & bone
-        let mut keyframes = shared.armature.sel_anim(sel).unwrap().keyframes.clone();
+        let mut keyframes = armature.sel_anim(sel).unwrap().keyframes.clone();
         keyframes.sort_by(|a, b| (a.element.clone() as i32).cmp(&(b.element.clone() as i32)));
         keyframes.sort_by(|a, b| a.bone_id.cmp(&b.bone_id));
 
@@ -295,7 +340,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
             let kf = &keyframes[i];
 
             if last_bone_id != kf.bone_id {
-                let bones = &shared.armature.bones;
+                let bones = &armature.bones;
                 let bone = bones.iter().find(|b| b.id == kf.bone_id).unwrap();
                 let label = ui
                     .label(bone.name.clone())
@@ -303,14 +348,14 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                     .interact(egui::Sense::click());
                 if label.clicked() {
                     let kf_id = kf.bone_id;
-                    let sel = shared.armature.bones.iter().position(|b| b.id == kf_id);
-                    shared.events.select_bone(sel.unwrap(), false);
+                    let sel = armature.bones.iter().position(|b| b.id == kf_id);
+                    events.select_bone(sel.unwrap(), false);
 
-                    let parents = shared.armature.get_all_parents(kf.bone_id);
+                    let parents = armature.get_all_parents(kf.bone_id);
                     for parent in &parents {
-                        let bones = &shared.armature.bones;
+                        let bones = &armature.bones;
                         let idx = bones.iter().position(|b| b.id == parent.id).unwrap();
-                        shared.events.toggle_bone_folded(idx, false);
+                        events.toggle_bone_folded(idx, false);
                     }
                 }
                 last_bone_id = kf.bone_id;
@@ -327,7 +372,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
             ui.horizontal(|ui| {
                 ui.add_space(30.);
                 let str = &("keyframe_editor.elements.".to_owned() + &kf.element.to_string());
-                let label = ui.label(&shared.ui.loc(str));
+                let label = ui.label(&shared_ui.loc(str));
                 bone_tops.tops.push(BoneTop {
                     id: kf.bone_id,
                     element: kf.element.clone(),
@@ -338,12 +383,22 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
     });
 }
 
-pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: f32) {
+pub fn draw_top_bar(
+    ui: &mut egui::Ui,
+    width: f32,
+    hitbox: f32,
+    shared_ui: &mut crate::Ui,
+    selections: &SelectionState,
+    armature: &mut Armature,
+    input: &InputStates,
+    config: &Config,
+    events: &mut EventState,
+) {
     let mut drew_drag = false;
     let scroll_area = egui::ScrollArea::horizontal()
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
-        .scroll_offset(egui::Vec2::new(shared.ui.anim.timeline_offset.x, 0.));
-    let sel = shared.selections.clone();
+        .scroll_offset(egui::Vec2::new(shared_ui.anim.timeline_offset.x, 0.));
+    let sel = selections.clone();
 
     scroll_area.show(ui, |ui| {
         egui::Frame::new().show(ui, |ui| {
@@ -351,30 +406,30 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
             ui.set_height(20.);
 
             let mut second = 0;
-            for (i, x) in shared.ui.anim.lines_x.iter().enumerate() {
-                if i as i32 % shared.armature.sel_anim(&sel).unwrap().fps != 0 {
+            for (i, x) in shared_ui.anim.lines_x.iter().enumerate() {
+                if i as i32 % armature.sel_anim(&sel).unwrap().fps != 0 {
                     continue;
                 }
                 second += 1;
                 let pos = Vec2::new(ui.min_rect().left() + x, ui.min_rect().top() + 10.);
                 let center = egui::Align2::CENTER_CENTER;
                 let fontid = egui::FontId::default();
-                let col = shared.config.colors.text;
+                let col = config.colors.text;
                 let painter = ui.painter_at(ui.min_rect());
                 let str = second.to_string() + "s";
                 painter.text(pos.into(), center, str, fontid, col.into());
             }
 
-            for i in 0..shared.armature.sel_anim(&sel).unwrap().keyframes.len() {
-                let frame = shared.armature.sel_anim(&sel).unwrap().keyframes[i].frame;
+            for i in 0..armature.sel_anim(&sel).unwrap().keyframes.len() {
+                let frame = armature.sel_anim(&sel).unwrap().keyframes[i].frame;
 
                 // don't draw diamond if it's beyond the recorded lines
-                if shared.ui.anim.lines_x.len() - 1 < frame as usize {
+                if shared_ui.anim.lines_x.len() - 1 < frame as usize {
                     break;
                 }
 
                 let pos = Vec2::new(
-                    ui.min_rect().left() + shared.ui.anim.lines_x[frame as usize] + 3.,
+                    ui.min_rect().left() + shared_ui.anim.lines_x[frame as usize] + 3.,
                     ui.min_rect().top() + 10.,
                 );
 
@@ -383,17 +438,17 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                 let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
                 if response.drag_started() {
-                    shared.events.select_anim_frame(frame as usize);
+                    events.select_anim_frame(frame as usize);
                 }
 
                 if response.hovered() {
-                    shared.ui.cursor_icon = egui::CursorIcon::Grab;
+                    shared_ui.cursor_icon = egui::CursorIcon::Grab;
                 }
 
                 let cursor = get_cursor(ui);
 
                 if response.dragged() {
-                    shared.ui.anim.dragged_keyframe = Keyframe {
+                    shared_ui.anim.dragged_keyframe = Keyframe {
                         frame,
                         bone_id: -1,
                         ..Default::default()
@@ -407,7 +462,7 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     draw_diamond(&ui.ctx().debug_painter(), pos, color);
                 }
 
-                let kf = &shared.ui.anim.dragged_keyframe;
+                let kf = &shared_ui.anim.dragged_keyframe;
                 if kf.frame != frame || kf.bone_id != -1 {
                     draw_diamond(ui.painter(), pos, egui::Color32::WHITE);
                 } else if !drew_drag {
@@ -416,38 +471,36 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
                     drew_drag = true;
                 }
 
-                if !response.drag_stopped() || shared.input.left_clicked {
+                if !response.drag_stopped() || input.left_clicked {
                     continue;
                 }
 
-                let anim = shared.armature.sel_anim(&sel).unwrap().clone();
-                shared.undo_states.new_undo_anim(&anim);
+                let anim = armature.sel_anim(&sel).unwrap().clone();
 
-                shared.ui.cursor_icon = egui::CursorIcon::Grabbing;
+                shared_ui.cursor_icon = egui::CursorIcon::Grabbing;
 
                 // remove keyframe if dragged out
                 if cursor.y < 0. {
-                    let anim = shared.armature.sel_anim_mut(&sel).unwrap();
-                    let frame = anim.keyframes[i].frame;
-                    anim.keyframes.retain(|kf| kf.frame != frame);
+                    events.remove_keyframes_by_frame(anim.keyframes[i].frame);
+
                     // break loop to prevent OOB errors
                     break;
                 }
 
                 // move all keyframes under this one over
-                for j in 0..shared.ui.anim.lines_x.len() {
-                    let x = shared.ui.anim.lines_x[j];
+                for j in 0..shared_ui.anim.lines_x.len() {
+                    let x = shared_ui.anim.lines_x[j];
                     if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
                         continue;
                     }
-                    let selected_anim = &mut shared.armature.sel_anim_mut(&sel).unwrap();
+                    let selected_anim = &mut armature.sel_anim_mut(&sel).unwrap();
                     selected_anim.keyframes.retain(|kf| kf.frame != j as i32);
-                    for kf in &mut shared.armature.sel_anim_mut(&sel).unwrap().keyframes {
+                    for kf in &mut armature.sel_anim_mut(&sel).unwrap().keyframes {
                         if kf.frame == frame as i32 {
                             kf.frame = j as i32;
                         }
                     }
-                    shared.armature.sel_anim_mut(&sel).unwrap().sort_keyframes();
+                    armature.sel_anim_mut(&sel).unwrap().sort_keyframes();
                     return;
                 }
             }
@@ -457,15 +510,20 @@ pub fn draw_top_bar(ui: &mut egui::Ui, shared: &mut Shared, width: f32, hitbox: 
 
 pub fn draw_timeline_graph(
     ui: &mut egui::Ui,
-    shared: &mut Shared,
     width: f32,
     bone_tops: BoneTops,
     hitbox: f32,
+    shared_ui: &mut crate::Ui,
+    config: &Config,
+    selections: &SelectionState,
+    armature: &Armature,
+    events: &mut EventState,
+    input: &mut InputStates,
 ) {
     let layout = egui::Layout::left_to_right(egui::Align::Center);
     ui.with_layout(layout, |ui| {
         let frame = egui::Frame::new()
-            .fill(shared.config.colors.light_accent.into())
+            .fill(config.colors.light_accent.into())
             .inner_margin(3);
         frame.show(ui, |ui| {
             let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
@@ -474,13 +532,13 @@ pub fn draw_timeline_graph(
 
                 let mut cursor = get_cursor(ui);
                 // keep cursor on the frame
-                cursor.y -= shared.ui.anim.timeline_offset.y;
+                cursor.y -= shared_ui.anim.timeline_offset.y;
 
                 // render darkened background after last keyframe
-                let sel = shared.selections.clone();
-                let lkf = shared.armature.sel_anim(&sel).unwrap().keyframes.last();
-                if lkf != None && (lkf.unwrap().frame as usize) < shared.ui.anim.lines_x.len() {
-                    let left_top_rect = egui::vec2(shared.ui.anim.lines_x[lkf.unwrap().frame as usize], -3.);
+                let sel = selections.clone();
+                let lkf = armature.sel_anim(&sel).unwrap().keyframes.last();
+                if lkf != None && (lkf.unwrap().frame as usize) < shared_ui.anim.lines_x.len() {
+                    let left_top_rect = egui::vec2(shared_ui.anim.lines_x[lkf.unwrap().frame as usize], -3.);
                     let right_bottom_rect = egui::vec2(0., 999.);
 
                     let rect_to_fill = egui::Rect::from_min_size(
@@ -489,20 +547,28 @@ pub fn draw_timeline_graph(
                     );
 
                     ui.painter()
-                        .rect_filled(rect_to_fill, 0., shared.config.colors.dark_accent);
+                        .rect_filled(rect_to_fill, 0., config.colors.dark_accent);
                 }
 
                 #[rustfmt::skip]
-                draw_frame_lines(ui, &mut shared.ui, &mut shared.armature, &mut shared.config, &mut shared.input, &mut shared.selections, &mut shared.events, &bone_tops, hitbox, cursor);
+                draw_frame_lines(ui, shared_ui, armature, config, input, selections, events, &bone_tops, hitbox, cursor);
             });
-            shared.ui.anim.timeline_offset = response.state.offset.into();
-            shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
+            shared_ui.anim.timeline_offset = response.state.offset.into();
+            shared_ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
         });
     });
 }
 
-pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
-    let sel = shared.selections.clone();
+pub fn draw_bottom_bar(
+    ui: &mut egui::Ui,
+    selections: &mut SelectionState,
+    config: &Config,
+    armature: &Armature,
+    shared_ui: &mut crate::Ui,
+    events: &mut EventState,
+    copy_buffer: &mut CopyBuffer,
+) {
+    let sel = selections.clone();
     egui::Frame::new().show(ui, |ui| {
         ui.set_width(ui.available_width());
         ui.set_height(20.);
@@ -510,19 +576,19 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
             ui.painter_at(ui.min_rect()).rect_filled(
                 ui.min_rect(),
                 egui::CornerRadius::ZERO,
-                shared.config.colors.main,
+                config.colors.main,
             );
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
-                let play_str = if shared.armature.sel_anim(&sel).unwrap().elapsed != None {
-                    &shared.ui.loc("keyframe_editor.pause")
+                let play_str = if armature.sel_anim(&sel).unwrap().elapsed != None {
+                    &shared_ui.loc("keyframe_editor.pause")
                 } else {
-                    &shared.ui.loc("keyframe_editor.play")
+                    &shared_ui.loc("keyframe_editor.play")
                 };
 
-                let play_text = egui::RichText::new(play_str).color(shared.config.colors.text);
+                let play_text = egui::RichText::new(play_str).color(config.colors.text);
                 let button = egui::Button::new(play_text)
-                    .fill(shared.config.colors.light_accent)
+                    .fill(config.colors.light_accent)
                     .corner_radius(0.);
 
                 let button = ui
@@ -533,99 +599,55 @@ pub fn draw_bottom_bar(ui: &mut egui::Ui, shared: &mut Shared) {
                 if button.clicked() {
                     pressed = true;
                 }
-                if !pressed || shared.armature.sel_anim(&sel).unwrap().keyframes.len() == 0 {
+                if !pressed || armature.sel_anim(&sel).unwrap().keyframes.len() == 0 {
                     return;
                 }
 
-                let anim = shared.armature.sel_anim_mut(&sel).unwrap();
-                anim.elapsed = if anim.elapsed == None {
-                    Some(Instant::now())
-                } else {
-                    None
-                };
-                shared.ui.anim.played_frame = shared.selections.anim_frame;
+                let anim = armature.sel_anim(&sel).unwrap();
+                events.toggle_anim_playing(selections.anim, anim.elapsed == None);
+                shared_ui.anim.played_frame = selections.anim_frame;
             });
 
             if ui.skf_button("+").clicked() {
-                shared.ui.anim.timeline_zoom -= 0.1;
+                shared_ui.anim.timeline_zoom -= 0.1;
             }
             if ui.skf_button("-").clicked() {
-                shared.ui.anim.timeline_zoom += 0.1;
+                shared_ui.anim.timeline_zoom += 0.1;
             }
 
             ui.add_space(20.);
 
-            ui.label(&shared.ui.loc("keyframe_editor.frame"));
-            ui.add(egui::DragValue::new(&mut shared.selections.anim_frame).speed(0.1));
+            ui.label(&shared_ui.loc("keyframe_editor.frame"));
+            ui.add(egui::DragValue::new(&mut selections.anim_frame).speed(0.1));
 
-            let fps = shared.armature.sel_anim(&sel).unwrap().fps;
+            let fps = armature.sel_anim(&sel).unwrap().fps;
 
-            ui.label(&shared.ui.loc("keyframe_editor.fps"))
-                .on_hover_text(&shared.ui.loc("keyframe_editor.frames_per_second"));
+            ui.label(&shared_ui.loc("keyframe_editor.fps"))
+                .on_hover_text(&shared_ui.loc("keyframe_editor.frames_per_second"));
             let (edited, value, _) =
-                ui.float_input("fps".to_string(), &mut shared.ui, fps as f32, 1., None);
+                ui.float_input("fps".to_string(), shared_ui, fps as f32, 1., None);
             if edited {
-                let anim_mut = shared.armature.sel_anim_mut(&sel).unwrap();
-
-                let mut old_unique_keyframes: Vec<i32> =
-                    anim_mut.keyframes.iter().map(|kf| kf.frame).collect();
-                old_unique_keyframes.dedup();
-
-                let mut anim_clone = anim_mut.clone();
-
-                // adjust keyframes to maintain spacing
-                let div = anim_mut.fps as f32 / value;
-                for kf in &mut anim_clone.keyframes {
-                    kf.frame = ((kf.frame as f32) / div) as i32
-                }
-
-                let mut unique_keyframes: Vec<i32> =
-                    anim_clone.keyframes.iter().map(|kf| kf.frame).collect();
-                unique_keyframes.dedup();
-
-                if unique_keyframes.len() == old_unique_keyframes.len() {
-                    anim_mut.fps = value as i32;
-                    anim_mut.keyframes = anim_clone.keyframes;
-                } else {
-                    shared
-                        .events
-                        .open_modal("keyframe_editor.invalid_fps", false);
-                }
+                events.adjust_keyframes_by_fps(value as usize);
             }
-            shared.ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
+            shared_ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
 
             if ui
-                .skf_button(&shared.ui.loc("keyframe_editor.copy"))
+                .skf_button(&shared_ui.loc("keyframe_editor.copy"))
                 .clicked()
             {
-                shared.copy_buffer = CopyBuffer::default();
-                for kf in 0..shared.armature.sel_anim(&sel).unwrap().keyframes.len() {
-                    let frame = shared.selections.anim_frame;
-                    if shared.armature.sel_anim(&sel).unwrap().keyframes[kf].frame == frame {
-                        let keyframe =
-                            shared.armature.sel_anim(&sel).unwrap().keyframes[kf].clone();
-                        shared.copy_buffer.keyframes.push(keyframe);
+                *copy_buffer = CopyBuffer::default();
+                for kf in 0..armature.sel_anim(&sel).unwrap().keyframes.len() {
+                    let frame = selections.anim_frame;
+                    if armature.sel_anim(&sel).unwrap().keyframes[kf].frame == frame {
+                        let keyframe = armature.sel_anim(&sel).unwrap().keyframes[kf].clone();
+                        copy_buffer.keyframes.push(keyframe);
                     }
                 }
             }
 
-            let paste_str = &shared.ui.loc("keyframe_editor.paste");
+            let paste_str = &shared_ui.loc("keyframe_editor.paste");
             if ui.skf_button(paste_str).clicked() {
-                let anim = shared.armature.sel_anim(&sel).unwrap().clone();
-                shared.undo_states.new_undo_anim(&anim);
-
-                let frame = shared.selections.anim_frame;
-                let buffer_frames = shared.copy_buffer.keyframes.clone();
-                let anim = &mut shared.armature.sel_anim_mut(&sel).unwrap();
-
-                anim.keyframes.retain(|kf| kf.frame != frame);
-
-                for kf in 0..buffer_frames.len() {
-                    let keyframe = buffer_frames[kf].clone();
-                    anim.keyframes.push(Keyframe { frame, ..keyframe })
-                }
-
-                shared.armature.sel_anim_mut(&sel).unwrap().sort_keyframes();
+                events.paste_keyframes();
             }
         });
     });

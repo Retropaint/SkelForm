@@ -1857,6 +1857,7 @@ pub enum Events {
 
     CopyBone,
     PasteBone,
+    PasteKeyframes,
 
     NewAnimation,
     NewStyle,
@@ -1890,9 +1891,12 @@ pub enum Events {
     SaveEditedBone,
     ApplySettings,
     ResetConfig,
-    MoveCamera,
+    EditCamera,
     ClickVertex,
     AdjustVertex,
+    CancelPendingTexture,
+    AdjustKeyframesByFPS,
+    RemoveKeyframesByFrame
 }
 
 enum_string!(Events);
@@ -1941,8 +1945,9 @@ impl EventState {
     generic_event!(edit_mode_rotate, Events::EditModeRotate);
     generic_event!(edit_mode_scale, Events::EditModeScale);
     generic_event!(new_armature, Events::NewArmature);
-    generic_event!(move_camera, Events::MoveCamera);
     generic_event!(new_vertex, Events::NewVertex);
+    generic_event!(cancel_pending_texture, Events::CancelPendingTexture);
+    generic_event!(paste_keyframes, Events::PasteKeyframes);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_anim_frame, Events::SelectAnimFrame, frame, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, usize);
@@ -1958,6 +1963,8 @@ impl EventState {
     event_with_value!(drag_vertex, Events::DragVertex, vert_id, usize);
     event_with_value!(click_vertex, Events::ClickVertex, vert_id, usize);
     event_with_value!(remove_triangle, Events::RemoveTriangle, idx, usize);
+    event_with_value!(adjust_keyframes_by_fps, Events::AdjustKeyframesByFPS, fps, usize);
+    event_with_value!(remove_keyframes_by_frame, Events::RemoveKeyframesByFrame, frame, i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -2085,6 +2092,13 @@ impl EventState {
         self.events.push(Events::AdjustVertex);
         self.values.push(pos_x as f32);
         self.values.push(pos_y as f32);
+    }
+
+    pub fn edit_camera(&mut self, pos_x: f32, pos_y: f32, zoom: f32) {
+        self.events.push(Events::EditCamera);
+        self.values.push(pos_x as f32);
+        self.values.push(pos_y as f32);
+        self.values.push(zoom as f32);
     }
 }
 

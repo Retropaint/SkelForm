@@ -395,7 +395,8 @@ pub fn render(
 
     // move camera
     if (input.holding_mod || input.right_down) && !camera.on_ui {
-        events.move_camera();
+        let vel = renderer::mouse_vel(&input, &camera) * camera.zoom;
+        events.edit_camera(camera.pos.x + vel.x, camera.pos.y + vel.y, camera.zoom);
         return;
     }
 

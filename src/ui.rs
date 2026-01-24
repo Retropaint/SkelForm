@@ -46,7 +46,14 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         shared.input.holding_mod = i.modifiers.command;
         shared.input.holding_shift = i.modifiers.shift;
         if shared.ui.rename_id == "" {
-            kb_inputs(i, shared);
+            kb_inputs(
+                i,
+                &mut shared.events,
+                &shared.config,
+                &shared.selections,
+                &mut shared.ui,
+                &mut shared.edit_mode,
+            );
         }
         shared.ui.last_pressed = i.keys_down.iter().last().copied();
 
@@ -94,13 +101,13 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     context.set_cursor_icon(shared.ui.cursor_icon);
     shared.ui.cursor_icon = egui::CursorIcon::Default;
 
-    default_styling(context, shared);
+    default_styling(context, &shared.config);
 
     // apply individual element styling once, then immediately go back to default
     macro_rules! style_once {
         ($func:expr) => {
             $func;
-            default_styling(context, shared);
+            default_styling(context, &shared.config);
         };
     }
 
@@ -132,7 +139,13 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             }
         }
     }
-    camera_bar(context, shared);
+    camera_bar(
+        context,
+        &shared.config,
+        &mut shared.ui,
+        &shared.camera,
+        &mut shared.events,
+    );
 
     if shared.ui.polar_modal {
         modal::polar_modal(context, &shared.config, &mut shared.ui, &mut shared.events);
@@ -157,10 +170,18 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         startup_window::startup_modal(context, &mut shared.ui, &mut shared.events, &shared.config);
     }
     if shared.ui.donating_modal {
-        modal::donating_modal(shared, context);
+        modal::donating_modal(context, &mut shared.ui, &shared.config);
     }
     if shared.ui.atlas_modal {
-        atlas_modal::draw(shared, context);
+        atlas_modal::draw(
+            context,
+            &shared.config,
+            &shared.selections,
+            &shared.armature,
+            &mut shared.ui,
+            &shared.input,
+            &mut shared.events,
+        );
     }
     #[cfg(not(target_arch = "wasm32"))]
     if shared.ui.checking_update {
@@ -193,13 +214,28 @@ pub fn draw(context: &Context, shared: &mut Shared) {
 
         shared.ui.checking_update = false;
     }
-    style_once!(top_panel(context, shared));
+    style_once!(top_panel(
+        context,
+        &shared.config,
+        &mut shared.ui,
+        &mut shared.events,
+        &shared.selections,
+        &shared.armature
+    ));
 
     if shared.edit_mode.anim_open {
         style_once!(keyframe_editor::draw(context, shared));
     }
 
-    style_once!(armature_window::draw(context, shared));
+    style_once!(armature_window::draw(
+        context,
+        &mut shared.events,
+        &shared.config,
+        &shared.armature,
+        &shared.selections,
+        &shared.edit_mode,
+        &mut shared.ui
+    ));
 
     let min_default_size = 210.;
     let mut max_size = min_default_size;
@@ -258,7 +294,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
             });
             shared.ui.bone_panel_rect = Some(ui.min_rect());
         }),
-        &mut shared.camera.on_ui,
+        &mut shared.events,
         context,
     );
 
@@ -315,7 +351,14 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     }
 
     if shared.selections.bone_idx != usize::MAX {
-        edit_mode_bar(context, shared);
+        edit_mode_bar(
+            context,
+            &shared.armature,
+            &shared.selections,
+            &shared.edit_mode,
+            &mut shared.events,
+            &mut shared.ui,
+        );
     }
 
     if shared.armature.bones.len() > 0 {
@@ -380,33 +423,40 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     }
 }
 
-pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
+pub fn kb_inputs(
+    input: &mut egui::InputState,
+    events: &mut EventState,
+    config: &Config,
+    selections: &SelectionState,
+    shared_ui: &mut crate::Ui,
+    edit_mode: &mut EditMode,
+) {
     mouse_button_as_key(input, egui::PointerButton::Primary, egui::Key::F31);
     mouse_button_as_key(input, egui::PointerButton::Secondary, egui::Key::F32);
     mouse_button_as_key(input, egui::PointerButton::Middle, egui::Key::F33);
     mouse_button_as_key(input, egui::PointerButton::Extra1, egui::Key::F34);
     mouse_button_as_key(input, egui::PointerButton::Extra2, egui::Key::F35);
 
-    if input.consume_shortcut(&shared.config.keys.undo) {
-        shared.events.undo();
+    if input.consume_shortcut(&config.keys.undo) {
+        events.undo();
     }
-    if input.consume_shortcut(&shared.config.keys.redo) {
-        shared.events.redo();
-    }
-
-    if input.consume_shortcut(&shared.config.keys.zoom_in_camera) {
-        shared.events.cam_zoom_in();
-    }
-    if input.consume_shortcut(&shared.config.keys.zoom_out_camera) {
-        shared.events.cam_zoom_out();
+    if input.consume_shortcut(&config.keys.redo) {
+        events.redo();
     }
 
-    if input.consume_shortcut(&shared.config.keys.save) {
+    if input.consume_shortcut(&config.keys.zoom_in_camera) {
+        events.cam_zoom_in();
+    }
+    if input.consume_shortcut(&config.keys.zoom_out_camera) {
+        events.cam_zoom_out();
+    }
+
+    if input.consume_shortcut(&config.keys.save) {
         #[cfg(target_arch = "wasm32")]
         utils::save_web(shared);
 
         #[cfg(not(target_arch = "wasm32"))]
-        utils::open_save_dialog(&shared.ui.file_name, &shared.ui.saving);
+        utils::open_save_dialog(&shared_ui.file_name, &shared_ui.saving);
         //if shared.save_path == "" {
         //    utils::open_save_dialog();
         //} else {
@@ -414,52 +464,49 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
         //}
     }
 
-    if input.consume_shortcut(&shared.config.keys.open) {
+    if input.consume_shortcut(&config.keys.open) {
         #[cfg(not(target_arch = "wasm32"))]
-        utils::open_import_dialog(&shared.ui.file_name, &shared.ui.import_contents);
+        utils::open_import_dialog(&shared_ui.file_name, &shared_ui.import_contents);
         #[cfg(target_arch = "wasm32")]
         crate::clickFileInput(false);
     }
 
     // copy shortcut
-    if input.consume_shortcut(&shared.config.keys.copy) {
-        shared.copy_buffer = CopyBuffer::default();
-
+    if input.consume_shortcut(&config.keys.copy) {
         // copy bone(s)
-        let idx = shared.selections.bone_idx;
+        let idx = selections.bone_idx;
         if idx != usize::MAX {
-            shared.events.copy_bone(idx);
+            events.copy_bone(idx);
         }
     }
 
     // paste shortcut
-    if input.consume_shortcut(&shared.config.keys.paste) {
-        shared.events.paste_bone(shared.selections.bone_idx);
+    if input.consume_shortcut(&config.keys.paste) {
+        events.paste_bone(selections.bone_idx);
     }
 
-    if input.consume_shortcut(&shared.config.keys.cancel) {
-        let ui = &mut shared.ui;
-        let no_modals = !ui.styles_modal
-            && !ui.modal
-            && !ui.polar_modal
-            && !ui.forced_modal
-            && !ui.settings_modal;
+    if input.consume_shortcut(&config.keys.cancel) {
+        let no_modals = !shared_ui.styles_modal
+            && !shared_ui.modal
+            && !shared_ui.polar_modal
+            && !shared_ui.forced_modal
+            && !shared_ui.settings_modal;
 
-        ui.styles_modal = false;
-        ui.modal = false;
-        ui.polar_modal = false;
-        ui.forced_modal = false;
-        ui.settings_modal = false;
-        ui.atlas_modal = false;
+        shared_ui.styles_modal = false;
+        shared_ui.modal = false;
+        shared_ui.polar_modal = false;
+        shared_ui.forced_modal = false;
+        shared_ui.settings_modal = false;
+        shared_ui.atlas_modal = false;
 
         // if a context menu is open, cancel that instead
-        if ui.context_menu.id != "" {
-            shared.ui.context_menu.id = "".to_string();
+        if shared_ui.context_menu.id != "" {
+            shared_ui.context_menu.id = "".to_string();
             return;
         }
 
-        if no_modals && !shared.edit_mode.setting_ik_target {
-            shared.events.unselect_all();
+        if no_modals && !edit_mode.setting_ik_target {
+            events.unselect_all();
         }
 
         #[cfg(target_arch = "wasm32")]
@@ -468,7 +515,7 @@ pub fn kb_inputs(input: &mut egui::InputState, shared: &mut Shared) {
             toggleElement(false, "file-dialog".to_string());
         }
 
-        shared.edit_mode.setting_ik_target = false;
+        edit_mode.setting_ik_target = false;
     }
 }
 
@@ -492,10 +539,17 @@ pub fn mouse_button_as_key(
     });
 }
 
-fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
+fn top_panel(
+    egui_ctx: &Context,
+    config: &Config,
+    shared_ui: &mut crate::Ui,
+    events: &mut EventState,
+    selections: &SelectionState,
+    armature: &Armature,
+) {
     let panel = egui::TopBottomPanel::top("top_bar").frame(egui::Frame {
-        fill: shared.config.colors.main.into(),
-        stroke: Stroke::new(0., shared.config.colors.main),
+        fill: config.colors.main.into(),
+        stroke: Stroke::new(0., config.colors.main),
         inner_margin: egui::Margin::default(),
         outer_margin: egui::Margin::default(),
         ..Default::default()
@@ -504,37 +558,39 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
         ui.set_max_height(20.);
         let mut offset = 0.;
         egui::MenuBar::new().ui(ui, |ui| {
-            menu_file_button(ui, shared);
-            menu_edit_button(ui, shared);
-            menu_view_button(ui, shared);
+            menu_file_button(ui, &config, shared_ui, events, &selections, &armature);
+            menu_edit_button(ui, &config, &shared_ui, events);
+            menu_view_button(ui, &config, &shared_ui, events);
 
             macro_rules! title {
                 ($title:expr) => {
-                    egui::RichText::new($title).color(shared.config.colors.text)
+                    egui::RichText::new($title).color(config.colors.text)
                 };
             }
 
-            let str_settings = title!(&shared.ui.loc("top_bar.settings"));
+            let str_settings = title!(&shared_ui.loc("top_bar.settings"));
             let button = ui.menu_button(str_settings, |ui| ui.close());
             if button.response.clicked() {
-                shared.ui.settings_modal = true;
+                shared_ui.settings_modal = true;
             }
 
-            ui.menu_button(title!(&shared.ui.loc("top_bar.help.heading")), |ui| {
+            let s_ui = &shared_ui;
+
+            ui.menu_button(title!(&shared_ui.loc("top_bar.help.heading")), |ui| {
                 ui.set_width(90.);
                 //let str_user_docs = &shared.ui.loc("top_bar.help.user_docs");
-                let str_user_docs = &shared.ui.loc("top_bar.help.user_docs");
-                if top_bar_button(ui, str_user_docs, None, &mut offset, shared).clicked() {
+                let str_user_docs = &shared_ui.loc("top_bar.help.user_docs");
+                if top_bar_button(ui, str_user_docs, None, &mut offset, config, s_ui).clicked() {
                     utils::open_docs(true, "");
                 }
-                let str_dev_docs = &shared.ui.loc("top_bar.help.dev_docs");
-                if top_bar_button(ui, str_dev_docs, None, &mut offset, shared).clicked() {
+                let str_dev_docs = &shared_ui.loc("top_bar.help.dev_docs");
+                if top_bar_button(ui, str_dev_docs, None, &mut offset, config, s_ui).clicked() {
                     utils::open_docs(false, "");
                 }
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    let str_binary = &shared.ui.loc("top_bar.help.binary_folder");
-                    if top_bar_button(ui, str_binary, None, &mut offset, shared).clicked() {
+                    let str_binary = &shared_ui.loc("top_bar.help.binary_folder");
+                    if top_bar_button(ui, str_binary, None, &mut offset, config, s_ui).clicked() {
                         match open::that(utils::bin_path()) {
                             Err(_) => {}
                             Ok(file) => file,
@@ -544,8 +600,8 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
 
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    let str_config = &shared.ui.loc("top_bar.help.config_folder");
-                    if top_bar_button(ui, str_config, None, &mut offset, shared).clicked() {
+                    let str_config = &shared_ui.loc("top_bar.help.config_folder");
+                    if top_bar_button(ui, str_config, None, &mut offset, config, s_ui).clicked() {
                         match open::that(config_path().parent().unwrap()) {
                             Err(_) => {}
                             Ok(file) => file,
@@ -555,7 +611,7 @@ fn top_panel(egui_ctx: &Context, shared: &mut Shared) {
             });
         });
 
-        shared.ui.top_panel_rect = Some(ui.min_rect());
+        shared_ui.top_panel_rect = Some(ui.min_rect());
     });
 }
 
@@ -815,38 +871,45 @@ pub fn create_ui_texture(
     Some(ui_tex)
 }
 
-fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
+fn menu_file_button(
+    ui: &mut egui::Ui,
+    config: &Config,
+    shared_ui: &mut crate::Ui,
+    events: &mut EventState,
+    selections: &SelectionState,
+    armature: &Armature,
+) {
     let mut offset = 0.;
-    let title = egui::RichText::new(&shared.ui.loc("top_bar.file.heading"))
-        .color(shared.config.colors.text);
+    let title =
+        egui::RichText::new(&shared_ui.loc("top_bar.file.heading")).color(config.colors.text);
     ui.menu_button(title, |ui| {
         ui.set_width(125.);
 
         macro_rules! top_bar_button {
             ($name:expr, $kb:expr) => {
-                top_bar_button(ui, $name, $kb, &mut offset, shared)
+                top_bar_button(ui, $name, $kb, &mut offset, &config, &shared_ui)
             };
         }
 
-        let str_open = &shared.ui.loc("top_bar.file.open");
-        if top_bar_button!(str_open, Some(&shared.config.keys.open)).clicked() {
+        let str_open = &shared_ui.loc("top_bar.file.open");
+        if top_bar_button!(str_open, Some(&config.keys.open)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_import_dialog(&shared.ui.file_name, &shared.ui.import_contents);
+            utils::open_import_dialog(&shared_ui.file_name, &shared_ui.import_contents);
             #[cfg(target_arch = "wasm32")]
             crate::clickFileInput(false);
             ui.close();
         }
-        let str_save = &shared.ui.loc("top_bar.file.save");
-        if top_bar_button!(str_save, Some(&shared.config.keys.save)).clicked() {
+        let str_save = &shared_ui.loc("top_bar.file.save");
+        if top_bar_button!(str_save, Some(&config.keys.save)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(&shared.ui.file_name, &shared.ui.saving);
+            utils::open_save_dialog(&shared_ui.file_name, &shared_ui.saving);
             #[cfg(target_arch = "wasm32")]
             utils::save_web(&shared);
             ui.close();
         }
-        let str_startup = &shared.ui.loc("top_bar.file.startup");
+        let str_startup = &shared_ui.loc("top_bar.file.startup");
         if top_bar_button!(str_startup, None).clicked() {
-            shared.ui.startup_window = true;
+            shared_ui.startup_window = true;
             ui.close();
         }
         // disabled: export video is unstable and not really necessary (focus on sprite export instead!)
@@ -870,87 +933,104 @@ fn menu_file_button(ui: &mut egui::Ui, shared: &mut Shared) {
                 }
             }
             if !ffmpeg {
-                shared.events.open_modal("startup.error_ffmpeg", false);
+                events.open_modal("startup.error_ffmpeg", false);
                 return;
             }
 
             // complain if there's no proper animation to export
-            let sel = shared.selections.clone();
-            if shared.selections.anim == usize::MAX {
-                let anims = &shared.armature.animations;
+            let sel = selections.clone();
+            if selections.anim == usize::MAX {
+                let anims = &armature.animations;
                 if anims.len() == 0 || anims[0].keyframes.len() == 0 {
-                    shared.events.open_modal("No animation available.", false);
+                    events.open_modal("No animation available.", false);
                     return;
                 } else {
-                    shared.selections.anim = 0;
+                    //selections.anim = 0;
                 }
-            } else if shared.armature.sel_anim(&sel).unwrap().keyframes.last() == None {
-                shared.events.open_modal("No animation available.", false);
+            } else if armature.sel_anim(&sel).unwrap().keyframes.last() == None {
+                events.open_modal("No animation available.", false);
                 return;
             }
 
-            shared.recording = true;
-            shared.edit_mode.anim_open = true;
-            shared.done_recording = true;
-            shared.events.select_anim_frame(0);
-            shared.ui.anim.loops = 1;
+            //edit_mode.recording = true;
+            //edit_mode.anim_open = true;
+            //edit_mode.done_recording = true;
+            events.select_anim_frame(0);
+            shared_ui.anim.loops = 1;
             ui.close();
         }
     });
 }
 
-fn menu_view_button(ui: &mut egui::Ui, shared: &mut Shared) {
+fn menu_view_button(
+    ui: &mut egui::Ui,
+    config: &Config,
+    shared_ui: &crate::Ui,
+    events: &mut EventState,
+) {
     let mut offset = 0.;
 
-    let str_view = &shared.ui.loc("top_bar.view.heading");
-    let title = egui::RichText::new(str_view).color(shared.config.colors.text);
+    let str_view = &shared_ui.loc("top_bar.view.heading");
+    let title = egui::RichText::new(str_view).color(config.colors.text);
     ui.menu_button(title, |ui| {
         macro_rules! tpb {
             ($name:expr, $kb:expr) => {
-                top_bar_button(ui, $name, $kb, &mut offset, shared)
+                top_bar_button(ui, $name, $kb, &mut offset, &config, &shared_ui)
             };
         }
 
         ui.set_width(125.);
-        let str_zoom_in = &shared.ui.loc("top_bar.view.zoom_in");
-        if tpb!(str_zoom_in, Some(&shared.config.keys.zoom_in_camera)).clicked() {
-            shared.events.cam_zoom_in();
+        let str_zoom_in = &shared_ui.loc("top_bar.view.zoom_in");
+        if tpb!(str_zoom_in, Some(&config.keys.zoom_in_camera)).clicked() {
+            events.cam_zoom_in();
         }
-        let str_zoom_out = &shared.ui.loc("top_bar.view.zoom_out");
-        if tpb!(str_zoom_out, Some(&shared.config.keys.zoom_out_camera)).clicked() {
-            shared.events.cam_zoom_out();
+        let str_zoom_out = &shared_ui.loc("top_bar.view.zoom_out");
+        if tpb!(str_zoom_out, Some(&config.keys.zoom_out_camera)).clicked() {
+            events.cam_zoom_out();
         }
     });
 }
 
-fn menu_edit_button(ui: &mut egui::Ui, shared: &mut Shared) {
+fn menu_edit_button(
+    ui: &mut egui::Ui,
+    config: &Config,
+    shared_ui: &crate::Ui,
+    events: &mut EventState,
+) {
     let mut offset = 0.;
-    let str_edit = &shared.ui.loc("top_bar.edit.heading");
-    let title = egui::RichText::new(str_edit).color(shared.config.colors.text);
+    let str_edit = &shared_ui.loc("top_bar.edit.heading");
+    let title = egui::RichText::new(str_edit).color(config.colors.text);
     ui.menu_button(title, |ui| {
         ui.set_width(90.);
-        let key_undo = Some(&shared.config.keys.undo);
-        let str_undo = &shared.ui.loc("top_bar.edit.undo");
-        if top_bar_button(ui, str_undo, key_undo, &mut offset, shared).clicked() {
-            shared.events.undo();
+        let key_undo = Some(&config.keys.undo);
+        let str_undo = &shared_ui.loc("top_bar.edit.undo");
+        if top_bar_button(ui, str_undo, key_undo, &mut offset, &config, &shared_ui).clicked() {
+            events.undo();
             ui.close();
         }
-        let str_redo = &shared.ui.loc("top_bar.edit.redo");
-        let key_redo = Some(&shared.config.keys.redo);
-        if top_bar_button(ui, str_redo, key_redo, &mut offset, shared).clicked() {
-            shared.events.redo();
+        let str_redo = &shared_ui.loc("top_bar.edit.redo");
+        let key_redo = Some(&config.keys.redo);
+        if top_bar_button(ui, str_redo, key_redo, &mut offset, &config, &shared_ui).clicked() {
+            events.redo();
             ui.close();
         }
     });
 }
 
-fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
+fn edit_mode_bar(
+    egui_ctx: &egui::Context,
+    armature: &Armature,
+    selections: &SelectionState,
+    edit_mode: &EditMode,
+    events: &mut EventState,
+    shared_ui: &mut crate::Ui,
+) {
     let mut ik_disabled = true;
     let mut is_end = false;
-    let sel = shared.selections.clone();
-    if let Some(bone) = shared.armature.sel_bone(&sel) {
-        ik_disabled = bone.ik_disabled || shared.armature.bone_eff(bone.id) == JointEffector::None;
-        is_end = shared.armature.bone_eff(bone.id) == JointEffector::End;
+    let sel = selections.clone();
+    if let Some(bone) = armature.sel_bone(&sel) {
+        ik_disabled = bone.ik_disabled || armature.bone_eff(bone.id) == JointEffector::None;
+        is_end = armature.bone_eff(bone.id) == JointEffector::End;
     }
 
     // edit mode window
@@ -960,44 +1040,42 @@ fn edit_mode_bar(egui_ctx: &Context, shared: &mut Shared) {
         .max_width(100.)
         .movable(false)
         .current_pos(egui::Pos2::new(
-            shared.ui.edit_bar.pos.x + 7.5,
-            shared.ui.edit_bar.pos.y - 1.,
+            shared_ui.edit_bar.pos.x + 7.5,
+            shared_ui.edit_bar.pos.y - 1.,
         ));
     window.show(egui_ctx, |ui| {
         ui.horizontal(|ui| {
             macro_rules! edit_mode_button {
                 ($label:expr, $edit_mode:expr, $event:ident, $check:expr) => {
                     ui.add_enabled_ui($check, |ui| {
-                        if selection_button($label, shared.edit_mode.current == $edit_mode, ui)
-                            .clicked()
-                        {
-                            shared.events.$event()
+                        if selection_button($label, edit_mode.current == $edit_mode, ui).clicked() {
+                            events.$event()
                         };
                     })
                 };
             }
-            let ik_disabled = !shared.edit_mode.showing_mesh && ik_disabled;
+            let ik_disabled = !edit_mode.showing_mesh && ik_disabled;
             let rot = ik_disabled || is_end;
             edit_mode_button!(
-                &shared.ui.loc("move"),
+                &shared_ui.loc("move"),
                 EditModes::Move,
                 edit_mode_move,
                 ik_disabled
             );
             edit_mode_button!(
-                &shared.ui.loc("rotate"),
+                &shared_ui.loc("rotate"),
                 EditModes::Rotate,
                 edit_mode_rotate,
                 rot
             );
             edit_mode_button!(
-                &shared.ui.loc("scale"),
+                &shared_ui.loc("scale"),
                 EditModes::Scale,
                 edit_mode_scale,
                 ik_disabled
             );
         });
-        shared.ui.edit_bar.scale = ui.min_rect().size().into();
+        shared_ui.edit_bar.scale = ui.min_rect().size().into();
     });
 }
 
@@ -1030,7 +1108,13 @@ fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
     });
 }
 
-fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
+fn camera_bar(
+    egui_ctx: &Context,
+    config: &Config,
+    shared_ui: &mut crate::Ui,
+    camera: &Camera,
+    events: &mut EventState,
+) {
     let margin = 6.;
     let window = egui::Window::new("Camera")
         .resizable(false)
@@ -1039,48 +1123,54 @@ fn camera_bar(egui_ctx: &Context, shared: &mut Shared) {
         .max_height(25.)
         .movable(false)
         .frame(egui::Frame {
-            fill: shared.config.colors.gradient.into(),
+            fill: config.colors.gradient.into(),
             inner_margin: margin.into(),
             stroke: Stroke {
                 width: 1.,
-                color: shared.config.colors.dark_accent.into(),
+                color: config.colors.dark_accent.into(),
             },
             ..Default::default()
         })
         .current_pos(egui::Pos2::new(
-            shared.ui.camera_bar.pos.x,
-            shared.ui.camera_bar.pos.y,
+            shared_ui.camera_bar.pos.x,
+            shared_ui.camera_bar.pos.y,
         ));
     window.show(egui_ctx, |ui| {
         macro_rules! input {
             ($float:expr, $id:expr, $label:expr, $tip:expr) => {
                 ui.horizontal(|ui| {
-                    ui.label($label).on_hover_text(&shared.ui.loc($tip));
+                    ui.label($label).on_hover_text(&shared_ui.loc($tip));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        (_, $float, _) = ui.float_input(
-                            $id.to_string(),
-                            &mut shared.ui,
-                            $float.round(),
-                            1.,
-                            None,
-                        );
+                        let id = $id.to_string();
+                        let (edited, value, _) =
+                            ui.float_input(id, shared_ui, $float.round(), 1., None);
+                        if edited {
+                            let cam = &camera;
+                            if $id.to_string() == "cam_pos_x" {
+                                events.edit_camera(value, cam.pos.y, cam.zoom);
+                            } else if $id.to_string() == "cam_pos_y" {
+                                events.edit_camera(cam.pos.x, value, cam.zoom);
+                            } else if $id.to_string() == "cam_zoom" {
+                                events.edit_camera(cam.pos.x, cam.pos.y, value);
+                            }
+                        }
                     })
                 })
             };
         }
 
-        input!(shared.camera.pos.x, "cam_pos_x", "X", "cam_x");
-        input!(shared.camera.pos.y, "cam_pos_y", "Y", "cam_y");
-        input!(shared.camera.zoom, "cam_zoom", "🔍", "cam_zoom");
+        input!(camera.pos.x, "cam_pos_x", "X", "cam_x");
+        input!(camera.pos.y, "cam_pos_y", "Y", "cam_y");
+        input!(camera.zoom, "cam_zoom", "🔍", "cam_zoom");
 
-        shared.ui.camera_bar.scale = ui.min_rect().size().into();
+        shared_ui.camera_bar.scale = ui.min_rect().size().into();
     });
 }
 
 /// Default styling to apply across all UI.
-pub fn default_styling(context: &Context, shared: &Shared) {
+pub fn default_styling(context: &Context, config: &Config) {
     let mut visuals = egui::Visuals::dark();
-    let colors = &shared.config.colors;
+    let colors = &config.colors;
 
     visuals.menu_corner_radius = egui::CornerRadius::ZERO;
 
@@ -1158,7 +1248,8 @@ pub fn top_bar_button(
     text: &str,
     key: Option<&egui::KeyboardShortcut>,
     offset: &mut f32,
-    shared: &Shared,
+    config: &Config,
+    shared_ui: &crate::Ui,
 ) -> egui::Response {
     let height = 20.;
 
@@ -1170,7 +1261,7 @@ pub fn top_bar_button(
     let painter = ui.painter_at(ui.min_rect());
 
     let col = if response.hovered() {
-        shared.config.colors.light_accent.into()
+        config.colors.light_accent.into()
     } else {
         egui::Color32::TRANSPARENT
     };
@@ -1181,7 +1272,7 @@ pub fn top_bar_button(
     // text
     let pos =
         egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() + *offset) + egui::vec2(5., 2.);
-    let text_col = shared.config.colors.text.into();
+    let text_col = config.colors.text.into();
     painter.text(pos, egui::Align2::LEFT_TOP, text, font.clone(), text_col);
 
     let key_str = if key != None {
@@ -1191,7 +1282,7 @@ pub fn top_bar_button(
     };
 
     // kb key text
-    if !shared.ui.mobile {
+    if !shared_ui.mobile {
         let pos = egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset)
             + egui::vec2(-5., 2.5);
         let align = egui::Align2::RIGHT_TOP;
@@ -1252,12 +1343,12 @@ fn open_mobile_input(_value: String) {
 pub fn draw_resizable_panel<T>(
     id: &str,
     panel: egui::InnerResponse<T>,
-    on_ui: &mut bool,
+    events: &mut EventState,
     context: &egui::Context,
 ) {
     if let Some(resize) = context.read_response(egui::Id::new(id).with("__resize")) {
         if resize.hovered() || panel.response.hovered() {
-            *on_ui = true;
+            events.toggle_pointer_on_ui(true);
         }
     }
 }

@@ -120,9 +120,9 @@ pub fn modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &Config) {
     )
 }
 
-pub fn donating_modal(shared: &mut Shared, ctx: &egui::Context) {
-    let headline = shared.ui.loc("donating");
-    let config = shared.config.clone();
+pub fn donating_modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &Config) {
+    let headline = shared_ui.loc("donating");
+    let config = config.clone();
     modal_template(
         ctx,
         "donate".to_string(),
@@ -156,8 +156,8 @@ pub fn donating_modal(shared: &mut Shared, ctx: &egui::Context) {
                 pressed = true;
             }
             if ui.skf_button("Never").clicked() {
-                shared.config.ignore_donate = true;
-                utils::save_config(&shared.config);
+                //shared.config.ignore_donate = true;
+                utils::save_config(&config);
                 pressed = true;
             }
 
@@ -165,9 +165,9 @@ pub fn donating_modal(shared: &mut Shared, ctx: &egui::Context) {
                 return;
             }
 
-            shared.ui.modal = false;
-            shared.ui.confirmed_exit = true;
-            shared.ui.headline = "".to_string();
+            shared_ui.modal = false;
+            shared_ui.confirmed_exit = true;
+            shared_ui.headline = "".to_string();
         },
     )
 }

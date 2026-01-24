@@ -38,7 +38,13 @@ pub fn iterate_events(
             };
         }
 
-        if events.events[0] == Events::AdjustVertex {
+        if events.events[0] == Events::EditCamera {
+            camera.pos = Vec2::new(events.values[0], events.values[1]);
+            camera.zoom = events.values[2];
+
+            events.events.remove(0);
+            events.values.drain(0..=2);
+        } else if events.events[0] == Events::AdjustVertex {
             let vert = &mut armature.sel_bone_mut(&selections).unwrap().vertices
                 [renderer.changed_vert_id as usize];
             vert.pos = Vec2::new(events.values[0], events.values[1]);
@@ -268,6 +274,9 @@ pub fn process_event(
         Events::RenameBone => armature.bones[value as usize].name = str_value,
         Events::RenameAnim => armature.animations[value as usize].name = str_value,
         Events::PointerOnUi => camera.on_ui = value == 1.,
+        Events::CancelPendingTexture => {
+            _ = armature.sel_style_mut(&selections).unwrap().textures.pop()
+        }
         Events::DeleteAnim => {
             _ = armature.animations.remove(value as usize);
             selections.anim = usize::MAX
@@ -314,9 +323,7 @@ pub fn process_event(
             selections.style = if value == f32::MAX { i32::MAX } else { val };
         }
         Events::OpenModal => {
-            ui.modal = true;
-            ui.forced_modal = value == 1.;
-            ui.headline = ui.loc(&str_value);
+            open_modal(ui, value == 1., str_value);
         }
         Events::SelectAnimFrame => {
             let selected_anim = selections.anim;
@@ -482,9 +489,6 @@ pub fn process_event(
             let frame = selections.anim_frame;
             armature.set_bone_tex(value as i32, str_value.clone(), selections.anim, frame);
         }
-        Events::MoveCamera => {
-            camera.pos += renderer::mouse_vel(&input, &camera) * camera.zoom;
-        }
         Events::RemoveVertex => {
             let sel = &selections;
             #[rustfmt::skip]
@@ -558,15 +562,65 @@ pub fn process_event(
             let sel = &selections;
             let tex_img = renderer::sel_tex_img(armature.sel_bone(sel).unwrap(), &armature);
             let bone_mut = armature.sel_bone_mut(sel).unwrap();
-            let ids = bone_mut.vertices.iter().map(|v| v.id as i32).collect();
-            renderer.new_vert.unwrap().id = generate_id(ids) as u32;
+
             bone_mut.vertices.push(renderer.new_vert.unwrap());
+            bone_mut.vertices.last_mut().unwrap().id = 4.max(bone_mut.vertices.len() as u32);
             bone_mut.vertices = renderer::sort_vertices(bone_mut.vertices.clone());
             bone_mut.indices = renderer::triangulate(&bone_mut.vertices, &tex_img);
             bone_mut.verts_edited = true;
         }
+        Events::AdjustKeyframesByFPS => {
+            let anim_mut = armature.sel_anim_mut(selections).unwrap();
+
+            let mut old_unique_keyframes: Vec<i32> =
+                anim_mut.keyframes.iter().map(|kf| kf.frame).collect();
+            old_unique_keyframes.dedup();
+
+            let mut anim_clone = anim_mut.clone();
+
+            // adjust keyframes to maintain spacing
+            let div = anim_mut.fps as f32 / value;
+            for kf in &mut anim_clone.keyframes {
+                kf.frame = ((kf.frame as f32) / div) as i32
+            }
+
+            let mut unique_keyframes: Vec<i32> =
+                anim_clone.keyframes.iter().map(|kf| kf.frame).collect();
+            unique_keyframes.dedup();
+
+            if unique_keyframes.len() == old_unique_keyframes.len() {
+                anim_mut.fps = value as i32;
+                anim_mut.keyframes = anim_clone.keyframes;
+            } else {
+                open_modal(ui, value == 1., "keyframe_editor.invalid_fps".to_string());
+            }
+        }
+        Events::PasteKeyframes => {
+            let frame = selections.anim_frame;
+            let buffer_frames = copy_buffer.keyframes.clone();
+            let anim = &mut armature.sel_anim_mut(&selections).unwrap();
+
+            anim.keyframes.retain(|kf| kf.frame != frame);
+
+            for kf in 0..buffer_frames.len() {
+                let keyframe = buffer_frames[kf].clone();
+                anim.keyframes.push(Keyframe { frame, ..keyframe })
+            }
+
+            armature.sel_anim_mut(&selections).unwrap().sort_keyframes();
+        }
+        Events::RemoveKeyframesByFrame => {
+            let anim = armature.sel_anim_mut(&selections).unwrap();
+            anim.keyframes.retain(|kf| kf.frame != value as i32);
+        }
         _ => {}
     }
+}
+
+fn open_modal(ui: &mut crate::Ui, forced: bool, headline: String) {
+    ui.modal = true;
+    ui.forced_modal = forced;
+    ui.headline = ui.loc(&headline);
 }
 
 fn select_bone(
