@@ -11,7 +11,7 @@ pub fn render(
     device: &Device,
     camera: &Camera,
     input: &InputStates,
-    armature: &mut Armature,
+    armature: &Armature,
     config: &Config,
     edit_mode: &EditMode,
     selections: &SelectionState,
@@ -70,13 +70,12 @@ pub fn render(
         let mut diff = temp_vert.pos - init_vert_pos - temp_arm.bones[selections.bone_idx].pos;
 
         // if unbound, vert needs to account for pos in the previous frame
-        let vert = &mut armature.sel_bone_mut(&sel).unwrap().vertices[vert_id];
+        let vert = &armature.sel_bone(&sel).unwrap().vertices[vert_id];
         if let Some(last_frame_pos) = renderer.changed_vert_init_pos {
             diff = temp_vert.pos - last_frame_pos;
         }
 
-        vert.pos -= diff;
-        renderer.changed_vert_id = -1;
+        events.adjust_vertex(vert.pos.x - diff.x, vert.pos.y - diff.y);
     }
 
     let mut mesh_onion_id = -1;
@@ -166,15 +165,12 @@ pub fn render(
                     + (v[c2].pos - tb.pos) * bary.2;
 
                 if edit_mode.showing_mesh && input.right_clicked && !removed_vert {
-                    let bone = &mut armature.sel_bone_mut(&sel).unwrap();
-                    if bone.indices.len() == 6 {
+                    if armature.sel_bone(&sel).unwrap().indices.len() == 6 {
                         events.open_modal("indices_limit", false);
-                        break;
+                    } else {
+                        events.remove_triangle(i * 3);
+                        removed_vert = true;
                     }
-                    bone.indices.remove(i * 3);
-                    bone.indices.remove(i * 3);
-                    bone.indices.remove(i * 3);
-                    removed_vert = true;
                     break;
                 }
 
@@ -224,6 +220,9 @@ pub fn render(
 
         // select bone on click
         if input.left_clicked && hover_bone_id == temp_arm.bones[b].id {
+            let id = temp_arm.bones[b].id;
+            let bones = &armature.bones;
+            let idx = bones.iter().position(|bone| bone.id == id).unwrap();
             events.select_bone(idx, true);
         }
     }
@@ -333,14 +332,8 @@ pub fn render(
 
     if !edit_mode.setting_bind_verts {
         if let Some(mut vert) = new_vert {
-            let tex_img = sel_tex_img(armature.sel_bone(&sel).unwrap(), &armature);
-            let bone_mut = armature.sel_bone_mut(&sel).unwrap();
-            let ids = bone_mut.vertices.iter().map(|v| v.id as i32).collect();
-            vert.id = generate_id(ids) as u32;
-            bone_mut.vertices.push(vert);
-            bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
-            bone_mut.indices = triangulate(&bone_mut.vertices, &tex_img);
-            bone_mut.verts_edited = true;
+            renderer.new_vert = new_vert;
+            events.new_vertex();
         }
     }
 

@@ -1824,6 +1824,7 @@ pub struct Renderer {
     pub bone_init_rot: f32,
     pub gridline_gap: i32,
     pub sel_bone_temp_verts: Vec<Vertex>,
+    pub new_vert: Option<Vertex>,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]
@@ -1851,6 +1852,8 @@ pub enum Events {
     DeleteTex,
     DeleteStyle,
     DeleteKeyframe,
+    RemoveVertex,
+    RemoveTriangle,
 
     CopyBone,
     PasteBone,
@@ -1859,6 +1862,7 @@ pub enum Events {
     NewStyle,
     NewBone,
     NewArmature,
+    NewVertex,
 
     RenameAnim,
     RenameStyle,
@@ -1868,16 +1872,18 @@ pub enum Events {
     SetKeyframeFrame,
     SetBoneTexture,
 
+    DragBone,
+    DragVertex,
+    MigrateTexture,
+    MoveTexture,
+    MoveStyle,
+
     OpenModal,
     UnselectAll,
     OpenPolarModal,
     PointerOnUi,
-    DragBone,
     ToggleAnimPlaying,
     ToggleStyleActive,
-    MoveStyle,
-    MigrateTexture,
-    MoveTexture,
     DuplicateAnim,
     ToggleBoneFolded,
     EditBone,
@@ -1885,9 +1891,8 @@ pub enum Events {
     ApplySettings,
     ResetConfig,
     MoveCamera,
-    RemoveVertex,
-    DragVertex,
     ClickVertex,
+    AdjustVertex,
 }
 
 enum_string!(Events);
@@ -1937,6 +1942,7 @@ impl EventState {
     generic_event!(edit_mode_scale, Events::EditModeScale);
     generic_event!(new_armature, Events::NewArmature);
     generic_event!(move_camera, Events::MoveCamera);
+    generic_event!(new_vertex, Events::NewVertex);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_anim_frame, Events::SelectAnimFrame, frame, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, usize);
@@ -1951,6 +1957,7 @@ impl EventState {
     event_with_value!(remove_vertex, Events::RemoveVertex, vert_idx, usize);
     event_with_value!(drag_vertex, Events::DragVertex, vert_id, usize);
     event_with_value!(click_vertex, Events::ClickVertex, vert_id, usize);
+    event_with_value!(remove_triangle, Events::RemoveTriangle, idx, usize);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -2072,6 +2079,12 @@ impl EventState {
         self.events.push(Events::SetBoneTexture);
         self.values.push(bone_id as f32);
         self.str_values.push(tex);
+    }
+
+    pub fn adjust_vertex(&mut self, pos_x: f32, pos_y: f32) {
+        self.events.push(Events::AdjustVertex);
+        self.values.push(pos_x as f32);
+        self.values.push(pos_y as f32);
     }
 }
 

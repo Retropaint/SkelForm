@@ -38,7 +38,15 @@ pub fn iterate_events(
             };
         }
 
-        if events.events[0] == Events::EditBone {
+        if events.events[0] == Events::AdjustVertex {
+            let vert = &mut armature.sel_bone_mut(&selections).unwrap().vertices
+                [renderer.changed_vert_id as usize];
+            vert.pos = Vec2::new(events.values[0], events.values[1]);
+            renderer.changed_vert_id = -1;
+
+            events.events.remove(0);
+            events.values.drain(0..=1);
+        } else if events.events[0] == Events::EditBone {
             ui.cursor_icon = egui::CursorIcon::Crosshair;
             let bone_id = events.values[0] as i32;
             let element = AnimElement::from_repr(events.values[1] as usize).unwrap();
@@ -539,6 +547,23 @@ pub fn process_event(
                 renderer.changed_vert_init_pos = None;
                 renderer.changed_vert_id = changed_vert_id as i32;
             }
+        }
+        Events::RemoveTriangle => {
+            let bone = &mut armature.sel_bone_mut(&selections).unwrap();
+            bone.indices.remove(value as usize);
+            bone.indices.remove(value as usize);
+            bone.indices.remove(value as usize);
+        }
+        Events::NewVertex => {
+            let sel = &selections;
+            let tex_img = renderer::sel_tex_img(armature.sel_bone(sel).unwrap(), &armature);
+            let bone_mut = armature.sel_bone_mut(sel).unwrap();
+            let ids = bone_mut.vertices.iter().map(|v| v.id as i32).collect();
+            renderer.new_vert.unwrap().id = generate_id(ids) as u32;
+            bone_mut.vertices.push(renderer.new_vert.unwrap());
+            bone_mut.vertices = renderer::sort_vertices(bone_mut.vertices.clone());
+            bone_mut.indices = renderer::triangulate(&bone_mut.vertices, &tex_img);
+            bone_mut.verts_edited = true;
         }
         _ => {}
     }
