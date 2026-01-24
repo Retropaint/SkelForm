@@ -313,7 +313,7 @@ pub fn draw_hierarchy(shared: &mut Shared, ui: &mut egui::Ui) {
                             shared.edit_mode.setting_bind_bone = false;
                         } else {
                             if !shared.input.holding_mod && !shared.input.holding_shift {
-                                shared.events.select_bone(idx as usize);
+                                shared.events.select_bone(idx as usize, false);
                             }
 
                             let id = shared.armature.bones[idx as usize].id;

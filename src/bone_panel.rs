@@ -384,9 +384,8 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.button(go_to_root_str).clicked() {
-                    shared
-                        .events
-                        .select_bone(bones.position(|b| b.id == root_id).unwrap());
+                    let idx = bones.position(|b| b.id == root_id).unwrap();
+                    shared.events.select_bone(idx, false);
                     shared.selections.bone_ids = vec![];
                 }
             });
@@ -461,9 +460,8 @@ pub fn inverse_kinematics(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
             if ui.selectable_label(false, tr_name).clicked() {
                 let bones = &mut shared.armature.bones;
                 let ik_id = bone.ik_target_id;
-                shared
-                    .events
-                    .select_bone(bones.iter().position(|b| b.id == ik_id).unwrap());
+                let idx = bones.iter().position(|b| b.id == ik_id).unwrap();
+                shared.events.select_bone(idx, false);
             };
         } else {
             ui.label(shared.ui.loc("none"));
@@ -544,7 +542,7 @@ pub fn mesh_deformation(ui: &mut egui::Ui, shared: &mut Shared, bone: &Bone) {
                 if ui.skf_button(str).clicked() {
                     let bones = &shared.armature.bones;
                     let idx = bones.iter().position(|b| b.id == mesh_parent_id).unwrap();
-                    shared.events.select_bone(idx);
+                    shared.events.select_bone(idx, false);
                 }
             });
         });

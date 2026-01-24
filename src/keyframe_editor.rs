@@ -304,7 +304,7 @@ pub fn draw_bones_list(ui: &mut egui::Ui, shared: &mut Shared, bone_tops: &mut B
                 if label.clicked() {
                     let kf_id = kf.bone_id;
                     let sel = shared.armature.bones.iter().position(|b| b.id == kf_id);
-                    shared.events.select_bone(sel.unwrap());
+                    shared.events.select_bone(sel.unwrap(), false);
 
                     let parents = shared.armature.get_all_parents(kf.bone_id);
                     for parent in &parents {

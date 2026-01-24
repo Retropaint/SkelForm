@@ -1934,7 +1934,6 @@ impl EventState {
     generic_event!(edit_mode_scale, Events::EditModeScale);
     generic_event!(new_armature, Events::NewArmature);
     generic_event!(move_camera, Events::MoveCamera);
-    event_with_value!(select_bone, Events::SelectBone, bone_id, usize);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_anim_frame, Events::SelectAnimFrame, frame, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, usize);
@@ -1952,6 +1951,16 @@ impl EventState {
         self.events.push(Events::OpenModal);
         self.values.push(if forced { 1. } else { 0. });
         self.str_values.push(loc_headline.to_string());
+    }
+
+    pub fn select_bone(&mut self, bone_id: usize, from_renderer: bool) {
+        self.events.push(Events::SelectBone);
+        self.values.push(bone_id as f32);
+        self.str_values.push(if from_renderer {
+            "t".to_string()
+        } else {
+            "f".to_string()
+        });
     }
 
     pub fn rename_bone(&mut self, bone_idx: usize, new_name: String) {

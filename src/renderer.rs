@@ -233,16 +233,9 @@ pub fn render(
                 armature.sel_bone_mut(&sel).unwrap().ik_target_id = click_on_hover_id;
                 //edit_mode.setting_ik_target = false;
             } else {
-                //let idx = &mut selections.bone_idx;
-                let bones = &armature.bones;
                 let id = click_on_hover_id;
-                //*idx = bones.iter().position(|bone| bone.id == id).unwrap();
-                //selections.bone_ids = vec![];
-
-                // unfold all parents that lead to this bone, so it's visible in the hierarchy
-                for parent in &parents {
-                    armature.find_bone_mut(parent.id).unwrap().folded = false;
-                }
+                let idx = armature.bones.iter().position(|b| b.id == id).unwrap();
+                events.select_bone(idx, true);
             }
         }
     }
@@ -1014,22 +1007,7 @@ pub fn bone_vertices(
             if world_verts.len() <= 4 {
                 events.open_modal("vert_limit", false);
             } else {
-                let tex_img = sel_tex_img(&armature.sel_bone(&sel).unwrap(), &armature);
-                let verts = &mut armature.sel_bone_mut(&sel).unwrap().vertices;
-                verts.remove(wv);
-                *verts = sort_vertices(verts.clone());
-                armature.sel_bone_mut(&sel).unwrap().indices = triangulate(&verts, &tex_img);
-
-                // remove this vert from its binds
-                'bind: for bind in &mut armature.sel_bone_mut(&sel).unwrap().binds {
-                    for v in 0..bind.verts.len() {
-                        if bind.verts[v].id == world_verts[wv].id as i32 {
-                            bind.verts.remove(v);
-                            break 'bind;
-                        }
-                    }
-                }
-
+                events.remove_vertex(wv);
                 break;
             }
         }

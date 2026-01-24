@@ -18,22 +18,22 @@ pub fn iterate_events(
     let mut last_event = Events::None;
     while events.events.len() > 0 {
         // for every new event, create a new undo state
-        // note: `edit_bone` is not included as its undo is conditional (see `save_edited_bone`)
+        // note: `edit_bone` is not included, as its undo is conditional (see `save_edited_bone`)
         if last_event != events.events[0] {
             last_event = events.events[0].clone();
 
             type E = Events;
             #[rustfmt::skip]
             match last_event {
-                E::NewBone | E::DragBone | E::DeleteBone => undo_states.new_undo_bones(&armature.bones),
-                E::NewAnimation | E::DeleteAnim => undo_states.new_undo_anims(&armature.animations),
-                E::DeleteKeyframe => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
-                E::ToggleBoneFolded | E::SetBoneTexture => undo_states.new_undo_bone(&armature.bones[selections.bone_idx]),
-                E::DeleteTex => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
-                E::DeleteStyle | E::NewStyle => undo_states.new_undo_styles(&armature.styles),
+                E::NewBone | E::DragBone | E::DeleteBone                  => undo_states.new_undo_bones(&armature.bones),
+                E::NewAnimation | E::DeleteAnim                           => undo_states.new_undo_anims(&armature.animations),
+                E::DeleteKeyframe                                         => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
+                E::ToggleBoneFolded | E::SetBoneTexture | E::RemoveVertex => undo_states.new_undo_bone(&armature.bones[selections.bone_idx]),
+                E::DeleteTex                                              => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
+                E::DeleteStyle | E::NewStyle                              => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
-                E::RenameBone =>  if !ui.just_made_bone  { undo_states.new_undo_bone( &armature.sel_bone( &selections).unwrap());  ui.just_made_bone  = false }
-                E::RenameAnim =>  if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap());  ui.just_made_anim  = false }
+                E::RenameBone  => if !ui.just_made_bone  { undo_states.new_undo_bone( &armature.sel_bone( &selections).unwrap()); ui.just_made_bone  = false }
+                E::RenameAnim  => if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap()); ui.just_made_anim  = false }
                 _ => {}
             };
         }
@@ -281,17 +281,18 @@ pub fn process_event(
         Events::UnselectAll => unselect_all(selections, edit_mode),
         Events::Undo => undo_redo(true, undo_states, armature, selections),
         Events::Redo => undo_redo(false, undo_states, armature, selections),
+        Events::ResetConfig => *config = serde_json::from_str(&utils::config_str()).unwrap(),
+        Events::RenameBone => armature.bones[value as usize].name = str_value,
+        Events::RenameAnim => armature.animations[value as usize].name = str_value,
+        Events::PointerOnUi => camera.on_ui = value == 1.,
         Events::DeleteAnim => {
             _ = armature.animations.remove(value as usize);
             selections.anim = usize::MAX
         }
-        Events::RenameAnim => armature.animations[value as usize].name = str_value,
         Events::RenameStyle => {
             armature.sel_style_mut(&selections).unwrap().name = str_value;
             ui.just_made_style = false
         }
-        Events::ResetConfig => *config = serde_json::from_str(&utils::config_str()).unwrap(),
-        Events::RenameBone => armature.bones[value as usize].name = str_value,
         Events::NewArmature => {
             unselect_all(selections, edit_mode);
             edit_mode.anim_open = false;
@@ -316,7 +317,9 @@ pub fn process_event(
                 .remove(value as usize)
         }
         Events::SelectBone => {
-            select_bone(value, selections, armature);
+            let render = str_value == "t";
+            let val = value as usize;
+            select_bone(selections, ui, armature, edit_mode, input, val, render);
         }
         Events::SelectAnim => {
             let val = value as usize;
@@ -342,9 +345,6 @@ pub fn process_event(
             ui.polar_id = PolarId::from_repr(value as usize).unwrap();
             ui.polar_modal = true;
             ui.headline = str_value.to_string();
-        }
-        Events::PointerOnUi => {
-            camera.on_ui = value == 1.;
         }
         Events::DeleteBone => {
             let bone = &armature.bones[value as usize];
@@ -487,16 +487,13 @@ pub fn process_event(
                 (_, idx) = armature.new_bone(id);
             }
             armature.bones[idx].name = "".to_string();
-            select_bone(idx as f32, selections, armature);
+            let sel = selections;
+            select_bone(sel, ui, armature, edit_mode, input, value as usize, false);
             ui.rename_id = "bone_".to_string() + &idx.to_string();
         }
         Events::SetBoneTexture => {
-            armature.set_bone_tex(
-                value as i32,
-                str_value.clone(),
-                selections.anim,
-                selections.anim_frame,
-            );
+            let frame = selections.anim_frame;
+            armature.set_bone_tex(value as i32, str_value.clone(), selections.anim, frame);
         }
         Events::MoveCamera => {
             camera.pos += renderer::mouse_vel(&input, &camera) * camera.zoom;
@@ -506,6 +503,7 @@ pub fn process_event(
             #[rustfmt::skip]
             macro_rules! verts {() => { armature.sel_bone_mut(&sel).unwrap().vertices }}
 
+            let verts = verts!().clone();
             let tex_img = renderer::sel_tex_img(&armature.sel_bone(&sel).unwrap(), &armature);
             verts!().remove(value as usize);
             verts!() = renderer::sort_vertices(verts!().clone());
@@ -513,7 +511,6 @@ pub fn process_event(
                 renderer::triangulate(&verts!(), &tex_img);
 
             // remove this vert from its binds
-            let verts = verts!().clone();
             'bind: for bind in &mut armature.sel_bone_mut(&sel).unwrap().binds {
                 for v in 0..bind.verts.len() {
                     if bind.verts[v].id == verts[value as usize].id as i32 {
@@ -527,10 +524,73 @@ pub fn process_event(
     }
 }
 
-fn select_bone(value: f32, selections: &mut SelectionState, armature: &mut Armature) {
-    let val = value as usize;
-    selections.bone_idx = if value == f32::MAX { usize::MAX } else { val };
-    selections.bone_ids = vec![armature.bones[value as usize].id];
+fn select_bone(
+    sel: &mut SelectionState,
+    ui: &mut crate::Ui,
+    armature: &mut Armature,
+    edit_mode: &mut EditMode,
+    input: &InputStates,
+    idx: usize,
+    from_renderer: bool,
+) {
+    // rename bone if already selected
+    if sel.bone_idx == idx && !from_renderer {
+        ui.rename_id = "bone_".to_string() + &sel.bone_idx.to_string().clone();
+        ui.edit_value = Some(armature.sel_bone(&sel).unwrap().name.clone());
+        return;
+    }
+
+    // set this bone as IK target if in IK target mode
+    if edit_mode.setting_ik_target {
+        let sel_bone = armature.sel_bone(&sel).unwrap().clone();
+        armature.sel_bone_mut(&sel).unwrap().ik_target_id = sel_bone.id;
+        edit_mode.setting_ik_target = false;
+        return;
+    }
+
+    // set this bone as bind if in bind mode
+    if edit_mode.setting_bind_bone {
+        let sel_bone = armature.sel_bone(&sel).unwrap().clone();
+        let idx = sel.bind as usize;
+        let bind = &mut armature.sel_bone_mut(&sel).unwrap().binds[idx];
+        bind.bone_id = sel_bone.id;
+        edit_mode.setting_bind_bone = false;
+        return;
+    }
+
+    // select only this bone if not holding modifiers
+    if !input.holding_mod && !input.holding_shift {
+        sel.bone_idx = idx;
+        sel.bone_ids = vec![armature.bones[idx].id];
+
+        // unfold this bone's parents to reveal it in the hierarchy
+        let parents = utils::get_all_parents(&armature.bones, armature.sel_bone(sel).unwrap().id);
+        let bones = &mut armature.bones;
+        for p in parents {
+            bones.iter_mut().find(|b| b.id == p.id).unwrap().folded = false;
+        }
+        return;
+    } else if !from_renderer {
+        if input.holding_mod {
+            let id = armature.bones[idx as usize].id;
+            sel.bone_ids.push(id);
+        } else {
+            let mut first = sel.bone_idx;
+            let mut second = idx as usize;
+            if first > second {
+                first = idx as usize;
+                second = sel.bone_idx;
+            }
+            for i in first..second as usize {
+                let bone = &armature.bones[i];
+                let this_id = sel.bone_ids.contains(&bone.id);
+                let sel_bone = armature.sel_bone(&sel).unwrap();
+                if !this_id && bone.parent_id == sel_bone.parent_id {
+                    sel.bone_ids.push(bone.id);
+                }
+            }
+        }
+    }
 }
 
 fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode) {
@@ -624,9 +684,8 @@ pub fn undo_redo(
         if !action.continued {
             // reverse list to restore order of actions
             undo_states.temp_actions.reverse();
-            undo_states
-                .redo_actions
-                .append(&mut undo_states.temp_actions);
+            let temp_actions = &mut undo_states.temp_actions;
+            undo_states.redo_actions.append(temp_actions);
             undo_states.temp_actions = vec![];
         }
     } else {
@@ -634,9 +693,8 @@ pub fn undo_redo(
         if !action.continued {
             // ditto
             undo_states.temp_actions.reverse();
-            undo_states
-                .undo_actions
-                .append(&mut undo_states.temp_actions);
+            let temp_actions = &mut undo_states.temp_actions;
+            undo_states.undo_actions.append(temp_actions);
             undo_states.temp_actions = vec![];
         }
     }
