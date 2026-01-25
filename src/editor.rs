@@ -74,15 +74,9 @@ pub fn iterate_events(
             events.values.drain(0..=1);
         } else if event == Events::EditBone {
             ui.cursor_icon = egui::CursorIcon::Crosshair;
-            edit_bone(
-                armature,
-                config,
-                events.values[0] as i32,
-                AnimElement::from_repr(events.values[1] as usize).unwrap(),
-                events.values[2],
-                events.values[3] as usize,
-                events.values[4] as i32,
-            );
+            let anim_el = AnimElement::from_repr(events.values[1] as usize).unwrap();
+            #[rustfmt::skip]
+            edit_bone(armature, config, events.values[0] as i32, anim_el, events.values[2], events.values[3] as usize, events.values[4] as i32);
             events.events.remove(0);
             events.values.drain(0..=4);
         } else if event == Events::ToggleBoneFolded {

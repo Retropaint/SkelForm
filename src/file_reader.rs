@@ -128,7 +128,7 @@ fn trim_transparent(img: &DynamicImage) -> Option<RgbaImage> {
     for y in 0..height {
         for x in 0..width {
             let alpha = rgba.get_pixel(x, y)[3];
-            if alpha != 0 {
+            if alpha > 125 {
                 found = true;
                 min_x = min_x.min(x);
                 min_y = min_y.min(y);

@@ -708,18 +708,12 @@ pub fn draw_tex_preview(
 
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         let mut name = egui::text::LayoutJob::default();
-        ui::job_text(
-            &shared_ui.loc("styles_modal.img_name"),
-            Some(egui::Color32::WHITE),
-            &mut name,
-        );
+        let img_name_str = &shared_ui.loc("styles_modal.img_name");
+        ui::job_text(img_name_str, Some(egui::Color32::WHITE), &mut name);
         ui::job_text(&tex.name, None, &mut name);
         let mut size = egui::text::LayoutJob::default();
-        ui::job_text(
-            &shared_ui.loc("styles_modal.img_size"),
-            Some(egui::Color32::WHITE),
-            &mut size,
-        );
+        let img_size_str = &shared_ui.loc("styles_modal.img_size");
+        ui::job_text(img_size_str, Some(egui::Color32::WHITE), &mut size);
         ui::job_text(
             &(tex.size.x.to_string() + " x " + &tex.size.y.to_string()),
             None,
@@ -730,7 +724,7 @@ pub fn draw_tex_preview(
     });
 }
 
-fn resize_tex_img(mut size: Vec2, max: usize) -> Vec2 {
+pub fn resize_tex_img(mut size: Vec2, max: usize) -> Vec2 {
     let mut mult = 1.;
     if size.x > max as f32 {
         mult = max as f32 / size.x;

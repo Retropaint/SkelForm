@@ -35,9 +35,10 @@ pub fn draw(
                 ui.set_width(300.);
                 ui.set_height(300.);
                 let data = armature.tex_data(&atlas).unwrap();
-                egui::Image::new(data.ui_img.as_ref().unwrap())
-                    .uv(egui::Rect::from_min_size([0., 0.].into(), [1., 1.].into()))
-                    .paint_at(ui, ui.min_rect());
+                let img_size = Vec2::new(data.image.width() as f32, data.image.height() as f32);
+                let size = styles_modal::resize_tex_img(img_size, 300);
+                let rect = egui::Rect::from_min_size(ui.min_rect().left_top(), size.into());
+                egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, rect);
                 for t in 0..shared_ui.pending_textures.len() {
                     let tex = &shared_ui.pending_textures[t];
                     let interp = tex.offset / atlas.size;
