@@ -710,7 +710,7 @@ pub fn mesh_deformation(
                 let bind = &armature.sel_bone(&sel).unwrap().binds[selected];
                 let mut new_path = bind.is_path;
                 ui.checkbox(&mut new_path, "".into_atoms());
-                events.toggle_bind_pathing(selected, bind.is_path);
+                events.toggle_bind_pathing(selected, new_path);
             }
 
             ui.label(shared_ui.loc("bone_panel.mesh_deformation.pathing_label"))

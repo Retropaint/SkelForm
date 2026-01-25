@@ -308,8 +308,19 @@ impl ApplicationHandler for App {
                     &self.shared.edit_mode,
                 );
 
-                // ui logic handled in ui.rs
                 let shared = &mut self.shared;
+                ui::process_inputs(
+                    gui_state.egui_ctx(),
+                    &mut shared.input,
+                    &mut shared.ui,
+                    &shared.config,
+                    &shared.selections,
+                    &mut shared.edit_mode,
+                    &mut shared.events,
+                    &shared.camera,
+                );
+
+                // ui logic handled in ui.rs
                 ui::draw(
                     gui_state.egui_ctx(),
                     &mut shared.ui,
@@ -369,19 +380,21 @@ impl ApplicationHandler for App {
                     .egui_ctx()
                     .set_pixels_per_point(self.shared.ui.scale);
 
-                editor::iterate_events(
-                    &self.shared.input,
-                    &mut self.shared.config,
-                    &mut self.shared.events,
-                    &mut self.shared.camera,
-                    &mut self.shared.edit_mode,
-                    &mut self.shared.selections,
-                    &mut self.shared.undo_states,
-                    &mut self.shared.armature,
-                    &mut self.shared.copy_buffer,
-                    &mut self.shared.ui,
-                    &mut self.shared.renderer,
-                );
+                while self.shared.events.events.len() > 0 {
+                    editor::iterate_events(
+                        &self.shared.input,
+                        &mut self.shared.config,
+                        &mut self.shared.events,
+                        &mut self.shared.camera,
+                        &mut self.shared.edit_mode,
+                        &mut self.shared.selections,
+                        &mut self.shared.undo_states,
+                        &mut self.shared.armature,
+                        &mut self.shared.copy_buffer,
+                        &mut self.shared.ui,
+                        &mut self.shared.renderer,
+                    );
+                }
             }
             _ => (),
         }

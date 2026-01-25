@@ -16,16 +16,19 @@ pub fn iterate_events(
     renderer: &mut crate::Renderer,
 ) {
     let mut last_event = Events::None;
-    while events.events.len() > 0 {
-        let event = events.events[0].clone();
+    let event = events.events[0].clone();
 
-        // for every new event, create a new undo state
-        // note: `edit_bone` is not included, as its undo is conditional (see `save_edited_bone`)
-        if last_event != event {
-            last_event = event.clone();
+    edit_mode.is_moving = false;
+    edit_mode.is_rotating = false;
+    edit_mode.is_scaling = false;
 
-            type E = Events;
-            #[rustfmt::skip]
+    // for every new event, create a new undo state
+    // note: `edit_bone` is not included, as its undo is conditional (see `save_edited_bone`)
+    if last_event != event {
+        last_event = event.clone();
+
+        type E = Events;
+        #[rustfmt::skip]
             match last_event {
                 E::NewBone | E::DragBone | E::DeleteBone => undo_states.new_undo_bones(&armature.bones),
                 E::NewAnimation | E::DeleteAnim          => undo_states.new_undo_anims(&armature.animations),
@@ -41,151 +44,156 @@ pub fn iterate_events(
                 }
                 _ => {}
             };
+    }
+
+    if event == Events::SetBindWeight {
+        let vert = events.values[0] as usize;
+        let weight = events.values[1];
+        let sel_bind = selections.bind as usize;
+        armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].verts[vert].weight = weight;
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::ToggleBindPathing {
+        let sel_bind = events.values[0] as usize;
+        let is_pathing = events.values[1] == 1.;
+        armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].is_path = is_pathing;
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::EditCamera {
+        camera.pos = Vec2::new(events.values[0], events.values[1]);
+        camera.zoom = events.values[2];
+
+        events.events.remove(0);
+        events.values.drain(0..=2);
+    } else if event == Events::AdjustVertex {
+        let vert = &mut armature.sel_bone_mut(&selections).unwrap().vertices
+            [renderer.changed_vert_id as usize];
+        vert.pos = Vec2::new(events.values[0], events.values[1]);
+        renderer.changed_vert_id = -1;
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::EditBone {
+        ui.cursor_icon = egui::CursorIcon::Crosshair;
+        let anim_el = AnimElement::from_repr(events.values[1] as usize).unwrap();
+
+        edit_mode.is_moving = edit_mode.current == EditModes::Move;
+        edit_mode.is_rotating = edit_mode.current == EditModes::Rotate;
+        edit_mode.is_scaling = edit_mode.current == EditModes::Scale;
+
+        #[rustfmt::skip]
+        edit_bone(armature, config, events.values[0] as i32, anim_el, events.values[2], events.values[3] as usize, events.values[4] as i32);
+
+        events.events.remove(0);
+        events.values.drain(0..=4);
+    } else if event == Events::ToggleBoneFolded {
+        let idx = events.values[0] as usize;
+
+        undo_states.new_undo_bone(&armature.bones[idx]);
+        armature.bones[idx].folded = events.values[1] == 1.;
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::MoveTexture {
+        let new_idx = events.values[0] as usize;
+        let sel = &selections;
+        let textures = &mut armature.sel_style_mut(sel).unwrap().textures;
+        let tex = textures[events.values[1] as usize].clone();
+        textures.remove(events.values[1] as usize);
+        textures.insert(new_idx, tex);
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::RenameTex {
+        let style = armature.sel_style_mut(&selections).unwrap();
+        let t = events.values[0] as usize;
+        let og_name = style.textures[t].name.clone();
+        let trimmed = events.str_values[0].trim_start().trim_end().to_string();
+        style.textures[t].name = trimmed.clone();
+        let tex_names: Vec<String> = style.textures.iter().map(|t| t.name.clone()).collect();
+
+        let filter = tex_names.iter().filter(|name| **name == trimmed);
+        if filter.count() > 1 {
+            style.textures[t].name = og_name.clone();
+            events.open_modal("styles_modal.same_name", false);
         }
 
-        if event == Events::SetBindWeight {
-            let vert = events.values[0] as usize;
-            let weight = events.values[1];
-            let sel_bind = selections.bind as usize;
-            armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].verts[vert].weight = weight;
-
-            events.events.remove(0);
-            events.values.drain(0..=1);
-        } else if event == Events::ToggleBindPathing {
-            let sel_bind = events.values[0] as usize;
-            let is_pathing = events.values[1] == 1.;
-            armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].is_path = is_pathing;
-
-            events.events.remove(0);
-            events.values.drain(0..=1);
-        } else if event == Events::EditCamera {
-            camera.pos = Vec2::new(events.values[0], events.values[1]);
-            camera.zoom = events.values[2];
-
-            events.events.remove(0);
-            events.values.drain(0..=2);
-        } else if event == Events::AdjustVertex {
-            let vert = &mut armature.sel_bone_mut(&selections).unwrap().vertices
-                [renderer.changed_vert_id as usize];
-            vert.pos = Vec2::new(events.values[0], events.values[1]);
-            renderer.changed_vert_id = -1;
-
-            events.events.remove(0);
-            events.values.drain(0..=1);
-        } else if event == Events::EditBone {
-            ui.cursor_icon = egui::CursorIcon::Crosshair;
-            let anim_el = AnimElement::from_repr(events.values[1] as usize).unwrap();
-            #[rustfmt::skip]
-            edit_bone(armature, config, events.values[0] as i32, anim_el, events.values[2], events.values[3] as usize, events.values[4] as i32);
-            events.events.remove(0);
-            events.values.drain(0..=4);
-        } else if event == Events::ToggleBoneFolded {
-            let idx = events.values[0] as usize;
-
-            undo_states.new_undo_bone(&armature.bones[idx]);
-            armature.bones[idx].folded = events.values[1] == 1.;
-
-            events.events.remove(0);
-            events.values.drain(0..=1);
-        } else if event == Events::MoveTexture {
-            let new_idx = events.values[0] as usize;
-            let sel = &selections;
-            let textures = &mut armature.sel_style_mut(sel).unwrap().textures;
-            let tex = textures[events.values[1] as usize].clone();
-            textures.remove(events.values[1] as usize);
-            textures.insert(new_idx, tex);
-
-            events.events.remove(0);
-            events.values.drain(0..=1);
-        } else if event == Events::RenameTex {
-            let style = armature.sel_style_mut(&selections).unwrap();
-            let t = events.values[0] as usize;
-            let og_name = style.textures[t].name.clone();
-            let trimmed = events.str_values[0].trim_start().trim_end().to_string();
-            style.textures[t].name = trimmed.clone();
-            let tex_names: Vec<String> = style.textures.iter().map(|t| t.name.clone()).collect();
-
-            let filter = tex_names.iter().filter(|name| **name == trimmed);
-            if filter.count() > 1 {
-                style.textures[t].name = og_name.clone();
-                events.open_modal("styles_modal.same_name", false);
-            }
-
-            if !config.keep_tex_str {
-                for bone in &mut armature.bones {
-                    if bone.tex == og_name {
-                        bone.tex = trimmed.clone();
-                    }
+        if !config.keep_tex_str {
+            for bone in &mut armature.bones {
+                if bone.tex == og_name {
+                    bone.tex = trimmed.clone();
                 }
             }
-
-            events.events.remove(0);
-            events.values.drain(0..=1);
-            events.str_values.remove(0);
-        } else if event == Events::MigrateTexture {
-            let style = &mut armature.styles[selections.style as usize];
-            let tex = style.textures[events.values[0] as usize].clone();
-            style.textures.remove(events.values[0] as usize);
-            armature.styles[events.values[1] as usize]
-                .textures
-                .push(tex);
-            ui.dragging_tex = false;
-
-            events.events.remove(0);
-            events.values.drain(0..=1);
-        } else if event == Events::MoveStyle {
-            armature
-                .styles
-                .swap(events.values[0] as usize, events.values[1] as usize);
-            events.events.remove(0);
-            events.values.drain(0..=1);
-        } else if event == Events::ToggleStyleActive {
-            armature.styles[events.values[0] as usize].active =
-                !armature.styles[events.values[0] as usize].active;
-            for b in 0..armature.bones.len() {
-                armature.set_bone_tex(
-                    armature.bones[b].id,
-                    armature.bones[b].tex.clone(),
-                    selections.anim,
-                    selections.anim_frame,
-                );
-            }
-            events.events.remove(0);
-            events.values.drain(0..=1);
-        } else if event == Events::ToggleAnimPlaying {
-            let anim = &mut armature.animations[events.values[0] as usize];
-            let playing = events.values[1] == 1.;
-            anim.elapsed = if playing { Some(Instant::now()) } else { None };
-            events.events.remove(0);
-            events.values.drain(0..=1);
-        } else if event == Events::SetKeyframeFrame {
-            armature.animations[selections.anim].keyframes[events.values[0] as usize].frame =
-                events.values[1] as i32;
-            armature.animations[selections.anim].sort_keyframes();
-
-            events.events.remove(0);
-            events.values.drain(0..=1);
-        } else if event == Events::DragBone {
-            // dropping dragged bone and moving it (or setting it as child)
-            let pointing_id = events.values[0] as i32;
-            let is_above = events.values[1] == 1.;
-            drag_bone(armature, pointing_id, selections, is_above);
-            events.events.remove(0);
-            events.values.drain(0..=1);
-        } else {
-            // normal events: 1 event ID, 1 set of value(s)
-
-            let event = &events.events[0].clone();
-            let value = events.values[0];
-            let str_value = events.str_values[0].clone().to_string();
-
-            #[rustfmt::skip]
-            editor::process_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, copy_buffer, ui, renderer, config);
-
-            events.events.remove(0);
-            events.values.remove(0);
-            events.str_values.remove(0);
         }
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
+        events.str_values.remove(0);
+    } else if event == Events::MigrateTexture {
+        let style = &mut armature.styles[selections.style as usize];
+        let tex = style.textures[events.values[0] as usize].clone();
+        style.textures.remove(events.values[0] as usize);
+        armature.styles[events.values[1] as usize]
+            .textures
+            .push(tex);
+        ui.dragging_tex = false;
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::MoveStyle {
+        armature
+            .styles
+            .swap(events.values[0] as usize, events.values[1] as usize);
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::ToggleStyleActive {
+        armature.styles[events.values[0] as usize].active =
+            !armature.styles[events.values[0] as usize].active;
+        for b in 0..armature.bones.len() {
+            armature.set_bone_tex(
+                armature.bones[b].id,
+                armature.bones[b].tex.clone(),
+                selections.anim,
+                selections.anim_frame,
+            );
+        }
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::ToggleAnimPlaying {
+        let anim = &mut armature.animations[events.values[0] as usize];
+        let playing = events.values[1] == 1.;
+        anim.elapsed = if playing { Some(Instant::now()) } else { None };
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::SetKeyframeFrame {
+        armature.animations[selections.anim].keyframes[events.values[0] as usize].frame =
+            events.values[1] as i32;
+        armature.animations[selections.anim].sort_keyframes();
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::DragBone {
+        // dropping dragged bone and moving it (or setting it as child)
+        let pointing_id = events.values[0] as i32;
+        let is_above = events.values[1] == 1.;
+        drag_bone(armature, pointing_id, selections, is_above);
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else {
+        // normal events: 1 event ID, 1 set of value(s)
+
+        let event = &events.events[0].clone();
+        let value = events.values[0];
+        let str_value = events.str_values[0].clone().to_string();
+
+        #[rustfmt::skip]
+        editor::process_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, copy_buffer, ui, renderer, config);
+
+        events.events.remove(0);
+        events.values.remove(0);
+        events.str_values.remove(0);
     }
 }
 

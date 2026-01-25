@@ -39,7 +39,7 @@ macro_rules! context_menu {
 pub fn draw(
     context: &Context,
     shared_ui: &mut crate::Ui,
-    input: &mut InputStates,
+    input: &InputStates,
     selections: &mut SelectionState,
     config: &mut Config,
     events: &mut EventState,
@@ -52,50 +52,6 @@ pub fn draw(
     shared_ui.context_menu.keep = false;
 
     let sel = selections.clone();
-
-    context.input_mut(|i| {
-        input.holding_mod = i.modifiers.command;
-        input.holding_shift = i.modifiers.shift;
-        if shared_ui.rename_id == "" {
-            kb_inputs(i, events, config, selections, shared_ui, edit_mode);
-        }
-        shared_ui.last_pressed = i.keys_down.iter().last().copied();
-
-        input.left_clicked = i.pointer.primary_clicked();
-        input.right_clicked = i.pointer.secondary_clicked();
-        input.left_down = i.pointer.primary_down();
-        input.left_pressed = i.pointer.primary_pressed();
-        input.right_down = i.pointer.secondary_down();
-        if input.left_pressed {
-            input.mouse_init = Some(input.mouse);
-        }
-        if input.left_down {
-            input.down_dur += 1;
-        } else {
-            input.down_dur = -1;
-        }
-        if shared_ui.mobile {
-            input.left_clicked = i.pointer.any_pressed();
-        }
-        input.mouse_prev = input.mouse;
-        if let Some(mouse) = i.pointer.latest_pos() {
-            input.mouse = mouse.into();
-            input.mouse *= shared_ui.scale;
-        }
-
-        // don't record prev mouse on first frame of touch as it
-        // goes all over the place
-        if i.any_touches() && i.pointer.primary_pressed() {
-            input.mouse_prev = input.mouse;
-        }
-
-        if i.smooth_scroll_delta.y != 0. && !camera.on_ui {
-            input.scroll_delta = i.smooth_scroll_delta.y;
-            events.cam_zoom_scroll();
-        }
-
-        edit_mode.time = i.time as f32;
-    });
 
     context.set_cursor_icon(shared_ui.cursor_icon);
     shared_ui.cursor_icon = egui::CursorIcon::Default;
@@ -399,13 +355,68 @@ pub fn draw(
     }
 }
 
+pub fn process_inputs(
+    context: &Context,
+    input: &mut InputStates,
+    shared_ui: &mut crate::Ui,
+    config: &Config,
+    selections: &SelectionState,
+    edit_mode: &mut EditMode,
+    events: &mut EventState,
+    camera: &Camera,
+) {
+    context.input_mut(|i| {
+        input.holding_mod = i.modifiers.command;
+        input.holding_shift = i.modifiers.shift;
+        if shared_ui.rename_id == "" {
+            kb_inputs(i, shared_ui, events, config, selections, edit_mode);
+        }
+        shared_ui.last_pressed = i.keys_down.iter().last().copied();
+
+        input.left_clicked = i.pointer.primary_clicked();
+        input.right_clicked = i.pointer.secondary_clicked();
+        input.left_down = i.pointer.primary_down();
+        input.left_pressed = i.pointer.primary_pressed();
+        input.right_down = i.pointer.secondary_down();
+        if input.left_pressed {
+            input.mouse_init = Some(input.mouse);
+        }
+        if input.left_down {
+            input.down_dur += 1;
+        } else {
+            input.down_dur = -1;
+        }
+        if shared_ui.mobile {
+            input.left_clicked = i.pointer.any_pressed();
+        }
+        input.mouse_prev = input.mouse;
+        if let Some(mouse) = i.pointer.latest_pos() {
+            input.mouse = mouse.into();
+            input.mouse *= shared_ui.scale;
+        }
+
+        // don't record prev mouse on first frame of touch as it
+        // goes all over the place
+        if i.any_touches() && i.pointer.primary_pressed() {
+            input.mouse_prev = input.mouse;
+        }
+
+        if i.smooth_scroll_delta.y != 0. && !camera.on_ui {
+            input.scroll_delta = i.smooth_scroll_delta.y;
+            events.cam_zoom_scroll();
+        }
+
+        edit_mode.time = i.time as f32;
+    });
+}
+
 pub fn kb_inputs(
     input: &mut egui::InputState,
+    shared_ui: &mut crate::Ui,
     events: &mut EventState,
     config: &Config,
     selections: &SelectionState,
-    shared_ui: &mut crate::Ui,
-    edit_mode: &mut EditMode,
+    edit_mode: &EditMode,
 ) {
     mouse_button_as_key(input, egui::PointerButton::Primary, egui::Key::F31);
     mouse_button_as_key(input, egui::PointerButton::Secondary, egui::Key::F32);
@@ -491,7 +502,7 @@ pub fn kb_inputs(
             toggleElement(false, "file-dialog".to_string());
         }
 
-        edit_mode.setting_ik_target = false;
+        events.toggle_setting_ik_target(0);
     }
 }
 
