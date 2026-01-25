@@ -17,10 +17,12 @@ pub fn iterate_events(
 ) {
     let mut last_event = Events::None;
     while events.events.len() > 0 {
+        let event = events.events[0].clone();
+
         // for every new event, create a new undo state
         // note: `edit_bone` is not included, as its undo is conditional (see `save_edited_bone`)
-        if last_event != events.events[0] {
-            last_event = events.events[0].clone();
+        if last_event != event {
+            last_event = event.clone();
 
             type E = Events;
             #[rustfmt::skip]
@@ -28,23 +30,41 @@ pub fn iterate_events(
                 E::NewBone | E::DragBone | E::DeleteBone => undo_states.new_undo_bones(&armature.bones),
                 E::NewAnimation | E::DeleteAnim          => undo_states.new_undo_anims(&armature.animations),
                 E::DeleteKeyframe                        => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
-                E::RemoveVertex                          => undo_states.new_undo_bone(&armature.bones[selections.bone_idx]),
                 E::DeleteTex                             => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
                 E::DeleteStyle | E::NewStyle             => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
                 E::RenameBone  => if !ui.just_made_bone  { undo_states.new_undo_bone( &armature.sel_bone( &selections).unwrap()); ui.just_made_bone  = false }
                 E::RenameAnim  => if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap()); ui.just_made_anim  = false }
+
+                E::ResetVertices | E::EditBone | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts => {
+                    undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
+                }
                 _ => {}
             };
         }
 
-        if events.events[0] == Events::EditCamera {
+        if event == Events::SetBindWeight {
+            let vert = events.values[0] as usize;
+            let weight = events.values[1];
+            let sel_bind = selections.bind as usize;
+            armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].verts[vert].weight = weight;
+
+            events.events.remove(0);
+            events.values.drain(0..=1);
+        } else if event == Events::ToggleBindPathing {
+            let sel_bind = events.values[0] as usize;
+            let is_pathing = events.values[1] == 1.;
+            armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].is_path = is_pathing;
+
+            events.events.remove(0);
+            events.values.drain(0..=1);
+        } else if event == Events::EditCamera {
             camera.pos = Vec2::new(events.values[0], events.values[1]);
             camera.zoom = events.values[2];
 
             events.events.remove(0);
             events.values.drain(0..=2);
-        } else if events.events[0] == Events::AdjustVertex {
+        } else if event == Events::AdjustVertex {
             let vert = &mut armature.sel_bone_mut(&selections).unwrap().vertices
                 [renderer.changed_vert_id as usize];
             vert.pos = Vec2::new(events.values[0], events.values[1]);
@@ -52,90 +72,20 @@ pub fn iterate_events(
 
             events.events.remove(0);
             events.values.drain(0..=1);
-        } else if events.events[0] == Events::EditBone {
+        } else if event == Events::EditBone {
             ui.cursor_icon = egui::CursorIcon::Crosshair;
-            let bone_id = events.values[0] as i32;
-            let element = AnimElement::from_repr(events.values[1] as usize).unwrap();
-            let value = events.values[2] as f32;
-            let anim_id = events.values[3] as usize;
-            let anim_frame = events.values[4] as i32;
-
-            // drain event sooner, to allow `continue` to work here
+            edit_bone(
+                armature,
+                config,
+                events.values[0] as i32,
+                AnimElement::from_repr(events.values[1] as usize).unwrap(),
+                events.values[2],
+                events.values[3] as usize,
+                events.values[4] as i32,
+            );
             events.events.remove(0);
             events.values.drain(0..=4);
-
-            let bones = &mut armature.bones;
-            let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
-            let mut init_value = 0.;
-
-            // do nothing if anim is playing and edit_while_playing config is false
-            let anims = &armature.animations;
-            let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
-            if !config.edit_while_playing && is_any_anim_playing {
-                continue;
-            }
-
-            macro_rules! set {
-                ($field:expr) => {{
-                    init_value = $field;
-                    if anim_id == usize::MAX {
-                        $field = value;
-                    }
-                }};
-            }
-
-            match element {
-                AnimElement::PositionX => set!(bone.pos.x),
-                AnimElement::PositionY => set!(bone.pos.y),
-                AnimElement::Rotation => set!(bone.rot),
-                AnimElement::ScaleX => set!(bone.scale.x),
-                AnimElement::ScaleY => set!(bone.scale.y),
-                AnimElement::Zindex => {
-                    init_value = bone.zindex as f32;
-                    if anim_id == usize::MAX {
-                        bone.zindex = value as i32
-                    }
-                }
-                AnimElement::Texture => { /* handled in set_bone_tex() */ }
-                AnimElement::IkConstraint => {
-                    init_value = (bone.ik_constraint as usize) as f32;
-                    if anim_id == usize::MAX {
-                        bone.ik_constraint = match value {
-                            1. => JointConstraint::Clockwise,
-                            2. => JointConstraint::CounterClockwise,
-                            _ => JointConstraint::None,
-                        }
-                    }
-                }
-                AnimElement::Hidden => {
-                    init_value = shared::bool_as_f32(bone.is_hidden);
-                    if anim_id == usize::MAX {
-                        bone.is_hidden = shared::f32_as_bool(value)
-                    }
-                }
-            };
-
-            if anim_id == usize::MAX {
-                continue;
-            }
-
-            macro_rules! check_kf {
-                ($kf:expr) => {
-                    $kf.frame == 0 && $kf.element == element && $kf.bone_id == bone_id
-                };
-            }
-
-            let anim = &mut armature.animations;
-
-            let has_0th = anim[anim_id].keyframes.iter().find(|kf| check_kf!(kf)) != None;
-            if anim_frame != 0 && !has_0th {
-                anim[anim_id].check_if_in_keyframe(bone_id, 0, element.clone());
-                let oth_frame = anim[anim_id].keyframes.iter_mut().find(|kf| check_kf!(kf));
-                oth_frame.unwrap().value = init_value;
-            }
-            let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
-            anim[anim_id].keyframes[frame].value = value;
-        } else if events.events[0] == Events::ToggleBoneFolded {
+        } else if event == Events::ToggleBoneFolded {
             let idx = events.values[0] as usize;
 
             undo_states.new_undo_bone(&armature.bones[idx]);
@@ -143,7 +93,7 @@ pub fn iterate_events(
 
             events.events.remove(0);
             events.values.drain(0..=1);
-        } else if events.events[0] == Events::MoveTexture {
+        } else if event == Events::MoveTexture {
             let new_idx = events.values[0] as usize;
             let sel = &selections;
             let textures = &mut armature.sel_style_mut(sel).unwrap().textures;
@@ -153,7 +103,7 @@ pub fn iterate_events(
 
             events.events.remove(0);
             events.values.drain(0..=1);
-        } else if events.events[0] == Events::RenameTex {
+        } else if event == Events::RenameTex {
             let style = armature.sel_style_mut(&selections).unwrap();
             let t = events.values[0] as usize;
             let og_name = style.textures[t].name.clone();
@@ -178,7 +128,7 @@ pub fn iterate_events(
             events.events.remove(0);
             events.values.drain(0..=1);
             events.str_values.remove(0);
-        } else if events.events[0] == Events::MigrateTexture {
+        } else if event == Events::MigrateTexture {
             let style = &mut armature.styles[selections.style as usize];
             let tex = style.textures[events.values[0] as usize].clone();
             style.textures.remove(events.values[0] as usize);
@@ -189,13 +139,13 @@ pub fn iterate_events(
 
             events.events.remove(0);
             events.values.drain(0..=1);
-        } else if events.events[0] == Events::MoveStyle {
+        } else if event == Events::MoveStyle {
             armature
                 .styles
                 .swap(events.values[0] as usize, events.values[1] as usize);
             events.events.remove(0);
             events.values.drain(0..=1);
-        } else if events.events[0] == Events::ToggleStyleActive {
+        } else if event == Events::ToggleStyleActive {
             armature.styles[events.values[0] as usize].active =
                 !armature.styles[events.values[0] as usize].active;
             for b in 0..armature.bones.len() {
@@ -208,20 +158,20 @@ pub fn iterate_events(
             }
             events.events.remove(0);
             events.values.drain(0..=1);
-        } else if events.events[0] == Events::ToggleAnimPlaying {
+        } else if event == Events::ToggleAnimPlaying {
             let anim = &mut armature.animations[events.values[0] as usize];
             let playing = events.values[1] == 1.;
             anim.elapsed = if playing { Some(Instant::now()) } else { None };
             events.events.remove(0);
             events.values.drain(0..=1);
-        } else if events.events[0] == Events::SetKeyframeFrame {
+        } else if event == Events::SetKeyframeFrame {
             armature.animations[selections.anim].keyframes[events.values[0] as usize].frame =
                 events.values[1] as i32;
             armature.animations[selections.anim].sort_keyframes();
 
             events.events.remove(0);
             events.values.drain(0..=1);
-        } else if events.events[0] == Events::DragBone {
+        } else if event == Events::DragBone {
             // dropping dragged bone and moving it (or setting it as child)
             let pointing_id = events.values[0] as i32;
             let is_above = events.values[1] == 1.;
@@ -263,7 +213,6 @@ pub fn process_event(
     match event {
         Events::CamZoomIn => camera.zoom -= 10.,
         Events::CamZoomOut => camera.zoom += 10.,
-        Events::CamZoomScroll => camera.zoom -= input.scroll_delta,
         Events::EditModeMove => edit_mode.current = EditModes::Move,
         Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
         Events::EditModeScale => edit_mode.current = EditModes::Scale,
@@ -275,6 +224,31 @@ pub fn process_event(
         Events::RenameAnim => armature.animations[value as usize].name = str_value,
         Events::PointerOnUi => camera.on_ui = value == 1.,
         Events::ToggleShowingMesh => edit_mode.showing_mesh = value == 1.,
+        Events::ToggleSettingIkTarget => edit_mode.setting_ik_target = value == 1.,
+        Events::RemoveIkTarget => armature.sel_bone_mut(selections).unwrap().ik_target_id = -1,
+        Events::ToggleIkFolded => {
+            armature.sel_bone_mut(&selections).unwrap().ik_folded = value == 1.
+        }
+        Events::ToggleIkDisabled => {
+            armature.sel_bone_mut(&selections).unwrap().ik_disabled = value == 1.
+        }
+        Events::ToggleMeshdefFolded => {
+            armature.sel_bone_mut(&selections).unwrap().meshdef_folded = value == 1.
+        }
+        Events::CamZoomScroll => {
+            camera.zoom -= input.scroll_delta;
+            match config.layout {
+                UiLayout::Right => camera.pos.x -= input.scroll_delta * 0.5,
+                UiLayout::Left => camera.pos.x += input.scroll_delta * 0.5,
+                _ => {}
+            }
+        }
+        Events::ToggleAnimPanelOpen => {
+            edit_mode.anim_open = value == 1.;
+            for anim in &mut armature.animations {
+                anim.elapsed = None;
+            }
+        }
         Events::CancelPendingTexture => {
             _ = armature.sel_style_mut(&selections).unwrap().textures.pop()
         }
@@ -627,7 +601,6 @@ pub fn process_event(
         }
         Events::SelectBind => {
             if value == -2. {
-                let sel_bone = armature.sel_bone(&selections).unwrap().clone();
                 let binds = &mut armature.sel_bone_mut(&selections).unwrap().binds;
                 binds.push(BoneBind {
                     bone_id: -1,
@@ -650,7 +623,48 @@ pub fn process_event(
                 bind.is_path = false;
             }
         }
+        Events::CenterBoneVerts => {
+            let verts = &mut armature.sel_bone_mut(&selections).unwrap().vertices;
+            center_verts(verts)
+        }
+        Events::TraceBoneVerts => {
+            let bone = armature.sel_bone(&selections).unwrap().clone();
+            let tex = &armature.tex_of(bone.id).unwrap();
+            let tex_data = &armature.tex_data;
+            let data = tex_data.iter().find(|d| tex.data_id == d.id).unwrap();
+            let (verts, indices) = renderer::trace_mesh(&data.image);
+            let bone = &mut armature.sel_bone_mut(&selections).unwrap();
+            bone.vertices = verts;
+            bone.indices = indices;
+            bone.binds = vec![];
+            bone.verts_edited = true;
+            selections.bind = -1;
+        }
         _ => {}
+    }
+}
+
+pub fn center_verts(verts: &mut Vec<Vertex>) {
+    let mut min = Vec2::default();
+    let mut max = Vec2::default();
+    for v in &mut *verts {
+        if v.pos.x < min.x {
+            min.x = v.pos.x;
+        }
+        if v.pos.y < min.y {
+            min.y = v.pos.y
+        }
+        if v.pos.x > max.x {
+            max.x = v.pos.x;
+        }
+        if v.pos.y > max.y {
+            max.y = v.pos.y;
+        }
+    }
+
+    let avg = (min + max) / 2.;
+    for v in verts {
+        v.pos -= avg;
     }
 }
 
@@ -931,4 +945,102 @@ pub fn drag_bone(
         // adjust dragged bone so it stays in place
         armature.offset_pos_by_parent(old_parents, id);
     }
+}
+
+fn edit_bone(
+    armature: &mut Armature,
+    config: &Config,
+    bone_id: i32,
+    element: AnimElement,
+    value: f32,
+    anim_id: usize,
+    anim_frame: i32,
+) {
+    let bones = &mut armature.bones;
+    let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
+    let mut init_value = 0.;
+
+    // do nothing if anim is playing and edit_while_playing config is false
+    let anims = &armature.animations;
+    let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
+    if !config.edit_while_playing && is_any_anim_playing {
+        return;
+    }
+
+    macro_rules! set {
+        ($field:expr) => {{
+            init_value = $field;
+            if anim_id == usize::MAX {
+                $field = value;
+            }
+        }};
+    }
+
+    match element {
+        AnimElement::PositionX => set!(bone.pos.x),
+        AnimElement::PositionY => set!(bone.pos.y),
+        AnimElement::Rotation => set!(bone.rot),
+        AnimElement::ScaleX => set!(bone.scale.x),
+        AnimElement::ScaleY => set!(bone.scale.y),
+        AnimElement::Zindex => {
+            init_value = bone.zindex as f32;
+            if anim_id == usize::MAX {
+                bone.zindex = value as i32
+            }
+        }
+        AnimElement::Texture => { /* handled in set_bone_tex() */ }
+        AnimElement::IkConstraint => {
+            init_value = (bone.ik_constraint as usize) as f32;
+            if anim_id == usize::MAX {
+                bone.ik_constraint = match value {
+                    1. => JointConstraint::Clockwise,
+                    2. => JointConstraint::CounterClockwise,
+                    _ => JointConstraint::None,
+                }
+            }
+        }
+        AnimElement::Hidden => {
+            init_value = shared::bool_as_f32(bone.is_hidden);
+            if anim_id == usize::MAX {
+                bone.is_hidden = shared::f32_as_bool(value)
+            }
+        }
+        AnimElement::IkMode => {
+            init_value = (bone.ik_mode as usize) as f32;
+            if anim_id == usize::MAX {
+                bone.ik_mode = match value {
+                    0. => InverseKinematicsMode::FABRIK,
+                    1. => InverseKinematicsMode::Arc,
+                    _ => InverseKinematicsMode::Skip,
+                }
+            }
+        }
+        AnimElement::IkFamilyId => {
+            init_value = bone.ik_family_id as f32;
+            if anim_id == usize::MAX {
+                bone.ik_family_id = value as i32;
+            }
+        }
+    };
+
+    if anim_id == usize::MAX {
+        return;
+    }
+
+    macro_rules! check_kf {
+        ($kf:expr) => {
+            $kf.frame == 0 && $kf.element == element && $kf.bone_id == bone_id
+        };
+    }
+
+    let anim = &mut armature.animations;
+
+    let has_0th = anim[anim_id].keyframes.iter().find(|kf| check_kf!(kf)) != None;
+    if anim_frame != 0 && !has_0th {
+        anim[anim_id].check_if_in_keyframe(bone_id, 0, element.clone());
+        let oth_frame = anim[anim_id].keyframes.iter_mut().find(|kf| check_kf!(kf));
+        oth_frame.unwrap().value = init_value;
+    }
+    let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
+    anim[anim_id].keyframes[frame].value = value;
 }

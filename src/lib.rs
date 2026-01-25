@@ -309,7 +309,19 @@ impl ApplicationHandler for App {
                 );
 
                 // ui logic handled in ui.rs
-                ui::draw(gui_state.egui_ctx(), &mut self.shared);
+                let shared = &mut self.shared;
+                ui::draw(
+                    gui_state.egui_ctx(),
+                    &mut shared.ui,
+                    &mut shared.input,
+                    &mut shared.selections,
+                    &mut shared.config,
+                    &mut shared.events,
+                    &mut shared.edit_mode,
+                    &shared.camera,
+                    &mut shared.armature,
+                    &mut shared.copy_buffer,
+                );
 
                 let egui_winit::egui::FullOutput {
                     textures_delta,

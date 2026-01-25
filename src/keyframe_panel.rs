@@ -1,19 +1,15 @@
 use crate::*;
 
-pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
-    ui.heading("Keyframe (".to_owned() + &shared.selections.anim_frame.to_string() + ")");
-    let sel = shared.selections.clone();
+pub fn draw(ui: &mut egui::Ui, selections: &SelectionState, armature: &Armature) {
+    ui.heading("Keyframe (".to_owned() + &selections.anim_frame.to_string() + ")");
+    let sel = selections.clone();
 
     return;
 
     #[allow(unreachable_code)]
-    let keyframes_in_frame = shared
-        .armature
-        .sel_anim(&sel)
-        .unwrap()
-        .keyframes
-        .iter()
-        .filter(|a| a.frame == shared.selections.anim_frame);
+    let keyframes = armature.sel_anim(&sel).unwrap().keyframes;
+    let frame = selections.anim_frame;
+    let keyframes_in_frame = keyframes.iter().filter(|a| a.frame == frame);
 
     if keyframes_in_frame.count() == 0 {
         return;
@@ -22,16 +18,16 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
     ui.horizontal(|ui| {
         ui.label("Transition:");
 
-        if shared.selections.anim_frame == -1
-            || shared.armature.sel_anim(&sel) == None
-            || shared.armature.sel_anim(&sel).unwrap().keyframes.len() == 0
+        if selections.anim_frame == -1
+            || armature.sel_anim(&sel) == None
+            || armature.sel_anim(&sel).unwrap().keyframes.len() == 0
         {
             return;
         }
 
         let mut transition = Transition::default();
-        let frame = shared.selections.anim_frame;
-        for kf in &mut shared.armature.sel_anim_mut(&sel).unwrap().keyframes {
+        let frame = selections.anim_frame;
+        for kf in &mut armature.sel_anim_mut(&sel).unwrap().keyframes {
             if kf.frame == frame {
                 transition = kf.transition.clone();
                 break;
@@ -57,8 +53,8 @@ pub fn draw(ui: &mut egui::Ui, shared: &mut Shared) {
 
         // change all fields to use new transition
         if og_transition != transition {
-            let selected_frame = shared.selections.anim_frame;
-            for kf in &mut shared.armature.sel_anim_mut(&sel).unwrap().keyframes {
+            let selected_frame = selections.anim_frame;
+            for kf in &mut armature.sel_anim_mut(&sel).unwrap().keyframes {
                 if kf.frame == selected_frame {
                     kf.transition = transition.clone();
                 }

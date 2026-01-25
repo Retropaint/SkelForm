@@ -36,83 +36,82 @@ macro_rules! context_menu {
 }
 
 /// The `main` of this module.
-pub fn draw(context: &Context, shared: &mut Shared) {
-    shared.ui.last_pressed = None;
-    shared.ui.context_menu.keep = false;
+pub fn draw(
+    context: &Context,
+    shared_ui: &mut crate::Ui,
+    input: &mut InputStates,
+    selections: &mut SelectionState,
+    config: &mut Config,
+    events: &mut EventState,
+    edit_mode: &mut EditMode,
+    camera: &Camera,
+    armature: &mut Armature,
+    copy_buffer: &mut CopyBuffer,
+) {
+    shared_ui.last_pressed = None;
+    shared_ui.context_menu.keep = false;
 
-    let sel = shared.selections.clone();
+    let sel = selections.clone();
 
     context.input_mut(|i| {
-        shared.input.holding_mod = i.modifiers.command;
-        shared.input.holding_shift = i.modifiers.shift;
-        if shared.ui.rename_id == "" {
-            kb_inputs(
-                i,
-                &mut shared.events,
-                &shared.config,
-                &shared.selections,
-                &mut shared.ui,
-                &mut shared.edit_mode,
-            );
+        input.holding_mod = i.modifiers.command;
+        input.holding_shift = i.modifiers.shift;
+        if shared_ui.rename_id == "" {
+            kb_inputs(i, events, config, selections, shared_ui, edit_mode);
         }
-        shared.ui.last_pressed = i.keys_down.iter().last().copied();
+        shared_ui.last_pressed = i.keys_down.iter().last().copied();
 
-        shared.input.left_clicked = i.pointer.primary_clicked();
-        shared.input.right_clicked = i.pointer.secondary_clicked();
-        shared.input.left_down = i.pointer.primary_down();
-        shared.input.left_pressed = i.pointer.primary_pressed();
-        shared.input.right_down = i.pointer.secondary_down();
-        if shared.input.left_pressed {
-            shared.input.mouse_init = Some(shared.input.mouse);
+        input.left_clicked = i.pointer.primary_clicked();
+        input.right_clicked = i.pointer.secondary_clicked();
+        input.left_down = i.pointer.primary_down();
+        input.left_pressed = i.pointer.primary_pressed();
+        input.right_down = i.pointer.secondary_down();
+        if input.left_pressed {
+            input.mouse_init = Some(input.mouse);
         }
-        if shared.input.left_down {
-            shared.input.down_dur += 1;
+        if input.left_down {
+            input.down_dur += 1;
         } else {
-            shared.input.down_dur = -1;
+            input.down_dur = -1;
         }
-        if shared.ui.mobile {
-            shared.input.left_clicked = i.pointer.any_pressed();
+        if shared_ui.mobile {
+            input.left_clicked = i.pointer.any_pressed();
         }
-        shared.input.mouse_prev = shared.input.mouse;
+        input.mouse_prev = input.mouse;
         if let Some(mouse) = i.pointer.latest_pos() {
-            shared.input.mouse = mouse.into();
-            shared.input.mouse *= shared.ui.scale;
+            input.mouse = mouse.into();
+            input.mouse *= shared_ui.scale;
         }
 
         // don't record prev mouse on first frame of touch as it
         // goes all over the place
         if i.any_touches() && i.pointer.primary_pressed() {
-            shared.input.mouse_prev = shared.input.mouse;
+            input.mouse_prev = input.mouse;
         }
 
-        if i.smooth_scroll_delta.y != 0. && !shared.camera.on_ui {
-            shared.events.cam_zoom_scroll();
-            shared.input.scroll_delta = i.smooth_scroll_delta.y;
-            match shared.config.layout {
-                UiLayout::Right => shared.camera.pos.x -= i.smooth_scroll_delta.y * 0.5,
-                UiLayout::Left => shared.camera.pos.x += i.smooth_scroll_delta.y * 0.5,
-                _ => {}
-            }
+        if i.smooth_scroll_delta.y != 0. && !camera.on_ui {
+            input.scroll_delta = i.smooth_scroll_delta.y;
+            events.cam_zoom_scroll();
         }
 
-        shared.edit_mode.time = i.time as f32;
+        edit_mode.time = i.time as f32;
     });
 
-    context.set_cursor_icon(shared.ui.cursor_icon);
-    shared.ui.cursor_icon = egui::CursorIcon::Default;
+    context.set_cursor_icon(shared_ui.cursor_icon);
+    shared_ui.cursor_icon = egui::CursorIcon::Default;
 
-    default_styling(context, &shared.config);
+    default_styling(context, &config);
 
     // apply individual element styling once, then immediately go back to default
     macro_rules! style_once {
         ($func:expr) => {
             $func;
-            default_styling(context, &shared.config);
+            default_styling(context, &config);
         };
     }
 
     if let Some(_pos) = context.pointer_latest_pos() {
-        if shared.ui.mobile {
+        if shared_ui.mobile {
             #[cfg(feature = "debug")]
             context
                 .debug_painter()
@@ -121,7 +120,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     }
 
     let anim_icon_size = 18;
-    if shared.ui.anim.icon_images.len() == 0 {
+    if shared_ui.anim.icon_images.len() == 0 {
         let mut full_img =
             image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
 
@@ -135,57 +134,40 @@ pub fn draw(context: &Context, shared: &mut Shared) {
                     img.as_flat_samples().as_slice(),
                 );
                 let tex = context.load_texture("anim_icons", color_image, Default::default());
-                shared.ui.anim.icon_images.push(tex);
+                shared_ui.anim.icon_images.push(tex);
             }
         }
     }
-    camera_bar(
-        context,
-        &shared.config,
-        &mut shared.ui,
-        &shared.camera,
-        &mut shared.events,
-    );
+    camera_bar(context, config, shared_ui, camera, events);
 
-    if shared.ui.polar_modal {
-        modal::polar_modal(context, &shared.config, &mut shared.ui, &mut shared.events);
+    if shared_ui.polar_modal {
+        modal::polar_modal(context, &config, shared_ui, events);
     }
-    if shared.ui.modal {
-        modal::modal(context, &mut shared.ui, &shared.config);
+    if shared_ui.modal {
+        modal::modal(context, shared_ui, &config);
     }
-    if shared.ui.styles_modal {
-        #[rustfmt::skip]
-        styles_modal::draw(context, &mut shared.ui, &shared.config, &shared.camera, &shared.armature, &shared.selections, &mut shared.events);
-    }
-    if shared.ui.settings_modal {
-        settings_modal::draw(
-            &mut shared.ui,
-            &mut shared.config,
-            &shared.camera,
-            &mut shared.events,
-            context,
+    if shared_ui.styles_modal {
+        styles_modal::draw(
+            context, shared_ui, config, camera, armature, selections, events,
         );
     }
-    if shared.ui.startup_window {
-        startup_window::startup_modal(context, &mut shared.ui, &mut shared.events, &shared.config);
+    if shared_ui.settings_modal {
+        settings_modal::draw(shared_ui, config, camera, events, context);
     }
-    if shared.ui.donating_modal {
-        modal::donating_modal(context, &mut shared.ui, &shared.config);
+    if shared_ui.startup_window {
+        startup_window::startup_modal(context, shared_ui, events, &config);
     }
-    if shared.ui.atlas_modal {
+    if shared_ui.donating_modal {
+        modal::donating_modal(context, shared_ui, &config);
+    }
+    if shared_ui.atlas_modal {
         atlas_modal::draw(
-            context,
-            &shared.config,
-            &shared.selections,
-            &shared.armature,
-            &mut shared.ui,
-            &shared.input,
-            &mut shared.events,
+            context, config, selections, armature, shared_ui, input, events,
         );
     }
     #[cfg(not(target_arch = "wasm32"))]
-    if shared.ui.checking_update {
-        modal::modal(context, &mut shared.ui, &shared.config);
+    if shared_ui.checking_update {
+        modal::modal(context, shared_ui, &config);
         let url = "https://skelform.org/data/version";
         let request = ureq::get(url).header("Example-Header", "header value");
         let raw_ver = match request.call() {
@@ -194,82 +176,67 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         };
 
         if raw_ver == "err" {
-            shared.events.open_modal("startup.error_update", false);
+            events.open_modal("startup.error_update", false);
         } else if raw_ver != "" {
             let ver_str = raw_ver.split(' ').collect::<Vec<_>>();
             let ver_idx = ver_str[0].parse::<i32>().unwrap();
             let ver_name = ver_str[1];
             if ver_idx > crate::VERSION_IDX {
-                shared.ui.new_version = ver_name.to_string();
+                shared_ui.new_version = ver_name.to_string();
                 let str = "New version available: ".to_owned()
                     + &ver_name
                     + "\nGo to version page and download manually?";
-                shared.events.open_polar_modal(PolarId::NewUpdate, str);
+                events.open_polar_modal(PolarId::NewUpdate, str);
             } else {
-                shared
-                    .events
-                    .open_modal("No updates available. This is the latest version.", false);
+                events.open_modal("No updates available. This is the latest version.", false);
             }
         }
 
-        shared.ui.checking_update = false;
+        shared_ui.checking_update = false;
     }
     style_once!(top_panel(
-        context,
-        &shared.config,
-        &mut shared.ui,
-        &mut shared.events,
-        &shared.selections,
-        &shared.armature
+        context, config, shared_ui, events, selections, armature
     ));
 
-    if shared.edit_mode.anim_open {
+    if edit_mode.anim_open {
         style_once!(keyframe_editor::draw(
             context,
-            &mut shared.ui,
-            &shared.input,
-            &mut shared.armature,
-            &shared.config,
-            &mut shared.selections,
-            &mut shared.events,
-            &mut shared.copy_buffer
+            shared_ui,
+            input,
+            armature,
+            config,
+            selections,
+            events,
+            copy_buffer
         ));
     }
 
     style_once!(armature_window::draw(
-        context,
-        &mut shared.events,
-        &shared.config,
-        &shared.armature,
-        &shared.selections,
-        &shared.edit_mode,
-        &mut shared.ui
+        context, events, config, armature, selections, edit_mode, shared_ui
     ));
 
     let min_default_size = 210.;
     let mut max_size = min_default_size;
-    if shared.selections.bone_idx != usize::MAX {
+    if selections.bone_idx != usize::MAX {
         max_size = 250.;
-    } else if shared.selections.anim_frame != -1 {
+    } else if selections.anim_frame != -1 {
         max_size = 250.;
     }
 
     let mut enable_bone_panel = true;
-    if let Some(_) = shared.armature.sel_bone(&sel) {
-        enable_bone_panel = !shared.edit_mode.setting_ik_target;
+    if let Some(_) = armature.sel_bone(&sel) {
+        enable_bone_panel = !edit_mode.setting_ik_target;
     }
 
     // get current properties of selected bone, including animations
     let mut selected_bone = Bone::default();
-    if shared.selections.bone_idx != usize::MAX
-        && shared.selections.bone_idx < shared.armature.bones.len()
-    {
-        selected_bone = shared.armature.sel_bone(&sel).unwrap().clone();
+    if selections.bone_idx != usize::MAX && selections.bone_idx < armature.bones.len() {
+        selected_bone = armature.sel_bone(&sel).unwrap().clone();
 
-        if shared.edit_mode.anim_open && shared.selections.anim != usize::MAX {
-            let frame = shared.selections.anim_frame;
-            let animated_bones = shared.armature.animate(shared.selections.anim, frame, None);
-            selected_bone = animated_bones[shared.selections.bone_idx].clone();
+        if edit_mode.anim_open && selections.anim != usize::MAX {
+            let frame = selections.anim_frame;
+            let animated_bones = armature.animate(selections.anim, frame, None);
+            selected_bone = animated_bones[selections.bone_idx].clone();
         }
     }
 
@@ -279,7 +246,7 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         .max_width(max_size)
         .min_width(min_default_size)
         .default_width(min_default_size);
-    if shared.config.layout == UiLayout::Left {
+    if config.layout == UiLayout::Left {
         side_panel = egui::SidePanel::left(bone_panel_id)
             .resizable(true)
             .max_width(max_size)
@@ -290,128 +257,128 @@ pub fn draw(context: &Context, shared: &mut Shared) {
         bone_panel_id,
         side_panel.show(context, |ui| {
             ui.add_enabled_ui(enable_bone_panel, |ui| {
-                let gradient = shared.config.colors.gradient.into();
+                let gradient = config.colors.gradient.into();
                 ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
 
-                if shared.selections.bone_idx != usize::MAX {
-                    bone_panel::draw(selected_bone.clone(), ui, shared);
-                } else if shared.armature.sel_anim(&shared.selections) != None
-                    && shared.selections.anim_frame != -1
-                {
-                    keyframe_panel::draw(ui, shared);
+                if selections.bone_idx != usize::MAX {
+                    bone_panel::draw(
+                        selected_bone.clone(),
+                        ui,
+                        selections,
+                        shared_ui,
+                        armature,
+                        config,
+                        events,
+                        edit_mode,
+                    );
+                } else if armature.sel_anim(&selections) != None && selections.anim_frame != -1 {
+                    keyframe_panel::draw(ui, &selections, &armature);
                 }
             });
-            shared.ui.bone_panel_rect = Some(ui.min_rect());
+            shared_ui.bone_panel_rect = Some(ui.min_rect());
         }),
-        &mut shared.events,
+        events,
         context,
     );
 
     // adjust bar positions
-    let bone_panel = shared.ui.bone_panel_rect.unwrap();
-    let top_panel = shared.ui.top_panel_rect.unwrap();
-    let armature_panel = shared.ui.armature_panel_rect.unwrap();
-    let keyframe_panel = shared.ui.keyframe_panel_rect;
-    match shared.config.layout {
+    let bone_panel = shared_ui.bone_panel_rect.unwrap();
+    let top_panel = shared_ui.top_panel_rect.unwrap();
+    let armature_panel = shared_ui.armature_panel_rect.unwrap();
+    let keyframe_panel = shared_ui.keyframe_panel_rect;
+    match config.layout {
         UiLayout::Split => {
-            shared.ui.anim_bar.pos.x = bone_panel.left() - shared.ui.anim_bar.scale.x - 21.;
-            shared.ui.anim_bar.pos.y = top_panel.bottom() - 1.;
+            shared_ui.anim_bar.pos.x = bone_panel.left() - shared_ui.anim_bar.scale.x - 21.;
+            shared_ui.anim_bar.pos.y = top_panel.bottom() - 1.;
 
-            shared.ui.edit_bar.pos = Vec2::new(armature_panel.right(), top_panel.bottom());
+            shared_ui.edit_bar.pos = Vec2::new(armature_panel.right(), top_panel.bottom());
 
-            shared.ui.camera_bar.pos.x =
-                bone_panel.left() - shared.ui.camera_bar.scale.x - ((6. * 3.3) as f32).ceil();
-            if keyframe_panel != None && shared.edit_mode.anim_open {
-                shared.ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
+            shared_ui.camera_bar.pos.x =
+                bone_panel.left() - shared_ui.camera_bar.scale.x - ((6. * 3.3) as f32).ceil();
+            if keyframe_panel != None && edit_mode.anim_open {
+                shared_ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
-                shared.ui.camera_bar.pos.y = context.content_rect().bottom();
+                shared_ui.camera_bar.pos.y = context.content_rect().bottom();
             }
-            shared.ui.camera_bar.pos.y -= shared.ui.camera_bar.scale.y + 15.;
+            shared_ui.camera_bar.pos.y -= shared_ui.camera_bar.scale.y + 15.;
         }
         UiLayout::Right => {
-            shared.ui.edit_bar.pos.x = bone_panel.left() - shared.ui.edit_bar.scale.x - 28.;
-            shared.ui.edit_bar.pos.y = top_panel.bottom();
+            shared_ui.edit_bar.pos.x = bone_panel.left() - shared_ui.edit_bar.scale.x - 28.;
+            shared_ui.edit_bar.pos.y = top_panel.bottom();
 
-            shared.ui.anim_bar.pos = Vec2::new(0., top_panel.bottom());
+            shared_ui.anim_bar.pos = Vec2::new(0., top_panel.bottom());
 
-            shared.ui.camera_bar.pos.x = bone_panel.left() - shared.ui.camera_bar.scale.x - 21.;
-            if keyframe_panel != None && shared.edit_mode.anim_open {
-                shared.ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
+            shared_ui.camera_bar.pos.x = bone_panel.left() - shared_ui.camera_bar.scale.x - 21.;
+            if keyframe_panel != None && edit_mode.anim_open {
+                shared_ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
-                shared.ui.camera_bar.pos.y = context.content_rect().bottom();
+                shared_ui.camera_bar.pos.y = context.content_rect().bottom();
             }
-            shared.ui.camera_bar.pos.y -= shared.ui.camera_bar.scale.y + 15.;
+            shared_ui.camera_bar.pos.y -= shared_ui.camera_bar.scale.y + 15.;
         }
         UiLayout::Left => {
-            shared.ui.edit_bar.pos.x = bone_panel.right();
-            shared.ui.edit_bar.pos.y = top_panel.bottom();
+            shared_ui.edit_bar.pos.x = bone_panel.right();
+            shared_ui.edit_bar.pos.y = top_panel.bottom();
 
-            shared.ui.anim_bar.pos.x = context.content_rect().right() - shared.ui.anim_bar.scale.x;
-            shared.ui.anim_bar.pos.y = top_panel.bottom();
+            shared_ui.anim_bar.pos.x = context.content_rect().right() - shared_ui.anim_bar.scale.x;
+            shared_ui.anim_bar.pos.y = top_panel.bottom();
 
-            shared.ui.camera_bar.pos.x = bone_panel.right() + 7.;
-            if keyframe_panel != None && shared.edit_mode.anim_open {
-                shared.ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
+            shared_ui.camera_bar.pos.x = bone_panel.right() + 7.;
+            if keyframe_panel != None && edit_mode.anim_open {
+                shared_ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
-                shared.ui.camera_bar.pos.y = context.content_rect().bottom();
+                shared_ui.camera_bar.pos.y = context.content_rect().bottom();
             }
-            shared.ui.camera_bar.pos.y -= shared.ui.camera_bar.scale.y + 15.;
+            shared_ui.camera_bar.pos.y -= shared_ui.camera_bar.scale.y + 15.;
         }
     }
 
-    if shared.selections.bone_idx != usize::MAX {
-        edit_mode_bar(
-            context,
-            &shared.armature,
-            &shared.selections,
-            &shared.edit_mode,
-            &mut shared.events,
-            &mut shared.ui,
-        );
+    if selections.bone_idx != usize::MAX {
+        edit_mode_bar(context, armature, selections, edit_mode, events, shared_ui);
     }
 
-    if shared.armature.bones.len() > 0 {
-        animate_bar(context, shared);
+    if armature.bones.len() > 0 {
+        animate_bar(context, shared_ui, edit_mode, events);
     }
 
     // check if mouse is on ui
     //
     // this check always returns false on mouse click, so it's only checked when the mouse isn't clicked
-    if !shared.input.left_down {
-        shared.camera.on_ui = context.is_pointer_over_area();
+    if !input.left_down {
+        events.toggle_pointer_on_ui(context.is_pointer_over_area());
     }
 
     // close all context menus if clicking outside of them
-    if shared.input.left_clicked && !shared.ui.context_menu.keep {
-        shared.ui.context_menu.close();
+    if input.left_clicked && !shared_ui.context_menu.keep {
+        shared_ui.context_menu.close();
     }
 
     macro_rules! helper_text {
         ($text:expr, $offset:expr) => {
             let align = egui::Align2::CENTER_CENTER;
             let font = egui::FontId::default();
-            let mouse_pos = shared.input.mouse / shared.ui.scale + $offset;
+            let mouse_pos = input.mouse / shared_ui.scale + $offset;
             let painter = context.debug_painter();
 
             let pos = (mouse_pos + Vec2::new(1., 1.)).into();
             painter.text(pos, align, $text, font.clone(), egui::Color32::BLACK);
 
-            let point_col = shared.config.colors.center_point.into();
+            let point_col = config.colors.center_point.into();
             painter.text(mouse_pos.into(), align, $text, font, point_col);
         };
     }
 
-    if shared.armature.sel_bone(&sel) == None {
+    if armature.sel_bone(&sel) == None {
         return;
     }
 
-    if shared.edit_mode.is_rotating {
+    if edit_mode.is_rotating {
         let offset = Vec2::new(50., 0.);
         let rot = selected_bone.rot / 3.14 * 180.;
         let formatted = (rot * 100.).round() / 100.;
         helper_text!(formatted.to_string() + "°", offset);
     }
-    if shared.edit_mode.is_scaling {
+    if edit_mode.is_scaling {
         let offset = Vec2::new(50., 0.);
         let formatted = (selected_bone.scale.x * 100.).round() / 100.;
         let mut padding = "";
@@ -1088,32 +1055,34 @@ fn edit_mode_bar(
     });
 }
 
-fn animate_bar(egui_ctx: &Context, shared: &mut Shared) {
+fn animate_bar(
+    egui_ctx: &Context,
+    shared_ui: &mut crate::Ui,
+    edit_mode: &EditMode,
+    events: &mut EventState,
+) {
     let window = egui::Window::new("Animating")
         .resizable(false)
         .title_bar(false)
         .max_width(100.)
         .movable(false)
         .current_pos(egui::Pos2::new(
-            shared.ui.anim_bar.pos.x,
-            shared.ui.anim_bar.pos.y,
+            shared_ui.anim_bar.pos.x,
+            shared_ui.anim_bar.pos.y,
         ));
     window.show(egui_ctx, |ui| {
         ui.horizontal(|ui| {
-            let str_armature = &shared.ui.loc("armature_panel.heading");
-            if selection_button(str_armature, !shared.edit_mode.anim_open, ui).clicked() {
-                shared.edit_mode.anim_open = false;
-                for anim in &mut shared.armature.animations {
-                    anim.elapsed = None;
-                }
+            let str_armature = &shared_ui.loc("armature_panel.heading");
+            if selection_button(str_armature, !edit_mode.anim_open, ui).clicked() {
+                events.toggle_anim_panel_open(0);
             }
-            let str_animation = &shared.ui.loc("keyframe_editor.heading");
-            if selection_button(str_animation, shared.edit_mode.anim_open, ui).clicked() {
-                shared.edit_mode.anim_open = true;
+            let str_animation = &shared_ui.loc("keyframe_editor.heading");
+            if selection_button(str_animation, edit_mode.anim_open, ui).clicked() {
+                events.toggle_anim_panel_open(1);
             }
-            shared.ui.anim_bar.scale = ui.min_rect().size().into();
+            shared_ui.anim_bar.scale = ui.min_rect().size().into();
         });
-        shared.ui.anim_bar.scale = ui.min_rect().size().into();
+        shared_ui.anim_bar.scale = ui.min_rect().size().into();
     });
 }
 

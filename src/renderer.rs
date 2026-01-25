@@ -292,9 +292,9 @@ pub fn render(
         let wv = bone.world_verts.clone();
 
         #[rustfmt::skip]
-        let (verts, indices, on_vert) = bone_vertices(&bone.clone(), &wv, true, selections, input, camera, config, edit_mode, events, armature, renderer);
+        let (verts, indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, edit_mode, events, armature, renderer);
         #[rustfmt::skip]
-        let (lines_v, lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, nw, true, on_vert, selections, camera, input, renderer);
+        let (lines_v, lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, nw, true, on_vert, camera, input, renderer);
 
         draw(&None, &lines_v, &lines_i, render_pass, device);
         draw(&None, &verts, &indices, render_pass, device);
@@ -322,16 +322,16 @@ pub fn render(
         let vertex = Vertex::default();
 
         #[rustfmt::skip]
-        let (verts, indices, _) = vert_lines(bone, &tp, &vertex, &mut None, true, false, selections, camera, input, renderer);
+        let (verts, indices, _) = vert_lines(bone, &tp, &vertex, &mut None, true, false, camera, input, renderer);
         draw(&None, &verts, &indices, render_pass, device);
 
         #[rustfmt::skip]
-        let (verts, indices, _) = bone_vertices(&bone.clone(), &wv, false, selections, input, camera, config, edit_mode, events, armature, renderer);
+        let (verts, indices, _) = bone_vertices(&wv, false, selections, input, camera, config, edit_mode, events, armature, renderer);
         draw(&None, &verts, &indices, render_pass, device);
     }
 
     if !edit_mode.setting_bind_verts {
-        if let Some(mut vert) = new_vert {
+        if new_vert != None {
             renderer.new_vert = new_vert;
             events.new_vertex();
         }
@@ -919,7 +919,6 @@ pub fn draw(
 }
 
 pub fn bone_vertices(
-    bone: &Bone,
     world_verts: &Vec<Vertex>,
     editable: bool,
     selections: &SelectionState,
@@ -1030,7 +1029,6 @@ pub fn vert_lines(
     new_vert: &mut Option<Vertex>,
     editable: bool,
     hovering_vert: bool,
-    selections: &SelectionState,
     camera: &Camera,
     input: &InputStates,
     renderer: &mut Renderer,
@@ -1043,7 +1041,6 @@ pub fn vert_lines(
     let mut indices = vec![0, 1, 2, 1, 2, 3];
 
     let mut hovered_once = false;
-    let sel = selections.clone();
 
     // identify how many lines to create based on indices
     let mut lines: Vec<(u32, u32)> = vec![];
@@ -1308,7 +1305,7 @@ pub fn trace_mesh(texture: &image::DynamicImage) -> (Vec<Vertex>, Vec<u32>) {
     //}
 
     verts = sort_vertices(verts);
-    bone_panel::center_verts(&mut verts);
+    editor::center_verts(&mut verts);
     (verts.clone(), triangulate(&verts, texture))
 }
 

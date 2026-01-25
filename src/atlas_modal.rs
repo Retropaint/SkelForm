@@ -176,7 +176,6 @@ pub fn draw(
                         if ui.skf_button("Cancel").clicked() {
                             shared_ui.pending_textures = vec![];
                             shared_ui.atlas_modal = false;
-                            let sel = &selections;
                             events.cancel_pending_texture();
                         }
                     });

@@ -3,7 +3,7 @@
 use egui::*;
 
 use crate::{
-    shared::{Shared, Vec2},
+    shared::Vec2,
     ui::{self, EguiUi, TextInputOptions},
     utils,
 };

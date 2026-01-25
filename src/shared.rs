@@ -1618,6 +1618,8 @@ pub enum AnimElement {
     /* 6 */ Texture,
     /* 7 */ IkConstraint,
     /* 8 */ Hidden,
+    /* 9 */ IkMode,
+    /* 10 */ IkFamilyId,
 }
 
 // iterable anim change icons IDs
@@ -1854,6 +1856,7 @@ pub enum Events {
     DeleteKeyframe,
     RemoveVertex,
     RemoveTriangle,
+    RemoveKeyframesByFrame,
 
     CopyBone,
     PasteBone,
@@ -1879,12 +1882,22 @@ pub enum Events {
     MoveTexture,
     MoveStyle,
 
+    ToggleAnimPlaying,
+    ToggleStyleActive,
+    ToggleShowingMesh,
+    ToggleBindingVerts,
+    ToggleSettingIkTarget,
+    ToggleAnimPanelOpen,
+    ToggleIkFolded,
+    ToggleIkDisabled,
+    ToggleMeshdefFolded,
+    ToggleBindPathing,
+
     OpenModal,
     UnselectAll,
     OpenPolarModal,
     PointerOnUi,
-    ToggleAnimPlaying,
-    ToggleStyleActive,
+
     DuplicateAnim,
     ToggleBoneFolded,
     EditBone,
@@ -1896,11 +1909,12 @@ pub enum Events {
     AdjustVertex,
     CancelPendingTexture,
     AdjustKeyframesByFPS,
-    RemoveKeyframesByFrame,
-    ToggleShowingMesh,
     ResetVertices,
     SelectBind,
-    ToggleBindingVerts,
+    RemoveIkTarget,
+    CenterBoneVerts,
+    TraceBoneVerts,
+    SetBindWeight,
 }
 
 enum_string!(Events);
@@ -1953,6 +1967,9 @@ impl EventState {
     generic_event!(cancel_pending_texture, Events::CancelPendingTexture);
     generic_event!(paste_keyframes, Events::PasteKeyframes);
     generic_event!(reset_vertices, Events::ResetVertices);
+    generic_event!(remove_ik_target, Events::RemoveIkTarget);
+    generic_event!(center_bone_verts, Events::CenterBoneVerts);
+    generic_event!(trace_bone_verts, Events::TraceBoneVerts);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_anim_frame, Events::SelectAnimFrame, frame, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, usize);
@@ -1990,6 +2007,25 @@ impl EventState {
     event_with_value!(
         toggle_binding_verts,
         Events::ToggleBindingVerts,
+        toggle,
+        usize
+    );
+    event_with_value!(
+        toggle_setting_ik_target,
+        Events::ToggleSettingIkTarget,
+        idx,
+        i32
+    );
+    event_with_value!(
+        toggle_anim_panel_open,
+        Events::ToggleAnimPanelOpen,
+        toggle,
+        usize
+    );
+    event_with_value!(toggle_ik_folded, Events::ToggleIkFolded, toggle, usize);
+    event_with_value!(
+        toggle_meshdef_folded,
+        Events::ToggleMeshdefFolded,
         toggle,
         usize
     );
@@ -2127,6 +2163,24 @@ impl EventState {
         self.values.push(pos_x as f32);
         self.values.push(pos_y as f32);
         self.values.push(zoom as f32);
+    }
+
+    pub fn toggle_bone_ik_disabled(&mut self, bone_idx: usize, toggle: bool) {
+        self.events.push(Events::EditCamera);
+        self.values.push(bone_idx as f32);
+        self.values.push(if toggle { 1. } else { 0. });
+    }
+
+    pub fn toggle_bind_pathing(&mut self, bind_idx: usize, toggle: bool) {
+        self.events.push(Events::ToggleBindPathing);
+        self.values.push(bind_idx as f32);
+        self.values.push(if toggle { 1. } else { 0. });
+    }
+
+    pub fn set_bind_weight(&mut self, vert_idx: usize, weight: f32) {
+        self.events.push(Events::SetBindWeight);
+        self.values.push(vert_idx as f32);
+        self.values.push(weight);
     }
 }
 

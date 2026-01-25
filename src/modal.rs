@@ -1,4 +1,4 @@
-use crate::{ui::EguiUi, utils, Config, PolarId, Shared};
+use crate::{ui::EguiUi, utils, Config, PolarId};
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     ctx: &egui::Context,
