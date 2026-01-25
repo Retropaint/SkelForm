@@ -28,7 +28,7 @@ pub fn iterate_events(
                 E::NewBone | E::DragBone | E::DeleteBone => undo_states.new_undo_bones(&armature.bones),
                 E::NewAnimation | E::DeleteAnim          => undo_states.new_undo_anims(&armature.animations),
                 E::DeleteKeyframe                        => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
-                E::SetBoneTexture | E::RemoveVertex      => undo_states.new_undo_bone(&armature.bones[selections.bone_idx]),
+                E::RemoveVertex                          => undo_states.new_undo_bone(&armature.bones[selections.bone_idx]),
                 E::DeleteTex                             => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
                 E::DeleteStyle | E::NewStyle             => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
@@ -274,6 +274,7 @@ pub fn process_event(
         Events::RenameBone => armature.bones[value as usize].name = str_value,
         Events::RenameAnim => armature.animations[value as usize].name = str_value,
         Events::PointerOnUi => camera.on_ui = value == 1.,
+        Events::ToggleShowingMesh => edit_mode.showing_mesh = value == 1.,
         Events::CancelPendingTexture => {
             _ = armature.sel_style_mut(&selections).unwrap().textures.pop()
         }
@@ -612,6 +613,42 @@ pub fn process_event(
         Events::RemoveKeyframesByFrame => {
             let anim = armature.sel_anim_mut(&selections).unwrap();
             anim.keyframes.retain(|kf| kf.frame != value as i32);
+        }
+        Events::ResetVertices => {
+            let sel_bone = armature.sel_bone(&selections).unwrap().clone();
+            let tex_size = armature.tex_of(sel_bone.id).unwrap().size.clone();
+            let (verts, indices) = renderer::create_tex_rect(&tex_size);
+            let bone = armature.sel_bone_mut(&selections).unwrap();
+            bone.vertices = verts;
+            bone.indices = indices;
+            bone.binds = vec![];
+            bone.verts_edited = false;
+            selections.bind = -1;
+        }
+        Events::SelectBind => {
+            if value == -2. {
+                let sel_bone = armature.sel_bone(&selections).unwrap().clone();
+                let binds = &mut armature.sel_bone_mut(&selections).unwrap().binds;
+                binds.push(BoneBind {
+                    bone_id: -1,
+                    ..Default::default()
+                });
+                selections.bind = binds.len() as i32 - 1;
+            } else if value != -1. {
+                selections.bind = value as i32;
+            }
+        }
+        Events::ToggleBindingVerts => {
+            edit_mode.setting_bind_verts = !edit_mode.setting_bind_verts;
+            let bind =
+                &mut armature.sel_bone_mut(&selections).unwrap().binds[selections.bind as usize];
+            if ui.was_editing_path {
+                bind.is_path = true;
+                ui.was_editing_path = false;
+            } else {
+                ui.was_editing_path = bind.is_path;
+                bind.is_path = false;
+            }
         }
         _ => {}
     }

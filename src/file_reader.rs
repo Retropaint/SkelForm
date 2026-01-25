@@ -58,7 +58,7 @@ pub fn read_image_loaders(
     bind_group_layout: Option<&BindGroupLayout>,
     ctx: Option<&egui::Context>,
 ) {
-    let image: image::DynamicImage;
+    let mut image: image::DynamicImage;
     #[allow(unused_assignments)]
     let mut dimensions = Vec2::default();
     #[allow(unused_assignments, unused_mut)]
@@ -77,15 +77,12 @@ pub fn read_image_loaders(
 
         // read image pixels and dimensions
         image = image::load_from_memory(&shared.ui.img_contents.lock().unwrap()).unwrap();
-        dimensions = Vec2::new(image.width() as f32, image.height() as f32);
-
         *shared.ui.img_contents.lock().unwrap() = vec![];
     }
 
     #[cfg(target_arch = "wasm32")]
     {
         if let Some((wasm_pixels, dims)) = load_image_wasm("last-image".to_string()) {
-            dimensions = Vec2::new(dims.x as f32, dims.y as f32);
             image = image::DynamicImage::ImageRgba8(
                 image::ImageBuffer::from_raw(dims.x as u32, dims.y as u32, wasm_pixels).unwrap(),
             );
@@ -98,35 +95,57 @@ pub fn read_image_loaders(
         removeImage();
     }
 
+    // trim transparent padding
+    image = trim_transparent(&image).unwrap().into();
+    dimensions = Vec2::new(image.width() as f32, image.height() as f32);
+
     if image.clone().into_rgba8().to_vec().len() == 0 {
         shared.events.open_modal("img_err", false);
         return;
     }
 
-    // check if this texture already exists
     let sel = &shared.selections;
-    for tex in &shared.armature.sel_style(sel).unwrap().clone().textures {
-        if image == shared.armature.tex_data(tex).unwrap().image {
-            return;
-        }
-    }
-
     let style = shared.armature.sel_style(sel).unwrap().clone();
     shared.undo_states.new_undo_style(&style);
 
-    add_texture(
-        image,
-        shared.selections.style,
-        dimensions,
-        &name,
-        &mut shared.armature,
-        queue,
-        device,
-        bind_group_layout,
-        ctx,
-    );
+    #[rustfmt::skip]
+    add_texture(image, shared.selections.style, dimensions, &name, &mut shared.armature, queue, device, bind_group_layout, ctx);
 
     shared.ui.atlas_modal = true;
+}
+
+fn trim_transparent(img: &DynamicImage) -> Option<RgbaImage> {
+    let rgba = img.to_rgba8();
+    let (width, height) = rgba.dimensions();
+
+    let mut min_x = width;
+    let mut min_y = height;
+    let mut max_x = 0;
+    let mut max_y = 0;
+
+    let mut found = false;
+
+    for y in 0..height {
+        for x in 0..width {
+            let alpha = rgba.get_pixel(x, y)[3];
+            if alpha != 0 {
+                found = true;
+                min_x = min_x.min(x);
+                min_y = min_y.min(y);
+                max_x = max_x.max(x);
+                max_y = max_y.max(y);
+            }
+        }
+    }
+
+    if !found {
+        return None; // image is fully transparent
+    }
+
+    Some(
+        image::imageops::crop_imm(&rgba, min_x, min_y, max_x - min_x + 1, max_y - min_y + 1)
+            .to_image(),
+    )
 }
 
 pub fn add_pending_textures(

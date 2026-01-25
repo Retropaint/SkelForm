@@ -839,7 +839,6 @@ pub fn markdown(str: String, local_doc_url: String) -> String {
 
 // Simulate text being added to egui and truncate it to fit the max width
 pub fn trunc_str(ui: &egui::Ui, text: &str, max_width: f32) -> String {
-    let mut trunc = 0;
     let f_id = egui::FontId::proportional(14.0);
     let col = egui::Color32::WHITE;
     let mut width = ui.ctx().fonts_mut(|fonts| {
@@ -850,13 +849,12 @@ pub fn trunc_str(ui: &egui::Ui, text: &str, max_width: f32) -> String {
     let elipsis_margin = 7.;
     while width + elipsis_margin > max_width {
         width = ui.ctx().fonts_mut(|fonts| {
-            ctext = ctext[0..ctext.len() - trunc].to_string();
+            ctext.pop();
             let galley = fonts.layout_no_wrap(ctext.to_string(), f_id.clone(), col);
-            trunc += 1;
             galley.size().x
         });
     }
-    if trunc > 0 {
+    if ctext.len() < text.len() {
         ctext += "...";
     }
     ctext

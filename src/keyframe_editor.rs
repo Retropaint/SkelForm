@@ -8,28 +8,37 @@ use crate::*;
 
 const LINE_OFFSET: f32 = 30.;
 
-pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
-    if !shared.input.left_down {
-        shared.ui.anim.dragged_keyframe.frame = -1;
+pub fn draw(
+    egui_ctx: &egui::Context,
+    shared_ui: &mut crate::Ui,
+    input: &InputStates,
+    armature: &mut Armature,
+    config: &Config,
+    selections: &mut SelectionState,
+    events: &mut EventState,
+    copy_buffer: &mut CopyBuffer,
+) {
+    if !input.left_down {
+        shared_ui.anim.dragged_keyframe.frame = -1;
     }
 
-    let sel = shared.selections.clone();
+    let sel = selections.clone();
 
     // navigating frames with kb input
-    if shared.ui.rename_id == "" {
-        let right = egui_ctx.input_mut(|i| i.consume_shortcut(&shared.config.keys.next_anim_frame));
-        let left = egui_ctx.input_mut(|i| i.consume_shortcut(&shared.config.keys.prev_anim_frame));
+    if shared_ui.rename_id == "" {
+        let right = egui_ctx.input_mut(|i| i.consume_shortcut(&config.keys.next_anim_frame));
+        let left = egui_ctx.input_mut(|i| i.consume_shortcut(&config.keys.prev_anim_frame));
         if right {
-            shared.selections.anim_frame += 1;
-            let last_frame = shared.armature.sel_anim(&sel).unwrap().keyframes.last();
-            if last_frame != None && shared.selections.anim_frame > last_frame.unwrap().frame {
-                shared.selections.anim_frame = 0;
+            selections.anim_frame += 1;
+            let last_frame = armature.sel_anim(&sel).unwrap().keyframes.last();
+            if last_frame != None && selections.anim_frame > last_frame.unwrap().frame {
+                selections.anim_frame = 0;
             }
         } else if left {
-            shared.selections.anim_frame -= 1;
-            let last_frame = shared.armature.sel_anim(&sel).unwrap().keyframes.last();
-            if last_frame != None && shared.selections.anim_frame < 0 {
-                shared.selections.anim_frame = last_frame.unwrap().frame;
+            selections.anim_frame -= 1;
+            let last_frame = armature.sel_anim(&sel).unwrap().keyframes.last();
+            if last_frame != None && selections.anim_frame < 0 {
+                selections.anim_frame = last_frame.unwrap().frame;
             }
         }
     }
@@ -44,7 +53,7 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
             ui.gradient(
                 ui.ctx().content_rect(),
                 egui::Color32::TRANSPARENT,
-                shared.config.colors.gradient.into(),
+                config.colors.gradient.into(),
             );
 
             let full_height = ui.available_height();
@@ -62,33 +71,28 @@ pub fn draw(egui_ctx: &egui::Context, shared: &mut Shared) {
                     egui::Frame::new().show(ui, |ui| {
                         ui.vertical(|ui| {
                             draw_animations_list(
-                                ui,
-                                &mut shared.ui,
-                                &shared.armature,
-                                &shared.config,
-                                &shared.selections,
-                                &mut shared.events,
+                                ui, shared_ui, armature, config, selections, events,
                             );
                         })
                     });
                 });
 
-                if shared.selections.anim != usize::MAX {
+                if selections.anim != usize::MAX {
                     timeline_editor(
                         ui,
-                        &mut shared.selections,
-                        &mut shared.armature,
-                        &mut shared.events,
-                        &mut shared.ui,
-                        &shared.config,
-                        &mut shared.input,
-                        &mut shared.copy_buffer,
+                        selections,
+                        armature,
+                        events,
+                        shared_ui,
+                        config,
+                        input,
+                        copy_buffer,
                     );
                 }
             });
-            shared.ui.keyframe_panel_rect = Some(ui.min_rect());
+            shared_ui.keyframe_panel_rect = Some(ui.min_rect());
         }),
-        &mut shared.events,
+        events,
         &egui_ctx,
     );
 }
@@ -222,7 +226,7 @@ fn timeline_editor(
     events: &mut EventState,
     shared_ui: &mut crate::Ui,
     config: &Config,
-    input: &mut InputStates,
+    input: &InputStates,
     copy_buffer: &mut CopyBuffer,
 ) {
     let frame = egui::Frame::new().outer_margin(egui::Margin {
@@ -518,7 +522,7 @@ pub fn draw_timeline_graph(
     selections: &SelectionState,
     armature: &Armature,
     events: &mut EventState,
-    input: &mut InputStates,
+    input: &InputStates,
 ) {
     let layout = egui::Layout::left_to_right(egui::Align::Center);
     ui.with_layout(layout, |ui| {

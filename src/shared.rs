@@ -1896,7 +1896,11 @@ pub enum Events {
     AdjustVertex,
     CancelPendingTexture,
     AdjustKeyframesByFPS,
-    RemoveKeyframesByFrame
+    RemoveKeyframesByFrame,
+    ToggleShowingMesh,
+    ResetVertices,
+    SelectBind,
+    ToggleBindingVerts,
 }
 
 enum_string!(Events);
@@ -1948,6 +1952,7 @@ impl EventState {
     generic_event!(new_vertex, Events::NewVertex);
     generic_event!(cancel_pending_texture, Events::CancelPendingTexture);
     generic_event!(paste_keyframes, Events::PasteKeyframes);
+    generic_event!(reset_vertices, Events::ResetVertices);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_anim_frame, Events::SelectAnimFrame, frame, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, usize);
@@ -1963,8 +1968,31 @@ impl EventState {
     event_with_value!(drag_vertex, Events::DragVertex, vert_id, usize);
     event_with_value!(click_vertex, Events::ClickVertex, vert_id, usize);
     event_with_value!(remove_triangle, Events::RemoveTriangle, idx, usize);
-    event_with_value!(adjust_keyframes_by_fps, Events::AdjustKeyframesByFPS, fps, usize);
-    event_with_value!(remove_keyframes_by_frame, Events::RemoveKeyframesByFrame, frame, i32);
+    event_with_value!(
+        adjust_keyframes_by_fps,
+        Events::AdjustKeyframesByFPS,
+        fps,
+        usize
+    );
+    event_with_value!(
+        remove_keyframes_by_frame,
+        Events::RemoveKeyframesByFrame,
+        frame,
+        i32
+    );
+    event_with_value!(
+        toggle_showing_mesh,
+        Events::ToggleShowingMesh,
+        visible,
+        usize
+    );
+    event_with_value!(select_bind, Events::SelectBind, idx, i32);
+    event_with_value!(
+        toggle_binding_verts,
+        Events::ToggleBindingVerts,
+        toggle,
+        usize
+    );
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

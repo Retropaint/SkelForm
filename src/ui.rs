@@ -224,7 +224,16 @@ pub fn draw(context: &Context, shared: &mut Shared) {
     ));
 
     if shared.edit_mode.anim_open {
-        style_once!(keyframe_editor::draw(context, shared));
+        style_once!(keyframe_editor::draw(
+            context,
+            &mut shared.ui,
+            &shared.input,
+            &mut shared.armature,
+            &shared.config,
+            &mut shared.selections,
+            &mut shared.events,
+            &mut shared.copy_buffer
+        ));
     }
 
     style_once!(armature_window::draw(
