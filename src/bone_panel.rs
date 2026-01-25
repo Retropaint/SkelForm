@@ -710,7 +710,9 @@ pub fn mesh_deformation(
                 let bind = &armature.sel_bone(&sel).unwrap().binds[selected];
                 let mut new_path = bind.is_path;
                 ui.checkbox(&mut new_path, "".into_atoms());
-                events.toggle_bind_pathing(selected, new_path);
+                if new_path != bind.is_path {
+                    events.toggle_bind_pathing(selected, new_path);
+                }
             }
 
             ui.label(shared_ui.loc("bone_panel.mesh_deformation.pathing_label"))
@@ -730,7 +732,9 @@ pub fn mesh_deformation(
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let mut new_weight = bind.verts[w].weight;
                     ui.add(egui::Slider::new(&mut new_weight, (0.)..=1.));
-                    events.set_bind_weight(w, new_weight);
+                    if new_weight != bind.verts[w].weight {
+                        events.set_bind_weight(w, new_weight);
+                    }
                 });
             });
         }

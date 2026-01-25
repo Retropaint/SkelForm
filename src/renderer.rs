@@ -381,16 +381,14 @@ pub fn render(
         return;
     }
 
-    if !input.left_down && !input.right_down {
-        return;
-    }
-
-    // mouse related stuff
-
     if input.mouse_init == None {
         if let Some(bone) = armature.sel_bone(&sel) {
             renderer.bone_init_rot = bone.rot;
         }
+    }
+
+    if !input.left_down && !input.right_down {
+        return;
     }
 
     // move camera
@@ -427,7 +425,8 @@ pub fn render(
             let cam = &world_camera(&camera, &config);
             let aspect_ratio = camera.aspect_ratio();
             let cw = world_vert(center, cam, aspect_ratio, Vec2::new(0.5, 0.5));
-            draw_line(cw.pos, mouse, render_pass, &camera, &device);
+            render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
+            draw_line(cw.pos, mouse, render_pass, &device);
         }
 
         if !renderer.editing_bone {
@@ -1161,31 +1160,25 @@ pub fn vert_lines(
     (all_verts, all_indices, hovered_once)
 }
 
-fn draw_line(
-    origin: Vec2,
-    target: Vec2,
-    render_pass: &mut RenderPass,
-    camera: &Camera,
-    device: &Device,
-) {
+fn draw_line(origin: Vec2, target: Vec2, render_pass: &mut RenderPass, device: &Device) {
     let dir = target - origin;
 
     let width = 2.5;
-    let mut base = Vec2::new(width, width) / camera.zoom;
-    base = utils::rotate(&base, dir.y.atan2(dir.x));
+    let mut base = Vec2::new(width, width) / 1000.;
+    base = utils::rotate(&base, dir.y.atan2(dir.x) + (45. * 3.14 / 180.));
 
     let color = VertexColor::new(0., 1., 0., 1.);
 
     macro_rules! vert {
         ($pos:expr) => {
-            vert(Some(origin + base), Some(color), None)
+            vert(Some($pos), Some(color), None)
         };
     }
 
-    let v0_top = vert!(origin + base);
-    let v0_bot = vert!(origin - base);
-    let v1_top = vert!(target + base);
-    let v1_bot = vert!(target - base);
+    let v0_top = vert!(origin - base);
+    let v0_bot = vert!(origin + base);
+    let v1_top = vert!(target - base);
+    let v1_bot = vert!(target + base);
 
     let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
     let indices = vec![0, 1, 2, 1, 2, 3];

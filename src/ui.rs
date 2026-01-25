@@ -381,6 +381,9 @@ pub fn process_inputs(
         if input.left_pressed {
             input.mouse_init = Some(input.mouse);
         }
+        if i.pointer.primary_released() {
+            input.mouse_init = None;
+        }
         if input.left_down {
             input.down_dur += 1;
         } else {
