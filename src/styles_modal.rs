@@ -757,8 +757,8 @@ pub fn draw_tex_buttons(
     let sel = selections.clone();
     for i in 0..armature.sel_style(&sel).unwrap().textures.len() {
         idx += 1;
-        let mut name = armature.sel_style(&sel).unwrap().textures[i].name.clone();
-        name = utils::trunc_str(ui, &name, width - 10.);
+        let mut og_name = armature.sel_style(&sel).unwrap().textures[i].name.clone();
+        let trimmed_name = utils::trunc_str(ui, &og_name, width - 10.);
         let context_id = "tex_".to_owned() + &i.to_string();
 
         let str_desc = &shared_ui.loc("styles_modal.texture_desc").clone();
@@ -773,7 +773,7 @@ pub fn draw_tex_buttons(
                 let (edited, value, _) = ui.text_input(
                     context_id.clone(),
                     shared_ui,
-                    name.to_string(),
+                    og_name.to_string(),
                     Some(TextInputOptions {
                         focus: true,
                         placeholder: "Texture".to_string(),
@@ -795,7 +795,7 @@ pub fn draw_tex_buttons(
                             ui.set_width(width - bin_width);
                             ui.set_height(21.);
                             ui.add_space(5.);
-                            ui.label(egui::RichText::new(&name).color(config.colors.text));
+                            ui.label(egui::RichText::new(&trimmed_name).color(config.colors.text));
                         });
                     });
                 })
