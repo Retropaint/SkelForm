@@ -39,7 +39,7 @@ pub fn iterate_events(
                 E::RenameBone  => if !ui.just_made_bone  { undo_states.new_undo_bone( &armature.sel_bone( &selections).unwrap()); ui.just_made_bone  = false }
                 E::RenameAnim  => if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap()); ui.just_made_anim  = false }
 
-                E::ResetVertices | E::EditBone | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts => {
+                E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts => {
                     undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
                 }
                 _ => {}
@@ -439,7 +439,7 @@ pub fn process_event(
                 let anim = armature.animations[selections.anim as usize].clone();
                 undo_states.new_undo_anim(&anim);
             } else {
-                let bone = armature.bones[selections.bone_idx as usize].clone();
+                let bone = armature.bones[value as usize].clone();
                 undo_states.new_undo_bone(&bone);
             }
             *ui.saving.lock().unwrap() = Saving::Autosaving;

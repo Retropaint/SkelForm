@@ -1948,7 +1948,6 @@ macro_rules! event_with_value {
 
 impl EventState {
     generic_event!(new_animation, Events::NewAnimation);
-    generic_event!(save_edited_bone, Events::SaveEditedBone);
     generic_event!(apply_settings, Events::ApplySettings);
     generic_event!(reset_config, Events::ResetConfig);
     generic_event!(new_bone, Events::NewBone);
@@ -2029,6 +2028,7 @@ impl EventState {
         toggle,
         usize
     );
+    event_with_value!(save_edited_bone, Events::SaveEditedBone, bone_idx, usize);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

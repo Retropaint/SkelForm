@@ -141,7 +141,7 @@ pub fn draw(
                 }
 
                 let frame = selections.anim_frame;
-                events.save_edited_bone();
+                events.save_edited_bone(selections.bone_idx);
                 events.edit_bone(bone.id, $element, $float, anim_id, frame);
                 *shared_ui.saving.lock().unwrap() = shared::Saving::Autosaving;
             }

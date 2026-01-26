@@ -430,7 +430,7 @@ pub fn render(
         }
 
         if !renderer.editing_bone {
-            events.save_edited_bone();
+            events.save_edited_bone(selections.bone_idx);
             renderer.editing_bone = true;
         }
 

@@ -193,7 +193,7 @@ pub fn draw_hierarchy(
                     let hidden = if !is_hidden { 1. } else { 0. };
                     let sel = selections.anim;
                     let frame = selections.anim_frame;
-                    events.save_edited_bone();
+                    events.save_edited_bone(b);
                     events.edit_bone(bone_id, &AnimElement::Hidden, hidden as f32, sel, frame);
                 }
                 ui.add_space(17.);
