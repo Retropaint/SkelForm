@@ -151,7 +151,7 @@ pub fn draw(
         shared_ui.checking_update = false;
     }
     style_once!(top_panel(
-        context, config, shared_ui, events, selections, armature
+        context, config, shared_ui, events, selections, armature, camera
     ));
 
     if edit_mode.anim_open {
@@ -364,12 +364,15 @@ pub fn process_inputs(
     edit_mode: &mut EditMode,
     events: &mut EventState,
     camera: &Camera,
+    armature: &Armature,
 ) {
     context.input_mut(|i| {
         input.holding_mod = i.modifiers.command;
         input.holding_shift = i.modifiers.shift;
         if shared_ui.rename_id == "" {
-            kb_inputs(i, shared_ui, events, config, selections, edit_mode);
+            kb_inputs(
+                i, shared_ui, events, config, selections, edit_mode, armature, camera,
+            );
         }
         shared_ui.last_pressed = i.keys_down.iter().last().copied();
 
@@ -420,6 +423,8 @@ pub fn kb_inputs(
     config: &Config,
     selections: &SelectionState,
     edit_mode: &EditMode,
+    armature: &Armature,
+    camera: &Camera,
 ) {
     mouse_button_as_key(input, egui::PointerButton::Primary, egui::Key::F31);
     mouse_button_as_key(input, egui::PointerButton::Secondary, egui::Key::F32);
@@ -536,6 +541,7 @@ fn top_panel(
     events: &mut EventState,
     selections: &SelectionState,
     armature: &Armature,
+    camera: &Camera,
 ) {
     let panel = egui::TopBottomPanel::top("top_bar").frame(egui::Frame {
         fill: config.colors.main.into(),
@@ -548,7 +554,15 @@ fn top_panel(
         ui.set_max_height(20.);
         let mut offset = 0.;
         egui::MenuBar::new().ui(ui, |ui| {
-            menu_file_button(ui, &config, shared_ui, events, &selections, &armature);
+            menu_file_button(
+                ui,
+                &config,
+                shared_ui,
+                events,
+                &selections,
+                &armature,
+                &camera,
+            );
             menu_edit_button(ui, &config, &shared_ui, events);
             menu_view_button(ui, &config, &shared_ui, events);
 
@@ -868,6 +882,7 @@ fn menu_file_button(
     events: &mut EventState,
     selections: &SelectionState,
     armature: &Armature,
+    camera: &Camera,
 ) {
     let mut offset = 0.;
     let title =

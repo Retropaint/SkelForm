@@ -318,6 +318,7 @@ impl ApplicationHandler for App {
                     &mut shared.edit_mode,
                     &mut shared.events,
                     &shared.camera,
+                    &shared.armature,
                 );
 
                 // ui logic handled in ui.rs
