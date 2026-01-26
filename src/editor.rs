@@ -132,7 +132,7 @@ pub fn iterate_events(
         events.values.drain(0..=1);
         events.str_values.remove(0);
     } else if event == Events::MigrateTexture {
-        let style = &mut armature.styles[selections.style as usize];
+        let style = &mut armature.sel_style_mut(selections).unwrap();
         let tex = style.textures[events.values[0] as usize].clone();
         style.textures.remove(events.values[0] as usize);
         armature.styles[events.values[1] as usize]
@@ -366,7 +366,7 @@ pub fn process_event(
             }
         }
         Events::DeleteTex => {
-            let style = &mut armature.styles[selections.style as usize];
+            let style = &mut armature.sel_style_mut(selections).unwrap();
             style.textures.remove(value as usize);
         }
         Events::DeleteStyle => {
@@ -782,8 +782,9 @@ pub fn undo_redo(
 
     match &action.action {
         ActionType::Bone => {
-            new_action.bones = armature.bones.clone();
-            *armature.find_bone_mut(action.bones[0].id).unwrap() = action.bones[0].clone();
+            let bone = armature.find_bone_mut(action.bones[0].id).unwrap();
+            new_action.bones = vec![bone.clone()];
+            *bone = action.bones[0].clone();
         }
         ActionType::Bones => {
             new_action.bones = armature.bones.clone();
@@ -801,10 +802,13 @@ pub fn undo_redo(
             }
         }
         ActionType::Animation => {
-            new_action.animations = armature.animations.clone();
-            let anims = &mut armature.animations;
-            let anim = anims.iter_mut().find(|a| a.id == action.animations[0].id);
-            *anim.unwrap() = action.animations[0].clone();
+            let anim = armature
+                .animations
+                .iter_mut()
+                .find(|a| a.id == action.animations[0].id)
+                .unwrap();
+            new_action.animations = vec![anim.clone()];
+            *anim = action.animations[0].clone();
         }
         ActionType::Animations => {
             new_action.animations = armature.animations.clone();
@@ -815,10 +819,9 @@ pub fn undo_redo(
             }
         }
         ActionType::Style => {
-            new_action.styles = armature.styles.clone();
-            let styles = &mut armature.styles;
             let id = action.styles[0].id;
-            let style = styles.iter_mut().find(|a| a.id == id).unwrap();
+            let style = armature.styles.iter_mut().find(|a| a.id == id).unwrap();
+            new_action.styles = vec![style.clone()];
             *style = action.styles[0].clone();
         }
         ActionType::Styles => {
