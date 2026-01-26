@@ -451,7 +451,7 @@ pub fn kb_inputs(
         utils::save_web(armature, camera);
 
         #[cfg(not(target_arch = "wasm32"))]
-        utils::open_save_dialog(&shared_ui.file_name, &shared_ui.saving);
+        utils::open_save_dialog(&shared_ui.file_path, &shared_ui.saving);
         //if shared.save_path == "" {
         //    utils::open_save_dialog();
         //} else {
@@ -461,7 +461,7 @@ pub fn kb_inputs(
 
     if input.consume_shortcut(&config.keys.open) {
         #[cfg(not(target_arch = "wasm32"))]
-        utils::open_import_dialog(&shared_ui.file_name, &shared_ui.import_contents);
+        utils::open_import_dialog(&shared_ui.file_path, &shared_ui.file_type);
         #[cfg(target_arch = "wasm32")]
         crate::clickFileInput(false);
     }
@@ -899,7 +899,7 @@ fn menu_file_button(
         let str_open = &shared_ui.loc("top_bar.file.open");
         if top_bar_button!(str_open, Some(&config.keys.open)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_import_dialog(&shared_ui.file_name, &shared_ui.import_contents);
+            utils::open_import_dialog(&shared_ui.file_path, &shared_ui.file_type);
             #[cfg(target_arch = "wasm32")]
             crate::clickFileInput(false);
             ui.close();
@@ -907,7 +907,7 @@ fn menu_file_button(
         let str_save = &shared_ui.loc("top_bar.file.save");
         if top_bar_button!(str_save, Some(&config.keys.save)).clicked() {
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(&shared_ui.file_name, &shared_ui.saving);
+            utils::open_save_dialog(&shared_ui.file_path, &shared_ui.saving);
             #[cfg(target_arch = "wasm32")]
             utils::save_web(armature, camera);
             ui.close();

@@ -13,6 +13,7 @@ use max_rects::packing_box::PackingBox;
 pub use web::*;
 
 use image::{ExtendedColorType::Rgb8, GenericImage, ImageEncoder};
+use std::path::PathBuf;
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::Mutex;
 
@@ -125,8 +126,8 @@ pub fn to_vec2(f: f32) -> Vec2 {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_save_dialog(file_name: &Arc<Mutex<String>>, saving: &Arc<Mutex<Saving>>) {
-    let filename = Arc::clone(&file_name);
+pub fn open_save_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, saving: &Arc<Mutex<Saving>>) {
+    let filepath = Arc::clone(&file_path);
     let csaving = Arc::clone(&saving);
     std::thread::spawn(move || {
         let fil = "SkelForm Armature";
@@ -134,26 +135,22 @@ pub fn open_save_dialog(file_name: &Arc<Mutex<String>>, saving: &Arc<Mutex<Savin
         if task == None {
             return;
         }
-        let task_path = task.as_ref().unwrap().as_path().to_str().unwrap();
-        *filename.lock().unwrap() = task_path.to_string();
+        *filepath.lock().unwrap() = vec![task.unwrap()];
         *csaving.lock().unwrap() = shared::Saving::CustomPath;
     });
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_import_dialog(file_name: &Arc<Mutex<String>>, file_contents: &Arc<Mutex<Vec<u8>>>) {
-    let filename = Arc::clone(&file_name);
-    let filecontents = Arc::clone(&file_contents);
+pub fn open_import_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mutex<i32>>) {
+    let filepath = Arc::clone(&file_path);
+    let filetype = Arc::clone(&file_type);
     std::thread::spawn(move || {
         let task = rfd::FileDialog::new().pick_file();
         if task == None {
             return;
         }
-
-        let file_str = task.as_ref().unwrap().as_path().file_name().unwrap();
-        *filename.lock().unwrap() = file_str.to_str().unwrap().to_string();
-        *filecontents.lock().unwrap() =
-            fs::read(task.unwrap().as_path().to_str().unwrap()).unwrap();
+        *filepath.lock().unwrap() = vec![task.unwrap()];
+        *filetype.lock().unwrap() = 2;
     });
 }
 

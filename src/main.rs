@@ -8,6 +8,7 @@ use skelform_lib::{shared::*, utils};
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Read;
+use std::path::PathBuf;
 
 fn main() -> Result<(), winit::error::EventLoopError> {
     // uncomment below to get console panic hook as early as possible for debugging
@@ -50,8 +51,9 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 
         // load .skf based on first arg
         if args.len() > 1 {
-            *app.shared.ui.file_name.lock().unwrap() = args[1].to_string();
-            *app.shared.ui.import_contents.lock().unwrap() = vec![0];
+            let mut buf = PathBuf::new();
+            buf.push(args[1].to_string());
+            *app.shared.ui.file_path.lock().unwrap() = vec![buf];
         }
     }
 

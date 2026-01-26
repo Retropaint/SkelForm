@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::ui::EguiUi;
 use crate::*;
 
@@ -70,7 +72,7 @@ fn startup_content(
             #[cfg(target_arch = "wasm32")]
             crate::clickFileInput(false);
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_import_dialog(&shared_ui.file_name, &shared_ui.import_contents);
+            utils::open_import_dialog(&shared_ui.file_path, &shared_ui.file_type);
         }
 
         #[cfg(not(target_arch = "wasm32"))]
@@ -103,8 +105,9 @@ fn startup_content(
                         if leftside_button("", $name, ui, skel_pos, thumb_tex, $desc, conf)
                             .clicked()
                         {
-                            *shared_ui.file_name.lock().unwrap() = $path.to_string();
-                            *shared_ui.import_contents.lock().unwrap() = vec![0];
+                            let mut buf = PathBuf::new();
+                            buf.push($path);
+                            *shared_ui.file_path.lock().unwrap() = vec![buf];
                             shared_ui.startup_window = false;
                         }
                     };
@@ -477,8 +480,10 @@ pub fn skf_file_button(
         });
 
         if button.clicked() {
-            *shared_ui.file_name.lock().unwrap() = path.clone();
-            *shared_ui.import_contents.lock().unwrap() = vec![0];
+            let mut buf = PathBuf::new();
+            buf.push(path.clone());
+            *shared_ui.file_path.lock().unwrap() = vec![buf];
+            *shared_ui.file_type.lock().unwrap() = 2;
             shared_ui.startup_window = false;
         }
 

@@ -58,57 +58,74 @@ pub fn read_image_loaders(
     bind_group_layout: Option<&BindGroupLayout>,
     ctx: Option<&egui::Context>,
 ) {
-    let mut image: image::DynamicImage;
-    #[allow(unused_assignments)]
-    let mut dimensions = Vec2::default();
+    if *shared.ui.file_type.lock().unwrap() != 1 {
+        return;
+    }
+    *shared.ui.file_type.lock().unwrap() = 0;
+
+    let mut images: Vec<image::DynamicImage> = vec![];
     #[allow(unused_assignments, unused_mut)]
-    let mut name = "".to_string();
+    let mut names: Vec<String> = vec![];
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if shared.ui.img_contents.lock().unwrap().len() == 0 {
-            return;
+        let len = shared.ui.file_path.lock().unwrap().len();
+        for f in 0..len {
+            let name = shared.ui.file_path.lock().unwrap()[f]
+                .as_path()
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string();
+            names.push(name);
+
+            let path = shared.ui.file_path.lock().unwrap()[f]
+                .as_path()
+                .to_str()
+                .unwrap()
+                .to_string();
+            let buf = fs::read(path).unwrap();
+            images.push(image::load_from_memory(&buf).unwrap());
         }
-
-        name = shared.ui.file_name.lock().unwrap().to_string();
-
-        // read image pixels and dimensions
-        image = image::load_from_memory(&shared.ui.img_contents.lock().unwrap()).unwrap();
-        *shared.ui.img_contents.lock().unwrap() = vec![];
     }
 
     #[cfg(target_arch = "wasm32")]
     {
         if let Some((wasm_pixels, dims)) = load_image_wasm("last-image".to_string()) {
-            image = image::DynamicImage::ImageRgba8(
+            images = vec![image::DynamicImage::ImageRgba8(
                 image::ImageBuffer::from_raw(dims.x as u32, dims.y as u32, wasm_pixels).unwrap(),
-            );
+            )];
         } else {
             return;
         }
 
-        name = getImgName().split('.').collect::<Vec<_>>()[0].to_string();
+        names = vec![getImgName().split('.').collect::<Vec<_>>()[0].to_string()];
 
         removeImage();
-    }
-
-    // trim transparent padding
-    image = trim_transparent(&image).into();
-    dimensions = Vec2::new(image.width() as f32, image.height() as f32);
-
-    if image.clone().into_rgba8().to_vec().len() == 0 {
-        shared.events.open_modal("img_err", false);
-        return;
     }
 
     let sel = &shared.selections;
     let style = shared.armature.sel_style(sel).unwrap().clone();
     shared.undo_states.new_undo_style(&style);
 
-    #[rustfmt::skip]
-    add_texture(image, shared.selections.style, dimensions, &name, &mut shared.armature, queue, device, bind_group_layout, ctx);
+    for i in 0..images.len() {
+        // trim transparent padding
+        let image: image::DynamicImage = trim_transparent(&images[i]).into();
+        let dims = Vec2::new(image.width() as f32, image.height() as f32);
 
-    shared.ui.atlas_modal = true;
+        if image.clone().into_rgba8().to_vec().len() == 0 {
+            shared.events.open_modal("img_err", false);
+            return;
+        }
+
+        #[rustfmt::skip]
+        add_texture(image, shared.selections.style, dims, &names[i], &mut shared.armature, queue, device, bind_group_layout, ctx);
+    }
+
+    *shared.ui.file_path.lock().unwrap() = vec![];
+
+    shared.ui.atlas_modal = images.len() == 1;
 }
 
 pub fn trim_transparent(img: &image::DynamicImage) -> image::DynamicImage {
@@ -539,23 +556,35 @@ pub fn read_import(
     bgl: Option<&BindGroupLayout>,
     context: Option<&egui::Context>,
 ) {
-    let filename;
     let file;
+    let filename;
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        filename = shared.ui.file_name.lock().unwrap().to_string();
-        if shared.ui.import_contents.lock().unwrap().len() == 0 {
+        if *shared.ui.file_type.lock().unwrap() != 2 {
             return;
         }
-        *shared.ui.import_contents.lock().unwrap() = vec![];
+        *shared.ui.file_type.lock().unwrap() = 0;
 
-        file = std::fs::File::open(shared.ui.file_name.lock().unwrap().to_string());
+        let path = shared.ui.file_path.lock().unwrap()[0]
+            .as_path()
+            .to_str()
+            .unwrap()
+            .to_string();
+        file = std::fs::File::open(path);
         if let Err(_) = file {
             //let text = shared.ui.loc("import_err").to_owned() + &err.to_string();
             shared.events.open_modal("import_err", false);
             return;
         }
+
+        filename = shared.ui.file_path.lock().unwrap()[0]
+            .as_path()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -598,7 +627,6 @@ pub fn read_import(
         }
     };
 
-    *shared.ui.import_contents.lock().unwrap() = vec![];
     #[cfg(target_arch = "wasm32")]
     removeFile();
 }

@@ -2,6 +2,7 @@
 
 use crate::*;
 use egui::IntoAtoms;
+use std::path::PathBuf;
 use ui::EguiUi;
 
 // native-only imports
@@ -744,17 +745,17 @@ pub fn mesh_deformation(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_file_dialog(file_name: Arc<Mutex<String>>, file_contents: Arc<Mutex<Vec<u8>>>) {
+pub fn open_file_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mutex<i32>>) {
+    let filepath = Arc::clone(file_path);
+    let filetype = Arc::clone(file_type);
     thread::spawn(move || {
         let task = rfd::FileDialog::new()
             .add_filter("image", &["png", "jpg", "tif"])
-            .pick_file();
+            .pick_files();
         if task == None {
             return;
         }
-        let file_str = task.as_ref().unwrap().as_path().file_name().unwrap();
-        *file_name.lock().unwrap() = file_str.to_str().unwrap().to_string();
-        *file_contents.lock().unwrap() =
-            fs::read(task.unwrap().as_path().to_str().unwrap()).unwrap();
+        *filepath.lock().unwrap() = task.unwrap();
+        *filetype.lock().unwrap() = 1;
     });
 }

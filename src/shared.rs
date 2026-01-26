@@ -5,6 +5,7 @@ use crate::*;
 use std::{
     fmt,
     ops::{DivAssign, MulAssign},
+    path::PathBuf,
 };
 
 use std::sync::Mutex;
@@ -563,9 +564,8 @@ pub struct Ui {
     pub last_pressed: Option<egui::Key>,
     pub recent_file_paths: Vec<String>,
 
-    pub file_name: Arc<Mutex<String>>,
-    pub img_contents: Arc<Mutex<Vec<u8>>>,
-    pub import_contents: Arc<Mutex<Vec<u8>>>,
+    pub file_path: Arc<Mutex<Vec<PathBuf>>>,
+    pub file_type: Arc<Mutex<i32>>,
 
     pub saving: Arc<Mutex<Saving>>,
     pub save_finished: Arc<Mutex<bool>>,

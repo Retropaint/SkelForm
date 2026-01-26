@@ -259,9 +259,7 @@ impl ApplicationHandler for App {
                 self.shared.ui.modal = false;
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    let file_path = _path_buf.into_os_string().into_string().unwrap();
-                    *self.shared.ui.file_name.lock().unwrap() = file_path;
-                    *self.shared.ui.import_contents.lock().unwrap() = vec![0];
+                    *self.shared.ui.file_path.lock().unwrap() = vec![_path_buf];
                 }
             }
             WindowEvent::CloseRequested => {
@@ -669,7 +667,11 @@ impl BackendRenderer {
         let screenshot_res = shared.screenshot_res;
         let mut armature = shared.armature.clone();
         let camera = shared.camera.clone();
-        let mut save_path = shared.ui.file_name.lock().unwrap().clone();
+        let mut save_path = shared.ui.file_path.lock().unwrap()[0]
+            .as_path()
+            .to_str()
+            .unwrap()
+            .to_string();
         if *shared.ui.saving.lock().unwrap() == shared::Saving::Autosaving {
             let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
             let dir = dir_init.unwrap().data_dir().to_str().unwrap().to_string();
