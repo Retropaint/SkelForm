@@ -246,7 +246,7 @@ pub fn draw_styles_list(
                     let hov = *hovered_payload.clone().unwrap() as usize;
                     if !shared_ui.dragging_tex {
                         events.move_style(hov as usize, idx as usize);
-                    } else if idx != selections.style {
+                    } else if armature.styles[s].id != selections.style {
                         events.migrate_texture(hov, idx as usize);
                     }
                 });
@@ -273,8 +273,7 @@ pub fn draw_textures_list(
     let frame = egui::Frame::default().inner_margin(5.);
     let mut set_idx: usize = usize::MAX;
     let styles = &armature.styles;
-    let tex_id = selections.style;
-    if let Some(idx) = styles.iter().position(|set| set.id == tex_id) {
+    if let Some(idx) = styles.iter().position(|set| set.id == selections.style) {
         set_idx = idx;
     }
     let is_selected = set_idx == shared_ui.hovering_set as usize;
@@ -343,7 +342,7 @@ pub fn draw_textures_list(
                     return;
                 }
 
-                let style = &armature.styles[selections.style as usize];
+                let style = &armature.sel_style(selections).unwrap();
                 if style.textures.len() == 0 {
                     let mut cache = egui_commonmark::CommonMarkCache::default();
                     let loc = shared_ui.loc("styles_modal.textures_empty").to_string();
@@ -573,7 +572,7 @@ pub fn draw_bone_buttons(
 
             let bone = &armature.bones[idx as usize];
             let id = bone.id;
-            let style = &armature.styles[selections.style as usize];
+            let style = &armature.sel_style(selections).unwrap();
             let tex_str = style.textures[*dragged_payload.unwrap() as usize]
                 .name
                 .clone();
@@ -696,7 +695,7 @@ pub fn draw_tex_preview(
     selections: &crate::SelectionState,
     ui: &mut egui::Ui,
 ) {
-    let tex = &armature.styles[selections.style as usize].textures[shared_ui.hovering_tex as usize];
+    let tex = &armature.sel_style(selections).unwrap().textures[shared_ui.hovering_tex as usize];
     let size = resize_tex_img(tex.size, ui.available_width() as usize);
     let left_top = egui::Pos2::new(
         ui.min_rect().center().x - size.x / 2.,
