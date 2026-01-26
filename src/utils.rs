@@ -150,25 +150,24 @@ pub fn open_import_dialog(file_name: &Arc<Mutex<String>>, file_contents: &Arc<Mu
             return;
         }
 
-        let file_str = task.as_ref().unwrap().as_path().to_str();
-        *filename.lock().unwrap() = file_str.unwrap().to_string();
+        let file_str = task.as_ref().unwrap().as_path().file_name().unwrap();
+        *filename.lock().unwrap() = file_str.to_str().unwrap().to_string();
         *filecontents.lock().unwrap() =
             fs::read(task.unwrap().as_path().to_str().unwrap()).unwrap();
     });
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn save_web(shared: &Shared) {
+pub fn save_web(armature: &Armature, camera: &Camera) {
     let mut png_bufs = vec![];
     let mut sizes = vec![];
-    let mut carmature = shared.armature.clone();
+    let mut carmature = armature.clone();
 
     if carmature.styles.len() > 0 && carmature.styles[0].textures.len() > 0 {
         (png_bufs, sizes) = utils::create_tex_sheet(&mut carmature);
     }
 
-    let (armatures_json, editor_json) =
-        prepare_files(&carmature, shared.camera.clone(), sizes.clone());
+    let (armatures_json, editor_json) = prepare_files(&carmature, camera.clone(), sizes.clone());
 
     // create zip file
     let mut buf: Vec<u8> = Vec::new();

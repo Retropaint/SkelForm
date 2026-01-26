@@ -318,6 +318,7 @@ impl ApplicationHandler for App {
                     &mut shared.edit_mode,
                     &mut shared.events,
                     &shared.camera,
+                    &shared.armature,
                 );
 
                 // ui logic handled in ui.rs
@@ -529,7 +530,7 @@ impl BackendRenderer {
         if *shared.ui.saving.lock().unwrap() != shared::Saving::None {
             #[cfg(target_arch = "wasm32")]
             if *shared.ui.saving.lock().unwrap() == shared::Saving::CustomPath {
-                utils::save_web(&shared);
+                utils::save_web(&shared.armature, &shared.camera);
             }
             #[cfg(not(target_arch = "wasm32"))]
             self.save(shared);

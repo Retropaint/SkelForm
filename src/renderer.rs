@@ -25,9 +25,9 @@ pub fn render(
     let sel = selections.clone();
 
     #[cfg(target_arch = "wasm32")]
-    if !shared.renderer.has_loaded {
+    if !renderer.has_loaded {
         loaded();
-        shared.renderer.has_loaded = true;
+        renderer.has_loaded = true;
     }
 
     // create vert on cursor

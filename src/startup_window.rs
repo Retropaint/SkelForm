@@ -198,7 +198,7 @@ fn startup_content(
             #[cfg(target_arch = "wasm32")]
             ui.vertical(|ui| {
                 let width = ui.available_width();
-                let msg = &shared.ui.loc("startup.web_note");
+                let msg = &shared_ui.loc("startup.web_note");
                 let text = egui::RichText::new(msg).size(14.);
                 ui.label(text);
                 ui.add_space(20.);
@@ -206,16 +206,18 @@ fn startup_content(
                 let name = "Skellington Sample".to_owned();
                 let skf_name = SKEL_SKF.to_string();
                 let skel_file = include_bytes!(".././assets/skellington_icon.png").to_vec();
-                let desc = shared.ui.loc("startup.skellington_sample_desc");
-                #[rustfmt::skip]
-                web_sample_button(name, skf_name, skel_file, ui, ctx, width, desc, &mut shared.ui, &shared.config);
+                let desc = shared_ui.loc("startup.skellington_sample_desc");
+                web_sample_button(
+                    name, skf_name, skel_file, ui, ctx, width, desc, shared_ui, conf,
+                );
 
                 let name = "Skellina Sample".to_owned();
                 let skf_name = SKELA_SKF.to_string();
                 let skel_file = include_bytes!(".././assets/skellina_icon.png").to_vec();
-                let desc = shared.ui.loc("startup.skellina_sample_desc");
-                #[rustfmt::skip]
-                web_sample_button(name, skf_name, skel_file, ui, ctx, width, desc, &mut shared.ui, &shared.config);
+                let desc = shared_ui.loc("startup.skellina_sample_desc");
+                web_sample_button(
+                    name, skf_name, skel_file, ui, ctx, width, desc, shared_ui, conf,
+                );
             })
         });
     });

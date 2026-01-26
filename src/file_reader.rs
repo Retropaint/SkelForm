@@ -70,10 +70,7 @@ pub fn read_image_loaders(
             return;
         }
 
-        // extract name
-        let raw_filename = shared.ui.file_name.lock().unwrap();
-        let filename = raw_filename.split('/').last().unwrap().to_string();
-        name = filename.split('.').collect::<Vec<_>>()[0].to_string();
+        name = shared.ui.file_name.lock().unwrap().to_string();
 
         // read image pixels and dimensions
         image = image::load_from_memory(&shared.ui.img_contents.lock().unwrap()).unwrap();
@@ -96,7 +93,7 @@ pub fn read_image_loaders(
     }
 
     // trim transparent padding
-    image = trim_transparent(&image).unwrap().into();
+    image = trim_transparent(&image).into();
     dimensions = Vec2::new(image.width() as f32, image.height() as f32);
 
     if image.clone().into_rgba8().to_vec().len() == 0 {
@@ -114,7 +111,7 @@ pub fn read_image_loaders(
     shared.ui.atlas_modal = true;
 }
 
-fn trim_transparent(img: &DynamicImage) -> Option<RgbaImage> {
+pub fn trim_transparent(img: &image::DynamicImage) -> image::DynamicImage {
     let rgba = img.to_rgba8();
     let (width, height) = rgba.dimensions();
 
@@ -139,13 +136,12 @@ fn trim_transparent(img: &DynamicImage) -> Option<RgbaImage> {
     }
 
     if !found {
-        return None; // image is fully transparent
+        return img.clone();
     }
 
-    Some(
-        image::imageops::crop_imm(&rgba, min_x, min_y, max_x - min_x + 1, max_y - min_y + 1)
-            .to_image(),
-    )
+    image::imageops::crop_imm(&rgba, min_x, min_y, max_x - min_x + 1, max_y - min_y + 1)
+        .to_image()
+        .into()
 }
 
 pub fn add_pending_textures(

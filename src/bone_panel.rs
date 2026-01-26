@@ -460,10 +460,12 @@ pub fn inverse_kinematics(
                     ui.selectable_value(&mut ik, JointConstraint::None, str_none);
                     ui.selectable_value(&mut ik, JointConstraint::Clockwise, str_clockwise);
                     ui.selectable_value(&mut ik, JointConstraint::CounterClockwise, str_ccw);
-                    let sel = selections.anim;
-                    let frame = selections.anim_frame;
-                    let constraint = AnimElement::IkConstraint;
-                    events.edit_bone(bone.id, &constraint, (ik as usize) as f32, sel, frame);
+                    if ik != armature.sel_bone(&sel).unwrap().ik_constraint {
+                        let sel = selections.anim;
+                        let frame = selections.anim_frame;
+                        let constraint = AnimElement::IkConstraint;
+                        events.edit_bone(bone.id, &constraint, (ik as usize) as f32, sel, frame);
+                    }
                 })
                 .response
                 .on_hover_text(str_desc);
@@ -750,8 +752,8 @@ pub fn open_file_dialog(file_name: Arc<Mutex<String>>, file_contents: Arc<Mutex<
         if task == None {
             return;
         }
-        let file_str = task.as_ref().unwrap().as_path().to_str();
-        *file_name.lock().unwrap() = file_str.unwrap().to_string();
+        let file_str = task.as_ref().unwrap().as_path().file_name().unwrap();
+        *file_name.lock().unwrap() = file_str.to_str().unwrap().to_string();
         *file_contents.lock().unwrap() =
             fs::read(task.unwrap().as_path().to_str().unwrap()).unwrap();
     });
