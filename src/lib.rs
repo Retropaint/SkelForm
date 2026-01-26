@@ -77,7 +77,6 @@ extern "C" {
     pub fn getFile() -> Vec<u8>;
     pub fn getFileName() -> String;
     pub fn removeFile();
-    pub fn getImgName() -> String;
     pub fn loaded();
     pub fn focusEditInput();
     pub fn openDocumentation(docs_name: String, path: String);
@@ -86,6 +85,8 @@ extern "C" {
     pub fn openLink(url: String);
     pub fn isMobile() -> bool;
     pub fn clickFileInput(isImage: bool);
+    pub fn hasElement(id: &str) -> bool;
+    pub fn getImgName(idx: usize) -> String;
 }
 
 #[derive(Default)]
@@ -667,11 +668,11 @@ impl BackendRenderer {
         let screenshot_res = shared.screenshot_res;
         let mut armature = shared.armature.clone();
         let camera = shared.camera.clone();
-        let mut save_path = shared.ui.file_path.lock().unwrap()[0]
-            .as_path()
-            .to_str()
-            .unwrap()
-            .to_string();
+        let mut save_path = "".to_string();
+        if shared.ui.file_path.lock().unwrap().len() > 0 {
+            let path = &shared.ui.file_path.lock().unwrap()[0];
+            save_path = path.as_path().to_str().unwrap().to_string();
+        }
         if *shared.ui.saving.lock().unwrap() == shared::Saving::Autosaving {
             let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
             let dir = dir_init.unwrap().data_dir().to_str().unwrap().to_string();

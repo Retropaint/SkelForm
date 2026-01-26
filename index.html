@@ -107,6 +107,7 @@
                 type="file"
                 accept=".png"
                 id="img-input"
+                multiple
             />
             <label class="button" for="img-input" title="For security reasons, images must be uploaded using this overlay.">Upload Image</label>
             <label
@@ -188,8 +189,6 @@
             <canvas class="main-canvas" id="canvas" style="visibility: hidden"></canvas>
         </div>
         
-        <img src="" id="last-image" />
-
         <button id="fullscreenTest"></button>
 
         <script>
@@ -246,14 +245,26 @@
                 saveConfig(JSON.stringify(config));
             }
 
+            function hasElement(id) {
+                return document.getElementById(id) !== null;
+            }
+
             function loadImage(event) {
-                var reader = new FileReader();
-                reader.readAsDataURL(event.target.files[0]);
-                imgName = event.target.files[0].name;
-                reader.onload = function (event) {
-                    let img = document.getElementById("last-image");
-                    img.src = event.target.result;
-                };
+                let idx = 0;
+                for (file of event.target.files) {
+                    var reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    let name = 'image-' + idx.toString();
+                    let filename = file.name
+                    reader.onload = function (event) {
+                        let img = document.createElement('img');
+                        document.body.appendChild(img);
+                        img.id = name;
+                        img.src = event.target.result;
+                        img.dataname = filename;
+                    };
+                    idx++
+                }
             }
 
             async function loadFile(event) {
@@ -271,8 +282,8 @@
                 return fileName;
             }
 
-            function getImgName() {
-                return imgName;
+            function getImgName(id) {
+                return document.getElementById("image-"+id).dataname;
             }
 
             function removeFile() {
@@ -281,7 +292,10 @@
             }
 
             function removeImage() {
-                document.getElementById("last-image").src = "";
+                let idx = 0;
+                while(document.getElementById("image-" + idx)) {
+                    document.getElementById("image-" + idx).remove()
+                }
             }
 
             function resizeCanvas() {

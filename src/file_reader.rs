@@ -58,33 +58,28 @@ pub fn read_image_loaders(
     bind_group_layout: Option<&BindGroupLayout>,
     ctx: Option<&egui::Context>,
 ) {
-    if *shared.ui.file_type.lock().unwrap() != 1 {
-        return;
-    }
-    *shared.ui.file_type.lock().unwrap() = 0;
-
     let mut images: Vec<image::DynamicImage> = vec![];
     #[allow(unused_assignments, unused_mut)]
     let mut names: Vec<String> = vec![];
 
     #[cfg(not(target_arch = "wasm32"))]
     {
+        if *shared.ui.file_type.lock().unwrap() != 1 {
+            return;
+        }
+        *shared.ui.file_type.lock().unwrap() = 0;
         let len = shared.ui.file_path.lock().unwrap().len();
         for f in 0..len {
-            let name = shared.ui.file_path.lock().unwrap()[f]
-                .as_path()
-                .file_name()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .to_string();
-            names.push(name);
+            let file = &shared.ui.file_path.lock().unwrap()[f];
+            let raw_name = file.as_path().file_name().unwrap();
+            let name = raw_name.to_str().unwrap().to_string();
+            if name.contains(".") {
+                names.push(name.split('.').collect::<Vec<_>>()[0].to_string());
+            } else {
+                names.push(name);
+            }
 
-            let path = shared.ui.file_path.lock().unwrap()[f]
-                .as_path()
-                .to_str()
-                .unwrap()
-                .to_string();
+            let path = file.as_path().to_str().unwrap().to_string();
             let buf = fs::read(path).unwrap();
             images.push(image::load_from_memory(&buf).unwrap());
         }
@@ -92,15 +87,26 @@ pub fn read_image_loaders(
 
     #[cfg(target_arch = "wasm32")]
     {
-        if let Some((wasm_pixels, dims)) = load_image_wasm("last-image".to_string()) {
-            images = vec![image::DynamicImage::ImageRgba8(
-                image::ImageBuffer::from_raw(dims.x as u32, dims.y as u32, wasm_pixels).unwrap(),
-            )];
-        } else {
+        if !hasElement("image-0") {
             return;
         }
 
-        names = vec![getImgName().split('.').collect::<Vec<_>>()[0].to_string()];
+        let mut idx = 0;
+        while hasElement(&("image-".to_string() + &idx.to_string())) {
+            let img = load_image_wasm("image-".to_string() + &idx.to_string());
+            let pixels = img.as_ref().unwrap().0.clone();
+            let dims = img.as_ref().unwrap().1;
+            images.push(image::DynamicImage::ImageRgba8(
+                image::ImageBuffer::from_raw(dims.x as u32, dims.y as u32, pixels).unwrap(),
+            ));
+
+            if getImgName(idx).contains(".") {
+                names.push(getImgName(idx).split('.').collect::<Vec<_>>()[0].to_string());
+            } else {
+                names.push(getImgName(idx))
+            }
+            idx += 1;
+        }
 
         removeImage();
     }
