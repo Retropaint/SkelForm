@@ -106,31 +106,6 @@ pub fn iterate_events(
 
         events.events.remove(0);
         events.values.drain(0..=1);
-    } else if event == Events::RenameTex {
-        let style = armature.sel_style_mut(&selections).unwrap();
-        let t = events.values[0] as usize;
-        let og_name = style.textures[t].name.clone();
-        let trimmed = events.str_values[0].trim_start().trim_end().to_string();
-        style.textures[t].name = trimmed.clone();
-        let tex_names: Vec<String> = style.textures.iter().map(|t| t.name.clone()).collect();
-
-        let filter = tex_names.iter().filter(|name| **name == trimmed);
-        if filter.count() > 1 {
-            style.textures[t].name = og_name.clone();
-            events.open_modal("styles_modal.same_name", false);
-        }
-
-        if !config.keep_tex_str {
-            for bone in &mut armature.bones {
-                if bone.tex == og_name {
-                    bone.tex = trimmed.clone();
-                }
-            }
-        }
-
-        events.events.remove(0);
-        events.values.drain(0..=1);
-        events.str_values.remove(0);
     } else if event == Events::MigrateTexture {
         let style = &mut armature.sel_style_mut(selections).unwrap();
         let tex = style.textures[events.values[0] as usize].clone();
@@ -640,6 +615,28 @@ pub fn process_event(
             bone.binds = vec![];
             bone.verts_edited = true;
             selections.bind = -1;
+        }
+        Events::RenameTex => {
+            let style = armature.sel_style_mut(&selections).unwrap();
+            let t = value as usize;
+            let og_name = style.textures[t].name.clone();
+            let trimmed = str_value.trim_start().trim_end().to_string();
+            style.textures[t].name = trimmed.clone();
+            let tex_names: Vec<String> = style.textures.iter().map(|t| t.name.clone()).collect();
+
+            let filter = tex_names.iter().filter(|name| **name == trimmed);
+            if filter.count() > 1 {
+                style.textures[t].name = og_name.clone();
+                open_modal(ui, false, "styles_modal.same_name".to_string());
+            }
+
+            if !config.keep_tex_str {
+                for bone in &mut armature.bones {
+                    if bone.tex == og_name {
+                        bone.tex = trimmed.clone();
+                    }
+                }
+            }
         }
         _ => {}
     }
