@@ -197,6 +197,7 @@
             let imgName = "";
             let hasLoaded = false;
             let config = {};
+            let loadedAllImages = false;
             loadConfig();
 
             toggleElement(false, "image-dialog");
@@ -249,23 +250,36 @@
                 return document.getElementById(id) !== null;
             }
 
-            function loadImage(event) {
+            function hasLoadedAllImages() {
+                return loadedAllImages;
+            }
+
+            async function loadImage(event) {
                 let idx = 0;
+                let len = event.target.files.length;
                 for (file of event.target.files) {
                     var reader = new FileReader();
                     reader.readAsDataURL(file);
                     let name = 'image-' + idx.toString();
                     let filename = file.name
-                    reader.onload = function (event) {
-                        let img = document.createElement('img');
-                        document.body.appendChild(img);
-                        img.id = name;
-                        img.src = event.target.result;
-                        img.dataname = filename;
-                    };
+                    let img = document.createElement('img');
+                    document.body.appendChild(img);
+                    img.id = name;
+                    img.src = await readFileData(file);
+                    img.dataname = filename;
                     idx++
                 }
+                loadedAllImages = true;
             }
+
+            async function readFileData(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }            
 
             async function loadFile(event) {
                 const file = event.target.files[0];
@@ -297,6 +311,7 @@
                     document.getElementById("image-" + idx).remove()
                     idx++
                 }
+                loadedAllImages = false;
             }
 
             function resizeCanvas() {

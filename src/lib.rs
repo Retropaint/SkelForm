@@ -87,6 +87,7 @@ extern "C" {
     pub fn clickFileInput(isImage: bool);
     pub fn hasElement(id: &str) -> bool;
     pub fn getImgName(idx: usize) -> String;
+    pub fn hasLoadedAllImages() -> bool;
 }
 
 #[derive(Default)]

@@ -87,7 +87,7 @@ pub fn read_image_loaders(
 
     #[cfg(target_arch = "wasm32")]
     {
-        if !hasElement("image-0") {
+        if !hasLoadedAllImages() {
             return;
         }
 
