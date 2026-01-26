@@ -46,7 +46,11 @@ pub fn iterate_events(
             };
     }
 
-    if event == Events::SetBindWeight {
+    if event == Events::ToggleIkDisabled {
+        armature.bones[events.values[0] as usize].ik_disabled = events.values[1] == 1.;
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::SetBindWeight {
         let vert = events.values[0] as usize;
         let weight = events.values[1];
         let sel_bind = selections.bind as usize;

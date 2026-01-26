@@ -757,7 +757,7 @@ pub fn draw_tex_buttons(
     let sel = selections.clone();
     for i in 0..armature.sel_style(&sel).unwrap().textures.len() {
         idx += 1;
-        let mut og_name = armature.sel_style(&sel).unwrap().textures[i].name.clone();
+        let og_name = armature.sel_style(&sel).unwrap().textures[i].name.clone();
         let trimmed_name = utils::trunc_str(ui, &og_name, width - 10.);
         let context_id = "tex_".to_owned() + &i.to_string();
 

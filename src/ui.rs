@@ -423,8 +423,8 @@ pub fn kb_inputs(
     config: &Config,
     selections: &SelectionState,
     edit_mode: &EditMode,
-    armature: &Armature,
-    camera: &Camera,
+    #[allow(unused_variables)] armature: &Armature,
+    #[allow(unused_variables)] camera: &Camera,
 ) {
     mouse_button_as_key(input, egui::PointerButton::Primary, egui::Key::F31);
     mouse_button_as_key(input, egui::PointerButton::Secondary, egui::Key::F32);
@@ -882,7 +882,7 @@ fn menu_file_button(
     events: &mut EventState,
     selections: &SelectionState,
     armature: &Armature,
-    camera: &Camera,
+    #[allow(unused_variables)] camera: &Camera,
 ) {
     let mut offset = 0.;
     let title =

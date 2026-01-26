@@ -2166,7 +2166,7 @@ impl EventState {
     }
 
     pub fn toggle_bone_ik_disabled(&mut self, bone_idx: usize, toggle: bool) {
-        self.events.push(Events::EditCamera);
+        self.events.push(Events::ToggleIkDisabled);
         self.values.push(bone_idx as f32);
         self.values.push(if toggle { 1. } else { 0. });
     }

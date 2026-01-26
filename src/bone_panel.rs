@@ -297,9 +297,9 @@ pub fn inverse_kinematics(
                     return;
                 }
 
-                let mut is_root = false;
+                let mut is_root = true;
                 if armature.bone_eff(bone.id) != JointEffector::Start {
-                    is_root = true;
+                    is_root = false;
                 }
 
                 let mut enabled = !bone.ik_disabled;
