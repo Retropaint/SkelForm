@@ -32,6 +32,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     init_shared(&mut app.shared);
 
     // open 'SkelForm has crashed' modal if there's an untagged crash log
+    #[cfg(not(target_arch = "wasm32"))]
     if let Ok(does) = fs::exists(utils::crashlog_file()) {
         if does {
             let contents = fs::read_to_string(utils::crashlog_file()).unwrap();
@@ -45,14 +46,17 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     }
 
     // tag crashlog to indicate it's been read
-    let file = std::fs::OpenOptions::new()
-        .append(true)
-        .open(utils::crashlog_file());
-    if let Ok(mut f) = file {
-        let contents = fs::read_to_string(utils::crashlog_file()).unwrap();
-        let last_line = contents.lines().last().map(|s| s.to_string()).unwrap();
-        if last_line != CRASHLOG_END {
-            writeln!(&mut f, "{}", CRASHLOG_END).unwrap();
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let file = std::fs::OpenOptions::new()
+            .append(true)
+            .open(utils::crashlog_file());
+        if let Ok(mut f) = file {
+            let contents = fs::read_to_string(utils::crashlog_file()).unwrap();
+            let last_line = contents.lines().last().map(|s| s.to_string()).unwrap();
+            if last_line != CRASHLOG_END {
+                writeln!(&mut f, "{}", CRASHLOG_END).unwrap();
+            }
         }
     }
 
@@ -171,6 +175,7 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.init_lang(en);
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn install_panic_handler() {
     std::panic::set_hook(Box::new(|panic_info| {
         if let Ok(_) = std::fs::remove_file(&utils::crashlog_file()) {}
