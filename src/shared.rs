@@ -185,14 +185,11 @@ macro_rules! enum_string {
 #[rustfmt::skip]
 #[repr(C)]
 #[derive(PartialEq,serde::Serialize,serde::Deserialize,Copy,Clone,bytemuck::Pod,bytemuck::Zeroable,Debug)]
+#[serde(default)]
 pub struct Vertex {
-    #[serde(default)]
     pub id: u32,
-    #[serde(default)]
     pub pos: Vec2,
-    #[serde(default)]
     pub uv: Vec2,
-    #[serde(default)] 
     pub init_pos: Vec2,
     #[serde(skip)]
     pub color: VertexColor,
@@ -205,11 +202,10 @@ pub struct Vertex {
 // The vertex data supplied to wgpu.
 #[rustfmt::skip]
 #[repr(C)]
-#[derive(PartialEq,serde::Serialize,serde::Deserialize,Copy,Clone,bytemuck::Pod,bytemuck::Zeroable,Debug)]
+#[derive(PartialEq,serde::Serialize,serde::Deserialize,Copy,Clone,bytemuck::Pod,bytemuck::Zeroable,Debug,Default)]
+#[serde(default)]
 pub struct GpuVertex {
-    #[serde(default)]
     pub pos: Vec2,
-    #[serde(default)]
     pub uv: Vec2,
     #[serde(skip)]
     pub color: VertexColor,
@@ -435,6 +431,7 @@ pub enum PolarId {
     DeleteTex,
     DeleteStyle,
     NewUpdate,
+    OpenCrashlog,
 }
 enum_string!(PolarId);
 
@@ -569,6 +566,8 @@ pub struct Ui {
 
     pub saving: Arc<Mutex<Saving>>,
     pub save_finished: Arc<Mutex<bool>>,
+
+    pub crashed_last_time: bool,
 }
 
 impl Ui {
@@ -620,35 +619,27 @@ pub enum UiLayout {
 enum_string!(UiLayout);
 
 #[derive(Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct Config {
     #[serde(default = "default_one")]
     pub ui_scale: f32,
     #[serde(default = "gridline_default")]
     pub gridline_gap: i32,
-    #[serde(default)]
     pub skip_startup: bool,
-    #[serde(default)]
     pub autosave_frequency: i32,
-    #[serde(default)]
     pub exact_bone_select: bool,
-    #[serde(default)]
     pub gridline_front: bool,
-    #[serde(default)]
     pub keep_tex_str: bool,
-    #[serde(default)]
     pub edit_while_playing: bool,
-    #[serde(default)]
     pub layout: UiLayout,
-    #[serde(default)]
     pub ignore_donate: bool,
 
-    #[serde(default)]
     pub colors: ColorConfig,
-    #[serde(default)]
     pub keys: KeyboardConfig,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct ColorConfig {
     pub main: Color,
     pub light_accent: Color,
@@ -699,6 +690,7 @@ impl Default for ColorConfig {
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone)]
+#[serde(default)]
 pub struct KeyboardConfig {
     pub next_anim_frame: egui::KeyboardShortcut,
     pub prev_anim_frame: egui::KeyboardShortcut,
@@ -840,24 +832,18 @@ pub enum JointConstraint {
 enum_string!(JointConstraint);
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
+#[serde(default)]
 pub struct Bone {
-    #[serde(default)]
     pub id: i32,
-    #[serde(default)]
     pub name: String,
-    #[serde(default)]
     pub parent_id: i32,
     #[serde(default, skip_serializing_if = "is_str_empty")]
     pub tex: String,
     #[serde(default, skip_serializing_if = "is_neg_one")]
     pub zindex: i32,
-    #[serde(default)]
     pub pos: Vec2,
-    #[serde(default)]
     pub scale: Vec2,
-    #[serde(default)]
     pub rot: f32,
-    #[serde(default)]
     pub is_hidden: bool,
 
     #[serde(default = "default_neg_one")]
@@ -914,48 +900,41 @@ pub struct Bone {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
+#[serde(default)]
 pub struct BoneBind {
     #[serde(default = "default_neg_one")]
     pub bone_id: i32,
-    #[serde(default)]
     pub is_path: bool,
-    #[serde(default)]
     pub verts: Vec<BoneBindVert>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
+#[serde(default)]
 pub struct BoneBindVert {
-    #[serde(default)]
     pub id: i32,
-    #[serde(default)]
     pub weight: f32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
+#[serde(default)]
 pub struct EditorStyle {
-    #[serde(default)]
     pub active: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
+#[serde(default)]
 pub struct EditorOptions {
-    #[serde(default)]
     pub camera: Camera,
-    #[serde(default)]
     pub bones: Vec<EditorBone>,
-    #[serde(default)]
     pub styles: Vec<EditorStyle>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
+#[serde(default)]
 pub struct EditorBone {
-    #[serde(default)]
     pub folded: bool,
-    #[serde(default)]
     pub ik_folded: bool,
-    #[serde(default)]
     pub meshdef_folded: bool,
-    #[serde(default)]
     pub ik_disabled: bool,
 }
 
@@ -970,24 +949,20 @@ pub enum InverseKinematicsMode {
 enum_string!(InverseKinematicsMode);
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq, Debug)]
+#[serde(default)]
 pub struct IkFamily {
-    #[serde(default)]
     pub constraint: JointConstraint,
-    #[serde(default)]
     pub mode: InverseKinematicsMode,
-    #[serde(default)]
     pub target_id: i32,
-    #[serde(default)]
     pub bone_ids: Vec<i32>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct Armature {
-    #[serde(default)]
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
-    #[serde(default)]
     pub styles: Vec<Style>,
     #[serde(skip)]
     pub tex_data: Vec<TextureData>,
@@ -1392,30 +1367,24 @@ pub struct TexAtlas {
 
 // used for the json
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct Root {
-    #[serde(default)]
     pub version: String,
-    #[serde(default)]
     pub ik_root_ids: Vec<i32>,
-    #[serde(default)]
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
-    #[serde(default)]
     pub atlases: Vec<TexAtlas>,
-    #[serde(default)]
     pub styles: Vec<Style>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
+#[serde(default)]
 pub struct Style {
-    #[serde(default)]
     pub id: i32,
-    #[serde(default)]
     pub name: String,
     #[serde(skip)]
     pub active: bool,
-    #[serde(default)]
     pub textures: Vec<Texture>,
 }
 
@@ -1432,8 +1401,8 @@ impl Vec2I {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
+#[serde(default)]
 pub struct Texture {
-    #[serde(default)]
     pub name: String,
 
     #[serde(skip)]
@@ -1446,7 +1415,6 @@ pub struct Texture {
     pub ser_offset: Vec2I,
     #[serde(default, rename = "size")]
     pub ser_size: Vec2I,
-    #[serde(default)]
     pub atlas_idx: i32,
 
     #[serde(skip)]
@@ -1466,14 +1434,11 @@ pub struct TextureData {
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct Animation {
-    #[serde(default)]
     pub name: String,
-    #[serde(default)]
     pub id: i32,
-    #[serde(default)]
     pub fps: i32,
-    #[serde(default)]
     pub keyframes: Vec<Keyframe>,
     #[serde(skip)]
     pub elapsed: Option<Instant>,
@@ -1568,10 +1533,9 @@ impl Animation {
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct Keyframe {
-    #[serde(default)]
     pub frame: i32,
-    #[serde(default)]
     pub bone_id: i32,
 
     /// runtime: while the editor uses enums for elements, runtimes can use their numerical id
@@ -1586,7 +1550,6 @@ pub struct Keyframe {
     #[serde(default, skip_serializing_if = "is_max")]
     pub value: f32,
 
-    #[serde(default)]
     pub transition: Transition,
 
     #[serde(skip)]
@@ -1728,16 +1691,12 @@ pub enum Saving {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
+#[serde(default)]
 pub struct StartupResourceItem {
-    #[serde(default)]
     pub code: String,
-    #[serde(default)]
     pub url_type: StartupItemType,
-    #[serde(default)]
     pub url: String,
-    #[serde(default)]
     pub items: Vec<StartupResourceItem>,
-    #[serde(default)]
     pub update_checker: bool,
 }
 
@@ -1750,8 +1709,8 @@ pub enum StartupItemType {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
+#[serde(default)]
 pub struct Startup {
-    #[serde(default)]
     pub resources: Vec<StartupResourceItem>,
 }
 
