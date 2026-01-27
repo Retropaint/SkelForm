@@ -130,7 +130,8 @@ pub fn render(
         let cam = world_camera(&camera, &config);
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &mut temp_arm.bones[b];
-            let vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
+            let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
+            vert.tint = tb.tint;
             tb.world_verts.push(vert);
         }
 

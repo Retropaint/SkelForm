@@ -196,6 +196,8 @@ pub struct Vertex {
     #[serde(skip)]
     pub add_color: VertexColor,
     #[serde(skip)]
+    pub tint: TintColor,
+    #[serde(skip)]
     pub offset_rot: f32,
 }
 
@@ -211,6 +213,8 @@ pub struct GpuVertex {
     pub color: VertexColor,
     #[serde(skip)]
     pub add_color: VertexColor,
+    #[serde(skip)]
+    pub tint: TintColor,
 }
 
 impl Default for Vertex {
@@ -222,6 +226,7 @@ impl Default for Vertex {
             init_pos: Vec2::default(),
             color: VertexColor::default(),
             add_color: VertexColor::new(0., 0., 0., 0.),
+            tint: TintColor::new(1., 1., 1., 1.),
             offset_rot: 0.,
         }
     }
@@ -234,6 +239,7 @@ impl From<Vertex> for GpuVertex {
             uv: vert.uv,
             color: vert.color,
             add_color: vert.add_color,
+            tint: vert.tint,
         }
     }
 }
@@ -284,7 +290,9 @@ pub struct Color {
     pub a: u8,
 }
 
-#[derive(PartialEq, Copy, Clone, serde::Deserialize, serde::Serialize, Default, Debug)]
+#[rustfmt::skip]
+#[repr(C)]
+#[derive(PartialEq, Copy, Clone, serde::Deserialize, serde::Serialize, Default, Debug, bytemuck::Pod,bytemuck::Zeroable)]
 pub struct TintColor {
     pub r: f32,
     pub g: f32,
