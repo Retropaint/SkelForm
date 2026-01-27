@@ -17,6 +17,8 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     #[cfg(not(debug_assertions))]
     install_panic_handler();
 
+    std::env::set_var("RUST_BACKTRACE", "1");
+
     // uncomment below to get console panic hook as early as possible for debugging
     //
     // otherwise, it's activated in lib.rs
