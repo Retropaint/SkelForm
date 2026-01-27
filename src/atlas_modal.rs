@@ -171,6 +171,12 @@ pub fn draw(
                                     tex.name = "Texture ".to_owned() + &t.to_string();
                                 }
                             }
+
+                            // remove textures with size (0, 0)
+                            shared_ui
+                                .pending_textures
+                                .retain(|t| t.size.x > 0. && t.size.y > 0.);
+
                             shared_ui.done_pending = shared_ui.pending_textures.len() > 0;
                             shared_ui.atlas_modal = false;
                         }
