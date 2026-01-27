@@ -555,15 +555,8 @@ fn top_panel(
         ui.set_max_height(20.);
         let mut offset = 0.;
         egui::MenuBar::new().ui(ui, |ui| {
-            menu_file_button(
-                ui,
-                &config,
-                shared_ui,
-                events,
-                &selections,
-                &armature,
-                &camera,
-            );
+            #[rustfmt::skip]
+            menu_file_button(ui, &config, shared_ui, events, &selections, &armature, &camera);
             menu_edit_button(ui, &config, &shared_ui, events);
             menu_view_button(ui, &config, &shared_ui, events);
 
@@ -614,6 +607,13 @@ fn top_panel(
                     }
                 }
             });
+
+            ui.horizontal(|ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.add_space(10.);
+                    ui.label("2 ⚠");
+                })
+            })
         });
 
         shared_ui.top_panel_rect = Some(ui.min_rect());

@@ -283,7 +283,11 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::Config
     let mut cache = egui_commonmark::CommonMarkCache::default();
     let str = utils::markdown(text, shared_ui.local_doc_url.to_string());
     egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
-    ui.add_space(5.);
+    ui.add_space(20.);
+
+    if ui.button("Intentionally Crash").clicked() {
+        panic!();
+    }
 }
 
 fn colors(ui: &mut egui::Ui, config: &mut crate::Config, shared_ui: &crate::Ui) {
