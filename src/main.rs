@@ -14,7 +14,7 @@ use std::path::PathBuf;
 pub const CRASHLOG_END: &str = "###";
 
 fn main() -> Result<(), winit::error::EventLoopError> {
-    install_panic_handler();
+    //install_panic_handler();
 
     // uncomment below to get console panic hook as early as possible for debugging
     //

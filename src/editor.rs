@@ -216,6 +216,9 @@ pub fn process_event(
         Events::ToggleMeshdefFolded => {
             armature.sel_bone_mut(&selections).unwrap().meshdef_folded = value == 1.
         }
+        Events::ToggleEffectsFolded => {
+            armature.sel_bone_mut(&selections).unwrap().effects_folded = value == 1.
+        }
         Events::CamZoomScroll => {
             camera.zoom -= input.scroll_delta;
             match config.layout {
@@ -283,8 +286,12 @@ pub fn process_event(
         }
         Events::SelectAnimFrame => {
             let selected_anim = selections.anim;
+            let selected_bone_idx = selections.bone_idx;
+            let selected_bone_ids = selections.bone_ids.clone();
             unselect_all(selections, edit_mode);
             selections.anim = selected_anim;
+            selections.bone_idx = selected_bone_idx;
+            selections.bone_ids = selected_bone_ids;
             selections.anim_frame = value as i32;
         }
         Events::OpenPolarModal => {
@@ -976,26 +983,25 @@ fn edit_bone(
     }
 
     macro_rules! set {
-        ($field:expr) => {{
-            init_value = $field;
+        ($field:expr, $field_type:ident) => {{
+            init_value = $field as f32;
             if anim_id == usize::MAX {
-                $field = value;
+                $field = value as $field_type;
             }
         }};
     }
 
     match element {
-        AnimElement::PositionX => set!(bone.pos.x),
-        AnimElement::PositionY => set!(bone.pos.y),
-        AnimElement::Rotation => set!(bone.rot),
-        AnimElement::ScaleX => set!(bone.scale.x),
-        AnimElement::ScaleY => set!(bone.scale.y),
-        AnimElement::Zindex => {
-            init_value = bone.zindex as f32;
-            if anim_id == usize::MAX {
-                bone.zindex = value as i32
-            }
-        }
+        AnimElement::PositionX => set!(bone.pos.x, f32),
+        AnimElement::PositionY => set!(bone.pos.y, f32),
+        AnimElement::Rotation => set!(bone.rot, f32),
+        AnimElement::ScaleX => set!(bone.scale.x, f32),
+        AnimElement::ScaleY => set!(bone.scale.y, f32),
+        AnimElement::Zindex => set!(bone.zindex, i32),
+        AnimElement::IkFamilyId => set!(bone.ik_family_id, i32),
+        AnimElement::TintR => set!(bone.tint.r, f32),
+        AnimElement::TintG => set!(bone.tint.g, f32),
+        AnimElement::TintB => set!(bone.tint.b, f32),
         AnimElement::Texture => { /* handled in set_bone_tex() */ }
         AnimElement::IkConstraint => {
             init_value = (bone.ik_constraint as usize) as f32;
@@ -1021,12 +1027,6 @@ fn edit_bone(
                     1. => InverseKinematicsMode::Arc,
                     _ => InverseKinematicsMode::Skip,
                 }
-            }
-        }
-        AnimElement::IkFamilyId => {
-            init_value = bone.ik_family_id as f32;
-            if anim_id == usize::MAX {
-                bone.ik_family_id = value as i32;
             }
         }
     };

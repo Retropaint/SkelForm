@@ -225,6 +225,7 @@ pub fn draw(
                         armature,
                         config,
                         events,
+                        &input,
                         edit_mode,
                     );
                 } else if armature.sel_anim(&selections) != None && selections.anim_frame != -1 {

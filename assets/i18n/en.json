@@ -159,6 +159,9 @@
       "weights_label": "Weights",
       "bind_verts": "Bind Verts",
       "no_bound_verts": "Click `Bind Verts` to add vertices to this bind. Click again to stop adding.\n\nOnce added, their weights will be configurable here.\n\n"
+    },
+    "texture_effects": {
+      "heading": "Texture Effects"
     }
   },
   "polar": {
@@ -247,7 +250,10 @@
       "Zindex": "Zindex",
       "Texture": "Texture",
       "IkConstraint": "Constraint",
-      "Hidden": "Hidden"
+      "Hidden": "Hidden",
+      "TintR": "Red Tint",
+      "TintG": "Green Tint",
+      "TintB": "Blue Tint"
     }
   },
   "polar": {

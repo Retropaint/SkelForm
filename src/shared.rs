@@ -284,6 +284,20 @@ pub struct Color {
     pub a: u8,
 }
 
+#[derive(PartialEq, Copy, Clone, serde::Deserialize, serde::Serialize, Default, Debug)]
+pub struct TintColor {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub a: f32,
+}
+
+impl TintColor {
+    pub const fn new(r: f32, g: f32, b: f32, a: f32) -> TintColor {
+        TintColor { r, g, b, a }
+    }
+}
+
 impl std::ops::AddAssign for Color {
     fn add_assign(&mut self, other: Color) {
         macro_rules! add {
@@ -840,6 +854,8 @@ pub struct Bone {
     pub parent_id: i32,
     #[serde(default, skip_serializing_if = "is_str_empty")]
     pub tex: String,
+    #[serde(default = "default_tint", skip_serializing_if = "is_tint_white")]
+    pub tint: TintColor,
     #[serde(default, skip_serializing_if = "is_neg_one")]
     pub zindex: i32,
     pub pos: Vec2,
@@ -895,6 +911,8 @@ pub struct Bone {
     #[serde(skip)]
     pub meshdef_folded: bool,
     #[serde(skip)]
+    pub effects_folded: bool,
+    #[serde(skip)]
     pub world_verts: Vec<Vertex>,
     #[serde(skip)]
     pub ik_disabled: bool,
@@ -936,6 +954,7 @@ pub struct EditorBone {
     pub folded: bool,
     pub ik_folded: bool,
     pub meshdef_folded: bool,
+    pub effects_folded: bool,
     pub ik_disabled: bool,
 }
 
@@ -1118,6 +1137,9 @@ impl Armature {
                 b.rot     = interpolate!(AnimElement::Rotation,  b.rot    );
                 b.scale.x = interpolate!(AnimElement::ScaleX,    b.scale.x);
                 b.scale.y = interpolate!(AnimElement::ScaleY,    b.scale.y);
+                b.tint.r =  interpolate!(AnimElement::TintR,     b.tint.r);
+                b.tint.g =  interpolate!(AnimElement::TintG,     b.tint.g);
+                b.tint.b =  interpolate!(AnimElement::TintB,     b.tint.b);
                 b.zindex  = prev_frame!( AnimElement::Zindex,    b.zindex  as f32) as i32;
                 b.is_hidden  = prev_frame!( AnimElement::Hidden, bool_as_f32(b.is_hidden)) != 0.;
                 b.tex     = prev_str!(   AnimElement::Texture,   b.tex.clone());
@@ -1584,6 +1606,9 @@ pub enum AnimElement {
     /* 8 */ Hidden,
     /* 9 */ IkMode,
     /* 10 */ IkFamilyId,
+    /* 11 */ TintR,
+    /* 12 */ TintG,
+    /* 13 */ TintB,
 }
 
 // iterable anim change icons IDs
@@ -1851,6 +1876,7 @@ pub enum Events {
     ToggleIkFolded,
     ToggleIkDisabled,
     ToggleMeshdefFolded,
+    ToggleEffectsFolded,
     ToggleBindPathing,
 
     OpenModal,
@@ -1985,6 +2011,12 @@ impl EventState {
     event_with_value!(
         toggle_meshdef_folded,
         Events::ToggleMeshdefFolded,
+        toggle,
+        usize
+    );
+    event_with_value!(
+        toggle_effects_folded,
+        Events::ToggleEffectsFolded,
         toggle,
         usize
     );
@@ -2213,6 +2245,10 @@ fn gridline_default() -> i32 {
     500
 }
 
+fn default_tint() -> TintColor {
+    TintColor::new(1., 1., 1., 1.)
+}
+
 fn is_neg_one(value: &i32) -> bool {
     *value == -1
 }
@@ -2227,6 +2263,10 @@ fn are_verts_empty(value: &Vec<Vertex>) -> bool {
 
 fn are_indices_empty<T: std::cmp::PartialEq<Vec<u32>>>(value: &T) -> bool {
     *value == vec![]
+}
+
+fn is_tint_white<T: std::cmp::PartialEq<TintColor>>(value: &T) -> bool {
+    *value == TintColor::new(1., 1., 1., 1.)
 }
 
 fn are_weights_empty<T: std::cmp::PartialEq<Vec<BoneBind>>>(value: &T) -> bool {

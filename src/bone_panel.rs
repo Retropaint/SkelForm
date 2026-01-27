@@ -33,6 +33,7 @@ pub fn draw(
     armature: &mut Armature,
     config: &Config,
     events: &mut EventState,
+    input: &InputStates,
     edit_mode: &mut EditMode,
 ) {
     let sel = selections.clone();
@@ -256,6 +257,19 @@ pub fn draw(
 
     mesh_deformation(
         ui, &bone, shared_ui, events, config, selections, armature, edit_mode,
+    );
+
+    ui.add_space(20.);
+
+    texture_effects(
+        ui,
+        &bone,
+        shared_ui,
+        &selections,
+        config,
+        &edit_mode,
+        &input,
+        events,
     );
 }
 
@@ -757,5 +771,62 @@ pub fn open_file_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mu
         }
         *filepath.lock().unwrap() = task.unwrap();
         *filetype.lock().unwrap() = 1;
+    });
+}
+
+pub fn texture_effects(
+    ui: &mut egui::Ui,
+    bone: &Bone,
+    shared_ui: &mut crate::Ui,
+    selections: &SelectionState,
+    config: &Config,
+    edit_mode: &EditMode,
+    input: &InputStates,
+    events: &mut EventState,
+) {
+    let str_heading = &shared_ui.loc("bone_panel.texture_effects.heading").clone();
+
+    let frame = egui::Frame::new()
+        .fill(config.colors.dark_accent.into())
+        .inner_margin(egui::Margin::same(5));
+    frame.show(ui, |ui| {
+        ui.horizontal(|ui| {
+            ui.label(str_heading.to_owned());
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let fold_icon = if bone.effects_folded { "⏴" } else { "⏷" };
+                let pointing_hand = egui::CursorIcon::PointingHand;
+                if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
+                    let effects = bone.effects_folded;
+                    events.toggle_effects_folded(if effects { 0 } else { 1 });
+                }
+            })
+        });
+    });
+    ui.add_space(2.5);
+
+    if bone.effects_folded {
+        return;
+    }
+
+    ui.horizontal(|ui| {
+        ui.label("Tint: ");
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let og_col: [f32; 3] = [bone.tint.r, bone.tint.g, bone.tint.b];
+            let mut col = og_col.clone();
+            ui.color_edit_button_rgb(&mut col);
+            if col == og_col || !input.left_down {
+                return;
+            }
+            let anim_id = if edit_mode.anim_open {
+                selections.anim
+            } else {
+                usize::MAX
+            };
+            let frame = selections.anim_frame;
+            events.edit_bone(bone.id, &AnimElement::TintR, col[0], anim_id, frame);
+            events.edit_bone(bone.id, &AnimElement::TintG, col[1], anim_id, frame);
+            events.edit_bone(bone.id, &AnimElement::TintB, col[2], anim_id, frame);
+        });
     });
 }

@@ -476,6 +476,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
             folded: bone.folded,
             ik_folded: bone.ik_folded,
             meshdef_folded: bone.meshdef_folded,
+            effects_folded: bone.effects_folded,
             ik_disabled: bone.ik_disabled,
         });
     }
