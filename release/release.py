@@ -92,9 +92,7 @@ shutil.copytree("../samples",     f"./{dirname}/samples")
 
 # Platform-specific distribution
 
-if platform.system() != "Darwin":
-    shutil.make_archive(dirname, 'zip', ".", dirname)
-else:
+def darwin():
     print(">>> Preparing Mac app...")
     bin_path = "./SkelForm.app/Contents/MacOS/"
     if os.path.exists(bin_path):
@@ -114,3 +112,12 @@ else:
     )
     subprocess.run("./create-dmg.sh" + stdout, shell=True)
     print(f">>> Mac release complete. Please look for {BLUE}SkelForm.dmg{RESET}.")
+
+match platform.system():
+    case "Windows":
+        shutil.copy(f"../target/{path}/SkelForm.pdb", f"./{dirname}")
+        shutil.make_archive(dirname, 'zip', ".", dirname)
+    case "Darwin":
+        darwin()
+    case "Linux":
+        shutil.make_archive(dirname, 'zip', ".", dirname)
