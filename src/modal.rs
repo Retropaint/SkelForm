@@ -94,7 +94,10 @@ pub fn polar_modal(
                     }
                 }
                 PolarId::OpenCrashlog => {
-                    _ = open::that(utils::crashlog_file());
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        _ = open::that(utils::crashlog_file());
+                    }
                 }
             }
         },
@@ -159,8 +162,7 @@ pub fn donating_modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &C
                 pressed = true;
             }
             if ui.skf_button("Never").clicked() {
-                //shared.config.ignore_donate = true;
-                utils::save_config(&config);
+                shared_ui.never_donate = true;
                 pressed = true;
             }
 

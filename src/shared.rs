@@ -568,6 +568,7 @@ pub struct Ui {
     pub save_finished: Arc<Mutex<bool>>,
 
     pub crashed_last_time: bool,
+    pub never_donate: bool,
 }
 
 impl Ui {

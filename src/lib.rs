@@ -426,6 +426,10 @@ impl ApplicationHandler for App {
         }
 
         if self.shared.ui.confirmed_exit {
+            if self.shared.ui.never_donate {
+                self.shared.config.ignore_donate = true;
+                crate::utils::save_config(&self.shared.config);
+            }
             event_loop.exit();
         }
 
