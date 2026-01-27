@@ -93,6 +93,9 @@ pub fn polar_modal(
                         _ = open::that(base_url.to_owned() + &shared_ui.new_version.to_string());
                     }
                 }
+                PolarId::OpenCrashlog => {
+                    _ = open::that(utils::crashlog_file());
+                }
             }
         },
     );

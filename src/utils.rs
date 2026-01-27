@@ -905,3 +905,11 @@ pub fn animate_bones(armature: &mut Armature, selection: &SelectionState, edit_m
         armature.animated_bones = armature.animate(selection.anim, selection.anim_frame, None);
     }
 }
+
+pub fn crashlog_file() -> PathBuf {
+    let exe_path = std::env::current_exe().unwrap_or_else(|_| PathBuf::from("."));
+    let exe_dir = exe_path
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."));
+    exe_dir.join("crash.log")
+}

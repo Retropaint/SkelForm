@@ -6,11 +6,16 @@ use skelform_lib::shared::config_path;
 
 use skelform_lib::{shared::*, utils};
 
+use std::fs;
 #[cfg(not(target_arch = "wasm32"))]
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 
+pub const CRASHLOG_END: &str = "###";
+
 fn main() -> Result<(), winit::error::EventLoopError> {
+    install_panic_handler();
+
     // uncomment below to get console panic hook as early as possible for debugging
     //
     // otherwise, it's activated in lib.rs
@@ -25,6 +30,31 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     let mut app = skelform_lib::App::default();
 
     init_shared(&mut app.shared);
+
+    // open 'SkelForm has crashed' modal if there's an untagged crash log
+    if let Ok(does) = fs::exists(utils::crashlog_file()) {
+        if does {
+            let contents = fs::read_to_string(utils::crashlog_file()).unwrap();
+            let last_line = contents.lines().last().map(|s| s.to_string()).unwrap();
+            if last_line != CRASHLOG_END {
+                app.shared
+                    .events
+                    .open_polar_modal(PolarId::OpenCrashlog, app.shared.ui.loc("crashed"));
+            }
+        }
+    }
+
+    // tag crashlog to indicate it's been read
+    let file = std::fs::OpenOptions::new()
+        .append(true)
+        .open(utils::crashlog_file());
+    if let Ok(mut f) = file {
+        let contents = fs::read_to_string(utils::crashlog_file()).unwrap();
+        let last_line = contents.lines().last().map(|s| s.to_string()).unwrap();
+        if last_line != CRASHLOG_END {
+            writeln!(&mut f, "{}", CRASHLOG_END).unwrap();
+        }
+    }
 
     // load startup.json, but only if no args were given
     let startup: Startup;
@@ -139,4 +169,35 @@ fn init_shared(shared: &mut Shared) {
     let bytes = include_bytes!("../assets/i18n/en.json").as_slice();
     let en: serde_json::Value = serde_json::from_slice(bytes).unwrap();
     shared.ui.init_lang(en);
+}
+
+pub fn install_panic_handler() {
+    std::panic::set_hook(Box::new(|panic_info| {
+        if let Ok(_) = std::fs::remove_file(&utils::crashlog_file()) {}
+
+        let mut file = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&utils::crashlog_file())
+            .unwrap_or_else(|_| {
+                // last resort: stderr
+                eprintln!("Failed to open panic log at {:?}", utils::crashlog_file());
+                std::process::exit(1);
+            });
+
+        if let Some(location) = panic_info.location() {
+            let _ = writeln!(
+                file,
+                "Location: {}:{}:{}",
+                location.file(),
+                location.line(),
+                location.column()
+            );
+        }
+
+        let bt = backtrace::Backtrace::new();
+        let _ = writeln!(file, "\nBacktrace:\n{:?}", bt);
+
+        let _ = file.flush();
+    }));
 }

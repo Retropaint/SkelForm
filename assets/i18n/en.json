@@ -21,6 +21,7 @@
   "delete": "Delete",
   "img_err": "Could not extract image data.",
   "donating": "If you liked using SkelForm, a [donation](https://ko-fi.com/retropaintt) is highly appreciated!\n\nThe donation will be through ko-fi.com.\n\nThank you for using SkelForm!",
+  "crashed": "SkelForm crashed last time.\n\nThe crash log is located in the same path as the binary.\n\nOpen log file?",
   "startup": {
     "import": "Import",
     "samples": "Samples",

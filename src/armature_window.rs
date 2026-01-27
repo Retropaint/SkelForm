@@ -58,6 +58,7 @@ pub fn draw(
         ui.horizontal(|ui| {
             let button = ui.skf_button(&&shared_ui.loc("armature_panel.new_bone_button"));
             if button.clicked() {
+                println!("{}", armature.bones[selections.bone_idx].name);
                 events.new_bone();
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
