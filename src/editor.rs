@@ -279,7 +279,7 @@ pub fn process_event(
         }
         Events::SelectStyle => {
             let val = value as i32;
-            selections.style = if value == f32::MAX { i32::MAX } else { val };
+            selections.style = if value == f32::MAX { -1 } else { val };
         }
         Events::OpenModal => {
             open_modal(ui, value == 1., str_value);
@@ -359,7 +359,7 @@ pub fn process_event(
             let styles = &mut armature.styles;
             let idx = styles.iter().position(|s| s.id == value as i32).unwrap();
             if selections.style == value as i32 {
-                selections.style = i32::MAX;
+                selections.style = -1;
             }
             styles.remove(idx);
         }
