@@ -1621,7 +1621,7 @@ pub enum AnimElement {
 
 // iterable anim change icons IDs
 #[rustfmt::skip]
-pub const ANIM_ICON_ID: [usize; 9] = [
+pub const ANIM_ICON_ID: [usize; 14] = [
     /* 0 */ 0,
     /* 1 */ 1,
     /* 2 */ 2,
@@ -1631,6 +1631,11 @@ pub const ANIM_ICON_ID: [usize; 9] = [
     /* 6 */ 6,
     /* 7 */ 5,
     /* 8 */ 5,
+    /* 9 */ 7,
+    /* 10 */ 5,
+    /* 11 */ 8,
+    /* 12 */ 9,
+    /* 13 */ 10,
 ];
 
 #[derive(Default, Clone, PartialEq)]
