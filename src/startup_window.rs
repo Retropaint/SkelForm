@@ -108,6 +108,7 @@ fn startup_content(
                             let mut buf = PathBuf::new();
                             buf.push($path);
                             *shared_ui.file_path.lock().unwrap() = vec![buf];
+                            *shared_ui.file_type.lock().unwrap() = 2;
                             shared_ui.startup_window = false;
                         }
                     };
