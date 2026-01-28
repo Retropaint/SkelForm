@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use crate::*;
 
+const MIN_ZOOM: f32 = 10.;
+
 pub fn iterate_events(
     input: &InputStates,
     config: &mut Config,
@@ -67,7 +69,7 @@ pub fn iterate_events(
         events.values.drain(0..=1);
     } else if event == Events::EditCamera {
         camera.pos = Vec2::new(events.values[0], events.values[1]);
-        camera.zoom = events.values[2];
+        camera.zoom = MIN_ZOOM.max(events.values[2]);
 
         events.events.remove(0);
         events.values.drain(0..=2);
@@ -192,7 +194,7 @@ pub fn process_event(
     config: &mut crate::Config,
 ) {
     match event {
-        Events::CamZoomIn => camera.zoom = (10. as f32).max(camera.zoom - 10.),
+        Events::CamZoomIn => camera.zoom = MIN_ZOOM.max(camera.zoom - 10.),
         Events::CamZoomOut => camera.zoom += 10.,
         Events::EditModeMove => edit_mode.current = EditModes::Move,
         Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
@@ -220,7 +222,7 @@ pub fn process_event(
             armature.sel_bone_mut(&selections).unwrap().effects_folded = value == 1.
         }
         Events::CamZoomScroll => {
-            camera.zoom = (10. as f32).max(camera.zoom - input.scroll_delta);
+            camera.zoom = MIN_ZOOM.max(camera.zoom - input.scroll_delta);
             match config.layout {
                 UiLayout::Right => camera.pos.x -= input.scroll_delta * 0.5,
                 UiLayout::Left => camera.pos.x += input.scroll_delta * 0.5,
