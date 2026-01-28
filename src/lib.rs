@@ -13,7 +13,9 @@ use std::io::Write;
 
 use egui_wgpu::wgpu::ExperimentalFeatures;
 use shared::*;
-use wgpu::{BindGroupLayout, InstanceDescriptor, PipelineCompilationOptions};
+use wgpu::{
+    util::DeviceExt, BindGroupLayout, Buffer, InstanceDescriptor, PipelineCompilationOptions,
+};
 
 pub const VERSION_IDX: i32 = 1;
 
@@ -437,11 +439,22 @@ impl ApplicationHandler for App {
     }
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+struct BlitUniforms {
+    window_x: f32,
+    window_y: f32,
+    magnification: f32,
+    _pad: [f32; 3], // std140 alignment (important!)
+}
+
 pub struct BackendRenderer {
     gpu: Gpu,
     egui_renderer: egui_wgpu::Renderer,
     scene: Scene,
     bind_group_layout: BindGroupLayout,
+    blit_bind_group_layout: BindGroupLayout,
+    blit_buffer: Buffer,
 }
 
 impl BackendRenderer {
@@ -486,13 +499,64 @@ impl BackendRenderer {
                     label: Some("texture_bind_group_layout"),
                 });
 
+        let blit_bind_group_layout =
+            gpu.device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::FRAGMENT,
+                            ty: wgpu::BindingType::Texture {
+                                multisampled: false,
+                                view_dimension: wgpu::TextureViewDimension::D2,
+                                sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::FRAGMENT,
+                            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::FRAGMENT,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                has_dynamic_offset: false,
+                                min_binding_size: None,
+                            },
+                            count: None,
+                        },
+                    ],
+                    label: Some("texture_bind_group_layout"),
+                });
+
         let scene = Scene::new(&gpu.device, gpu.surface_format, &bind_group_layout);
+
+        let blit_uniforms = BlitUniforms {
+            window_x: 0.,
+            window_y: 0.,
+            magnification: 1.0,
+            _pad: [0.0; 3],
+        };
+
+        let blit_uniform_buffer =
+            gpu.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Blit Uniform Buffer"),
+                    contents: bytemuck::bytes_of(&blit_uniforms),
+                    usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                });
 
         Self {
             gpu,
             egui_renderer,
             scene,
             bind_group_layout,
+            blit_bind_group_layout,
+            blit_buffer: blit_uniform_buffer,
         }
     }
 
@@ -549,10 +613,17 @@ impl BackendRenderer {
                     usage: None,
                 });
 
+        let mag = 1 as f32;
+        let uniforms = BlitUniforms {
+            window_x: shared.camera.window.x,
+            window_y: shared.camera.window.y,
+            magnification: mag,
+            _pad: [0.0; 3],
+        };
         let pixel_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
-                width: shared.camera.window.x as u32,
-                height: shared.camera.window.y as u32,
+                width: shared.camera.window.x as u32 / mag as u32,
+                height: shared.camera.window.y as u32 / mag as u32,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
@@ -566,8 +637,6 @@ impl BackendRenderer {
             view_formats: &[],
         });
         let pixel_view = pixel_texture.create_view(&wgpu::TextureViewDescriptor::default());
-
-        println!("{}", shared.camera.window / 5.);
 
         let mut pixel_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
@@ -593,7 +662,7 @@ impl BackendRenderer {
             .gpu
             .device
             .create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &self.bind_group_layout,
+                layout: &self.blit_bind_group_layout,
                 entries: &[
                     wgpu::BindGroupEntry {
                         binding: 0,
@@ -602,6 +671,10 @@ impl BackendRenderer {
                     wgpu::BindGroupEntry {
                         binding: 1,
                         resource: wgpu::BindingResource::Sampler(&sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: self.blit_buffer.as_entire_binding(),
                     },
                 ],
                 label: Some("LowRes Blit BindGroup"),
@@ -627,6 +700,10 @@ impl BackendRenderer {
             &paint_jobs,
             &screen_descriptor,
         );
+
+        self.gpu
+            .queue
+            .write_buffer(&self.blit_buffer, 0, bytemuck::bytes_of(&uniforms));
         self.gpu.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();
 
@@ -1132,6 +1209,16 @@ impl Scene {
                         binding: 1,
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
                         count: None,
                     },
                 ],
