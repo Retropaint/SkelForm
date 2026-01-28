@@ -442,10 +442,8 @@ impl ApplicationHandler for App {
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 struct BlitUniforms {
-    window_x: f32,
-    window_y: f32,
     magnification: f32,
-    _pad: [f32; 3], // std140 alignment (important!)
+    _pad: [f32; 7], // std140 alignment (important!)
 }
 
 pub struct BackendRenderer {
@@ -536,10 +534,8 @@ impl BackendRenderer {
         let scene = Scene::new(&gpu.device, gpu.surface_format, &bind_group_layout);
 
         let blit_uniforms = BlitUniforms {
-            window_x: 0.,
-            window_y: 0.,
             magnification: 1.0,
-            _pad: [0.0; 3],
+            _pad: [0.0; 7],
         };
 
         let blit_uniform_buffer =
@@ -571,6 +567,10 @@ impl BackendRenderer {
         textures_delta: egui::TexturesDelta,
         shared: &mut shared::Shared,
     ) {
+        if shared.camera.window == Vec2::new(0., 0.) {
+            return;
+        }
+
         let clear = wgpu::Operations {
             load: wgpu::LoadOp::Clear(wgpu::Color {
                 r: shared.config.colors.background.r as f64 / 255.,
@@ -614,11 +614,18 @@ impl BackendRenderer {
                 });
 
         let uniforms = BlitUniforms {
-            window_x: shared.camera.window.x,
-            window_y: shared.camera.window.y,
             magnification: shared.config.pixel_magnification as f32,
-            _pad: [0.0; 3],
+            _pad: [0.0; 7],
         };
+        let format;
+        #[cfg(target_arch = "wasm32")]
+        {
+            format = wgpu::TextureFormat::Rgba8Unorm;
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            format = wgpu::TextureFormat::Bgra8Unorm;
+        }
         let pixel_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
                 width: shared.camera.window.x as u32 / shared.config.pixel_magnification as u32,
@@ -628,7 +635,7 @@ impl BackendRenderer {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Bgra8Unorm,
+            format,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT
                 | wgpu::TextureUsages::COPY_SRC
                 | wgpu::TextureUsages::TEXTURE_BINDING,

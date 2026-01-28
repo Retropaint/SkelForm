@@ -9,9 +9,8 @@ fn vs_main(@builtin(vertex_index) i: u32) -> @builtin(position) vec4<f32> {
 }
 
 struct BlitUniforms {
-    window_x: f32,
-    window_y: f32,
     magnification: f32,
+    _pad: vec3<f32>
 };
 
 @group(0) @binding(0)
