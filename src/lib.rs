@@ -507,6 +507,77 @@ impl BackendRenderer {
         textures_delta: egui::TexturesDelta,
         shared: &mut shared::Shared,
     ) {
+        let clear = wgpu::Operations {
+            load: wgpu::LoadOp::Clear(wgpu::Color {
+                r: shared.config.colors.background.r as f64 / 255.,
+                g: shared.config.colors.background.g as f64 / 255.,
+                b: shared.config.colors.background.b as f64 / 255.,
+                a: 1.0,
+            }),
+            store: wgpu::StoreOp::Store,
+        };
+
+        for (id, image_delta) in &textures_delta.set {
+            self.egui_renderer
+                .update_texture(&self.gpu.device, &self.gpu.queue, *id, image_delta);
+        }
+        for id in &textures_delta.free {
+            self.egui_renderer.free_texture(id);
+        }
+
+        #[rustfmt::skip]
+        let desc = &wgpu::CommandEncoderDescriptor { label: Some("Render Encoder") };
+        let mut encoder = self.gpu.device.create_command_encoder(desc);
+
+        #[rustfmt::skip]
+        self.egui_renderer.update_buffers(&self.gpu.device, &self.gpu.queue, &mut encoder, &paint_jobs, &screen_descriptor);
+
+        let surface_texture = self.gpu.surface.get_current_texture().unwrap();
+        let surface_texture_view =
+            surface_texture
+                .texture
+                .create_view(&wgpu::TextureViewDescriptor {
+                    label: wgpu::Label::default(),
+                    aspect: wgpu::TextureAspect::default(),
+                    format: Some(self.gpu.surface_format),
+                    dimension: None,
+                    base_mip_level: 0,
+                    mip_level_count: None,
+                    base_array_layer: 0,
+                    array_layer_count: None,
+                    usage: None,
+                });
+
+        encoder.insert_debug_marker("Render scene");
+        let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Render Pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view: &surface_texture_view,
+                resolve_target: None,
+                ops: clear,
+                depth_slice: None,
+            })],
+            depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
+        });
+
+        render_pass.set_pipeline(&self.scene.pipeline);
+
+        self.skf_render(shared, &mut render_pass);
+
+        self.egui_renderer.render(
+            &mut render_pass.forget_lifetime(),
+            &paint_jobs,
+            &screen_descriptor,
+        );
+        self.gpu.queue.submit(std::iter::once(encoder.finish()));
+        surface_texture.present();
+
+        //self.skf_record(shared);
+    }
+
+    fn skf_render(&mut self, shared: &mut Shared, render_pass: &mut wgpu::RenderPass) {
         if shared.renderer.generic_bindgroup == None {
             shared.renderer.generic_bindgroup = Some(renderer::create_texture_bind_group(
                 vec![255, 255, 255, 255],
@@ -531,6 +602,7 @@ impl BackendRenderer {
             shared.ui.modal = false;
             *shared.ui.save_finished.lock().unwrap() = false;
         }
+
         if *shared.ui.saving.lock().unwrap() != shared::Saving::None {
             #[cfg(target_arch = "wasm32")]
             if *shared.ui.saving.lock().unwrap() == shared::Saving::CustomPath {
@@ -539,76 +611,6 @@ impl BackendRenderer {
             #[cfg(not(target_arch = "wasm32"))]
             self.save(shared);
         }
-        for (id, image_delta) in &textures_delta.set {
-            self.egui_renderer
-                .update_texture(&self.gpu.device, &self.gpu.queue, *id, image_delta);
-        }
-
-        for id in &textures_delta.free {
-            self.egui_renderer.free_texture(id);
-        }
-
-        let mut encoder = self
-            .gpu
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            });
-
-        self.egui_renderer.update_buffers(
-            &self.gpu.device,
-            &self.gpu.queue,
-            &mut encoder,
-            &paint_jobs,
-            &screen_descriptor,
-        );
-
-        let surface_texture = self
-            .gpu
-            .surface
-            .get_current_texture()
-            .expect("Failed to get surface texture!");
-
-        let surface_texture_view =
-            surface_texture
-                .texture
-                .create_view(&wgpu::TextureViewDescriptor {
-                    label: wgpu::Label::default(),
-                    aspect: wgpu::TextureAspect::default(),
-                    format: Some(self.gpu.surface_format),
-                    dimension: None,
-                    base_mip_level: 0,
-                    mip_level_count: None,
-                    base_array_layer: 0,
-                    array_layer_count: None,
-                    usage: None,
-                });
-
-        encoder.insert_debug_marker("Render scene");
-        let clear_color = shared.config.colors.background;
-
-        let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Render Pass"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &surface_texture_view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
-                        r: clear_color.r as f64 / 255.,
-                        g: clear_color.g as f64 / 255.,
-                        b: clear_color.b as f64 / 255.,
-                        a: 1.0,
-                    }),
-                    store: wgpu::StoreOp::Store,
-                },
-                depth_slice: None,
-            })],
-            depth_stencil_attachment: None,
-            timestamp_writes: None,
-            occlusion_query_set: None,
-        });
-
-        render_pass.set_pipeline(&self.scene.pipeline);
 
         for b in 0..shared.armature.bones.len() {
             let tex = shared.armature.tex_of(shared.armature.bones[b].id);
@@ -622,7 +624,7 @@ impl BackendRenderer {
 
         // core rendering logic handled in renderer.rs
         renderer::render(
-            &mut render_pass,
+            render_pass,
             &self.gpu.device,
             &shared.camera,
             &shared.input,
@@ -633,15 +635,9 @@ impl BackendRenderer {
             &mut shared.renderer,
             &mut shared.events,
         );
+    }
 
-        self.egui_renderer.render(
-            &mut render_pass.forget_lifetime(),
-            &paint_jobs,
-            &screen_descriptor,
-        );
-        self.gpu.queue.submit(std::iter::once(encoder.finish()));
-        surface_texture.present();
-
+    fn skf_record(&mut self, shared: &mut Shared) {
         if shared.recording {
             #[cfg(not(target_arch = "wasm32"))]
             self.take_screenshot(shared);
