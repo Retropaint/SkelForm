@@ -1148,6 +1148,7 @@ impl Armature {
                 b.tint.r =  interpolate!(AnimElement::TintR,     b.tint.r);
                 b.tint.g =  interpolate!(AnimElement::TintG,     b.tint.g);
                 b.tint.b =  interpolate!(AnimElement::TintB,     b.tint.b);
+                b.tint.a =  interpolate!(AnimElement::TintA,     b.tint.a);
                 b.zindex  = prev_frame!( AnimElement::Zindex,    b.zindex  as f32) as i32;
                 b.is_hidden  = prev_frame!( AnimElement::Hidden, bool_as_f32(b.is_hidden)) != 0.;
                 b.tex     = prev_str!(   AnimElement::Texture,   b.tex.clone());
@@ -1617,11 +1618,12 @@ pub enum AnimElement {
     /* 11 */ TintR,
     /* 12 */ TintG,
     /* 13 */ TintB,
+    /* 14 */ TintA,
 }
 
 // iterable anim change icons IDs
 #[rustfmt::skip]
-pub const ANIM_ICON_ID: [usize; 14] = [
+pub const ANIM_ICON_ID: [usize; 15] = [
     /* 0 */ 0,
     /* 1 */ 1,
     /* 2 */ 2,
@@ -1636,6 +1638,7 @@ pub const ANIM_ICON_ID: [usize; 14] = [
     /* 11 */ 8,
     /* 12 */ 9,
     /* 13 */ 10,
+    /* 14 */ 11,
 ];
 
 #[derive(Default, Clone, PartialEq)]
@@ -1914,7 +1917,7 @@ pub enum Events {
     CenterBoneVerts,
     TraceBoneVerts,
     SetBindWeight,
-    OpenFileErrModal
+    OpenFileErrModal,
 }
 
 enum_string!(Events);

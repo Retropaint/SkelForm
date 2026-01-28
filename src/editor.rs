@@ -192,7 +192,7 @@ pub fn process_event(
     config: &mut crate::Config,
 ) {
     match event {
-        Events::CamZoomIn => camera.zoom -= 10.,
+        Events::CamZoomIn => camera.zoom = (10. as f32).max(camera.zoom - 10.),
         Events::CamZoomOut => camera.zoom += 10.,
         Events::EditModeMove => edit_mode.current = EditModes::Move,
         Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
@@ -220,7 +220,7 @@ pub fn process_event(
             armature.sel_bone_mut(&selections).unwrap().effects_folded = value == 1.
         }
         Events::CamZoomScroll => {
-            camera.zoom -= input.scroll_delta;
+            camera.zoom = (10. as f32).max(camera.zoom - input.scroll_delta);
             match config.layout {
                 UiLayout::Right => camera.pos.x -= input.scroll_delta * 0.5,
                 UiLayout::Left => camera.pos.x += input.scroll_delta * 0.5,
@@ -1005,6 +1005,7 @@ fn edit_bone(
         AnimElement::TintR => set!(bone.tint.r, f32),
         AnimElement::TintG => set!(bone.tint.g, f32),
         AnimElement::TintB => set!(bone.tint.b, f32),
+        AnimElement::TintA => set!(bone.tint.a, f32),
         AnimElement::Texture => { /* handled in set_bone_tex() */ }
         AnimElement::IkConstraint => {
             init_value = (bone.ik_constraint as usize) as f32;

@@ -812,10 +812,10 @@ pub fn texture_effects(
     ui.horizontal(|ui| {
         ui.label("Tint: ");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let og_col: [f32; 3] = [bone.tint.r, bone.tint.g, bone.tint.b];
+            let og_col: [f32; 4] = [bone.tint.r, bone.tint.g, bone.tint.b, bone.tint.a];
             let mut col = og_col.clone();
-            ui.color_edit_button_rgb(&mut col);
-            if col == og_col || !input.left_down {
+            ui.color_edit_button_rgba_premultiplied(&mut col);
+            if col == og_col || !input.left_down || !egui::Popup::is_any_open(ui.ctx()) {
                 return;
             }
             let anim_id = if edit_mode.anim_open {
@@ -827,6 +827,7 @@ pub fn texture_effects(
             events.edit_bone(bone.id, &AnimElement::TintR, col[0], anim_id, frame);
             events.edit_bone(bone.id, &AnimElement::TintG, col[1], anim_id, frame);
             events.edit_bone(bone.id, &AnimElement::TintB, col[2], anim_id, frame);
+            events.edit_bone(bone.id, &AnimElement::TintA, col[3], anim_id, frame);
         });
     });
 }
