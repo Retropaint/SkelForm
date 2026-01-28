@@ -97,6 +97,20 @@
                     display: flex
                 }
             }
+
+            #crash-box {
+                position: absolute;
+                bottom: 0;
+                background: red;
+                color: white;
+                z-index: 99;
+                width: 100%;
+                padding: 1rem;
+
+                p {
+                    margin: 0
+                }
+            }
         </style>
     </head>
 
@@ -188,6 +202,12 @@
         <div class="root">
             <canvas class="main-canvas" id="canvas" style="visibility: hidden"></canvas>
         </div>
+
+        <div id="crash-box" style="visibility: hidden">
+            <p>SkelForm has crashed.</p>
+            <br/>
+            <p>The crash log is in the console. Open via right clicking here > Inspect > Console, or F12.</p>
+        </div>
         
         <button id="fullscreenTest"></button>
 
@@ -198,6 +218,7 @@
             let hasLoaded = false;
             let config = {};
             let loadedAllImages = false;
+            let realError = false;
             loadConfig();
 
             toggleElement(false, "image-dialog");
@@ -441,6 +462,12 @@
             window.addEventListener("resize", resizeCanvas);
             window.addEventListener("load", resizeCanvas);
             window.addEventListener("beforeunload", beforeUnload);
+            window.addEventListener("error", () => {
+                if(realError) {
+                    toggleElement(true, "crash-box")
+                }
+                realError = true;
+            });
 
             if(!isMobile()) {
                 fullscreenButton.style.display = "none";

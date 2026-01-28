@@ -636,7 +636,7 @@ pub fn read_import(
     removeFile();
 }
 
-/// Load image by reading an `img` tag with id `last-image`.
+/// Load image by reading an `img` tag with the specified ID.
 #[cfg(target_arch = "wasm32")]
 pub fn load_image_wasm(id: String) -> Option<(Vec<u8>, Vec2)> {
     let mut result: Vec<u8> = vec![];
