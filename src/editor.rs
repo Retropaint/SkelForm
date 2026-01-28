@@ -282,7 +282,7 @@ pub fn process_event(
             selections.style = if value == f32::MAX { -1 } else { val };
         }
         Events::OpenModal => {
-            open_modal(ui, value == 1., str_value);
+            open_modal(ui, value == 1., ui.loc(&str_value));
         }
         Events::SelectAnimFrame => {
             let selected_anim = selections.anim;
@@ -554,7 +554,7 @@ pub fn process_event(
                 anim_mut.fps = value as i32;
                 anim_mut.keyframes = anim_clone.keyframes;
             } else {
-                open_modal(ui, value == 1., "keyframe_editor.invalid_fps".to_string());
+                open_modal(ui, value == 1., ui.loc("keyframe_editor.invalid_fps"));
             }
         }
         Events::PasteKeyframes => {
@@ -638,7 +638,7 @@ pub fn process_event(
             let filter = tex_names.iter().filter(|name| **name == trimmed);
             if filter.count() > 1 {
                 style.textures[t].name = og_name.clone();
-                open_modal(ui, false, "styles_modal.same_name".to_string());
+                open_modal(ui, false, ui.loc("styles_modal.same_name"));
             }
 
             if !config.keep_tex_str {
@@ -648,6 +648,9 @@ pub fn process_event(
                     }
                 }
             }
+        }
+        Events::OpenFileErrModal => {
+            open_modal(ui, false, ui.loc("import_err") + &str_value);
         }
         _ => {}
     }
@@ -680,7 +683,7 @@ pub fn center_verts(verts: &mut Vec<Vertex>) {
 fn open_modal(ui: &mut crate::Ui, forced: bool, headline: String) {
     ui.modal = true;
     ui.forced_modal = forced;
-    ui.headline = ui.loc(&headline);
+    ui.headline = headline;
 }
 
 fn select_bone(

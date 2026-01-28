@@ -1914,6 +1914,7 @@ pub enum Events {
     CenterBoneVerts,
     TraceBoneVerts,
     SetBindWeight,
+    OpenFileErrModal
 }
 
 enum_string!(Events);
@@ -2186,6 +2187,12 @@ impl EventState {
         self.events.push(Events::SetBindWeight);
         self.values.push(vert_idx as f32);
         self.values.push(weight);
+    }
+
+    pub fn open_file_err_modal(&mut self, err: String) {
+        self.events.push(Events::OpenFileErrModal);
+        self.values.push(-1.);
+        self.str_values.push(err);
     }
 }
 

@@ -578,9 +578,8 @@ pub fn read_import(
             .unwrap()
             .to_string();
         file = std::fs::File::open(path);
-        if let Err(_) = file {
-            //let text = shared.ui.loc("import_err").to_owned() + &err.to_string();
-            shared.events.open_modal("import_err", false);
+        if let Err(err) = file {
+            shared.events.open_file_err_modal(err.to_string());
             return;
         }
 
