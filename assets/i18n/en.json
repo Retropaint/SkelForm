@@ -193,6 +193,8 @@
     "rendering": {
       "heading": "Rendering",
       "gridline_gap": "Gridline gap (pixels): ",
+      "pixel_mag": "Pixel Magnification: ",
+      "translucent_desc": "Makes this box translucent to preview rendering changes",
       "background": "Background",
       "gridline": "Gridline",
       "center_point": "Center Point",

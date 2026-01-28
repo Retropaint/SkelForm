@@ -613,17 +613,16 @@ impl BackendRenderer {
                     usage: None,
                 });
 
-        let mag = 1 as f32;
         let uniforms = BlitUniforms {
             window_x: shared.camera.window.x,
             window_y: shared.camera.window.y,
-            magnification: mag,
+            magnification: shared.config.pixel_magnification as f32,
             _pad: [0.0; 3],
         };
         let pixel_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
-                width: shared.camera.window.x as u32 / mag as u32,
-                height: shared.camera.window.y as u32 / mag as u32,
+                width: shared.camera.window.x as u32 / shared.config.pixel_magnification as u32,
+                height: shared.camera.window.y as u32 / shared.config.pixel_magnification as u32,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,

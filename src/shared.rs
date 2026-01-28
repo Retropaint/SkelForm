@@ -524,6 +524,7 @@ pub struct Ui {
     pub context_menu: ContextMenu,
 
     pub settings_state: SettingsState,
+    pub translucent_settings: bool,
 
     pub changing_key: String,
 
@@ -656,6 +657,7 @@ pub struct Config {
     pub edit_while_playing: bool,
     pub layout: UiLayout,
     pub ignore_donate: bool,
+    pub pixel_magnification: i32,
 
     pub colors: ColorConfig,
     pub keys: KeyboardConfig,
@@ -691,6 +693,7 @@ impl Default for Config {
             layout: UiLayout::Split,
             edit_while_playing: false,
             ignore_donate: false,
+            pixel_magnification: 1,
         }
     }
 }

@@ -1,3 +1,5 @@
+use std::ops::SubAssign;
+
 use crate::utils;
 use egui::IntoAtoms;
 
@@ -12,9 +14,13 @@ pub fn draw(
     events: &mut crate::EventState,
     ctx: &egui::Context,
 ) {
+    let mut col: egui::Color32 = config.colors.main.into();
+    if shared_ui.translucent_settings {
+        col = col.gamma_multiply(0.5);
+    }
     let modal = egui::Modal::new("test".into()).frame(egui::Frame {
         corner_radius: 0.into(),
-        fill: config.colors.main.into(),
+        fill: col,
         inner_margin: egui::Margin::same(5),
         stroke: egui::Stroke::new(1., config.colors.light_accent),
         ..Default::default()
@@ -25,8 +31,12 @@ pub fn draw(
         modal_ui.set_height(window.y.min(500.));
 
         modal_ui.horizontal(|ui| {
+            let mut col: egui::Color32 = config.colors.dark_accent.into();
+            if shared_ui.translucent_settings {
+                col = col.gamma_multiply(0.5);
+            }            
             let frame = egui::Frame::new()
-                .fill(config.colors.dark_accent.into())
+                .fill(col)
                 .inner_margin(egui::Margin::same(5));
             frame.show(ui, |ui| {
                 ui.set_width(window.x.min(100.));
@@ -55,6 +65,10 @@ pub fn draw(
                     tab!(str_keyboard, shared::SettingsState::Keyboard);
                     tab!(str_misc, shared::SettingsState::Misc);
 
+                    if shared_ui.settings_state != shared::SettingsState::Rendering {
+                        shared_ui.translucent_settings = false;
+                    }
+
                     if !is_hovered {
                         shared_ui.hovering_setting = None;
                     }
@@ -78,10 +92,12 @@ pub fn draw(
             if ui.skf_button("Apply").clicked() {
                 events.apply_settings();
                 shared_ui.settings_modal = false;
+                shared_ui.translucent_settings = false;
             }
             if ui.skf_button("Cancel").clicked() {
                 events.reset_config();
                 shared_ui.settings_modal = false;
+                shared_ui.translucent_settings = false;
             }
         })
     });
@@ -177,6 +193,15 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::C
         let str_heading = &shared_ui.loc("settings_modal.rendering.heading");
         ui.heading(str_heading);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            // translucent toggle
+            let label = ui
+                .heading("👁")
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .on_hover_text(shared_ui.loc("settings_modal.rendering.translucent_desc"));
+
+            if label.clicked() {
+                shared_ui.translucent_settings = !shared_ui.translucent_settings;
+            }
             let str_default = &shared_ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
                 config.colors.background = crate::Config::default().colors.background;
@@ -185,6 +210,17 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::C
                 config.gridline_gap = crate::Config::default().gridline_gap;
             }
         });
+    });
+
+    ui.horizontal(|ui| {
+        let str_heading = &shared_ui.loc("settings_modal.rendering.pixel_mag");
+        ui.label(str_heading);
+        let id = "pixelmag".to_string();
+        let (edited, value, _) =
+            ui.float_input(id, shared_ui, config.pixel_magnification as f32, 1., None);
+        if edited {
+            config.pixel_magnification = (value as i32).max(1);
+        }
     });
 
     ui.horizontal(|ui| {
