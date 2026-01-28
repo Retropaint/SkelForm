@@ -13,7 +13,7 @@ use std::io::Write;
 
 use egui_wgpu::wgpu::ExperimentalFeatures;
 use shared::*;
-use wgpu::{BindGroupLayout, InstanceDescriptor};
+use wgpu::{BindGroupLayout, InstanceDescriptor, PipelineCompilationOptions};
 
 pub const VERSION_IDX: i32 = 1;
 
@@ -528,6 +528,7 @@ impl BackendRenderer {
         #[rustfmt::skip]
         let desc = &wgpu::CommandEncoderDescriptor { label: Some("Render Encoder") };
         let mut encoder = self.gpu.device.create_command_encoder(desc);
+        encoder.insert_debug_marker("Render scene");
 
         #[rustfmt::skip]
         self.egui_renderer.update_buffers(&self.gpu.device, &self.gpu.queue, &mut encoder, &paint_jobs, &screen_descriptor);
@@ -548,7 +549,63 @@ impl BackendRenderer {
                     usage: None,
                 });
 
-        encoder.insert_debug_marker("Render scene");
+        let pixel_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
+            size: wgpu::Extent3d {
+                width: shared.camera.window.x as u32,
+                height: shared.camera.window.y as u32,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Bgra8Unorm,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT
+                | wgpu::TextureUsages::COPY_SRC
+                | wgpu::TextureUsages::TEXTURE_BINDING,
+            label: Some("Capture Texture"),
+            view_formats: &[],
+        });
+        let pixel_view = pixel_texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        println!("{}", shared.camera.window / 5.);
+
+        let mut pixel_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Render Pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view: &pixel_view,
+                resolve_target: None,
+                ops: clear,
+                depth_slice: None,
+            })],
+            depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
+        });
+        pixel_pass.set_pipeline(&self.scene.pipeline);
+        self.skf_render(shared, &mut pixel_pass.forget_lifetime());
+
+        let sampler = self.gpu.device.create_sampler(&wgpu::SamplerDescriptor {
+            mag_filter: wgpu::FilterMode::Nearest, // pixelated look
+            min_filter: wgpu::FilterMode::Nearest,
+            ..Default::default()
+        });
+        let blit_bind_group = self
+            .gpu
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &self.bind_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(&pixel_view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(&sampler),
+                    },
+                ],
+                label: Some("LowRes Blit BindGroup"),
+            });
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -561,10 +618,9 @@ impl BackendRenderer {
             timestamp_writes: None,
             occlusion_query_set: None,
         });
-
-        render_pass.set_pipeline(&self.scene.pipeline);
-
-        self.skf_render(shared, &mut render_pass);
+        render_pass.set_pipeline(&self.scene.blit_pipeline);
+        render_pass.set_bind_group(0, &blit_bind_group, &[]);
+        render_pass.draw(0..3, 0..1);
 
         self.egui_renderer.render(
             &mut render_pass.forget_lifetime(),
@@ -1036,6 +1092,7 @@ impl Gpu {
 
 struct Scene {
     pub pipeline: wgpu::RenderPipeline,
+    pub blit_pipeline: wgpu::RenderPipeline,
 }
 
 impl Scene {
@@ -1045,8 +1102,92 @@ impl Scene {
         bind_group_layout: &BindGroupLayout,
     ) -> Self {
         let pipeline = Self::create_pipeline(device, surface_format, &bind_group_layout);
+        let blit_pipeline = Self::create_blit_pipeline(device, surface_format);
 
-        Self { pipeline }
+        Self {
+            pipeline,
+            blit_pipeline,
+        }
+    }
+
+    fn create_blit_pipeline(
+        device: &wgpu::Device,
+        surface_format: wgpu::TextureFormat,
+    ) -> wgpu::RenderPipeline {
+        let blit_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Blit Bind Group Layout"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
+        let blit_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("Blit Pipeline Layout"),
+            bind_group_layouts: &[&blit_bind_group_layout],
+            push_constant_ranges: &[],
+        });
+        let blit_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Blit Shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("blit.wgsl").into()),
+        });
+        device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Blit Pipeline"),
+            layout: Some(&blit_pipeline_layout),
+
+            vertex: wgpu::VertexState {
+                module: &blit_shader,
+                entry_point: Some("vs_main"),
+                buffers: &[], // fullscreen triangle, no vertex buffer
+                compilation_options: Default::default(),
+            },
+
+            fragment: Some(wgpu::FragmentState {
+                module: &blit_shader,
+                entry_point: Some("fs_main"),
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: surface_format,
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+                compilation_options: Default::default(),
+            }),
+
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: None,
+                polygon_mode: wgpu::PolygonMode::Fill,
+                unclipped_depth: false,
+                conservative: false,
+            },
+
+            depth_stencil: None,
+
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+
+            multiview: None,
+            cache: None,
+        })
     }
 
     fn create_pipeline(
