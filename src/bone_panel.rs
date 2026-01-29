@@ -825,6 +825,7 @@ pub fn texture_effects(
             } else {
                 usize::MAX
             };
+            println!("test");
             let frame = selections.anim_frame;
             events.edit_bone(bone.id, &AnimElement::TintR, col[0], anim_id, frame);
             events.edit_bone(bone.id, &AnimElement::TintG, col[1], anim_id, frame);

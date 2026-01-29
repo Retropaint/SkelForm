@@ -610,8 +610,27 @@ fn top_panel(
 
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if shared_ui.warnings.len() == 0 {
+                        return;
+                    }
                     ui.add_space(10.);
-                    ui.label("2 ⚠");
+                    let warnings = ui
+                        .label(shared_ui.warnings.len().to_string() + " ⚠")
+                        .on_hover_cursor(egui::CursorIcon::PointingHand);
+                    if warnings.clicked() {
+                        shared_ui.warnings_open = !shared_ui.warnings_open;
+                    }
+                    if shared_ui.warnings_open {
+                        let popup = egui::Popup::new(
+                            "warnings".into(),
+                            ui.ctx().clone(),
+                            &warnings,
+                            egui::LayerId::background(),
+                        );
+                        popup.show(|ui| {
+                            warnings::warnings_popup(ui, &shared_ui, &armature, events);
+                        });
+                    }
                 })
             })
         });

@@ -267,5 +267,8 @@
     "delete_tex": "Are you sure to delete this texture?",
     "delete_style": "Are you sure to delete this style?",
     "unsaved": "Are you sure you want to quit and discard unsaved changes?\n\n(Click 'Yes' to confirm)"
+  },
+  "warnings": {
+    "SameZIndex": "$b Bones have a Z-index of $z: "
   }
 }

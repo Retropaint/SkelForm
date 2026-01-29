@@ -60,6 +60,7 @@ pub mod startup_window;
 pub mod styles_modal;
 pub mod ui;
 pub mod utils;
+pub mod warnings;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
@@ -772,6 +773,8 @@ impl BackendRenderer {
             &mut shared.renderer,
             &mut shared.events,
         );
+
+        shared.ui.warnings = warnings::check_warnings(&shared.armature, &shared.selections);
     }
 
     fn skf_record(&mut self, shared: &mut Shared) {

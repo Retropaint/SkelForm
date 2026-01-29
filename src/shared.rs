@@ -486,6 +486,32 @@ pub struct UiBar {
     pub scale: Vec2,
 }
 
+#[derive(Clone, Default, PartialEq)]
+pub enum Warnings {
+    #[default]
+    SameZIndex,
+    NoIkTarget,
+    UnboundBind,
+    NoVertsInBind,
+}
+
+#[derive(Clone, Default, PartialEq)]
+pub struct Warning {
+    pub warn_type: Warnings,
+    pub ids: Vec<usize>,
+    pub value: f32,
+}
+
+impl Warning {
+    pub fn new(warn_type: Warnings, ids: Vec<usize>, value: f32) -> Self {
+        Self {
+            warn_type,
+            ids,
+            value,
+        }
+    }
+}
+
 #[derive(Clone, Default)]
 pub struct Ui {
     pub anim: UiAnim,
@@ -593,6 +619,8 @@ pub struct Ui {
 
     pub saving: Arc<Mutex<Saving>>,
     pub save_finished: Arc<Mutex<bool>>,
+    pub warnings: Vec<Warning>,
+    pub warnings_open: bool,
 }
 
 impl Ui {
@@ -1066,6 +1094,7 @@ impl Armature {
             ik_mode: InverseKinematicsMode::FABRIK,
             ik_target_id: -1,
             ik_family_id: -1,
+            tint: default_tint(),
             ..Default::default()
         };
         if id == -1 {
