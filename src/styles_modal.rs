@@ -380,6 +380,8 @@ pub fn draw_textures_list(
                 let mut offset = Vec2::new(0., 0.);
                 let mut row_height = 0.;
                 for tex in &armature.styles[shared_ui.hovering_set as usize].textures {
+                    let data = armature.tex_data(tex).unwrap();
+
                     let size = resize_tex_img(tex.size, 50);
 
                     if offset.x + size.x > ui.available_width() {
@@ -395,7 +397,6 @@ pub fn draw_textures_list(
                         ui.min_rect().left_top() + offset.into(),
                         size.into(),
                     );
-                    let data = armature.tex_data(tex).unwrap();
                     egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, rect);
                     offset.x += size.x;
                 }

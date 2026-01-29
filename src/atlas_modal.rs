@@ -32,13 +32,18 @@ pub fn draw(
             // draw atlas
             let frame = egui::Frame::new();
             let image = frame.show(ui, |ui| {
-                ui.set_width(300.);
-                ui.set_height(300.);
                 let data = armature.tex_data(&atlas).unwrap();
-                let img_size = Vec2::new(data.image.width() as f32, data.image.height() as f32);
-                let size = styles_modal::resize_tex_img(img_size, 300);
-                let rect = egui::Rect::from_min_size(ui.min_rect().left_top(), size.into());
-                egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, rect);
+                let filter = imageops::FilterType::Nearest;
+                if shared_ui.atlas_image == None {
+                    let dims = data.image.clone().resize(300, 300, filter).dimensions();
+                    shared_ui.atlas_image = Some(Vec2::new(dims.0 as f32, dims.1 as f32));
+                }
+                ui.set_width(shared_ui.atlas_image.unwrap().x as f32);
+                ui.set_height(shared_ui.atlas_image.unwrap().y as f32);
+                egui::Image::new(data.ui_img.as_ref().unwrap())
+                    .maintain_aspect_ratio(true)
+                    .fit_to_fraction(ui.min_rect().size())
+                    .paint_at(ui, ui.min_rect());
                 for t in 0..shared_ui.pending_textures.len() {
                     let tex = &shared_ui.pending_textures[t];
                     let interp = tex.offset / atlas.size;
@@ -65,8 +70,8 @@ pub fn draw(
                 );
 
                 // drag rects if mouse is on them
-                let mut dragging = false;
-                for tex in &mut shared_ui.pending_textures {
+                for t in 0..shared_ui.pending_textures.len() {
+                    let tex = &mut shared_ui.pending_textures[t];
                     let pixel = atlas.size * interp;
                     if !(pixel.x > tex.offset.x
                         && pixel.y > tex.offset.y
@@ -77,39 +82,48 @@ pub fn draw(
                         continue;
                     }
 
-                    shared_ui.cursor_icon = egui::CursorIcon::Grab;
-                    if input.left_down {
-                        dragging = true;
-                        tex.offset += atlas.size * (interp - shared_ui.prev_pending_interp);
-                        if tex.offset.x < 0. {
-                            tex.offset.x = 0.;
-                        }
-                        if tex.offset.y < 0. {
-                            tex.offset.y = 0.;
-                        }
-
-                        if tex.offset.x + tex.size.x > atlas.size.x {
-                            tex.offset.x = atlas.size.x - tex.size.x;
-                        }
-                        if tex.offset.y + tex.size.y > atlas.size.y {
-                            tex.offset.y = atlas.size.y - tex.size.y;
-                        }
+                    if input.left_pressed {
+                        shared_ui.dragging_slice = t;
+                        break;
                     }
 
+                    shared_ui.cursor_icon = egui::CursorIcon::Grab;
                     break;
                 }
 
-                if !dragging {
+                if !input.left_down {
+                    shared_ui.dragging_on_atlas = false;
+                    shared_ui.dragging_slice = usize::MAX;
+                }
+
+                if shared_ui.dragging_slice != usize::MAX {
+                    let tex = &mut shared_ui.pending_textures[shared_ui.dragging_slice];
+                    tex.offset += atlas.size * (interp - shared_ui.prev_pending_interp);
+                    if tex.offset.x < 0. {
+                        tex.offset.x = 0.;
+                    }
+                    if tex.offset.y < 0. {
+                        tex.offset.y = 0.;
+                    }
+
+                    if tex.offset.x + tex.size.x > atlas.size.x {
+                        tex.offset.x = atlas.size.x - tex.size.x;
+                    }
+                    if tex.offset.y + tex.size.y > atlas.size.y {
+                        tex.offset.y = atlas.size.y - tex.size.y;
+                    }
+                } else {
                     // if left clicked, initiate new texture
                     if input.left_pressed && image.response.contains_pointer() {
                         shared_ui.init_pending_mouse = pointer.into();
+                        shared_ui.dragging_on_atlas = true;
                         shared_ui.pending_textures.push(Texture {
                             offset: (atlas.size * interp).floor(),
                             ..Default::default()
                         });
                     }
 
-                    if input.left_down && image.response.contains_pointer() {
+                    if input.left_down && shared_ui.dragging_on_atlas {
                         shared_ui.is_dragging_pending = true;
                         let tex = &mut shared_ui.pending_textures.last_mut().unwrap();
                         let init_pending = shared_ui.init_pending_mouse;
@@ -179,10 +193,12 @@ pub fn draw(
 
                             shared_ui.done_pending = shared_ui.pending_textures.len() > 0;
                             shared_ui.atlas_modal = false;
+                            shared_ui.atlas_image = None;
                         }
                         if ui.skf_button("Cancel").clicked() {
                             shared_ui.pending_textures = vec![];
                             shared_ui.atlas_modal = false;
+                            shared_ui.atlas_image = None;
                             events.cancel_pending_texture();
                         }
                     });

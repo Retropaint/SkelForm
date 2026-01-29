@@ -592,6 +592,9 @@ pub struct Ui {
 
     pub crashed_last_time: bool,
     pub never_donate: bool,
+    pub atlas_image: Option<Vec2>,
+    pub dragging_on_atlas: bool,
+    pub dragging_slice: usize,
 }
 
 impl Ui {
