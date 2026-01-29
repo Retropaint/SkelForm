@@ -1,5 +1,3 @@
-use std::ops::SubAssign;
-
 use crate::utils;
 use egui::IntoAtoms;
 
@@ -81,7 +79,7 @@ pub fn draw(
                 ui.with_layout(layout, |ui| match shared_ui.settings_state {
                     shared::SettingsState::Ui => user_interface(ui, shared_ui, config),
                     shared::SettingsState::Animation => animation(ui, shared_ui, config),
-                    shared::SettingsState::Rendering => rendering(ui, shared_ui, config),
+                    shared::SettingsState::Rendering => rendering(ui, shared_ui, config, camera),
                     shared::SettingsState::Keyboard => keyboard(ui, shared_ui, config),
                     shared::SettingsState::Misc => misc(ui, shared_ui, config),
                 });
@@ -188,7 +186,7 @@ fn animation(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::C
     });
 }
 
-fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::Config) {
+fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::Config,camera: &crate::Camera) {
     ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.rendering.heading");
         ui.heading(str_heading);
@@ -221,6 +219,8 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::C
         if edited {
             config.pixel_magnification = (value as i32).max(1);
         }
+        let window = camera.window / config.pixel_magnification as f32;
+        ui.label("= ".to_owned() + &window.x.to_string() + ", " + &window.y.to_string());
     });
 
     ui.horizontal(|ui| {

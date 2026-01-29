@@ -77,7 +77,7 @@ pub fn draw(
         }
     });
 
-    let tex = armature.tex_of(bone.id);
+    let tex = armature.anim_tex_of(bone.id);
 
     let tex_name_col = if tex != None {
         config.colors.text

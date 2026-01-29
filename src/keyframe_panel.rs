@@ -1,13 +1,16 @@
 use crate::*;
 
-pub fn draw(ui: &mut egui::Ui, selections: &SelectionState, armature: &Armature) {
+pub fn draw(
+    ui: &mut egui::Ui,
+    selections: &SelectionState,
+    armature: &Armature,
+    events: &mut EventState,
+) {
     ui.heading("Keyframe (".to_owned() + &selections.anim_frame.to_string() + ")");
     let sel = selections.clone();
 
-    return;
-
     #[allow(unreachable_code)]
-    let keyframes = armature.sel_anim(&sel).unwrap().keyframes;
+    let keyframes = &armature.sel_anim(&sel).unwrap().keyframes;
     let frame = selections.anim_frame;
     let keyframes_in_frame = keyframes.iter().filter(|a| a.frame == frame);
 
@@ -27,7 +30,7 @@ pub fn draw(ui: &mut egui::Ui, selections: &SelectionState, armature: &Armature)
 
         let mut transition = Transition::default();
         let frame = selections.anim_frame;
-        for kf in &mut armature.sel_anim_mut(&sel).unwrap().keyframes {
+        for kf in &armature.sel_anim(&sel).unwrap().keyframes {
             if kf.frame == frame {
                 transition = kf.transition.clone();
                 break;
@@ -54,11 +57,7 @@ pub fn draw(ui: &mut egui::Ui, selections: &SelectionState, armature: &Armature)
         // change all fields to use new transition
         if og_transition != transition {
             let selected_frame = selections.anim_frame;
-            for kf in &mut armature.sel_anim_mut(&sel).unwrap().keyframes {
-                if kf.frame == selected_frame {
-                    kf.transition = transition.clone();
-                }
-            }
+            events.set_keyframe_transition(selected_frame as usize, transition);
         }
     });
 }

@@ -1222,21 +1222,13 @@ impl Armature {
 
         let total_frames = keyframes[next].frame - keyframes[prev].frame;
         let current_frame = frame - keyframes[prev].frame;
-        self.interpolate(
+        utils::interp(
             current_frame,
             total_frames,
             keyframes[prev].value,
             keyframes[next].value,
+            keyframes[next].transition.clone(),
         )
-    }
-
-    fn interpolate(&self, current: i32, max: i32, start_val: f32, end_val: f32) -> f32 {
-        if max == 0 || current >= max {
-            return end_val;
-        }
-        let interp = current as f32 / max as f32;
-        let end = end_val - start_val;
-        start_val + (end * interp)
     }
 
     pub fn get_all_parents(&self, bone_id: i32) -> Vec<Bone> {
@@ -1288,6 +1280,22 @@ impl Armature {
 
     pub fn tex_of(&self, bone_id: i32) -> Option<&Texture> {
         let bone = self.bones.iter().find(|bone| bone.id == bone_id);
+        if bone == None {
+            return None;
+        }
+        for style in &self.styles {
+            if !style.active {
+                continue;
+            }
+            if let Some(tex) = style.textures.iter().find(|t| t.name == bone.unwrap().tex) {
+                return Some(tex);
+            }
+        }
+        None
+    }
+
+    pub fn anim_tex_of(&self, bone_id: i32) -> Option<&Texture> {
+        let bone = self.animated_bones.iter().find(|bone| bone.id == bone_id);
         if bone == None {
             return None;
         }
@@ -1591,7 +1599,7 @@ pub struct Keyframe {
     pub label_top: f32,
 }
 
-#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
+#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default, Debug, FromRepr)]
 pub enum Transition {
     #[default]
     Linear,
@@ -1921,6 +1929,7 @@ pub enum Events {
     TraceBoneVerts,
     SetBindWeight,
     OpenFileErrModal,
+    SetKeyframeTransition,
 }
 
 enum_string!(Events);
@@ -1976,7 +1985,6 @@ impl EventState {
     generic_event!(center_bone_verts, Events::CenterBoneVerts);
     generic_event!(trace_bone_verts, Events::TraceBoneVerts);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
-    event_with_value!(select_anim_frame, Events::SelectAnimFrame, frame, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, usize);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
     event_with_value!(delete_anim, Events::DeleteAnim, anim_id, usize);
@@ -2199,6 +2207,18 @@ impl EventState {
         self.events.push(Events::OpenFileErrModal);
         self.values.push(-1.);
         self.str_values.push(err);
+    }
+
+    pub fn select_anim_frame(&mut self, frame: usize, show_panel: bool) {
+        self.events.push(Events::SelectAnimFrame);
+        self.values.push(frame as f32);
+        self.values.push(if show_panel { 1. } else { 0. });
+    }
+
+    pub fn set_keyframe_transition(&mut self, frame: usize, transition: Transition) {
+        self.events.push(Events::SetKeyframeTransition);
+        self.values.push(frame as f32);
+        self.values.push((transition as usize) as f32);
     }
 }
 

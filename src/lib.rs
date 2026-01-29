@@ -13,9 +13,7 @@ use std::io::Write;
 
 use egui_wgpu::wgpu::ExperimentalFeatures;
 use shared::*;
-use wgpu::{
-    util::DeviceExt, BindGroupLayout, Buffer, InstanceDescriptor, PipelineCompilationOptions,
-};
+use wgpu::{util::DeviceExt, BindGroupLayout, Buffer, InstanceDescriptor};
 
 pub const VERSION_IDX: i32 = 1;
 
@@ -713,7 +711,7 @@ impl BackendRenderer {
         self.gpu.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();
 
-        //self.skf_record(shared);
+        self.skf_record(shared);
     }
 
     fn skf_render(&mut self, shared: &mut Shared, render_pass: &mut wgpu::RenderPass) {

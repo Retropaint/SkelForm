@@ -442,11 +442,14 @@ pub fn draw_top_bar(
                 let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
 
                 if response.drag_started() {
-                    events.select_anim_frame(frame as usize);
+                    events.select_anim_frame(frame as usize, false);
                 }
 
                 if response.hovered() {
                     shared_ui.cursor_icon = egui::CursorIcon::Grab;
+                    if input.left_clicked {
+                        events.select_anim_frame(frame as usize, true);
+                    }
                 }
 
                 let cursor = get_cursor(ui);
@@ -702,7 +705,7 @@ fn draw_frame_lines(
 
             // select this frame if clicked
             if input.left_clicked {
-                events.select_anim_frame(i as usize);
+                events.select_anim_frame(i as usize, false);
             }
         }
 

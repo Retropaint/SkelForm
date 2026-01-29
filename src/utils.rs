@@ -914,3 +914,15 @@ pub fn crashlog_file() -> PathBuf {
         .unwrap_or_else(|| std::path::Path::new("."));
     exe_dir.join("crash.log")
 }
+
+pub fn interp(current: i32, max: i32, start_val: f32, end_val: f32, transition: Transition) -> f32 {
+    if max == 0 || current >= max {
+        return end_val;
+    }
+    let interp = match transition {
+        Transition::Linear => current as f32 / max as f32,
+        Transition::SineIn => 1. - (current as f32 / max as f32 * 3.14 * 0.5).cos(),
+        Transition::SineOut => (current as f32 / max as f32 * 3.14 * 0.5).sin(),
+    };
+    start_val + (end_val - start_val) * interp
+}

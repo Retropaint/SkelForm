@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::*;
 
-const MIN_ZOOM: f32 = 10.;
+const MIN_ZOOM: f32 = 1.;
 
 pub fn iterate_events(
     input: &InputStates,
@@ -48,7 +48,28 @@ pub fn iterate_events(
             };
     }
 
-    if event == Events::ToggleIkDisabled {
+    if event == Events::SetKeyframeTransition {
+        for kf in &mut armature.sel_anim_mut(&selections).unwrap().keyframes {
+            if kf.frame == events.values[0] as i32 {
+                kf.transition = Transition::from_repr(events.values[1] as usize).unwrap();
+            }
+        }
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::SelectAnimFrame {
+        let selected_anim = selections.anim;
+        let selected_bone_idx = selections.bone_idx;
+        let selected_bone_ids = selections.bone_ids.clone();
+        unselect_all(selections, edit_mode);
+        selections.anim = selected_anim;
+        if events.values[1] != 1. {
+            selections.bone_idx = selected_bone_idx;
+            selections.bone_ids = selected_bone_ids;
+        }
+        selections.anim_frame = events.values[0] as i32;
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::ToggleIkDisabled {
         armature.bones[events.values[0] as usize].ik_disabled = events.values[1] == 1.;
         events.events.remove(0);
         events.values.drain(0..=1);
@@ -285,16 +306,6 @@ pub fn process_event(
         }
         Events::OpenModal => {
             open_modal(ui, value == 1., ui.loc(&str_value));
-        }
-        Events::SelectAnimFrame => {
-            let selected_anim = selections.anim;
-            let selected_bone_idx = selections.bone_idx;
-            let selected_bone_ids = selections.bone_ids.clone();
-            unselect_all(selections, edit_mode);
-            selections.anim = selected_anim;
-            selections.bone_idx = selected_bone_idx;
-            selections.bone_ids = selected_bone_ids;
-            selections.anim_frame = value as i32;
         }
         Events::OpenPolarModal => {
             ui.polar_id = PolarId::from_repr(value as usize).unwrap();

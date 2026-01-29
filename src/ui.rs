@@ -229,7 +229,7 @@ pub fn draw(
                         edit_mode,
                     );
                 } else if armature.sel_anim(&selections) != None && selections.anim_frame != -1 {
-                    keyframe_panel::draw(ui, &selections, &armature);
+                    keyframe_panel::draw(ui, &selections, &armature, events);
                 }
             });
             shared_ui.bone_panel_rect = Some(ui.min_rect());
@@ -961,7 +961,7 @@ fn menu_file_button(
             //edit_mode.recording = true;
             //edit_mode.anim_open = true;
             //edit_mode.done_recording = true;
-            events.select_anim_frame(0);
+            events.select_anim_frame(0, false);
             shared_ui.anim.loops = 1;
             ui.close();
         }
