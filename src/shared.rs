@@ -491,8 +491,11 @@ pub enum Warnings {
     #[default]
     SameZIndex,
     NoIkTarget,
+    OnlyIk,
     UnboundBind,
     NoVertsInBind,
+    OnlyPath,
+    NoWeights
 }
 
 #[derive(Clone, Default, PartialEq)]

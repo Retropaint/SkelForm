@@ -269,7 +269,12 @@
     "unsaved": "Are you sure you want to quit and discard unsaved changes?\n\n(Click 'Yes' to confirm)"
   },
   "warnings": {
-    "SameZIndex": "$b bones have a Z-index of $z: ",
-    "NoIkTarget": "$b has no IK target."
+    "SameZIndex": "$bone_count bones have a Z-index of $zindex: ",
+    "NoIkTarget": "$bone has no IK target.",
+    "UnboundBind": "$bone's bind $bind has no bone attached.",
+    "NoVertsInBind": "$bone's bind $bind has no vertices.",
+    "OnlyPath": "$bone can't have a single bind that's a path.",
+    "OnlyIk": "$bone is the only bone IK family $ik_family_id.",
+    "NoWeights": "$bone's bind $bind has all weights set to 0."
   }
 }

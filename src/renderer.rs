@@ -953,16 +953,20 @@ pub fn bone_vertices(
     }
 
     for wv in 0..world_verts.len() {
-        let idx = selections.bind as usize;
+        let idx = selections.bind;
         let verts: Vec<i32>;
-        if idx == usize::MAX {
+        if idx == -1 {
             verts = vec![];
         } else {
             let selected = armature.sel_bone(&sel).unwrap();
-            verts = selected.binds[idx].verts.iter().map(|v| v.id).collect();
+            verts = selected.binds[idx as usize]
+                .verts
+                .iter()
+                .map(|v| v.id)
+                .collect();
         }
 
-        let mut col = if idx != usize::MAX && verts.contains(&(world_verts[wv].id as i32)) {
+        let mut col = if idx == -1 && verts.contains(&(world_verts[wv].id as i32)) {
             VertexColor::YELLOW
         } else {
             VertexColor::GREEN

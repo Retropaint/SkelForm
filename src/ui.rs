@@ -628,7 +628,24 @@ fn top_panel(
                             egui::LayerId::background(),
                         );
                         popup.show(|ui| {
-                            warnings::warnings_popup(ui, &shared_ui, &armature, events);
+                            for w in 0..shared_ui.warnings.len() {
+                                let warning = &shared_ui.warnings[w];
+
+                                egui::Frame::new().show(ui, |ui| {
+                                    ui.horizontal(|ui| {
+                                        ui.set_width(ui.available_width().min(300.));
+                                        ui.set_height(21.);
+                                        ui.add_space(5.);
+                                        warnings::warning_line(
+                                            ui,
+                                            &shared_ui.warnings[w],
+                                            &shared_ui,
+                                            &armature,
+                                            events,
+                                        );
+                                    });
+                                });
+                            }
                         });
                     }
                 })
