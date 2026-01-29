@@ -27,7 +27,13 @@ pub fn check_warnings(armature: &Armature, selections: &SelectionState) -> Vec<W
                 }
             }
         }
+
+        if armature.bone_eff(bone.id) == JointEffector::Start && bone.ik_target_id == -1 {
+            warnings.push(Warning::new(W::NoIkTarget, vec![bone.id as usize], 0.));
+        }
     }
+
+    warnings.sort_by(|a, b| (a.warn_type.clone() as usize).cmp(&(b.warn_type.clone() as usize)));
 
     warnings
 }
@@ -46,29 +52,36 @@ pub fn warnings_popup(
                 ui.set_width(ui.available_width().min(300.));
                 ui.set_height(21.);
                 ui.add_space(5.);
+                let bones = &armature.bones;
                 if warning.warn_type == W::SameZIndex {
                     let str = shared_ui
                         .loc("warnings.SameZIndex")
                         .replace("$b", &warning.ids.len().to_string())
                         .replace("$z", &warning.value.to_string());
-                    ui.label(egui::RichText::new(str).strong());
+                    ui.label(egui::RichText::new(str));
                     for i in 0..warning.ids.len() {
                         let id = warning.ids[i];
-                        let bones = &armature.bones;
                         let bone_name = &bones.iter().find(|b| b.id == id as i32).unwrap().name;
                         let mut str = bone_name.to_string();
                         if i != warning.ids.len() - 1 {
                             str += ",";
                         }
                         if ui.clickable_label(str).clicked() {
-                            let idx = armature
-                                .bones
-                                .iter()
-                                .position(|b| b.id == id as i32)
-                                .unwrap();
-                            events.select_bone(idx, false);
+                            let bones = &armature.bones;
+                            let idx = bones.iter().position(|b| b.id == id as i32).unwrap();
+                            events.select_bone(idx, true);
                         };
                     }
+                } else if warning.warn_type == W::NoIkTarget {
+                    let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
+                    let str = shared_ui
+                        .loc("warnings.NoIkTarget")
+                        .replace("$b", &bone.unwrap().name);
+                    if ui.clickable_label(str).clicked() {
+                        let bones = &armature.bones;
+                        let idx = bones.iter().position(|b| b.id == warning.ids[0] as i32);
+                        events.select_bone(idx.unwrap(), true);
+                    };
                 }
             });
         });

@@ -269,6 +269,7 @@
     "unsaved": "Are you sure you want to quit and discard unsaved changes?\n\n(Click 'Yes' to confirm)"
   },
   "warnings": {
-    "SameZIndex": "$b Bones have a Z-index of $z: "
+    "SameZIndex": "$b bones have a Z-index of $z: ",
+    "NoIkTarget": "$b has no IK target."
   }
 }
