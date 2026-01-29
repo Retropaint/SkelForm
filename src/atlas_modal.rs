@@ -91,11 +91,6 @@ pub fn draw(
                     break;
                 }
 
-                if !input.left_down {
-                    shared_ui.dragging_on_atlas = false;
-                    shared_ui.dragging_slice = usize::MAX;
-                }
-
                 if shared_ui.dragging_slice != usize::MAX {
                     let tex = &mut shared_ui.pending_textures[shared_ui.dragging_slice];
                     tex.offset += atlas.size * (interp - shared_ui.prev_pending_interp);
@@ -116,14 +111,14 @@ pub fn draw(
                     // if left clicked, initiate new texture
                     if input.left_pressed && image.response.contains_pointer() {
                         shared_ui.init_pending_mouse = pointer.into();
-                        shared_ui.dragging_on_atlas = true;
+                        shared_ui.is_dragging_pending = true;
                         shared_ui.pending_textures.push(Texture {
                             offset: (atlas.size * interp).floor(),
                             ..Default::default()
                         });
                     }
 
-                    if input.left_down && shared_ui.dragging_on_atlas {
+                    if input.left_down && shared_ui.is_dragging_pending {
                         shared_ui.is_dragging_pending = true;
                         let tex = &mut shared_ui.pending_textures.last_mut().unwrap();
                         let init_pending = shared_ui.init_pending_mouse;
@@ -159,6 +154,7 @@ pub fn draw(
 
             if !input.left_down {
                 shared_ui.is_dragging_pending = false;
+                shared_ui.dragging_slice = usize::MAX;
             }
 
             ui.add_space(40.);

@@ -231,6 +231,21 @@ pub fn draw(
 
     let section_spacing = 10.;
 
+    // show 'IK root bone' button if this is a target bone
+    ui.add_space(10.);
+    let is_target_of = armature
+        .bones
+        .iter()
+        .position(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
+    if is_target_of != None {
+        let target_str = shared_ui.loc("bone_panel.target_bone").to_owned();
+        ui.label(target_str + &armature.bones[is_target_of.unwrap()].name + ".");
+        if ui.skf_button("Go to IK bone").clicked() {
+            events.select_bone(is_target_of.unwrap(), false);
+        };
+    }
+    ui.add_space(5.);
+
     if children.len() == 0
         && parents.len() == 0
         && bone.vertices.len() == 0
@@ -261,16 +276,8 @@ pub fn draw(
 
     ui.add_space(20.);
 
-    texture_effects(
-        ui,
-        &bone,
-        shared_ui,
-        &selections,
-        config,
-        &edit_mode,
-        &input,
-        events,
-    );
+    #[rustfmt::skip]
+    texture_effects(ui, &bone, shared_ui, &selections, config, &edit_mode, &input, events);
 }
 
 pub fn inverse_kinematics(
@@ -391,13 +398,8 @@ pub fn inverse_kinematics(
                             id = -1;
                         }
                         let sel = &selections;
-                        events.edit_bone(
-                            bone.id,
-                            &AnimElement::IkFamilyId,
-                            id as f32,
-                            sel.anim,
-                            sel.anim_frame,
-                        );
+                        let family_id = AnimElement::IkFamilyId;
+                        events.edit_bone(bone.id, &family_id, id as f32, sel.anim, sel.anim_frame);
                     }
                 })
                 .response
@@ -413,11 +415,11 @@ pub fn inverse_kinematics(
     let ik_id = bone.ik_family_id;
     let root_id = bones.iter().find(|b| b.ik_family_id == ik_id).unwrap().id;
 
-    let go_to_root_str = shared_ui.loc("bone_panel.inverse_kinematics.go_to-root");
+    let go_to_root_str = shared_ui.loc("bone_panel.inverse_kinematics.go_to_root");
     if root_id != bone.id {
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.button(go_to_root_str).clicked() {
+                if ui.skf_button(&go_to_root_str).clicked() {
                     let idx = bones.iter().position(|b| b.id == root_id).unwrap();
                     events.select_bone(idx, false);
                     selections.bone_ids = vec![];

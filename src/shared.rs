@@ -556,6 +556,10 @@ pub struct Ui {
     pub done_pending: bool,
     pub init_pending_mouse: Vec2,
     pub is_dragging_pending: bool,
+    pub crashed_last_time: bool,
+    pub never_donate: bool,
+    pub atlas_image: Option<Vec2>,
+    pub dragging_slice: usize,
     pub prev_pending_interp: Vec2,
     pub just_made_bone: bool,
     pub just_made_anim: bool,
@@ -589,12 +593,6 @@ pub struct Ui {
 
     pub saving: Arc<Mutex<Saving>>,
     pub save_finished: Arc<Mutex<bool>>,
-
-    pub crashed_last_time: bool,
-    pub never_donate: bool,
-    pub atlas_image: Option<Vec2>,
-    pub dragging_on_atlas: bool,
-    pub dragging_slice: usize,
 }
 
 impl Ui {

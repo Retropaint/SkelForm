@@ -23,14 +23,7 @@ pub fn draw(
     let panel_id = "Armature";
     let side_panel: egui::SidePanel;
     match config.layout {
-        UiLayout::Split => {
-            side_panel = egui::SidePanel::left(panel_id)
-                .default_width(min_default_size)
-                .min_width(min_default_size)
-                .max_width(min_default_size + 100.)
-                .resizable(true);
-        }
-        UiLayout::Left => {
+        UiLayout::Split | UiLayout::Left => {
             side_panel = egui::SidePanel::left(panel_id)
                 .default_width(min_default_size)
                 .min_width(min_default_size)
@@ -64,7 +57,6 @@ pub fn draw(
                 if armature.bones.len() == 0 {
                     return;
                 }
-                let mut selected_style = -1;
                 let dropdown = egui::ComboBox::new("styles", "")
                     .selected_text(&shared_ui.loc("armature_panel.styles"))
                     .width(80.)
@@ -76,7 +68,7 @@ pub fn draw(
                             let tick = if active { " 👁" } else { "" };
                             let mut name = armature.styles[s].name.to_string();
                             name = utils::trunc_str(ui, &name, ui.min_rect().width() - 20.);
-                            let label = ui.selectable_value(&mut selected_style, s as i32, name);
+                            let label = ui.selectable_value(&mut -1, s as i32, name);
                             ui.painter().text(
                                 label.rect.right_center(),
                                 egui::Align2::RIGHT_CENTER,
@@ -88,8 +80,9 @@ pub fn draw(
                                 events.toggle_style_active(s, !armature.styles[s].active);
                             }
                         }
-                        let label = ui.selectable_value(&mut selected_style, -2, "[Setup]");
+                        let label = ui.selectable_value(&mut -1, -2, "[Setup]");
                         if label.clicked() {
+                            shared_ui.styles_modal = true;
                             ui.close();
                         }
                     })
@@ -99,15 +92,6 @@ pub fn draw(
                 if shared_ui.focus_style_dropdown {
                     dropdown.request_focus();
                     shared_ui.focus_style_dropdown = false;
-                }
-                if selected_style == -2 {
-                    shared_ui.styles_modal = true;
-                } else if selected_style != -1 {
-                    events.select_style(selected_style as usize);
-                    for b in 0..armature.bones.len() {
-                        let bone = armature.bones[b].clone();
-                        events.set_bone_texture(bone.id as usize, bone.tex.clone());
-                    }
                 }
             });
         });
@@ -126,15 +110,8 @@ pub fn draw(
                 ui.style_mut().visuals.hyperlink_color = egui::Color32::from_rgb(94, 156, 255);
 
                 if armature.bones.len() != 0 {
-                    draw_hierarchy(
-                        ui,
-                        shared_ui,
-                        &selections,
-                        &armature,
-                        &config,
-                        &edit_mode,
-                        events,
-                    );
+                    #[rustfmt::skip]
+                    draw_hierarchy(ui, shared_ui, &selections, &armature, &config, &edit_mode, events);
                 } else {
                     let mut cache = egui_commonmark::CommonMarkCache::default();
                     let armature_str = shared_ui.loc("armature_panel.empty_armature");
@@ -277,10 +254,23 @@ pub fn draw_hierarchy(
 
                                 let has_tex = armature.tex_of(bone_id) != None;
 
+                                let is_target = armature
+                                    .bones
+                                    .iter()
+                                    .find(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
+
                                 let pic = if has_tex { "🖻  " } else { "" };
+                                let verts = if bone.verts_edited { "⬟ " } else { "" };
+                                let ik = if bone.ik_family_id != -1 {
+                                    "🔧".to_owned() + &bone.ik_family_id.to_string()
+                                } else {
+                                    "".to_string()
+                                };
+                                let target = if is_target != None { "⌖ " } else { "" };
+                                let icons = pic.to_owned() + verts + &ik + target;
                                 let mut pic_col = config.colors.dark_accent;
                                 pic_col += Color::new(40, 40, 40, 0);
-                                ui.label(egui::RichText::new(pic).color(pic_col))
+                                ui.label(egui::RichText::new(icons).color(pic_col));
                             });
                         });
                     })

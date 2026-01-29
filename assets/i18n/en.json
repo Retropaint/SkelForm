@@ -118,6 +118,7 @@
     "rotation": "Rotation:",
     "zindex": "Z-Index:",
     "bone_empty": "This bone currently has no texture and is an invisible point.\n\nTo add a texture to it, assign one via the Textures setup above.\n\nThis bone may be dragged in the Armature list, to change its order or to assign it as a child to another bone.",
+    "target_bone": "This is a target bone to ",
     "inverse_kinematics": {
       "heading": "Inverse Kinematics ℹ",
       "desc": "Automatically adjust and bend bones to reach a specified target.\nBest used for joints like shoulders and legs.\n\nAfter the joints have been set up, click the checkbox next to this header to activate IK.",
