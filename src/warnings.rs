@@ -25,14 +25,15 @@ pub fn check_warnings(armature: &Armature, selections: &SelectionState) -> Vec<W
                     same_warning.unwrap().ids.push(bone.id as usize);
                 } else {
                     let zindex = bone.zindex as f32;
-                    warnings.push(Warning::new(W::SameZIndex, vec![bone.id as usize], zindex));
+                    let bone_id = vec![bone.id as usize];
+                    warnings.push(Warning::valued(W::SameZIndex, bone_id, zindex));
                 }
             }
         }
 
         // Warning::NoIkTarget
         if armature.bone_eff(bone.id) == JointEffector::Start && bone.ik_target_id == -1 {
-            warnings.push(Warning::new(W::NoIkTarget, vec![bone.id as usize], 0.));
+            warnings.push(Warning::new(W::NoIkTarget, vec![bone.id as usize]));
         }
 
         // Warning::UnboundBind
@@ -40,27 +41,42 @@ pub fn check_warnings(armature: &Armature, selections: &SelectionState) -> Vec<W
         for b in 0..bone.binds.len() {
             let id = vec![bone.id as usize];
             if bone.binds[b].bone_id == -1 {
-                warnings.push(Warning::new(W::UnboundBind, id, b as f32));
+                warnings.push(Warning::valued(W::UnboundBind, id, b as f32));
             } else if bone.binds[b].verts.len() == 0 {
-                warnings.push(Warning::new(W::NoVertsInBind, id, b as f32));
+                warnings.push(Warning::valued(W::NoVertsInBind, id, b as f32));
             }
         }
 
         // Warning::NoVertsInBind
         if bone.binds.len() == 1 && bone.binds[0].is_path {
-            warnings.push(Warning::new(W::OnlyPath, vec![bone.id as usize], 0.));
+            warnings.push(Warning::new(W::OnlyPath, vec![bone.id as usize]));
         }
 
         // Warning::OnlyIk
+        // Warning::BoneOutOfFamily
         if armature.bone_eff(bone.id) == JointEffector::Start {
-            let families: Vec<i32> = armature
+            let mut family: Vec<&Bone> = armature
                 .bones
                 .iter()
-                .map(|b| b.ik_family_id)
-                .filter(|id| id == &bone.ik_family_id)
+                .filter(|b| b.ik_family_id == bone.ik_family_id)
                 .collect();
-            if families.len() == 1 {
-                warnings.push(Warning::new(W::OnlyIk, vec![bone.id as usize], 0.));
+            if family.len() == 1 {
+                warnings.push(Warning::new(W::OnlyIk, vec![bone.id as usize]));
+            } else {
+                // get all children that are part of this family
+                let mut children = vec![bone.clone()];
+                armature_window::get_all_children(&armature.bones, &mut children, bone);
+                children.retain(|b| b.ik_family_id == bone.ik_family_id);
+
+                if children.len() != family.len() {
+                    // get bones in this family that are not children (culprits)
+                    let children_ids: Vec<i32> = children.iter().map(|b| b.id).collect();
+                    family.retain(|b| !children_ids.contains(&b.id));
+                    let ids: Vec<usize> = family.iter().map(|f| f.id as usize).collect();
+
+                    let family_id = bone.ik_family_id as f32;
+                    warnings.push(Warning::valued(W::BoneOutOfFamily, ids, family_id));
+                }
             }
         }
 
@@ -74,24 +90,54 @@ pub fn check_warnings(armature: &Armature, selections: &SelectionState) -> Vec<W
                 }
             }
             if no_weights {
-                warnings.push(Warning::new(W::NoWeights, vec![bone.id as usize], b as f32));
+                let bone_id = vec![bone.id as usize];
+                warnings.push(Warning::valued(W::NoWeights, bone_id, b as f32));
             }
         }
     }
 
-    warnings.sort_by(|a, b| (a.warn_type.clone() as usize).cmp(&(b.warn_type.clone() as usize)));
+    // Warning::EmptyStyle
+    let mut empty_styles = armature.styles.clone();
+    empty_styles.retain(|s| s.textures.len() == 0);
+    if empty_styles.len() > 0 {
+        let ids: Vec<usize> = empty_styles.iter().map(|s| s.id as usize).collect();
+        warnings.push(Warning::new(W::EmptyStyles, ids));
+    }
 
+    // Warning::UnassignedTextures
+    {
+        let mut remaining_texes: Vec<String> = vec![];
+        for style in &armature.styles {
+            let mut tex_names: Vec<String> =
+                style.textures.iter().map(|t| t.name.clone()).collect();
+            remaining_texes.append(&mut tex_names);
+        }
+        remaining_texes.dedup();
+
+        let mut all_bone_tex_names: Vec<String> =
+            armature.bones.iter().map(|b| b.tex.clone()).collect();
+        all_bone_tex_names.dedup();
+
+        remaining_texes.retain(|name| !all_bone_tex_names.contains(name));
+        if remaining_texes.len() > 0 {
+            let warn = W::UnusedTextures;
+            warnings.push(Warning::full(warn, vec![], 0., remaining_texes));
+        }
+    }
+
+    warnings.sort_by(|a, b| (a.warn_type.clone() as usize).cmp(&(b.warn_type.clone() as usize)));
     warnings
 }
 
 pub fn warning_line(
     ui: &mut egui::Ui,
     warning: &Warning,
-    shared_ui: &crate::Ui,
+    shared_ui: &mut crate::Ui,
     armature: &Armature,
     events: &mut EventState,
 ) {
     let bones = &armature.bones;
+    let styles = &armature.styles;
 
     match warning.warn_type {
         W::SameZIndex => {
@@ -107,8 +153,8 @@ pub fn warning_line(
                 if i != warning.ids.len() - 1 {
                     str += ",";
                 }
-                if ui.clickable_label(str).clicked() {
-                    let bones = &armature.bones;
+                let egui_str = egui::RichText::new(str).underline();
+                if ui.clickable_label(egui_str).clicked() {
                     let idx = bones.iter().position(|b| b.id == id as i32).unwrap();
                     events.select_bone(idx, true);
                 };
@@ -159,6 +205,60 @@ pub fn warning_line(
                 .replace("$bone", &bone.unwrap().name)
                 .replace("$bind", &warning.value.to_string());
             clickable_bone(ui, armature, str, events, warning);
+        }
+        W::BoneOutOfFamily => {
+            let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
+            let str = shared_ui
+                .loc("warnings.BoneOutOfFamily")
+                .replace("$bone", &bone.unwrap().name)
+                .replace("$ik_family_id", &warning.value.to_string());
+            ui.vertical(|ui| {
+                ui.label(str);
+                ui.horizontal(|ui| {
+                    ui.label(shared_ui.loc("warnings.BoneOutOfFamilyCulprits"));
+                    for i in 0..warning.ids.len() {
+                        let id = warning.ids[i];
+                        let bone_name = &bones.iter().find(|b| b.id == id as i32).unwrap().name;
+                        let mut str = bone_name.to_string();
+                        if i != warning.ids.len() - 1 {
+                            str += ",";
+                        }
+                        let egui_str = egui::RichText::new(str).underline();
+                        if ui.clickable_label(egui_str).clicked() {
+                            let idx = bones.iter().position(|b| b.id == id as i32).unwrap();
+                            events.select_bone(idx, true);
+                        };
+                    }
+                });
+            });
+        }
+        W::EmptyStyles => {
+            let str = shared_ui.loc("warnings.EmptyStyles");
+            ui.label(egui::RichText::new(str));
+            for i in 0..warning.ids.len() {
+                let id = warning.ids[i];
+                let style_name = &styles.iter().find(|b| b.id == id as i32).unwrap().name;
+                let mut str = style_name.to_string();
+                if i != warning.ids.len() - 1 {
+                    str += ",";
+                }
+                let egui_str = egui::RichText::new(str).underline();
+                if ui.clickable_label(egui_str).clicked() {
+                    events.select_style(warning.ids[i]);
+                    shared_ui.styles_modal = true;
+                };
+            }
+        }
+        W::UnusedTextures => {
+            let str = shared_ui.loc("warnings.UnusedTextures");
+            ui.label(egui::RichText::new(str));
+            for s in 0..warning.str_values.len() {
+                let mut tex_str = "\"".to_owned() + &warning.str_values[s].clone() + "\"";
+                if s != warning.str_values.len() - 1 {
+                    tex_str += ",";
+                }
+                ui.label(tex_str);
+            }
         }
     }
 }

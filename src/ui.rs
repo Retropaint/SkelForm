@@ -1,5 +1,6 @@
 //! Core user interface (UI) logic.
 use egui::{Color32, Context, Shadow, Stroke};
+use modal::modal_x;
 
 use crate::*;
 
@@ -620,34 +621,40 @@ fn top_panel(
                     if warnings.clicked() {
                         shared_ui.warnings_open = !shared_ui.warnings_open;
                     }
-                    if shared_ui.warnings_open {
-                        let popup = egui::Popup::new(
-                            "warnings".into(),
-                            ui.ctx().clone(),
-                            &warnings,
-                            egui::LayerId::background(),
-                        );
-                        popup.show(|ui| {
-                            for w in 0..shared_ui.warnings.len() {
-                                let warning = &shared_ui.warnings[w];
-
-                                egui::Frame::new().show(ui, |ui| {
-                                    ui.horizontal(|ui| {
-                                        ui.set_width(ui.available_width().min(300.));
-                                        ui.set_height(21.);
-                                        ui.add_space(5.);
-                                        warnings::warning_line(
-                                            ui,
-                                            &shared_ui.warnings[w],
-                                            &shared_ui,
-                                            &armature,
-                                            events,
-                                        );
-                                    });
-                                });
-                            }
-                        });
+                    if !shared_ui.warnings_open {
+                        return;
                     }
+                    let popup = egui::Popup::new(
+                        "warnings".into(),
+                        ui.ctx().clone(),
+                        &warnings,
+                        egui::LayerId::background(),
+                    );
+                    popup.show(|ui| {
+                        ui.set_width(350.);
+                        ui.heading("Warnings");
+                        modal_x(ui, [0., 0.].into(), || {
+                            shared_ui.warnings_open = false;
+                        });
+                        ui.add_space(5.);
+                        for w in 0..shared_ui.warnings.len() {
+                            let warning = shared_ui.warnings[w].clone();
+
+                            egui::Frame::new().show(ui, |ui| {
+                                ui.horizontal(|ui| {
+                                    ui.set_height(21.);
+                                    ui.add_space(5.);
+                                    warnings::warning_line(
+                                        ui, &warning, shared_ui, &armature, events,
+                                    );
+                                });
+                            });
+
+                            if w != shared_ui.warnings.len() - 1 {
+                                ui.separator();
+                            }
+                        }
+                    });
                 })
             })
         });

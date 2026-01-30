@@ -86,7 +86,7 @@ pub fn draw(
     };
 
     let mut selected_tex = bone.tex.clone();
-    let mut tex_name = if tex != None {
+    let mut tex_name = if bone.tex != "" {
         bone.tex.clone()
     } else {
         shared_ui.loc("none")

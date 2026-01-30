@@ -495,7 +495,10 @@ pub enum Warnings {
     UnboundBind,
     NoVertsInBind,
     OnlyPath,
-    NoWeights
+    NoWeights,
+    BoneOutOfFamily,
+    EmptyStyles,
+    UnusedTextures,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -503,14 +506,34 @@ pub struct Warning {
     pub warn_type: Warnings,
     pub ids: Vec<usize>,
     pub value: f32,
+    pub str_values: Vec<String>,
 }
 
 impl Warning {
-    pub fn new(warn_type: Warnings, ids: Vec<usize>, value: f32) -> Self {
+    pub fn new(warn_type: Warnings, ids: Vec<usize>) -> Self {
+        Self {
+            warn_type,
+            ids,
+            value: 0.,
+            str_values: vec![],
+        }
+    }
+
+    pub fn valued(warn_type: Warnings, ids: Vec<usize>, value: f32) -> Self {
         Self {
             warn_type,
             ids,
             value,
+            str_values: vec![],
+        }
+    }
+
+    pub fn full(warn_type: Warnings, ids: Vec<usize>, value: f32, str_values: Vec<String>) -> Self {
+        Self {
+            warn_type,
+            ids,
+            value,
+            str_values,
         }
     }
 }

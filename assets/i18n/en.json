@@ -269,12 +269,16 @@
     "unsaved": "Are you sure you want to quit and discard unsaved changes?\n\n(Click 'Yes' to confirm)"
   },
   "warnings": {
-    "SameZIndex": "$bone_count bones have a Z-index of $zindex: ",
+    "SameZIndex": "$bone_count bones have a Z-index of $zindex:",
     "NoIkTarget": "$bone has no IK target.",
     "UnboundBind": "$bone's bind $bind has no bone attached.",
     "NoVertsInBind": "$bone's bind $bind has no vertices.",
     "OnlyPath": "$bone can't have a single bind that's a path.",
     "OnlyIk": "$bone is the only bone IK family $ik_family_id.",
-    "NoWeights": "$bone's bind $bind has all weights set to 0."
+    "NoWeights": "$bone's bind $bind has all weights set to 0.",
+    "BoneOutOfFamily": "Bones of IK family $ik_family_id are not all within the same root.",
+    "BoneOutOfFamilyCulprits": "Culprits:",
+    "EmptyStyles": "These styles have no textures:",
+    "UnusedTextures": "These textures are unused:"
   }
 }
