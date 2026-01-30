@@ -339,7 +339,7 @@ pub fn draw_bones_list(
         .id_salt("bones_list")
         .vertical_scroll_offset(shared_ui.anim.timeline_offset.y)
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
-    scroll_area.show(ui, |ui| {
+    let response = scroll_area.show(ui, |ui| {
         // sort keyframes by element & bone
         let mut keyframes = armature.sel_anim(sel).unwrap().keyframes.clone();
         keyframes.sort_by(|a, b| (a.element.clone() as i32).cmp(&(b.element.clone() as i32)));
@@ -409,7 +409,13 @@ pub fn draw_bones_list(
                 });
             });
         }
+
+        ui.add_space(20.);
     });
+
+    if ui.ui_contains_pointer() {
+        shared_ui.anim.timeline_offset.y = response.state.offset.y;
+    }
 }
 
 pub fn draw_top_bar(
@@ -558,7 +564,7 @@ pub fn draw_timeline_graph(
             .fill(config.colors.light_accent.into())
             .inner_margin(3);
         frame.show(ui, |ui| {
-            let response = egui::ScrollArea::both().id_salt("test").show(ui, |ui| {
+            let response = egui::ScrollArea::both().scroll_offset(shared_ui.anim.timeline_offset.into()).id_salt("test").show(ui, |ui| {
                 ui.set_width(width);
                 ui.set_height(ui.available_height());
 
@@ -585,7 +591,9 @@ pub fn draw_timeline_graph(
                 #[rustfmt::skip]
                 draw_frame_lines(ui, shared_ui, armature, config, input, selections, events, &bone_tops, hitbox, cursor);
             });
-            shared_ui.anim.timeline_offset = response.state.offset.into();
+            if ui.ui_contains_pointer() {
+                shared_ui.anim.timeline_offset = response.state.offset.into();
+            }
             shared_ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
         });
     });
@@ -787,9 +795,6 @@ fn draw_frame_lines(
         },
     );
 
-    // used to determine lowest rendered icon, to add extra space at the bottom
-    let mut height = 0.;
-
     // draw per-change icons
     let sel_anim = &armature.animations[selections.anim];
     for i in 0..sel_anim.keyframes.len() {
@@ -810,10 +815,6 @@ fn draw_frame_lines(
         let x = shared_ui.anim.lines_x[kf.frame as usize] + ui.min_rect().left();
         let pos = Vec2::new(x, top + size.y / 2.);
         let offset = size / 2.;
-
-        if top > height {
-            height = top;
-        }
 
         let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
         let mut idx = kf.element.clone().clone() as usize;
@@ -890,7 +891,11 @@ fn draw_frame_lines(
     }
 
     // create extra space at the bottom
-    let rect = egui::Rect::from_min_size(egui::pos2(0., height), egui::Vec2::new(1., 40.));
+    let rect = egui::Rect::from_min_size(
+        egui::pos2(0., bone_tops.tops.last().unwrap().height),
+        egui::Vec2::new(1., 40.),
+    );
+    ui.add_space(40.);
     ui.allocate_rect(rect, egui::Sense::empty());
 }
 
