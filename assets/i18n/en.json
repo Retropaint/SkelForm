@@ -108,11 +108,11 @@
     "styles_desc": "Create a style, add textures, then assign bones to use it. Click on styles in the dropdown to toggle them.\n\nBones use textures based on their index. To change it, select a bone > 'Tex Index'.\n\nMultiple styles can be active at once. Bones assinged to multiple active styles will use the top-most first.",
     "empty_armature": "Don't forget - if in doubt, consult the [User Documentation](user-docs/index.html).\n\nIf you're new here, check out the [Starter Guide](user-docs/starter-guide/main.html).\n\nYou may import a PSD (File > Import), provided it has the [right structure](user-docs/psd.html).\n\nClick **New Bone** above to get started with your armature.",
     "icons": {
-      "tex": "This bone has a texture.",
-      "tex_inactive": "This bone has a texture, but no active styles contain it.",
-      "mesh": "This bone's texture is a mesh.",
-      "ik_family": "This bone is of IK family $family_id.",
-      "ik_target": "This bone is the target of IK family $family_id."
+      "tex": "Texture - $tex",
+      "tex_inactive": "Texture - $tex (no active styles to display)",
+      "mesh": "Contains mesh",
+      "ik_family": "Inverse kinematics family #$family_id",
+      "ik_target": "Target of inverse kinematics family #$family_id"
     }
   },
   "bone_panel": {
@@ -127,7 +127,7 @@
     "bone_empty": "This bone currently has no texture and is an invisible point.\n\nTo add a texture to it, assign one via the Textures setup above.\n\nThis bone may be dragged in the Armature list, to change its order or to assign it as a child to another bone.",
     "target_bone": "This is a target bone to ",
     "inverse_kinematics": {
-      "heading": "Inverse Kinematics ℹ",
+      "heading": "Inverse Kinematics",
       "desc": "Automatically adjust and bend bones to reach a specified target.\nBest used for joints like shoulders and legs.\n\nAfter the joints have been set up, click the checkbox next to this header to activate IK.",
       "enabled_desc": "Should inverse kinematics be running for this set of joints?\n\nUntick this to allow setting up joint positions and rotations.",
       "effector": "Effector: ",
@@ -148,7 +148,7 @@
       "go_to_root": "Go to root joint"
     },
     "mesh_deformation": {
-      "heading": "Mesh Deformation ℹ",
+      "heading": "Mesh Deformation",
       "desc": "Turn this texture into a deformable mesh. Vertices can be bound to other bones with custom weights to influence them.",
       "edit": "Edit Vertices",
       "finish_edit": "Finish",
@@ -169,7 +169,7 @@
       "no_bound_verts": "Click `Bind Verts` to add vertices to this bind. Click again to stop adding.\n\nOnce added, their weights will be configurable here.\n\n"
     },
     "texture_effects": {
-      "heading": "Texture Effects"
+      "heading": "Texture & Visuals"
     }
   },
   "polar": {
@@ -279,8 +279,8 @@
   },
   "warnings": {
     "heading": "Warnings ℹ",
-    "desc": "These are quirks that need your attention to fix.\n\nRuntimes may have issues with this armature if not dealt with.",
-    "SameZIndex": "$bone_count bones have a Z-index of $zindex:",
+    "desc": "These are quirks that need your attention to fix.\nRuntimes may have issues with this armature if not dealt with.",
+    "SameZIndex": "$bone_count bones with Z-index of $zindex:",
     "NoIkTarget": "$bone has no IK target.",
     "UnboundBind": "$bone's bind $bind has no bone attached.",
     "NoVertsInBind": "$bone's bind $bind has no vertices.",
@@ -289,7 +289,7 @@
     "NoWeights": "$bone's bind $bind has all weights set to 0.",
     "BoneOutOfFamily": "Bones of IK family $ik_family_id are not all within the same root.",
     "BoneOutOfFamilyCulprits": "Culprits:",
-    "EmptyStyles": "These styles have no textures:",
-    "UnusedTextures": "These textures are unused:"
+    "EmptyStyles": "Styles with no textures:",
+    "UnusedTextures": "Unused textures:"
   }
 }

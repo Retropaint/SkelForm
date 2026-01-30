@@ -267,18 +267,26 @@ pub fn draw_hierarchy(
                                     .insert(egui::TextStyle::Body, egui::FontId::monospace(14.0));
 
                                 if armature.tex_of(bone.id) != None {
-                                    icon_label(ui, "🖻", shared_ui.loc("armature_panel.icons.tex"));
+                                    let str = shared_ui
+                                        .loc("armature_panel.icons.tex")
+                                        .replace("$tex", &bone.tex);
+                                    icon_label(ui, "🖻", str, Color::new(200, 200, 200, 125));
                                 } else if bone.tex != "" {
-                                    let str = shared_ui.loc("armature_panel.icons.tex_inactive");
-                                    icon_label(ui, "🗋", str);
+                                    let str = shared_ui
+                                        .loc("armature_panel.icons.tex_inactive")
+                                        .replace("$tex", &bone.tex);
+                                    icon_label(ui, "🗋", str, Color::new(175, 175, 175, 125));
                                 };
                                 if bone.verts_edited {
-                                    icon_label(ui, "⬟", shared_ui.loc("armature_panel.icons.mesh"));
+                                    let mesh_str = shared_ui.loc("armature_panel.icons.mesh");
+                                    icon_label(ui, "⬟", mesh_str, Color::new(0, 125, 20, 125));
                                 }
                                 if bone.ik_family_id != -1 {
                                     let icon = "🔧".to_owned() + &bone.ik_family_id.to_string();
-                                    let desc = shared_ui.loc("armature_panel.icons.ik_family");
-                                    icon_label(ui, &icon, desc);
+                                    let desc = shared_ui
+                                        .loc("armature_panel.icons.ik_family")
+                                        .replace("$family_id", &bone.ik_family_id.to_string());
+                                    icon_label(ui, &icon, desc, Color::new(175, 175, 0, 125));
                                 }
                                 if is_target != None {
                                     let family_id = is_target.unwrap().ik_family_id.to_string();
@@ -286,7 +294,9 @@ pub fn draw_hierarchy(
                                     let desc = shared_ui
                                         .loc("armature_panel.icons.ik_target")
                                         .replace("$family_id", &family_id);
-                                    icon_label(ui, &icon, desc);
+                                    let inc = 20 * is_target.unwrap().ik_family_id as u8;
+                                    let color = Color::new(90, 90 + inc, 150 + inc, 125);
+                                    icon_label(ui, &icon, desc, color);
                                 }
                             });
                         });
@@ -433,8 +443,8 @@ pub fn get_all_children(bones: &Vec<Bone>, children_vec: &mut Vec<Bone>, parent:
     }
 }
 
-fn icon_label(ui: &mut egui::Ui, icon: &str, desc: String) {
-    let label = ui.label(icon);
+fn icon_label(ui: &mut egui::Ui, icon: &str, desc: String, color: Color) {
+    let label = ui.label(egui::RichText::new(icon).color(color));
     if label.contains_pointer() {
         label.show_tooltip_text(desc);
     }

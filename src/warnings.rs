@@ -258,7 +258,7 @@ pub fn warning_line(
             let str = shared_ui.loc("warnings.UnusedTextures");
             ui.label(egui::RichText::new(str).color(warn_color));
             for s in 0..warning.str_values.len() {
-                let mut tex_str = "\"".to_owned() + &warning.str_values[s].clone() + "\"";
+                let mut tex_str = warning.str_values[s].clone();
                 if s != warning.str_values.len() - 1 {
                     tex_str += ",";
                 }
