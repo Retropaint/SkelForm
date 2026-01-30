@@ -1927,6 +1927,7 @@ pub enum Events {
     RemoveVertex,
     RemoveTriangle,
     RemoveKeyframesByFrame,
+    DeleteKeyframesByBoneElement,
 
     CopyBone,
     PasteBone,
@@ -2277,6 +2278,12 @@ impl EventState {
         self.events.push(Events::SetKeyframeTransition);
         self.values.push(frame as f32);
         self.values.push((transition as usize) as f32);
+    }
+
+    pub fn delete_keyframes_by_bone_element(&mut self, bone_id: usize, element: &AnimElement) {
+        self.events.push(Events::DeleteKeyframesByBoneElement);
+        self.values.push(bone_id as f32);
+        self.values.push((element.clone() as usize) as f32);
     }
 }
 

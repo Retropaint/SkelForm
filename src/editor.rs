@@ -34,7 +34,7 @@ pub fn iterate_events(
             match last_event {
                 E::NewBone | E::DragBone | E::DeleteBone => undo_states.new_undo_bones(&armature.bones),
                 E::NewAnimation | E::DeleteAnim          => undo_states.new_undo_anims(&armature.animations),
-                E::DeleteKeyframe                        => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
+                E::DeleteKeyframe | E::DeleteKeyframesByBoneElement => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
                 E::DeleteTex                             => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
                 E::DeleteStyle | E::NewStyle             => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
@@ -48,7 +48,18 @@ pub fn iterate_events(
             };
     }
 
-    if event == Events::SetKeyframeTransition {
+    if event == Events::DeleteKeyframesByBoneElement {
+        armature
+            .sel_anim_mut(&selections)
+            .unwrap()
+            .keyframes
+            .retain(|kf| {
+                !(kf.bone_id == events.values[0] as i32
+                    && kf.element == AnimElement::from_repr(events.values[1] as usize).unwrap())
+            });
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::SetKeyframeTransition {
         for kf in &mut armature.sel_anim_mut(&selections).unwrap().keyframes {
             if kf.frame == events.values[0] as i32 {
                 kf.transition = Transition::from_repr(events.values[1] as usize).unwrap();

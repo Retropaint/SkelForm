@@ -251,7 +251,15 @@ fn timeline_editor(
             });
             frame.show(ui, |ui| {
                 ui.vertical(|ui| {
-                    draw_bones_list(ui, &mut bone_tops, selections, armature, shared_ui, events);
+                    draw_bones_list(
+                        ui,
+                        &mut bone_tops,
+                        selections,
+                        armature,
+                        config,
+                        shared_ui,
+                        events,
+                    );
                 });
             });
         }
@@ -321,9 +329,11 @@ pub fn draw_bones_list(
     bone_tops: &mut BoneTops,
     selections: &SelectionState,
     armature: &Armature,
+    config: &Config,
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
 ) {
+    ui.set_width(150.);
     let sel = &selections;
     let scroll_area = egui::ScrollArea::vertical()
         .id_salt("bones_list")
@@ -336,6 +346,7 @@ pub fn draw_bones_list(
         keyframes.sort_by(|a, b| a.bone_id.cmp(&b.bone_id));
 
         let mut last_bone_id = -1;
+        let mut first = true;
 
         // keep track of elements, to prevent showing multiple of the same
         let mut added_elements: Vec<AnimElement> = vec![];
@@ -344,6 +355,10 @@ pub fn draw_bones_list(
             let kf = &keyframes[i];
 
             if last_bone_id != kf.bone_id {
+                if !first {
+                    ui.separator();
+                }
+                first = false;
                 let bones = &armature.bones;
                 let bone = bones.iter().find(|b| b.id == kf.bone_id).unwrap();
                 let label = ui
@@ -377,6 +392,16 @@ pub fn draw_bones_list(
                 ui.add_space(30.);
                 let str = &("keyframe_editor.elements.".to_owned() + &kf.element.to_string());
                 let label = ui.label(&shared_ui.loc(str));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let mut col = config.colors.text;
+                    col -= Color::new(60, 60, 60, 0);
+                    let text = egui::RichText::new("🗑").size(15.).color(col);
+                    let pointing_hand = egui::CursorIcon::PointingHand;
+                    let label = ui.label(text).on_hover_cursor(pointing_hand);
+                    if label.clicked() {
+                        events.delete_keyframes_by_bone_element(kf.bone_id as usize, &kf.element);
+                    }
+                });
                 bone_tops.tops.push(BoneTop {
                     id: kf.bone_id,
                     element: kf.element.clone(),
@@ -675,6 +700,9 @@ fn draw_frame_lines(
 ) {
     shared_ui.anim.lines_x = vec![];
 
+    let mut selected_line_x = 0.;
+    let mut hovered_line_x = 0.;
+
     let mut x = 0.;
     let mut i = 0;
     while x < ui.min_rect().width() {
@@ -699,7 +727,9 @@ fn draw_frame_lines(
 
         if selections.anim_frame == i {
             color = egui::Color32::WHITE;
+            selected_line_x = ui.min_rect().left() + x;
         } else if !in_modal && in_ui && cur.x < x + hitbox && cur.x > x - hitbox && above_bar {
+            hovered_line_x = ui.min_rect().left() + x;
             shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
             color = egui::Color32::WHITE;
 
@@ -718,6 +748,44 @@ fn draw_frame_lines(
 
         i += 1;
     }
+
+    let mut last_bone = -1;
+    let mut count = 0;
+    for top in &bone_tops.tops {
+        if count < 2 {
+            count += 1;
+            continue;
+        }
+        if last_bone != top.id {
+            let range = egui::Rangef::new(0., ui.available_width());
+            let mut col = config.colors.dark_accent;
+            col -= Color::new(20, 20, 20, 0);
+            let color = egui::Stroke::new(1.5, config.colors.dark_accent);
+            ui.painter().hline(range, top.height - 25.5, color);
+        }
+        last_bone = top.id;
+        continue;
+    }
+
+    // draw selected line
+    ui.painter().vline(
+        hovered_line_x,
+        egui::Rangef { min: 0., max: 999. },
+        Stroke {
+            width: 2.,
+            color: egui::Color32::WHITE,
+        },
+    );
+
+    // draw selected line
+    ui.painter().vline(
+        selected_line_x,
+        egui::Rangef { min: 0., max: 999. },
+        Stroke {
+            width: 2.,
+            color: egui::Color32::WHITE,
+        },
+    );
 
     // used to determine lowest rendered icon, to add extra space at the bottom
     let mut height = 0.;
