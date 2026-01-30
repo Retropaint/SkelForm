@@ -106,7 +106,14 @@
     "new_bone_name": "New Bone",
     "styles": "👕 Styles",
     "styles_desc": "Create a style, add textures, then assign bones to use it. Click on styles in the dropdown to toggle them.\n\nBones use textures based on their index. To change it, select a bone > 'Tex Index'.\n\nMultiple styles can be active at once. Bones assinged to multiple active styles will use the top-most first.",
-    "empty_armature": "Don't forget - if in doubt, consult the [User Documentation](user-docs/index.html).\n\nIf you're new here, check out the [Starter Guide](user-docs/starter-guide/main.html).\n\nYou may import a PSD (File > Import), provided it has the [right structure](user-docs/psd.html).\n\nClick **New Bone** above to get started with your armature."
+    "empty_armature": "Don't forget - if in doubt, consult the [User Documentation](user-docs/index.html).\n\nIf you're new here, check out the [Starter Guide](user-docs/starter-guide/main.html).\n\nYou may import a PSD (File > Import), provided it has the [right structure](user-docs/psd.html).\n\nClick **New Bone** above to get started with your armature.",
+    "icons": {
+      "tex": "This bone has a texture.",
+      "tex_inactive": "This bone has a texture, but no active styles contain it.",
+      "mesh": "This bone's texture is a mesh.",
+      "ik_family": "This bone is of IK family $family_id.",
+      "ik_target": "This bone is the target of IK family $family_id."
+    }
   },
   "bone_panel": {
     "heading": "Bone",
@@ -269,6 +276,7 @@
     "unsaved": "Are you sure you want to quit and discard unsaved changes?\n\n(Click 'Yes' to confirm)"
   },
   "warnings": {
+    "heading": "Warnings",
     "SameZIndex": "$bone_count bones have a Z-index of $zindex:",
     "NoIkTarget": "$bone has no IK target.",
     "UnboundBind": "$bone's bind $bind has no bone attached.",

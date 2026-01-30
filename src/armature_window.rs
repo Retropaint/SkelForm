@@ -252,29 +252,42 @@ pub fn draw_hierarchy(
                                 ui.add_space(5.);
                                 ui.label(egui::RichText::new(name).color(text_col));
 
+                                let mut icon_col = config.colors.dark_accent;
+                                icon_col += Color::new(40, 40, 40, 0);
+
                                 let is_target = armature
                                     .bones
                                     .iter()
                                     .find(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
 
-                                let pic = if armature.tex_of(bone.id) != None {
-                                    "🖻  "
+                                ui.spacing_mut().item_spacing.x = 5.;
+                                ui.style_mut().visuals.override_text_color = Some(icon_col.into());
+                                ui.style_mut()
+                                    .text_styles
+                                    .insert(egui::TextStyle::Body, egui::FontId::monospace(14.0));
+
+                                if armature.tex_of(bone.id) != None {
+                                    icon_label(ui, "🖻", shared_ui.loc("armature_panel.icons.tex"));
                                 } else if bone.tex != "" {
-                                    "🗋 "
-                                } else {
-                                    ""
+                                    let str = shared_ui.loc("armature_panel.icons.tex_inactive");
+                                    icon_label(ui, "🗋", str);
                                 };
-                                let verts = if bone.verts_edited { "⬟ " } else { "" };
-                                let ik = if bone.ik_family_id != -1 {
-                                    "🔧".to_owned() + &bone.ik_family_id.to_string()
-                                } else {
-                                    "".to_string()
-                                };
-                                let target = if is_target != None { "⌖ " } else { "" };
-                                let icons = pic.to_owned() + verts + &ik + target;
-                                let mut icon_col = config.colors.dark_accent;
-                                icon_col += Color::new(40, 40, 40, 0);
-                                ui.label(egui::RichText::new(icons).color(icon_col));
+                                if bone.verts_edited {
+                                    icon_label(ui, "⬟", shared_ui.loc("armature_panel.icons.mesh"));
+                                }
+                                if bone.ik_family_id != -1 {
+                                    let icon = "🔧".to_owned() + &bone.ik_family_id.to_string();
+                                    let desc = shared_ui.loc("armature_panel.icons.ik_family");
+                                    icon_label(ui, &icon, desc);
+                                }
+                                if is_target != None {
+                                    let family_id = is_target.unwrap().ik_family_id.to_string();
+                                    let icon = "⌖".to_owned() + &family_id;
+                                    let desc = shared_ui
+                                        .loc("armature_panel.icons.ik_target")
+                                        .replace("$family_id", &family_id);
+                                    icon_label(ui, &icon, desc);
+                                }
                             });
                         });
                     })
@@ -417,5 +430,12 @@ pub fn get_all_children(bones: &Vec<Bone>, children_vec: &mut Vec<Bone>, parent:
         }
         children_vec.push(bones[idx + j].clone());
         get_all_children(bones, children_vec, &bones[idx + j]);
+    }
+}
+
+fn icon_label(ui: &mut egui::Ui, icon: &str, desc: String) {
+    let label = ui.label(icon);
+    if label.contains_pointer() {
+        label.show_tooltip_text(desc);
     }
 }

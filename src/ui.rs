@@ -632,7 +632,7 @@ fn top_panel(
                     );
                     popup.show(|ui| {
                         ui.set_width(350.);
-                        ui.heading("Warnings");
+                        ui.heading(shared_ui.loc("warnings.heading"));
                         modal_x(ui, [0., 0.].into(), || {
                             shared_ui.warnings_open = false;
                         });
