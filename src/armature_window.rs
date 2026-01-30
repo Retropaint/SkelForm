@@ -252,14 +252,18 @@ pub fn draw_hierarchy(
                                 ui.add_space(5.);
                                 ui.label(egui::RichText::new(name).color(text_col));
 
-                                let has_tex = armature.tex_of(bone_id) != None;
-
                                 let is_target = armature
                                     .bones
                                     .iter()
                                     .find(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
 
-                                let pic = if has_tex { "🖻  " } else { "" };
+                                let pic = if armature.tex_of(bone.id) != None {
+                                    "🖻  "
+                                } else if bone.tex != "" {
+                                    "🗋 "
+                                } else {
+                                    ""
+                                };
                                 let verts = if bone.verts_edited { "⬟ " } else { "" };
                                 let ik = if bone.ik_family_id != -1 {
                                     "🔧".to_owned() + &bone.ik_family_id.to_string()
@@ -268,9 +272,9 @@ pub fn draw_hierarchy(
                                 };
                                 let target = if is_target != None { "⌖ " } else { "" };
                                 let icons = pic.to_owned() + verts + &ik + target;
-                                let mut pic_col = config.colors.dark_accent;
-                                pic_col += Color::new(40, 40, 40, 0);
-                                ui.label(egui::RichText::new(icons).color(pic_col));
+                                let mut icon_col = config.colors.dark_accent;
+                                icon_col += Color::new(40, 40, 40, 0);
+                                ui.label(egui::RichText::new(icons).color(icon_col));
                             });
                         });
                     })
