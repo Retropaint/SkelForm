@@ -77,60 +77,6 @@ pub fn draw(
         }
     });
 
-    let tex = armature.anim_tex_of(bone.id);
-
-    let tex_name_col = if tex != None {
-        config.colors.text
-    } else {
-        config.colors.light_accent + Color::new(60, 60, 60, 0)
-    };
-
-    let mut selected_tex = bone.tex.clone();
-    let mut tex_name = if bone.tex != "" {
-        bone.tex.clone()
-    } else {
-        shared_ui.loc("none")
-    };
-    ui.horizontal(|ui| {
-        ui.label(&shared_ui.loc("bone_panel.texture"));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            tex_name = utils::trunc_str(ui, &tex_name, 100.);
-            let combo_box = egui::ComboBox::new("tex_selector", "")
-                .width(100.)
-                .selected_text(egui::RichText::new(tex_name).color(tex_name_col));
-            combo_box.show_ui(ui, |ui| {
-                let mut texes = vec![];
-                for style in &armature.styles {
-                    let textures = style.textures.iter();
-                    let mut names = textures.map(|t| t.name.clone()).collect::<Vec<String>>();
-                    texes.append(&mut names);
-                }
-
-                // remove duplicates
-                texes.sort_unstable();
-                texes.dedup();
-
-                ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
-                for tex in texes {
-                    let name = utils::trunc_str(ui, &tex.clone(), ui.min_rect().width());
-                    ui.selectable_value(&mut selected_tex, tex.clone(), &name);
-                }
-                ui.selectable_value(&mut selected_tex, "[Setup]".to_string(), "[Setup]");
-            });
-        });
-    });
-
-    if selected_tex == "[Setup]" {
-        shared_ui.styles_modal = true;
-    } else if selected_tex != bone.tex {
-        let mut anim_id = selections.anim;
-        if !shared_ui.is_animating(&edit_mode, &selections) {
-            anim_id = usize::MAX;
-        }
-
-        armature.set_bone_tex(bone.id, selected_tex, anim_id, selections.anim_frame);
-    }
-
     let mut edited = false;
 
     // Backbone of editable bone fields. Do not use by itself, instead refer to `input!`.
@@ -216,23 +162,13 @@ pub fn draw(
     .response
     .on_disabled_hover_text(str_cant_edit);
 
-    ui.horizontal(|ui| {
-        label!(&shared_ui.loc("bone_panel.zindex"), ui);
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let mut zindex = bone.zindex as f32;
-            input!(zindex, "zindex", &AnimElement::Zindex, 1., ui, "");
-            bone.zindex = zindex as i32;
-        });
-    });
-
     let mut children = vec![];
     armature_window::get_all_children(&armature.bones, &mut children, &bone);
     let parents = armature.get_all_parents(bone.id);
 
-    let section_spacing = 10.;
+    ui.add_space(20.);
 
     // show 'IK root bone' button if this is a target bone
-    ui.add_space(10.);
     let is_target_of = armature
         .bones
         .iter()
@@ -243,41 +179,36 @@ pub fn draw(
         if ui.skf_button("Go to IK bone").clicked() {
             events.select_bone(is_target_of.unwrap(), false);
         };
+        ui.add_space(20.);
     }
-    ui.add_space(5.);
 
-    if children.len() == 0
-        && parents.len() == 0
-        && bone.vertices.len() == 0
-        && armature.tex_of(bone.id) == None
-    {
+    #[rustfmt::skip]
+    texture_effects(ui, &mut bone, shared_ui, &selections, config, &edit_mode, &input, armature, events);
+    ui.add_space(20.);
+
+    if children.len() == 0 && parents.len() == 0 && bone.tex == "" {
         ui.add_space(10.);
         let mut cache = egui_commonmark::CommonMarkCache::default();
         let loc = shared_ui.loc("bone_panel.bone_empty").to_string();
         let str = utils::markdown(loc, shared_ui.local_doc_url.to_string());
-        egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
+        //egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
+    }
+
+    if bone.vertices.len() > 0 && armature.tex_of(bone.id) != None {
+        mesh_deformation(
+            ui, &bone, shared_ui, events, config, selections, armature, edit_mode,
+        );
+        ui.add_space(20.);
     }
 
     if children.len() > 0 || parents.len() > 0 {
-        ui.add_space(section_spacing);
         inverse_kinematics(ui, &bone, selections, shared_ui, config, armature, events);
         if !bone.ik_folded {
             ui.add_space(20.);
         }
     }
 
-    if armature.tex_of(bone.id) == None || bone.vertices.len() == 0 {
-        return;
-    }
-
-    mesh_deformation(
-        ui, &bone, shared_ui, events, config, selections, armature, edit_mode,
-    );
-
     ui.add_space(20.);
-
-    #[rustfmt::skip]
-    texture_effects(ui, &bone, shared_ui, &selections, config, &edit_mode, &input, events);
 }
 
 pub fn inverse_kinematics(
@@ -306,6 +237,11 @@ pub fn inverse_kinematics(
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
             ui.label(str_heading.to_owned()).on_hover_text(str_desc);
+            ui.label(
+                egui::RichText::new("🔧")
+                    .size(16.)
+                    .color(Color::new(175, 175, 0, 125)),
+            );
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
@@ -550,6 +486,7 @@ pub fn mesh_deformation(
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
             ui.label(str_heading.to_owned()).on_hover_text(str_desc);
+            ui.label(egui::RichText::new("⬟").color(Color::new(0, 175, 0, 125)));
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let fold_icon = if bone.meshdef_folded { "⏴" } else { "⏷" };
@@ -778,22 +715,23 @@ pub fn open_file_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mu
 
 pub fn texture_effects(
     ui: &mut egui::Ui,
-    bone: &Bone,
+    bone: &mut Bone,
     shared_ui: &mut crate::Ui,
     selections: &SelectionState,
     config: &Config,
     edit_mode: &EditMode,
     input: &InputStates,
+    armature: &Armature,
     events: &mut EventState,
 ) {
     let str_heading = &shared_ui.loc("bone_panel.texture_effects.heading").clone();
-
     let frame = egui::Frame::new()
         .fill(config.colors.dark_accent.into())
         .inner_margin(egui::Margin::same(5));
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
             ui.label(str_heading.to_owned());
+            ui.label(egui::RichText::new("🖻").color(Color::new(200, 200, 200, 125)));
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let fold_icon = if bone.effects_folded { "⏴" } else { "⏷" };
@@ -809,6 +747,55 @@ pub fn texture_effects(
 
     if bone.effects_folded {
         return;
+    }
+
+    let tex = armature.anim_tex_of(bone.id);
+
+    let tex_name_col = if tex != None {
+        config.colors.text
+    } else {
+        config.colors.light_accent + Color::new(60, 60, 60, 0)
+    };
+
+    let mut selected_tex = bone.tex.clone();
+    let mut tex_name = if bone.tex != "" {
+        bone.tex.clone()
+    } else {
+        shared_ui.loc("none")
+    };
+    ui.horizontal(|ui| {
+        ui.label(&shared_ui.loc("bone_panel.texture"));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            tex_name = utils::trunc_str(ui, &tex_name, 100.);
+            let combo_box = egui::ComboBox::new("tex_selector", "")
+                .width(100.)
+                .selected_text(egui::RichText::new(tex_name).color(tex_name_col));
+            combo_box.show_ui(ui, |ui| {
+                let mut texes = vec![];
+                for style in &armature.styles {
+                    let textures = style.textures.iter();
+                    let mut names = textures.map(|t| t.name.clone()).collect::<Vec<String>>();
+                    texes.append(&mut names);
+                }
+
+                // remove duplicates
+                texes.sort_unstable();
+                texes.dedup();
+
+                ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
+                for tex in texes {
+                    let name = utils::trunc_str(ui, &tex.clone(), ui.min_rect().width());
+                    ui.selectable_value(&mut selected_tex, tex.clone(), &name);
+                }
+                ui.selectable_value(&mut selected_tex, "[Setup]".to_string(), "[Setup]");
+            });
+        });
+    });
+
+    if selected_tex == "[Setup]" {
+        shared_ui.styles_modal = true;
+    } else if selected_tex != bone.tex {
+        events.set_bone_texture(bone.id as usize, selected_tex);
     }
 
     ui.horizontal(|ui| {
@@ -831,6 +818,20 @@ pub fn texture_effects(
             events.edit_bone(bone.id, &AnimElement::TintG, col[1], anim_id, frame);
             events.edit_bone(bone.id, &AnimElement::TintB, col[2], anim_id, frame);
             events.edit_bone(bone.id, &AnimElement::TintA, col[3], anim_id, frame);
+        });
+    });
+
+    ui.horizontal(|ui| {
+        ui.label(&shared_ui.loc("bone_panel.zindex"));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let zindex = bone.zindex as f32;
+            let (edited, value, _) =
+                ui.float_input("zindex".to_string(), shared_ui, zindex, 1., None);
+            if edited {
+                let el = &AnimElement::Zindex;
+                events.save_edited_bone(selections.bone_idx);
+                events.edit_bone(bone.id, el, value, selections.anim, selections.anim_frame);
+            }
         });
     });
 }
