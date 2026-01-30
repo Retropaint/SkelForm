@@ -399,7 +399,12 @@ pub fn draw_bones_list(
                     let pointing_hand = egui::CursorIcon::PointingHand;
                     let label = ui.label(text).on_hover_cursor(pointing_hand);
                     if label.clicked() {
-                        events.delete_keyframes_by_bone_element(kf.bone_id as usize, &kf.element);
+                        shared_ui.anim.deleting_line_bone_id = kf.bone_id;
+                        shared_ui.anim.deleting_line_element = kf.element.clone();
+                        events.open_polar_modal(
+                            PolarId::DeleteKeyframeLine,
+                            shared_ui.loc("polar.delete_keyframe_line"),
+                        );
                     }
                 });
                 bone_tops.tops.push(BoneTop {

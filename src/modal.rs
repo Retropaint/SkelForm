@@ -99,6 +99,12 @@ pub fn polar_modal(
                         _ = open::that(utils::crashlog_file());
                     }
                 }
+                PolarId::DeleteKeyframeLine => {
+                    events.delete_keyframe_line(
+                        shared_ui.anim.deleting_line_bone_id as usize,
+                        &shared_ui.anim.deleting_line_element,
+                    );
+                }
             }
         },
     );

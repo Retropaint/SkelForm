@@ -452,6 +452,7 @@ pub enum PolarId {
     DeleteFile,
     DeleteTex,
     DeleteStyle,
+    DeleteKeyframeLine,
     NewUpdate,
     OpenCrashlog,
 }
@@ -891,6 +892,8 @@ pub struct UiAnim {
     pub loops: i32,
 
     pub bottom_bar_top: f32,
+    pub deleting_line_bone_id: i32,
+    pub deleting_line_element: AnimElement
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq, Debug)]
@@ -1927,7 +1930,7 @@ pub enum Events {
     RemoveVertex,
     RemoveTriangle,
     RemoveKeyframesByFrame,
-    DeleteKeyframesByBoneElement,
+    DeleteKeyframeLine,
 
     CopyBone,
     PasteBone,
@@ -2280,8 +2283,8 @@ impl EventState {
         self.values.push((transition as usize) as f32);
     }
 
-    pub fn delete_keyframes_by_bone_element(&mut self, bone_id: usize, element: &AnimElement) {
-        self.events.push(Events::DeleteKeyframesByBoneElement);
+    pub fn delete_keyframe_line(&mut self, bone_id: usize, element: &AnimElement) {
+        self.events.push(Events::DeleteKeyframeLine);
         self.values.push(bone_id as f32);
         self.values.push((element.clone() as usize) as f32);
     }
