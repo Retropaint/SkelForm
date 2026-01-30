@@ -731,6 +731,7 @@ pub struct ColorConfig {
     pub gridline: Color,
     pub center_point: Color,
     pub link: Color,
+    pub warning_text: Color,
 }
 
 impl Default for Config {
@@ -766,6 +767,7 @@ impl Default for ColorConfig {
             gridline: Color::new(128, 128, 128, 255),
             center_point: Color::new(0, 255, 0, 255),
             link: Color::new(193, 165, 221, 255),
+            warning_text: Color::new(223, 210, 95, 255),
         }
     }
 }

@@ -190,7 +190,8 @@
         "text": "Text",
         "frameline": "Frameline",
         "gradient": "Gradient",
-        "link": "Link"
+        "link": "Link",
+        "warning_text": "Warning Text"
       }
     },
     "animation": {
@@ -276,7 +277,8 @@
     "unsaved": "Are you sure you want to quit and discard unsaved changes?\n\n(Click 'Yes' to confirm)"
   },
   "warnings": {
-    "heading": "Warnings",
+    "heading": "Warnings ℹ",
+    "desc": "These are quirks that need your attention to fix.\n\nRuntimes may have issues with this armature if not dealt with.",
     "SameZIndex": "$bone_count bones have a Z-index of $zindex:",
     "NoIkTarget": "$bone has no IK target.",
     "UnboundBind": "$bone's bind $bind has no bone attached.",

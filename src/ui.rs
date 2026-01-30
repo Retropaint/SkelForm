@@ -615,24 +615,22 @@ fn top_panel(
                         return;
                     }
                     ui.add_space(10.);
-                    let warnings = ui
-                        .label(shared_ui.warnings.len().to_string() + " ⚠")
-                        .on_hover_cursor(egui::CursorIcon::PointingHand);
-                    if warnings.clicked() {
+                    let count = egui::RichText::new(shared_ui.warnings.len().to_string() + " ⚠")
+                        .color(config.colors.warning_text);
+                    let pointing_hand = egui::CursorIcon::PointingHand;
+                    let header = ui.label(count).on_hover_cursor(pointing_hand);
+                    if header.clicked() {
                         shared_ui.warnings_open = !shared_ui.warnings_open;
                     }
                     if !shared_ui.warnings_open {
                         return;
                     }
-                    let popup = egui::Popup::new(
-                        "warnings".into(),
-                        ui.ctx().clone(),
-                        &warnings,
-                        egui::LayerId::background(),
-                    );
+                    let bg = egui::LayerId::background();
+                    let popup = egui::Popup::new("warnings".into(), ui.ctx().clone(), &header, bg);
                     popup.show(|ui| {
                         ui.set_width(350.);
-                        ui.heading(shared_ui.loc("warnings.heading"));
+                        ui.heading(shared_ui.loc("warnings.heading"))
+                            .on_hover_text(shared_ui.loc("warnings.desc"));
                         modal_x(ui, [0., 0.].into(), || {
                             shared_ui.warnings_open = false;
                         });
@@ -645,7 +643,7 @@ fn top_panel(
                                     ui.set_height(21.);
                                     ui.add_space(5.);
                                     warnings::warning_line(
-                                        ui, &warning, shared_ui, &armature, events,
+                                        ui, &warning, shared_ui, &armature, config, events,
                                     );
                                 });
                             });

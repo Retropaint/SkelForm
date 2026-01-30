@@ -360,6 +360,7 @@ fn colors(ui: &mut egui::Ui, config: &mut crate::Config, shared_ui: &crate::Ui) 
         color_row!("frameline",    &mut config.colors.frameline,    main_bg);
         color_row!("gradient",     &mut config.colors.gradient,     alt_bg);
         color_row!("link",         &mut config.colors.link,         main_bg);
+        color_row!("warning_text", &mut config.colors.warning_text, alt_bg);
     };
 }
 

@@ -134,10 +134,12 @@ pub fn warning_line(
     warning: &Warning,
     shared_ui: &mut crate::Ui,
     armature: &Armature,
+    config: &Config,
     events: &mut EventState,
 ) {
     let bones = &armature.bones;
     let styles = &armature.styles;
+    let warn_color = config.colors.warning_text;
 
     match warning.warn_type {
         W::SameZIndex => {
@@ -145,7 +147,7 @@ pub fn warning_line(
                 .loc("warnings.SameZIndex")
                 .replace("$bone_count", &warning.ids.len().to_string())
                 .replace("$zindex", &warning.value.to_string());
-            ui.label(egui::RichText::new(str));
+            ui.label(egui::RichText::new(str).color(warn_color));
             for i in 0..warning.ids.len() {
                 let id = warning.ids[i];
                 let bone_name = &bones.iter().find(|b| b.id == id as i32).unwrap().name;
@@ -165,7 +167,7 @@ pub fn warning_line(
             let str = shared_ui
                 .loc("warnings.NoIkTarget")
                 .replace("$bone", &bone.unwrap().name);
-            clickable_bone(ui, armature, str, events, warning);
+            clickable_bone(ui, armature, str, events, warning, warn_color);
         }
         W::UnboundBind => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
@@ -173,7 +175,7 @@ pub fn warning_line(
                 .loc("warnings.UnboundBind")
                 .replace("$bind", &warning.value.to_string())
                 .replace("$bone", &bone.unwrap().name);
-            clickable_bone(ui, armature, str, events, warning);
+            clickable_bone(ui, armature, str, events, warning, warn_color);
         }
         W::NoVertsInBind => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
@@ -181,14 +183,14 @@ pub fn warning_line(
                 .loc("warnings.NoVertsInBind")
                 .replace("$bind", &warning.value.to_string())
                 .replace("$bone", &bone.unwrap().name);
-            clickable_bone(ui, armature, str, events, warning);
+            clickable_bone(ui, armature, str, events, warning, warn_color);
         }
         W::OnlyPath => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
             let str = shared_ui
                 .loc("warnings.OnlyPath")
                 .replace("$bone", &bone.unwrap().name);
-            clickable_bone(ui, armature, str, events, warning);
+            clickable_bone(ui, armature, str, events, warning, warn_color);
         }
         W::OnlyIk => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
@@ -196,7 +198,7 @@ pub fn warning_line(
                 .loc("warnings.OnlyIk")
                 .replace("$bone", &bone.unwrap().name)
                 .replace("$ik_family_id", &bone.unwrap().ik_family_id.to_string());
-            clickable_bone(ui, armature, str, events, warning);
+            clickable_bone(ui, armature, str, events, warning, warn_color);
         }
         W::NoWeights => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
@@ -204,7 +206,7 @@ pub fn warning_line(
                 .loc("warnings.NoWeights")
                 .replace("$bone", &bone.unwrap().name)
                 .replace("$bind", &warning.value.to_string());
-            clickable_bone(ui, armature, str, events, warning);
+            clickable_bone(ui, armature, str, events, warning, warn_color);
         }
         W::BoneOutOfFamily => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
@@ -213,9 +215,12 @@ pub fn warning_line(
                 .replace("$bone", &bone.unwrap().name)
                 .replace("$ik_family_id", &warning.value.to_string());
             ui.vertical(|ui| {
-                ui.label(str);
+                ui.label(egui::RichText::new(str).color(warn_color));
                 ui.horizontal(|ui| {
-                    ui.label(shared_ui.loc("warnings.BoneOutOfFamilyCulprits"));
+                    let text =
+                        egui::RichText::new(shared_ui.loc("warnings.BoneOutOfFamilyCulprits"))
+                            .color(warn_color);
+                    ui.label(text);
                     for i in 0..warning.ids.len() {
                         let id = warning.ids[i];
                         let bone_name = &bones.iter().find(|b| b.id == id as i32).unwrap().name;
@@ -234,7 +239,7 @@ pub fn warning_line(
         }
         W::EmptyStyles => {
             let str = shared_ui.loc("warnings.EmptyStyles");
-            ui.label(egui::RichText::new(str));
+            ui.label(egui::RichText::new(str).color(warn_color));
             for i in 0..warning.ids.len() {
                 let id = warning.ids[i];
                 let style_name = &styles.iter().find(|b| b.id == id as i32).unwrap().name;
@@ -251,7 +256,7 @@ pub fn warning_line(
         }
         W::UnusedTextures => {
             let str = shared_ui.loc("warnings.UnusedTextures");
-            ui.label(egui::RichText::new(str));
+            ui.label(egui::RichText::new(str).color(warn_color));
             for s in 0..warning.str_values.len() {
                 let mut tex_str = "\"".to_owned() + &warning.str_values[s].clone() + "\"";
                 if s != warning.str_values.len() - 1 {
@@ -269,8 +274,10 @@ fn clickable_bone(
     str: String,
     events: &mut EventState,
     warning: &Warning,
+    color: Color,
 ) {
-    if ui.clickable_label(str).clicked() {
+    let text = egui::RichText::new(str).color(color).underline();
+    if ui.clickable_label(text).clicked() {
         let bones = &armature.bones;
         let idx = bones.iter().position(|b| b.id == warning.ids[0] as i32);
         events.unselect_all();
