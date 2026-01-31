@@ -947,6 +947,12 @@ fn menu_file_button(
             shared_ui.export_modal = true;
             ui.close();
         }
+        let str_save_as = &shared_ui.loc("top_bar.file.save_as");
+        if top_bar_button!(str_save_as, None).clicked() {
+            shared_ui.save_path = None;
+            shared_ui.export_modal = true;
+            ui.close();
+        }
         let str_startup = &shared_ui.loc("top_bar.file.startup");
         if top_bar_button!(str_startup, None).clicked() {
             shared_ui.startup_window = true;
