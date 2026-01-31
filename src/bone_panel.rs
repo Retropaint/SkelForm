@@ -262,34 +262,34 @@ pub fn inverse_kinematics(
 
                 let mut enabled = !bone.ik_disabled;
                 let str_desc = &shared_ui.loc("bone_panel.inverse_kinematics.enabled_desc");
-                let checkbox = ui
-                    .add_enabled(is_root, egui::Checkbox::new(&mut enabled, "".into_atoms()))
-                    .on_hover_text(str_desc);
-                if checkbox.clicked() {
-                    let mut bones = vec![];
-                    armature_window::get_all_children(&armature.bones, &mut bones, &bone);
-                    bones.push(bone.clone());
-                    for b in 0..bones.len() {
-                        let disabled = armature.bones[b].ik_disabled;
-                        events.toggle_bone_ik_disabled(b, !disabled);
-                    }
+                //let checkbox = ui
+                //    .add_enabled(is_root, egui::Checkbox::new(&mut enabled, "".into_atoms()))
+                //    .on_hover_text(str_desc);
+                //if checkbox.clicked() {
+                //    let mut bones = vec![];
+                //    armature_window::get_all_children(&armature.bones, &mut bones, &bone);
+                //    bones.push(bone.clone());
+                //    for b in 0..bones.len() {
+                //        let disabled = armature.bones[b].ik_disabled;
+                //        events.toggle_bone_ik_disabled(b, !disabled);
+                //    }
 
-                    if is_root {
-                        return;
-                    }
+                //    if is_root {
+                //        return;
+                //    }
 
-                    // emable parents IK as well
+                //    // emable parents IK as well
 
-                    let parents = armature.get_all_parents(bone.id);
-                    for p in parents {
-                        if armature.bone_eff(p.id) == JointEffector::None {
-                            continue;
-                        }
+                //    let parents = armature.get_all_parents(bone.id);
+                //    for p in parents {
+                //        if armature.bone_eff(p.id) == JointEffector::None {
+                //            continue;
+                //        }
 
-                        let idx = armature.bones.iter().position(|b| b.id == p.id).unwrap();
-                        events.toggle_bone_ik_disabled(idx, false);
-                    }
-                }
+                //        let idx = armature.bones.iter().position(|b| b.id == p.id).unwrap();
+                //        events.toggle_bone_ik_disabled(idx, false);
+                //    }
+                //}
             })
         });
     });
@@ -812,7 +812,6 @@ pub fn texture_effects(
             } else {
                 usize::MAX
             };
-            println!("test");
             let frame = selections.anim_frame;
             events.edit_bone(bone.id, &AnimElement::TintR, col[0], anim_id, frame);
             events.edit_bone(bone.id, &AnimElement::TintG, col[1], anim_id, frame);

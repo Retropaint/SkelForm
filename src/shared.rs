@@ -632,6 +632,7 @@ pub struct Ui {
     pub focus_style_dropdown: bool,
     pub donating_modal: bool,
     pub atlas_modal: bool,
+    pub export_modal: bool,
     pub checking_update: bool,
     pub update_request_sent: bool,
     pub new_version: String,
@@ -648,6 +649,7 @@ pub struct Ui {
     pub save_finished: Arc<Mutex<bool>>,
     pub warnings: Vec<Warning>,
     pub warnings_open: bool,
+    pub export_bake_ik: bool,
 }
 
 impl Ui {
@@ -893,7 +895,7 @@ pub struct UiAnim {
 
     pub bottom_bar_top: f32,
     pub deleting_line_bone_id: i32,
-    pub deleting_line_element: AnimElement
+    pub deleting_line_element: AnimElement,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq, Debug)]
@@ -1475,6 +1477,7 @@ pub struct TexAtlas {
 pub struct Root {
     pub version: String,
     pub ik_root_ids: Vec<i32>,
+    pub baked_ik: bool,
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
@@ -1754,7 +1757,7 @@ pub struct BoneTops {
     pub tops: Vec<BoneTop>,
 }
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Clone)]
 pub enum EditModes {
     #[default]
     Move,
@@ -1762,7 +1765,7 @@ pub enum EditModes {
     Scale,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct EditMode {
     pub current: EditModes,
     pub is_moving: bool,

@@ -122,6 +122,9 @@ pub fn draw(
             context, config, selections, armature, shared_ui, input, events,
         );
     }
+    if shared_ui.export_modal {
+        export_modal::draw(context, shared_ui);
+    }
     #[cfg(not(target_arch = "wasm32"))]
     if shared_ui.checking_update {
         modal::modal(context, shared_ui, &config);
@@ -452,8 +455,9 @@ pub fn kb_inputs(
         #[cfg(target_arch = "wasm32")]
         utils::save_web(armature, camera);
 
-        #[cfg(not(target_arch = "wasm32"))]
-        utils::open_save_dialog(&shared_ui.file_path, &shared_ui.saving);
+        shared_ui.export_modal = true;
+        //#[cfg(not(target_arch = "wasm32"))]
+        //utils::open_save_dialog(&shared_ui.file_path, &shared_ui.saving);
         //if shared.save_path == "" {
         //    utils::open_save_dialog();
         //} else {
@@ -487,7 +491,8 @@ pub fn kb_inputs(
             && !shared_ui.modal
             && !shared_ui.polar_modal
             && !shared_ui.forced_modal
-            && !shared_ui.settings_modal;
+            && !shared_ui.settings_modal
+            && !shared_ui.export_modal;
 
         shared_ui.styles_modal = false;
         shared_ui.modal = false;
@@ -495,6 +500,7 @@ pub fn kb_inputs(
         shared_ui.forced_modal = false;
         shared_ui.settings_modal = false;
         shared_ui.atlas_modal = false;
+        shared_ui.export_modal = false;
 
         // if a context menu is open, cancel that instead
         if shared_ui.context_menu.id != "" {

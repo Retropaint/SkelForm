@@ -9,6 +9,7 @@ mod web {
     pub use zip::write::FileOptions;
 }
 use max_rects::packing_box::PackingBox;
+use renderer::construction;
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
@@ -155,7 +156,12 @@ pub fn open_import_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn save_web(armature: &Armature, camera: &Camera) {
+pub fn save_web(
+    armature: &Armature,
+    camera: &Camera,
+    selection: &SelectionState,
+    edit_mode: &EditMode,
+) {
     let mut png_bufs = vec![];
     let mut sizes = vec![];
     let mut carmature = armature.clone();
@@ -297,7 +303,13 @@ pub fn create_tex_sheet(armature: &mut Armature) -> (Vec<Vec<u8>>, Vec<i32>) {
     (bufs, sizes)
 }
 
-pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (String, String) {
+pub fn prepare_files(
+    armature: &Armature,
+    camera: Camera,
+    sizes: Vec<i32>,
+    selection: &SelectionState,
+    edit_mode: &EditMode,
+) -> (String, String) {
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
@@ -347,14 +359,16 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
         joints[0].ik_mode_id = joints[0].ik_mode as i32;
     }
 
-    // populate keyframe bone_idx
     for a in 0..armature_copy.animations.len() {
         armature_copy.animations[a].id = a as i32;
         for kf in 0..armature_copy.animations[a].keyframes.len() {
             let keyframe = &mut armature_copy.animations[a].keyframes[kf];
             let bones = &mut armature_copy.bones.iter();
+
+            // populate keyframe bone_id
             keyframe.bone_id = bones.position(|bone| bone.id == keyframe.bone_id).unwrap() as i32;
 
+            // populate value_str of constraint keyframes
             if keyframe.element == AnimElement::IkConstraint {
                 keyframe.value_str = match keyframe.value {
                     1. => "Clockwise".to_string(),
@@ -457,6 +471,7 @@ pub fn prepare_files(armature: &Armature, camera: Camera, sizes: Vec<i32>) -> (S
     let root = Root {
         version: env!("CARGO_PKG_VERSION").to_string(),
         ik_root_ids,
+        baked_ik: false,
         bones: armature_copy.bones,
         animations: armature_copy.animations,
         styles: armature_copy.styles,

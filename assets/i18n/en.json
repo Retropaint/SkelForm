@@ -100,6 +100,11 @@
   "atlas_modal": {
     "no_pending": "If the imported image is a single texture, simply click 'Done'.\n\nIf it's a texture atlas, drag the image or click 'Add Texture' to add a new slice of texture.\n\nThe atlas will be discarded once done, and will need to be re-imported to add more textures."
   },
+  "export_modal": {
+    "heading": "Save/Export",
+    "bake_ik": "Bake inverse kinematics:",
+    "bake_ik_desc": "If ticked, inverse kinematics will be baked into all animations where targets are moved.\n\nRecommended if inverse kinematics is only used in animations, especially if developing your own runtime (IK will not need to be implemented)."
+  },
   "armature_panel": {
     "heading": "Armature",
     "new_bone_button": "New Bone",

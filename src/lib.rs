@@ -49,6 +49,7 @@ pub mod armature_window;
 pub mod atlas_modal;
 pub mod bone_panel;
 pub mod editor;
+pub mod export_modal;
 pub mod file_reader;
 pub mod keyframe_editor;
 pub mod keyframe_panel;
@@ -809,6 +810,8 @@ impl BackendRenderer {
         let screenshot_res = shared.screenshot_res;
         let mut armature = shared.armature.clone();
         let camera = shared.camera.clone();
+        let selection = shared.selections.clone();
+        let edit_mode = shared.edit_mode.clone();
         let mut save_path = "".to_string();
         if shared.ui.file_path.lock().unwrap().len() > 0 {
             let path = &shared.ui.file_path.lock().unwrap()[0];
@@ -837,7 +840,7 @@ impl BackendRenderer {
             }
 
             let (armatures_json, editor_json) =
-                utils::prepare_files(&armature, camera, sizes.clone());
+                utils::prepare_files(&armature, camera, sizes.clone(), &selection, &edit_mode);
 
             // create zip file
             let mut zip = zip::ZipWriter::new(std::fs::File::create(save_path.clone()).unwrap());

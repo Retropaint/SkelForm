@@ -727,8 +727,7 @@ fn select_bone(
 
     // set this bone as IK target if in IK target mode
     if edit_mode.setting_ik_target {
-        let sel_bone = armature.sel_bone(&sel).unwrap().clone();
-        armature.sel_bone_mut(&sel).unwrap().ik_target_id = sel_bone.id;
+        armature.sel_bone_mut(&sel).unwrap().ik_target_id = armature.bones[idx].id;
         edit_mode.setting_ik_target = false;
         return;
     }
