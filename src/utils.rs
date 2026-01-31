@@ -787,9 +787,14 @@ pub fn save_config(config: &Config) {
     #[cfg(not(target_arch = "wasm32"))]
     {
         fs::create_dir_all(config_path().parent().unwrap()).unwrap();
-        let mut file = std::fs::File::create(&config_path()).unwrap();
-        file.write_all(serde_json::to_string(&config).unwrap().as_bytes())
-            .unwrap();
+        let config_json = serde_json::to_string(&config).unwrap();
+        let mut config_file = std::fs::File::create(&config_path()).unwrap();
+        config_file.write_all(config_json.as_bytes()).unwrap();
+
+        fs::create_dir_all(color_path().parent().unwrap()).unwrap();
+        let color_json = serde_json::to_string(&config.colors).unwrap();
+        let mut color_file = std::fs::File::create(&color_path()).unwrap();
+        color_file.write_all(color_json.as_bytes()).unwrap();
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -804,6 +809,22 @@ pub fn config_str() -> String {
     {
         let mut str = String::new();
         std::fs::File::open(&config_path())
+            .unwrap()
+            .read_to_string(&mut str)
+            .unwrap();
+        return str;
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        return getConfig();
+    }
+}
+
+pub fn color_str() -> String {
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let mut str = String::new();
+        std::fs::File::open(&color_path())
             .unwrap()
             .read_to_string(&mut str)
             .unwrap();

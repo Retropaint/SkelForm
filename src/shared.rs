@@ -716,9 +716,10 @@ pub struct Config {
     pub layout: UiLayout,
     pub ignore_donate: bool,
     pub pixel_magnification: i32,
-
-    pub colors: ColorConfig,
     pub keys: KeyboardConfig,
+
+    #[serde(skip)]
+    pub colors: ColorConfig,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -2444,6 +2445,13 @@ pub fn bool_as_f32(value: bool) -> f32 {
 pub fn config_path() -> std::path::PathBuf {
     directories_next::ProjectDirs::from("com", "retropaint", "skelform")
         .map(|proj_dirs| proj_dirs.data_dir().join("config.json"))
+        .unwrap()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn color_path() -> std::path::PathBuf {
+    directories_next::ProjectDirs::from("com", "retropaint", "skelform")
+        .map(|proj_dirs| proj_dirs.data_dir().join("colors.json"))
         .unwrap()
 }
 

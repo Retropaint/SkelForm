@@ -150,9 +150,10 @@ fn init_shared(shared: &mut Shared) {
             _ => {}
         }
 
-        // import config
-        if config_path().exists() {
+        // import config & colors
+        if config_path().exists() && color_path().exists() {
             shared.config = serde_json::from_str(&utils::config_str()).unwrap();
+            shared.config.colors = serde_json::from_str(&utils::color_str()).unwrap();
         } else {
             utils::save_config(&shared.config);
         }
