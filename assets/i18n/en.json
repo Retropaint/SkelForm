@@ -200,7 +200,11 @@
         "frameline": "Frameline",
         "gradient": "Gradient",
         "link": "Link",
-        "warning_text": "Warning Text"
+        "warning_text": "Warning Text",
+        "inverse_kinematics": "Inverse Kinematics Icon",
+        "meshdef": "Mesh Deformation Icon",
+        "texture": "Texture Icon",
+        "ik_target": "Inverse Kinematics Target Icon"
       }
     },
     "animation": {

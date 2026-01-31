@@ -3,8 +3,6 @@ use egui::IntoAtoms;
 
 use crate::{shared, ui::EguiUi, Display};
 
-pub const DIRECT_BONE: &str = "When clicking a bone's texture, the first untextured parent of the bone will be selected. Checkmark this to always select the textured bone directly.";
-
 pub fn draw(
     shared_ui: &mut crate::Ui,
     config: &mut crate::Config,
@@ -32,7 +30,7 @@ pub fn draw(
             let mut col: egui::Color32 = config.colors.dark_accent.into();
             if shared_ui.translucent_settings {
                 col = col.gamma_multiply(0.5);
-            }            
+            }
             let frame = egui::Frame::new()
                 .fill(col)
                 .inner_margin(egui::Margin::same(5));
@@ -75,13 +73,15 @@ pub fn draw(
             egui::Frame::new().show(ui, |ui| {
                 ui.set_width(window.x.min(400.));
                 ui.set_height(window.y.min(475.));
-                let layout = egui::Layout::top_down(egui::Align::Min);
-                ui.with_layout(layout, |ui| match shared_ui.settings_state {
-                    shared::SettingsState::Ui => user_interface(ui, shared_ui, config),
-                    shared::SettingsState::Animation => animation(ui, shared_ui, config),
-                    shared::SettingsState::Rendering => rendering(ui, shared_ui, config, camera),
-                    shared::SettingsState::Keyboard => keyboard(ui, shared_ui, config),
-                    shared::SettingsState::Misc => misc(ui, shared_ui, config),
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    let layout = egui::Layout::top_down(egui::Align::Min);
+                    ui.with_layout(layout, |ui| match shared_ui.settings_state {
+                        shared::SettingsState::Ui => user_interface(ui, shared_ui, config),
+                        shared::SettingsState::Animation => animation(ui, shared_ui, config),
+                        shared::SettingsState::Rendering => rendering(ui, shared_ui, config, camera),
+                        shared::SettingsState::Keyboard => keyboard(ui, shared_ui, config),
+                        shared::SettingsState::Misc => misc(ui, shared_ui, config),
+                    });
                 });
             })
         });
@@ -171,8 +171,8 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut cra
     });
 
     ui.add_space(20.);
-
     colors(ui, config, shared_ui);
+    ui.add_space(20.);
 }
 
 fn animation(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::Config) {
@@ -186,7 +186,12 @@ fn animation(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::C
     });
 }
 
-fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::Config,camera: &crate::Camera) {
+fn rendering(
+    ui: &mut egui::Ui,
+    shared_ui: &mut crate::Ui,
+    config: &mut crate::Config,
+    camera: &crate::Camera,
+) {
     ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.rendering.heading");
         ui.heading(str_heading);
@@ -361,6 +366,10 @@ fn colors(ui: &mut egui::Ui, config: &mut crate::Config, shared_ui: &crate::Ui) 
         color_row!("gradient",     &mut config.colors.gradient,     alt_bg);
         color_row!("link",         &mut config.colors.link,         main_bg);
         color_row!("warning_text", &mut config.colors.warning_text, alt_bg);
+        color_row!("inverse_kinematics", &mut config.colors.inverse_kinematics, main_bg);
+        color_row!("meshdef", &mut config.colors.meshdef, alt_bg);
+        color_row!("texture", &mut config.colors.texture, main_bg);
+        color_row!("ik_target", &mut config.colors.ik_target, alt_bg);
     };
 }
 

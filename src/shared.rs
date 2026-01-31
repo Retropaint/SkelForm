@@ -735,6 +735,10 @@ pub struct ColorConfig {
     pub center_point: Color,
     pub link: Color,
     pub warning_text: Color,
+    pub inverse_kinematics: Color,
+    pub meshdef: Color,
+    pub texture: Color,
+    pub ik_target: Color,
 }
 
 impl Default for Config {
@@ -770,7 +774,11 @@ impl Default for ColorConfig {
             gridline: Color::new(128, 128, 128, 255),
             center_point: Color::new(0, 255, 0, 255),
             link: Color::new(193, 165, 221, 255),
-            warning_text: Color::new(223, 210, 95, 255),
+            warning_text: Color::new(238, 215, 102, 255),
+            meshdef: Color::new(0, 125, 20, 255),
+            texture: Color::new(200, 200, 200, 255),
+            inverse_kinematics: Color::new(175, 175, 0, 255),
+            ik_target: Color::new(90, 90, 150, 255),
         }
     }
 }

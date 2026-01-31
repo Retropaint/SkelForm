@@ -237,11 +237,8 @@ pub fn inverse_kinematics(
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
             ui.label(str_heading.to_owned()).on_hover_text(str_desc);
-            ui.label(
-                egui::RichText::new("🔧")
-                    .size(16.)
-                    .color(Color::new(175, 175, 0, 125)),
-            );
+            let color = config.colors.inverse_kinematics;
+            ui.label(egui::RichText::new("🔧").size(16.).color(color));
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
@@ -486,7 +483,8 @@ pub fn mesh_deformation(
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
             ui.label(str_heading.to_owned()).on_hover_text(str_desc);
-            ui.label(egui::RichText::new("⬟").color(Color::new(0, 175, 0, 125)));
+            let color = config.colors.meshdef;
+            ui.label(egui::RichText::new("⬟").color(color));
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let fold_icon = if bone.meshdef_folded { "⏴" } else { "⏷" };
@@ -731,7 +729,8 @@ pub fn texture_effects(
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
             ui.label(str_heading.to_owned());
-            ui.label(egui::RichText::new("🖻").color(Color::new(200, 200, 200, 125)));
+            let color = config.colors.texture;
+            ui.label(egui::RichText::new("🖻").color(color));
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let fold_icon = if bone.effects_folded { "⏴" } else { "⏷" };

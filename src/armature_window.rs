@@ -270,23 +270,23 @@ pub fn draw_hierarchy(
                                     let str = shared_ui
                                         .loc("armature_panel.icons.tex")
                                         .replace("$tex", &bone.tex);
-                                    icon_label(ui, "🖻", str, Color::new(200, 200, 200, 125));
+                                    icon_label(ui, "🖻", str, config.colors.texture);
                                 } else if bone.tex != "" {
                                     let str = shared_ui
                                         .loc("armature_panel.icons.tex_inactive")
                                         .replace("$tex", &bone.tex);
-                                    icon_label(ui, "🗋", str, Color::new(175, 175, 175, 125));
+                                    icon_label(ui, "🗋", str, config.colors.texture);
                                 };
                                 if bone.verts_edited {
                                     let mesh_str = shared_ui.loc("armature_panel.icons.mesh");
-                                    icon_label(ui, "⬟", mesh_str, Color::new(0, 125, 20, 125));
+                                    icon_label(ui, "⬟", mesh_str, config.colors.meshdef);
                                 }
                                 if bone.ik_family_id != -1 {
                                     let icon = "🔧".to_owned() + &bone.ik_family_id.to_string();
                                     let desc = shared_ui
                                         .loc("armature_panel.icons.ik_family")
                                         .replace("$family_id", &bone.ik_family_id.to_string());
-                                    icon_label(ui, &icon, desc, Color::new(175, 175, 0, 125));
+                                    icon_label(ui, &icon, desc, config.colors.inverse_kinematics);
                                 }
                                 if is_target != None {
                                     let family_id = is_target.unwrap().ik_family_id.to_string();
@@ -295,7 +295,8 @@ pub fn draw_hierarchy(
                                         .loc("armature_panel.icons.ik_target")
                                         .replace("$family_id", &family_id);
                                     let inc = 20 * is_target.unwrap().ik_family_id as u8;
-                                    let color = Color::new(90, 90 + inc, 150 + inc, 125);
+                                    let mut color = config.colors.ik_target;
+                                    color += Color::new(0, inc, inc, 0);
                                     icon_label(ui, &icon, desc, color);
                                 }
                             });
