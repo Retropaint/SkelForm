@@ -14,9 +14,9 @@ use renderer::construction;
 pub use web::*;
 
 use image::{ExtendedColorType::Rgb8, GenericImage, ImageEncoder};
-use std::path::PathBuf;
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::Mutex;
+use std::{collections::HashMap, path::PathBuf};
 
 use std::io::{Read, Write};
 
@@ -313,6 +313,68 @@ pub fn prepare_files(
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
+    for a in 0..armature_copy.animations.len() {
+        armature_copy.animations[a].id = a as i32;
+        let mut extra_keyframes: Vec<Keyframe> = vec![];
+        let mut last_frame_rots: HashMap<i32, f32> = HashMap::new();
+        for kf in 0..armature_copy.animations[a].keyframes.len() {
+            let keyframe = armature_copy.animations[a].keyframes[kf].clone();
+            let bones = &armature_copy.bones;
+            let bone = bones.iter().find(|b| b.id == keyframe.bone_id).unwrap();
+
+            let mut bones = armature.bones.iter();
+            let root_idx = bones.position(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
+            if root_idx == None {
+                continue;
+            }
+
+            let mut anim_arm = armature_copy.clone();
+            anim_arm.bones = anim_arm.animate(a, keyframe.frame, None);
+            let bones = anim_arm.bones.clone();
+            construction(&mut anim_arm.bones, &bones);
+
+            let ifd = anim_arm.bones[root_idx.unwrap()].ik_family_id;
+            let bones = &mut anim_arm.bones.iter_mut();
+            let mut family: Vec<&mut Bone> = bones.filter(|b| b.ik_family_id == ifd).collect();
+            for i in 0..family.len() {
+                for f in 0..family.len() {
+                    if family[f].id == family[i].id {
+                        break;
+                    }
+                    family[i].rot -= family[f].rot;
+                }
+                if last_frame_rots.contains_key(&family[i].id) {
+                    let prev_rot = *last_frame_rots.get(&family[i].id).unwrap();
+                    family[i].rot = prev_rot + shortest_angle_delta(prev_rot, family[i].rot);
+                    last_frame_rots.remove(&family[i].id);
+                }
+                last_frame_rots.insert(family[i].id, family[i].rot);
+
+                let ae_rot = AnimElement::Rotation;
+                let exists = extra_keyframes.iter().find(|kf| {
+                    kf.frame == keyframe.frame && kf.bone_id == family[i].id && kf.element == ae_rot
+                });
+                if exists == None {
+                    extra_keyframes.push(Keyframe {
+                        frame: keyframe.frame,
+                        bone_id: family[i].id,
+                        element_id: AnimElement::Rotation as i32,
+                        element: AnimElement::Rotation,
+                        value_str: "".to_string(),
+                        value: family[i].rot,
+                        transition: keyframe.transition.clone(),
+                        label_top: 0.,
+                    });
+                }
+            }
+        }
+
+        armature_copy.animations[a]
+            .keyframes
+            .append(&mut extra_keyframes);
+        armature_copy.animations[a].sort_keyframes();
+    }
+
     let mut family_ids: Vec<i32> = armature_copy
         .bones
         .iter()
@@ -320,9 +382,7 @@ pub fn prepare_files(
         .filter(|id| *id != -1)
         .collect();
     family_ids.dedup();
-
     let mut ik_root_ids = vec![];
-
     for fid in family_ids {
         let ac_c = armature_copy.clone();
         let ac = &mut armature_copy;
@@ -940,4 +1000,12 @@ pub fn interp(current: i32, max: i32, start_val: f32, end_val: f32, transition: 
         Transition::SineOut => (current as f32 / max as f32 * 3.14 * 0.5).sin(),
     };
     start_val + (end_val - start_val) * interp
+}
+
+// I admit defeat:
+// https://chatgpt.com/share/697de90a-5a08-8004-9551-326e2ba6aee2
+pub fn shortest_angle_delta(from: f32, to: f32) -> f32 {
+    let mut delta = to - from;
+    delta = (delta + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;
+    delta
 }

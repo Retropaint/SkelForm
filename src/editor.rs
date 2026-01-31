@@ -672,6 +672,9 @@ pub fn process_event(
         Events::OpenFileErrModal => {
             open_modal(ui, false, ui.loc("import_err") + &str_value);
         }
+        Events::ToggleBakingIk => {
+            edit_mode.export_bake_ik = value == 1.;
+        }
         _ => {}
     }
 }

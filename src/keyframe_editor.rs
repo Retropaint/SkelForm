@@ -896,12 +896,14 @@ fn draw_frame_lines(
     }
 
     // create extra space at the bottom
-    let rect = egui::Rect::from_min_size(
-        egui::pos2(0., bone_tops.tops.last().unwrap().height),
-        egui::Vec2::new(1., 40.),
-    );
-    ui.add_space(40.);
-    ui.allocate_rect(rect, egui::Sense::empty());
+    if bone_tops.tops.len() > 0 {
+        let rect = egui::Rect::from_min_size(
+            egui::pos2(0., bone_tops.tops.last().unwrap().height),
+            egui::Vec2::new(1., 40.),
+        );
+        ui.add_space(40.);
+        ui.allocate_rect(rect, egui::Sense::empty());
+    }
 }
 
 pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32) {

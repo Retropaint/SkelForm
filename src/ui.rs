@@ -123,7 +123,7 @@ pub fn draw(
         );
     }
     if shared_ui.export_modal {
-        export_modal::draw(context, shared_ui);
+        export_modal::draw(context, shared_ui, &edit_mode, events);
     }
     #[cfg(not(target_arch = "wasm32"))]
     if shared_ui.checking_update {

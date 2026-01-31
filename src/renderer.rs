@@ -559,7 +559,6 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
         }
 
         let family: Vec<&Bone> = bones.iter().filter(|b| b.ik_family_id == ik_id).collect();
-
         let mut joints = vec![];
         for bone in family {
             joints.push(bone.clone());
