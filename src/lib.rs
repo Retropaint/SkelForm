@@ -802,6 +802,7 @@ impl BackendRenderer {
             return;
         }
         if *shared.ui.saving.lock().unwrap() == Saving::CustomPath {
+            shared.ui.save_path = Some(shared.ui.file_path.lock().unwrap()[0].clone());
             shared.events.open_modal("saving", true);
         }
         self.take_screenshot(shared);

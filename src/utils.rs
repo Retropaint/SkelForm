@@ -314,6 +314,9 @@ pub fn prepare_files(
     let mut armature_copy = armature.clone();
 
     for a in 0..armature_copy.animations.len() {
+        if !edit_mode.export_bake_ik {
+            break;
+        }
         armature_copy.animations[a].id = a as i32;
         let mut extra_keyframes: Vec<Keyframe> = vec![];
         let mut last_frame_rots: HashMap<i32, f32> = HashMap::new();
@@ -375,48 +378,53 @@ pub fn prepare_files(
         armature_copy.animations[a].sort_keyframes();
     }
 
-    let mut family_ids: Vec<i32> = armature_copy
-        .bones
-        .iter()
-        .map(|bone| bone.ik_family_id)
-        .filter(|id| *id != -1)
-        .collect();
-    family_ids.dedup();
-    let mut ik_root_ids = vec![];
-    for fid in family_ids {
-        let ac_c = armature_copy.clone();
-        let ac = &mut armature_copy;
-        let mut joints: Vec<&mut Bone> = ac
+    if edit_mode.export_bake_ik && edit_mode.export_exclude_ik {
+        for bone in &mut armature_copy.bones {
+            bone.ik_family_id = -1;
+        }
+    } else {
+        let mut family_ids: Vec<i32> = armature_copy
             .bones
-            .iter_mut()
-            .filter(|b| b.ik_family_id == fid)
+            .iter()
+            .map(|bone| bone.ik_family_id)
+            .filter(|id| *id != -1)
             .collect();
+        family_ids.dedup();
+        for fid in family_ids {
+            let ac_c = armature_copy.clone();
+            let ac = &mut armature_copy;
+            let mut joints: Vec<&mut Bone> = ac
+                .bones
+                .iter_mut()
+                .filter(|b| b.ik_family_id == fid)
+                .collect();
 
-        // get all bone ids (sequentially) of this family in one array
-        let mut bone_ids = vec![];
-        for joint in &joints {
-            let idx = ac_c.bones.iter().position(|bone| bone.id == joint.id);
-            bone_ids.push(idx.unwrap() as i32);
+            // get all bone ids (sequentially) of this family in one array
+            let mut bone_ids = vec![];
+            for joint in &joints {
+                let idx = ac_c.bones.iter().position(|bone| bone.id == joint.id);
+                bone_ids.push(idx.unwrap() as i32);
+            }
+
+            // get target id (sequentially)
+            let mut target_id = -1;
+            let joint_target_id = joints[0].ik_target_id;
+            let target_idx = ac_c.bones.iter().position(|b| b.id == joint_target_id);
+            if target_idx != None {
+                target_id = target_idx.unwrap() as i32;
+            }
+
+            // clear ik_bone_ids of al joints to mark them as 'non-root'
+            for joint in &mut joints {
+                joint.ik_bone_ids = vec![];
+            }
+
+            // populate IK data to root bone
+            joints[0].ik_bone_ids = bone_ids;
+            joints[0].ik_target_id = target_id;
+            joints[0].ik_constraint_id = joints[0].ik_constraint as i32;
+            joints[0].ik_mode_id = joints[0].ik_mode as i32;
         }
-
-        // get target id (sequentially)
-        let mut target_id = -1;
-        let joint_target_id = joints[0].ik_target_id;
-        let target_idx = ac_c.bones.iter().position(|b| b.id == joint_target_id);
-        if target_idx != None {
-            target_id = target_idx.unwrap() as i32;
-        }
-
-        // clear ik_bone_ids of al joints to mark them as 'non-root'
-        for joint in &mut joints {
-            joint.ik_bone_ids = vec![];
-        }
-
-        // populate IK data to root bone
-        joints[0].ik_bone_ids = bone_ids;
-        joints[0].ik_target_id = target_id;
-        joints[0].ik_constraint_id = joints[0].ik_constraint as i32;
-        joints[0].ik_mode_id = joints[0].ik_mode as i32;
     }
 
     for a in 0..armature_copy.animations.len() {
@@ -504,6 +512,7 @@ pub fn prepare_files(
         bone.id = b as i32;
     }
 
+    let mut ik_root_ids = vec![];
     for bone in &armature_copy.bones {
         if bone.ik_family_id != -1 {
             ik_root_ids.push(bone.id);
@@ -531,7 +540,7 @@ pub fn prepare_files(
     let root = Root {
         version: env!("CARGO_PKG_VERSION").to_string(),
         ik_root_ids,
-        baked_ik: false,
+        baked_ik: edit_mode.export_bake_ik,
         bones: armature_copy.bones,
         animations: armature_copy.animations,
         styles: armature_copy.styles,

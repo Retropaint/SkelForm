@@ -452,17 +452,7 @@ pub fn kb_inputs(
     }
 
     if input.consume_shortcut(&config.keys.save) {
-        #[cfg(target_arch = "wasm32")]
-        utils::save_web(armature, camera);
-
         shared_ui.export_modal = true;
-        //#[cfg(not(target_arch = "wasm32"))]
-        //utils::open_save_dialog(&shared_ui.file_path, &shared_ui.saving);
-        //if shared.save_path == "" {
-        //    utils::open_save_dialog();
-        //} else {
-        //    utils::save(shared.save_path.clone(), shared);
-        //}
     }
 
     if input.consume_shortcut(&config.keys.open) {
@@ -954,10 +944,7 @@ fn menu_file_button(
         }
         let str_save = &shared_ui.loc("top_bar.file.save");
         if top_bar_button!(str_save, Some(&config.keys.save)).clicked() {
-            #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(&shared_ui.file_path, &shared_ui.saving);
-            #[cfg(target_arch = "wasm32")]
-            utils::save_web(armature, camera);
+            shared_ui.export_modal = true;
             ui.close();
         }
         let str_startup = &shared_ui.loc("top_bar.file.startup");

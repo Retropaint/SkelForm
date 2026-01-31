@@ -121,8 +121,15 @@ pub fn iterate_events(
         edit_mode.is_rotating = edit_mode.current == EditModes::Rotate;
         edit_mode.is_scaling = edit_mode.current == EditModes::Scale;
 
+        let mut anim_id = events.values[3] as usize;
+        let anim_frame = events.values[4] as i32;
+
+        if !edit_mode.anim_open {
+            anim_id = usize::MAX;
+        }
+
         #[rustfmt::skip]
-        edit_bone(armature, config, events.values[0] as i32, anim_el, events.values[2], events.values[3] as usize, events.values[4] as i32);
+        edit_bone(armature, config, events.values[0] as i32, anim_el, events.values[2], anim_id, anim_frame);
 
         events.events.remove(0);
         events.values.drain(0..=4);
@@ -672,9 +679,8 @@ pub fn process_event(
         Events::OpenFileErrModal => {
             open_modal(ui, false, ui.loc("import_err") + &str_value);
         }
-        Events::ToggleBakingIk => {
-            edit_mode.export_bake_ik = value == 1.;
-        }
+        Events::ToggleBakingIk => edit_mode.export_bake_ik = value == 1.,
+        Events::ToggleExcludeIk => edit_mode.export_exclude_ik = value == 1.,
         _ => {}
     }
 }

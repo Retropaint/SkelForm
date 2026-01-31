@@ -649,6 +649,7 @@ pub struct Ui {
     pub save_finished: Arc<Mutex<bool>>,
     pub warnings: Vec<Warning>,
     pub warnings_open: bool,
+    pub save_path: Option<PathBuf>,
 }
 
 impl Ui {
@@ -1777,6 +1778,7 @@ pub struct EditMode {
     pub anim_open: bool,
     pub time: f32,
     pub export_bake_ik: bool,
+    pub export_exclude_ik: bool,
 }
 
 #[derive(Default, PartialEq, Debug)]
@@ -1971,6 +1973,7 @@ pub enum Events {
     ToggleEffectsFolded,
     ToggleBindPathing,
     ToggleBakingIk,
+    ToggleExcludeIk,
 
     OpenModal,
     UnselectAll,
@@ -2116,6 +2119,7 @@ impl EventState {
     );
     event_with_value!(save_edited_bone, Events::SaveEditedBone, bone_idx, usize);
     event_with_value!(toggle_baking_ik, Events::ToggleBakingIk, toggle, usize);
+    event_with_value!(toggle_exclude_ik, Events::ToggleExcludeIk, toggle, usize);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
