@@ -745,7 +745,12 @@ impl BackendRenderer {
         if *shared.ui.saving.lock().unwrap() != shared::Saving::None {
             #[cfg(target_arch = "wasm32")]
             if *shared.ui.saving.lock().unwrap() == shared::Saving::CustomPath {
-                utils::save_web(&shared.armature, &shared.camera);
+                utils::save_web(
+                    &shared.armature,
+                    &shared.camera,
+                    &shared.selections,
+                    &shared.edit_mode,
+                );
             }
             #[cfg(not(target_arch = "wasm32"))]
             self.save(shared);
@@ -843,7 +848,7 @@ impl BackendRenderer {
             }
 
             let (armatures_json, editor_json) =
-                utils::prepare_files(&armature, camera, sizes.clone(), &selection, &edit_mode);
+                utils::prepare_files(&armature, camera, sizes.clone(), &edit_mode);
 
             // create zip file
             let mut zip = zip::ZipWriter::new(std::fs::File::create(save_path.clone()).unwrap());

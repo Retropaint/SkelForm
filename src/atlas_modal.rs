@@ -2,6 +2,8 @@ use ui::{EguiUi, TextInputOptions};
 
 use crate::*;
 
+use image::GenericImageView;
+
 pub fn draw(
     ctx: &egui::Context,
     config: &Config,
@@ -33,7 +35,7 @@ pub fn draw(
             let frame = egui::Frame::new();
             let image = frame.show(ui, |ui| {
                 let data = armature.tex_data(&atlas).unwrap();
-                let filter = imageops::FilterType::Nearest;
+                let filter = image::imageops::FilterType::Nearest;
                 if shared_ui.atlas_image == None {
                     let dims = data.image.clone().resize(300, 300, filter).dimensions();
                     shared_ui.atlas_image = Some(Vec2::new(dims.0 as f32, dims.1 as f32));

@@ -1,12 +1,18 @@
 use egui::IntoAtoms;
 
-use crate::{modal::modal_x, ui::EguiUi, utils, EditMode, EventState, Saving, Vec2};
+use crate::{
+    modal::modal_x, ui::EguiUi, utils, Armature, Camera, EditMode, EventState, Saving,
+    SelectionState, Vec2,
+};
 
 pub fn draw(
     ctx: &egui::Context,
     shared_ui: &mut crate::Ui,
     edit_mode: &EditMode,
     events: &mut EventState,
+    armature: &Armature,
+    camera: &Camera,
+    selections: &SelectionState,
 ) {
     if shared_ui.save_path != None {
         *shared_ui.file_path.lock().unwrap() = vec![shared_ui.save_path.clone().unwrap()];
@@ -50,7 +56,7 @@ pub fn draw(
                     let str = &shared_ui.loc("export_modal.save_button");
                     if ui.skf_button(str).clicked() {
                         #[cfg(target_arch = "wasm32")]
-                        utils::save_web(armature, camera);
+                        utils::save_web(armature, camera, selections, edit_mode);
                         #[cfg(not(target_arch = "wasm32"))]
                         utils::open_save_dialog(&shared_ui.file_path, &shared_ui.saving);
                         shared_ui.export_modal = false;

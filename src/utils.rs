@@ -170,7 +170,7 @@ pub fn save_web(
         (png_bufs, sizes) = utils::create_tex_sheet(&mut carmature);
     }
 
-    let (armatures_json, editor_json) = prepare_files(&carmature, camera.clone(), sizes.clone());
+    let (armatures_json, editor_json) = prepare_files(&carmature, camera.clone(), sizes.clone(), edit_mode);
 
     // create zip file
     let mut buf: Vec<u8> = Vec::new();
@@ -307,7 +307,6 @@ pub fn prepare_files(
     armature: &Armature,
     camera: Camera,
     sizes: Vec<i32>,
-    selection: &SelectionState,
     edit_mode: &EditMode,
 ) -> (String, String) {
     // clone armature and make some edits, then serialize it
