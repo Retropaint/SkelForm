@@ -11,6 +11,7 @@ pub fn draw(
     if shared_ui.save_path != None {
         *shared_ui.file_path.lock().unwrap() = vec![shared_ui.save_path.clone().unwrap()];
         *shared_ui.saving.lock().unwrap() = Saving::CustomPath;
+        shared_ui.export_modal = false;
         return;
     }
     egui::Modal::new("export_modal".into()).show(ctx, |ui| {
