@@ -249,11 +249,8 @@ fn rendering(
     macro_rules! color_row {
         ($title:expr, $color:expr) => {
             alt_col = !alt_col;
-            let bg_color = if alt_col {
-                config.colors.main
-            } else {
-                config.colors.dark_accent
-            };
+            let col = &config.colors;
+            let bg_color = if alt_col { col.main } else { col.dark_accent };
             let str_color = shared_ui
                 .loc(&("settings_modal.rendering.".to_owned() + $title))
                 .clone();
@@ -343,11 +340,8 @@ fn colors(ui: &mut egui::Ui, config: &mut crate::Config, shared_ui: &crate::Ui) 
     macro_rules! color_row {
         ($title:expr, $color:expr) => {
             alt_col = !alt_col;
-            let color = if alt_col {
-                config.colors.main
-            } else {
-                config.colors.dark_accent
-            };
+            let col = &config.colors;
+            let color = if alt_col { col.main } else { col.dark_accent };
             let str_color = shared_ui
                 .loc(&("settings_modal.user_interface.colors.".to_owned() + $title))
                 .clone();
@@ -395,18 +389,9 @@ fn color_row(title: String, color: &mut shared::Color, bg: shared::Color, ui: &m
 
             // color picker
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let mut col: [f32; 3] = [
-                    color.r as f32 / 255.,
-                    color.g as f32 / 255.,
-                    color.b as f32 / 255.,
-                ];
-                ui.color_edit_button_rgb(&mut col);
-                *color = shared::Color {
-                    r: (col[0] * 255.) as u8,
-                    g: (col[1] * 255.) as u8,
-                    b: (col[2] * 255.) as u8,
-                    a: 255,
-                };
+                let mut col: [u8; 3] = [color.r, color.g, color.b];
+                ui.color_edit_button_srgb(&mut col);
+                *color = shared::Color::new(col[0], col[1], col[2], 255);
             });
         });
     });
