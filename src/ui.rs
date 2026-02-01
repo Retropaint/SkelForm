@@ -454,7 +454,10 @@ pub fn kb_inputs(
     }
 
     if input.consume_shortcut(&config.keys.save) {
-        shared_ui.export_modal = true;
+        #[cfg(target_arch = "wasm32")]
+        utils::save_web(armature, camera, selections, edit_mode);
+        #[cfg(not(target_arch = "wasm32"))]
+        utils::save_native(shared_ui);
     }
 
     if input.consume_shortcut(&config.keys.open) {
@@ -946,12 +949,23 @@ fn menu_file_button(
         }
         let str_save = &shared_ui.loc("top_bar.file.save");
         if top_bar_button!(str_save, Some(&config.keys.save)).clicked() {
-            shared_ui.export_modal = true;
+            #[cfg(target_arch = "wasm32")]
+            utils::save_web(armature, camera, selections, edit_mode);
+            #[cfg(not(target_arch = "wasm32"))]
+            utils::save_native(shared_ui);
             ui.close();
         }
         let str_save_as = &shared_ui.loc("top_bar.file.save_as");
         if top_bar_button!(str_save_as, None).clicked() {
             shared_ui.save_path = None;
+            #[cfg(target_arch = "wasm32")]
+            utils::save_web(armature, camera, selections, edit_mode);
+            #[cfg(not(target_arch = "wasm32"))]
+            utils::save_native(shared_ui);
+            ui.close();
+        }
+        let str_export = &shared_ui.loc("top_bar.file.export");
+        if top_bar_button!(str_export, None).clicked() {
             shared_ui.export_modal = true;
             ui.close();
         }

@@ -55,6 +55,7 @@
       "open": "Open",
       "save": "Save",
       "save_as": "Save As",
+      "export": "Export",
       "startup": "Startup"
     },
     "edit": {
@@ -102,12 +103,12 @@
     "no_pending": "If the imported image is a single texture, simply click 'Done'.\n\nIf it's a texture atlas, drag the image or click 'Add Texture' to add a new slice of texture.\n\nThe atlas will be discarded once done, and will need to be re-imported to add more textures."
   },
   "export_modal": {
-    "heading": "Save/Export",
+    "heading": "Export",
     "bake_ik": "Bake inverse kinematics ℹ:",
     "bake_ik_desc": "If ticked, inverse kinematics will be baked into all animations where targets are moved.\n\nRecommended if inverse kinematics is only used in animations, especially if developing your own runtime.",
     "exclude_ik": "Exclude inverse kinematics data ℹ:",
     "exclude_ik_desc": "Inverse kinematics will be assumed off when exporting.\n\nRecommended to prevent runtimes from mixing up baked and real-time inverse kinematics.",
-    "save_button": "Save"
+    "save_button": "Export"
   },
   "armature_panel": {
     "heading": "Armature",

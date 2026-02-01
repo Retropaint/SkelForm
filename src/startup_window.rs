@@ -483,9 +483,10 @@ pub fn skf_file_button(
         if button.clicked() {
             let mut buf = PathBuf::new();
             buf.push(path.clone());
-            *shared_ui.file_path.lock().unwrap() = vec![buf];
+            *shared_ui.file_path.lock().unwrap() = vec![buf.clone()];
             *shared_ui.file_type.lock().unwrap() = 2;
-            shared_ui.startup_window = false;
+            shared_ui.save_path = Some(buf);
+            shared_ui.changed_window_name = false;
         }
 
         let bottom = egui::Rect::from_min_size(

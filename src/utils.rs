@@ -127,7 +127,11 @@ pub fn to_vec2(f: f32) -> Vec2 {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_save_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, saving: &Arc<Mutex<Saving>>) {
+pub fn open_save_dialog(
+    file_path: &Arc<Mutex<Vec<PathBuf>>>,
+    saving: &Arc<Mutex<Saving>>,
+    save_result: Saving,
+) {
     let filepath = Arc::clone(&file_path);
     let csaving = Arc::clone(&saving);
     std::thread::spawn(move || {
@@ -137,7 +141,7 @@ pub fn open_save_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, saving: &Arc<Mutex
             return;
         }
         *filepath.lock().unwrap() = vec![task.unwrap()];
-        *csaving.lock().unwrap() = shared::Saving::CustomPath;
+        *csaving.lock().unwrap() = save_result
     });
 }
 
@@ -170,7 +174,8 @@ pub fn save_web(
         (png_bufs, sizes) = utils::create_tex_sheet(&mut carmature);
     }
 
-    let (armatures_json, editor_json) = prepare_files(&carmature, camera.clone(), sizes.clone(), edit_mode);
+    let (armatures_json, editor_json) =
+        prepare_files(&carmature, camera.clone(), sizes.clone(), edit_mode);
 
     // create zip file
     let mut buf: Vec<u8> = Vec::new();
@@ -196,6 +201,16 @@ pub fn save_web(
 
     let bytes = zip.finish().unwrap().into_inner().to_vec();
     downloadZip(bytes);
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn save_native(shared_ui: &mut shared::Ui) {
+    if shared_ui.save_path != None {
+        *shared_ui.file_path.lock().unwrap() = vec![shared_ui.save_path.clone().unwrap()];
+        *shared_ui.saving.lock().unwrap() = Saving::CustomPath;
+    } else {
+        utils::open_save_dialog(&shared_ui.file_path, &shared_ui.saving, Saving::CustomPath);
+    }
 }
 
 pub fn create_tex_sheet(armature: &mut Armature) -> (Vec<Vec<u8>>, Vec<i32>) {

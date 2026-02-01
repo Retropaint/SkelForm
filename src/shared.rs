@@ -650,6 +650,7 @@ pub struct Ui {
     pub warnings: Vec<Warning>,
     pub warnings_open: bool,
     pub save_path: Option<PathBuf>,
+    pub changed_window_name: bool,
 }
 
 impl Ui {
@@ -775,7 +776,7 @@ impl Default for ColorConfig {
             gridline: Color::new(128, 128, 128, 255),
             center_point: Color::new(0, 255, 0, 255),
             link: Color::new(193, 165, 221, 255),
-            warning_text: Color::new(238, 215, 102, 255),
+            warning_text: Color::new(246, 220, 132, 255),
             meshdef: Color::new(0, 125, 20, 255),
             texture: Color::new(200, 200, 200, 255),
             inverse_kinematics: Color::new(175, 175, 0, 255),
@@ -1816,6 +1817,7 @@ pub enum Saving {
     None,
     CustomPath,
     Autosaving,
+    Exporting,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
@@ -1846,7 +1848,8 @@ pub struct Startup {
 pub struct UndoStates {
     pub undo_actions: Vec<Action>,
     pub redo_actions: Vec<Action>,
-    pub prev_undo_actions: Vec<Action>,
+    pub unsaved_undo_actions: usize,
+    pub prev_undo_actions: usize,
     pub temp_actions: Vec<Action>,
 }
 

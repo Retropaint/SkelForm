@@ -118,12 +118,6 @@ impl ApplicationHandler for App {
             attributes.window_icon = Some(icon);
         }
 
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let title = "SkelForm v".to_owned() + &env!("CARGO_PKG_VERSION").to_string();
-            attributes = attributes.with_title(title);
-        }
-
         #[cfg(target_arch = "wasm32")]
         {
             use winit::platform::web::WindowAttributesExtWebSys;
@@ -301,6 +295,34 @@ impl ApplicationHandler for App {
                 let now = Instant::now();
                 *last_render_time = now;
 
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    let undo = &self.shared.undo_states;
+                    if undo.prev_undo_actions != undo.undo_actions.len() {
+                        self.shared.ui.changed_window_name = false;
+                    }
+                    if !self.shared.ui.changed_window_name {
+                        let file = if self.shared.ui.save_path == None {
+                            "SkelForm".to_string()
+                        } else {
+                            let path = self.shared.ui.save_path.clone().unwrap();
+                            let filename = path.as_path().file_name().unwrap();
+                            filename.to_str().unwrap().to_string()
+                        };
+                        let undo = &self.shared.undo_states;
+                        let unsaved = if undo.prev_undo_actions != undo.undo_actions.len() {
+                            self.shared.undo_states.prev_undo_actions = undo.undo_actions.len();
+                            " *"
+                        } else {
+                            ""
+                        };
+                        let title =
+                            file + " - v" + &env!("CARGO_PKG_VERSION").to_string() + unsaved;
+                        window.set_title(&title);
+                        self.shared.ui.changed_window_name = true;
+                    }
+                }
+
                 let input = gui_state.take_egui_input(&window);
                 gui_state.egui_ctx().begin_pass(input);
 
@@ -416,11 +438,11 @@ impl ApplicationHandler for App {
         }
 
         if self.shared.ui.exiting {
-            if self.shared.undo_states.prev_undo_actions != self.shared.undo_states.undo_actions {
+            let undo = &self.shared.undo_states;
+            if undo.unsaved_undo_actions != undo.undo_actions.len() {
                 let str_del = self.shared.ui.loc("polar.unsaved").clone().to_string();
-                self.shared
-                    .events
-                    .open_polar_modal(PolarId::Exiting, str_del);
+                let exiting = PolarId::Exiting;
+                self.shared.events.open_polar_modal(exiting, str_del);
             } else {
                 event_loop.exit();
             }
@@ -737,21 +759,24 @@ impl BackendRenderer {
             ));
         }
         if *shared.ui.save_finished.lock().unwrap() {
-            shared.undo_states.prev_undo_actions = shared.undo_states.undo_actions.clone();
             shared.ui.modal = false;
             *shared.ui.save_finished.lock().unwrap() = false;
         }
 
         if *shared.ui.saving.lock().unwrap() != shared::Saving::None {
             #[cfg(target_arch = "wasm32")]
-            if *shared.ui.saving.lock().unwrap() == shared::Saving::CustomPath {
-                utils::save_web(
-                    &shared.armature,
-                    &shared.camera,
-                    &shared.selections,
-                    &shared.edit_mode,
-                );
+            {
+                let saving_type = shared.ui.saving.lock().unwrap().clone();
+                if saving_type == Saving::CustomPath || saving_type == Saving::Exporting {
+                    utils::save_web(
+                        &shared.armature,
+                        &shared.camera,
+                        &shared.selections,
+                        &shared.edit_mode,
+                    );
+                }
             }
+
             #[cfg(not(target_arch = "wasm32"))]
             self.save(shared);
         }
@@ -802,41 +827,60 @@ impl BackendRenderer {
 
     #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&mut self, shared: &mut Shared) {
-        if shared.edit_mode.time - shared.last_autosave < shared.config.autosave_frequency as f32 {
-            *shared.ui.saving.lock().unwrap() = Saving::None;
-            return;
-        }
-        if *shared.ui.saving.lock().unwrap() == Saving::CustomPath {
-            if shared.ui.save_path == None {
-                shared.ui.save_path = Some(shared.ui.file_path.lock().unwrap()[0].clone());
-            }
-            shared.events.open_modal("saving", true);
-        }
-        self.take_screenshot(shared);
-        let buffer = shared.rendered_frames[0].buffer.clone();
-        shared.rendered_frames = vec![];
-        let screenshot_res = shared.screenshot_res;
-        let mut armature = shared.armature.clone();
-        let camera = shared.camera.clone();
-        let selection = shared.selections.clone();
-        let edit_mode = shared.edit_mode.clone();
         let mut save_path = "".to_string();
-        if shared.ui.file_path.lock().unwrap().len() > 0 {
-            let path = &shared.ui.file_path.lock().unwrap()[0];
-            save_path = path.as_path().to_str().unwrap().to_string();
+        let saving_type = shared.ui.saving.lock().unwrap().clone();
+        match saving_type {
+            Saving::CustomPath => {
+                let path = &shared.ui.file_path.lock().unwrap()[0];
+                save_path = path.as_path().to_str().unwrap().to_string();
+                shared.ui.changed_window_name = false;
+                shared.events.open_modal("saving", true);
+                *shared.ui.save_finished.lock().unwrap() = false;
+                if shared.ui.save_path == None && saving_type != Saving::Exporting {
+                    shared.ui.save_path = Some(shared.ui.file_path.lock().unwrap()[0].clone());
+                }
+            }
+            Saving::Exporting => {
+                let path = &shared.ui.file_path.lock().unwrap()[0];
+                save_path = path.as_path().to_str().unwrap().to_string();
+                shared.events.open_modal("exporting", true);
+                *shared.ui.save_finished.lock().unwrap() = false;
+            }
+            Saving::Autosaving => {
+                let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
+                let dir = dir_init.unwrap().data_dir().to_str().unwrap().to_string();
+                save_path = dir + "/autosave.skf";
+                shared.last_autosave = shared.edit_mode.time;
+                let in_cooldown = shared.edit_mode.time - shared.last_autosave
+                    < shared.config.autosave_frequency as f32;
+                if in_cooldown {
+                    *shared.ui.saving.lock().unwrap() = Saving::None;
+                    return;
+                }
+            }
+            _ => {}
         }
-        if *shared.ui.saving.lock().unwrap() == shared::Saving::Autosaving {
-            let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
-            let dir = dir_init.unwrap().data_dir().to_str().unwrap().to_string();
-            save_path = dir + "/autosave.skf";
-            shared.last_autosave = shared.edit_mode.time;
-        }
+
         if !shared.ui.recent_file_paths.contains(&save_path) {
             shared.ui.recent_file_paths.push(save_path.clone());
         }
         utils::save_to_recent_files(&shared.ui.recent_file_paths);
-        *shared.ui.saving.lock().unwrap() = Saving::None;
+
+        self.take_screenshot(shared);
+        let buffer = shared.rendered_frames[0].buffer.clone();
+        shared.rendered_frames = vec![];
+        let screenshot_res = shared.screenshot_res;
+
+        let mut armature = shared.armature.clone();
+        let camera = shared.camera.clone();
+        let edit_mode = shared.edit_mode.clone();
+
         let autosaving = *shared.ui.saving.lock().unwrap() == Saving::Autosaving;
+        *shared.ui.saving.lock().unwrap() = Saving::None;
+
+        shared.undo_states.unsaved_undo_actions = shared.undo_states.undo_actions.len();
+        shared.undo_states.prev_undo_actions = shared.undo_states.undo_actions.len();
+
         let save_finished = Arc::clone(&shared.ui.save_finished);
         let device = self.gpu.device.clone();
         std::thread::spawn(move || {
