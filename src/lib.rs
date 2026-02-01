@@ -297,9 +297,10 @@ impl ApplicationHandler for App {
 
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    let undo = &self.shared.undo_states;
+                    let undo = &mut self.shared.undo_states;
                     if undo.prev_undo_actions != undo.undo_actions.len() {
                         self.shared.ui.changed_window_name = false;
+                        undo.prev_undo_actions = undo.undo_actions.len();
                     }
                     if !self.shared.ui.changed_window_name {
                         let file = if self.shared.ui.save_path == None {
@@ -310,8 +311,7 @@ impl ApplicationHandler for App {
                             filename.to_str().unwrap().to_string()
                         };
                         let undo = &self.shared.undo_states;
-                        let unsaved = if undo.prev_undo_actions != undo.undo_actions.len() {
-                            self.shared.undo_states.prev_undo_actions = undo.undo_actions.len();
+                        let unsaved = if undo.unsaved_undo_actions != undo.undo_actions.len() {
                             " *"
                         } else {
                             ""
@@ -428,7 +428,7 @@ impl ApplicationHandler for App {
         if let Ok(event) = global_hotkey::GlobalHotKeyEvent::receiver().try_recv() {
             let pressing_w = event.id() == self.shared.input.mod_w.unwrap().id();
             let pressing_q = event.id() == self.shared.input.mod_q.unwrap().id();
-            if pressing_w || pressing_q {
+            if (pressing_w || pressing_q) && self.shared.ui.can_quit {
                 utils::exit(
                     &mut self.shared.undo_states,
                     &self.shared.config,
@@ -759,7 +759,11 @@ impl BackendRenderer {
             ));
         }
         if *shared.ui.save_finished.lock().unwrap() {
+            shared.undo_states.unsaved_undo_actions = shared.undo_states.undo_actions.len();
+            shared.undo_states.prev_undo_actions = shared.undo_states.undo_actions.len();
+            shared.ui.changed_window_name = false;
             shared.ui.modal = false;
+            shared.ui.can_quit = true;
             *shared.ui.save_finished.lock().unwrap() = false;
         }
 
@@ -837,12 +841,14 @@ impl BackendRenderer {
                 shared.events.open_modal("saving", true);
                 *shared.ui.save_finished.lock().unwrap() = false;
                 shared.ui.save_path = Some(path.clone());
+                shared.ui.can_quit = false;
             }
             Saving::Exporting => {
                 let path = &shared.ui.file_path.lock().unwrap()[0];
                 save_path = path.as_path().to_str().unwrap().to_string();
                 shared.events.open_modal("exporting", true);
                 *shared.ui.save_finished.lock().unwrap() = false;
+                shared.ui.can_quit = false;
             }
             Saving::Autosaving => {
                 let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
@@ -878,9 +884,6 @@ impl BackendRenderer {
 
         let autosaving = *shared.ui.saving.lock().unwrap() == Saving::Autosaving;
         *shared.ui.saving.lock().unwrap() = Saving::None;
-
-        shared.undo_states.unsaved_undo_actions = shared.undo_states.undo_actions.len();
-        shared.undo_states.prev_undo_actions = shared.undo_states.undo_actions.len();
 
         let save_finished = Arc::clone(&shared.ui.save_finished);
         let device = self.gpu.device.clone();

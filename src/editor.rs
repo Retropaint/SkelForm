@@ -235,8 +235,14 @@ pub fn process_event(
         Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
         Events::EditModeScale => edit_mode.current = EditModes::Scale,
         Events::UnselectAll => unselect_all(selections, edit_mode),
-        Events::Undo => undo_redo(true, undo_states, armature, selections),
-        Events::Redo => undo_redo(false, undo_states, armature, selections),
+        Events::Undo => {
+            undo_redo(true, undo_states, armature, selections);
+            ui.changed_window_name = false;
+        }
+        Events::Redo => {
+            undo_redo(false, undo_states, armature, selections);
+            ui.changed_window_name = false;
+        }
         Events::ResetConfig => *config = serde_json::from_str(&utils::config_str()).unwrap(),
         Events::RenameBone => armature.bones[value as usize].name = str_value,
         Events::RenameAnim => armature.animations[value as usize].name = str_value,
@@ -895,6 +901,9 @@ pub fn undo_redo(
             undo_states.temp_actions = vec![];
         }
     }
+
+    undo_states.prev_undo_actions = undo_states.undo_actions.len();
+    undo_states.unsaved_undo_actions = undo_states.undo_actions.len();
 
     // actions tagged with `continue` are part of an action chain
     if action.continued {

@@ -839,13 +839,11 @@ pub fn edit_bone(
         edit!(bone, AnimElement::PositionX, pos.x);
         edit!(bone, AnimElement::PositionY, pos.y);
     } else if edit_mode.current == EditModes::Rotate {
-        let mut mouse_init = utils::screen_to_world_space(input.mouse_init.unwrap(), camera.window);
-        mouse_init.x *= camera.aspect_ratio();
+        let mouse_init = utils::screen_to_world_space(input.mouse_init.unwrap(), camera.window);
         let dir_init = mouse_init - bone_center.pos;
         let rot_init = dir_init.y.atan2(dir_init.x);
 
-        let mut mouse = utils::screen_to_world_space(input.mouse, camera.window);
-        mouse.x *= camera.aspect_ratio();
+        let mouse = utils::screen_to_world_space(input.mouse, camera.window);
         let dir = mouse - bone_center.pos;
         let rot = dir.y.atan2(dir.x);
 
