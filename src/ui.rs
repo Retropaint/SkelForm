@@ -49,7 +49,6 @@ pub fn draw(
     armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
 ) {
-    shared_ui.last_pressed = None;
     shared_ui.context_menu.keep = false;
 
     let sel = selections.clone();
@@ -373,6 +372,8 @@ pub fn process_inputs(
     camera: &Camera,
     armature: &Armature,
 ) {
+    shared_ui.last_pressed = None;
+
     context.input_mut(|i| {
         input.holding_mod = i.modifiers.command;
         input.holding_shift = i.modifiers.shift;
@@ -457,6 +458,16 @@ pub fn kb_inputs(
         #[cfg(target_arch = "wasm32")]
         utils::save_web(armature, camera, selections, edit_mode);
         #[cfg(not(target_arch = "wasm32"))]
+        utils::save_native(shared_ui);
+    }
+
+    if input.consume_shortcut(&config.keys.export) {
+        shared_ui.export_modal = true;
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    if input.consume_shortcut(&config.keys.save_as) {
+        shared_ui.save_path = None;
         utils::save_native(shared_ui);
     }
 
@@ -956,7 +967,7 @@ fn menu_file_button(
             ui.close();
         }
         let str_save_as = &shared_ui.loc("top_bar.file.save_as");
-        if top_bar_button!(str_save_as, None).clicked() {
+        if top_bar_button!(str_save_as, Some(&config.keys.save_as)).clicked() {
             shared_ui.save_path = None;
             #[cfg(target_arch = "wasm32")]
             utils::save_web(armature, camera, selections, edit_mode);
@@ -965,7 +976,7 @@ fn menu_file_button(
             ui.close();
         }
         let str_export = &shared_ui.loc("top_bar.file.export");
-        if top_bar_button!(str_export, None).clicked() {
+        if top_bar_button!(str_export, Some(&config.keys.export)).clicked() {
             shared_ui.export_modal = true;
             ui.close();
         }

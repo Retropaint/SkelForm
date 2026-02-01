@@ -4,7 +4,7 @@ use crate::*;
 
 type W = Warnings;
 
-pub fn check_warnings(armature: &Armature, selections: &SelectionState) -> Vec<Warning> {
+pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
     let mut warnings: Vec<Warning> = vec![];
 
     for b in 0..armature.bones.len() {

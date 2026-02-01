@@ -105,7 +105,7 @@ pub struct App {
 
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        let mut attributes = Window::default_attributes();
+        let attributes = Window::default_attributes();
 
         #[cfg(target_os = "windows")]
         {
@@ -805,7 +805,7 @@ impl BackendRenderer {
             &mut shared.events,
         );
 
-        shared.ui.warnings = warnings::check_warnings(&shared.armature, &shared.selections);
+        shared.ui.warnings = warnings::check_warnings(&shared.armature);
     }
 
     fn skf_record(&mut self, shared: &mut Shared) {
@@ -872,6 +872,9 @@ impl BackendRenderer {
         let mut armature = shared.armature.clone();
         let camera = shared.camera.clone();
         let edit_mode = shared.edit_mode.clone();
+
+        shared.edit_mode.export_bake_ik = false;
+        shared.edit_mode.export_exclude_ik = false;
 
         let autosaving = *shared.ui.saving.lock().unwrap() == Saving::Autosaving;
         *shared.ui.saving.lock().unwrap() = Saving::None;

@@ -244,22 +244,28 @@ fn rendering(
         ui.checkbox(&mut config.gridline_front, "".into_atoms());
     });
 
+    let mut alt_col = true;
+
     macro_rules! color_row {
-        ($title:expr, $color:expr, $bg_color:expr) => {
+        ($title:expr, $color:expr) => {
+            alt_col = !alt_col;
+            let bg_color = if alt_col {
+                config.colors.main
+            } else {
+                config.colors.dark_accent
+            };
             let str_color = shared_ui
                 .loc(&("settings_modal.rendering.".to_owned() + $title))
                 .clone();
             let mut col = $color.clone();
-            color_row(str_color, &mut col, $bg_color, ui);
+            color_row(str_color, &mut col, bg_color, ui);
             $color = col;
         };
     }
 
-    let dark_accent = &config.colors.dark_accent;
-    let main = &config.colors.main;
-    color_row!("background", config.colors.background, *dark_accent);
-    color_row!("gridline", config.colors.gridline, *main);
-    color_row!("center_point", config.colors.center_point, *dark_accent);
+    color_row!("background", config.colors.background);
+    color_row!("gridline", config.colors.gridline);
+    color_row!("center_point", config.colors.center_point);
 }
 
 fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::Config) {
@@ -332,12 +338,20 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::Config
 }
 
 fn colors(ui: &mut egui::Ui, config: &mut crate::Config, shared_ui: &crate::Ui) {
+    let mut alt_col = true;
+
     macro_rules! color_row {
-        ($title:expr, $color:expr, $bg_color:expr) => {
+        ($title:expr, $color:expr) => {
+            alt_col = !alt_col;
+            let color = if alt_col {
+                config.colors.main
+            } else {
+                config.colors.dark_accent
+            };
             let str_color = shared_ui
                 .loc(&("settings_modal.user_interface.colors.".to_owned() + $title))
                 .clone();
-            color_row(str_color, $color, $bg_color, ui);
+            color_row(str_color, $color, color, ui);
         };
     }
 
@@ -352,24 +366,21 @@ fn colors(ui: &mut egui::Ui, config: &mut crate::Config, shared_ui: &crate::Ui) 
         });
     });
 
-    let alt_bg = config.colors.main.clone();
-    let main_bg = config.colors.dark_accent.clone();
-
     // iterable color config
     #[rustfmt::skip]
     {
-        color_row!("main",         &mut config.colors.main,         main_bg);
-        color_row!("light_accent", &mut config.colors.light_accent, alt_bg);
-        color_row!("dark_accent",  &mut config.colors.dark_accent,  main_bg);
-        color_row!("text",         &mut config.colors.text,         alt_bg);
-        color_row!("frameline",    &mut config.colors.frameline,    main_bg);
-        color_row!("gradient",     &mut config.colors.gradient,     alt_bg);
-        color_row!("link",         &mut config.colors.link,         main_bg);
-        color_row!("warning_text", &mut config.colors.warning_text, alt_bg);
-        color_row!("inverse_kinematics", &mut config.colors.inverse_kinematics, main_bg);
-        color_row!("meshdef", &mut config.colors.meshdef, alt_bg);
-        color_row!("texture", &mut config.colors.texture, main_bg);
-        color_row!("ik_target", &mut config.colors.ik_target, alt_bg);
+        color_row!("main",               &mut config.colors.main              );
+        color_row!("light_accent",       &mut config.colors.light_accent      );
+        color_row!("dark_accent",        &mut config.colors.dark_accent       );
+        color_row!("text",               &mut config.colors.text              );
+        color_row!("frameline",          &mut config.colors.frameline         );
+        color_row!("gradient",           &mut config.colors.gradient          );
+        color_row!("link",               &mut config.colors.link              );
+        color_row!("warning_text",       &mut config.colors.warning_text      );
+        color_row!("inverse_kinematics", &mut config.colors.inverse_kinematics);
+        color_row!("meshdef",            &mut config.colors.meshdef           );
+        color_row!("texture",            &mut config.colors.texture           );
+        color_row!("ik_target",          &mut config.colors.ik_target         );
     };
 }
 
@@ -413,15 +424,23 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::Co
         });
     });
 
+    let mut alt_col = true;
+
     macro_rules! key {
-        ($label:expr, $field:expr, $color:expr) => {
+        ($label:expr, $field:expr) => {
+            alt_col = !alt_col;
+            let color = if alt_col {
+                config.colors.main
+            } else {
+                config.colors.dark_accent
+            };
             key(
                 $label,
                 &mut $field,
                 ui,
                 &mut shared_ui.changing_key,
                 &shared_ui.last_pressed,
-                $color,
+                color,
                 config.colors.text,
             );
         };
@@ -435,28 +454,22 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::Co
         };
     }
 
-    macro_rules! keys {
-        () => {
-            &mut config.keys
-        };
-    }
-
-    let colors = &config.colors;
-
     // iterable key config
     #[rustfmt::skip]
     {
-        key!(loc!("next_anim_frame"), keys!().next_anim_frame, colors.dark_accent);
-        key!(loc!("prev_anim_frame"), keys!().prev_anim_frame, colors.main);
-        key!(loc!("zoom_camera_in"),  keys!().zoom_in_camera,  colors.dark_accent);
-        key!(loc!("zoom_camera_out"), keys!().zoom_out_camera, colors.main);
-        key!(loc!("undo"),            keys!().undo,            colors.dark_accent);
-        key!(loc!("redo"),            keys!().redo,            colors.main);
-        key!(loc!("save"),            keys!().save,            colors.dark_accent);
-        key!(loc!("open"),            keys!().open,            colors.main);
-        key!(loc!("cancel"),          keys!().cancel,          colors.dark_accent);
-        key!(loc!("copy"),            keys!().copy,            colors.main);
-        key!(loc!("paste"),           keys!().paste,           colors.dark_accent);
+        key!(loc!("next_anim_frame"), config.keys.next_anim_frame);
+        key!(loc!("prev_anim_frame"), config.keys.prev_anim_frame);
+        key!(loc!("zoom_camera_in"),  config.keys.zoom_in_camera );
+        key!(loc!("zoom_camera_out"), config.keys.zoom_out_camera);
+        key!(loc!("undo"),            config.keys.undo           );
+        key!(loc!("redo"),            config.keys.redo           );
+        key!(loc!("save"),            config.keys.save           );
+        key!(loc!("save_as"),         config.keys.save_as        );
+        key!(loc!("export"),          config.keys.export         );
+        key!(loc!("open"),            config.keys.open           );
+        key!(loc!("cancel"),          config.keys.cancel         );
+        key!(loc!("copy"),            config.keys.copy           );
+        key!(loc!("paste"),           config.keys.paste          );
     };
 }
 

@@ -188,9 +188,9 @@ pub fn draw(
 
     if children.len() == 0 && parents.len() == 0 && bone.tex == "" {
         ui.add_space(10.);
-        let mut cache = egui_commonmark::CommonMarkCache::default();
-        let loc = shared_ui.loc("bone_panel.bone_empty").to_string();
-        let str = utils::markdown(loc, shared_ui.local_doc_url.to_string());
+        //let mut cache = egui_commonmark::CommonMarkCache::default();
+        //let loc = shared_ui.loc("bone_panel.bone_empty").to_string();
+        //let str = utils::markdown(loc, shared_ui.local_doc_url.to_string());
         //egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
     }
 
@@ -252,13 +252,13 @@ pub fn inverse_kinematics(
                     return;
                 }
 
-                let mut is_root = true;
-                if armature.bone_eff(bone.id) != JointEffector::Start {
-                    is_root = false;
-                }
+                //let mut is_root = true;
+                //if armature.bone_eff(bone.id) != JointEffector::Start {
+                //    is_root = false;
+                //}
 
-                let mut enabled = !bone.ik_disabled;
-                let str_desc = &shared_ui.loc("bone_panel.inverse_kinematics.enabled_desc");
+                //let mut enabled = !bone.ik_disabled;
+                //let str_desc = &shared_ui.loc("bone_panel.inverse_kinematics.enabled_desc");
                 //let checkbox = ui
                 //    .add_enabled(is_root, egui::Checkbox::new(&mut enabled, "".into_atoms()))
                 //    .on_hover_text(str_desc);
