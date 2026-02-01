@@ -205,10 +205,18 @@ pub fn save_web(
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn save_native(shared_ui: &mut shared::Ui) {
+    let mut open_dialog = true;
     if shared_ui.save_path != None {
-        *shared_ui.file_path.lock().unwrap() = vec![shared_ui.save_path.clone().unwrap()];
-        *shared_ui.saving.lock().unwrap() = Saving::CustomPath;
-    } else {
+        let path = shared_ui.save_path.clone().unwrap();
+        let filename = path.as_path().file_name().unwrap();
+        filename.to_str().unwrap().to_string();
+        if filename != "autosave.skf" {
+            *shared_ui.file_path.lock().unwrap() = vec![shared_ui.save_path.clone().unwrap()];
+            *shared_ui.saving.lock().unwrap() = Saving::CustomPath;
+            open_dialog = false;
+        }
+    }
+    if open_dialog {
         utils::open_save_dialog(&shared_ui.file_path, &shared_ui.saving, Saving::CustomPath);
     }
 }

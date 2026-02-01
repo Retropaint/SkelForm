@@ -836,9 +836,7 @@ impl BackendRenderer {
                 shared.ui.changed_window_name = false;
                 shared.events.open_modal("saving", true);
                 *shared.ui.save_finished.lock().unwrap() = false;
-                if shared.ui.save_path == None && saving_type != Saving::Exporting {
-                    shared.ui.save_path = Some(shared.ui.file_path.lock().unwrap()[0].clone());
-                }
+                shared.ui.save_path = Some(path.clone());
             }
             Saving::Exporting => {
                 let path = &shared.ui.file_path.lock().unwrap()[0];
