@@ -125,7 +125,7 @@
     "empty_armature": "Don't forget - if in doubt, consult the [User Documentation](user-docs/index.html).\n\nIf you're new here, check out the [Starter Guide](user-docs/starter-guide/main.html).\n\nYou may import a PSD (File > Import), provided it has the [right structure](user-docs/psd.html).\n\nClick **New Bone** above to get started with your armature.",
     "icons": {
       "tex": "Texture - $tex",
-      "tex_inactive": "Texture - $tex (no active styles to display)",
+      "tex_inactive": "Texture - $tex\n(no active styles to display)",
       "mesh": "Contains mesh",
       "ik_family": "Inverse kinematics family #$family_id",
       "ik_target": "Target of inverse kinematics family #$family_id"

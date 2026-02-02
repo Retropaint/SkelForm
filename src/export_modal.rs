@@ -16,8 +16,8 @@ pub fn draw(
     _selections: &SelectionState,
 ) {
     egui::Modal::new("export_modal".into()).show(ctx, |ui| {
-        ui.set_width(250.);
-        ui.set_height(250.);
+        ui.set_width(300.);
+        ui.set_height(300.);
         ui.heading(shared_ui.loc("export_modal.heading"));
         modal_x(ui, [0., 0.].into(), || {
             shared_ui.export_modal = false;
@@ -37,6 +37,8 @@ pub fn draw(
                     egui::RichText::new(shared_ui.loc("export_modal.inverse_kinematics")).size(15.);
                 ui.label(text);
             });
+
+        ui.add_space(2.);
 
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("export_modal.bake_ik"))
@@ -60,7 +62,7 @@ pub fn draw(
             });
         });
 
-        ui.add_space(20.);
+        ui.add_space(30.);
 
         egui::Frame::new()
             .fill(config.colors.dark_accent.into())
@@ -70,6 +72,7 @@ pub fn draw(
                 let text = egui::RichText::new(shared_ui.loc("export_modal.tex_atlas")).size(15.);
                 ui.label(text);
             });
+        ui.add_space(5.);
 
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("export_modal.img_format"));

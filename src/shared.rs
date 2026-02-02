@@ -647,6 +647,7 @@ pub struct Ui {
 
     pub saving: Arc<Mutex<Saving>>,
     pub save_finished: Arc<Mutex<bool>>,
+    pub export_finished: Arc<Mutex<bool>>,
     pub can_quit: bool,
     pub warnings: Vec<Warning>,
     pub warnings_open: bool,

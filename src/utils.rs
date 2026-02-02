@@ -136,9 +136,11 @@ pub fn open_save_dialog(
 ) {
     let filepath = Arc::clone(&file_path);
     let csaving = Arc::clone(&saving);
+    let is_exporting = save_result == Saving::Exporting;
+    let ext = if is_exporting { "skfe" } else { "skf" };
     std::thread::spawn(move || {
         let fil = "SkelForm Armature";
-        let task = rfd::FileDialog::new().add_filter(fil, &["skf"]).save_file();
+        let task = rfd::FileDialog::new().add_filter(fil, &[ext]).save_file();
         if task == None {
             return;
         }

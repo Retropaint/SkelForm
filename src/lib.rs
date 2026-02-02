@@ -765,6 +765,10 @@ impl BackendRenderer {
             shared.ui.modal = false;
             shared.ui.can_quit = true;
             *shared.ui.save_finished.lock().unwrap() = false;
+        } else if *shared.ui.export_finished.lock().unwrap() {
+            shared.ui.modal = false;
+            shared.ui.can_quit = true;
+            *shared.ui.export_finished.lock().unwrap() = false;
         }
 
         if *shared.ui.saving.lock().unwrap() != shared::Saving::None {
@@ -842,32 +846,36 @@ impl BackendRenderer {
                 *shared.ui.save_finished.lock().unwrap() = false;
                 shared.ui.save_path = Some(path.clone());
                 shared.ui.can_quit = false;
+                if !shared.ui.recent_file_paths.contains(&save_path) {
+                    shared.ui.recent_file_paths.push(save_path.clone());
+                }
             }
             Saving::Exporting => {
                 let path = &shared.ui.file_path.lock().unwrap()[0];
                 save_path = path.as_path().to_str().unwrap().to_string();
                 shared.events.open_modal("exporting", true);
-                *shared.ui.save_finished.lock().unwrap() = false;
+                *shared.ui.export_finished.lock().unwrap() = false;
                 shared.ui.can_quit = false;
+                utils::save_to_recent_files(&shared.ui.recent_file_paths);
             }
             Saving::Autosaving => {
                 let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
                 let dir = dir_init.unwrap().data_dir().to_str().unwrap().to_string();
                 save_path = dir + "/autosave.skf";
-                shared.last_autosave = shared.edit_mode.time;
-                let in_cooldown = shared.edit_mode.time - shared.last_autosave
-                    < shared.config.autosave_frequency as f32;
+                let freq = shared.config.autosave_frequency as f32;
+                let in_cooldown = shared.edit_mode.time - shared.last_autosave < freq;
                 if in_cooldown {
                     *shared.ui.saving.lock().unwrap() = Saving::None;
                     return;
                 }
+                if !shared.ui.recent_file_paths.contains(&save_path) {
+                    shared.ui.recent_file_paths.push(save_path.clone());
+                }
+                shared.last_autosave = shared.edit_mode.time;
             }
             _ => {}
         }
 
-        if !shared.ui.recent_file_paths.contains(&save_path) {
-            shared.ui.recent_file_paths.push(save_path.clone());
-        }
         utils::save_to_recent_files(&shared.ui.recent_file_paths);
 
         self.take_screenshot(shared);
@@ -885,10 +893,12 @@ impl BackendRenderer {
         shared.edit_mode.export_clear_color = Color::new(0, 0, 0, 0);
         shared.edit_mode.export_img_format = ExportImgFormat::PNG;
 
+        let was_exporting = *shared.ui.saving.lock().unwrap() == Saving::Exporting;
         let autosaving = *shared.ui.saving.lock().unwrap() == Saving::Autosaving;
         *shared.ui.saving.lock().unwrap() = Saving::None;
 
         let save_finished = Arc::clone(&shared.ui.save_finished);
+        let export_finished = Arc::clone(&shared.ui.export_finished);
         let device = self.gpu.device.clone();
         std::thread::spawn(move || {
             let mut png_bufs = vec![];
@@ -935,7 +945,11 @@ impl BackendRenderer {
 
             // trigger saving modal if manually saving
             if !autosaving {
-                *save_finished.lock().unwrap() = true;
+                if was_exporting {
+                    *export_finished.lock().unwrap() = true;
+                } else {
+                    *save_finished.lock().unwrap() = true;
+                }
             }
         });
     }
