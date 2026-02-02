@@ -118,26 +118,32 @@ fn settings_button(
         col += shared::Color::new(20, 20, 20, 0);
     }
 
-    let rect = egui::Rect::from_min_max(
-        egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() - 5.),
-        egui::Pos2::new(width, 21.),
+    let rect = egui::Rect::from_min_size(
+        egui::Pos2::new(ui.cursor().left(), ui.cursor().top()),
+        egui::Vec2::new(width, 21.),
     );
 
     let id = egui::Id::new("setting_".to_owned() + &name);
     let button = ui
         .interact(rect, id, egui::Sense::click())
         .on_hover_cursor(egui::CursorIcon::PointingHand);
-    egui::Frame::new()
-        .fill(col.into())
-        .show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.set_width(width);
-                ui.set_height(21.);
-                ui.add_space(5.);
-                ui.label(name);
-            });
-        })
-        .response;
+
+    egui::Frame::new().fill(col.into()).show(ui, |ui| {
+        ui.horizontal(|ui| {
+            ui.set_width(width);
+            ui.set_height(21.);
+            let mut text_pos = ui.min_rect().left_center();
+            text_pos.x += 5.;
+            ui.painter().text(
+                text_pos,
+                egui::Align2::LEFT_CENTER,
+                name.clone(),
+                egui::FontId::new(13., egui::FontFamily::Proportional),
+                config.colors.text.into(),
+            );
+        });
+    });
+
     if button.contains_pointer() || button.has_focus() {
         shared_ui.hovering_setting = Some(state.clone());
         *is_hovered = true;

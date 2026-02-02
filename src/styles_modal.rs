@@ -500,11 +500,8 @@ pub fn draw_bone_buttons(
             if children.len() == 0 {
                 armature_window::hor_line(11., ui, &config);
             } else {
-                let fold_icon = if armature.bones[b].folded {
-                    "⏵"
-                } else {
-                    "⏷"
-                };
+                let folded = armature.bones[b].folded;
+                let fold_icon = if folded { "⏵" } else { "⏷" };
                 let id = "bone_style_fold".to_owned() + &b.to_string();
                 if armature_window::bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), config)
                     .clicked()
@@ -711,13 +708,10 @@ pub fn draw_tex_preview(
         ui::job_text(img_name_str, Some(egui::Color32::WHITE), &mut name);
         ui::job_text(&tex.name, None, &mut name);
         let mut size = egui::text::LayoutJob::default();
-        let img_size_str = &shared_ui.loc("styles_modal.img_size");
-        ui::job_text(img_size_str, Some(egui::Color32::WHITE), &mut size);
-        ui::job_text(
-            &(tex.size.x.to_string() + " x " + &tex.size.y.to_string()),
-            None,
-            &mut size,
-        );
+        let img_size_header_str = &shared_ui.loc("styles_modal.img_size");
+        ui::job_text(img_size_header_str, Some(egui::Color32::WHITE), &mut size);
+        let img_size_str = &(tex.size.x.to_string() + " x " + &tex.size.y.to_string());
+        ui::job_text(img_size_str, None, &mut size);
         ui.label(name);
         ui.label(size);
     });
