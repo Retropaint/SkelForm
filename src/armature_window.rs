@@ -40,6 +40,10 @@ pub fn draw(
     }
 
     let panel = side_panel.resizable(true).show(egui_ctx, |ui| {
+        if shared_ui.startup_window {
+            shared_ui.armature_panel_rect = Some(ui.min_rect());
+            return;
+        }
         let gradient = config.colors.gradient.into();
         ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
         ui.horizontal(|ui| {
@@ -306,7 +310,7 @@ pub fn draw_hierarchy(
                     .interact(Sense::click())
                     .on_hover_cursor(cursor);
 
-                if button.contains_pointer() {
+                if button.contains_pointer() || button.has_focus() {
                     is_hovering = true;
                     shared_ui.hovering_bone = idx;
                 }

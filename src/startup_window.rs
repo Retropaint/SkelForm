@@ -340,7 +340,7 @@ pub fn leftside_button(
             .on_hover_cursor(egui::CursorIcon::PointingHand);
     }
 
-    if button.contains_pointer() {
+    if button.contains_pointer() || button.has_focus() {
         let dark_accent = config.colors.dark_accent.into();
         ui.gradient(gradient, egui::Color32::TRANSPARENT, dark_accent);
     }
@@ -433,7 +433,7 @@ pub fn skf_file_button(
             .interact(gradient_rect, id, egui::Sense::click())
             .on_hover_cursor(egui::CursorIcon::PointingHand);
 
-        if button.hovered() {
+        if button.contains_pointer() || button.has_focus() {
             let dark_accent = config.colors.dark_accent.into();
             ui.gradient(gradient_rect, egui::Color32::TRANSPARENT, dark_accent);
         }
@@ -496,7 +496,7 @@ pub fn skf_file_button(
         ui.painter()
             .rect_filled(bottom, egui::CornerRadius::ZERO, config.colors.dark_accent);
 
-        if !button.contains_pointer() {
+        if !button.contains_pointer() && !button.has_focus() {
             return;
         }
 
@@ -634,7 +634,7 @@ pub fn file_button_icon(
         egui::Color32::PLACEHOLDER
     };
 
-    let label = egui::Label::new(egui::RichText::new(icon).size(18.).color(col));
+    let label = egui::Button::selectable(false, egui::RichText::new(icon).size(18.).color(col));
     ui.put(rect, label)
         .on_hover_cursor(egui::CursorIcon::PointingHand)
         .on_hover_text(name)

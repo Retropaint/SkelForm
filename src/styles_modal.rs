@@ -174,7 +174,8 @@ pub fn draw_styles_list(
                         .response
                         .on_hover_cursor(cursor_icon)
                         .interact(egui::Sense::click());
-                    if button.contains_pointer() && !shared_ui.dragging_tex {
+                    if (button.contains_pointer() || button.has_focus()) && !shared_ui.dragging_tex
+                    {
                         shared_ui.hovering_set = s as i32;
                         hovered = true;
                     }
@@ -202,7 +203,7 @@ pub fn draw_styles_list(
                         .on_hover_cursor(egui::CursorIcon::PointingHand)
                         .on_hover_text(str_style_active_desc);
                     let mut visible_col = config.colors.text;
-                    if visible_checkbox.contains_pointer() {
+                    if visible_checkbox.contains_pointer() || visible_checkbox.has_focus() {
                         visible_col += Color::new(60, 60, 60, 0);
                     }
                     let visible = if armature.styles[s].active {
@@ -542,7 +543,7 @@ pub fn draw_bone_buttons(
                 .response
                 .interact(egui::Sense::click());
 
-            if button.contains_pointer() {
+            if button.contains_pointer() || button.has_focus() {
                 shared_ui.hovering_style_bone = b as i32;
                 hovered = true;
             }
@@ -819,7 +820,7 @@ pub fn draw_tex_buttons(
                 ui.context_delete(shared_ui, &config, events, "delete_tex", PolarId::DeleteTex);
             });
 
-            if button.contains_pointer() {
+            if button.contains_pointer() || button.has_focus() {
                 shared_ui.hovering_tex = i as i32;
                 hovered = true;
             }

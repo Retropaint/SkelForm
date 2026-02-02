@@ -105,7 +105,8 @@ pub struct App {
 
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        let attributes = Window::default_attributes();
+        #[allow(unused_mut)]
+        let mut attributes = Window::default_attributes();
 
         #[cfg(target_os = "windows")]
         {

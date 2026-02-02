@@ -117,7 +117,17 @@ fn settings_button(
     if shared_ui.settings_state == state.clone() {
         col += shared::Color::new(20, 20, 20, 0);
     }
-    let button = egui::Frame::new()
+
+    let rect = egui::Rect::from_min_max(
+        egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() - 5.),
+        egui::Pos2::new(width, 21.),
+    );
+
+    let id = egui::Id::new("setting_".to_owned() + &name);
+    let button = ui
+        .interact(rect, id, egui::Sense::click())
+        .on_hover_cursor(egui::CursorIcon::PointingHand);
+    egui::Frame::new()
         .fill(col.into())
         .show(ui, |ui| {
             ui.horizontal(|ui| {
@@ -127,10 +137,8 @@ fn settings_button(
                 ui.label(name);
             });
         })
-        .response
-        .interact(egui::Sense::click())
-        .on_hover_cursor(egui::CursorIcon::PointingHand);
-    if button.contains_pointer() {
+        .response;
+    if button.contains_pointer() || button.has_focus() {
         shared_ui.hovering_setting = Some(state.clone());
         *is_hovered = true;
     }

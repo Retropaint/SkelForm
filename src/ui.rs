@@ -94,7 +94,9 @@ pub fn draw(
             }
         }
     }
-    camera_bar(context, config, shared_ui, camera, events);
+    if !shared_ui.startup_window {
+        camera_bar(context, config, shared_ui, camera, events);
+    }
 
     if shared_ui.polar_modal {
         modal::polar_modal(context, &config, shared_ui, events);
@@ -434,6 +436,9 @@ pub fn kb_inputs(
     #[allow(unused_variables)] armature: &Armature,
     #[allow(unused_variables)] camera: &Camera,
 ) {
+    if shared_ui.startup_window {
+        return;
+    }
     mouse_button_as_key(input, egui::PointerButton::Primary, egui::Key::F31);
     mouse_button_as_key(input, egui::PointerButton::Secondary, egui::Key::F32);
     mouse_button_as_key(input, egui::PointerButton::Middle, egui::Key::F33);
@@ -498,7 +503,8 @@ pub fn kb_inputs(
             && !shared_ui.polar_modal
             && !shared_ui.forced_modal
             && !shared_ui.settings_modal
-            && !shared_ui.export_modal;
+            && !shared_ui.export_modal
+            && !shared_ui.warnings_open;
 
         shared_ui.styles_modal = false;
         shared_ui.modal = false;
@@ -507,6 +513,7 @@ pub fn kb_inputs(
         shared_ui.settings_modal = false;
         shared_ui.atlas_modal = false;
         shared_ui.export_modal = false;
+        shared_ui.warnings_open = false;
 
         // if a context menu is open, cancel that instead
         if shared_ui.context_menu.id != "" {
@@ -567,6 +574,10 @@ fn top_panel(
     panel.show(egui_ctx, |ui| {
         ui.set_max_height(20.);
         let mut offset = 0.;
+        if shared_ui.startup_window {
+            shared_ui.top_panel_rect = Some(ui.min_rect());
+            return;
+        }
         egui::MenuBar::new().ui(ui, |ui| {
             #[rustfmt::skip]
             menu_file_button(ui, &config, shared_ui, events, &selections, &armature, &camera);
@@ -630,7 +641,9 @@ fn top_panel(
                     let count = egui::RichText::new(shared_ui.warnings.len().to_string() + " ⚠")
                         .color(config.colors.warning_text);
                     let pointing_hand = egui::CursorIcon::PointingHand;
-                    let header = ui.label(count).on_hover_cursor(pointing_hand);
+                    let header = ui
+                        .add(egui::Button::selectable(false, count))
+                        .on_hover_cursor(pointing_hand);
                     if header.clicked() {
                         shared_ui.warnings_open = !shared_ui.warnings_open;
                     }
@@ -696,10 +709,11 @@ impl EguiUi for egui::Ui {
 
     fn clickable_label(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response {
         let hand = egui::CursorIcon::PointingHand;
-        let click = egui::Sense::click();
-        let label = self.label(text).on_hover_cursor(hand).interact(click);
+        let label = self
+            .add(egui::Button::selectable(false, text))
+            .on_hover_cursor(hand);
 
-        if label.contains_pointer() {
+        if label.contains_pointer() || label.has_focus() {
             return label.highlight();
         }
 
