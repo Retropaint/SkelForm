@@ -1480,7 +1480,6 @@ impl Armature {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct TexAtlas {
-    #[serde(skip_deserializing)]
     pub filename: String,
     #[serde(skip_deserializing)]
     pub size: Vec2I,
@@ -1493,6 +1492,9 @@ pub struct Root {
     pub version: String,
     pub ik_root_ids: Vec<i32>,
     pub baked_ik: bool,
+    pub img_format: ExportImgFormat,
+    #[serde(default, skip_serializing_if = "is_color_empty")]
+    pub clear_color: Color,
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
@@ -1780,6 +1782,14 @@ pub enum EditModes {
     Scale,
 }
 
+#[derive(Default, PartialEq, Clone, FromRepr, serde::Serialize, serde::Deserialize, Debug)]
+pub enum ExportImgFormat {
+    #[default]
+    PNG,
+    JPG,
+}
+enum_string!(ExportImgFormat);
+
 #[derive(Default, Clone)]
 pub struct EditMode {
     pub current: EditModes,
@@ -1794,6 +1804,8 @@ pub struct EditMode {
     pub time: f32,
     pub export_bake_ik: bool,
     pub export_exclude_ik: bool,
+    pub export_img_format: ExportImgFormat,
+    pub export_clear_color: Color,
 }
 
 #[derive(Default, PartialEq, Debug)]
@@ -2016,6 +2028,8 @@ pub enum Events {
     SetBindWeight,
     OpenFileErrModal,
     SetKeyframeTransition,
+    SetExportClearColor,
+    SetExportImgFormat,
 }
 
 enum_string!(Events);
@@ -2137,6 +2151,12 @@ impl EventState {
     event_with_value!(save_edited_bone, Events::SaveEditedBone, bone_idx, usize);
     event_with_value!(toggle_baking_ik, Events::ToggleBakingIk, toggle, usize);
     event_with_value!(toggle_exclude_ik, Events::ToggleExcludeIk, toggle, usize);
+    event_with_value!(
+        set_export_img_format,
+        Events::SetExportImgFormat,
+        format,
+        usize
+    );
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -2314,6 +2334,13 @@ impl EventState {
         self.values.push(bone_id as f32);
         self.values.push((element.clone() as usize) as f32);
     }
+
+    pub fn set_export_clear_color(&mut self, r: f32, g: f32, b: f32) {
+        self.events.push(Events::SetExportClearColor);
+        self.values.push(r as f32);
+        self.values.push(g as f32);
+        self.values.push(b as f32);
+    }
 }
 
 #[derive(Default, Clone)]
@@ -2395,6 +2422,10 @@ fn is_neg_one(value: &i32) -> bool {
 
 fn is_max(value: &f32) -> bool {
     *value == f32::MAX
+}
+
+fn is_color_empty(value: &Color) -> bool {
+    *value == Color::new(0, 0, 0, 0)
 }
 
 fn are_verts_empty(value: &Vec<Vertex>) -> bool {

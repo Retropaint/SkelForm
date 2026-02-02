@@ -48,7 +48,17 @@ pub fn iterate_events(
             };
     }
 
-    if event == Events::DeleteKeyframeLine {
+    if event == Events::SetExportClearColor {
+        edit_mode.export_clear_color = Color::new(
+            (events.values[0] * 255.).round() as u8,
+            (events.values[1] * 255.).round() as u8,
+            (events.values[2] * 255.).round() as u8,
+            0,
+        );
+
+        events.events.remove(0);
+        events.values.drain(0..=2);
+    } else if event == Events::DeleteKeyframeLine {
         armature
             .sel_anim_mut(&selections)
             .unwrap()
@@ -687,6 +697,9 @@ pub fn process_event(
         }
         Events::ToggleBakingIk => edit_mode.export_bake_ik = value == 1.,
         Events::ToggleExcludeIk => edit_mode.export_exclude_ik = value == 1.,
+        Events::SetExportImgFormat => {
+            edit_mode.export_img_format = ExportImgFormat::from_repr(value as usize).unwrap()
+        }
         _ => {}
     }
 }

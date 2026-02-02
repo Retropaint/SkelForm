@@ -109,7 +109,12 @@
     "bake_ik_desc": "If ticked, inverse kinematics will be baked into all animations where targets are moved.\n\nRecommended if inverse kinematics is only used in animations, especially if developing your own runtime.",
     "exclude_ik": "Exclude inverse kinematics data ℹ:",
     "exclude_ik_desc": "Inverse kinematics will be assumed off when exporting.\n\nRecommended to prevent runtimes from mixing up baked and real-time inverse kinematics.",
-    "save_button": "Export"
+    "img_format": "Atlas image format:",
+    "clear_color": "Clear Color ℹ:",
+    "clear_color_desc": "The color that transparent pixels will be represented by",
+    "save_button": "Export",
+    "inverse_kinematics": "Inverse Kinematics",
+    "tex_atlas": "Texture Atlas(es)"
   },
   "armature_panel": {
     "heading": "Armature",

@@ -21,7 +21,7 @@ serde = { version = "1.0.219", features = ["serde_derive"] }
 serde_json = "1.0.140"
 wgpu = { version = "27.0.1", features=["webgl"]}
 winit = "0.30.12"
-image = { version = "0.25.5", default-features = false, features = ["png"] }
+image = { version = "0.25.5", default-features = false, features = ["png", "jpeg"] }
 psd = { "path" = "./vendor_deps/psd"}  # vendored for faster layer flattening algorithm
 max_rects = { "path" = "./vendor_deps/max_rects"}  # vendored to remove visualizer
 spade = "2.15.0" # Delaunay triangulation for meshes

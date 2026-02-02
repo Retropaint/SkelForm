@@ -879,8 +879,11 @@ impl BackendRenderer {
         let camera = shared.camera.clone();
         let edit_mode = shared.edit_mode.clone();
 
+        // clear export options
         shared.edit_mode.export_bake_ik = false;
         shared.edit_mode.export_exclude_ik = false;
+        shared.edit_mode.export_clear_color = Color::new(0, 0, 0, 0);
+        shared.edit_mode.export_img_format = ExportImgFormat::PNG;
 
         let autosaving = *shared.ui.saving.lock().unwrap() == Saving::Autosaving;
         *shared.ui.saving.lock().unwrap() = Saving::None;
@@ -892,7 +895,7 @@ impl BackendRenderer {
             let mut sizes = vec![];
 
             if armature.styles.len() > 0 && armature.styles[0].textures.len() > 0 {
-                (png_bufs, sizes) = utils::create_tex_sheet(&mut armature);
+                (png_bufs, sizes) = utils::create_tex_sheet(&mut armature, &edit_mode);
             }
 
             let (armatures_json, editor_json) =
@@ -916,8 +919,12 @@ impl BackendRenderer {
             zip.start_file("readme.md", options.clone()).unwrap();
             zip.write(include_bytes!("../assets/skf_readme.md"))
                 .unwrap();
+            let atlas_ext = match edit_mode.export_img_format {
+                ExportImgFormat::PNG => ".png",
+                ExportImgFormat::JPG => ".jpg",
+            };
             for i in 0..png_bufs.len() {
-                let atlas_name = "atlas".to_owned() + &i.to_string() + ".png";
+                let atlas_name = "atlas".to_owned() + &i.to_string() + atlas_ext;
                 zip.start_file(atlas_name, options.clone()).unwrap();
                 zip.write(&png_bufs[i]).unwrap();
             }

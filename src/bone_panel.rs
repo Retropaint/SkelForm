@@ -227,12 +227,7 @@ pub fn inverse_kinematics(
     let str_desc = &shared_ui.loc("bone_panel.inverse_kinematics.desc").clone();
     let frame = egui::Frame::new()
         .fill(config.colors.dark_accent.into())
-        .inner_margin(egui::Margin {
-            bottom: 5,
-            top: 5,
-            left: 5,
-            right: 5,
-        });
+        .inner_margin(egui::Margin::same(5));
 
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {

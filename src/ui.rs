@@ -123,7 +123,7 @@ pub fn draw(
     }
     if shared_ui.export_modal {
         export_modal::draw(
-            context, shared_ui, &edit_mode, events, armature, camera, selections,
+            context, shared_ui, &edit_mode, config, events, armature, camera, selections,
         );
     }
     #[cfg(not(target_arch = "wasm32"))]

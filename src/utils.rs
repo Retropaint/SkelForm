@@ -8,12 +8,14 @@ mod web {
     pub use web_sys::*;
     pub use zip::write::FileOptions;
 }
+use buffer::ConvertBuffer;
 use max_rects::packing_box::PackingBox;
 use renderer::construction;
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
 use image::{ExtendedColorType::Rgb8, GenericImage, ImageEncoder};
+use std::any::Any;
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::Mutex;
 use std::{collections::HashMap, path::PathBuf};
@@ -221,7 +223,7 @@ pub fn save_native(shared_ui: &mut shared::Ui) {
     }
 }
 
-pub fn create_tex_sheet(armature: &mut Armature) -> (Vec<Vec<u8>>, Vec<i32>) {
+pub fn create_tex_sheet(armature: &mut Armature, edit_mode: &EditMode) -> (Vec<Vec<u8>>, Vec<i32>) {
     let mut atlases: Vec<Vec<PackingBox>> = vec![];
     let mut sizes: Vec<i32> = vec![];
     let mut boxes = vec![];
@@ -312,15 +314,33 @@ pub fn create_tex_sheet(armature: &mut Armature) -> (Vec<Vec<u8>>, Vec<i32>) {
             }
         }
 
-        // encode buffer to png
-        let mut png_buf: Vec<u8> = vec![];
-        let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
-        let img = image::ColorType::Rgba8.into();
-        encoder
-            .write_image(&raw_buf, raw_buf.width(), raw_buf.height(), img)
-            .unwrap();
+        let mut buf: Vec<u8> = vec![];
+        let size = raw_buf.dimensions();
 
-        bufs.push(png_buf);
+        // encode buffer to provided format
+        match edit_mode.export_img_format {
+            ExportImgFormat::PNG => {
+                let encoder = image::codecs::png::PngEncoder::new(&mut buf);
+                let img = image::ColorType::Rgba8.into();
+                encoder.write_image(&raw_buf, size.0, size.1, img).unwrap();
+            }
+            ExportImgFormat::JPG => {
+                let mut rgba: RgbaImage = raw_buf.convert();
+                for pixel in rgba.pixels_mut() {
+                    let [_, _, _, a] = pixel.0;
+                    let cc = edit_mode.export_clear_color;
+                    if a == 0 {
+                        *pixel = Rgba([cc.r, cc.g, cc.b, 0]);
+                    }
+                }
+                let rgb: RgbImage = rgba.convert();
+                let encoder = image::codecs::jpeg::JpegEncoder::new(&mut buf);
+                let img = image::ColorType::Rgb8.into();
+                encoder.write_image(&rgb, size.0, size.1, img).unwrap();
+            }
+        }
+
+        bufs.push(buf);
     }
 
     (bufs, sizes)
@@ -552,17 +572,28 @@ pub fn prepare_files(
     }
 
     let mut atlases = vec![];
+    let atlas_ext = match edit_mode.export_img_format {
+        ExportImgFormat::PNG => ".png",
+        ExportImgFormat::JPG => ".jpg",
+    };
     for s in 0..sizes.len() {
         atlases.push(TexAtlas {
-            filename: "atlas".to_owned() + &s.to_string() + ".png",
+            filename: "atlas".to_owned() + &s.to_string() + atlas_ext,
             size: Vec2I::new(sizes[s], sizes[s]),
         });
+    }
+
+    let mut clear_color = edit_mode.export_clear_color;
+    if edit_mode.export_img_format == ExportImgFormat::PNG {
+        clear_color = Color::new(0, 0, 0, 0);
     }
 
     let root = Root {
         version: env!("CARGO_PKG_VERSION").to_string(),
         ik_root_ids,
         baked_ik: edit_mode.export_bake_ik,
+        img_format: edit_mode.export_img_format.clone(),
+        clear_color,
         bones: armature_copy.bones,
         animations: armature_copy.animations,
         styles: armature_copy.styles,
@@ -677,14 +708,32 @@ pub fn import<R: Read + std::io::Seek>(
     if styles.len() > 0 && has_tex {
         let mut imgs = vec![];
         for a in 0..root.atlases.len() {
-            let name = &("atlas".to_owned() + &a.to_string() + ".png");
-            let texture_file = zip.as_mut().unwrap().by_name(name).unwrap();
+            let filename = &root.atlases[a].filename;
+            let texture_file = zip.as_mut().unwrap().by_name(filename).unwrap();
 
             let mut bytes = vec![];
             for byte in texture_file.bytes() {
                 bytes.push(byte.unwrap());
             }
             imgs.push(image::load_from_memory(&bytes).unwrap());
+        }
+
+        // remove clear color for JPG atlases
+        if root.img_format == ExportImgFormat::JPG {
+            for i in 0..imgs.len() {
+                let png = imgs[i].clone().into_rgba8();
+                imgs[i] = image::DynamicImage::ImageRgba8(png);
+                let mut this_img = imgs[i].clone().into_rgba8();
+                for pixel in this_img.pixels_mut() {
+                    let [r, g, b, _] = pixel.0;
+                    let src = [r, g, b];
+                    let cc = [root.clear_color.r, root.clear_color.g, root.clear_color.b];
+                    if color_within_range(src, cc, 100) {
+                        *pixel = Rgba([0, 0, 0, 0]);
+                    }
+                }
+                imgs[i] = image::DynamicImage::ImageRgba8(this_img);
+            }
         }
 
         for set in &mut shared.armature.styles {
@@ -1052,6 +1101,12 @@ pub fn interp(current: i32, max: i32, start_val: f32, end_val: f32, transition: 
         Transition::SineOut => (current as f32 / max as f32 * 3.14 * 0.5).sin(),
     };
     start_val + (end_val - start_val) * interp
+}
+
+pub fn color_within_range(src: [u8; 3], dst: [u8; 3], tol: u8) -> bool {
+    (src[0] >= dst[0].saturating_sub(tol) && src[0] <= dst[0].saturating_add(tol))
+        && (src[1] >= dst[1].saturating_sub(tol) && src[1] <= dst[1].saturating_add(tol))
+        && (src[2] >= dst[2].saturating_sub(tol) && src[2] <= dst[2].saturating_add(tol))
 }
 
 // I admit defeat:
