@@ -41,7 +41,7 @@ pub fn iterate_events(
                 E::RenameBone  => if !ui.just_made_bone  { undo_states.new_undo_bone( &armature.sel_bone( &selections).unwrap()); ui.just_made_bone  = false }
                 E::RenameAnim  => if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap()); ui.just_made_anim  = false }
 
-                E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts => {
+                E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts | E::NewVertex => {
                     undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
                 }
                 _ => {}
@@ -571,7 +571,19 @@ pub fn process_event(
             bone_mut.vertices.push(renderer.new_vert.unwrap());
             bone_mut.vertices.last_mut().unwrap().id = 4.max(bone_mut.vertices.len() as u32);
             bone_mut.vertices = renderer::sort_vertices(bone_mut.vertices.clone());
-            bone_mut.indices = renderer::triangulate(&bone_mut.vertices, &tex_img);
+            bone_mut.indices = renderer::triangulate(&mut bone_mut.vertices, &tex_img);
+
+            // remove vertices that are not in any triangle
+            for v in (0..bone_mut.vertices.len()).rev() {
+                if bone_mut.indices.contains(&(v as u32)) {
+                    continue;
+                }
+                bone_mut.vertices.remove(v);
+                for idx in &mut bone_mut.indices {
+                    *idx -= if *idx >= v as u32 { 1 } else { 0 };
+                }
+            }
+
             bone_mut.verts_edited = true;
         }
         Events::AdjustKeyframesByFPS => {
@@ -812,7 +824,10 @@ fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode) {
     selections.anim_frame = -1;
     selections.anim = usize::MAX;
     selections.bind = -1;
+    selections.style = -1;
     edit_mode.showing_mesh = false;
+    edit_mode.setting_ik_target = false;
+    edit_mode.setting_bind_verts = false;
 }
 
 pub fn undo_redo(

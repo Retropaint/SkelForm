@@ -8,14 +8,14 @@ mod web {
     pub use web_sys::*;
     pub use zip::write::FileOptions;
 }
-use buffer::ConvertBuffer;
+use image::buffer::ConvertBuffer;
+use image::{RgbaImage, RgbImage, Rgba};
 use max_rects::packing_box::PackingBox;
 use renderer::construction;
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
 use image::{ExtendedColorType::Rgb8, GenericImage, ImageEncoder};
-use std::any::Any;
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::Mutex;
 use std::{collections::HashMap, path::PathBuf};
@@ -175,7 +175,7 @@ pub fn save_web(
     let mut carmature = armature.clone();
 
     if carmature.styles.len() > 0 && carmature.styles[0].textures.len() > 0 {
-        (png_bufs, sizes) = utils::create_tex_sheet(&mut carmature);
+        (png_bufs, sizes) = utils::create_tex_sheet(&mut carmature, edit_mode);
     }
 
     let (armatures_json, editor_json) =

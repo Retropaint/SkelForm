@@ -169,6 +169,7 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut cra
         {
             let str = shared_ui.loc("settings_modal.user_interface.ui_slider");
             if ui.skf_button(&str).clicked() {
+                shared_ui.settings_modal = false;
                 crate::toggleElement(true, "ui-slider".to_string())
             }
         }

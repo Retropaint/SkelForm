@@ -778,7 +778,7 @@ impl Default for ColorConfig {
             gridline: Color::new(128, 128, 128, 255),
             center_point: Color::new(0, 255, 0, 255),
             link: Color::new(193, 165, 221, 255),
-            warning_text: Color::new(255, 203, 50, 0),
+            warning_text: Color::new(214, 168, 0, 0),
             meshdef: Color::new(0, 125, 20, 255),
             texture: Color::new(200, 200, 200, 255),
             inverse_kinematics: Color::new(188, 188, 0, 255),

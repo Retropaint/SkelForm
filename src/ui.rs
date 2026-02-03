@@ -158,7 +158,7 @@ pub fn draw(
         shared_ui.checking_update = false;
     }
     style_once!(top_panel(
-        context, config, shared_ui, events, selections, armature, camera
+        context, config, shared_ui, events, selections, armature, camera, edit_mode
     ));
 
     if edit_mode.anim_open {
@@ -563,6 +563,7 @@ fn top_panel(
     selections: &SelectionState,
     armature: &Armature,
     camera: &Camera,
+    edit_mode: &EditMode,
 ) {
     let panel = egui::TopBottomPanel::top("top_bar").frame(egui::Frame {
         fill: config.colors.main.into(),
@@ -580,7 +581,7 @@ fn top_panel(
         }
         egui::MenuBar::new().ui(ui, |ui| {
             #[rustfmt::skip]
-            menu_file_button(ui, &config, shared_ui, events, &selections, &armature, &camera);
+            menu_file_button(ui, &config, shared_ui, events, &selections, &armature, edit_mode, &camera);
             menu_edit_button(ui, &config, &shared_ui, events);
             menu_view_button(ui, &config, &shared_ui, events);
 
@@ -950,6 +951,7 @@ fn menu_file_button(
     events: &mut EventState,
     selections: &SelectionState,
     armature: &Armature,
+    edit_mode: &EditMode,
     #[allow(unused_variables)] camera: &Camera,
 ) {
     let mut offset = 0.;
