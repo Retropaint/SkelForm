@@ -564,6 +564,7 @@ pub fn read_import(
 ) {
     let file;
     let filename;
+    let filepath;
 
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -571,25 +572,17 @@ pub fn read_import(
             return;
         }
         *shared.ui.file_type.lock().unwrap() = 0;
+        let raw_filepath = &shared.ui.file_path.lock().unwrap()[0];
 
-        let path = shared.ui.file_path.lock().unwrap()[0]
-            .as_path()
-            .to_str()
-            .unwrap()
-            .to_string();
-        file = std::fs::File::open(path);
+        filepath = raw_filepath.as_path().to_str().unwrap().to_string();
+        file = std::fs::File::open(filepath.to_string());
         if let Err(err) = file {
             shared.events.open_file_err_modal(err.to_string());
             return;
         }
 
-        filename = shared.ui.file_path.lock().unwrap()[0]
-            .as_path()
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string();
+        let raw_filename = raw_filepath.as_path().file_name();
+        filename = raw_filename.unwrap().to_str().unwrap().to_string();
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -612,8 +605,8 @@ pub fn read_import(
             #[cfg(not(target_arch = "wasm32"))]
             {
                 utils::import(file.unwrap(), shared, queue, device, bgl, context);
-                if !shared.ui.recent_file_paths.contains(&filename) {
-                    shared.ui.recent_file_paths.push(filename);
+                if !shared.ui.recent_file_paths.contains(&filepath) {
+                    shared.ui.recent_file_paths.push(filepath);
                 }
                 utils::save_to_recent_files(&shared.ui.recent_file_paths);
             }
