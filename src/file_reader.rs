@@ -563,7 +563,7 @@ pub fn read_import(
     context: Option<&egui::Context>,
 ) {
     let file;
-    let filename;
+    let filename: String;
     let filepath: String;
 
     #[cfg(not(target_arch = "wasm32"))]

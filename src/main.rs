@@ -6,9 +6,11 @@ use skelform_lib::shared::config_path;
 
 use skelform_lib::{shared::*, utils};
 
+#[cfg(not(target_arch = "wasm32"))]
 use std::fs;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::{Read, Write};
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
 
 pub const CRASHLOG_END: &str = "###";
@@ -23,12 +25,11 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     //
     // otherwise, it's activated in lib.rs
 
-    //#[cfg(target_arch = "wasm32")]
-    //{
-    //    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-    //    console_log::init().expect("Failed to initialize logger!");
-    //    log::info!("test");
-    //}
+    #[cfg(target_arch = "wasm32")]
+    {
+        std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+        console_log::init().expect("Failed to initialize logger!");
+    }
 
     let mut app = skelform_lib::App::default();
 
@@ -147,16 +148,19 @@ fn init_shared(shared: &mut Shared) {
         }
 
         // import config & colors
-        if config_path().exists() && color_path().exists() {
-            shared.config = serde_json::from_str(&utils::config_str()).unwrap();
-            shared.config.colors = serde_json::from_str(&utils::color_str()).unwrap();
-        } else {
-            utils::save_config(&shared.config);
+        if let Ok(data) = serde_json::from_str(&utils::config_str()) {
+            shared.config = data;
         }
+        if let Ok(data) = serde_json::from_str(&utils::color_str()) {
+            shared.config.colors = data;
+        }
+        utils::save_config(&shared.config);
     }
     #[cfg(target_arch = "wasm32")]
     {
-        shared.config = serde_json::from_str(&utils::config_str()).unwrap();
+        if let Ok(data) = serde_json::from_str(&utils::config_str()) {
+            shared.config = data;
+        }
         utils::save_config(&shared.config);
     }
 

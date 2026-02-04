@@ -183,9 +183,6 @@ impl ApplicationHandler for App {
             {
                 let (sender, receiver) = futures::channel::oneshot::channel();
                 self.renderer_receiver = Some(receiver);
-                console_error_panic_hook::set_once();
-                console_log::init().expect("Failed to initialize logger!");
-                //log::info!("Canvas dimensions: ({canvas_width} x {canvas_height})");
                 let size = self.shared.camera.window.clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     let renderer =

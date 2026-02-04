@@ -2,13 +2,13 @@
 
 use crate::*;
 use egui::IntoAtoms;
-use std::path::PathBuf;
 use ui::EguiUi;
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
     pub use crate::file_reader::*;
+    pub use std::path::PathBuf;
     pub use std::sync::Mutex;
     pub use std::{fs::File, io::Write, thread};
 }
