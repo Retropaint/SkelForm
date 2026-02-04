@@ -9,7 +9,7 @@ mod web {
     pub use zip::write::FileOptions;
 }
 use image::buffer::ConvertBuffer;
-use image::{RgbaImage, RgbImage, Rgba};
+use image::{RgbImage, Rgba, RgbaImage};
 use max_rects::packing_box::PackingBox;
 use renderer::construction;
 #[cfg(target_arch = "wasm32")]

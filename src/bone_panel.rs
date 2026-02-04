@@ -554,6 +554,7 @@ pub fn mesh_deformation(
                 let can_reset = !edit_mode.setting_bind_verts;
                 let button = ui
                     .add_enabled(can_reset, egui::Button::new(str_reset))
+                    .on_hover_cursor(egui::CursorIcon::PointingHand)
                     .on_hover_text(str_reset_desc);
                 if button.clicked() {
                     events.reset_vertices();

@@ -90,14 +90,9 @@ fn main() -> Result<(), winit::error::EventLoopError> {
         if args.len() > 1 {
             let mut buf = PathBuf::new();
             let exe_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-            let exe_dir = exe_path
-                .parent()
-                .unwrap_or_else(|| std::path::Path::new("."));
-            println!(
-                "{}",
-                exe_dir.to_str().unwrap().to_string() + "/" + &args[1].to_string()
-            );
-            buf.push(exe_dir.to_str().unwrap().to_string() + "/" + &args[1].to_string());
+            let exe_dir = exe_path.as_path();
+            println!("{}", &args[1].to_string());
+            buf.push(&args[1].to_string());
             *app.shared.ui.file_path.lock().unwrap() = vec![buf];
             *app.shared.ui.file_type.lock().unwrap() = 2;
         }
