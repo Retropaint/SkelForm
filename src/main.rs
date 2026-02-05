@@ -19,11 +19,10 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     #[cfg(all(not(debug_assertions), not(target_arch = "wasm32")))]
     install_panic_handler();
 
-    //std::env::set_var("RUST_BACKTRACE", "1");
-
-    // uncomment below to get console panic hook as early as possible for debugging
-    //
-    // otherwise, it's activated in lib.rs
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        std::env::set_var("RUST_BACKTRACE", "1");
+    }
 
     #[cfg(target_arch = "wasm32")]
     {
