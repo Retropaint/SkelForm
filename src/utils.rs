@@ -913,6 +913,7 @@ pub fn add_texture_img(
     ctx: &egui::Context,
     img_buf: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
     size: Vec2,
+    name: &str,
 ) -> egui::TextureHandle {
     // force 300x300 to texture size
     let resized = image::imageops::resize(
@@ -922,7 +923,7 @@ pub fn add_texture_img(
         image::imageops::FilterType::Nearest,
     );
     let color_image = egui::ColorImage::from_rgba_unmultiplied([300, 300], &resized);
-    let tex = ctx.load_texture("anim_icons", color_image, Default::default());
+    let tex = ctx.load_texture(name, color_image, Default::default());
     tex
 }
 

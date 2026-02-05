@@ -532,6 +532,7 @@ pub fn add_texture(
             &ctx.unwrap(),
             img_buf,
             Vec2::new(300., 300.),
+            tex_name,
         ));
     }
 

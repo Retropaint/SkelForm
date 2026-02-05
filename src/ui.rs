@@ -77,21 +77,19 @@ pub fn draw(
 
     let anim_icon_size = 18;
     if shared_ui.anim.icon_images.len() == 0 {
-        let mut full_img =
-            image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
+        let full_img = image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
 
-        if full_img.width() > 0 {
-            let mut x = 0;
-            while full_img.width() > 0 && x < full_img.width() - 1 {
-                let img = full_img.crop(x, 0, 18, 18).into_rgba8();
-                x += anim_icon_size;
-                let color_image = egui::ColorImage::from_rgba_unmultiplied(
-                    [img.width() as usize, img.height() as usize],
-                    img.as_flat_samples().as_slice(),
-                );
-                let tex = context.load_texture("anim_icons", color_image, Default::default());
-                shared_ui.anim.icon_images.push(tex);
-            }
+        let mut x = 0;
+        while full_img.width() > 0 && x < full_img.width() - 1 {
+            let img = full_img.crop_imm(x, 0, 18, 18).into_rgba8();
+            x += anim_icon_size;
+            let color_image = egui::ColorImage::from_rgba_unmultiplied(
+                [img.width() as usize, img.height() as usize],
+                img.as_flat_samples().as_slice(),
+            );
+            let name = "anim_icon_".to_owned() + &x.to_string();
+            let tex = context.load_texture(name, color_image, Default::default());
+            shared_ui.anim.icon_images.push(tex);
         }
     }
     if !shared_ui.startup_window {
@@ -919,6 +917,7 @@ pub fn create_ui_texture(
     bytes: Vec<u8>,
     has_alpha: bool,
     ctx: &Context,
+    name: &str,
 ) -> Option<egui::TextureHandle> {
     let thumb_img;
     if let Ok(data) = image::load_from_memory(&bytes) {
@@ -926,20 +925,24 @@ pub fn create_ui_texture(
     } else {
         return None;
     }
-    let color_image: egui::ColorImage;
-    if has_alpha {
-        color_image = egui::ColorImage::from_rgba_unmultiplied(
-            [thumb_img.width() as usize, thumb_img.height() as usize],
-            &thumb_img.clone().into_rgba8(),
-        );
-    } else {
-        color_image = egui::ColorImage::from_rgb(
-            [thumb_img.width() as usize, thumb_img.height() as usize],
-            &thumb_img.clone().into_rgb8(),
-        );
-    }
 
-    let ui_tex = ctx.load_texture("anim_icons", color_image, Default::default());
+    let (size, pixels) = if has_alpha {
+        let rgba = thumb_img.into_rgba8();
+        let size = [rgba.width() as usize, rgba.height() as usize];
+        (size, rgba.into_raw())
+    } else {
+        let rgb = thumb_img.into_rgb8();
+        let size = [rgb.width() as usize, rgb.height() as usize];
+        (size, rgb.into_raw())
+    };
+
+    let color_image = if has_alpha {
+        egui::ColorImage::from_rgba_unmultiplied(size, &pixels)
+    } else {
+        egui::ColorImage::from_rgb(size, &pixels)
+    };
+
+    let ui_tex = ctx.load_texture(name, color_image, Default::default());
 
     Some(ui_tex)
 }

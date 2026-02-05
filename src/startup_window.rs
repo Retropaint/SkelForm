@@ -94,7 +94,7 @@ fn startup_content(
                             let skel_file = include_bytes!($filename).to_vec();
                             shared_ui.thumb_ui_tex.insert(
                                 $key.to_string(),
-                                ui::create_ui_texture(skel_file, true, ctx).unwrap(),
+                                ui::create_ui_texture(skel_file, true, ctx, $filename).unwrap(),
                             );
                         }
                     };
@@ -411,7 +411,7 @@ pub fn skf_file_button(
             for byte in file.unwrap().bytes() {
                 thumb_bytes.push(byte.unwrap());
             }
-            let ui_tex = ui::create_ui_texture(thumb_bytes, false, ctx).unwrap();
+            let ui_tex = ui::create_ui_texture(thumb_bytes, false, ctx, &filename).unwrap();
             shared_ui
                 .thumb_ui_tex
                 .insert(filename.clone(), ui_tex.clone());
@@ -541,7 +541,7 @@ pub fn web_sample_button(
     let thumb_size = Vec2::new(64., 64.);
 
     if !shared_ui.thumb_ui_tex.contains_key(&name) {
-        let ui_tex = ui::create_ui_texture(thumb_bytes, true, ctx).unwrap();
+        let ui_tex = ui::create_ui_texture(thumb_bytes, true, ctx, &filename).unwrap();
         shared_ui.thumb_ui_tex.insert(name.clone(), ui_tex.clone());
     }
 
