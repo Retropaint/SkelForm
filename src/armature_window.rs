@@ -320,7 +320,7 @@ pub fn draw_hierarchy(
                 }
 
                 crate::context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {
-                    ui.context_rename(shared_ui, &config, context_id);
+                    ui.context_rename(shared_ui, &config, context_id.clone());
                     let delete_bone = PolarId::DeleteBone;
                     ui.context_delete(shared_ui, &config, events, "delete_bone", delete_bone);
 

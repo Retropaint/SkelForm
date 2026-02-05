@@ -603,7 +603,7 @@ pub fn mesh_deformation(
     }
 
     let binds = armature.sel_bone(&sel).unwrap().binds.clone();
-    if selections.bind as usize > binds.len() - 1 {
+    if binds.len() == 0 || selections.bind as usize > binds.len() - 1 {
         selections.bind = -1;
         return;
     }

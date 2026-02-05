@@ -64,6 +64,7 @@ pub fn polar_modal(
 
             match shared_ui.polar_id {
                 PolarId::DeleteBone => {
+                    println!("{}", shared_ui.context_menu.id);
                     events.delete_bone(shared_ui.context_id_parsed() as usize);
                 }
                 PolarId::Exiting => {

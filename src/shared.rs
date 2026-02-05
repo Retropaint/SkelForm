@@ -472,7 +472,6 @@ impl ContextMenu {
     }
 
     pub fn close(&mut self) {
-        self.id = "".to_string();
         self.keep = false;
     }
 
