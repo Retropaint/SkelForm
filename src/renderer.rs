@@ -964,11 +964,9 @@ pub fn bone_vertices(
                 .collect();
         }
 
-        let mut col = if idx == -1 && verts.contains(&(world_verts[wv].id as i32)) {
-            VertexColor::YELLOW
-        } else {
-            VertexColor::GREEN
-        };
+        let bound = idx != -1 && verts.contains(&(world_verts[wv].id as i32));
+        type Vc = VertexColor;
+        let mut col = if bound { Vc::YELLOW } else { Vc::GREEN };
         col.a = if editable { 0.5 } else { 0.15 };
         let (mut verts, mut indices) = point!(wv, col);
         let mouse_on_it = utils::in_bounding_box(&input.mouse, &verts, &camera.window).1;

@@ -565,6 +565,7 @@ pub fn read_import(
 ) {
     let file;
     let filename: String;
+    #[cfg(not(target_arch = "wasm32"))]
     let filepath: String;
 
     #[cfg(not(target_arch = "wasm32"))]

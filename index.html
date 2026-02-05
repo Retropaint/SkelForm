@@ -384,13 +384,14 @@
                     })
             }
 
-            function downloadZip(binary) {
+            function downloadZip(binary, is_export) {
                 var link = document.createElement("a");
                 link.href = window.URL.createObjectURL(
                     new Blob([binary], { type: "zip" }),
                 );
                 link.setAttribute("test", "sk_a");
-                link.setAttribute("download", "SkelForm_armature.skf");
+                let ext = (is_export) ? ".skfe" : ".skf";
+                link.setAttribute("download", "SkelForm_armature" + ext);
                 link.click();
                 link.remove();
             }

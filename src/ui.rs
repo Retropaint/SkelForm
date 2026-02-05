@@ -459,7 +459,7 @@ pub fn kb_inputs(
 
     if input.consume_shortcut(&config.keys.save) {
         #[cfg(target_arch = "wasm32")]
-        utils::save_web(armature, camera, selections, edit_mode);
+        utils::save_web(armature, camera, edit_mode, false);
         #[cfg(not(target_arch = "wasm32"))]
         utils::save_native(shared_ui);
     }
@@ -954,7 +954,7 @@ fn menu_file_button(
     events: &mut EventState,
     selections: &SelectionState,
     armature: &Armature,
-    edit_mode: &EditMode,
+    #[allow(unused_variables)] edit_mode: &EditMode,
     #[allow(unused_variables)] camera: &Camera,
 ) {
     let mut offset = 0.;
@@ -980,19 +980,19 @@ fn menu_file_button(
         let str_save = &shared_ui.loc("top_bar.file.save");
         if top_bar_button!(str_save, Some(&config.keys.save)).clicked() {
             #[cfg(target_arch = "wasm32")]
-            utils::save_web(armature, camera, selections, edit_mode);
+            utils::save_web(armature, camera, edit_mode, false);
             #[cfg(not(target_arch = "wasm32"))]
             utils::save_native(shared_ui);
             ui.close();
         }
-        let str_save_as = &shared_ui.loc("top_bar.file.save_as");
-        if top_bar_button!(str_save_as, Some(&config.keys.save_as)).clicked() {
-            shared_ui.save_path = None;
-            #[cfg(target_arch = "wasm32")]
-            utils::save_web(armature, camera, selections, edit_mode);
-            #[cfg(not(target_arch = "wasm32"))]
-            utils::save_native(shared_ui);
-            ui.close();
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let str_save_as = &shared_ui.loc("top_bar.file.save_as");
+            if top_bar_button!(str_save_as, Some(&config.keys.save_as)).clicked() {
+                shared_ui.save_path = None;
+                utils::save_native(shared_ui);
+                ui.close();
+            }
         }
         let str_export = &shared_ui.loc("top_bar.file.export");
         if top_bar_button!(str_export, Some(&config.keys.export)).clicked() {

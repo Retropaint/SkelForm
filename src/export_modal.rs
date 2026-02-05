@@ -2,7 +2,7 @@ use egui::IntoAtoms;
 
 use crate::{
     modal::modal_x, ui::EguiUi, utils, Armature, Camera, Config, EditMode, EventState,
-    ExportImgFormat, Saving, SelectionState,
+    ExportImgFormat, SelectionState,
 };
 
 pub fn draw(
@@ -108,12 +108,12 @@ pub fn draw(
                     if ui.skf_button(str).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter))
                     {
                         #[cfg(target_arch = "wasm32")]
-                        utils::save_web(_armature, _camera, _selections, edit_mode);
+                        utils::save_web(_armature, _camera, edit_mode, true);
                         #[cfg(not(target_arch = "wasm32"))]
                         utils::open_save_dialog(
                             &shared_ui.file_path,
                             &shared_ui.saving,
-                            Saving::Exporting,
+                            crate::Saving::Exporting,
                         );
                         shared_ui.export_modal = false;
                     }

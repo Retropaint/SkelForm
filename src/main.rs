@@ -1,8 +1,6 @@
 #![windows_subsystem = "windows"]
 
 use global_hotkey::hotkey::{Code, HotKey, Modifiers};
-#[cfg(not(target_arch = "wasm32"))]
-use skelform_lib::shared::config_path;
 
 use skelform_lib::{shared::*, utils};
 
@@ -89,9 +87,6 @@ fn main() -> Result<(), winit::error::EventLoopError> {
         // load .skf based on first arg
         if args.len() > 1 {
             let mut buf = PathBuf::new();
-            let exe_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-            let exe_dir = exe_path.as_path();
-            println!("{}", &args[1].to_string());
             buf.push(&args[1].to_string());
             *app.shared.ui.file_path.lock().unwrap() = vec![buf];
             *app.shared.ui.file_type.lock().unwrap() = 2;

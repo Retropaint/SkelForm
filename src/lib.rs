@@ -90,6 +90,7 @@ extern "C" {
     pub fn hasElement(id: &str) -> bool;
     pub fn getImgName(idx: usize) -> String;
     pub fn hasLoadedAllImages() -> bool;
+    pub fn downloadZip(zip: Vec<u8>, is_export: bool);
 }
 
 #[derive(Default)]
@@ -777,8 +778,8 @@ impl BackendRenderer {
                     utils::save_web(
                         &shared.armature,
                         &shared.camera,
-                        &shared.selections,
                         &shared.edit_mode,
+                        saving_type == Saving::Exporting,
                     );
                 }
             }
@@ -1171,7 +1172,7 @@ impl Gpu {
         height: u32,
     ) -> Self {
         let surface: wgpu::Surface;
-        #[allow(unused_mut)]
+        #[allow(unused_mut, unused_assignments)]
         let mut instance = wgpu::Instance::new(&InstanceDescriptor::default());
 
         // force DX12 on Windows

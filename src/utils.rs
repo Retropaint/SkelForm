@@ -22,12 +22,6 @@ use std::{collections::HashMap, path::PathBuf};
 
 use std::io::{Read, Write};
 
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
-extern "C" {
-    fn downloadZip(zip: Vec<u8>);
-}
-
 /// Convert a point from screen to world space.
 pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
     let aspect_ratio = window.x / window.y;
@@ -164,12 +158,7 @@ pub fn open_import_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn save_web(
-    armature: &Armature,
-    camera: &Camera,
-    selection: &SelectionState,
-    edit_mode: &EditMode,
-) {
+pub fn save_web(armature: &Armature, camera: &Camera, edit_mode: &EditMode, is_export: bool) {
     let mut png_bufs = vec![];
     let mut sizes = vec![];
     let mut carmature = armature.clone();
@@ -197,14 +186,18 @@ pub fn save_web(
     zip.start_file("readme.md", options.clone()).unwrap();
     zip.write(include_bytes!("../assets/skf_readme.md"))
         .unwrap();
+    let atlas_ext = match edit_mode.export_img_format {
+        ExportImgFormat::PNG => ".png",
+        ExportImgFormat::JPG => ".jpg",
+    };
     for i in 0..png_bufs.len() {
-        let name = "atlas".to_owned() + &i.to_string() + ".png";
+        let name = "atlas".to_owned() + &i.to_string() + atlas_ext;
         zip.start_file(name, options.clone()).unwrap();
         zip.write(&png_bufs[i]).unwrap();
     }
 
     let bytes = zip.finish().unwrap().into_inner().to_vec();
-    downloadZip(bytes);
+    downloadZip(bytes, is_export);
 }
 
 #[cfg(not(target_arch = "wasm32"))]
