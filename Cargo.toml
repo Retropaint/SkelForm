@@ -26,12 +26,12 @@ psd = { "path" = "./vendor_deps/psd"}  # vendored for faster layer flattening al
 max_rects = { "path" = "./vendor_deps/max_rects"}  # vendored to remove visualizer
 spade = "2.15.0" # Delaunay triangulation for meshes
 egui_commonmark = { version = "0.22.0" } # egui markdown support
+strum = { version = "0.27.2", features = ["derive"] }
+backtrace = "0.3.76"
 
 # Handle system shortcuts (cmd+q, cmd+w, etc) since winit can't
 # https://github.com/rust-windowing/winit/issues/2776#issuecomment-2477222703
 global-hotkey = "0.7.0"
-strum = { version = "0.27.2", features = ["derive"] }
-backtrace = "0.3.76"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 pollster = "0.4.0"

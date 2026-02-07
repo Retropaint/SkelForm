@@ -598,6 +598,9 @@ pub fn read_import(
 
     let ext = filename.split('.').last().unwrap();
     match ext {
+        "swf" => {
+            shared.events.open_modal("import_swf", false);
+        }
         "skf" => {
             #[cfg(target_arch = "wasm32")]
             {
