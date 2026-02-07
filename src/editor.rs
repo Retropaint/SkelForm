@@ -41,7 +41,7 @@ pub fn iterate_events(
                 E::RenameBone  => if !ui.just_made_bone  { undo_states.new_undo_bone( &armature.sel_bone( &selections).unwrap()); ui.just_made_bone  = false }
                 E::RenameAnim  => if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap()); ui.just_made_anim  = false }
 
-                E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts | E::NewVertex => {
+                E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts => {
                     undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
                 }
                 _ => {}
@@ -595,6 +595,10 @@ pub fn process_event(
             bone.indices.remove(value as usize);
         }
         Events::NewVertex => {
+            // remove drag vertex action, since it's always triggered
+            undo_states.undo_actions.pop();
+            undo_states.new_undo_bone(&armature.bones[selections.bone_idx]);
+
             let sel = &selections;
             let tex_img = renderer::sel_tex_img(armature.sel_bone(sel).unwrap(), &armature);
             let bone_mut = armature.sel_bone_mut(sel).unwrap();
