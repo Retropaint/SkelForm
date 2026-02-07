@@ -75,7 +75,11 @@ pub fn render(
             diff = temp_vert.pos - last_frame_pos;
         }
 
-        events.adjust_vertex(vert.pos.x - diff.x, vert.pos.y - diff.y);
+        let scale = temp_arm.bones[selections.bone_idx].scale;
+        events.adjust_vertex(
+            (vert.pos.x + diff.x) / scale.x,
+            (vert.pos.y + diff.y) / scale.y,
+        );
     }
 
     let mut mesh_onion_id = -1;
@@ -964,11 +968,8 @@ pub fn bone_vertices(
             verts = vec![];
         } else {
             let selected = armature.sel_bone(&sel).unwrap();
-            verts = selected.binds[idx as usize]
-                .verts
-                .iter()
-                .map(|v| v.id)
-                .collect();
+            let sel_bind = &selected.binds;
+            verts = sel_bind[idx as usize].verts.iter().map(|v| v.id).collect();
         }
 
         let bound = idx != -1 && verts.contains(&(world_verts[wv].id as i32));
