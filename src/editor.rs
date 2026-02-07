@@ -253,7 +253,14 @@ pub fn process_event(
             undo_redo(false, undo_states, armature, selections);
             ui.changed_window_name = false;
         }
-        Events::ResetConfig => *config = serde_json::from_str(&utils::config_str()).unwrap(),
+        Events::ResetConfig => {
+            if let Ok(data) = serde_json::from_str(&utils::config_str()) {
+                *config = data;
+            }
+            if let Ok(data) = serde_json::from_str(&utils::color_str()) {
+                config.colors = data;
+            }
+        }
         Events::RenameBone => armature.bones[value as usize].name = str_value,
         Events::RenameAnim => armature.animations[value as usize].name = str_value,
         Events::PointerOnUi => camera.on_ui = value == 1.,
