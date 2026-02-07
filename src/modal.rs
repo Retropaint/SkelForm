@@ -15,7 +15,7 @@ pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
         ..Default::default()
     });
     modal.show(ctx, |ui| {
-        ui.set_width(250.);
+        ui.set_width(300.);
         content(ui);
         ui.add_space(20.);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
@@ -31,11 +31,17 @@ pub fn polar_modal(
     events: &mut crate::EventState,
 ) {
     let headline = shared_ui.headline.to_string();
+    let local_doc = shared_ui.local_doc_url.to_string();
+
     modal_template(
         ctx,
         "polar".to_string(),
         &config,
-        |ui| _ = ui.label(headline),
+        |ui| {
+            let mut cache = egui_commonmark::CommonMarkCache::default();
+            let str = utils::markdown(headline, local_doc);
+            egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
+        },
         |ui| {
             let mut yes = false;
 
@@ -64,7 +70,6 @@ pub fn polar_modal(
 
             match shared_ui.polar_id {
                 PolarId::DeleteBone => {
-                    println!("{}", shared_ui.context_menu.id);
                     events.delete_bone(shared_ui.context_id_parsed() as usize);
                 }
                 PolarId::Exiting => {
