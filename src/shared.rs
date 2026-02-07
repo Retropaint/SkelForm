@@ -473,6 +473,7 @@ impl ContextMenu {
     }
 
     pub fn close(&mut self) {
+        self.hide = true;
         self.keep = false;
     }
 
