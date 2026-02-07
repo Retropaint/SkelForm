@@ -122,9 +122,9 @@ pub fn render(
 
         // save constructed vertices for the ClickVertex event
         if selections.bone_idx != usize::MAX
-            && temp_arm.bones[b].id == armature.bones[selections.bone_idx].id
+            && temp_arm.bones[b].id == armature.sel_bone(&sel).unwrap().id
         {
-            renderer.sel_bone_temp_verts = temp_arm.bones[b].vertices.clone();
+            renderer.sel_temp_bone = Some(temp_arm.bones[b].clone());
         }
 
         let cam = world_camera(&camera, &config);
@@ -161,9 +161,9 @@ pub fn render(
                 let bones = &temp_arm.bones;
                 let v = &bones.iter().find(|bone| bone.id == tb.id).unwrap().vertices;
                 let uv = v[c0].uv * bary.3 + v[c1].uv * bary.1 + v[c2].uv * bary.2;
-                let mut pos = (v[c0].pos - tb.pos) * bary.3
-                    + (v[c1].pos - tb.pos) * bary.1
-                    + (v[c2].pos - tb.pos) * bary.2;
+                let mut pos = (utils::rotate(&v[c0].pos, -tb.rot) - tb.pos) * bary.3
+                    + (utils::rotate(&v[c1].pos, -tb.rot) - tb.pos) * bary.1
+                    + (utils::rotate(&v[c2].pos, -tb.rot) - tb.pos) * bary.2;
 
                 if edit_mode.showing_mesh && input.right_clicked && !removed_vert {
                     if armature.sel_bone(&sel).unwrap().indices.len() == 6 {
@@ -228,6 +228,8 @@ pub fn render(
             events.select_bone(idx, true);
         }
     }
+
+    renderer.temp_bones = temp_arm.bones.clone();
 
     // runtime: sort bones by z-index for drawing
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
@@ -599,7 +601,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
         // this will be overridden if vertex has a bind.
         for vert in &mut bones[b].vertices {
             vert.pos = inherit_vert(vert.pos, &bone);
-            vert.offset_rot = bone.rot;
+            vert.offset_rot = 0.;
         }
 
         for bi in 0..bones[b].binds.len() {
@@ -619,7 +621,6 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                     let weight = bind.verts[v_id].weight;
                     let end_pos = inherit_vert(init_vert_pos[idx.unwrap()], &bind_bone) - vert.pos;
                     vert.pos += end_pos * weight;
-                    vert.offset_rot = -bind_bone.rot;
                     continue;
                 }
 
@@ -650,7 +651,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
                 vert.pos = init_vert_pos[idx.unwrap()] + bind_bone.pos;
                 let rotated = utils::rotate(&(vert.pos - bind_bone.pos), normal_angle);
                 vert.pos = bind_bone.pos + (rotated * bind.verts[v_id].weight);
-                vert.offset_rot = -normal_angle;
+                vert.offset_rot = normal_angle;
             }
         }
     }

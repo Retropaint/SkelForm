@@ -8,6 +8,7 @@ use std::{
     path::PathBuf,
 };
 
+use backtrace::trace;
 use std::sync::Mutex;
 use wgpu::BindGroup;
 
@@ -1733,7 +1734,7 @@ pub const ANIM_ICON_ID: [usize; 15] = [
     /* 14 */ 11,
 ];
 
-#[derive(Default, Clone, PartialEq)]
+#[derive(Default, Clone, PartialEq, Debug)]
 pub enum ActionType {
     #[default]
     Bone,
@@ -1746,6 +1747,7 @@ pub enum ActionType {
     Texture,
     Textures,
 }
+enum_string!(ActionType);
 
 #[derive(Default, Clone, PartialEq)]
 pub struct Action {
@@ -1932,9 +1934,10 @@ pub struct Renderer {
     pub has_loaded: bool,
     pub bone_init_rot: f32,
     pub gridline_gap: i32,
-    pub sel_bone_temp_verts: Vec<Vertex>,
     pub new_vert: Option<Vertex>,
     pub started_dragging_verts: bool,
+    pub sel_temp_bone: Option<Bone>,
+    pub temp_bones: Vec<Bone>,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]

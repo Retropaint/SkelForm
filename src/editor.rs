@@ -530,17 +530,34 @@ pub fn process_event(
             }
         }
         Events::DragVertex => {
-            let bone = armature.sel_bone(&selections).unwrap().clone();
+            let bone = renderer.sel_temp_bone.clone().unwrap();
             let temp_vert = bone.vertices.iter().find(|v| v.id == value as u32);
             if bone.vertices.len() == 0 || temp_vert == None {
                 return;
             }
+
+            let mut total_rot = temp_vert.unwrap().offset_rot;
+            let mut is_in_path = false;
+            for bind in bone.binds {
+                let vert = bind.verts.iter().find(|v| v.id == value as i32);
+                if vert != None && !bind.is_path {
+                    let bones = &renderer.temp_bones;
+                    let bind_bone = bones.iter().find(|b| b.id == bind.bone_id).unwrap();
+                    total_rot += bind_bone.rot;
+                } else if bind.is_path {
+                    is_in_path = true;
+                }
+            }
+            if !is_in_path {
+                total_rot += bone.rot;
+            }
+
             let mouse_vel = renderer::mouse_vel(&input, &camera);
             let zoom = camera.zoom;
             let og_bone = &mut armature.sel_bone_mut(&selections).unwrap();
             og_bone.verts_edited = true;
             let vert_mut = og_bone.vertices.iter_mut().find(|v| v.id == value as u32);
-            vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), -bone.rot) / bone.scale;
+            vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), -total_rot) / bone.scale;
         }
         Events::ClickVertex => {
             let bone_mut = &mut armature.sel_bone_mut(&selections).unwrap();
@@ -555,9 +572,11 @@ pub fn process_event(
                 let changed_vert_id = verts.iter().position(|v| v.id == vert_id).unwrap();
                 renderer.changed_vert_id = changed_vert_id as i32;
 
+                let vert_pos =
+                    renderer.sel_temp_bone.as_ref().unwrap().vertices[changed_vert_id].pos;
+
                 // store this frame's vert pos for adjustment later
-                renderer.changed_vert_init_pos =
-                    Some(renderer.sel_bone_temp_verts[changed_vert_id].pos);
+                renderer.changed_vert_init_pos = Some(vert_pos);
             } else {
                 bone_mut.binds[idx].verts.push(BoneBindVert {
                     id: vert_id as i32,
@@ -585,10 +604,16 @@ pub fn process_event(
             bone_mut.vertices = renderer::sort_vertices(bone_mut.vertices.clone());
             bone_mut.indices = renderer::triangulate(&mut bone_mut.vertices, &tex_img);
 
-            // remove vertices that are not in any triangle
-            for v in (0..bone_mut.vertices.len()).rev() {
+            // remove vertices that are not in any triangle or binds
+            'verts: for v in (0..bone_mut.vertices.len()).rev() {
                 if bone_mut.indices.contains(&(v as u32)) {
                     continue;
+                }
+                for bind in &bone_mut.binds {
+                    let ids: Vec<i32> = bind.verts.iter().map(|v| v.id).collect();
+                    if ids.contains(&(bone_mut.vertices[v].id as i32)) {
+                        continue 'verts;
+                    }
                 }
                 bone_mut.vertices.remove(v);
                 for idx in &mut bone_mut.indices {
