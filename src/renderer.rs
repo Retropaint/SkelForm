@@ -1586,6 +1586,7 @@ pub fn draw_vertical_line(
 
 pub fn triangulate(verts: &Vec<Vertex>, tex: &image::DynamicImage) -> Vec<u32> {
     let mut triangulation: spade::DelaunayTriangulation<_> = spade::DelaunayTriangulation::new();
+    let size = Vec2::new(tex.width() as f32, tex.height() as f32);
 
     for vert in verts {
         let _ = triangulation.insert(spade::Point2::new(vert.uv.x, vert.uv.y));
@@ -1603,16 +1604,18 @@ pub fn triangulate(verts: &Vec<Vertex>, tex: &image::DynamicImage) -> Vec<u32> {
         let v2 = verts[tri_indices[1]];
         let v3 = verts[tri_indices[2]];
         let blt = Vec2::new(
-            v1.pos.x.min(v2.pos.x).min(v3.pos.x),
-            v1.pos.y.min(v2.pos.y).min(v3.pos.y),
-        );
+            v1.uv.x.min(v2.uv.x).min(v3.uv.x),
+            v1.uv.y.min(v2.uv.y).min(v3.uv.y),
+        ) * size;
         let brb = Vec2::new(
-            v1.pos.x.max(v2.pos.x).max(v3.pos.x),
-            v1.pos.y.max(v2.pos.y).max(v3.pos.y),
-        );
+            v1.uv.x.max(v2.uv.x).max(v3.uv.x),
+            v1.uv.y.max(v2.uv.y).max(v3.uv.y),
+        ) * size;
+
         'pixel_check: for x in (blt.x as i32)..(brb.x as i32) {
             for y in (blt.y as i32)..(brb.y as i32) {
-                let bary = tri_point(&Vec2::new(x as f32, y as f32), &v1.pos, &v2.pos, &v3.pos);
+                let pos = &Vec2::new(x as f32, y as f32);
+                let bary = tri_point(pos, &(v1.uv * size), &(v2.uv * size), &(v3.uv * size));
                 let uv = v1.uv * bary.3 + v2.uv * bary.1 + v3.uv * bary.2;
                 let pos = Vec2::new(
                     (uv.x * tex.width() as f32).min(tex.width() as f32 - 1.),
