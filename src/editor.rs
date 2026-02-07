@@ -528,7 +528,7 @@ pub fn process_event(
             let og_bone = &mut armature.sel_bone_mut(&selections).unwrap();
             og_bone.verts_edited = true;
             let vert_mut = og_bone.vertices.iter_mut().find(|v| v.id == value as u32);
-            vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), -bone.rot);
+            vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), -bone.rot) / bone.scale;
         }
         Events::ClickVertex => {
             let bone_mut = &mut armature.sel_bone_mut(&selections).unwrap();
