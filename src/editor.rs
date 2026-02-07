@@ -572,8 +572,8 @@ pub fn process_event(
                 let changed_vert_id = verts.iter().position(|v| v.id == vert_id).unwrap();
                 renderer.changed_vert_id = changed_vert_id as i32;
 
-                let vert_pos =
-                    renderer.sel_temp_bone.as_ref().unwrap().vertices[changed_vert_id].pos;
+                let temp_bone = renderer.sel_temp_bone.as_ref().unwrap();
+                let vert_pos = temp_bone.vertices[changed_vert_id].pos;
 
                 // store this frame's vert pos for adjustment later
                 renderer.changed_vert_init_pos = Some(vert_pos);
@@ -822,6 +822,9 @@ fn select_bone(
         edit_mode.setting_bind_bone = false;
         return;
     }
+
+    sel.bind = -1;
+    edit_mode.setting_bind_verts = false;
 
     // select only this bone if not holding modifiers
     if !input.holding_mod && !input.holding_shift {

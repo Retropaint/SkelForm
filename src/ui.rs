@@ -10,7 +10,7 @@ pub trait EguiUi {
     fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32);
     fn clickable_label(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response;
     fn text_input(&mut self,id: String, shared_ui: &mut crate::Ui, value: String, options: Option<TextInputOptions>) -> (bool, String, egui::Response);
-    fn float_input(&mut self,id: String,shared_ui: &mut crate::Ui,value: f32,modifier: f32,options: Option<TextInputOptions>) -> (bool, f32, egui::Response);
+    fn float_input(&mut self, id: String, shared_ui: &mut crate::Ui, value: f32, modifier: f32, options: Option<TextInputOptions>) -> (bool, f32, egui::Response);
     fn debug_rect(&mut self, rect: egui::Rect);
     fn context_rename(&mut self, shared_ui: &mut crate::Ui, config: &Config, id: String);
     fn context_delete(&mut self, shared_ui: &mut crate::Ui, config: &Config, events: &mut EventState, loc_code: &str, polar_id: PolarId);
@@ -160,16 +160,8 @@ pub fn draw(
     ));
 
     if edit_mode.anim_open {
-        style_once!(keyframe_editor::draw(
-            context,
-            shared_ui,
-            input,
-            armature,
-            config,
-            selections,
-            events,
-            copy_buffer
-        ));
+        #[rustfmt::skip]
+        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, copy_buffer));
     }
 
     style_once!(armature_window::draw(
@@ -222,17 +214,8 @@ pub fn draw(
                 ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
 
                 if selections.bone_idx != usize::MAX {
-                    bone_panel::draw(
-                        selected_bone.clone(),
-                        ui,
-                        selections,
-                        shared_ui,
-                        armature,
-                        config,
-                        events,
-                        &input,
-                        edit_mode,
-                    );
+                    #[rustfmt::skip]
+                    bone_panel::draw(selected_bone.clone(), ui, selections, shared_ui, armature, config, events, &input, edit_mode);
                 } else if armature.sel_anim(&selections) != None && selections.anim_frame != -1 {
                     keyframe_panel::draw(ui, &selections, &armature, events);
                 }
@@ -543,26 +526,18 @@ pub fn mouse_button_as_key(
         return;
     }
 
+    let none = egui::Modifiers::NONE;
+
     if input.pointer.button_pressed(button) {
         input.keys_down.insert(fake_key);
-        input.events.push(egui::Event::Key {
-            key: fake_key,
-            physical_key: None,
-            pressed: true,
-            repeat: false,
-            modifiers: egui::Modifiers::NONE,
-        });
+        #[rustfmt::skip]
+        input.events.push(egui::Event::Key { key: fake_key, physical_key: None, pressed: true, repeat: false, modifiers: none });
     }
 
     if input.pointer.button_released(button) {
         input.keys_down.remove(&fake_key);
-        input.events.push(egui::Event::Key {
-            key: fake_key,
-            physical_key: None,
-            pressed: false,
-            repeat: false,
-            modifiers: egui::Modifiers::NONE,
-        });
+        #[rustfmt::skip]
+        input.events.push(egui::Event::Key { key: fake_key, physical_key: None, pressed: false, repeat: false, modifiers: none });
     }
 }
 
