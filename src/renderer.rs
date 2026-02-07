@@ -161,7 +161,7 @@ pub fn render(
                 let bones = &temp_arm.bones;
                 let v = &bones.iter().find(|bone| bone.id == tb.id).unwrap().vertices;
                 let uv = v[c0].uv * bary.3 + v[c1].uv * bary.1 + v[c2].uv * bary.2;
-                let pos = (v[c0].pos - tb.pos) * bary.3
+                let mut pos = (v[c0].pos - tb.pos) * bary.3
                     + (v[c1].pos - tb.pos) * bary.1
                     + (v[c2].pos - tb.pos) * bary.2;
 
@@ -176,6 +176,7 @@ pub fn render(
                 }
 
                 if edit_mode.showing_mesh && input.left_clicked && new_vert == None {
+                    pos /= tb.scale;
                     new_vert = Some(vert(Some(pos), None, Some(uv)));
                     break;
                 }
@@ -374,7 +375,12 @@ pub fn render(
     if !input.left_down {
         renderer.dragging_verts = vec![];
         renderer.editing_bone = false;
+        renderer.started_dragging_verts = false;
     } else if renderer.dragging_verts.len() > 0 {
+        if !renderer.started_dragging_verts {
+            events.save_bone(selections.bone_idx);
+            renderer.started_dragging_verts = true
+        }
         for vert_id in renderer.dragging_verts.clone() {
             events.drag_vertex(vert_id);
         }
@@ -1078,15 +1084,9 @@ pub fn vert_lines(
         col += VertexColor::new(-0.5, -0.5, -0.5, 0.);
         col.a = if editable { 0.3 } else { 0.1 };
 
-        macro_rules! vert {
-            ($pos:expr, $v:expr) => {
-                Vertex {
-                    pos: $pos,
-                    color: col,
-                    ..$v
-                }
-            };
-        }
+        #[rustfmt::skip]
+        macro_rules! vert { ($pos:expr, $v:expr) => { Vertex { pos: $pos, color: col, ..$v } }; }
+
         let mut v0_top = vert!(v0.pos + base, v0);
         let mut v0_bot = vert!(v0.pos - base, v0);
         let mut v1_top = vert!(v1.pos + base, v1);

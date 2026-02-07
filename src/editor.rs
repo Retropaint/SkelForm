@@ -470,6 +470,11 @@ pub fn process_event(
         Events::DuplicateAnim => armature
             .animations
             .push(armature.animations[value as usize].clone()),
+        Events::SaveBone => {
+            let bone = armature.bones[value as usize].clone();
+            undo_states.new_undo_bone(&bone);
+            *ui.saving.lock().unwrap() = Saving::Autosaving;
+        }
         Events::SaveEditedBone => {
             if ui.is_animating(&edit_mode, &selections) {
                 let anim = armature.animations[selections.anim as usize].clone();

@@ -1934,6 +1934,7 @@ pub struct Renderer {
     pub gridline_gap: i32,
     pub sel_bone_temp_verts: Vec<Vertex>,
     pub new_vert: Option<Vertex>,
+    pub started_dragging_verts: bool,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]
@@ -2013,6 +2014,7 @@ pub enum Events {
     ToggleBoneFolded,
     EditBone,
     SaveEditedBone,
+    SaveBone,
     ApplySettings,
     ResetConfig,
     EditCamera,
@@ -2149,6 +2151,7 @@ impl EventState {
         usize
     );
     event_with_value!(save_edited_bone, Events::SaveEditedBone, bone_idx, usize);
+    event_with_value!(save_bone, Events::SaveBone, bone_idx, usize);
     event_with_value!(toggle_baking_ik, Events::ToggleBakingIk, toggle, usize);
     event_with_value!(toggle_exclude_ik, Events::ToggleExcludeIk, toggle, usize);
     event_with_value!(
