@@ -1122,10 +1122,10 @@ pub fn vert_lines(
                 } else if input.left_clicked && !added_vert {
                     let bones = &bones;
                     let v = &bones.iter().find(|b| b.id == bone.id).unwrap().vertices;
-                    let wv0 = v[i0 as usize].pos - bone.pos;
-                    let wv1 = v[i1 as usize].pos - bone.pos;
+                    let wv0 = utils::rotate(&v[i0 as usize].pos, -bone.rot) - bone.pos;
+                    let wv1 = utils::rotate(&v[i1 as usize].pos, -bone.rot) - bone.pos;
                     let pos = wv0 + (wv1 - wv0) * interp;
-                    *new_vert = Some(vert(Some(pos), None, Some(uv)));
+                    *new_vert = Some(vert(Some(pos / bone.scale), None, Some(uv)));
                     added_vert = true;
                 }
             }
