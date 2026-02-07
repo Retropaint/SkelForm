@@ -543,14 +543,27 @@ pub fn mouse_button_as_key(
         return;
     }
 
-    input.keys_down.insert(fake_key);
-    input.events.push(egui::Event::Key {
-        key: fake_key,
-        physical_key: None,
-        pressed: true,
-        repeat: false,
-        modifiers: egui::Modifiers::NONE,
-    });
+    if input.pointer.button_pressed(button) {
+        input.keys_down.insert(fake_key);
+        input.events.push(egui::Event::Key {
+            key: fake_key,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers::NONE,
+        });
+    }
+
+    if input.pointer.button_released(button) {
+        input.keys_down.remove(&fake_key);
+        input.events.push(egui::Event::Key {
+            key: fake_key,
+            physical_key: None,
+            pressed: false,
+            repeat: false,
+            modifiers: egui::Modifiers::NONE,
+        });
+    }
 }
 
 fn top_panel(
