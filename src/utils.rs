@@ -877,10 +877,9 @@ pub fn config_str() -> String {
     #[cfg(not(target_arch = "wasm32"))]
     {
         let mut str = String::new();
-        std::fs::File::open(&config_path())
-            .unwrap()
-            .read_to_string(&mut str)
-            .unwrap();
+        if let Ok(mut file) = std::fs::File::open(&config_path()) {
+            if let Ok(_) = file.read_to_string(&mut str) {}
+        }
         return str;
     }
     #[cfg(target_arch = "wasm32")]
@@ -893,10 +892,9 @@ pub fn color_str() -> String {
     #[cfg(not(target_arch = "wasm32"))]
     {
         let mut str = String::new();
-        std::fs::File::open(&color_path())
-            .unwrap()
-            .read_to_string(&mut str)
-            .unwrap();
+        if let Ok(mut file) = std::fs::File::open(&color_path()) {
+            if let Ok(_) = file.read_to_string(&mut str) {}
+        }
         return str;
     }
     #[cfg(target_arch = "wasm32")]
