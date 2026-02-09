@@ -2036,6 +2036,7 @@ pub enum Events {
     SetKeyframeTransition,
     SetExportClearColor,
     SetExportImgFormat,
+    ExportSpritesheet,
 }
 
 enum_string!(Events);
@@ -2090,6 +2091,7 @@ impl EventState {
     generic_event!(remove_ik_target, Events::RemoveIkTarget);
     generic_event!(center_bone_verts, Events::CenterBoneVerts);
     generic_event!(trace_bone_verts, Events::TraceBoneVerts);
+    generic_event!(export_spritesheet, Events::ExportSpritesheet);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, usize);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);

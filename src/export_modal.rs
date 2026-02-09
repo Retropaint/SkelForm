@@ -107,14 +107,17 @@ pub fn draw(
                     let str = &shared_ui.loc("export_modal.save_button");
                     if ui.skf_button(str).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter))
                     {
-                        #[cfg(target_arch = "wasm32")]
-                        utils::save_web(_armature, _camera, edit_mode, true);
-                        #[cfg(not(target_arch = "wasm32"))]
-                        utils::open_save_dialog(
-                            &shared_ui.file_path,
-                            &shared_ui.saving,
-                            crate::Saving::Exporting,
-                        );
+                        //#[cfg(target_arch = "wasm32")]
+                        //utils::save_web(_armature, _camera, edit_mode, true);
+                        //#[cfg(not(target_arch = "wasm32"))]
+                        //utils::open_save_dialog(
+                        //    &shared_ui.file_path,
+                        //    &shared_ui.saving,
+                        //    crate::Saving::Exporting,
+                        //);
+
+                        events.export_spritesheet();                       
+
                         shared_ui.export_modal = false;
                     }
                 });

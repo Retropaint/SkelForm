@@ -415,6 +415,8 @@ impl ApplicationHandler for App {
                         &mut self.shared.copy_buffer,
                         &mut self.shared.ui,
                         &mut self.shared.renderer,
+                        &self.renderer.as_ref().unwrap(),
+                        &self.renderer.as_ref().unwrap().gpu.device,
                     );
                 }
             }
@@ -816,7 +818,13 @@ impl BackendRenderer {
     fn skf_record(&mut self, shared: &mut Shared) {
         if shared.recording {
             #[cfg(not(target_arch = "wasm32"))]
-            self.take_screenshot(shared);
+            self.take_screenshot(
+                shared.screenshot_res,
+                &shared.armature,
+                &shared.camera,
+                &shared.config,
+                &mut shared.rendered_frames,
+            );
         } else if shared.done_recording {
             #[cfg(not(target_arch = "wasm32"))]
             {
@@ -875,7 +883,13 @@ impl BackendRenderer {
 
         utils::save_to_recent_files(&shared.ui.recent_file_paths);
 
-        self.take_screenshot(shared);
+        self.take_screenshot(
+            shared.screenshot_res,
+            &shared.armature,
+            &shared.camera,
+            &shared.config,
+            &mut shared.rendered_frames,
+        );
         let buffer = shared.rendered_frames[0].buffer.clone();
         shared.rendered_frames = vec![];
         let screenshot_res = shared.screenshot_res;
@@ -914,7 +928,7 @@ impl BackendRenderer {
             let options = zip::write::FullFileOptions::default()
                 .compression_method(zip::CompressionMethod::Stored);
 
-            let thumb_buf = utils::process_thumbnail(&buffer, &device, screenshot_res);
+            let thumb_buf = utils::process_screenshot(&buffer, &device, screenshot_res);
 
             // save relevant files into the zip
             zip.start_file("armature.json", options.clone()).unwrap();
@@ -952,9 +966,17 @@ impl BackendRenderer {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    fn take_screenshot(&mut self, shared: &mut shared::Shared) {
-        let width = shared.screenshot_res.x as u32;
-        let height = shared.screenshot_res.y as u32;
+    pub fn take_screenshot(
+        &self,
+        screenshot_res: Vec2,
+        armature: &Armature,
+        camera: &Camera,
+        config: &Config,
+        rendered_frames: &mut Vec<RenderedFrame>,
+    ) {
+        println!("{}", screenshot_res);
+        let width = screenshot_res.x as u32;
+        let height = screenshot_res.y as u32;
 
         let capture_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
@@ -972,7 +994,7 @@ impl BackendRenderer {
         });
 
         let capture_view = capture_texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let clear_color = shared.config.colors.background;
+        let clear_color = config.colors.background;
 
         let mut encoder = self
             .gpu
@@ -993,7 +1015,7 @@ impl BackendRenderer {
                             r: clear_color.r as f64 / 255.,
                             g: clear_color.g as f64 / 255.,
                             b: clear_color.b as f64 / 255.,
-                            a: 1.0,
+                            a: 0.0,
                         }),
                         store: wgpu::StoreOp::Store,
                     },
@@ -1009,9 +1031,9 @@ impl BackendRenderer {
             renderer::render_screenshot(
                 &mut capture_pass,
                 &self.gpu.device,
-                &shared.armature,
-                &shared.camera,
-                &shared.config,
+                &armature,
+                &camera,
+                &config,
             );
         }
 
@@ -1047,7 +1069,7 @@ impl BackendRenderer {
             },
         );
 
-        shared.rendered_frames.push(RenderedFrame {
+        rendered_frames.push(RenderedFrame {
             buffer: output_buffer.clone(),
             width,
             height,
@@ -1058,7 +1080,7 @@ impl BackendRenderer {
         buffer_slice.map_async(wgpu::MapMode::Read, |result| {
             if let Ok(()) = result {
             } else {
-                panic!("Failed to map buffer for read.");
+                println!("Failed to map buffer for read.");
             }
         });
     }

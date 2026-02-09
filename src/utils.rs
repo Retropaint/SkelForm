@@ -957,7 +957,7 @@ pub fn without_unicode(str: &str) -> &str {
     str.split('\u{0000}').collect::<Vec<_>>()[0]
 }
 
-pub fn process_thumbnail(
+pub fn process_screenshot(
     buffer: &wgpu::Buffer,
     device: &wgpu::Device,
     resolution: Vec2,
@@ -968,34 +968,44 @@ pub fn process_thumbnail(
             timeout: None,
         })
         .unwrap();
+
     let view = buffer.slice(..).get_mapped_range();
 
-    let mut rgb = vec![0u8; (resolution.x * resolution.y * 3.) as usize];
-    for (j, chunk) in view.as_ref().chunks_exact(4).enumerate() {
-        let offset = j * 3;
-        if offset + 2 > rgb.len() {
-            return vec![];
+    let width = resolution.x as usize;
+    let height = resolution.y as usize;
+
+    let mut rgba = vec![0u8; width * height * 4];
+
+    // Convert BGRA (wgpu) → RGBA (image/png)
+    for (i, px) in view.chunks_exact(4).enumerate() {
+        let dst = i * 4;
+        if dst + 3 >= rgba.len() {
+            break;
         }
-        rgb[offset + 0] = chunk[2];
-        rgb[offset + 1] = chunk[1];
-        rgb[offset + 2] = chunk[0];
+
+        let b = px[0];
+        let g = px[1];
+        let r = px[2];
+        let a = px[3];
+
+        rgba[dst + 0] = r;
+        rgba[dst + 1] = g;
+        rgba[dst + 2] = b;
+        rgba[dst + 3] = a; // 👈 keep alpha
     }
 
-    type ImgType = image::ImageBuffer<image::Rgb<u8>, Vec<u8>>;
-    let img_buf =
-        <ImgType>::from_raw(resolution.x as u32, resolution.y as u32, rgb.clone()).unwrap();
+    let img = image::RgbaImage::from_raw(resolution.x as u32, resolution.y as u32, rgba)
+        .expect("Invalid RGBA buffer");
 
-    let thumb_size = Vec2::new(128., 128.);
-    let mut img = image::DynamicImage::ImageRgb8(img_buf);
-    img = img.thumbnail(thumb_size.x as u32, thumb_size.y as u32);
+    let mut png_buf = Vec::new();
+    let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
 
-    let mut thumb_buf: Vec<u8> = Vec::new();
-    let encoder = image::codecs::png::PngEncoder::new(&mut thumb_buf);
+    let rgba8 = image::ExtendedColorType::Rgba8;
     encoder
-        .write_image(img.to_rgb8().as_raw(), img.width(), img.height(), Rgb8)
+        .write_image(img.as_raw(), img.width(), img.height(), rgba8)
         .unwrap();
 
-    thumb_buf
+    png_buf
 }
 
 pub fn markdown(str: String, local_doc_url: String) -> String {

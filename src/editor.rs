@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use wgpu::Device;
+
 use crate::*;
 
 const MIN_ZOOM: f32 = 1.;
@@ -16,6 +18,8 @@ pub fn iterate_events(
     copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
     renderer: &mut crate::Renderer,
+    backend: &BackendRenderer,
+    device: &Device,
 ) {
     let mut last_event = Events::None;
     let event = events.events[0].clone();
@@ -215,7 +219,7 @@ pub fn iterate_events(
         let str_value = events.str_values[0].clone().to_string();
 
         #[rustfmt::skip]
-        editor::process_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, copy_buffer, ui, renderer, config);
+        editor::process_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, copy_buffer, ui, renderer, config, backend, device);
 
         events.events.remove(0);
         events.values.remove(0);
@@ -237,6 +241,8 @@ pub fn process_event(
     ui: &mut crate::Ui,
     renderer: &mut crate::Renderer,
     config: &mut crate::Config,
+    backend: &BackendRenderer,
+    device: &Device,
 ) {
     match event {
         Events::CamZoomIn => camera.zoom = MIN_ZOOM.max(camera.zoom - 10.),
@@ -752,6 +758,23 @@ pub fn process_event(
         Events::ToggleExcludeIk => edit_mode.export_exclude_ik = value == 1.,
         Events::SetExportImgFormat => {
             edit_mode.export_img_format = ExportImgFormat::from_repr(value as usize).unwrap()
+        }
+        Events::ExportSpritesheet => {
+            let res = Vec2::new(384., 384.);
+
+            let mut frames = vec![];
+            backend.take_screenshot(res, armature, camera, config, &mut frames);
+            let buffer = frames[0].buffer.clone();
+            let img_buf = utils::process_screenshot(&buffer, device, res);
+
+            let mut zip = zip::ZipWriter::new(std::fs::File::create("test").unwrap());
+            let options = zip::write::FullFileOptions::default()
+                .compression_method(zip::CompressionMethod::Stored);
+
+            // save relevant files into the zip
+            zip.start_file("thumbnail.png", options.clone()).unwrap();
+            zip.write(&img_buf).unwrap();
+            zip.finish().unwrap();
         }
         _ => {}
     }
