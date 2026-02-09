@@ -738,16 +738,17 @@ impl BackendRenderer {
     }
 
     fn skf_render(&mut self, shared: &mut Shared, render_pass: &mut wgpu::RenderPass) {
-        if shared.ui.spritesheet_elapsed != None
-            && shared.ui.spritesheet_elapsed.unwrap().elapsed().as_secs() > 1
-        {
-            self.skf_web_spritesheet(
-                &shared.armature,
-                &shared.camera,
-                &self.gpu.device,
-                &mut shared.ui,
-                &shared.config,
-            );
+        // if the spritesheet timer has initiaed, wait a second for all buffers to complete before saving them
+        let elapsed = shared.ui.spritesheet_elapsed;
+        if elapsed != None && elapsed.unwrap().elapsed().as_secs() > 1 {
+            #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
+            self.skf_native_spritesheet(&shared.armature, &shared.camera, &self.gpu.device, &mut shared.ui, &shared.config);
+
+            #[rustfmt::skip] #[cfg(target_arch = "wasm32")]
+            self.skf_web_spritesheet(&shared.armature, &shared.camera, &self.gpu.device, &mut shared.ui, &shared.config);
+
+            shared.ui.spritesheet_elapsed = None;
+            shared.ui.modal = false;
         }
 
         if shared.renderer.generic_bindgroup == None {
@@ -800,14 +801,16 @@ impl BackendRenderer {
             #[cfg(not(target_arch = "wasm32"))]
             self.save(shared);
         } else if saving == Saving::Spritesheet {
-            self.skf_spritesheet(
+            shared.events.open_modal("exporting", true);
+            utils::render_spritesheets(
                 &shared.armature,
-                &shared.camera,
-                &self.gpu.device,
                 &mut shared.ui,
+                &shared.camera,
                 &shared.config,
+                self,
             );
             *shared.ui.saving.lock().unwrap() = Saving::None;
+            shared.ui.spritesheet_elapsed = Some(Instant::now());
         }
 
         for b in 0..shared.armature.bones.len() {
@@ -837,7 +840,7 @@ impl BackendRenderer {
         shared.ui.warnings = warnings::check_warnings(&shared.armature);
     }
 
-    fn skf_spritesheet(
+    fn skf_native_spritesheet(
         &self,
         armature: &Armature,
         camera: &Camera,
@@ -845,70 +848,23 @@ impl BackendRenderer {
         shared_ui: &mut Ui,
         config: &Config,
     ) {
-        //let path = &shared_ui.file_path.lock().unwrap()[0];
-        let path = "";
-        //let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
-        //let options = zip::write::FullFileOptions::default()
-        //    .compression_method(zip::CompressionMethod::Stored);
+        let path = shared_ui.file_path.lock().unwrap()[0].clone();
+        let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
+        let options = zip::write::FullFileOptions::default()
+            .compression_method(zip::CompressionMethod::Stored);
 
-        for a in 0..armature.animations.len() {
-            let anim = &armature.animations[a];
-            let all_frames = anim.keyframes.last().unwrap().frame;
-            let mut new_arm = armature.clone();
-            let mut frames = vec![];
-            for f in 0..all_frames {
-                new_arm.bones = new_arm.animate(a, f, Some(&armature.bones));
-                self.take_screenshot(shared_ui.sprite_size, &new_arm, camera, config, &mut frames);
-            }
+        let bufs = utils::encode_spritesheets(armature, shared_ui, camera, config, self);
 
-            shared_ui.rendered_frames = frames.clone();
-            #[cfg(target_arch = "wasm32")]
-            continue;
-
-            let rows: f32 =
-                f32::round((frames.len() / shared_ui.sprites_per_row as usize) as f32) + 1.;
-            let sheet_size = Vec2::new(
-                shared_ui.sprite_size.x * shared_ui.sprites_per_row as f32 + 1.,
-                shared_ui.sprite_size.y * rows as f32 + 1.,
-            );
-
-            let mut sheet = image::RgbaImage::new(sheet_size.x as u32, sheet_size.y as u32);
-            let mut column = 0;
-            let mut height = 0;
-            for (_, sprite) in frames.iter().enumerate() {
-                let img = utils::process_screenshot(&sprite.buffer, device, shared_ui.sprite_size);
-                let new_img = image::load_from_memory(&img).unwrap();
-                sheet
-                    .copy_from(&new_img, column * shared_ui.sprite_size.x as u32, height)
-                    .unwrap();
-                column += 1;
-                if column >= shared_ui.sprites_per_row as u32 {
-                    height += shared_ui.sprite_size.y as u32;
-                    column = 0;
-                }
-            }
-
-            let mut png_buf = Vec::new();
-            let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
-
-            let rgba8 = image::ExtendedColorType::Rgba8;
-            encoder
-                .write_image(sheet.as_raw(), sheet.width(), sheet.height(), rgba8)
-                .unwrap();
-
-            let png_name = anim.name.to_owned() + &".png";
-            //zip.start_file(png_name, options.clone()).unwrap();
-            //zip.write(&png_buf).unwrap();
+        for b in 0..bufs.len() {
+            let png_name = armature.animations[b].name.to_string() + ".png";
+            zip.start_file(png_name, options.clone()).unwrap();
+            zip.write(&bufs[b]).unwrap();
         }
 
-        #[cfg(target_arch = "wasm32")]
-        {
-            shared_ui.spritesheet_elapsed = Some(Instant::now());
-        }
-
-        //zip.finish().unwrap();
+        _ = zip.finish();
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn skf_web_spritesheet(
         &self,
         armature: &Armature,
@@ -923,17 +879,16 @@ impl BackendRenderer {
         let options = zip::write::SimpleFileOptions::default()
             .compression_method(zip::CompressionMethod::Stored);
 
-        let bufs = utils::web_spritesheet(armature, shared_ui, camera, config, self);
+        let bufs = utils::encode_spritesheets(armature, shared_ui, camera, config, self);
 
         for b in 0..bufs.len() {
-            zip.start_file(armature.animations[b].name.to_string(), options.clone())
-                .unwrap();
+            let png_name = armature.animations[b].name.to_string() + ".png";
+            zip.start_file(png_name, options.clone()).unwrap();
             zip.write(&bufs[b]).unwrap();
         }
 
         let bytes = zip.finish().unwrap().into_inner().to_vec();
-        shared_ui.spritesheet_elapsed = None;
-        downloadZip(bytes, shared_ui.saving.lock().unwrap().to_string());
+        downloadZip(bytes, Saving::Spritesheet.to_string());
     }
 
     fn skf_record(&mut self, shared: &mut Shared) {
