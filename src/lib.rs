@@ -974,7 +974,6 @@ impl BackendRenderer {
         config: &Config,
         rendered_frames: &mut Vec<RenderedFrame>,
     ) {
-        println!("{}", screenshot_res);
         let width = screenshot_res.x as u32;
         let height = screenshot_res.y as u32;
 

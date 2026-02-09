@@ -962,6 +962,27 @@ pub fn process_screenshot(
     device: &wgpu::Device,
     resolution: Vec2,
 ) -> Vec<u8> {
+    let rgba = process_screenshot_raw(buffer, device, resolution);
+
+    let img = image::RgbaImage::from_raw(resolution.x as u32, resolution.y as u32, rgba)
+        .expect("Invalid RGBA buffer");
+
+    let mut png_buf = Vec::new();
+    let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
+
+    let rgba8 = image::ExtendedColorType::Rgba8;
+    encoder
+        .write_image(img.as_raw(), img.width(), img.height(), rgba8)
+        .unwrap();
+
+    png_buf
+}
+
+pub fn process_screenshot_raw(
+    buffer: &wgpu::Buffer,
+    device: &wgpu::Device,
+    resolution: Vec2,
+) -> Vec<u8> {
     device
         .poll(wgpu::PollType::Wait {
             submission_index: None,
@@ -976,7 +997,6 @@ pub fn process_screenshot(
 
     let mut rgba = vec![0u8; width * height * 4];
 
-    // Convert BGRA (wgpu) → RGBA (image/png)
     for (i, px) in view.chunks_exact(4).enumerate() {
         let dst = i * 4;
         if dst + 3 >= rgba.len() {
@@ -991,21 +1011,10 @@ pub fn process_screenshot(
         rgba[dst + 0] = r;
         rgba[dst + 1] = g;
         rgba[dst + 2] = b;
-        rgba[dst + 3] = a; // 👈 keep alpha
+        rgba[dst + 3] = a;
     }
 
-    let img = image::RgbaImage::from_raw(resolution.x as u32, resolution.y as u32, rgba)
-        .expect("Invalid RGBA buffer");
-
-    let mut png_buf = Vec::new();
-    let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
-
-    let rgba8 = image::ExtendedColorType::Rgba8;
-    encoder
-        .write_image(img.as_raw(), img.width(), img.height(), rgba8)
-        .unwrap();
-
-    png_buf
+    rgba
 }
 
 pub fn markdown(str: String, local_doc_url: String) -> String {

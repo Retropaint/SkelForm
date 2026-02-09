@@ -760,12 +760,45 @@ pub fn process_event(
             edit_mode.export_img_format = ExportImgFormat::from_repr(value as usize).unwrap()
         }
         Events::ExportSpritesheet => {
-            let res = Vec2::new(384., 384.);
+            let res = Vec2::new(128., 128.);
+            let per_row = 5;
+            let anim_idx = 1;
 
+            let anim = &armature.animations[anim_idx];
+            let all_frames = anim.keyframes.last().unwrap().frame;
+            let mut new_arm = armature.clone();
             let mut frames = vec![];
-            backend.take_screenshot(res, armature, camera, config, &mut frames);
-            let buffer = frames[0].buffer.clone();
-            let img_buf = utils::process_screenshot(&buffer, device, res);
+            for f in 0..all_frames {
+                new_arm.bones = new_arm.animate(anim_idx, f, Some(&armature.bones));
+                backend.take_screenshot(res, &new_arm, camera, config, &mut frames);
+            }
+
+            let rows: f32 = f32::round((frames.len() / per_row) as f32) + 1.;
+            let sheet_size = Vec2::new(res.x * per_row as f32 + 1., res.y * rows as f32 + 1.);
+
+            let mut sheet = RgbaImage::new(sheet_size.x as u32, sheet_size.y as u32);
+            let mut column = 0;
+            let mut height = 0;
+            for (_, sprite) in frames.iter().enumerate() {
+                let img = utils::process_screenshot(&sprite.buffer, device, res);
+                let new_img = image::load_from_memory(&img).unwrap();
+                sheet
+                    .copy_from(&new_img, column * res.x as u32, height)
+                    .unwrap();
+                column += 1;
+                if column >= per_row as u32 {
+                    height += res.y as u32;
+                    column = 0;
+                }
+            }
+
+            let mut png_buf = Vec::new();
+            let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
+
+            let rgba8 = image::ExtendedColorType::Rgba8;
+            encoder
+                .write_image(sheet.as_raw(), sheet.width(), sheet.height(), rgba8)
+                .unwrap();
 
             let mut zip = zip::ZipWriter::new(std::fs::File::create("test").unwrap());
             let options = zip::write::FullFileOptions::default()
@@ -773,7 +806,7 @@ pub fn process_event(
 
             // save relevant files into the zip
             zip.start_file("thumbnail.png", options.clone()).unwrap();
-            zip.write(&img_buf).unwrap();
+            zip.write(&png_buf).unwrap();
             zip.finish().unwrap();
         }
         _ => {}
