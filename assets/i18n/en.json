@@ -35,6 +35,7 @@
     "skellina_sample_desc": "A character with simple, 2-bone limbs. Does not contain meshes.",
     "error_update": "Something went wrong.\n\nPlease check your internet connection and try again.\n\nIf the problem persists, it might be on SkelForm's side.\n\n[All Versions Page](https://github.com/Retropaint/SkelForm/releases)",
     "error_ffmpeg": "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.",
+    "no_updates": "No updates available. This is the latest version.",
     "resources": {
       "user_docs": "User Documentation",
       "starter_guide": "Starter Guide",

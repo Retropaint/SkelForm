@@ -140,16 +140,17 @@ pub fn draw(
             events.open_modal("startup.error_update", false);
         } else if raw_ver != "" {
             let ver_str = raw_ver.split(' ').collect::<Vec<_>>();
-            let ver_idx = ver_str[0].parse::<i32>().unwrap();
+            //let ver_idx = ver_str[0].parse::<i32>().unwrap();
             let ver_name = ver_str[1];
-            if ver_idx > crate::VERSION_IDX {
+            let this_ver_name = "v".to_owned() + env!("CARGO_PKG_VERSION");
+            if ver_name.trim() != this_ver_name.trim() {
                 shared_ui.new_version = ver_name.to_string();
                 let str = "New version available: ".to_owned()
                     + &ver_name
                     + "\nGo to version page and download manually?";
                 events.open_polar_modal(PolarId::NewUpdate, str);
             } else {
-                events.open_modal("No updates available. This is the latest version.", false);
+                events.open_modal("startup.no_updates", false);
             }
         }
 

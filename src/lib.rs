@@ -15,8 +15,6 @@ use egui_wgpu::wgpu::ExperimentalFeatures;
 use shared::*;
 use wgpu::{util::DeviceExt, BindGroupLayout, Buffer, InstanceDescriptor};
 
-pub const VERSION_IDX: i32 = 1;
-
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
