@@ -655,9 +655,11 @@ pub fn draw_bottom_bar(
 
             if ui.skf_button("+").clicked() {
                 shared_ui.anim.timeline_zoom -= 0.1;
+                shared_ui.anim.timeline_zoom = shared_ui.anim.timeline_zoom.max(0.1);
             }
             if ui.skf_button("-").clicked() {
                 shared_ui.anim.timeline_zoom += 0.1;
+                shared_ui.anim.timeline_zoom = shared_ui.anim.timeline_zoom.min(3.);
             }
 
             ui.add_space(20.);
