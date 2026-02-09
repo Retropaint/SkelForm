@@ -738,6 +738,18 @@ impl BackendRenderer {
     }
 
     fn skf_render(&mut self, shared: &mut Shared, render_pass: &mut wgpu::RenderPass) {
+        if shared.ui.spritesheet_elapsed != None
+            && shared.ui.spritesheet_elapsed.unwrap().elapsed().as_secs() > 1
+        {
+            self.skf_web_spritesheet(
+                &shared.armature,
+                &shared.camera,
+                &self.gpu.device,
+                &mut shared.ui,
+                &shared.config,
+            );
+        }
+
         if shared.renderer.generic_bindgroup == None {
             shared.renderer.generic_bindgroup = Some(renderer::create_texture_bind_group(
                 vec![255, 255, 255, 255],
@@ -792,7 +804,7 @@ impl BackendRenderer {
                 &shared.armature,
                 &shared.camera,
                 &self.gpu.device,
-                &shared.ui,
+                &mut shared.ui,
                 &shared.config,
             );
             *shared.ui.saving.lock().unwrap() = Saving::None;
@@ -830,13 +842,14 @@ impl BackendRenderer {
         armature: &Armature,
         camera: &Camera,
         device: &wgpu::Device,
-        shared_ui: &Ui,
+        shared_ui: &mut Ui,
         config: &Config,
     ) {
-        let path = &shared_ui.file_path.lock().unwrap()[0];
-        let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
-        let options = zip::write::FullFileOptions::default()
-            .compression_method(zip::CompressionMethod::Stored);
+        //let path = &shared_ui.file_path.lock().unwrap()[0];
+        let path = "";
+        //let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
+        //let options = zip::write::FullFileOptions::default()
+        //    .compression_method(zip::CompressionMethod::Stored);
 
         for a in 0..armature.animations.len() {
             let anim = &armature.animations[a];
@@ -847,6 +860,10 @@ impl BackendRenderer {
                 new_arm.bones = new_arm.animate(a, f, Some(&armature.bones));
                 self.take_screenshot(shared_ui.sprite_size, &new_arm, camera, config, &mut frames);
             }
+
+            shared_ui.rendered_frames = frames.clone();
+            #[cfg(target_arch = "wasm32")]
+            continue;
 
             let rows: f32 =
                 f32::round((frames.len() / shared_ui.sprites_per_row as usize) as f32) + 1.;
@@ -880,11 +897,43 @@ impl BackendRenderer {
                 .unwrap();
 
             let png_name = anim.name.to_owned() + &".png";
-            zip.start_file(png_name, options.clone()).unwrap();
-            zip.write(&png_buf).unwrap();
+            //zip.start_file(png_name, options.clone()).unwrap();
+            //zip.write(&png_buf).unwrap();
         }
 
-        zip.finish().unwrap();
+        #[cfg(target_arch = "wasm32")]
+        {
+            shared_ui.spritesheet_elapsed = Some(Instant::now());
+        }
+
+        //zip.finish().unwrap();
+    }
+
+    fn skf_web_spritesheet(
+        &self,
+        armature: &Armature,
+        camera: &Camera,
+        device: &wgpu::Device,
+        shared_ui: &mut Ui,
+        config: &Config,
+    ) {
+        let mut buf: Vec<u8> = Vec::new();
+        let cursor = std::io::Cursor::new(&mut buf);
+        let mut zip = zip::ZipWriter::new(cursor);
+        let options = zip::write::SimpleFileOptions::default()
+            .compression_method(zip::CompressionMethod::Stored);
+
+        let bufs = utils::web_spritesheet(armature, shared_ui, camera, config, self);
+
+        for b in 0..bufs.len() {
+            zip.start_file(armature.animations[b].name.to_string(), options.clone())
+                .unwrap();
+            zip.write(&bufs[b]).unwrap();
+        }
+
+        let bytes = zip.finish().unwrap().into_inner().to_vec();
+        shared_ui.spritesheet_elapsed = None;
+        downloadZip(bytes, shared_ui.saving.lock().unwrap().to_string());
     }
 
     fn skf_record(&mut self, shared: &mut Shared) {
@@ -895,12 +944,12 @@ impl BackendRenderer {
                 &shared.armature,
                 &shared.camera,
                 &shared.config,
-                &mut shared.rendered_frames,
+                &mut shared.ui.rendered_frames,
             );
         } else if shared.done_recording {
             #[cfg(not(target_arch = "wasm32"))]
             {
-                let frames = shared.rendered_frames.clone();
+                let frames = shared.ui.rendered_frames.clone();
                 let window = shared.camera.window.clone();
                 std::thread::spawn(move || {
                     Self::export_video(frames, window);
@@ -960,10 +1009,10 @@ impl BackendRenderer {
             &shared.armature,
             &shared.camera,
             &shared.config,
-            &mut shared.rendered_frames,
+            &mut shared.ui.rendered_frames,
         );
-        let buffer = shared.rendered_frames[0].buffer.clone();
-        shared.rendered_frames = vec![];
+        let buffer = shared.ui.rendered_frames[0].buffer.clone();
+        shared.ui.rendered_frames = vec![];
         let screenshot_res = shared.screenshot_res;
 
         let mut armature = shared.armature.clone();
@@ -1048,6 +1097,15 @@ impl BackendRenderer {
         let width = screenshot_res.x as u32;
         let height = screenshot_res.y as u32;
 
+        let format;
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            format = wgpu::TextureFormat::Bgra8Unorm;
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            format = wgpu::TextureFormat::Rgba8Unorm;
+        }
         let capture_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
                 width,
@@ -1057,7 +1115,7 @@ impl BackendRenderer {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Bgra8Unorm,
+            format,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
             label: Some("Capture Texture"),
             view_formats: &[],

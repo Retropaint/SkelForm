@@ -663,6 +663,9 @@ pub struct Ui {
     pub changed_window_name: bool,
     pub sprite_size: Vec2,
     pub sprites_per_row: i32,
+
+    pub spritesheet_elapsed: Option<Instant>,
+    pub rendered_frames: Vec<RenderedFrame>,
 }
 
 impl Ui {
@@ -2387,8 +2390,6 @@ pub struct Shared {
     pub recording: bool,
     pub done_recording: bool,
     // mainly used for video, but can also be used for screenshots
-    pub rendered_frames: Vec<RenderedFrame>,
-
     pub edit_mode: EditMode,
 
     pub config: Config,

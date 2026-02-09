@@ -225,6 +225,11 @@ pub fn create_spritesheet(
             backend.take_screenshot(shared_ui.sprite_size, &new_arm, camera, config, &mut frames);
         }
 
+        shared_ui.rendered_frames = frames.clone();
+
+        #[cfg(target_arch = "wasm32")]
+        continue;
+
         let rows: f32 = f32::round((frames.len() / shared_ui.sprites_per_row as usize) as f32) + 1.;
         let sheet_size = Vec2::new(
             shared_ui.sprite_size.x * shared_ui.sprites_per_row as f32 + 1.,
@@ -235,6 +240,65 @@ pub fn create_spritesheet(
         let mut column = 0;
         let mut height = 0;
         for (_, sprite) in frames.iter().enumerate() {
+            let img = utils::process_screenshot(
+                &sprite.buffer,
+                &backend.gpu.device,
+                shared_ui.sprite_size,
+            );
+            let new_img = image::load_from_memory(&img).unwrap();
+            sheet
+                .copy_from(&new_img, column * shared_ui.sprite_size.x as u32, height)
+                .unwrap();
+            column += 1;
+            if column >= shared_ui.sprites_per_row as u32 {
+                height += shared_ui.sprite_size.y as u32;
+                column = 0;
+            }
+        }
+
+        let mut png_buf = Vec::new();
+        let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
+
+        let rgba8 = image::ExtendedColorType::Rgba8;
+        encoder
+            .write_image(sheet.as_raw(), sheet.width(), sheet.height(), rgba8)
+            .unwrap();
+
+        bufs.push(png_buf);
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        shared_ui.spritesheet_elapsed = Some(Instant::now());
+    }
+
+    bufs
+}
+
+pub fn web_spritesheet(
+    armature: &Armature,
+    shared_ui: &mut shared::Ui,
+    camera: &Camera,
+    config: &Config,
+    backend: &BackendRenderer,
+) -> Vec<Vec<u8>> {
+    let mut bufs = vec![];
+
+    for a in 0..armature.animations.len() {
+        let anim = &armature.animations[a];
+
+        let rows: f32 = f32::round(
+            (shared_ui.rendered_frames.len() / shared_ui.sprites_per_row as usize) as f32,
+        ) + 1.;
+        let sheet_size = Vec2::new(
+            shared_ui.sprite_size.x * shared_ui.sprites_per_row as f32 + 1.,
+            shared_ui.sprite_size.y * rows as f32 + 1.,
+        );
+
+        let mut sheet = image::RgbaImage::new(sheet_size.x as u32, sheet_size.y as u32);
+        let mut column = 0;
+        let mut height = 0;
+        for (_, sprite) in shared_ui.rendered_frames.iter().enumerate() {
             let img = utils::process_screenshot(
                 &sprite.buffer,
                 &backend.gpu.device,
@@ -1045,13 +1109,6 @@ pub fn process_screenshot_raw(
     device: &wgpu::Device,
     resolution: Vec2,
 ) -> Vec<u8> {
-    device
-        .poll(wgpu::PollType::Wait {
-            submission_index: None,
-            timeout: None,
-        })
-        .unwrap();
-
     let view = buffer.slice(..).get_mapped_range();
 
     let width = resolution.x as usize;
@@ -1065,10 +1122,25 @@ pub fn process_screenshot_raw(
             break;
         }
 
-        let b = px[0];
-        let g = px[1];
-        let r = px[2];
-        let a = px[3];
+        let r;
+        let g;
+        let b;
+        let a;
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            b = px[0];
+            g = px[1];
+            r = px[2];
+            a = px[3];
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            r = px[0];
+            g = px[1];
+            b = px[2];
+            a = px[3];
+        }
 
         rgba[dst + 0] = r;
         rgba[dst + 1] = g;
