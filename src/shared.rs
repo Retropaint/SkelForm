@@ -444,6 +444,13 @@ pub enum SettingsState {
     Misc,
 }
 
+#[derive(Clone, Default, PartialEq)]
+pub enum ExportState {
+    #[default]
+    Armature,
+    Spritesheet,
+}
+
 #[derive(Clone, Default, PartialEq, Debug, FromRepr)]
 pub enum PolarId {
     #[default]
@@ -654,6 +661,8 @@ pub struct Ui {
     pub warnings_open: bool,
     pub save_path: Option<PathBuf>,
     pub changed_window_name: bool,
+    pub sprite_size: Vec2,
+    pub sprites_per_row: i32,
 }
 
 impl Ui {
@@ -1831,14 +1840,16 @@ pub struct CopyBuffer {
     pub bones: Vec<Bone>,
 }
 
-#[derive(Default, Clone, PartialEq)]
+#[derive(Default, Clone, PartialEq, Debug)]
 pub enum Saving {
     #[default]
     None,
     CustomPath,
     Autosaving,
     Exporting,
+    Spritesheet,
 }
+enum_string!(Saving);
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
 #[serde(default)]

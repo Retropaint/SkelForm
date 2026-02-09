@@ -8,10 +8,10 @@
 //!
 //! `todo:` - not important as of being written, but good to keep in mind.
 
-#[cfg(not(target_arch = "wasm32"))]
 use std::io::Write;
 
 use egui_wgpu::wgpu::ExperimentalFeatures;
+use image::{GenericImage, ImageEncoder};
 use shared::*;
 use wgpu::{util::DeviceExt, BindGroupLayout, Buffer, InstanceDescriptor};
 
@@ -88,7 +88,7 @@ extern "C" {
     pub fn hasElement(id: &str) -> bool;
     pub fn getImgName(idx: usize) -> String;
     pub fn hasLoadedAllImages() -> bool;
-    pub fn downloadZip(zip: Vec<u8>, is_export: bool);
+    pub fn downloadZip(zip: Vec<u8>, saving: String);
 }
 
 #[derive(Default)]
@@ -770,7 +770,8 @@ impl BackendRenderer {
             *shared.ui.export_finished.lock().unwrap() = false;
         }
 
-        if *shared.ui.saving.lock().unwrap() != shared::Saving::None {
+        let saving = shared.ui.saving.lock().unwrap().clone();
+        if saving != Saving::None && saving != Saving::Spritesheet {
             #[cfg(target_arch = "wasm32")]
             {
                 let saving_type = shared.ui.saving.lock().unwrap().clone();
@@ -779,13 +780,22 @@ impl BackendRenderer {
                         &shared.armature,
                         &shared.camera,
                         &shared.edit_mode,
-                        saving_type == Saving::Exporting,
+                        saving_type,
                     );
                 }
             }
 
             #[cfg(not(target_arch = "wasm32"))]
             self.save(shared);
+        } else if saving == Saving::Spritesheet {
+            self.skf_spritesheet(
+                &shared.armature,
+                &shared.camera,
+                &self.gpu.device,
+                &shared.ui,
+                &shared.config,
+            );
+            *shared.ui.saving.lock().unwrap() = Saving::None;
         }
 
         for b in 0..shared.armature.bones.len() {
@@ -813,6 +823,68 @@ impl BackendRenderer {
         );
 
         shared.ui.warnings = warnings::check_warnings(&shared.armature);
+    }
+
+    fn skf_spritesheet(
+        &self,
+        armature: &Armature,
+        camera: &Camera,
+        device: &wgpu::Device,
+        shared_ui: &Ui,
+        config: &Config,
+    ) {
+        let path = &shared_ui.file_path.lock().unwrap()[0];
+        let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
+        let options = zip::write::FullFileOptions::default()
+            .compression_method(zip::CompressionMethod::Stored);
+
+        for a in 0..armature.animations.len() {
+            let anim = &armature.animations[a];
+            let all_frames = anim.keyframes.last().unwrap().frame;
+            let mut new_arm = armature.clone();
+            let mut frames = vec![];
+            for f in 0..all_frames {
+                new_arm.bones = new_arm.animate(a, f, Some(&armature.bones));
+                self.take_screenshot(shared_ui.sprite_size, &new_arm, camera, config, &mut frames);
+            }
+
+            let rows: f32 =
+                f32::round((frames.len() / shared_ui.sprites_per_row as usize) as f32) + 1.;
+            let sheet_size = Vec2::new(
+                shared_ui.sprite_size.x * shared_ui.sprites_per_row as f32 + 1.,
+                shared_ui.sprite_size.y * rows as f32 + 1.,
+            );
+
+            let mut sheet = image::RgbaImage::new(sheet_size.x as u32, sheet_size.y as u32);
+            let mut column = 0;
+            let mut height = 0;
+            for (_, sprite) in frames.iter().enumerate() {
+                let img = utils::process_screenshot(&sprite.buffer, device, shared_ui.sprite_size);
+                let new_img = image::load_from_memory(&img).unwrap();
+                sheet
+                    .copy_from(&new_img, column * shared_ui.sprite_size.x as u32, height)
+                    .unwrap();
+                column += 1;
+                if column >= shared_ui.sprites_per_row as u32 {
+                    height += shared_ui.sprite_size.y as u32;
+                    column = 0;
+                }
+            }
+
+            let mut png_buf = Vec::new();
+            let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
+
+            let rgba8 = image::ExtendedColorType::Rgba8;
+            encoder
+                .write_image(sheet.as_raw(), sheet.width(), sheet.height(), rgba8)
+                .unwrap();
+
+            let png_name = anim.name.to_owned() + &".png";
+            zip.start_file(png_name, options.clone()).unwrap();
+            zip.write(&png_buf).unwrap();
+        }
+
+        zip.finish().unwrap();
     }
 
     fn skf_record(&mut self, shared: &mut Shared) {
@@ -965,7 +1037,6 @@ impl BackendRenderer {
         });
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
     pub fn take_screenshot(
         &self,
         screenshot_res: Vec2,

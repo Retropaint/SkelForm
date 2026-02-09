@@ -443,7 +443,10 @@ pub fn kb_inputs(
 
     if input.consume_shortcut(&config.keys.save) {
         #[cfg(target_arch = "wasm32")]
-        utils::save_web(armature, camera, edit_mode, false);
+        {
+            let saving = shared_ui.saving.lock().unwrap().clone();
+            utils::save_web(armature, camera, edit_mode, saving);
+        }
         #[cfg(not(target_arch = "wasm32"))]
         utils::save_native(shared_ui);
     }
@@ -969,7 +972,12 @@ fn menu_file_button(
         let str_save = &shared_ui.loc("top_bar.file.save");
         if top_bar_button!(str_save, Some(&config.keys.save)).clicked() {
             #[cfg(target_arch = "wasm32")]
-            utils::save_web(armature, camera, edit_mode, false);
+            utils::save_web(
+                armature,
+                camera,
+                edit_mode,
+                shared_ui.saving.lock().unwrap().clone(),
+            );
             #[cfg(not(target_arch = "wasm32"))]
             utils::save_native(shared_ui);
             ui.close();

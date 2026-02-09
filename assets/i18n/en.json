@@ -116,7 +116,9 @@
     "clear_color_desc": "The color that transparent pixels will be represented by",
     "save_button": "Export",
     "inverse_kinematics": "Inverse Kinematics",
-    "tex_atlas": "Texture Atlas(es)"
+    "tex_atlas": "Texture Atlas(es)",
+    "armature": "Armature",
+    "spritesheet": "Spritesheet"
   },
   "armature_panel": {
     "heading": "Armature",

@@ -384,13 +384,19 @@
                     })
             }
 
-            function downloadZip(binary, is_export) {
+            function downloadZip(binary, saving) {
                 var link = document.createElement("a");
                 link.href = window.URL.createObjectURL(
                     new Blob([binary], { type: "zip" }),
                 );
+                var ext = ".skf";
+                switch(saving) {
+                    case "Exporting": 
+                        ext = ".skfe"
+                    break; case "Spritesheet": 
+                        ext = ".zip"
+                }
                 link.setAttribute("test", "sk_a");
-                let ext = (is_export) ? ".skfe" : ".skf";
                 link.setAttribute("download", "SkelForm_armature" + ext);
                 link.click();
                 link.remove();
@@ -447,7 +453,7 @@
                 if (document.fullscreenEnabled) { 
                     el.requestFullscreen();
                 } else if (document.webkitFullscreenEnabled) {
-                  el.webkitRequestFullscreen();
+                 el.webkitRequestFullscreen();
                 } else if (document.mozFullScreenEnabled) {
                   el.mozRequestFullScreen();
                 } else if (document.msFullscreenEnabled) {

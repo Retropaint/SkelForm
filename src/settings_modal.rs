@@ -101,7 +101,7 @@ pub fn draw(
     });
 }
 
-fn settings_button(
+pub fn settings_button(
     name: String,
     state: shared::SettingsState,
     ui: &mut egui::Ui,

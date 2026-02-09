@@ -124,6 +124,8 @@ fn init_shared(shared: &mut Shared) {
     shared.selections.bind = -1;
     shared.ui.styles_modal_size = Vec2::new(500., 500.);
     shared.screenshot_res = Vec2::new(128., 128.);
+    shared.ui.sprite_size = Vec2::new(128., 128.);
+    shared.ui.sprites_per_row = 4;
     shared.renderer.changed_vert_id = -1;
     shared.ui.dragging_slice = usize::MAX;
     shared.edit_mode.export_exclude_ik = true;
