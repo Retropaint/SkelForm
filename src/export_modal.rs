@@ -61,16 +61,15 @@ pub fn draw(
 
             egui::Frame::new().show(ui, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    ui.set_width(ui.available_width());
                     let layout = egui::Layout::top_down(egui::Align::Min);
                     ui.with_layout(layout, |ui| match shared_ui.settings_state {
                         SettingsState::Ui => armature_export(
                             ui, shared_ui, edit_mode, events, config, armature, camera, selections,
                         ),
-                        SettingsState::Animation => spritesheet_export(
+                        SettingsState::Animation => image_export(
                             ui, shared_ui, edit_mode, events, config, armature, camera, selections,
                         ),
-                        SettingsState::Keyboard => spritesheet_export(
+                        SettingsState::Keyboard => image_export(
                             ui, shared_ui, edit_mode, events, config, armature, camera, selections,
                         ),
                         _ => {}
@@ -93,7 +92,7 @@ pub fn armature_export(
 ) {
     ui.heading("Export Armature");
     ui.add_space(10.);
-    let width = ui.available_width();
+    let width = ui.available_width() - 10.;
     egui::Frame::new()
         .fill(config.colors.dark_accent.into())
         .inner_margin(egui::Margin::same(5))
@@ -188,7 +187,7 @@ pub fn armature_export(
     });
 }
 
-pub fn spritesheet_export(
+pub fn image_export(
     ui: &mut egui::Ui,
     shared_ui: &mut crate::Ui,
     edit_mode: &EditMode,
@@ -199,6 +198,7 @@ pub fn spritesheet_export(
     selections: &SelectionState,
 ) {
     ui.heading("Export Image");
+    let width = ui.available_width() - 10.;
 
     ui.add_space(10.);
     ui.horizontal(|ui| {
@@ -244,12 +244,19 @@ pub fn spritesheet_export(
         }
     });
 
-    ui.add_space(10.);
-
-    ui.heading(shared_ui.loc("export_modal.animations"));
+    ui.add_space(20.);
+    egui::Frame::new()
+        .fill(config.colors.dark_accent.into())
+        .inner_margin(egui::Margin::same(5))
+        .show(ui, |ui| {
+            ui.set_width(width);
+            let text = egui::RichText::new(shared_ui.loc("export_modal.animations")).size(15.);
+            ui.label(text);
+        });
+    ui.add_space(5.);
     for a in 0..armature.animations.len() {
         #[rustfmt::skip]
-        let col = if a % 2 == 0 { config.colors.dark_accent } else { config.colors.main };
+        let col = if a % 2 == 1 { config.colors.dark_accent } else { config.colors.main };
 
         let anim = &armature.animations[a];
 
@@ -281,7 +288,7 @@ pub fn spritesheet_export(
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let str = &shared_ui.loc("export_modal.save_button");
-                if ui.skf_button(str).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                if ui.skf_button(str).clicked() {
                     #[cfg(target_arch = "wasm32")]
                     {
                         *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
