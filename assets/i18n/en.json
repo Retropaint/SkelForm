@@ -118,8 +118,10 @@
     "inverse_kinematics": "Inverse Kinematics",
     "tex_atlas": "Texture Atlas(es)",
     "armature": "Armature",
-    "spritesheet": "Spritesheet",
+    "images": "Image",
     "animations": "Animations",
+    "image_sequences": "Image sequences ℹ:",
+    "image_sequences_desc": "Instead of using sheets, sprites will be exported individually",
     "animations_check_desc": "Include this animation in the export?"
   },
   "armature_panel": {

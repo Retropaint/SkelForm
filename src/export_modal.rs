@@ -49,7 +49,7 @@ pub fn draw(
                     }
 
                     let str_armature = shared_ui.loc("export_modal.armature").clone();
-                    let str_spritesheet = shared_ui.loc("export_modal.spritesheet").clone();
+                    let str_spritesheet = shared_ui.loc("export_modal.images").clone();
                     tab!(str_armature, crate::SettingsState::Ui);
                     tab!(str_spritesheet, crate::SettingsState::Animation);
 
@@ -198,7 +198,36 @@ pub fn spritesheet_export(
     camera: &Camera,
     selections: &SelectionState,
 ) {
-    ui.heading("Export Spritesheet");
+    ui.heading("Export Image");
+
+    ui.add_space(10.);
+    ui.horizontal(|ui| {
+        ui.label("Export type:");
+        let selected_str = if shared_ui.image_sequences {
+            "Sequences"
+        } else {
+            "Spritesheets"
+        };
+        egui::ComboBox::new("transition_dropdown".to_string(), "")
+            .selected_text(selected_str.to_string())
+            .show_ui(ui, |ui| {
+                ui.selectable_value(&mut shared_ui.image_sequences, false, "Spritesheets");
+                ui.selectable_value(&mut shared_ui.image_sequences, true, "Sequences");
+            })
+            .response;
+    });
+
+    ui.add_enabled_ui(!shared_ui.image_sequences, |ui: &mut egui::Ui| {
+        ui.horizontal(|ui| {
+            ui.label("Sprites per row: ");
+            let spr = shared_ui.sprites_per_row as f32;
+            let (edited, value, _) = ui.float_input("sprite_row".into(), shared_ui, spr, 1., None);
+            if edited {
+                shared_ui.sprites_per_row = value as i32;
+            }
+        });
+    });
+
     ui.add_space(10.);
     ui.horizontal(|ui| {
         ui.label("Size per sprite: ");
@@ -215,18 +244,9 @@ pub fn spritesheet_export(
         }
     });
 
-    ui.horizontal(|ui| {
-        ui.label("Sprites per row: ");
-        let spr = shared_ui.sprites_per_row as f32;
-        let (edited, value, _) = ui.float_input("sprite_row".into(), shared_ui, spr, 1., None);
-        if edited {
-            shared_ui.sprites_per_row = value as i32;
-        }
-    });
-
     ui.add_space(10.);
-    ui.heading(shared_ui.loc("export_modal.animations"));
 
+    ui.heading(shared_ui.loc("export_modal.animations"));
     for a in 0..armature.animations.len() {
         #[rustfmt::skip]
         let col = if a % 2 == 0 { config.colors.dark_accent } else { config.colors.main };

@@ -8,7 +8,7 @@
 //!
 //! `todo:` - not important as of being written, but good to keep in mind.
 
-use std::io::Write;
+use std::io::{Seek, Write};
 
 use egui_wgpu::wgpu::ExperimentalFeatures;
 use image::{GenericImage, ImageEncoder};
@@ -25,6 +25,7 @@ mod native {
 }
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
+use zip::write::{FileOptions, FullFileOptions};
 
 #[cfg(target_arch = "wasm32")]
 mod web {
@@ -855,13 +856,8 @@ impl BackendRenderer {
         let options = zip::write::FullFileOptions::default()
             .compression_method(zip::CompressionMethod::Stored);
 
-        let bufs = utils::encode_spritesheets(armature, shared_ui, camera, config, self);
-
-        for b in 0..bufs.len() {
-            let png_name = armature.animations[b].name.to_string() + ".png";
-            zip.start_file(png_name, options.clone()).unwrap();
-            zip.write(&bufs[b]).unwrap();
-        }
+        #[rustfmt::skip]
+        self.skf_pack_sprites(armature, camera, device, shared_ui, config, &mut zip, options.clone());
 
         _ = zip.finish();
     }
@@ -878,19 +874,53 @@ impl BackendRenderer {
         let mut buf: Vec<u8> = Vec::new();
         let cursor = std::io::Cursor::new(&mut buf);
         let mut zip = zip::ZipWriter::new(cursor);
-        let options = zip::write::SimpleFileOptions::default()
+        let options = zip::write::FullFileOptions::default()
             .compression_method(zip::CompressionMethod::Stored);
 
-        let bufs = utils::encode_spritesheets(armature, shared_ui, camera, config, self);
-
-        for b in 0..bufs.len() {
-            let png_name = armature.animations[b].name.to_string() + ".png";
-            zip.start_file(png_name, options.clone()).unwrap();
-            zip.write(&bufs[b]).unwrap();
-        }
+        #[rustfmt::skip]
+        self.skf_pack_sprites(armature, camera, device, shared_ui, config, &mut zip, options.clone());
 
         let bytes = zip.finish().unwrap().into_inner().to_vec();
         downloadZip(bytes, Saving::Spritesheet.to_string());
+    }
+
+    // sprite-packing stuff that applies to both native and web
+    fn skf_pack_sprites<W: Write + Seek>(
+        &self,
+        armature: &Armature,
+        camera: &Camera,
+        device: &wgpu::Device,
+        shared_ui: &mut Ui,
+        config: &Config,
+        zip: &mut zip::ZipWriter<W>,
+        options: FullFileOptions,
+    ) {
+        if shared_ui.image_sequences {
+            let bufs = utils::encode_sequence(armature, shared_ui, camera, config, self);
+
+            let mut buf_idx = 0;
+            for a in 0..shared_ui.exporting_anims.len() {
+                if !shared_ui.exporting_anims[a] {
+                    continue;
+                }
+                zip.add_directory(armature.animations[a].name.clone(), options.clone())
+                    .unwrap();
+                for b in 0..bufs[buf_idx].len() {
+                    let png_name =
+                        armature.animations[a].name.to_string() + "/" + &b.to_string() + ".png";
+                    zip.start_file(png_name, options.clone()).unwrap();
+                    zip.write(&bufs[buf_idx][b]).unwrap();
+                }
+                buf_idx += 1;
+            }
+        } else {
+            let bufs = utils::encode_spritesheets(armature, shared_ui, camera, config, self);
+            for b in 0..bufs.len() {
+                let png_name = armature.animations[b].name.to_string() + ".png";
+                zip.start_file(png_name, options.clone()).unwrap();
+                zip.write(&bufs[b]).unwrap();
+            }
+        }
     }
 
     fn skf_record(&mut self, shared: &mut Shared) {

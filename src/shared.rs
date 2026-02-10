@@ -668,6 +668,7 @@ pub struct Ui {
     pub rendered_frames: Vec<RenderedFrame>,
     pub rendered_spritesheets: Vec<Vec<RenderedFrame>>,
     pub exporting_anims: Vec<bool>,
+    pub image_sequences: bool,
 }
 
 impl Ui {

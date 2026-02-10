@@ -290,6 +290,50 @@ pub fn encode_spritesheets(
     bufs
 }
 
+pub fn encode_sequence(
+    armature: &Armature,
+    shared_ui: &mut shared::Ui,
+    camera: &Camera,
+    config: &Config,
+    backend: &BackendRenderer,
+) -> Vec<Vec<Vec<u8>>> {
+    let mut bufs = vec![];
+
+    for a in 0..armature.animations.len() {
+        if !shared_ui.exporting_anims[a] {
+            continue;
+        }
+
+        bufs.push(vec![]);
+
+        for (_, sprite) in shared_ui.rendered_spritesheets[a].iter().enumerate() {
+            let img = utils::process_screenshot(
+                &sprite.buffer,
+                &backend.gpu.device,
+                shared_ui.sprite_size,
+            );
+            let new_img = image::load_from_memory(&img).unwrap();
+
+            let mut png_buf = Vec::new();
+            let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
+
+            let rgba8 = image::ExtendedColorType::Rgba8;
+            encoder
+                .write_image(
+                    new_img.as_rgba8().unwrap(),
+                    new_img.width(),
+                    new_img.height(),
+                    rgba8,
+                )
+                .unwrap();
+
+            bufs.last_mut().unwrap().push(png_buf);
+        }
+    }
+
+    bufs
+}
+
 #[cfg(not(target_arch = "wasm32"))]
 pub fn save_native(shared_ui: &mut shared::Ui) {
     let mut open_dialog = true;
