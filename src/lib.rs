@@ -1122,15 +1122,19 @@ impl BackendRenderer {
             );
         }
 
-        let buffer_size = (width * height * 4) as u64;
+        // pad screenshot width to a multiple of 256
+        let bytes_per_pixel = 4;
+        let unpadded_bytes_per_row = width * bytes_per_pixel;
+        let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT as u32;
+        let padded_bytes_per_row = ((unpadded_bytes_per_row + align - 1) / align) * align;
+
+        let buffer_size = (padded_bytes_per_row * height * 4) as u64;
         let output_buffer = self.gpu.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Readback Buffer"),
             size: buffer_size,
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
             mapped_at_creation: false,
         });
-
-        let bytes_per_row = 4 * width;
 
         encoder.copy_texture_to_buffer(
             wgpu::TexelCopyTextureInfo {
@@ -1143,8 +1147,8 @@ impl BackendRenderer {
                 buffer: &output_buffer,
                 layout: wgpu::TexelCopyBufferLayout {
                     offset: 0,
-                    bytes_per_row: Some(bytes_per_row),
-                    rows_per_image: Some(height),
+                    bytes_per_row: Some(padded_bytes_per_row),
+                    rows_per_image: None,
                 },
             },
             wgpu::Extent3d {

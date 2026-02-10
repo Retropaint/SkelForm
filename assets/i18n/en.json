@@ -119,7 +119,8 @@
     "tex_atlas": "Texture Atlas(es)",
     "armature": "Armature",
     "spritesheet": "Spritesheet",
-    "animations": "Animations"
+    "animations": "Animations",
+    "animations_check_desc": "Include this animation in the export?"
   },
   "armature_panel": {
     "heading": "Armature",

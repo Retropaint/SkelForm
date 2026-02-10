@@ -1067,7 +1067,7 @@ pub fn process_screenshot(
 
 pub fn process_screenshot_raw(
     buffer: &wgpu::Buffer,
-    device: &wgpu::Device,
+    _device: &wgpu::Device,
     resolution: Vec2,
 ) -> Vec<u8> {
     let view = buffer.slice(..).get_mapped_range();
@@ -1075,38 +1075,32 @@ pub fn process_screenshot_raw(
     let width = resolution.x as usize;
     let height = resolution.y as usize;
 
-    let mut rgba = vec![0u8; width * height * 4];
+    // screenshot widths are always a multiple of 256, so get the proepr width
+    let unpadded_bytes_per_row = width * 4;
+    let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT as usize;
+    let padded_bytes_per_row = ((unpadded_bytes_per_row + align - 1) / align) * align;
+    let mut rgba = Vec::with_capacity(width * height * 4);
 
-    for (i, px) in view.chunks_exact(4).enumerate() {
-        let dst = i * 4;
-        if dst + 3 >= rgba.len() {
-            break;
+    for y in 0..height {
+        let row_start = y * padded_bytes_per_row;
+        let row = &view[row_start..row_start + unpadded_bytes_per_row];
+
+        // copy pixels to rgba
+        for px in row.chunks_exact(4) {
+            // use bgra for native
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                rgba.push(px[2]);
+                rgba.push(px[1]);
+                rgba.push(px[0]);
+                rgba.push(px[3]);
+            }
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                rgba.extend_from_slice(px);
+            }
         }
-
-        let r;
-        let g;
-        let b;
-        let a;
-
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            b = px[0];
-            g = px[1];
-            r = px[2];
-            a = px[3];
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            r = px[0];
-            g = px[1];
-            b = px[2];
-            a = px[3];
-        }
-
-        rgba[dst + 0] = r;
-        rgba[dst + 1] = g;
-        rgba[dst + 2] = b;
-        rgba[dst + 3] = a;
     }
 
     rgba

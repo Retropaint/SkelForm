@@ -5,6 +5,9 @@ use crate::{
     ExportImgFormat, ExportState, SelectionState, SettingsState, Vec2,
 };
 
+#[cfg(target_arch = "wasm32")]
+use web_time::Instant;
+
 pub fn draw(
     ctx: &egui::Context,
     shared_ui: &mut crate::Ui,
@@ -65,6 +68,9 @@ pub fn draw(
                             ui, shared_ui, edit_mode, events, config, armature, camera, selections,
                         ),
                         SettingsState::Animation => spritesheet_export(
+                            ui, shared_ui, edit_mode, events, config, armature, camera, selections,
+                        ),
+                        SettingsState::Keyboard => spritesheet_export(
                             ui, shared_ui, edit_mode, events, config, armature, camera, selections,
                         ),
                         _ => {}
@@ -225,11 +231,27 @@ pub fn spritesheet_export(
         #[rustfmt::skip]
         let col = if a % 2 == 0 { config.colors.dark_accent } else { config.colors.main };
 
+        let anim = &armature.animations[a];
+
         egui::Frame::new().fill(col.into()).show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.label(armature.animations[a].name.to_string());
+                ui.label(anim.name.to_string());
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.checkbox(&mut shared_ui.exporting_anims[a], "".into_atoms());
+                    let mut meta_col = config.colors.text;
+                    meta_col -= crate::Color::new(40, 40, 40, 0);
+                    ui.checkbox(&mut shared_ui.exporting_anims[a], "".into_atoms())
+                        .on_hover_text(shared_ui.loc("export_modal.animations_check_desc"));
+                    ui.add_space(10.);
+                    let total_frames = anim.keyframes.last().unwrap().frame;
+                    ui.label(
+                        egui::RichText::new(
+                            anim.fps.to_string()
+                                + &" FPS  -  ".to_string()
+                                + &total_frames.to_string()
+                                + &" frames".to_string(),
+                        )
+                        .color(meta_col),
+                    );
                 });
             });
         });
