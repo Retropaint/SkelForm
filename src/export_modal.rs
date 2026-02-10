@@ -223,6 +223,7 @@ pub fn spritesheet(
                     #[cfg(target_arch = "wasm32")]
                     {
                         *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
+                        shared_ui.spritesheet_elapsed = Some(Instant::now());
                     }
                     #[cfg(not(target_arch = "wasm32"))]
                     utils::open_save_dialog(
