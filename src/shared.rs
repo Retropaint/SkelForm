@@ -669,6 +669,7 @@ pub struct Ui {
     pub rendered_spritesheets: Vec<Vec<RenderedFrame>>,
     pub exporting_anims: Vec<bool>,
     pub image_sequences: bool,
+    pub exporting_video: bool,
 }
 
 impl Ui {
@@ -1854,6 +1855,7 @@ pub enum Saving {
     Autosaving,
     Exporting,
     Spritesheet,
+    Video,
 }
 enum_string!(Saving);
 

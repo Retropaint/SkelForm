@@ -90,6 +90,9 @@ extern "C" {
     pub fn getImgName(idx: usize) -> String;
     pub fn hasLoadedAllImages() -> bool;
     pub fn downloadZip(zip: Vec<u8>, saving: String);
+    pub fn downloadMp4(data: Vec<u8>);
+    pub fn downloadGif();
+    pub fn addGifFrame(frame: Vec<u8>);
 }
 
 #[derive(Default)]
@@ -743,11 +746,22 @@ impl BackendRenderer {
         let elapsed = shared.ui.spritesheet_elapsed;
         let duration_in_millis = 250;
         if elapsed != None && elapsed.unwrap().elapsed().as_millis() > duration_in_millis {
-            #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
-            self.skf_native_spritesheet(&shared.armature, &shared.camera, &self.gpu.device, &mut shared.ui, &shared.config);
-
-            #[rustfmt::skip] #[cfg(target_arch = "wasm32")]
-            self.skf_web_spritesheet(&shared.armature, &shared.camera, &self.gpu.device, &mut shared.ui, &shared.config);
+            if shared.ui.exporting_video {
+                let bufs = utils::encode_sequence(
+                    &shared.armature,
+                    &mut shared.ui,
+                    &shared.camera,
+                    &shared.config,
+                    self,
+                );
+                //Self::encode_video(bufs[1].clone(), Vec2::new(128., 128.));
+                Self::encode_gif(bufs[1].clone(), Vec2::new(128., 128.));
+            } else {
+                #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
+                self.skf_native_spritesheet(&shared.armature, &shared.camera, &self.gpu.device, &mut shared.ui, &shared.config);
+                #[rustfmt::skip] #[cfg(target_arch = "wasm32")]
+                self.skf_web_spritesheet(&shared.armature, &shared.camera, &self.gpu.device, &mut shared.ui, &shared.config);
+            }
 
             shared.ui.spritesheet_elapsed = None;
             shared.ui.modal = false;
@@ -786,7 +800,10 @@ impl BackendRenderer {
         }
 
         let saving = shared.ui.saving.lock().unwrap().clone();
-        if saving != Saving::None && saving != Saving::Spritesheet {
+
+        let recording_spritesheets = saving == Saving::Spritesheet || saving == Saving::Video;
+
+        if saving != Saving::None && !recording_spritesheets {
             #[cfg(target_arch = "wasm32")]
             {
                 let saving_type = shared.ui.saving.lock().unwrap().clone();
@@ -802,7 +819,7 @@ impl BackendRenderer {
 
             #[cfg(not(target_arch = "wasm32"))]
             self.save(shared);
-        } else if saving == Saving::Spritesheet {
+        } else if recording_spritesheets {
             shared.events.open_modal("exporting", true);
             utils::render_spritesheets(
                 &shared.armature,
@@ -939,7 +956,7 @@ impl BackendRenderer {
                 let frames = shared.ui.rendered_frames.clone();
                 let window = shared.camera.window.clone();
                 std::thread::spawn(move || {
-                    Self::export_video(frames, window);
+                    //Self::encode_video(frames, window);
                 });
                 shared.done_recording = false;
             }
@@ -1204,85 +1221,32 @@ impl BackendRenderer {
         });
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    fn export_video(rendered_frames: Vec<RenderedFrame>, window: Vec2) {
-        let width = rendered_frames[0].width.to_string();
-        let height = rendered_frames[0].height.to_string();
+    fn encode_video(rendered_frames: Vec<Vec<u8>>, window: Vec2) {
+        let frame_size = window.x as usize * window.y as usize * 3;
 
-        let output_width = width.clone();
-        let output_height = height.clone();
+        let mut raw_video = Vec::with_capacity(rendered_frames.len() * frame_size);
 
-        let mut child = std::process::Command::new("ffmpeg")
-            .args([
-                "-f",
-                "rawvideo",
-                // input resolution
-                "-video_size",
-                &(width + "x" + &height),
-                // fps
-                "-r",
-                "60",
-                "-pixel_format",
-                "rgb24",
-                "-i",
-                "-",
-                // output resolution
-                "-s",
-                &("".to_owned() + &output_width.to_string() + ":" + &output_height.to_string()),
-                // fast preset
-                "-preset",
-                "veryfast",
-                // don't encode audio
-                "-c:a",
-                "copy",
-                "-y",
-                "output.mp4",
-                "-loglevel",
-                "verbose",
-            ])
-            .stdin(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::inherit())
-            .spawn()
-            .unwrap();
-
-        let mut stdin = child.stdin.take().unwrap();
-
-        for i in 0..rendered_frames.len() {
-            let buffer_slice = rendered_frames[i].buffer.slice(..);
-            let view = buffer_slice.get_mapped_range();
-
-            let mut rgb = vec![0u8; (window.x * window.y * 3.) as usize];
-            for (j, chunk) in view.as_ref().chunks_exact(4).enumerate() {
-                let offset = j * 3;
-                rgb[offset + 0] = chunk[2];
-                rgb[offset + 1] = chunk[1];
-                rgb[offset + 2] = chunk[0];
+        for frame in rendered_frames {
+            let rgb = image::load_from_memory(&frame).unwrap();
+            for chunk in rgb.to_rgba8().chunks_exact(4) {
+                raw_video.push(chunk[0]);
+                raw_video.push(chunk[1]);
+                raw_video.push(chunk[2]);
             }
-
-            let img = <image::ImageBuffer<image::Rgb<u8>, _>>::from_raw(
-                window.x as u32,
-                window.y as u32,
-                rgb,
-            );
-
-            stdin.write_all(img.as_ref().unwrap()).unwrap();
-
-            //let frame = i.to_string();
-            //let headline = "Exporting... ".to_owned()
-            //    + &frame.to_owned()
-            //    + " out of "
-            //    + &(rendered_frames.len() - 1).to_string()
-            //    + " frames";
-            //if i != rendered_frames.len() - 1 {
-            //    file_reader::create_temp_file(&temp.export_vid_text, &headline);
-            //}
         }
 
-        //file_reader::create_temp_file(&temp.export_vid_text, &temp.export_vid_done);
+        #[cfg(target_arch = "wasm32")]
+        downloadMp4(raw_video);
+    }
 
-        stdin.flush().unwrap();
-        drop(stdin);
-        child.wait().unwrap();
+    fn encode_gif(rendered_frames: Vec<Vec<u8>>, window: Vec2) {
+        #[cfg(target_arch = "wasm32")]
+        {
+            for frame in rendered_frames {
+                addGifFrame(frame);
+            }
+            downloadGif();
+        }
     }
 }
 

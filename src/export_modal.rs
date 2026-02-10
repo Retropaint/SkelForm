@@ -52,6 +52,7 @@ pub fn draw(
                     let str_spritesheet = shared_ui.loc("export_modal.images").clone();
                     tab!(str_armature, crate::SettingsState::Ui);
                     tab!(str_spritesheet, crate::SettingsState::Animation);
+                    tab!("Video".to_string(), crate::SettingsState::Keyboard);
 
                     if !is_hovered {
                         shared_ui.hovering_setting = None;
@@ -69,7 +70,7 @@ pub fn draw(
                         SettingsState::Animation => image_export(
                             ui, shared_ui, edit_mode, events, config, armature, camera, selections,
                         ),
-                        SettingsState::Keyboard => image_export(
+                        SettingsState::Keyboard => video_export(
                             ui, shared_ui, edit_mode, events, config, armature, camera, selections,
                         ),
                         _ => {}
@@ -292,6 +293,42 @@ pub fn image_export(
                     #[cfg(target_arch = "wasm32")]
                     {
                         *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
+                        shared_ui.spritesheet_elapsed = Some(Instant::now());
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    utils::open_save_dialog(
+                        &shared_ui.file_path,
+                        &shared_ui.saving,
+                        crate::Saving::Spritesheet,
+                    );
+                }
+            });
+        });
+    });
+}
+
+pub fn video_export(
+    ui: &mut egui::Ui,
+    shared_ui: &mut crate::Ui,
+    edit_mode: &EditMode,
+    events: &mut EventState,
+    config: &Config,
+    armature: &Armature,
+    camera: &Camera,
+    selections: &SelectionState,
+) {
+    ui.heading("Export Video");
+    let width = ui.available_width() - 10.;
+
+    ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+        ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let str = &shared_ui.loc("export_modal.save_button");
+                if ui.skf_button(str).clicked() {
+                    shared_ui.exporting_video = true;
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        *shared_ui.saving.lock().unwrap() = crate::Saving::Video;
                         shared_ui.spritesheet_elapsed = Some(Instant::now());
                     }
                     #[cfg(not(target_arch = "wasm32"))]

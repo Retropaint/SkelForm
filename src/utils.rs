@@ -303,6 +303,7 @@ pub fn encode_sequence(
 ) -> Vec<Vec<Vec<u8>>> {
     let mut bufs = vec![];
 
+    let mut idx = 0;
     for a in 0..armature.animations.len() {
         if !shared_ui.exporting_anims[a] {
             continue;
@@ -310,7 +311,7 @@ pub fn encode_sequence(
 
         bufs.push(vec![]);
 
-        for (_, sprite) in shared_ui.rendered_spritesheets[a].iter().enumerate() {
+        for (_, sprite) in shared_ui.rendered_spritesheets[idx].iter().enumerate() {
             let img = utils::process_screenshot(
                 &sprite.buffer,
                 &backend.gpu.device,
@@ -333,6 +334,8 @@ pub fn encode_sequence(
 
             bufs.last_mut().unwrap().push(png_buf);
         }
+
+        idx += 1;
     }
 
     bufs
