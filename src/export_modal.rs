@@ -194,13 +194,13 @@ pub fn spritesheet(
     ui.horizontal(|ui| {
         ui.label("Size per sprite: ");
         let x = shared_ui.sprite_size.x;
-        let (edited, value, _) = ui.float_input("sprite_size".into(), shared_ui, x, 1., None);
+        let (edited, value, _) = ui.float_input("sprite_size_x".into(), shared_ui, x, 1., None);
         if edited {
             shared_ui.sprite_size.x = value;
         }
         ui.label("x");
         let y = shared_ui.sprite_size.y;
-        let (edited, value, _) = ui.float_input("sprite_size".into(), shared_ui, y, 1., None);
+        let (edited, value, _) = ui.float_input("sprite_size_y".into(), shared_ui, y, 1., None);
         if edited {
             shared_ui.sprite_size.y = value;
         }
