@@ -453,6 +453,7 @@ pub fn kb_inputs(
 
     if input.consume_shortcut(&config.keys.export) {
         shared_ui.export_modal = true;
+        shared_ui.exporting_video_type = ExportVideoType::Mp4;
         shared_ui.exporting_anims = vec![];
         for _ in &armature.animations {
             shared_ui.exporting_anims.push(true);
@@ -998,6 +999,7 @@ fn menu_file_button(
         let str_export = &shared_ui.loc("top_bar.file.export");
         if top_bar_button!(str_export, Some(&config.keys.export)).clicked() {
             shared_ui.export_modal = true;
+            shared_ui.exporting_video_type = ExportVideoType::Mp4;
             shared_ui.exporting_anims = vec![];
             for _ in &armature.animations {
                 shared_ui.exporting_anims.push(true);

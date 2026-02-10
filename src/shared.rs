@@ -669,8 +669,18 @@ pub struct Ui {
     pub rendered_spritesheets: Vec<Vec<RenderedFrame>>,
     pub exporting_anims: Vec<bool>,
     pub image_sequences: bool,
-    pub exporting_video: bool,
+    pub exporting_video_type: ExportVideoType,
+    pub exporting_video_anim: usize,
 }
+
+#[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
+pub enum ExportVideoType {
+    #[default]
+    None,
+    Mp4,
+    Gif,
+}
+enum_string!(ExportVideoType);
 
 impl Ui {
     pub fn is_animating(&self, edit_mode: &EditMode, selections: &SelectionState) -> bool {

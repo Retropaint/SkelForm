@@ -90,8 +90,8 @@ extern "C" {
     pub fn getImgName(idx: usize) -> String;
     pub fn hasLoadedAllImages() -> bool;
     pub fn downloadZip(zip: Vec<u8>, saving: String);
-    pub fn downloadMp4(data: Vec<u8>);
-    pub fn downloadGif();
+    pub fn downloadMp4(data: Vec<u8>, resX: f32, resY: f32, name: &str);
+    pub fn downloadGif(resX: f32, resY: f32, name: &str);
     pub fn addGifFrame(frame: Vec<u8>);
 }
 
@@ -746,7 +746,7 @@ impl BackendRenderer {
         let elapsed = shared.ui.spritesheet_elapsed;
         let duration_in_millis = 250;
         if elapsed != None && elapsed.unwrap().elapsed().as_millis() > duration_in_millis {
-            if shared.ui.exporting_video {
+            if shared.ui.exporting_video_type != ExportVideoType::None {
                 let bufs = utils::encode_sequence(
                     &shared.armature,
                     &mut shared.ui,
@@ -754,8 +754,13 @@ impl BackendRenderer {
                     &shared.config,
                     self,
                 );
-                //Self::encode_video(bufs[1].clone(), Vec2::new(128., 128.));
-                Self::encode_gif(bufs[1].clone(), Vec2::new(128., 128.));
+                let anim_idx = shared.ui.exporting_video_anim;
+                let name = &shared.armature.animations[anim_idx].name;
+                if shared.ui.exporting_video_type == ExportVideoType::Mp4 {
+                    Self::encode_video(bufs[anim_idx].clone(), shared.ui.sprite_size, name);
+                } else {
+                    Self::encode_gif(bufs[anim_idx].clone(), shared.ui.sprite_size, name);
+                }
             } else {
                 #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
                 self.skf_native_spritesheet(&shared.armature, &shared.camera, &self.gpu.device, &mut shared.ui, &shared.config);
@@ -765,6 +770,7 @@ impl BackendRenderer {
 
             shared.ui.spritesheet_elapsed = None;
             shared.ui.modal = false;
+            shared.ui.sprite_size = shared.screenshot_res;
         }
 
         if shared.renderer.generic_bindgroup == None {
@@ -1221,7 +1227,7 @@ impl BackendRenderer {
         });
     }
 
-    fn encode_video(rendered_frames: Vec<Vec<u8>>, window: Vec2) {
+    fn encode_video(rendered_frames: Vec<Vec<u8>>, window: Vec2, name: &str) {
         let frame_size = window.x as usize * window.y as usize * 3;
 
         let mut raw_video = Vec::with_capacity(rendered_frames.len() * frame_size);
@@ -1236,16 +1242,16 @@ impl BackendRenderer {
         }
 
         #[cfg(target_arch = "wasm32")]
-        downloadMp4(raw_video);
+        downloadMp4(raw_video, window.x, window.y, name);
     }
 
-    fn encode_gif(rendered_frames: Vec<Vec<u8>>, window: Vec2) {
+    fn encode_gif(rendered_frames: Vec<Vec<u8>>, window: Vec2, name: &str) {
         #[cfg(target_arch = "wasm32")]
         {
             for frame in rendered_frames {
                 addGifFrame(frame);
             }
-            downloadGif();
+            downloadGif(window.x, window.y, name);
         }
     }
 }

@@ -2,7 +2,7 @@ use egui::IntoAtoms;
 
 use crate::{
     modal::modal_x, ui::EguiUi, utils, Armature, Camera, Config, EditMode, EventState,
-    ExportImgFormat, ExportState, SelectionState, SettingsState, Vec2,
+    ExportImgFormat, ExportState, ExportVideoType, SelectionState, SettingsState, Vec2,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -290,6 +290,7 @@ pub fn image_export(
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let str = &shared_ui.loc("export_modal.save_button");
                 if ui.skf_button(str).clicked() {
+                    shared_ui.exporting_video_type = ExportVideoType::None;
                     #[cfg(target_arch = "wasm32")]
                     {
                         *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
@@ -320,12 +321,51 @@ pub fn video_export(
     ui.heading("Export Video");
     let width = ui.available_width() - 10.;
 
+    ui.horizontal(|ui| {
+        ui.label("Resolution: ");
+        let x = shared_ui.sprite_size.x;
+        let (edited, value, _) = ui.float_input("sprite_size_x".into(), shared_ui, x, 1., None);
+        if edited {
+            shared_ui.sprite_size.x = value;
+        }
+        ui.label("x");
+        let y = shared_ui.sprite_size.y;
+        let (edited, value, _) = ui.float_input("sprite_size_y".into(), shared_ui, y, 1., None);
+        if edited {
+            shared_ui.sprite_size.y = value;
+        }
+    });
+
+    ui.horizontal(|ui| {
+        ui.label("Animation: ");
+        let anim_idx = shared_ui.exporting_video_anim;
+        let dropdown = egui::ComboBox::new("animation_to_export", "")
+            .selected_text(armature.animations[anim_idx as usize].name.clone())
+            .width(80.);
+        dropdown.show_ui(ui, |ui| {
+            let export = &mut shared_ui.exporting_video_anim;
+            for a in 0..armature.animations.len() {
+                ui.selectable_value(export, a, armature.animations[a].name.to_string());
+            }
+        });
+    });
+
+    ui.horizontal(|ui| {
+        let dropdown = egui::ComboBox::new("export_video", "")
+            .selected_text(&shared_ui.exporting_video_type.to_string())
+            .width(80.);
+        dropdown.show_ui(ui, |ui| {
+            let export = &mut shared_ui.exporting_video_type;
+            ui.selectable_value(export, ExportVideoType::Mp4, "mp4");
+            ui.selectable_value(export, ExportVideoType::Gif, "gif");
+        });
+    });
+
     ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let str = &shared_ui.loc("export_modal.save_button");
                 if ui.skf_button(str).clicked() {
-                    shared_ui.exporting_video = true;
                     #[cfg(target_arch = "wasm32")]
                     {
                         *shared_ui.saving.lock().unwrap() = crate::Saving::Video;

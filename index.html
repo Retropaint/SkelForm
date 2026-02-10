@@ -488,7 +488,8 @@
                 fullscreenButton.style.display = "none";
             }
 
-            async function downloadMp4(data) {
+            async function downloadMp4(data, resX, resY, anim_name) {
+                let name = anim_name + ".mp4"
                 await ffmpeg.writeFile(
                   'input.rgb',
                   data
@@ -497,23 +498,23 @@
                 await ffmpeg.exec([
                   '-f', 'rawvideo',
                   '-pixel_format', 'rgb24',
-                  '-video_size', `${128}x${128}`,
+                  '-video_size', `${resX}x${resY}`,
                   '-r', '60',
                   '-i', 'input.rgb',
-                  '-s', `${128}:${128}`,
+                  '-s', `${resX}:${resY}`,
                   '-preset', 'veryfast',
                   '-pix_fmt', 'yuv420p',
                   '-y',
-                  'output.gif'
+                  name
                 ]);
 
                 // download mp4
-                const mp4Data = await ffmpeg.readFile('output.mp4');
+                const mp4Data = await ffmpeg.readFile(name);
                 const blob = new Blob([mp4Data.buffer], { type: 'video/mp4' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `output.mp4`;
+                link.download = name;
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
@@ -525,7 +526,8 @@
                 gifFrames.push(frame)
             }
 
-            async function downloadGif() {
+            async function downloadGif(anim_name, resX, resY) {
+                let name = anim_name + ".gif"
                 for (let i = 0; i < gifFrames.length; i++) {
                     const name = `frame${String(i).padStart(3, '0')}.png`;
                     await ffmpeg.writeFile(name, gifFrames[i]);
@@ -545,19 +547,20 @@
                     '-filter_complex',
                     '[0:v]fps=30[v];[v][1:v]paletteuse=dither=sierra2_4a',
                     '-loop', '0',
-                    'output.gif'
+                    name
                 ]);
 
                 // download gif
-                const mp4Data = await ffmpeg.readFile('output.gif');
+                const mp4Data = await ffmpeg.readFile(name);
                 const blob = new Blob([mp4Data.buffer], { type: 'image/gif' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `output.gif`;
+                link.download = name;
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
+                gifFrames = [];
             }            
         </script>
 
