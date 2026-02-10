@@ -216,6 +216,7 @@ pub fn render_spritesheets(
 ) {
     shared_ui.rendered_spritesheets = vec![];
 
+    let mut spritesheet_idx = 0;
     for a in 0..armature.animations.len() {
         if !shared_ui.exporting_anims[a] {
             continue;
@@ -226,11 +227,11 @@ pub fn render_spritesheets(
         let mut new_arm = armature.clone();
         for f in 0..all_frames {
             new_arm.bones = new_arm.animate(a, f, Some(&armature.bones));
-            let frames = &mut shared_ui.rendered_spritesheets[a];
+            let frames = &mut shared_ui.rendered_spritesheets[spritesheet_idx];
             backend.take_screenshot(shared_ui.sprite_size, &new_arm, camera, config, frames);
         }
 
-        continue;
+        spritesheet_idx += 1;
     }
 }
 
@@ -244,12 +245,14 @@ pub fn encode_spritesheets(
 ) -> Vec<Vec<u8>> {
     let mut bufs = vec![];
 
+    let mut idx = 0;
     for a in 0..armature.animations.len() {
         if !shared_ui.exporting_anims[a] {
             continue;
         }
         let rows: f32 = f32::round(
-            (shared_ui.rendered_spritesheets[a].len() / shared_ui.sprites_per_row as usize) as f32,
+            (shared_ui.rendered_spritesheets[idx].len() / shared_ui.sprites_per_row as usize)
+                as f32,
         ) + 1.;
         let sheet_size = Vec2::new(
             shared_ui.sprite_size.x * shared_ui.sprites_per_row as f32 + 1.,
@@ -259,7 +262,7 @@ pub fn encode_spritesheets(
         let mut sheet = image::RgbaImage::new(sheet_size.x as u32, sheet_size.y as u32);
         let mut column = 0;
         let mut height = 0;
-        for (_, sprite) in shared_ui.rendered_spritesheets[a].iter().enumerate() {
+        for (_, sprite) in shared_ui.rendered_spritesheets[idx].iter().enumerate() {
             let img = utils::process_screenshot(
                 &sprite.buffer,
                 &backend.gpu.device,
@@ -285,6 +288,7 @@ pub fn encode_spritesheets(
             .unwrap();
 
         bufs.push(png_buf);
+        idx += 1;
     }
 
     bufs
