@@ -667,6 +667,7 @@ pub struct Ui {
     pub spritesheet_elapsed: Option<Instant>,
     pub rendered_frames: Vec<RenderedFrame>,
     pub rendered_spritesheets: Vec<Vec<RenderedFrame>>,
+    pub exporting_anims: Vec<bool>,
 }
 
 impl Ui {

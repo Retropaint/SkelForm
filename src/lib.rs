@@ -740,7 +740,8 @@ impl BackendRenderer {
     fn skf_render(&mut self, shared: &mut Shared, render_pass: &mut wgpu::RenderPass) {
         // if the spritesheet timer has initiaed, wait a second for all buffers to complete before saving them
         let elapsed = shared.ui.spritesheet_elapsed;
-        if elapsed != None && elapsed.unwrap().elapsed().as_secs() > 1 {
+        let duration_in_millis = 250;
+        if elapsed != None && elapsed.unwrap().elapsed().as_millis() > duration_in_millis {
             #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
             self.skf_native_spritesheet(&shared.armature, &shared.camera, &self.gpu.device, &mut shared.ui, &shared.config);
 
@@ -811,6 +812,7 @@ impl BackendRenderer {
             );
             *shared.ui.saving.lock().unwrap() = Saving::None;
             shared.ui.spritesheet_elapsed = Some(Instant::now());
+            shared.ui.export_modal = false;
         }
 
         for b in 0..shared.armature.bones.len() {

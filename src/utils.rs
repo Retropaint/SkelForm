@@ -215,7 +215,11 @@ pub fn render_spritesheets(
     backend: &BackendRenderer,
 ) {
     shared_ui.rendered_spritesheets = vec![];
+
     for a in 0..armature.animations.len() {
+        if !shared_ui.exporting_anims[a] {
+            continue;
+        }
         shared_ui.rendered_spritesheets.push(vec![]);
         let anim = &armature.animations[a];
         let all_frames = anim.keyframes.last().unwrap().frame;
@@ -241,6 +245,9 @@ pub fn encode_spritesheets(
     let mut bufs = vec![];
 
     for a in 0..armature.animations.len() {
+        if !shared_ui.exporting_anims[a] {
+            continue;
+        }
         let rows: f32 = f32::round(
             (shared_ui.rendered_spritesheets[a].len() / shared_ui.sprites_per_row as usize) as f32,
         ) + 1.;

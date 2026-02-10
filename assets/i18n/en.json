@@ -118,7 +118,8 @@
     "inverse_kinematics": "Inverse Kinematics",
     "tex_atlas": "Texture Atlas(es)",
     "armature": "Armature",
-    "spritesheet": "Spritesheet"
+    "spritesheet": "Spritesheet",
+    "animations": "Animations"
   },
   "armature_panel": {
     "heading": "Armature",

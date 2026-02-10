@@ -17,8 +17,7 @@ pub fn draw(
 ) {
     egui::Modal::new("export_modal".into()).show(ctx, |ui| {
         ui.set_width(400.);
-        ui.set_height(300.);
-        ui.heading(shared_ui.loc("export_modal.heading"));
+        ui.set_height(350.);
 
         ui.horizontal(|ui| {
             let col: egui::Color32 = config.colors.dark_accent.into();
@@ -27,7 +26,7 @@ pub fn draw(
                 .inner_margin(egui::Margin::same(5));
             frame.show(ui, |ui| {
                 ui.set_width(100.);
-                ui.set_height(300.);
+                ui.set_height(400.);
                 let width = ui.min_rect().width();
                 ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                     let mut is_hovered = false;
@@ -65,7 +64,7 @@ pub fn draw(
                         SettingsState::Ui => armature_export(
                             ui, shared_ui, edit_mode, events, config, armature, camera, selections,
                         ),
-                        SettingsState::Animation => spritesheet(
+                        SettingsState::Animation => spritesheet_export(
                             ui, shared_ui, edit_mode, events, config, armature, camera, selections,
                         ),
                         _ => {}
@@ -86,6 +85,8 @@ pub fn armature_export(
     camera: &Camera,
     selections: &SelectionState,
 ) {
+    ui.heading("Export Armature");
+    ui.add_space(10.);
     let width = ui.available_width();
     egui::Frame::new()
         .fill(config.colors.dark_accent.into())
@@ -181,7 +182,7 @@ pub fn armature_export(
     });
 }
 
-pub fn spritesheet(
+pub fn spritesheet_export(
     ui: &mut egui::Ui,
     shared_ui: &mut crate::Ui,
     edit_mode: &EditMode,
@@ -191,6 +192,8 @@ pub fn spritesheet(
     camera: &Camera,
     selections: &SelectionState,
 ) {
+    ui.heading("Export Spritesheet");
+    ui.add_space(10.);
     ui.horizontal(|ui| {
         ui.label("Size per sprite: ");
         let x = shared_ui.sprite_size.x;
@@ -215,6 +218,23 @@ pub fn spritesheet(
         }
     });
 
+    ui.add_space(10.);
+    ui.heading(shared_ui.loc("export_modal.animations"));
+
+    for a in 0..armature.animations.len() {
+        #[rustfmt::skip]
+        let col = if a % 2 == 0 { config.colors.dark_accent } else { config.colors.main };
+
+        egui::Frame::new().fill(col.into()).show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(armature.animations[a].name.to_string());
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.checkbox(&mut shared_ui.exporting_anims[a], "".into_atoms());
+                });
+            });
+        });
+    }
+
     ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -231,7 +251,6 @@ pub fn spritesheet(
                         &shared_ui.saving,
                         crate::Saving::Spritesheet,
                     );
-                    shared_ui.export_modal = false;
                 }
             });
         });
