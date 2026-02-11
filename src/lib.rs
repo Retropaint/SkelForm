@@ -1285,42 +1285,30 @@ impl BackendRenderer {
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            #[rustfmt::skip]
-            let mut palette = Command::new("ffmpeg")
-                .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
-                    "-framerate", "60", "-i", "pipe:0", "-vf", "fps=60,palettegen", "palette.png"])
-                .stdin(Stdio::piped())
-                .spawn()
-                .unwrap();
-
-            {
-                let stdin = palette.stdin.as_mut().unwrap();
-                for frame in &rendered_frames {
-                    let rgb = image::load_from_memory(&frame).unwrap();
-                    stdin.write_all(&rgb.to_rgba8()).unwrap();
-                }
-            }
-            palette.wait().unwrap();
-
             let save_path = path.as_path().to_str().unwrap().to_string();
             #[rustfmt::skip]
-            let mut gif = Command::new("ffmpeg")
-                .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
-                    "-framerate", "60", "-i", "pipe:0", "-i", "palette.png", "-lavfi", "fps=60,paletteuse=dither=sierra2_4a", "-loop", "0", 
-                    &(save_path.to_owned() + &".gif")])
-                .stdin(Stdio::piped())
-                .spawn()
-                .unwrap();
+            let mut child = Command::new("ffmpeg")
+            .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), "-framerate", "60", "-i", "pipe:0", "-filter_complex",
+                "[0:v] fps=60,split [a][b]; \
+                 [a] palettegen=stats_mode=diff [p]; \
+                 [b][p] paletteuse=dither=sierra2_4a",
+                "-loop", "0",
+                &(save_path.to_owned() + &".gif")
+            ])
+            .stdin(Stdio::piped())
+            .stderr(Stdio::inherit())
+            .spawn()
+            .unwrap();
 
             {
-                let stdin = gif.stdin.as_mut().unwrap();
+                let stdin = child.stdin.as_mut().unwrap();
                 for frame in &rendered_frames {
                     let rgb = image::load_from_memory(&frame).unwrap();
                     stdin.write_all(&rgb.to_rgba8()).unwrap();
                 }
             }
 
-            gif.wait().unwrap();
+            child.wait().unwrap();
             let _ = std::fs::remove_file("palette.png");
         }
     }
