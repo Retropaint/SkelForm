@@ -232,13 +232,6 @@
             toggleElement(false, "resolution-message");
             toggleElement(true, "wait-message");
 
-            const { FFmpeg } = FFmpegWASM;
-            const ffmpeg = new FFmpeg();
-            ffmpeg.load({
-              coreURL: "ffmpeg-core.js",
-              wasmURL: "ffmpeg-core.wasm"
-            })
-
             async function loadConfig() {
                 let data = await localStorage.getItem("skelform_config");
                 if (data === undefined) {
@@ -489,12 +482,22 @@
                 fullscreenButton.style.display = "none";
             }
 
+            let ffmpeg;
+            async function ensureFFmpeg() {
+              if (!ffmpeg) {
+                const { FFmpeg } = FFmpegWASM;
+                ffmpeg = new FFmpeg();
+                await ffmpeg.load({
+                    coreURL: "ffmpeg-core.js",
+                    wasmURL: "ffmpeg-core.wasm"
+                });
+              }
+            }            
+
             async function downloadMp4(data, resX, resY, anim_name) {
+                await ensureFFmpeg();
                 let name = anim_name + ".mp4"
-                await ffmpeg.writeFile(
-                  'input.rgb',
-                  data
-                );
+                await ffmpeg.writeFile('input.rgb', data);
 
                 await ffmpeg.exec([
                   '-f', 'rawvideo',
@@ -528,6 +531,7 @@
             }
 
             async function downloadGif(anim_name, resX, resY) {
+                await ensureFFmpeg();
                 let name = anim_name + ".gif"
                 for (let i = 0; i < gifFrames.length; i++) {
                     const name = `frame${String(i).padStart(3, '0')}.png`;

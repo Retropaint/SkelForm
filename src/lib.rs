@@ -760,11 +760,15 @@ impl BackendRenderer {
                 );
                 let anim_idx = shared.ui.exporting_video_anim;
                 let name = &shared.armature.animations[anim_idx].name;
-                let path = &shared.ui.file_path.lock().unwrap()[0];
+                let mut path = PathBuf::default();
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    path = shared.ui.file_path.lock().unwrap()[0].clone();
+                }
                 if shared.ui.exporting_video_type == ExportVideoType::Mp4 {
-                    Self::encode_video(bufs[anim_idx].clone(), shared.ui.sprite_size, name, path);
+                    Self::encode_video(bufs[anim_idx].clone(), shared.ui.sprite_size, name, &path);
                 } else {
-                    Self::encode_gif(bufs[anim_idx].clone(), shared.ui.sprite_size, name, path);
+                    Self::encode_gif(bufs[anim_idx].clone(), shared.ui.sprite_size, name, &path);
                 }
             } else {
                 #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
