@@ -4,12 +4,14 @@ use global_hotkey::hotkey::{Code, HotKey, Modifiers};
 
 use skelform_lib::{shared::*, utils};
 
+use std::any::Any;
 #[cfg(not(target_arch = "wasm32"))]
 use std::fs;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::{Read, Write};
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
+use std::process::Command;
 
 pub const CRASHLOG_END: &str = "###";
 
@@ -200,6 +202,12 @@ pub fn install_panic_handler() {
                 eprintln!("Failed to open panic log at {:?}", utils::crashlog_file());
                 std::process::exit(1);
             });
+
+        if let Some(message) = panic_info.payload().downcast_ref::<&str>() {
+            let _ = writeln!(file, "Message: {}", message);
+        } else if let Some(message) = panic_info.payload().downcast_ref::<String>() {
+            let _ = writeln!(file, "Message: {}", message);
+        }
 
         if let Some(location) = panic_info.location() {
             let _ = writeln!(
