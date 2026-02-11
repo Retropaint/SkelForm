@@ -8,7 +8,11 @@
 //!
 //! `todo:` - not important as of being written, but good to keep in mind.
 
-use std::io::{Seek, Write};
+use std::{
+    io::{Seek, Write},
+    path::PathBuf,
+    process::{Command, Stdio},
+};
 
 use egui_wgpu::wgpu::ExperimentalFeatures;
 use image::{GenericImage, ImageEncoder};
@@ -756,10 +760,11 @@ impl BackendRenderer {
                 );
                 let anim_idx = shared.ui.exporting_video_anim;
                 let name = &shared.armature.animations[anim_idx].name;
+                let path = &shared.ui.file_path.lock().unwrap()[0];
                 if shared.ui.exporting_video_type == ExportVideoType::Mp4 {
-                    Self::encode_video(bufs[anim_idx].clone(), shared.ui.sprite_size, name);
+                    Self::encode_video(bufs[anim_idx].clone(), shared.ui.sprite_size, name, path);
                 } else {
-                    Self::encode_gif(bufs[anim_idx].clone(), shared.ui.sprite_size, name);
+                    Self::encode_gif(bufs[anim_idx].clone(), shared.ui.sprite_size, name, path);
                 }
             } else {
                 #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
@@ -1227,31 +1232,96 @@ impl BackendRenderer {
         });
     }
 
-    fn encode_video(rendered_frames: Vec<Vec<u8>>, window: Vec2, name: &str) {
-        let frame_size = window.x as usize * window.y as usize * 3;
+    fn encode_video(rendered_frames: Vec<Vec<u8>>, window: Vec2, name: &str, path: &PathBuf) {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let save_path = path.as_path().to_str().unwrap().to_string();
 
-        let mut raw_video = Vec::with_capacity(rendered_frames.len() * frame_size);
+            #[rustfmt::skip]
+            let mut child = Command::new("ffmpeg")
+            .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
+                "-framerate", "60", "-i", "pipe:0", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                &(save_path.to_owned() + &".mp4")])
+            .stderr(Stdio::piped())
+            .stdin(Stdio::piped())
+            .spawn()
+            .unwrap();
 
-        for frame in rendered_frames {
-            let rgb = image::load_from_memory(&frame).unwrap();
-            for chunk in rgb.to_rgba8().chunks_exact(4) {
-                raw_video.push(chunk[0]);
-                raw_video.push(chunk[1]);
-                raw_video.push(chunk[2]);
+            {
+                let stdin = child.stdin.as_mut().unwrap();
+                for frame in &rendered_frames {
+                    let rgb = image::load_from_memory(&frame).unwrap();
+                    stdin.write_all(&rgb.to_rgba8()).unwrap();
+                }
             }
+
+            drop(child.stdin.take());
+            child.wait().unwrap();
         }
 
         #[cfg(target_arch = "wasm32")]
-        downloadMp4(raw_video, window.x, window.y, name);
+        {
+            let mut raw_video = vec![];
+            for frame in rendered_frames {
+                let rgb = image::load_from_memory(&frame).unwrap();
+                for chunk in rgb.to_rgba8().chunks_exact(4) {
+                    raw_video.push(chunk[0]);
+                    raw_video.push(chunk[1]);
+                    raw_video.push(chunk[2]);
+                }
+            }
+            downloadMp4(raw_video, window.x, window.y, name);
+        }
     }
 
-    fn encode_gif(rendered_frames: Vec<Vec<u8>>, window: Vec2, name: &str) {
+    fn encode_gif(rendered_frames: Vec<Vec<u8>>, window: Vec2, name: &str, path: &PathBuf) {
         #[cfg(target_arch = "wasm32")]
         {
             for frame in rendered_frames {
                 addGifFrame(frame);
             }
             downloadGif(window.x, window.y, name);
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            #[rustfmt::skip]
+            let mut palette = Command::new("ffmpeg")
+                .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
+                    "-framerate", "60", "-i", "pipe:0", "-vf", "fps=60,palettegen", "palette.png"])
+                .stdin(Stdio::piped())
+                .spawn()
+                .unwrap();
+
+            {
+                let stdin = palette.stdin.as_mut().unwrap();
+                for frame in &rendered_frames {
+                    let rgb = image::load_from_memory(&frame).unwrap();
+                    stdin.write_all(&rgb.to_rgba8()).unwrap();
+                }
+            }
+            palette.wait().unwrap();
+
+            let save_path = path.as_path().to_str().unwrap().to_string();
+            #[rustfmt::skip]
+            let mut gif = Command::new("ffmpeg")
+                .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
+                    "-framerate", "60", "-i", "pipe:0", "-i", "palette.png", "-lavfi", "fps=60,paletteuse=dither=sierra2_4a", "-loop", "0", 
+                    &(save_path.to_owned() + &".gif")])
+                .stdin(Stdio::piped())
+                .spawn()
+                .unwrap();
+
+            {
+                let stdin = gif.stdin.as_mut().unwrap();
+                for frame in &rendered_frames {
+                    let rgb = image::load_from_memory(&frame).unwrap();
+                    stdin.write_all(&rgb.to_rgba8()).unwrap();
+                }
+            }
+
+            gif.wait().unwrap();
+            let _ = std::fs::remove_file("palette.png");
         }
     }
 }

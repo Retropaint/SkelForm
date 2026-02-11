@@ -133,6 +133,7 @@ pub fn open_save_dialog(
     let ext = match save_result {
         Saving::Exporting => "skfe",
         Saving::Spritesheet => "zip",
+        Saving::Video => "",
         _ => "skf",
     };
     std::thread::spawn(move || {

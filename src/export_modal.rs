@@ -351,8 +351,9 @@ pub fn video_export(
     });
 
     ui.horizontal(|ui| {
+        ui.label("Format: ");
         let dropdown = egui::ComboBox::new("export_video", "")
-            .selected_text(&shared_ui.exporting_video_type.to_string())
+            .selected_text(&shared_ui.exporting_video_type.to_string().to_lowercase())
             .width(80.);
         dropdown.show_ui(ui, |ui| {
             let export = &mut shared_ui.exporting_video_type;
@@ -375,7 +376,7 @@ pub fn video_export(
                     utils::open_save_dialog(
                         &shared_ui.file_path,
                         &shared_ui.saving,
-                        crate::Saving::Spritesheet,
+                        crate::Saving::Video,
                     );
                 }
             });
