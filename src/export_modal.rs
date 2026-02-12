@@ -363,38 +363,41 @@ pub fn video_export(
         });
     });
 
-    ui.add_space(20.);
-    egui::Frame::new()
-        .fill(config.colors.dark_accent.into())
-        .inner_margin(egui::Margin::same(5))
-        .show(ui, |ui| {
-            ui.set_width(width);
-            let text =
-                egui::RichText::new(shared_ui.loc("export_modal.video.compatibility")).size(15.);
-            ui.label(text);
-        });
-    ui.add_space(5.);
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        ui.add_space(20.);
+        egui::Frame::new()
+            .fill(config.colors.dark_accent.into())
+            .inner_margin(egui::Margin::same(5))
+            .show(ui, |ui| {
+                ui.set_width(width);
+                let text = egui::RichText::new(shared_ui.loc("export_modal.video.compatibility"))
+                    .size(15.);
+                ui.label(text);
+            });
+        ui.add_space(5.);
 
-    ui.horizontal(|ui| {
-        ui.label(shared_ui.loc("export_modal.video.encoder"));
-        let is_mp4 = shared_ui.exporting_video_type == ExportVideoType::Mp4;
-        ui.add_enabled_ui(is_mp4, |ui| {
-            let dropdown = egui::ComboBox::new("export_encoder", "")
-                .selected_text(&shared_ui.exporting_video_encoder.to_string().to_lowercase())
-                .width(80.);
-            dropdown.show_ui(ui, |ui| {
-                let export = &mut shared_ui.exporting_video_encoder;
-                ui.selectable_value(export, ExportVideoEncoder::Libx264, "libx264");
-                ui.selectable_value(export, ExportVideoEncoder::AV1, "av1");
+        ui.horizontal(|ui| {
+            ui.label(shared_ui.loc("export_modal.video.encoder"));
+            let is_mp4 = shared_ui.exporting_video_type == ExportVideoType::Mp4;
+            ui.add_enabled_ui(is_mp4, |ui| {
+                let dropdown = egui::ComboBox::new("export_encoder", "")
+                    .selected_text(&shared_ui.exporting_video_encoder.to_string().to_lowercase())
+                    .width(80.);
+                dropdown.show_ui(ui, |ui| {
+                    let export = &mut shared_ui.exporting_video_encoder;
+                    ui.selectable_value(export, ExportVideoEncoder::Libx264, "libx264");
+                    ui.selectable_value(export, ExportVideoEncoder::AV1, "av1");
+                });
             });
         });
-    });
 
-    ui.horizontal(|ui| {
-        ui.label(shared_ui.loc("export_modal.video.use_system_ffmpeg"))
-            .on_hover_text(shared_ui.loc("export_modal.video.use_system_ffmpeg_desc"));
-        ui.checkbox(&mut shared_ui.use_system_ffmpeg, "".into_atoms());
-    });
+        ui.horizontal(|ui| {
+            ui.label(shared_ui.loc("export_modal.video.use_system_ffmpeg"))
+                .on_hover_text(shared_ui.loc("export_modal.video.use_system_ffmpeg_desc"));
+            ui.checkbox(&mut shared_ui.use_system_ffmpeg, "".into_atoms());
+        });
+    }
 
     ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
         ui.horizontal(|ui| {
@@ -415,8 +418,11 @@ pub fn video_export(
                     );
                 }
 
-                ui.checkbox(&mut shared_ui.open_after_export, "".into_atoms());
-                ui.label("Open after export: ");
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    ui.checkbox(&mut shared_ui.open_after_export, "".into_atoms());
+                    ui.label("Open after export: ");
+                }
             });
         });
     });

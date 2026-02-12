@@ -161,6 +161,8 @@ fn init_shared(shared: &mut Shared) {
             shared.config = data;
         }
         utils::save_config(&shared.config);
+        // prevents calling utils::bin_path (crashes on web)
+        shared.ui.use_system_ffmpeg = true;
     }
 
     if !shared.config.skip_startup {
