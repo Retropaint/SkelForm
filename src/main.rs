@@ -132,6 +132,7 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.dragging_slice = usize::MAX;
     shared.edit_mode.export_exclude_ik = true;
     shared.ui.can_quit = true;
+    shared.ui.open_after_export = true;
 
     #[cfg(feature = "debug")]
     {

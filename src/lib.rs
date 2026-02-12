@@ -760,24 +760,37 @@ impl BackendRenderer {
                 );
                 let anim_idx = shared.ui.exporting_video_anim;
                 let name = &shared.armature.animations[anim_idx].name;
-                let mut path = PathBuf::default();
+                let mut path: String = "".to_string();
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    path = shared.ui.file_path.lock().unwrap()[0].clone();
+                    path = shared.ui.file_path.lock().unwrap()[0]
+                        .as_path()
+                        .to_str()
+                        .unwrap()
+                        .to_string();
                 }
-                if shared.ui.exporting_video_type == ExportVideoType::Mp4 {
+                let success;
+                let ext;
+                let size = shared.ui.sprite_size;
+                let this_anim = bufs[anim_idx].clone();
+                if shared.ui.exporting_video_type == ExportVideoType::Gif {
+                    success = Self::encode_gif(this_anim, size, name, &path);
+                    ext = ".gif";
+                } else {
                     let codec_str = match shared.ui.exporting_video_encoder {
                         ExportVideoEncoder::Libx264 => "libx264",
                         ExportVideoEncoder::AV1 => "libsvtav1",
                     };
-                    #[rustfmt::skip]
-                    let success = Self::encode_video(bufs[anim_idx].clone(), shared.armature.animations[anim_idx].fps, shared.ui.sprite_size, name, codec_str, &path);
-                    if !success {
-                        shared.events.open_modal("error_vid_export", false);
+                    let fps = shared.armature.animations[anim_idx].fps;
+                    success = Self::encode_video(this_anim, fps, size, name, codec_str, &path);
+                    ext = ".mp4";
+                }
+                if !success {
+                    shared.events.open_modal("error_vid_export", false);
+                } else if shared.ui.open_after_export {
+                    if let Err(e) = open::that(path + ext) {
+                        println!("{}", e);
                     }
-                } else {
-                    #[rustfmt::skip]
-                    let success = Self::encode_gif(bufs[anim_idx].clone(), shared.ui.sprite_size, name, &path);
                 }
             } else {
                 #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
@@ -1251,12 +1264,10 @@ impl BackendRenderer {
         window: Vec2,
         name: &str,
         codec: &str,
-        path: &PathBuf,
+        path: &String,
     ) -> bool {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let save_path = path.as_path().to_str().unwrap().to_string();
-
             let ffmpeg_bin;
             #[cfg(not(debug_assertions))]
             {
@@ -1271,7 +1282,7 @@ impl BackendRenderer {
             let mut child = Command::new(ffmpeg_bin)
                 .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
                     "-framerate", &fps.to_string(), "-i", "pipe:0", "-c:v", codec, "-pix_fmt", "yuv420p",
-                    &(save_path.to_owned() + &".mp4")])
+                    &(path.to_owned() + &".mp4")])
                 .stderr(Stdio::piped())
                 .stdin(Stdio::piped())
                 .spawn();
@@ -1311,7 +1322,7 @@ impl BackendRenderer {
         true
     }
 
-    fn encode_gif(rendered_frames: Vec<Vec<u8>>, window: Vec2, name: &str, path: &PathBuf) -> bool {
+    fn encode_gif(rendered_frames: Vec<Vec<u8>>, window: Vec2, name: &str, path: &String) -> bool {
         #[cfg(target_arch = "wasm32")]
         {
             for frame in rendered_frames {
@@ -1331,7 +1342,6 @@ impl BackendRenderer {
             {
                 ffmpeg_bin = "ffmpeg";
             }
-            let save_path = path.as_path().to_str().unwrap().to_string();
             #[rustfmt::skip]
             let mut child = Command::new(ffmpeg_bin)
             .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), "-framerate", "60", "-i", "pipe:0", "-filter_complex",
@@ -1339,7 +1349,7 @@ impl BackendRenderer {
                  [a] palettegen=stats_mode=diff [p]; \
                  [b][p] paletteuse=dither=sierra2_4a",
                 "-loop", "0",
-                &(save_path.to_owned() + &".gif")
+                &(path.to_owned() + &".gif")
             ])
             .stdin(Stdio::piped())
             .stderr(Stdio::inherit())

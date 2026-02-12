@@ -672,6 +672,7 @@ pub struct Ui {
     pub exporting_video_type: ExportVideoType,
     pub exporting_video_anim: usize,
     pub exporting_video_encoder: ExportVideoEncoder,
+    pub open_after_export: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

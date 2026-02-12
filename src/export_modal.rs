@@ -393,6 +393,7 @@ pub fn video_export(
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let str = &shared_ui.loc("export_modal.save_button");
+
                 if ui.skf_button(str).clicked() {
                     #[cfg(target_arch = "wasm32")]
                     {
@@ -406,6 +407,9 @@ pub fn video_export(
                         crate::Saving::Video,
                     );
                 }
+
+                ui.checkbox(&mut shared_ui.open_after_export, "".into_atoms());
+                ui.label("Open after export: ");
             });
         });
     });
