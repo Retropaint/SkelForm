@@ -510,14 +510,7 @@ fn tri_point(p: &Vec2, a: &Vec2, b: &Vec2, c: &Vec2) -> (f32, f32, f32, f32) {
     (-1., -1., -1., -1.)
 }
 
-/// Stripped-down renderer for screenshot purposes.
-pub fn render_screenshot(
-    render_pass: &mut RenderPass,
-    device: &Device,
-    armature: &Armature,
-    camera: &Camera,
-    config: &Config,
-) {
+pub fn get_sprite_boundary(armature: &Armature, camera: &Camera, config: &Config) -> (Vec2, Vec2) {
     let mut temp_arm = Armature::default();
     temp_arm.bones = armature.bones.clone();
     construction(&mut temp_arm.bones, &armature.bones);
@@ -545,11 +538,20 @@ pub fn render_screenshot(
         }
     }
 
-    cam.pos = (left_top + right_bot) / 2.;
-    cam.zoom = (right_bot.x - cam.pos.x)
-        .max(right_bot.y.abs() - cam.pos.y)
-        .max(left_top.y - cam.pos.y)
-        .max(left_top.x.abs() - cam.pos.x);
+    (left_top, right_bot)
+}
+
+/// Stripped-down renderer for screenshot purposes.
+pub fn render_screenshot(
+    render_pass: &mut RenderPass,
+    device: &Device,
+    armature: &Armature,
+    camera: &Camera,
+) {
+    let mut temp_arm = Armature::default();
+    temp_arm.bones = armature.bones.clone();
+    construction(&mut temp_arm.bones, &armature.bones);
+    temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
     for b in 0..temp_arm.bones.len() {
         if armature.tex_of(temp_arm.bones[b].id) == None || temp_arm.bones[b].is_hidden {
@@ -558,7 +560,7 @@ pub fn render_screenshot(
 
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &temp_arm.bones[b];
-            let mut new_vert = world_vert(tb.vertices[v], &cam, 1., Vec2::default());
+            let mut new_vert = world_vert(tb.vertices[v], camera, 1., Vec2::default());
             new_vert.add_color = VertexColor::new(0., 0., 0., 0.);
             temp_arm.bones[b].world_verts.push(new_vert);
         }

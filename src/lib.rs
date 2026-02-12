@@ -741,8 +741,6 @@ impl BackendRenderer {
             .write_buffer(&self.blit_buffer, 0, bytemuck::bytes_of(&uniforms));
         self.gpu.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();
-
-        self.skf_record(shared);
     }
 
     fn skf_render(&mut self, shared: &mut Shared, render_pass: &mut wgpu::RenderPass) {
@@ -985,29 +983,6 @@ impl BackendRenderer {
         }
     }
 
-    fn skf_record(&mut self, shared: &mut Shared) {
-        if shared.recording {
-            #[cfg(not(target_arch = "wasm32"))]
-            self.take_screenshot(
-                shared.screenshot_res,
-                &shared.armature,
-                &shared.camera,
-                &shared.config,
-                &mut shared.ui.rendered_frames,
-            );
-        } else if shared.done_recording {
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                let frames = shared.ui.rendered_frames.clone();
-                let window = shared.camera.window.clone();
-                std::thread::spawn(move || {
-                    //Self::encode_video(frames, window);
-                });
-                shared.done_recording = false;
-            }
-        }
-    }
-
     #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&mut self, shared: &mut Shared) {
         let mut save_path = "".to_string();
@@ -1205,13 +1180,7 @@ impl BackendRenderer {
             capture_pass.set_pipeline(&self.scene.pipeline);
 
             // core rendering logic handled in renderer.rs
-            renderer::render_screenshot(
-                &mut capture_pass,
-                &self.gpu.device,
-                &armature,
-                &camera,
-                &config,
-            );
+            renderer::render_screenshot(&mut capture_pass, &self.gpu.device, &armature, &camera);
         }
 
         // pad screenshot width to a multiple of 256

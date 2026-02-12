@@ -226,10 +226,30 @@ pub fn render_spritesheets(
         let anim = &armature.animations[a];
         let all_frames = anim.keyframes.last().unwrap().frame;
         let mut new_arm = armature.clone();
+
+        // get maximum sprite boundary, based on the biggest frame of this animation
+        let mut left_top = Vec2::new(f32::MAX, -f32::MAX);
+        let mut right_bot = Vec2::new(-f32::MAX, f32::MAX);
+        for f in 0..all_frames {
+            new_arm.bones = new_arm.animate(a, f, Some(&armature.bones));
+            let (lt, br) = renderer::get_sprite_boundary(&new_arm, camera, config);
+            left_top = Vec2::new(left_top.x.min(lt.x), left_top.y.max(lt.y));
+            right_bot = Vec2::new(right_bot.x.max(br.x), right_bot.y.min(br.y));
+        }
+
+        // adjust camera to the biggest boundary
+        let mut cam = camera.clone();
+        cam.pos = (left_top + right_bot) / 2.;
+        cam.zoom = (right_bot.x - cam.pos.x)
+            .max(right_bot.y.abs() - cam.pos.y)
+            .max(left_top.y - cam.pos.y)
+            .max(left_top.x.abs() - cam.pos.x);
+
+        // take screenshots of each frame
         for f in 0..all_frames {
             new_arm.bones = new_arm.animate(a, f, Some(&armature.bones));
             let frames = &mut shared_ui.rendered_spritesheets[spritesheet_idx];
-            backend.take_screenshot(shared_ui.sprite_size, &new_arm, camera, config, frames);
+            backend.take_screenshot(shared_ui.sprite_size, &new_arm, &cam, config, frames);
         }
 
         spritesheet_idx += 1;
