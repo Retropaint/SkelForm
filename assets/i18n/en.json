@@ -124,7 +124,15 @@
     "image_sequences": "Image sequences ℹ:",
     "image_sequences_desc": "Instead of using sheets, sprites will be exported individually",
     "animations_check_desc": "Include this animation in the export?",
-    "compatibility": "Compatibility"
+    "video": {
+      "resolution": "Resolution: ",
+      "animation": "Animation: ",
+      "format": "Format: ",
+      "compatibility": "Compatibility",
+      "encoder": "Encoder: ",
+      "use_system_ffmpeg": "Use system ffmpeg: ",
+      "use_system_ffmpeg_desc": "SkelForm comes with its own binary for ffmpeg, but this will make it call 'ffmpeg' globally instead."
+    }
   },
   "armature_panel": {
     "heading": "Armature",

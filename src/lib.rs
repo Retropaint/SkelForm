@@ -771,10 +771,15 @@ impl BackendRenderer {
                 }
                 let success;
                 let ext;
+                let ffmpeg_bin = if shared.ui.use_system_ffmpeg {
+                    "ffmpeg".to_string()
+                } else {
+                    utils::bin_path() + "ffmpeg"
+                };
                 let size = shared.ui.sprite_size;
                 let this_anim = bufs[anim_idx].clone();
                 if shared.ui.exporting_video_type == ExportVideoType::Gif {
-                    success = Self::encode_gif(this_anim, size, name, &path);
+                    success = Self::encode_gif(this_anim, size, name, &path, ffmpeg_bin);
                     ext = ".gif";
                 } else {
                     let codec_str = match shared.ui.exporting_video_encoder {
@@ -782,7 +787,9 @@ impl BackendRenderer {
                         ExportVideoEncoder::AV1 => "libsvtav1",
                     };
                     let fps = shared.armature.animations[anim_idx].fps;
-                    success = Self::encode_video(this_anim, fps, size, name, codec_str, &path);
+                    success = Self::encode_video(
+                        this_anim, fps, size, name, codec_str, &path, ffmpeg_bin,
+                    );
                     ext = ".mp4";
                 }
                 if !success {
@@ -1265,19 +1272,10 @@ impl BackendRenderer {
         name: &str,
         codec: &str,
         path: &String,
+        ffmpeg_bin: String,
     ) -> bool {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let ffmpeg_bin;
-            #[cfg(not(debug_assertions))]
-            {
-                ffmpeg_bin = utils::bin_path() + "ffmpeg"
-            }
-            #[cfg(debug_assertions)]
-            {
-                ffmpeg_bin = "ffmpeg";
-            }
-
             #[rustfmt::skip]
             let mut child = Command::new(ffmpeg_bin)
                 .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
@@ -1322,7 +1320,13 @@ impl BackendRenderer {
         true
     }
 
-    fn encode_gif(rendered_frames: Vec<Vec<u8>>, window: Vec2, name: &str, path: &String) -> bool {
+    fn encode_gif(
+        rendered_frames: Vec<Vec<u8>>,
+        window: Vec2,
+        name: &str,
+        path: &String,
+        ffmpeg_bin: String,
+    ) -> bool {
         #[cfg(target_arch = "wasm32")]
         {
             for frame in rendered_frames {
@@ -1333,15 +1337,6 @@ impl BackendRenderer {
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let ffmpeg_bin;
-            #[cfg(not(debug_assertions))]
-            {
-                ffmpeg_bin = utils::bin_path() + "ffmpeg"
-            }
-            #[cfg(debug_assertions)]
-            {
-                ffmpeg_bin = "ffmpeg";
-            }
             #[rustfmt::skip]
             let mut child = Command::new(ffmpeg_bin)
             .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), "-framerate", "60", "-i", "pipe:0", "-filter_complex",

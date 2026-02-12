@@ -323,7 +323,7 @@ pub fn video_export(
     let width = ui.available_width() - 10.;
 
     ui.horizontal(|ui| {
-        ui.label("Resolution: ");
+        ui.label(shared_ui.loc("export_modal.video.resolution"));
         let x = shared_ui.sprite_size.x;
         let (edited, value, _) = ui.float_input("sprite_size_x".into(), shared_ui, x, 1., None);
         if edited {
@@ -338,7 +338,7 @@ pub fn video_export(
     });
 
     ui.horizontal(|ui| {
-        ui.label("Animation: ");
+        ui.label(shared_ui.loc("export_modal.video.animation"));
         let anim_idx = shared_ui.exporting_video_anim;
         let dropdown = egui::ComboBox::new("animation_to_export", "")
             .selected_text(armature.animations[anim_idx as usize].name.clone())
@@ -352,7 +352,7 @@ pub fn video_export(
     });
 
     ui.horizontal(|ui| {
-        ui.label("Format: ");
+        ui.label(shared_ui.loc("export_modal.video.format"));
         let dropdown = egui::ComboBox::new("export_video", "")
             .selected_text(&shared_ui.exporting_video_type.to_string().to_uppercase())
             .width(80.);
@@ -369,13 +369,14 @@ pub fn video_export(
         .inner_margin(egui::Margin::same(5))
         .show(ui, |ui| {
             ui.set_width(width);
-            let text = egui::RichText::new(shared_ui.loc("export_modal.compatibility")).size(15.);
+            let text =
+                egui::RichText::new(shared_ui.loc("export_modal.video.compatibility")).size(15.);
             ui.label(text);
         });
     ui.add_space(5.);
 
     ui.horizontal(|ui| {
-        ui.label("Encoder: ");
+        ui.label(shared_ui.loc("export_modal.video.encoder"));
         let is_mp4 = shared_ui.exporting_video_type == ExportVideoType::Mp4;
         ui.add_enabled_ui(is_mp4, |ui| {
             let dropdown = egui::ComboBox::new("export_encoder", "")
@@ -387,6 +388,12 @@ pub fn video_export(
                 ui.selectable_value(export, ExportVideoEncoder::AV1, "av1");
             });
         });
+    });
+
+    ui.horizontal(|ui| {
+        ui.label(shared_ui.loc("export_modal.video.use_system_ffmpeg"))
+            .on_hover_text(shared_ui.loc("export_modal.video.use_system_ffmpeg_desc"));
+        ui.checkbox(&mut shared_ui.use_system_ffmpeg, "".into_atoms());
     });
 
     ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
