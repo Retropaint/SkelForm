@@ -8,3 +8,5 @@ assets/ffmpeg-wasm/ffmpeg-core.js filter=lfs diff=lfs merge=lfs -text
 assets/ffmpeg-wasm/ffmpeg-core.wasm filter=lfs diff=lfs merge=lfs -text
 assets/ffmpeg-wasm/ffmpeg.js filter=lfs diff=lfs merge=lfs -text
 assets/ffmpeg-wasm/ffmpeg.js.map filter=lfs diff=lfs merge=lfs -text
+ffmpeg-native/** filter=lfs diff=lfs merge=lfs -text
+ffmpeg-wasm/** filter=lfs diff=lfs merge=lfs -text
