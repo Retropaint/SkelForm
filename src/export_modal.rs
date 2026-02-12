@@ -2,7 +2,8 @@ use egui::IntoAtoms;
 
 use crate::{
     modal::modal_x, ui::EguiUi, utils, Armature, Camera, Config, EditMode, EventState,
-    ExportImgFormat, ExportState, ExportVideoType, SelectionState, SettingsState, Vec2,
+    ExportImgFormat, ExportState, ExportVideoEncoder, ExportVideoType, SelectionState,
+    SettingsState, Vec2,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -353,12 +354,35 @@ pub fn video_export(
     ui.horizontal(|ui| {
         ui.label("Format: ");
         let dropdown = egui::ComboBox::new("export_video", "")
-            .selected_text(&shared_ui.exporting_video_type.to_string().to_lowercase())
+            .selected_text(&shared_ui.exporting_video_type.to_string().to_uppercase())
             .width(80.);
         dropdown.show_ui(ui, |ui| {
             let export = &mut shared_ui.exporting_video_type;
-            ui.selectable_value(export, ExportVideoType::Mp4, "mp4");
-            ui.selectable_value(export, ExportVideoType::Gif, "gif");
+            ui.selectable_value(export, ExportVideoType::Mp4, "MP4");
+            ui.selectable_value(export, ExportVideoType::Gif, "GIF");
+        });
+    });
+
+    ui.add_space(20.);
+    egui::Frame::new()
+        .fill(config.colors.dark_accent.into())
+        .inner_margin(egui::Margin::same(5))
+        .show(ui, |ui| {
+            ui.set_width(width);
+            let text = egui::RichText::new(shared_ui.loc("export_modal.compatibility")).size(15.);
+            ui.label(text);
+        });
+    ui.add_space(5.);
+
+    ui.horizontal(|ui| {
+        ui.label("Encoder: ");
+        let dropdown = egui::ComboBox::new("export_encoder", "")
+            .selected_text(&shared_ui.exporting_video_encoder.to_string().to_lowercase())
+            .width(80.);
+        dropdown.show_ui(ui, |ui| {
+            let export = &mut shared_ui.exporting_video_encoder;
+            ui.selectable_value(export, ExportVideoEncoder::Libx264, "libx264");
+            ui.selectable_value(export, ExportVideoEncoder::AV1, "av1");
         });
     });
 

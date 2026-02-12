@@ -24,6 +24,7 @@
   "img_err": "Could not extract image data.",
   "donating": "If you liked using SkelForm, a [donation](https://ko-fi.com/retropaintt) is highly appreciated!\n\nThe donation will be through ko-fi.com.\n\nThank you for using SkelForm!",
   "crashed": "SkelForm crashed last time.\n\nThe crash log is located in the same path as the binary.\n\nOpen log file?",
+  "error_vid_export": "Something went wrong with this export.\n\nTry a different encoder.\n\nIf nothing works, you may export sprite sequences and create a video using an image -> video converter.",
   "startup": {
     "import": "Import",
     "samples": "Samples",
@@ -122,7 +123,8 @@
     "animations": "Animations",
     "image_sequences": "Image sequences ℹ:",
     "image_sequences_desc": "Instead of using sheets, sprites will be exported individually",
-    "animations_check_desc": "Include this animation in the export?"
+    "animations_check_desc": "Include this animation in the export?",
+    "compatibility": "Compatibility"
   },
   "armature_panel": {
     "heading": "Armature",

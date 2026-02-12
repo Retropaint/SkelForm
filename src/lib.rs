@@ -766,7 +766,20 @@ impl BackendRenderer {
                     path = shared.ui.file_path.lock().unwrap()[0].clone();
                 }
                 if shared.ui.exporting_video_type == ExportVideoType::Mp4 {
-                    Self::encode_video(bufs[anim_idx].clone(), shared.ui.sprite_size, name, &path);
+                    let codec_str = match shared.ui.exporting_video_encoder {
+                        ExportVideoEncoder::Libx264 => "libx264",
+                        ExportVideoEncoder::AV1 => "libsvtav1",
+                    };
+                    let success = Self::encode_video(
+                        bufs[anim_idx].clone(),
+                        shared.ui.sprite_size,
+                        name,
+                        codec_str,
+                        &path,
+                    );
+                    if !success {
+                        shared.events.open_modal("error_vid_export", false);
+                    }
                 } else {
                     Self::encode_gif(bufs[anim_idx].clone(), shared.ui.sprite_size, name, &path);
                 }
@@ -1236,41 +1249,42 @@ impl BackendRenderer {
         });
     }
 
-    fn encode_video(rendered_frames: Vec<Vec<u8>>, window: Vec2, name: &str, path: &PathBuf) {
+    fn encode_video(
+        rendered_frames: Vec<Vec<u8>>,
+        window: Vec2,
+        name: &str,
+        codec: &str,
+        path: &PathBuf,
+    ) -> bool {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let save_path = path.as_path().to_str().unwrap().to_string();
 
-            let codec;
-            #[cfg(not(target_os = "linux"))]
-            {
-                codec = "libx264";
-            }
-            #[cfg(target_os = "linux")]
-            {
-                codec = "libsvtav1";
-            }
-
             #[rustfmt::skip]
             let mut child = Command::new("ffmpeg")
-            .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
-                "-framerate", "60", "-i", "pipe:0", "-c:v", codec, "-pix_fmt", "yuv420p",
-                &(save_path.to_owned() + &".mp4")])
-            .stderr(Stdio::piped())
-            .stdin(Stdio::piped())
-            .spawn()
-            .unwrap();
+                .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
+                    "-framerate", "60", "-i", "pipe:0", "-c:v", codec, "-pix_fmt", "yuv420p",
+                    &(save_path.to_owned() + &".mp4")])
+                .stderr(Stdio::piped())
+                .stdin(Stdio::piped())
+                .spawn();
+
+            if let Err(_) = child {
+                return false;
+            }
 
             {
-                let stdin = child.stdin.as_mut().unwrap();
+                let stdin = child.as_mut().unwrap().stdin.as_mut().unwrap();
                 for frame in &rendered_frames {
                     let rgb = image::load_from_memory(&frame).unwrap();
-                    stdin.write_all(&rgb.to_rgba8()).unwrap();
+                    if let Err(_) = stdin.write_all(&rgb.to_rgba8()) {
+                        return false;
+                    }
                 }
             }
 
-            drop(child.stdin.take());
-            child.wait().unwrap();
+            drop(child.as_mut().unwrap().stdin.take());
+            child.as_mut().unwrap().wait().unwrap();
         }
 
         #[cfg(target_arch = "wasm32")]
@@ -1286,6 +1300,8 @@ impl BackendRenderer {
             }
             downloadMp4(raw_video, window.x, window.y, name);
         }
+
+        true
     }
 
     fn encode_gif(rendered_frames: Vec<Vec<u8>>, window: Vec2, name: &str, path: &PathBuf) {

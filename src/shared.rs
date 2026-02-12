@@ -671,6 +671,7 @@ pub struct Ui {
     pub image_sequences: bool,
     pub exporting_video_type: ExportVideoType,
     pub exporting_video_anim: usize,
+    pub exporting_video_encoder: ExportVideoEncoder,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -681,6 +682,14 @@ pub enum ExportVideoType {
     Gif,
 }
 enum_string!(ExportVideoType);
+
+#[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
+pub enum ExportVideoEncoder {
+    #[default]
+    Libx264,
+    AV1,
+}
+enum_string!(ExportVideoEncoder);
 
 impl Ui {
     pub fn is_animating(&self, edit_mode: &EditMode, selections: &SelectionState) -> bool {
