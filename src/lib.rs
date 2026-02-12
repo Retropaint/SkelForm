@@ -770,13 +770,8 @@ impl BackendRenderer {
                         ExportVideoEncoder::Libx264 => "libx264",
                         ExportVideoEncoder::AV1 => "libsvtav1",
                     };
-                    let success = Self::encode_video(
-                        bufs[anim_idx].clone(),
-                        shared.ui.sprite_size,
-                        name,
-                        codec_str,
-                        &path,
-                    );
+                    #[rustfmt::skip]
+                    let success = Self::encode_video(bufs[anim_idx].clone(), shared.armature.animations[anim_idx].fps, shared.ui.sprite_size, name, codec_str, &path);
                     if !success {
                         shared.events.open_modal("error_vid_export", false);
                     }
@@ -1251,6 +1246,7 @@ impl BackendRenderer {
 
     fn encode_video(
         rendered_frames: Vec<Vec<u8>>,
+        fps: i32,
         window: Vec2,
         name: &str,
         codec: &str,
@@ -1261,9 +1257,9 @@ impl BackendRenderer {
             let save_path = path.as_path().to_str().unwrap().to_string();
 
             #[rustfmt::skip]
-            let mut child = Command::new("ffmpeg")
+            let mut child = Command::new(utils::bin_path() + "ffmpeg")
                 .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
-                    "-framerate", "60", "-i", "pipe:0", "-c:v", codec, "-pix_fmt", "yuv420p",
+                    "-framerate", &fps.to_string(), "-i", "pipe:0", "-c:v", codec, "-pix_fmt", "yuv420p",
                     &(save_path.to_owned() + &".mp4")])
                 .stderr(Stdio::piped())
                 .stdin(Stdio::piped())
@@ -1317,7 +1313,7 @@ impl BackendRenderer {
         {
             let save_path = path.as_path().to_str().unwrap().to_string();
             #[rustfmt::skip]
-            let mut child = Command::new("ffmpeg")
+            let mut child = Command::new(utils::bin_path() + "ffmpeg")
             .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), "-framerate", "60", "-i", "pipe:0", "-filter_complex",
                 "[0:v] fps=60,split [a][b]; \
                  [a] palettegen=stats_mode=diff [p]; \
