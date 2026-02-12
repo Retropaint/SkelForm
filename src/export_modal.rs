@@ -376,13 +376,16 @@ pub fn video_export(
 
     ui.horizontal(|ui| {
         ui.label("Encoder: ");
-        let dropdown = egui::ComboBox::new("export_encoder", "")
-            .selected_text(&shared_ui.exporting_video_encoder.to_string().to_lowercase())
-            .width(80.);
-        dropdown.show_ui(ui, |ui| {
-            let export = &mut shared_ui.exporting_video_encoder;
-            ui.selectable_value(export, ExportVideoEncoder::Libx264, "libx264");
-            ui.selectable_value(export, ExportVideoEncoder::AV1, "av1");
+        let is_mp4 = shared_ui.exporting_video_type == ExportVideoType::Mp4;
+        ui.add_enabled_ui(is_mp4, |ui| {
+            let dropdown = egui::ComboBox::new("export_encoder", "")
+                .selected_text(&shared_ui.exporting_video_encoder.to_string().to_lowercase())
+                .width(80.);
+            dropdown.show_ui(ui, |ui| {
+                let export = &mut shared_ui.exporting_video_encoder;
+                ui.selectable_value(export, ExportVideoEncoder::Libx264, "libx264");
+                ui.selectable_value(export, ExportVideoEncoder::AV1, "av1");
+            });
         });
     });
 
