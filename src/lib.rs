@@ -1345,7 +1345,7 @@ impl BackendRenderer {
             #[rustfmt::skip]
             let mut child = Command::new(ffmpeg_bin)
             .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), "-framerate", "60", "-i", "pipe:0", "-filter_complex",
-                "[0:v] fps=60,split [a][b]; \
+                "[0:v] fps=30,split [a][b]; \
                  [a] palettegen=stats_mode=diff [p]; \
                  [b][p] paletteuse=dither=sierra2_4a",
                 "-loop", "0",
