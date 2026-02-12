@@ -1241,10 +1241,20 @@ impl BackendRenderer {
         {
             let save_path = path.as_path().to_str().unwrap().to_string();
 
+            let codec;
+            #[cfg(not(target_os = "linux"))]
+            {
+                codec = "libx264";
+            }
+            #[cfg(target_os = "linux")]
+            {
+                codec = "libsvtav1";
+            }
+
             #[rustfmt::skip]
             let mut child = Command::new("ffmpeg")
             .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
-                "-framerate", "60", "-i", "pipe:0", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                "-framerate", "60", "-i", "pipe:0", "-c:v", codec, "-pix_fmt", "yuv420p",
                 &(save_path.to_owned() + &".mp4")])
             .stderr(Stdio::piped())
             .stdin(Stdio::piped())
