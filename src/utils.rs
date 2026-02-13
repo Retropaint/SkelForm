@@ -223,7 +223,11 @@ pub fn render_spritesheets(
         }
         shared_ui.rendered_spritesheets.push(vec![]);
         let anim = &armature.animations[a];
-        let last_frame = anim.keyframes.last().unwrap().frame;
+        let last_frame = if let Some(kf) = anim.keyframes.last() {
+            kf.frame
+        } else {
+            1
+        };
         let all_frames = last_frame * shared_ui.anim_cycles;
         let mut new_arm = armature.clone();
 

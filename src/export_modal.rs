@@ -308,12 +308,15 @@ pub fn image_export(
                     ui.checkbox(&mut shared_ui.exporting_anims[a], "".into_atoms())
                         .on_hover_text(shared_ui.loc("export_modal.animations_check_desc"));
                     ui.add_space(10.);
-                    let total_frames = anim.keyframes.last().unwrap().frame;
+                    let total_frames = anim.keyframes.last();
+                    if total_frames == None {
+                        return;
+                    }
                     ui.label(
                         egui::RichText::new(
                             anim.fps.to_string()
                                 + &" FPS  -  ".to_string()
-                                + &total_frames.to_string()
+                                + &total_frames.unwrap().frame.to_string()
                                 + &" frames".to_string(),
                         )
                         .color(meta_col),
