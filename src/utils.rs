@@ -130,15 +130,14 @@ pub fn open_save_dialog(
 ) {
     let filepath = Arc::clone(&file_path);
     let csaving = Arc::clone(&saving);
-    let ext = match save_result {
-        Saving::Exporting => "skfe",
-        Saving::Spritesheet => "zip",
-        Saving::Video => "",
-        _ => "skf",
+    let (ext, name) = match save_result {
+        Saving::Exporting => ("skfe", "SkelForm Armature"),
+        Saving::Spritesheet => ("zip", "Sprites/Spritesheet"),
+        Saving::Video => ("", "Video"),
+        _ => ("skf", "SkelForm Armature"),
     };
     std::thread::spawn(move || {
-        let fil = "SkelForm Armature";
-        let task = rfd::FileDialog::new().add_filter(fil, &[ext]).save_file();
+        let task = rfd::FileDialog::new().add_filter(name, &[ext]).save_file();
         if task == None {
             return;
         }
