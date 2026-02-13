@@ -223,14 +223,15 @@ pub fn render_spritesheets(
         }
         shared_ui.rendered_spritesheets.push(vec![]);
         let anim = &armature.animations[a];
-        let all_frames = anim.keyframes.last().unwrap().frame;
+        let last_frame = anim.keyframes.last().unwrap().frame;
+        let all_frames = last_frame * shared_ui.anim_cycles;
         let mut new_arm = armature.clone();
 
         // get maximum sprite boundary, based on the biggest frame of this animation
         let mut left_top = Vec2::new(f32::MAX, -f32::MAX);
         let mut right_bot = Vec2::new(-f32::MAX, f32::MAX);
         for f in 0..all_frames {
-            new_arm.bones = new_arm.animate(a, f, Some(&armature.bones));
+            new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
             let (lt, br) = renderer::get_sprite_boundary(&new_arm, camera, config);
             left_top = Vec2::new(left_top.x.min(lt.x), left_top.y.max(lt.y));
             right_bot = Vec2::new(right_bot.x.max(br.x), right_bot.y.min(br.y));
@@ -246,7 +247,7 @@ pub fn render_spritesheets(
 
         // take screenshots of each frame
         for f in 0..all_frames {
-            new_arm.bones = new_arm.animate(a, f, Some(&armature.bones));
+            new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
             let frames = &mut shared_ui.rendered_spritesheets[spritesheet_idx];
             let clear = &shared_ui.video_clear_bg;
             backend.take_screenshot(shared_ui.sprite_size, &new_arm, &cam, clear, frames);

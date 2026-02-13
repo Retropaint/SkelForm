@@ -127,6 +127,10 @@ pub fn draw(
             );
         }
         SettingsState::Keyboard => {
+            for anim in &mut shared_ui.exporting_anims {
+                *anim = false;
+            }
+            shared_ui.exporting_anims[shared_ui.exporting_video_anim] = true;
             #[cfg(target_arch = "wasm32")]
             {
                 *shared_ui.saving.lock().unwrap() = crate::Saving::Video;
@@ -383,6 +387,21 @@ pub fn video_export(
             let mut col: [u8; 3] = [real.r, real.g, real.b];
             ui.color_edit_button_srgb(&mut col);
             *real = crate::shared::Color::new(col[0], col[1], col[2], 255);
+        });
+    });
+
+    if !is_mp4 {
+        shared_ui.anim_cycles = 1;
+    }
+    ui.add_enabled_ui(is_mp4, |ui| {
+        ui.horizontal(|ui| {
+            ui.label("Cycles:");
+            let cycles = "anim_cycles".to_string();
+            let (edited, value, _) =
+                ui.float_input(cycles, shared_ui, shared_ui.anim_cycles as f32, 1., None);
+            if edited {
+                shared_ui.anim_cycles = value as i32;
+            }
         });
     });
 

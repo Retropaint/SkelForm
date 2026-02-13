@@ -761,7 +761,7 @@ impl BackendRenderer {
                     utils::bin_path() + "ffmpeg"
                 };
                 let size = shared.ui.sprite_size;
-                let this_anim = bufs[anim_idx].clone();
+                let this_anim = bufs[0].clone();
                 if shared.ui.exporting_video_type == ExportVideoType::Gif {
                     success = Self::encode_gif(this_anim, size, name, &_path, ffmpeg_bin);
                     _ext = ".gif";
@@ -831,7 +831,6 @@ impl BackendRenderer {
         let saving = shared.ui.saving.lock().unwrap().clone();
 
         let recording_spritesheets = saving == Saving::Spritesheet || saving == Saving::Video;
-
         if saving != Saving::None && !recording_spritesheets {
             #[cfg(target_arch = "wasm32")]
             {
