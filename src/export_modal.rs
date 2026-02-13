@@ -339,21 +339,6 @@ pub fn video_export(
     }
 
     ui.horizontal(|ui| {
-        ui.label(shared_ui.loc("export_modal.video.resolution"));
-        let x = shared_ui.sprite_size.x;
-        let (edited, value, _) = ui.float_input("sprite_size_x".into(), shared_ui, x, 1., None);
-        if edited {
-            shared_ui.sprite_size.x = value;
-        }
-        ui.label("x");
-        let y = shared_ui.sprite_size.y;
-        let (edited, value, _) = ui.float_input("sprite_size_y".into(), shared_ui, y, 1., None);
-        if edited {
-            shared_ui.sprite_size.y = value;
-        }
-    });
-
-    ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.video.animation"));
         let anim_idx = shared_ui.exporting_video_anim;
         let dropdown = egui::ComboBox::new("animation_to_export", "")
@@ -377,6 +362,21 @@ pub fn video_export(
             ui.selectable_value(export, crate::ExportVideoType::Mp4, "MP4");
             ui.selectable_value(export, crate::ExportVideoType::Gif, "GIF");
         });
+    });
+
+    ui.horizontal(|ui| {
+        ui.label(shared_ui.loc("export_modal.video.resolution"));
+        let x = shared_ui.sprite_size.x;
+        let (edited, value, _) = ui.float_input("sprite_size_x".into(), shared_ui, x, 1., None);
+        if edited {
+            shared_ui.sprite_size.x = value;
+        }
+        ui.label("x");
+        let y = shared_ui.sprite_size.y;
+        let (edited, value, _) = ui.float_input("sprite_size_y".into(), shared_ui, y, 1., None);
+        if edited {
+            shared_ui.sprite_size.y = value;
+        }
     });
 
     let is_mp4 = shared_ui.exporting_video_type == crate::ExportVideoType::Mp4;
