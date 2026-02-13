@@ -174,9 +174,8 @@ pub fn armature_export(
         .inner_margin(egui::Margin::same(5))
         .show(ui, |ui| {
             ui.set_width(width);
-            let text =
-                egui::RichText::new(shared_ui.loc("export_modal.armature.inverse_kinematics"))
-                    .size(15.);
+            let ik_str = shared_ui.loc("export_modal.armature.inverse_kinematics");
+            let text = egui::RichText::new(ik_str).size(15.);
             ui.label(text);
         });
 

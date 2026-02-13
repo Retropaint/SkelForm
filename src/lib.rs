@@ -758,7 +758,14 @@ impl BackendRenderer {
                 let ffmpeg_bin = if shared.ui.use_system_ffmpeg {
                     "ffmpeg".to_string()
                 } else {
-                    utils::bin_path() + "ffmpeg"
+                    #[cfg(target_os = "windows")]
+                    {
+                        utils::bin_path() + "ffmpeg.exe"
+                    }
+                    #[cfg(not(target_os = "windows"))]
+                    {
+                        utils::bin_path() + "ffmpeg"
+                    }
                 };
                 let size = shared.ui.sprite_size;
                 let this_anim = bufs[0].clone();
