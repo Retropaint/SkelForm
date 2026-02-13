@@ -794,6 +794,20 @@ pub fn texture_effects(
     }
 
     ui.horizontal(|ui| {
+        ui.label(&shared_ui.loc("bone_panel.zindex"));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let zindex = bone.zindex as f32;
+            let (edited, value, _) =
+                ui.float_input("zindex".to_string(), shared_ui, zindex, 1., None);
+            if edited {
+                let el = &AnimElement::Zindex;
+                events.save_edited_bone(selections.bone_idx);
+                events.edit_bone(bone.id, el, value, selections.anim, selections.anim_frame);
+            }
+        });
+    });
+
+    ui.horizontal(|ui| {
         ui.label("Tint: ");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let og_col: [f32; 4] = [bone.tint.r, bone.tint.g, bone.tint.b, bone.tint.a];
@@ -812,20 +826,6 @@ pub fn texture_effects(
             events.edit_bone(bone.id, &AnimElement::TintG, col[1], anim_id, frame);
             events.edit_bone(bone.id, &AnimElement::TintB, col[2], anim_id, frame);
             events.edit_bone(bone.id, &AnimElement::TintA, col[3], anim_id, frame);
-        });
-    });
-
-    ui.horizontal(|ui| {
-        ui.label(&shared_ui.loc("bone_panel.zindex"));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let zindex = bone.zindex as f32;
-            let (edited, value, _) =
-                ui.float_input("zindex".to_string(), shared_ui, zindex, 1., None);
-            if edited {
-                let el = &AnimElement::Zindex;
-                events.save_edited_bone(selections.bone_idx);
-                events.edit_bone(bone.id, el, value, selections.anim, selections.anim_frame);
-            }
         });
     });
 }

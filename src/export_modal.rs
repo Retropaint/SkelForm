@@ -382,10 +382,9 @@ pub fn video_export(
                 ui.label(shared_ui.loc("export_modal.video.encoder"));
                 let is_mp4 = shared_ui.exporting_video_type == ExportVideoType::Mp4;
                 ui.add_enabled_ui(is_mp4, |ui| {
+                    let encoder_str = &shared_ui.exporting_video_encoder.to_string().to_lowercase();
                     let dropdown = egui::ComboBox::new("export_encoder", "")
-                        .selected_text(
-                            &shared_ui.exporting_video_encoder.to_string().to_lowercase(),
-                        )
+                        .selected_text(encoder_str)
                         .width(80.);
                     dropdown.show_ui(ui, |ui| {
                         let export = &mut shared_ui.exporting_video_encoder;
