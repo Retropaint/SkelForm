@@ -744,28 +744,20 @@ impl BackendRenderer {
     }
 
     fn skf_render(&mut self, shared: &mut Shared, render_pass: &mut wgpu::RenderPass) {
-        // if the spritesheet timer has initiaed, wait a second for all buffers to complete before saving them
+        // if the spritesheet timer has initiaed, wait a little for all buffers to complete before saving them
         let elapsed = shared.ui.spritesheet_elapsed;
         let duration_in_millis = 250;
         if elapsed != None && elapsed.unwrap().elapsed().as_millis() > duration_in_millis {
             if shared.ui.exporting_video_type != ExportVideoType::None {
-                let bufs = utils::encode_sequence(
-                    &shared.armature,
-                    &mut shared.ui,
-                    &shared.camera,
-                    &shared.config,
-                    self,
-                );
+                #[rustfmt::skip]
+                let bufs = utils::encode_sequence(&shared.armature, &mut shared.ui, &shared.camera, &shared.config, self);
                 let anim_idx = shared.ui.exporting_video_anim;
                 let name = &shared.armature.animations[anim_idx].name;
                 let mut path: String = "".to_string();
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    path = shared.ui.file_path.lock().unwrap()[0]
-                        .as_path()
-                        .to_str()
-                        .unwrap()
-                        .to_string();
+                    let raw_path = &shared.ui.file_path.lock().unwrap()[0];
+                    path = raw_path.as_path().to_str().unwrap().to_string();
                 }
                 let success;
                 let ext;
@@ -851,12 +843,8 @@ impl BackendRenderer {
             {
                 let saving_type = shared.ui.saving.lock().unwrap().clone();
                 if saving_type == Saving::CustomPath || saving_type == Saving::Exporting {
-                    utils::save_web(
-                        &shared.armature,
-                        &shared.camera,
-                        &shared.edit_mode,
-                        saving_type,
-                    );
+                    #[rustfmt::skip]
+                    utils::save_web(&shared.armature, &shared.camera, &shared.edit_mode, saving_type);
                 }
             }
 
@@ -864,13 +852,8 @@ impl BackendRenderer {
             self.save(shared);
         } else if recording_spritesheets {
             shared.events.open_modal("exporting", true);
-            utils::render_spritesheets(
-                &shared.armature,
-                &mut shared.ui,
-                &shared.camera,
-                &shared.config,
-                self,
-            );
+            #[rustfmt::skip]
+            utils::render_spritesheets(&shared.armature, &mut shared.ui, &shared.camera, &shared.config, self);
             *shared.ui.saving.lock().unwrap() = Saving::None;
             shared.ui.spritesheet_elapsed = Some(Instant::now());
             shared.ui.export_modal = false;
@@ -887,20 +870,11 @@ impl BackendRenderer {
         }
 
         // core rendering logic handled in renderer.rs
-        renderer::render(
-            render_pass,
-            &self.gpu.device,
-            &shared.camera,
-            &shared.input,
-            &mut shared.armature,
-            &shared.config,
-            &shared.edit_mode,
-            &mut shared.selections,
-            &mut shared.renderer,
-            &mut shared.events,
-        );
+        let s = shared;
+        #[rustfmt::skip]
+        renderer::render(render_pass, &self.gpu.device, &s.camera, &s.input, &mut s.armature, &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events,);
 
-        shared.ui.warnings = warnings::check_warnings(&shared.armature);
+        s.ui.warnings = warnings::check_warnings(&s.armature);
     }
 
     fn skf_native_spritesheet(
@@ -917,7 +891,7 @@ impl BackendRenderer {
             .compression_method(zip::CompressionMethod::Stored);
 
         #[rustfmt::skip]
-        self.skf_pack_sprites(armature, camera, device, shared_ui, config, &mut zip, options.clone());
+        self.skf_pack_sprites(armature, camera, device, shared_ui, config, &mut zip, &options);
 
         _ = zip.finish();
     }
@@ -938,7 +912,7 @@ impl BackendRenderer {
             .compression_method(zip::CompressionMethod::Stored);
 
         #[rustfmt::skip]
-        self.skf_pack_sprites(armature, camera, device, shared_ui, config, &mut zip, options.clone());
+        self.skf_pack_sprites(armature, camera, device, shared_ui, config, &mut zip, options);
 
         let bytes = zip.finish().unwrap().into_inner().to_vec();
         downloadZip(bytes, Saving::Spritesheet.to_string());
@@ -953,7 +927,7 @@ impl BackendRenderer {
         shared_ui: &mut Ui,
         config: &Config,
         zip: &mut zip::ZipWriter<W>,
-        options: FullFileOptions,
+        options: &FullFileOptions,
     ) {
         if shared_ui.image_sequences {
             let bufs = utils::encode_sequence(armature, shared_ui, camera, config, self);
@@ -1028,15 +1002,10 @@ impl BackendRenderer {
 
         utils::save_to_recent_files(&shared.ui.recent_file_paths);
 
-        self.take_screenshot(
-            shared.screenshot_res,
-            &shared.armature,
-            &shared.camera,
-            &shared.config,
-            &mut shared.ui.rendered_frames,
-        );
-        let buffer = shared.ui.rendered_frames[0].buffer.clone();
-        shared.ui.rendered_frames = vec![];
+        let mut frames = vec![];
+        #[rustfmt::skip]
+        self.take_screenshot(shared.screenshot_res, &shared.armature, &shared.camera, &shared.config, &mut frames);
+        let buffer = frames[0].buffer.clone();
         let screenshot_res = shared.screenshot_res;
 
         let mut armature = shared.armature.clone();

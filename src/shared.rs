@@ -665,7 +665,6 @@ pub struct Ui {
     pub sprites_per_row: i32,
 
     pub spritesheet_elapsed: Option<Instant>,
-    pub rendered_frames: Vec<RenderedFrame>,
     pub rendered_spritesheets: Vec<Vec<RenderedFrame>>,
     pub exporting_anims: Vec<bool>,
     pub image_sequences: bool,

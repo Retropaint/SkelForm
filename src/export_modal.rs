@@ -19,6 +19,7 @@ pub fn draw(
     camera: &Camera,
     selections: &SelectionState,
 ) {
+    let mut pressed_export = false;
     egui::Modal::new("export_modal".into()).show(ctx, |ui| {
         ui.set_width(400.);
         ui.set_height(350.);
@@ -35,18 +36,9 @@ pub fn draw(
                 ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                     let mut is_hovered = false;
 
+                    #[rustfmt::skip]
                     macro_rules! tab {
-                        ($name:expr, $state:expr) => {
-                            crate::settings_modal::settings_button(
-                                $name,
-                                $state,
-                                ui,
-                                shared_ui,
-                                &config,
-                                width,
-                                &mut is_hovered,
-                            )
-                        };
+                        ($name:expr, $state:expr) => { crate::settings_modal::settings_button($name, $state, ui, shared_ui, &config, width, &mut is_hovered) };
                     }
 
                     let str_armature = shared_ui.loc("export_modal.armature").clone();
@@ -77,9 +69,73 @@ pub fn draw(
                         _ => {}
                     });
                 });
-            })
+            });
+
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+                ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let str = &shared_ui.loc("export_modal.save_button");
+                        let pressed_enter = ui.input(|i| i.key_pressed(egui::Key::Enter));
+                        if ui.skf_button(str).clicked() || pressed_enter {
+                            pressed_export = true;
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        if shared_ui.settings_state == SettingsState::Keyboard {
+                            ui.checkbox(&mut shared_ui.open_after_export, "".into_atoms());
+                            ui.label("Open after export: ");
+                        }
+                    });
+                });
+            });
         });
     });
+
+    if !pressed_export {
+        return;
+    }
+    match shared_ui.settings_state {
+        SettingsState::Ui => {
+            #[cfg(target_arch = "wasm32")]
+            {
+                *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            utils::open_save_dialog(
+                &shared_ui.file_path,
+                &shared_ui.saving,
+                crate::Saving::Exporting,
+            );
+            shared_ui.export_modal = false;
+        }
+        SettingsState::Animation => {
+            shared_ui.exporting_video_type = ExportVideoType::None;
+            #[cfg(target_arch = "wasm32")]
+            {
+                *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
+                shared_ui.spritesheet_elapsed = Some(Instant::now());
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            utils::open_save_dialog(
+                &shared_ui.file_path,
+                &shared_ui.saving,
+                crate::Saving::Spritesheet,
+            );
+        }
+        SettingsState::Keyboard => {
+            #[cfg(target_arch = "wasm32")]
+            {
+                *shared_ui.saving.lock().unwrap() = crate::Saving::Video;
+                shared_ui.spritesheet_elapsed = Some(Instant::now());
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            utils::open_save_dialog(
+                &shared_ui.file_path,
+                &shared_ui.saving,
+                crate::Saving::Video,
+            );
+        }
+        _ => {}
+    }
 }
 
 pub fn armature_export(
@@ -164,27 +220,6 @@ pub fn armature_export(
             let mut col: [f32; 3] = [cc.r as f32 / 255., cc.g as f32 / 255., cc.b as f32 / 255.];
             ui.color_edit_button_rgb(&mut col);
             events.set_export_clear_color(col[0], col[1], col[2]);
-        });
-    });
-
-    ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-        ui.horizontal(|ui| {
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let str = &shared_ui.loc("export_modal.save_button");
-                if ui.skf_button(str).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
-                    }
-                    #[cfg(not(target_arch = "wasm32"))]
-                    utils::open_save_dialog(
-                        &shared_ui.file_path,
-                        &shared_ui.saving,
-                        crate::Saving::Exporting,
-                    );
-                    shared_ui.export_modal = false;
-                }
-            });
         });
     });
 }
@@ -285,28 +320,6 @@ pub fn image_export(
             });
         });
     }
-
-    ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-        ui.horizontal(|ui| {
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let str = &shared_ui.loc("export_modal.save_button");
-                if ui.skf_button(str).clicked() {
-                    shared_ui.exporting_video_type = ExportVideoType::None;
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
-                        shared_ui.spritesheet_elapsed = Some(Instant::now());
-                    }
-                    #[cfg(not(target_arch = "wasm32"))]
-                    utils::open_save_dialog(
-                        &shared_ui.file_path,
-                        &shared_ui.saving,
-                        crate::Saving::Spritesheet,
-                    );
-                }
-            });
-        });
-    });
 }
 
 pub fn video_export(
@@ -321,6 +334,11 @@ pub fn video_export(
 ) {
     ui.heading("Export Video");
     let width = ui.available_width() - 10.;
+
+    if armature.animations.len() == 0 {
+        ui.label("No animations to export videos");
+        return;
+    }
 
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.video.resolution"));
@@ -401,32 +419,4 @@ pub fn video_export(
             ui.checkbox(&mut shared_ui.use_system_ffmpeg, "".into_atoms());
         });
     }
-
-    ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-        ui.horizontal(|ui| {
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let str = &shared_ui.loc("export_modal.save_button");
-
-                if ui.skf_button(str).clicked() {
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        *shared_ui.saving.lock().unwrap() = crate::Saving::Video;
-                        shared_ui.spritesheet_elapsed = Some(Instant::now());
-                    }
-                    #[cfg(not(target_arch = "wasm32"))]
-                    utils::open_save_dialog(
-                        &shared_ui.file_path,
-                        &shared_ui.saving,
-                        crate::Saving::Video,
-                    );
-                }
-
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    ui.checkbox(&mut shared_ui.open_after_export, "".into_atoms());
-                    ui.label("Open after export: ");
-                }
-            });
-        });
-    });
 }
