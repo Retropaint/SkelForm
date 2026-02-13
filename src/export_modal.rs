@@ -375,22 +375,26 @@ pub fn video_export(
                     .size(15.);
                 ui.label(text);
             });
-        ui.add_space(5.);
 
-        ui.horizontal(|ui| {
-            ui.label(shared_ui.loc("export_modal.video.encoder"));
-            let is_mp4 = shared_ui.exporting_video_type == ExportVideoType::Mp4;
-            ui.add_enabled_ui(is_mp4, |ui| {
-                let dropdown = egui::ComboBox::new("export_encoder", "")
-                    .selected_text(&shared_ui.exporting_video_encoder.to_string().to_lowercase())
-                    .width(80.);
-                dropdown.show_ui(ui, |ui| {
-                    let export = &mut shared_ui.exporting_video_encoder;
-                    ui.selectable_value(export, ExportVideoEncoder::Libx264, "libx264");
-                    ui.selectable_value(export, ExportVideoEncoder::AV1, "av1");
+        // disabled: encoder dropdown - default is always used for now
+        if false {
+            ui.horizontal(|ui| {
+                ui.label(shared_ui.loc("export_modal.video.encoder"));
+                let is_mp4 = shared_ui.exporting_video_type == ExportVideoType::Mp4;
+                ui.add_enabled_ui(is_mp4, |ui| {
+                    let dropdown = egui::ComboBox::new("export_encoder", "")
+                        .selected_text(
+                            &shared_ui.exporting_video_encoder.to_string().to_lowercase(),
+                        )
+                        .width(80.);
+                    dropdown.show_ui(ui, |ui| {
+                        let export = &mut shared_ui.exporting_video_encoder;
+                        ui.selectable_value(export, ExportVideoEncoder::Libx264, "libx264");
+                        ui.selectable_value(export, ExportVideoEncoder::AV1, "av1");
+                    });
                 });
             });
-        });
+        }
 
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("export_modal.video.use_system_ffmpeg"))

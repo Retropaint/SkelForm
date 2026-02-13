@@ -1249,7 +1249,10 @@ impl BackendRenderer {
             #[rustfmt::skip]
             let mut child = Command::new(ffmpeg_bin)
                 .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
-                    "-framerate", &fps.to_string(), "-i", "pipe:0", "-c:v", codec, "-pix_fmt", "yuv420p",
+                    "-framerate", &fps.to_string(), "-i", "pipe:0", 
+                    // disabled: manual encoder codec - not needed for now
+                    // "-c:v", codec, 
+                    "-pix_fmt", "yuv420p",
                     &(path.to_owned() + &".mp4")])
                 .stderr(Stdio::piped())
                 .stdin(Stdio::piped())
