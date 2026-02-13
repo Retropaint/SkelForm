@@ -4,14 +4,12 @@ use global_hotkey::hotkey::{Code, HotKey, Modifiers};
 
 use skelform_lib::{shared::*, utils};
 
-use std::any::Any;
 #[cfg(not(target_arch = "wasm32"))]
 use std::fs;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::{Read, Write};
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
-use std::process::Command;
 
 pub const CRASHLOG_END: &str = "###";
 

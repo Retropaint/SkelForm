@@ -1,4 +1,3 @@
-use crate::utils;
 use egui::IntoAtoms;
 
 use crate::{shared, ui::EguiUi, Display};
@@ -328,7 +327,7 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::Config
         let str_clear_recents = &shared_ui.loc("settings_modal.miscellaneous.clear_recent_files");
         if ui.skf_button(str_clear_recents).clicked() {
             shared_ui.recent_file_paths = vec![];
-            utils::save_to_recent_files(&vec![]);
+            crate::utils::save_to_recent_files(&vec![]);
         }
     });
 

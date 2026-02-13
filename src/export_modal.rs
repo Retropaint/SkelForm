@@ -1,13 +1,22 @@
 use egui::IntoAtoms;
 
 use crate::{
-    modal::modal_x, ui::EguiUi, utils, Armature, Camera, Config, EditMode, EventState,
-    ExportImgFormat, ExportState, ExportVideoEncoder, ExportVideoType, SelectionState,
-    SettingsState, Vec2,
+    ui::EguiUi, Armature, Config, EditMode, EventState, ExportImgFormat, SettingsState,
 };
 
 #[cfg(target_arch = "wasm32")]
-use web_time::Instant;
+mod web {
+    pub use web_time::Instant;
+}
+#[cfg(target_arch = "wasm32")]
+pub use web::*;
+
+#[cfg(not(target_arch = "wasm32"))]
+mod native {
+    pub use crate::utils;
+}
+#[cfg(not(target_arch = "wasm32"))]
+pub use native::*;
 
 pub fn draw(
     ctx: &egui::Context,
@@ -16,8 +25,6 @@ pub fn draw(
     config: &Config,
     events: &mut EventState,
     armature: &Armature,
-    camera: &Camera,
-    selections: &SelectionState,
 ) {
     let mut pressed_export = false;
     egui::Modal::new("export_modal".into()).show(ctx, |ui| {
@@ -58,13 +65,13 @@ pub fn draw(
                     let layout = egui::Layout::top_down(egui::Align::Min);
                     ui.with_layout(layout, |ui| match shared_ui.settings_state {
                         SettingsState::Ui => armature_export(
-                            ui, shared_ui, edit_mode, events, config, armature, camera, selections,
+                            ui, shared_ui, edit_mode, events, config
                         ),
                         SettingsState::Animation => image_export(
-                            ui, shared_ui, edit_mode, events, config, armature, camera, selections,
+                            ui, shared_ui, config, armature,
                         ),
                         SettingsState::Keyboard => video_export(
-                            ui, shared_ui, edit_mode, events, config, armature, camera, selections,
+                            ui, shared_ui, config, armature,
                         ),
                         _ => {}
                     });
@@ -75,8 +82,8 @@ pub fn draw(
                 ui.horizontal(|ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         let str = &shared_ui.loc("export_modal.save_button");
-                        let pressed_enter = ui.input(|i| i.key_pressed(egui::Key::Enter));
-                        if ui.skf_button(str).clicked() || pressed_enter {
+                        //let pressed_enter = ui.input(|i| i.key_pressed(egui::Key::Enter));
+                        if ui.skf_button(str).clicked() {
                             pressed_export = true;
                         }
                         #[cfg(not(target_arch = "wasm32"))]
@@ -108,7 +115,7 @@ pub fn draw(
             shared_ui.export_modal = false;
         }
         SettingsState::Animation => {
-            shared_ui.exporting_video_type = ExportVideoType::None;
+            shared_ui.exporting_video_type = crate::ExportVideoType::None;
             #[cfg(target_arch = "wasm32")]
             {
                 *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
@@ -144,9 +151,6 @@ pub fn armature_export(
     edit_mode: &EditMode,
     events: &mut EventState,
     config: &Config,
-    armature: &Armature,
-    camera: &Camera,
-    selections: &SelectionState,
 ) {
     ui.heading("Export Armature");
     ui.add_space(10.);
@@ -227,12 +231,8 @@ pub fn armature_export(
 pub fn image_export(
     ui: &mut egui::Ui,
     shared_ui: &mut crate::Ui,
-    edit_mode: &EditMode,
-    events: &mut EventState,
     config: &Config,
     armature: &Armature,
-    camera: &Camera,
-    selections: &SelectionState,
 ) {
     ui.heading("Export Image");
     let width = ui.available_width() - 10.;
@@ -325,15 +325,11 @@ pub fn image_export(
 pub fn video_export(
     ui: &mut egui::Ui,
     shared_ui: &mut crate::Ui,
-    edit_mode: &EditMode,
-    events: &mut EventState,
-    config: &Config,
+    _config: &Config,
     armature: &Armature,
-    camera: &Camera,
-    selections: &SelectionState,
 ) {
     ui.heading("Export Video");
-    let width = ui.available_width() - 10.;
+    let _width = ui.available_width() - 10.;
 
     if armature.animations.len() == 0 {
         ui.label("No animations to export videos");
@@ -376,8 +372,8 @@ pub fn video_export(
             .width(80.);
         dropdown.show_ui(ui, |ui| {
             let export = &mut shared_ui.exporting_video_type;
-            ui.selectable_value(export, ExportVideoType::Mp4, "MP4");
-            ui.selectable_value(export, ExportVideoType::Gif, "GIF");
+            ui.selectable_value(export, crate::ExportVideoType::Mp4, "MP4");
+            ui.selectable_value(export, crate::ExportVideoType::Gif, "GIF");
         });
     });
 
@@ -385,10 +381,10 @@ pub fn video_export(
     {
         ui.add_space(20.);
         egui::Frame::new()
-            .fill(config.colors.dark_accent.into())
+            .fill(_config.colors.dark_accent.into())
             .inner_margin(egui::Margin::same(5))
             .show(ui, |ui| {
-                ui.set_width(width);
+                ui.set_width(_width);
                 let text = egui::RichText::new(shared_ui.loc("export_modal.video.compatibility"))
                     .size(15.);
                 ui.label(text);
@@ -398,7 +394,7 @@ pub fn video_export(
         if false {
             ui.horizontal(|ui| {
                 ui.label(shared_ui.loc("export_modal.video.encoder"));
-                let is_mp4 = shared_ui.exporting_video_type == ExportVideoType::Mp4;
+                let is_mp4 = shared_ui.exporting_video_type == crate::ExportVideoType::Mp4;
                 ui.add_enabled_ui(is_mp4, |ui| {
                     let encoder_str = &shared_ui.exporting_video_encoder.to_string().to_lowercase();
                     let dropdown = egui::ComboBox::new("export_encoder", "")
@@ -406,8 +402,8 @@ pub fn video_export(
                         .width(80.);
                     dropdown.show_ui(ui, |ui| {
                         let export = &mut shared_ui.exporting_video_encoder;
-                        ui.selectable_value(export, ExportVideoEncoder::Libx264, "libx264");
-                        ui.selectable_value(export, ExportVideoEncoder::AV1, "av1");
+                        ui.selectable_value(export, crate::ExportVideoEncoder::Libx264, "libx264");
+                        ui.selectable_value(export, crate::ExportVideoEncoder::AV1, "av1");
                     });
                 });
             });

@@ -122,9 +122,7 @@ pub fn draw(
         );
     }
     if shared_ui.export_modal {
-        export_modal::draw(
-            context, shared_ui, &edit_mode, config, events, armature, camera, selections,
-        );
+        export_modal::draw(context, shared_ui, &edit_mode, config, events, armature);
     }
     #[cfg(not(target_arch = "wasm32"))]
     if shared_ui.checking_update {

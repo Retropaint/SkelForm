@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use wgpu::Device;
-
 use crate::*;
 
 const MIN_ZOOM: f32 = 1.;
@@ -18,8 +16,6 @@ pub fn iterate_events(
     copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
     renderer: &mut crate::Renderer,
-    backend: &BackendRenderer,
-    device: &Device,
 ) {
     let mut last_event = Events::None;
     let event = events.events[0].clone();
@@ -219,7 +215,7 @@ pub fn iterate_events(
         let str_value = events.str_values[0].clone().to_string();
 
         #[rustfmt::skip]
-        editor::process_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, copy_buffer, ui, renderer, config, backend, device);
+        editor::process_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, copy_buffer, ui, renderer, config);
 
         events.events.remove(0);
         events.values.remove(0);
@@ -241,8 +237,6 @@ pub fn process_event(
     ui: &mut crate::Ui,
     renderer: &mut crate::Renderer,
     config: &mut crate::Config,
-    backend: &BackendRenderer,
-    device: &Device,
 ) {
     match event {
         Events::CamZoomIn => camera.zoom = MIN_ZOOM.max(camera.zoom - 10.),

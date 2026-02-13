@@ -8,7 +8,6 @@ use std::{
     path::PathBuf,
 };
 
-use backtrace::trace;
 use std::sync::Mutex;
 use wgpu::BindGroup;
 

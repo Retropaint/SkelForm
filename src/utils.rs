@@ -15,7 +15,7 @@ use renderer::construction;
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
-use image::{ExtendedColorType::Rgb8, GenericImage, ImageEncoder};
+use image::{GenericImage, ImageEncoder};
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::Mutex;
 use std::{collections::HashMap, path::PathBuf};
@@ -259,8 +259,6 @@ pub fn render_spritesheets(
 pub fn encode_spritesheets(
     armature: &Armature,
     shared_ui: &mut shared::Ui,
-    camera: &Camera,
-    config: &Config,
     backend: &BackendRenderer,
 ) -> Vec<Vec<u8>> {
     let mut bufs = vec![];
@@ -317,8 +315,6 @@ pub fn encode_spritesheets(
 pub fn encode_sequence(
     armature: &Armature,
     shared_ui: &mut shared::Ui,
-    camera: &Camera,
-    config: &Config,
     backend: &BackendRenderer,
 ) -> Vec<Vec<Vec<u8>>> {
     let mut bufs = vec![];

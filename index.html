@@ -494,7 +494,7 @@
               }
             }            
 
-            async function downloadMp4(data, resX, resY, anim_name) {
+            async function downloadMp4(data, resX, resY, anim_name, fps) {
                 await ensureFFmpeg();
                 let name = anim_name + ".mp4"
                 await ffmpeg.writeFile('input.rgb', data);
@@ -503,7 +503,7 @@
                   '-f', 'rawvideo',
                   '-pixel_format', 'rgb24',
                   '-video_size', `${resX}x${resY}`,
-                  '-r', '60',
+                  '-r', fps.toString(),
                   '-i', 'input.rgb',
                   '-s', `${resX}:${resY}`,
                   '-preset', 'veryfast',
