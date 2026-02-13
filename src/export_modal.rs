@@ -1,8 +1,6 @@
 use egui::IntoAtoms;
 
-use crate::{
-    ui::EguiUi, Armature, Config, EditMode, EventState, ExportImgFormat, SettingsState,
-};
+use crate::{ui::EguiUi, Armature, Config, EditMode, EventState, ExportImgFormat, SettingsState};
 
 #[cfg(target_arch = "wasm32")]
 mod web {
@@ -377,6 +375,17 @@ pub fn video_export(
         });
     });
 
+    let is_mp4 = shared_ui.exporting_video_type == crate::ExportVideoType::Mp4;
+    ui.add_enabled_ui(is_mp4, |ui| {
+        ui.horizontal(|ui| {
+            ui.label("Background Color:");
+            let real = &mut shared_ui.video_clear_bg;
+            let mut col: [u8; 3] = [real.r, real.g, real.b];
+            ui.color_edit_button_srgb(&mut col);
+            *real = crate::shared::Color::new(col[0], col[1], col[2], 255);
+        });
+    });
+
     #[cfg(not(target_arch = "wasm32"))]
     {
         ui.add_space(20.);
@@ -394,7 +403,6 @@ pub fn video_export(
         if false {
             ui.horizontal(|ui| {
                 ui.label(shared_ui.loc("export_modal.video.encoder"));
-                let is_mp4 = shared_ui.exporting_video_type == crate::ExportVideoType::Mp4;
                 ui.add_enabled_ui(is_mp4, |ui| {
                     let encoder_str = &shared_ui.exporting_video_encoder.to_string().to_lowercase();
                     let dropdown = egui::ComboBox::new("export_encoder", "")

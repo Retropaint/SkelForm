@@ -981,7 +981,7 @@ impl BackendRenderer {
 
         let mut frames = vec![];
         #[rustfmt::skip]
-        self.take_screenshot(shared.screenshot_res, &shared.armature, &shared.camera, &shared.config, &mut frames);
+        self.take_screenshot(shared.screenshot_res, &shared.armature, &shared.camera, &shared.config.colors.background, &mut frames);
         let buffer = frames[0].buffer.clone();
         let screenshot_res = shared.screenshot_res;
 
@@ -1061,7 +1061,7 @@ impl BackendRenderer {
         screenshot_res: Vec2,
         armature: &Armature,
         camera: &Camera,
-        config: &Config,
+        clear_color: &Color,
         rendered_frames: &mut Vec<RenderedFrame>,
     ) {
         let width = screenshot_res.x as u32;
@@ -1092,7 +1092,6 @@ impl BackendRenderer {
         });
 
         let capture_view = capture_texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let clear_color = config.colors.background;
 
         let device = &self.gpu.device;
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());

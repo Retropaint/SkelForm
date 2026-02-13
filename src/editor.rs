@@ -753,6 +753,15 @@ pub fn process_event(
         Events::SetExportImgFormat => {
             edit_mode.export_img_format = ExportImgFormat::from_repr(value as usize).unwrap()
         }
+        Events::OpenExportModal => {
+            ui.export_modal = true;
+            ui.video_clear_bg = config.colors.background;
+            ui.exporting_video_type = ExportVideoType::Mp4;
+            ui.exporting_anims = vec![];
+            for _ in &armature.animations {
+                ui.exporting_anims.push(true);
+            }
+        }
         _ => {}
     }
 }

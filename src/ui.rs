@@ -450,12 +450,7 @@ pub fn kb_inputs(
     }
 
     if input.consume_shortcut(&config.keys.export) {
-        shared_ui.export_modal = true;
-        shared_ui.exporting_video_type = ExportVideoType::Mp4;
-        shared_ui.exporting_anims = vec![];
-        for _ in &armature.animations {
-            shared_ui.exporting_anims.push(true);
-        }
+        events.open_export_modal();
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -996,12 +991,7 @@ fn menu_file_button(
         }
         let str_export = &shared_ui.loc("top_bar.file.export");
         if top_bar_button!(str_export, Some(&config.keys.export)).clicked() {
-            shared_ui.export_modal = true;
-            shared_ui.exporting_video_type = ExportVideoType::Mp4;
-            shared_ui.exporting_anims = vec![];
-            for _ in &armature.animations {
-                shared_ui.exporting_anims.push(true);
-            }
+            events.open_export_modal();
             ui.close();
         }
         let str_startup = &shared_ui.loc("top_bar.file.startup");
@@ -1392,21 +1382,6 @@ pub fn top_bar_button(
     *offset += height + 2.;
 
     response
-}
-
-pub fn draw_fading_rect(
-    ui: &mut egui::Ui,
-    rect: egui::Rect,
-    color: Color32,
-    max_alpha: f32,
-    time: f64,
-) {
-    let time = ui.ctx().input(|i| i.time / time);
-    let fade = ((time * 3.14).sin() * 0.5 + 0.5) as f32;
-
-    let fade_color =
-        Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), (fade * max_alpha) as u8);
-    ui.painter().rect_filled(rect, 0., fade_color);
 }
 
 #[derive(PartialEq)]
