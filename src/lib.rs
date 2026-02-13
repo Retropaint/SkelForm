@@ -753,7 +753,6 @@ impl BackendRenderer {
                     let raw_path = &shared.ui.file_path.lock().unwrap()[0];
                     _path = raw_path.as_path().to_str().unwrap().to_string();
                 }
-                let success;
                 let _ext;
                 let ffmpeg_bin = if shared.ui.use_system_ffmpeg {
                     "ffmpeg".to_string()
@@ -770,7 +769,8 @@ impl BackendRenderer {
                 let size = shared.ui.sprite_size;
                 let this_anim = bufs[0].clone();
                 if shared.ui.exporting_video_type == ExportVideoType::Gif {
-                    success = Self::encode_gif(this_anim, size, name, &_path, ffmpeg_bin);
+                    shared.ui.export_error =
+                        Self::encode_gif(this_anim, size, name, &_path, ffmpeg_bin);
                     _ext = ".gif";
                 } else {
                     let codec_str = match shared.ui.exporting_video_encoder {
@@ -778,12 +778,12 @@ impl BackendRenderer {
                         ExportVideoEncoder::AV1 => "libsvtav1",
                     };
                     let fps = shared.armature.animations[anim_idx].fps;
-                    success = Self::encode_video(
+                    shared.ui.export_error = Self::encode_video(
                         this_anim, fps, size, name, codec_str, &_path, ffmpeg_bin,
                     );
                     _ext = ".mp4";
                 }
-                if !success {
+                if shared.ui.export_error != "" {
                     shared.events.open_modal("error_vid_export", false);
                 } else if shared.ui.open_after_export {
                     #[cfg(not(target_arch = "wasm32"))]
@@ -1190,7 +1190,7 @@ impl BackendRenderer {
         _codec: &str,
         _path: &String,
         _ffmpeg_bin: String,
-    ) -> bool {
+    ) -> String {
         #[cfg(not(target_arch = "wasm32"))]
         {
             #[rustfmt::skip]
@@ -1205,16 +1205,16 @@ impl BackendRenderer {
                 .stdin(Stdio::piped())
                 .spawn();
 
-            if let Err(_) = child {
-                return false;
+            if let Err(e) = child {
+                return "spawn ffmpeg: ".to_owned() + &e.to_string();
             }
 
             {
                 let stdin = child.as_mut().unwrap().stdin.as_mut().unwrap();
                 for frame in &rendered_frames {
                     let rgb = image::load_from_memory(&frame).unwrap();
-                    if let Err(_) = stdin.write_all(&rgb.to_rgba8()) {
-                        return false;
+                    if let Err(e) = stdin.write_all(&rgb.to_rgba8()) {
+                        return "stdin: ".to_owned() + &e.to_string();
                     }
                 }
             }
@@ -1237,7 +1237,7 @@ impl BackendRenderer {
             downloadMp4(raw_video, window.x, window.y, _name, fps);
         }
 
-        true
+        "".to_string()
     }
 
     fn encode_gif(
@@ -1246,7 +1246,7 @@ impl BackendRenderer {
         _name: &str,
         _path: &String,
         _ffmpeg_bin: String,
-    ) -> bool {
+    ) -> String {
         #[cfg(target_arch = "wasm32")]
         {
             for frame in rendered_frames {
@@ -1270,16 +1270,16 @@ impl BackendRenderer {
             .stderr(Stdio::inherit())
             .spawn();
 
-            if let Err(_) = child {
-                return false;
+            if let Err(e) = child {
+                return "spawn ffmpeg: ".to_owned() + &e.to_string();
             }
 
             {
                 let stdin = child.as_mut().unwrap().stdin.as_mut().unwrap();
                 for frame in &rendered_frames {
                     let rgb = image::load_from_memory(&frame).unwrap();
-                    if let Err(_) = stdin.write_all(&rgb.to_rgba8()) {
-                        return false;
+                    if let Err(e) = stdin.write_all(&rgb.to_rgba8()) {
+                        return "stdin: ".to_string() + &e.to_string();
                     }
                 }
             }
@@ -1288,7 +1288,7 @@ impl BackendRenderer {
             let _ = std::fs::remove_file("palette.png");
         }
 
-        true
+        "".to_string()
     }
 }
 

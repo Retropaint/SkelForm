@@ -674,6 +674,7 @@ pub struct Ui {
     pub use_system_ffmpeg: bool,
     pub video_clear_bg: Color,
     pub anim_cycles: i32,
+    pub export_error: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
