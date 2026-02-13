@@ -41,16 +41,26 @@ pub fn draw(
                 ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                     let mut is_hovered = false;
 
-                    #[rustfmt::skip]
                     macro_rules! tab {
-                        ($name:expr, $state:expr) => { crate::settings_modal::settings_button($name, $state, ui, shared_ui, &config, width, &mut is_hovered) };
+                        ($name:expr, $state:expr) => {
+                            crate::settings_modal::settings_button(
+                                $name,
+                                $state,
+                                ui,
+                                shared_ui,
+                                &config,
+                                width,
+                                &mut is_hovered,
+                            )
+                        };
                     }
 
-                    let str_armature = shared_ui.loc("export_modal.armature").clone();
-                    let str_spritesheet = shared_ui.loc("export_modal.images").clone();
+                    let str_armature = shared_ui.loc("export_modal.header_armature").clone();
+                    let str_image = shared_ui.loc("export_modal.header_image").clone();
+                    let str_video = shared_ui.loc("export_modal.header_video").clone();
                     tab!(str_armature, crate::SettingsState::Ui);
-                    tab!(str_spritesheet, crate::SettingsState::Animation);
-                    tab!("Video".to_string(), crate::SettingsState::Keyboard);
+                    tab!(str_image, crate::SettingsState::Animation);
+                    tab!(str_video, crate::SettingsState::Keyboard);
 
                     if !is_hovered {
                         shared_ui.hovering_setting = None;
@@ -62,19 +72,21 @@ pub fn draw(
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     let layout = egui::Layout::top_down(egui::Align::Min);
                     ui.with_layout(layout, |ui| match shared_ui.settings_state {
-                        SettingsState::Ui => armature_export(
-                            ui, shared_ui, edit_mode, events, config
-                        ),
-                        SettingsState::Animation => image_export(
-                            ui, shared_ui, config, armature,
-                        ),
-                        SettingsState::Keyboard => video_export(
-                            ui, shared_ui, config, armature,
-                        ),
+                        SettingsState::Ui => {
+                            armature_export(ui, shared_ui, edit_mode, events, config)
+                        }
+                        SettingsState::Animation => image_export(ui, shared_ui, config, armature),
+                        SettingsState::Keyboard => video_export(ui, shared_ui, config, armature),
                         _ => {}
                     });
                 });
             });
+
+            let image_or_vid = shared_ui.settings_state == SettingsState::Animation
+                || shared_ui.settings_state == SettingsState::Keyboard;
+            if image_or_vid && armature.animations.len() == 0 {
+                return;
+            }
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                 ui.horizontal(|ui| {
@@ -87,7 +99,7 @@ pub fn draw(
                         #[cfg(not(target_arch = "wasm32"))]
                         if shared_ui.settings_state == SettingsState::Keyboard {
                             ui.checkbox(&mut shared_ui.open_after_export, "".into_atoms());
-                            ui.label("Open after export: ");
+                            ui.label(shared_ui.loc("export_modal.video.open_after_export"));
                         }
                     });
                 });
@@ -154,7 +166,7 @@ pub fn armature_export(
     events: &mut EventState,
     config: &Config,
 ) {
-    ui.heading("Export Armature");
+    ui.heading(shared_ui.loc("export_modal.armature.header"));
     ui.add_space(10.);
     let width = ui.available_width() - 10.;
     egui::Frame::new()
@@ -163,15 +175,16 @@ pub fn armature_export(
         .show(ui, |ui| {
             ui.set_width(width);
             let text =
-                egui::RichText::new(shared_ui.loc("export_modal.inverse_kinematics")).size(15.);
+                egui::RichText::new(shared_ui.loc("export_modal.armature.inverse_kinematics"))
+                    .size(15.);
             ui.label(text);
         });
 
     ui.add_space(2.);
 
     ui.horizontal(|ui| {
-        ui.label(shared_ui.loc("export_modal.bake_ik"))
-            .on_hover_text(shared_ui.loc("export_modal.bake_ik_desc"));
+        ui.label(shared_ui.loc("export_modal.armature.bake_ik"))
+            .on_hover_text(shared_ui.loc("export_modal.armature.bake_ik_desc"));
         let mut bake_ik = edit_mode.export_bake_ik;
         ui.checkbox(&mut bake_ik, "".into_atoms());
         if bake_ik != edit_mode.export_bake_ik {
@@ -181,8 +194,8 @@ pub fn armature_export(
 
     ui.add_enabled_ui(edit_mode.export_bake_ik, |ui| {
         ui.horizontal(|ui| {
-            ui.label(shared_ui.loc("export_modal.exclude_ik"))
-                .on_hover_text(shared_ui.loc("export_modal.exclude_ik_desc"));
+            ui.label(shared_ui.loc("export_modal.armature.exclude_ik"))
+                .on_hover_text(shared_ui.loc("export_modal.armature.exclude_ik_desc"));
             let mut exclude_ik = edit_mode.export_exclude_ik;
             ui.checkbox(&mut exclude_ik, "".into_atoms());
             if exclude_ik != edit_mode.export_exclude_ik {
@@ -198,13 +211,14 @@ pub fn armature_export(
         .inner_margin(egui::Margin::same(5))
         .show(ui, |ui| {
             ui.set_width(width);
-            let text = egui::RichText::new(shared_ui.loc("export_modal.tex_atlas")).size(15.);
+            let text =
+                egui::RichText::new(shared_ui.loc("export_modal.armature.tex_atlas")).size(15.);
             ui.label(text);
         });
     ui.add_space(5.);
 
     ui.horizontal(|ui| {
-        ui.label(shared_ui.loc("export_modal.img_format"));
+        ui.label(shared_ui.loc("export_modal.armature.img_format"));
         let dropdown = egui::ComboBox::new("img_format", "")
             .selected_text(&edit_mode.export_img_format.to_string())
             .width(80.);
@@ -220,8 +234,8 @@ pub fn armature_export(
 
     ui.add_enabled_ui(edit_mode.export_img_format == ExportImgFormat::JPG, |ui| {
         ui.horizontal(|ui| {
-            ui.label(shared_ui.loc("export_modal.clear_color"))
-                .on_hover_text(shared_ui.loc("export_modal.clear_color_desc"));
+            ui.label(shared_ui.loc("export_modal.armature.clear_color"))
+                .on_hover_text(shared_ui.loc("export_modal.armature.clear_color_desc"));
             let cc = &edit_mode.export_clear_color;
             let mut col: [f32; 3] = [cc.r as f32 / 255., cc.g as f32 / 255., cc.b as f32 / 255.];
             ui.color_edit_button_rgb(&mut col);
@@ -236,29 +250,36 @@ pub fn image_export(
     config: &Config,
     armature: &Armature,
 ) {
-    ui.heading("Export Image");
+    ui.heading(shared_ui.loc("export_modal.image.header"));
     let width = ui.available_width() - 10.;
+
+    if armature.animations.len() == 0 {
+        ui.label(shared_ui.loc("export_modal.no_anims"));
+        return;
+    }
 
     ui.add_space(10.);
     ui.horizontal(|ui| {
-        ui.label("Export type:");
+        ui.label(shared_ui.loc("export_modal.image.export_type"));
+        let str_sequences = shared_ui.loc("export_modal.image.sequences");
+        let str_spritesheets = shared_ui.loc("export_modal.image.spritesheets");
         let selected_str = if shared_ui.image_sequences {
-            "Sequences"
+            &str_sequences
         } else {
-            "Spritesheets"
+            &str_spritesheets
         };
         egui::ComboBox::new("transition_dropdown".to_string(), "")
             .selected_text(selected_str.to_string())
             .show_ui(ui, |ui| {
-                ui.selectable_value(&mut shared_ui.image_sequences, false, "Spritesheets");
-                ui.selectable_value(&mut shared_ui.image_sequences, true, "Sequences");
+                ui.selectable_value(&mut shared_ui.image_sequences, false, str_spritesheets);
+                ui.selectable_value(&mut shared_ui.image_sequences, true, str_sequences);
             })
             .response;
     });
 
     ui.add_enabled_ui(!shared_ui.image_sequences, |ui: &mut egui::Ui| {
         ui.horizontal(|ui| {
-            ui.label("Sprites per row: ");
+            ui.label(shared_ui.loc("export_modal.image.sprites_per_row"));
             let spr = shared_ui.sprites_per_row as f32;
             let (edited, value, _) = ui.float_input("sprite_row".into(), shared_ui, spr, 1., None);
             if edited {
@@ -269,7 +290,7 @@ pub fn image_export(
 
     ui.add_space(10.);
     ui.horizontal(|ui| {
-        ui.label("Size per sprite: ");
+        ui.label(shared_ui.loc("export_modal.image.size_per_sprite"));
         let x = shared_ui.sprite_size.x;
         let (edited, value, _) = ui.float_input("sprite_size_x".into(), shared_ui, x, 1., None);
         if edited {
@@ -289,7 +310,8 @@ pub fn image_export(
         .inner_margin(egui::Margin::same(5))
         .show(ui, |ui| {
             ui.set_width(width);
-            let text = egui::RichText::new(shared_ui.loc("export_modal.animations")).size(15.);
+            let text =
+                egui::RichText::new(shared_ui.loc("export_modal.image.animations")).size(15.);
             ui.label(text);
         });
     ui.add_space(5.);
@@ -298,7 +320,6 @@ pub fn image_export(
         let col = if a % 2 == 1 { config.colors.dark_accent } else { config.colors.main };
 
         let anim = &armature.animations[a];
-
         egui::Frame::new().fill(col.into()).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(anim.name.to_string());
@@ -306,21 +327,17 @@ pub fn image_export(
                     let mut meta_col = config.colors.text;
                     meta_col -= crate::Color::new(40, 40, 40, 0);
                     ui.checkbox(&mut shared_ui.exporting_anims[a], "".into_atoms())
-                        .on_hover_text(shared_ui.loc("export_modal.animations_check_desc"));
+                        .on_hover_text(shared_ui.loc("export_modal.image.animations_check_desc"));
                     ui.add_space(10.);
                     let total_frames = anim.keyframes.last();
                     if total_frames == None {
                         return;
                     }
-                    ui.label(
-                        egui::RichText::new(
-                            anim.fps.to_string()
-                                + &" FPS  -  ".to_string()
-                                + &total_frames.unwrap().frame.to_string()
-                                + &" frames".to_string(),
-                        )
-                        .color(meta_col),
-                    );
+                    let str = anim.fps.to_string()
+                        + &" FPS  -  ".to_string()
+                        + &total_frames.unwrap().frame.to_string()
+                        + &shared_ui.loc("export_modal.iamge.frames");
+                    ui.label(egui::RichText::new(str).color(meta_col));
                 });
             });
         });
@@ -333,11 +350,11 @@ pub fn video_export(
     _config: &Config,
     armature: &Armature,
 ) {
-    ui.heading("Export Video");
+    ui.heading(shared_ui.loc("export_modal.video.header"));
     let _width = ui.available_width() - 10.;
 
     if armature.animations.len() == 0 {
-        ui.label("No animations to export videos");
+        ui.label(shared_ui.loc("export_modal.no_anims"));
         return;
     }
 
@@ -385,7 +402,7 @@ pub fn video_export(
     let is_mp4 = shared_ui.exporting_video_type == crate::ExportVideoType::Mp4;
     ui.add_enabled_ui(is_mp4, |ui| {
         ui.horizontal(|ui| {
-            ui.label("Background Color:");
+            ui.label(shared_ui.loc("export_modal.video.background_color"));
             let real = &mut shared_ui.video_clear_bg;
             let mut col: [u8; 3] = [real.r, real.g, real.b];
             ui.color_edit_button_srgb(&mut col);
@@ -398,7 +415,7 @@ pub fn video_export(
     }
     ui.add_enabled_ui(is_mp4, |ui| {
         ui.horizontal(|ui| {
-            ui.label("Cycles:");
+            ui.label(shared_ui.loc("export_modal.video.cycles"));
             let cycles = "anim_cycles".to_string();
             let (edited, value, _) =
                 ui.float_input(cycles, shared_ui, shared_ui.anim_cycles as f32, 1., None);
