@@ -139,15 +139,6 @@ fn init_shared(shared: &mut Shared) {
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        println!(
-            "{} {}",
-            utils::bin_path()
-                .join("dev-docs")
-                .to_str()
-                .unwrap()
-                .to_string(),
-            std::fs::exists(utils::bin_path().join("dev-docs")).unwrap()
-        );
         match std::fs::exists(utils::bin_path().join("dev-docs")) {
             Ok(_) => shared.ui.local_doc_url = utils::bin_path().to_str().unwrap().to_string(),
             _ => {}
