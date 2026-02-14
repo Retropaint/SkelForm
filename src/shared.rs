@@ -675,8 +675,9 @@ pub struct Ui {
     pub use_system_ffmpeg: bool,
     pub video_clear_bg: Color,
     pub anim_cycles: i32,
-    pub export_error: String,
     pub mapped_frames: Arc<Mutex<usize>>,
+
+    pub custom_error: String,
 
     // used for the UpdateConfig event
     pub updated_config: Config,

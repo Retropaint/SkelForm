@@ -24,7 +24,8 @@
   "img_err": "Could not extract image data.",
   "donating": "If you liked using SkelForm, a [donation](https://ko-fi.com/retropaintt) is highly appreciated!\n\nThe donation will be through ko-fi.com.\n\nThank you for using SkelForm!",
   "crashed": "SkelForm crashed last time.\n\nThe crash log is located in the same path as the binary.\n\nOpen log file?",
-  "error_vid_export": "Something went wrong with this export:\n\n$export_err\n\nTry changing compability settings. If nothing works, you may export sprite sequences and create a video using an online converter.",
+  "error_vid_export": "Something went wrong with this export:\n\n$err\n\nTry changing compability settings. If nothing works, you may export sprite sequences and create a video using an online converter.",
+  "error_skf": "Something went wrong:\n\n$err",
   "startup": {
     "import": "Import",
     "samples": "Samples",

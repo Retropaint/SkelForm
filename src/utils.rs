@@ -19,6 +19,7 @@ use image::{GenericImage, ImageEncoder};
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::Mutex;
 use std::{collections::HashMap, path::PathBuf};
+use zip::read::ZipFile;
 
 use std::io::{Read, Write};
 
@@ -799,20 +800,35 @@ pub fn import<R: Read + std::io::Seek>(
     if let Err(_) = zip {
         return;
     }
+    let str = shared.ui.loc("error_skf");
+
+    macro_rules! custom_err {
+        ($error:expr) => {
+            shared.ui.custom_error = $error.to_string();
+            editor::open_modal(&mut shared.ui, false, str);
+            return;
+        };
+    }
 
     // load armature
-    let armature_file = zip.as_mut().unwrap().by_name("armature.json").unwrap();
-    let root: crate::Root = serde_json::from_reader(armature_file).unwrap();
+    let armature_file = zip.as_mut().unwrap().by_name("armature.json");
+    if let Err(_) = armature_file {
+        custom_err!("armature.json file could not be found.");
+    }
+    let root: std::result::Result<Root, _> = serde_json::from_reader(armature_file.unwrap());
+    if let Err(ref e) = root {
+        custom_err!("armature:json:\n".to_owned() + &e.to_string());
+    }
 
-    shared.armature = shared::Armature {
-        bones: root.bones,
-        animations: root.animations,
-        styles: root.styles,
+    let mut temp_arm = shared::Armature {
+        bones: root.as_ref().unwrap().bones.clone(),
+        animations: root.as_ref().unwrap().animations.clone(),
+        styles: root.as_ref().unwrap().styles.clone(),
         tex_data: vec![],
         animated_bones: vec![],
     };
 
-    for bone in &mut shared.armature.bones {
+    for bone in &mut temp_arm.bones {
         for (i, vert) in bone.vertices.iter_mut().enumerate() {
             vert.id = i as u32;
         }
@@ -821,65 +837,78 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     // populate style ids
-    for s in 0..shared.armature.styles.len() {
-        shared.armature.styles[s].id = s as i32;
+    for s in 0..temp_arm.styles.len() {
+        temp_arm.styles[s].id = s as i32;
     }
 
     // populate bone IK data
-    for b in 0..shared.armature.bones.len() {
-        if shared.armature.bones[b].ik_bone_ids.len() > 0 {
-            for i in 0..shared.armature.bones[b].ik_bone_ids.len() {
-                let id = shared.armature.bones[b].ik_bone_ids[i] as i32;
-                let fam_id = shared.armature.bones[b].ik_family_id;
-                let bones = &mut shared.armature.bones;
-                bones.iter_mut().find(|b| b.id == id).unwrap().ik_family_id = fam_id;
+    for b in 0..temp_arm.bones.len() {
+        if temp_arm.bones[b].ik_bone_ids.len() > 0 {
+            for i in 0..temp_arm.bones[b].ik_bone_ids.len() {
+                let id = temp_arm.bones[b].ik_bone_ids[i] as i32;
+                let fam_id = temp_arm.bones[b].ik_family_id;
+                let bones = &mut temp_arm.bones;
+                let bone = bones.iter_mut().find(|b| b.id == id);
+                if bone == None {
+                    custom_err!(
+                        "Bone of ID ".to_owned()
+                            + &id.to_string()
+                            + " of IK family #"
+                            + &temp_arm.bones[b].ik_family_id.to_string()
+                            + " could not be found."
+                    );
+                }
+                bone.unwrap().ik_family_id = fam_id;
             }
         }
     }
 
     // load editor data
     if let Ok(editor_file) = zip.as_mut().unwrap().by_name("editor.json") {
-        let editor: crate::EditorOptions = serde_json::from_reader(editor_file).unwrap();
+        if let Ok(editor) =
+            serde_json::from_reader::<ZipFile<'_, R>, crate::EditorOptions>(editor_file)
+        {
+            shared.camera = editor.camera;
+            for b in 0..temp_arm.bones.len() {
+                let bone = &mut temp_arm.bones[b];
+                let ed_bone = &editor.bones[b];
 
-        shared.camera = editor.camera;
+                // iterable editor bone imports
+                bone.folded = ed_bone.folded;
+                bone.ik_folded = ed_bone.ik_folded;
+                bone.meshdef_folded = ed_bone.meshdef_folded;
+                bone.ik_disabled = ed_bone.ik_disabled;
+            }
+            for s in 0..temp_arm.styles.len() {
+                let style = &mut temp_arm.styles[s];
+                let ed_style = &editor.styles[s];
 
-        for b in 0..shared.armature.bones.len() {
-            let bone = &mut shared.armature.bones[b];
-            let ed_bone = &editor.bones[b];
-
-            // iterable editor bone imports
-            bone.folded = ed_bone.folded;
-            bone.ik_folded = ed_bone.ik_folded;
-            bone.meshdef_folded = ed_bone.meshdef_folded;
-            bone.ik_disabled = ed_bone.ik_disabled;
-        }
-
-        for s in 0..shared.armature.styles.len() {
-            let style = &mut shared.armature.styles[s];
-            let ed_style = &editor.styles[s];
-
-            style.active = ed_style.active;
+                style.active = ed_style.active;
+            }
         }
     }
 
     // load texture
-    let styles = &shared.armature.styles;
+    let styles = &temp_arm.styles;
     let has_tex = styles.iter().find(|set| set.textures.len() > 0) != None;
     if styles.len() > 0 && has_tex {
         let mut imgs = vec![];
-        for a in 0..root.atlases.len() {
-            let filename = &root.atlases[a].filename;
-            let texture_file = zip.as_mut().unwrap().by_name(filename).unwrap();
+        for a in 0..root.as_ref().unwrap().atlases.len() {
+            let filename = &root.as_ref().unwrap().atlases[a].filename;
+            let texture_file = zip.as_mut().unwrap().by_name(filename);
+            if let Err(_) = texture_file {
+                custom_err!("Texture file '".to_owned() + filename + "' could not be found.");
+            }
 
             let mut bytes = vec![];
-            for byte in texture_file.bytes() {
+            for byte in texture_file.unwrap().bytes() {
                 bytes.push(byte.unwrap());
             }
             imgs.push(image::load_from_memory(&bytes).unwrap());
         }
 
         // remove clear color for JPG atlases
-        if root.img_format == ExportImgFormat::JPG {
+        if root.as_ref().unwrap().img_format == ExportImgFormat::JPG {
             for i in 0..imgs.len() {
                 let png = imgs[i].clone().into_rgba8();
                 imgs[i] = image::DynamicImage::ImageRgba8(png);
@@ -887,7 +916,11 @@ pub fn import<R: Read + std::io::Seek>(
                 for pixel in this_img.pixels_mut() {
                     let [r, g, b, _] = pixel.0;
                     let src = [r, g, b];
-                    let cc = [root.clear_color.r, root.clear_color.g, root.clear_color.b];
+                    let cc = [
+                        root.as_ref().unwrap().clear_color.r,
+                        root.as_ref().unwrap().clear_color.g,
+                        root.as_ref().unwrap().clear_color.b,
+                    ];
                     if color_within_range(src, cc, 100) {
                         *pixel = Rgba([0, 0, 0, 0]);
                     }
@@ -896,7 +929,7 @@ pub fn import<R: Read + std::io::Seek>(
             }
         }
 
-        for set in &mut shared.armature.styles {
+        for set in &mut temp_arm.styles {
             for tex in &mut set.textures {
                 tex.offset = Vec2::new(tex.ser_offset.x as f32, tex.ser_offset.y as f32);
                 tex.size = Vec2::new(tex.ser_size.x as f32, tex.ser_size.y as f32);
@@ -932,9 +965,9 @@ pub fn import<R: Read + std::io::Seek>(
                 let file = "anim_icons";
                 let ui_img = context.unwrap().load_texture(file, col, Default::default());
 
-                let data_id = shared.armature.tex_data.len() as i32;
+                let data_id = temp_arm.tex_data.len() as i32;
                 tex.data_id = data_id;
-                shared.armature.tex_data.push(TextureData {
+                temp_arm.tex_data.push(TextureData {
                     id: data_id,
                     image,
                     bind_group,
@@ -943,6 +976,8 @@ pub fn import<R: Read + std::io::Seek>(
             }
         }
     }
+
+    shared.armature = temp_arm;
 
     shared.events.unselect_all();
     shared.ui.startup_window = false;

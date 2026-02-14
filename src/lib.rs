@@ -790,7 +790,7 @@ impl BackendRenderer {
                 let size = shared.ui.sprite_size;
                 let this_anim = bufs[0].clone();
                 if shared.ui.exporting_video_type == ExportVideoType::Gif {
-                    shared.ui.export_error =
+                    shared.ui.custom_error =
                         Self::encode_gif(this_anim, size, name, &_path, ffmpeg_bin);
                     _ext = ".gif";
                 } else {
@@ -799,12 +799,12 @@ impl BackendRenderer {
                         ExportVideoEncoder::AV1 => "libsvtav1",
                     };
                     let fps = shared.armature.animations[anim_idx].fps;
-                    shared.ui.export_error = Self::encode_video(
+                    shared.ui.custom_error = Self::encode_video(
                         this_anim, fps, size, name, codec_str, &_path, ffmpeg_bin,
                     );
                     _ext = ".mp4";
                 }
-                if shared.ui.export_error != "" {
+                if shared.ui.custom_error != "" {
                     shared.events.open_modal("error_vid_export", false);
                 } else if shared.ui.open_after_export {
                     #[cfg(not(target_arch = "wasm32"))]

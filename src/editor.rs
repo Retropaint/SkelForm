@@ -796,10 +796,10 @@ pub fn center_verts(verts: &mut Vec<Vertex>) {
     }
 }
 
-fn open_modal(ui: &mut crate::Ui, forced: bool, headline: String) {
+pub fn open_modal(ui: &mut crate::Ui, forced: bool, headline: String) {
     ui.modal = true;
     ui.forced_modal = forced;
-    ui.headline = headline.replace("$export_err", &ui.export_error);
+    ui.headline = headline.replace("$err", &ui.custom_error);
 }
 
 fn select_bone(
