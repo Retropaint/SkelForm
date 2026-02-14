@@ -122,9 +122,7 @@ pub fn draw(
         );
     }
     if shared_ui.export_modal {
-        export_modal::draw(
-            context, shared_ui, &edit_mode, config, events, armature, camera, selections,
-        );
+        export_modal::draw(context, shared_ui, &edit_mode, config, events, armature);
     }
     #[cfg(not(target_arch = "wasm32"))]
     if shared_ui.checking_update {
@@ -443,13 +441,16 @@ pub fn kb_inputs(
 
     if input.consume_shortcut(&config.keys.save) {
         #[cfg(target_arch = "wasm32")]
-        utils::save_web(armature, camera, edit_mode, false);
+        {
+            let saving = shared_ui.saving.lock().unwrap().clone();
+            utils::save_web(armature, camera, edit_mode, saving);
+        }
         #[cfg(not(target_arch = "wasm32"))]
         utils::save_native(shared_ui);
     }
 
     if input.consume_shortcut(&config.keys.export) {
-        shared_ui.export_modal = true;
+        events.open_export_modal();
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -969,7 +970,12 @@ fn menu_file_button(
         let str_save = &shared_ui.loc("top_bar.file.save");
         if top_bar_button!(str_save, Some(&config.keys.save)).clicked() {
             #[cfg(target_arch = "wasm32")]
-            utils::save_web(armature, camera, edit_mode, false);
+            utils::save_web(
+                armature,
+                camera,
+                edit_mode,
+                shared_ui.saving.lock().unwrap().clone(),
+            );
             #[cfg(not(target_arch = "wasm32"))]
             utils::save_native(shared_ui);
             ui.close();
@@ -985,7 +991,7 @@ fn menu_file_button(
         }
         let str_export = &shared_ui.loc("top_bar.file.export");
         if top_bar_button!(str_export, Some(&config.keys.export)).clicked() {
-            shared_ui.export_modal = true;
+            events.open_export_modal();
             ui.close();
         }
         let str_startup = &shared_ui.loc("top_bar.file.startup");
@@ -1376,21 +1382,6 @@ pub fn top_bar_button(
     *offset += height + 2.;
 
     response
-}
-
-pub fn draw_fading_rect(
-    ui: &mut egui::Ui,
-    rect: egui::Rect,
-    color: Color32,
-    max_alpha: f32,
-    time: f64,
-) {
-    let time = ui.ctx().input(|i| i.time / time);
-    let fade = ((time * 3.14).sin() * 0.5 + 0.5) as f32;
-
-    let fade_color =
-        Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), (fade * max_alpha) as u8);
-    ui.painter().rect_filled(rect, 0., fade_color);
 }
 
 #[derive(PartialEq)]

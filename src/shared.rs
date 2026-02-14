@@ -8,7 +8,6 @@ use std::{
     path::PathBuf,
 };
 
-use backtrace::trace;
 use std::sync::Mutex;
 use wgpu::BindGroup;
 
@@ -444,6 +443,13 @@ pub enum SettingsState {
     Misc,
 }
 
+#[derive(Clone, Default, PartialEq)]
+pub enum ExportState {
+    #[default]
+    Armature,
+    Spritesheet,
+}
+
 #[derive(Clone, Default, PartialEq, Debug, FromRepr)]
 pub enum PolarId {
     #[default]
@@ -654,7 +660,39 @@ pub struct Ui {
     pub warnings_open: bool,
     pub save_path: Option<PathBuf>,
     pub changed_window_name: bool,
+    pub sprite_size: Vec2,
+    pub sprites_per_row: i32,
+
+    pub spritesheet_elapsed: Option<Instant>,
+    pub rendered_spritesheets: Vec<Vec<RenderedFrame>>,
+    pub exporting_anims: Vec<bool>,
+    pub image_sequences: bool,
+    pub exporting_video_type: ExportVideoType,
+    pub exporting_video_anim: usize,
+    pub exporting_video_encoder: ExportVideoEncoder,
+    pub open_after_export: bool,
+    pub use_system_ffmpeg: bool,
+    pub video_clear_bg: Color,
+    pub anim_cycles: i32,
+    pub export_error: String,
 }
+
+#[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
+pub enum ExportVideoType {
+    #[default]
+    None,
+    Mp4,
+    Gif,
+}
+enum_string!(ExportVideoType);
+
+#[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
+pub enum ExportVideoEncoder {
+    #[default]
+    Libx264,
+    AV1,
+}
+enum_string!(ExportVideoEncoder);
 
 impl Ui {
     pub fn is_animating(&self, edit_mode: &EditMode, selections: &SelectionState) -> bool {
@@ -1831,14 +1869,17 @@ pub struct CopyBuffer {
     pub bones: Vec<Bone>,
 }
 
-#[derive(Default, Clone, PartialEq)]
+#[derive(Default, Clone, PartialEq, Debug)]
 pub enum Saving {
     #[default]
     None,
     CustomPath,
     Autosaving,
     Exporting,
+    Spritesheet,
+    Video,
 }
+enum_string!(Saving);
 
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
 #[serde(default)]
@@ -2036,6 +2077,7 @@ pub enum Events {
     SetKeyframeTransition,
     SetExportClearColor,
     SetExportImgFormat,
+    OpenExportModal,
 }
 
 enum_string!(Events);
@@ -2090,6 +2132,7 @@ impl EventState {
     generic_event!(remove_ik_target, Events::RemoveIkTarget);
     generic_event!(center_bone_verts, Events::CenterBoneVerts);
     generic_event!(trace_bone_verts, Events::TraceBoneVerts);
+    generic_event!(open_export_modal, Events::OpenExportModal);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, usize);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
@@ -2374,8 +2417,6 @@ pub struct Shared {
     pub recording: bool,
     pub done_recording: bool,
     // mainly used for video, but can also be used for screenshots
-    pub rendered_frames: Vec<RenderedFrame>,
-
     pub edit_mode: EditMode,
 
     pub config: Config,

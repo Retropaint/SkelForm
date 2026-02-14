@@ -1,0 +1,12 @@
+assets/ffmpeg-native filter=lfs diff=lfs merge=lfs -text
+assets/ffmpeg-native/ffmpeg-linux filter=lfs diff=lfs merge=lfs -text
+assets/ffmpeg-native/ffmpeg-mac-arm filter=lfs diff=lfs merge=lfs -text
+assets/ffmpeg-native/ffmpeg.exe filter=lfs diff=lfs merge=lfs -text
+assets/ffmpeg-wasm/814.ffmpeg.js filter=lfs diff=lfs merge=lfs -text
+assets/ffmpeg-wasm/814.ffmpeg.js.map filter=lfs diff=lfs merge=lfs -text
+assets/ffmpeg-wasm/ffmpeg-core.js filter=lfs diff=lfs merge=lfs -text
+assets/ffmpeg-wasm/ffmpeg-core.wasm filter=lfs diff=lfs merge=lfs -text
+assets/ffmpeg-wasm/ffmpeg.js filter=lfs diff=lfs merge=lfs -text
+assets/ffmpeg-wasm/ffmpeg.js.map filter=lfs diff=lfs merge=lfs -text
+ffmpeg-native/** filter=lfs diff=lfs merge=lfs -text
+ffmpeg-wasm/** filter=lfs diff=lfs merge=lfs -text

@@ -24,6 +24,7 @@
   "img_err": "Could not extract image data.",
   "donating": "If you liked using SkelForm, a [donation](https://ko-fi.com/retropaintt) is highly appreciated!\n\nThe donation will be through ko-fi.com.\n\nThank you for using SkelForm!",
   "crashed": "SkelForm crashed last time.\n\nThe crash log is located in the same path as the binary.\n\nOpen log file?",
+  "error_vid_export": "Something went wrong with this export:\n\n$export_err\n\nTry changing compability settings. If nothing works, you may export sprite sequences and create a video using an online converter.",
   "startup": {
     "import": "Import",
     "samples": "Samples",
@@ -107,16 +108,49 @@
   },
   "export_modal": {
     "heading": "Export",
-    "bake_ik": "Bake inverse kinematics ℹ:",
-    "bake_ik_desc": "If ticked, inverse kinematics will be baked into all animations where targets are moved.\n\nRecommended if inverse kinematics is only used in animations, especially if developing your own runtime.",
-    "exclude_ik": "Exclude inverse kinematics data ℹ:",
-    "exclude_ik_desc": "Inverse kinematics will be assumed off when exporting.\n\nRecommended to prevent runtimes from mixing up baked and real-time inverse kinematics.",
-    "img_format": "Atlas image format:",
-    "clear_color": "Clear Color ℹ:",
-    "clear_color_desc": "The color that transparent pixels will be represented by",
+    "no_anims": "Export unavailable - no animations.\n\nTo export the rest pose, create an empty animation.",
+    "header_image": "Image",
+    "header_video": "Video",
+    "header_armature": "Armature",
     "save_button": "Export",
-    "inverse_kinematics": "Inverse Kinematics",
-    "tex_atlas": "Texture Atlas(es)"
+    "armature": {
+      "header": "Export Armature",
+      "bake_ik": "Bake inverse kinematics ℹ:",
+      "bake_ik_desc": "If ticked, inverse kinematics will be baked into all animations where targets are moved.\n\nRecommended if inverse kinematics is only used in animations, especially if developing your own runtime.",
+      "exclude_ik": "Exclude inverse kinematics data ℹ:",
+      "exclude_ik_desc": "Inverse kinematics will be assumed off when exporting.\n\nRecommended to prevent runtimes from mixing up baked and real-time inverse kinematics.",
+      "img_format": "Atlas image format:",
+      "clear_color": "Clear Color ℹ:",
+      "clear_color_desc": "The color that transparent pixels will be represented by",
+      "inverse_kinematics": "Inverse Kinematics",
+      "tex_atlas": "Texture Atlas(es)"
+    },
+    "image": {
+      "header": "Export Image",
+      "export_type": "Export type: ",
+      "spritesheets": "Spritesheets",
+      "sequences": "Sequences",
+      "sprites_per_row": "Sprites per row: ",
+      "size_per_sprite": "Size per sprite: ",
+      "frames": " frames",
+      "animations": "Animations",
+      "image_sequences": "Image sequences ℹ: ",
+      "image_sequences_desc": "Instead of using sheets, sprites will be exported individually",
+      "animations_check_desc": "Include this animation in the export?"
+    },
+    "video": {
+      "header": "Export Video",
+      "resolution": "Resolution: ",
+      "animation": "Animation: ",
+      "format": "Format: ",
+      "compatibility": "Compatibility",
+      "encoder": "Encoder: ",
+      "use_system_ffmpeg": "Use system ffmpeg: ",
+      "use_system_ffmpeg_desc": "SkelForm comes with its own binary for ffmpeg, but this will make it call 'ffmpeg' globally instead.",
+      "background_color": "Background Color: ",
+      "cycles": "Cycles: ",
+      "open_after_export": "Open after export: "
+    }
   },
   "armature_panel": {
     "heading": "Armature",

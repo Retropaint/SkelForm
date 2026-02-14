@@ -510,14 +510,7 @@ fn tri_point(p: &Vec2, a: &Vec2, b: &Vec2, c: &Vec2) -> (f32, f32, f32, f32) {
     (-1., -1., -1., -1.)
 }
 
-/// Stripped-down renderer for screenshot purposes.
-pub fn render_screenshot(
-    render_pass: &mut RenderPass,
-    device: &Device,
-    armature: &Armature,
-    camera: &Camera,
-    config: &Config,
-) {
+pub fn get_sprite_boundary(armature: &Armature, camera: &Camera, config: &Config) -> (Vec2, Vec2) {
     let mut temp_arm = Armature::default();
     temp_arm.bones = armature.bones.clone();
     construction(&mut temp_arm.bones, &armature.bones);
@@ -525,20 +518,49 @@ pub fn render_screenshot(
 
     let mut cam = world_camera(&camera, &config).clone();
     cam.pos = Vec2::new(0., 0.);
-    cam.zoom = 1500.;
+    cam.zoom = 1.;
+
+    let mut left_top = Vec2::new(f32::MAX, -f32::MAX);
+    let mut right_bot = Vec2::new(-f32::MAX, f32::MAX);
 
     for b in 0..temp_arm.bones.len() {
-        if armature.tex_of(temp_arm.bones[b].id) == None {
-            continue;
-        }
-        if temp_arm.bones[b].is_hidden {
+        if armature.tex_of(temp_arm.bones[b].id) == None || temp_arm.bones[b].is_hidden {
             continue;
         }
 
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &temp_arm.bones[b];
-            let mut new_vert =
-                world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
+            let new_vert = world_vert(tb.vertices[v], &cam, 1., Vec2::default());
+
+            let pos = new_vert.pos;
+            left_top = Vec2::new(left_top.x.min(pos.x), left_top.y.max(pos.y));
+            right_bot = Vec2::new(right_bot.x.max(pos.x), right_bot.y.min(pos.y));
+        }
+    }
+
+    (left_top, right_bot)
+}
+
+/// Stripped-down renderer for screenshot purposes.
+pub fn render_screenshot(
+    render_pass: &mut RenderPass,
+    device: &Device,
+    armature: &Armature,
+    camera: &Camera,
+) {
+    let mut temp_arm = Armature::default();
+    temp_arm.bones = armature.bones.clone();
+    construction(&mut temp_arm.bones, &armature.bones);
+    temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
+
+    for b in 0..temp_arm.bones.len() {
+        if armature.tex_of(temp_arm.bones[b].id) == None || temp_arm.bones[b].is_hidden {
+            continue;
+        }
+
+        for v in 0..temp_arm.bones[b].vertices.len() {
+            let tb = &temp_arm.bones[b];
+            let mut new_vert = world_vert(tb.vertices[v], camera, 1., Vec2::default());
             new_vert.add_color = VertexColor::new(0., 0., 0., 0.);
             temp_arm.bones[b].world_verts.push(new_vert);
         }

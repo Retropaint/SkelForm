@@ -1,4 +1,3 @@
-use crate::utils;
 use egui::IntoAtoms;
 
 use crate::{shared, ui::EguiUi, Display};
@@ -101,7 +100,7 @@ pub fn draw(
     });
 }
 
-fn settings_button(
+pub fn settings_button(
     name: String,
     state: shared::SettingsState,
     ui: &mut egui::Ui,
@@ -231,19 +230,6 @@ fn rendering(
     });
 
     ui.horizontal(|ui| {
-        let str_heading = &shared_ui.loc("settings_modal.rendering.pixel_mag");
-        ui.label(str_heading);
-        let id = "pixelmag".to_string();
-        let (edited, value, _) =
-            ui.float_input(id, shared_ui, config.pixel_magnification as f32, 1., None);
-        if edited {
-            config.pixel_magnification = (value as i32).max(1);
-        }
-        let window = camera.window / config.pixel_magnification as f32;
-        ui.label("= ".to_owned() + &window.x.to_string() + ", " + &window.y.to_string());
-    });
-
-    ui.horizontal(|ui| {
         let str_gridline_gap = &shared_ui.loc("settings_modal.rendering.gridline_gap");
         ui.label(str_gridline_gap);
         let gap = config.gridline_gap as f32;
@@ -257,6 +243,19 @@ fn rendering(
         let str_gridline_gap = &shared_ui.loc("settings_modal.rendering.gridline_front");
         ui.label(str_gridline_gap);
         ui.checkbox(&mut config.gridline_front, "".into_atoms());
+    });
+
+    ui.horizontal(|ui| {
+        let str_heading = &shared_ui.loc("settings_modal.rendering.pixel_mag");
+        ui.label(str_heading);
+        let id = "pixelmag".to_string();
+        let (edited, value, _) =
+            ui.float_input(id, shared_ui, config.pixel_magnification as f32, 1., None);
+        if edited {
+            config.pixel_magnification = (value as i32).max(1);
+        }
+        let window = camera.window / config.pixel_magnification as f32;
+        ui.label("= ".to_owned() + &window.x.to_string() + ", " + &window.y.to_string());
     });
 
     let mut alt_col = true;
@@ -328,21 +327,21 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &mut crate::Config
         let str_clear_recents = &shared_ui.loc("settings_modal.miscellaneous.clear_recent_files");
         if ui.skf_button(str_clear_recents).clicked() {
             shared_ui.recent_file_paths = vec![];
-            utils::save_to_recent_files(&vec![]);
+            crate::utils::save_to_recent_files(&vec![]);
         }
     });
 
     ui.add_space(20.);
 
-    let str_startup = &shared_ui.loc("settings_modal.miscellaneous.beta.heading");
-    ui.heading(str_startup);
-    //let text = shared.ui.loc("settings_modal.miscellaneous.beta.warning");
-    let mut text = shared_ui.loc("settings_modal.miscellaneous.beta.nothing");
-    text = text.replace("$version", env!("CARGO_PKG_VERSION"));
-    let mut cache = egui_commonmark::CommonMarkCache::default();
-    let str = utils::markdown(text, shared_ui.local_doc_url.to_string());
-    egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
-    ui.add_space(20.);
+    //let str_startup = &shared_ui.loc("settings_modal.miscellaneous.beta.heading");
+    //ui.heading(str_startup);
+    ////let text = shared.ui.loc("settings_modal.miscellaneous.beta.warning");
+    //let mut text = shared_ui.loc("settings_modal.miscellaneous.beta.nothing");
+    //text = text.replace("$version", env!("CARGO_PKG_VERSION"));
+    //let mut cache = egui_commonmark::CommonMarkCache::default();
+    //let str = utils::markdown(text, shared_ui.local_doc_url.to_string());
+    //egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
+    //ui.add_space(20.);
 
     if ui.button("Intentionally Crash").clicked() {
         panic!();

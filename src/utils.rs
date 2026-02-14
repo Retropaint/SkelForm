@@ -15,7 +15,7 @@ use renderer::construction;
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
-use image::{ExtendedColorType::Rgb8, GenericImage, ImageEncoder};
+use image::{GenericImage, ImageEncoder};
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::Mutex;
 use std::{collections::HashMap, path::PathBuf};
@@ -130,11 +130,14 @@ pub fn open_save_dialog(
 ) {
     let filepath = Arc::clone(&file_path);
     let csaving = Arc::clone(&saving);
-    let is_exporting = save_result == Saving::Exporting;
-    let ext = if is_exporting { "skfe" } else { "skf" };
+    let (ext, name) = match save_result {
+        Saving::Exporting => ("skfe", "SkelForm Armature"),
+        Saving::Spritesheet => ("zip", "Sprites/Spritesheet"),
+        Saving::Video => ("", "Video"),
+        _ => ("skf", "SkelForm Armature"),
+    };
     std::thread::spawn(move || {
-        let fil = "SkelForm Armature";
-        let task = rfd::FileDialog::new().add_filter(fil, &[ext]).save_file();
+        let task = rfd::FileDialog::new().add_filter(name, &[ext]).save_file();
         if task == None {
             return;
         }
@@ -161,7 +164,7 @@ pub fn open_import_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn save_web(armature: &Armature, camera: &Camera, edit_mode: &EditMode, is_export: bool) {
+pub fn save_web(armature: &Armature, camera: &Camera, edit_mode: &EditMode, save_result: Saving) {
     let mut png_bufs = vec![];
     let mut sizes = vec![];
     let mut carmature = armature.clone();
@@ -200,7 +203,164 @@ pub fn save_web(armature: &Armature, camera: &Camera, edit_mode: &EditMode, is_e
     }
 
     let bytes = zip.finish().unwrap().into_inner().to_vec();
-    downloadZip(bytes, is_export);
+    downloadZip(bytes, save_result.to_string());
+}
+
+// process spritesheet buffers, to be used later
+pub fn render_spritesheets(
+    armature: &Armature,
+    shared_ui: &mut shared::Ui,
+    camera: &Camera,
+    config: &Config,
+    backend: &BackendRenderer,
+) {
+    shared_ui.rendered_spritesheets = vec![];
+
+    let mut spritesheet_idx = 0;
+    for a in 0..armature.animations.len() {
+        if !shared_ui.exporting_anims[a] {
+            continue;
+        }
+        shared_ui.rendered_spritesheets.push(vec![]);
+        let anim = &armature.animations[a];
+        let last_frame = if let Some(kf) = anim.keyframes.last() {
+            kf.frame
+        } else {
+            1
+        };
+        let all_frames = last_frame * shared_ui.anim_cycles;
+        let mut new_arm = armature.clone();
+
+        // get maximum sprite boundary, based on the biggest frame of this animation
+        let mut left_top = Vec2::new(f32::MAX, -f32::MAX);
+        let mut right_bot = Vec2::new(-f32::MAX, f32::MAX);
+        for f in 0..all_frames {
+            new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
+            let (lt, br) = renderer::get_sprite_boundary(&new_arm, camera, config);
+            left_top = Vec2::new(left_top.x.min(lt.x), left_top.y.max(lt.y));
+            right_bot = Vec2::new(right_bot.x.max(br.x), right_bot.y.min(br.y));
+        }
+
+        // adjust camera to the biggest boundary
+        let mut cam = camera.clone();
+        cam.pos = (left_top + right_bot) / 2.;
+        cam.zoom = (right_bot.x - cam.pos.x)
+            .max(right_bot.y.abs() - cam.pos.y)
+            .max(left_top.y - cam.pos.y)
+            .max(left_top.x.abs() - cam.pos.x);
+
+        // take screenshots of each frame
+        for f in 0..all_frames {
+            new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
+            let frames = &mut shared_ui.rendered_spritesheets[spritesheet_idx];
+            let clear = &shared_ui.video_clear_bg;
+            backend.take_screenshot(shared_ui.sprite_size, &new_arm, &cam, clear, frames);
+        }
+
+        spritesheet_idx += 1;
+    }
+}
+
+// take the buffered spritesheets and encode them to be saveable as images
+pub fn encode_spritesheets(
+    armature: &Armature,
+    shared_ui: &mut shared::Ui,
+    backend: &BackendRenderer,
+) -> Vec<Vec<u8>> {
+    let mut bufs = vec![];
+
+    let mut idx = 0;
+    for a in 0..armature.animations.len() {
+        if !shared_ui.exporting_anims[a] {
+            continue;
+        }
+        let rows: f32 = f32::round(
+            (shared_ui.rendered_spritesheets[idx].len() / shared_ui.sprites_per_row as usize)
+                as f32,
+        ) + 1.;
+        let sheet_size = Vec2::new(
+            shared_ui.sprite_size.x * shared_ui.sprites_per_row as f32 + 1.,
+            shared_ui.sprite_size.y * rows as f32 + 1.,
+        );
+
+        let mut sheet = image::RgbaImage::new(sheet_size.x as u32, sheet_size.y as u32);
+        let mut column = 0;
+        let mut height = 0;
+        for (_, sprite) in shared_ui.rendered_spritesheets[idx].iter().enumerate() {
+            let img = utils::process_screenshot(
+                &sprite.buffer,
+                &backend.gpu.device,
+                shared_ui.sprite_size,
+            );
+            let new_img = image::load_from_memory(&img).unwrap();
+            sheet
+                .copy_from(&new_img, column * shared_ui.sprite_size.x as u32, height)
+                .unwrap();
+            column += 1;
+            if column >= shared_ui.sprites_per_row as u32 {
+                height += shared_ui.sprite_size.y as u32;
+                column = 0;
+            }
+        }
+
+        let mut png_buf = Vec::new();
+        let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
+
+        let rgba8 = image::ExtendedColorType::Rgba8;
+        encoder
+            .write_image(sheet.as_raw(), sheet.width(), sheet.height(), rgba8)
+            .unwrap();
+
+        bufs.push(png_buf);
+        idx += 1;
+    }
+
+    bufs
+}
+
+pub fn encode_sequence(
+    armature: &Armature,
+    shared_ui: &mut shared::Ui,
+    backend: &BackendRenderer,
+) -> Vec<Vec<Vec<u8>>> {
+    let mut bufs = vec![];
+
+    let mut idx = 0;
+    for a in 0..armature.animations.len() {
+        if !shared_ui.exporting_anims[a] {
+            continue;
+        }
+
+        bufs.push(vec![]);
+
+        for (_, sprite) in shared_ui.rendered_spritesheets[idx].iter().enumerate() {
+            let img = utils::process_screenshot(
+                &sprite.buffer,
+                &backend.gpu.device,
+                shared_ui.sprite_size,
+            );
+            let new_img = image::load_from_memory(&img).unwrap();
+
+            let mut png_buf = Vec::new();
+            let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
+
+            let rgba8 = image::ExtendedColorType::Rgba8;
+            encoder
+                .write_image(
+                    new_img.as_rgba8().unwrap(),
+                    new_img.width(),
+                    new_img.height(),
+                    rgba8,
+                )
+                .unwrap();
+
+            bufs.last_mut().unwrap().push(png_buf);
+        }
+
+        idx += 1;
+    }
+
+    bufs
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -817,7 +977,7 @@ pub fn open_docs(is_dev: bool, mut _path: &str) {
     // open the local docs, or online if it can't be found on default path
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let url = bin_path() + docs_name + "/" + _path;
+        let url = bin_path().join(docs_name).join(_path);
         match open::that(url) {
             Err(_) => {
                 let url =
@@ -832,24 +992,10 @@ pub fn open_docs(is_dev: bool, mut _path: &str) {
     }
 }
 
-pub fn bin_path() -> String {
-    #[cfg(feature = "debug")]
-    return "".to_string();
-
-    let mut bin = std::env::current_exe()
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string();
-
-    // remove executable from path
-    let _ = bin.split_off(bin.find("SkelForm").unwrap());
-
-    if cfg!(target_os = "macos") {
-        bin.push_str("SkelForm.app/Contents/MacOS/")
-    }
-
-    bin
+pub fn bin_path() -> std::path::PathBuf {
+    let exe_path = std::env::current_exe().unwrap();
+    let exe_dir = exe_path.parent().unwrap();
+    exe_dir.to_path_buf()
 }
 
 pub fn save_config(config: &Config) {
@@ -957,45 +1103,66 @@ pub fn without_unicode(str: &str) -> &str {
     str.split('\u{0000}').collect::<Vec<_>>()[0]
 }
 
-pub fn process_thumbnail(
+pub fn process_screenshot(
     buffer: &wgpu::Buffer,
     device: &wgpu::Device,
     resolution: Vec2,
 ) -> Vec<u8> {
-    device
-        .poll(wgpu::PollType::Wait {
-            submission_index: None,
-            timeout: None,
-        })
+    let rgba = process_screenshot_raw(buffer, device, resolution);
+
+    let img = image::RgbaImage::from_raw(resolution.x as u32, resolution.y as u32, rgba)
+        .expect("Invalid RGBA buffer");
+
+    let mut png_buf = Vec::new();
+    let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
+
+    let rgba8 = image::ExtendedColorType::Rgba8;
+    encoder
+        .write_image(img.as_raw(), img.width(), img.height(), rgba8)
         .unwrap();
+
+    png_buf
+}
+
+pub fn process_screenshot_raw(
+    buffer: &wgpu::Buffer,
+    _device: &wgpu::Device,
+    resolution: Vec2,
+) -> Vec<u8> {
     let view = buffer.slice(..).get_mapped_range();
 
-    let mut rgb = vec![0u8; (resolution.x * resolution.y * 3.) as usize];
-    for (j, chunk) in view.as_ref().chunks_exact(4).enumerate() {
-        let offset = j * 3;
-        if offset + 2 > rgb.len() {
-            return vec![];
+    let width = resolution.x as usize;
+    let height = resolution.y as usize;
+
+    // screenshot widths are always a multiple of 256, so get the proepr width
+    let unpadded_bytes_per_row = width * 4;
+    let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT as usize;
+    let padded_bytes_per_row = ((unpadded_bytes_per_row + align - 1) / align) * align;
+    let mut rgba = Vec::with_capacity(width * height * 4);
+
+    for y in 0..height {
+        let row_start = y * padded_bytes_per_row;
+        let row = &view[row_start..row_start + unpadded_bytes_per_row];
+
+        // copy pixels to rgba
+        for px in row.chunks_exact(4) {
+            // use bgra for native
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                rgba.push(px[2]);
+                rgba.push(px[1]);
+                rgba.push(px[0]);
+                rgba.push(px[3]);
+            }
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                rgba.extend_from_slice(px);
+            }
         }
-        rgb[offset + 0] = chunk[2];
-        rgb[offset + 1] = chunk[1];
-        rgb[offset + 2] = chunk[0];
     }
 
-    type ImgType = image::ImageBuffer<image::Rgb<u8>, Vec<u8>>;
-    let img_buf =
-        <ImgType>::from_raw(resolution.x as u32, resolution.y as u32, rgb.clone()).unwrap();
-
-    let thumb_size = Vec2::new(128., 128.);
-    let mut img = image::DynamicImage::ImageRgb8(img_buf);
-    img = img.thumbnail(thumb_size.x as u32, thumb_size.y as u32);
-
-    let mut thumb_buf: Vec<u8> = Vec::new();
-    let encoder = image::codecs::png::PngEncoder::new(&mut thumb_buf);
-    encoder
-        .write_image(img.to_rgb8().as_raw(), img.width(), img.height(), Rgb8)
-        .unwrap();
-
-    thumb_buf
+    rgba
 }
 
 pub fn markdown(str: String, local_doc_url: String) -> String {

@@ -753,6 +753,16 @@ pub fn process_event(
         Events::SetExportImgFormat => {
             edit_mode.export_img_format = ExportImgFormat::from_repr(value as usize).unwrap()
         }
+        Events::OpenExportModal => {
+            ui.export_modal = true;
+            ui.video_clear_bg = config.colors.background;
+            ui.exporting_video_type = ExportVideoType::Mp4;
+            ui.exporting_anims = vec![];
+            ui.anim_cycles = 1;
+            for _ in &armature.animations {
+                ui.exporting_anims.push(true);
+            }
+        }
         _ => {}
     }
 }
@@ -784,7 +794,7 @@ pub fn center_verts(verts: &mut Vec<Vertex>) {
 fn open_modal(ui: &mut crate::Ui, forced: bool, headline: String) {
     ui.modal = true;
     ui.forced_modal = forced;
-    ui.headline = headline;
+    ui.headline = headline.replace("$export_err", &ui.export_error);
 }
 
 fn select_bone(

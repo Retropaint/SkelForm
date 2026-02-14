@@ -124,10 +124,13 @@ fn init_shared(shared: &mut Shared) {
     shared.selections.bind = -1;
     shared.ui.styles_modal_size = Vec2::new(500., 500.);
     shared.screenshot_res = Vec2::new(128., 128.);
+    shared.ui.sprite_size = Vec2::new(128., 128.);
+    shared.ui.sprites_per_row = 4;
     shared.renderer.changed_vert_id = -1;
     shared.ui.dragging_slice = usize::MAX;
     shared.edit_mode.export_exclude_ik = true;
     shared.ui.can_quit = true;
+    shared.ui.open_after_export = true;
 
     #[cfg(feature = "debug")]
     {
@@ -136,8 +139,17 @@ fn init_shared(shared: &mut Shared) {
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        match std::fs::exists(utils::bin_path() + "dev-docs") {
-            Ok(_) => shared.ui.local_doc_url = utils::bin_path(),
+        println!(
+            "{} {}",
+            utils::bin_path()
+                .join("dev-docs")
+                .to_str()
+                .unwrap()
+                .to_string(),
+            std::fs::exists(utils::bin_path().join("dev-docs")).unwrap()
+        );
+        match std::fs::exists(utils::bin_path().join("dev-docs")) {
+            Ok(_) => shared.ui.local_doc_url = utils::bin_path().to_str().unwrap().to_string(),
             _ => {}
         }
 
@@ -156,6 +168,8 @@ fn init_shared(shared: &mut Shared) {
             shared.config = data;
         }
         utils::save_config(&shared.config);
+        // prevents calling utils::bin_path (crashes on web)
+        shared.ui.use_system_ffmpeg = true;
     }
 
     if !shared.config.skip_startup {
@@ -198,6 +212,12 @@ pub fn install_panic_handler() {
                 eprintln!("Failed to open panic log at {:?}", utils::crashlog_file());
                 std::process::exit(1);
             });
+
+        if let Some(message) = panic_info.payload().downcast_ref::<&str>() {
+            let _ = writeln!(file, "Message: {}", message);
+        } else if let Some(message) = panic_info.payload().downcast_ref::<String>() {
+            let _ = writeln!(file, "Message: {}", message);
+        }
 
         if let Some(location) = panic_info.location() {
             let _ = writeln!(
