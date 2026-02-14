@@ -1516,7 +1516,7 @@ fn draw_gridline(
     let mut x = (cam.pos.x - cam.zoom / camera.aspect_ratio()).round();
     let right_side = cam.pos.x + cam.zoom / camera.aspect_ratio();
     while x < right_side {
-        if x % renderer.gridline_gap as f32 != 0. {
+        if x % config.gridline_gap as f32 != 0. {
             x += 1.;
             continue;
         }
@@ -1535,7 +1535,7 @@ fn draw_gridline(
     let mut y = (cam.pos.y - cam.zoom).round();
     let top_side = cam.pos.y + cam.zoom;
     while y < top_side {
-        if y % renderer.gridline_gap as f32 != 0. {
+        if y % config.gridline_gap as f32 != 0. {
             y += 1.;
             continue;
         }

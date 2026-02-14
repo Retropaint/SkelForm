@@ -168,7 +168,6 @@ fn init_shared(shared: &mut Shared) {
     }
 
     shared.ui.scale = shared.config.ui_scale;
-    shared.renderer.gridline_gap = shared.config.gridline_gap;
 
     // if this were false, the first click would always
     // be considered non-UI

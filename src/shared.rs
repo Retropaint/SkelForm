@@ -1981,7 +1981,6 @@ pub struct Renderer {
     pub initialized_window: bool,
     pub has_loaded: bool,
     pub bone_init_rot: f32,
-    pub gridline_gap: i32,
     pub new_vert: Option<Vertex>,
     pub started_dragging_verts: bool,
     pub sel_temp_bone: Option<Bone>,

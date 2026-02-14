@@ -487,7 +487,6 @@ pub fn process_event(
         }
         Events::ApplySettings => {
             ui.scale = config.ui_scale;
-            renderer.gridline_gap = config.gridline_gap;
             crate::utils::save_config(&config);
         }
         Events::NewBone => {
