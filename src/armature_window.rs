@@ -233,7 +233,8 @@ pub fn draw_hierarchy(
                     });
                     let (edited, value, _) = ui.text_input(context_id, shared_ui, bone, options);
                     if edited {
-                        events.rename_bone(sel.bone_idx, value);
+                        events.save_bone(idx as usize);
+                        events.rename_bone(idx as usize, value);
                     }
                     return;
                 }

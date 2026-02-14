@@ -32,13 +32,12 @@ pub fn iterate_events(
         type E = Events;
         #[rustfmt::skip]
             match last_event {
-                E::NewBone | E::DragBone | E::DeleteBone  => undo_states.new_undo_bones(&armature.bones),
+                E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone  => undo_states.new_undo_bones(&armature.bones),
                 E::NewAnimation | E::DeleteAnim           => undo_states.new_undo_anims(&armature.animations),
                 E::DeleteKeyframe | E::DeleteKeyframeLine => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
                 E::DeleteTex                              => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
                 E::DeleteStyle | E::NewStyle              => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
-                E::RenameBone  => if !ui.just_made_bone  { undo_states.new_undo_bone( &armature.sel_bone( &selections).unwrap()); ui.just_made_bone  = false }
                 E::RenameAnim  => if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap()); ui.just_made_anim  = false }
 
                 E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts => {
