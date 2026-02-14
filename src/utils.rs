@@ -254,7 +254,9 @@ pub fn render_spritesheets(
             new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
             let frames = &mut shared_ui.rendered_spritesheets[spritesheet_idx];
             let clear = &shared_ui.video_clear_bg;
-            backend.take_screenshot(shared_ui.sprite_size, &new_arm, &cam, clear, frames, config);
+            let mapped_frames = &mut shared_ui.mapped_frames;
+            let size = shared_ui.sprite_size;
+            backend.take_screenshot(size, &new_arm, &cam, clear, frames, mapped_frames, config);
         }
 
         spritesheet_idx += 1;
@@ -1129,6 +1131,13 @@ pub fn process_screenshot_raw(
     _device: &wgpu::Device,
     resolution: Vec2,
 ) -> Vec<u8> {
+    #[cfg(not(target_arch = "wasm32"))]
+    _device
+        .poll(wgpu::PollType::Wait {
+            submission_index: None,
+            timeout: None,
+        })
+        .unwrap();
     let view = buffer.slice(..).get_mapped_range();
 
     let width = resolution.x as usize;

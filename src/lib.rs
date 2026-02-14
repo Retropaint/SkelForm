@@ -8,7 +8,10 @@
 //!
 //! `todo:` - not important as of being written, but good to keep in mind.
 
-use std::io::{Seek, Write};
+use std::{
+    io::{Seek, Write},
+    sync::Mutex,
+};
 
 use egui_wgpu::wgpu::ExperimentalFeatures;
 use shared::*;
@@ -739,9 +742,19 @@ impl BackendRenderer {
 
     fn skf_render(&mut self, shared: &mut Shared, render_pass: &mut wgpu::RenderPass) {
         // if the spritesheet timer has initiaed, wait a little for all buffers to complete before saving them
-        let elapsed = shared.ui.spritesheet_elapsed;
+        let elapsed = &mut shared.ui.spritesheet_elapsed;
         let duration_in_millis = 250;
-        if elapsed != None && elapsed.unwrap().elapsed().as_millis() > duration_in_millis {
+
+        // keep timer still until all frames have been mapped
+        let mut total_frames = 0;
+        for sheet in &shared.ui.rendered_spritesheets {
+            total_frames += sheet.len();
+        }
+        if *shared.ui.mapped_frames.lock().unwrap() < total_frames {
+            *elapsed = Some(Instant::now());
+        }
+
+        if *elapsed != None && elapsed.unwrap().elapsed().as_millis() > duration_in_millis {
             if shared.ui.exporting_video_type != ExportVideoType::None {
                 #[rustfmt::skip]
                 let bufs = utils::encode_sequence(&shared.armature, &mut shared.ui, self);
@@ -809,6 +822,7 @@ impl BackendRenderer {
             shared.ui.spritesheet_elapsed = None;
             shared.ui.modal = false;
             shared.ui.sprite_size = shared.screenshot_res;
+            *shared.ui.mapped_frames.lock().unwrap() = 0;
         }
 
         if shared.renderer.generic_bindgroup == None {
@@ -995,7 +1009,7 @@ impl BackendRenderer {
 
         let mut frames = vec![];
         #[rustfmt::skip]
-        self.take_screenshot(shared.screenshot_res, &shared.armature, &shared.camera, &shared.config.colors.background, &mut frames, &shared.config);
+        self.take_screenshot(shared.screenshot_res, &shared.armature, &shared.camera, &shared.config.colors.background, &mut frames, &mut shared.ui.mapped_frames, &shared.config);
         let buffer = frames[0].buffer.clone();
         let screenshot_res = shared.screenshot_res;
 
@@ -1077,6 +1091,7 @@ impl BackendRenderer {
         camera: &Camera,
         clear_color: &Color,
         rendered_frames: &mut Vec<RenderedFrame>,
+        mapped_frames: &mut Arc<Mutex<usize>>,
         config: &Config,
     ) {
         let width = screenshot_res.x as u32;
@@ -1187,10 +1202,12 @@ impl BackendRenderer {
             height,
         });
 
+        let arc_mapped_frames = Arc::clone(mapped_frames);
         self.gpu.queue.submit(std::iter::once(encoder.finish()));
         let buffer_slice = output_buffer.slice(..);
-        buffer_slice.map_async(wgpu::MapMode::Read, |result| {
+        buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
             if let Ok(()) = result {
+                *arc_mapped_frames.lock().unwrap() += 1;
             } else {
                 println!("Failed to map buffer for read.");
             }

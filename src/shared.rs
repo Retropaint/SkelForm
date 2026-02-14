@@ -676,6 +676,7 @@ pub struct Ui {
     pub video_clear_bg: Color,
     pub anim_cycles: i32,
     pub export_error: String,
+    pub mapped_frames: Arc<Mutex<usize>>,
 
     // used for the UpdateConfig event
     pub updated_config: Config,
