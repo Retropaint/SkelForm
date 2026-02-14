@@ -409,7 +409,11 @@ fn check_bone_dragging(
         return false;
     };
 
-    events.drag_bone(is_above, armature.bones[idx].id as usize);
+    events.drag_bone(
+        is_above,
+        armature.bones[idx].id as usize,
+        armature.bones[*drag_payload.unwrap() as usize].id as usize,
+    );
     return true;
 }
 

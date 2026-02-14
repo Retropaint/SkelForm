@@ -201,11 +201,17 @@ pub fn iterate_events(
         events.values.drain(0..=1);
     } else if event == Events::DragBone {
         // dropping dragged bone and moving it (or setting it as child)
-        let pointing_id = events.values[0] as i32;
-        let is_above = events.values[1] == 1.;
+        let is_above = events.values[0] == 1.;
+        let pointing_id = events.values[1] as i32;
+        let dragging_id = events.values[2] as i32;
+        let bones = &armature.bones;
+        if selections.bone_ids.len() < 2 {
+            selections.bone_idx = bones.iter().position(|b| b.id == dragging_id).unwrap();
+            selections.bone_ids = vec![dragging_id];
+        }
         drag_bone(armature, pointing_id, selections, is_above);
         events.events.remove(0);
-        events.values.drain(0..=1);
+        events.values.drain(0..=2);
     } else {
         // normal events: 1 event ID, 1 set of value(s)
 

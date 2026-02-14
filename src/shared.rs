@@ -2283,10 +2283,11 @@ impl EventState {
         self.str_values.push("".to_string());
     }
 
-    pub fn drag_bone(&mut self, is_above: bool, point_id: usize) {
+    pub fn drag_bone(&mut self, is_above: bool, point_id: usize, drag_id: usize) {
         self.events.push(Events::DragBone);
-        self.values.push(point_id as f32);
         self.values.push(if is_above { 1. } else { 0. });
+        self.values.push(point_id as f32);
+        self.values.push(drag_id as f32);
     }
 
     pub fn set_keyframe_frame(&mut self, keyframe: usize, frame: usize) {
