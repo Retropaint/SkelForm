@@ -321,8 +321,8 @@ pub fn draw_textures_list(
                 .inner_margin(5.)
                 .fill(darker.into())
                 .show(ui, |ui| {
-                    ui.set_width(size.x - tex_frame_padding.x + 5.);
-                    ui.set_height(size.y - tex_frame_padding.y + 5.);
+                    ui.set_width(size.x);
+                    ui.set_height(size.y - 10.);
                 });
             return;
         }
@@ -334,7 +334,7 @@ pub fn draw_textures_list(
             }
             let frame = egui::Frame::new().fill(darker.into()).inner_margin(2.);
             frame.show(ui, |ui| {
-                ui.set_width(size.x - tex_frame_padding.x);
+                ui.set_max_width(size.x - tex_frame_padding.x);
                 ui.set_height(size.y - tex_frame_padding.y);
 
                 if set_idx == usize::MAX {
@@ -416,6 +416,7 @@ fn draw_bones_list(
     selections: &SelectionState,
     events: &mut EventState,
 ) {
+    let padding = Vec2::new(0., 33.);
     ui.vertical(|ui| {
         ui.horizontal(|ui| {
             let str_heading = &shared_ui.loc("styles_modal.bones");
@@ -423,15 +424,14 @@ fn draw_bones_list(
         });
 
         if selections.style == -1 {
-            let size = ui.available_size();
             let mut darker = config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
             egui::Frame::new()
                 .inner_margin(5.)
                 .fill(darker.into())
                 .show(ui, |ui| {
-                    ui.set_width(size.x - 50.);
-                    ui.set_height(size.y - 10.);
+                    ui.set_width((modal_width / 3.) - padding.x);
+                    ui.set_height(height - 31.);
                 });
             return;
         }
@@ -442,13 +442,8 @@ fn draw_bones_list(
                 .fill(config.colors.dark_accent.into())
                 .inner_margin(6.);
             frame.show(ui, |ui| {
-                let padding = Vec2::new(0., 33.);
-                ui.set_width((modal_width / 3.) - padding.x);
+                ui.set_max_width((modal_width / 3.) - padding.x);
                 ui.set_height(height - padding.y);
-
-                if selections.style == -1 {
-                    return;
-                }
 
                 let styles = &armature.styles;
                 let tex_id = selections.style;
@@ -617,13 +612,9 @@ fn draw_assigned_list(
                 .fill(config.colors.dark_accent.into())
                 .inner_margin(6.);
             frame.show(ui, |ui| {
-                ui.set_width(default_width);
+                ui.set_max_width(default_width);
                 let padding = Vec2::new(20., 33.);
                 ui.set_height(height - padding.y);
-
-                if selections.style == -1 {
-                    return;
-                }
 
                 let styles = &armature.styles;
                 let tex_id = selections.style;
@@ -648,7 +639,7 @@ fn draw_assigned_list(
                         }
                         let bone = armature.bones[b].clone();
                         let mut raw_str = bone.tex.to_string();
-                        let max_letters = 13;
+                        let max_letters = 11;
                         if raw_str.len() > max_letters - 1 {
                             raw_str =
                                 raw_str[0..max_letters.min(raw_str.len())].to_string() + "...";
