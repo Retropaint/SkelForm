@@ -57,7 +57,7 @@ pub fn draw(
             let hand = egui::CursorIcon::PointingHand;
             if ui.label(text).on_hover_cursor(hand).clicked() {
                 let str = shared_ui.loc("polar.delete_bone").clone().to_string();
-                let context_id = "b_".to_owned() + &armature.sel_bone(&sel).unwrap().id.to_string();
+                let context_id = "b_".to_owned() + &sel.bone_idx.to_string();
                 shared_ui.context_menu.id = context_id;
                 shared_ui.context_menu.keep = true;
                 events.open_polar_modal(PolarId::DeleteBone, str);
