@@ -321,6 +321,7 @@ pub fn image_export(
         let anim = &armature.animations[a];
         egui::Frame::new().fill(col.into()).show(ui, |ui| {
             ui.horizontal(|ui| {
+                ui.set_width(width + 10.);
                 ui.label(anim.name.to_string());
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let mut meta_col = config.colors.text;
@@ -350,7 +351,7 @@ pub fn video_export(
     armature: &Armature,
 ) {
     ui.heading(shared_ui.loc("export_modal.video.header"));
-    let _width = ui.available_width() - 10.;
+    let _width = ui.available_width() - 20.;
 
     if armature.animations.len() == 0 {
         ui.label(shared_ui.loc("export_modal.no_anims"));
