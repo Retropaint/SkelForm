@@ -1355,15 +1355,21 @@ impl Armature {
         )
     }
 
-    pub fn get_all_parents(&self, bone_id: i32) -> Vec<Bone> {
-        let bone = self.bones.iter().find(|b| b.id == bone_id).unwrap().clone();
+    pub fn get_all_parents(&self, is_anim: bool, bone_id: i32) -> Vec<Bone> {
+        let bones = if is_anim {
+            &self.animated_bones
+        } else {
+            &self.bones
+        };
+
+        let bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
 
         // add own bone temporarily
         let mut parents: Vec<Bone> = vec![bone];
 
         while parents.last().unwrap().parent_id != -1 {
             let id = parents.last().unwrap().parent_id;
-            let parent = self.bones.iter().find(|b| b.id == id);
+            let parent = bones.iter().find(|b| b.id == id);
             parents.push(parent.unwrap().clone());
         }
 
@@ -1383,8 +1389,7 @@ impl Armature {
             return;
         }
 
-        let new_parents = self.get_all_parents(bone_id);
-
+        let new_parents = self.get_all_parents(false, bone_id);
         for parent in new_parents {
             let parent_pos = parent.pos;
             self.find_bone_mut(bone_id).unwrap().pos -= parent_pos;
@@ -1521,6 +1526,35 @@ impl Armature {
             return Some(&mut self.bones[selections.bone_idx]);
         }
         None
+    }
+
+    pub fn is_bone_hidden(&self, is_anim: bool, propagate: bool, bone_id: i32) -> bool {
+        let bones = if is_anim {
+            &self.animated_bones
+        } else {
+            &self.bones
+        };
+
+        let bone = bones.iter().find(|b| b.id == bone_id);
+
+        if bone == None {
+            return false;
+        }
+        if !propagate {
+            return bone.unwrap().is_hidden;
+        }
+        if bone.unwrap().is_hidden {
+            return true;
+        }
+
+        let parents = self.get_all_parents(is_anim, bone_id);
+        for parent in &parents {
+            if parent.is_hidden {
+                return true;
+            }
+        }
+
+        false
     }
 }
 

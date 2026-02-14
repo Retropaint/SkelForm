@@ -253,7 +253,9 @@
     "animation": {
       "heading": "Animation",
       "edit_while_playing": "Edit while playing:",
-      "edit_while_playing_desc": "By default, edits won't be recorded if an animation is playing to prevent accidents.\n\nTick this allow editing while an animation is playing."
+      "edit_while_playing_desc": "By default, edits won't be recorded if an animation is playing to prevent accidents.\n\nTick this allow editing while an animation is playing.",
+      "propagate_visibility": "Propagate visibility ℹ:",
+      "propagate_visibility_desc": "By default, bones do not propagate their current visibily onto their children.\n\nThis is to replicate simple runtime behavior, where propagation is likely to not be implemented.\n\n"
     },
     "rendering": {
       "heading": "Rendering",

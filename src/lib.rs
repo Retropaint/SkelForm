@@ -995,7 +995,7 @@ impl BackendRenderer {
 
         let mut frames = vec![];
         #[rustfmt::skip]
-        self.take_screenshot(shared.screenshot_res, &shared.armature, &shared.camera, &shared.config.colors.background, &mut frames);
+        self.take_screenshot(shared.screenshot_res, &shared.armature, &shared.camera, &shared.config.colors.background, &mut frames, &shared.config);
         let buffer = frames[0].buffer.clone();
         let screenshot_res = shared.screenshot_res;
 
@@ -1077,6 +1077,7 @@ impl BackendRenderer {
         camera: &Camera,
         clear_color: &Color,
         rendered_frames: &mut Vec<RenderedFrame>,
+        config: &Config,
     ) {
         let width = screenshot_res.x as u32;
         let height = screenshot_res.y as u32;
@@ -1135,7 +1136,13 @@ impl BackendRenderer {
             capture_pass.set_pipeline(&self.scene.pipeline);
 
             // core rendering logic handled in renderer.rs
-            renderer::render_screenshot(&mut capture_pass, &self.gpu.device, &armature, &camera);
+            renderer::render_screenshot(
+                &mut capture_pass,
+                &self.gpu.device,
+                &armature,
+                &camera,
+                &config,
+            );
         }
 
         // pad screenshot width to a multiple of 256

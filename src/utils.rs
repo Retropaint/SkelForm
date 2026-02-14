@@ -254,7 +254,7 @@ pub fn render_spritesheets(
             new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
             let frames = &mut shared_ui.rendered_spritesheets[spritesheet_idx];
             let clear = &shared_ui.video_clear_bg;
-            backend.take_screenshot(shared_ui.sprite_size, &new_arm, &cam, clear, frames);
+            backend.take_screenshot(shared_ui.sprite_size, &new_arm, &cam, clear, frames, config);
         }
 
         spritesheet_idx += 1;

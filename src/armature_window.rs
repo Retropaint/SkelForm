@@ -154,7 +154,7 @@ pub fn draw_hierarchy(
 
         let mut dragged = false;
 
-        let parents = armature.get_all_parents(armature.bones[b].id);
+        let parents = armature.get_all_parents(false, armature.bones[b].id);
         let bone = armature.sel_bone(&sel);
         let selected_bone_id = if bone != None { bone.unwrap().id } else { -1 };
 
@@ -166,16 +166,16 @@ pub fn draw_hierarchy(
 
         ui.add_enabled_ui(!setting_ik_target, |ui| {
             ui.horizontal(|ui| {
-                let hidden = armature.animated_bones[b].is_hidden;
+                let hidden = armature.is_bone_hidden(true, config.propagate_visibility, bone_id);
                 let hidden_icon = if hidden { "---" } else { "👁" };
                 let id = "bone_hidden".to_owned() + &b.to_string();
                 if bone_label(hidden_icon, ui, id, Vec2::new(-2., 18.), &config).clicked() {
-                    let is_hidden = armature.animated_bones[b].is_hidden;
-                    let hidden = if !is_hidden { 1. } else { 0. };
+                    let hidden_f32 = if !hidden { 1. } else { 0. };
+                    println!("{}", hidden_f32);
                     let sel = selections.anim;
                     let frame = selections.anim_frame;
                     events.save_edited_bone(b);
-                    events.edit_bone(bone_id, &AnimElement::Hidden, hidden as f32, sel, frame);
+                    events.edit_bone(bone_id, &AnimElement::Hidden, hidden_f32, sel, frame);
                 }
                 ui.add_space(17.);
 
@@ -204,7 +204,7 @@ pub fn draw_hierarchy(
                 let mut selected_col = config.colors.dark_accent;
                 let mut cursor = egui::CursorIcon::PointingHand;
 
-                if armature.animated_bones[b].is_hidden {
+                if hidden {
                     selected_col = config.colors.dark_accent;
                 }
 
@@ -242,10 +242,9 @@ pub fn draw_hierarchy(
                 let button = ui
                     .dnd_drag_source(id, idx, |ui| {
                         ui.set_width(width);
-
                         let name = armature.bones[b].name.to_string();
                         let mut text_col = config.colors.text;
-                        if armature.animated_bones[b].is_hidden {
+                        if hidden {
                             text_col = config.colors.dark_accent;
                             text_col += Color::new(40, 40, 40, 0)
                         }

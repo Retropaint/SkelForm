@@ -107,7 +107,7 @@ pub fn render(
     // pre-draw bone setup
     for b in 0..temp_arm.bones.len() {
         let tex = temp_arm.tex_of(temp_arm.bones[b].id);
-        let parents = armature.get_all_parents(temp_arm.bones[b].id);
+        let parents = armature.get_all_parents(false, temp_arm.bones[b].id);
 
         let selected_bone = armature.sel_bone(&sel);
         if selected_bone != None && selected_bone.unwrap().id == temp_arm.bones[b].id {
@@ -120,7 +120,9 @@ pub fn render(
             }
         }
 
-        if tex == None || temp_arm.bones[b].is_hidden {
+        if tex == None
+            || temp_arm.is_bone_hidden(false, config.propagate_visibility, temp_arm.bones[b].id)
+        {
             continue;
         }
 
@@ -240,7 +242,9 @@ pub fn render(
 
     for b in 0..temp_arm.bones.len() {
         let tex = temp_arm.tex_of(temp_arm.bones[b].id);
-        if tex == None || temp_arm.bones[b].is_hidden {
+        if tex == None
+            || temp_arm.is_bone_hidden(false, config.propagate_visibility, temp_arm.bones[b].id)
+        {
             continue;
         }
 
@@ -547,6 +551,7 @@ pub fn render_screenshot(
     device: &Device,
     armature: &Armature,
     camera: &Camera,
+    config: &Config,
 ) {
     let mut temp_arm = Armature::default();
     temp_arm.bones = armature.bones.clone();
@@ -554,7 +559,10 @@ pub fn render_screenshot(
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
     for b in 0..temp_arm.bones.len() {
-        if armature.tex_of(temp_arm.bones[b].id) == None || temp_arm.bones[b].is_hidden {
+        //if armature.tex_of(temp_arm.bones[b].id) == None || temp_arm.bones[b].is_hidden {
+        if armature.tex_of(temp_arm.bones[b].id) == None
+            || temp_arm.is_bone_hidden(false, config.propagate_visibility, temp_arm.bones[b].id)
+        {
             continue;
         }
 

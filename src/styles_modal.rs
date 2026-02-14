@@ -481,7 +481,7 @@ pub fn draw_bone_buttons(
             continue;
         }
         ui.horizontal(|ui| {
-            let parents = armature.get_all_parents(armature.bones[b].id);
+            let parents = armature.get_all_parents(false, armature.bones[b].id);
             // add space to the left if this is a child
             for _ in 0..parents.len() {
                 armature_window::vert_line(0., ui, &config);
@@ -518,7 +518,7 @@ pub fn draw_bone_buttons(
 
             let name = armature.bones[b].name.to_string();
             let mut text_col = config.colors.text;
-            if armature.bones[b].is_hidden {
+            if armature.is_bone_hidden(false, config.propagate_visibility, armature.bones[b].id) {
                 text_col = config.colors.dark_accent;
                 text_col += crate::Color::new(40, 40, 40, 0)
             }

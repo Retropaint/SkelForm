@@ -78,7 +78,7 @@ pub fn draw(
                     ui.with_layout(layout, |ui| match shared_ui.settings_state {
                         shared::SettingsState::Ui => user_interface(ui, shared_ui),
                         shared::SettingsState::Animation => animation(ui, shared_ui),
-                        shared::SettingsState::Rendering => rendering(ui, shared_ui, camera, events),
+                        shared::SettingsState::Rendering => rendering(ui, shared_ui, camera),
                         shared::SettingsState::Keyboard => keyboard(ui, shared_ui),
                         shared::SettingsState::Misc => misc(ui, shared_ui),
                     });
@@ -246,14 +246,19 @@ fn animation(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
             "".into_atoms(),
         );
     });
+
+    ui.horizontal(|ui| {
+        let str_edit = &shared_ui.loc("settings_modal.animation.propagate_visibility");
+        let str_edit_desc = &shared_ui.loc("settings_modal.animation.propagate_visibility_desc");
+        ui.label(str_edit).on_hover_text(str_edit_desc);
+        ui.checkbox(
+            &mut shared_ui.updated_config.propagate_visibility,
+            "".into_atoms(),
+        );
+    });
 }
 
-fn rendering(
-    ui: &mut egui::Ui,
-    shared_ui: &mut crate::Ui,
-    camera: &crate::Camera,
-    events: &mut crate::EventState,
-) {
+fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camera) {
     ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.rendering.heading");
         ui.heading(str_heading);

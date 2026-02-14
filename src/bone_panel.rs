@@ -164,7 +164,7 @@ pub fn draw(
 
     let mut children = vec![];
     armature_window::get_all_children(&armature.bones, &mut children, &bone);
-    let parents = armature.get_all_parents(bone.id);
+    let parents = armature.get_all_parents(false, bone.id);
 
     ui.add_space(20.);
 
@@ -498,7 +498,7 @@ pub fn mesh_deformation(
     }
 
     // check if this bone is a weight
-    let parents = armature.get_all_parents(bone.id);
+    let parents = armature.get_all_parents(false, bone.id);
     let mut mesh_parent_id = -1;
     'parent: for parent in parents {
         for bind in parent.binds {

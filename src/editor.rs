@@ -1053,7 +1053,7 @@ pub fn drag_bone(
     });
 
     for id in sorted_ids {
-        let old_parents = armature.get_all_parents(id);
+        let old_parents = armature.get_all_parents(false, id);
 
         #[rustfmt::skip] macro_rules! dragged {()=>{armature.find_bone_mut(id).unwrap()}}
         #[rustfmt::skip] macro_rules! pointing{()=>{armature.find_bone_mut(pointing_id).unwrap()}}

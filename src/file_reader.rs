@@ -480,7 +480,9 @@ pub fn read_psd(
         let bones = &shared.armature.bones;
         let effs = bones.iter().filter(|bone| bone.ik_family_id == ik_id);
         let mut pos = effs.clone().last().unwrap().pos;
-        let parents = shared.armature.get_all_parents(effs.last().unwrap().id);
+        let parents = shared
+            .armature
+            .get_all_parents(false, effs.last().unwrap().id);
         for bone in parents {
             pos += bone.pos;
         }

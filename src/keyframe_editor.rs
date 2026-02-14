@@ -370,7 +370,7 @@ pub fn draw_bones_list(
                     let sel = armature.bones.iter().position(|b| b.id == kf_id);
                     events.select_bone(sel.unwrap(), false);
 
-                    let parents = armature.get_all_parents(kf.bone_id);
+                    let parents = armature.get_all_parents(false, kf.bone_id);
                     for parent in &parents {
                         let bones = &armature.bones;
                         let idx = bones.iter().position(|b| b.id == parent.id).unwrap();
