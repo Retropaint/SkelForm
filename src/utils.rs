@@ -977,7 +977,7 @@ pub fn open_docs(is_dev: bool, mut _path: &str) {
     // open the local docs, or online if it can't be found on default path
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let url = bin_path() + docs_name + "/" + _path;
+        let url = bin_path().join(docs_name).join(_path);
         match open::that(url) {
             Err(_) => {
                 let url =
@@ -992,24 +992,10 @@ pub fn open_docs(is_dev: bool, mut _path: &str) {
     }
 }
 
-pub fn bin_path() -> String {
-    #[cfg(feature = "debug")]
-    return "".to_string();
-
-    let mut bin = std::env::current_exe()
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string();
-
-    // remove executable from path
-    let _ = bin.split_off(bin.find("SkelForm").unwrap());
-
-    if cfg!(target_os = "macos") {
-        bin.push_str("SkelForm.app/Contents/MacOS/")
-    }
-
-    bin
+pub fn bin_path() -> std::path::PathBuf {
+    let exe_path = std::env::current_exe().unwrap();
+    let exe_dir = exe_path.parent().unwrap();
+    exe_dir.to_path_buf()
 }
 
 pub fn save_config(config: &Config) {

@@ -119,13 +119,13 @@ fn startup_content(
                 add_thumb_tex!("skellina_icon.png", "../assets/skellina_icon.png");
 
                 let key = "skellington_icon.png";
-                let sample = utils::bin_path() + "samples/" + SKEL_SKF;
+                let sample = utils::bin_path().join("samples").join(SKEL_SKF);
                 let desc = shared_ui.loc("startup.skellington_sample_desc");
                 let name = "Skellington";
                 sample_button!(key, name, sample, desc);
 
                 let key = "skellina_icon.png";
-                let sample = utils::bin_path() + "samples/" + SKELA_SKF;
+                let sample = utils::bin_path().join("samples").join(SKELA_SKF);
                 let desc = shared_ui.loc("startup.skellina_sample_desc");
                 sample_button!(key, "Skellina", sample, desc);
             }
@@ -161,11 +161,11 @@ fn startup_content(
                             break;
                         }
 
-                        let path = shared_ui.recent_file_paths[p].to_string();
+                        let path = PathBuf::from(shared_ui.recent_file_paths[p].to_string());
 
                         // ignore filenames starting with _
-                        let filename = path.split('/').collect::<Vec<_>>();
-                        if filename.last().unwrap().chars().nth(0).unwrap() == '_' {
+                        let filename = path.file_name().unwrap().to_str().unwrap().to_string();
+                        if filename.chars().nth(0).unwrap() == '_' {
                             continue;
                         }
 
@@ -173,12 +173,15 @@ fn startup_content(
 
                         if let Err(_) = std::fs::File::open(&path) {
                             let recent = &shared_ui.recent_file_paths;
-                            let idx = recent.iter().position(|r_path| *r_path == path).unwrap();
+                            let idx = recent
+                                .iter()
+                                .position(|r_path| PathBuf::from(r_path) == path)
+                                .unwrap();
                             shared_ui.recent_file_paths.remove(idx);
                             continue;
                         }
 
-                        skf_file_button(path, ui, ctx, available_width, shared_ui, conf, events);
+                        skf_file_button(&path, ui, ctx, available_width, shared_ui, conf, events);
                         ui.add_space(5.);
                     }
 
@@ -388,7 +391,7 @@ pub fn leftside_button(
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn skf_file_button(
-    path: String,
+    path: &PathBuf,
     ui: &mut egui::Ui,
     ctx: &egui::Context,
     width: f32,
@@ -396,7 +399,7 @@ pub fn skf_file_button(
     config: &Config,
     events: &mut EventState,
 ) {
-    let filename = path.split('/').last().unwrap().to_string();
+    let filename = path.file_name().unwrap().to_str().unwrap().to_string();
     let file = std::fs::File::open(path.clone()).unwrap();
     let mut zip = zip::ZipArchive::new(file);
     if let Err(_) = zip {
@@ -429,7 +432,7 @@ pub fn skf_file_button(
             egui::Pos2::new(ui.min_rect().right() + 25., ui.min_rect().bottom()),
         );
 
-        let id = egui::Id::new("frame rect".to_owned() + &path);
+        let id = egui::Id::new("frame rect".to_owned() + &filename);
         let button = ui
             .interact(gradient_rect, id, egui::Sense::click())
             .on_hover_cursor(egui::CursorIcon::PointingHand);
@@ -504,14 +507,17 @@ pub fn skf_file_button(
         let mut pos = egui::Vec2::new(-21., 0.);
         if file_button_icon("X", "Remove from list", egui::Vec2::new(-20., 8.), pos, ui).clicked() {
             let recent = &shared_ui.recent_file_paths;
-            let idx = recent.iter().position(|rfp| *rfp == path).unwrap();
+            let idx = recent
+                .iter()
+                .position(|rfp| PathBuf::from(rfp) == *path)
+                .unwrap();
             shared_ui.recent_file_paths.remove(idx);
             utils::save_to_recent_files(&shared_ui.recent_file_paths);
         }
         pos += egui::Vec2::new(-21., 0.);
 
         if file_button_icon("🗑", "Delete file", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
-            shared_ui.selected_path = path.clone();
+            shared_ui.selected_path = path.to_str().unwrap().to_string().clone();
             let str_del = &shared_ui.loc("polar.delete_file").replace("$", &filename);
             events.open_polar_modal(PolarId::DeleteFile, str_del.to_string());
         }

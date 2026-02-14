@@ -759,11 +759,19 @@ impl BackendRenderer {
                 } else {
                     #[cfg(target_os = "windows")]
                     {
-                        utils::bin_path() + "ffmpeg.exe"
+                        utils::bin_path()
+                            .join("ffmpeg.exe")
+                            .to_str()
+                            .unwrap()
+                            .to_string()
                     }
                     #[cfg(not(target_os = "windows"))]
                     {
-                        utils::bin_path() + "ffmpeg"
+                        utils::bin_path()
+                            .join("ffmpeg")
+                            .to_str()
+                            .unwrap()
+                            .to_string()
                     }
                 };
                 let size = shared.ui.sprite_size;
@@ -1201,7 +1209,7 @@ impl BackendRenderer {
                     // "-c:v", codec, 
                     "-pix_fmt", "yuv420p",
                     &(_path.to_owned() + &".mp4")])
-                .stderr(Stdio::piped())
+                //.stderr(Stdio::piped())
                 .stdin(Stdio::piped())
                 .spawn();
 
