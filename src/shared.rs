@@ -660,9 +660,10 @@ pub struct Ui {
     pub warnings_open: bool,
     pub save_path: Option<PathBuf>,
     pub changed_window_name: bool,
+
+    // export options
     pub sprite_size: Vec2,
     pub sprites_per_row: i32,
-
     pub spritesheet_elapsed: Option<Instant>,
     pub rendered_spritesheets: Vec<Vec<RenderedFrame>>,
     pub exporting_anims: Vec<bool>,
@@ -675,6 +676,9 @@ pub struct Ui {
     pub video_clear_bg: Color,
     pub anim_cycles: i32,
     pub export_error: String,
+
+    // used for the UpdateConfig event
+    pub updated_config: Config,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -759,6 +763,7 @@ pub struct Config {
     pub ignore_donate: bool,
     pub pixel_magnification: i32,
     pub keys: KeyboardConfig,
+    pub propagate_visibility: bool,
 
     #[serde(skip)]
     pub colors: ColorConfig,
@@ -800,6 +805,7 @@ impl Default for Config {
             edit_while_playing: false,
             ignore_donate: false,
             pixel_magnification: 1,
+            propagate_visibility: false,
         }
     }
 }
@@ -2078,6 +2084,7 @@ pub enum Events {
     SetExportClearColor,
     SetExportImgFormat,
     OpenExportModal,
+    UpdateConfig,
 }
 
 enum_string!(Events);
@@ -2133,6 +2140,7 @@ impl EventState {
     generic_event!(center_bone_verts, Events::CenterBoneVerts);
     generic_event!(trace_bone_verts, Events::TraceBoneVerts);
     generic_event!(open_export_modal, Events::OpenExportModal);
+    generic_event!(update_config, Events::UpdateConfig);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, usize);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);

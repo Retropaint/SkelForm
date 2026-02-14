@@ -763,6 +763,7 @@ pub fn process_event(
                 ui.exporting_anims.push(true);
             }
         }
+        Events::UpdateConfig => *config = ui.updated_config.clone(),
         _ => {}
     }
 }
