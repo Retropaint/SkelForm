@@ -168,7 +168,7 @@ pub fn armature_export(
 ) {
     ui.heading(shared_ui.loc("export_modal.armature.header"));
     ui.add_space(10.);
-    let width = ui.available_width() - 10.;
+    let width = ui.available_width() - 20.;
     egui::Frame::new()
         .fill(config.colors.dark_accent.into())
         .inner_margin(egui::Margin::same(5))
@@ -250,7 +250,7 @@ pub fn image_export(
     armature: &Armature,
 ) {
     ui.heading(shared_ui.loc("export_modal.image.header"));
-    let width = ui.available_width() - 10.;
+    let width = ui.available_width() - 20.;
 
     if armature.animations.len() == 0 {
         ui.label(shared_ui.loc("export_modal.no_anims"));
