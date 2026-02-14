@@ -15,7 +15,7 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
             let same_zindex = armature
                 .bones
                 .iter()
-                .find(|b| b.zindex == bone.zindex && b.id != bone.id)
+                .find(|b| b.tex != "" && b.zindex == bone.zindex && b.id != bone.id)
                 != None;
             if same_zindex {
                 let same_warning = warnings
