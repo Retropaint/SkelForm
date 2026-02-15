@@ -19,6 +19,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          lfs: true
+          
       - name: Cache
         uses: actions/cache@v4
         with:
@@ -27,6 +30,9 @@ jobs:
             ~/.cargo/git
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           
+      - name: pull lfs files
+        run: git lfs pull
+        
       - name: install python
         uses: actions/setup-python@v5
         with:
@@ -54,6 +60,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          lfs: true
 
       - name: Cache
         uses: actions/cache@v4
@@ -62,6 +70,9 @@ jobs:
             C:\Users\runneradmin\.cargo\registry
             C:\Users\runneradmin\.cargo\git
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          
+      - name: pull lfs files
+        run: git lfs pull
 
       - name: install python
         uses: actions/setup-python@v5
@@ -88,6 +99,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          lfs: true
       - name: Cache
         uses: actions/cache@v4
         with:
@@ -95,6 +108,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          
+      - name: pull lfs files
+        run: git lfs pull
           
       - name: install python
         uses: actions/setup-python@v5
