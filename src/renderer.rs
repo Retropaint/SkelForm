@@ -535,7 +535,7 @@ pub fn render_screenshot(
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &temp_arm.bones[b];
             let mut new_vert = world_vert(tb.vertices[v], camera, 1., Vec2::default());
-            new_vert.add_color = VertexColor::new(0., 0., 0., 0.);
+            new_vert.tint = temp_arm.bones[b].tint;
             temp_arm.bones[b].world_verts.push(new_vert);
         }
 
