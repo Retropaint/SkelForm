@@ -2472,7 +2472,7 @@ pub fn generate_id(ids: Vec<i32>) -> i32 {
     return idx;
 }
 
-pub fn does_id_exist(id: i32, ids: Vec<i32>) -> i32 {
+fn does_id_exist(id: i32, ids: Vec<i32>) -> i32 {
     for this_id in ids {
         if this_id == id {
             return id;
