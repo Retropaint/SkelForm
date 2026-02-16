@@ -2456,18 +2456,10 @@ pub struct Shared {
     pub events: EventState,
     pub camera: Camera,
     pub selections: SelectionState,
-
-    pub recording: bool,
-    pub done_recording: bool,
-    // mainly used for video, but can also be used for screenshots
     pub edit_mode: EditMode,
-
     pub config: Config,
-
     pub copy_buffer: CopyBuffer,
-
     pub last_autosave: f32,
-
     pub screenshot_res: Vec2,
 }
 
