@@ -2011,7 +2011,6 @@ pub struct Renderer {
     pub editing_bone: bool,
     pub dragging_verts: Vec<usize>,
     pub generic_bindgroup: Option<BindGroup>,
-    pub ik_arrow_bindgroup: Option<BindGroup>,
     pub changed_vert_id: i32,
     pub changed_vert_init_pos: Option<Vec2>,
     pub initialized_window: bool,

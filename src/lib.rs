@@ -834,16 +834,6 @@ impl BackendRenderer {
                 &self.bind_group_layout,
             ));
         }
-        if shared.renderer.ik_arrow_bindgroup == None {
-            let img = image::load_from_memory(include_bytes!(".././assets/ik_arrow.png")).unwrap();
-            shared.renderer.ik_arrow_bindgroup = Some(renderer::create_texture_bind_group(
-                img.clone().into_rgba8().to_vec(),
-                Vec2::new(img.width() as f32, img.height() as f32),
-                &self.gpu.queue,
-                &self.gpu.device,
-                &self.bind_group_layout,
-            ));
-        }
         if *shared.ui.save_finished.lock().unwrap() {
             shared.undo_states.unsaved_undo_actions = shared.undo_states.undo_actions.len();
             shared.undo_states.prev_undo_actions = shared.undo_states.undo_actions.len();

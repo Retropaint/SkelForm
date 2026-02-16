@@ -258,39 +258,6 @@ pub fn render(
         draw(&bg, &bone.world_verts, &bone.indices, render_pass, device);
     }
 
-    // draw inverse kinematics arrows
-
-    // todo:
-    // only draw arrows for the selected set of bones.
-    // currently it shows all when any are selected.
-    let sel_bone = armature.sel_bone(&sel);
-    if sel_bone != None && armature.bone_eff(sel_bone.unwrap().id) != JointEffector::None {
-        for bone in &temp_arm.bones {
-            let bone_eff = armature.bone_eff(bone.id);
-            if bone_eff == JointEffector::None || bone_eff == JointEffector::End {
-                continue;
-            }
-            let mut arrow = Bone {
-                pos: bone.pos,
-                rot: bone.rot,
-                scale: Vec2::new(2., 2.),
-                ..Default::default()
-            };
-            let size = Vec2::new(61., 48.);
-            (arrow.vertices, arrow.indices) = create_tex_rect(&size);
-            let ratio = camera.aspect_ratio();
-            let pivot = Vec2::new(0., 0.5);
-            for v in 0..4 {
-                let verts = arrow.vertices[v];
-                let mut new_vert = world_vert(verts, &camera, ratio, pivot);
-                new_vert.color = VertexColor::new(1., 1., 1., 0.2);
-                arrow.world_verts.push(new_vert);
-            }
-            let bg = &renderer.ik_arrow_bindgroup;
-            draw(bg, &arrow.world_verts, &arrow.indices, render_pass, device);
-        }
-    }
-
     if edit_mode.showing_mesh || edit_mode.setting_bind_verts {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
