@@ -198,7 +198,9 @@
       "cant_edit": "Transforms cannot be edited for IK child bones.\n\nTo adjust the distance between this bone and the previous, edit the Distance field in the IK section below.",
       "family_index": "Family Index:",
       "mode_label": "Mode:",
-      "go_to_root": "Go to root joint"
+      "go_to_root": "Go to root joint",
+      "distance": "Distance ℹ: ",
+      "distance_desc": "Adjust the distance between this bone, and the previous one in the IK family."
     },
     "mesh_deformation": {
       "heading": "Mesh Deformation",

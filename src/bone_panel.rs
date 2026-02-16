@@ -319,15 +319,17 @@ pub fn inverse_kinematics(
                     ui.selectable_value(&mut selected, -2, "New");
 
                     if selected != -1 {
+                        type A = AnimElement;
                         let mut id = selected;
                         if selected == -2 {
                             id = generate_id(ik_family_ids);
                         } else if selected == -3 {
                             id = -1;
+                        } else {
+                            // reset Y pos if this is a child IK bone
+                            events.edit_bone(bone.id, &A::PositionY, 0., usize::MAX, -1);
                         }
-                        let sel = &selections;
-                        let family_id = AnimElement::IkFamilyId;
-                        events.edit_bone(bone.id, &family_id, id as f32, sel.anim, sel.anim_frame);
+                        events.edit_bone(bone.id, &A::IkFamilyId, id as f32, usize::MAX, -1);
                     }
                 })
                 .response
@@ -342,7 +344,8 @@ pub fn inverse_kinematics(
     let go_to_root_str = shared_ui.loc("bone_panel.inverse_kinematics.go_to_root");
     if root_id != bone.id {
         ui.horizontal(|ui| {
-            ui.label("Distance: ");
+            ui.label(shared_ui.loc("bone_panel.inverse_kinematics.distance"))
+                .on_hover_text(shared_ui.loc("bone_panel.inverse_kinematics.distance_desc"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let id = "ik_distance".to_string();
                 let (edited, value, _) = ui.float_input(id, shared_ui, bone.pos.x, 1., None);
