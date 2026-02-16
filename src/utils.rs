@@ -848,7 +848,7 @@ pub fn import<R: Read + std::io::Seek>(
                 let id = temp_arm.bones[b].ik_bone_ids[i] as i32;
                 let fam_id = temp_arm.bones[b].ik_family_id;
                 let bones = &mut temp_arm.bones;
-                let bone = bones.iter_mut().find(|b| b.id == id);
+                let mut bone = bones.iter_mut().find(|b| b.id == id);
                 if bone == None {
                     custom_err!(
                         "Bone of ID ".to_owned()
@@ -858,7 +858,8 @@ pub fn import<R: Read + std::io::Seek>(
                             + " could not be found."
                     );
                 }
-                bone.unwrap().ik_family_id = fam_id;
+                bone.as_mut().unwrap().ik_family_id = fam_id;
+                bone.as_mut().unwrap().pos.y = 0.;
             }
         }
     }
@@ -943,13 +944,10 @@ pub fn import<R: Read + std::io::Seek>(
                 let mut bind_group: Option<wgpu::BindGroup> = None;
 
                 if queue != None && device != None && bind_group_layout != None {
-                    bind_group = Some(renderer::create_texture_bind_group(
-                        image.clone().into_rgba8().to_vec(),
-                        tex.size,
-                        queue.unwrap(),
-                        device.unwrap(),
-                        bind_group_layout.unwrap(),
-                    ));
+                    let rgba = image.clone().into_rgba8().to_vec();
+                    let bgl = bind_group_layout.unwrap();
+                    let func = renderer::create_texture_bind_group;
+                    bind_group = Some(func(rgba, tex.size, queue.unwrap(), device.unwrap(), bgl));
                 }
 
                 if context == None {
@@ -967,12 +965,8 @@ pub fn import<R: Read + std::io::Seek>(
 
                 let data_id = temp_arm.tex_data.len() as i32;
                 tex.data_id = data_id;
-                temp_arm.tex_data.push(TextureData {
-                    id: data_id,
-                    image,
-                    bind_group,
-                    ui_img: Some(ui_img),
-                });
+                #[rustfmt::skip]
+                temp_arm.tex_data.push(TextureData { id: data_id, image, bind_group, ui_img: Some(ui_img) });
             }
         }
     }

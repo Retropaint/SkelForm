@@ -117,7 +117,9 @@ pub fn draw(
         };
     }
 
-    let has_ik = !bone.ik_disabled && armature.bone_eff(bone.id) != JointEffector::None;
+    let has_ik = bone.ik_family_id != -1
+        && !bone.ik_disabled
+        && armature.bone_eff(bone.id) != JointEffector::Start;
     let str_cant_edit = shared_ui
         .loc("bone_panel.inverse_kinematics.cant_edit")
         .clone();
@@ -144,12 +146,11 @@ pub fn draw(
     .response
     .on_disabled_hover_text(str_cant_edit);
 
-    let not_end_ik = !has_ik || armature.bone_eff(bone.id) == JointEffector::End;
     let str_cant_edit = shared_ui
         .loc("bone_panel.inverse_kinematics.cant_edit")
         .clone();
 
-    ui.add_enabled_ui(not_end_ik, |ui| {
+    ui.add_enabled_ui(!has_ik, |ui| {
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.rotation"), ui);
             let rot_el = &AnimElement::Rotation;
@@ -229,6 +230,10 @@ pub fn inverse_kinematics(
         .fill(config.colors.dark_accent.into())
         .inner_margin(egui::Margin::same(5));
 
+    let bones = &armature.bones;
+    let ik_id = bone.ik_family_id;
+    let root_id = bones.iter().find(|b| b.ik_family_id == ik_id).unwrap().id;
+
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
             ui.label(str_heading.to_owned()).on_hover_text(str_desc);
@@ -246,11 +251,6 @@ pub fn inverse_kinematics(
                 if armature.bone_eff(bone.id) == JointEffector::None {
                     return;
                 }
-
-                //let mut is_root = true;
-                //if armature.bone_eff(bone.id) != JointEffector::Start {
-                //    is_root = false;
-                //}
 
                 //let mut enabled = !bone.ik_disabled;
                 //let str_desc = &shared_ui.loc("bone_panel.inverse_kinematics.enabled_desc");
@@ -339,12 +339,21 @@ pub fn inverse_kinematics(
         return;
     }
 
-    let bones = &armature.bones;
-    let ik_id = bone.ik_family_id;
-    let root_id = bones.iter().find(|b| b.ik_family_id == ik_id).unwrap().id;
-
     let go_to_root_str = shared_ui.loc("bone_panel.inverse_kinematics.go_to_root");
     if root_id != bone.id {
+        ui.horizontal(|ui| {
+            ui.label("Distance: ");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let id = "ik_distance".to_string();
+                let (edited, value, _) = ui.float_input(id, shared_ui, bone.pos.x, 1., None);
+                if edited {
+                    type A = AnimElement;
+                    events.edit_bone(bone.id, &A::PositionX, value, usize::MAX, -1);
+                    events.edit_bone(bone.id, &A::PositionY, 0., usize::MAX, -1);
+                }
+            });
+        });
+
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.skf_button(&go_to_root_str).clicked() {

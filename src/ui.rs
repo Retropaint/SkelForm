@@ -1112,12 +1112,12 @@ fn edit_mode_bar(
     events: &mut EventState,
     shared_ui: &mut crate::Ui,
 ) {
-    let mut ik_disabled = true;
-    let mut is_end = false;
+    let mut has_ik = true;
     let sel = selections.clone();
     if let Some(bone) = armature.sel_bone(&sel) {
-        ik_disabled = bone.ik_disabled || armature.bone_eff(bone.id) == JointEffector::None;
-        is_end = armature.bone_eff(bone.id) == JointEffector::End;
+        has_ik = bone.ik_family_id != -1
+            && !bone.ik_disabled
+            && armature.bone_eff(bone.id) != JointEffector::Start;
     }
 
     // edit mode window
@@ -1141,8 +1141,7 @@ fn edit_mode_bar(
                     })
                 };
             }
-            let ik_disabled = !edit_mode.showing_mesh && ik_disabled;
-            let rot = ik_disabled || is_end;
+            let ik_disabled = !edit_mode.showing_mesh && !has_ik;
             edit_mode_button!(
                 &shared_ui.loc("move"),
                 EditModes::Move,
@@ -1153,7 +1152,7 @@ fn edit_mode_bar(
                 &shared_ui.loc("rotate"),
                 EditModes::Rotate,
                 edit_mode_rotate,
-                rot
+                ik_disabled
             );
             edit_mode_button!(
                 &shared_ui.loc("scale"),

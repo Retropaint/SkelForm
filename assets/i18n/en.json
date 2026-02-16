@@ -195,7 +195,7 @@
       "End": "End",
       "Clockwise": "CW",
       "CounterClockwise": "CCW",
-      "cant_edit": "Turn off inverse kinematics to edit",
+      "cant_edit": "Transforms cannot be edited for IK child bones.\n\nTo adjust the distance between this bone and the previous, edit the Distance field in the IK section below.",
       "family_index": "Family Index:",
       "mode_label": "Mode:",
       "go_to_root": "Go to root joint"
