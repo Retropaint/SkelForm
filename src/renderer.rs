@@ -416,15 +416,14 @@ pub fn render(
         return;
     }
 
-    let mut ik_disabled = true;
+    let mut has_ik = false;
     if let Some(bone) = armature.sel_bone(&sel) {
-        let is_end = edit_mode.current == EditModes::Rotate
-            && armature.bone_eff(bone.id) == JointEffector::End;
-        ik_disabled =
-            is_end || (bone.ik_disabled || armature.bone_eff(bone.id) == JointEffector::None);
+        has_ik = bone.ik_family_id != -1
+            && !bone.ik_disabled
+            && armature.bone_eff(bone.id) != JointEffector::Start;
     }
 
-    if edit_mode.showing_mesh || !ik_disabled {
+    if edit_mode.showing_mesh || has_ik {
         return;
     }
 
@@ -713,10 +712,6 @@ pub fn inverse_kinematics(bones: &mut Vec<Bone>, target: Vec2) {
     let end_bone = bones.last().unwrap();
     let mut tip_pos = end_bone.pos;
     for b in (0..bones.len()).rev() {
-        if b == bones.len() - 1 {
-            continue;
-        }
-
         let dir = tip_pos - bones[b].pos;
         bones[b].rot = dir.y.atan2(dir.x);
         tip_pos = bones[b].pos;
@@ -775,10 +770,7 @@ pub fn fabrik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
     let mut next_pos: Vec2 = target;
     let mut next_length = 0.;
     for b in (0..bones.len()).rev() {
-        let mut length = (next_pos - bones[b].pos).normalize() * next_length;
-        if length.x.is_nan() {
-            length = Vec2::new(0., 0.);
-        }
+        let length = (next_pos - bones[b].pos).normalize() * next_length;
         if b != 0 {
             next_length = (bones[b].pos - bones[b - 1].pos).mag();
         }
@@ -790,10 +782,7 @@ pub fn fabrik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
     let mut prev_pos: Vec2 = root;
     let mut prev_length = 0.;
     for b in 0..bones.len() {
-        let mut length = (prev_pos - bones[b].pos).normalize() * prev_length;
-        if length.x.is_nan() {
-            length = Vec2::new(0., 0.);
-        }
+        let length = (prev_pos - bones[b].pos).normalize() * prev_length;
         if b != bones.len() - 1 {
             prev_length = (bones[b].pos - bones[b + 1].pos).mag();
         }
