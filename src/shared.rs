@@ -681,6 +681,8 @@ pub struct Ui {
 
     // used for the UpdateConfig event
     pub updated_config: Config,
+
+    pub bone_tops: BoneTops,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -1852,7 +1854,7 @@ impl AnimElement {
 
 enum_string!(AnimElement);
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct BoneTops {
     pub tops: Vec<BoneTop>,
 }
@@ -1891,7 +1893,7 @@ pub struct EditMode {
     pub export_clear_color: Color,
 }
 
-#[derive(Default, PartialEq, Debug)]
+#[derive(Default, PartialEq, Debug, Clone)]
 pub struct BoneTop {
     pub id: i32,
     pub element: AnimElement,

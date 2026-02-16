@@ -78,16 +78,8 @@ pub fn draw(
                 });
 
                 if selections.anim != usize::MAX {
-                    timeline_editor(
-                        ui,
-                        selections,
-                        armature,
-                        events,
-                        shared_ui,
-                        config,
-                        input,
-                        copy_buffer,
-                    );
+                    #[rustfmt::skip]
+                    timeline_editor(ui, selections, armature, events, shared_ui, config, input, copy_buffer);
                 }
             });
             shared_ui.keyframe_panel_rect = Some(ui.min_rect());
@@ -238,7 +230,7 @@ fn timeline_editor(
         ui.set_height(ui.available_height());
 
         // track the Y of bone change labels for their diamonds
-        let mut bone_tops = BoneTops::default();
+        shared_ui.bone_tops = BoneTops::default();
 
         let sel = selections.clone();
 
@@ -251,15 +243,7 @@ fn timeline_editor(
             });
             frame.show(ui, |ui| {
                 ui.vertical(|ui| {
-                    draw_bones_list(
-                        ui,
-                        &mut bone_tops,
-                        selections,
-                        armature,
-                        config,
-                        shared_ui,
-                        events,
-                    );
+                    draw_bones_list(ui, selections, armature, config, shared_ui, events);
                 });
             });
         }
@@ -316,8 +300,7 @@ fn timeline_editor(
                     copy_buffer,
                 );
                 draw_timeline_graph(
-                    ui, width, bone_tops, hitbox, shared_ui, config, selections, armature, events,
-                    input,
+                    ui, width, hitbox, shared_ui, config, selections, armature, events, input,
                 );
             });
         });
@@ -326,7 +309,6 @@ fn timeline_editor(
 
 pub fn draw_bones_list(
     ui: &mut egui::Ui,
-    bone_tops: &mut BoneTops,
     selections: &SelectionState,
     armature: &Armature,
     config: &Config,
@@ -354,15 +336,22 @@ pub fn draw_bones_list(
         for i in 0..keyframes.len() {
             let kf = &keyframes[i];
 
+            let bones = &armature.bones;
+            let bone = bones.iter().find(|b| b.id == kf.bone_id).unwrap();
+            let highlighted =
+                selections.bone_ids.len() != 0 && selections.bone_ids[0] == kf.bone_id;
+
             if last_bone_id != kf.bone_id {
                 if !first {
                     ui.separator();
                 }
                 first = false;
-                let bones = &armature.bones;
-                let bone = bones.iter().find(|b| b.id == kf.bone_id).unwrap();
+                let mut bone_str = egui::RichText::new(bone.name.clone());
+                if highlighted {
+                    bone_str = bone_str.strong();
+                }
                 let label = ui
-                    .label(bone.name.clone())
+                    .label(bone_str)
                     .on_hover_cursor(egui::CursorIcon::PointingHand)
                     .interact(egui::Sense::click());
                 if label.clicked() {
@@ -391,7 +380,11 @@ pub fn draw_bones_list(
             ui.horizontal(|ui| {
                 ui.add_space(30.);
                 let str = &("keyframe_editor.elements.".to_owned() + &kf.element.to_string());
-                let label = ui.label(&shared_ui.loc(str));
+                let mut element_str = egui::RichText::new(shared_ui.loc(str));
+                if highlighted {
+                    element_str = element_str.strong();
+                }
+                let label = ui.label(element_str);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let mut col = config.colors.text;
                     col -= Color::new(60, 60, 60, 0);
@@ -407,7 +400,7 @@ pub fn draw_bones_list(
                         );
                     }
                 });
-                bone_tops.tops.push(BoneTop {
+                shared_ui.bone_tops.tops.push(BoneTop {
                     id: kf.bone_id,
                     element: kf.element.clone(),
                     height: label.rect.top(),
@@ -554,7 +547,6 @@ pub fn draw_top_bar(
 pub fn draw_timeline_graph(
     ui: &mut egui::Ui,
     width: f32,
-    bone_tops: BoneTops,
     hitbox: f32,
     shared_ui: &mut crate::Ui,
     config: &Config,
@@ -594,7 +586,7 @@ pub fn draw_timeline_graph(
                 }
 
                 #[rustfmt::skip]
-                draw_frame_lines(ui, shared_ui, armature, config, input, selections, events, &bone_tops, hitbox, cursor);
+                draw_frame_lines(ui, shared_ui, armature, config, input, selections, events, hitbox, cursor);
             });
             if ui.ui_contains_pointer() {
                 shared_ui.anim.timeline_offset = response.state.offset.into();
@@ -709,7 +701,6 @@ fn draw_frame_lines(
     input: &InputStates,
     selections: &SelectionState,
     events: &mut EventState,
-    bone_tops: &BoneTops,
     hitbox: f32,
     cursor: Vec2,
 ) {
@@ -766,7 +757,7 @@ fn draw_frame_lines(
 
     let mut last_bone = -1;
     let mut count = 0;
-    for top in &bone_tops.tops {
+    for top in &shared_ui.bone_tops.tops {
         if count < 2 {
             count += 1;
             continue;
@@ -813,7 +804,7 @@ fn draw_frame_lines(
 
         let el = kf.element.clone();
         let b_id = kf.bone_id;
-        let tops = &bone_tops.tops;
+        let tops = &shared_ui.bone_tops.tops;
         if let Some(b_top) = tops.iter().find(|bt| bt.id == b_id && bt.element == el) {
             top = b_top.height;
         } else {
@@ -898,9 +889,9 @@ fn draw_frame_lines(
     }
 
     // create extra space at the bottom
-    if bone_tops.tops.len() > 0 {
+    if shared_ui.bone_tops.tops.len() > 0 {
         let rect = egui::Rect::from_min_size(
-            egui::pos2(0., bone_tops.tops.last().unwrap().height),
+            egui::pos2(0., shared_ui.bone_tops.tops.last().unwrap().height),
             egui::Vec2::new(1., 40.),
         );
         ui.add_space(40.);

@@ -367,7 +367,8 @@ pub fn render(
 
     if input.mouse_init == None {
         if let Some(bone) = armature.sel_bone(&sel) {
-            let sel_anim_bone = armature.animated_bones.iter().find(|b| b.id == bone.id).unwrap();
+            let anim_bones = &armature.animated_bones;
+            let sel_anim_bone = anim_bones.iter().find(|b| b.id == bone.id).unwrap();
             renderer.bone_init_rot = sel_anim_bone.rot;
         }
     }

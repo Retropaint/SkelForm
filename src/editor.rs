@@ -840,6 +840,11 @@ fn select_bone(
 
     sel.bind = -1;
     edit_mode.setting_bind_verts = false;
+    let bone_id = armature.bones[idx].id;
+    if let Some(bone) = ui.bone_tops.tops.iter().find(|b| b.id == bone_id) {
+        ui.anim.timeline_offset.y =
+            bone.height + ui.anim.timeline_offset.y - ui.keyframe_panel_rect.unwrap().top() - 47.;
+    }
 
     // select only this bone if not holding modifiers
     if !input.holding_mod && !input.holding_shift {
