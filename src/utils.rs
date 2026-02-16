@@ -859,7 +859,10 @@ pub fn import<R: Read + std::io::Seek>(
                     );
                 }
                 bone.as_mut().unwrap().ik_family_id = fam_id;
-                bone.as_mut().unwrap().pos.y = 0.;
+                // don't reset Y of root bone
+                if i != 0 {
+                    bone.as_mut().unwrap().pos.y = 0.;
+                }
             }
         }
     }
