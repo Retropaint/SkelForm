@@ -58,12 +58,24 @@ pub fn render(
     // animate next and previous frame armatures for onions
     let mut next_arm = armature.clone();
     let mut prev_arm = armature.clone();
-    let mut prev_sel = selections.clone();
-    prev_sel.anim_frame -= 1;
-    let mut next_sel = selections.clone();
-    next_sel.anim_frame += 1;
-    utils::animate_bones(&mut next_arm, &next_sel, edit_mode);
-    utils::animate_bones(&mut prev_arm, &prev_sel, edit_mode);
+    if selections.anim != usize::MAX {
+        let mut prev_sel = selections.clone();
+        let mut next_sel = selections.clone();
+        let keyframes = &armature.sel_anim(selections).unwrap().keyframes;
+        prev_sel.anim_frame = keyframes[keyframes
+            .iter()
+            .position(|kf| kf.frame > selections.anim_frame)
+            .unwrap_or_else(|| 1)
+            - 1]
+        .frame;
+        if let Some(next_kf) = keyframes.iter().find(|kf| kf.frame > selections.anim_frame) {
+            next_sel.anim_frame = next_kf.frame;
+        } else {
+            next_sel.anim_frame = prev_sel.anim_frame;
+        }
+        utils::animate_bones(&mut next_arm, &next_sel, edit_mode);
+        utils::animate_bones(&mut prev_arm, &prev_sel, edit_mode);
+    }
     prev_arm.bones = prev_arm.animated_bones.clone();
     next_arm.bones = next_arm.animated_bones.clone();
 
@@ -75,8 +87,8 @@ pub fn render(
     }
 
     construction(&mut temp_arm.bones, &anim_bones);
-    construction(&mut next_arm.bones, &anim_bones);
-    construction(&mut prev_arm.bones, &anim_bones);
+    construction(&mut next_arm.bones, &next_arm.animated_bones);
+    construction(&mut prev_arm.bones, &prev_arm.animated_bones);
 
     // adjust bound/unbound vert's pos after construction
     if renderer.changed_vert_id != -1 {
@@ -112,6 +124,8 @@ pub fn render(
 
     // sort bones by highest zindex first, so that hover logic will pick the top-most one
     temp_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
+    prev_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
+    next_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
 
     let mut hover_bone_id = -1;
 
@@ -148,6 +162,7 @@ pub fn render(
             renderer.sel_temp_bone = Some(temp_arm.bones[b].clone());
         }
 
+        // setup world verts
         let cam = world_camera(&camera, &config);
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &mut temp_arm.bones[b];
@@ -155,18 +170,18 @@ pub fn render(
             vert.tint = tb.tint;
             tb.world_verts.push(vert);
         }
-        let cam = world_camera(&camera, &config);
+
+        // setup onion world verts
         for v in 0..prev_arm.bones[b].vertices.len() {
             let tb = &mut prev_arm.bones[b];
             let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
-            vert.tint = TintColor::new(255., 0., 0., 0.5);
+            vert.tint = TintColor::new(255., 0., 0., 0.4);
             tb.world_verts.push(vert);
         }
-        let cam = world_camera(&camera, &config);
         for v in 0..next_arm.bones[b].vertices.len() {
             let tb = &mut next_arm.bones[b];
             let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
-            vert.tint = TintColor::new(0., 0., 255., 0.5);
+            vert.tint = TintColor::new(0., 0., 255., 0.4);
             tb.world_verts.push(vert);
         }
 
@@ -271,35 +286,51 @@ pub fn render(
     prev_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
     next_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
+    // render onion layers
     for b in 0..temp_arm.bones.len() {
         let tex = temp_arm.tex_of(temp_arm.bones[b].id);
-        if tex == None
-            || temp_arm.is_bone_hidden(false, config.propagate_visibility, temp_arm.bones[b].id)
-        {
+        let id = temp_arm.bones[b].id;
+        if tex == None || temp_arm.is_bone_hidden(false, config.propagate_visibility, id) {
             continue;
         }
+        let t = tex.unwrap();
+        let bg = armature.tex_data(t).unwrap().bind_group.clone();
+        let mut verts = vec![];
+        let mut indices = vec![];
+        if selections.anim_frame > 0 {
+            let bone = &mut prev_arm.bones[b];
+            let mut offset = 0;
+            if bone.world_verts.len() != 0 {
+                verts.append(&mut bone.world_verts);
+                indices.append(&mut bone.indices);
+                offset = verts.len();
+            }
+            let bone = &mut next_arm.bones[b];
+            if bone.world_verts.len() != 0 {
+                verts.append(&mut bone.world_verts);
+                for index in &bone.indices {
+                    indices.push(*index + offset as u32);
+                }
+            }
+        }
+        if verts.len() > 0 {
+            draw(&bg, &verts, &indices, render_pass, device);
+        }
+    }
 
-        if edit_mode.showing_mesh && armature.sel_bone(&sel).unwrap().id == temp_arm.bones[b].id {
+    // render bones
+    for b in 0..temp_arm.bones.len() {
+        let tex = temp_arm.tex_of(temp_arm.bones[b].id);
+        let id = temp_arm.bones[b].id;
+        if tex == None || temp_arm.is_bone_hidden(false, config.propagate_visibility, id) {
             continue;
         }
-
+        if edit_mode.showing_mesh && armature.sel_bone(&sel).unwrap().id == id {
+            continue;
+        }
         let t = tex.unwrap();
         let bg = armature.tex_data(t).unwrap().bind_group.clone();
         let bone = &temp_arm.bones[b];
-
-        // render onion bones
-        if selections.anim_frame > 0 {
-            let bone = &prev_arm.bones[b];
-            if bone.world_verts.len() != 0 {
-                draw(&bg, &bone.world_verts, &bone.indices, render_pass, device);
-            }
-
-            let bone = &next_arm.bones[b];
-            if bone.world_verts.len() != 0 {
-                draw(&bg, &bone.world_verts, &bone.indices, render_pass, device);
-            }
-        }
-
         draw(&bg, &bone.world_verts, &bone.indices, render_pass, device);
     }
 
