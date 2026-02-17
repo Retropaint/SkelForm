@@ -56,9 +56,9 @@ pub fn iterate_events(
                 continue;
             }
             if is_in {
-                kf.start_handle = events.values[2];
+                kf.start_tangent = events.values[2];
             } else {
-                kf.end_handle = events.values[2];
+                kf.end_tangent = events.values[2];
             }
         }
 

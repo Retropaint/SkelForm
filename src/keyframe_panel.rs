@@ -53,6 +53,7 @@ pub fn draw(
                     ui.selectable_value(&mut selected, 0, "Linear");
                     ui.selectable_value(&mut selected, 1, "Sine In");
                     ui.selectable_value(&mut selected, 2, "Sine Out");
+                    ui.selectable_value(&mut selected, 3, "Sine In-Out");
                 });
 
             match selected {
@@ -79,7 +80,8 @@ pub fn draw(
         ui.horizontal(|ui| {
             ui.label("Start Tangent: ");
             let id = "trans_in".to_string();
-            let (edited, value, _) = ui.float_input(id, shared_ui, keyframe.start_handle, 1., None);
+            let (edited, value, _) =
+                ui.float_input(id, shared_ui, keyframe.start_tangent, 1., None);
             if edited {
                 events.update_keyframe_transition(keyframe.frame, true, value);
             }
@@ -88,7 +90,7 @@ pub fn draw(
         ui.horizontal(|ui| {
             ui.label("End Tangent: ");
             let id = "trans_out".to_string();
-            let (edited, value, _) = ui.float_input(id, shared_ui, keyframe.end_handle, 1., None);
+            let (edited, value, _) = ui.float_input(id, shared_ui, keyframe.end_tangent, 1., None);
             if edited {
                 events.update_keyframe_transition(keyframe.frame, false, value);
             }

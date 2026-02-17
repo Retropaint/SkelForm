@@ -1339,8 +1339,8 @@ impl Armature {
             total_frames,
             keyframes[prev].value,
             keyframes[next].value,
-            keyframes[next].start_handle,
-            keyframes[next].end_handle,
+            keyframes[next].start_tangent,
+            keyframes[next].end_tangent,
         )
     }
 
@@ -1665,6 +1665,8 @@ impl Animation {
             bone_id: id,
             element: element.clone(),
             element_id: element.clone() as i32,
+            start_tangent: 0.,
+            end_tangent: 0.,
             ..Default::default()
         });
 
@@ -1743,8 +1745,10 @@ pub struct Keyframe {
     #[serde(default, skip_serializing_if = "is_max")]
     pub value: f32,
 
-    pub start_handle: f32,
-    pub end_handle: f32,
+    #[serde(default = "default_one")]
+    pub start_tangent: f32,
+    #[serde(default = "default_one")]
+    pub end_tangent: f32,
 
     #[serde(skip)]
     pub label_top: f32,

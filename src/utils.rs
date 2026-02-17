@@ -568,8 +568,8 @@ pub fn prepare_files(
                         element: AnimElement::Rotation,
                         value_str: "".to_string(),
                         value: family[i].rot,
-                        start_handle: 1.,
-                        end_handle: 1.,
+                        start_tangent: 1.,
+                        end_tangent: 1.,
                         label_top: 0.,
                     });
                 }
