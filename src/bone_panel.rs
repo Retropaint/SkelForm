@@ -62,6 +62,16 @@ pub fn draw(
                 shared_ui.context_menu.keep = true;
                 events.open_polar_modal(PolarId::DeleteBone, str);
             }
+
+            let mut col = config.colors.text;
+            if !bone.locked {
+                col -= Color::new(60, 60, 60, 0);
+            }
+            let text = egui::RichText::new("🔒").size(15.).color(col);
+            if ui.label(text).on_hover_cursor(hand).clicked() {
+                let locked_f32 = if bone.locked { 0. } else { 1. };
+                events.edit_bone(bone.id, &AnimElement::Locked, locked_f32, usize::MAX, -1);
+            }
         });
     });
 

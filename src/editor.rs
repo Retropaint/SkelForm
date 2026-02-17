@@ -1109,14 +1109,20 @@ fn edit_bone(
     bone_id: i32,
     element: AnimElement,
     value: f32,
-    anim_id: usize,
-    anim_frame: i32,
+    mut anim_id: usize,
+    mut anim_frame: i32,
 ) {
     let bones = &mut armature.bones;
     let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
     let mut init_value = 0.;
 
-    // do nothing if anim is playing and edit_while_playing config is false
+    // prevent recording into animation if bone is locked
+    if bone.locked {
+        anim_id = usize::MAX;
+        anim_frame = -1;
+    }
+
+    // do nothing if anim is playing and 'edit while playing' config is false
     let anims = &armature.animations;
     let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
     if !config.edit_while_playing && is_any_anim_playing {

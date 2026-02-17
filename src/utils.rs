@@ -778,7 +778,7 @@ pub fn prepare_files(
             meshdef_folded: bone.meshdef_folded,
             effects_folded: bone.effects_folded,
             ik_disabled: bone.ik_disabled,
-            locked: bone.locked
+            locked: bone.locked,
         });
     }
     for style in &armature.styles {
@@ -888,11 +888,11 @@ pub fn import<R: Read + std::io::Seek>(
                 bone.ik_folded = ed_bone.ik_folded;
                 bone.meshdef_folded = ed_bone.meshdef_folded;
                 bone.ik_disabled = ed_bone.ik_disabled;
+                bone.locked = ed_bone.locked;
             }
             for s in 0..temp_arm.styles.len() {
                 let style = &mut temp_arm.styles[s];
                 let ed_style = &editor.styles[s];
-
                 style.active = ed_style.active;
             }
         }
