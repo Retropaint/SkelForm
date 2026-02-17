@@ -47,7 +47,20 @@ pub fn iterate_events(
             };
     }
 
-    if event == Events::SetExportClearColor {
+    if event == Events::UpdateKeyframeTransition {
+        let kf_idx = events.values[0] as usize;
+        let is_in = events.values[1] == 1.;
+
+        let kf = &mut armature.sel_anim_mut(selections).unwrap().keyframes[kf_idx];
+        if is_in {
+            kf.in_handle = events.values[2];
+        } else {
+            kf.out_handle = events.values[2];
+        }
+
+        events.events.remove(0);
+        events.values.drain(0..=2);
+    } else if event == Events::SetExportClearColor {
         edit_mode.export_clear_color = Color::new(
             (events.values[0] * 255.).round() as u8,
             (events.values[1] * 255.).round() as u8,
@@ -66,14 +79,6 @@ pub fn iterate_events(
                 !(kf.bone_id == events.values[0] as i32
                     && kf.element == AnimElement::from_repr(events.values[1] as usize).unwrap())
             });
-        events.events.remove(0);
-        events.values.drain(0..=1);
-    } else if event == Events::SetKeyframeTransition {
-        for kf in &mut armature.sel_anim_mut(&selections).unwrap().keyframes {
-            if kf.frame == events.values[0] as i32 {
-                kf.transition = Transition::from_repr(events.values[1] as usize).unwrap();
-            }
-        }
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::SelectAnimFrame {

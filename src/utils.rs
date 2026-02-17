@@ -568,7 +568,8 @@ pub fn prepare_files(
                         element: AnimElement::Rotation,
                         value_str: "".to_string(),
                         value: family[i].rot,
-                        transition: keyframe.transition.clone(),
+                        in_handle: 1.,
+                        out_handle: 1.,
                         label_top: 0.,
                     });
                 }
@@ -815,15 +816,18 @@ pub fn import<R: Read + std::io::Seek>(
     if let Err(_) = armature_file {
         custom_err!("armature.json file could not be found.");
     }
-    let root: std::result::Result<Root, _> = serde_json::from_reader(armature_file.unwrap());
-    if let Err(ref e) = root {
+
+    let value: std::result::Result<serde_json::Value, _> =
+        serde_json::from_reader(armature_file.unwrap());
+    if let Err(ref e) = value {
         custom_err!("armature:json:\n".to_owned() + &e.to_string());
     }
+    let root = backwards_compat::proceed(value.unwrap());
 
     let mut temp_arm = shared::Armature {
-        bones: root.as_ref().unwrap().bones.clone(),
-        animations: root.as_ref().unwrap().animations.clone(),
-        styles: root.as_ref().unwrap().styles.clone(),
+        bones: root.bones.clone(),
+        animations: root.animations.clone(),
+        styles: root.styles.clone(),
         tex_data: vec![],
         animated_bones: vec![],
     };
@@ -897,8 +901,8 @@ pub fn import<R: Read + std::io::Seek>(
     let has_tex = styles.iter().find(|set| set.textures.len() > 0) != None;
     if styles.len() > 0 && has_tex {
         let mut imgs = vec![];
-        for a in 0..root.as_ref().unwrap().atlases.len() {
-            let filename = &root.as_ref().unwrap().atlases[a].filename;
+        for a in 0..root.atlases.len() {
+            let filename = &root.atlases[a].filename;
             let texture_file = zip.as_mut().unwrap().by_name(filename);
             if let Err(_) = texture_file {
                 custom_err!("Texture file '".to_owned() + filename + "' could not be found.");
@@ -912,7 +916,7 @@ pub fn import<R: Read + std::io::Seek>(
         }
 
         // remove clear color for JPG atlases
-        if root.as_ref().unwrap().img_format == ExportImgFormat::JPG {
+        if root.img_format == ExportImgFormat::JPG {
             for i in 0..imgs.len() {
                 let png = imgs[i].clone().into_rgba8();
                 imgs[i] = image::DynamicImage::ImageRgba8(png);
@@ -920,11 +924,7 @@ pub fn import<R: Read + std::io::Seek>(
                 for pixel in this_img.pixels_mut() {
                     let [r, g, b, _] = pixel.0;
                     let src = [r, g, b];
-                    let cc = [
-                        root.as_ref().unwrap().clear_color.r,
-                        root.as_ref().unwrap().clear_color.g,
-                        root.as_ref().unwrap().clear_color.b,
-                    ];
+                    let cc = [root.clear_color.r, root.clear_color.g, root.clear_color.b];
                     if color_within_range(src, cc, 100) {
                         *pixel = Rgba([0, 0, 0, 0]);
                     }
@@ -1296,16 +1296,36 @@ pub fn crashlog_file() -> PathBuf {
     exe_dir.join("crash.log")
 }
 
-pub fn interp(current: i32, max: i32, start_val: f32, end_val: f32, transition: Transition) -> f32 {
+pub fn interp(
+    current: i32,
+    max: i32,
+    start_val: f32,
+    end_val: f32,
+    out_tangent: f32,
+    in_tangent: f32,
+) -> f32 {
     if max == 0 || current >= max {
         return end_val;
     }
-    let interp = match transition {
-        Transition::Linear => current as f32 / max as f32,
-        Transition::SineIn => 1. - (current as f32 / max as f32 * 3.14 * 0.5).cos(),
-        Transition::SineOut => (current as f32 / max as f32 * 3.14 * 0.5).sin(),
-    };
-    start_val + (end_val - start_val) * interp
+
+    let t = current as f32 / max as f32;
+
+    let h1 = 2. * t.powi(3) - 3. * t.powi(2) + 1.;
+    let h2 = t.powi(3) - 2. * t.powi(2) + t;
+    let h3 = -2. * t.powi(3) + 3. * t.powi(2);
+    let h4 = t.powi(3) - t.powi(2);
+
+    h1 * start_val + h2 * out_tangent + h3 * end_val + h4 * in_tangent
+}
+
+pub fn get_prev_frame(frame: i32, kfs: &Vec<Keyframe>, b_id: i32, el: &AnimElement) -> usize {
+    let mut prev = usize::MAX;
+    for (i, kf) in kfs.iter().enumerate() {
+        if kf.frame <= frame && kf.bone_id == b_id && kf.element == *el {
+            prev = i;
+        }
+    }
+    prev
 }
 
 pub fn color_within_range(src: [u8; 3], dst: [u8; 3], tol: u8) -> bool {

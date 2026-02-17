@@ -1248,7 +1248,7 @@ impl Armature {
 
             macro_rules! prev_frame {
                 ($element:expr, $default:expr) => {{
-                    let prev = self.get_prev_frame(anim_frame, kfs, b.id, &$element);
+                    let prev = utils::get_prev_frame(anim_frame, kfs, b.id, &$element);
                     if prev != usize::MAX {
                         kfs[prev].value
                     } else {
@@ -1259,7 +1259,7 @@ impl Armature {
 
             macro_rules! prev_str {
                 ($element:expr, $default:expr) => {{
-                    let prev = self.get_prev_frame(anim_frame, kfs, b.id, &$element);
+                    let prev = utils::get_prev_frame(anim_frame, kfs, b.id, &$element);
                     if prev != usize::MAX {
                         kfs[prev].value_str.clone()
                     } else {
@@ -1287,7 +1287,7 @@ impl Armature {
 
             let kfs = &self.animations[anim_idx].keyframes;
             let constraint_frame =
-                self.get_prev_frame(anim_frame, kfs, b.id, &AnimElement::IkConstraint);
+                utils::get_prev_frame(anim_frame, kfs, b.id, &AnimElement::IkConstraint);
             if constraint_frame != usize::MAX {
                 let constraint = kfs[constraint_frame].value;
                 b.ik_constraint = match constraint {
@@ -1301,22 +1301,6 @@ impl Armature {
         bones
     }
 
-    fn get_prev_frame(
-        &self,
-        frame: i32,
-        kfs: &Vec<Keyframe>,
-        b_id: i32,
-        el: &AnimElement,
-    ) -> usize {
-        let mut prev = usize::MAX;
-        for (i, kf) in kfs.iter().enumerate() {
-            if kf.frame <= frame && kf.bone_id == b_id && kf.element == *el {
-                prev = i;
-            }
-        }
-        prev
-    }
-
     pub fn interpolate_keyframes(
         &self,
         anim_id: usize,
@@ -1326,7 +1310,7 @@ impl Armature {
         frame: i32,
     ) -> f32 {
         let keyframes = &self.animations[anim_id].keyframes;
-        let mut prev = self.get_prev_frame(frame, keyframes, bone_id, &element);
+        let mut prev = utils::get_prev_frame(frame, keyframes, bone_id, &element);
         let mut next = usize::MAX;
 
         for (i, kf) in keyframes.iter().enumerate() {
@@ -1355,7 +1339,8 @@ impl Armature {
             total_frames,
             keyframes[prev].value,
             keyframes[next].value,
-            keyframes[next].transition.clone(),
+            keyframes[next].in_handle,
+            keyframes[next].out_handle,
         )
     }
 
@@ -1758,7 +1743,8 @@ pub struct Keyframe {
     #[serde(default, skip_serializing_if = "is_max")]
     pub value: f32,
 
-    pub transition: Transition,
+    pub in_handle: f32,
+    pub out_handle: f32,
 
     #[serde(skip)]
     pub label_top: f32,
@@ -1771,7 +1757,6 @@ pub enum Transition {
     SineIn,
     SineOut,
 }
-
 enum_string!(Transition);
 
 #[derive(
@@ -2116,11 +2101,11 @@ pub enum Events {
     TraceBoneVerts,
     SetBindWeight,
     OpenFileErrModal,
-    SetKeyframeTransition,
     SetExportClearColor,
     SetExportImgFormat,
     OpenExportModal,
     UpdateConfig,
+    UpdateKeyframeTransition,
 }
 
 enum_string!(Events);
@@ -2418,12 +2403,6 @@ impl EventState {
         self.values.push(if show_panel { 1. } else { 0. });
     }
 
-    pub fn set_keyframe_transition(&mut self, frame: usize, transition: Transition) {
-        self.events.push(Events::SetKeyframeTransition);
-        self.values.push(frame as f32);
-        self.values.push((transition as usize) as f32);
-    }
-
     pub fn delete_keyframe_line(&mut self, bone_id: usize, element: &AnimElement) {
         self.events.push(Events::DeleteKeyframeLine);
         self.values.push(bone_id as f32);
@@ -2435,6 +2414,13 @@ impl EventState {
         self.values.push(r as f32);
         self.values.push(g as f32);
         self.values.push(b as f32);
+    }
+
+    pub fn update_keyframe_transition(&mut self, kf_idx: usize, is_in: bool, value: f32) {
+        self.events.push(Events::UpdateKeyframeTransition);
+        self.values.push(kf_idx as f32);
+        self.values.push(if is_in { 1. } else { 0. });
+        self.values.push(value);
     }
 }
 

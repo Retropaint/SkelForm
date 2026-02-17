@@ -216,7 +216,7 @@ pub fn draw(
                     #[rustfmt::skip]
                     bone_panel::draw(selected_bone.clone(), ui, selections, shared_ui, armature, config, events, &input, edit_mode);
                 } else if armature.sel_anim(&selections) != None && selections.anim_frame != -1 {
-                    keyframe_panel::draw(ui, &selections, &armature, events);
+                    keyframe_panel::draw(ui, &selections, &armature, events, shared_ui);
                 }
             });
             shared_ui.bone_panel_rect = Some(ui.min_rect());

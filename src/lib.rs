@@ -64,6 +64,7 @@ pub mod styles_modal;
 pub mod ui;
 pub mod utils;
 pub mod warnings;
+pub mod backwards_compat;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
