@@ -48,14 +48,18 @@ pub fn iterate_events(
     }
 
     if event == Events::UpdateKeyframeTransition {
-        let kf_idx = events.values[0] as usize;
+        let frame = events.values[0] as usize;
         let is_in = events.values[1] == 1.;
 
-        let kf = &mut armature.sel_anim_mut(selections).unwrap().keyframes[kf_idx];
-        if is_in {
-            kf.in_handle = events.values[2];
-        } else {
-            kf.out_handle = events.values[2];
+        for kf in &mut armature.sel_anim_mut(selections).unwrap().keyframes {
+            if kf.frame != frame as i32 {
+                continue;
+            }
+            if is_in {
+                kf.start_handle = events.values[2];
+            } else {
+                kf.end_handle = events.values[2];
+            }
         }
 
         events.events.remove(0);

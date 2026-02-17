@@ -568,8 +568,8 @@ pub fn prepare_files(
                         element: AnimElement::Rotation,
                         value_str: "".to_string(),
                         value: family[i].rot,
-                        in_handle: 1.,
-                        out_handle: 1.,
+                        start_handle: 1.,
+                        end_handle: 1.,
                         label_top: 0.,
                     });
                 }
@@ -1301,21 +1301,20 @@ pub fn interp(
     max: i32,
     start_val: f32,
     end_val: f32,
-    out_tangent: f32,
-    in_tangent: f32,
+    start_tangent: f32,
+    end_tangent: f32,
 ) -> f32 {
     if max == 0 || current >= max {
         return end_val;
     }
 
     let t = current as f32 / max as f32;
+    let h1 = t.powi(3) - 2.0 * t.powi(2) + t;
+    let h2 = -2.0 * t.powi(3) + 3.0 * t.powi(2);
+    let h3 = t.powi(3) - t.powi(2);
 
-    let h1 = 2. * t.powi(3) - 3. * t.powi(2) + 1.;
-    let h2 = t.powi(3) - 2. * t.powi(2) + t;
-    let h3 = -2. * t.powi(3) + 3. * t.powi(2);
-    let h4 = t.powi(3) - t.powi(2);
-
-    h1 * start_val + h2 * out_tangent + h3 * end_val + h4 * in_tangent
+    let progress = h1 * start_tangent + h2 + h3 * end_tangent;
+    start_val + (end_val - start_val) * progress
 }
 
 pub fn get_prev_frame(frame: i32, kfs: &Vec<Keyframe>, b_id: i32, el: &AnimElement) -> usize {

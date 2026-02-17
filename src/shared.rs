@@ -1339,8 +1339,8 @@ impl Armature {
             total_frames,
             keyframes[prev].value,
             keyframes[next].value,
-            keyframes[next].in_handle,
-            keyframes[next].out_handle,
+            keyframes[next].start_handle,
+            keyframes[next].end_handle,
         )
     }
 
@@ -1743,8 +1743,8 @@ pub struct Keyframe {
     #[serde(default, skip_serializing_if = "is_max")]
     pub value: f32,
 
-    pub in_handle: f32,
-    pub out_handle: f32,
+    pub start_handle: f32,
+    pub end_handle: f32,
 
     #[serde(skip)]
     pub label_top: f32,
@@ -1825,18 +1825,6 @@ pub struct Action {
     pub styles: Vec<Style>,
     pub continued: bool,
 }
-
-impl AnimElement {
-    pub fn default_of(element: &AnimElement) -> f32 {
-        match *element {
-            AnimElement::ScaleX => {
-                return 1.;
-            }
-            _ => 0.,
-        }
-    }
-}
-
 enum_string!(AnimElement);
 
 #[derive(Default, Debug, Clone)]
@@ -2416,9 +2404,9 @@ impl EventState {
         self.values.push(b as f32);
     }
 
-    pub fn update_keyframe_transition(&mut self, kf_idx: usize, is_in: bool, value: f32) {
+    pub fn update_keyframe_transition(&mut self, frame: i32, is_in: bool, value: f32) {
         self.events.push(Events::UpdateKeyframeTransition);
-        self.values.push(kf_idx as f32);
+        self.values.push(frame as f32);
         self.values.push(if is_in { 1. } else { 0. });
         self.values.push(value);
     }
