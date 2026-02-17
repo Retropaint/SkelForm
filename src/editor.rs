@@ -1161,6 +1161,12 @@ fn edit_bone(
                 bone.is_hidden = shared::f32_as_bool(value)
             }
         }
+        AnimElement::Locked => {
+            init_value = shared::bool_as_f32(bone.locked);
+            if anim_id == usize::MAX {
+                bone.locked = shared::f32_as_bool(value)
+            }
+        }
         AnimElement::IkMode => {
             init_value = (bone.ik_mode as usize) as f32;
             if anim_id == usize::MAX {

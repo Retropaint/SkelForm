@@ -1054,6 +1054,8 @@ pub struct Bone {
     pub world_verts: Vec<Vertex>,
     #[serde(skip)]
     pub ik_disabled: bool,
+    #[serde(skip)]
+    pub locked: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
@@ -1094,6 +1096,7 @@ pub struct EditorBone {
     pub meshdef_folded: bool,
     pub effects_folded: bool,
     pub ik_disabled: bool,
+    pub locked: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Default, PartialEq, Debug)]
@@ -1332,11 +1335,9 @@ impl Armature {
             return default;
         }
 
-        let total_frames = keyframes[next].frame - keyframes[prev].frame;
-        let current_frame = frame - keyframes[prev].frame;
         utils::interp(
-            current_frame,
-            total_frames,
+            frame - keyframes[prev].frame,
+            keyframes[next].frame - keyframes[prev].frame,
             keyframes[prev].value,
             keyframes[next].value,
             keyframes[next].start_tangent,
@@ -1786,6 +1787,7 @@ pub enum AnimElement {
     /* 12 */ TintG,
     /* 13 */ TintB,
     /* 14 */ TintA,
+    /* 15 */ Locked,
 }
 
 // iterable anim change icons IDs

@@ -166,18 +166,31 @@ pub fn draw_hierarchy(
 
         ui.add_enabled_ui(!setting_ik_target, |ui| {
             ui.horizontal(|ui| {
-                let hidden = armature.is_bone_hidden(true, config.propagate_visibility, bone_id);
-                let hidden_icon = if hidden { "---" } else { "👁" };
                 let id = "bone_hidden".to_owned() + &b.to_string();
-                if bone_label(hidden_icon, ui, id, Vec2::new(-2., 18.), &config).clicked() {
+                let hidden = armature.is_bone_hidden(true, config.propagate_visibility, bone_id);
+                let mut col = config.colors.text;
+                if hidden {
+                    col -= Color::new(80, 80, 80, 0);
+                }
+                if bone_label("👁", ui, id, Vec2::new(-2., 18.), col).clicked() {
                     let hidden_f32 = if !hidden { 1. } else { 0. };
-                    println!("{}", hidden_f32);
                     let sel = selections.anim;
                     let frame = selections.anim_frame;
                     events.save_edited_bone(b);
                     events.edit_bone(bone_id, &AnimElement::Hidden, hidden_f32, sel, frame);
                 }
-                ui.add_space(17.);
+                let locked = armature.bones[b].locked;
+                let mut col = config.colors.text;
+                if !locked {
+                    col -= Color::new(80, 80, 80, 0);
+                }
+                let id = "bone_locked".to_owned() + &b.to_string();
+                if bone_label("🔒", ui, id, Vec2::new(15., 18.), col).clicked() {
+                    let locked_f32 = if !locked { 1. } else { 0. };
+                    events.save_edited_bone(b);
+                    events.edit_bone(bone_id, &AnimElement::Locked, locked_f32, usize::MAX, -1);
+                }
+                ui.add_space(34.);
 
                 // add space to the left if this is a child
                 for _ in 0..parents.len() {
@@ -195,7 +208,9 @@ pub fn draw_hierarchy(
                     let folded = armature.bones[b].folded;
                     let fold_icon = if folded { "⏵" } else { "⏷" };
                     let id = "bone_fold".to_owned() + &b.to_string();
-                    if bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), &config).clicked() {
+                    if bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), config.colors.text)
+                        .clicked()
+                    {
                         events.toggle_bone_folded(idx as usize, !armature.bones[b].folded);
                     }
                 }
@@ -356,14 +371,14 @@ pub fn bone_label(
     ui: &mut egui::Ui,
     id: String,
     offset: Vec2,
-    config: &Config,
+    color: Color,
 ) -> egui::Response {
     let rect = ui.painter().text(
         ui.cursor().min + Vec2::new(offset.x, offset.y).into(),
         egui::Align2::LEFT_BOTTOM,
         icon,
         egui::FontId::default(),
-        config.colors.text.into(),
+        color.into(),
     );
     ui.interact(rect, id.into(), egui::Sense::CLICK)
         .on_hover_cursor(egui::CursorIcon::PointingHand)

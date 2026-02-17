@@ -778,6 +778,7 @@ pub fn prepare_files(
             meshdef_folded: bone.meshdef_folded,
             effects_folded: bone.effects_folded,
             ik_disabled: bone.ik_disabled,
+            locked: bone.locked
         });
     }
     for style in &armature.styles {
