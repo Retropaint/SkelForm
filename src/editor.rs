@@ -34,7 +34,7 @@ pub fn iterate_events(
             match last_event {
                 E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone  => undo_states.new_undo_bones(&armature.bones),
                 E::NewAnimation | E::DeleteAnim           => undo_states.new_undo_anims(&armature.animations),
-                E::DeleteKeyframe | E::DeleteKeyframeLine => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
+                E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
                 E::DeleteTex                              => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
                 E::DeleteStyle | E::NewStyle              => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
@@ -668,10 +668,17 @@ pub fn process_event(
         }
         Events::PasteKeyframes => {
             let frame = selections.anim_frame;
-            let buffer_frames = copy_buffer.keyframes.clone();
+            let mut buffer_frames = copy_buffer.keyframes.clone();
             let anim = &mut armature.sel_anim_mut(&selections).unwrap();
 
-            anim.keyframes.retain(|kf| kf.frame != frame);
+            // set copy buffer to new frames, for the retain() later
+            for kf in &mut buffer_frames {
+                kf.frame = frame;
+            }
+
+            // remove identical keyframes in the new frame
+            anim.keyframes
+                .retain(|kf| buffer_frames.iter().find(|bkf| **bkf == *kf) == None);
 
             for kf in 0..buffer_frames.len() {
                 let keyframe = buffer_frames[kf].clone();
@@ -777,6 +784,20 @@ pub fn process_event(
             }
         }
         Events::UpdateConfig => *config = ui.updated_config.clone(),
+        Events::CopyKeyframe => {
+            copy_buffer.keyframes =
+                vec![armature.sel_anim(selections).unwrap().keyframes[value as usize].clone()];
+        }
+        Events::CopyKeyframesInFrame => {
+            *copy_buffer = CopyBuffer::default();
+            for kf in 0..armature.sel_anim(&selections).unwrap().keyframes.len() {
+                let frame = selections.anim_frame;
+                if armature.sel_anim(&selections).unwrap().keyframes[kf].frame == frame {
+                    let keyframe = armature.sel_anim(&selections).unwrap().keyframes[kf].clone();
+                    copy_buffer.keyframes.push(keyframe);
+                }
+            }
+        }
         _ => {}
     }
 }

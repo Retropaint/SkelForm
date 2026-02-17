@@ -674,14 +674,7 @@ pub fn draw_bottom_bar(
                 .skf_button(&shared_ui.loc("keyframe_editor.copy"))
                 .clicked()
             {
-                *copy_buffer = CopyBuffer::default();
-                for kf in 0..armature.sel_anim(&sel).unwrap().keyframes.len() {
-                    let frame = selections.anim_frame;
-                    if armature.sel_anim(&sel).unwrap().keyframes[kf].frame == frame {
-                        let keyframe = armature.sel_anim(&sel).unwrap().keyframes[kf].clone();
-                        copy_buffer.keyframes.push(keyframe);
-                    }
-                }
+                events.copy_keyframes_in_frame();
             }
 
             let paste_str = &shared_ui.loc("keyframe_editor.paste");
@@ -795,6 +788,8 @@ fn draw_frame_lines(
 
     // draw per-change icons
     let sel_anim = &armature.animations[selections.anim];
+    let mut context_response: Option<egui::Response> = None;
+    let mut has_context = false;
     for i in 0..sel_anim.keyframes.len() {
         let kf = sel_anim.keyframes[i].clone();
         let size = Vec2::new(17., 17.);
@@ -831,7 +826,7 @@ fn draw_frame_lines(
             .paint_at(ui, rect);
 
         let rect = egui::Rect::from_center_size(pos.into(), (size * 0.5).into());
-        let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
+        let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click_and_drag());
 
         if response.hovered() {
             shared_ui.cursor_icon = egui::CursorIcon::Grab;
@@ -846,6 +841,27 @@ fn draw_frame_lines(
                     .paint_at(ui, drag_rect);
             }
         }
+
+        let context_id = &("keyframe_".to_string()
+            + &(kf.element as usize).to_string()
+            + &kf.bone_id.to_string()
+            + &kf.frame.to_string());
+
+        if response.secondary_clicked() {
+            shared_ui.context_menu.show(context_id);
+        }
+
+        context_menu!(response, shared_ui, context_id, |ui: &mut egui::Ui| {
+            if ui.context_button("Copy", &config).clicked() {
+                events.copy_keyframe(i);
+                shared_ui.context_menu.close();
+            }
+
+            if ui.context_button("Paste", &config).clicked() {
+                events.paste_keyframes();
+                shared_ui.context_menu.close();
+            }
+        });
 
         if !response.drag_stopped() {
             continue;

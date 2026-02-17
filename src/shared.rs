@@ -2037,6 +2037,8 @@ pub enum Events {
 
     CopyBone,
     PasteBone,
+    CopyKeyframe,
+    CopyKeyframesInFrame,
     PasteKeyframes,
 
     NewAnimation,
@@ -2158,6 +2160,7 @@ impl EventState {
     generic_event!(trace_bone_verts, Events::TraceBoneVerts);
     generic_event!(open_export_modal, Events::OpenExportModal);
     generic_event!(update_config, Events::UpdateConfig);
+    generic_event!(copy_keyframes_in_frame, Events::CopyKeyframesInFrame);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, usize);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
@@ -2229,9 +2232,10 @@ impl EventState {
     event_with_value!(
         set_export_img_format,
         Events::SetExportImgFormat,
-        format,
+        idx,
         usize
     );
+    event_with_value!(copy_keyframe, Events::CopyKeyframe, idx, usize);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

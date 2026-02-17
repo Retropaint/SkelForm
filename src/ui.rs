@@ -468,16 +468,23 @@ pub fn kb_inputs(
 
     // copy shortcut
     if input.consume_shortcut(&config.keys.copy) {
-        // copy bone(s)
-        let idx = selections.bone_idx;
-        if idx != usize::MAX {
-            events.copy_bone(idx);
+        if selections.anim_frame != -1 {
+            events.copy_keyframes_in_frame();
+        } else {
+            let idx = selections.bone_idx;
+            if idx != usize::MAX {
+                events.copy_bone(idx);
+            }
         }
     }
 
     // paste shortcut
     if input.consume_shortcut(&config.keys.paste) {
-        events.paste_bone(selections.bone_idx);
+        if selections.anim_frame != -1 {
+            events.paste_keyframes();
+        } else {
+            events.paste_bone(selections.bone_idx);
+        }
     }
 
     if input.consume_shortcut(&config.keys.cancel) {
