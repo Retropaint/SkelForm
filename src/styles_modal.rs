@@ -499,7 +499,8 @@ pub fn draw_bone_buttons(
                 let fold_icon = if folded { "⏵" } else { "⏷" };
                 let id = "bone_style_fold".to_owned() + &b.to_string();
                 let col = config.colors.text;
-                if armature_window::bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), col)
+                let desc = shared_ui.loc("armature_panel.fold_desc");
+                if armature_window::bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), desc, col)
                     .clicked()
                 {
                     events.toggle_bone_folded(b, !armature.bones[b].folded);

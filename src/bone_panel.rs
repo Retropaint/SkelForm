@@ -68,7 +68,9 @@ pub fn draw(
                 col -= Color::new(60, 60, 60, 0);
             }
             let text = egui::RichText::new("🔒").size(15.).color(col);
-            if ui.label(text).on_hover_cursor(hand).clicked() {
+            let desc = shared_ui.loc("locked_desc");
+            let label = ui.label(text).on_hover_cursor(hand).on_hover_text(desc);
+            if label.clicked() {
                 let locked_f32 = if bone.locked { 0. } else { 1. };
                 events.edit_bone(bone.id, &AnimElement::Locked, locked_f32, usize::MAX, -1);
             }

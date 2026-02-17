@@ -172,7 +172,8 @@ pub fn draw_hierarchy(
                 if hidden {
                     col -= Color::new(80, 80, 80, 0);
                 }
-                if bone_label("👁", ui, id, Vec2::new(-2., 18.), col).clicked() {
+                let desc = shared_ui.loc("hidden_desc");
+                if bone_label("👁", ui, id, Vec2::new(-2., 18.), desc, col).clicked() {
                     let hidden_f32 = if !hidden { 1. } else { 0. };
                     let sel = selections.anim;
                     let frame = selections.anim_frame;
@@ -185,7 +186,8 @@ pub fn draw_hierarchy(
                     col -= Color::new(80, 80, 80, 0);
                 }
                 let id = "bone_locked".to_owned() + &b.to_string();
-                if bone_label("🔒", ui, id, Vec2::new(15., 18.), col).clicked() {
+                let desc = shared_ui.loc("locked_desc");
+                if bone_label("🔒", ui, id, Vec2::new(15., 18.), desc, col).clicked() {
                     let locked_f32 = if !locked { 1. } else { 0. };
                     events.save_edited_bone(b);
                     events.edit_bone(bone_id, &AnimElement::Locked, locked_f32, usize::MAX, -1);
@@ -208,9 +210,9 @@ pub fn draw_hierarchy(
                     let folded = armature.bones[b].folded;
                     let fold_icon = if folded { "⏵" } else { "⏷" };
                     let id = "bone_fold".to_owned() + &b.to_string();
-                    if bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), config.colors.text)
-                        .clicked()
-                    {
+                    let desc = shared_ui.loc("armature_panel.fold_desc");
+                    let text = config.colors.text;
+                    if bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), desc, text).clicked() {
                         events.toggle_bone_folded(idx as usize, !armature.bones[b].folded);
                     }
                 }
@@ -371,6 +373,7 @@ pub fn bone_label(
     ui: &mut egui::Ui,
     id: String,
     offset: Vec2,
+    desc: String,
     color: Color,
 ) -> egui::Response {
     let rect = ui.painter().text(
@@ -382,6 +385,7 @@ pub fn bone_label(
     );
     ui.interact(rect, id.into(), egui::Sense::CLICK)
         .on_hover_cursor(egui::CursorIcon::PointingHand)
+        .on_hover_text(desc)
 }
 
 fn check_bone_dragging(

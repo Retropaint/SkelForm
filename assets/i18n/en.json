@@ -26,6 +26,8 @@
   "crashed": "SkelForm crashed last time.\n\nThe crash log is located in the same path as the binary.\n\nOpen log file?",
   "error_vid_export": "Something went wrong with this export:\n\n$err\n\nTry changing compability settings. If nothing works, you may export sprite sequences and create a video using an online converter.",
   "error_skf": "Something went wrong:\n\n$err",
+  "hidden_desc": "Toggle this bone's visibility.\n\nTo propagate it to all children, toggle it in Settings > Animation.",
+  "locked_desc": "Lock this bone to prevent edits from being recorded in animations",
   "startup": {
     "import": "Import",
     "samples": "Samples",
@@ -160,6 +162,7 @@
     "styles": "👕 Styles",
     "styles_desc": "Create a style, add textures, then assign bones to use it. Click on styles in the dropdown to toggle them.\n\nBones use textures based on their index. To change it, select a bone > 'Tex Index'.\n\nMultiple styles can be active at once. Bones assinged to multiple active styles will use the top-most first.",
     "empty_armature": "Don't forget - if in doubt, consult the [User Documentation](user-docs/index.html).\n\nIf you're new here, check out the [Starter Guide](user-docs/starter-guide/main.html).\n\nYou may import a PSD (File > Import), provided it has the [right structure](user-docs/psd.html).\n\nClick **New Bone** above to get started with your armature.",
+    "fold_desc": "Fold/unfold this bone's children",
     "icons": {
       "tex": "Texture - $tex",
       "tex_inactive": "Texture - $tex\n(no active styles to display)",
