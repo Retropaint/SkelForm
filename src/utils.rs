@@ -571,6 +571,7 @@ pub fn prepare_files(
                         start_tangent: 1.,
                         end_tangent: 1.,
                         label_top: 0.,
+                        is_snap: false,
                     });
                 }
             }
@@ -1304,6 +1305,11 @@ pub fn interp(
     start_tangent: f32,
     end_tangent: f32,
 ) -> f32 {
+    // snapping behavior for None transition preset
+    if start_tangent == 999. && end_tangent == 999. {
+        return start_val;
+    }
+
     if max == 0 || current >= max {
         return end_val;
     }

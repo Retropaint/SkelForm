@@ -25,12 +25,10 @@ pub fn draw(
     }
 
     let mut keyframe = Keyframe::default();
-    let mut idx = usize::MAX;
     for k in 0..keyframes.len() {
         let kf = &keyframes[k];
         if kf.frame == frame {
             keyframe = kf.clone();
-            idx = k;
             break;
         }
     }
@@ -54,6 +52,7 @@ pub fn draw(
                     ui.selectable_value(&mut selected, 1, "Sine In");
                     ui.selectable_value(&mut selected, 2, "Sine Out");
                     ui.selectable_value(&mut selected, 3, "Sine In-Out");
+                    ui.selectable_value(&mut selected, 4, "None");
                 });
 
             match selected {
@@ -72,6 +71,10 @@ pub fn draw(
                 3 => {
                     events.update_keyframe_transition(keyframe.frame, true, 0.);
                     events.update_keyframe_transition(keyframe.frame, false, 0.);
+                }
+                4 => {
+                    events.update_keyframe_transition(keyframe.frame, true, 999.);
+                    events.update_keyframe_transition(keyframe.frame, false, 999.);
                 }
                 _ => {}
             }

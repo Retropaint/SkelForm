@@ -1745,6 +1745,8 @@ pub struct Keyframe {
     #[serde(default, skip_serializing_if = "is_max")]
     pub value: f32,
 
+    #[serde(default)]
+    pub is_snap: bool,
     #[serde(default = "default_one")]
     pub start_tangent: f32,
     #[serde(default = "default_one")]

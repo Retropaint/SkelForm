@@ -438,7 +438,7 @@ pub fn draw_top_bar(
             ui.set_width(width);
             ui.set_height(20.);
 
-            let mut second = 0;
+            let mut second = -1;
             for (i, x) in shared_ui.anim.lines_x.iter().enumerate() {
                 if i as i32 % armature.sel_anim(&sel).unwrap().fps != 0 {
                     continue;
@@ -475,15 +475,15 @@ pub fn draw_top_bar(
                 }
 
                 if response.hovered() {
-                    shared_ui.cursor_icon = egui::CursorIcon::Grab;
+                    shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
                     if input.left_clicked {
                         events.select_anim_frame(frame as usize, true);
                     }
                 }
 
                 let cursor = get_cursor(ui);
-
                 if response.dragged() {
+                    shared_ui.cursor_icon = egui::CursorIcon::Grabbing;
                     shared_ui.anim.dragged_keyframe = Keyframe {
                         frame,
                         bone_id: -1,
