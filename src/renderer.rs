@@ -3,6 +3,7 @@
 use crate::*;
 use image::{DynamicImage, GenericImageView};
 use spade::Triangulation;
+use utils::animate_bones;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
 /// The `main` of this module.
@@ -54,6 +55,18 @@ pub fn render(
 
     temp_arm.bones = anim_bones.clone();
 
+    // animate next and previous frame armatures for onions
+    let mut next_arm = armature.clone();
+    let mut prev_arm = armature.clone();
+    let mut prev_sel = selections.clone();
+    prev_sel.anim_frame -= 1;
+    let mut next_sel = selections.clone();
+    next_sel.anim_frame += 1;
+    utils::animate_bones(&mut next_arm, &next_sel, edit_mode);
+    utils::animate_bones(&mut prev_arm, &prev_sel, edit_mode);
+    prev_arm.bones = prev_arm.animated_bones.clone();
+    next_arm.bones = next_arm.animated_bones.clone();
+
     // store bound/unbound vert's pos before construction
     let mut init_vert_pos = Vec2::default();
     let vert_id = renderer.changed_vert_id as usize;
@@ -62,6 +75,8 @@ pub fn render(
     }
 
     construction(&mut temp_arm.bones, &anim_bones);
+    construction(&mut next_arm.bones, &anim_bones);
+    construction(&mut prev_arm.bones, &anim_bones);
 
     // adjust bound/unbound vert's pos after construction
     if renderer.changed_vert_id != -1 {
@@ -138,6 +153,20 @@ pub fn render(
             let tb = &mut temp_arm.bones[b];
             let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
             vert.tint = tb.tint;
+            tb.world_verts.push(vert);
+        }
+        let cam = world_camera(&camera, &config);
+        for v in 0..prev_arm.bones[b].vertices.len() {
+            let tb = &mut prev_arm.bones[b];
+            let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
+            vert.tint = TintColor::new(255., 0., 0., 0.5);
+            tb.world_verts.push(vert);
+        }
+        let cam = world_camera(&camera, &config);
+        for v in 0..next_arm.bones[b].vertices.len() {
+            let tb = &mut next_arm.bones[b];
+            let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
+            vert.tint = TintColor::new(0., 0., 255., 0.5);
             tb.world_verts.push(vert);
         }
 
@@ -239,6 +268,8 @@ pub fn render(
 
     // runtime: sort bones by z-index for drawing
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
+    prev_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
+    next_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
     for b in 0..temp_arm.bones.len() {
         let tex = temp_arm.tex_of(temp_arm.bones[b].id);
@@ -255,6 +286,20 @@ pub fn render(
         let t = tex.unwrap();
         let bg = armature.tex_data(t).unwrap().bind_group.clone();
         let bone = &temp_arm.bones[b];
+
+        // render onion bones
+        if selections.anim_frame > 0 {
+            let bone = &prev_arm.bones[b];
+            if bone.world_verts.len() != 0 {
+                draw(&bg, &bone.world_verts, &bone.indices, render_pass, device);
+            }
+
+            let bone = &next_arm.bones[b];
+            if bone.world_verts.len() != 0 {
+                draw(&bg, &bone.world_verts, &bone.indices, render_pass, device);
+            }
+        }
+
         draw(&bg, &bone.world_verts, &bone.indices, render_pass, device);
     }
 
