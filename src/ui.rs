@@ -6,7 +6,7 @@ use crate::*;
 
 #[rustfmt::skip]
 pub trait EguiUi {
-    fn skf_button(&mut self, text: &str) -> egui::Response;
+    fn skf_button(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response;
     fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32);
     fn clickable_label(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response;
     fn text_input(&mut self,id: String, shared_ui: &mut crate::Ui, value: String, options: Option<TextInputOptions>) -> (bool, String, egui::Response);
@@ -160,7 +160,7 @@ pub fn draw(
 
     if edit_mode.anim_open {
         #[rustfmt::skip]
-        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, copy_buffer));
+        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, copy_buffer,&edit_mode));
     }
 
     style_once!(armature_window::draw(
@@ -683,8 +683,7 @@ fn top_panel(
 }
 
 impl EguiUi for egui::Ui {
-    fn skf_button(&mut self, text: &str) -> egui::Response {
-        let text = egui::RichText::new(text);
+    fn skf_button(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response {
         self.add(egui::Button::new(text).corner_radius(egui::CornerRadius::ZERO))
             .on_hover_cursor(egui::CursorIcon::PointingHand)
     }

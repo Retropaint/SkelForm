@@ -56,9 +56,11 @@ pub fn render(
     temp_arm.bones = anim_bones.clone();
 
     // animate next and previous frame armatures for onions
-    let mut next_arm = armature.clone();
-    let mut prev_arm = armature.clone();
-    if selections.anim != usize::MAX {
+    let mut next_arm = Armature::default();
+    let mut prev_arm = Armature::default();
+    if selections.anim_frame != -1 && edit_mode.onion_layers {
+        next_arm = armature.clone();
+        prev_arm = armature.clone();
         let mut prev_sel = selections.clone();
         let mut next_sel = selections.clone();
         let keyframes = &armature.sel_anim(selections).unwrap().keyframes;
@@ -75,9 +77,11 @@ pub fn render(
         }
         utils::animate_bones(&mut next_arm, &next_sel, edit_mode);
         utils::animate_bones(&mut prev_arm, &prev_sel, edit_mode);
+        prev_arm.bones = prev_arm.animated_bones.clone();
+        next_arm.bones = next_arm.animated_bones.clone();
+        construction(&mut next_arm.bones, &next_arm.animated_bones);
+        construction(&mut prev_arm.bones, &prev_arm.animated_bones);
     }
-    prev_arm.bones = prev_arm.animated_bones.clone();
-    next_arm.bones = next_arm.animated_bones.clone();
 
     // store bound/unbound vert's pos before construction
     let mut init_vert_pos = Vec2::default();
@@ -87,8 +91,6 @@ pub fn render(
     }
 
     construction(&mut temp_arm.bones, &anim_bones);
-    construction(&mut next_arm.bones, &next_arm.animated_bones);
-    construction(&mut prev_arm.bones, &prev_arm.animated_bones);
 
     // adjust bound/unbound vert's pos after construction
     if renderer.changed_vert_id != -1 {
@@ -172,17 +174,21 @@ pub fn render(
         }
 
         // setup onion world verts
-        for v in 0..prev_arm.bones[b].vertices.len() {
-            let tb = &mut prev_arm.bones[b];
-            let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
-            vert.tint = TintColor::new(255., 0., 0., 0.4);
-            tb.world_verts.push(vert);
-        }
-        for v in 0..next_arm.bones[b].vertices.len() {
-            let tb = &mut next_arm.bones[b];
-            let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
-            vert.tint = TintColor::new(0., 0., 255., 0.4);
-            tb.world_verts.push(vert);
+        if selections.anim_frame != -1 && edit_mode.onion_layers {
+            for v in 0..prev_arm.bones[b].vertices.len() {
+                let tb = &mut prev_arm.bones[b];
+                let mut vert =
+                    world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
+                vert.tint = TintColor::new(255., 0., 0., 0.4);
+                tb.world_verts.push(vert);
+            }
+            for v in 0..next_arm.bones[b].vertices.len() {
+                let tb = &mut next_arm.bones[b];
+                let mut vert =
+                    world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
+                vert.tint = TintColor::new(0., 0., 255., 0.4);
+                tb.world_verts.push(vert);
+            }
         }
 
         for vert in &mut temp_arm.bones[b].world_verts {
@@ -283,11 +289,16 @@ pub fn render(
 
     // runtime: sort bones by z-index for drawing
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
-    prev_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
-    next_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
+    if selections.anim_frame != -1 && edit_mode.onion_layers {
+        prev_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
+        next_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
+    }
 
     // render onion layers
     for b in 0..temp_arm.bones.len() {
+        if selections.anim_frame == -1 || !edit_mode.onion_layers {
+            break;
+        }
         let tex = temp_arm.tex_of(temp_arm.bones[b].id);
         let id = temp_arm.bones[b].id;
         if tex == None || temp_arm.is_bone_hidden(false, config.propagate_visibility, id) {
@@ -297,20 +308,18 @@ pub fn render(
         let bg = armature.tex_data(t).unwrap().bind_group.clone();
         let mut verts = vec![];
         let mut indices = vec![];
-        if selections.anim_frame > 0 {
-            let bone = &mut prev_arm.bones[b];
-            let mut offset = 0;
-            if bone.world_verts.len() != 0 {
-                verts.append(&mut bone.world_verts);
-                indices.append(&mut bone.indices);
-                offset = verts.len();
-            }
-            let bone = &mut next_arm.bones[b];
-            if bone.world_verts.len() != 0 {
-                verts.append(&mut bone.world_verts);
-                for index in &bone.indices {
-                    indices.push(*index + offset as u32);
-                }
+        let bone = &mut prev_arm.bones[b];
+        let mut offset = 0;
+        if bone.world_verts.len() != 0 {
+            verts.append(&mut bone.world_verts);
+            indices.append(&mut bone.indices);
+            offset = verts.len();
+        }
+        let bone = &mut next_arm.bones[b];
+        if bone.world_verts.len() != 0 {
+            verts.append(&mut bone.world_verts);
+            for index in &bone.indices {
+                indices.push(*index + offset as u32);
             }
         }
         if verts.len() > 0 {

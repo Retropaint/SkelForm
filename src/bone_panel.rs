@@ -564,7 +564,7 @@ pub fn mesh_deformation(
 
     ui.horizontal(|ui| {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.skf_button(&mesh_label).clicked() {
+            if ui.skf_button(mesh_label).clicked() {
                 events.toggle_showing_mesh(if edit_mode.showing_mesh { 0 } else { 1 });
             }
         });

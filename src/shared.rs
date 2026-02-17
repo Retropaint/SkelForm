@@ -1872,6 +1872,7 @@ pub struct EditMode {
     pub export_exclude_ik: bool,
     pub export_img_format: ExportImgFormat,
     pub export_clear_color: Color,
+    pub onion_layers: bool,
 }
 
 #[derive(Default, PartialEq, Debug, Clone)]
@@ -2104,6 +2105,7 @@ pub enum Events {
     OpenExportModal,
     UpdateConfig,
     UpdateKeyframeTransition,
+    ToggleOnionLayers,
 }
 
 enum_string!(Events);
@@ -2236,6 +2238,12 @@ impl EventState {
         usize
     );
     event_with_value!(copy_keyframe, Events::CopyKeyframe, idx, usize);
+    event_with_value!(
+        toggle_onion_layers,
+        Events::ToggleOnionLayers,
+        toggle,
+        usize
+    );
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

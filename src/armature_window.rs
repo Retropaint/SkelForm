@@ -53,7 +53,7 @@ pub fn draw(
         ui.separator();
 
         ui.horizontal(|ui| {
-            let button = ui.skf_button(&&shared_ui.loc("armature_panel.new_bone_button"));
+            let button = ui.skf_button(shared_ui.loc("armature_panel.new_bone_button"));
             if button.clicked() {
                 events.new_bone();
             }

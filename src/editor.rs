@@ -280,6 +280,7 @@ pub fn process_event(
         Events::PointerOnUi => camera.on_ui = value == 1.,
         Events::ToggleShowingMesh => edit_mode.showing_mesh = value == 1.,
         Events::ToggleSettingIkTarget => edit_mode.setting_ik_target = value == 1.,
+        Events::ToggleOnionLayers => edit_mode.onion_layers = value == 1.,
         Events::RemoveIkTarget => armature.sel_bone_mut(selections).unwrap().ik_target_id = -1,
         Events::ToggleIkFolded => {
             armature.sel_bone_mut(&selections).unwrap().ik_folded = value == 1.
@@ -303,6 +304,9 @@ pub fn process_event(
         }
         Events::ToggleAnimPanelOpen => {
             edit_mode.anim_open = value == 1.;
+            if !edit_mode.anim_open {
+                selections.anim_frame = -1;
+            }
             for anim in &mut armature.animations {
                 anim.elapsed = None;
             }

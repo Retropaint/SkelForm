@@ -318,6 +318,7 @@
     "copy": "Copy",
     "paste": "Paste",
     "duplicate": "Duplicate",
+    "onion_desc": "Toggle onion layers",
     "elements": {
       "PositionX": "Position X",
       "PositionY": "Position Y",

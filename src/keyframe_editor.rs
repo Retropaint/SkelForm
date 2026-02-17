@@ -17,6 +17,7 @@ pub fn draw(
     selections: &mut SelectionState,
     events: &mut EventState,
     copy_buffer: &mut CopyBuffer,
+    edit_mode: &EditMode,
 ) {
     if !input.left_down {
         shared_ui.anim.dragged_keyframe.frame = -1;
@@ -79,7 +80,7 @@ pub fn draw(
 
                 if selections.anim != usize::MAX {
                     #[rustfmt::skip]
-                    timeline_editor(ui, selections, armature, events, shared_ui, config, input, copy_buffer);
+                    timeline_editor(ui, selections, armature, events, shared_ui, config, input, copy_buffer, edit_mode);
                 }
             });
             shared_ui.keyframe_panel_rect = Some(ui.min_rect());
@@ -101,7 +102,7 @@ fn draw_animations_list(
         let str_anim = shared_ui.loc("keyframe_editor.heading");
         ui.heading(str_anim);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
-            let str_new = &&shared_ui.loc("new");
+            let str_new = shared_ui.loc("new");
             let button = ui.skf_button(str_new);
             if !button.clicked() {
                 return;
@@ -220,6 +221,7 @@ fn timeline_editor(
     config: &Config,
     input: &InputStates,
     copy_buffer: &mut CopyBuffer,
+    edit_mode: &EditMode,
 ) {
     let frame = egui::Frame::new().outer_margin(egui::Margin {
         left: 0,
@@ -298,6 +300,7 @@ fn timeline_editor(
                     shared_ui,
                     events,
                     copy_buffer,
+                    edit_mode,
                 );
                 draw_timeline_graph(
                     ui, width, hitbox, shared_ui, config, selections, armature, events, input,
@@ -603,7 +606,8 @@ pub fn draw_bottom_bar(
     armature: &Armature,
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
-    copy_buffer: &mut CopyBuffer,
+    copy_buffer: &CopyBuffer,
+    edit_mode: &EditMode,
 ) {
     let sel = selections.clone();
     egui::Frame::new().show(ui, |ui| {
@@ -680,6 +684,18 @@ pub fn draw_bottom_bar(
             let paste_str = &shared_ui.loc("keyframe_editor.paste");
             if ui.skf_button(paste_str).clicked() {
                 events.paste_keyframes();
+            }
+
+            let mut col = config.colors.text;
+            if !edit_mode.onion_layers {
+                col -= Color::new(60, 60, 60, 0);
+            }
+            if ui
+                .skf_button(egui::RichText::new("🌓").color(col))
+                .on_hover_text(shared_ui.loc("keyframe_editor.onion_desc"))
+                .clicked()
+            {
+                events.toggle_onion_layers(if edit_mode.onion_layers { 0 } else { 1 });
             }
         });
     });
