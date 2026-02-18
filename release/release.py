@@ -109,11 +109,11 @@ def darwin():
 match platform.system():
     case "Windows":
         shutil.copy(f"../target/{path}/SkelForm.pdb", f"./{dirname}")
-        #shutil.copy("../assets/ffmpeg-native/ffmpeg.exe", f"./{dirname}/ffmpeg.exe")
+        shutil.copy("../ffmpeg/native/ffmpeg.exe", f"./{dirname}/ffmpeg.exe")
         shutil.make_archive(dirname, 'zip', ".", dirname)
     case "Darwin":
-        #shutil.copy("../assets/ffmpeg-native/ffmpeg-mac-arm", f"./{dirname}/ffmpeg")
+        shutil.copy("../ffmpeg/native/ffmpeg-mac-arm", f"./{dirname}/ffmpeg")
         darwin()
     case "Linux":
-        #shutil.copy("../assets/ffmpeg-native/ffmpeg-linux", f"./{dirname}/ffmpeg")
+        shutil.copy("../ffmpeg/native/ffmpeg-linux", f"./{dirname}/ffmpeg")
         shutil.make_archive(dirname, 'zip', ".", dirname)
