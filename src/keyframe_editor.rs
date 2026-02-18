@@ -732,13 +732,14 @@ fn draw_frame_lines(
 
         let above_bar = cursor.y < ui.min_rect().height() - 13.;
         let in_ui = cursor.y > 0.;
-        let in_modal = shared_ui.modal || shared_ui.settings_modal;
+        let can_hover =
+            in_ui && !shared_ui.modal && !shared_ui.settings_modal && shared_ui.context_menu.hide;
         let cur = cursor;
 
         if selections.anim_frame == i {
             color = egui::Color32::WHITE;
             selected_line_x = ui.min_rect().left() + x;
-        } else if !in_modal && in_ui && cur.x < x + hitbox && cur.x > x - hitbox && above_bar {
+        } else if can_hover && cur.x < x + hitbox && cur.x > x - hitbox && above_bar {
             hovered_line_x = ui.min_rect().left() + x;
             shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
             color = egui::Color32::WHITE;
