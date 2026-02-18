@@ -1324,6 +1324,17 @@ pub fn interp(
     start_val + (end_val - start_val) * progress
 }
 
+pub fn interp_preset(name: &str) -> (f32, f32) {
+    match name {
+        "linear" => (1. / 3., 2. / 3.),
+        "sinein" => (0., 2. / 3.),
+        "sineout" => (1., 1. / 3.),
+        "sineinout" => (0., 1.),
+        "none" => (999., 999.),
+        &_ => (0., 0.),
+    }
+}
+
 pub fn get_prev_frame(frame: i32, kfs: &Vec<Keyframe>, b_id: i32, el: &AnimElement) -> usize {
     let mut prev = usize::MAX;
     for (i, kf) in kfs.iter().enumerate() {

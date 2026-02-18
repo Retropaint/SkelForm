@@ -44,39 +44,21 @@ pub fn draw(
                 return;
             }
 
-            let mut selected = -1;
+            let mut selected = "";
             egui::ComboBox::new("transition".to_string(), "")
                 .selected_text("Transition Presets")
                 .show_ui(ui, |ui| {
-                    ui.selectable_value(&mut selected, 0, "Linear");
-                    ui.selectable_value(&mut selected, 1, "Sine In");
-                    ui.selectable_value(&mut selected, 2, "Sine Out");
-                    ui.selectable_value(&mut selected, 3, "Sine In-Out");
-                    ui.selectable_value(&mut selected, 4, "None");
+                    ui.selectable_value(&mut selected, "linear", "Linear");
+                    ui.selectable_value(&mut selected, "sinein", "Sine In");
+                    ui.selectable_value(&mut selected, "sineout", "Sine Out");
+                    ui.selectable_value(&mut selected, "sineinout", "Sine In-Out");
+                    ui.selectable_value(&mut selected, "none", "None");
                 });
 
-            match selected {
-                0 => {
-                    events.update_keyframe_transition(keyframe.frame, true, 1. / 3.);
-                    events.update_keyframe_transition(keyframe.frame, false, 2. / 3.);
-                }
-                1 => {
-                    events.update_keyframe_transition(keyframe.frame, true, 0.);
-                    events.update_keyframe_transition(keyframe.frame, false, 2. / 3.);
-                }
-                2 => {
-                    events.update_keyframe_transition(keyframe.frame, true, 1.);
-                    events.update_keyframe_transition(keyframe.frame, false, 1. / 3.);
-                }
-                3 => {
-                    events.update_keyframe_transition(keyframe.frame, true, 0.);
-                    events.update_keyframe_transition(keyframe.frame, false, 1.);
-                }
-                4 => {
-                    events.update_keyframe_transition(keyframe.frame, true, 999.);
-                    events.update_keyframe_transition(keyframe.frame, false, 999.);
-                }
-                _ => {}
+            if selected != "" {
+                let (start, end) = utils::interp_preset(selected);
+                events.update_keyframe_transition(keyframe.frame, true, start);
+                events.update_keyframe_transition(keyframe.frame, false, end);
             }
         });
 

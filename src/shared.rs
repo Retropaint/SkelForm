@@ -1667,8 +1667,8 @@ impl Animation {
             bone_id: id,
             element: element.clone(),
             element_id: element.clone() as i32,
-            start_handle: 0.,
-            end_handle: 0.,
+            start_handle: utils::interp_preset("linear").0,
+            end_handle: utils::interp_preset("linear").1,
             ..Default::default()
         });
 

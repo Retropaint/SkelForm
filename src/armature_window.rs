@@ -18,6 +18,7 @@ pub fn draw(
     selections: &SelectionState,
     edit_mode: &EditMode,
     shared_ui: &mut crate::Ui,
+    camera: &Camera,
 ) {
     let min_default_size = 175.;
     let panel_id = "Armature";
@@ -128,7 +129,7 @@ pub fn draw(
         shared_ui.armature_panel_rect = Some(ui.min_rect());
     });
 
-    ui::draw_resizable_panel(panel_id, panel, events, &egui_ctx);
+    ui::draw_resizable_panel(panel_id, panel, events, &egui_ctx, camera);
 }
 
 pub fn draw_hierarchy(

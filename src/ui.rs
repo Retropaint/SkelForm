@@ -127,24 +127,24 @@ pub fn draw(
     #[cfg(not(target_arch = "wasm32"))]
     if shared_ui.checking_update {
         modal::modal(context, shared_ui, &config);
-        let url = "https://skelform.org/data/version";
+        let url = "https://skelform.org/data/download_links.json";
         let request = ureq::get(url).header("Example-Header", "header value");
-        let raw_ver = match request.call() {
-            Ok(mut data) => data.body_mut().read_to_string().unwrap(),
-            Err(_) => "err".to_string(),
+        let dl_links: serde_json::Value = match request.call() {
+            Ok(mut data) => {
+                serde_json::from_str(&data.body_mut().read_to_string().unwrap()).unwrap()
+            }
+            Err(_) => serde_json::Value::default(),
         };
 
-        if raw_ver == "err" {
+        if dl_links.get("version") == None {
             events.open_modal("startup.error_update", false);
-        } else if raw_ver != "" {
-            let ver_str = raw_ver.split(' ').collect::<Vec<_>>();
-            //let ver_idx = ver_str[0].parse::<i32>().unwrap();
-            let ver_name = ver_str[1];
-            let this_ver_name = "v".to_owned() + env!("CARGO_PKG_VERSION");
-            if ver_name.trim() != this_ver_name.trim() {
-                shared_ui.new_version = ver_name.to_string();
+        } else if dl_links != "" {
+            let ver_str = dl_links["version"].as_str().unwrap();
+            let this_ver_str = "v".to_owned() + env!("CARGO_PKG_VERSION");
+            if ver_str.trim() != this_ver_str.trim() {
+                shared_ui.new_version = this_ver_str.to_string();
                 let str = "New version available: ".to_owned()
-                    + &ver_name
+                    + &ver_str
                     + "\nGo to version page and download manually?";
                 events.open_polar_modal(PolarId::NewUpdate, str);
             } else {
@@ -160,11 +160,11 @@ pub fn draw(
 
     if edit_mode.anim_open {
         #[rustfmt::skip]
-        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, copy_buffer,&edit_mode));
+        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, copy_buffer,&edit_mode, camera));
     }
 
     style_once!(armature_window::draw(
-        context, events, config, armature, selections, edit_mode, shared_ui
+        context, events, config, armature, selections, edit_mode, shared_ui, camera
     ));
 
     let min_default_size = 210.;
@@ -223,6 +223,7 @@ pub fn draw(
         }),
         events,
         context,
+        camera
     );
 
     // adjust bar positions
@@ -288,7 +289,7 @@ pub fn draw(
     // check if mouse is on ui
     //
     // this check always returns false on mouse click, so it's only checked when the mouse isn't clicked
-    if !input.left_down {
+    if !input.left_down && camera.on_ui != context.is_pointer_over_area() {
         events.toggle_pointer_on_ui(context.is_pointer_over_area());
     }
 
@@ -1424,10 +1425,13 @@ pub fn draw_resizable_panel<T>(
     panel: egui::InnerResponse<T>,
     events: &mut EventState,
     context: &egui::Context,
+    camera: &Camera,
 ) {
     if let Some(resize) = context.read_response(egui::Id::new(id).with("__resize")) {
         if resize.hovered() || panel.response.hovered() {
-            events.toggle_pointer_on_ui(true);
+            if !camera.on_ui {
+                events.toggle_pointer_on_ui(true);
+            }
         }
     }
 }

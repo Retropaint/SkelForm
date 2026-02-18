@@ -18,6 +18,7 @@ pub fn draw(
     events: &mut EventState,
     copy_buffer: &mut CopyBuffer,
     edit_mode: &EditMode,
+    camera: &Camera,
 ) {
     if !input.left_down {
         shared_ui.anim.dragged_keyframe.frame = -1;
@@ -87,6 +88,7 @@ pub fn draw(
         }),
         events,
         &egui_ctx,
+        &camera
     );
 }
 
