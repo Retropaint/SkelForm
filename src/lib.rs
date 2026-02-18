@@ -789,16 +789,16 @@ impl BackendRenderer {
                 };
                 let size = shared.ui.sprite_size;
                 let this_anim = bufs[0].clone();
+                    let fps = shared.armature.animations[anim_idx].fps;
                 if shared.ui.exporting_video_type == ExportVideoType::Gif {
                     shared.ui.custom_error =
-                        Self::encode_gif(this_anim, size, name, &_path, ffmpeg_bin);
+                        Self::encode_gif(this_anim, fps, size, name, &_path, ffmpeg_bin);
                     _ext = ".gif";
                 } else {
                     let codec_str = match shared.ui.exporting_video_encoder {
                         ExportVideoEncoder::Libx264 => "libx264",
                         ExportVideoEncoder::AV1 => "libsvtav1",
                     };
-                    let fps = shared.armature.animations[anim_idx].fps;
                     shared.ui.custom_error = Self::encode_video(
                         this_anim, fps, size, name, codec_str, &_path, ffmpeg_bin,
                     );
@@ -1264,6 +1264,7 @@ impl BackendRenderer {
 
     fn encode_gif(
         rendered_frames: Vec<Vec<u8>>,
+        fps: i32,
         window: Vec2,
         _name: &str,
         _path: &String,
@@ -1281,7 +1282,8 @@ impl BackendRenderer {
         {
             #[rustfmt::skip]
             let mut child = Command::new(_ffmpeg_bin)
-            .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), "-framerate", "60", "-i", "pipe:0", "-filter_complex",
+            .args(["-y", "-f", "rawvideo", "-pixel_format", "rgba", "-video_size", &format!("{}x{}", window.x, window.y), 
+                "-framerate", &fps.to_string(), "-i", "pipe:0", "-filter_complex",
                 "[0:v] fps=30,split [a][b]; \
                  [a] palettegen=stats_mode=diff [p]; \
                  [b][p] paletteuse=dither=sierra2_4a",
