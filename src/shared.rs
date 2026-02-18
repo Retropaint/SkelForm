@@ -2579,4 +2579,4 @@ pub fn recents_path() -> std::path::PathBuf {
     directories_next::ProjectDirs::from("com", "retropaint", "skelform")
         .map(|proj_dirs| proj_dirs.data_dir().join("recent_files.json"))
         .unwrap()
-}
+} 
