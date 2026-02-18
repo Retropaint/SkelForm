@@ -530,23 +530,24 @@
                 gifFrames.push(frame)
             }
 
-            async function downloadGif(anim_name, resX, resY) {
+            async function downloadGif(anim_name, resX, resY, fps) {
                 await ensureFFmpeg();
                 let name = anim_name + ".gif"
                 for (let i = 0; i < gifFrames.length; i++) {
                     const name = `frame${String(i).padStart(3, '0')}.png`;
                     await ffmpeg.writeFile(name, gifFrames[i]);
                 }
+                gifFrames = [];
 
                 await ffmpeg.exec([
-                    '-framerate', '60',
+                    '-framerate', fps.toString(),
                     '-i', 'frame%03d.png',
                     '-vf', 'palettegen=stats_mode=full',
                     'palette.png'
                 ]);
 
                 await ffmpeg.exec([
-                    '-framerate', '60',
+                    '-framerate', fps.toString(),
                     '-i', 'frame%03d.png',
                     '-i', 'palette.png',
                     '-filter_complex',
@@ -565,7 +566,6 @@
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
-                gifFrames = [];
             }            
         </script>
 

@@ -95,7 +95,7 @@ extern "C" {
     pub fn hasLoadedAllImages() -> bool;
     pub fn downloadZip(zip: Vec<u8>, saving: String);
     pub fn downloadMp4(data: Vec<u8>, resX: f32, resY: f32, name: &str, fps: i32);
-    pub fn downloadGif(resX: f32, resY: f32, name: &str);
+    pub fn downloadGif(resX: f32, resY: f32, name: &str, fps: i32);
     pub fn addGifFrame(frame: Vec<u8>);
 }
 
@@ -789,7 +789,7 @@ impl BackendRenderer {
                 };
                 let size = shared.ui.sprite_size;
                 let this_anim = bufs[0].clone();
-                    let fps = shared.armature.animations[anim_idx].fps;
+                let fps = shared.armature.animations[anim_idx].fps;
                 if shared.ui.exporting_video_type == ExportVideoType::Gif {
                     shared.ui.custom_error =
                         Self::encode_gif(this_anim, fps, size, name, &_path, ffmpeg_bin);
@@ -1275,7 +1275,7 @@ impl BackendRenderer {
             for frame in rendered_frames {
                 addGifFrame(frame);
             }
-            downloadGif(window.x, window.y, _name);
+            downloadGif(window.x, window.y, _name, fps);
         }
 
         #[cfg(not(target_arch = "wasm32"))]
