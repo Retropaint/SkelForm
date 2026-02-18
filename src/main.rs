@@ -131,7 +131,7 @@ fn init_shared(shared: &mut Shared) {
     shared.edit_mode.export_exclude_ik = true;
     shared.ui.can_quit = true;
     shared.ui.open_after_export = true;
-    shared.edit_mode.onion_layers = true;
+    shared.edit_mode.onion_layers = false;
 
     #[cfg(feature = "debug")]
     {
