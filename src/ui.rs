@@ -143,10 +143,12 @@ pub fn draw(
             let this_ver_str = "v".to_owned() + env!("CARGO_PKG_VERSION");
             if ver_str.trim() != this_ver_str.trim() {
                 shared_ui.new_version = this_ver_str.to_string();
-                let str = "New version available: ".to_owned()
-                    + &ver_str
-                    + "\nGo to version page and download manually?";
-                events.open_polar_modal(PolarId::NewUpdate, str);
+                events.open_polar_modal(
+                    PolarId::NewUpdate,
+                    shared_ui
+                        .loc("startup.update_available")
+                        .replace("$ver", ver_str),
+                );
             } else {
                 events.open_modal("startup.no_updates", false);
             }

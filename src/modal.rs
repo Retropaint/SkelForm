@@ -95,8 +95,8 @@ pub fn polar_modal(
                 PolarId::NewUpdate => {
                     #[cfg(not(target_arch = "wasm32"))]
                     {
-                        let base_url = "https://github.com/Retropaint/SkelForm/releases/tag/v";
-                        _ = open::that(base_url.to_owned() + &shared_ui.new_version.to_string());
+                        let base_url = "https://github.com/Retropaint/SkelForm/releases/latest";
+                        _ = open::that(base_url.to_owned());
                     }
                 }
                 PolarId::OpenCrashlog => {
