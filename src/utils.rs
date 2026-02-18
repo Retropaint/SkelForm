@@ -1298,6 +1298,7 @@ pub fn crashlog_file() -> PathBuf {
     exe_dir.join("crash.log")
 }
 
+// runtimes: interpolation using bezier splines
 pub fn interp(
     current: i32,
     max: i32,
@@ -1310,17 +1311,16 @@ pub fn interp(
     if start_tangent == 999. && end_tangent == 999. {
         return start_val;
     }
-
     if max == 0 || current >= max {
         return end_val;
     }
 
     let t = current as f32 / max as f32;
-    let h1 = t.powi(3) - 2.0 * t.powi(2) + t;
-    let h2 = -2.0 * t.powi(3) + 3.0 * t.powi(2);
-    let h3 = t.powi(3) - t.powi(2);
+    let h10 = 3. * (1. - t).powi(2) * t;
+    let h01 = 3. * (1. - t) * t.powi(2);
+    let h11 = t.powi(3);
+    let progress = h10 * start_tangent + h01 * end_tangent + h11;
 
-    let progress = h1 * start_tangent + h2 + h3 * end_tangent;
     start_val + (end_val - start_val) * progress
 }
 
