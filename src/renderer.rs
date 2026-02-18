@@ -58,28 +58,26 @@ pub fn render(
     let mut next_arm = Armature::default();
     let mut prev_arm = Armature::default();
     if selections.anim_frame != -1 && edit_mode.onion_layers {
-        next_arm = armature.clone();
+        let keyframes = &armature.sel_anim(selections).unwrap().keyframes;
+
+        // set up previous onion
         prev_arm = armature.clone();
         let mut prev_sel = selections.clone();
-        let mut next_sel = selections.clone();
-        let keyframes = &armature.sel_anim(selections).unwrap().keyframes;
-        prev_sel.anim_frame = keyframes[keyframes
-            .iter()
-            .position(|kf| kf.frame > selections.anim_frame)
-            .unwrap_or_else(|| 1)
-            - 1]
-        .frame;
-        if let Some(next_kf) = keyframes.iter().find(|kf| kf.frame > selections.anim_frame) {
-            next_sel.anim_frame = next_kf.frame;
-        } else {
-            next_sel.anim_frame = prev_sel.anim_frame;
-        }
-        utils::animate_bones(&mut next_arm, &next_sel, edit_mode);
+        let idx = keyframes.iter().position(|kf| kf.frame > sel.anim_frame);
+        prev_sel.anim_frame = keyframes[idx.unwrap_or_else(|| 1) - 1].frame;
         utils::animate_bones(&mut prev_arm, &prev_sel, edit_mode);
         prev_arm.bones = prev_arm.animated_bones.clone();
+        construction(&mut prev_arm.bones, &prev_arm.animated_bones);
+
+        // set up next onion
+        next_arm = armature.clone();
+        let mut next_sel = prev_sel.clone();
+        if let Some(next_kf) = keyframes.iter().find(|kf| kf.frame > selections.anim_frame) {
+            next_sel.anim_frame = next_kf.frame;
+        }
+        utils::animate_bones(&mut next_arm, &next_sel, edit_mode);
         next_arm.bones = next_arm.animated_bones.clone();
         construction(&mut next_arm.bones, &next_arm.animated_bones);
-        construction(&mut prev_arm.bones, &prev_arm.animated_bones);
     }
 
     // store bound/unbound vert's pos before construction
@@ -288,6 +286,8 @@ pub fn render(
 
     // runtime: sort bones by z-index for drawing
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
+
+    // sort onions by zindex as well
     if selections.anim_frame != -1 && edit_mode.onion_layers {
         prev_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
         next_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
