@@ -34,7 +34,7 @@ pub fn iterate_events(
             match last_event {
                 E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone  => undo_states.new_undo_bones(&armature.bones),
                 E::NewAnimation | E::DeleteAnim           => undo_states.new_undo_anims(&armature.animations),
-                E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
+                E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::PasteKeyframes => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
                 E::DeleteTex                              => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
                 E::DeleteStyle | E::NewStyle              => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
