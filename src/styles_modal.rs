@@ -334,7 +334,7 @@ pub fn draw_textures_list(
             }
             let frame = egui::Frame::new().fill(darker.into()).inner_margin(2.);
             frame.show(ui, |ui| {
-                ui.set_max_width(size.x - tex_frame_padding.x);
+                ui.set_width(size.x - tex_frame_padding.x);
                 ui.set_height(size.y - tex_frame_padding.y);
 
                 if set_idx == usize::MAX {
@@ -442,7 +442,7 @@ fn draw_bones_list(
                 .fill(config.colors.dark_accent.into())
                 .inner_margin(6.);
             frame.show(ui, |ui| {
-                ui.set_max_width((modal_width / 3.) - padding.x);
+                ui.set_width((modal_width / 3.) - padding.x);
                 ui.set_height(height - padding.y);
 
                 let styles = &armature.styles;
@@ -614,7 +614,7 @@ fn draw_assigned_list(
                 .fill(config.colors.dark_accent.into())
                 .inner_margin(6.);
             frame.show(ui, |ui| {
-                ui.set_max_width(default_width);
+                ui.set_width(default_width);
                 let padding = Vec2::new(20., 33.);
                 ui.set_height(height - padding.y);
 
