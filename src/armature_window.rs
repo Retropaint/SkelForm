@@ -145,10 +145,11 @@ pub fn draw_hierarchy(
     let mut idx: i32 = -1;
     let mut is_hovering = false;
     let sel = selections.clone();
+    let panel = shared_ui.armature_panel_rect;
 
     for b in 0..armature.bones.len() {
         // stop rendering if bones go below this panel
-        if ui.cursor().top() > ui.min_rect().bottom() {
+        if panel != None && ui.cursor().top() > panel.unwrap().bottom() {
             break;
         }
 
