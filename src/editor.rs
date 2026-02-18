@@ -494,11 +494,11 @@ pub fn process_event(
             *ui.saving.lock().unwrap() = Saving::Autosaving;
         }
         Events::SaveEditedBone => {
-            if ui.is_animating(&edit_mode, &selections) {
+            let bone = armature.bones[value as usize].clone();
+            if ui.is_animating(&edit_mode, &selections) && !bone.locked {
                 let anim = armature.animations[selections.anim as usize].clone();
                 undo_states.new_undo_anim(&anim);
             } else {
-                let bone = armature.bones[value as usize].clone();
                 undo_states.new_undo_bone(&bone);
             }
             *ui.saving.lock().unwrap() = Saving::Autosaving;
