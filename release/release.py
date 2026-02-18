@@ -20,7 +20,7 @@ RESET = "\033[0m"
 parser = argparse.ArgumentParser(prog="SkelForm Release Builder", description="Build script for SkelForm release distributions.", formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument("-v", "--verbose", action="store_true", help="Print output of everything")
 parser.add_argument("-dmg", "--dmg", action="store_true", help="Attempt to create Mac dmg (requires create-dmg)")
-parser.add_argument("-dbg", "--debug", action="store_true", help="Create debug build")
+parser.add_argument("-d", "--debug", action="store_true", help="Create debug build")
 parser.add_argument("-nd", "--nodocs", action="store_true", help="Skip user docs & dev docs")
 parser.add_argument("-up", "--ubuntudeps", action="store_true", help="Install glib2 and gtk3 for Ubuntu (used for CI/CD)")
 args = parser.parse_args()
@@ -57,14 +57,7 @@ match platform.system():
     case "Linux":
         platform_name = "linux"
 
-version = ""
-with open("../Cargo.toml", "r") as file:
-    for line in file.readlines():
-        if "version" in line.strip():
-            version = line.strip().split('"')[1]
-            break
-
-dirname = "skelform_" + platform_name + "_v" + version
+dirname = "skelform_" + platform_name
 
 if os.path.exists(dirname):
     shutil.rmtree(dirname)
