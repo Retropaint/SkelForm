@@ -465,6 +465,12 @@ pub fn video_export(
                 .on_hover_text(shared_ui.loc("export_modal.video.use_system_ffmpeg_desc"));
             ui.checkbox(&mut shared_ui.use_system_ffmpeg, "".into_atoms());
         });
+
+        // disabled:
+        // optional ffmpeg downloads - would need to compress first for reduced download size
+        // and then uncompress via zip
+        return;
+
         ui.add_space(10.);
         if ui.skf_button("Download ffmpeg").clicked() {
             let base_url =
