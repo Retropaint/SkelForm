@@ -3,7 +3,6 @@
 use crate::*;
 use image::{DynamicImage, GenericImageView};
 use spade::Triangulation;
-use utils::animate_bones;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
 /// The `main` of this module.

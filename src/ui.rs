@@ -47,7 +47,6 @@ pub fn draw(
     edit_mode: &mut EditMode,
     camera: &Camera,
     armature: &mut Armature,
-    copy_buffer: &mut CopyBuffer,
 ) {
     shared_ui.context_menu.keep = false;
 
@@ -162,7 +161,7 @@ pub fn draw(
 
     if edit_mode.anim_open {
         #[rustfmt::skip]
-        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, copy_buffer,&edit_mode, camera));
+        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, &edit_mode, camera));
     }
 
     style_once!(armature_window::draw(

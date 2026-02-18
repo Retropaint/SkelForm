@@ -16,7 +16,6 @@ pub fn draw(
     config: &Config,
     selections: &mut SelectionState,
     events: &mut EventState,
-    copy_buffer: &mut CopyBuffer,
     edit_mode: &EditMode,
     camera: &Camera,
 ) {
@@ -80,15 +79,16 @@ pub fn draw(
                 });
 
                 if selections.anim != usize::MAX {
-                    #[rustfmt::skip]
-                    timeline_editor(ui, selections, armature, events, shared_ui, config, input, copy_buffer, edit_mode);
+                    timeline_editor(
+                        ui, selections, armature, events, shared_ui, config, input, edit_mode,
+                    );
                 }
             });
             shared_ui.keyframe_panel_rect = Some(ui.min_rect());
         }),
         events,
         &egui_ctx,
-        &camera
+        &camera,
     );
 }
 
@@ -222,7 +222,6 @@ fn timeline_editor(
     shared_ui: &mut crate::Ui,
     config: &Config,
     input: &InputStates,
-    copy_buffer: &mut CopyBuffer,
     edit_mode: &EditMode,
 ) {
     let frame = egui::Frame::new().outer_margin(egui::Margin {
@@ -295,14 +294,7 @@ fn timeline_editor(
             // so that the remaining height can be taken up by timeline graph.
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                 draw_bottom_bar(
-                    ui,
-                    selections,
-                    &config,
-                    &armature,
-                    shared_ui,
-                    events,
-                    copy_buffer,
-                    edit_mode,
+                    ui, selections, &config, &armature, shared_ui, events, edit_mode,
                 );
                 draw_timeline_graph(
                     ui, width, hitbox, shared_ui, config, selections, armature, events, input,
@@ -337,7 +329,6 @@ pub fn draw_bones_list(
 
         // keep track of elements, to prevent showing multiple of the same
         let mut added_elements: Vec<AnimElement> = vec![];
-        let panel = shared_ui.keyframe_panel_rect;
 
         for i in 0..keyframes.len() {
             let kf = &keyframes[i];
@@ -605,7 +596,6 @@ pub fn draw_bottom_bar(
     armature: &Armature,
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
-    copy_buffer: &CopyBuffer,
     edit_mode: &EditMode,
 ) {
     let sel = selections.clone();

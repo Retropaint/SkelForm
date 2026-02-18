@@ -49,6 +49,7 @@ use winit::{
 
 pub mod armature_window;
 pub mod atlas_modal;
+pub mod backwards_compat;
 pub mod bone_panel;
 pub mod editor;
 pub mod export_modal;
@@ -64,7 +65,6 @@ pub mod styles_modal;
 pub mod ui;
 pub mod utils;
 pub mod warnings;
-pub mod backwards_compat;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
@@ -361,7 +361,6 @@ impl ApplicationHandler for App {
                     &mut shared.edit_mode,
                     &shared.camera,
                     &mut shared.armature,
-                    &mut shared.copy_buffer,
                 );
 
                 let egui_winit::egui::FullOutput {
