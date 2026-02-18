@@ -580,7 +580,7 @@ pub fn get_sprite_boundary(armature: &Armature, camera: &Camera, config: &Config
     let mut right_bot = Vec2::new(-f32::MAX, f32::MAX);
 
     for b in 0..temp_arm.bones.len() {
-        if armature.tex_of(temp_arm.bones[b].id) == None || temp_arm.bones[b].is_hidden {
+        if armature.tex_of(temp_arm.bones[b].id) == None || temp_arm.bones[b].hidden {
             continue;
         }
 
@@ -611,7 +611,6 @@ pub fn render_screenshot(
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
 
     for b in 0..temp_arm.bones.len() {
-        //if armature.tex_of(temp_arm.bones[b].id) == None || temp_arm.bones[b].is_hidden {
         if armature.tex_of(temp_arm.bones[b].id) == None
             || temp_arm.is_bone_hidden(false, config.propagate_visibility, temp_arm.bones[b].id)
         {

@@ -56,9 +56,9 @@ pub fn iterate_events(
                 continue;
             }
             if is_in {
-                kf.start_tangent = events.values[2];
+                kf.start_handle = events.values[2];
             } else {
-                kf.end_tangent = events.values[2];
+                kf.end_handle = events.values[2];
             }
         }
 
@@ -1187,9 +1187,9 @@ fn edit_bone(
             }
         }
         AnimElement::Hidden => {
-            init_value = shared::bool_as_f32(bone.is_hidden);
+            init_value = shared::bool_as_f32(bone.hidden);
             if anim_id == usize::MAX {
-                bone.is_hidden = shared::f32_as_bool(value)
+                bone.hidden = shared::f32_as_bool(value)
             }
         }
         AnimElement::Locked => {

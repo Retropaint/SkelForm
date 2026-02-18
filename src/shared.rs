@@ -999,7 +999,8 @@ pub struct Bone {
     pub pos: Vec2,
     pub scale: Vec2,
     pub rot: f32,
-    pub is_hidden: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub hidden: bool,
 
     #[serde(default = "default_neg_one")]
     pub ik_family_id: i32,
@@ -1029,7 +1030,7 @@ pub struct Bone {
     #[serde(default, skip_serializing_if = "is_neg_one", skip_deserializing)]
     pub init_ik_constraint: i32,
     #[serde(default, skip_serializing_if = "is_false", skip_deserializing)]
-    pub init_is_hidden: bool,
+    pub init_hidden: bool,
     #[serde(default, skip_serializing_if = "is_str_empty", skip_deserializing)]
     pub init_tex: String,
 
@@ -1284,7 +1285,7 @@ impl Armature {
                 b.tint.b =  interpolate!(AnimElement::TintB,     b.tint.b);
                 b.tint.a =  interpolate!(AnimElement::TintA,     b.tint.a);
                 b.zindex  = prev_frame!( AnimElement::Zindex,    b.zindex  as f32) as i32;
-                b.is_hidden  = prev_frame!( AnimElement::Hidden, bool_as_f32(b.is_hidden)) != 0.;
+                b.hidden  = prev_frame!( AnimElement::Hidden, bool_as_f32(b.hidden)) != 0.;
                 b.tex     = prev_str!(   AnimElement::Texture,   b.tex.clone());
             };
 
@@ -1340,8 +1341,8 @@ impl Armature {
             keyframes[next].frame - keyframes[prev].frame,
             keyframes[prev].value,
             keyframes[next].value,
-            keyframes[next].start_tangent,
-            keyframes[next].end_tangent,
+            keyframes[next].start_handle,
+            keyframes[next].end_handle,
         )
     }
 
@@ -1531,15 +1532,15 @@ impl Armature {
             return false;
         }
         if !propagate {
-            return bone.unwrap().is_hidden;
+            return bone.unwrap().hidden;
         }
-        if bone.unwrap().is_hidden {
+        if bone.unwrap().hidden {
             return true;
         }
 
         let parents = self.get_all_parents(is_anim, bone_id);
         for parent in &parents {
-            if parent.is_hidden {
+            if parent.hidden {
                 return true;
             }
         }
@@ -1666,8 +1667,8 @@ impl Animation {
             bone_id: id,
             element: element.clone(),
             element_id: element.clone() as i32,
-            start_tangent: 0.,
-            end_tangent: 0.,
+            start_handle: 0.,
+            end_handle: 0.,
             ..Default::default()
         });
 
@@ -1749,9 +1750,9 @@ pub struct Keyframe {
     #[serde(default)]
     pub is_snap: bool,
     #[serde(default = "default_one")]
-    pub start_tangent: f32,
+    pub start_handle: f32,
     #[serde(default = "default_one")]
-    pub end_tangent: f32,
+    pub end_handle: f32,
 
     #[serde(skip)]
     pub label_top: f32,

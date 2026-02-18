@@ -568,8 +568,8 @@ pub fn prepare_files(
                         element: AnimElement::Rotation,
                         value_str: "".to_string(),
                         value: family[i].rot,
-                        start_tangent: 1.,
-                        end_tangent: 1.,
+                        start_handle: 1.,
+                        end_handle: 1.,
                         label_top: 0.,
                         is_snap: false,
                     });
@@ -683,7 +683,7 @@ pub fn prepare_files(
         bone.init_rot = bone.rot;
         bone.init_scale = bone.scale;
         bone.init_tex = bone.tex.clone();
-        bone.init_is_hidden = bone.is_hidden;
+        bone.init_hidden = bone.hidden;
         bone.init_ik_constraint = bone.ik_constraint_id;
 
         if bone.ik_bone_ids.len() == 0 {
@@ -1304,11 +1304,11 @@ pub fn interp(
     max: i32,
     start_val: f32,
     end_val: f32,
-    start_tangent: f32,
-    end_tangent: f32,
+    start_handle: f32,
+    end_handle: f32,
 ) -> f32 {
     // snapping behavior for None transition preset
-    if start_tangent == 999. && end_tangent == 999. {
+    if start_handle == 999. && end_handle == 999. {
         return start_val;
     }
     if max == 0 || current >= max {
@@ -1319,7 +1319,7 @@ pub fn interp(
     let h10 = 3. * (1. - t).powi(2) * t;
     let h01 = 3. * (1. - t) * t.powi(2);
     let h11 = t.powi(3);
-    let progress = h10 * start_tangent + h01 * end_tangent + h11;
+    let progress = h10 * start_handle + h01 * end_handle + h11;
 
     start_val + (end_val - start_val) * progress
 }
