@@ -1,7 +1,7 @@
-use std::{
-    io::{Read, Write},
-    os::unix::fs::PermissionsExt,
-};
+use std::io::{Read, Write};
+
+#[cfg(not(target_os = "windows"))]
+use std::os::unix::fs::PermissionsExt;
 
 use egui::IntoAtoms;
 
@@ -470,6 +470,7 @@ pub fn video_export(
             let base_url =
                 "https://github.com/Retropaint/SkelForm/raw/refs/heads/master/assets/ffmpeg-native/";
             let bin_name;
+            let mut final_bin_name = "ffmpeg";
             #[cfg(target_os = "macos")]
             {
                 bin_name = "ffmpeg-mac-arm"
@@ -477,6 +478,7 @@ pub fn video_export(
             #[cfg(target_os = "windows")]
             {
                 bin_name = "ffmpeg.exe";
+                final_bin_name = "ffmpeg.exe";
             }
             #[cfg(target_os = "linux")]
             {
@@ -484,7 +486,7 @@ pub fn video_export(
             }
 
             let resp = ureq::get(base_url.to_owned() + bin_name).call().unwrap();
-            let mut f = std::fs::File::create(utils::bin_path().join("ffmpeg")).unwrap();
+            let mut f = std::fs::File::create(utils::bin_path().join(final_bin_name)).unwrap();
             let mut perms = f.metadata().unwrap().permissions();
             perms.set_readonly(false);
             #[cfg(not(target_os = "windows"))]
@@ -501,7 +503,7 @@ pub fn video_export(
         let mut size_warning = "";
         #[cfg(target_os = "windows")]
         {
-            size_warning = " (>100mb)";
+            size_warning = " (>100mb).\nThe program will freeze during download, do not close it.";
         }
         let str = if std::fs::exists(utils::bin_path().join("ffmpeg")).unwrap() {
             "Re-download ffmpeg if problems occur.".to_string()
