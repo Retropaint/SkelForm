@@ -155,22 +155,26 @@ fn draw_animations_list(
                     } else {
                         egui::CursorIcon::Default
                     };
-                    //let button = ui::selection_button(&name, i == shared.selections.anim, ui);
-                    let button = egui::Frame::new()
-                        .fill(col.into())
-                        .show(ui, |ui| {
-                            ui.horizontal(|ui| {
-                                ui.set_width(width - button_padding);
-                                ui.set_height(21.);
-                                ui.add_space(5.);
-                                let col = config.colors.text;
-                                ui.label(egui::RichText::new(name.clone()).color(col));
-                            });
-                        })
-                        .response
-                        .interact(egui::Sense::click())
+
+                    // set up a focusable frame for the animation button
+                    let rect = egui::Rect::from_min_size(
+                        egui::Pos2::new(ui.cursor().left(), ui.cursor().top()),
+                        egui::Vec2::new(width, 21.),
+                    );
+                    let id = egui::Id::new("anim_".to_owned() + &name);
+                    let button = ui
+                        .interact(rect, id, egui::Sense::click())
                         .on_hover_cursor(cursor_icon);
-                    if button.contains_pointer() {
+                    egui::Frame::new().fill(col.into()).show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.set_width(width - button_padding);
+                            ui.set_height(21.);
+                            ui.add_space(5.);
+                            let col = config.colors.text;
+                            ui.label(egui::RichText::new(name.clone()).color(col));
+                        });
+                    });
+                    if button.contains_pointer() || button.has_focus() {
                         shared_ui.hovering_anim = i as i32;
                         hovered = true;
                     }
