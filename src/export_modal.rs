@@ -1,6 +1,6 @@
 use std::io::{Read, Write};
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(all(not(target_os = "windows"), not(target_arch = "wasm32")))]
 use std::os::unix::fs::PermissionsExt;
 
 use egui::IntoAtoms;
@@ -468,7 +468,7 @@ pub fn video_export(
         ui.add_space(10.);
         if ui.skf_button("Download ffmpeg").clicked() {
             let base_url =
-                "https://github.com/Retropaint/SkelForm/raw/refs/heads/master/assets/ffmpeg-native/";
+                "https://github.com/Retropaint/SkelForm/raw/refs/heads/master/ffmpeg/native/";
             let bin_name;
             let mut final_bin_name = "ffmpeg";
             #[cfg(target_os = "macos")]

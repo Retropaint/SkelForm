@@ -66,7 +66,7 @@ subprocess.run(build_command, shell=True)
 shutil.copy("assets/skf_icon.ico", "dist/favicon.ico")
 shutil.copy("samples/_skellington.skf", "dist/_skellington.skf")
 shutil.copy("samples/_skellina.skf", "dist/_skellina.skf")
-shutil.copytree("assets/ffmpeg-wasm", "dist/ffmpeg-wasm")
+shutil.copytree("ffmpeg/wasm", "dist/ffmpeg-wasm")
 
 if args.serve:
     # automatically serve via python http
