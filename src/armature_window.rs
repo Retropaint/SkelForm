@@ -146,6 +146,11 @@ pub fn draw_hierarchy(
     let sel = selections.clone();
 
     for b in 0..armature.bones.len() {
+        // stop rendering if bones go below this panel
+        if ui.cursor().top() > ui.min_rect().bottom() {
+            break;
+        }
+
         idx += 1;
         if armature.is_bone_folded(armature.bones[b].id) {
             continue;

@@ -335,10 +335,10 @@ pub fn draw_bones_list(
 
         // keep track of elements, to prevent showing multiple of the same
         let mut added_elements: Vec<AnimElement> = vec![];
+        let panel = shared_ui.keyframe_panel_rect;
 
         for i in 0..keyframes.len() {
             let kf = &keyframes[i];
-
             let bones = &armature.bones;
             let bone = bones.iter().find(|b| b.id == kf.bone_id).unwrap();
             let highlighted =
@@ -374,11 +374,9 @@ pub fn draw_bones_list(
                 // reset element tracker, since this is a new bone
                 added_elements = vec![];
             }
-
             if added_elements.contains(&kf.element) {
                 continue;
             }
-
             added_elements.push(kf.element.clone());
             ui.horizontal(|ui| {
                 ui.add_space(30.);
@@ -577,13 +575,12 @@ pub fn draw_timeline_graph(
                 let lkf = armature.sel_anim(&sel).unwrap().keyframes.last();
                 if lkf != None && (lkf.unwrap().frame as usize) < shared_ui.anim.lines_x.len() {
                     let left_top_rect = egui::vec2(shared_ui.anim.lines_x[lkf.unwrap().frame as usize], -3.);
-                    let right_bottom_rect = egui::vec2(0., 999.);
+                    let right_bottom_rect = egui::vec2(0., shared_ui.bone_tops.tops.last().unwrap().height);
 
                     let rect_to_fill = egui::Rect::from_min_size(
                         ui.min_rect().left_top() + left_top_rect,
                         ui.min_rect().size() + right_bottom_rect,
                     );
-
                     ui.painter()
                         .rect_filled(rect_to_fill, 0., config.colors.dark_accent);
                 }
@@ -718,6 +715,8 @@ fn draw_frame_lines(
     let mut selected_line_x = 0.;
     let mut hovered_line_x = 0.;
 
+    let panel = shared_ui.keyframe_panel_rect;
+
     let mut x = 0.;
     let mut i = 0;
     while x < ui.min_rect().width() {
@@ -804,8 +803,6 @@ fn draw_frame_lines(
 
     // draw per-change icons
     let sel_anim = &armature.animations[selections.anim];
-    let mut context_response: Option<egui::Response> = None;
-    let mut has_context = false;
     for i in 0..sel_anim.keyframes.len() {
         let kf = sel_anim.keyframes[i].clone();
         let size = Vec2::new(17., 17.);
@@ -824,6 +821,9 @@ fn draw_frame_lines(
         let x = shared_ui.anim.lines_x[kf.frame as usize] + ui.min_rect().left();
         let pos = Vec2::new(x, top + size.y / 2.);
         let offset = size / 2.;
+        if panel != None && pos.y > panel.unwrap().bottom() {
+            continue;
+        }
 
         let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
         let mut idx = kf.element.clone().clone() as usize;
