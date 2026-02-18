@@ -1,3 +1,8 @@
+use std::{
+    io::{Read, Write},
+    os::unix::fs::PermissionsExt,
+};
+
 use egui::IntoAtoms;
 
 use crate::{ui::EguiUi, Armature, Config, EditMode, EventState, ExportImgFormat, SettingsState};
@@ -455,11 +460,56 @@ pub fn video_export(
                 });
             });
         }
-
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("export_modal.video.use_system_ffmpeg"))
                 .on_hover_text(shared_ui.loc("export_modal.video.use_system_ffmpeg_desc"));
             ui.checkbox(&mut shared_ui.use_system_ffmpeg, "".into_atoms());
         });
+        ui.add_space(10.);
+        if ui.skf_button("Download ffmpeg").clicked() {
+            let base_url =
+                "https://github.com/Retropaint/SkelForm/raw/refs/heads/master/assets/ffmpeg-native/";
+            let bin_name;
+            #[cfg(target_os = "macos")]
+            {
+                bin_name = "ffmpeg-mac-arm"
+            }
+            #[cfg(target_os = "windows")]
+            {
+                bin_name = "ffmpeg.exe";
+            }
+            #[cfg(target_os = "linux")]
+            {
+                bin_name = "ffmpeg-linux"
+            }
+
+            let resp = ureq::get(base_url.to_owned() + bin_name).call().unwrap();
+            let mut f = std::fs::File::create(utils::bin_path().join("ffmpeg")).unwrap();
+            let mut perms = f.metadata().unwrap().permissions();
+            perms.set_readonly(false);
+            #[cfg(not(target_os = "windows"))]
+            {
+                perms.set_mode(0o755);
+            }
+            f.set_permissions(perms).unwrap();
+            let bytes_result: Result<Vec<u8>, _> = resp.into_body().into_reader().bytes().collect();
+            if let Ok(bytes) = bytes_result {
+                _ = f.write(&bytes);
+            }
+        }
+        ui.add_space(2.5);
+        let mut size_warning = "";
+        #[cfg(target_os = "windows")]
+        {
+            size_warning = " (>100mb)";
+        }
+        let str = if std::fs::exists(utils::bin_path().join("ffmpeg")).unwrap() {
+            "Re-download ffmpeg if problems occur.".to_string()
+        } else {
+            "ffmpeg is not installed.\nClick the above button to download it".to_owned()
+                + &size_warning
+                + "."
+        };
+        ui.label(str);
     }
 }
