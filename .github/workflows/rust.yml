@@ -7,7 +7,6 @@ on:
 env:
   USER_DOCS: https://github.com/Retropaint/skelform_user_docs
   DEV_DOCS: https://github.com/Retropaint/skelform_dev_docs
-  CARGO_BUILD_JOBS: 4
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,20 +20,16 @@ jobs:
         with:
           lfs: true
           
-      - uses: dtolnay/rust-toolchain@stable
-      
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "skelform-${{ runner.os }}"
-          cache-on-failure: true
-
-      - uses: mozilla-actions/sccache-action@v0.0.4
-      - run: echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+          
+      - name: pull lfs files
+        run: git lfs pull
         
       - name: install python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.14"
+          python-version: "3.13.6"
           
       - name: build binary
         run: cd release && python3 release.py
@@ -57,21 +52,17 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: true
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
           
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "skelform-${{ runner.os }}"
-          cache-on-failure: true
-
-      - uses: mozilla-actions/sccache-action@v0.0.4
-      - run: echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+      - name: pull lfs files
+        run: git lfs pull
 
       - name: install python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.14"
+          python-version: "3.13.6"
 
       - name: build windows binary
         shell: bash
@@ -96,20 +87,16 @@ jobs:
         with:
           lfs: true
           
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
           
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "skelform-${{ runner.os }}"
-          cache-on-failure: true
-
-      - uses: mozilla-actions/sccache-action@v0.0.4
-      - run: echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+      - name: pull lfs files
+        run: git lfs pull
           
       - name: install python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.14"
+          python-version: "3.13.6"
           
       - name: build binary
         run: cd release && python3 release.py --ubuntudeps
