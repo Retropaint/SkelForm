@@ -497,10 +497,10 @@ pub fn video_export(
 
             // get zip file
             let resp = ureq::get(base_url.to_owned() + bin_name).call().unwrap();
-            let mut f = std::fs::File::create(utils::bin_path().join("ffmpeg.zip")).unwrap();
+            let mut ffmpeg_zip = std::fs::File::create(utils::bin_path().join("ffmpeg.zip")).unwrap();
             let bytes_result: Result<Vec<u8>, _> = resp.into_body().into_reader().bytes().collect();
             if let Ok(bytes) = bytes_result {
-                _ = f.write(&bytes);
+                _ = ffmpeg_zip.write(&bytes);
             }
 
             let options = OpenOptions::new()
@@ -522,14 +522,14 @@ pub fn video_export(
                 Err(_) => {}
             }
 
-            let f = std::fs::File::create(utils::bin_path().join(final_bin_name)).unwrap();
-            let mut perms = f.metadata().unwrap().permissions();
+            let ffmpeg_bin = std::fs::File::open(utils::bin_path().join(final_bin_name)).unwrap();
+            let mut perms = ffmpeg_bin.metadata().unwrap().permissions();
             perms.set_readonly(false);
             #[cfg(not(target_os = "windows"))]
             {
                 perms.set_mode(0o755);
             }
-            f.set_permissions(perms).unwrap();
+            ffmpeg_bin.set_permissions(perms).unwrap();
         }
         ui.add_space(2.5);
         #[allow(unused_mut)]
