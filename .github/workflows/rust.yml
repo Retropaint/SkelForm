@@ -35,7 +35,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.14"
-          cache: "pip"
           
       - name: build binary
         run: cd release && python3 release.py
