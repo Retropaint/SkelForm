@@ -1,9 +1,13 @@
-use std::io::{Read, Write};
+use std::{
+    fs::OpenOptions,
+    io::{Read, Write},
+};
 
 #[cfg(all(not(target_os = "windows"), not(target_arch = "wasm32")))]
 use std::os::unix::fs::PermissionsExt;
 
 use egui::IntoAtoms;
+use zip::ZipArchive;
 
 use crate::{ui::EguiUi, Armature, Config, EditMode, EventState, ExportImgFormat, SettingsState};
 
@@ -469,7 +473,6 @@ pub fn video_export(
         // disabled:
         // optional ffmpeg downloads - would need to compress first for reduced download size
         // and then uncompress via zip
-        return;
 
         ui.add_space(10.);
         if ui.skf_button("Download ffmpeg").clicked() {
@@ -479,30 +482,37 @@ pub fn video_export(
             let mut final_bin_name = "ffmpeg";
             #[cfg(target_os = "macos")]
             {
-                bin_name = "ffmpeg-mac-arm"
+                bin_name = "ffmpeg-mac-arm.zip"
             }
             #[cfg(target_os = "windows")]
             {
-                bin_name = "ffmpeg.exe";
+                bin_name = "ffmpeg-win.zip";
                 final_bin_name = "ffmpeg.exe";
             }
             #[cfg(target_os = "linux")]
             {
-                bin_name = "ffmpeg-linux"
+                bin_name = "ffmpeg-linux.zip"
             }
 
+            // get zip file
             let resp = ureq::get(base_url.to_owned() + bin_name).call().unwrap();
-            let mut f = std::fs::File::create(utils::bin_path().join(final_bin_name)).unwrap();
-            let mut perms = f.metadata().unwrap().permissions();
-            perms.set_readonly(false);
-            #[cfg(not(target_os = "windows"))]
-            {
-                perms.set_mode(0o755);
-            }
-            f.set_permissions(perms).unwrap();
+            let mut f = std::fs::File::create(utils::bin_path().join("ffmpeg.zip")).unwrap();
             let bytes_result: Result<Vec<u8>, _> = resp.into_body().into_reader().bytes().collect();
             if let Ok(bytes) = bytes_result {
                 _ = f.write(&bytes);
+            }
+
+            let options = OpenOptions::new()
+                .append(true)
+                .read(true)
+                .open(utils::bin_path().join("ffmpeg.zip").clone());
+            match options {
+                Ok(file) => {
+                    // unzip it
+                    let mut zip = ZipArchive::new(file).unwrap();
+                    zip.extract(utils::bin_path().join(final_bin_name)).unwrap();
+                }
+                Err(e) => {}
             }
         }
         ui.add_space(2.5);
