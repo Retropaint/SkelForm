@@ -6,6 +6,7 @@
 
 import subprocess
 import os
+import stat
 import platform
 import shutil
 import argparse
@@ -112,7 +113,11 @@ match platform.system():
         #shutil.copy("../ffmpeg/native/ffmpeg.exe", f"./{dirname}/ffmpeg.exe")
         shutil.make_archive(dirname, 'zip', ".", dirname)
     case "Darwin":
-        #shutil.copy("../ffmpeg/native/ffmpeg-mac-arm", f"./{dirname}/ffmpeg")
+        shutil.copy("../ffmpeg/native/ffmpeg-mac-arm.zip", f"./{dirname}/ffmpeg.zip")
+        shutil.unpack_archive(f"./{dirname}/ffmpeg.zip", extract_dir=f"./{dirname}")
+        os.rename(f"./{dirname}/ffmpeg-mac-arm", f"./{dirname}/ffmpeg")
+        os.chmod(f"./{dirname}/ffmpeg", stat.S_IRWXU)
+        os.remove(f"./{dirname}/ffmpeg.zip")
         darwin()
     case "Linux":
         #shutil.copy("../ffmpeg/native/ffmpeg-linux", f"./{dirname}/ffmpeg")
