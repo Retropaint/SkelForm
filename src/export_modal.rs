@@ -479,10 +479,11 @@ pub fn video_export(
             let base_url =
                 "https://github.com/Retropaint/SkelForm/raw/refs/heads/master/ffmpeg/native/";
             let bin_name;
-            let mut final_bin_name = "ffmpeg";
+            let final_bin_name;
             #[cfg(target_os = "macos")]
             {
-                bin_name = "ffmpeg-mac-arm.zip"
+                bin_name = "ffmpeg-mac-arm.zip";
+                final_bin_name = "ffmpeg";
             }
             #[cfg(target_os = "windows")]
             {
@@ -491,7 +492,8 @@ pub fn video_export(
             }
             #[cfg(target_os = "linux")]
             {
-                bin_name = "ffmpeg-linux.zip"
+                bin_name = "ffmpeg-linux.zip";
+                final_bin_name = "ffmpeg";
             }
 
             // get zip file
@@ -518,10 +520,10 @@ pub fn video_export(
                         _ = ffmpeg_bin.write(&bytes);
                     }
                 }
-                Err(e) => {}
+                Err(_) => {}
             }
 
-            let mut f = std::fs::File::create(utils::bin_path().join(final_bin_name)).unwrap();
+            let f = std::fs::File::create(utils::bin_path().join(final_bin_name)).unwrap();
             let mut perms = f.metadata().unwrap().permissions();
             perms.set_readonly(false);
             #[cfg(not(target_os = "windows"))]
@@ -531,10 +533,11 @@ pub fn video_export(
             f.set_permissions(perms).unwrap();
         }
         ui.add_space(2.5);
+        #[allow(unused_mut)]
         let mut size_warning = "";
         #[cfg(target_os = "windows")]
         {
-            size_warning = " (>100mb).\nThe program will freeze during download, do not close it.";
+            size_warning = " (>100mb).\nThe program will freeze during download, do not close it";
         }
         let str = if std::fs::exists(utils::bin_path().join("ffmpeg")).unwrap() {
             "Re-download ffmpeg if problems occur.".to_string()
