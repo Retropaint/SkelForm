@@ -116,6 +116,9 @@ pub fn ui_content(ui: &mut egui::Ui, start_handle: &mut Vec2, end_handle: &mut V
         response.rect,
     );
 
+    let col_prev = Color32::from_rgb(200, 25, 25);
+    let col_next = Color32::from_rgb(25, 100, 200);
+
     let control_point_radius = 8.0;
 
     let mut control_points = [
@@ -132,12 +135,11 @@ pub fn ui_content(ui: &mut egui::Ui, start_handle: &mut Vec2, end_handle: &mut V
             if i == 0 || i == 3 {
                 return Shape::circle_stroke([-100., -100.].into(), 0., egui::Stroke::default());
             }
-            let size = egui::Vec2::splat(2.0 * control_point_radius);
 
+            let size = egui::Vec2::splat(2.0 * control_point_radius);
             let point_in_screen = to_screen.transform_pos(*point);
             let point_rect = Rect::from_center_size(point_in_screen, size);
-            let point_id = response.id.with(i);
-            let point_response = ui.interact(point_rect, point_id, Sense::drag());
+            let point_response = ui.interact(point_rect, response.id.with(i), Sense::drag());
 
             *point += point_response.drag_delta();
             *point = to_screen.from().clamp(*point);
@@ -147,10 +149,11 @@ pub fn ui_content(ui: &mut egui::Ui, start_handle: &mut Vec2, end_handle: &mut V
                 dragged = true;
             }
 
-            let point_in_screen = to_screen.transform_pos(*point);
-            let stroke = ui.style().interact(&point_response).fg_stroke;
-
-            Shape::circle_stroke(point_in_screen, control_point_radius, stroke)
+            let mut col = if i == 1 { col_prev } else { col_next };
+            if point_response.contains_pointer() {
+                col = col + Color32::from_rgb(40, 40, 40);
+            }
+            Shape::circle_filled(to_screen.transform_pos(*point), control_point_radius, col)
         })
         .collect();
 
@@ -175,6 +178,13 @@ pub fn ui_content(ui: &mut egui::Ui, start_handle: &mut Vec2, end_handle: &mut V
     *start_handle = p1;
     *end_handle = p2;
 
+    let prev = Stroke::new(1., col_prev);
+    let next = Stroke::new(1., col_next);
+    let cp = &control_points;
+    let p0p1: Vec<Pos2> = cp[0..=1].iter().map(|p| to_screen * *p).collect();
+    let p2p3: Vec<Pos2> = cp[2..=3].iter().map(|p| to_screen * *p).collect();
+    painter.add(egui::epaint::PathShape::line(p0p1, prev));
+    painter.add(egui::epaint::PathShape::line(p2p3, next));
     painter.extend(control_point_shapes);
     dragged
 }
