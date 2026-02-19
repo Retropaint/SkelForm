@@ -116,4 +116,4 @@ match platform.system():
         darwin()
     case "Linux":
         #shutil.copy("../ffmpeg/native/ffmpeg-linux", f"./{dirname}/ffmpeg")
-        shutil.make_archive(dirname, 'zip', ".", dirname)
+        shutil.make_archive(dirname, 'zip', ".", dirname) 
