@@ -1,13 +1,7 @@
-use std::{
-    fs::OpenOptions,
-    io::{Read, Write},
-};
-
 #[cfg(all(not(target_os = "windows"), not(target_arch = "wasm32")))]
 use std::os::unix::fs::PermissionsExt;
 
 use egui::IntoAtoms;
-use zip::ZipArchive;
 
 use crate::{ui::EguiUi, Armature, Config, EditMode, EventState, ExportImgFormat, SettingsState};
 
@@ -21,6 +15,11 @@ pub use web::*;
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
     pub use crate::utils;
+    pub use std::{
+        fs::OpenOptions,
+        io::{Read, Write},
+    };
+    pub use zip::ZipArchive;
 }
 #[cfg(not(target_arch = "wasm32"))]
 pub use native::*;
