@@ -2425,11 +2425,12 @@ impl EventState {
         self.values.push(b as f32);
     }
 
-    pub fn update_keyframe_transition(&mut self, frame: i32, is_in: bool, value: f32) {
+    pub fn update_keyframe_transition(&mut self, frame: i32, is_in: bool, handle: Vec2) {
         self.events.push(Events::UpdateKeyframeTransition);
         self.values.push(frame as f32);
         self.values.push(if is_in { 1. } else { 0. });
-        self.values.push(value);
+        self.values.push(handle.x);
+        self.values.push(handle.y);
     }
 }
 

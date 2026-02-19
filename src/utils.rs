@@ -1315,13 +1315,31 @@ pub fn interp(
         return end_val;
     }
 
-    let t = current as f32 / max as f32;
-    let h10 = 3. * (1. - t).powi(2) * t;
-    let h01 = 3. * (1. - t) * t.powi(2);
-    let h11 = t.powi(3);
-    let progress = h10 * start_handle.y + h01 * end_handle.y + h11;
+    // solve for time (x axis) with Newton-Raphson
+    let initial = current as f32 / max as f32;
+    let mut t = initial;
+    for _ in 0..5 {
+        let x = cubic_bezier(t, start_handle.x, end_handle.x);
+        let dx = cubic_bezier_derivative(t, start_handle.x, end_handle.x);
+        if dx.abs() < 1e-5 {
+            break;
+        }
+        t -= (x - initial) / dx;
+        t = t.clamp(0.0, 1.0);
+    }
 
+    let progress = cubic_bezier(t, start_handle.y, end_handle.y);
     start_val + (end_val - start_val) * progress
+}
+
+// p0 and p3 are hardcoded to 0 and 1
+fn cubic_bezier(t: f32, p1: f32, p2: f32) -> f32 {
+    let u = 1. - t;
+    3. * u * u * t * p1 + 3. * u * t * t * p2 + t * t * t
+}
+fn cubic_bezier_derivative(t: f32, p1: f32, p2: f32) -> f32 {
+    let u = 1. - t;
+    3. * u * u * p1 + 6. * u * t * (p2 - p1) + 3. * t * t * (1. - p2)
 }
 
 pub fn interp_preset(name: &str) -> (Vec2, Vec2) {
@@ -1329,8 +1347,8 @@ pub fn interp_preset(name: &str) -> (Vec2, Vec2) {
     #[rustfmt::skip] macro_rules! p2 { ($yval:expr) => { Vec2::new(2. / 3., $yval) } }
     match name {
         "linear" => (p1!(1. / 3.), p2!(2. / 3.)),
-        "sinein" => (p1!(0.), p2!(2. / 3.)),
-        "sineout" => (p1!(1.), p2!(1. / 3.)),
+        "sinein" => (p1!(0.), p2!(1.)),
+        "sineout" => (p1!(1.), p2!(1.)),
         "sineinout" => (p1!(0.), p2!(1.)),
         "none" => (p1!(999.), p2!(999.)),
         &_ => (p1!(0.), p2!(0.)),

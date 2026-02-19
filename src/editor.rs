@@ -50,20 +50,21 @@ pub fn iterate_events(
     if event == Events::UpdateKeyframeTransition {
         let frame = events.values[0] as usize;
         let is_in = events.values[1] == 1.;
+        let handle = Vec2::new(events.values[2], events.values[3]);
 
         for kf in &mut armature.sel_anim_mut(selections).unwrap().keyframes {
             if kf.frame != frame as i32 {
                 continue;
             }
             if is_in {
-                kf.start_handle.y = events.values[2];
+                kf.start_handle = handle;
             } else {
-                kf.end_handle.y = events.values[2];
+                kf.end_handle = handle;
             }
         }
 
         events.events.remove(0);
-        events.values.drain(0..=2);
+        events.values.drain(0..=3);
     } else if event == Events::SetExportClearColor {
         edit_mode.export_clear_color = Color::new(
             (events.values[0] * 255.).round() as u8,
