@@ -54,15 +54,16 @@ pub fn draw(
 
             if selected != "" {
                 let (start, end) = utils::interp_preset(selected);
-                events.update_keyframe_transition(keyframe.frame, true, start);
-                events.update_keyframe_transition(keyframe.frame, false, end);
+                events.update_keyframe_transition(keyframe.frame, true, start.y);
+                events.update_keyframe_transition(keyframe.frame, false, end.y);
             }
         });
 
         ui.horizontal(|ui| {
             ui.label("Start Handle: ");
             let id = "trans_in".to_string();
-            let (edited, value, _) = ui.float_input(id, shared_ui, keyframe.start_handle, 1., None);
+            let (edited, value, _) =
+                ui.float_input(id, shared_ui, keyframe.start_handle.y, 1., None);
             if edited {
                 events.update_keyframe_transition(keyframe.frame, true, value);
             }
@@ -71,7 +72,7 @@ pub fn draw(
         ui.horizontal(|ui| {
             ui.label("End Handle: ");
             let id = "trans_out".to_string();
-            let (edited, value, _) = ui.float_input(id, shared_ui, keyframe.end_handle, 1., None);
+            let (edited, value, _) = ui.float_input(id, shared_ui, keyframe.end_handle.y, 1., None);
             if edited {
                 events.update_keyframe_transition(keyframe.frame, false, value);
             }

@@ -510,10 +510,25 @@ pub fn video_export(
                 Ok(file) => {
                     // unzip it
                     let mut zip = ZipArchive::new(file).unwrap();
-                    zip.extract(utils::bin_path().join(final_bin_name)).unwrap();
+                    let download = zip.by_index(0).unwrap();
+                    let mut ffmpeg_bin =
+                        std::fs::File::create(utils::bin_path().join(final_bin_name)).unwrap();
+                    let bytes_result: Result<Vec<u8>, _> = download.bytes().collect();
+                    if let Ok(bytes) = bytes_result {
+                        _ = ffmpeg_bin.write(&bytes);
+                    }
                 }
                 Err(e) => {}
             }
+
+            let mut f = std::fs::File::create(utils::bin_path().join(final_bin_name)).unwrap();
+            let mut perms = f.metadata().unwrap().permissions();
+            perms.set_readonly(false);
+            #[cfg(not(target_os = "windows"))]
+            {
+                perms.set_mode(0o755);
+            }
+            f.set_permissions(perms).unwrap();
         }
         ui.add_space(2.5);
         let mut size_warning = "";

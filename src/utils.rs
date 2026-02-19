@@ -568,8 +568,8 @@ pub fn prepare_files(
                         element: AnimElement::Rotation,
                         value_str: "".to_string(),
                         value: family[i].rot,
-                        start_handle: 1.,
-                        end_handle: 1.,
+                        start_handle: Vec2::new(1. / 3., 0.),
+                        end_handle: Vec2::new(1. / 3., 0.),
                         label_top: 0.,
                         is_snap: false,
                     });
@@ -1304,11 +1304,11 @@ pub fn interp(
     max: i32,
     start_val: f32,
     end_val: f32,
-    start_handle: f32,
-    end_handle: f32,
+    start_handle: Vec2,
+    end_handle: Vec2,
 ) -> f32 {
     // snapping behavior for None transition preset
-    if start_handle == 999. && end_handle == 999. {
+    if start_handle.y == 999. && end_handle.y == 999. {
         return start_val;
     }
     if max == 0 || current >= max {
@@ -1319,19 +1319,21 @@ pub fn interp(
     let h10 = 3. * (1. - t).powi(2) * t;
     let h01 = 3. * (1. - t) * t.powi(2);
     let h11 = t.powi(3);
-    let progress = h10 * start_handle + h01 * end_handle + h11;
+    let progress = h10 * start_handle.y + h01 * end_handle.y + h11;
 
     start_val + (end_val - start_val) * progress
 }
 
-pub fn interp_preset(name: &str) -> (f32, f32) {
+pub fn interp_preset(name: &str) -> (Vec2, Vec2) {
+    #[rustfmt::skip] macro_rules! p1 { ($yval:expr) => { Vec2::new(1. / 3., $yval) } }
+    #[rustfmt::skip] macro_rules! p2 { ($yval:expr) => { Vec2::new(2. / 3., $yval) } }
     match name {
-        "linear" => (1. / 3., 2. / 3.),
-        "sinein" => (0., 2. / 3.),
-        "sineout" => (1., 1. / 3.),
-        "sineinout" => (0., 1.),
-        "none" => (999., 999.),
-        &_ => (0., 0.),
+        "linear" => (p1!(1. / 3.), p2!(2. / 3.)),
+        "sinein" => (p1!(0.), p2!(2. / 3.)),
+        "sineout" => (p1!(1.), p2!(1. / 3.)),
+        "sineinout" => (p1!(0.), p2!(1.)),
+        "none" => (p1!(999.), p2!(999.)),
+        &_ => (p1!(0.), p2!(0.)),
     }
 }
 

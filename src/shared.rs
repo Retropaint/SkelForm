@@ -1749,10 +1749,10 @@ pub struct Keyframe {
 
     #[serde(default)]
     pub is_snap: bool,
-    #[serde(default = "default_one")]
-    pub start_handle: f32,
-    #[serde(default = "default_one")]
-    pub end_handle: f32,
+    #[serde(default)]
+    pub start_handle: Vec2,
+    #[serde(default)]
+    pub end_handle: Vec2,
 
     #[serde(skip)]
     pub label_top: f32,
@@ -2579,4 +2579,4 @@ pub fn recents_path() -> std::path::PathBuf {
     directories_next::ProjectDirs::from("com", "retropaint", "skelform")
         .map(|proj_dirs| proj_dirs.data_dir().join("recent_files.json"))
         .unwrap()
-} 
+}
