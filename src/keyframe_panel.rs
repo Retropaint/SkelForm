@@ -36,84 +36,91 @@ pub fn draw(
         }
     }
     ui.add_space(10.);
-    ui.add_enabled_ui(keyframe.frame != 0, |ui| {
-        ui.horizontal(|ui| {
-            if selections.anim_frame == -1
-                || armature.sel_anim(&sel) == None
-                || armature.sel_anim(&sel).unwrap().keyframes.len() == 0
-            {
-                return;
-            }
-
-            let mut selected = "";
-            egui::ComboBox::new("transition".to_string(), "")
-                .selected_text("Transition Presets")
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(&mut selected, "linear", "Linear");
-                    ui.selectable_value(&mut selected, "sinein", "Sine In");
-                    ui.selectable_value(&mut selected, "sineout", "Sine Out");
-                    ui.selectable_value(&mut selected, "sineinout", "Sine In-Out");
-                    ui.selectable_value(&mut selected, "none", "None");
-                });
-
-            if selected != "" {
-                let (start, end) = utils::interp_preset(selected);
-                events.update_keyframe_transition(keyframe.frame, true, start);
-                events.update_keyframe_transition(keyframe.frame, false, end);
-            }
-        });
-
-        // render bezier curve
-        let bezier_frame = egui::Frame::new().fill(config.colors.dark_accent.into());
-        let mut dragged = false;
-        bezier_frame.show(ui, |ui| {
-            dragged = bezier_graph(ui, &mut keyframe.start_handle, &mut keyframe.end_handle);
-        });
-        if !dragged {
-            shared_ui.dragging_handles = false;
-        } else {
-            if !shared_ui.dragging_handles {
-                events.save_animation();
-                shared_ui.dragging_handles = true;
-            }
-            events.update_keyframe_transition(frame, true, keyframe.start_handle);
-            events.update_keyframe_transition(frame, false, keyframe.end_handle);
+    if keyframe.frame == 0 {
+        ui.label(shared_ui.loc("keyframe_panel.empty"));
+        return;
+    }
+    ui.horizontal(|ui| {
+        if selections.anim_frame == -1
+            || armature.sel_anim(&sel) == None
+            || armature.sel_anim(&sel).unwrap().keyframes.len() == 0
+        {
+            return;
         }
 
-        macro_rules! handle_input {
-            ($id:expr, $handle:expr, $is_x:expr, $ui:expr) => {
-                let value_to_change = if $is_x { $handle.x } else { $handle.y };
-                let (edited, value, _) =
-                    $ui.float_input($id.to_string(), shared_ui, value_to_change, 1., None);
-                let new_value = if $is_x {
-                    Vec2::new(value, $handle.y)
-                } else {
-                    Vec2::new($handle.x, value)
-                };
-                if edited {
-                    events.save_animation();
-                    events.update_keyframe_transition(frame, true, new_value);
+        let mut selected = "";
+        egui::ComboBox::new("transition".to_string(), "")
+            .selected_text(shared_ui.loc("keyframe_panel.transition_presets"))
+            .show_ui(ui, |ui| {
+                macro_rules! preset {
+                    ($name:expr) => {
+                        shared_ui.loc(&("keyframe_panel.".to_owned() + $name))
+                    };
                 }
-                $ui.label(if $is_x { "X:" } else { "Y:" });
-            };
-        }
+                ui.selectable_value(&mut selected, "linear", preset!("linear"));
+                ui.selectable_value(&mut selected, "sinein", preset!("sinein"));
+                ui.selectable_value(&mut selected, "sineout", preset!("sineout"));
+                ui.selectable_value(&mut selected, "sineinout", preset!("sineinout"));
+                ui.selectable_value(&mut selected, "none", preset!("none"));
+            });
 
-        // handle input fields
-        let start_handle = keyframe.start_handle;
-        let end_handle = keyframe.end_handle;
-        ui.horizontal(|ui| {
-            ui.label("Start:");
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                handle_input!("start_handle_y", start_handle, false, ui);
-                handle_input!("start_handle_x", start_handle, true, ui);
-            });
+        if selected != "" {
+            let (start, end) = utils::interp_preset(selected);
+            events.update_keyframe_transition(keyframe.frame, true, start);
+            events.update_keyframe_transition(keyframe.frame, false, end);
+        }
+    });
+
+    // render bezier curve
+    let bezier_frame = egui::Frame::new().fill(config.colors.dark_accent.into());
+    let mut dragged = false;
+    bezier_frame.show(ui, |ui| {
+        dragged = bezier_graph(ui, &mut keyframe.start_handle, &mut keyframe.end_handle);
+    });
+    if !dragged {
+        shared_ui.dragging_handles = false;
+    } else {
+        if !shared_ui.dragging_handles {
+            events.save_animation();
+            shared_ui.dragging_handles = true;
+        }
+        events.update_keyframe_transition(frame, true, keyframe.start_handle);
+        events.update_keyframe_transition(frame, false, keyframe.end_handle);
+    }
+
+    macro_rules! handle_input {
+        ($id:expr, $handle:expr, $is_x:expr, $ui:expr) => {
+            let value_to_change = if $is_x { $handle.x } else { $handle.y };
+            let (edited, value, _) =
+                $ui.float_input($id.to_string(), shared_ui, value_to_change, 1., None);
+            let new_value = if $is_x {
+                Vec2::new(value, $handle.y)
+            } else {
+                Vec2::new($handle.x, value)
+            };
+            if edited {
+                events.save_animation();
+                events.update_keyframe_transition(frame, true, new_value);
+            }
+            $ui.label(if $is_x { "X:" } else { "Y:" });
+        };
+    }
+
+    // handle input fields
+    let start_handle = keyframe.start_handle;
+    let end_handle = keyframe.end_handle;
+    ui.horizontal(|ui| {
+        ui.label(shared_ui.loc("keyframe_panel.start"));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            handle_input!("start_handle_y", start_handle, false, ui);
+            handle_input!("start_handle_x", start_handle, true, ui);
         });
-        ui.horizontal(|ui| {
-            ui.label("End:");
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                handle_input!("end_handle_y", end_handle, false, ui);
-                handle_input!("end_handle_x", end_handle, true, ui);
-            });
+    });
+    ui.horizontal(|ui| {
+        ui.label(shared_ui.loc("keyframe_panel.end"));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            handle_input!("end_handle_y", end_handle, false, ui);
+            handle_input!("end_handle_x", end_handle, true, ui);
         });
     });
 }

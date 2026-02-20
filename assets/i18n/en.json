@@ -336,6 +336,19 @@
       "TintA": "Alpha Tint"
     }
   },
+  "keyframe_panel": {
+    "empty": "Nothing to edit, as this is the first frame.\n\nTo adjust this keyframe's transition, select the one after it.",
+    "transition_presets": "Transition Presets",
+    "presets": {
+      "linear": "Linear",
+      "sinein": "Sine-In",
+      "sineout": "Sine-Out",
+      "sineinout": "Sine-In-Out",
+      "none": "None"
+    },
+    "start": "Start:",
+    "end": "End:"
+  },
   "polar": {
     "delete_bone": "Are you sure to delete this bone?",
     "delete_anim": "Are you sure to delete this animation?",
