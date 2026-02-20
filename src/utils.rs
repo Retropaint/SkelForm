@@ -1351,6 +1351,7 @@ pub fn interp_preset(preset: HandlePreset) -> (Vec2, Vec2) {
         HandlePreset::SineOut => (p1!(1.), p2!(1.)),
         HandlePreset::SineInOut => (Vec2::new(0.5, 0.), Vec2::new(0.5, 1.)),
         HandlePreset::None => (Vec2::new(999., 999.), Vec2::new(999., 999.)),
+        _ => (Vec2::new(0., 0.), Vec2::new(0., 0.)),
     }
 }
 

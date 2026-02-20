@@ -62,9 +62,11 @@ pub fn iterate_events(
             } else {
                 kf.end_handle = handle;
             }
-            if preset != -1 {
-                kf.handle_preset = HandlePreset::from_repr(preset as usize).unwrap();
-            }
+            kf.handle_preset = if preset == -1 {
+                HandlePreset::Custom
+            } else {
+                HandlePreset::from_repr(preset as usize).unwrap()
+            };
         }
 
         events.events.remove(0);

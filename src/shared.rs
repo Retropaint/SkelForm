@@ -1770,6 +1770,7 @@ pub enum HandlePreset {
     SineOut,
     SineInOut,
     None,
+    Custom,
 }
 enum_string!(HandlePreset);
 
