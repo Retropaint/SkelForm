@@ -10,6 +10,7 @@
   "none_option": "[None]",
   "vert_limit": "Cannot delete vertex.\n\nMeshes must have at least 4 vertices.",
   "indices_limit": "Cannot delete triangle.\n\nMeshes must have at least 2 triangles.",
+  "tracing_high_gap": "This point gap generated an invalid mesh. Please use a lower gap.",
   "saving": "Saving, please wait...",
   "exporting": "Exporting, please wait...",
   "import_unrecognized": "File could not be recognized.\n\nSupported files:\n- SkelForm armature (.skf)\n- Photoshop Document (.psd)",
@@ -210,7 +211,7 @@
       "heading": "Mesh Deformation",
       "desc": "Turn this texture into a deformable mesh. Vertices can be bound to other bones with custom weights to influence them.",
       "edit": "Edit Vertices",
-      "finish_edit": "Finish",
+      "finish_edit": "Finish Editing",
       "reset": "Reset",
       "finish": "Finish",
       "reset_desc": "Reset mesh to image quad",
@@ -218,6 +219,8 @@
       "center_desc": "Adjust mesh to its center",
       "go_to_mesh": "Go to mesh",
       "trace": "Trace",
+      "trace_desc": "Generate a mesh based on the texture shape",
+      "trace_finish_desc": "Finish tracing and hide tracing options",
       "bone_label": "Bone: ",
       "bone_set": "Set Bone",
       "binds_label": "Binds:",
@@ -225,7 +228,11 @@
       "pathing_desc": "Vertices will follow this bind along a path formed with adjacent binds.",
       "weights_label": "Weights",
       "bind_verts": "Bind Verts",
-      "no_bound_verts": "Click `Bind Verts` to add vertices to this bind. Click again to stop adding.\n\nOnce added, their weights will be configurable here.\n\n"
+      "no_bound_verts": "Click `Bind Verts` to add vertices to this bind. Click again to stop adding.\n\nOnce added, their weights will be configurable here.\n\n",
+      "gap": "Point Gap ℹ:",
+      "padding": "Padding ℹ:",
+      "density_desc": "A higher gap spaces out potential points. Increase if there are too many points close to each other",
+      "padding_desc": "Extra space around the image, allowing points to be more accurate around edges"
     },
     "texture_effects": {
       "heading": "Texture & Visuals"

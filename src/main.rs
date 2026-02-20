@@ -132,6 +132,8 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.can_quit = true;
     shared.ui.open_after_export = true;
     shared.edit_mode.onion_layers = false;
+    shared.ui.tracing_gap = 25.;
+    shared.ui.tracing_padding = 50.;
 
     #[cfg(feature = "debug")]
     {

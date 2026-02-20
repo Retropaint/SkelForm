@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-
 use crate::*;
+use spade::Triangulation;
+use std::collections::HashMap;
 
 const MIN_ZOOM: f32 = 1.;
 
@@ -285,7 +285,12 @@ pub fn process_event(
         Events::RenameBone => armature.bones[value as usize].name = str_value,
         Events::RenameAnim => armature.animations[value as usize].name = str_value,
         Events::PointerOnUi => camera.on_ui = value == 1.,
-        Events::ToggleShowingMesh => edit_mode.showing_mesh = value == 1.,
+        Events::ToggleShowingMesh => {
+            edit_mode.showing_mesh = value == 1.;
+            if value != 1. {
+                ui.tracing = false
+            }
+        }
         Events::ToggleSettingIkTarget => edit_mode.setting_ik_target = value == 1.,
         Events::ToggleOnionLayers => edit_mode.onion_layers = value == 1.,
         Events::RemoveIkTarget => armature.sel_bone_mut(selections).unwrap().ik_target_id = -1,
@@ -539,9 +544,8 @@ pub fn process_event(
             let verts = verts!().clone();
             let tex_img = renderer::sel_tex_img(&armature.sel_bone(&sel).unwrap(), &armature);
             verts!().remove(value as usize);
-            verts!() = renderer::sort_vertices(verts!().clone());
-            armature.sel_bone_mut(&sel).unwrap().indices =
-                renderer::triangulate(&verts!(), &tex_img);
+            verts!() = sort_vertices(verts!().clone());
+            armature.sel_bone_mut(&sel).unwrap().indices = triangulate(&verts!(), &tex_img);
 
             // remove this vert from its binds
             'bind: for bind in &mut armature.sel_bone_mut(&sel).unwrap().binds {
@@ -629,8 +633,8 @@ pub fn process_event(
 
             bone_mut.vertices.push(renderer.new_vert.unwrap());
             bone_mut.vertices.last_mut().unwrap().id = 4.max(bone_mut.vertices.len() as u32);
-            bone_mut.vertices = renderer::sort_vertices(bone_mut.vertices.clone());
-            bone_mut.indices = renderer::triangulate(&mut bone_mut.vertices, &tex_img);
+            bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
+            bone_mut.indices = triangulate(&mut bone_mut.vertices, &tex_img);
 
             // remove vertices that are not in any triangle or binds
             'verts: for v in (0..bone_mut.vertices.len()).rev() {
@@ -746,7 +750,10 @@ pub fn process_event(
             let tex = &armature.tex_of(bone.id).unwrap();
             let tex_data = &armature.tex_data;
             let data = tex_data.iter().find(|d| tex.data_id == d.id).unwrap();
-            let (verts, indices) = renderer::trace_mesh(&data.image);
+            let (verts, indices) = trace_mesh(&data.image, ui.tracing_gap, ui.tracing_padding);
+            if verts.len() < 4 && indices.len() < 6 {
+                open_modal(ui, false, ui.loc("tracing_high_gap"));
+            }
             let bone = &mut armature.sel_bone_mut(&selections).unwrap();
             bone.vertices = verts;
             bone.indices = indices;
@@ -1241,4 +1248,260 @@ fn edit_bone(
     }
     let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
     anim[anim_id].keyframes[frame].value = value;
+}
+
+pub fn trace_mesh(
+    texture: &image::DynamicImage,
+    gap: f32,
+    padding: f32,
+) -> (Vec<Vertex>, Vec<u32>) {
+    let mut poi: Vec<Vec2> = vec![];
+
+    // place points across the image where it's own pixel is fully transparent
+    let mut cursor = Vec2::default();
+    while cursor.y < texture.height() as f32 + padding {
+        let out_of_bounds = cursor.x > texture.width() as f32 || cursor.y > texture.height() as f32;
+        if out_of_bounds
+            || image::GenericImageView::get_pixel(texture, cursor.x as u32, cursor.y as u32).0[3]
+                == 0
+        {
+            poi.push(cursor);
+        }
+        cursor.x += gap;
+        if cursor.x > texture.width() as f32 + padding {
+            cursor.x = 0.;
+            cursor.y += gap;
+        }
+    }
+
+    // remove points which have 8 neighbours, keeping only points
+    // that are closest to the image
+    let poi_clone = poi.clone();
+    poi.retain(|point| {
+        let left = Vec2::new(point.x - gap, point.y);
+        let right = Vec2::new(point.x + gap, point.y);
+        let up = Vec2::new(point.x, point.y + gap);
+        let down = Vec2::new(point.x, point.y - gap);
+
+        let lt = Vec2::new(point.x - gap, point.y + gap);
+        let lb = Vec2::new(point.x - gap, point.y - gap);
+        let rt = Vec2::new(point.x + gap, point.y + gap);
+        let rb = Vec2::new(point.x + gap, point.y - gap);
+
+        macro_rules! p {
+            ($dir:expr) => {
+                !poi_clone.contains($dir)
+                    && $dir.x > 0.
+                    && $dir.y > 0.
+                    && $dir.x < texture.width() as f32
+                    && $dir.y < texture.height() as f32
+            };
+        }
+
+        p!(&left) || p!(&right) || p!(&up) || p!(&down) || p!(&lt) || p!(&lb) || p!(&rt) || p!(&rb)
+    });
+
+    if poi.len() == 0 {
+        return (vec![], vec![]);
+    }
+
+    // sort points in any winding order
+    poi = winding_sort(poi);
+
+    let uv_x = poi[0].x / texture.width() as f32;
+    let uv_y = poi[0].y / texture.height() as f32;
+    let pos = Vec2::new(poi[0].x, -poi[0].y);
+    let mut verts = vec![vert(Some(pos), None, Some(Vec2::new(uv_x, uv_y)))];
+    let mut curr_poi = 0;
+
+    // get last point that current one has light of sight on
+    // if next point checked happens to be first and there's line of sight, tracing is over
+    let mut id = 1;
+    for p in curr_poi..poi.len() {
+        if p == poi.len() - 1 {
+            break;
+        }
+        if line_of_sight(&texture, poi[curr_poi], poi[(p + 1) % (poi.len() - 1)]) {
+            continue;
+        }
+        if p == 0 {
+            curr_poi = 1;
+            continue;
+        }
+
+        let tex = Vec2::new(texture.width() as f32, texture.height() as f32);
+        verts.push(Vertex {
+            pos: Vec2::new(poi[p - 1].x, -poi[p - 1].y),
+            uv: poi[p - 1] / tex,
+            id,
+            ..Default::default()
+        });
+        id += 1;
+        curr_poi = p - 1;
+    }
+
+    //for point in poi {
+    //    verts.push(Vertex {
+    //        pos: Vec2::new(point.x, -point.y),
+    //        uv: Vec2::new(
+    //            point.x / texture.width() as f32,
+    //            point.y / texture.height() as f32,
+    //        ),
+    //        ..Default::default()
+    //    });
+    //}
+
+    verts = sort_vertices(verts);
+    editor::center_verts(&mut verts);
+    (verts.clone(), triangulate(&verts, texture))
+}
+
+fn winding_sort(mut points: Vec<Vec2>) -> Vec<Vec2> {
+    let mut center = Vec2::default();
+    for p in &points {
+        center += *p;
+    }
+    center /= points.len() as f32;
+
+    points.sort_by(|a, b| {
+        let angle_a = (a.y - center.y).atan2(a.x - center.x);
+        let angle_b = (b.y - center.y).atan2(b.x - center.x);
+        angle_a.partial_cmp(&angle_b).unwrap()
+    });
+
+    points
+}
+
+/// sort vertices in cw (or ccw?) order
+pub fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
+    let mut center = Vec2::default();
+    for v in 0..verts.len() {
+        center += verts[v].pos;
+    }
+    center /= verts.len() as f32;
+
+    verts.sort_by(|a, b| {
+        let angle_a = (a.pos.y - center.y).atan2(a.pos.x - center.x);
+        let angle_b = (b.pos.y - center.y).atan2(b.pos.x - center.x);
+        angle_a.partial_cmp(&angle_b).unwrap()
+    });
+
+    verts
+}
+
+fn vert(pos: Option<Vec2>, col: Option<VertexColor>, uv: Option<Vec2>) -> Vertex {
+    Vertex {
+        pos: pos.unwrap_or_default(),
+        color: col.unwrap_or_default(),
+        uv: uv.unwrap_or_default(),
+        ..Default::default()
+    }
+}
+
+pub fn triangulate(verts: &Vec<Vertex>, tex: &image::DynamicImage) -> Vec<u32> {
+    let mut triangulation: spade::DelaunayTriangulation<_> = spade::DelaunayTriangulation::new();
+    let size = Vec2::new(tex.width() as f32, tex.height() as f32);
+
+    for vert in verts {
+        let _ = triangulation.insert(spade::Point2::new(vert.uv.x, vert.uv.y));
+    }
+
+    let mut indices: Vec<u32> = Vec::new();
+    for face in triangulation.inner_faces() {
+        let tri_indices = face.vertices().map(|v| v.index()).to_vec();
+        if tri_indices.len() != 3 {
+            continue;
+        }
+
+        // check if this triangle is part of the texture, and ignore if not
+        let v1 = verts[tri_indices[0]];
+        let v2 = verts[tri_indices[1]];
+        let v3 = verts[tri_indices[2]];
+        let blt = Vec2::new(
+            v1.uv.x.min(v2.uv.x).min(v3.uv.x),
+            v1.uv.y.min(v2.uv.y).min(v3.uv.y),
+        ) * size;
+        let brb = Vec2::new(
+            v1.uv.x.max(v2.uv.x).max(v3.uv.x),
+            v1.uv.y.max(v2.uv.y).max(v3.uv.y),
+        ) * size;
+
+        'pixel_check: for x in (blt.x as i32)..(brb.x as i32) {
+            for y in (blt.y as i32)..(brb.y as i32) {
+                let pos = &Vec2::new(x as f32, y as f32);
+                let bary = tri_point(pos, &(v1.uv * size), &(v2.uv * size), &(v3.uv * size));
+                let uv = v1.uv * bary.3 + v2.uv * bary.1 + v3.uv * bary.2;
+                let pos = Vec2::new(
+                    (uv.x * tex.width() as f32).min(tex.width() as f32 - 1.),
+                    (uv.y * tex.height() as f32).min(tex.height() as f32 - 1.),
+                );
+                let pixel_alpha =
+                    image::GenericImageView::get_pixel(tex, pos.x as u32, pos.y as u32).0[3];
+                if pixel_alpha > 125 {
+                    indices.push(tri_indices[0] as u32);
+                    indices.push(tri_indices[1] as u32);
+                    indices.push(tri_indices[2] as u32);
+                    break 'pixel_check;
+                }
+            }
+        }
+    }
+
+    indices
+}
+
+fn line_of_sight(img: &DynamicImage, mut p0: Vec2, p1: Vec2) -> bool {
+    let dx = (p1.x - p0.x).abs();
+    let sx = if p0.x < p1.x { 1 } else { -1 };
+    let dy = -(p1.y - p0.y).abs();
+    let sy = if p0.y < p1.y { 1 } else { -1 };
+    let mut err = dx + dy;
+
+    loop {
+        if p0.x >= 0. && p0.y >= 0. && p0.x < img.width() as f32 && p0.y < img.height() as f32 {
+            let px = image::GenericImageView::get_pixel(img, p0.x as u32, p0.y as u32);
+            if px[3] == 255 {
+                return false;
+            }
+        }
+
+        if p0.x == p1.x && p0.y == p1.y {
+            break;
+        }
+        let e2 = 2. * err;
+        if e2 >= dy {
+            err += dy;
+            p0.x += sx as f32;
+        }
+        if e2 <= dx {
+            err += dx;
+            p0.y += sy as f32;
+        }
+    }
+
+    true
+}
+
+fn tri_point(p: &Vec2, a: &Vec2, b: &Vec2, c: &Vec2) -> (f32, f32, f32, f32) {
+    let s = a.y * c.x - a.x * c.y + (c.y - a.y) * p.x + (a.x - c.x) * p.y;
+    let t = a.x * b.y - a.y * b.x + (a.y - b.y) * p.x + (b.x - a.x) * p.y;
+
+    if (s < 0.0) != (t < 0.0) && s != 0.0 && t != 0.0 {
+        return (-1., -1., -1., -1.);
+    }
+
+    let area = -b.y * c.x + a.y * (c.x - b.x) + a.x * (b.y - c.y) + b.x * c.y;
+    if area == 0.0 {
+        return (-1., -1., -1., -1.);
+    }
+
+    let s_normalized = s / area;
+    let t_normalized = t / area;
+
+    if s_normalized >= 0.0 && t_normalized >= 0.0 && (s_normalized + t_normalized) <= 1.0 {
+        let third = 1. - (s_normalized + t_normalized);
+        return (area, s_normalized, t_normalized, third);
+    }
+
+    (-1., -1., -1., -1.)
 }

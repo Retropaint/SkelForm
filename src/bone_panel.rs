@@ -591,13 +591,59 @@ pub fn mesh_deformation(
                     events.center_bone_verts();
                 }
 
-                let trace_str = &shared_ui.loc("bone_panel.mesh_deformation.trace");
-                if ui.skf_button(trace_str).clicked() {
-                    events.trace_bone_verts();
+                let desc_str;
+                let str = if !shared_ui.tracing {
+                    desc_str = "bone_panel.mesh_deformation.trace_desc";
+                    "bone_panel.mesh_deformation.trace"
+                } else {
+                    desc_str = "bone_panel.mesh_deformation.trace_finish_desc";
+                    "bone_panel.mesh_deformation.finish"
+                };
+                let trace_str = &shared_ui.loc(str);
+                let button = ui
+                    .skf_button(trace_str)
+                    .on_hover_text(shared_ui.loc(desc_str));
+                if button.clicked() {
+                    shared_ui.tracing = !shared_ui.tracing;
+                    if shared_ui.tracing {
+                        events.save_bone(
+                            armature.bones.iter().position(|b| b.id == bone.id).unwrap(),
+                        );
+                        events.trace_bone_verts();
+                    }
                 }
             });
         });
     });
+
+    if shared_ui.tracing {
+        ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let gap = shared_ui.tracing_gap;
+                let (edited, value, _) =
+                    ui.float_input("gap".to_string(), shared_ui, gap, 1., None);
+                if edited {
+                    shared_ui.tracing_gap = value.max(10.);
+                    events.trace_bone_verts();
+                }
+                ui.label(shared_ui.loc("bone_panel.mesh_deformation.gap"))
+                    .on_hover_text(shared_ui.loc("bone_panel.mesh_deformation.gap_desc"));
+            });
+        });
+        ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let padding = shared_ui.tracing_padding;
+                let (edited, value, _) =
+                    ui.float_input("padding".to_string(), shared_ui, padding, 1., None);
+                if edited {
+                    shared_ui.tracing_padding = value;
+                    events.trace_bone_verts();
+                }
+                ui.label(shared_ui.loc("bone_panel.mesh_deformation.padding"))
+                    .on_hover_text(shared_ui.loc("bone_panel.mesh_deformation.padding_desc"));
+            });
+        });
+    }
 
     ui.separator();
 

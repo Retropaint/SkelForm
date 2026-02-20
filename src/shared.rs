@@ -676,7 +676,6 @@ pub struct Ui {
     pub video_clear_bg: Color,
     pub anim_cycles: i32,
     pub mapped_frames: Arc<Mutex<usize>>,
-
     pub custom_error: String,
 
     // used for the UpdateConfig event
@@ -685,6 +684,10 @@ pub struct Ui {
     pub bone_tops: BoneTops,
 
     pub dragging_handles: bool,
+
+    pub tracing: bool,
+    pub tracing_gap: f32,
+    pub tracing_padding: f32,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -2439,7 +2442,7 @@ impl EventState {
         frame: i32,
         is_in: bool,
         handle: Vec2,
-        preset: i32
+        preset: i32,
     ) {
         self.events.push(Events::UpdateKeyframeTransition);
         self.values.push(frame as f32);
