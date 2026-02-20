@@ -65,13 +65,20 @@ pub fn draw(
 
         // render bezier curve
         let bezier_frame = egui::Frame::new().fill(config.colors.dark_accent.into());
+        let mut dragged = false;
         bezier_frame.show(ui, |ui| {
-            let dragged = ui_content(ui, &mut keyframe.start_handle, &mut keyframe.end_handle);
-            if dragged {
-                events.update_keyframe_transition(frame, true, keyframe.start_handle);
-                events.update_keyframe_transition(frame, false, keyframe.end_handle);
-            }
+            dragged = bezier_graph(ui, &mut keyframe.start_handle, &mut keyframe.end_handle);
         });
+        if !dragged {
+            shared_ui.dragging_handles = false;
+        } else {
+            if !shared_ui.dragging_handles {
+                events.save_animation();
+                shared_ui.dragging_handles = true;
+            }
+            events.update_keyframe_transition(frame, true, keyframe.start_handle);
+            events.update_keyframe_transition(frame, false, keyframe.end_handle);
+        }
 
         macro_rules! handle_input {
             ($id:expr, $handle:expr, $is_x:expr, $ui:expr) => {
@@ -84,6 +91,7 @@ pub fn draw(
                     Vec2::new($handle.x, value)
                 };
                 if edited {
+                    events.save_animation();
                     events.update_keyframe_transition(frame, true, new_value);
                 }
                 $ui.label(if $is_x { "X:" } else { "Y:" });
@@ -110,7 +118,7 @@ pub fn draw(
     });
 }
 
-pub fn ui_content(ui: &mut egui::Ui, start_handle: &mut Vec2, end_handle: &mut Vec2) -> bool {
+pub fn bezier_graph(ui: &mut egui::Ui, start_handle: &mut Vec2, end_handle: &mut Vec2) -> bool {
     let size = egui::Vec2::new(ui.available_width(), 300.);
     let (response, painter) = ui.allocate_painter(size, Sense::hover());
     let mut dragged = false;
@@ -148,8 +156,7 @@ pub fn ui_content(ui: &mut egui::Ui, start_handle: &mut Vec2, end_handle: &mut V
             *point += point_response.drag_delta();
             *point = to_screen.from().clamp(*point);
 
-            let delta = point_response.drag_delta();
-            if delta.x.abs() > 0. || delta.y.abs() > 0. {
+            if point_response.dragged() {
                 dragged = true;
             }
 

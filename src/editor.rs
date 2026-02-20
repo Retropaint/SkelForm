@@ -803,6 +803,9 @@ pub fn process_event(
                 }
             }
         }
+        Events::SaveAnimation => {
+            undo_states.new_undo_anim(&armature.sel_anim(&selections).unwrap());
+        }
         _ => {}
     }
 }

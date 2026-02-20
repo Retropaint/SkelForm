@@ -683,6 +683,8 @@ pub struct Ui {
     pub updated_config: Config,
 
     pub bone_tops: BoneTops,
+
+    pub dragging_handles: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -2087,6 +2089,7 @@ pub enum Events {
     EditBone,
     SaveEditedBone,
     SaveBone,
+    SaveAnimation,
     ApplySettings,
     ResetConfig,
     EditCamera,
@@ -2164,6 +2167,7 @@ impl EventState {
     generic_event!(open_export_modal, Events::OpenExportModal);
     generic_event!(update_config, Events::UpdateConfig);
     generic_event!(copy_keyframes_in_frame, Events::CopyKeyframesInFrame);
+    generic_event!(save_animation, Events::SaveAnimation);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, usize);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
