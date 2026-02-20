@@ -127,7 +127,7 @@ pub fn draw(
 }
 
 pub fn bezier_graph(ui: &mut egui::Ui, start_handle: &mut Vec2, end_handle: &mut Vec2) -> bool {
-    let size = egui::Vec2::new(ui.available_width(), 300.);
+    let size = egui::Vec2::new(ui.available_width(), ui.available_width());
     let (response, painter) = ui.allocate_painter(size, Sense::hover());
     let mut dragged = false;
 
