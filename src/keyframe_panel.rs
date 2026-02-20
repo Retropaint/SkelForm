@@ -54,7 +54,7 @@ pub fn draw(
             .show_ui(ui, |ui| {
                 macro_rules! preset {
                     ($name:expr) => {
-                        shared_ui.loc(&("keyframe_panel.".to_owned() + $name))
+                        shared_ui.loc(&("keyframe_panel.presets.".to_owned() + $name))
                     };
                 }
                 ui.selectable_value(&mut selected, "linear", preset!("linear"));
