@@ -22,5 +22,5 @@ pub fn v0d3_to_v0d4(raw: &mut serde_json::Value) {
     for bone in raw.get_mut("bones").iter_mut() {
         bone["hidden"] = bone["is_hidden"].clone();
     }
-    raw["version"] = "v0.3.0".into();
+    raw["version"] = "v0.4.0".into();
 }

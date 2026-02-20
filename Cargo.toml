@@ -9,6 +9,7 @@ path = "src/lib.rs"
 name = "skelform_lib"
 
 [profile.release]
+opt-level = "s"
 lto = true
 debug = true
 
