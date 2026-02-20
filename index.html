@@ -116,35 +116,6 @@
     </head>
 
     <body>
-        <div id="image-dialog" class="modal file-dialog">
-            <input
-                onchange="toggleElement(false, 'image-dialog'); loadImage(event)"
-                type="file"
-                accept=".png"
-                id="img-input"
-                multiple
-            />
-            <label class="button" for="img-input" title="For security reasons, images must be uploaded using this overlay.">Upload Image</label>
-            <label
-                class="button"
-                onclick="toggleElement(false, 'image-dialog')"
-                >Cancel</label
-            >
-        </div>
-
-        <div id="file-dialog" class="modal file-dialog">
-            <input
-                type="file"
-                onchange="toggleElement(false, 'file-dialog'); loadFile(event)"
-                id="file-input"
-            />
-            <label class="button" for="file-input" title="For security reasons, files must be uploaded using this overlay.">Upload File</label>
-            <label
-                class="button"
-                onclick="toggleElement(false, 'file-dialog')"
-                >Cancel</label>
-        </div>
-
         <div id="ui-slider" class="modal ui-slider">
             <div class="box">
                 <p>
@@ -172,23 +143,6 @@
                 >Done</label
             >
         </div>
-
-        <div id="focus" class="modal" onclick="hideFocus()">
-            <p id="focus-p">Click to focus</p>
-        </div>
-
-        <div id="resolution-message" class="resolution-message">
-            <p>
-                If you see this message, SkelForm has failed to load properly.
-                <br />
-                <br />
-                <b>Please refresh the page.</b>
-                <br />
-                <br />
-                If this persists, please try another browser (preferrably Chrome).
-            </p>
-        </div>
-
 
         <div id="wait-message" class="resolution-message">
             <p>Loading, please wait...</p>
@@ -223,14 +177,10 @@
             let realError = false;
             loadConfig();
 
-            toggleElement(false, "image-dialog");
-            toggleElement(false, "file-dialog");
             toggleElement(false, "ui-slider");
-            toggleElement(false, "focus")
             toggleElement(true, "canvas")
             toggleElement(false, "edit-input-modal");
             toggleElement(false, "resolution-message");
-            toggleElement(true, "wait-message");
 
             async function loadConfig() {
                 let data = await localStorage.getItem("skelform_config");
