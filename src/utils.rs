@@ -571,7 +571,7 @@ pub fn prepare_files(
                         start_handle: Vec2::new(1. / 3., 0.),
                         end_handle: Vec2::new(1. / 3., 0.),
                         label_top: 0.,
-                        is_snap: false,
+                        handle_preset: HandlePreset::Linear,
                     });
                 }
             }
@@ -1342,16 +1342,15 @@ fn cubic_bezier_derivative(t: f32, p1: f32, p2: f32) -> f32 {
     3. * u * u * p1 + 6. * u * t * (p2 - p1) + 3. * t * t * (1. - p2)
 }
 
-pub fn interp_preset(name: &str) -> (Vec2, Vec2) {
+pub fn interp_preset(preset: HandlePreset) -> (Vec2, Vec2) {
     #[rustfmt::skip] macro_rules! p1 { ($yval:expr) => { Vec2::new(1. / 3., $yval) } }
     #[rustfmt::skip] macro_rules! p2 { ($yval:expr) => { Vec2::new(2. / 3., $yval) } }
-    match name {
-        "linear" => (p1!(1. / 3.), p2!(2. / 3.)),
-        "sinein" => (Vec2::new(0.5, 0.), Vec2::new(1., 1.)),
-        "sineout" => (p1!(1.), p2!(1.)),
-        "sineinout" => (Vec2::new(0.5, 0.), Vec2::new(0.5, 1.)),
-        "none" => (p1!(999.), p2!(999.)),
-        &_ => (p1!(0.), p2!(0.)),
+    match preset {
+        HandlePreset::Linear => (p1!(1. / 3.), p2!(2. / 3.)),
+        HandlePreset::SineIn => (Vec2::new(0.5, 0.), Vec2::new(1., 1.)),
+        HandlePreset::SineOut => (p1!(1.), p2!(1.)),
+        HandlePreset::SineInOut => (Vec2::new(0.5, 0.), Vec2::new(0.5, 1.)),
+        HandlePreset::None => (Vec2::new(999., 999.), Vec2::new(999., 999.)),
     }
 }
 

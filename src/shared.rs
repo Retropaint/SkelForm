@@ -1669,8 +1669,8 @@ impl Animation {
             bone_id: id,
             element: element.clone(),
             element_id: element.clone() as i32,
-            start_handle: utils::interp_preset("linear").0,
-            end_handle: utils::interp_preset("linear").1,
+            start_handle: utils::interp_preset(HandlePreset::Linear).0,
+            end_handle: utils::interp_preset(HandlePreset::Linear).1,
             ..Default::default()
         });
 
@@ -1750,24 +1750,28 @@ pub struct Keyframe {
     pub value: f32,
 
     #[serde(default)]
-    pub is_snap: bool,
-    #[serde(default)]
     pub start_handle: Vec2,
     #[serde(default)]
     pub end_handle: Vec2,
+    // unused in editor and official runtimes - just a helper for personal runtimes
+    // to hardcode interpolations instead of implementing beziers
+    #[serde(default)]
+    pub handle_preset: HandlePreset,
 
     #[serde(skip)]
     pub label_top: f32,
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default, Debug, FromRepr)]
-pub enum Transition {
+pub enum HandlePreset {
     #[default]
     Linear,
     SineIn,
     SineOut,
+    SineInOut,
+    None,
 }
-enum_string!(Transition);
+enum_string!(HandlePreset);
 
 #[derive(
     Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, Clone, Default, Debug, FromRepr
@@ -2429,12 +2433,19 @@ impl EventState {
         self.values.push(b as f32);
     }
 
-    pub fn update_keyframe_transition(&mut self, frame: i32, is_in: bool, handle: Vec2) {
+    pub fn update_keyframe_transition(
+        &mut self,
+        frame: i32,
+        is_in: bool,
+        handle: Vec2,
+        preset: i32
+    ) {
         self.events.push(Events::UpdateKeyframeTransition);
         self.values.push(frame as f32);
         self.values.push(if is_in { 1. } else { 0. });
         self.values.push(handle.x);
         self.values.push(handle.y);
+        self.values.push(preset as f32);
     }
 }
 

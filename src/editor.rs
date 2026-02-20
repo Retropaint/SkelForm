@@ -51,6 +51,7 @@ pub fn iterate_events(
         let frame = events.values[0] as usize;
         let is_in = events.values[1] == 1.;
         let handle = Vec2::new(events.values[2], events.values[3]);
+        let preset = events.values[4] as i32;
 
         for kf in &mut armature.sel_anim_mut(selections).unwrap().keyframes {
             if kf.frame != frame as i32 {
@@ -61,10 +62,13 @@ pub fn iterate_events(
             } else {
                 kf.end_handle = handle;
             }
+            if preset != -1 {
+                kf.handle_preset = HandlePreset::from_repr(preset as usize).unwrap();
+            }
         }
 
         events.events.remove(0);
-        events.values.drain(0..=3);
+        events.values.drain(0..=4);
     } else if event == Events::SetExportClearColor {
         edit_mode.export_clear_color = Color::new(
             (events.values[0] * 255.).round() as u8,

@@ -48,7 +48,8 @@ pub fn draw(
             return;
         }
 
-        let mut selected = "";
+        let mut selected = keyframe.handle_preset;
+        let og_selected = selected.clone();
         egui::ComboBox::new("transition".to_string(), "")
             .selected_text(shared_ui.loc("keyframe_panel.transition_presets"))
             .show_ui(ui, |ui| {
@@ -57,17 +58,17 @@ pub fn draw(
                         shared_ui.loc(&("keyframe_panel.presets.".to_owned() + $name))
                     };
                 }
-                ui.selectable_value(&mut selected, "linear", preset!("linear"));
-                ui.selectable_value(&mut selected, "sinein", preset!("sinein"));
-                ui.selectable_value(&mut selected, "sineout", preset!("sineout"));
-                ui.selectable_value(&mut selected, "sineinout", preset!("sineinout"));
-                ui.selectable_value(&mut selected, "none", preset!("none"));
+                ui.selectable_value(&mut selected, HandlePreset::Linear, preset!("linear"));
+                ui.selectable_value(&mut selected, HandlePreset::SineIn, preset!("sinein"));
+                ui.selectable_value(&mut selected, HandlePreset::SineOut, preset!("sineout"));
+                ui.selectable_value(&mut selected, HandlePreset::SineInOut, preset!("sineinout"));
+                ui.selectable_value(&mut selected, HandlePreset::None, preset!("none"));
             });
 
-        if selected != "" {
-            let (start, end) = utils::interp_preset(selected);
-            events.update_keyframe_transition(keyframe.frame, true, start);
-            events.update_keyframe_transition(keyframe.frame, false, end);
+        if selected != og_selected {
+            let (start, end) = utils::interp_preset(selected.clone());
+            events.update_keyframe_transition(keyframe.frame, true, start, selected.clone() as i32);
+            events.update_keyframe_transition(keyframe.frame, false, end, selected as i32);
         }
     });
 
@@ -84,8 +85,8 @@ pub fn draw(
             events.save_animation();
             shared_ui.dragging_handles = true;
         }
-        events.update_keyframe_transition(frame, true, keyframe.start_handle);
-        events.update_keyframe_transition(frame, false, keyframe.end_handle);
+        events.update_keyframe_transition(frame, true, keyframe.start_handle, -1);
+        events.update_keyframe_transition(frame, false, keyframe.end_handle, -1);
     }
 
     macro_rules! handle_input {
@@ -100,7 +101,7 @@ pub fn draw(
             };
             if edited {
                 events.save_animation();
-                events.update_keyframe_transition(frame, true, new_value);
+                events.update_keyframe_transition(frame, true, new_value, -1);
             }
             $ui.label(if $is_x { "X:" } else { "Y:" });
         };
