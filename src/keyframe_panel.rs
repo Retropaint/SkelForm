@@ -73,35 +73,39 @@ pub fn draw(
             }
         });
 
+        macro_rules! handle_input {
+            ($id:expr, $handle:expr, $is_x:expr, $ui:expr) => {
+                let value_to_change = if $is_x { $handle.x } else { $handle.y };
+                let (edited, value, _) =
+                    $ui.float_input($id.to_string(), shared_ui, value_to_change, 1., None);
+                let new_value = if $is_x {
+                    Vec2::new(value, $handle.y)
+                } else {
+                    Vec2::new($handle.x, value)
+                };
+                if edited {
+                    events.update_keyframe_transition(frame, true, new_value);
+                }
+                $ui.label(if $is_x { "X:" } else { "Y:" });
+            };
+        }
+
         // handle input fields
-        let frame = keyframe.frame;
         let start_handle = keyframe.start_handle;
         let end_handle = keyframe.end_handle;
         ui.horizontal(|ui| {
-            ui.label("Start Handle: ");
-            let id = "start_handle_x".to_string();
-            let (edited, value, _) = ui.float_input(id, shared_ui, start_handle.x, 1., None);
-            if edited {
-                events.update_keyframe_transition(frame, true, Vec2::new(value, start_handle.y));
-            }
-            let id = "start_handle_y".to_string();
-            let (edited, value, _) = ui.float_input(id, shared_ui, start_handle.y, 1., None);
-            if edited {
-                events.update_keyframe_transition(frame, true, Vec2::new(start_handle.x, value));
-            }
+            ui.label("Start:");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                handle_input!("start_handle_y", start_handle, false, ui);
+                handle_input!("start_handle_x", start_handle, true, ui);
+            });
         });
         ui.horizontal(|ui| {
-            ui.label("End Handle: ");
-            let id = "end_handle_x".to_string();
-            let (edited, value, _) = ui.float_input(id, shared_ui, end_handle.x, 1., None);
-            if edited {
-                events.update_keyframe_transition(frame, false, Vec2::new(value, end_handle.y));
-            }
-            let id = "end_handle_y".to_string();
-            let (edited, value, _) = ui.float_input(id, shared_ui, end_handle.y, 1., None);
-            if edited {
-                events.update_keyframe_transition(frame, false, Vec2::new(end_handle.x, value));
-            }
+            ui.label("End:");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                handle_input!("end_handle_y", end_handle, false, ui);
+                handle_input!("end_handle_x", end_handle, true, ui);
+            });
         });
     });
 }
