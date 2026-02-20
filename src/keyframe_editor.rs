@@ -65,8 +65,8 @@ pub fn draw(
                 let resize = egui::Resize::default()
                     .min_height(full_height) // make height unadjustable
                     .max_height(full_height) //
-                    .default_width(150.)
-                    .max_width(200.)
+                    .default_width(175.)
+                    .max_width(300.)
                     .with_stroke(false);
                 resize.show(ui, |ui| {
                     egui::Frame::new().show(ui, |ui| {
@@ -104,6 +104,7 @@ fn draw_animations_list(
         let str_anim = shared_ui.loc("keyframe_editor.heading");
         ui.heading(str_anim);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+            ui.add_space(13.);
             let str_new = shared_ui.loc("new");
             let button = ui.skf_button(str_new);
             if !button.clicked() {
@@ -113,8 +114,14 @@ fn draw_animations_list(
             shared_ui.just_made_anim = true;
         });
     });
+    ui.add_space(5.);
     egui::ScrollArea::vertical().show(ui, |ui| {
-        let frame = egui::Frame::new().fill(config.colors.dark_accent.into());
+        let frame = egui::Frame::new()
+            .fill(config.colors.dark_accent.into())
+            .outer_margin(egui::Margin {
+                right: 13,
+                ..Default::default()
+            });
         frame.show(ui, |ui| {
             let width = ui.available_width();
             let mut hovered = false;
@@ -161,7 +168,7 @@ fn draw_animations_list(
                         egui::Pos2::new(ui.cursor().left(), ui.cursor().top()),
                         egui::Vec2::new(width, 21.),
                     );
-                    let id = egui::Id::new("anim_".to_owned() + &name);
+                    let id = egui::Id::new("anim_".to_owned() + &i.to_string());
                     let button = ui
                         .interact(rect, id, egui::Sense::click())
                         .on_hover_cursor(cursor_icon);
@@ -732,8 +739,11 @@ fn draw_frame_lines(
 
         let above_bar = cursor.y < ui.min_rect().height() - 13.;
         let in_ui = cursor.y > 0.;
-        let can_hover =
-            in_ui && !shared_ui.modal && !shared_ui.settings_modal && shared_ui.context_menu.hide;
+        let can_hover = in_ui
+            && !shared_ui.modal
+            && !shared_ui.settings_modal
+            && shared_ui.context_menu.hide
+            && !shared_ui.export_modal;
         let cur = cursor;
 
         if selections.anim_frame == i {
