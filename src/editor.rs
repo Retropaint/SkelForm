@@ -751,8 +751,9 @@ pub fn process_event(
             let tex_data = &armature.tex_data;
             let data = tex_data.iter().find(|d| tex.data_id == d.id).unwrap();
             let (verts, indices) = trace_mesh(&data.image, ui.tracing_gap, ui.tracing_padding);
-            if verts.len() < 4 && indices.len() < 6 {
+            if verts.len() < 4 || indices.len() < 6 {
                 open_modal(ui, false, ui.loc("tracing_high_gap"));
+                return;
             }
             let bone = &mut armature.sel_bone_mut(&selections).unwrap();
             bone.vertices = verts;
@@ -1260,7 +1261,8 @@ pub fn trace_mesh(
     // place points across the image where it's own pixel is fully transparent
     let mut cursor = Vec2::default();
     while cursor.y < texture.height() as f32 + padding {
-        let out_of_bounds = cursor.x > texture.width() as f32 || cursor.y > texture.height() as f32;
+        let out_of_bounds =
+            cursor.x >= texture.width() as f32 || cursor.y >= texture.height() as f32;
         if out_of_bounds
             || image::GenericImageView::get_pixel(texture, cursor.x as u32, cursor.y as u32).0[3]
                 == 0
