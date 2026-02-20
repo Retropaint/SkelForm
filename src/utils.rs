@@ -1347,7 +1347,7 @@ pub fn interp_preset(name: &str) -> (Vec2, Vec2) {
     #[rustfmt::skip] macro_rules! p2 { ($yval:expr) => { Vec2::new(2. / 3., $yval) } }
     match name {
         "linear" => (p1!(1. / 3.), p2!(2. / 3.)),
-        "sinein" => (p1!(0.), p2!(1.)),
+        "sinein" => (Vec2::new(0.5, 0.), Vec2::new(1., 1.)),
         "sineout" => (p1!(1.), p2!(1.)),
         "sineinout" => (Vec2::new(0.5, 0.), Vec2::new(0.5, 1.)),
         "none" => (p1!(999.), p2!(999.)),
