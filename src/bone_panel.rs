@@ -623,7 +623,7 @@ pub fn mesh_deformation(
                 let (edited, value, _) =
                     ui.float_input("gap".to_string(), shared_ui, gap, 1., None);
                 if edited {
-                    shared_ui.tracing_gap = value.max(10.);
+                    shared_ui.tracing_gap = value.max(1.);
                     events.trace_bone_verts();
                 }
                 ui.label(shared_ui.loc("bone_panel.mesh_deformation.gap"))

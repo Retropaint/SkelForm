@@ -635,23 +635,7 @@ pub fn process_event(
             bone_mut.vertices.last_mut().unwrap().id = 4.max(bone_mut.vertices.len() as u32);
             bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
             bone_mut.indices = triangulate(&mut bone_mut.vertices, &tex_img);
-
-            // remove vertices that are not in any triangle or binds
-            'verts: for v in (0..bone_mut.vertices.len()).rev() {
-                if bone_mut.indices.contains(&(v as u32)) {
-                    continue;
-                }
-                for bind in &bone_mut.binds {
-                    let ids: Vec<i32> = bind.verts.iter().map(|v| v.id).collect();
-                    if ids.contains(&(bone_mut.vertices[v].id as i32)) {
-                        continue 'verts;
-                    }
-                }
-                bone_mut.vertices.remove(v);
-                for idx in &mut bone_mut.indices {
-                    *idx -= if *idx >= v as u32 { 1 } else { 0 };
-                }
-            }
+            cleanup_vertices(bone_mut);
 
             bone_mut.verts_edited = true;
         }
@@ -760,6 +744,7 @@ pub fn process_event(
             bone.indices = indices;
             bone.binds = vec![];
             bone.verts_edited = true;
+            cleanup_vertices(bone);
             selections.bind = -1;
         }
         Events::RenameTex => {
@@ -1251,6 +1236,25 @@ fn edit_bone(
     anim[anim_id].keyframes[frame].value = value;
 }
 
+// remove vertices that are not in any triangle or binds
+pub fn cleanup_vertices(bone: &mut Bone) {
+    'verts: for v in (0..bone.vertices.len()).rev() {
+        if bone.indices.contains(&(v as u32)) {
+            continue;
+        }
+        for bind in &bone.binds {
+            let ids: Vec<i32> = bind.verts.iter().map(|v| v.id).collect();
+            if ids.contains(&(bone.vertices[v].id as i32)) {
+                continue 'verts;
+            }
+        }
+        bone.vertices.remove(v);
+        for idx in &mut bone.indices {
+            *idx -= if *idx >= v as u32 { 1 } else { 0 };
+        }
+    }
+}
+
 pub fn trace_mesh(
     texture: &image::DynamicImage,
     gap: f32,
@@ -1318,8 +1322,7 @@ pub fn trace_mesh(
 
     // get last point that current one has light of sight on
     // if next point checked happens to be first and there's line of sight, tracing is over
-    let mut id = 1;
-    for p in curr_poi..poi.len() {
+    for p in 0..poi.len() {
         if p == poi.len() - 1 {
             break;
         }
@@ -1335,10 +1338,36 @@ pub fn trace_mesh(
         verts.push(Vertex {
             pos: Vec2::new(poi[p - 1].x, -poi[p - 1].y),
             uv: poi[p - 1] / tex,
-            id,
+            id: p as u32,
             ..Default::default()
         });
-        id += 1;
+        curr_poi = p - 1;
+    }
+    curr_poi = 0;
+
+    // do the same line of sight checks, but in reverse (covers corners that initial side might have missed)
+    for p in (0..poi.len()).rev() {
+        if line_of_sight(&texture, poi[curr_poi], poi[(p + 1) % (poi.len() - 1)]) {
+            continue;
+        }
+        if p == 0 {
+            curr_poi = 1;
+            continue;
+        }
+
+        // don't add if it's already in vertices
+        let ids: Vec<u32> = verts.iter().map(|v| v.id).collect();
+        if ids.contains(&(p as u32)) {
+            continue;
+        }
+
+        let tex = Vec2::new(texture.width() as f32, texture.height() as f32);
+        verts.push(Vertex {
+            pos: Vec2::new(poi[p - 1].x, -poi[p - 1].y),
+            uv: poi[p - 1] / tex,
+            id: p as u32,
+            ..Default::default()
+        });
         curr_poi = p - 1;
     }
 
