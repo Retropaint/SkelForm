@@ -1,4 +1,5 @@
 use crate::*;
+use image::DynamicImage;
 use spade::Triangulation;
 use std::collections::HashMap;
 

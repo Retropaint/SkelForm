@@ -1,8 +1,7 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
 use crate::*;
-use image::{DynamicImage, GenericImageView};
-use spade::Triangulation;
+use image::GenericImageView;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
 /// The `main` of this module.
