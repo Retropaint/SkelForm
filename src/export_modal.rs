@@ -469,10 +469,12 @@ pub fn video_export(
             ui.checkbox(&mut shared_ui.use_system_ffmpeg, "".into_atoms());
         });
 
-        // disabled:
-        // optional ffmpeg downloads - would need to compress first for reduced download size
-        // and then uncompress via zip
+        #[cfg(target_os = "macos")]
+        {
+            return;
+        }
 
+        #[allow(unreachable_code)]
         ui.add_space(10.);
         if ui.skf_button("Download ffmpeg").clicked() {
             let base_url =
