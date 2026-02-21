@@ -643,14 +643,11 @@ impl BackendRenderer {
             magnification: shared.config.pixel_magnification as f32,
             _pad: [0.0; 7],
         };
-        let format;
-        #[cfg(target_arch = "wasm32")]
+        #[allow(unused_mut)]
+        let mut format = wgpu::TextureFormat::Bgra8Unorm;
+        #[cfg(any(target_arch = "wasm32", target_os = "linux"))]
         {
             format = wgpu::TextureFormat::Rgba8Unorm;
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            format = wgpu::TextureFormat::Bgra8Unorm;
         }
         let pixel_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
             size: wgpu::Extent3d {

@@ -532,6 +532,7 @@ pub fn video_export(
             {
                 perms.set_mode(0o755);
             }
+            ffmpeg_bin.set_permissions(perms).unwrap();
         }
         ui.add_space(2.5);
         #[allow(unused_mut)]
