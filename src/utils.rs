@@ -1190,7 +1190,7 @@ pub fn process_screenshot_raw(
         // copy pixels to rgba
         for px in row.chunks_exact(4) {
             // use bgra for native
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(all(not(target_arch = "wasm32"), not(target_os="linux")))]
             {
                 rgba.push(px[2]);
                 rgba.push(px[1]);
@@ -1198,7 +1198,7 @@ pub fn process_screenshot_raw(
                 rgba.push(px[3]);
             }
 
-            #[cfg(target_arch = "wasm32")]
+            #[cfg(any(target_arch = "wasm32", target_os="linux"))]
             {
                 rgba.extend_from_slice(px);
             }

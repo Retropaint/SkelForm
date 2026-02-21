@@ -1084,12 +1084,9 @@ impl BackendRenderer {
         let width = screenshot_res.x as u32;
         let height = screenshot_res.y as u32;
 
-        let format;
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            format = wgpu::TextureFormat::Bgra8Unorm;
-        }
-        #[cfg(target_arch = "wasm32")]
+        #[allow(unused_mut)]
+        let mut format = wgpu::TextureFormat::Bgra8Unorm;
+        #[cfg(any(target_arch = "wasm32", target_os = "linux"))]
         {
             format = wgpu::TextureFormat::Rgba8Unorm;
         }
