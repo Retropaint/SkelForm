@@ -530,9 +530,9 @@ pub fn video_export(
             perms.set_readonly(false);
             #[cfg(not(target_os = "windows"))]
             {
+                ffmpeg_bin.set_permissions(perms).unwrap();
                 perms.set_mode(0o755);
             }
-            ffmpeg_bin.set_permissions(perms).unwrap();
         }
         ui.add_space(2.5);
         #[allow(unused_mut)]
