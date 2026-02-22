@@ -860,7 +860,7 @@ pub fn edit_bone(
 
     macro_rules! edit {
         ($bone:expr, $element:expr, $value:expr) => {
-            events.edit_bone($bone.id, &$element, $value, anim_id, anim_frame);
+            events.edit_bone($bone.id, &$element, $value, "", anim_id, anim_frame);
         };
     }
 

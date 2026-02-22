@@ -2,6 +2,7 @@ use crate::*;
 use image::DynamicImage;
 use spade::Triangulation;
 use std::collections::HashMap;
+use std::str::FromStr;
 
 const MIN_ZOOM: f32 = 1.;
 
@@ -155,10 +156,11 @@ pub fn iterate_events(
         }
 
         #[rustfmt::skip]
-        edit_bone(armature, config, events.values[0] as i32, anim_el, events.values[2], anim_id, anim_frame);
+        edit_bone(armature, config, events.values[0] as i32, anim_el, events.values[2], events.str_values[0].clone(), anim_id, anim_frame);
 
         events.events.remove(0);
         events.values.drain(0..=4);
+        events.str_values.remove(0);
     } else if event == Events::ToggleBoneFolded {
         let idx = events.values[0] as usize;
 
@@ -1139,12 +1141,14 @@ fn edit_bone(
     bone_id: i32,
     element: AnimElement,
     value: f32,
+    value_str: String,
     mut anim_id: usize,
     mut anim_frame: i32,
 ) {
     let bones = &mut armature.bones;
     let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
     let mut init_value = 0.;
+    let mut init_value_str = "".to_string();
 
     // prevent recording into animation if bone is locked
     if bone.locked {
@@ -1167,6 +1171,14 @@ fn edit_bone(
             }
         }};
     }
+    macro_rules! set_str {
+        ($field:expr, $enum:ident) => {{
+            init_value_str = $field.to_string();
+            if anim_id == usize::MAX {
+                $field = $enum::from_str(&value_str).unwrap()
+            }
+        }};
+    }
 
     match element {
         AnimElement::PositionX => set!(bone.pos.x, f32),
@@ -1181,16 +1193,7 @@ fn edit_bone(
         AnimElement::TintB => set!(bone.tint.b, f32),
         AnimElement::TintA => set!(bone.tint.a, f32),
         AnimElement::Texture => { /* handled in set_bone_tex() */ }
-        AnimElement::IkConstraint => {
-            init_value = (bone.ik_constraint as usize) as f32;
-            if anim_id == usize::MAX {
-                bone.ik_constraint = match value {
-                    1. => JointConstraint::Clockwise,
-                    2. => JointConstraint::CounterClockwise,
-                    _ => JointConstraint::None,
-                }
-            }
-        }
+        AnimElement::IkConstraint => set_str!(bone.ik_constraint, JointConstraint),
         AnimElement::Hidden => {
             init_value = shared::bool_as_f32(bone.hidden);
             if anim_id == usize::MAX {
@@ -1203,16 +1206,7 @@ fn edit_bone(
                 bone.locked = shared::f32_as_bool(value)
             }
         }
-        AnimElement::IkMode => {
-            init_value = (bone.ik_mode as usize) as f32;
-            if anim_id == usize::MAX {
-                bone.ik_mode = match value {
-                    0. => InverseKinematicsMode::FABRIK,
-                    1. => InverseKinematicsMode::Arc,
-                    _ => InverseKinematicsMode::Skip,
-                }
-            }
-        }
+        AnimElement::IkMode => set_str!(bone.ik_mode, InverseKinematicsMode),
     };
 
     if anim_id == usize::MAX {
@@ -1230,11 +1224,13 @@ fn edit_bone(
     let has_0th = anim[anim_id].keyframes.iter().find(|kf| check_kf!(kf)) != None;
     if anim_frame != 0 && !has_0th {
         anim[anim_id].check_if_in_keyframe(bone_id, 0, element.clone());
-        let oth_frame = anim[anim_id].keyframes.iter_mut().find(|kf| check_kf!(kf));
-        oth_frame.unwrap().value = init_value;
+        let mut oth_frame = anim[anim_id].keyframes.iter_mut().find(|kf| check_kf!(kf));
+        oth_frame.as_mut().unwrap().value = init_value;
+        oth_frame.as_mut().unwrap().value_str = init_value_str;
     }
     let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
     anim[anim_id].keyframes[frame].value = value;
+    anim[anim_id].keyframes[frame].value_str = value_str;
 }
 
 // remove vertices that are not in any triangle or binds

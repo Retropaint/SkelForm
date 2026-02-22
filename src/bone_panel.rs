@@ -72,7 +72,14 @@ pub fn draw(
             let label = ui.label(text).on_hover_cursor(hand).on_hover_text(desc);
             if label.clicked() {
                 let locked_f32 = if bone.locked { 0. } else { 1. };
-                events.edit_bone(bone.id, &AnimElement::Locked, locked_f32, usize::MAX, -1);
+                events.edit_bone(
+                    bone.id,
+                    &AnimElement::Locked,
+                    locked_f32,
+                    "",
+                    usize::MAX,
+                    -1,
+                );
             }
         });
     });
@@ -102,7 +109,7 @@ pub fn draw(
 
                 let frame = selections.anim_frame;
                 events.save_edited_bone(selections.bone_idx);
-                events.edit_bone(bone.id, $element, $float, anim_id, frame);
+                events.edit_bone(bone.id, $element, $float, "", anim_id, frame);
                 *shared_ui.saving.lock().unwrap() = shared::Saving::Autosaving;
             }
             if $label != "" {
@@ -339,9 +346,9 @@ pub fn inverse_kinematics(
                             id = -1;
                         } else {
                             // reset Y pos if this is a child IK bone
-                            events.edit_bone(bone.id, &A::PositionY, 0., usize::MAX, -1);
+                            events.edit_bone(bone.id, &A::PositionY, 0., "", usize::MAX, -1);
                         }
-                        events.edit_bone(bone.id, &A::IkFamilyId, id as f32, usize::MAX, -1);
+                        events.edit_bone(bone.id, &A::IkFamilyId, id as f32, "", usize::MAX, -1);
                     }
                 })
                 .response
@@ -363,8 +370,8 @@ pub fn inverse_kinematics(
                 let (edited, value, _) = ui.float_input(id, shared_ui, bone.pos.x, 1., None);
                 if edited {
                     type A = AnimElement;
-                    events.edit_bone(bone.id, &A::PositionX, value, usize::MAX, -1);
-                    events.edit_bone(bone.id, &A::PositionY, 0., usize::MAX, -1);
+                    events.edit_bone(bone.id, &A::PositionX, value, "", usize::MAX, -1);
+                    events.edit_bone(bone.id, &A::PositionY, 0., "", usize::MAX, -1);
                 }
             });
         });
@@ -383,10 +390,9 @@ pub fn inverse_kinematics(
 
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("bone_panel.inverse_kinematics.mode_label"));
-        let mode = armature.sel_bone(&sel).unwrap().ik_mode;
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             egui::ComboBox::new("ik_mode", "")
-                .selected_text(mode.to_string())
+                .selected_text(bone.ik_mode.to_string())
                 .width(40.)
                 .show_ui(ui, |ui| {
                     let mut selected_mode = -1;
@@ -396,7 +402,10 @@ pub fn inverse_kinematics(
                         events.edit_bone(
                             bone.id,
                             &AnimElement::IkMode,
-                            selected_mode as f32,
+                            f32::MAX,
+                            &InverseKinematicsMode::from_repr(selected_mode)
+                                .unwrap()
+                                .to_string(),
                             selections.anim,
                             selections.anim_frame,
                         );
@@ -430,10 +439,14 @@ pub fn inverse_kinematics(
                     ui.selectable_value(&mut ik, JointConstraint::Clockwise, str_clockwise);
                     ui.selectable_value(&mut ik, JointConstraint::CounterClockwise, str_ccw);
                     if ik != armature.sel_bone(&sel).unwrap().ik_constraint {
-                        let sel = selections.anim;
-                        let frame = selections.anim_frame;
-                        let constraint = AnimElement::IkConstraint;
-                        events.edit_bone(bone.id, &constraint, (ik as usize) as f32, sel, frame);
+                        events.edit_bone(
+                            bone.id,
+                            &AnimElement::IkConstraint,
+                            f32::MAX,
+                            &ik.to_string(),
+                            selections.anim,
+                            selections.anim_frame,
+                        );
                     }
                 })
                 .response
@@ -872,7 +885,14 @@ pub fn texture_effects(
             if edited {
                 let el = &AnimElement::Zindex;
                 events.save_edited_bone(selections.bone_idx);
-                events.edit_bone(bone.id, el, value, selections.anim, selections.anim_frame);
+                events.edit_bone(
+                    bone.id,
+                    el,
+                    value,
+                    "",
+                    selections.anim,
+                    selections.anim_frame,
+                );
             }
         });
     });
@@ -892,10 +912,10 @@ pub fn texture_effects(
                 usize::MAX
             };
             let frame = selections.anim_frame;
-            events.edit_bone(bone.id, &AnimElement::TintR, col[0], anim_id, frame);
-            events.edit_bone(bone.id, &AnimElement::TintG, col[1], anim_id, frame);
-            events.edit_bone(bone.id, &AnimElement::TintB, col[2], anim_id, frame);
-            events.edit_bone(bone.id, &AnimElement::TintA, col[3], anim_id, frame);
+            events.edit_bone(bone.id, &AnimElement::TintR, col[0], "", anim_id, frame);
+            events.edit_bone(bone.id, &AnimElement::TintG, col[1], "", anim_id, frame);
+            events.edit_bone(bone.id, &AnimElement::TintB, col[2], "", anim_id, frame);
+            events.edit_bone(bone.id, &AnimElement::TintA, col[3], "", anim_id, frame);
         });
     });
 }

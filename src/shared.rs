@@ -6,12 +6,13 @@ use std::{
     fmt,
     ops::{DivAssign, MulAssign},
     path::PathBuf,
+    str::FromStr,
 };
 
 use std::sync::Mutex;
 use wgpu::BindGroup;
 
-use strum::FromRepr;
+use strum::{EnumString, FromRepr};
 
 use serde::{Deserialize, Serialize};
 
@@ -978,7 +979,9 @@ pub enum JointEffector {
 }
 enum_string!(JointEffector);
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Default, PartialEq, Debug)]
+#[derive(
+    serde::Serialize, serde::Deserialize, Clone, Copy, Default, PartialEq, Debug, EnumString,
+)]
 pub enum JointConstraint {
     #[default]
     None,
@@ -1103,8 +1106,18 @@ pub struct EditorBone {
     pub locked: bool,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Default, PartialEq, Debug)]
-#[repr(i32)] // Specify the underlying integer type
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Copy,
+    Clone,
+    Default,
+    PartialEq,
+    Debug,
+    EnumString,
+    FromRepr,
+)]
+#[repr(i32)]
 pub enum InverseKinematicsMode {
     #[default]
     FABRIK,
@@ -1288,21 +1301,22 @@ impl Armature {
                 b.tint.b =  interpolate!(AnimElement::TintB,     b.tint.b);
                 b.tint.a =  interpolate!(AnimElement::TintA,     b.tint.a);
                 b.zindex  = prev_frame!( AnimElement::Zindex,    b.zindex  as f32) as i32;
-                b.hidden  = prev_frame!( AnimElement::Hidden, bool_as_f32(b.hidden)) != 0.;
+                b.hidden  = prev_frame!( AnimElement::Hidden,    bool_as_f32(b.hidden)) != 0.;
                 b.tex     = prev_str!(   AnimElement::Texture,   b.tex.clone());
             };
 
-            let kfs = &self.animations[anim_idx].keyframes;
-            let constraint_frame =
-                utils::get_prev_frame(anim_frame, kfs, b.id, &AnimElement::IkConstraint);
-            if constraint_frame != usize::MAX {
-                let constraint = kfs[constraint_frame].value;
-                b.ik_constraint = match constraint {
-                    1. => JointConstraint::Clockwise,
-                    2. => JointConstraint::CounterClockwise,
-                    _ => JointConstraint::None,
+            macro_rules! prev_frame {
+                ($field:expr, $anim_element:expr, $enum:ident) => {
+                    let kfs = &self.animations[anim_idx].keyframes;
+                    let prev_frame = utils::get_prev_frame(anim_frame, kfs, b.id, &$anim_element);
+                    if prev_frame != usize::MAX {
+                        $field = $enum::from_str(&kfs[prev_frame].value_str).unwrap();
+                    }
                 };
             }
+
+            prev_frame!(b.ik_constraint, AnimElement::IkConstraint, JointConstraint);
+            prev_frame!(b.ik_mode, AnimElement::IkMode, InverseKinematicsMode);
         }
 
         bones
@@ -2357,6 +2371,7 @@ impl EventState {
         bone_id: i32,
         element: &AnimElement,
         value: f32,
+        value_str: &str,
         anim_id: usize,
         anim_frame: i32,
     ) {
@@ -2366,6 +2381,7 @@ impl EventState {
         self.values.push(value as f32);
         self.values.push(anim_id as f32);
         self.values.push(anim_frame as f32);
+        self.str_values.push(value_str.to_string());
     }
 
     pub fn set_bone_texture(&mut self, bone_id: usize, tex: String) {

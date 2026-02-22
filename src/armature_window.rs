@@ -185,7 +185,7 @@ pub fn draw_hierarchy(
                     let sel = selections.anim;
                     let frame = selections.anim_frame;
                     events.save_edited_bone(b);
-                    events.edit_bone(bone_id, &AnimElement::Hidden, hidden_f32, sel, frame);
+                    events.edit_bone(bone_id, &AnimElement::Hidden, hidden_f32, "", sel, frame);
                 }
                 let locked = armature.bones[b].locked;
                 let mut col = config.colors.text;
@@ -197,7 +197,14 @@ pub fn draw_hierarchy(
                 if bone_label("🔒", ui, id, Vec2::new(15., 18.), desc, col).clicked() {
                     let locked_f32 = if !locked { 1. } else { 0. };
                     events.save_edited_bone(b);
-                    events.edit_bone(bone_id, &AnimElement::Locked, locked_f32, usize::MAX, -1);
+                    events.edit_bone(
+                        bone_id,
+                        &AnimElement::Locked,
+                        locked_f32,
+                        "",
+                        usize::MAX,
+                        -1,
+                    );
                 }
                 ui.add_space(34.);
 

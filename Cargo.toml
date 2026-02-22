@@ -12,7 +12,6 @@ name = "skelform_lib"
 opt-level = "s"
 lto = true
 debug = true
-strip = "debuginfo"
 
 [dependencies]
 bytemuck = { version = "1.24.0", features = ["derive"] }
