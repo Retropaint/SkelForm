@@ -564,7 +564,6 @@ pub fn prepare_files(
                     extra_keyframes.push(Keyframe {
                         frame: keyframe.frame,
                         bone_id: family[i].id,
-                        element_id: AnimElement::Rotation as i32,
                         element: AnimElement::Rotation,
                         value_str: "".to_string(),
                         value: family[i].rot,
@@ -627,8 +626,6 @@ pub fn prepare_files(
             // populate IK data to root bone
             joints[0].ik_bone_ids = bone_ids;
             joints[0].ik_target_id = target_id;
-            joints[0].ik_constraint_id = joints[0].ik_constraint as i32;
-            joints[0].ik_mode_id = joints[0].ik_mode as i32;
         }
     }
 
@@ -684,17 +681,14 @@ pub fn prepare_files(
         bone.init_scale = bone.scale;
         bone.init_tex = bone.tex.clone();
         bone.init_hidden = bone.hidden;
-        bone.init_ik_constraint = bone.ik_constraint_id;
-
         if bone.ik_bone_ids.len() == 0 {
             bone.ik_constraint = JointConstraint::Skip;
             bone.ik_mode = InverseKinematicsMode::Skip;
             bone.ik_family_id = -1;
             bone.ik_bone_ids = vec![];
-            bone.ik_mode_id = -1;
-            bone.ik_constraint_id = -1;
-            bone.init_ik_constraint = -1;
         }
+        bone.init_ik_mode = bone.ik_mode;
+        bone.init_ik_constraint = bone.ik_constraint;
     }
 
     for b in 0..armature_copy.bones.len() {
@@ -822,9 +816,12 @@ pub fn import<R: Read + std::io::Seek>(
     let value: std::result::Result<serde_json::Value, _> =
         serde_json::from_reader(armature_file.unwrap());
     if let Err(ref e) = value {
-        custom_err!("armature:json:\n".to_owned() + &e.to_string());
+        custom_err!("armature.json:\n".to_owned() + &e.to_string());
     }
-    let root = backwards_compat::proceed(value.unwrap());
+    let (root, root_err) = backwards_compat::proceed(value.unwrap());
+    if root_err != "" {
+        custom_err!(root_err.to_string());
+    }
 
     let mut temp_arm = shared::Armature {
         bones: root.bones.clone(),
@@ -1190,7 +1187,7 @@ pub fn process_screenshot_raw(
         // copy pixels to rgba
         for px in row.chunks_exact(4) {
             // use bgra for native
-            #[cfg(all(not(target_arch = "wasm32"), not(target_os="linux")))]
+            #[cfg(all(not(target_arch = "wasm32"), not(target_os = "linux")))]
             {
                 rgba.push(px[2]);
                 rgba.push(px[1]);
@@ -1198,7 +1195,7 @@ pub fn process_screenshot_raw(
                 rgba.push(px[3]);
             }
 
-            #[cfg(any(target_arch = "wasm32", target_os="linux"))]
+            #[cfg(any(target_arch = "wasm32", target_os = "linux"))]
             {
                 rgba.extend_from_slice(px);
             }

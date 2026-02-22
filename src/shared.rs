@@ -1010,14 +1010,10 @@ pub struct Bone {
     #[serde(default = "default_neg_one")]
     pub ik_family_id: i32,
     #[rustfmt::skip]
-    #[serde(default, skip_serializing_if = "no_constraints", rename = "ik_constraint_str")]
+    #[serde(default, skip_serializing_if = "no_constraints")]
     pub ik_constraint: JointConstraint,
-    #[serde(default, skip_serializing_if = "is_neg_one", rename = "ik_constraint")]
-    pub ik_constraint_id: i32,
-    #[serde(default, skip_serializing_if = "no_ik_mode", rename = "ik_mode_str")]
+    #[serde(default, skip_serializing_if = "no_ik_mode")]
     pub ik_mode: InverseKinematicsMode,
-    #[serde(default, skip_serializing_if = "is_neg_one", rename = "ik_mode")]
-    pub ik_mode_id: i32,
     #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
     pub ik_target_id: i32,
     #[serde(default, skip_serializing_if = "is_i32_empty")]
@@ -1032,8 +1028,10 @@ pub struct Bone {
     pub init_scale: Vec2,
     #[serde(default, skip_deserializing)]
     pub init_rot: f32,
-    #[serde(default, skip_serializing_if = "is_neg_one", skip_deserializing)]
-    pub init_ik_constraint: i32,
+    #[serde(default, skip_serializing_if = "no_constraints", skip_deserializing)]
+    pub init_ik_constraint: JointConstraint,
+    #[serde(default, skip_serializing_if = "no_ik_mode", skip_deserializing)]
+    pub init_ik_mode: InverseKinematicsMode,
     #[serde(default, skip_serializing_if = "is_false", skip_deserializing)]
     pub init_hidden: bool,
     #[serde(default, skip_serializing_if = "is_str_empty", skip_deserializing)]
@@ -1671,7 +1669,6 @@ impl Animation {
             frame,
             bone_id: id,
             element: element.clone(),
-            element_id: element.clone() as i32,
             start_handle: utils::interp_preset(HandlePreset::Linear).0,
             end_handle: utils::interp_preset(HandlePreset::Linear).1,
             ..Default::default()
@@ -1740,11 +1737,7 @@ pub struct Keyframe {
     pub frame: i32,
     pub bone_id: i32,
 
-    /// runtime: while the editor uses enums for elements, runtimes can use their numerical id
-    /// for simplicity and performance
-    #[serde(default, rename = "element")]
-    pub element_id: i32,
-    #[serde(default, rename = "element_str")]
+    #[serde(default)]
     pub element: AnimElement,
 
     #[serde(default, skip_serializing_if = "is_str_empty")]

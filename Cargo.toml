@@ -12,6 +12,7 @@ name = "skelform_lib"
 opt-level = "s"
 lto = true
 debug = true
+strip = "debuginfo"
 
 [dependencies]
 bytemuck = { version = "1.24.0", features = ["derive"] }
@@ -32,6 +33,7 @@ backtrace = "0.3.76"
 # Handle system shortcuts (cmd+q, cmd+w, etc) since winit can't
 # https://github.com/rust-windowing/winit/issues/2776#issuecomment-2477222703
 global-hotkey = "0.7.0"
+serde_path_to_error = "0.1.20"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 pollster = "0.4.0"
