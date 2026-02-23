@@ -681,6 +681,8 @@ pub fn prepare_files(
         bone.init_scale = bone.scale;
         bone.init_tex = bone.tex.clone();
         bone.init_hidden = bone.hidden;
+        bone.init_tint = bone.tint;
+        bone.init_zindex = bone.zindex;
         if bone.ik_bone_ids.len() == 0 {
             bone.ik_constraint = JointConstraint::Skip;
             bone.ik_mode = InverseKinematicsMode::Skip;
@@ -689,7 +691,6 @@ pub fn prepare_files(
         }
         bone.init_ik_mode = bone.ik_mode;
         bone.init_ik_constraint = bone.ik_constraint;
-        bone.init_tint = bone.tint;
     }
 
     for b in 0..armature_copy.bones.len() {
