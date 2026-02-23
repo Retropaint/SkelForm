@@ -1039,6 +1039,8 @@ pub struct Bone {
     pub init_hidden: bool,
     #[serde(default, skip_serializing_if = "is_str_empty", skip_deserializing)]
     pub init_tex: String,
+    #[serde(default = "default_tint", skip_serializing_if = "is_tint_white")]
+    pub init_tint: TintColor,
 
     #[serde(default, skip_serializing_if = "are_verts_empty")]
     pub vertices: Vec<Vertex>,

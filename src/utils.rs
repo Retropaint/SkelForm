@@ -689,6 +689,7 @@ pub fn prepare_files(
         }
         bone.init_ik_mode = bone.ik_mode;
         bone.init_ik_constraint = bone.ik_constraint;
+        bone.init_tint = bone.tint;
     }
 
     for b in 0..armature_copy.bones.len() {
