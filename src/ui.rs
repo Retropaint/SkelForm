@@ -126,7 +126,7 @@ pub fn draw(
     #[cfg(not(target_arch = "wasm32"))]
     if shared_ui.checking_update {
         modal::modal(context, shared_ui, &config);
-        let url = "https://skelform.org/data/download_links.json";
+        let url = "https://skelform.org/download_links.json";
         let request = ureq::get(url).header("Example-Header", "header value");
         let dl_links: serde_json::Value = match request.call() {
             Ok(mut data) => {
