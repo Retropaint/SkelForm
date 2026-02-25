@@ -454,9 +454,11 @@ fn draw_bones_list(
                     return;
                 }
 
+                let width = ui.available_width();
                 let scroll = egui::ScrollArea::both()
                     .vertical_scroll_offset(shared_ui.bones_assigned_scroll)
                     .show(ui, |ui| {
+                        ui.set_width(width);
                         draw_bone_buttons(ui, armature, &config, shared_ui, &selections, events);
                     });
                 shared_ui.bones_assigned_scroll = scroll.state.offset.y;
