@@ -90,7 +90,7 @@ pub fn draw(
     }
 
     macro_rules! handle_input {
-        ($id:expr, $handle:expr, $is_x:expr, $ui:expr) => {
+        ($id:expr, $handle:expr, $is_x:expr, $is_in:expr, $ui:expr) => {
             let value_to_change = if $is_x { $handle.x } else { $handle.y };
             let (edited, value, _) =
                 $ui.float_input($id.to_string(), shared_ui, value_to_change, 1., None);
@@ -101,7 +101,7 @@ pub fn draw(
             };
             if edited {
                 events.save_animation();
-                events.update_keyframe_transition(frame, true, new_value, -1);
+                events.update_keyframe_transition(frame, $is_in, new_value, -1);
             }
             $ui.label(if $is_x { "X:" } else { "Y:" });
         };
@@ -113,15 +113,15 @@ pub fn draw(
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("keyframe_panel.start"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            handle_input!("start_handle_y", start_handle, false, ui);
-            handle_input!("start_handle_x", start_handle, true, ui);
+            handle_input!("start_handle_y", start_handle, false, true, ui);
+            handle_input!("start_handle_x", start_handle, true, true, ui);
         });
     });
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("keyframe_panel.end"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            handle_input!("end_handle_y", end_handle, false, ui);
-            handle_input!("end_handle_x", end_handle, true, ui);
+            handle_input!("end_handle_y", end_handle, false, false, ui);
+            handle_input!("end_handle_x", end_handle, true, false, ui);
         });
     });
 }
