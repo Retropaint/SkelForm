@@ -304,7 +304,12 @@ pub fn encode_spritesheets(
                 column = 0;
             }
             let size = shared_ui.sprite_size;
-            let img = utils::process_screenshot(&sprite.buffer, &backend.gpu.device, size);
+            let img = utils::process_screenshot(
+                &sprite.buffer,
+                &backend.gpu.device,
+                backend.gpu.surface_format,
+                size,
+            );
             let new_img = image::load_from_memory(&img).unwrap();
             let width = column * shared_ui.sprite_size.x as u32;
             sheet.copy_from(&new_img, width, height).unwrap();
@@ -345,6 +350,7 @@ pub fn encode_sequence(
             let img = utils::process_screenshot(
                 &sprite.buffer,
                 &backend.gpu.device,
+                backend.gpu.surface_format,
                 shared_ui.sprite_size,
             );
             let new_img = image::load_from_memory(&img).unwrap();
@@ -1146,9 +1152,10 @@ pub fn without_unicode(str: &str) -> &str {
 pub fn process_screenshot(
     buffer: &wgpu::Buffer,
     device: &wgpu::Device,
+    surface_format: wgpu::TextureFormat,
     resolution: Vec2,
 ) -> Vec<u8> {
-    let rgba = process_screenshot_raw(buffer, device, resolution);
+    let rgba = process_screenshot_raw(buffer, device, surface_format, resolution);
 
     let img = image::RgbaImage::from_raw(resolution.x as u32, resolution.y as u32, rgba)
         .expect("Invalid RGBA buffer");
@@ -1167,6 +1174,7 @@ pub fn process_screenshot(
 pub fn process_screenshot_raw(
     buffer: &wgpu::Buffer,
     _device: &wgpu::Device,
+    surface_format: wgpu::TextureFormat,
     resolution: Vec2,
 ) -> Vec<u8> {
     #[cfg(not(target_arch = "wasm32"))]
@@ -1193,18 +1201,14 @@ pub fn process_screenshot_raw(
 
         // copy pixels to rgba
         for px in row.chunks_exact(4) {
-            // use bgra for native
-            #[cfg(all(not(target_arch = "wasm32"), not(target_os = "linux")))]
-            {
-                rgba.push(px[2]);
-                rgba.push(px[1]);
-                rgba.push(px[0]);
-                rgba.push(px[3]);
-            }
-
-            #[cfg(any(target_arch = "wasm32", target_os = "linux"))]
-            {
-                rgba.extend_from_slice(px);
+            match surface_format {
+                wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb => {
+                    rgba.push(px[2]);
+                    rgba.push(px[1]);
+                    rgba.push(px[0]);
+                    rgba.push(px[3]);
+                }
+                _ => rgba.extend_from_slice(px),
             }
         }
     }

@@ -648,9 +648,6 @@ impl BackendRenderer {
             wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb => {
                 format = wgpu::TextureFormat::Bgra8Unorm;
             }
-            wgpu::TextureFormat::Rgba8Unorm | wgpu::TextureFormat::Rgba8UnormSrgb => {
-                format = wgpu::TextureFormat::Rgba8Unorm;
-            }
             _ => format = wgpu::TextureFormat::Rgba8Unorm,
         }
         let pixel_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
@@ -1021,6 +1018,7 @@ impl BackendRenderer {
         let save_finished = Arc::clone(&shared.ui.save_finished);
         let export_finished = Arc::clone(&shared.ui.export_finished);
         let device = self.gpu.device.clone();
+        let surface_format = self.gpu.surface_format;
         std::thread::spawn(move || {
             let mut png_bufs = vec![];
             let mut sizes = vec![];
@@ -1038,7 +1036,8 @@ impl BackendRenderer {
             let options = zip::write::FullFileOptions::default()
                 .compression_method(zip::CompressionMethod::Stored);
 
-            let thumb_buf = utils::process_screenshot(&buffer, &device, screenshot_res);
+            let thumb_buf =
+                utils::process_screenshot(&buffer, &device, surface_format, screenshot_res);
 
             // save relevant files into the zip
             zip.start_file("armature.json", options.clone()).unwrap();
@@ -1092,9 +1091,6 @@ impl BackendRenderer {
         match self.gpu.surface_format {
             wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb => {
                 format = wgpu::TextureFormat::Bgra8Unorm;
-            }
-            wgpu::TextureFormat::Rgba8Unorm | wgpu::TextureFormat::Rgba8UnormSrgb => {
-                format = wgpu::TextureFormat::Rgba8Unorm;
             }
             _ => format = wgpu::TextureFormat::Rgba8Unorm,
         }
