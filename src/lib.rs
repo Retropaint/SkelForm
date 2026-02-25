@@ -340,8 +340,8 @@ impl ApplicationHandler for App {
                 let s = &mut self.shared;
                 #[rustfmt::skip]
                 ui::process_inputs(
-                    gui_state.egui_ctx(), &mut s.input, &mut s.ui, &s.config, &s.selections, 
-                    &mut s.edit_mode, &mut s.events, &s.camera, &s.armature
+                    gui_state.egui_ctx(), &mut s.input, &mut s.ui, &s.config,
+                    &mut s.edit_mode, &mut s.events, &s.camera
                 );
 
                 // ui logic handled in ui.rs

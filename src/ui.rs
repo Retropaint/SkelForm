@@ -347,11 +347,9 @@ pub fn process_inputs(
     input: &mut InputStates,
     shared_ui: &mut crate::Ui,
     config: &Config,
-    selections: &SelectionState,
     edit_mode: &mut EditMode,
     events: &mut EventState,
     camera: &Camera,
-    armature: &Armature,
 ) {
     shared_ui.last_pressed = None;
 
