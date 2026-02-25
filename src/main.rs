@@ -192,39 +192,18 @@ fn init_shared(shared: &mut Shared) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+
 pub fn install_panic_handler() {
     std::panic::set_hook(Box::new(|panic_info| {
-        if let Ok(_) = std::fs::remove_file(&utils::crashlog_file()) {}
-
-        let mut file = std::fs::OpenOptions::new()
+        eprintln!("{}", panic_info);
+        if let Ok(mut file) = std::fs::OpenOptions::new()
             .create(true)
             .append(true)
-            .open(&utils::crashlog_file())
-            .unwrap_or_else(|_| {
-                // last resort: stderr
-                eprintln!("Failed to open panic log at {:?}", utils::crashlog_file());
-                std::process::exit(1);
-            });
-
-        if let Some(message) = panic_info.payload().downcast_ref::<&str>() {
-            let _ = writeln!(file, "Message: {}", message);
-        } else if let Some(message) = panic_info.payload().downcast_ref::<String>() {
-            let _ = writeln!(file, "Message: {}", message);
+            .open(utils::crashlog_file())
+        {
+            let _ = writeln!(file, "Panic: {panic_info}");
+            let bt = std::backtrace::Backtrace::force_capture();
+            let _ = writeln!(file, "{bt}");
         }
-
-        if let Some(location) = panic_info.location() {
-            let _ = writeln!(
-                file,
-                "Location: {}:{}:{}",
-                location.file(),
-                location.line(),
-                location.column()
-            );
-        }
-
-        let bt = backtrace::Backtrace::new();
-        let _ = writeln!(file, "\nBacktrace:\n{:?}", bt);
-
-        let _ = file.flush();
     }));
 }
