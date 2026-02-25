@@ -447,26 +447,6 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
 
     let mut alt_col = true;
 
-    macro_rules! key {
-        ($label:expr, $field:expr) => {
-            alt_col = !alt_col;
-            let color = if alt_col {
-                shared_ui.updated_config.colors.main
-            } else {
-                shared_ui.updated_config.colors.dark_accent
-            };
-            key(
-                $label,
-                &mut $field,
-                ui,
-                &mut shared_ui.changing_key,
-                &shared_ui.last_pressed,
-                color,
-                shared_ui.updated_config.colors.text,
-            );
-        };
-    }
-
     macro_rules! loc {
         ($label:expr) => {
             shared_ui
@@ -475,33 +455,60 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         };
     }
 
+    macro_rules! key {
+        ($label:expr, $field:expr, $has_key:expr) => {
+            alt_col = !alt_col;
+            let color = if alt_col {
+                shared_ui.updated_config.colors.main
+            } else {
+                shared_ui.updated_config.colors.dark_accent
+            };
+            key(
+                loc!($label),
+                loc!(&($label.to_owned() + &"_desc")),
+                &mut $field,
+                ui,
+                &mut shared_ui.changing_key,
+                &shared_ui.last_pressed,
+                color,
+                shared_ui.updated_config.colors.text,
+                $has_key,
+            );
+        };
+    }
+
+    let mut keys = shared_ui.updated_config.keys.clone();
     // iterable key config
     #[rustfmt::skip]
     {
-        key!(loc!("next_anim_frame"), shared_ui.updated_config.keys.next_anim_frame);
-        key!(loc!("prev_anim_frame"), shared_ui.updated_config.keys.prev_anim_frame);
-        key!(loc!("zoom_camera_in"),  shared_ui.updated_config.keys.zoom_in_camera );
-        key!(loc!("zoom_camera_out"), shared_ui.updated_config.keys.zoom_out_camera);
-        key!(loc!("undo"),            shared_ui.updated_config.keys.undo           );
-        key!(loc!("redo"),            shared_ui.updated_config.keys.redo           );
-        key!(loc!("save"),            shared_ui.updated_config.keys.save           );
-        key!(loc!("save_as"),         shared_ui.updated_config.keys.save_as        );
-        key!(loc!("export"),          shared_ui.updated_config.keys.export         );
-        key!(loc!("open"),            shared_ui.updated_config.keys.open           );
-        key!(loc!("cancel"),          shared_ui.updated_config.keys.cancel         );
-        key!(loc!("copy"),            shared_ui.updated_config.keys.copy           );
-        key!(loc!("paste"),           shared_ui.updated_config.keys.paste          );
+        key!("next_anim_frame",    keys.next_anim_frame,    true);
+        key!("prev_anim_frame",    keys.prev_anim_frame,    true);
+        key!("zoom_camera_in",     keys.zoom_in_camera,     true);
+        key!("zoom_camera_out",    keys.zoom_out_camera,    true);
+        key!("undo",               keys.undo,               true);
+        key!("redo",               keys.redo,               true);
+        key!("save",               keys.save,               true);
+        key!("save_as",            keys.save_as,            true);
+        key!("export",             keys.export ,            true);
+        key!("open",               keys.open,               true);
+        key!("cancel",             keys.cancel,             true);
+        key!("copy",               keys.copy,               true);
+        key!("paste",              keys.paste,              true);
+        key!("timeline_zoom_mode", keys.timeline_zoom_mode, false);
     };
+    shared_ui.updated_config.keys = keys.clone();
 }
 
 fn key(
     name: String,
+    tooltip: String,
     field: &mut egui::KeyboardShortcut,
     ui: &mut egui::Ui,
     changing_key: &mut String,
     last_pressed: &Option<egui::Key>,
     color: shared::Color,
     text_color: shared::Color,
+    show_key: bool,
 ) {
     macro_rules! dd_mod {
         ($ui:expr, $modifier:expr, $field:expr) => {
@@ -512,23 +519,32 @@ fn key(
 
     ui.horizontal(|ui| {
         egui::Frame::new().fill(color.into()).show(ui, |ui| {
-            ui.label(name.clone());
+            if tooltip != "" {
+                ui.label(name.clone()).on_hover_text(tooltip);
+            } else {
+                ui.label(name.clone());
+            }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let button_str = if *changing_key == name {
-                    "...".to_string()
+                // logical key
+                if show_key {
+                    let button_str = if *changing_key == name {
+                        "...".to_string()
+                    } else {
+                        field.logical_key.display()
+                    };
+                    let button_rich_text = egui::RichText::new(button_str).color(text_color);
+                    let button = ui
+                        .add_sized([80., 20.], egui::Button::new(button_rich_text))
+                        .on_hover_cursor(egui::CursorIcon::PointingHand);
+                    if button.clicked() {
+                        *changing_key = name.to_string();
+                    }
                 } else {
-                    field.logical_key.display()
-                };
-
-                let button_rich_text = egui::RichText::new(button_str).color(text_color);
-                if ui
-                    .add_sized([80., 20.], egui::Button::new(button_rich_text))
-                    .on_hover_cursor(egui::CursorIcon::PointingHand)
-                    .clicked()
-                {
-                    *changing_key = name.to_string();
+                    // add padding, to align modifier dropdown to the rest in the list
+                    ui.add_space(88.);
                 }
 
+                // modifier dropdown
                 egui::ComboBox::new(name.to_string() + "mod", "")
                     .selected_text(
                         egui::RichText::new(modifier_name(field.modifiers)).color(text_color),

@@ -689,6 +689,8 @@ pub struct Ui {
     pub tracing: bool,
     pub tracing_gap: f32,
     pub tracing_padding: f32,
+
+    pub pointer_on_timeline: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -858,6 +860,7 @@ pub struct KeyboardConfig {
     pub cancel: egui::KeyboardShortcut,
     pub copy: egui::KeyboardShortcut,
     pub paste: egui::KeyboardShortcut,
+    pub timeline_zoom_mode: egui::KeyboardShortcut,
 }
 
 pub trait Display {
@@ -914,19 +917,20 @@ impl Default for KeyboardConfig {
     #[rustfmt::skip]
     fn default() -> Self {
         KeyboardConfig {
-            next_anim_frame: regular_key!(egui::Key::ArrowRight),
-            prev_anim_frame: regular_key!(egui::Key::ArrowLeft),
-            zoom_in_camera:  regular_key!(egui::Key::Equals),
-            zoom_out_camera: regular_key!(egui::Key::Minus),
-            cancel:          regular_key!(egui::Key::Escape),
-            undo:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::Z),
-            redo:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::Y),
-            save:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::S),
-            save_as:         shortcut_key!(egui::Modifiers::SHIFT, egui::Key::S),
-            export:          shortcut_key!(egui::Modifiers::COMMAND, egui::Key::E),
-            open:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::O),
-            copy:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::C),
-            paste:           shortcut_key!(egui::Modifiers::COMMAND, egui::Key::V),
+            next_anim_frame:    regular_key!(egui::Key::ArrowRight),
+            prev_anim_frame:    regular_key!(egui::Key::ArrowLeft),
+            zoom_in_camera:     regular_key!(egui::Key::Equals),
+            zoom_out_camera:    regular_key!(egui::Key::Minus),
+            cancel:             regular_key!(egui::Key::Escape),
+            undo:               shortcut_key!(egui::Modifiers::COMMAND, egui::Key::Z),
+            redo:               shortcut_key!(egui::Modifiers::COMMAND, egui::Key::Y),
+            save:               shortcut_key!(egui::Modifiers::COMMAND, egui::Key::S),
+            save_as:            shortcut_key!(egui::Modifiers::SHIFT, egui::Key::S),
+            export:             shortcut_key!(egui::Modifiers::COMMAND, egui::Key::E),
+            open:               shortcut_key!(egui::Modifiers::COMMAND, egui::Key::O),
+            copy:               shortcut_key!(egui::Modifiers::COMMAND, egui::Key::C),
+            paste:              shortcut_key!(egui::Modifiers::COMMAND, egui::Key::V),
+            timeline_zoom_mode: shortcut_key!(egui::Modifiers::COMMAND, egui::Key::F30),
         }
     }
 }

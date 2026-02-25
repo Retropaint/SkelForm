@@ -337,30 +337,18 @@ impl ApplicationHandler for App {
                     &self.shared.edit_mode,
                 );
 
-                let shared = &mut self.shared;
+                let s = &mut self.shared;
+                #[rustfmt::skip]
                 ui::process_inputs(
-                    gui_state.egui_ctx(),
-                    &mut shared.input,
-                    &mut shared.ui,
-                    &shared.config,
-                    &shared.selections,
-                    &mut shared.edit_mode,
-                    &mut shared.events,
-                    &shared.camera,
-                    &shared.armature,
+                    gui_state.egui_ctx(), &mut s.input, &mut s.ui, &s.config, &s.selections, 
+                    &mut s.edit_mode, &mut s.events, &s.camera, &s.armature
                 );
 
                 // ui logic handled in ui.rs
+                #[rustfmt::skip]
                 ui::draw(
-                    gui_state.egui_ctx(),
-                    &mut shared.ui,
-                    &mut shared.input,
-                    &mut shared.selections,
-                    &mut shared.config,
-                    &mut shared.events,
-                    &mut shared.edit_mode,
-                    &shared.camera,
-                    &mut shared.armature,
+                    gui_state.egui_ctx(), &mut s.ui, &mut s.input, &mut s.selections, 
+                    &mut s.config, &mut s.events, &mut s.edit_mode, &s.camera, &mut s.armature
                 );
 
                 let egui_winit::egui::FullOutput {
@@ -410,18 +398,11 @@ impl ApplicationHandler for App {
                     .set_pixels_per_point(self.shared.ui.scale);
 
                 while self.shared.events.events.len() > 0 {
+                    let s = &mut self.shared;
+                    #[rustfmt::skip]
                     editor::iterate_events(
-                        &self.shared.input,
-                        &mut self.shared.config,
-                        &mut self.shared.events,
-                        &mut self.shared.camera,
-                        &mut self.shared.edit_mode,
-                        &mut self.shared.selections,
-                        &mut self.shared.undo_states,
-                        &mut self.shared.armature,
-                        &mut self.shared.copy_buffer,
-                        &mut self.shared.ui,
-                        &mut self.shared.renderer,
+                        &s.input, &mut s.config, &mut s.events, &mut s.camera, &mut s.edit_mode, &mut s.selections, 
+                        &mut s.undo_states, &mut s.armature, &mut s.copy_buffer, &mut s.ui, &mut s.renderer
                     );
                 }
             }

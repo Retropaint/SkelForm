@@ -307,7 +307,7 @@ fn timeline_editor(
 
             // The options bar has to be at the bottom, but it needs to be created first
             // so that the remaining height can be taken up by timeline graph.
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+            let timeline = ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                 draw_bottom_bar(
                     ui, selections, &config, &armature, shared_ui, events, edit_mode,
                 );
@@ -315,6 +315,8 @@ fn timeline_editor(
                     ui, width, hitbox, shared_ui, config, selections, armature, events, input,
                 );
             });
+
+            shared_ui.pointer_on_timeline = timeline.response.contains_pointer();
         });
     });
 }

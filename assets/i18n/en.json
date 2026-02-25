@@ -295,7 +295,9 @@
       "open": "Open",
       "cancel": "Cancel",
       "copy": "Copy",
-      "paste": "Paste"
+      "paste": "Paste",
+      "timeline_zoom_mode": "Timeline Zoom Mode ℹ",
+      "timeline_zoom_mode_desc": "The timeline editor will zoom, instead of scroll, when scrolling and holding this modifier."
     },
     "miscellaneous": {
       "heading": "Miscellaneous",

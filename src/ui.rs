@@ -356,12 +356,12 @@ pub fn process_inputs(
     shared_ui.last_pressed = None;
 
     context.input_mut(|i| {
-        input.holding_mod = i.modifiers.command;
-        input.holding_shift = i.modifiers.shift;
+        //input.holding_mod = i.modifiers.command;
+        //input.holding_shift = i.modifiers.shift;
         if shared_ui.rename_id == "" {
-            kb_inputs(
-                i, shared_ui, events, config, selections, edit_mode, armature, camera,
-            );
+            //kb_inputs(
+            //    i, shared_ui, events, config, selections, edit_mode, armature, camera,
+            //);
         }
         shared_ui.last_pressed = i.keys_down.iter().last().copied();
 
@@ -396,9 +396,16 @@ pub fn process_inputs(
             input.mouse_prev = input.mouse;
         }
 
-        if i.smooth_scroll_delta.y != 0. && !camera.on_ui {
-            input.scroll_delta = i.smooth_scroll_delta.y;
-            events.cam_zoom_scroll();
+        if i.raw_scroll_delta.y != 0. {
+            input.scroll_delta = i.raw_scroll_delta.y;
+            let timeline_mod = config.keys.timeline_zoom_mode.modifiers;
+            let timeline_mode = i.modifiers.matches_any(timeline_mod);
+            if timeline_mode && shared_ui.pointer_on_timeline {
+                shared_ui.anim.timeline_zoom -= input.scroll_delta / 10.;
+                shared_ui.anim.timeline_zoom = shared_ui.anim.timeline_zoom.min(10.).max(0.1);
+            } else if !camera.on_ui {
+                events.cam_zoom_scroll();
+            }
         }
 
         edit_mode.time = i.time as f32;
