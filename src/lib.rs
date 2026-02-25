@@ -942,7 +942,7 @@ impl BackendRenderer {
         } else {
             let bufs = utils::encode_spritesheets(armature, shared_ui, self);
             for b in 0..bufs.len() {
-                let png_name = armature.animations[b].name.to_string() + ".png";
+                let png_name = b.to_string() + ".png";
                 zip.start_file(png_name, options.clone()).unwrap();
                 zip.write(&bufs[b]).unwrap();
             }

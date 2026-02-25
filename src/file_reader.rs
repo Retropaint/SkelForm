@@ -185,23 +185,11 @@ pub fn add_pending_textures(
     shared.armature.tex_data.pop();
 
     for tex in &shared.ui.pending_textures {
-        let crop = image.crop_imm(
-            tex.offset.x as u32,
-            tex.offset.y as u32,
-            tex.size.x as u32,
-            tex.size.y as u32,
-        );
-        add_texture(
-            crop.clone(),
-            shared.selections.style,
-            Vec2::new(crop.width() as f32, crop.height() as f32),
-            &tex.name,
-            &mut shared.armature,
-            queue,
-            device,
-            bind_group_layout,
-            ctx,
-        );
+        #[rustfmt::skip]
+        let crop = image.crop_imm(tex.offset.x as u32, tex.offset.y as u32, tex.size.x as u32, tex.size.y as u32);
+        let crop_size = Vec2::new(crop.width() as f32, crop.height() as f32);
+        #[rustfmt::skip]
+        add_texture(crop.clone(), shared.selections.style, crop_size, &tex.name, &mut shared.armature, queue, device, bind_group_layout, ctx);
     }
 
     shared.ui.pending_textures = vec![];

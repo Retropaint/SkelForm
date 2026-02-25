@@ -142,12 +142,9 @@ pub fn draw(
             let this_ver_str = "v".to_owned() + env!("CARGO_PKG_VERSION");
             if ver_str.trim() != this_ver_str.trim() {
                 shared_ui.new_version = this_ver_str.to_string();
-                events.open_polar_modal(
-                    PolarId::NewUpdate,
-                    shared_ui
-                        .loc("startup.update_available")
-                        .replace("$ver", ver_str),
-                );
+                let loc = "startup.update_available";
+                let str = shared_ui.loc(loc).replace("$ver", ver_str);
+                events.open_polar_modal(PolarId::NewUpdate, str);
             } else {
                 events.open_modal("startup.no_updates", false);
             }

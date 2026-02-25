@@ -35,13 +35,15 @@ pub fn iterate_events(
         #[rustfmt::skip]
             match last_event {
                 E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone  => undo_states.new_undo_bones(&armature.bones),
-                E::NewAnimation | E::DeleteAnim           => undo_states.new_undo_anims(&armature.animations),
-                E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::PasteKeyframes => undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()),
-                E::DeleteTex                              => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
-                E::DeleteStyle | E::NewStyle              => undo_states.new_undo_styles(&armature.styles),
+                E::NewAnimation | E::DeleteAnim => undo_states.new_undo_anims(&armature.animations),
+                E::DeleteTex                    => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
+                E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
                 E::RenameAnim  => if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap()); ui.just_made_anim  = false }
 
+                E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframes => { 
+                    undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()) 
+                }                
                 E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts => {
                     undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
                 }
@@ -211,8 +213,18 @@ pub fn iterate_events(
         anim.elapsed = if playing { Some(Instant::now()) } else { None };
         events.events.remove(0);
         events.values.drain(0..=1);
+    } else if event == Events::SetAllKeyframesFrame {
+        for kf in &mut armature.sel_anim_mut(&selections).unwrap().keyframes {
+            if kf.frame == events.values[0] as i32 {
+                kf.frame = events.values[1] as i32
+            }
+        }
+        armature.animations[selections.anim].sort_keyframes();
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
     } else if event == Events::SetKeyframeFrame {
-        armature.animations[selections.anim].keyframes[events.values[0] as usize].frame =
+        armature.sel_anim_mut(&selections).unwrap().keyframes[events.values[0] as usize].frame =
             events.values[1] as i32;
         armature.animations[selections.anim].sort_keyframes();
 

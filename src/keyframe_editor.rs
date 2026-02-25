@@ -427,7 +427,7 @@ pub fn draw_top_bar(
     hitbox: f32,
     shared_ui: &mut crate::Ui,
     selections: &SelectionState,
-    armature: &mut Armature,
+    armature: &Armature,
     input: &InputStates,
     config: &Config,
     events: &mut EventState,
@@ -517,13 +517,11 @@ pub fn draw_top_bar(
                 }
 
                 let anim = armature.sel_anim(&sel).unwrap().clone();
-
                 shared_ui.cursor_icon = egui::CursorIcon::Grabbing;
 
                 // remove keyframe if dragged out
                 if cursor.y < 0. {
                     events.remove_keyframes_by_frame(anim.keyframes[i].frame);
-
                     // break loop to prevent OOB errors
                     break;
                 }
@@ -534,14 +532,8 @@ pub fn draw_top_bar(
                     if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
                         continue;
                     }
-                    let selected_anim = &mut armature.sel_anim_mut(&sel).unwrap();
-                    selected_anim.keyframes.retain(|kf| kf.frame != j as i32);
-                    for kf in &mut armature.sel_anim_mut(&sel).unwrap().keyframes {
-                        if kf.frame == frame as i32 {
-                            kf.frame = j as i32;
-                        }
-                    }
-                    armature.sel_anim_mut(&sel).unwrap().sort_keyframes();
+                    events.save_animation();
+                    events.set_all_keyframe_frame(frame as usize, j);
                     return;
                 }
             }
@@ -922,6 +914,7 @@ fn draw_frame_lines(
                 curr -= 1;
             }
 
+            events.save_animation();
             events.set_keyframe_frame(curr, j);
             return;
         }
