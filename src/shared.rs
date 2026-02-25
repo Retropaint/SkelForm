@@ -1187,9 +1187,11 @@ impl Armature {
             let kf = anim.check_if_in_keyframe(bone_id as i32, selected_frame, tx.clone());
             anim.keyframes[kf].value_str = new_tex_str;
 
-            // add 0th keyframe
-            let first = anim.check_if_in_keyframe(bone_id as i32, 0, tx.clone());
-            anim.keyframes[first].value_str = bone.tex.clone();
+            // add 0th keyframe if that wasn't the selected frame
+            if selected_frame != 0 {
+                let first = anim.check_if_in_keyframe(bone_id as i32, 0, tx.clone());
+                anim.keyframes[first].value_str = bone.tex.clone();
+            }
         }
     }
 
