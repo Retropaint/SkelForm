@@ -680,24 +680,6 @@ pub fn prepare_files(
         }
     }
 
-    for bone in &mut armature_copy.bones {
-        bone.init_pos = bone.pos;
-        bone.init_rot = bone.rot;
-        bone.init_scale = bone.scale;
-        bone.init_tex = bone.tex.clone();
-        bone.init_hidden = bone.hidden;
-        bone.init_tint = bone.tint;
-        bone.init_zindex = bone.zindex;
-        if bone.ik_bone_ids.len() == 0 {
-            bone.ik_constraint = JointConstraint::Skip;
-            bone.ik_mode = InverseKinematicsMode::Skip;
-            bone.ik_family_id = -1;
-            bone.ik_bone_ids = vec![];
-        }
-        bone.init_ik_mode = bone.ik_mode;
-        bone.init_ik_constraint = bone.ik_constraint;
-    }
-
     for b in 0..armature_copy.bones.len() {
         if armature_copy.bones[b].parent_id == -1 {
             continue;
@@ -716,6 +698,24 @@ pub fn prepare_files(
         }
 
         bone.id = b as i32;
+    }
+
+    for bone in &mut armature_copy.bones {
+        bone.init_pos = bone.pos;
+        bone.init_rot = bone.rot;
+        bone.init_scale = bone.scale;
+        bone.init_tex = bone.tex.clone();
+        bone.init_hidden = bone.hidden;
+        bone.init_tint = bone.tint;
+        bone.init_zindex = bone.zindex;
+        if bone.ik_bone_ids.len() == 0 {
+            bone.ik_constraint = JointConstraint::Skip;
+            bone.ik_mode = InverseKinematicsMode::Skip;
+            bone.ik_family_id = -1;
+            bone.ik_bone_ids = vec![];
+        }
+        bone.init_ik_mode = bone.ik_mode;
+        bone.init_ik_constraint = bone.ik_constraint;
     }
 
     let mut ik_root_ids = vec![];
