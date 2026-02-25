@@ -172,15 +172,19 @@ fn draw_animations_list(
                     let button = ui
                         .interact(rect, id, egui::Sense::click())
                         .on_hover_cursor(cursor_icon);
-                    egui::Frame::new().fill(col.into()).show(ui, |ui| {
-                        ui.horizontal(|ui| {
-                            ui.set_width(width - button_padding);
-                            ui.set_height(21.);
-                            ui.add_space(5.);
-                            let col = config.colors.text;
-                            ui.label(egui::RichText::new(name.clone()).color(col));
+                    ui.scope(|ui| {
+                        ui.style_mut().interaction.selectable_labels = false;
+                        egui::Frame::new().fill(col.into()).show(ui, |ui| {
+                            ui.horizontal(|ui| {
+                                ui.set_width(width - button_padding);
+                                ui.set_height(21.);
+                                ui.add_space(5.);
+                                let col = config.colors.text;
+                                ui.label(egui::RichText::new(name.clone()).color(col));
+                            });
                         });
                     });
+
                     if button.contains_pointer() || button.has_focus() {
                         shared_ui.hovering_anim = i as i32;
                         hovered = true;
