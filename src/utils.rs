@@ -225,7 +225,7 @@ pub fn render_spritesheets(
         shared_ui.rendered_spritesheets.push(vec![]);
         let anim = &armature.animations[a];
         let last_frame = if let Some(kf) = anim.keyframes.last() {
-            kf.frame
+            kf.frame + 1
         } else {
             1
         };
@@ -277,38 +277,43 @@ pub fn encode_spritesheets(
         if !shared_ui.exporting_anims[a] {
             continue;
         }
-        let rows: f32 = f32::round(
-            (shared_ui.rendered_spritesheets[idx].len() / shared_ui.sprites_per_row as usize)
-                as f32,
-        ) + 1.;
+
+        // setup sheet size
+        let mut rows: f32 =
+            shared_ui.rendered_spritesheets[idx].len() as f32 / shared_ui.sprites_per_row as f32;
+
+        // add 1 row if it doesn't end up as an integer
+        rows = if rows % 1 as f32 == 0 as f32 {
+            rows.floor()
+        } else {
+            rows.floor() + 1.
+        };
+
         let sheet_size = Vec2::new(
             shared_ui.sprite_size.x * shared_ui.sprites_per_row as f32 + 1.,
             shared_ui.sprite_size.y * rows as f32 + 1.,
         );
 
+        // copy frames into sheet
         let mut sheet = image::RgbaImage::new(sheet_size.x as u32, sheet_size.y as u32);
         let mut column = 0;
         let mut height = 0;
         for (_, sprite) in shared_ui.rendered_spritesheets[idx].iter().enumerate() {
-            let img = utils::process_screenshot(
-                &sprite.buffer,
-                &backend.gpu.device,
-                shared_ui.sprite_size,
-            );
-            let new_img = image::load_from_memory(&img).unwrap();
-            sheet
-                .copy_from(&new_img, column * shared_ui.sprite_size.x as u32, height)
-                .unwrap();
-            column += 1;
             if column >= shared_ui.sprites_per_row as u32 {
                 height += shared_ui.sprite_size.y as u32;
                 column = 0;
             }
+            let size = shared_ui.sprite_size;
+            let img = utils::process_screenshot(&sprite.buffer, &backend.gpu.device, size);
+            let new_img = image::load_from_memory(&img).unwrap();
+            let width = column * shared_ui.sprite_size.x as u32;
+            sheet.copy_from(&new_img, width, height).unwrap();
+            column += 1;
         }
 
+        // encode sheet into png
         let mut png_buf = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
-
         let rgba8 = image::ExtendedColorType::Rgba8;
         encoder
             .write_image(sheet.as_raw(), sheet.width(), sheet.height(), rgba8)
