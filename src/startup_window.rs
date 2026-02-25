@@ -277,7 +277,18 @@ fn startup_content(
                             shared_ui.checking_update = true;
                         }
                     }
-                    ui.add_space(5.);
+
+                    // show current version below update checker
+                    if item.update_checker {
+                        let str = "Current: v".to_owned() + &env!("CARGO_PKG_VERSION").to_string();
+                        ui.horizontal(|ui| {
+                            ui.add_space(4.);
+                            let str = egui::RichText::new(str)
+                                .color(conf.colors.text)
+                                .size(header_size - 3.);
+                            ui.label(str);
+                        });
+                    }
 
                     for sub in &item.items {
                         ui.horizontal(|ui| {
