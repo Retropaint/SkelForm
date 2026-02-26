@@ -350,6 +350,8 @@ pub fn process_inputs(
     edit_mode: &mut EditMode,
     events: &mut EventState,
     camera: &Camera,
+    selections: &SelectionState,
+    armature: &mut Armature,
 ) {
     shared_ui.last_pressed = None;
 
@@ -357,9 +359,9 @@ pub fn process_inputs(
         //input.holding_mod = i.modifiers.command;
         //input.holding_shift = i.modifiers.shift;
         if shared_ui.rename_id == "" {
-            //kb_inputs(
-            //    i, shared_ui, events, config, selections, edit_mode, armature, camera,
-            //);
+            kb_inputs(
+                i, shared_ui, events, config, selections, edit_mode, armature, camera,
+            );
         }
         shared_ui.last_pressed = i.keys_down.iter().last().copied();
 
@@ -758,21 +760,22 @@ impl EguiUi for egui::Ui {
     ) -> (bool, String, egui::Response) {
         let input: egui::Response;
 
+        // if the input was out of focus due to selecting another, save the value
+        if shared_ui.last_rename_id != shared_ui.rename_id && shared_ui.last_rename_id == id {
+            let singleline =
+                egui::TextEdit::singleline(shared_ui.last_edit_value.as_mut().unwrap())
+                    .hint_text(options.as_ref().unwrap().placeholder.clone());
+            input = self.add_sized(options.as_ref().unwrap().size, singleline);
+            shared_ui.last_rename_id = "".to_string();
+            return (true, shared_ui.last_edit_value.clone().unwrap(), input);
+        }
+
+        // setup default options, as well as size (separately since it depends on UI width)
         if options == None {
             options = Some(TextInputOptions::default());
         }
-
         if options.as_ref().unwrap().size == Vec2::ZERO {
             options.as_mut().unwrap().size = Vec2::new(self.available_width(), 20.);
-        }
-
-        if options.as_ref().unwrap().focus && !shared_ui.input_focused {
-            shared_ui.input_focused = true;
-            shared_ui.edit_value = Some(value.clone());
-
-            if shared_ui.mobile {
-                open_mobile_input(shared_ui.edit_value.clone().unwrap());
-            }
         }
 
         if shared_ui.rename_id != id {
@@ -794,6 +797,11 @@ impl EguiUi for egui::Ui {
                 .hint_text(options.as_ref().unwrap().placeholder.clone());
             input = self.add_sized(options.as_ref().unwrap().size, singleline);
 
+            // save this as the last edited input, so its value can be saved if focus is lost
+            // due to selecting another input
+            shared_ui.last_edit_value = shared_ui.edit_value.clone();
+            shared_ui.last_rename_id = shared_ui.rename_id.clone();
+
             let mut entered = false;
 
             // if input modal is closed, consider the value entered
@@ -810,31 +818,36 @@ impl EguiUi for egui::Ui {
             if self.input(|i| i.key_pressed(egui::Key::Escape)) {
                 shared_ui.input_focused = false;
                 shared_ui.rename_id = "".to_string();
+                shared_ui.last_rename_id = "".to_string();
                 return (false, value, input);
-            }
-
-            if self.input(|i| i.key_pressed(egui::Key::Enter)) || input.lost_focus() {
+            } else if self.input(|i| i.key_pressed(egui::Key::Enter)) {
                 entered = true;
             }
 
-            let mut final_value = shared_ui.edit_value.as_ref().unwrap();
-            if final_value == "" {
-                final_value = &options.as_ref().unwrap().default;
+            if input.lost_focus() {
+                entered = true;
+                shared_ui.rename_id = "".to_string();
             }
 
             if entered {
+                let mut final_value = shared_ui.edit_value.as_ref().unwrap();
+                if final_value == "" {
+                    final_value = &options.as_ref().unwrap().default;
+                }
                 shared_ui.input_focused = false;
                 shared_ui.rename_id = "".to_string();
+                shared_ui.last_rename_id = "".to_string();
                 return (true, final_value.clone(), input);
-            }
-
-            if input.lost_focus() {
-                shared_ui.rename_id = "".to_string();
             }
         }
 
-        if options.as_ref().unwrap().focus {
+        if options.as_ref().unwrap().focus && !shared_ui.input_focused {
+            shared_ui.input_focused = true;
             input.request_focus();
+            shared_ui.edit_value = Some(value.clone());
+            if shared_ui.mobile {
+                open_mobile_input(shared_ui.edit_value.clone().unwrap());
+            }
         }
 
         (false, value, input)
@@ -856,21 +869,20 @@ impl EguiUi for egui::Ui {
             })
         }
 
-        let (edited, _, input) =
+        let (edited, mut str_value, input) =
             self.text_input(id, shared_ui, (value * modifier).to_string(), options);
-
         if edited {
             shared_ui.rename_id = "".to_string();
-            if shared_ui.edit_value.as_mut().unwrap() == "" {
-                shared_ui.edit_value = Some("0".to_string());
-            }
-            match shared_ui.edit_value.as_mut().unwrap().parse::<f32>() {
-                Ok(output) => return (true, output / modifier, input),
-                Err(_) => return (false, value, input),
+            shared_ui.last_rename_id = "".to_string();
+            if str_value == "" {
+                str_value = "0".to_string();
             }
         }
 
-        (false, value, input)
+        match str_value.parse::<f32>() {
+            Ok(output) => return (true, output / modifier, input),
+            Err(_) => return (false, value, input),
+        }
     }
 
     fn debug_rect(&mut self, rect: egui::Rect) {
@@ -883,10 +895,8 @@ impl EguiUi for egui::Ui {
     }
 
     fn context_rename(&mut self, shared_ui: &mut crate::Ui, config: &Config, id: String) {
-        if self
-            .context_button(shared_ui.loc("rename"), config)
-            .clicked()
-        {
+        let str = shared_ui.loc("rename");
+        if self.context_button(str, config).clicked() {
             shared_ui.rename_id = id;
             shared_ui.context_menu.close();
         };
@@ -900,10 +910,8 @@ impl EguiUi for egui::Ui {
         loc_code: &str,
         polar_id: PolarId,
     ) {
-        if self
-            .context_button(shared_ui.loc("delete"), config)
-            .clicked()
-        {
+        let str = shared_ui.loc("delete");
+        if self.context_button(str, config).clicked() {
             let str_del = &shared_ui.loc(&("polar.".to_owned() + &loc_code)).clone();
             events.open_polar_modal(polar_id, str_del.to_string());
 

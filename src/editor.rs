@@ -508,7 +508,6 @@ pub fn process_event(
         Events::NewAnimation => {
             armature.new_animation();
             let idx = armature.animations.len() - 1;
-            ui.original_name = "".to_string();
             ui.rename_id = "anim_".to_owned() + &idx.to_string();
             ui.edit_value = Some("".to_string());
         }

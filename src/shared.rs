@@ -562,15 +562,15 @@ pub struct Ui {
     pub top_panel_rect: Option<egui::Rect>,
 
     pub rename_id: String,
-    pub original_name: String,
+    // the initial value of what is being edited via input
+    pub edit_value: Option<String>,
+    pub last_rename_id: String,
+    pub last_edit_value: Option<String>,
 
     // id to identify actions for polar (yes-no) dialog
     pub polar_id: PolarId,
 
     pub headline: String,
-
-    // the initial value of what is being edited via input
-    pub edit_value: Option<String>,
 
     pub states: Vec<UiState>,
 

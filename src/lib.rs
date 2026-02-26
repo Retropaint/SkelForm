@@ -341,7 +341,7 @@ impl ApplicationHandler for App {
                 #[rustfmt::skip]
                 ui::process_inputs(
                     gui_state.egui_ctx(), &mut s.input, &mut s.ui, &s.config,
-                    &mut s.edit_mode, &mut s.events, &s.camera
+                    &mut s.edit_mode, &mut s.events, &s.camera, &s.selections, &mut s.armature
                 );
 
                 // ui logic handled in ui.rs
