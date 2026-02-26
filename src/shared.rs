@@ -2040,6 +2040,12 @@ pub struct Renderer {
     pub temp_bones: Vec<Bone>,
     pub vertex_buffer: Option<wgpu::Buffer>,
     pub index_buffer: Option<wgpu::Buffer>,
+    pub bone_vertex_buffer: Option<wgpu::Buffer>,
+    pub bone_index_buffer: Option<wgpu::Buffer>,
+    pub prev_onion_vertex_buffer: Option<wgpu::Buffer>,
+    pub prev_onion_index_buffer: Option<wgpu::Buffer>,
+    pub next_onion_vertex_buffer: Option<wgpu::Buffer>,
+    pub next_onion_index_buffer: Option<wgpu::Buffer>,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]

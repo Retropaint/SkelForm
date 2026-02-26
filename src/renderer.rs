@@ -23,18 +23,31 @@ pub fn render(
     }
 
     if renderer.vertex_buffer == None || renderer.index_buffer == None {
-        renderer.vertex_buffer = Some(device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("General Vertex Buffer"),
-            size: 1000 * std::mem::size_of::<GpuVertex>() as u64,
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        }));
-        renderer.index_buffer = Some(device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("General Index Buffer"),
-            size: 1000 * std::mem::size_of::<u32>() as u64,
-            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        }));
+        let max = 1000;
+        macro_rules! create_buffer {
+            ($buffer:expr, $type:expr) => {
+                $buffer = Some(device.create_buffer(&wgpu::BufferDescriptor {
+                    label: None,
+                    size: max * std::mem::size_of::<GpuVertex>() as u64,
+                    usage: $type | wgpu::BufferUsages::COPY_DST,
+                    mapped_at_creation: false,
+                }));
+            };
+        }
+        create_buffer!(renderer.vertex_buffer, wgpu::BufferUsages::VERTEX);
+        create_buffer!(renderer.index_buffer, wgpu::BufferUsages::INDEX);
+        create_buffer!(renderer.bone_vertex_buffer, wgpu::BufferUsages::VERTEX);
+        create_buffer!(renderer.bone_index_buffer, wgpu::BufferUsages::INDEX);
+        create_buffer!(
+            renderer.prev_onion_vertex_buffer,
+            wgpu::BufferUsages::VERTEX
+        );
+        create_buffer!(renderer.prev_onion_index_buffer, wgpu::BufferUsages::INDEX);
+        create_buffer!(
+            renderer.next_onion_vertex_buffer,
+            wgpu::BufferUsages::VERTEX
+        );
+        create_buffer!(renderer.next_onion_index_buffer, wgpu::BufferUsages::INDEX);
     }
 
     let sel = selections.clone();
@@ -312,75 +325,31 @@ pub fn render(
     }
 
     // render onion layers
-    for b in 0..temp_arm.bones.len() {
-        if selections.anim_frame == -1 || !edit_mode.onion_layers {
-            break;
-        }
-        let tex = armature.tex_of(temp_arm.bones[b].id);
-        let id = temp_arm.bones[b].id;
-        if tex == None || temp_arm.is_bone_hidden(false, config.propagate_visibility, id) {
-            continue;
-        }
-        let t = tex.unwrap();
-        let bg = armature.tex_data(t).unwrap().bind_group.clone();
-        let bone = &prev_arm.bones[b];
-
-        let gpu_verts: Vec<GpuVertex> =
-            bone.world_verts.iter().map(|vert| (*vert).into()).collect();
-        let index_buffer = &bone.index_buffer.as_ref().unwrap();
-        let vertex_buffer = &bone.vertex_buffer.as_ref().unwrap();
-        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&bone.indices));
-        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        draw(
-            &bg,
-            vertex_buffer,
-            index_buffer,
-            render_pass,
-            bone.indices.len(),
-            device,
+    if selections.anim_frame != -1 && edit_mode.onion_layers {
+        #[rustfmt::skip]
+        draw_armature(
+            &prev_arm, armature, edit_mode, &sel, config, queue, device, render_pass, 
+            &renderer.prev_onion_vertex_buffer, &renderer.prev_onion_index_buffer
+        );
+        #[rustfmt::skip]
+        draw_armature(
+            &next_arm, armature, edit_mode, &sel, config, queue, device, render_pass, 
+            &renderer.next_onion_vertex_buffer, &renderer.next_onion_index_buffer
         );
     }
 
     // render bones
-    for b in 0..temp_arm.bones.len() {
-        let tex = armature.tex_of(temp_arm.bones[b].id);
-        let id = temp_arm.bones[b].id;
-        let bone = &temp_arm.bones[b];
-        if bone.world_verts.len() == 0
-            || tex == None
-            || temp_arm.is_bone_hidden(false, config.propagate_visibility, id)
-        {
-            continue;
-        }
-        if edit_mode.showing_mesh && armature.sel_bone(&sel).unwrap().id == id {
-            continue;
-        }
-        let t = tex.unwrap();
-        let bg = &armature.tex_data(t).unwrap().bind_group;
-
-        let gpu_verts: Vec<GpuVertex> =
-            bone.world_verts.iter().map(|vert| (*vert).into()).collect();
-
-        let index_buffer = &bone.index_buffer.as_ref().unwrap();
-        let vertex_buffer = &bone.vertex_buffer.as_ref().unwrap();
-        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&bone.indices));
-        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        draw(
-            &bg,
-            vertex_buffer,
-            index_buffer,
-            render_pass,
-            bone.indices.len(),
-            device,
-        );
-    }
+    #[rustfmt::skip]
+    draw_armature(
+        &temp_arm, armature, edit_mode, &sel, config, queue, device, render_pass, 
+        &renderer.bone_vertex_buffer, &renderer.bone_index_buffer
+    );
 
     if edit_mode.showing_mesh || edit_mode.setting_bind_verts {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
         let tex = armature.tex_of(bone.id).unwrap();
         let bind_group = &armature.tex_data(tex).unwrap().bind_group;
-        let verts = &bone.world_verts;
 
         let gpu_verts: Vec<GpuVertex> =
             bone.world_verts.iter().map(|vert| (*vert).into()).collect();
@@ -388,14 +357,8 @@ pub fn render(
         let vertex_buffer = &bone.vertex_buffer.as_ref().unwrap();
         queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&bone.indices));
         queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        draw(
-            &bind_group,
-            vertex_buffer,
-            index_buffer,
-            render_pass,
-            bone.indices.len(),
-            device,
-        );
+        #[rustfmt::skip]
+        draw(&bind_group, vertex_buffer, index_buffer, render_pass, 0, bone.indices.len(), device);
 
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         let mouse = mouse_world_vert;
@@ -430,14 +393,8 @@ pub fn render(
         let vertex_buffer = &renderer.vertex_buffer.as_ref().unwrap();
         queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&indices));
         queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        draw(
-            &None,
-            &vertex_buffer,
-            &index_buffer,
-            render_pass,
-            indices.len(),
-            device,
-        );
+        #[rustfmt::skip]
+        draw(&None, &vertex_buffer, &index_buffer, render_pass, 0, indices.len(), device);
     }
 
     if mesh_onion_id != -1 {
@@ -571,6 +528,59 @@ pub fn render(
 
         #[rustfmt::skip]
         edit_bone(events, edit_mode, &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones);
+    }
+}
+
+pub fn draw_armature(
+    armature: &Armature,
+    src_arm: &Armature,
+    edit_mode: &EditMode,
+    sel: &SelectionState,
+    config: &Config,
+    queue: &wgpu::Queue,
+    device: &Device,
+    render_pass: &mut RenderPass,
+    vertex_buffer: &Option<wgpu::Buffer>,
+    index_buffer: &Option<wgpu::Buffer>,
+) {
+    let mut all_gpu_verts = vec![];
+    let mut all_indices = vec![];
+    let mut bone_ids_to_draw = vec![];
+    for b in 0..armature.bones.len() {
+        let tex = src_arm.tex_of(armature.bones[b].id);
+        let id = armature.bones[b].id;
+        let bone = &armature.bones[b];
+        let hidden = armature.is_bone_hidden(false, config.propagate_visibility, id);
+        if bone.world_verts.len() == 0 || tex == None || hidden {
+            continue;
+        }
+        if edit_mode.showing_mesh && src_arm.sel_bone(&sel).unwrap().id == id {
+            continue;
+        }
+        bone_ids_to_draw.push(armature.bones[b].id);
+        let mut gpu_verts: Vec<GpuVertex> =
+            bone.world_verts.iter().map(|vert| (*vert).into()).collect();
+        all_gpu_verts.append(&mut gpu_verts);
+        if all_indices.len() == 0 {
+            all_indices.append(&mut bone.indices.clone());
+        } else {
+            add_offseted_indices(&mut bone.indices.clone(), &mut all_indices);
+        }
+    }
+    let index_buffer = &index_buffer;
+    let vertex_buffer = &vertex_buffer;
+    queue.write_buffer(index_buffer.as_ref().unwrap(), 0, bytemuck::cast_slice(&all_indices));
+    queue.write_buffer(vertex_buffer.as_ref().unwrap(), 0, bytemuck::cast_slice(&all_gpu_verts));
+    let mut curr_indices = 0;
+    for bone_id in bone_ids_to_draw {
+        let tex = src_arm.tex_of(bone_id);
+        let bone = &armature.bones.iter().find(|b| b.id == bone_id).unwrap();
+        let t = tex.unwrap();
+        let bg = &src_arm.tex_data(t).unwrap().bind_group;
+        let indices_end = curr_indices + bone.indices.len();
+        #[rustfmt::skip]
+        draw(&bg, vertex_buffer.as_ref().unwrap(), index_buffer.as_ref().unwrap(), render_pass, curr_indices, indices_end, device);
+        curr_indices += bone.indices.len();
     }
 }
 
@@ -1014,7 +1024,8 @@ pub fn draw(
     vert_buf: &wgpu::Buffer,
     index_buf: &wgpu::Buffer,
     render_pass: &mut RenderPass,
-    indices_len: usize,
+    indices_start: usize,
+    indices_end: usize,
     device: &Device,
 ) {
     if *bind_group != None {
@@ -1022,7 +1033,7 @@ pub fn draw(
     }
     render_pass.set_vertex_buffer(0, vert_buf.slice(..));
     render_pass.set_index_buffer(index_buf.slice(..), wgpu::IndexFormat::Uint32);
-    render_pass.draw_indexed(0..indices_len as u32, 0, 0..1);
+    render_pass.draw_indexed(indices_start as u32..indices_end as u32, 0, 0..1);
 }
 
 pub fn bone_vertices(
