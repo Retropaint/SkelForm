@@ -328,12 +328,12 @@ pub fn render(
     if selections.anim_frame != -1 && edit_mode.onion_layers {
         #[rustfmt::skip]
         draw_armature(
-            &prev_arm, armature, edit_mode, &sel, config, queue, device, render_pass, 
+            &prev_arm, armature, edit_mode.showing_mesh, &sel, config, queue, device, render_pass, 
             &renderer.prev_onion_vertex_buffer, &renderer.prev_onion_index_buffer
         );
         #[rustfmt::skip]
         draw_armature(
-            &next_arm, armature, edit_mode, &sel, config, queue, device, render_pass, 
+            &next_arm, armature, edit_mode.showing_mesh, &sel, config, queue, device, render_pass, 
             &renderer.next_onion_vertex_buffer, &renderer.next_onion_index_buffer
         );
     }
@@ -341,7 +341,7 @@ pub fn render(
     // render bones
     #[rustfmt::skip]
     draw_armature(
-        &temp_arm, armature, edit_mode, &sel, config, queue, device, render_pass, 
+        &temp_arm, armature, edit_mode.showing_mesh, &sel, config, queue, device, render_pass, 
         &renderer.bone_vertex_buffer, &renderer.bone_index_buffer
     );
 
@@ -398,18 +398,18 @@ pub fn render(
     }
 
     if mesh_onion_id != -1 {
-        render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
-        let tp = &temp_arm.bones;
-        let bone = tp.iter().find(|bone| bone.id == mesh_onion_id).unwrap();
-        let wv = bone.world_verts.clone();
-        let vertex = Vertex::default();
+        //render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
+        //let tp = &temp_arm.bones;
+        //let bone = tp.iter().find(|bone| bone.id == mesh_onion_id).unwrap();
+        //let wv = bone.world_verts.clone();
+        //let vertex = Vertex::default();
 
-        #[rustfmt::skip]
-        let (verts, indices, _) = vert_lines(bone, &tp, &vertex, &mut None, true, false, camera, input, renderer);
+        //#[rustfmt::skip]
+        //let (verts, indices, _) = vert_lines(bone, &tp, &vertex, &mut None, true, false, camera, input, renderer);
         //draw(&None, &verts, &indices, render_pass, device);
 
-        #[rustfmt::skip]
-        let (verts, indices, _) = bone_vertices(&wv, false, selections, input, camera, config, edit_mode, events, armature, renderer);
+        //#[rustfmt::skip]
+        //let (verts, indices, _) = bone_vertices(&wv, false, selections, input, camera, config, edit_mode, events, armature, renderer);
         //draw(&None, &verts, &indices, render_pass, device);
     }
 
@@ -534,7 +534,7 @@ pub fn render(
 pub fn draw_armature(
     armature: &Armature,
     src_arm: &Armature,
-    edit_mode: &EditMode,
+    showing_mesh: bool,
     sel: &SelectionState,
     config: &Config,
     queue: &wgpu::Queue,
@@ -554,7 +554,7 @@ pub fn draw_armature(
         if bone.world_verts.len() == 0 || tex == None || hidden {
             continue;
         }
-        if edit_mode.showing_mesh && src_arm.sel_bone(&sel).unwrap().id == id {
+        if showing_mesh && src_arm.sel_bone(&sel).unwrap().id == id {
             continue;
         }
         bone_ids_to_draw.push(armature.bones[b].id);
@@ -676,11 +676,14 @@ pub fn render_screenshot(
     armature: &Armature,
     camera: &Camera,
     config: &Config,
+    renderer: &Renderer,
+    queue: &wgpu::Queue,
 ) {
     let mut temp_arm = Armature::default();
     temp_arm.bones = armature.bones.clone();
     construction(&mut temp_arm.bones, &armature.bones);
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
+    let sel = SelectionState::default();
 
     for b in 0..temp_arm.bones.len() {
         if armature.tex_of(temp_arm.bones[b].id) == None
@@ -695,14 +698,8 @@ pub fn render_screenshot(
             new_vert.tint = temp_arm.bones[b].tint;
             temp_arm.bones[b].world_verts.push(new_vert);
         }
-
-        let arm = &armature;
-        let id = temp_arm.bones[b].id;
-        let tex = arm.tex_of(id).unwrap();
-        let bg = &armature.tex_data(tex).unwrap().bind_group;
-        let bones = &temp_arm.bones[b];
-        // draw(bg, &bones.world_verts, &bones.indices, render_pass, device);
     }
+    draw_armature(&temp_arm, armature, false, &sel, config, queue, device, render_pass, &renderer.bone_vertex_buffer, &renderer.bone_index_buffer);
 }
 
 pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {

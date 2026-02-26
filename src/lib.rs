@@ -840,7 +840,7 @@ impl BackendRenderer {
         } else if recording_spritesheets {
             shared.events.open_modal("exporting", true);
             #[rustfmt::skip]
-            utils::render_spritesheets(&shared.armature, &mut shared.ui, &shared.camera, &shared.config, self);
+            utils::render_spritesheets(&shared.armature, &mut shared.ui, &shared.camera, &shared.config, self, &shared.renderer);
             *shared.ui.saving.lock().unwrap() = Saving::None;
             shared.ui.spritesheet_elapsed = Some(Instant::now());
             shared.ui.export_modal = false;
@@ -1002,7 +1002,10 @@ impl BackendRenderer {
 
         let mut frames = vec![];
         #[rustfmt::skip]
-        self.take_screenshot(shared.screenshot_res, &shared.armature, &shared.camera, &shared.config.colors.background, &mut frames, &mut shared.ui.mapped_frames, &shared.config);
+        self.take_screenshot(
+            shared.screenshot_res, &shared.armature, &shared.camera, &shared.config.colors.background, 
+            &mut frames, &mut shared.ui.mapped_frames, &shared.config, &shared.renderer
+        );
         let buffer = frames[0].buffer.clone();
         let screenshot_res = shared.screenshot_res;
 
@@ -1088,6 +1091,7 @@ impl BackendRenderer {
         rendered_frames: &mut Vec<RenderedFrame>,
         mapped_frames: &mut Arc<Mutex<usize>>,
         config: &Config,
+        renderer: &Renderer,
     ) {
         let width = screenshot_res.x as u32;
         let height = screenshot_res.y as u32;
@@ -1150,6 +1154,8 @@ impl BackendRenderer {
                 &armature,
                 &camera,
                 &config,
+                renderer,
+                &self.gpu.queue
             );
         }
 
