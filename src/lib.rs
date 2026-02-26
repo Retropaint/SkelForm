@@ -331,11 +331,7 @@ impl ApplicationHandler for App {
                 let input = gui_state.take_egui_input(&window);
                 gui_state.egui_ctx().begin_pass(input);
 
-                utils::animate_bones(
-                    &mut self.shared.armature,
-                    &self.shared.selections,
-                    &self.shared.edit_mode,
-                );
+                
 
                 let s = &mut self.shared;
                 #[rustfmt::skip]
@@ -856,14 +852,42 @@ impl BackendRenderer {
                 let size = tex.unwrap().size;
                 let bone = &mut shared.armature.bones[b];
                 (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
-                shared.armature.bones[b].verts_edited = false;
+                bone.verts_edited = false;
             }
         }
+
+        for b in 0..shared.armature.bones.len() {
+            let bone = &mut shared.armature.bones[b];
+            if bone.vertex_buffer != None && bone.index_buffer != None {
+                continue;
+            }
+            bone.vertex_buffer = Some(self.gpu.device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("Bone Vertex Buffer"),
+                size: 300 * std::mem::size_of::<GpuVertex>() as u64,
+                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            }));
+            bone.index_buffer = Some(self.gpu.device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("Bone Index Buffer"),
+                size: 300 * std::mem::size_of::<u32>() as u64,
+                usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            }));
+        }        
+
+        utils::animate_bones(
+            &mut shared.armature,
+            &shared.selections,
+            &shared.edit_mode,
+        );        
 
         // core rendering logic handled in renderer.rs
         let s = shared;
         #[rustfmt::skip]
-        renderer::render(render_pass, &self.gpu.device, &s.camera, &s.input, &mut s.armature, &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events,);
+        renderer::render(
+            render_pass, &self.gpu.device, &self.gpu.queue, &s.camera, &s.input, &mut s.armature, 
+            &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events
+        );
 
         s.ui.warnings = warnings::check_warnings(&s.armature);
     }

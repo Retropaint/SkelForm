@@ -8,6 +8,7 @@ use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 pub fn render(
     render_pass: &mut RenderPass,
     device: &Device,
+    queue: &wgpu::Queue,
     camera: &Camera,
     input: &InputStates,
     armature: &Armature,
@@ -19,6 +20,21 @@ pub fn render(
 ) {
     if camera.window == Vec2::ZERO {
         return;
+    }
+
+    if renderer.vertex_buffer == None || renderer.index_buffer == None {
+        renderer.vertex_buffer = Some(device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("General Vertex Buffer"),
+            size: 1000 * std::mem::size_of::<GpuVertex>() as u64,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        }));
+        renderer.index_buffer = Some(device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("General Index Buffer"),
+            size: 1000 * std::mem::size_of::<u32>() as u64,
+            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        }));
     }
 
     let sel = selections.clone();
@@ -307,25 +323,22 @@ pub fn render(
         }
         let t = tex.unwrap();
         let bg = armature.tex_data(t).unwrap().bind_group.clone();
-        let mut verts = vec![];
-        let mut indices = vec![];
-        let bone = &mut prev_arm.bones[b];
-        let mut offset = 0;
-        if bone.world_verts.len() != 0 {
-            verts.append(&mut bone.world_verts);
-            indices.append(&mut bone.indices);
-            offset = verts.len();
-        }
-        let bone = &mut next_arm.bones[b];
-        if bone.world_verts.len() != 0 {
-            verts.append(&mut bone.world_verts);
-            for index in &bone.indices {
-                indices.push(*index + offset as u32);
-            }
-        }
-        if verts.len() > 0 {
-            draw(&bg, &verts, &indices, render_pass, device);
-        }
+        let bone = &prev_arm.bones[b];
+
+        let gpu_verts: Vec<GpuVertex> =
+            bone.world_verts.iter().map(|vert| (*vert).into()).collect();
+        let index_buffer = &bone.index_buffer.as_ref().unwrap();
+        let vertex_buffer = &bone.vertex_buffer.as_ref().unwrap();
+        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&bone.indices));
+        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
+        draw(
+            &bg,
+            vertex_buffer,
+            index_buffer,
+            render_pass,
+            bone.indices.len(),
+            device,
+        );
     }
 
     // render bones
@@ -344,7 +357,22 @@ pub fn render(
         }
         let t = tex.unwrap();
         let bg = &armature.tex_data(t).unwrap().bind_group;
-        draw(&bg, &bone.world_verts, &bone.indices, render_pass, device);
+
+        let gpu_verts: Vec<GpuVertex> =
+            bone.world_verts.iter().map(|vert| (*vert).into()).collect();
+
+        let index_buffer = &bone.index_buffer.as_ref().unwrap();
+        let vertex_buffer = &bone.vertex_buffer.as_ref().unwrap();
+        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&bone.indices));
+        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
+        draw(
+            &bg,
+            vertex_buffer,
+            index_buffer,
+            render_pass,
+            bone.indices.len(),
+            device,
+        );
     }
 
     if edit_mode.showing_mesh || edit_mode.setting_bind_verts {
@@ -353,19 +381,34 @@ pub fn render(
         let tex = armature.tex_of(bone.id).unwrap();
         let bind_group = &armature.tex_data(tex).unwrap().bind_group;
         let verts = &bone.world_verts;
-        draw(&bind_group, &verts, &bone.indices, render_pass, device);
+
+        let gpu_verts: Vec<GpuVertex> =
+            bone.world_verts.iter().map(|vert| (*vert).into()).collect();
+        let index_buffer = &bone.index_buffer.as_ref().unwrap();
+        let vertex_buffer = &bone.vertex_buffer.as_ref().unwrap();
+        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&bone.indices));
+        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
+        draw(
+            &bind_group,
+            vertex_buffer,
+            index_buffer,
+            render_pass,
+            bone.indices.len(),
+            device,
+        );
+
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         let mouse = mouse_world_vert;
         let nw = &mut new_vert;
         let wv = bone.world_verts.clone();
 
         #[rustfmt::skip]
-        let (verts, indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, edit_mode, events, armature, renderer);
+        let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, edit_mode, events, armature, renderer);
         #[rustfmt::skip]
-        let (lines_v, lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, nw, true, on_vert, camera, input, renderer);
+        let (mut lines_v, mut lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, nw, true, on_vert, camera, input, renderer);
 
-        draw(&None, &lines_v, &lines_i, render_pass, device);
-        draw(&None, &verts, &indices, render_pass, device);
+        verts.append(&mut lines_v);
+        add_offseted_indices(&mut lines_i, &mut indices);
 
         // draw hovered triangle if neither a vertex nor a line is hovered
         let mut hovering_tri = bone_triangle(&bone, &mouse, wv);
@@ -373,13 +416,28 @@ pub fn render(
             hovering_tri[0].add_color = VertexColor::new(-255., 0., -255., -0.75);
             hovering_tri[1].add_color = VertexColor::new(-255., 0., -255., -0.75);
             hovering_tri[2].add_color = VertexColor::new(-255., 0., -255., -0.75);
-            draw(&None, &hovering_tri, &vec![0, 1, 2], render_pass, device);
+            verts.append(&mut hovering_tri.clone());
+            add_offseted_indices(&mut vec![0, 1, 2], &mut indices);
 
             // verts of this triangle will be dragged
             if input.left_pressed {
                 renderer.dragging_verts = hovering_tri.iter().map(|v| v.id as usize).collect();
             }
         }
+
+        let gpu_verts: Vec<GpuVertex> = verts.iter().map(|vert| (*vert).into()).collect();
+        let index_buffer = &renderer.index_buffer.as_ref().unwrap();
+        let vertex_buffer = &renderer.vertex_buffer.as_ref().unwrap();
+        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&indices));
+        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
+        draw(
+            &None,
+            &vertex_buffer,
+            &index_buffer,
+            render_pass,
+            indices.len(),
+            device,
+        );
     }
 
     if mesh_onion_id != -1 {
@@ -391,11 +449,11 @@ pub fn render(
 
         #[rustfmt::skip]
         let (verts, indices, _) = vert_lines(bone, &tp, &vertex, &mut None, true, false, camera, input, renderer);
-        draw(&None, &verts, &indices, render_pass, device);
+        //draw(&None, &verts, &indices, render_pass, device);
 
         #[rustfmt::skip]
         let (verts, indices, _) = bone_vertices(&wv, false, selections, input, camera, config, edit_mode, events, armature, renderer);
-        draw(&None, &verts, &indices, render_pass, device);
+        //draw(&None, &verts, &indices, render_pass, device);
     }
 
     if !edit_mode.setting_bind_verts {
@@ -435,7 +493,7 @@ pub fn render(
         point_indices.append(&mut this_indices);
     }
     if point_indices.len() > 0 {
-        draw(&mut None, &point_verts, &point_indices, render_pass, device);
+        // draw(&mut None, &point_verts, &point_indices, render_pass, device);
     }
 
     if !input.left_down {
@@ -633,7 +691,7 @@ pub fn render_screenshot(
         let tex = arm.tex_of(id).unwrap();
         let bg = &armature.tex_data(tex).unwrap().bind_group;
         let bones = &temp_arm.bones[b];
-        draw(bg, &bones.world_verts, &bones.indices, render_pass, device);
+        // draw(bg, &bones.world_verts, &bones.indices, render_pass, device);
     }
 }
 
@@ -953,20 +1011,18 @@ pub fn inheritance(bones: &mut Vec<Bone>, ik_rot: std::collections::HashMap<i32,
 
 pub fn draw(
     bind_group: &Option<BindGroup>,
-    verts: &Vec<Vertex>,
-    indices: &Vec<u32>,
+    vert_buf: &wgpu::Buffer,
+    index_buf: &wgpu::Buffer,
     render_pass: &mut RenderPass,
+    indices_len: usize,
     device: &Device,
 ) {
     if *bind_group != None {
         render_pass.set_bind_group(0, bind_group, &[]);
     }
-    render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
-    render_pass.set_index_buffer(
-        index_buffer(indices.to_vec(), &device).slice(..),
-        wgpu::IndexFormat::Uint32,
-    );
-    render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
+    render_pass.set_vertex_buffer(0, vert_buf.slice(..));
+    render_pass.set_index_buffer(index_buf.slice(..), wgpu::IndexFormat::Uint32);
+    render_pass.draw_indexed(0..indices_len as u32, 0, 0..1);
 }
 
 pub fn bone_vertices(
@@ -1228,7 +1284,7 @@ fn draw_line(origin: Vec2, target: Vec2, render_pass: &mut RenderPass, device: &
     let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
     let indices = vec![0, 1, 2, 1, 2, 3];
 
-    draw(&None, &verts, &indices, render_pass, device);
+    // draw(&None, &verts, &indices, render_pass, device);
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
@@ -1367,7 +1423,7 @@ pub fn create_texture_bind_group(
     bind_group
 }
 
-fn index_buffer(indices: Vec<u32>, device: &Device) -> wgpu::Buffer {
+pub fn index_buffer(indices: Vec<u32>, device: &Device) -> wgpu::Buffer {
     wgpu::util::DeviceExt::create_buffer_init(
         device,
         &wgpu::util::BufferInitDescriptor {
@@ -1378,7 +1434,7 @@ fn index_buffer(indices: Vec<u32>, device: &Device) -> wgpu::Buffer {
     )
 }
 
-fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
+pub fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
     let gpu_verts: Vec<GpuVertex> = vertices.iter().map(|vert| (*vert).into()).collect();
 
     wgpu::util::DeviceExt::create_buffer_init(
@@ -1391,7 +1447,7 @@ fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
     )
 }
 
-fn world_vert(mut vert: Vertex, camera: &Camera, aspect_ratio: f32, pivot: Vec2) -> Vertex {
+pub fn world_vert(mut vert: Vertex, camera: &Camera, aspect_ratio: f32, pivot: Vec2) -> Vertex {
     vert.pos.x -= pivot.x;
     vert.pos.y += pivot.y;
 
@@ -1526,4 +1582,14 @@ pub fn draw_vertical_line(
         vert!((Vec2::new(x, c.pos.y + edge) - c.pos) / c.zoom * r, color),
     ];
     vertices
+}
+
+pub fn add_offseted_indices(src: &mut Vec<u32>, dst: &mut Vec<u32>) {
+    let mut highest = 0;
+    dst.iter().for_each(|s| highest = highest.max(*s));
+    highest += 1;
+    for idx in &mut *src {
+        *idx += highest;
+    }
+    dst.append(src);
 }

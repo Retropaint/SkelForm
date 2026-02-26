@@ -778,6 +778,10 @@ impl EguiUi for egui::Ui {
             options.as_mut().unwrap().size = Vec2::new(self.available_width(), 20.);
         }
 
+        if options.as_ref().unwrap().focus && !shared_ui.input_focused {
+            shared_ui.edit_value = Some(value.clone());
+        }
+
         if shared_ui.rename_id != id {
             input = self.add_sized(
                 options.as_ref().unwrap().size,

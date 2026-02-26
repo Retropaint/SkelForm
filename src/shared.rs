@@ -1071,6 +1071,10 @@ pub struct Bone {
     pub ik_disabled: bool,
     #[serde(skip)]
     pub locked: bool,
+    #[serde(skip)]
+    pub vertex_buffer: Option<wgpu::Buffer>,
+    #[serde(skip)]
+    pub index_buffer: Option<wgpu::Buffer>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
@@ -2034,6 +2038,8 @@ pub struct Renderer {
     pub started_dragging_verts: bool,
     pub sel_temp_bone: Option<Bone>,
     pub temp_bones: Vec<Bone>,
+    pub vertex_buffer: Option<wgpu::Buffer>,
+    pub index_buffer: Option<wgpu::Buffer>,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]
