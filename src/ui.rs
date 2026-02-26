@@ -877,12 +877,14 @@ impl EguiUi for egui::Ui {
             if str_value == "" {
                 str_value = "0".to_string();
             }
+
+            match str_value.parse::<f32>() {
+                Ok(output) => return (true, output / modifier, input),
+                Err(_) => return (false, value, input),
+            }
         }
 
-        match str_value.parse::<f32>() {
-            Ok(output) => return (true, output / modifier, input),
-            Err(_) => return (false, value, input),
-        }
+        (false, value, input)
     }
 
     fn debug_rect(&mut self, rect: egui::Rect) {
