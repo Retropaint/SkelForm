@@ -38,7 +38,8 @@ pub fn render(
         draw_gridline(render_pass, device, &renderer, &camera, &config);
     }
 
-    let mut temp_arm = armature.clone();
+    let mut temp_arm = Armature::default();
+    temp_arm.bones = armature.bones.clone();
     let mut anim_bones = armature.animated_bones.clone();
 
     // adjust anim_bones' verts for new textrues mid-animations
@@ -60,7 +61,8 @@ pub fn render(
         let keyframes = &armature.sel_anim(selections).unwrap().keyframes;
 
         // set up previous onion
-        prev_arm = armature.clone();
+        prev_arm.bones = armature.bones.clone();
+        prev_arm.animations = armature.animations.clone();
         let mut prev_sel = selections.clone();
         let idx = keyframes.iter().position(|kf| kf.frame > sel.anim_frame);
         prev_sel.anim_frame = keyframes[idx.unwrap_or_else(|| 1) - 1].frame;
@@ -69,7 +71,8 @@ pub fn render(
         construction(&mut prev_arm.bones, &prev_arm.animated_bones);
 
         // set up next onion
-        next_arm = armature.clone();
+        next_arm.bones = armature.bones.clone();
+        next_arm.animations = armature.animations.clone();
         let mut next_sel = prev_sel.clone();
         if let Some(next_kf) = keyframes.iter().find(|kf| kf.frame > selections.anim_frame) {
             next_sel.anim_frame = next_kf.frame;
@@ -133,13 +136,13 @@ pub fn render(
 
     // pre-draw bone setup
     for b in 0..temp_arm.bones.len() {
-        let tex = temp_arm.tex_of(temp_arm.bones[b].id);
+        let tex = armature.tex_of(temp_arm.bones[b].id);
         let parents = armature.get_all_parents(false, temp_arm.bones[b].id);
 
         let selected_bone = armature.sel_bone(&sel);
         if selected_bone != None && selected_bone.unwrap().id == temp_arm.bones[b].id {
             for parent in &parents {
-                let tex = temp_arm.tex_of(parent.id);
+                let tex = armature.tex_of(parent.id);
                 if tex != None && parent.verts_edited {
                     mesh_onion_id = parent.id;
                     break;
@@ -233,7 +236,7 @@ pub fn render(
                     break;
                 }
 
-                let tex = temp_arm.tex_of(temp_arm.bones[b].id).unwrap();
+                let tex = armature.tex_of(temp_arm.bones[b].id).unwrap();
                 let img = &armature.tex_data(tex).unwrap().image;
                 let pos = Vec2::new(
                     (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
@@ -297,7 +300,7 @@ pub fn render(
         if selections.anim_frame == -1 || !edit_mode.onion_layers {
             break;
         }
-        let tex = temp_arm.tex_of(temp_arm.bones[b].id);
+        let tex = armature.tex_of(temp_arm.bones[b].id);
         let id = temp_arm.bones[b].id;
         if tex == None || temp_arm.is_bone_hidden(false, config.propagate_visibility, id) {
             continue;
@@ -327,24 +330,27 @@ pub fn render(
 
     // render bones
     for b in 0..temp_arm.bones.len() {
-        let tex = temp_arm.tex_of(temp_arm.bones[b].id);
+        let tex = armature.tex_of(temp_arm.bones[b].id);
         let id = temp_arm.bones[b].id;
-        if tex == None || temp_arm.is_bone_hidden(false, config.propagate_visibility, id) {
+        let bone = &temp_arm.bones[b];
+        if bone.world_verts.len() == 0
+            || tex == None
+            || temp_arm.is_bone_hidden(false, config.propagate_visibility, id)
+        {
             continue;
         }
         if edit_mode.showing_mesh && armature.sel_bone(&sel).unwrap().id == id {
             continue;
         }
         let t = tex.unwrap();
-        let bg = armature.tex_data(t).unwrap().bind_group.clone();
-        let bone = &temp_arm.bones[b];
+        let bg = &armature.tex_data(t).unwrap().bind_group;
         draw(&bg, &bone.world_verts, &bone.indices, render_pass, device);
     }
 
     if edit_mode.showing_mesh || edit_mode.setting_bind_verts {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
-        let tex = temp_arm.tex_of(bone.id).unwrap();
+        let tex = armature.tex_of(bone.id).unwrap();
         let bind_group = &armature.tex_data(tex).unwrap().bind_group;
         let verts = &bone.world_verts;
         draw(&bind_group, &verts, &bone.indices, render_pass, device);
