@@ -356,8 +356,8 @@ pub fn process_inputs(
     shared_ui.last_pressed = None;
 
     context.input_mut(|i| {
-        //input.holding_mod = i.modifiers.command;
-        //input.holding_shift = i.modifiers.shift;
+        input.holding_mod = i.modifiers.command;
+        input.holding_shift = i.modifiers.shift;
         if shared_ui.rename_id == "" {
             kb_inputs(
                 i, shared_ui, events, config, selections, edit_mode, armature, camera,
