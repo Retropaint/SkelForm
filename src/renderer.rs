@@ -432,7 +432,7 @@ pub fn render(
         config.colors.center_point.r as f32 / 255.,
         config.colors.center_point.g as f32 / 255.,
         config.colors.center_point.b as f32 / 255.,
-        1.,
+        0.75,
     );
     let kite_color = VertexColor::new(
         config.colors.center_point.r as f32 / 255.,
@@ -482,7 +482,7 @@ pub fn render(
         kite_indices.append(&mut this_indices);
         vert_pack_idx += 1;
     }
-    if kite_indices.len() > 0 {
+    if point_indices.len() > 0 {
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         let gpu_verts: Vec<GpuVertex> = point_verts.iter().map(|vert| (*vert).into()).collect();
         let index_buffer = &renderer.point_index_buffer.as_ref().unwrap();
@@ -491,7 +491,8 @@ pub fn render(
         queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
         #[rustfmt::skip]
         draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, point_indices.len());
-
+    }
+    if kite_indices.len() > 0 {
         render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
         let gpu_verts: Vec<GpuVertex> = kite_verts.iter().map(|vert| (*vert).into()).collect();
         let index_buffer = &renderer.kite_index_buffer.as_ref().unwrap();
