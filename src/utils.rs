@@ -1374,13 +1374,9 @@ pub fn interp_preset(preset: HandlePreset) -> (Vec2, Vec2) {
 }
 
 pub fn get_prev_frame(frame: i32, kfs: &Vec<Keyframe>, b_id: i32, el: &AnimElement) -> usize {
-    let mut prev = usize::MAX;
-    for (i, kf) in kfs.iter().enumerate() {
-        if kf.frame <= frame && kf.bone_id == b_id && kf.element == *el {
-            prev = i;
-        }
-    }
-    prev
+    kfs.iter()
+        .rposition(|kf| kf.frame <= frame && kf.bone_id == b_id && kf.element == *el)
+        .unwrap_or(usize::MAX)
 }
 
 pub fn color_within_range(src: [u8; 3], dst: [u8; 3], tol: u8) -> bool {

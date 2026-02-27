@@ -1348,14 +1348,10 @@ impl Armature {
     ) -> f32 {
         let keyframes = &self.animations[anim_id].keyframes;
         let mut prev = utils::get_prev_frame(frame, keyframes, bone_id, &element);
-        let mut next = usize::MAX;
-
-        for (i, kf) in keyframes.iter().enumerate() {
-            if kf.frame > frame && kf.bone_id == bone_id && kf.element == element {
-                next = i;
-                break;
-            }
-        }
+        let mut next = keyframes
+            .iter()
+            .position(|kf| kf.frame > frame && kf.bone_id == bone_id && kf.element == element)
+            .unwrap_or(usize::MAX);
 
         // ensure prev and next are pointing somewhere
         if prev == usize::MAX {
