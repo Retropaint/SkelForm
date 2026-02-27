@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="47.448345mm"
+   height="28.00074mm"
+   viewBox="0 0 47.448345 28.00074"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
+   sodipodi:docname="flow-diamond.svg"
+   inkscape:export-filename="flow-diamond.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="2.4576847"
+     inkscape:cx="112.30082"
+     inkscape:cy="89.922032"
+     inkscape:window-width="1440"
+     inkscape:window-height="847"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       sodipodi:type="star"
+       style="fill:#000000;stroke-width:0.268817"
+       id="path1"
+       inkscape:flatsided="true"
+       sodipodi:sides="3"
+       sodipodi:cx="41.811928"
+       sodipodi:cy="30.139431"
+       sodipodi:r1="11.380037"
+       sodipodi:r2="5.9316773"
+       sodipodi:arg1="2.0922763"
+       sodipodi:arg2="3.1394738"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="m 36.142804,40.006866 -0.04176,-19.710758 17.0909,9.819211 z"
+       inkscape:transform-center-x="-0.0093674891"
+       inkscape:transform-center-y="-4.1898368"
+       transform="matrix(1.9511485,0,0,1.4146835,-56.337027,-28.596314)" />
+    <rect
+       style="fill:#000000;stroke-width:0.26747"
+       id="rect1"
+       width="19.899748"
+       height="19.899748"
+       x="9.9498739"
+       y="-9.9498739"
+       transform="matrix(0.71066905,0.70352647,-0.71066905,0.70352647,0,0)" />
+  </g>
+</svg>

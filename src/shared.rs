@@ -1075,6 +1075,10 @@ pub struct Bone {
     pub vertex_buffer: Option<wgpu::Buffer>,
     #[serde(skip)]
     pub index_buffer: Option<wgpu::Buffer>,
+    #[serde(skip)]
+    pub kite_rot: f32,
+    #[serde(skip)]
+    pub kite_width: f32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
@@ -2025,6 +2029,7 @@ pub struct Renderer {
     pub editing_bone: bool,
     pub dragging_verts: Vec<usize>,
     pub generic_bindgroup: Option<BindGroup>,
+    pub flow_kite_bindgroup: Option<BindGroup>,
     pub changed_vert_id: i32,
     pub changed_vert_init_pos: Option<Vec2>,
     pub initialized_window: bool,
@@ -2044,6 +2049,8 @@ pub struct Renderer {
     pub next_onion_index_buffer: Option<wgpu::Buffer>,
     pub point_vertex_buffer: Option<wgpu::Buffer>,
     pub point_index_buffer: Option<wgpu::Buffer>,
+    pub kite_vertex_buffer: Option<wgpu::Buffer>,
+    pub kite_index_buffer: Option<wgpu::Buffer>,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]

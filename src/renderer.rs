@@ -48,6 +48,8 @@ pub fn render(
         create_buffer!(renderer.next_onion_index_buffer, index);
         create_buffer!(renderer.point_vertex_buffer, vertex);
         create_buffer!(renderer.point_index_buffer, index);
+        create_buffer!(renderer.kite_vertex_buffer, vertex);
+        create_buffer!(renderer.kite_index_buffer, index);
     }
 
     let sel = selections.clone();
@@ -141,14 +143,14 @@ pub fn render(
 
     let mut mesh_onion_id = -1;
 
-    let mut selected_bones_pos = vec![];
+    let mut selected_bones = vec![];
     if armature.sel_bone(&sel) != None {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
         let mut children = vec![bone.clone()];
         armature_window::get_all_children(&temp_arm.bones, &mut children, &bone);
         for child in children {
-            selected_bones_pos.push(child.pos);
+            selected_bones.push(child);
         }
     }
 
@@ -426,43 +428,78 @@ pub fn render(
 
     render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
 
-    let mut color = VertexColor::new(
+    let mut point_color = VertexColor::new(
         config.colors.center_point.r as f32 / 255.,
         config.colors.center_point.g as f32 / 255.,
         config.colors.center_point.b as f32 / 255.,
-        0.75,
+        1.,
+    );
+    let kite_color = VertexColor::new(
+        config.colors.center_point.r as f32 / 255.,
+        config.colors.center_point.g as f32 / 255.,
+        config.colors.center_point.b as f32 / 255.,
+        -0.5,
     );
     let cam = world_camera(&camera, &config);
     let zero = Vec2::default();
+    let mut kite_verts = vec![];
+    let mut kite_indices = vec![];
     let mut point_verts = vec![];
     let mut point_indices = vec![];
-    for p in 0..selected_bones_pos.len() {
+    let mut vert_pack_idx = 0;
+    for p in 0..selected_bones.len() {
         if p > 0 {
-            color.a = 0.25;
+            point_color.a = 0.5;
         }
-        let pos = selected_bones_pos[p];
+        let bone = &selected_bones[p];
         let (mut this_verts, mut this_indices) =
-            draw_point(&zero, &camera, &config, &pos, color, cam.pos, 0.);
+            draw_point(&zero, &camera, &config, &bone.pos, point_color, cam.pos, 0.);
         for idx in &mut this_indices {
             *idx += p as u32 * 4;
         }
         point_verts.append(&mut this_verts);
-        point_indices.append(&mut this_indices);
+        point_indices.append(&mut this_indices.clone());
+
+        if p == 0 {
+            continue;
+        }
+        let parent = temp_arm.bones.iter().find(|b| b.id == bone.parent_id);
+        if parent == None {
+            continue;
+        }
+
+        let diff = parent.unwrap().pos - bone.pos;
+        let kite_width = diff.mag() / 1.;
+        let kite_rot = diff.y.atan2(diff.x);
+        #[rustfmt::skip]
+        let (mut this_verts, mut this_indices) = draw_flow_kite(
+            &zero, &camera, &config, &bone.pos, kite_color, cam.pos, kite_rot, kite_width
+        );
+        for idx in &mut this_indices {
+            *idx += vert_pack_idx * 4;
+        }
+        kite_verts.append(&mut this_verts);
+        kite_indices.append(&mut this_indices);
+        vert_pack_idx += 1;
     }
-    if point_indices.len() > 0 {
+    if kite_indices.len() > 0 {
+        render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         let gpu_verts: Vec<GpuVertex> = point_verts.iter().map(|vert| (*vert).into()).collect();
         let index_buffer = &renderer.point_index_buffer.as_ref().unwrap();
         let vertex_buffer = &renderer.point_vertex_buffer.as_ref().unwrap();
         queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&point_indices));
         queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        draw(
-            &mut None,
-            &vertex_buffer,
-            &index_buffer,
-            render_pass,
-            0,
-            point_indices.len(),
-        );
+        #[rustfmt::skip]
+        draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, point_indices.len());
+
+        render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
+        let gpu_verts: Vec<GpuVertex> = kite_verts.iter().map(|vert| (*vert).into()).collect();
+        let index_buffer = &renderer.kite_index_buffer.as_ref().unwrap();
+        let vertex_buffer = &renderer.kite_vertex_buffer.as_ref().unwrap();
+        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&kite_indices));
+        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
+        #[rustfmt::skip]
+        draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, kite_indices.len());
     }
 
     if !input.left_down {
@@ -1371,6 +1408,58 @@ fn draw_point(
     for v in &mut temp_point_verts {
         v.pos += *pos;
         v.pos = utils::rotate(&v.pos, rotation);
+    }
+
+    let mut point_verts = vec![];
+    let ar = camera.aspect_ratio();
+    let mut cam = world_camera(&camera, &config).clone();
+    cam.pos = camera_pos;
+    let pivot = Vec2::new(0.5, 0.5);
+    for vert in temp_point_verts {
+        let vert = world_vert(vert, &cam, ar, pivot);
+        point_verts.push(vert);
+    }
+
+    for vert in &mut point_verts {
+        vert.pos += *offset;
+    }
+
+    let indices = vec![0, 1, 2, 1, 2, 3];
+
+    (point_verts, indices)
+}
+
+fn draw_flow_kite(
+    offset: &Vec2,
+    camera: &Camera,
+    config: &Config,
+    pos: &Vec2,
+    color: VertexColor,
+    camera_pos: Vec2,
+    rotation: f32,
+    width: f32,
+) -> (Vec<Vertex>, Vec<u32>) {
+    let height = 30.;
+    macro_rules! vert {
+        ($pos:expr, $uv:expr) => {
+            Vertex {
+                pos: $pos,
+                uv: $uv,
+                add_color: color,
+                ..Default::default()
+            }
+        };
+    }
+    let mut temp_point_verts: [Vertex; 4] = [
+        vert!(Vec2::new(-1., height), Vec2::new(1., 0.)),
+        vert!(Vec2::new(width, height), Vec2::new(0., 0.)),
+        vert!(Vec2::new(-1., -height), Vec2::new(1., 1.)),
+        vert!(Vec2::new(width, -height), Vec2::new(0., 1.)),
+    ];
+
+    for v in &mut temp_point_verts {
+        v.pos = utils::rotate(&v.pos, rotation);
+        v.pos += *pos;
     }
 
     let mut point_verts = vec![];
