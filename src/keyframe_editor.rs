@@ -464,8 +464,13 @@ pub fn draw_top_bar(
                 painter.text(pos.into(), center, str, fontid, col.into());
             }
 
+            let mut last_unique_frame = -1;
             for i in 0..armature.sel_anim(&sel).unwrap().keyframes.len() {
                 let frame = armature.sel_anim(&sel).unwrap().keyframes[i].frame;
+                if frame == last_unique_frame {
+                    continue;
+                }
+                last_unique_frame = frame;
 
                 // don't draw diamond if it's beyond the recorded lines
                 if shared_ui.anim.lines_x.len() - 1 < frame as usize {

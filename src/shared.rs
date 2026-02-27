@@ -1071,6 +1071,10 @@ pub struct Bone {
     pub ik_disabled: bool,
     #[serde(skip)]
     pub locked: bool,
+    #[serde(skip)]
+    pub vertex_buffer: Option<wgpu::Buffer>,
+    #[serde(skip)]
+    pub index_buffer: Option<wgpu::Buffer>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
@@ -1344,14 +1348,10 @@ impl Armature {
     ) -> f32 {
         let keyframes = &self.animations[anim_id].keyframes;
         let mut prev = utils::get_prev_frame(frame, keyframes, bone_id, &element);
-        let mut next = usize::MAX;
-
-        for (i, kf) in keyframes.iter().enumerate() {
-            if kf.frame > frame && kf.bone_id == bone_id && kf.element == element {
-                next = i;
-                break;
-            }
-        }
+        let mut next = keyframes
+            .iter()
+            .position(|kf| kf.frame > frame && kf.bone_id == bone_id && kf.element == element)
+            .unwrap_or(usize::MAX);
 
         // ensure prev and next are pointing somewhere
         if prev == usize::MAX {
@@ -2034,6 +2034,14 @@ pub struct Renderer {
     pub started_dragging_verts: bool,
     pub sel_temp_bone: Option<Bone>,
     pub temp_bones: Vec<Bone>,
+    pub vertex_buffer: Option<wgpu::Buffer>,
+    pub index_buffer: Option<wgpu::Buffer>,
+    pub bone_vertex_buffer: Option<wgpu::Buffer>,
+    pub bone_index_buffer: Option<wgpu::Buffer>,
+    pub prev_onion_vertex_buffer: Option<wgpu::Buffer>,
+    pub prev_onion_index_buffer: Option<wgpu::Buffer>,
+    pub next_onion_vertex_buffer: Option<wgpu::Buffer>,
+    pub next_onion_index_buffer: Option<wgpu::Buffer>,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]

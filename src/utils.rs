@@ -214,6 +214,7 @@ pub fn render_spritesheets(
     camera: &Camera,
     config: &Config,
     backend: &BackendRenderer,
+    renderer: &Renderer,
 ) {
     shared_ui.rendered_spritesheets = vec![];
 
@@ -257,7 +258,16 @@ pub fn render_spritesheets(
             let clear = &shared_ui.video_clear_bg;
             let mapped_frames = &mut shared_ui.mapped_frames;
             let size = shared_ui.sprite_size;
-            backend.take_screenshot(size, &new_arm, &cam, clear, frames, mapped_frames, config);
+            backend.take_screenshot(
+                size,
+                &new_arm,
+                &cam,
+                clear,
+                frames,
+                mapped_frames,
+                config,
+                renderer,
+            );
         }
 
         spritesheet_idx += 1;
@@ -1364,13 +1374,9 @@ pub fn interp_preset(preset: HandlePreset) -> (Vec2, Vec2) {
 }
 
 pub fn get_prev_frame(frame: i32, kfs: &Vec<Keyframe>, b_id: i32, el: &AnimElement) -> usize {
-    let mut prev = usize::MAX;
-    for (i, kf) in kfs.iter().enumerate() {
-        if kf.frame <= frame && kf.bone_id == b_id && kf.element == *el {
-            prev = i;
-        }
-    }
-    prev
+    kfs.iter()
+        .rposition(|kf| kf.frame <= frame && kf.bone_id == b_id && kf.element == *el)
+        .unwrap_or(usize::MAX)
 }
 
 pub fn color_within_range(src: [u8; 3], dst: [u8; 3], tol: u8) -> bool {
