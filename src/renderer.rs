@@ -34,20 +34,20 @@ pub fn render(
                 }));
             };
         }
-        create_buffer!(renderer.vertex_buffer, wgpu::BufferUsages::VERTEX);
-        create_buffer!(renderer.index_buffer, wgpu::BufferUsages::INDEX);
-        create_buffer!(renderer.bone_vertex_buffer, wgpu::BufferUsages::VERTEX);
-        create_buffer!(renderer.bone_index_buffer, wgpu::BufferUsages::INDEX);
-        create_buffer!(
-            renderer.prev_onion_vertex_buffer,
-            wgpu::BufferUsages::VERTEX
-        );
-        create_buffer!(renderer.prev_onion_index_buffer, wgpu::BufferUsages::INDEX);
-        create_buffer!(
-            renderer.next_onion_vertex_buffer,
-            wgpu::BufferUsages::VERTEX
-        );
-        create_buffer!(renderer.next_onion_index_buffer, wgpu::BufferUsages::INDEX);
+
+        let vertex = wgpu::BufferUsages::VERTEX;
+        let index = wgpu::BufferUsages::INDEX;
+
+        create_buffer!(renderer.vertex_buffer, vertex);
+        create_buffer!(renderer.index_buffer, index);
+        create_buffer!(renderer.bone_vertex_buffer, vertex);
+        create_buffer!(renderer.bone_index_buffer, index);
+        create_buffer!(renderer.prev_onion_vertex_buffer, vertex);
+        create_buffer!(renderer.prev_onion_index_buffer, index);
+        create_buffer!(renderer.next_onion_vertex_buffer, vertex);
+        create_buffer!(renderer.next_onion_index_buffer, index);
+        create_buffer!(renderer.point_vertex_buffer, vertex);
+        create_buffer!(renderer.point_index_buffer, index);
     }
 
     let sel = selections.clone();
@@ -450,7 +450,13 @@ pub fn render(
         point_indices.append(&mut this_indices);
     }
     if point_indices.len() > 0 {
-        // draw(&mut None, &point_verts, &point_indices, render_pass, device);
+        let gpu_verts: Vec<GpuVertex> =
+            point_verts.iter().map(|vert| (*vert).into()).collect();
+        let index_buffer = &renderer.point_index_buffer.as_ref().unwrap();
+        let vertex_buffer = &renderer.point_vertex_buffer.as_ref().unwrap();
+        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&point_indices));
+        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
+        draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, point_indices.len());
     }
 
     if !input.left_down {

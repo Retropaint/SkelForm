@@ -2042,6 +2042,8 @@ pub struct Renderer {
     pub prev_onion_index_buffer: Option<wgpu::Buffer>,
     pub next_onion_vertex_buffer: Option<wgpu::Buffer>,
     pub next_onion_index_buffer: Option<wgpu::Buffer>,
+    pub point_vertex_buffer: Option<wgpu::Buffer>,
+    pub point_index_buffer: Option<wgpu::Buffer>,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]
