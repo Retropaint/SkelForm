@@ -625,10 +625,17 @@ impl BackendRenderer {
             }
             _ => format = wgpu::TextureFormat::Rgba8Unorm,
         }
+        let size = Vec2::new(
+            (shared.camera.window.x as u32 / shared.config.pixel_magnification as u32) as f32,
+            (shared.camera.window.y as u32 / shared.config.pixel_magnification as u32) as f32,
+        );
+        if size.x == 0. || size.y == 0. {
+            return;
+        }
         let pixel_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
-                width: shared.camera.window.x as u32 / shared.config.pixel_magnification as u32,
-                height: shared.camera.window.y as u32 / shared.config.pixel_magnification as u32,
+                width: size.x as u32,
+                height: size.y as u32,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
@@ -638,7 +645,7 @@ impl BackendRenderer {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT
                 | wgpu::TextureUsages::COPY_SRC
                 | wgpu::TextureUsages::TEXTURE_BINDING,
-            label: Some("Capture Texture"),
+            label: Some("Pixel Texture"),
             view_formats: &[],
         });
         let pixel_view = pixel_texture.create_view(&wgpu::TextureViewDescriptor::default());
