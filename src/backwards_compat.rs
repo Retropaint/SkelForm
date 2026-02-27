@@ -19,6 +19,7 @@ pub fn proceed(mut raw: serde_json::Value) -> (Root, String) {
         };
     }
 
+    from_ver!("0.2", v0d2_to_v0d3);
     from_ver!("0.3", v0d3_to_v0d4);
 
     if err == "" {
@@ -26,6 +27,10 @@ pub fn proceed(mut raw: serde_json::Value) -> (Root, String) {
     } else {
         return (Root::default(), err);
     }
+}
+
+pub fn v0d2_to_v0d3(raw: &mut serde_json::Value) {
+    raw["version"] = "v0.4.0".into();
 }
 
 pub fn v0d3_to_v0d4(raw: &mut serde_json::Value) {
