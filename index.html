@@ -427,10 +427,6 @@
                 realError = true;
             });
 
-            if(!isMobile()) {
-                fullscreenButton.style.display = "none";
-            }
-
             let ffmpeg;
             async function ensureFFmpeg() {
               if (!ffmpeg) {
