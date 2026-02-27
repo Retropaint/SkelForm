@@ -328,12 +328,12 @@ pub fn render(
     if selections.anim_frame != -1 && edit_mode.onion_layers {
         #[rustfmt::skip]
         draw_armature(
-            &prev_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass, 
+            &prev_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass,
             &renderer.prev_onion_vertex_buffer, &renderer.prev_onion_index_buffer
         );
         #[rustfmt::skip]
         draw_armature(
-            &next_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass, 
+            &next_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass,
             &renderer.next_onion_vertex_buffer, &renderer.next_onion_index_buffer
         );
     }
@@ -450,13 +450,19 @@ pub fn render(
         point_indices.append(&mut this_indices);
     }
     if point_indices.len() > 0 {
-        let gpu_verts: Vec<GpuVertex> =
-            point_verts.iter().map(|vert| (*vert).into()).collect();
+        let gpu_verts: Vec<GpuVertex> = point_verts.iter().map(|vert| (*vert).into()).collect();
         let index_buffer = &renderer.point_index_buffer.as_ref().unwrap();
         let vertex_buffer = &renderer.point_vertex_buffer.as_ref().unwrap();
         queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&point_indices));
         queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, point_indices.len());
+        draw(
+            &mut None,
+            &vertex_buffer,
+            &index_buffer,
+            render_pass,
+            0,
+            point_indices.len(),
+        );
     }
 
     if !input.left_down {
@@ -574,8 +580,16 @@ pub fn draw_armature(
     }
     let index_buffer = &index_buffer;
     let vertex_buffer = &vertex_buffer;
-    queue.write_buffer(index_buffer.as_ref().unwrap(), 0, bytemuck::cast_slice(&all_indices));
-    queue.write_buffer(vertex_buffer.as_ref().unwrap(), 0, bytemuck::cast_slice(&all_gpu_verts));
+    queue.write_buffer(
+        index_buffer.as_ref().unwrap(),
+        0,
+        bytemuck::cast_slice(&all_indices),
+    );
+    queue.write_buffer(
+        vertex_buffer.as_ref().unwrap(),
+        0,
+        bytemuck::cast_slice(&all_gpu_verts),
+    );
     let mut curr_indices = 0;
     for bone_id in bone_ids_to_draw {
         let tex = src_arm.tex_of(bone_id);
@@ -703,7 +717,17 @@ pub fn render_screenshot(
             temp_arm.bones[b].world_verts.push(new_vert);
         }
     }
-    draw_armature(&temp_arm, armature, false, &sel, config, queue, render_pass, &renderer.bone_vertex_buffer, &renderer.bone_index_buffer);
+    draw_armature(
+        &temp_arm,
+        armature,
+        false,
+        &sel,
+        config,
+        queue,
+        render_pass,
+        &renderer.bone_vertex_buffer,
+        &renderer.bone_index_buffer,
+    );
 }
 
 pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
@@ -1295,7 +1319,14 @@ fn draw_line(origin: Vec2, target: Vec2, render_pass: &mut RenderPass, device: &
     let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
     let indices = vec![0, 1, 2, 1, 2, 3];
 
-    draw(&None, &vertex_buffer(&verts, device), &index_buffer(indices, device), render_pass, 0, 6);
+    draw(
+        &None,
+        &vertex_buffer(&verts, device),
+        &index_buffer(indices, device),
+        render_pass,
+        0,
+        6,
+    );
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {

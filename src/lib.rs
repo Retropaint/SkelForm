@@ -331,8 +331,6 @@ impl ApplicationHandler for App {
                 let input = gui_state.take_egui_input(&window);
                 gui_state.egui_ctx().begin_pass(input);
 
-                
-
                 let s = &mut self.shared;
                 #[rustfmt::skip]
                 ui::process_inputs(
@@ -343,7 +341,7 @@ impl ApplicationHandler for App {
                 // ui logic handled in ui.rs
                 #[rustfmt::skip]
                 ui::draw(
-                    gui_state.egui_ctx(), &mut s.ui, &mut s.input, &mut s.selections, 
+                    gui_state.egui_ctx(), &mut s.ui, &mut s.input, &mut s.selections,
                     &mut s.config, &mut s.events, &mut s.edit_mode, &s.camera, &mut s.armature
                 );
 
@@ -397,7 +395,7 @@ impl ApplicationHandler for App {
                     let s = &mut self.shared;
                     #[rustfmt::skip]
                     editor::iterate_events(
-                        &s.input, &mut s.config, &mut s.events, &mut s.camera, &mut s.edit_mode, &mut s.selections, 
+                        &s.input, &mut s.config, &mut s.events, &mut s.camera, &mut s.edit_mode, &mut s.selections,
                         &mut s.undo_states, &mut s.armature, &mut s.copy_buffer, &mut s.ui, &mut s.renderer
                     );
                 }
@@ -873,19 +871,15 @@ impl BackendRenderer {
                 usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
                 mapped_at_creation: false,
             }));
-        }        
+        }
 
-        utils::animate_bones(
-            &mut shared.armature,
-            &shared.selections,
-            &shared.edit_mode,
-        );        
+        utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
 
         // core rendering logic handled in renderer.rs
         let s = shared;
         #[rustfmt::skip]
         renderer::render(
-            render_pass, &self.gpu.device, &self.gpu.queue, &s.camera, &s.input, &mut s.armature, 
+            render_pass, &self.gpu.device, &self.gpu.queue, &s.camera, &s.input, &mut s.armature,
             &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events
         );
 
@@ -1003,7 +997,7 @@ impl BackendRenderer {
         let mut frames = vec![];
         #[rustfmt::skip]
         self.take_screenshot(
-            shared.screenshot_res, &shared.armature, &shared.camera, &shared.config.colors.background, 
+            shared.screenshot_res, &shared.armature, &shared.camera, &shared.config.colors.background,
             &mut frames, &mut shared.ui.mapped_frames, &shared.config, &shared.renderer
         );
         let buffer = frames[0].buffer.clone();
@@ -1154,7 +1148,7 @@ impl BackendRenderer {
                 &camera,
                 &config,
                 renderer,
-                &self.gpu.queue
+                &self.gpu.queue,
             );
         }
 

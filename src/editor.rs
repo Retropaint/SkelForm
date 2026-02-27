@@ -41,9 +41,9 @@ pub fn iterate_events(
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
                 E::RenameAnim  => if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap()); ui.just_made_anim  = false }
 
-                E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframes => { 
-                    undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap()) 
-                }                
+                E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframes => {
+                    undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
+                }
                 E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts => {
                     undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
                 }
