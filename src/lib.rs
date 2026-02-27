@@ -1150,7 +1150,6 @@ impl BackendRenderer {
             // core rendering logic handled in renderer.rs
             renderer::render_screenshot(
                 &mut capture_pass,
-                &self.gpu.device,
                 &armature,
                 &camera,
                 &config,

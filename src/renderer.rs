@@ -328,12 +328,12 @@ pub fn render(
     if selections.anim_frame != -1 && edit_mode.onion_layers {
         #[rustfmt::skip]
         draw_armature(
-            &prev_arm, armature, edit_mode.showing_mesh, &sel, config, queue, device, render_pass, 
+            &prev_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass, 
             &renderer.prev_onion_vertex_buffer, &renderer.prev_onion_index_buffer
         );
         #[rustfmt::skip]
         draw_armature(
-            &next_arm, armature, edit_mode.showing_mesh, &sel, config, queue, device, render_pass, 
+            &next_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass, 
             &renderer.next_onion_vertex_buffer, &renderer.next_onion_index_buffer
         );
     }
@@ -341,7 +341,7 @@ pub fn render(
     // render bones
     #[rustfmt::skip]
     draw_armature(
-        &temp_arm, armature, edit_mode.showing_mesh, &sel, config, queue, device, render_pass, 
+        &temp_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass, 
         &renderer.bone_vertex_buffer, &renderer.bone_index_buffer
     );
 
@@ -358,7 +358,7 @@ pub fn render(
         queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&bone.indices));
         queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
         #[rustfmt::skip]
-        draw(&bind_group, vertex_buffer, index_buffer, render_pass, 0, bone.indices.len(), device);
+        draw(&bind_group, vertex_buffer, index_buffer, render_pass, 0, bone.indices.len());
 
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         let mouse = mouse_world_vert;
@@ -394,7 +394,7 @@ pub fn render(
         queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&indices));
         queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
         #[rustfmt::skip]
-        draw(&None, &vertex_buffer, &index_buffer, render_pass, 0, indices.len(), device);
+        draw(&None, &vertex_buffer, &index_buffer, render_pass, 0, indices.len());
     }
 
     if mesh_onion_id != -1 {
@@ -538,7 +538,6 @@ pub fn draw_armature(
     sel: &SelectionState,
     config: &Config,
     queue: &wgpu::Queue,
-    device: &Device,
     render_pass: &mut RenderPass,
     vertex_buffer: &Option<wgpu::Buffer>,
     index_buffer: &Option<wgpu::Buffer>,
@@ -579,7 +578,7 @@ pub fn draw_armature(
         let bg = &src_arm.tex_data(t).unwrap().bind_group;
         let indices_end = curr_indices + bone.indices.len();
         #[rustfmt::skip]
-        draw(&bg, vertex_buffer.as_ref().unwrap(), index_buffer.as_ref().unwrap(), render_pass, curr_indices, indices_end, device);
+        draw(&bg, vertex_buffer.as_ref().unwrap(), index_buffer.as_ref().unwrap(), render_pass, curr_indices, indices_end);
         curr_indices += bone.indices.len();
     }
 }
@@ -672,7 +671,6 @@ pub fn get_sprite_boundary(armature: &Armature, camera: &Camera, config: &Config
 /// Stripped-down renderer for screenshot purposes.
 pub fn render_screenshot(
     render_pass: &mut RenderPass,
-    device: &Device,
     armature: &Armature,
     camera: &Camera,
     config: &Config,
@@ -699,7 +697,7 @@ pub fn render_screenshot(
             temp_arm.bones[b].world_verts.push(new_vert);
         }
     }
-    draw_armature(&temp_arm, armature, false, &sel, config, queue, device, render_pass, &renderer.bone_vertex_buffer, &renderer.bone_index_buffer);
+    draw_armature(&temp_arm, armature, false, &sel, config, queue, render_pass, &renderer.bone_vertex_buffer, &renderer.bone_index_buffer);
 }
 
 pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
@@ -1023,7 +1021,6 @@ pub fn draw(
     render_pass: &mut RenderPass,
     indices_start: usize,
     indices_end: usize,
-    device: &Device,
 ) {
     if *bind_group != None {
         render_pass.set_bind_group(0, bind_group, &[]);
@@ -1292,7 +1289,7 @@ fn draw_line(origin: Vec2, target: Vec2, render_pass: &mut RenderPass, device: &
     let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
     let indices = vec![0, 1, 2, 1, 2, 3];
 
-    // draw(&None, &verts, &indices, render_pass, device);
+    draw(&None, &vertex_buffer(&verts, device), &index_buffer(indices, device), render_pass, 0, 6);
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
