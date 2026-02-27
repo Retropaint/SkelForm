@@ -673,7 +673,7 @@ pub fn prepare_files(
     for b in 0..armature_copy.bones.len() {
         // if it's a regular rect, empty verts and indices
         let bone = &armature_copy.bones[b];
-        if armature_copy.tex_of(bone.id) == None || !bone.verts_edited {
+        if !bone.verts_edited {
             armature_copy.bones[b].vertices = vec![];
             armature_copy.bones[b].indices = vec![];
             continue;
