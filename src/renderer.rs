@@ -160,11 +160,11 @@ pub fn render(
             continue;
         }
         let parent_id = &temp_arm.bones[b].parent_id;
-        let parent = temp_arm.bones.iter().find(|b|b.id == *parent_id);
+        let parent = temp_arm.bones.iter().find(|b| b.id == *parent_id);
         if parent != None {
             temp_arm.bones[b].group_color = parent.unwrap().group_color;
         }
-    }    
+    }
 
     // sort bones by highest zindex first, so that hover logic will pick the top-most one
     temp_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
@@ -176,8 +176,6 @@ pub fn render(
     // many fight for spot of newest vertex; only one will emerge victorious.
     let mut new_vert: Option<Vertex> = None;
     let mut removed_vert = false;
-
-    
 
     // pre-draw bone setup
     for b in 0..temp_arm.bones.len() {
@@ -357,7 +355,7 @@ pub fn render(
     // render bones
     #[rustfmt::skip]
     draw_armature(
-        &temp_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass, 
+        &temp_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass,
         &renderer.bone_vertex_buffer, &renderer.bone_index_buffer
     );
 
@@ -1689,32 +1687,37 @@ pub fn draw_points_and_kites(
     let mut point_indices = vec![];
     let mut vert_pack_idx = 0;
     for p in 0..temp_arm.bones.len() {
-        // --- rendering points ---
-
         let bone = &temp_arm.bones[p];
         let mut color;
+        if renderer.render_points {
+            // --- rendering points ---
 
-        if bone.group_color.a == 0 {
-            color = in_point_color;
-            if selected_bone_ids.contains(&bone.id) {
-                color = point_color
+            if bone.group_color.a == 0 {
+                color = in_point_color;
+                if selected_bone_ids.contains(&bone.id) {
+                    color = point_color
+                }
+            } else {
+                color = bone.group_color.into();
+                if !selected_bone_ids.contains(&bone.id) {
+                    color.a /= 2.;
+                }
             }
-        } else {
-            color = bone.group_color.into();
-            if !selected_bone_ids.contains(&bone.id) {
-                color.a /= 2.;
-            }
-        }
 
-        let (mut this_verts, mut this_indices) =
-            draw_point(&zero, &camera, &config, &bone.pos, color, cam.pos, 0.);
-        for idx in &mut this_indices {
-            *idx += p as u32 * 4;
+            let (mut this_verts, mut this_indices) =
+                draw_point(&zero, &camera, &config, &bone.pos, color, cam.pos, 0.);
+            for idx in &mut this_indices {
+                *idx += p as u32 * 4;
+            }
+            point_verts.append(&mut this_verts);
+            point_indices.append(&mut this_indices.clone());
         }
-        point_verts.append(&mut this_verts);
-        point_indices.append(&mut this_indices.clone());
 
         // --- rendering kites ---
+
+        if !renderer.render_kites {
+            continue;
+        }
 
         let parent = temp_arm.bones.iter().find(|b| b.id == bone.parent_id);
         if parent == None {

@@ -576,6 +576,7 @@ pub struct Ui {
     pub edit_bar: UiBar,
     pub anim_bar: UiBar,
     pub camera_bar: UiBar,
+    pub render_bar: UiBar,
 
     pub bone_panel_rect: Option<egui::Rect>,
     pub armature_panel_rect: Option<egui::Rect>,
@@ -713,6 +714,8 @@ pub struct Ui {
 
     pub pointer_on_timeline: bool,
     pub kite_img: Option<egui::TextureHandle>,
+    pub render_points: bool,
+    pub render_kites: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -2082,6 +2085,8 @@ pub struct Renderer {
     pub point_index_buffer: Option<wgpu::Buffer>,
     pub kite_vertex_buffer: Option<wgpu::Buffer>,
     pub kite_index_buffer: Option<wgpu::Buffer>,
+    pub render_points: bool,
+    pub render_kites: bool,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]
@@ -2186,6 +2191,7 @@ pub enum Events {
     UpdateConfig,
     UpdateKeyframeTransition,
     ToggleOnionLayers,
+    UpdateRenderOptions,
 }
 
 enum_string!(Events);
@@ -2217,6 +2223,8 @@ macro_rules! event_with_value {
     };
 }
 
+type E = Events;
+
 impl EventState {
     generic_event!(new_animation, Events::NewAnimation);
     generic_event!(apply_settings, Events::ApplySettings);
@@ -2244,6 +2252,7 @@ impl EventState {
     generic_event!(update_config, Events::UpdateConfig);
     generic_event!(copy_keyframes_in_frame, Events::CopyKeyframesInFrame);
     generic_event!(save_animation, Events::SaveAnimation);
+    generic_event!(update_render_options, Events::UpdateRenderOptions);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, usize);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
@@ -2258,72 +2267,32 @@ impl EventState {
     event_with_value!(drag_vertex, Events::DragVertex, vert_id, usize);
     event_with_value!(click_vertex, Events::ClickVertex, vert_id, usize);
     event_with_value!(remove_triangle, Events::RemoveTriangle, idx, usize);
-    event_with_value!(
-        adjust_keyframes_by_fps,
-        Events::AdjustKeyframesByFPS,
-        fps,
-        usize
-    );
-    event_with_value!(
-        remove_keyframes_by_frame,
-        Events::RemoveKeyframesByFrame,
-        frame,
-        i32
-    );
-    event_with_value!(
-        toggle_showing_mesh,
-        Events::ToggleShowingMesh,
-        visible,
-        usize
-    );
+    event_with_value!(adjust_keyframes_by_fps, E::AdjustKeyframesByFPS, fps, usize);
+    event_with_value!(toggle_showing_mesh, E::ToggleShowingMesh, visible, usize);
     event_with_value!(select_bind, Events::SelectBind, idx, i32);
-    event_with_value!(
-        toggle_binding_verts,
-        Events::ToggleBindingVerts,
-        toggle,
-        usize
-    );
-    event_with_value!(
-        toggle_setting_ik_target,
-        Events::ToggleSettingIkTarget,
-        idx,
-        i32
-    );
-    event_with_value!(
-        toggle_anim_panel_open,
-        Events::ToggleAnimPanelOpen,
-        toggle,
-        usize
-    );
+    event_with_value!(toggle_binding_verts, E::ToggleBindingVerts, toggle, usize);
+    event_with_value!(toggle_setting_ik_target, E::ToggleSettingIkTarget, idx, i32);
     event_with_value!(toggle_ik_folded, Events::ToggleIkFolded, toggle, usize);
-    event_with_value!(
-        toggle_meshdef_folded,
-        Events::ToggleMeshdefFolded,
-        toggle,
-        usize
-    );
-    event_with_value!(
-        toggle_effects_folded,
-        Events::ToggleEffectsFolded,
-        toggle,
-        usize
-    );
+    event_with_value!(toggle_meshdef_folded, E::ToggleMeshdefFolded, toggle, usize);
+    event_with_value!(toggle_effects_folded, E::ToggleEffectsFolded, toggle, usize);
     event_with_value!(save_edited_bone, Events::SaveEditedBone, bone_idx, usize);
     event_with_value!(save_bone, Events::SaveBone, bone_idx, usize);
     event_with_value!(toggle_baking_ik, Events::ToggleBakingIk, toggle, usize);
     event_with_value!(toggle_exclude_ik, Events::ToggleExcludeIk, toggle, usize);
-    event_with_value!(
-        set_export_img_format,
-        Events::SetExportImgFormat,
-        idx,
-        usize
-    );
+    event_with_value!(set_export_img_format, E::SetExportImgFormat, idx, usize);
     event_with_value!(copy_keyframe, Events::CopyKeyframe, idx, usize);
+    event_with_value!(toggle_onion_layers, E::ToggleOnionLayers, toggle, usize);
     event_with_value!(
-        toggle_onion_layers,
-        Events::ToggleOnionLayers,
+        toggle_anim_panel_open,
+        E::ToggleAnimPanelOpen,
         toggle,
         usize
+    );
+    event_with_value!(
+        remove_keyframes_by_frame,
+        E::RemoveKeyframesByFrame,
+        frame,
+        i32
     );
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {

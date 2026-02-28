@@ -819,6 +819,10 @@ pub fn process_event(
         Events::SaveAnimation => {
             undo_states.new_undo_anim(&armature.sel_anim(&selections).unwrap());
         }
+        Events::UpdateRenderOptions => {
+            renderer.render_points = ui.render_points;
+            renderer.render_kites = ui.render_kites;
+        }
         _ => {}
     }
 }

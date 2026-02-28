@@ -134,6 +134,10 @@ fn init_shared(shared: &mut Shared) {
     shared.edit_mode.onion_layers = false;
     shared.ui.tracing_gap = 25.;
     shared.ui.tracing_padding = 50.;
+    shared.ui.render_points = true;
+    shared.ui.render_kites = true;
+    shared.renderer.render_points = true;
+    shared.renderer.render_kites = true;
 
     #[cfg(feature = "debug")]
     {
