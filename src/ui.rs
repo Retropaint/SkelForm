@@ -1,5 +1,5 @@
 //! Core user interface (UI) logic.
-use egui::{Color32, Context, IntoAtoms, Shadow, Stroke};
+use egui::{Color32, Context, Shadow, Stroke};
 use modal::modal_x;
 
 use crate::*;
@@ -107,7 +107,7 @@ pub fn draw(
     }
 
     if !shared_ui.startup_window {
-        render_bar(context, config, shared_ui, camera, events);
+        render_bar(context, config, shared_ui, events);
     }
 
     if shared_ui.polar_modal {
@@ -271,12 +271,16 @@ pub fn draw(
 
             shared_ui.anim_bar.pos = Vec2::new(0., top_panel.bottom());
 
+            shared_ui.render_bar.pos.x = 0.;
             shared_ui.camera_bar.pos.x = bone_panel.left() - shared_ui.camera_bar.scale.x - 21.;
             if keyframe_panel != None && edit_mode.anim_open {
+                shared_ui.render_bar.pos.y = keyframe_panel.unwrap().top();
                 shared_ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
+                shared_ui.render_bar.pos.y = context.content_rect().bottom();
                 shared_ui.camera_bar.pos.y = context.content_rect().bottom();
             }
+            shared_ui.render_bar.pos.y -= shared_ui.render_bar.scale.y + 15.;
             shared_ui.camera_bar.pos.y -= shared_ui.camera_bar.scale.y + 15.;
         }
         UiLayout::Left => {
@@ -286,12 +290,17 @@ pub fn draw(
             shared_ui.anim_bar.pos.x = context.content_rect().right() - shared_ui.anim_bar.scale.x;
             shared_ui.anim_bar.pos.y = top_panel.bottom();
 
-            shared_ui.camera_bar.pos.x = bone_panel.right() + 7.;
+            shared_ui.render_bar.pos.x = bone_panel.right() + 7.;
+            shared_ui.camera_bar.pos.x =
+                context.content_rect().right() - shared_ui.camera_bar.scale.x - 15.;
             if keyframe_panel != None && edit_mode.anim_open {
+                shared_ui.render_bar.pos.y = keyframe_panel.unwrap().top();
                 shared_ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
             } else {
+                shared_ui.render_bar.pos.y = context.content_rect().bottom();
                 shared_ui.camera_bar.pos.y = context.content_rect().bottom();
             }
+            shared_ui.render_bar.pos.y -= shared_ui.render_bar.scale.y + 15.;
             shared_ui.camera_bar.pos.y -= shared_ui.camera_bar.scale.y + 15.;
         }
     }
@@ -1256,7 +1265,6 @@ fn render_bar(
     egui_ctx: &Context,
     config: &Config,
     shared_ui: &mut crate::Ui,
-    camera: &Camera,
     events: &mut EventState,
 ) {
     let margin = 6.;
@@ -1280,7 +1288,6 @@ fn render_bar(
             shared_ui.render_bar.pos.y,
         ));
     window.show(egui_ctx, |ui| {
-        shared_ui.render_bar.scale = ui.min_rect().size().into();
         macro_rules! button {
             ($field:expr, $str:expr) => {
                 let mut bg_col = config.colors.light_accent;
@@ -1290,7 +1297,7 @@ fn render_bar(
                 let button = egui::Button::new(egui::RichText::new($str))
                     .fill(bg_col)
                     .corner_radius(egui::CornerRadius::ZERO);
-                let mut cursor = egui::CursorIcon::PointingHand;
+                let cursor = egui::CursorIcon::PointingHand;
                 if ui
                     .add_sized([50., 20.], button)
                     .on_hover_cursor(cursor)
@@ -1304,6 +1311,7 @@ fn render_bar(
 
         button!(shared_ui.render_points, "Points");
         button!(shared_ui.render_kites, "Kites");
+        shared_ui.render_bar.scale = ui.min_rect().size().into();
     });
 }
 fn camera_bar(
