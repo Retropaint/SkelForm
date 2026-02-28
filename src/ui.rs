@@ -1283,9 +1283,9 @@ fn render_bar(
         shared_ui.render_bar.scale = ui.min_rect().size().into();
         macro_rules! button {
             ($field:expr, $str:expr) => {
-                let mut bg_col = ui.visuals().widgets.active.weak_bg_fill;
-                if $field {
-                    bg_col = bg_col + egui::Color32::from_rgb(10, 10, 10);
+                let mut bg_col = config.colors.light_accent;
+                if !$field {
+                    bg_col -= Color::new(20, 20, 20, 0);
                 }
                 let button = egui::Button::new(egui::RichText::new($str))
                     .fill(bg_col)
