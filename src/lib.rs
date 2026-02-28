@@ -359,7 +359,10 @@ impl ApplicationHandler for App {
                 let size = window.inner_size();
                 let screen_descriptor = {
                     egui_wgpu::ScreenDescriptor {
-                        size_in_pixels: [size.width, size.height],
+                        size_in_pixels: [
+                            renderer.gpu.surface_config.width,
+                            renderer.gpu.surface_config.height,
+                        ],
                         pixels_per_point,
                     }
                 };
@@ -666,7 +669,7 @@ impl BackendRenderer {
         self.skf_render(shared, &mut pixel_pass.forget_lifetime());
 
         let sampler = self.gpu.device.create_sampler(&wgpu::SamplerDescriptor {
-            mag_filter: wgpu::FilterMode::Nearest, // pixelated look
+            mag_filter: wgpu::FilterMode::Nearest,
             min_filter: wgpu::FilterMode::Nearest,
             ..Default::default()
         });
