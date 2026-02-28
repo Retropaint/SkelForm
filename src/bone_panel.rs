@@ -584,45 +584,49 @@ pub fn mesh_deformation(
 
     ui.add_enabled_ui(edit_mode.showing_mesh, |ui| {
         ui.horizontal(|ui| {
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let str_reset = &shared_ui.loc("bone_panel.mesh_deformation.reset");
-                let str_reset_desc = &shared_ui.loc("bone_panel.mesh_deformation.reset_desc");
-                let can_reset = !edit_mode.setting_bind_verts;
+            let button_widths = 149.;
+            ui.add_space(ui.available_width() - button_widths);
+
+            // tracing button
+            let desc_str;
+            let str = if !shared_ui.tracing {
+                desc_str = "bone_panel.mesh_deformation.trace_desc";
+                "bone_panel.mesh_deformation.trace"
+            } else {
+                desc_str = "bone_panel.mesh_deformation.trace_finish_desc";
+                "bone_panel.mesh_deformation.finish"
+            };
+            let trace_str = &shared_ui.loc(str);
+            let button = ui
+                .sized_skf_button([45., 20.], trace_str)
+                .on_hover_text(shared_ui.loc(desc_str));
+            if button.clicked() {
+                shared_ui.tracing = !shared_ui.tracing;
+                if shared_ui.tracing {
+                    events.save_bone(armature.bones.iter().position(|b| b.id == bone.id).unwrap());
+                    events.trace_bone_verts();
+                }
+            } 
+            
+            // center button
+            let str_center = &shared_ui.loc("bone_panel.mesh_deformation.center");
+            let str_center_desc = &shared_ui.loc("bone_panel.mesh_deformation.center_desc");
+            let button = ui.sized_skf_button([40., 20.], str_center);
+            if button.on_hover_text(str_center_desc).clicked() {
+                events.center_bone_verts();
+            }
+
+            // reset button
+            let str_reset = &shared_ui.loc("bone_panel.mesh_deformation.reset");
+            let str_reset_desc = &shared_ui.loc("bone_panel.mesh_deformation.reset_desc");
+            let can_reset = !edit_mode.setting_bind_verts;
+            ui.add_enabled_ui(can_reset, |ui| {
                 let button = ui
-                    .add_enabled(can_reset, egui::Button::new(str_reset))
+                    .add_sized([40., 20.], egui::Button::new(str_reset))
                     .on_hover_cursor(egui::CursorIcon::PointingHand)
                     .on_hover_text(str_reset_desc);
                 if button.clicked() {
                     events.reset_vertices();
-                }
-
-                let str_center = &shared_ui.loc("bone_panel.mesh_deformation.center");
-                let str_center_desc = &shared_ui.loc("bone_panel.mesh_deformation.center_desc");
-                let button = ui.skf_button(str_center);
-                if button.on_hover_text(str_center_desc).clicked() {
-                    events.center_bone_verts();
-                }
-
-                let desc_str;
-                let str = if !shared_ui.tracing {
-                    desc_str = "bone_panel.mesh_deformation.trace_desc";
-                    "bone_panel.mesh_deformation.trace"
-                } else {
-                    desc_str = "bone_panel.mesh_deformation.trace_finish_desc";
-                    "bone_panel.mesh_deformation.finish"
-                };
-                let trace_str = &shared_ui.loc(str);
-                let button = ui
-                    .skf_button(trace_str)
-                    .on_hover_text(shared_ui.loc(desc_str));
-                if button.clicked() {
-                    shared_ui.tracing = !shared_ui.tracing;
-                    if shared_ui.tracing {
-                        events.save_bone(
-                            armature.bones.iter().position(|b| b.id == bone.id).unwrap(),
-                        );
-                        events.trace_bone_verts();
-                    }
                 }
             });
         });

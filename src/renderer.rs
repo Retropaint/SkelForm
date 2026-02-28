@@ -1393,7 +1393,7 @@ fn draw_point(
     camera_pos: Vec2,
     rotation: f32,
 ) -> (Vec<Vertex>, Vec<u32>) {
-    let point_size = 6. * (camera.zoom / 500.);
+    let point_size = 5. * (camera.zoom / 500.);
     macro_rules! vert {
         ($pos:expr, $uv:expr) => {
             vert(Some($pos), Some(color), Some($uv))

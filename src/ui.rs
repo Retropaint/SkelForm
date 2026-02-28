@@ -7,6 +7,7 @@ use crate::*;
 #[rustfmt::skip]
 pub trait EguiUi {
     fn skf_button(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response;
+    fn sized_skf_button(&mut self, size: impl Into<egui::Vec2>, text: impl Into<egui::WidgetText>) -> egui::Response;
     fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32);
     fn clickable_label(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response;
     fn text_input(&mut self,id: String, shared_ui: &mut crate::Ui, value: String, options: Option<TextInputOptions>) -> (bool, String, egui::Response);
@@ -693,6 +694,18 @@ impl EguiUi for egui::Ui {
     fn skf_button(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response {
         self.add(egui::Button::new(text).corner_radius(egui::CornerRadius::ZERO))
             .on_hover_cursor(egui::CursorIcon::PointingHand)
+    }
+
+    fn sized_skf_button(
+        &mut self,
+        size: impl Into<egui::Vec2>,
+        text: impl Into<egui::WidgetText>,
+    ) -> egui::Response {
+        self.add_sized(
+            size,
+            egui::Button::new(text).corner_radius(egui::CornerRadius::ZERO),
+        )
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
     }
 
     fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32) {
