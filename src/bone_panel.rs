@@ -112,17 +112,25 @@ pub fn draw(
                 events.edit_bone(bone.id, $element, $float, "", anim_id, frame);
                 *shared_ui.saving.lock().unwrap() = shared::Saving::Autosaving;
             }
-            if $label != "" {
-                $ui.label($label);
-            }
         };
     }
 
     // main macro to use for editable bone fields
     macro_rules! input {
         ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr) => {
-            (edited, $float, _) =
-                $ui.float_input($id.to_string(), shared_ui, $float, $modifier, None);
+            if $label != "" {
+                $ui.label($label);
+            }
+            (edited, $float, _) = $ui.float_input(
+                $id.to_string(),
+                shared_ui,
+                $float,
+                $modifier,
+                Some(crate::ui::TextInputOptions {
+                    size: Vec2::new(40., 20.),
+                    ..Default::default()
+                }),
+            );
             check_input_edit!($float, $element, $ui, $label)
         };
     }
@@ -136,6 +144,8 @@ pub fn draw(
         };
     }
 
+    let input_widths = 120.;
+
     let has_ik = bone.ik_family_id != -1
         && !bone.ik_disabled
         && armature.bone_eff(bone.id) != JointEffector::Start;
@@ -146,37 +156,26 @@ pub fn draw(
     ui.add_enabled_ui(!has_ik, |ui| {
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.position"), ui);
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let pos_y = &AnimElement::PositionY;
-                input!(bone.pos.y, "pos_y", pos_y, 1., ui, "Y");
-                let pos_x = &AnimElement::PositionX;
-                input!(bone.pos.x, "pos_x", pos_x, 1., ui, "X");
-            })
+            ui.add_space(ui.available_width() - input_widths);
+            let pos_x = &AnimElement::PositionX;
+            input!(bone.pos.x, "pos_x", pos_x, 1., ui, "X");
+            let pos_y = &AnimElement::PositionY;
+            input!(bone.pos.y, "pos_y", pos_y, 1., ui, "Y");
         });
 
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.scale"), ui);
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                input!(bone.scale.y, "scale_y", &AnimElement::ScaleY, 1., ui, "H");
-                input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "W");
-            });
+            ui.add_space(ui.available_width() - input_widths - 5.);
+            input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "W");
+            input!(bone.scale.y, "scale_y", &AnimElement::ScaleY, 1., ui, "H");
         });
-    })
-    .response
-    .on_disabled_hover_text(str_cant_edit);
 
-    let str_cant_edit = shared_ui
-        .loc("bone_panel.inverse_kinematics.cant_edit")
-        .clone();
-
-    ui.add_enabled_ui(!has_ik, |ui| {
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.rotation"), ui);
+            ui.add_space(ui.available_width() - 40.);
             let rot_el = &AnimElement::Rotation;
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let deg_mod = 180. / std::f32::consts::PI;
-                input!(bone.rot, "rot", rot_el, deg_mod, ui, "");
-            });
+            let deg_mod = 180. / std::f32::consts::PI;
+            input!(bone.rot, "rot", rot_el, deg_mod, ui, "");
         });
     })
     .response
