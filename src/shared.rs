@@ -264,6 +264,17 @@ impl VertexColor {
     pub const WHITE: VertexColor = VertexColor::new(1., 1., 1., 1.);
 }
 
+impl From<Color> for VertexColor {
+    fn from(color: Color) -> VertexColor {
+        VertexColor {
+            r: color.r as f32 / 255.,
+            g: color.g as f32 / 255.,
+            b: color.b as f32 / 255.,
+            a: color.a as f32 / 255.,
+        }
+    }
+}
+
 impl std::ops::AddAssign for VertexColor {
     fn add_assign(&mut self, other: VertexColor) {
         self.r += other.r;
@@ -287,7 +298,6 @@ pub struct Color {
     pub r: u8,
     pub g: u8,
     pub b: u8,
-    #[serde(skip)]
     pub a: u8,
 }
 
@@ -804,6 +814,7 @@ pub struct ColorConfig {
     pub background: Color,
     pub gridline: Color,
     pub center_point: Color,
+    pub inactive_center_point: Color,
     pub link: Color,
     pub warning_text: Color,
     pub inverse_kinematics: Color,
@@ -844,7 +855,8 @@ impl Default for ColorConfig {
             gradient: Color::new(28, 20, 42, 255),
             background: Color::new(50, 50, 50, 255),
             gridline: Color::new(128, 128, 128, 255),
-            center_point: Color::new(0, 255, 0, 255),
+            center_point: Color::new(0, 255, 0, 175),
+            inactive_center_point: Color::new(0, 255, 0, 100),
             link: Color::new(193, 165, 221, 255),
             warning_text: Color::new(214, 168, 0, 0),
             meshdef: Color::new(0, 125, 20, 255),

@@ -606,8 +606,8 @@ pub fn mesh_deformation(
                     events.save_bone(armature.bones.iter().position(|b| b.id == bone.id).unwrap());
                     events.trace_bone_verts();
                 }
-            } 
-            
+            }
+
             // center button
             let str_center = &shared_ui.loc("bone_panel.mesh_deformation.center");
             let str_center_desc = &shared_ui.loc("bone_panel.mesh_deformation.center_desc");

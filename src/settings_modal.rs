@@ -259,6 +259,9 @@ fn animation(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
 }
 
 fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camera) {
+    #[rustfmt::skip]
+    macro_rules! colors { () => { shared_ui.updated_config.colors } }
+
     ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.rendering.heading");
         ui.heading(str_heading);
@@ -274,11 +277,11 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
             }
             let str_default = &shared_ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
-                shared_ui.updated_config.colors.background =
-                    crate::Config::default().colors.background;
-                shared_ui.updated_config.colors.gridline = crate::Config::default().colors.gridline;
-                shared_ui.updated_config.colors.center_point =
-                    crate::Config::default().colors.center_point;
+                colors!().background = crate::Config::default().colors.background;
+                colors!().gridline = crate::Config::default().colors.gridline;
+                colors!().center_point = crate::Config::default().colors.center_point;
+                colors!().inactive_center_point =
+                    crate::Config::default().colors.inactive_center_point;
                 shared_ui.updated_config.gridline_gap = crate::Config::default().gridline_gap;
             }
         });
@@ -337,15 +340,12 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
         };
     }
 
+    color_row!("background", colors!().background, false);
+    color_row!("gridline", colors!().gridline, false);
+    color_row!("center_point", colors!().center_point, true);
     color_row!(
-        "background",
-        shared_ui.updated_config.colors.background,
-        false
-    );
-    color_row!("gridline", shared_ui.updated_config.colors.gridline, false);
-    color_row!(
-        "center_point",
-        shared_ui.updated_config.colors.center_point,
+        "inactive_center_point",
+        colors!().inactive_center_point,
         true
     );
 }

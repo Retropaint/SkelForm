@@ -279,6 +279,7 @@
       "background": "Background",
       "gridline": "Gridline",
       "center_point": "Center Point",
+      "inactive_center_point": "Inactive Center Point",
       "gridline_front": "Render gridline in front: "
     },
     "keyboard": {

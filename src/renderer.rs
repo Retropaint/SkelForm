@@ -143,14 +143,14 @@ pub fn render(
 
     let mut mesh_onion_id = -1;
 
-    let mut selected_bones = vec![];
+    let mut selected_bone_ids = vec![];
     if armature.sel_bone(&sel) != None {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
         let mut children = vec![bone.clone()];
         armature_window::get_all_children(&temp_arm.bones, &mut children, &bone);
         for child in children {
-            selected_bones.push(child);
+            selected_bone_ids.push(child.id);
         }
     }
 
@@ -428,18 +428,13 @@ pub fn render(
 
     render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
 
-    let mut point_color = VertexColor::new(
-        config.colors.center_point.r as f32 / 255.,
-        config.colors.center_point.g as f32 / 255.,
-        config.colors.center_point.b as f32 / 255.,
-        0.75,
-    );
-    let kite_color = VertexColor::new(
-        config.colors.center_point.r as f32 / 255.,
-        config.colors.center_point.g as f32 / 255.,
-        config.colors.center_point.b as f32 / 255.,
-        -0.5,
-    );
+    let mut point_color: VertexColor = config.colors.center_point.into();
+    let mut kite_color: VertexColor = config.colors.center_point.into();
+    kite_color.a -= 0.25;
+    let in_point_color: VertexColor = config.colors.inactive_center_point.into();
+    let mut in_kite_color: VertexColor = config.colors.inactive_center_point.into();
+    in_kite_color.a -= 0.25;
+
     let cam = world_camera(&camera, &config);
     let zero = Vec2::default();
     let mut kite_verts = vec![];
@@ -447,33 +442,44 @@ pub fn render(
     let mut point_verts = vec![];
     let mut point_indices = vec![];
     let mut vert_pack_idx = 0;
-    for p in 0..selected_bones.len() {
-        if p > 0 {
-            point_color.a = 0.5;
+    for p in 0..temp_arm.bones.len() {
+        // --- rendering points ---
+
+        let bone = &temp_arm.bones[p];
+        let mut color = in_point_color;
+        if selected_bone_ids.contains(&bone.id) {
+            color = point_color
         }
-        let bone = &selected_bones[p];
+
         let (mut this_verts, mut this_indices) =
-            draw_point(&zero, &camera, &config, &bone.pos, point_color, cam.pos, 0.);
+            draw_point(&zero, &camera, &config, &bone.pos, color, cam.pos, 0.);
         for idx in &mut this_indices {
             *idx += p as u32 * 4;
         }
         point_verts.append(&mut this_verts);
         point_indices.append(&mut this_indices.clone());
 
-        if p == 0 {
-            continue;
-        }
+        // --- rendering kites ---
+
         let parent = temp_arm.bones.iter().find(|b| b.id == bone.parent_id);
         if parent == None {
             continue;
         }
-
         let diff = parent.unwrap().pos - bone.pos;
         let kite_width = diff.mag() / 1.;
         let kite_rot = diff.y.atan2(diff.x);
+        // skip 0 width kites, caused by the child being directly on the parent
+        if kite_width == 0. {
+            continue;
+        }
+
+        let mut color = in_point_color;
+        if selected_bone_ids.contains(&parent.unwrap().id) {
+            color = point_color
+        }
         #[rustfmt::skip]
         let (mut this_verts, mut this_indices) = draw_flow_kite(
-            &zero, &camera, &config, &bone.pos, kite_color, cam.pos, kite_rot, kite_width
+            &zero, &camera, &config, &bone.pos, color, cam.pos, kite_rot, kite_width
         );
         for idx in &mut this_indices {
             *idx += vert_pack_idx * 4;
@@ -1446,7 +1452,7 @@ fn draw_flow_kite(
             Vertex {
                 pos: $pos,
                 uv: $uv,
-                add_color: color,
+                color: color,
                 ..Default::default()
             }
         };
