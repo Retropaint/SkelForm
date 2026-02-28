@@ -200,7 +200,7 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
             let str_color = shared_ui
                 .loc(&("settings_modal.user_interface.colors.".to_owned() + $title))
                 .clone();
-            color_row(str_color, $color, color, ui);
+            color_row(str_color, $color, color, ui, false);
         };
     }
 
@@ -324,7 +324,7 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
     let mut alt_col = true;
 
     macro_rules! color_row {
-        ($title:expr, $color:expr) => {
+        ($title:expr, $color:expr, $alpha:expr) => {
             alt_col = !alt_col;
             let col = &shared_ui.updated_config.colors;
             let bg_color = if alt_col { col.main } else { col.dark_accent };
@@ -332,14 +332,22 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
                 .loc(&("settings_modal.rendering.".to_owned() + $title))
                 .clone();
             let mut col = $color.clone();
-            color_row(str_color, &mut col, bg_color, ui);
+            color_row(str_color, &mut col, bg_color, ui, $alpha);
             $color = col;
         };
     }
 
-    color_row!("background", shared_ui.updated_config.colors.background);
-    color_row!("gridline", shared_ui.updated_config.colors.gridline);
-    color_row!("center_point", shared_ui.updated_config.colors.center_point);
+    color_row!(
+        "background",
+        shared_ui.updated_config.colors.background,
+        false
+    );
+    color_row!("gridline", shared_ui.updated_config.colors.gridline, false);
+    color_row!(
+        "center_point",
+        shared_ui.updated_config.colors.center_point,
+        true
+    );
 }
 
 fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
@@ -414,7 +422,13 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     }
 }
 
-fn color_row(title: String, color: &mut shared::Color, bg: shared::Color, ui: &mut egui::Ui) {
+fn color_row(
+    title: String,
+    color: &mut shared::Color,
+    bg: shared::Color,
+    ui: &mut egui::Ui,
+    alpha: bool,
+) {
     let frame = egui::Frame {
         fill: bg.into(),
         ..Default::default()
@@ -425,9 +439,15 @@ fn color_row(title: String, color: &mut shared::Color, bg: shared::Color, ui: &m
 
             // color picker
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let mut col: [u8; 3] = [color.r, color.g, color.b];
-                ui.color_edit_button_srgb(&mut col);
-                *color = shared::Color::new(col[0], col[1], col[2], 255);
+                if alpha {
+                    let mut col: [u8; 4] = [color.r, color.g, color.b, color.a];
+                    ui.color_edit_button_srgba_unmultiplied(&mut col);
+                    *color = shared::Color::new(col[0], col[1], col[2], col[3]);
+                } else {
+                    let mut col: [u8; 3] = [color.r, color.g, color.b];
+                    ui.color_edit_button_srgb(&mut col);
+                    *color = shared::Color::new(col[0], col[1], col[2], 255);
+                }
             });
         });
     });

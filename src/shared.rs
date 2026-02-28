@@ -360,6 +360,17 @@ impl Color {
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
         Color { r, g, b, a }
     }
+
+    pub fn egui_rgba(self) -> egui::Color32 {
+        egui::Color32::from_rgba_premultiplied(self.r, self.g, self.b, self.a)
+    }
+
+    pub fn from_egui_rgba(&mut self, rhs: egui::Color32) {
+        self.r = rhs.r();
+        self.g = rhs.g();
+        self.b = rhs.b();
+        self.a = rhs.a();
+    }
 }
 
 impl From<egui::Color32> for Color {
