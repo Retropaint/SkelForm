@@ -75,6 +75,16 @@ pub fn draw(
         }
     }
 
+    // load kite img
+    if shared_ui.kite_img == None {
+        let img = image::load_from_memory(include_bytes!("../assets/flow-kite.png")).unwrap();
+        let egui_img = egui::ColorImage::from_rgba_unmultiplied(
+            [img.width() as usize, img.height() as usize],
+            &img.into_rgba8(),
+        );
+        shared_ui.kite_img = Some(context.load_texture("flow-kite", egui_img, Default::default()))
+    }
+
     let anim_icon_size = 18;
     if shared_ui.anim.icon_images.len() == 0 {
         let full_img = image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();

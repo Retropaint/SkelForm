@@ -48,40 +48,66 @@ pub fn draw(
 
     ui.horizontal(|ui| {
         ui.heading(&shared_ui.loc("bone_panel.heading"));
+        let hand = egui::CursorIcon::PointingHand;
 
-        // delete label
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let mut col = config.colors.text;
+        let icon_widths = 100.;
+        //ui.add_space(ui.available_width() - icon_widths);
+        //let rect =
+        //    egui::Rect::from_min_size(ui.cursor().left_top() + [0., 3.].into(), [13., 17.].into());
+        //let response: egui::Response = ui
+        //    .allocate_rect(rect, egui::Sense::click())
+        //    .on_hover_cursor(hand);
+        //egui::Image::new(shared_ui.kite_img.as_ref().unwrap()).paint_at(ui, rect);
+        //if response.clicked() {
+        //    egui::color_picker::color_picker_color32(
+        //        ui,
+        //        &mut bone.group_color.egui_rgba(),
+        //        egui::color_picker::Alpha::BlendOrAdditive,
+        //    );
+        //}
+        ui.add_space(ui.available_width() - icon_widths);
+
+        let og_col: [u8; 4] = [
+            bone.group_color.r,
+            bone.group_color.g,
+            bone.group_color.b,
+            bone.group_color.a,
+        ];
+        let mut col = og_col.clone();
+        let tooltip = shared_ui.loc("bone_panel.group_color_desc");
+        ui.color_edit_button_srgba_premultiplied(&mut col)
+            .on_hover_text(tooltip);
+        if col != og_col {
+            type E = AnimElement;
+            events.edit_bone(bone.id, &E::GroupColorR, col[0] as f32, "", usize::MAX, -1);
+            events.edit_bone(bone.id, &E::GroupColorG, col[1] as f32, "", usize::MAX, -1);
+            events.edit_bone(bone.id, &E::GroupColorB, col[2] as f32, "", usize::MAX, -1);
+            events.edit_bone(bone.id, &E::GroupColorA, col[3] as f32, "", usize::MAX, -1);
+        }
+
+        let mut col = config.colors.text;
+        if !bone.locked {
             col -= Color::new(60, 60, 60, 0);
-            let text = egui::RichText::new("🗑").size(15.).color(col);
-            let hand = egui::CursorIcon::PointingHand;
-            if ui.label(text).on_hover_cursor(hand).clicked() {
-                let str = shared_ui.loc("polar.delete_bone").clone().to_string();
-                let context_id = "b_".to_owned() + &sel.bone_idx.to_string();
-                shared_ui.context_menu.id = context_id;
-                shared_ui.context_menu.keep = true;
-                events.open_polar_modal(PolarId::DeleteBone, str);
-            }
+        }
+        let text = egui::RichText::new("🔒").size(15.).color(col);
+        let desc = shared_ui.loc("locked_desc");
+        let label = ui.label(text).on_hover_cursor(hand).on_hover_text(desc);
+        if label.clicked() {
+            let locked_f32 = if bone.locked { 0. } else { 1. };
+            let locked = &AnimElement::Locked;
+            events.edit_bone(bone.id, locked, locked_f32, "", usize::MAX, -1);
+        }
 
-            let mut col = config.colors.text;
-            if !bone.locked {
-                col -= Color::new(60, 60, 60, 0);
-            }
-            let text = egui::RichText::new("🔒").size(15.).color(col);
-            let desc = shared_ui.loc("locked_desc");
-            let label = ui.label(text).on_hover_cursor(hand).on_hover_text(desc);
-            if label.clicked() {
-                let locked_f32 = if bone.locked { 0. } else { 1. };
-                events.edit_bone(
-                    bone.id,
-                    &AnimElement::Locked,
-                    locked_f32,
-                    "",
-                    usize::MAX,
-                    -1,
-                );
-            }
-        });
+        let mut col = config.colors.text;
+        col -= Color::new(60, 60, 60, 0);
+        let text = egui::RichText::new("🗑").size(15.).color(col);
+        if ui.label(text).on_hover_cursor(hand).clicked() {
+            let str = shared_ui.loc("polar.delete_bone").clone().to_string();
+            let context_id = "b_".to_owned() + &sel.bone_idx.to_string();
+            shared_ui.context_menu.id = context_id;
+            shared_ui.context_menu.keep = true;
+            events.open_polar_modal(PolarId::DeleteBone, str);
+        }
     });
 
     ui.separator();
@@ -888,14 +914,8 @@ pub fn texture_effects(
             if edited {
                 let el = &AnimElement::Zindex;
                 events.save_edited_bone(selections.bone_idx);
-                events.edit_bone(
-                    bone.id,
-                    el,
-                    value,
-                    "",
-                    selections.anim,
-                    selections.anim_frame,
-                );
+                #[rustfmt::skip]
+                events.edit_bone(bone.id, el, value, "", selections.anim, selections.anim_frame);
             }
         });
     });

@@ -154,6 +154,18 @@ pub fn render(
         }
     }
 
+    // setup propagated group colors
+    for b in 0..temp_arm.bones.len() {
+        if temp_arm.bones[b].group_color.a != 0 {
+            continue;
+        }
+        let parent_id = &temp_arm.bones[b].parent_id;
+        let parent = temp_arm.bones.iter().find(|b|b.id == *parent_id);
+        if parent != None {
+            temp_arm.bones[b].group_color = parent.unwrap().group_color;
+        }
+    }    
+
     // sort bones by highest zindex first, so that hover logic will pick the top-most one
     temp_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
     prev_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
@@ -164,6 +176,8 @@ pub fn render(
     // many fight for spot of newest vertex; only one will emerge victorious.
     let mut new_vert: Option<Vertex> = None;
     let mut removed_vert = false;
+
+    
 
     // pre-draw bone setup
     for b in 0..temp_arm.bones.len() {
@@ -426,88 +440,8 @@ pub fn render(
         draw_gridline(render_pass, device, &renderer, &camera, &config);
     }
 
-    render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
-
-    let mut point_color: VertexColor = config.colors.center_point.into();
-    let mut kite_color: VertexColor = config.colors.center_point.into();
-    kite_color.a -= 0.25;
-    let in_point_color: VertexColor = config.colors.inactive_center_point.into();
-    let mut in_kite_color: VertexColor = config.colors.inactive_center_point.into();
-    in_kite_color.a -= 0.25;
-
-    let cam = world_camera(&camera, &config);
-    let zero = Vec2::default();
-    let mut kite_verts = vec![];
-    let mut kite_indices = vec![];
-    let mut point_verts = vec![];
-    let mut point_indices = vec![];
-    let mut vert_pack_idx = 0;
-    for p in 0..temp_arm.bones.len() {
-        // --- rendering points ---
-
-        let bone = &temp_arm.bones[p];
-        let mut color = in_point_color;
-        if selected_bone_ids.contains(&bone.id) {
-            color = point_color
-        }
-
-        let (mut this_verts, mut this_indices) =
-            draw_point(&zero, &camera, &config, &bone.pos, color, cam.pos, 0.);
-        for idx in &mut this_indices {
-            *idx += p as u32 * 4;
-        }
-        point_verts.append(&mut this_verts);
-        point_indices.append(&mut this_indices.clone());
-
-        // --- rendering kites ---
-
-        let parent = temp_arm.bones.iter().find(|b| b.id == bone.parent_id);
-        if parent == None {
-            continue;
-        }
-        let diff = parent.unwrap().pos - bone.pos;
-        let kite_width = diff.mag() / 1.;
-        let kite_rot = diff.y.atan2(diff.x);
-        // skip 0 width kites, caused by the child being directly on the parent
-        if kite_width == 0. {
-            continue;
-        }
-
-        let mut color = in_point_color;
-        if selected_bone_ids.contains(&parent.unwrap().id) {
-            color = point_color
-        }
-        #[rustfmt::skip]
-        let (mut this_verts, mut this_indices) = draw_flow_kite(
-            &zero, &camera, &config, &bone.pos, color, cam.pos, kite_rot, kite_width
-        );
-        for idx in &mut this_indices {
-            *idx += vert_pack_idx * 4;
-        }
-        kite_verts.append(&mut this_verts);
-        kite_indices.append(&mut this_indices);
-        vert_pack_idx += 1;
-    }
-    if point_indices.len() > 0 {
-        render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
-        let gpu_verts: Vec<GpuVertex> = point_verts.iter().map(|vert| (*vert).into()).collect();
-        let index_buffer = &renderer.point_index_buffer.as_ref().unwrap();
-        let vertex_buffer = &renderer.point_vertex_buffer.as_ref().unwrap();
-        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&point_indices));
-        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        #[rustfmt::skip]
-        draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, point_indices.len());
-    }
-    if kite_indices.len() > 0 {
-        render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
-        let gpu_verts: Vec<GpuVertex> = kite_verts.iter().map(|vert| (*vert).into()).collect();
-        let index_buffer = &renderer.kite_index_buffer.as_ref().unwrap();
-        let vertex_buffer = &renderer.kite_vertex_buffer.as_ref().unwrap();
-        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&kite_indices));
-        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        #[rustfmt::skip]
-        draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, kite_indices.len());
-    }
+    #[rustfmt::skip]
+    draw_points_and_kites(config, camera, &mut temp_arm, selected_bone_ids, renderer, queue, render_pass);
 
     if !input.left_down {
         renderer.dragging_verts = vec![];
@@ -1446,7 +1380,7 @@ fn draw_flow_kite(
     rotation: f32,
     width: f32,
 ) -> (Vec<Vertex>, Vec<u32>) {
-    let height = 30.;
+    let height = 20.;
     macro_rules! vert {
         ($pos:expr, $uv:expr) => {
             Vertex {
@@ -1458,10 +1392,10 @@ fn draw_flow_kite(
         };
     }
     let mut temp_point_verts: [Vertex; 4] = [
-        vert!(Vec2::new(-1., height), Vec2::new(1., 0.)),
+        vert!(Vec2::new(-1., height), Vec2::new(0., 1.)),
         vert!(Vec2::new(width, height), Vec2::new(0., 0.)),
         vert!(Vec2::new(-1., -height), Vec2::new(1., 1.)),
-        vert!(Vec2::new(width, -height), Vec2::new(0., 1.)),
+        vert!(Vec2::new(width, -height), Vec2::new(1., 0.)),
     ];
 
     for v in &mut temp_point_verts {
@@ -1730,4 +1664,114 @@ pub fn add_offseted_indices(src: &mut Vec<u32>, dst: &mut Vec<u32>) {
         *idx += highest;
     }
     dst.append(src);
+}
+
+pub fn draw_points_and_kites(
+    config: &Config,
+    camera: &Camera,
+    temp_arm: &mut Armature,
+    selected_bone_ids: Vec<i32>,
+    renderer: &mut Renderer,
+    queue: &wgpu::Queue,
+    render_pass: &mut RenderPass,
+) {
+    let point_color: VertexColor = config.colors.center_point.into();
+    let mut kite_color: VertexColor = config.colors.center_point.into();
+    kite_color.a -= 0.25;
+    let in_point_color: VertexColor = config.colors.inactive_center_point.into();
+    let mut in_kite_color: VertexColor = config.colors.inactive_center_point.into();
+    in_kite_color.a -= 0.25;
+    let cam = world_camera(&camera, &config);
+    let zero = Vec2::default();
+    let mut kite_verts = vec![];
+    let mut kite_indices = vec![];
+    let mut point_verts = vec![];
+    let mut point_indices = vec![];
+    let mut vert_pack_idx = 0;
+    for p in 0..temp_arm.bones.len() {
+        // --- rendering points ---
+
+        let bone = &temp_arm.bones[p];
+        let mut color;
+
+        if bone.group_color.a == 0 {
+            color = in_point_color;
+            if selected_bone_ids.contains(&bone.id) {
+                color = point_color
+            }
+        } else {
+            color = bone.group_color.into();
+            if !selected_bone_ids.contains(&bone.id) {
+                color.a /= 2.;
+            }
+        }
+
+        let (mut this_verts, mut this_indices) =
+            draw_point(&zero, &camera, &config, &bone.pos, color, cam.pos, 0.);
+        for idx in &mut this_indices {
+            *idx += p as u32 * 4;
+        }
+        point_verts.append(&mut this_verts);
+        point_indices.append(&mut this_indices.clone());
+
+        // --- rendering kites ---
+
+        let parent = temp_arm.bones.iter().find(|b| b.id == bone.parent_id);
+        if parent == None {
+            continue;
+        }
+        let parent_pos = parent.unwrap().pos;
+        let parent_id = parent.unwrap().id;
+        let group_color = parent.unwrap().group_color;
+
+        let diff = parent_pos - bone.pos;
+        let kite_width = diff.mag() / 1.;
+        let kite_rot = diff.y.atan2(diff.x);
+        // skip 0 width kites, caused by the child being directly on the parent
+        if kite_width == 0. {
+            continue;
+        }
+
+        if group_color.a == 0 {
+            color = in_point_color;
+            if selected_bone_ids.contains(&parent_id) {
+                color = point_color
+            }
+        } else {
+            color = group_color.into();
+            if !selected_bone_ids.contains(&parent_id) {
+                color.a /= 2.;
+            }
+        }
+        #[rustfmt::skip]
+        let (mut this_verts, mut this_indices) = draw_flow_kite(
+            &zero, &camera, &config, &temp_arm.bones[p].pos, color, cam.pos, kite_rot, kite_width
+        );
+        for idx in &mut this_indices {
+            *idx += vert_pack_idx * 4;
+        }
+        kite_verts.append(&mut this_verts);
+        kite_indices.append(&mut this_indices);
+        vert_pack_idx += 1;
+    }
+    if point_indices.len() > 0 {
+        render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
+        let gpu_verts: Vec<GpuVertex> = point_verts.iter().map(|vert| (*vert).into()).collect();
+        let index_buffer = &renderer.point_index_buffer.as_ref().unwrap();
+        let vertex_buffer = &renderer.point_vertex_buffer.as_ref().unwrap();
+        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&point_indices));
+        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
+        #[rustfmt::skip]
+        draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, point_indices.len());
+    }
+    if kite_indices.len() > 0 {
+        render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
+        let gpu_verts: Vec<GpuVertex> = kite_verts.iter().map(|vert| (*vert).into()).collect();
+        let index_buffer = &renderer.kite_index_buffer.as_ref().unwrap();
+        let vertex_buffer = &renderer.kite_vertex_buffer.as_ref().unwrap();
+        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&kite_indices));
+        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
+        #[rustfmt::skip]
+        draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, kite_indices.len());
+    }
 }

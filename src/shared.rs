@@ -712,6 +712,7 @@ pub struct Ui {
     pub tracing_padding: f32,
 
     pub pointer_on_timeline: bool,
+    pub kite_img: Option<egui::TextureHandle>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -856,7 +857,7 @@ impl Default for ColorConfig {
             background: Color::new(50, 50, 50, 255),
             gridline: Color::new(128, 128, 128, 255),
             center_point: Color::new(0, 255, 0, 175),
-            inactive_center_point: Color::new(0, 255, 0, 100),
+            inactive_center_point: Color::new(0, 255, 0, 50),
             link: Color::new(193, 165, 221, 255),
             warning_text: Color::new(214, 168, 0, 0),
             meshdef: Color::new(0, 125, 20, 255),
@@ -1099,9 +1100,7 @@ pub struct Bone {
     #[serde(skip)]
     pub index_buffer: Option<wgpu::Buffer>,
     #[serde(skip)]
-    pub kite_rot: f32,
-    #[serde(skip)]
-    pub kite_width: f32,
+    pub group_color: Color,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
@@ -1143,6 +1142,8 @@ pub struct EditorBone {
     pub effects_folded: bool,
     pub ik_disabled: bool,
     pub locked: bool,
+    #[serde(default = "default_0_alpha")]
+    pub group_color: Color,
 }
 
 #[derive(
@@ -1256,6 +1257,7 @@ impl Armature {
             ik_target_id: -1,
             ik_family_id: -1,
             tint: default_tint(),
+            group_color: Color::new(0, 0, 0, 0),
             ..Default::default()
         };
         if id == -1 {
@@ -1823,28 +1825,34 @@ pub enum HandlePreset {
 }
 enum_string!(HandlePreset);
 
+// Despite the name, not all of these are animatable.
+// Elements with NA are not animated.
 #[derive(
     Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, Clone, Default, Debug, FromRepr
 )]
 #[rustfmt::skip]
 pub enum AnimElement {
     #[default]
-    /* 0 */ PositionX,
-    /* 1 */ PositionY,
-    /* 2 */ Rotation,
-    /* 3 */ ScaleX,
-    /* 4 */ ScaleY,
-    /* 5 */ Zindex,
-    /* 6 */ Texture,
-    /* 7 */ IkConstraint,
-    /* 8 */ Hidden,
-    /* 9 */ IkMode,
-    /* 10 */ IkFamilyId,
-    /* 11 */ TintR,
-    /* 12 */ TintG,
-    /* 13 */ TintB,
-    /* 14 */ TintA,
-    /* 15 */ Locked,
+     PositionX,
+     PositionY,
+     Rotation,
+     ScaleX,
+     ScaleY,
+     Zindex,
+     Texture,
+     IkConstraint,
+     Hidden,
+     IkMode,
+     IkFamilyId,
+     TintR,
+     TintG,
+     TintB,
+     TintA,
+     Locked,      // NA
+     GroupColorR, // NA
+     GroupColorG, // NA
+     GroupColorB, // NA
+     GroupColorA, // NA
 }
 
 // iterable anim change icons IDs
@@ -2582,6 +2590,10 @@ fn gridline_default() -> i32 {
 
 fn default_tint() -> TintColor {
     TintColor::new(1., 1., 1., 1.)
+}
+
+fn default_0_alpha() -> Color {
+    Color::new(0, 0, 0, 0)
 }
 
 fn is_neg_one(value: &i32) -> bool {

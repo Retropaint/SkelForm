@@ -1218,6 +1218,10 @@ fn edit_bone(
             }
         }
         AnimElement::IkMode => set_str!(bone.ik_mode, InverseKinematicsMode),
+        AnimElement::GroupColorR => set!(bone.group_color.r, u8),
+        AnimElement::GroupColorG => set!(bone.group_color.g, u8),
+        AnimElement::GroupColorB => set!(bone.group_color.b, u8),
+        AnimElement::GroupColorA => set!(bone.group_color.a, u8),
     };
 
     if anim_id == usize::MAX {
