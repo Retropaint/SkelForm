@@ -206,6 +206,7 @@ pub fn draw(
     draw_resizable_panel(
         bone_panel_id,
         side_panel.show(context, |ui| {
+            ui.set_width(min_default_size);
             ui.add_enabled_ui(enable_bone_panel, |ui| {
                 let gradient = config.colors.gradient.into();
                 ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
@@ -760,6 +761,14 @@ impl EguiUi for egui::Ui {
     ) -> (bool, String, egui::Response) {
         let input: egui::Response;
 
+        // setup default options, as well as size (separately since it depends on UI width)
+        if options == None {
+            options = Some(TextInputOptions::default());
+        }
+        if options.as_ref().unwrap().size == Vec2::ZERO {
+            options.as_mut().unwrap().size = Vec2::new(self.available_width(), 20.);
+        }
+
         // if the input was out of focus due to selecting another, save the value
         if shared_ui.last_rename_id != shared_ui.rename_id && shared_ui.last_rename_id == id {
             let singleline =
@@ -768,14 +777,6 @@ impl EguiUi for egui::Ui {
             input = self.add_sized(options.as_ref().unwrap().size, singleline);
             shared_ui.last_rename_id = "".to_string();
             return (true, shared_ui.last_edit_value.clone().unwrap(), input);
-        }
-
-        // setup default options, as well as size (separately since it depends on UI width)
-        if options == None {
-            options = Some(TextInputOptions::default());
-        }
-        if options.as_ref().unwrap().size == Vec2::ZERO {
-            options.as_mut().unwrap().size = Vec2::new(self.available_width(), 20.);
         }
 
         if options.as_ref().unwrap().focus && !shared_ui.input_focused {
