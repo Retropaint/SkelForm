@@ -147,6 +147,20 @@ pub fn draw_hierarchy(
     let sel = selections.clone();
     let panel = shared_ui.armature_panel_rect;
 
+    // setup propagated group colors
+    let mut group_colors: std::collections::HashMap<i32, Color> = Default::default();
+    for bone in &armature.bones {
+        group_colors.insert(bone.id, bone.group_color);
+        if bone.group_color.a != 0 {
+            continue;
+        }
+        let parent_id = &bone.parent_id;
+        let parent = armature.bones.iter().find(|b| b.id == *parent_id);
+        if let Some(parent) = parent {
+            *group_colors.get_mut(&bone.id).unwrap() = *group_colors.get(&parent.id).unwrap();
+        }
+    }
+
     for b in 0..armature.bones.len() {
         // stop rendering if bones go below this panel
         if panel != None && ui.cursor().top() > panel.unwrap().bottom() {
@@ -162,8 +176,12 @@ pub fn draw_hierarchy(
         let mut dragged = false;
 
         let parents = armature.get_all_parents(false, armature.bones[b].id);
-        let bone = armature.sel_bone(&sel);
-        let selected_bone_id = if bone != None { bone.unwrap().id } else { -1 };
+        let sel_bone = armature.sel_bone(&sel);
+        let selected_bone_id = if sel_bone != None {
+            sel_bone.unwrap().id
+        } else {
+            -1
+        };
 
         // disable selected bone and it's children from armature if setting IK target,
         // since IK target cannot be itself
@@ -197,14 +215,8 @@ pub fn draw_hierarchy(
                 if bone_label("🔒", ui, id, Vec2::new(15., 18.), desc, col).clicked() {
                     let locked_f32 = if !locked { 1. } else { 0. };
                     events.save_edited_bone(b);
-                    events.edit_bone(
-                        bone_id,
-                        &AnimElement::Locked,
-                        locked_f32,
-                        "",
-                        usize::MAX,
-                        -1,
-                    );
+                    let locked = &AnimElement::Locked;
+                    events.edit_bone(bone_id, locked, locked_f32, "", usize::MAX, -1);
                 }
                 ui.add_space(34.);
 
@@ -276,6 +288,9 @@ pub fn draw_hierarchy(
                         ui.set_width(width);
                         let name = armature.bones[b].name.to_string();
                         let mut text_col = config.colors.text;
+                        if group_colors.get(&bone.id).unwrap().a != 0 {
+                            text_col = *group_colors.get(&bone.id).unwrap();
+                        }
                         if hidden {
                             text_col = config.colors.dark_accent;
                             text_col += Color::new(40, 40, 40, 0)

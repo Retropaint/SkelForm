@@ -674,17 +674,10 @@ pub fn render_screenshot(
             temp_arm.bones[b].world_verts.push(new_vert);
         }
     }
-    draw_armature(
-        &temp_arm,
-        armature,
-        false,
-        &sel,
-        config,
-        queue,
-        render_pass,
-        &renderer.bone_buffer.vertex,
-        &renderer.bone_buffer.index,
-    );
+    let vertex_buffer = &renderer.bone_buffer.vertex;
+    let index_buffer = &renderer.bone_buffer.index;
+    #[rustfmt::skip]
+    draw_armature(&temp_arm, armature, false, &sel, config, queue, render_pass, vertex_buffer, index_buffer);
 }
 
 pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
