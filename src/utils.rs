@@ -58,27 +58,12 @@ pub fn in_bounding_box(
         top = f32::max(top, v.pos.y);
     }
 
+    #[rustfmt::skip]
     let vertices: Vec<Vertex> = vec![
-        Vertex {
-            pos: Vec2::new(right, top),
-            uv: Vec2::new(1., 0.),
-            ..Default::default()
-        },
-        Vertex {
-            pos: Vec2::new(left, top),
-            uv: Vec2::new(0., 1.),
-            ..Default::default()
-        },
-        Vertex {
-            pos: Vec2::new(left, bot),
-            uv: Vec2::new(0., 0.),
-            ..Default::default()
-        },
-        Vertex {
-            pos: Vec2::new(right, bot),
-            uv: Vec2::new(1., 1.),
-            ..Default::default()
-        },
+        Vertex { pos: Vec2::new(right, top), uv: Vec2::new(1., 0.), ..Default::default() },
+        Vertex { pos: Vec2::new(left, top),  uv: Vec2::new(0., 1.), ..Default::default() },
+        Vertex { pos: Vec2::new(left, bot),  uv: Vec2::new(0., 0.), ..Default::default() },
+        Vertex { pos: Vec2::new(right, bot), uv: Vec2::new(1., 1.), ..Default::default() }
     ];
 
     // convert bound positions to screen space
@@ -849,26 +834,24 @@ pub fn import<R: Read + std::io::Seek>(
 
     // populate bone IK data
     for b in 0..temp_arm.bones.len() {
-        if temp_arm.bones[b].ik_bone_ids.len() > 0 {
-            for i in 0..temp_arm.bones[b].ik_bone_ids.len() {
-                let id = temp_arm.bones[b].ik_bone_ids[i] as i32;
-                let fam_id = temp_arm.bones[b].ik_family_id;
-                let bones = &mut temp_arm.bones;
-                let mut bone = bones.iter_mut().find(|b| b.id == id);
-                if bone == None {
-                    custom_err!(
-                        "Bone of ID ".to_owned()
-                            + &id.to_string()
-                            + " of IK family #"
-                            + &temp_arm.bones[b].ik_family_id.to_string()
-                            + " could not be found."
-                    );
-                }
-                bone.as_mut().unwrap().ik_family_id = fam_id;
-                // don't reset Y of root bone
-                if i != 0 {
-                    bone.as_mut().unwrap().pos.y = 0.;
-                }
+        for i in 0..temp_arm.bones[b].ik_bone_ids.len() {
+            let id = temp_arm.bones[b].ik_bone_ids[i] as i32;
+            let fam_id = temp_arm.bones[b].ik_family_id;
+            let bones = &mut temp_arm.bones;
+            let mut bone = bones.iter_mut().find(|b| b.id == id);
+            if bone == None {
+                custom_err!(
+                    "Bone of ID ".to_owned()
+                        + &id.to_string()
+                        + " of IK family #"
+                        + &temp_arm.bones[b].ik_family_id.to_string()
+                        + " could not be found."
+                );
+            }
+            bone.as_mut().unwrap().ik_family_id = fam_id;
+            // don't reset Y of root bone
+            if i != 0 {
+                bone.as_mut().unwrap().pos.y = 0.;
             }
         }
     }
@@ -1125,10 +1108,7 @@ pub fn flatten_json(
         serde_json::Value::String(s) => {
             out.insert(prefix, s.clone() + &suffix);
         }
-        _ => {
-            // only strings should be in your loc json
-            // but you can handle numbers/bools here if you want
-        }
+        _ => {}
     }
 }
 

@@ -1338,10 +1338,10 @@ fn draw_point(
         };
     }
     let verts: [Vertex; 4] = [
-        vert!(Vec2::new(-point_size, point_size), Vec2::new(1., 0.)),
-        vert!(Vec2::new(point_size, point_size), Vec2::new(0., 1.)),
+        vert!(Vec2::new(-point_size, point_size), Vec2::new(0., 1.)),
+        vert!(Vec2::new(point_size, point_size), Vec2::new(1., 1.)),
         vert!(Vec2::new(-point_size, -point_size), Vec2::new(0., 0.)),
-        vert!(Vec2::new(point_size, -point_size), Vec2::new(1., 1.)),
+        vert!(Vec2::new(point_size, -point_size), Vec2::new(1., 0.)),
     ];
 
     draw_rect(verts, offset, camera, config, pos, camera_pos, rotation)
@@ -1738,7 +1738,7 @@ pub fn draw_points_and_kites(
         vert_pack_idx += 1;
     }
     if point_indices.len() > 0 {
-        render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
+        render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
         let gpu_verts: Vec<GpuVertex> = point_verts.iter().map(|vert| (*vert).into()).collect();
         let index_buffer = &renderer.point_index_buffer.as_ref().unwrap();
         let vertex_buffer = &renderer.point_vertex_buffer.as_ref().unwrap();

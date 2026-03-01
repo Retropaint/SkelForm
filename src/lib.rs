@@ -818,6 +818,16 @@ impl BackendRenderer {
                 &self.bind_group_layout,
             ));
         }
+        if shared.renderer.circle_bindgroup == None {
+            let img = image::load_from_memory(include_bytes!("../assets/circle.png")).unwrap();
+            shared.renderer.circle_bindgroup = Some(renderer::create_texture_bind_group(
+                img.clone().into_rgba8().to_vec(),
+                Vec2::new(img.width() as f32, img.height() as f32),
+                &self.gpu.queue,
+                &self.gpu.device,
+                &self.bind_group_layout,
+            ));
+        }
         if shared.renderer.generic_bindgroup == None {
             shared.renderer.generic_bindgroup = Some(renderer::create_texture_bind_group(
                 vec![255, 255, 255, 255],
