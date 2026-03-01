@@ -2061,6 +2061,29 @@ impl UndoStates {
 }
 
 #[derive(Default)]
+pub struct RenderBuffer {
+    pub vertex: Option<wgpu::Buffer>,
+    pub index: Option<wgpu::Buffer>,
+}
+
+impl RenderBuffer {
+    pub fn init(&mut self, device: &wgpu::Device, size: u64) {
+        self.vertex = Some(device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: size * std::mem::size_of::<GpuVertex>() as u64,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        }));
+        self.index = Some(device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: size * std::mem::size_of::<u32>() as u64,
+            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        }));
+    }
+}
+
+#[derive(Default)]
 pub struct Renderer {
     pub editing_bone: bool,
     pub dragging_verts: Vec<usize>,
@@ -2076,24 +2099,16 @@ pub struct Renderer {
     pub started_dragging_verts: bool,
     pub sel_temp_bone: Option<Bone>,
     pub temp_bones: Vec<Bone>,
-    pub vertex_buffer: Option<wgpu::Buffer>,
-    pub index_buffer: Option<wgpu::Buffer>,
-    pub bone_vertex_buffer: Option<wgpu::Buffer>,
-    pub bone_index_buffer: Option<wgpu::Buffer>,
-    pub prev_onion_vertex_buffer: Option<wgpu::Buffer>,
-    pub prev_onion_index_buffer: Option<wgpu::Buffer>,
-    pub next_onion_vertex_buffer: Option<wgpu::Buffer>,
-    pub next_onion_index_buffer: Option<wgpu::Buffer>,
-    pub point_vertex_buffer: Option<wgpu::Buffer>,
-    pub point_index_buffer: Option<wgpu::Buffer>,
-    pub kite_vertex_buffer: Option<wgpu::Buffer>,
-    pub kite_index_buffer: Option<wgpu::Buffer>,
-    pub sel_bone_index_buffer: Option<wgpu::Buffer>,
-    pub sel_bone_vertex_buffer: Option<wgpu::Buffer>,
-    pub gridline_index_buffer: Option<wgpu::Buffer>,
-    pub gridline_vertex_buffer: Option<wgpu::Buffer>,
     pub render_points: bool,
     pub render_kites: bool,
+    pub meshframe_buffer: RenderBuffer,
+    pub bone_buffer: RenderBuffer,
+    pub prev_onion_buffer: RenderBuffer,
+    pub next_onion_buffer: RenderBuffer,
+    pub point_buffer: RenderBuffer,
+    pub kite_buffer: RenderBuffer,
+    pub sel_bone_buffer: RenderBuffer,
+    pub gridline_buffer: RenderBuffer,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]
