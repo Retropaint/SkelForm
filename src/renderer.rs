@@ -1668,10 +1668,11 @@ pub fn draw_points_and_kites(
             // play shrinking animation if this bone was just selected
             let fade_speed = 20.;
             let sel_size = 20.;
+            let normal_size = 7.;
             let elapsed = if selected_bone_ids.len() > 0 && bone.id == selected_bone_ids[0] {
-                (sel_size - sel_time * fade_speed).max(5.)
+                (sel_size - sel_time * fade_speed).max(normal_size)
             } else {
-                5.
+                normal_size
             };
 
             let (mut this_verts, mut this_indices) = draw_point(
@@ -1684,6 +1685,9 @@ pub fn draw_points_and_kites(
                 color = bone.group_color.into();
                 if bone.group_color.a == 0 {
                     color = point_color;
+                }
+                if selected_bone_ids.contains(&bone.id) {
+                    color += VertexColor::new(0.3, 0.3, 0.3, 1.);
                 }
                 (this_verts, this_indices) = draw_point(
                     &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
