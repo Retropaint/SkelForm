@@ -14,22 +14,21 @@ use std::path::PathBuf;
 pub const CRASHLOG_END: &str = "###";
 
 fn main() -> Result<(), winit::error::EventLoopError> {
-    #[cfg(all(not(debug_assertions), not(target_arch = "wasm32")))]
-    install_panic_handler();
-
+    // set up panic hooks, for crash logs and the like
     #[cfg(not(target_arch = "wasm32"))]
     {
         std::env::set_var("RUST_BACKTRACE", "1");
     }
-
+    #[cfg(all(not(debug_assertions), not(target_arch = "wasm32")))]
+    install_panic_handler();
     #[cfg(target_arch = "wasm32")]
     {
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
         console_log::init().expect("Failed to initialize logger!");
     }
 
+    // setup default values for shared values
     let mut app = skelform_lib::App::default();
-
     init_shared(&mut app.shared);
 
     // open 'SkelForm has crashed' modal if there's an untagged crash log
@@ -80,6 +79,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     }
     app.shared.ui.startup = startup;
 
+    // CLI arguments
     #[cfg(not(target_arch = "wasm32"))]
     {
         let args: Vec<String> = std::env::args().collect();
@@ -96,8 +96,9 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     let event_loop = winit::event_loop::EventLoop::builder().build()?;
     event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
 
+    // initialize system shortcuts, to be intercepted later
+    // eg; Cmd+Q on MacOS is intercepted to show the 'unsaved changes' modal instead of quitting immediately
     app.shared.input.hotkey_manager = Some(global_hotkey::GlobalHotKeyManager::new().unwrap());
-
     app.shared.input.mod_q = Some(HotKey::new(Some(Modifiers::SUPER), Code::KeyQ));
     app.shared.input.mod_w = Some(HotKey::new(Some(Modifiers::SUPER), Code::KeyW));
 
@@ -151,7 +152,7 @@ fn init_shared(shared: &mut Shared) {
             _ => {}
         }
 
-        // import config & colors
+        // import config files
         if let Ok(data) = serde_json::from_str(&utils::config_str()) {
             shared.config = data;
         }
@@ -193,16 +194,19 @@ fn init_shared(shared: &mut Shared) {
         shared.ui.recent_file_paths = serde_json::from_str(&str).unwrap();
     }
 
+    // initialize languages
     let bytes = include_bytes!("../assets/i18n/en.json").as_slice();
     let en: serde_json::Value = serde_json::from_slice(bytes).unwrap();
     shared.ui.init_lang(en);
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-
 pub fn install_panic_handler() {
     std::panic::set_hook(Box::new(|panic_info| {
+        // print error message and file loc to console
         eprintln!("{}", panic_info);
+
+        // write error and backtrace to log file
         if let Ok(mut file) = std::fs::OpenOptions::new()
             .create(true)
             .append(true)

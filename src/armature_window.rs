@@ -5,7 +5,7 @@ use egui::*;
 use crate::{
     shared::Vec2,
     ui::{self, EguiUi, TextInputOptions},
-    utils::{self, get_all_parents},
+    utils,
 };
 
 use crate::shared::*;
@@ -146,6 +146,8 @@ pub fn draw_hierarchy(
     let mut is_hovering = false;
     let sel = selections.clone();
     let panel = shared_ui.armature_panel_rect;
+    let mut def_line_col = config.colors.dark_accent;
+    def_line_col += Color::new(20, 20, 20, 0);
 
     // setup propagated group colors
     let mut group_colors: std::collections::HashMap<i32, Color> = Default::default();
@@ -174,6 +176,7 @@ pub fn draw_hierarchy(
         let bone_id = armature.bones[b].id;
 
         let mut dragged = false;
+        let this_group_color = *group_colors.get(&bone_id).unwrap();
 
         let parents = armature.get_all_parents(false, armature.bones[b].id);
         let sel_bone = armature.sel_bone(&sel);
@@ -220,49 +223,91 @@ pub fn draw_hierarchy(
                 }
                 ui.add_space(34.);
 
+                // this bone's parent's group color, used for tree lines
+                let mut parent_col = def_line_col;
+                if parents.len() > 0 && group_colors.get(&parents[0].id).unwrap().a != 0 {
+                    parent_col = *group_colors.get(&parents[0].id).unwrap();
+                }
+
+                let mut is_first_child = false;
+
                 // add space to the left if this is a child
-                for p in 0..parents.len() {
+                for p in (0..parents.len()).rev() {
                     // don't add vertical line if this is a grandchild and there's no more direct children
-                    if p != parents.len() - 1 {
+                    if p != 0 {
                         let mut children = vec![];
                         get_all_children(&armature.bones, &mut children, &parents[p]);
 
                         // if the idx of a direct child is lower than this bone, do not add vertical line
                         let this_idx = children.iter().position(|b| b.id == bone_id).unwrap();
+                        if this_idx == 0 {
+                            is_first_child = true;
+                        }
                         let direct_idx = children
                             .iter()
                             .rposition(|b| b.parent_id == parents[p].id)
                             .unwrap();
+
                         if direct_idx < this_idx {
                             ui.add_space(15.);
                             continue;
                         }
                     }
 
-                    vert_line(Vec2::new(0., -11.), ui, &config);
+                    vert_line(Vec2::new(0., -11.), None, ui, def_line_col);
                     ui.add_space(15.);
                 }
 
                 // no vertical line for root bones
                 if parents.len() != 0 {
-                    vert_line(Vec2::new(-15., -11.), ui, &config);
+                    let mut size = None;
+                    let mut offset = Vec2::new(-15., -11.);
+                    if is_first_child {
+                        size = Some(Vec2::new(2., 21.));
+                        offset = Vec2::new(-15., -8.);
+                    }
+                    vert_line(offset, size, ui, parent_col);
                 }
 
-                hor_line(Vec2::new(-8., 11.), ui, &config);
+                hor_line(Vec2::new(-8., 11.), ui, parent_col);
 
                 // show folding button if this bone has children
                 let mut children = vec![];
                 let bone = &armature.bones[b];
                 get_all_children(&armature.bones, &mut children, bone);
                 if children.len() == 0 {
-                    hor_line(Vec2::new(0., 11.), ui, &config);
+                    let mut col = def_line_col;
+                    if this_group_color.a != 0 {
+                        col = this_group_color;
+                    }
+                    hor_line(Vec2::new(0., 11.), ui, col);
                 } else {
                     let folded = armature.bones[b].folded;
                     let fold_icon = if folded { "⏵" } else { "⏷" };
                     let id = "bone_fold".to_owned() + &b.to_string();
                     let desc = shared_ui.loc("armature_panel.fold_desc");
-                    let text = config.colors.text;
-                    if bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), desc, text).clicked() {
+                    let mut border_col = def_line_col;
+                    if group_colors.get(&bone.id).unwrap().a != 0 {
+                        border_col = *group_colors.get(&bone.id).unwrap();
+                    }
+
+                    // render arrow border
+                    let border_id = "bone_fold_border".to_string() + &b.to_string();
+                    let ball_offset = Vec2::new(-2., 18.);
+                    bone_label("⏺", ui, border_id, ball_offset, "".to_string(), border_col);
+
+                    // render folding arrow
+
+                    // change arrow color to contrast better with border
+                    let mut arrow_col = config.colors.text;
+                    let brightest: u32 =
+                        (border_col.r as u32 + border_col.g as u32 + border_col.b as u32) / 3;
+                    if brightest > 75 {
+                        arrow_col = config.colors.dark_accent;
+                    }
+
+                    let arrow_offset = Vec2::new(-2., 18.5);
+                    if bone_label(fold_icon, ui, id, arrow_offset, desc, arrow_col).clicked() {
                         events.toggle_bone_folded(idx as usize, !armature.bones[b].folded);
                     }
                 }
@@ -486,26 +531,25 @@ fn check_bone_dragging(
     return true;
 }
 
-pub fn vert_line(offset: Vec2, ui: &mut egui::Ui, config: &Config) {
+pub fn vert_line(offset: Vec2, mut size: Option<Vec2>, ui: &mut egui::Ui, color: Color) {
+    if size == None {
+        size = Some(Vec2::new(2., 24.));
+    }
     let rect = egui::Rect::from_min_size(
         ui.cursor().left_top() + [3. + offset.x, -1.5 + offset.y].into(),
-        [2., 24.].into(),
+        size.unwrap().into(),
     );
-    let mut line_col = config.colors.dark_accent;
-    line_col += Color::new(20, 20, 20, 0);
     ui.painter()
-        .rect_filled(rect, egui::CornerRadius::ZERO, line_col);
+        .rect_filled(rect, egui::CornerRadius::ZERO, color);
 }
 
-pub fn hor_line(offset: Vec2, ui: &mut egui::Ui, config: &Config) {
+pub fn hor_line(offset: Vec2, ui: &mut egui::Ui, color: Color) {
     let rect = egui::Rect::from_min_size(
         ui.cursor().left_top() + [-2. + offset.x, -1.5 + offset.y].into(),
         [13., 2.].into(),
     );
-    let mut line_col = config.colors.dark_accent;
-    line_col += Color::new(20, 20, 20, 0);
     ui.painter()
-        .rect_filled(rect, egui::CornerRadius::ZERO, line_col);
+        .rect_filled(rect, egui::CornerRadius::ZERO, color);
 }
 
 /// Retrieve all children of this bone (recursive)

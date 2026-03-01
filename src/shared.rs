@@ -2078,7 +2078,7 @@ impl RenderBuffer {
         }));
         self.index = Some(device.create_buffer(&wgpu::BufferDescriptor {
             label: None,
-            size: size * std::mem::size_of::<u32>() as u64,
+            size: size * (std::mem::size_of::<u32>() as u64 * 2),
             usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         }));
