@@ -411,6 +411,8 @@ pub fn render(
         draw(&None, &vertex_buffer, &index_buffer, render_pass, 0, indices.len());
     }
 
+    if armature.sel_bone(&sel) != None {}
+
     if mesh_onion_id != -1 {
         //render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         //let tp = &temp_arm.bones;
@@ -1337,35 +1339,14 @@ fn draw_point(
             vert(Some($pos), Some(color), Some($uv))
         };
     }
-    let mut temp_point_verts: [Vertex; 4] = [
+    let verts: [Vertex; 4] = [
         vert!(Vec2::new(-point_size, point_size), Vec2::new(1., 0.)),
         vert!(Vec2::new(point_size, point_size), Vec2::new(0., 1.)),
         vert!(Vec2::new(-point_size, -point_size), Vec2::new(0., 0.)),
         vert!(Vec2::new(point_size, -point_size), Vec2::new(1., 1.)),
     ];
 
-    for v in &mut temp_point_verts {
-        v.pos += *pos;
-        v.pos = utils::rotate(&v.pos, rotation);
-    }
-
-    let mut point_verts = vec![];
-    let ar = camera.aspect_ratio();
-    let mut cam = world_camera(&camera, &config).clone();
-    cam.pos = camera_pos;
-    let pivot = Vec2::new(0.5, 0.5);
-    for vert in temp_point_verts {
-        let vert = world_vert(vert, &cam, ar, pivot);
-        point_verts.push(vert);
-    }
-
-    for vert in &mut point_verts {
-        vert.pos += *offset;
-    }
-
-    let indices = vec![0, 1, 2, 1, 2, 3];
-
-    (point_verts, indices)
+    draw_rect(verts, offset, camera, config, pos, camera_pos, rotation)
 }
 
 fn draw_flow_kite(
@@ -1381,22 +1362,55 @@ fn draw_flow_kite(
     let height = 20.;
     macro_rules! vert {
         ($pos:expr, $uv:expr) => {
-            Vertex {
-                pos: $pos,
-                uv: $uv,
-                color: color,
-                ..Default::default()
-            }
+            vert(Some($pos), Some(color), Some($uv))
         };
     }
-    let mut temp_point_verts: [Vertex; 4] = [
+    let verts: [Vertex; 4] = [
         vert!(Vec2::new(-1., height), Vec2::new(0., 1.)),
         vert!(Vec2::new(width, height), Vec2::new(0., 0.)),
         vert!(Vec2::new(-1., -height), Vec2::new(1., 1.)),
         vert!(Vec2::new(width, -height), Vec2::new(1., 0.)),
     ];
 
-    for v in &mut temp_point_verts {
+    draw_rect(verts, offset, camera, config, pos, camera_pos, rotation)
+}
+
+fn draw_transform_circle(
+    offset: &Vec2,
+    camera: &Camera,
+    config: &Config,
+    pos: &Vec2,
+    color: VertexColor,
+    camera_pos: Vec2,
+    rotation: f32,
+    width: f32,
+) -> (Vec<Vertex>, Vec<u32>) {
+    let height = 20.;
+    macro_rules! vert {
+        ($pos:expr, $uv:expr) => {
+            vert(Some($pos), Some(color), Some($uv))
+        };
+    }
+    let verts: [Vertex; 4] = [
+        vert!(Vec2::new(-width, height), Vec2::new(0., 1.)),
+        vert!(Vec2::new(width, height), Vec2::new(0., 0.)),
+        vert!(Vec2::new(-width, -height), Vec2::new(1., 1.)),
+        vert!(Vec2::new(width, -height), Vec2::new(1., 0.)),
+    ];
+
+    draw_rect(verts, offset, camera, config, pos, camera_pos, rotation)
+}
+
+fn draw_rect(
+    mut temp_verts: [Vertex; 4],
+    offset: &Vec2,
+    camera: &Camera,
+    config: &Config,
+    pos: &Vec2,
+    camera_pos: Vec2,
+    rotation: f32,
+) -> (Vec<Vertex>, Vec<u32>) {
+    for v in &mut temp_verts {
         v.pos = utils::rotate(&v.pos, rotation);
         v.pos += *pos;
     }
@@ -1406,7 +1420,7 @@ fn draw_flow_kite(
     let mut cam = world_camera(&camera, &config).clone();
     cam.pos = camera_pos;
     let pivot = Vec2::new(0.5, 0.5);
-    for vert in temp_point_verts {
+    for vert in temp_verts {
         let vert = world_vert(vert, &cam, ar, pivot);
         point_verts.push(vert);
     }
@@ -1415,9 +1429,7 @@ fn draw_flow_kite(
         vert.pos += *offset;
     }
 
-    let indices = vec![0, 1, 2, 1, 2, 3];
-
-    (point_verts, indices)
+    (point_verts, vec![0, 1, 2, 1, 2, 3])
 }
 
 /// Get bind group of a texture.
@@ -1690,8 +1702,6 @@ pub fn draw_points_and_kites(
         let bone = &temp_arm.bones[p];
         let mut color;
         if renderer.render_points {
-            // --- rendering points ---
-
             if bone.group_color.a == 0 {
                 color = in_point_color;
                 if selected_bone_ids.contains(&bone.id) {
@@ -1712,8 +1722,6 @@ pub fn draw_points_and_kites(
             point_verts.append(&mut this_verts);
             point_indices.append(&mut this_indices.clone());
         }
-
-        // --- rendering kites ---
 
         if !renderer.render_kites {
             continue;
