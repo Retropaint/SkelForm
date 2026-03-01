@@ -1105,10 +1105,6 @@ pub struct Bone {
     #[serde(skip)]
     pub locked: bool,
     #[serde(skip)]
-    pub vertex_buffer: Option<wgpu::Buffer>,
-    #[serde(skip)]
-    pub index_buffer: Option<wgpu::Buffer>,
-    #[serde(skip)]
     pub group_color: Color,
 }
 
@@ -2092,6 +2088,8 @@ pub struct Renderer {
     pub point_index_buffer: Option<wgpu::Buffer>,
     pub kite_vertex_buffer: Option<wgpu::Buffer>,
     pub kite_index_buffer: Option<wgpu::Buffer>,
+    pub sel_bone_index_buffer: Option<wgpu::Buffer>,
+    pub sel_bone_vertex_buffer: Option<wgpu::Buffer>,
     pub render_points: bool,
     pub render_kites: bool,
 }

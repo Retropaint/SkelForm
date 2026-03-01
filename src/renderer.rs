@@ -50,6 +50,8 @@ pub fn render(
         create_buffer!(renderer.point_index_buffer, index);
         create_buffer!(renderer.kite_vertex_buffer, vertex);
         create_buffer!(renderer.kite_index_buffer, index);
+        create_buffer!(renderer.sel_bone_vertex_buffer, vertex);
+        create_buffer!(renderer.sel_bone_index_buffer, index);
     }
 
     let sel = selections.clone();
@@ -367,8 +369,8 @@ pub fn render(
 
         let gpu_verts: Vec<GpuVertex> =
             bone.world_verts.iter().map(|vert| (*vert).into()).collect();
-        let index_buffer = &bone.index_buffer.as_ref().unwrap();
-        let vertex_buffer = &bone.vertex_buffer.as_ref().unwrap();
+        let index_buffer = &renderer.sel_bone_index_buffer.as_ref().unwrap();
+        let vertex_buffer = &renderer.sel_bone_vertex_buffer.as_ref().unwrap();
         queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&bone.indices));
         queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
         #[rustfmt::skip]

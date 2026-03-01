@@ -884,25 +884,6 @@ impl BackendRenderer {
             }
         }
 
-        for b in 0..shared.armature.bones.len() {
-            let bone = &mut shared.armature.bones[b];
-            if bone.vertex_buffer != None && bone.index_buffer != None {
-                continue;
-            }
-            bone.vertex_buffer = Some(self.gpu.device.create_buffer(&wgpu::BufferDescriptor {
-                label: Some("Bone Vertex Buffer"),
-                size: 300 * std::mem::size_of::<GpuVertex>() as u64,
-                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-                mapped_at_creation: false,
-            }));
-            bone.index_buffer = Some(self.gpu.device.create_buffer(&wgpu::BufferDescriptor {
-                label: Some("Bone Index Buffer"),
-                size: 300 * std::mem::size_of::<u32>() as u64,
-                usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-                mapped_at_creation: false,
-            }));
-        }
-
         utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
 
         // core rendering logic handled in renderer.rs
