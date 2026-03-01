@@ -724,6 +724,71 @@ impl BackendRenderer {
     }
 
     fn skf_render(&mut self, shared: &mut Shared, render_pass: &mut wgpu::RenderPass) {
+        self.init_buffers_and_bindgroups(shared);
+        self.check_export(shared);
+
+        if *shared.ui.save_finished.lock().unwrap() {
+            shared.undo_states.unsaved_undo_actions = shared.undo_states.undo_actions.len();
+            shared.undo_states.prev_undo_actions = shared.undo_states.undo_actions.len();
+            shared.ui.changed_window_name = false;
+            shared.ui.modal = false;
+            shared.ui.can_quit = true;
+            *shared.ui.save_finished.lock().unwrap() = false;
+        } else if *shared.ui.export_finished.lock().unwrap() {
+            shared.ui.modal = false;
+            shared.ui.can_quit = true;
+            *shared.ui.export_finished.lock().unwrap() = false;
+        }
+
+        let saving = shared.ui.saving.lock().unwrap().clone();
+        let recording_spritesheets = saving == Saving::Spritesheet || saving == Saving::Video;
+        if saving != Saving::None && !recording_spritesheets {
+            #[cfg(target_arch = "wasm32")]
+            {
+                let saving_type = shared.ui.saving.lock().unwrap().clone();
+                if saving_type == Saving::CustomPath || saving_type == Saving::Exporting {
+                    #[rustfmt::skip]
+                    utils::save_web(&shared.armature, &shared.camera, &shared.edit_mode, saving_type);
+                }
+            }
+
+            #[cfg(not(target_arch = "wasm32"))]
+            self.save(shared);
+        } else if recording_spritesheets {
+            shared.events.open_modal("exporting", true);
+            #[rustfmt::skip]
+            utils::render_spritesheets(&shared.armature, &mut shared.ui, &shared.camera, &shared.config, self, &shared.renderer);
+            *shared.ui.saving.lock().unwrap() = Saving::None;
+            shared.ui.spritesheet_elapsed = Some(Instant::now());
+            shared.ui.export_modal = false;
+        }
+
+        // initialize non-mesh bone verts and indices
+        for b in 0..shared.armature.bones.len() {
+            let tex = shared.armature.tex_of(shared.armature.bones[b].id);
+            if tex != None && shared.armature.bones[b].vertices.len() == 0 {
+                let size = tex.unwrap().size;
+                let bone = &mut shared.armature.bones[b];
+                (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
+                bone.verts_edited = false;
+            }
+        }
+
+        // animated bones will be used throughout the program
+        utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
+
+        // core rendering logic handled in renderer.rs
+        let s = shared;
+        #[rustfmt::skip]
+        renderer::render(
+            render_pass, &self.gpu.device, &self.gpu.queue, &s.camera, &s.input, &mut s.armature,
+            &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events
+        );
+
+        s.ui.warnings = warnings::check_warnings(&s.armature);
+    }
+
+    fn check_export(&self, shared: &mut shared::Shared) {
         // if the spritesheet timer has initiaed, wait a little for all buffers to complete before saving them
         let elapsed = &mut shared.ui.spritesheet_elapsed;
         let duration_in_millis = 250;
@@ -737,77 +802,99 @@ impl BackendRenderer {
             *elapsed = Some(Instant::now());
         }
 
-        if *elapsed != None && elapsed.unwrap().elapsed().as_millis() > duration_in_millis {
-            if shared.ui.exporting_video_type != ExportVideoType::None {
-                #[rustfmt::skip]
-                let bufs = utils::encode_sequence(&shared.armature, &mut shared.ui, self);
-                let anim_idx = shared.ui.exporting_video_anim;
-                let name = &shared.armature.animations[anim_idx].name;
-                let mut _path: String = "".to_string();
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    let raw_path = &shared.ui.file_path.lock().unwrap()[0];
-                    _path = raw_path.as_path().to_str().unwrap().to_string();
-                }
-                let _ext;
-                let ffmpeg_bin = if shared.ui.use_system_ffmpeg {
-                    "ffmpeg".to_string()
-                } else {
-                    #[cfg(target_os = "windows")]
-                    {
-                        utils::bin_path()
-                            .join("ffmpeg.exe")
-                            .to_str()
-                            .unwrap()
-                            .to_string()
-                    }
-                    #[cfg(not(target_os = "windows"))]
-                    {
-                        utils::bin_path()
-                            .join("ffmpeg")
-                            .to_str()
-                            .unwrap()
-                            .to_string()
-                    }
-                };
-                let size = shared.ui.sprite_size;
-                let this_anim = bufs[0].clone();
-                let fps = shared.armature.animations[anim_idx].fps;
-                if shared.ui.exporting_video_type == ExportVideoType::Gif {
-                    shared.ui.custom_error =
-                        Self::encode_gif(this_anim, fps, size, name, &_path, ffmpeg_bin);
-                    _ext = ".gif";
-                } else {
-                    let codec_str = match shared.ui.exporting_video_encoder {
-                        ExportVideoEncoder::Libx264 => "libx264",
-                        ExportVideoEncoder::AV1 => "libsvtav1",
-                    };
-                    shared.ui.custom_error = Self::encode_video(
-                        this_anim, fps, size, name, codec_str, &_path, ffmpeg_bin,
-                    );
-                    _ext = ".mp4";
-                }
-                if shared.ui.custom_error != "" {
-                    shared.events.open_modal("error_vid_export", false);
-                } else if shared.ui.open_after_export {
-                    #[cfg(not(target_arch = "wasm32"))]
-                    if let Err(e) = open::that(_path + _ext) {
-                        println!("{}", e);
-                    }
-                }
-            } else {
-                #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
-                self._skf_native_spritesheet(&shared.armature, &mut shared.ui);
-                #[rustfmt::skip] #[cfg(target_arch = "wasm32")]
-                self.skf_web_spritesheet(&shared.armature, &mut shared.ui);
-            }
-
-            shared.ui.spritesheet_elapsed = None;
-            shared.ui.modal = false;
-            shared.ui.sprite_size = shared.screenshot_res;
-            *shared.ui.mapped_frames.lock().unwrap() = 0;
+        if *elapsed == None || elapsed.unwrap().elapsed().as_millis() < duration_in_millis {
+            return;
         }
 
+        if shared.ui.exporting_video_type != ExportVideoType::None {
+            #[rustfmt::skip]
+                let bufs = utils::encode_sequence(&shared.armature, &mut shared.ui, self);
+            let anim_idx = shared.ui.exporting_video_anim;
+            let name = &shared.armature.animations[anim_idx].name;
+            let mut _path: String = "".to_string();
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let raw_path = &shared.ui.file_path.lock().unwrap()[0];
+                _path = raw_path.as_path().to_str().unwrap().to_string();
+            }
+            let _ext;
+            let ffmpeg_bin = if shared.ui.use_system_ffmpeg {
+                "ffmpeg".to_string()
+            } else {
+                #[cfg(target_os = "windows")]
+                {
+                    utils::bin_path()
+                        .join("ffmpeg.exe")
+                        .to_str()
+                        .unwrap()
+                        .to_string()
+                }
+                #[cfg(not(target_os = "windows"))]
+                {
+                    utils::bin_path()
+                        .join("ffmpeg")
+                        .to_str()
+                        .unwrap()
+                        .to_string()
+                }
+            };
+            let size = shared.ui.sprite_size;
+            let this_anim = bufs[0].clone();
+            let fps = shared.armature.animations[anim_idx].fps;
+            if shared.ui.exporting_video_type == ExportVideoType::Gif {
+                shared.ui.custom_error =
+                    Self::encode_gif(this_anim, fps, size, name, &_path, ffmpeg_bin);
+                _ext = ".gif";
+            } else {
+                let codec_str = match shared.ui.exporting_video_encoder {
+                    ExportVideoEncoder::Libx264 => "libx264",
+                    ExportVideoEncoder::AV1 => "libsvtav1",
+                };
+                shared.ui.custom_error =
+                    Self::encode_video(this_anim, fps, size, name, codec_str, &_path, ffmpeg_bin);
+                _ext = ".mp4";
+            }
+            if shared.ui.custom_error != "" {
+                shared.events.open_modal("error_vid_export", false);
+            } else if shared.ui.open_after_export {
+                #[cfg(not(target_arch = "wasm32"))]
+                if let Err(e) = open::that(_path + _ext) {
+                    println!("{}", e);
+                }
+            }
+        } else {
+            #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
+            self._skf_native_spritesheet(&shared.armature, &mut shared.ui);
+            #[rustfmt::skip] #[cfg(target_arch = "wasm32")]
+            self.skf_web_spritesheet(&shared.armature, &mut shared.ui);
+        }
+
+        shared.ui.spritesheet_elapsed = None;
+        shared.ui.modal = false;
+        shared.ui.sprite_size = shared.screenshot_res;
+        *shared.ui.mapped_frames.lock().unwrap() = 0;
+    }
+
+    fn init_buffers_and_bindgroups(&self, shared: &mut shared::Shared) {
+        if shared.renderer.meshframe_buffer.index == None {
+            shared.renderer.bone_buffer.init(&self.gpu.device, 1000);
+            shared
+                .renderer
+                .prev_onion_buffer
+                .init(&self.gpu.device, 1000);
+            shared
+                .renderer
+                .next_onion_buffer
+                .init(&self.gpu.device, 1000);
+            shared.renderer.point_buffer.init(&self.gpu.device, 1000);
+            shared.renderer.kite_buffer.init(&self.gpu.device, 1000);
+            shared.renderer.sel_bone_buffer.init(&self.gpu.device, 1000);
+            shared.renderer.gridline_buffer.init(&self.gpu.device, 1000);
+            shared
+                .renderer
+                .meshframe_buffer
+                .init(&self.gpu.device, 1000);
+        }
         if shared.renderer.flow_kite_bindgroup == None {
             let img = image::load_from_memory(include_bytes!("../assets/flow-kite.png")).unwrap();
             shared.renderer.flow_kite_bindgroup = Some(renderer::create_texture_bind_group(
@@ -837,64 +924,6 @@ impl BackendRenderer {
                 &self.bind_group_layout,
             ));
         }
-        if *shared.ui.save_finished.lock().unwrap() {
-            shared.undo_states.unsaved_undo_actions = shared.undo_states.undo_actions.len();
-            shared.undo_states.prev_undo_actions = shared.undo_states.undo_actions.len();
-            shared.ui.changed_window_name = false;
-            shared.ui.modal = false;
-            shared.ui.can_quit = true;
-            *shared.ui.save_finished.lock().unwrap() = false;
-        } else if *shared.ui.export_finished.lock().unwrap() {
-            shared.ui.modal = false;
-            shared.ui.can_quit = true;
-            *shared.ui.export_finished.lock().unwrap() = false;
-        }
-
-        let saving = shared.ui.saving.lock().unwrap().clone();
-
-        let recording_spritesheets = saving == Saving::Spritesheet || saving == Saving::Video;
-        if saving != Saving::None && !recording_spritesheets {
-            #[cfg(target_arch = "wasm32")]
-            {
-                let saving_type = shared.ui.saving.lock().unwrap().clone();
-                if saving_type == Saving::CustomPath || saving_type == Saving::Exporting {
-                    #[rustfmt::skip]
-                    utils::save_web(&shared.armature, &shared.camera, &shared.edit_mode, saving_type);
-                }
-            }
-
-            #[cfg(not(target_arch = "wasm32"))]
-            self.save(shared);
-        } else if recording_spritesheets {
-            shared.events.open_modal("exporting", true);
-            #[rustfmt::skip]
-            utils::render_spritesheets(&shared.armature, &mut shared.ui, &shared.camera, &shared.config, self, &shared.renderer);
-            *shared.ui.saving.lock().unwrap() = Saving::None;
-            shared.ui.spritesheet_elapsed = Some(Instant::now());
-            shared.ui.export_modal = false;
-        }
-
-        for b in 0..shared.armature.bones.len() {
-            let tex = shared.armature.tex_of(shared.armature.bones[b].id);
-            if tex != None && shared.armature.bones[b].vertices.len() == 0 {
-                let size = tex.unwrap().size;
-                let bone = &mut shared.armature.bones[b];
-                (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
-                bone.verts_edited = false;
-            }
-        }
-
-        utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
-
-        // core rendering logic handled in renderer.rs
-        let s = shared;
-        #[rustfmt::skip]
-        renderer::render(
-            render_pass, &self.gpu.device, &self.gpu.queue, &s.camera, &s.input, &mut s.armature,
-            &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events
-        );
-
-        s.ui.warnings = warnings::check_warnings(&s.armature);
     }
 
     fn _skf_native_spritesheet(&self, armature: &Armature, shared_ui: &mut Ui) {
