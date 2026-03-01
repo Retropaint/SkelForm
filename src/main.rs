@@ -158,6 +158,9 @@ fn init_shared(shared: &mut Shared) {
         if let Ok(data) = serde_json::from_str(&utils::color_str()) {
             shared.config.colors = data;
         }
+        if let Ok(data) = serde_json::from_str(&utils::config_keys_str()) {
+            shared.config.keys = data;
+        }
         utils::save_config(&shared.config);
     }
     #[cfg(target_arch = "wasm32")]

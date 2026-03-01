@@ -1030,6 +1030,11 @@ pub fn save_config(config: &Config) {
         let color_json = serde_json::to_string(&config.colors).unwrap();
         let mut color_file = std::fs::File::create(&color_path()).unwrap();
         color_file.write_all(color_json.as_bytes()).unwrap();
+
+        fs::create_dir_all(keys_path().parent().unwrap()).unwrap();
+        let key_json = serde_json::to_string(&config.keys).unwrap();
+        let mut key_file = std::fs::File::create(&keys_path()).unwrap();
+        key_file.write_all(key_json.as_bytes()).unwrap();
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -1059,6 +1064,21 @@ pub fn color_str() -> String {
     {
         let mut str = String::new();
         if let Ok(mut file) = std::fs::File::open(&color_path()) {
+            if let Ok(_) = file.read_to_string(&mut str) {}
+        }
+        return str;
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        return getConfig();
+    }
+}
+
+pub fn config_keys_str() -> String {
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let mut str = String::new();
+        if let Ok(mut file) = std::fs::File::open(&keys_path()) {
             if let Ok(_) = file.read_to_string(&mut str) {}
         }
         return str;
