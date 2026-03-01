@@ -868,6 +868,7 @@ fn select_bone(
 ) {
     edit_mode.setting_bind_verts = false;
     edit_mode.showing_mesh = false;
+    edit_mode.sel_time = 0.;
 
     // rename bone if already selected
     if sel.bone_idx == idx && !from_renderer {

@@ -1938,6 +1938,7 @@ pub struct EditMode {
     pub setting_ik_target: bool,
     pub anim_open: bool,
     pub time: f32,
+    pub sel_time: f32,
     pub export_bake_ik: bool,
     pub export_exclude_ik: bool,
     pub export_img_format: ExportImgFormat,

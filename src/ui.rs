@@ -437,6 +437,7 @@ pub fn process_inputs(
             }
         }
 
+        edit_mode.sel_time += i.time as f32 - edit_mode.time;
         edit_mode.time = i.time as f32;
     });
 }

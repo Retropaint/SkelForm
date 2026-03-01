@@ -420,7 +420,7 @@ pub fn render(
     }
 
     #[rustfmt::skip]
-    draw_points_and_kites(config, camera, &mut temp_arm, selected_bone_ids, renderer, queue, render_pass);
+    draw_points_and_kites(config, camera, input, edit_mode.sel_time, &mut temp_arm, selected_bone_ids, renderer, queue, render_pass, events);
 
     if !input.left_down {
         renderer.dragging_verts = vec![];
@@ -1031,7 +1031,7 @@ pub fn bone_vertices(
     #[rustfmt::skip]
     macro_rules! point {
         ($idx:expr, $color:expr) => {
-            draw_point(&world_verts[$idx].pos, &camera, &config, &v2z, $color, v2z, rotated)
+            draw_point(&world_verts[$idx].pos, &camera, &config, &v2z, $color, v2z, rotated, 5.)
         };
     }
     macro_rules! add_point {
@@ -1304,8 +1304,9 @@ fn draw_point(
     color: VertexColor,
     camera_pos: Vec2,
     rotation: f32,
+    size: f32,
 ) -> (Vec<Vertex>, Vec<u32>) {
-    let point_size = 5. * (camera.zoom / 500.);
+    let point_size = size * (camera.zoom / 500.);
     macro_rules! vert {
         ($pos:expr, $uv:expr) => {
             vert(Some($pos), Some(color), Some($uv))
@@ -1626,11 +1627,14 @@ pub fn add_offseted_indices(src: &mut Vec<u32>, dst: &mut Vec<u32>) {
 pub fn draw_points_and_kites(
     config: &Config,
     camera: &Camera,
+    input: &InputStates,
+    sel_time: f32,
     temp_arm: &mut Armature,
     selected_bone_ids: Vec<i32>,
     renderer: &mut Renderer,
     queue: &wgpu::Queue,
     render_pass: &mut RenderPass,
+    events: &mut EventState,
 ) {
     let point_color: VertexColor = config.colors.center_point.into();
     let mut kite_color: VertexColor = config.colors.center_point.into();
@@ -1661,11 +1665,38 @@ pub fn draw_points_and_kites(
                 }
             }
 
-            let (mut this_verts, mut this_indices) =
-                draw_point(&zero, &camera, &config, &bone.pos, color, cam.pos, 0.);
+            // play shrinking animation if this bone was just selected
+            let fade_speed = 20.;
+            let sel_size = 20.;
+            let elapsed = if selected_bone_ids.len() > 0 && bone.id == selected_bone_ids[0] {
+                (sel_size - sel_time * fade_speed).max(5.)
+            } else {
+                5.
+            };
+
+            let (mut this_verts, mut this_indices) = draw_point(
+                &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
+            );
+
+            // bones can be selected by clicking on their point
+            let mouse_on_it = utils::in_bounding_box(&input.mouse, &this_verts, &camera.window).1;
+            if mouse_on_it {
+                color = bone.group_color.into();
+                if bone.group_color.a == 0 {
+                    color = point_color;
+                }
+                (this_verts, this_indices) = draw_point(
+                    &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
+                );
+                if input.left_clicked {
+                    events.select_bone(bone.id as usize, true);
+                }
+            }
+
             for idx in &mut this_indices {
                 *idx += p as u32 * 4;
             }
+
             point_verts.append(&mut this_verts);
             point_indices.append(&mut this_indices.clone());
         }
