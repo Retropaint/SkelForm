@@ -75,15 +75,10 @@ pub fn draw(
         }
     }
 
-    // load kite img
-    if shared_ui.kite_img == None {
-        let img = image::load_from_memory(include_bytes!("../assets/flow-kite.png")).unwrap();
-        let egui_img = egui::ColorImage::from_rgba_unmultiplied(
-            [img.width() as usize, img.height() as usize],
-            &img.into_rgba8(),
-        );
-        shared_ui.kite_img = Some(context.load_texture("flow-kite", egui_img, Default::default()))
-    }
+    let ik_bytes = include_bytes!("../assets/lucysir_ik.png");
+    load_png(&mut shared_ui.ik_img, ik_bytes, "lucysir_ik", context);
+    let lock_bytes = include_bytes!("../assets/lock.png");
+    load_png(&mut shared_ui.lock_img, lock_bytes, "lock", context);
 
     let anim_icon_size = 18;
     if shared_ui.anim.icon_images.len() == 0 {
@@ -1556,4 +1551,21 @@ pub fn draw_resizable_panel<T>(
             }
         }
     }
+}
+
+pub fn load_png(
+    handle: &mut Option<egui::TextureHandle>,
+    bytes: &[u8],
+    id: &str,
+    context: &Context,
+) {
+    if *handle != None {
+        return;
+    }
+    let img = image::load_from_memory(bytes).unwrap();
+    let egui_img = egui::ColorImage::from_rgba_unmultiplied(
+        [img.width() as usize, img.height() as usize],
+        &img.into_rgba8(),
+    );
+    *handle = Some(context.load_texture(id, egui_img, Default::default()))
 }

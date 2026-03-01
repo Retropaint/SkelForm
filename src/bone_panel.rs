@@ -50,7 +50,7 @@ pub fn draw(
         ui.heading(&shared_ui.loc("bone_panel.heading"));
         let hand = egui::CursorIcon::PointingHand;
 
-        let icon_widths = 100.;
+        let icon_widths = 90.;
         //ui.add_space(ui.available_width() - icon_widths);
         //let rect =
         //    egui::Rect::from_min_size(ui.cursor().left_top() + [0., 3.].into(), [13., 17.].into());
@@ -89,10 +89,16 @@ pub fn draw(
         if !bone.locked {
             col -= Color::new(60, 60, 60, 0);
         }
-        let text = egui::RichText::new("🔒").size(15.).color(col);
-        let desc = shared_ui.loc("locked_desc");
-        let label = ui.label(text).on_hover_cursor(hand).on_hover_text(desc);
-        if label.clicked() {
+
+        let offset = ui.cursor().min + [0., 3.].into();
+        let rect = egui::Rect::from_min_size(offset, [15., 15.].into());
+        let img = shared_ui.lock_img.as_ref().unwrap();
+        egui::Image::new(img).tint(col).paint_at(ui, rect);
+        let response: egui::Response = ui
+            .allocate_rect(rect, egui::Sense::click())
+            .on_hover_cursor(egui::CursorIcon::PointingHand)
+            .on_hover_text(shared_ui.loc("locked_desc"));
+        if response.clicked() {
             let locked_f32 = if bone.locked { 0. } else { 1. };
             let locked = &AnimElement::Locked;
             events.edit_bone(bone.id, locked, locked_f32, "", usize::MAX, -1);

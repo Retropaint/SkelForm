@@ -213,15 +213,20 @@ pub fn draw_hierarchy(
                 if !locked {
                     col -= Color::new(80, 80, 80, 0);
                 }
-                let id = "bone_locked".to_owned() + &b.to_string();
-                let desc = shared_ui.loc("locked_desc");
-                if bone_label("🔒", ui, id, Vec2::new(15., 18.), desc, col).clicked() {
+                let offset = ui.cursor().min + [16., 3.].into();
+                let rect = egui::Rect::from_min_size(offset, [15., 15.].into());
+                let img = shared_ui.lock_img.as_ref().unwrap();
+                egui::Image::new(img).tint(col).paint_at(ui, rect);
+                let response: egui::Response = ui
+                    .allocate_rect(rect, egui::Sense::click())
+                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                    .on_hover_text(shared_ui.loc("locked_desc"));
+                if response.clicked() {
                     let locked_f32 = if !locked { 1. } else { 0. };
                     events.save_edited_bone(b);
                     let locked = &AnimElement::Locked;
                     events.edit_bone(bone_id, locked, locked_f32, "", usize::MAX, -1);
                 }
-                ui.add_space(34.);
 
                 // this bone's parent's group color, used for tree lines
                 let mut parent_col = def_line_col;
@@ -258,6 +263,10 @@ pub fn draw_hierarchy(
                     ui.add_space(15.);
                 }
 
+                let mut children = vec![];
+                let bone = &armature.bones[b];
+                get_all_children(&armature.bones, &mut children, bone);
+
                 // no vertical line for root bones
                 if parents.len() != 0 {
                     let mut size = None;
@@ -267,14 +276,10 @@ pub fn draw_hierarchy(
                         offset = Vec2::new(-15., -8.);
                     }
                     vert_line(offset, size, ui, parent_col);
+                    hor_line(Vec2::new(-8., 11.), ui, parent_col);
                 }
 
-                hor_line(Vec2::new(-8., 11.), ui, parent_col);
-
                 // show folding button if this bone has children
-                let mut children = vec![];
-                let bone = &armature.bones[b];
-                get_all_children(&armature.bones, &mut children, bone);
                 if children.len() == 0 {
                     let mut col = def_line_col;
                     if this_group_color.a != 0 {

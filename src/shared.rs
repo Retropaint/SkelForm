@@ -713,7 +713,8 @@ pub struct Ui {
     pub tracing_padding: f32,
 
     pub pointer_on_timeline: bool,
-    pub kite_img: Option<egui::TextureHandle>,
+    pub ik_img: Option<egui::TextureHandle>,
+    pub lock_img: Option<egui::TextureHandle>,
     pub render_points: bool,
     pub render_kites: bool,
 }
