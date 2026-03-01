@@ -32,33 +32,12 @@ pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
     }
 }
 
-pub fn world_to_screen_space(pos: Vec2, window: Vec2, zoom: f32, use_aspect_ratio: bool) -> Vec2 {
-    let mut aspect_ratio = window.y / window.x;
-    if !use_aspect_ratio {
-        aspect_ratio = 1.;
-    }
-
-    let mut vec2 = Vec2::new(
-        (pos.x * window.x as f32 / 4.) * aspect_ratio,
-        -(pos.y * window.y as f32 / 4.),
-    );
-    vec2 /= zoom;
-    vec2 += window / 4.;
-
-    vec2
-}
-
 /// Rotate a point via rotation matrix.
 pub fn rotate(point: &Vec2, rot: f32) -> Vec2 {
     Vec2 {
         x: point.x * rot.cos() - point.y * rot.sin(),
         y: point.x * rot.sin() + point.y * rot.cos(),
     }
-}
-
-/// Return the angle that the source would need to look at target.
-pub fn look_at(source: &Vec2, target: &Vec2) -> f32 {
-    f32::atan2(-(target.x - source.x), target.y - source.y)
 }
 
 /// Check if a point is in a rectangle (formed by vertices).

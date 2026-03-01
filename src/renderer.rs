@@ -411,8 +411,6 @@ pub fn render(
         draw(&None, &vertex_buffer, &index_buffer, render_pass, 0, indices.len());
     }
 
-    if armature.sel_bone(&sel) != None {}
-
     if mesh_onion_id != -1 {
         //render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         //let tp = &temp_arm.bones;
@@ -1375,39 +1373,13 @@ fn draw_flow_kite(
     draw_rect(verts, offset, camera, config, pos, camera_pos, rotation)
 }
 
-fn draw_transform_circle(
-    offset: &Vec2,
-    camera: &Camera,
-    config: &Config,
-    pos: &Vec2,
-    color: VertexColor,
-    camera_pos: Vec2,
-    rotation: f32,
-    width: f32,
-) -> (Vec<Vertex>, Vec<u32>) {
-    let height = 20.;
-    macro_rules! vert {
-        ($pos:expr, $uv:expr) => {
-            vert(Some($pos), Some(color), Some($uv))
-        };
-    }
-    let verts: [Vertex; 4] = [
-        vert!(Vec2::new(-width, height), Vec2::new(0., 1.)),
-        vert!(Vec2::new(width, height), Vec2::new(0., 0.)),
-        vert!(Vec2::new(-width, -height), Vec2::new(1., 1.)),
-        vert!(Vec2::new(width, -height), Vec2::new(1., 0.)),
-    ];
-
-    draw_rect(verts, offset, camera, config, pos, camera_pos, rotation)
-}
-
 fn draw_rect(
     mut temp_verts: [Vertex; 4],
     offset: &Vec2,
     camera: &Camera,
     config: &Config,
     pos: &Vec2,
-    camera_pos: Vec2,
+    camera_pos: Vec2, // set to (0, 0) for vertex points
     rotation: f32,
 ) -> (Vec<Vertex>, Vec<u32>) {
     for v in &mut temp_verts {
@@ -1419,7 +1391,7 @@ fn draw_rect(
     let ar = camera.aspect_ratio();
     let mut cam = world_camera(&camera, &config).clone();
     cam.pos = camera_pos;
-    let pivot = Vec2::new(0.5, 0.5);
+    let pivot = Vec2::new(0., 0.);
     for vert in temp_verts {
         let vert = world_vert(vert, &cam, ar, pivot);
         point_verts.push(vert);
