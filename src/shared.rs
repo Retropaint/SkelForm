@@ -888,6 +888,9 @@ pub struct KeyboardConfig {
     pub copy: egui::KeyboardShortcut,
     pub paste: egui::KeyboardShortcut,
     pub timeline_zoom_mode: egui::KeyboardShortcut,
+    pub transform_move: egui::KeyboardShortcut,
+    pub transform_rotate: egui::KeyboardShortcut,
+    pub transform_scale: egui::KeyboardShortcut,
 }
 
 pub trait Display {
@@ -958,6 +961,9 @@ impl Default for KeyboardConfig {
             copy:               shortcut_key!(egui::Modifiers::COMMAND, egui::Key::C),
             paste:              shortcut_key!(egui::Modifiers::COMMAND, egui::Key::V),
             timeline_zoom_mode: shortcut_key!(egui::Modifiers::COMMAND, egui::Key::F30),
+            transform_move: regular_key!(egui::Key::Q),
+            transform_rotate: regular_key!(egui::Key::W),
+            transform_scale: regular_key!(egui::Key::E),
         }
     }
 }

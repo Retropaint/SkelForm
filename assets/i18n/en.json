@@ -299,7 +299,10 @@
       "copy": "Copy",
       "paste": "Paste",
       "timeline_zoom_mode": "Timeline Zoom Mode ℹ",
-      "timeline_zoom_mode_desc": "The timeline editor will zoom, instead of scroll, when scrolling and holding this modifier."
+      "timeline_zoom_mode_desc": "The timeline editor will zoom, instead of scroll, when scrolling and holding this modifier.",
+      "transform_move": "Move Mode",
+      "transform_rotate": "Rotate Mode",
+      "transform_scale": "Scale Mode"
     },
     "miscellaneous": {
       "heading": "Miscellaneous",

@@ -522,6 +522,16 @@ pub fn kb_inputs(
         }
     }
 
+    if input.consume_shortcut(&config.keys.transform_move) {
+        events.edit_mode_move();
+    }
+    if input.consume_shortcut(&config.keys.transform_rotate) {
+        events.edit_mode_rotate();
+    }
+    if input.consume_shortcut(&config.keys.transform_scale) {
+        events.edit_mode_scale();
+    }
+
     if input.consume_shortcut(&config.keys.cancel) {
         let no_modals = !shared_ui.styles_modal
             && !shared_ui.modal
