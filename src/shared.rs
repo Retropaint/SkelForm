@@ -2090,6 +2090,8 @@ pub struct Renderer {
     pub kite_index_buffer: Option<wgpu::Buffer>,
     pub sel_bone_index_buffer: Option<wgpu::Buffer>,
     pub sel_bone_vertex_buffer: Option<wgpu::Buffer>,
+    pub gridline_index_buffer: Option<wgpu::Buffer>,
+    pub gridline_vertex_buffer: Option<wgpu::Buffer>,
     pub render_points: bool,
     pub render_kites: bool,
 }

@@ -52,6 +52,8 @@ pub fn render(
         create_buffer!(renderer.kite_index_buffer, index);
         create_buffer!(renderer.sel_bone_vertex_buffer, vertex);
         create_buffer!(renderer.sel_bone_index_buffer, index);
+        create_buffer!(renderer.gridline_vertex_buffer, vertex);
+        create_buffer!(renderer.gridline_index_buffer, index);
     }
 
     let sel = selections.clone();
@@ -68,7 +70,7 @@ pub fn render(
     mouse_world_vert.pos.x *= camera.window.y / camera.window.x;
 
     if !config.gridline_front {
-        draw_gridline(render_pass, device, &renderer, &camera, &config);
+        draw_gridline(render_pass, &renderer, &camera, &config, queue);
     }
 
     let mut temp_arm = Armature::default();
@@ -437,7 +439,7 @@ pub fn render(
     }
 
     if config.gridline_front {
-        draw_gridline(render_pass, device, &renderer, &camera, &config);
+        draw_gridline(render_pass, &renderer, &camera, &config, queue);
     }
 
     #[rustfmt::skip]
@@ -1521,10 +1523,10 @@ pub fn world_vert(mut vert: Vertex, camera: &Camera, aspect_ratio: f32, pivot: V
 
 fn draw_gridline(
     render_pass: &mut RenderPass,
-    device: &Device,
     renderer: &Renderer,
     camera: &Camera,
     config: &Config,
+    queue: &Queue,
 ) {
     render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
 
@@ -1587,12 +1589,13 @@ fn draw_gridline(
         return;
     }
 
-    render_pass.set_index_buffer(
-        index_buffer(indices.clone(), &device).slice(..),
-        wgpu::IndexFormat::Uint32,
-    );
-    render_pass.set_vertex_buffer(0, vertex_buffer(&verts, device).slice(..));
-    render_pass.draw_indexed(0..indices.len() as u32, 0, 0..1);
+    let gpu_verts: Vec<GpuVertex> = verts.iter().map(|vert| (*vert).into()).collect();
+    let index_buffer = &renderer.gridline_index_buffer.as_ref().unwrap();
+    let vertex_buffer = &renderer.gridline_vertex_buffer.as_ref().unwrap();
+    queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&indices));
+    queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
+    #[rustfmt::skip]
+    draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, indices.len());
 }
 
 macro_rules! vert {
