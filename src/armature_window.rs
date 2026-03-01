@@ -5,7 +5,7 @@ use egui::*;
 use crate::{
     shared::Vec2,
     ui::{self, EguiUi, TextInputOptions},
-    utils,
+    utils::{self, get_all_parents},
 };
 
 use crate::shared::*;
@@ -221,17 +221,41 @@ pub fn draw_hierarchy(
                 ui.add_space(34.);
 
                 // add space to the left if this is a child
-                for _ in 0..parents.len() {
-                    vert_line(0., ui, &config);
+                for p in 0..parents.len() {
+                    // don't add vertical line if this is a grandchild and there's no more direct children
+                    if p != parents.len() - 1 {
+                        let mut children = vec![];
+                        get_all_children(&armature.bones, &mut children, &parents[p]);
+
+                        // if the idx of a direct child is lower than this bone, do not add vertical line
+                        let this_idx = children.iter().position(|b| b.id == bone_id).unwrap();
+                        let direct_idx = children
+                            .iter()
+                            .rposition(|b| b.parent_id == parents[p].id)
+                            .unwrap();
+                        if direct_idx < this_idx {
+                            ui.add_space(15.);
+                            continue;
+                        }
+                    }
+
+                    vert_line(Vec2::new(0., -11.), ui, &config);
                     ui.add_space(15.);
                 }
+
+                // no vertical line for root bones
+                if parents.len() != 0 {
+                    vert_line(Vec2::new(-15., -11.), ui, &config);
+                }
+
+                hor_line(Vec2::new(-8., 11.), ui, &config);
 
                 // show folding button if this bone has children
                 let mut children = vec![];
                 let bone = &armature.bones[b];
                 get_all_children(&armature.bones, &mut children, bone);
                 if children.len() == 0 {
-                    hor_line(11., ui, &config);
+                    hor_line(Vec2::new(0., 11.), ui, &config);
                 } else {
                     let folded = armature.bones[b].folded;
                     let fold_icon = if folded { "⏵" } else { "⏷" };
@@ -288,9 +312,6 @@ pub fn draw_hierarchy(
                         ui.set_width(width);
                         let name = armature.bones[b].name.to_string();
                         let mut text_col = config.colors.text;
-                        if group_colors.get(&bone.id).unwrap().a != 0 {
-                            text_col = *group_colors.get(&bone.id).unwrap();
-                        }
                         if hidden {
                             text_col = config.colors.dark_accent;
                             text_col += Color::new(40, 40, 40, 0)
@@ -465,9 +486,9 @@ fn check_bone_dragging(
     return true;
 }
 
-pub fn vert_line(offset: f32, ui: &mut egui::Ui, config: &Config) {
+pub fn vert_line(offset: Vec2, ui: &mut egui::Ui, config: &Config) {
     let rect = egui::Rect::from_min_size(
-        ui.cursor().left_top() + [3., -1.5 + offset].into(),
+        ui.cursor().left_top() + [3. + offset.x, -1.5 + offset.y].into(),
         [2., 24.].into(),
     );
     let mut line_col = config.colors.dark_accent;
@@ -476,10 +497,10 @@ pub fn vert_line(offset: f32, ui: &mut egui::Ui, config: &Config) {
         .rect_filled(rect, egui::CornerRadius::ZERO, line_col);
 }
 
-pub fn hor_line(offset: f32, ui: &mut egui::Ui, config: &Config) {
+pub fn hor_line(offset: Vec2, ui: &mut egui::Ui, config: &Config) {
     let rect = egui::Rect::from_min_size(
-        ui.cursor().left_top() + [-2., -1.5 + offset].into(),
-        [12., 2.].into(),
+        ui.cursor().left_top() + [-2. + offset.x, -1.5 + offset.y].into(),
+        [13., 2.].into(),
     );
     let mut line_col = config.colors.dark_accent;
     line_col += Color::new(20, 20, 20, 0);

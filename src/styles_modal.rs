@@ -486,7 +486,7 @@ pub fn draw_bone_buttons(
             let parents = armature.get_all_parents(false, armature.bones[b].id);
             // add space to the left if this is a child
             for _ in 0..parents.len() {
-                armature_window::vert_line(0., ui, &config);
+                armature_window::vert_line(Vec2::new(0., 0.), ui, &config);
                 ui.add_space(15.);
             }
 
@@ -495,7 +495,7 @@ pub fn draw_bone_buttons(
             let bone = &armature.bones[b];
             armature_window::get_all_children(&armature.bones, &mut children, bone);
             if children.len() == 0 {
-                armature_window::hor_line(11., ui, &config);
+                armature_window::hor_line(Vec2::new(0., 11.), ui, &config);
             } else {
                 let folded = armature.bones[b].folded;
                 let fold_icon = if folded { "⏵" } else { "⏷" };
