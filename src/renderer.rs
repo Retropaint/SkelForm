@@ -543,7 +543,7 @@ pub fn render(
             let aspect_ratio = camera.aspect_ratio();
             let cw = world_vert(center, cam, aspect_ratio, Vec2::new(0.5, 0.5));
             render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
-            draw_line(cw.pos, mouse, render_pass, &device);
+            draw_line(cw.pos, mouse, &mut renderer.ring_buffer, render_pass, &queue);
         }
 
         if !renderer.editing_bone {
@@ -1293,7 +1293,13 @@ pub fn vert_lines(
     (all_verts, all_indices, hovered_once)
 }
 
-fn draw_line(origin: Vec2, target: Vec2, render_pass: &mut RenderPass, device: &Device) {
+fn draw_line(
+    origin: Vec2,
+    target: Vec2,
+    buffer: &mut RenderBuffer,
+    render_pass: &mut RenderPass,
+    queue: &wgpu::Queue
+) {
     let dir = target - origin;
 
     let width = 2.5;
@@ -1316,14 +1322,8 @@ fn draw_line(origin: Vec2, target: Vec2, render_pass: &mut RenderPass, device: &
     let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
     let indices = vec![0, 1, 2, 1, 2, 3];
 
-    //draw(
-    //    &None,
-    //    &vertex_buffer(&verts, device),
-    //    &index_buffer(indices, device),
-    //    render_pass,
-    //    0,
-    //    6,
-    //);
+    setup_render_buffer(buffer, &verts, &indices, queue);
+    draw(buffer, render_pass, 0, 6);
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
