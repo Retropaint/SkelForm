@@ -892,6 +892,8 @@ impl BackendRenderer {
         self.load_bindgroup(&mut renderer.circle_bindgroup, bytes);
         let bytes = include_bytes!("../assets/transform-ring.png");
         self.load_bindgroup(&mut renderer.ring_bindgroup, bytes);
+        let bytes = include_bytes!("../assets/selected-ring.png");
+        self.load_bindgroup(&mut renderer.selected_ring_bindgroup, bytes);
 
         if renderer.generic_bindgroup == None {
             renderer.generic_bindgroup = Some(renderer::create_texture_bind_group(

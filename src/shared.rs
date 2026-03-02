@@ -2098,6 +2098,7 @@ pub struct Renderer {
     pub generic_bindgroup: Option<BindGroup>,
     pub circle_bindgroup: Option<BindGroup>,
     pub ring_bindgroup: Option<BindGroup>,
+    pub selected_ring_bindgroup: Option<BindGroup>,
     pub flow_kite_bindgroup: Option<BindGroup>,
     pub changed_vert_id: i32,
     pub changed_vert_init_pos: Option<Vec2>,
@@ -2119,6 +2120,7 @@ pub struct Renderer {
     pub sel_bone_buffer: RenderBuffer,
     pub gridline_buffer: RenderBuffer,
     pub ring_buffer: RenderBuffer,
+    pub selected_ring_buffer: RenderBuffer,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]
