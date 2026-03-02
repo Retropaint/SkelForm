@@ -37,7 +37,7 @@ args = parser.parse_args()
 
 if args.nightly:
     args.release = True
-    args.baseurl = "editornightly"
+    args.baseurl = "editor-nightly"
 
 if args.release and not args.mobile:
     generic += " --release"
