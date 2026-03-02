@@ -235,10 +235,18 @@ pub fn iterate_events(
         let is_above = events.values[0] == 1.;
         let pointing_id = events.values[1] as i32;
         let dragging_id = events.values[2] as i32;
-        let bones = &armature.bones;
         if selections.bone_ids.len() < 2 {
-            selections.bone_idx = bones.iter().position(|b| b.id == dragging_id).unwrap();
             selections.bone_ids = vec![dragging_id];
+        } else {
+            // only move root bones (in context of selected bones)
+            let c_bone_ids = selections.bone_ids.clone();
+            selections.bone_ids.retain(|id| {
+                let bone = armature.bones.iter().find(|b| b.id == *id);
+                if bone == None {
+                    return false;
+                }
+                !c_bone_ids.contains(&bone.unwrap().parent_id)
+            });
         }
         drag_bone(armature, pointing_id, selections, is_above);
         events.events.remove(0);
@@ -934,18 +942,14 @@ fn select_bone(
             sel.bone_ids.push(id);
         } else {
             let mut first = sel.bone_idx;
-            let mut second = idx as usize;
+            let mut second = idx as usize + 1;
             if first > second {
                 first = idx as usize;
                 second = sel.bone_idx;
             }
             for i in first..second as usize {
                 let bone = &armature.bones[i];
-                let this_id = sel.bone_ids.contains(&bone.id);
-                let sel_bone = armature.sel_bone(&sel).unwrap();
-                if !this_id && bone.parent_id == sel_bone.parent_id {
-                    sel.bone_ids.push(bone.id);
-                }
+                sel.bone_ids.push(bone.id);
             }
         }
     }
