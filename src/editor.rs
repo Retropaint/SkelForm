@@ -942,12 +942,12 @@ fn select_bone(
             sel.bone_ids.push(id);
         } else {
             let mut first = sel.bone_idx;
-            let mut second = idx as usize + 1;
+            let mut second = idx as usize;
             if first > second {
                 first = idx as usize;
                 second = sel.bone_idx;
             }
-            for i in first..second as usize {
+            for i in first..second as usize + 1 {
                 let bone = &armature.bones[i];
                 sel.bone_ids.push(bone.id);
             }
