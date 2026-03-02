@@ -420,7 +420,7 @@ pub fn render(
     }
 
     #[rustfmt::skip]
-    draw_points_and_kites(config, camera, input, edit_mode.sel_time, &mut temp_arm, selected_bone_ids, renderer, queue, render_pass, events);
+    draw_points_and_kites(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids, renderer, queue, render_pass, events);
 
     if !input.left_down {
         renderer.dragging_verts = vec![];
@@ -1628,7 +1628,7 @@ pub fn draw_points_and_kites(
     config: &Config,
     camera: &Camera,
     input: &InputStates,
-    sel_time: f32,
+    edit_mode: &EditMode,
     temp_arm: &mut Armature,
     selected_bone_ids: Vec<i32>,
     renderer: &mut Renderer,
@@ -1648,9 +1648,16 @@ pub fn draw_points_and_kites(
     let mut kite_indices = vec![];
     let mut point_verts = vec![];
     let mut point_indices = vec![];
-    let mut vert_pack_idx = 0;
+    let mut point_vert_pack_idx = 0;
+    let mut kite_vert_pack_idx = 0;
     for p in 0..temp_arm.bones.len() {
         let bone = &temp_arm.bones[p];
+
+        // skip points & kites for this bone if editing its mesh
+        if edit_mode.showing_mesh && selected_bone_ids.contains(&bone.id) {
+            continue;
+        }
+
         let mut color;
         if renderer.render_points {
             if bone.group_color.a == 0 {
@@ -1670,7 +1677,7 @@ pub fn draw_points_and_kites(
             let sel_size = 20.;
             let normal_size = 7.;
             let elapsed = if selected_bone_ids.len() > 0 && bone.id == selected_bone_ids[0] {
-                (sel_size - sel_time * fade_speed).max(normal_size)
+                (sel_size - edit_mode.sel_time * fade_speed).max(normal_size)
             } else {
                 normal_size
             };
@@ -1698,11 +1705,12 @@ pub fn draw_points_and_kites(
             }
 
             for idx in &mut this_indices {
-                *idx += p as u32 * 4;
+                *idx += point_vert_pack_idx as u32 * 4;
             }
 
             point_verts.append(&mut this_verts);
             point_indices.append(&mut this_indices.clone());
+            point_vert_pack_idx += 1;
         }
 
         if !renderer.render_kites {
@@ -1741,11 +1749,11 @@ pub fn draw_points_and_kites(
             &zero, &camera, &config, &temp_arm.bones[p].pos, color, cam.pos, kite_rot, kite_width
         );
         for idx in &mut this_indices {
-            *idx += vert_pack_idx * 4;
+            *idx += kite_vert_pack_idx * 4;
         }
         kite_verts.append(&mut this_verts);
         kite_indices.append(&mut this_indices);
-        vert_pack_idx += 1;
+        kite_vert_pack_idx += 1;
     }
     if point_indices.len() > 0 {
         render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
