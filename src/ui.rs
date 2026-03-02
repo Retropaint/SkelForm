@@ -339,6 +339,17 @@ pub fn draw(
         return;
     }
 
+    // show which temporary mode will activate on press
+    if let Some(temporary) = &edit_mode.temporary {
+        if *temporary == EditModes::Move {
+            helper_text!("Move", Vec2::new(0., -10.));
+        } else if *temporary == EditModes::Rotate {
+            helper_text!("Rotate", Vec2::new(0., -10.));
+        } else if *temporary == EditModes::Scale {
+            helper_text!("Scale", Vec2::new(0., -10.));
+        }
+    }
+
     if edit_mode.is_rotating {
         let offset = Vec2::new(50., 0.);
         let rot = selected_bone.rot / 3.14 * 180.;

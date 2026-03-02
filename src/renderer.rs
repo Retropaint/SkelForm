@@ -22,6 +22,8 @@ pub fn render(
         return;
     }
 
+    // unselect bone if clicking
+    // this will be overridden by any event later that selects a bone
     if !camera.on_ui && armature.bones.len() > 0 && input.left_clicked {
         events.select_bone(usize::MAX, true);
     }
@@ -312,6 +314,38 @@ pub fn render(
         }
     }
 
+    // initiate temporary edit mode if mouse is close enough to bone
+    if !input.left_down && armature.sel_bone(&sel) != None {
+        // mouse pos in world space
+        let mouse_pos = Vec2::new(
+            mouse_world_vert.pos.x * camera.zoom / camera.aspect_ratio() + camera.pos.x,
+            mouse_world_vert.pos.y * camera.zoom + camera.pos.y,
+        );
+        let mut has_temporary = false;
+        let sel_bone = armature.sel_bone(&sel).unwrap();
+        let adjusted = Vec2::new(
+            (sel_bone.pos.x - mouse_pos.x) * camera.aspect_ratio(),
+            sel_bone.pos.y - mouse_pos.y,
+        );
+
+        let distance = adjusted.mag() / camera.zoom;
+        if distance < 0.01 {
+            has_temporary = true;
+            events.set_temporary_edit_mode(0);
+        } else if distance < 0.2 {
+            has_temporary = true;
+            events.set_temporary_edit_mode(1);
+        } else if distance < 0.3 {
+            has_temporary = true;
+            events.set_temporary_edit_mode(2);
+        }
+
+        // set temp 
+        if !has_temporary && edit_mode.temporary != None {
+            events.set_temporary_edit_mode(3);
+        }
+    }
+
     renderer.temp_bones = temp_arm.bones.clone();
 
     // runtime: sort bones by z-index for drawing
@@ -478,7 +512,13 @@ pub fn render(
     if camera.on_ui {
         renderer.editing_bone = false;
     } else if idx != usize::MAX && input.left_down && hover_bone_id == -1 && input.down_dur > 5 {
-        if edit_mode.current == EditModes::Rotate {
+        let current_edit = if edit_mode.temporary == None {
+            &edit_mode.current
+        } else {
+            edit_mode.temporary.as_ref().unwrap()
+        };
+
+        if *current_edit == EditModes::Rotate {
             let mut mouse = utils::screen_to_world_space(input.mouse, camera.window);
             mouse.x *= camera.aspect_ratio();
             let id = armature.sel_bone(&sel).unwrap().id;
@@ -500,7 +540,7 @@ pub fn render(
         let bone = temp_arm.bones.iter().find(|b| b.id == id).unwrap();
 
         #[rustfmt::skip]
-        edit_bone(events, edit_mode, &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones);
+        edit_bone(events, edit_mode.anim_open, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones);
     }
 }
 
@@ -896,7 +936,8 @@ pub fn fabrik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
 
 pub fn edit_bone(
     events: &mut EventState,
-    edit_mode: &EditMode,
+    anim_open: bool,
+    current_edit: EditModes,
     selections: &SelectionState,
     camera: &Camera,
     config: &Config,
@@ -907,7 +948,7 @@ pub fn edit_bone(
 ) {
     let mut anim_id = selections.anim;
     let anim_frame = selections.anim_frame;
-    if !edit_mode.anim_open {
+    if !anim_open {
         anim_id = usize::MAX;
     }
 
@@ -921,7 +962,7 @@ pub fn edit_bone(
     let cam = &world_camera(&camera, &config);
     let bone_center = world_vert(vert, cam, camera.aspect_ratio(), Vec2::new(0.5, 0.5));
 
-    if edit_mode.current == EditModes::Move {
+    if current_edit == EditModes::Move {
         let mut pos = bone.pos;
         let mouse_vel = mouse_vel(&input, &camera) * camera.zoom;
 
@@ -938,7 +979,7 @@ pub fn edit_bone(
 
         edit!(bone, AnimElement::PositionX, pos.x);
         edit!(bone, AnimElement::PositionY, pos.y);
-    } else if edit_mode.current == EditModes::Rotate {
+    } else if current_edit == EditModes::Rotate {
         let mouse_init = utils::screen_to_world_space(input.mouse_init.unwrap(), camera.window);
         let dir_init = mouse_init - bone_center.pos;
         let rot_init = dir_init.y.atan2(dir_init.x);
@@ -949,7 +990,7 @@ pub fn edit_bone(
 
         let rot = renderer.bone_init_rot + (rot - rot_init);
         edit!(bone, AnimElement::Rotation, rot);
-    } else if edit_mode.current == EditModes::Scale {
+    } else if current_edit == EditModes::Scale {
         let mut scale = bone.scale;
 
         // restore universal scale, by offsetting against parent's

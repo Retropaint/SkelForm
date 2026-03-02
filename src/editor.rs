@@ -843,6 +843,13 @@ pub fn process_event(
             renderer.render_points = ui.render_points;
             renderer.render_kites = ui.render_kites;
         }
+        Events::SetTemporaryEditMode => {
+            if value == 3. {
+                edit_mode.temporary = None;
+            } else {
+                edit_mode.temporary = EditModes::from_repr(value as usize);
+            }
+        }
         _ => {}
     }
 }
@@ -886,6 +893,12 @@ fn select_bone(
     idx: usize,
     from_renderer: bool,
 ) {
+    if idx == usize::MAX {
+        sel.bone_idx = usize::MAX;
+        sel.bone_ids = vec![];
+        return;
+    }
+
     edit_mode.setting_bind_verts = false;
     edit_mode.showing_mesh = false;
     edit_mode.sel_time = 0.;

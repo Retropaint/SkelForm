@@ -1912,7 +1912,7 @@ pub struct BoneTops {
     pub tops: Vec<BoneTop>,
 }
 
-#[derive(Default, PartialEq, Clone)]
+#[derive(Default, PartialEq, Clone, FromRepr)]
 pub enum EditModes {
     #[default]
     Move,
@@ -1931,6 +1931,7 @@ enum_string!(ExportImgFormat);
 #[derive(Default, Clone)]
 pub struct EditMode {
     pub current: EditModes,
+    pub temporary: Option<EditModes>,
     pub is_moving: bool,
     pub is_scaling: bool,
     pub is_rotating: bool,
@@ -2217,6 +2218,7 @@ pub enum Events {
     UpdateKeyframeTransition,
     ToggleOnionLayers,
     UpdateRenderOptions,
+    SetTemporaryEditMode,
 }
 
 enum_string!(Events);
@@ -2318,6 +2320,12 @@ impl EventState {
         E::RemoveKeyframesByFrame,
         frame,
         i32
+    );
+    event_with_value!(
+        set_temporary_edit_mode,
+        E::SetTemporaryEditMode,
+        mode,
+        u32
     );
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
