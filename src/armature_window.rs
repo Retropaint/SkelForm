@@ -403,11 +403,22 @@ pub fn draw_hierarchy(
                                     icon_label(ui, "⬟", mesh_str, config.colors.meshdef);
                                 }
                                 if bone.ik_family_id != -1 {
-                                    let icon = "🔧".to_owned() + &bone.ik_family_id.to_string();
+                                    let color = config.colors.inverse_kinematics;
                                     let desc = shared_ui
                                         .loc("armature_panel.icons.ik_family")
                                         .replace("$family_id", &bone.ik_family_id.to_string());
-                                    icon_label(ui, &icon, desc, config.colors.inverse_kinematics);
+                                    let offset = ui.cursor().min + [-1., 5.].into();
+                                    let rect = egui::Rect::from_min_size(offset, [15., 12.].into());
+                                    let img = shared_ui.ik_img.as_ref().unwrap();
+                                    egui::Image::new(img).tint(color).paint_at(ui, rect);
+                                    let response = ui
+                                        .allocate_rect(rect, egui::Sense::hover())
+                                        .on_hover_text(shared_ui.loc("locked_desc"));
+                                    if response.contains_pointer() {
+                                        response.show_tooltip_text(&desc);
+                                    }
+                                    let family_id = &bone.ik_family_id.to_string();
+                                    icon_label(ui, family_id, desc, color);
                                 }
                                 if is_target != None {
                                     let family_id = is_target.unwrap().ik_family_id.to_string();
