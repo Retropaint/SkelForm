@@ -406,7 +406,7 @@ pub fn draw_hierarchy(
                                         .loc("armature_panel.icons.ik_family")
                                         .replace("$family_id", &bone.ik_family_id.to_string());
                                     let offset = ui.cursor().min + [-1., 5.].into();
-                                    let rect = egui::Rect::from_min_size(offset, [15., 12.].into());
+                                    let rect = egui::Rect::from_min_size(offset, [13., 10.].into());
                                     let img = shared_ui.ik_img.as_ref().unwrap();
                                     egui::Image::new(img).tint(color).paint_at(ui, rect);
                                     let response = ui
