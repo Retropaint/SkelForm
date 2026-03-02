@@ -228,56 +228,49 @@ pub fn draw_hierarchy(
                     events.edit_bone(bone_id, locked, locked_f32, "", usize::MAX, -1);
                 }
 
-                // this bone's parent's group color, used for tree lines
-                let mut parent_col = def_line_col;
-                if parents.len() > 0 && group_colors.get(&parents[0].id).unwrap().a != 0 {
-                    parent_col = *group_colors.get(&parents[0].id).unwrap();
-                }
-
-                let mut is_first_child = false;
-
                 // add space to the left if this is a child
                 for p in (0..parents.len()).rev() {
-                    // don't add vertical line if this is a grandchild and there's no more direct children
-                    if p != 0 {
-                        let mut children = vec![];
-                        get_all_children(&armature.bones, &mut children, &parents[p]);
-
-                        // if the idx of a direct child is lower than this bone, do not add vertical line
-                        let this_idx = children.iter().position(|b| b.id == bone_id).unwrap();
-                        if this_idx == 0 {
-                            is_first_child = true;
-                        }
-                        let direct_idx = children
-                            .iter()
-                            .rposition(|b| b.parent_id == parents[p].id)
-                            .unwrap();
-
-                        if direct_idx < this_idx {
-                            ui.add_space(15.);
-                            continue;
-                        }
+                    // don't add vertical line, if there are no more direct children to this parent beyond this bone
+                    let mut children = vec![];
+                    get_all_children(&armature.bones, &mut children, &parents[p]);
+                    let this_child_idx = children.iter().position(|b| b.id == bone_id).unwrap();
+                    let direct_child_idx =
+                        children.iter().rposition(|b| b.parent_id == parents[p].id);
+                    if direct_child_idx.unwrap() < this_child_idx {
+                        ui.add_space(15.);
+                        continue;
                     }
 
-                    vert_line(Vec2::new(0., -11.), None, ui, def_line_col);
+                    // adjust vertical line on first children, so the parent's fold arrow isn't blocked
+                    let mut size = None;
+                    let mut offset = Vec2::new(0., -11.);
+                    if this_child_idx == 0 {
+                        size = Some(Vec2::new(2., 20.));
+                        offset = Vec2::new(0., -7.);
+                    }
+
+                    // get appropriate color for this vertical line, based on the current parent
+                    let mut line_col = def_line_col;
+                    if group_colors.get(&parents[p].id).unwrap().a != 0 {
+                        line_col = *group_colors.get(&parents[p].id).unwrap();
+                    }
+
+                    vert_line(offset, size, ui, line_col);
                     ui.add_space(15.);
+                }
+
+                // horizontal line connecting to vertical line, for children
+                if parents.len() != 0 {
+                    let mut parent_col = def_line_col;
+                    if parents.len() > 0 && group_colors.get(&parents[0].id).unwrap().a != 0 {
+                        parent_col = *group_colors.get(&parents[0].id).unwrap();
+                    }
+                    hor_line(Vec2::new(-8., 11.), ui, parent_col);
                 }
 
                 let mut children = vec![];
                 let bone = &armature.bones[b];
                 get_all_children(&armature.bones, &mut children, bone);
-
-                // no vertical line for root bones
-                if parents.len() != 0 {
-                    let mut size = None;
-                    let mut offset = Vec2::new(-15., -11.);
-                    if is_first_child {
-                        size = Some(Vec2::new(2., 21.));
-                        offset = Vec2::new(-15., -8.);
-                    }
-                    vert_line(offset, size, ui, parent_col);
-                    hor_line(Vec2::new(-8., 11.), ui, parent_col);
-                }
 
                 // show folding button if this bone has children
                 if children.len() == 0 {
@@ -287,16 +280,11 @@ pub fn draw_hierarchy(
                     }
                     hor_line(Vec2::new(0., 11.), ui, col);
                 } else {
-                    let folded = armature.bones[b].folded;
-                    let fold_icon = if folded { "⏵" } else { "⏷" };
-                    let id = "bone_fold".to_owned() + &b.to_string();
-                    let desc = shared_ui.loc("armature_panel.fold_desc");
+                    // render arrow border
                     let mut border_col = def_line_col;
                     if group_colors.get(&bone.id).unwrap().a != 0 {
                         border_col = *group_colors.get(&bone.id).unwrap();
                     }
-
-                    // render arrow border
                     let border_id = "bone_fold_border".to_string() + &b.to_string();
                     let ball_offset = Vec2::new(-2., 18.);
                     bone_label("⏺", ui, border_id, ball_offset, "".to_string(), border_col);
@@ -309,6 +297,10 @@ pub fn draw_hierarchy(
                         arrow_col = config.colors.dark_accent;
                     }
 
+                    let folded = armature.bones[b].folded;
+                    let fold_icon = if folded { "⏵" } else { "⏷" };
+                    let id = "bone_fold".to_owned() + &b.to_string();
+                    let desc = shared_ui.loc("armature_panel.fold_desc");
                     let arrow_offset = Vec2::new(-2., 18.5);
                     if bone_label(fold_icon, ui, id, arrow_offset, desc, arrow_col).clicked() {
                         events.toggle_bone_folded(idx as usize, !armature.bones[b].folded);
