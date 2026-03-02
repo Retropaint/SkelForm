@@ -22,6 +22,10 @@ pub fn render(
         return;
     }
 
+    if !camera.on_ui && armature.bones.len() > 0 && input.left_clicked {
+        events.select_bone(usize::MAX, true);
+    }
+
     if renderer.meshframe_buffer.index == None {
         renderer.bone_buffer.init(device, 1000);
         renderer.prev_onion_buffer.init(device, 1000);
