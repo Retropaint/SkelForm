@@ -1156,15 +1156,12 @@ pub fn drag_bone(
             pointing!().folded = false;
         }
 
-        // keep bone selected in new dragged position
-        let bones = &mut armature.bones;
-        let bone_idx = bones.iter().position(|b| b.id == id).unwrap();
-        sel.bone_ids = vec![id];
-        sel.bone_idx = bone_idx;
-
         // adjust dragged bone so it stays in place
         armature.offset_pos_by_parent(old_parents, id);
     }
+
+    let bones = &armature.bones;
+    sel.bone_idx = bones.iter().position(|b| b.id == sel.bone_ids[0]).unwrap();
 }
 
 fn edit_bone(
