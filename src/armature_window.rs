@@ -305,9 +305,7 @@ pub fn draw_hierarchy(
 
                     // change arrow color to contrast better with border
                     let mut arrow_col = config.colors.text;
-                    let brightest: u32 =
-                        (border_col.r as u32 + border_col.g as u32 + border_col.b as u32) / 3;
-                    if brightest > 75 {
+                    if constrast_between(border_col, arrow_col) < 4.5 {
                         arrow_col = config.colors.dark_accent;
                     }
 
@@ -586,4 +584,29 @@ fn icon_label(ui: &mut egui::Ui, icon: &str, desc: String, color: Color) {
     if label.contains_pointer() {
         label.show_tooltip_text(desc);
     }
+}
+
+fn constrast_between(color1: Color, color2: Color) -> f32 {
+    // https://www.w3.org/TR/WCAG20/#contrast-ratiodef
+    let lumm_1 = luminance(srgb_to_linear(color1));
+    let lumm_2 = luminance(srgb_to_linear(color2));
+
+    let max = lumm_1.max(lumm_2);
+    let min = lumm_1.min(lumm_2);
+
+    (max + 0.05) / (min + 0.05)
+}
+
+fn srgb_to_linear(color: Color) -> Color {
+    let r = (color.r as f32 / 255.).powf(2.2);
+    let g = (color.g as f32 / 255.).powf(2.2);
+    let b = (color.b as f32 / 255.).powf(2.2);
+
+    Color::new((r * 255.) as u8, (g * 255.) as u8, (b * 255.) as u8, 0)
+}
+
+fn luminance(color: Color) -> f32 {
+    // https://en.wikipedia.org/wiki/Relative_luminance
+    let y = (0.2125, 0.7154, 0.0721);
+    (color.r as f32 * 255.) * y.0 + (color.g as f32 * 255.) * y.1 + (color.b as f32 * 255.) * y.2
 }
