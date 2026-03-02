@@ -2072,18 +2072,22 @@ pub struct RenderBuffer {
 
 impl RenderBuffer {
     pub fn init(&mut self, device: &wgpu::Device, size: u64) {
-        self.vertex = Some(device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: size * std::mem::size_of::<GpuVertex>() as u64,
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        }));
-        self.index = Some(device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: size * (std::mem::size_of::<u32>() as u64 * 2),
-            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        }));
+        if self.vertex == None {
+            self.vertex = Some(device.create_buffer(&wgpu::BufferDescriptor {
+                label: None,
+                size: size * std::mem::size_of::<GpuVertex>() as u64,
+                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            }));
+        }
+        if self.index == None {
+            self.index = Some(device.create_buffer(&wgpu::BufferDescriptor {
+                label: None,
+                size: size * (std::mem::size_of::<u32>() as u64 * 2),
+                usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            }));
+        }
     }
 }
 
@@ -2093,6 +2097,7 @@ pub struct Renderer {
     pub dragging_verts: Vec<usize>,
     pub generic_bindgroup: Option<BindGroup>,
     pub circle_bindgroup: Option<BindGroup>,
+    pub ring_bindgroup: Option<BindGroup>,
     pub flow_kite_bindgroup: Option<BindGroup>,
     pub changed_vert_id: i32,
     pub changed_vert_init_pos: Option<Vec2>,
@@ -2113,6 +2118,7 @@ pub struct Renderer {
     pub kite_buffer: RenderBuffer,
     pub sel_bone_buffer: RenderBuffer,
     pub gridline_buffer: RenderBuffer,
+    pub ring_buffer: RenderBuffer,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]
@@ -2321,12 +2327,7 @@ impl EventState {
         frame,
         i32
     );
-    event_with_value!(
-        set_temporary_edit_mode,
-        E::SetTemporaryEditMode,
-        mode,
-        u32
-    );
+    event_with_value!(set_temporary_edit_mode, E::SetTemporaryEditMode, mode, u32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

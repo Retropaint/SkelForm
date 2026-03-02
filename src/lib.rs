@@ -724,7 +724,7 @@ impl BackendRenderer {
     }
 
     fn skf_render(&mut self, shared: &mut Shared, render_pass: &mut wgpu::RenderPass) {
-        self.init_buffers_and_bindgroups(shared);
+        self.init_buffers_and_bindgroups(&mut shared.renderer);
         self.check_export(shared);
 
         if *shared.ui.save_finished.lock().unwrap() {
@@ -875,50 +875,41 @@ impl BackendRenderer {
         *shared.ui.mapped_frames.lock().unwrap() = 0;
     }
 
-    fn init_buffers_and_bindgroups(&self, shared: &mut shared::Shared) {
-        if shared.renderer.meshframe_buffer.index == None {
-            shared.renderer.bone_buffer.init(&self.gpu.device, 1000);
-            shared
-                .renderer
-                .prev_onion_buffer
-                .init(&self.gpu.device, 1000);
-            shared
-                .renderer
-                .next_onion_buffer
-                .init(&self.gpu.device, 1000);
-            shared.renderer.point_buffer.init(&self.gpu.device, 1000);
-            shared.renderer.kite_buffer.init(&self.gpu.device, 1000);
-            shared.renderer.sel_bone_buffer.init(&self.gpu.device, 1000);
-            shared.renderer.gridline_buffer.init(&self.gpu.device, 1000);
-            shared
-                .renderer
-                .meshframe_buffer
-                .init(&self.gpu.device, 1000);
+    fn init_buffers_and_bindgroups(&self, renderer: &mut Renderer) {
+        if renderer.meshframe_buffer.index == None {
+            renderer.bone_buffer.init(&self.gpu.device, 1000);
+            renderer.prev_onion_buffer.init(&self.gpu.device, 1000);
+            renderer.next_onion_buffer.init(&self.gpu.device, 1000);
+            renderer.point_buffer.init(&self.gpu.device, 1000);
+            renderer.kite_buffer.init(&self.gpu.device, 1000);
+            renderer.sel_bone_buffer.init(&self.gpu.device, 1000);
+            renderer.gridline_buffer.init(&self.gpu.device, 1000);
+            renderer.meshframe_buffer.init(&self.gpu.device, 1000);
         }
-        if shared.renderer.flow_kite_bindgroup == None {
-            let img = image::load_from_memory(include_bytes!("../assets/flow-kite.png")).unwrap();
-            shared.renderer.flow_kite_bindgroup = Some(renderer::create_texture_bind_group(
-                img.clone().into_rgba8().to_vec(),
-                Vec2::new(img.width() as f32, img.height() as f32),
-                &self.gpu.queue,
-                &self.gpu.device,
-                &self.bind_group_layout,
-            ));
-        }
-        if shared.renderer.circle_bindgroup == None {
-            let img = image::load_from_memory(include_bytes!("../assets/circle.png")).unwrap();
-            shared.renderer.circle_bindgroup = Some(renderer::create_texture_bind_group(
-                img.clone().into_rgba8().to_vec(),
-                Vec2::new(img.width() as f32, img.height() as f32),
-                &self.gpu.queue,
-                &self.gpu.device,
-                &self.bind_group_layout,
-            ));
-        }
-        if shared.renderer.generic_bindgroup == None {
-            shared.renderer.generic_bindgroup = Some(renderer::create_texture_bind_group(
+        let bytes = include_bytes!("../assets/flow-kite.png");
+        self.load_bindgroup(&mut renderer.flow_kite_bindgroup, bytes);
+        let bytes = include_bytes!("../assets/circle.png");
+        self.load_bindgroup(&mut renderer.circle_bindgroup, bytes);
+        let bytes = include_bytes!("../assets/transform-ring.png");
+        self.load_bindgroup(&mut renderer.ring_bindgroup, bytes);
+
+        if renderer.generic_bindgroup == None {
+            renderer.generic_bindgroup = Some(renderer::create_texture_bind_group(
                 vec![255, 255, 255, 255],
                 Vec2::new(1., 1.),
+                &self.gpu.queue,
+                &self.gpu.device,
+                &self.bind_group_layout,
+            ));
+        }
+    }
+
+    fn load_bindgroup(&self, bindgroup: &mut Option<wgpu::BindGroup>, bytes: &[u8]) {
+        if *bindgroup == None {
+            let img = image::load_from_memory(bytes).unwrap();
+            *bindgroup = Some(renderer::create_texture_bind_group(
+                img.clone().into_rgba8().to_vec(),
+                Vec2::new(img.width() as f32, img.height() as f32),
                 &self.gpu.queue,
                 &self.gpu.device,
                 &self.bind_group_layout,

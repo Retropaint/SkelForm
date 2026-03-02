@@ -28,16 +28,15 @@ pub fn render(
         events.select_bone(usize::MAX, true);
     }
 
-    if renderer.meshframe_buffer.index == None {
-        renderer.bone_buffer.init(device, 1000);
-        renderer.prev_onion_buffer.init(device, 1000);
-        renderer.next_onion_buffer.init(device, 1000);
-        renderer.point_buffer.init(device, 1000);
-        renderer.kite_buffer.init(device, 1000);
-        renderer.sel_bone_buffer.init(device, 1000);
-        renderer.gridline_buffer.init(device, 1000);
-        renderer.meshframe_buffer.init(device, 1000);
-    }
+    renderer.bone_buffer.init(device, 1000);
+    renderer.prev_onion_buffer.init(device, 1000);
+    renderer.next_onion_buffer.init(device, 1000);
+    renderer.point_buffer.init(device, 1000);
+    renderer.kite_buffer.init(device, 1000);
+    renderer.sel_bone_buffer.init(device, 1000);
+    renderer.gridline_buffer.init(device, 1000);
+    renderer.meshframe_buffer.init(device, 1000);
+    renderer.ring_buffer.init(device, 1000);
 
     let sel = selections.clone();
 
@@ -315,35 +314,58 @@ pub fn render(
     }
 
     // initiate temporary edit mode if mouse is close enough to bone
+    let distance_move = 0.02;
+    let distance_rot = 0.1;
+    let distance_scale = 0.2;
     if !input.left_down && armature.sel_bone(&sel) != None {
+        render_pass.set_bind_group(0, &renderer.ring_bindgroup, &[]);
+
         // mouse pos in world space
         let mouse_pos = Vec2::new(
             mouse_world_vert.pos.x * camera.zoom / camera.aspect_ratio() + camera.pos.x,
             mouse_world_vert.pos.y * camera.zoom + camera.pos.y,
         );
         let mut has_temporary = false;
-        let sel_bone = armature.sel_bone(&sel).unwrap();
-        let adjusted = Vec2::new(
-            (sel_bone.pos.x - mouse_pos.x) * camera.aspect_ratio(),
-            sel_bone.pos.y - mouse_pos.y,
-        );
+        let sel_bone = temp_arm.sel_bone(&sel).unwrap();
+        let adjusted = Vec2::new((sel_bone.pos.x - mouse_pos.x), sel_bone.pos.y - mouse_pos.y);
 
         let distance = adjusted.mag() / camera.zoom;
-        if distance < 0.01 {
+        if distance < distance_move {
             has_temporary = true;
             events.set_temporary_edit_mode(0);
-        } else if distance < 0.2 {
+        } else if distance < distance_rot {
             has_temporary = true;
             events.set_temporary_edit_mode(1);
-        } else if distance < 0.3 {
+        } else if distance < distance_scale {
             has_temporary = true;
             events.set_temporary_edit_mode(2);
         }
 
-        // set temp 
+        // set temporary mode to None only once, to prevent event spam
         if !has_temporary && edit_mode.temporary != None {
             events.set_temporary_edit_mode(3);
         }
+
+        println!("{} {}", distance, distance_rot * camera.zoom);
+
+        let cam = world_camera(&camera, &config);
+        let col = VertexColor::new(1., 1., 1., 0.5);
+        let rot_offset = distance_rot * camera.zoom;
+        let scale_offset = distance_scale * camera.zoom;
+        #[rustfmt::skip]
+        let (mut verts_rot, mut indices_rot) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, col, cam.pos, 0., rot_offset);
+        #[rustfmt::skip]
+        let (mut verts_scale, mut indices_scale) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, col, cam.pos, 0., scale_offset);
+        verts_rot.extend_from_slice(&mut verts_scale);
+        add_offseted_indices(&mut indices_scale, &mut indices_rot);
+
+        let gpu_verts: Vec<GpuVertex> = verts_rot.iter().map(|vert| (*vert).into()).collect();
+        let index_buffer = &renderer.ring_buffer.index.as_ref().unwrap();
+        let vertex_buffer = &renderer.ring_buffer.vertex.as_ref().unwrap();
+        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&indices_rot));
+        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
+        #[rustfmt::skip]
+        draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, indices_rot.len());
     }
 
     renderer.temp_bones = temp_arm.bones.clone();
@@ -1352,6 +1374,32 @@ fn draw_point(
     size: f32,
 ) -> (Vec<Vertex>, Vec<u32>) {
     let point_size = size * (camera.zoom / 500.);
+    macro_rules! vert {
+        ($pos:expr, $uv:expr) => {
+            vert(Some($pos), Some(color), Some($uv))
+        };
+    }
+    let verts: [Vertex; 4] = [
+        vert!(Vec2::new(-point_size, point_size), Vec2::new(0., 1.)),
+        vert!(Vec2::new(point_size, point_size), Vec2::new(1., 1.)),
+        vert!(Vec2::new(-point_size, -point_size), Vec2::new(0., 0.)),
+        vert!(Vec2::new(point_size, -point_size), Vec2::new(1., 0.)),
+    ];
+
+    draw_rect(verts, offset, camera, config, pos, camera_pos, rotation)
+}
+
+fn draw_ring(
+    offset: &Vec2,
+    camera: &Camera,
+    config: &Config,
+    pos: &Vec2,
+    color: VertexColor,
+    camera_pos: Vec2,
+    rotation: f32,
+    size: f32,
+) -> (Vec<Vertex>, Vec<u32>) {
+    let point_size = size;
     macro_rules! vert {
         ($pos:expr, $uv:expr) => {
             vert(Some($pos), Some(color), Some($uv))

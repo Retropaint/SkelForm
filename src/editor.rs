@@ -146,9 +146,15 @@ pub fn iterate_events(
         ui.cursor_icon = egui::CursorIcon::Crosshair;
         let anim_el = AnimElement::from_repr(events.values[1] as usize).unwrap();
 
-        edit_mode.is_moving = edit_mode.current == EditModes::Move;
-        edit_mode.is_rotating = edit_mode.current == EditModes::Rotate;
-        edit_mode.is_scaling = edit_mode.current == EditModes::Scale;
+        let current_edit = if let Some(temporary) = &edit_mode.temporary {
+            &temporary
+        } else {
+            &edit_mode.current
+        };
+
+        edit_mode.is_moving = *current_edit == EditModes::Move;
+        edit_mode.is_rotating = *current_edit == EditModes::Rotate;
+        edit_mode.is_scaling = *current_edit == EditModes::Scale;
 
         let mut anim_id = events.values[3] as usize;
         let anim_frame = events.values[4] as i32;
