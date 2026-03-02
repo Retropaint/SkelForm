@@ -36,8 +36,8 @@ pub fn render(
     renderer.sel_bone_buffer.init(device, 1000);
     renderer.gridline_buffer.init(device, 1000);
     renderer.meshframe_buffer.init(device, 1000);
-    renderer.ring_buffer.init(device, 1000);
-    renderer.selected_ring_buffer.init(device, 1000);
+    renderer.ring_buffer.init(device, 10);
+    renderer.selected_ring_buffer.init(device, 10);
 
     let sel = selections.clone();
 
@@ -53,7 +53,7 @@ pub fn render(
     mouse_world_vert.pos.x *= camera.window.y / camera.window.x;
 
     if !config.gridline_front {
-        draw_gridline(render_pass, &renderer, &camera, &config, queue);
+        draw_gridline(render_pass, renderer, &camera, &config, queue);
     }
 
     let mut temp_arm = Armature::default();
@@ -330,12 +330,12 @@ pub fn render(
         #[rustfmt::skip]
         draw_armature(
             &prev_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass,
-            &renderer.prev_onion_buffer.vertex, &renderer.prev_onion_buffer.index
+            &renderer.prev_onion_buffer
         );
         #[rustfmt::skip]
         draw_armature(
             &next_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass,
-            &renderer.next_onion_buffer.vertex, &renderer.next_onion_buffer.index
+            &renderer.next_onion_buffer
         );
     }
 
@@ -343,7 +343,7 @@ pub fn render(
     #[rustfmt::skip]
     draw_armature(
         &temp_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass,
-        &renderer.bone_buffer.vertex, &renderer.bone_buffer.index
+        &renderer.bone_buffer
     );
 
     if edit_mode.showing_mesh || edit_mode.setting_bind_verts {
@@ -351,15 +351,10 @@ pub fn render(
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
         let tex = armature.tex_of(bone.id).unwrap();
         let bind_group = &armature.tex_data(tex).unwrap().bind_group;
-
-        let gpu_verts: Vec<GpuVertex> =
-            bone.world_verts.iter().map(|vert| (*vert).into()).collect();
-        let index_buffer = &renderer.sel_bone_buffer.index.as_ref().unwrap();
-        let vertex_buffer = &renderer.sel_bone_buffer.vertex.as_ref().unwrap();
-        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&bone.indices));
-        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        #[rustfmt::skip]
-        draw(&bind_group, vertex_buffer, index_buffer, render_pass, 0, bone.indices.len());
+        let sel_bone_buffer = &mut renderer.sel_bone_buffer;
+        render_pass.set_bind_group(0, bind_group, &[]);
+        setup_render_buffer(sel_bone_buffer, &bone.world_verts, &bone.indices, queue);
+        draw(&sel_bone_buffer, render_pass, 0, bone.indices.len());
 
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         let mouse = mouse_world_vert;
@@ -389,13 +384,8 @@ pub fn render(
             }
         }
 
-        let gpu_verts: Vec<GpuVertex> = verts.iter().map(|vert| (*vert).into()).collect();
-        let index_buffer = &renderer.meshframe_buffer.index.as_ref().unwrap();
-        let vertex_buffer = &renderer.meshframe_buffer.vertex.as_ref().unwrap();
-        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&indices));
-        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        #[rustfmt::skip]
-        draw(&None, &vertex_buffer, &index_buffer, render_pass, 0, indices.len());
+        setup_render_buffer(&mut renderer.meshframe_buffer, &verts, &indices, queue);
+        draw(&renderer.meshframe_buffer, render_pass, 0, indices.len());
     }
 
     if mesh_onion_id != -1 {
@@ -422,7 +412,7 @@ pub fn render(
     }
 
     if config.gridline_front {
-        draw_gridline(render_pass, &renderer, &camera, &config, queue);
+        draw_gridline(render_pass, renderer, &camera, &config, queue);
     }
 
     #[rustfmt::skip]
@@ -471,26 +461,17 @@ pub fn render(
         verts_rot.extend_from_slice(&mut verts_scale);
         add_offseted_indices(&mut indices_scale, &mut indices_rot);
 
-        let gpu_verts: Vec<GpuVertex> = verts_rot.iter().map(|vert| (*vert).into()).collect();
-        let index_buffer = &renderer.ring_buffer.index.as_ref().unwrap();
-        let vertex_buffer = &renderer.ring_buffer.vertex.as_ref().unwrap();
-        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&indices_rot));
-        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        #[rustfmt::skip]
-        draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, indices_rot.len());
+        setup_render_buffer(&mut renderer.ring_buffer, &verts_rot, &indices_rot, queue);
+        draw(&renderer.ring_buffer, render_pass, 0, indices_rot.len());
 
         if edit_mode.temporary != None && edit_mode.temporary.as_ref().unwrap() == &EditModes::Scale
         {
             render_pass.set_bind_group(0, &renderer.selected_ring_bindgroup, &[]);
             #[rustfmt::skip]
             let (sel_verts,sel_indices) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., distance_scale * camera.zoom);
-            let gpu_verts: Vec<GpuVertex> = sel_verts.iter().map(|vert| (*vert).into()).collect();
-            let index_buffer = &renderer.selected_ring_buffer.index.as_ref().unwrap();
-            let vertex_buffer = &renderer.selected_ring_buffer.vertex.as_ref().unwrap();
-            queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&sel_indices));
-            queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-            #[rustfmt::skip]
-            draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, indices_rot.len());
+            let buffer = &mut renderer.selected_ring_buffer;
+            setup_render_buffer(buffer, &sel_verts, &sel_indices, queue);
+            draw(&buffer, render_pass, 0, indices_rot.len());
         }
     }
 
@@ -586,8 +567,7 @@ pub fn draw_armature(
     config: &Config,
     queue: &wgpu::Queue,
     render_pass: &mut RenderPass,
-    vertex_buffer: &Option<wgpu::Buffer>,
-    index_buffer: &Option<wgpu::Buffer>,
+    buffer: &RenderBuffer,
 ) {
     let mut all_gpu_verts = vec![];
     let mut all_indices = vec![];
@@ -613,18 +593,10 @@ pub fn draw_armature(
             add_offseted_indices(&mut bone.indices.clone(), &mut all_indices);
         }
     }
-    let index_buffer = &index_buffer;
-    let vertex_buffer = &vertex_buffer;
-    queue.write_buffer(
-        index_buffer.as_ref().unwrap(),
-        0,
-        bytemuck::cast_slice(&all_indices),
-    );
-    queue.write_buffer(
-        vertex_buffer.as_ref().unwrap(),
-        0,
-        bytemuck::cast_slice(&all_gpu_verts),
-    );
+    let index_buffer = buffer.index.as_ref().unwrap();
+    let vertex_buffer = buffer.vertex.as_ref().unwrap();
+    queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&all_indices));
+    queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&all_gpu_verts));
     let mut curr_indices = 0;
     for bone_id in bone_ids_to_draw {
         let tex = src_arm.tex_of(bone_id);
@@ -632,8 +604,8 @@ pub fn draw_armature(
         let t = tex.unwrap();
         let bg = &src_arm.tex_data(t).unwrap().bind_group;
         let indices_end = curr_indices + bone.indices.len();
-        #[rustfmt::skip]
-        draw(&bg, vertex_buffer.as_ref().unwrap(), index_buffer.as_ref().unwrap(), render_pass, curr_indices, indices_end);
+        render_pass.set_bind_group(0, bg, &[]);
+        draw(&buffer, render_pass, curr_indices, indices_end);
         curr_indices += bone.indices.len();
     }
 }
@@ -752,10 +724,8 @@ pub fn render_screenshot(
             temp_arm.bones[b].world_verts.push(new_vert);
         }
     }
-    let vertex_buffer = &renderer.bone_buffer.vertex;
-    let index_buffer = &renderer.bone_buffer.index;
     #[rustfmt::skip]
-    draw_armature(&temp_arm, armature, false, &sel, config, queue, render_pass, vertex_buffer, index_buffer);
+    draw_armature(&temp_arm, armature, false, &sel, config, queue, render_pass, &renderer.bone_buffer);
 }
 
 pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
@@ -1074,18 +1044,16 @@ pub fn inheritance(bones: &mut Vec<Bone>, ik_rot: std::collections::HashMap<i32,
 }
 
 pub fn draw(
-    bind_group: &Option<BindGroup>,
-    vert_buf: &wgpu::Buffer,
-    index_buf: &wgpu::Buffer,
+    buffer: &RenderBuffer,
     render_pass: &mut RenderPass,
     indices_start: usize,
     indices_end: usize,
 ) {
-    if *bind_group != None {
-        render_pass.set_bind_group(0, bind_group, &[]);
-    }
-    render_pass.set_vertex_buffer(0, vert_buf.slice(..));
-    render_pass.set_index_buffer(index_buf.slice(..), wgpu::IndexFormat::Uint32);
+    render_pass.set_vertex_buffer(0, buffer.vertex.as_ref().unwrap().slice(..));
+    render_pass.set_index_buffer(
+        buffer.index.as_ref().unwrap().slice(..),
+        wgpu::IndexFormat::Uint32,
+    );
     render_pass.draw_indexed(indices_start as u32..indices_end as u32, 0, 0..1);
 }
 
@@ -1348,14 +1316,14 @@ fn draw_line(origin: Vec2, target: Vec2, render_pass: &mut RenderPass, device: &
     let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
     let indices = vec![0, 1, 2, 1, 2, 3];
 
-    draw(
-        &None,
-        &vertex_buffer(&verts, device),
-        &index_buffer(indices, device),
-        render_pass,
-        0,
-        6,
-    );
+    //draw(
+    //    &None,
+    //    &vertex_buffer(&verts, device),
+    //    &index_buffer(indices, device),
+    //    render_pass,
+    //    0,
+    //    6,
+    //);
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
@@ -1599,7 +1567,7 @@ pub fn world_vert(mut vert: Vertex, camera: &Camera, aspect_ratio: f32, pivot: V
 
 fn draw_gridline(
     render_pass: &mut RenderPass,
-    renderer: &Renderer,
+    renderer: &mut Renderer,
     camera: &Camera,
     config: &Config,
     queue: &Queue,
@@ -1665,13 +1633,8 @@ fn draw_gridline(
         return;
     }
 
-    let gpu_verts: Vec<GpuVertex> = verts.iter().map(|vert| (*vert).into()).collect();
-    let index_buffer = &renderer.gridline_buffer.index.as_ref().unwrap();
-    let vertex_buffer = &renderer.gridline_buffer.vertex.as_ref().unwrap();
-    queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&indices));
-    queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-    #[rustfmt::skip]
-    draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, indices.len());
+    setup_render_buffer(&mut renderer.gridline_buffer, &verts, &indices, queue);
+    draw(&renderer.gridline_buffer, render_pass, 0, indices.len());
 }
 
 macro_rules! vert {
@@ -1862,22 +1825,27 @@ pub fn draw_points_and_kites(
     }
     if point_indices.len() > 0 {
         render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
-        let gpu_verts: Vec<GpuVertex> = point_verts.iter().map(|vert| (*vert).into()).collect();
-        let index_buffer = &renderer.point_buffer.index.as_ref().unwrap();
-        let vertex_buffer = &renderer.point_buffer.vertex.as_ref().unwrap();
-        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&point_indices));
-        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        #[rustfmt::skip]
-        draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, point_indices.len());
+        let point_buffer = &mut renderer.point_buffer;
+        setup_render_buffer(point_buffer, &point_verts, &point_indices, queue);
+        draw(&renderer.point_buffer, render_pass, 0, point_indices.len());
     }
     if kite_indices.len() > 0 {
         render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
-        let gpu_verts: Vec<GpuVertex> = kite_verts.iter().map(|vert| (*vert).into()).collect();
-        let index_buffer = &renderer.kite_buffer.index.as_ref().unwrap();
-        let vertex_buffer = &renderer.kite_buffer.vertex.as_ref().unwrap();
-        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&kite_indices));
-        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
-        #[rustfmt::skip]
-        draw(&mut None, &vertex_buffer, &index_buffer, render_pass, 0, kite_indices.len());
+        setup_render_buffer(&mut renderer.kite_buffer, &kite_verts, &kite_indices, queue);
+        draw(&renderer.kite_buffer, render_pass, 0, kite_indices.len());
     }
+}
+
+// Add vertex and index data to the specified buffer.
+fn setup_render_buffer(
+    buffer: &mut RenderBuffer,
+    verts: &Vec<Vertex>,
+    indices: &Vec<u32>,
+    queue: &wgpu::Queue,
+) {
+    let gpu_verts: Vec<GpuVertex> = verts.iter().map(|vert| (*vert).into()).collect();
+    let index_buffer = &buffer.index.as_ref().unwrap();
+    let vertex_buffer = &buffer.vertex.as_ref().unwrap();
+    queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&indices));
+    queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
 }
