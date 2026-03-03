@@ -301,7 +301,9 @@ pub fn draw(
     }
 
     if selections.bone_idx != usize::MAX {
-        edit_mode_bar(context, armature, selections, edit_mode, events, shared_ui);
+        edit_mode_bar(
+            context, armature, selections, edit_mode, events, shared_ui, config,
+        );
     }
 
     if armature.bones.len() > 0 {
@@ -539,6 +541,9 @@ pub fn kb_inputs(
     }
     if input.consume_shortcut(&config.keys.transform_scale) {
         events.edit_mode_scale();
+    }
+    if input.consume_shortcut(&config.keys.toggle_animation) && armature.bones.len() > 0 {
+        events.toggle_anim_panel_open(if edit_mode.anim_open { 0 } else { 1 });
     }
 
     if input.consume_shortcut(&config.keys.cancel) {
@@ -1195,6 +1200,7 @@ fn edit_mode_bar(
     edit_mode: &EditMode,
     events: &mut EventState,
     shared_ui: &mut crate::Ui,
+    config: &Config,
 ) {
     let mut has_ik = true;
     let sel = selections.clone();
@@ -1215,35 +1221,34 @@ fn edit_mode_bar(
             shared_ui.edit_bar.pos.y - 1.,
         ));
     window.show(egui_ctx, |ui| {
+        let keys = &config.keys;
         ui.horizontal(|ui| {
             macro_rules! edit_mode_button {
-                ($label:expr, $edit_mode:expr, $event:ident, $check:expr) => {
+                ($label:expr, $edit_mode:expr, $event:ident, $check:expr, $key:expr) => {
                     ui.add_enabled_ui($check, |ui| {
-                        if selection_button($label, edit_mode.current == $edit_mode, ui).clicked() {
+                        let mut str = egui::text::LayoutJob::default();
+                        ui::job_text(&($label.to_owned() + &" "), None, &mut str);
+                        let mut col = config.colors.text;
+                        col -= Color::new(50, 50, 50, 0);
+                        ui::job_text(&$key, Some(col.into()), &mut str);
+                        if selection_button(str, edit_mode.current == $edit_mode, ui).clicked() {
                             events.$event()
                         };
                     })
                 };
             }
-            let ik_disabled = !edit_mode.showing_mesh && !has_ik;
-            edit_mode_button!(
-                &shared_ui.loc("move"),
-                EditModes::Move,
-                edit_mode_move,
-                ik_disabled
-            );
-            edit_mode_button!(
-                &shared_ui.loc("rotate"),
-                EditModes::Rotate,
-                edit_mode_rotate,
-                ik_disabled
-            );
-            edit_mode_button!(
-                &shared_ui.loc("scale"),
-                EditModes::Scale,
-                edit_mode_scale,
-                ik_disabled
-            );
+            let ikd = !edit_mode.showing_mesh && !has_ik;
+            type E = EditModes;
+
+            let key_move = keys.transform_move.display();
+            let key_rotate = keys.transform_rotate.display();
+            let key_scale = keys.transform_scale.display();
+            let move_str = &shared_ui.loc("move");
+            let rotate_str = &shared_ui.loc("rotate");
+            let scale_str = &shared_ui.loc("scale");
+            edit_mode_button!(move_str, E::Move, edit_mode_move, ikd, key_move);
+            edit_mode_button!(rotate_str, E::Rotate, edit_mode_rotate, ikd, key_rotate);
+            edit_mode_button!(scale_str, E::Scale, edit_mode_scale, ikd, key_scale);
         });
         shared_ui.edit_bar.scale = ui.min_rect().size().into();
     });
@@ -1526,7 +1531,11 @@ pub fn default_styling(context: &Context, config: &Config) {
     context.set_visuals(visuals);
 }
 
-pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::Response {
+pub fn selection_button(
+    text: impl Into<egui::WidgetText>,
+    selected: bool,
+    ui: &mut egui::Ui,
+) -> egui::Response {
     let mut cursor = egui::CursorIcon::PointingHand;
     let mut bg_col = ui.visuals().widgets.active.weak_bg_fill;
 
@@ -1535,7 +1544,7 @@ pub fn selection_button(text: &str, selected: bool, ui: &mut egui::Ui) -> egui::
         bg_col = bg_col + egui::Color32::from_rgb(20, 20, 20);
     }
 
-    let button = egui::Button::new(egui::RichText::new(text))
+    let button = egui::Button::new(text)
         .fill(bg_col)
         .corner_radius(egui::CornerRadius::ZERO);
 
