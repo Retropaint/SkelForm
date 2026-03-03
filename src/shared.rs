@@ -591,6 +591,7 @@ pub struct Ui {
     pub hovering_anim: i32,
     pub hovering_style_bone: i32,
     pub hovering_setting: Option<shared::SettingsState>,
+    pub hovering_render_option: i32,
 
     pub showing_samples: bool,
 
@@ -694,6 +695,8 @@ pub struct Ui {
     pub render_textures: bool,
     pub render_mesh_wf: bool,
     pub render_rects: bool,
+
+    pub expand_render_bar: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -2080,11 +2083,6 @@ impl RenderBuffer {
 pub struct Renderer {
     pub editing_bone: bool,
     pub dragging_verts: Vec<usize>,
-    pub generic_bindgroup: Option<BindGroup>,
-    pub circle_bindgroup: Option<BindGroup>,
-    pub ring_bindgroup: Option<BindGroup>,
-    pub selected_ring_bindgroup: Option<BindGroup>,
-    pub flow_kite_bindgroup: Option<BindGroup>,
     pub changed_vert_id: i32,
     pub changed_vert_init_pos: Option<Vec2>,
     pub initialized_window: bool,
@@ -2099,6 +2097,16 @@ pub struct Renderer {
     pub render_textures: bool,
     pub render_mesh_wf: bool,
     pub render_rects: bool,
+    pub on_point: bool,
+
+    // bindgroups
+    pub generic_bindgroup: Option<BindGroup>,
+    pub circle_bindgroup: Option<BindGroup>,
+    pub ring_bindgroup: Option<BindGroup>,
+    pub selected_ring_bindgroup: Option<BindGroup>,
+    pub flow_kite_bindgroup: Option<BindGroup>,
+
+    // buffers
     pub meshframe_buffer: RenderBuffer,
     pub bone_buffer: RenderBuffer,
     pub prev_onion_buffer: RenderBuffer,
@@ -2109,7 +2117,7 @@ pub struct Renderer {
     pub gridline_buffer: RenderBuffer,
     pub ring_buffer: RenderBuffer,
     pub selected_ring_buffer: RenderBuffer,
-    pub on_point: bool,
+    pub rect_buffer: RenderBuffer,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]

@@ -38,6 +38,7 @@ pub fn render(
     renderer.meshframe_buffer.init(device, 1000);
     renderer.ring_buffer.init(device, 10);
     renderer.selected_ring_buffer.init(device, 10);
+    renderer.rect_buffer.init(device, 1000);
 
     let sel = selections.clone();
 
@@ -404,16 +405,54 @@ pub fn render(
         draw(&renderer.meshframe_buffer, render_pass, 0, indices.len());
     }
 
+    if renderer.render_rects {
+        let mut verts = vec![];
+        let mut indices = vec![];
+        render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
+        for bone in &temp_arm.bones {
+            if bone.verts_edited
+                || temp_arm.is_bone_hidden(false, config.propagate_visibility, bone.id)
+            {
+                continue;
+            }
+
+            let mut world_verts = bone.world_verts.clone();
+
+            // color wireframes based on bone group color
+            for vert in &mut world_verts {
+                if bone.group_color.a == 0 {
+                    vert.color = config.colors.center_point;
+                    vert.color.a -= 50;
+                } else {
+                    vert.color = bone.group_color;
+                    vert.color.a -= 25;
+                }
+            }
+
+            verts.append(&mut world_verts);
+            let mut bone_indices = bone.indices.clone();
+            if indices.len() == 0 {
+                indices = bone_indices;
+            } else {
+                add_offseted_indices(&mut bone_indices, &mut indices);
+            }
+        }
+        setup_render_buffer(&mut renderer.rect_buffer, &verts, &indices, queue);
+        draw(&renderer.rect_buffer, render_pass, 0, indices.len());
+    }
+
     // render mesh wireframes if on
     if renderer.render_mesh_wf {
         let mut verts = vec![];
         let mut indices = vec![];
+        render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         for bone in &temp_arm.bones {
-            if !bone.verts_edited {
+            if !bone.verts_edited
+                || temp_arm.is_bone_hidden(false, config.propagate_visibility, bone.id)
+            {
                 continue;
             }
 
-            render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
             let mouse = mouse_world_vert;
             let nw = &mut new_vert;
             let wv = bone.world_verts.clone();
@@ -582,7 +621,7 @@ pub fn draw_armature(
     render_pass: &mut RenderPass,
     buffer: &RenderBuffer,
 ) {
-    let mut all_gpu_verts = vec![];
+    let mut all_verts = vec![];
     let mut all_indices = vec![];
     let mut bone_ids_to_draw = vec![];
     for b in 0..armature.bones.len() {
@@ -601,18 +640,14 @@ pub fn draw_armature(
             vert.color = Color::new(255, 255, 255, 255);
         }
         bone_ids_to_draw.push(armature.bones[b].id);
-        let mut gpu_verts: Vec<GpuVertex> = world_verts.iter().map(|vert| (*vert).into()).collect();
-        all_gpu_verts.append(&mut gpu_verts);
+        all_verts.append(&mut world_verts);
         if all_indices.len() == 0 {
             all_indices.append(&mut bone.indices.clone());
         } else {
             add_offseted_indices(&mut bone.indices.clone(), &mut all_indices);
         }
     }
-    let index_buffer = buffer.index.as_ref().unwrap();
-    let vertex_buffer = buffer.vertex.as_ref().unwrap();
-    queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&all_indices));
-    queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&all_gpu_verts));
+    setup_render_buffer(buffer, &all_verts, &all_indices, queue);
     let mut curr_indices = 0;
     for bone_id in bone_ids_to_draw {
         let tex = src_arm.tex_of(bone_id);
@@ -1835,7 +1870,7 @@ pub fn draw_points_and_kites(
 
 // Add vertex and index data to the specified buffer.
 fn setup_render_buffer(
-    buffer: &mut RenderBuffer,
+    buffer: &RenderBuffer,
     verts: &Vec<Vertex>,
     indices: &Vec<u32>,
     queue: &wgpu::Queue,
