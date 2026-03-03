@@ -437,9 +437,11 @@ pub fn process_inputs(
 
         if i.raw_scroll_delta.y != 0. {
             input.scroll_delta = i.raw_scroll_delta.y;
+
             let timeline_mod = config.keys.timeline_zoom_mode.modifiers;
             let timeline_mode = i.modifiers.matches_any(timeline_mod);
             if timeline_mode && shared_ui.pointer_on_timeline {
+                // zoom timeline instead of scrolling
                 shared_ui.anim.timeline_zoom -= input.scroll_delta / 10.;
                 shared_ui.anim.timeline_zoom = shared_ui.anim.timeline_zoom.min(10.).max(0.1);
             } else if !camera.on_ui {
@@ -465,6 +467,7 @@ pub fn kb_inputs(
     if shared_ui.startup_window {
         return;
     }
+
     mouse_button_as_key(input, egui::PointerButton::Primary, egui::Key::F31);
     mouse_button_as_key(input, egui::PointerButton::Secondary, egui::Key::F32);
     mouse_button_as_key(input, egui::PointerButton::Middle, egui::Key::F33);
@@ -544,6 +547,22 @@ pub fn kb_inputs(
     }
     if input.consume_shortcut(&config.keys.toggle_animation) && armature.bones.len() > 0 {
         events.toggle_anim_panel_open(if edit_mode.anim_open { 0 } else { 1 });
+    }
+
+    let mod_key = &config.keys.transform_modifier.modifiers;
+    let holding_edit_mod = input.modifiers.matches_any(*mod_key);
+    if holding_edit_mod && !edit_mode.holding_edit_mod {
+        events.toggle_edit_modifying(1);
+    } else if !holding_edit_mod && edit_mode.holding_edit_mod {
+        events.toggle_edit_modifying(0);
+    }
+
+    let snap_key = &config.keys.snap_transforms.modifiers;
+    let holding_edit_snap = input.modifiers.matches_any(*snap_key);
+    if holding_edit_snap && !edit_mode.holding_edit_snap {
+        events.toggle_edit_snapping(1);
+    } else if !holding_edit_snap && edit_mode.holding_edit_snap {
+        events.toggle_edit_snapping(0);
     }
 
     if input.consume_shortcut(&config.keys.cancel) {

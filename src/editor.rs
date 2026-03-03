@@ -859,6 +859,8 @@ pub fn process_event(
                 edit_mode.temporary = EditModes::from_repr(value as usize);
             }
         }
+        Events::ToggleEditModifying => edit_mode.holding_edit_mod = value == 1.,
+        Events::ToggleEditSnapping => edit_mode.holding_edit_snap = value == 1.,
         _ => {}
     }
 }

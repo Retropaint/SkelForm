@@ -1940,6 +1940,8 @@ pub struct EditMode {
     pub export_img_format: ExportImgFormat,
     pub export_clear_color: Color,
     pub onion_layers: bool,
+    pub holding_edit_mod: bool,
+    pub holding_edit_snap: bool,
 }
 
 #[derive(Default, PartialEq, Debug, Clone)]
@@ -2229,6 +2231,8 @@ pub enum Events {
     ToggleOnionLayers,
     UpdateRenderOptions,
     SetTemporaryEditMode,
+    ToggleEditModifying,
+    ToggleEditSnapping,
 }
 
 enum_string!(Events);
@@ -2332,6 +2336,8 @@ impl EventState {
         i32
     );
     event_with_value!(set_temporary_edit_mode, E::SetTemporaryEditMode, mode, u32);
+    event_with_value!(toggle_edit_modifying, E::ToggleEditModifying, mode, u32);
+    event_with_value!(toggle_edit_snapping, E::ToggleEditSnapping, mode, u32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

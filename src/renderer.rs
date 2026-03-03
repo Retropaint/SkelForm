@@ -53,6 +53,12 @@ pub fn render(
     let mut mouse_world_vert = vert(Some(space), None, None);
     mouse_world_vert.pos.x *= camera.window.y / camera.window.x;
 
+    // mouse pos in world space
+    let mouse_pos = Vec2::new(
+        mouse_world_vert.pos.x * camera.zoom / camera.aspect_ratio() + camera.pos.x,
+        mouse_world_vert.pos.y * camera.zoom + camera.pos.y,
+    );
+
     if !config.gridline_front {
         draw_gridline(render_pass, renderer, &camera, &config, queue);
     }
@@ -525,7 +531,7 @@ pub fn render(
 
     if !edit_mode.showing_mesh && !has_ik && !input.left_down && armature.sel_bone(&sel) != None {
         #[rustfmt::skip]
-        transform_ring(config, camera, armature, &mut temp_arm, render_pass, renderer, events, &mouse_world_vert, edit_mode, &sel, queue);
+        transform_ring(config, camera, armature, &mut temp_arm, render_pass, renderer, events, edit_mode, &sel, queue, &mouse_pos);
     }
 
     if !input.left_down {
@@ -602,7 +608,7 @@ pub fn render(
         let bone = temp_arm.bones.iter().find(|b| b.id == id).unwrap();
 
         #[rustfmt::skip]
-        edit_bone(events, edit_mode.anim_open, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones);
+        edit_bone(events, edit_mode, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones, &mouse_pos);
     }
 }
 
@@ -986,7 +992,7 @@ pub fn fabrik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
 
 pub fn edit_bone(
     events: &mut EventState,
-    anim_open: bool,
+    edit_mode: &EditMode,
     current_edit: EditModes,
     selections: &SelectionState,
     camera: &Camera,
@@ -995,10 +1001,11 @@ pub fn edit_bone(
     renderer: &Renderer,
     bone: &Bone,
     bones: &Vec<Bone>,
+    mouse_pos: &Vec2,
 ) {
     let mut anim_id = selections.anim;
     let anim_frame = selections.anim_frame;
-    if !anim_open {
+    if !edit_mode.anim_open {
         anim_id = usize::MAX;
     }
 
@@ -1038,7 +1045,14 @@ pub fn edit_bone(
         let dir = mouse - bone_center.pos;
         let rot = dir.y.atan2(dir.x);
 
-        let rot = renderer.bone_init_rot + (rot - rot_init);
+        let mut rot = renderer.bone_init_rot + (rot - rot_init);
+
+        // snap rot to user-defined steps if holding snap key
+        let step = 22.5 * 3.14 / 180.;
+        if edit_mode.holding_edit_snap {
+            rot = (rot / step).round() * step
+        }
+
         edit!(bone, AnimElement::Rotation, rot);
     } else if current_edit == EditModes::Scale {
         let mut scale = bone.scale;
@@ -1050,6 +1064,12 @@ pub fn edit_bone(
         }
 
         scale -= mouse_vel(&input, &camera);
+
+        // maintain aspect ratio (same X and Y scale) if holding edit mod
+        if edit_mode.holding_edit_mod {
+            let distance = (*mouse_pos - bone.pos).mag() / camera.zoom * 3.;
+            scale = Vec2::new(distance, distance);
+        }
 
         edit!(bone, AnimElement::ScaleX, scale.x);
         edit!(bone, AnimElement::ScaleY, scale.y);
@@ -1885,10 +1905,10 @@ fn transform_ring(
     render_pass: &mut RenderPass,
     renderer: &mut Renderer,
     events: &mut EventState,
-    mouse_world_vert: &Vertex,
     edit_mode: &EditMode,
     sel: &SelectionState,
     queue: &wgpu::Queue,
+    mouse_pos: &Vec2,
 ) {
     // initiate temporary edit mode if mouse is close enough to bone
     let distance_move = 0.02;
@@ -1898,11 +1918,6 @@ fn transform_ring(
 
     render_pass.set_bind_group(0, &renderer.ring_bindgroup, &[]);
 
-    // mouse pos in world space
-    let mouse_pos = Vec2::new(
-        mouse_world_vert.pos.x * camera.zoom / camera.aspect_ratio() + camera.pos.x,
-        mouse_world_vert.pos.y * camera.zoom + camera.pos.y,
-    );
     let id = armature.sel_bone(&sel).unwrap().id;
     let sel_bone = temp_arm.bones.iter().find(|b| b.id == id).unwrap();
     let adjusted = Vec2::new(sel_bone.pos.x - mouse_pos.x, sel_bone.pos.y - mouse_pos.y);
