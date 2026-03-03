@@ -515,17 +515,10 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
             } else {
                 shared_ui.updated_config.colors.dark_accent
             };
-            key(
-                loc!($label),
-                loc!(&($label.to_owned() + &"_desc")),
-                &mut $field,
-                ui,
-                &mut shared_ui.changing_key,
-                &shared_ui.last_pressed,
-                color,
-                shared_ui.updated_config.colors.text,
-                $has_key,
-            );
+            let text_col = shared_ui.updated_config.colors.text;
+            let label_desc = loc!(&($label.to_owned() + &"_desc"));
+            #[rustfmt::skip]
+            key(loc!($label), label_desc, &mut $field, ui, &mut shared_ui.changing_key, &shared_ui.last_pressed, color, text_col, $has_key);
         };
     }
 
@@ -542,7 +535,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("redo",               keys.redo,               true);
         key!("save",               keys.save,               true);
         key!("save_as",            keys.save_as,            true);
-        key!("export",             keys.export ,            true);
+        key!("export",             keys.export,             true);
         key!("open",               keys.open,               true);
         key!("cancel",             keys.cancel,             true);
         key!("copy",               keys.copy,               true);
@@ -550,7 +543,9 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("transform_move",     keys.transform_move,     true);
         key!("transform_rotate",   keys.transform_rotate,   true);
         key!("transform_scale",    keys.transform_scale,    true);
+        key!("toggle_animation",   keys.toggle_animation,   true);
     };
+    ui.add_space(10.);
     shared_ui.updated_config.keys = keys.clone();
 }
 

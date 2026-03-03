@@ -306,7 +306,8 @@
       "timeline_zoom_mode_desc": "The timeline editor will zoom, instead of scroll, when scrolling and holding this modifier.",
       "transform_move": "Move Mode",
       "transform_rotate": "Rotate Mode",
-      "transform_scale": "Scale Mode"
+      "transform_scale": "Scale Mode",
+      "toggle_animation": "Toggle Animation Mode"
     },
     "miscellaneous": {
       "heading": "Miscellaneous",
