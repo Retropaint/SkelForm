@@ -848,6 +848,7 @@ pub fn process_event(
         Events::UpdateRenderOptions => {
             renderer.render_points = ui.render_points;
             renderer.render_kites = ui.render_kites;
+            renderer.render_textures = ui.render_textures;
         }
         Events::SetTemporaryEditMode => {
             if value == 3. {

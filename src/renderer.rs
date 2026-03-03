@@ -229,8 +229,15 @@ pub fn render(
         // check if cursor is on an opaque pixel of this bone's texture
         let tb = &temp_arm.bones[b];
         let selected_mesh = !edit_mode.showing_mesh
-            || edit_mode.showing_mesh && armature.sel_bone(&sel).unwrap().id == tb.id;
-        if hover_bone_id == -1 && !input.left_down && !camera.on_ui && selected_mesh {
+            || edit_mode.showing_mesh
+                && sel.bone_idx != usize::MAX
+                && armature.sel_bone(&sel).unwrap().id == tb.id;
+        if hover_bone_id == -1
+            && !input.left_down
+            && !camera.on_ui
+            && selected_mesh
+            && renderer.render_textures
+        {
             let wv = &temp_arm.bones[b].world_verts;
             for (i, chunk) in temp_arm.bones[b].indices.chunks_exact(3).enumerate() {
                 let c0 = chunk[0] as usize;
@@ -327,7 +334,7 @@ pub fn render(
     }
 
     // render onion layers
-    if selections.anim_frame != -1 && edit_mode.onion_layers {
+    if renderer.render_textures && selections.anim_frame != -1 && edit_mode.onion_layers {
         #[rustfmt::skip]
         draw_armature(
             &prev_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass,
@@ -341,25 +348,29 @@ pub fn render(
     }
 
     // render bones
-    #[rustfmt::skip]
-    draw_armature(
-        &temp_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass,
-        &renderer.bone_buffer
-    );
+    if renderer.render_textures {
+        #[rustfmt::skip]
+        draw_armature(
+            &temp_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass,
+            &renderer.bone_buffer
+        );
+    }
 
     if edit_mode.showing_mesh || edit_mode.setting_bind_verts {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
-        let tex = armature.tex_of(bone.id).unwrap();
-        let bind_group = &armature.tex_data(tex).unwrap().bind_group;
-        let sel_bone_buffer = &mut renderer.sel_bone_buffer;
-        let mut world_verts = bone.world_verts.clone();
-        for vert in &mut world_verts {
-            vert.color = Color::new(255, 255, 255, 255);
+        if renderer.render_textures {
+            let tex = armature.tex_of(bone.id).unwrap();
+            let bind_group = &armature.tex_data(tex).unwrap().bind_group;
+            let sel_bone_buffer = &mut renderer.sel_bone_buffer;
+            let mut world_verts = bone.world_verts.clone();
+            for vert in &mut world_verts {
+                vert.color = Color::new(255, 255, 255, 255);
+            }
+            render_pass.set_bind_group(0, bind_group, &[]);
+            setup_render_buffer(sel_bone_buffer, &world_verts, &bone.indices, queue);
+            draw(&sel_bone_buffer, render_pass, 0, bone.indices.len());
         }
-        render_pass.set_bind_group(0, bind_group, &[]);
-        setup_render_buffer(sel_bone_buffer, &world_verts, &bone.indices, queue);
-        draw(&sel_bone_buffer, render_pass, 0, bone.indices.len());
 
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         let mouse = mouse_world_vert;
@@ -1646,7 +1657,7 @@ pub fn draw_points_and_kites(
 ) {
     let point_color: Color = config.colors.center_point;
     let mut kite_color: Color = config.colors.center_point;
-    kite_color.a -= 64;
+    kite_color.a -= 128;
     let in_point_color: Color = config.colors.inactive_center_point;
     let mut in_kite_color: Color = config.colors.inactive_center_point;
     in_kite_color.a = in_kite_color.a.saturating_sub(64);
@@ -1765,16 +1776,16 @@ pub fn draw_points_and_kites(
         kite_indices.append(&mut this_indices);
         kite_vert_pack_idx += 1;
     }
+    if kite_indices.len() > 0 {
+        render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
+        setup_render_buffer(&mut renderer.kite_buffer, &kite_verts, &kite_indices, queue);
+        draw(&renderer.kite_buffer, render_pass, 0, kite_indices.len());
+    }
     if point_indices.len() > 0 {
         render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
         let point_buffer = &mut renderer.point_buffer;
         setup_render_buffer(point_buffer, &point_verts, &point_indices, queue);
         draw(&renderer.point_buffer, render_pass, 0, point_indices.len());
-    }
-    if kite_indices.len() > 0 {
-        render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
-        setup_render_buffer(&mut renderer.kite_buffer, &kite_verts, &kite_indices, queue);
-        draw(&renderer.kite_buffer, render_pass, 0, kite_indices.len());
     }
 
     renderer.on_point = on_point;

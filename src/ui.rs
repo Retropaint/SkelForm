@@ -1290,7 +1290,7 @@ fn render_bar(
     let window = egui::Window::new("Render")
         .resizable(false)
         .title_bar(false)
-        .max_width(60.)
+        .max_width(90.)
         .max_height(25.)
         .movable(false)
         .frame(egui::Frame {
@@ -1318,7 +1318,7 @@ fn render_bar(
                     .corner_radius(egui::CornerRadius::ZERO);
                 let cursor = egui::CursorIcon::PointingHand;
                 if ui
-                    .add_sized([50., 20.], button)
+                    .add_sized([70., 20.], button)
                     .on_hover_cursor(cursor)
                     .clicked()
                 {
@@ -1328,6 +1328,7 @@ fn render_bar(
             };
         }
 
+        button!(shared_ui.render_textures, "Textuers");
         button!(shared_ui.render_points, "Points");
         button!(shared_ui.render_kites, "Kites");
         shared_ui.render_bar.scale = ui.min_rect().size().into();

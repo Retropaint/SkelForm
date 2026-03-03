@@ -137,8 +137,10 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.tracing_padding = 50.;
     shared.ui.render_points = true;
     shared.ui.render_kites = true;
+    shared.ui.render_textures = true;
     shared.renderer.render_points = true;
     shared.renderer.render_kites = true;
+    shared.renderer.render_textures = true;
 
     #[cfg(feature = "debug")]
     {

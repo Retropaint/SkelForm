@@ -691,6 +691,7 @@ pub struct Ui {
     pub lock_img: Option<egui::TextureHandle>,
     pub render_points: bool,
     pub render_kites: bool,
+    pub render_textures: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -2093,6 +2094,7 @@ pub struct Renderer {
     pub temp_bones: Vec<Bone>,
     pub render_points: bool,
     pub render_kites: bool,
+    pub render_textures: bool,
     pub meshframe_buffer: RenderBuffer,
     pub bone_buffer: RenderBuffer,
     pub prev_onion_buffer: RenderBuffer,
