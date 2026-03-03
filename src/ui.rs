@@ -102,7 +102,7 @@ pub fn draw(
     }
 
     if !shared_ui.startup_window {
-        render_bar(context, config, shared_ui, events);
+        render_bar(context, config, shared_ui, events, armature);
     }
 
     if shared_ui.polar_modal {
@@ -1285,7 +1285,28 @@ fn render_bar(
     config: &Config,
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
+    armature: &Armature,
 ) {
+    // check which toggles are eligible, and return if none are
+    let mut eligibles = vec![false, false, false, false, false];
+    for bone in &armature.bones {
+        eligibles[1] = true;
+        if armature.tex_of(bone.id) != None {
+            eligibles[0] = true;
+            if bone.verts_edited {
+                eligibles[3] = true
+            } else if !bone.verts_edited {
+                eligibles[4] = true
+            }
+        }
+        if bone.parent_id != -1 {
+            eligibles[2] = true;
+        }
+    }
+    if !eligibles.contains(&true) {
+        return;
+    }
+
     let margin = 6.;
     let window = egui::Window::new("Render")
         .resizable(false)
@@ -1305,86 +1326,85 @@ fn render_bar(
             shared_ui.render_bar.pos.y,
         ));
     window.show(egui_ctx, |ui| {
-        ui.set_width(20.);
-        ui.set_height(115.);
         let mut hovered = false;
-
-        if ui.ui_contains_pointer() {
-            shared_ui.expand_render_bar = true;
-        }
+        let mut idx = -1;
 
         macro_rules! button {
-            ($field:expr, $str:expr, $icon:expr, $idx:expr) => {
-                let mut bg_col = config.colors.light_accent;
-                if !$field {
-                    bg_col -= Color::new(20, 20, 20, 0);
-                }
-                let size;
-                let margin;
-                #[rustfmt::skip]
-                let str = if shared_ui.expand_render_bar {
-                    size = [90., 20.];
-                    margin = egui::Margin { top: 3, bottom: 3, right: 5, left: 6 };
-                    $icon.to_owned() + " " + $str
-                } else {
-                    size = [13., 20.];
-                    margin = egui::Margin { top: 3, bottom: 3, right: 5, left: 6 };
-                    $icon.to_owned()
-                };
-                let cursor = egui::CursorIcon::PointingHand;
-                let mut col = if $field {
-                    config.colors.light_accent
-                } else {
-                    config.colors.dark_accent
-                };
-                if shared_ui.hovering_render_option == $idx {
-                    col += Color::new(25, 25, 25, 0);
-                }
+            ($field:expr, $str:expr, $icon:expr) => {
+                idx += 1;
+                if eligibles[idx as usize] {
+                    let mut bg_col = config.colors.light_accent;
+                    if !$field {
+                        bg_col -= Color::new(20, 20, 20, 0);
+                    }
+                    let size;
+                    let margin;
+                    #[rustfmt::skip]
+                    let str = if shared_ui.expand_render_bar {
+                        size = [90., 20.];
+                        margin = egui::Margin { top: 3, bottom: 3, right: 5, left: 6 };
+                        $icon.to_owned() + " " + $str
+                    } else {
+                        size = [13., 20.];
+                        margin = egui::Margin { top: 3, bottom: 3, right: 5, left: 6 };
+                        $icon.to_owned()
+                    };
+                    let cursor = egui::CursorIcon::PointingHand;
+                    let mut col = if $field {
+                        config.colors.light_accent
+                    } else {
+                        config.colors.dark_accent
+                    };
+                    if shared_ui.hovering_render_toggle == idx {
+                        col += Color::new(25, 25, 25, 0);
+                    }
 
-                let rect = egui::Rect::from_min_size(
-                    egui::Pos2::new(ui.cursor().left(), ui.cursor().top()),
-                    egui::Vec2::new(size[0], 21.),
-                );
-                let button = ui
-                    .interact(rect, $str.into(), egui::Sense::click())
-                    .on_hover_cursor(egui::CursorIcon::PointingHand);
-                egui::Frame::new()
-                    .inner_margin(margin)
-                    .fill(col.into())
-                    .show(ui, |ui| {
-                        ui.set_width(size[0]);
-                        ui.scope(|ui| {
-                            ui.style_mut().interaction.selectable_labels = false;
-                            ui.label(str);
-                        });
-                    })
-                    .response;
-                if button.hovered() || button.has_focus() {
-                    shared_ui.hovering_render_option = $idx;
-                    hovered = true;
-                    shared_ui.expand_render_bar = true;
-                }
-                if button.on_hover_cursor(cursor).clicked() {
-                    $field = !$field;
-                    events.update_render_options();
+                    let rect = egui::Rect::from_min_size(
+                        egui::Pos2::new(ui.cursor().left(), ui.cursor().top()),
+                        egui::Vec2::new(size[0], 21.),
+                    );
+                    let button = ui
+                        .interact(rect, $str.into(), egui::Sense::click())
+                        .on_hover_cursor(egui::CursorIcon::PointingHand);
+                    egui::Frame::new()
+                        .inner_margin(margin)
+                        .fill(col.into())
+                        .show(ui, |ui| {
+                            ui.set_width(size[0]);
+                            ui.scope(|ui| {
+                                ui.style_mut().interaction.selectable_labels = false;
+                                ui.label(str);
+                            });
+                        })
+                        .response;
+                    if button.hovered() || button.has_focus() {
+                        shared_ui.hovering_render_toggle = idx;
+                        hovered = true;
+                        shared_ui.expand_render_bar = true;
+                    }
+                    if button.on_hover_cursor(cursor).clicked() {
+                        $field = !$field;
+                        events.update_render_options();
+                    }
                 }
             };
         }
 
-        button!(shared_ui.render_textures, "Textures", "🖻", 0);
-        button!(shared_ui.render_points, "Points", "⏺", 1);
-        button!(shared_ui.render_kites, "Kites", "♦", 2);
-        button!(shared_ui.render_mesh_wf, "Mesh Wires", "⬟", 3);
-        button!(shared_ui.render_rects, "Rects", "⬛", 4);
+        button!(shared_ui.render_textures, "Textures", "🖻");
+        button!(shared_ui.render_points, "Points", "⏺");
+        button!(shared_ui.render_kites, "Kites", "♦");
+        button!(shared_ui.render_mesh_wf, "Mesh Wires", "⬟");
+        button!(shared_ui.render_rects, "Rects", "⬛");
 
         if !hovered {
-            shared_ui.hovering_render_option = -1;
+            shared_ui.hovering_render_toggle = -1;
             shared_ui.expand_render_bar = ui.ui_contains_pointer();
         }
 
         shared_ui.render_bar.scale = ui.min_rect().size().into();
     });
 }
+
 fn camera_bar(
     egui_ctx: &Context,
     config: &Config,

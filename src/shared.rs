@@ -591,7 +591,7 @@ pub struct Ui {
     pub hovering_anim: i32,
     pub hovering_style_bone: i32,
     pub hovering_setting: Option<shared::SettingsState>,
-    pub hovering_render_option: i32,
+    pub hovering_render_toggle: i32,
 
     pub showing_samples: bool,
 
