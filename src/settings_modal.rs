@@ -299,6 +299,7 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
                 colors!().transform_circle = crate::Config::default().colors.transform_circle;
                 let config = &mut shared_ui.updated_config;
                 config.gridline_gap = crate::Config::default().gridline_gap;
+                config.pixel_magnification = crate::Config::default().pixel_magnification;
                 config.transform_rot_radius = crate::Config::default().transform_rot_radius;
                 config.center_point_radius = crate::Config::default().center_point_radius;
                 config.transform_scale_radius = crate::Config::default().transform_scale_radius;
