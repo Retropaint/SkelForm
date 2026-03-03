@@ -128,6 +128,7 @@ pub fn render(
 
     let mut mesh_onion_id = -1;
 
+    // get all children of selected bone
     let mut selected_bone_ids = vec![];
     if armature.sel_bone(&sel) != None {
         let id = armature.sel_bone(&sel).unwrap().id;
@@ -429,92 +430,9 @@ pub fn render(
             && armature.bone_eff(bone.id) != JointEffector::Start;
     }
 
-    // initiate temporary edit mode if mouse is close enough to bone
-    let distance_move = 0.02;
-    let distance_rot = config.transform_rot_radius;
-    let distance_scale = config.transform_scale_radius;
-    let mut temporary = 3;
     if !has_ik && !input.left_down && armature.sel_bone(&sel) != None {
-        render_pass.set_bind_group(0, &renderer.ring_bindgroup, &[]);
-
-        // mouse pos in world space
-        let mouse_pos = Vec2::new(
-            mouse_world_vert.pos.x * camera.zoom / camera.aspect_ratio() + camera.pos.x,
-            mouse_world_vert.pos.y * camera.zoom + camera.pos.y,
-        );
-        let id = armature.sel_bone(&sel).unwrap().id;
-        let sel_bone = temp_arm.bones.iter().find(|b| b.id == id).unwrap();
-        let adjusted = Vec2::new(sel_bone.pos.x - mouse_pos.x, sel_bone.pos.y - mouse_pos.y);
-
-        // set temporary mode based on distance from bone to cursor
-        if !camera.on_ui {
-            let distance = adjusted.mag() / camera.zoom;
-            if distance < distance_move {
-                temporary = 0;
-                events.set_temporary_edit_mode(0);
-            }
-
-            // prioritize rot or scale, depending on user-defined distance
-            if distance_scale > distance_rot {
-                if distance < distance_rot {
-                    temporary = 1;
-                    events.set_temporary_edit_mode(1);
-                } else if distance < distance_scale {
-                    temporary = 2;
-                    events.set_temporary_edit_mode(2);
-                }
-            } else {
-                if distance < distance_scale {
-                    temporary = 2;
-                    events.set_temporary_edit_mode(2);
-                } else if distance < distance_rot {
-                    temporary = 1;
-                    events.set_temporary_edit_mode(1);
-                }
-            }
-        }
-
-        // draw rot and scale rings
-        let cam = world_camera(&camera, &config);
-        let mut rot_col = config.colors.transform_circle;
-        let mut scale_col = config.colors.transform_circle;
-        scale_col -= Color::new(25, 25, 25, 0);
         #[rustfmt::skip]
-        let (mut verts_rot, mut indices_rot) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., distance_rot * camera.zoom);
-        #[rustfmt::skip]
-        let (mut verts_scale, mut indices_scale) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., distance_scale * camera.zoom);
-        verts_rot.extend_from_slice(&mut verts_scale);
-        add_offseted_indices(&mut indices_scale, &mut indices_rot);
-        setup_render_buffer(&mut renderer.ring_buffer, &verts_rot, &indices_rot, queue);
-        draw(&renderer.ring_buffer, render_pass, 0, indices_rot.len());
-
-        // setup rot background
-        if temporary != 2 {
-            scale_col.a -= 25;
-        }
-        render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
-        #[rustfmt::skip]
-        let (mut sel_verts, mut sel_indices) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., distance_scale * camera.zoom);
-
-        // setup scale background
-        if temporary != 1 {
-            rot_col.a -= 25;
-        }
-        render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
-        #[rustfmt::skip]
-        let (mut sel_verts1, mut sel_indices1) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., distance_rot * camera.zoom);
-
-        // draw both backgrounds
-        sel_verts.append(&mut sel_verts1);
-        add_offseted_indices(&mut sel_indices1, &mut sel_indices);
-        let buffer = &mut renderer.selected_ring_buffer;
-        setup_render_buffer(buffer, &sel_verts, &sel_indices, queue);
-        draw(&buffer, render_pass, 0, indices_rot.len());
-
-        // set temporary mode to None only once, to prevent event spam
-        if temporary == 3 && edit_mode.temporary != None {
-            events.set_temporary_edit_mode(3);
-        }
+        transform_ring(config, camera, armature, &mut temp_arm, render_pass, renderer, events, &mouse_world_vert, edit_mode, &sel, queue);
     }
 
     if !input.left_down {
@@ -1895,4 +1813,109 @@ fn setup_render_buffer(
     let vertex_buffer = &buffer.vertex.as_ref().unwrap();
     queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(&indices));
     queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(&gpu_verts));
+}
+
+fn transform_ring(
+    config: &Config,
+    camera: &Camera,
+    armature: &Armature,
+    temp_arm: &mut Armature,
+    render_pass: &mut RenderPass,
+    renderer: &mut Renderer,
+    events: &mut EventState,
+    mouse_world_vert: &Vertex,
+    edit_mode: &EditMode,
+    sel: &SelectionState,
+    queue: &wgpu::Queue,
+) {
+    // initiate temporary edit mode if mouse is close enough to bone
+    let distance_move = 0.02;
+    let distance_rot = config.transform_rot_radius;
+    let distance_scale = config.transform_scale_radius;
+    let mut temporary = 3;
+
+    render_pass.set_bind_group(0, &renderer.ring_bindgroup, &[]);
+
+    // mouse pos in world space
+    let mouse_pos = Vec2::new(
+        mouse_world_vert.pos.x * camera.zoom / camera.aspect_ratio() + camera.pos.x,
+        mouse_world_vert.pos.y * camera.zoom + camera.pos.y,
+    );
+    let id = armature.sel_bone(&sel).unwrap().id;
+    let sel_bone = temp_arm.bones.iter().find(|b| b.id == id).unwrap();
+    let adjusted = Vec2::new(sel_bone.pos.x - mouse_pos.x, sel_bone.pos.y - mouse_pos.y);
+
+    // set temporary mode based on distance from bone to cursor
+    if !camera.on_ui {
+        let distance = adjusted.mag() / camera.zoom;
+        if distance < distance_move {
+            temporary = 0;
+            events.set_temporary_edit_mode(0);
+        }
+
+        // prioritize rot or scale, depending on user-defined distance
+        if distance_scale > distance_rot {
+            if distance < distance_rot {
+                temporary = 1;
+                events.set_temporary_edit_mode(1);
+            } else if distance < distance_scale {
+                temporary = 2;
+                events.set_temporary_edit_mode(2);
+            }
+        } else {
+            if distance < distance_scale {
+                temporary = 2;
+                events.set_temporary_edit_mode(2);
+            } else if distance < distance_rot {
+                temporary = 1;
+                events.set_temporary_edit_mode(1);
+            }
+        }
+        if distance < distance_move {
+            temporary = 0;
+            events.set_temporary_edit_mode(0);
+        }
+    }
+
+    // draw rot and scale rings
+    let cam = world_camera(&camera, &config);
+    let mut rot_col = config.colors.transform_circle;
+    let mut scale_col = config.colors.transform_circle;
+    scale_col -= Color::new(25, 25, 25, 0);
+    #[rustfmt::skip]
+        let (mut verts_rot, mut indices_rot) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., distance_rot * camera.zoom);
+    #[rustfmt::skip]
+        let (mut verts_scale, mut indices_scale) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., distance_scale * camera.zoom);
+    verts_rot.extend_from_slice(&mut verts_scale);
+    add_offseted_indices(&mut indices_scale, &mut indices_rot);
+    setup_render_buffer(&mut renderer.ring_buffer, &verts_rot, &indices_rot, queue);
+    draw(&renderer.ring_buffer, render_pass, 0, indices_rot.len());
+
+    // setup rot background
+    if temporary != 2 {
+        scale_col.a -= 25;
+    }
+    render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
+    #[rustfmt::skip]
+        let (mut sel_verts, mut sel_indices) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., distance_scale * camera.zoom);
+
+    // setup scale background
+    if temporary != 1 {
+        rot_col.a -= 25;
+    }
+    render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
+    #[rustfmt::skip]
+        let (mut sel_verts1, mut sel_indices1) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., distance_rot * camera.zoom);
+
+    // draw both backgrounds
+    sel_verts.append(&mut sel_verts1);
+    add_offseted_indices(&mut sel_indices1, &mut sel_indices);
+    let buffer = &mut renderer.selected_ring_buffer;
+    setup_render_buffer(buffer, &sel_verts, &sel_indices, queue);
+    draw(&buffer, render_pass, 0, indices_rot.len());
+
+    // set temporary mode to None only once, to prevent event spam
+    if temporary == 3 && edit_mode.temporary != None {
+        events.set_temporary_edit_mode(3);
+    }
 }
