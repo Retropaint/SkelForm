@@ -737,19 +737,15 @@ impl Ui {
             return string.to_string();
         }
 
-        self.loc_strings[""].to_string()
+        str.to_string()
     }
     pub fn init_empty_loc(&mut self) {
         self.loc_strings.insert("".to_string(), "".to_string());
     }
 
     pub fn init_lang(&mut self, lang_json: serde_json::Value) {
-        utils::flatten_json(
-            &lang_json,
-            "".to_string(),
-            &mut self.loc_strings,
-            "".to_string(),
-        );
+        let loc_strings = &mut self.loc_strings;
+        utils::flatten_json(&lang_json, "".to_string(), loc_strings, "".to_string());
         self.loc_strings.insert("".to_string(), "".to_string());
     }
 }
