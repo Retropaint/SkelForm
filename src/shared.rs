@@ -488,6 +488,7 @@ impl ContextMenu {
 pub struct UiBar {
     pub pos: Vec2,
     pub scale: Vec2,
+    pub expanded: bool,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -695,8 +696,6 @@ pub struct Ui {
     pub render_textures: bool,
     pub render_mesh_wf: bool,
     pub render_rects: bool,
-
-    pub expand_render_bar: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

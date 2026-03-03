@@ -1340,7 +1340,7 @@ fn render_bar(
                     let size;
                     let margin;
                     #[rustfmt::skip]
-                    let str = if shared_ui.expand_render_bar {
+                    let str = if shared_ui.render_bar.expanded {
                         size = [90., 20.];
                         margin = egui::Margin { top: 3, bottom: 3, right: 5, left: 6 };
                         $icon.to_owned() + " " + $str
@@ -1380,7 +1380,7 @@ fn render_bar(
                     if button.hovered() || button.has_focus() {
                         shared_ui.hovering_render_toggle = idx;
                         hovered = true;
-                        shared_ui.expand_render_bar = true;
+                        shared_ui.render_bar.expanded = true;
                     }
                     if button.on_hover_cursor(cursor).clicked() {
                         $field = !$field;
@@ -1398,7 +1398,7 @@ fn render_bar(
 
         if !hovered {
             shared_ui.hovering_render_toggle = -1;
-            shared_ui.expand_render_bar = ui.ui_contains_pointer();
+            shared_ui.render_bar.expanded = ui.ui_contains_pointer();
         }
 
         shared_ui.render_bar.scale = ui.min_rect().size().into();
@@ -1433,33 +1433,43 @@ fn camera_bar(
             shared_ui.camera_bar.pos.y,
         ));
     window.show(egui_ctx, |ui| {
-        macro_rules! input {
-            ($float:expr, $id:expr, $label:expr, $tip:expr) => {
-                ui.horizontal(|ui| {
-                    ui.label($label).on_hover_text(&shared_ui.loc($tip));
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        let id = $id.to_string();
-                        let (edited, value, _) =
-                            ui.float_input(id, shared_ui, $float.round(), 1., None);
-                        if edited {
-                            let cam = &camera;
-                            if $id.to_string() == "cam_pos_x" {
-                                events.edit_camera(value, cam.pos.y, cam.zoom);
-                            } else if $id.to_string() == "cam_pos_y" {
-                                events.edit_camera(cam.pos.x, value, cam.zoom);
-                            } else if $id.to_string() == "cam_zoom" {
-                                events.edit_camera(cam.pos.x, cam.pos.y, value);
+        if !shared_ui.camera_bar.expanded {
+            ui.scope(|ui| {
+                ui.style_mut().interaction.selectable_labels = false;
+                ui.label(egui::RichText::new("🎥").size(16.));
+            });
+        } else {
+            ui.set_width(60.);
+            ui.set_height(60.);
+            macro_rules! input {
+                ($float:expr, $id:expr, $label:expr, $tip:expr) => {
+                    ui.horizontal(|ui| {
+                        ui.label($label).on_hover_text(&shared_ui.loc($tip));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            let id = $id.to_string();
+                            let (edited, value, _) =
+                                ui.float_input(id, shared_ui, $float.round(), 1., None);
+                            if edited {
+                                let cam = &camera;
+                                if $id.to_string() == "cam_pos_x" {
+                                    events.edit_camera(value, cam.pos.y, cam.zoom);
+                                } else if $id.to_string() == "cam_pos_y" {
+                                    events.edit_camera(cam.pos.x, value, cam.zoom);
+                                } else if $id.to_string() == "cam_zoom" {
+                                    events.edit_camera(cam.pos.x, cam.pos.y, value);
+                                }
                             }
-                        }
+                        })
                     })
-                })
-            };
+                };
+            }
+
+            input!(camera.pos.x, "cam_pos_x", "X", "cam_x");
+            input!(camera.pos.y, "cam_pos_y", "Y", "cam_y");
+            input!(camera.zoom, "cam_zoom", "🔍", "cam_zoom");
         }
 
-        input!(camera.pos.x, "cam_pos_x", "X", "cam_x");
-        input!(camera.pos.y, "cam_pos_y", "Y", "cam_y");
-        input!(camera.zoom, "cam_zoom", "🔍", "cam_zoom");
-
+        shared_ui.camera_bar.expanded = ui.ui_contains_pointer();
         shared_ui.camera_bar.scale = ui.min_rect().size().into();
     });
 }
