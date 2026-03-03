@@ -381,6 +381,15 @@ impl Color {
         self.b = rhs.b();
         self.a = rhs.a();
     }
+
+    pub fn as_f32(&self) -> VertexColor {
+        VertexColor::new(
+            self.r as f32 / 255.,
+            self.g as f32 / 255.,
+            self.b as f32 / 255.,
+            self.a as f32 / 255.,
+        )
+    }
 }
 
 impl From<egui::Color32> for Color {
@@ -801,6 +810,8 @@ pub struct Config {
     pub ignore_donate: bool,
     pub pixel_magnification: i32,
     pub propagate_visibility: bool,
+    pub transform_rot_radius: f32,
+    pub transform_scale_radius: f32,
 
     #[serde(skip)]
     pub colors: ColorConfig,
@@ -827,6 +838,7 @@ pub struct ColorConfig {
     pub meshdef: Color,
     pub texture: Color,
     pub ik_target: Color,
+    pub transform_circle: Color,
 }
 
 impl Default for Config {
@@ -846,6 +858,8 @@ impl Default for Config {
             ignore_donate: false,
             pixel_magnification: 1,
             propagate_visibility: false,
+            transform_rot_radius: 0.08,
+            transform_scale_radius: 0.16,
         }
     }
 }
@@ -869,6 +883,7 @@ impl Default for ColorConfig {
             texture: Color::new(200, 200, 200, 255),
             inverse_kinematics: Color::new(188, 188, 0, 255),
             ik_target: Color::new(90, 90, 150, 255),
+            transform_circle: Color::new(77, 144, 77, 125),
         }
     }
 }

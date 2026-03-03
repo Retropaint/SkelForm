@@ -282,7 +282,12 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
                 colors!().center_point = crate::Config::default().colors.center_point;
                 colors!().inactive_center_point =
                     crate::Config::default().colors.inactive_center_point;
+                colors!().transform_circle = crate::Config::default().colors.transform_circle;
                 shared_ui.updated_config.gridline_gap = crate::Config::default().gridline_gap;
+                shared_ui.updated_config.transform_rot_radius =
+                    crate::Config::default().transform_rot_radius;
+                shared_ui.updated_config.transform_scale_radius =
+                    crate::Config::default().transform_scale_radius;
             }
         });
     });
@@ -310,13 +315,8 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
         let str_heading = &shared_ui.loc("settings_modal.rendering.pixel_mag");
         ui.label(str_heading);
         let id = "pixelmag".to_string();
-        let (edited, value, _) = ui.float_input(
-            id,
-            shared_ui,
-            shared_ui.updated_config.pixel_magnification as f32,
-            1.,
-            None,
-        );
+        let mag = shared_ui.updated_config.pixel_magnification as f32;
+        let (edited, value, _) = ui.float_input(id, shared_ui, mag, 1., None);
         if edited {
             shared_ui.updated_config.pixel_magnification = (value as i32).max(1);
         }
@@ -324,8 +324,28 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
         ui.label("= ".to_owned() + &window.x.to_string() + ", " + &window.y.to_string());
     });
 
-    let mut alt_col = true;
+    ui.horizontal(|ui| {
+        let str_rot_radius = &shared_ui.loc("settings_modal.rendering.transform_rot_radius");
+        ui.label(str_rot_radius);
+        let gap = shared_ui.updated_config.transform_rot_radius;
+        let (edited, value, _) = ui.float_input("rot_radius".to_string(), shared_ui, gap, 1., None);
+        if edited {
+            shared_ui.updated_config.transform_rot_radius = value;
+        }
+    });
 
+    ui.horizontal(|ui| {
+        let str_scale_radius = &shared_ui.loc("settings_modal.rendering.transform_scale_radius");
+        ui.label(str_scale_radius);
+        let gap = shared_ui.updated_config.transform_scale_radius;
+        let (edited, value, _) =
+            ui.float_input("scale_radius".to_string(), shared_ui, gap, 1., None);
+        if edited {
+            shared_ui.updated_config.transform_scale_radius = value;
+        }
+    });
+
+    let mut alt_col = true;
     macro_rules! color_row {
         ($title:expr, $color:expr, $alpha:expr) => {
             alt_col = !alt_col;
@@ -348,6 +368,7 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
         colors!().inactive_center_point,
         true
     );
+    color_row!("transform_circle", colors!().transform_circle, true);
 }
 
 fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {

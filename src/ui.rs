@@ -343,11 +343,11 @@ pub fn draw(
     if !input.left_down {
         if let Some(temporary) = &edit_mode.temporary {
             if *temporary == EditModes::Move {
-                helper_text!("Move", Vec2::new(0., -10.));
+                helper_text!("Hold to Move", Vec2::new(0., -10.));
             } else if *temporary == EditModes::Rotate {
-                helper_text!("Rotate", Vec2::new(0., -10.));
+                helper_text!("Hold to Rotate", Vec2::new(0., -10.));
             } else if *temporary == EditModes::Scale {
-                helper_text!("Scale", Vec2::new(0., -10.));
+                helper_text!("Hold to Scale", Vec2::new(0., -10.));
             }
         }
     }

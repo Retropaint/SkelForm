@@ -281,7 +281,10 @@
       "gridline": "Gridline",
       "center_point": "Center Point",
       "inactive_center_point": "Inactive Center Point",
-      "gridline_front": "Render gridline in front: "
+      "gridline_front": "Render gridline in front: ",
+      "transform_circle": "Transform Circle: ",
+      "transform_rot_radius": "Rotation radius:",
+      "transform_scale_radius": "Scale radius:"
     },
     "keyboard": {
       "heading": "Keyboard",
