@@ -1328,9 +1328,11 @@ fn render_bar(
             };
         }
 
-        button!(shared_ui.render_textures, "Textuers");
+        button!(shared_ui.render_textures, "Textures");
         button!(shared_ui.render_points, "Points");
         button!(shared_ui.render_kites, "Kites");
+        button!(shared_ui.render_mesh_wf, "Mesh WF");
+        button!(shared_ui.render_rects, "Rects");
         shared_ui.render_bar.scale = ui.min_rect().size().into();
     });
 }

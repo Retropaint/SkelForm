@@ -404,6 +404,48 @@ pub fn render(
         draw(&renderer.meshframe_buffer, render_pass, 0, indices.len());
     }
 
+    // render mesh wireframes if on
+    if renderer.render_mesh_wf {
+        let mut verts = vec![];
+        let mut indices = vec![];
+        for bone in &temp_arm.bones {
+            if !bone.verts_edited {
+                continue;
+            }
+
+            render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
+            let mouse = mouse_world_vert;
+            let nw = &mut new_vert;
+            let wv = bone.world_verts.clone();
+
+            #[rustfmt::skip]
+            let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, camera, config, edit_mode, events, armature, renderer);
+            #[rustfmt::skip]
+            let (mut verts_l, mut indices_l, _) = vert_lines(bone, &temp_arm.bones, &mouse, nw, false, false, camera, input, renderer);
+
+            // color wireframes based on bone group color
+            for vert in &mut verts_p {
+                vert.color = bone.group_color;
+                vert.color.a -= 75;
+            }
+            for vert in &mut verts_l {
+                vert.color = bone.group_color;
+                vert.color.a -= 125;
+            }
+
+            verts.append(&mut verts_p);
+            verts.append(&mut verts_l);
+            if indices.len() == 0 {
+                indices = indices_p;
+            } else {
+                add_offseted_indices(&mut indices_p, &mut indices);
+            }
+            add_offseted_indices(&mut indices_l, &mut indices);
+        }
+        setup_render_buffer(&mut renderer.meshframe_buffer, &verts, &indices, queue);
+        draw(&renderer.meshframe_buffer, render_pass, 0, indices.len());
+    }
+
     if mesh_onion_id != -1 {
         //render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         //let tp = &temp_arm.bones;

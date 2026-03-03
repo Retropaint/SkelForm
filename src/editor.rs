@@ -849,6 +849,8 @@ pub fn process_event(
             renderer.render_points = ui.render_points;
             renderer.render_kites = ui.render_kites;
             renderer.render_textures = ui.render_textures;
+            renderer.render_mesh_wf = ui.render_mesh_wf;
+            renderer.render_rects = ui.render_rects;
         }
         Events::SetTemporaryEditMode => {
             if value == 3. {

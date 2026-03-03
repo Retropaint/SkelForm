@@ -692,6 +692,8 @@ pub struct Ui {
     pub render_points: bool,
     pub render_kites: bool,
     pub render_textures: bool,
+    pub render_mesh_wf: bool,
+    pub render_rects: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -2095,6 +2097,8 @@ pub struct Renderer {
     pub render_points: bool,
     pub render_kites: bool,
     pub render_textures: bool,
+    pub render_mesh_wf: bool,
+    pub render_rects: bool,
     pub meshframe_buffer: RenderBuffer,
     pub bone_buffer: RenderBuffer,
     pub prev_onion_buffer: RenderBuffer,
