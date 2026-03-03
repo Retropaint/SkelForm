@@ -905,6 +905,11 @@ impl Display for egui::KeyboardShortcut {
             *key = key.replace("⇧", "Shift");
         }
 
+        // ignore key if it's F30 (designated 'nothing' key)
+        if str.len() == 4 && str[1] == "F" && str[2] == "3" && str[3] == "0" {
+            return str[0].clone();
+        }
+
         str.join(" ")
     }
 }

@@ -1230,11 +1230,8 @@ fn edit_mode_bar(
     }
 
     // edit mode window
-    let window = egui::Window::new("Mode")
-        .resizable(false)
-        .title_bar(false)
-        .max_width(100.)
-        .movable(false)
+    #[rustfmt::skip]
+    let window = egui::Window::new("Mode").resizable(false).title_bar(false).max_width(100.).movable(false)
         .current_pos(egui::Pos2::new(
             shared_ui.edit_bar.pos.x + 7.5,
             shared_ui.edit_bar.pos.y - 1.,
@@ -1270,6 +1267,26 @@ fn edit_mode_bar(
             edit_mode_button!(scale_str, E::Scale, edit_mode_scale, ikd, key_scale);
         });
         shared_ui.edit_bar.scale = ui.min_rect().size().into();
+
+        // display edit features via shortcuts (snapping, etc) when actively editing
+        macro_rules! edit_feature {
+            ($str:expr, $key:expr) => {
+                ui.horizontal(|ui| {
+                    ui.label($str);
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.label($key.display());
+                    });
+                });
+            };
+        }
+        if edit_mode.is_moving {
+            edit_feature!("Snap X/Y", config.keys.snap_transforms);
+        } else if edit_mode.is_rotating {
+            edit_feature!("Snap to 22.5°", config.keys.snap_transforms);
+        } else if edit_mode.is_scaling {
+            edit_feature!("Snap X/Y", config.keys.snap_transforms);
+            edit_feature!("Maintain aspect ratio", config.keys.transform_modifier);
+        }
     });
 }
 
