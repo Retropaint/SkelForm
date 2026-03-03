@@ -195,7 +195,7 @@ pub struct Vertex {
     #[serde(skip)]
     pub color: Color,
     #[serde(skip)]
-    pub add_color: VertexColor,
+    pub add_color: Color,
     #[serde(skip)]
     pub tint: TintColor,
     #[serde(skip)]
@@ -226,7 +226,7 @@ impl Default for Vertex {
             uv: Vec2::default(),
             init_pos: Vec2::default(),
             color: Color::default(),
-            add_color: VertexColor::new(0., 0., 0., 0.),
+            add_color: Color::new(0, 0, 0, 0),
             tint: TintColor::new(1., 1., 1., 1.),
             offset_rot: 0.,
         }
@@ -239,56 +239,19 @@ impl From<Vertex> for GpuVertex {
             pos: vert.pos,
             uv: vert.uv,
             color: vert.color.as_f32(),
-            add_color: vert.add_color,
+            add_color: vert.add_color.as_f32(),
             tint: vert.tint,
         }
     }
 }
 
 #[repr(C)]
-#[derive(PartialEq, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Debug)]
+#[derive(PartialEq, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Debug, Default)]
 pub struct VertexColor {
     pub r: f32,
     pub g: f32,
     pub b: f32,
     pub a: f32,
-}
-
-impl VertexColor {
-    pub const fn new(r: f32, g: f32, b: f32, a: f32) -> VertexColor {
-        VertexColor { r, g, b, a }
-    }
-
-    pub const GREEN: VertexColor = VertexColor::new(0., 1., 0., 1.);
-    pub const YELLOW: VertexColor = VertexColor::new(1., 1., 0., 1.);
-    pub const WHITE: VertexColor = VertexColor::new(1., 1., 1., 1.);
-}
-
-impl From<Color> for VertexColor {
-    fn from(color: Color) -> VertexColor {
-        VertexColor {
-            r: color.r as f32 / 255.,
-            g: color.g as f32 / 255.,
-            b: color.b as f32 / 255.,
-            a: color.a as f32 / 255.,
-        }
-    }
-}
-
-impl std::ops::AddAssign for VertexColor {
-    fn add_assign(&mut self, other: VertexColor) {
-        self.r += other.r;
-        self.g += other.g;
-        self.b += other.b;
-        self.a += other.a;
-    }
-}
-
-#[rustfmt::skip]
-impl Default for VertexColor {
-    fn default() -> Self {
-        VertexColor {  r: 1., g: 1., b: 1., a: 1. }
-    }
 }
 
 #[rustfmt::skip]
@@ -318,12 +281,12 @@ impl Color {
     }
 
     pub fn as_f32(&self) -> VertexColor {
-        VertexColor::new(
-            self.r as f32 / 255.,
-            self.g as f32 / 255.,
-            self.b as f32 / 255.,
-            self.a as f32 / 255.,
-        )
+        VertexColor {
+            r: self.r as f32 / 255.,
+            g: self.g as f32 / 255.,
+            b: self.b as f32 / 255.,
+            a: self.a as f32 / 255.,
+        }
     }
 }
 
