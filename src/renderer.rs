@@ -1,5 +1,7 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
+use std::ops::SubAssign;
+
 use crate::*;
 use image::GenericImageView;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
@@ -460,9 +462,9 @@ pub fn render(
 
         // draw rot and scale rings
         let cam = world_camera(&camera, &config);
-        let mut rot_col = config.colors.transform_circle.as_f32();
-        let mut scale_col = config.colors.transform_circle.as_f32();
-        scale_col += VertexColor::new(-0.1, -0.1, -0.1, 0.);
+        let mut rot_col = config.colors.transform_circle;
+        let mut scale_col = config.colors.transform_circle;
+        scale_col -= Color::new(25, 25, 25, 0);
         #[rustfmt::skip]
         let (mut verts_rot, mut indices_rot) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., distance_rot * camera.zoom);
         #[rustfmt::skip]
@@ -474,7 +476,7 @@ pub fn render(
 
         // setup rot background
         if temporary != 2 {
-            scale_col.a -= 0.1;
+            scale_col.a -= 25;
         }
         render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
         #[rustfmt::skip]
@@ -482,7 +484,7 @@ pub fn render(
 
         // setup scale background
         if temporary != 1 {
-            rot_col.a -= 0.1;
+            rot_col.a -= 25;
         }
         render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
         #[rustfmt::skip]
@@ -608,9 +610,13 @@ pub fn draw_armature(
         if showing_mesh && src_arm.sel_bone(&sel).unwrap().id == id {
             continue;
         }
+        let mut world_verts = bone.world_verts.clone();
+        for vert in &mut world_verts {
+            vert.color = Color::new(255, 255, 255, 255);
+        }
         bone_ids_to_draw.push(armature.bones[b].id);
         let mut gpu_verts: Vec<GpuVertex> =
-            bone.world_verts.iter().map(|vert| (*vert).into()).collect();
+            world_verts.iter().map(|vert| (*vert).into()).collect();
         all_gpu_verts.append(&mut gpu_verts);
         if all_indices.len() == 0 {
             all_indices.append(&mut bone.indices.clone());
@@ -656,7 +662,7 @@ pub fn mouse_vel(input: &InputStates, camera: &Camera) -> Vec2 {
     mouse_prev_world - mouse_world
 }
 
-fn vert(pos: Option<Vec2>, col: Option<VertexColor>, uv: Option<Vec2>) -> Vertex {
+fn vert(pos: Option<Vec2>, col: Option<Color>, uv: Option<Vec2>) -> Vertex {
     Vertex {
         pos: pos.unwrap_or_default(),
         color: col.unwrap_or_default(),
@@ -1128,9 +1134,12 @@ pub fn bone_vertices(
         }
 
         let bound = idx != -1 && verts.contains(&(world_verts[wv].id as i32));
-        type Vc = VertexColor;
-        let mut col = if bound { Vc::YELLOW } else { Vc::GREEN };
-        col.a = if editable { 0.5 } else { 0.15 };
+        let mut col = if bound {
+            Color::new(255, 255, 0, 255)
+        } else {
+            Color::new(255, 0, 0, 255)
+        };
+        col.a = if editable { 125 } else { 38 };
         let (mut verts, mut indices) = point!(wv, col);
         let mouse_on_it = utils::in_bounding_box(&input.mouse, &verts, &camera.window).1;
 
@@ -1141,7 +1150,7 @@ pub fn bone_vertices(
 
         hovering_vert = true;
 
-        let (mut verts, mut indices) = point!(wv, VertexColor::WHITE);
+        let (mut verts, mut indices) = point!(wv, Color::new(255, 255, 255, 255));
         add_point!(verts, indices, wv);
         if input.right_clicked {
             if world_verts.len() <= 4 {
@@ -1237,9 +1246,9 @@ pub fn vert_lines(
         let mut base = Vec2::new(width, width) / camera.zoom;
         base = utils::rotate(&base, dir.y.atan2(dir.x));
 
-        let mut col = VertexColor::GREEN;
-        col += VertexColor::new(-0.5, -0.5, -0.5, 0.);
-        col.a = if editable { 0.3 } else { 0.1 };
+        let mut col = Color::new(255, 0, 0, 255);
+        col -= Color::new(125, 125, 125, 0);
+        col.a = if editable { 77 } else { 25 };
 
         #[rustfmt::skip]
         macro_rules! vert { ($pos:expr, $v:expr) => { Vertex { pos: $pos, color: col, ..$v } }; }
@@ -1331,7 +1340,7 @@ fn draw_line(
     let mut base = Vec2::new(width, width) / 1000.;
     base = utils::rotate(&base, dir.y.atan2(dir.x) + (45. * 3.14 / 180.));
 
-    let color = VertexColor::new(0., 1., 0., 1.);
+    let color = Color::new(0, 255, 0, 255);
 
     macro_rules! vert {
         ($pos:expr) => {
@@ -1373,7 +1382,7 @@ fn draw_point(
     camera: &Camera,
     config: &Config,
     pos: &Vec2,
-    color: VertexColor,
+    color: Color,
     camera_pos: Vec2,
     rotation: f32,
     size: f32,
@@ -1399,7 +1408,7 @@ fn draw_ring(
     camera: &Camera,
     config: &Config,
     pos: &Vec2,
-    color: VertexColor,
+    color: Color,
     camera_pos: Vec2,
     rotation: f32,
     size: f32,
@@ -1425,7 +1434,7 @@ fn draw_flow_kite(
     camera: &Camera,
     config: &Config,
     pos: &Vec2,
-    color: VertexColor,
+    color: Color,
     camera_pos: Vec2,
     rotation: f32,
     width: f32,
@@ -1601,16 +1610,16 @@ fn draw_gridline(
 
     let cam = world_camera(camera, config);
 
-    let col = VertexColor::new(
-        config.colors.gridline.r as f32 / 255.,
-        config.colors.gridline.g as f32 / 255.,
-        config.colors.gridline.b as f32 / 255.,
-        1.,
+    let col = Color::new(
+        config.colors.gridline.r,
+        config.colors.gridline.g,
+        config.colors.gridline.b,
+        255,
     );
 
     let width = 0.005 * cam.zoom;
-    let regular_color = VertexColor::new(col.r, col.g, col.b, 0.15);
-    let highlight_color = VertexColor::new(col.r, col.g, col.b, 1.);
+    let regular_color = Color::new(col.r, col.g, col.b, 38);
+    let highlight_color = Color::new(col.r, col.g, col.b, 255);
 
     let mut verts = vec![];
     let mut indices: Vec<u32> = vec![];
@@ -1677,7 +1686,7 @@ pub fn draw_horizontal_line(
     width: f32,
     camera: &Camera,
     config: &Config,
-    color: VertexColor,
+    color: Color,
 ) -> Vec<Vertex> {
     let edge = camera.zoom * 5.;
     let c = &world_camera(camera, config);
@@ -1694,7 +1703,7 @@ pub fn draw_vertical_line(
     width: f32,
     camera: &Camera,
     config: &Config,
-    color: VertexColor,
+    color: Color,
 ) -> Vec<Vertex> {
     let edge = camera.zoom * 5.;
     let c = &world_camera(camera, config);
@@ -1729,12 +1738,12 @@ pub fn draw_points_and_kites(
     render_pass: &mut RenderPass,
     events: &mut EventState,
 ) {
-    let point_color: VertexColor = config.colors.center_point.into();
-    let mut kite_color: VertexColor = config.colors.center_point.into();
-    kite_color.a -= 0.25;
-    let in_point_color: VertexColor = config.colors.inactive_center_point.into();
-    let mut in_kite_color: VertexColor = config.colors.inactive_center_point.into();
-    in_kite_color.a -= 0.25;
+    let point_color: Color = config.colors.center_point;
+    let mut kite_color: Color = config.colors.center_point;
+    kite_color.a -= 64;
+    let in_point_color: Color = config.colors.inactive_center_point;
+    let mut in_kite_color: Color = config.colors.inactive_center_point;
+    in_kite_color.a = in_kite_color.a.saturating_sub(64);
     let cam = world_camera(&camera, &config);
     let zero = Vec2::default();
     let mut kite_verts = vec![];
@@ -1761,7 +1770,7 @@ pub fn draw_points_and_kites(
             } else {
                 color = bone.group_color.into();
                 if !selected_bone_ids.contains(&bone.id) {
-                    color.a /= 2.;
+                    color.a /= 2;
                 }
             }
 
@@ -1787,7 +1796,7 @@ pub fn draw_points_and_kites(
                     color = point_color;
                 }
                 if selected_bone_ids.contains(&bone.id) {
-                    color += VertexColor::new(0.3, 0.3, 0.3, 1.);
+                    color += Color::new(64, 64, 64, 255);
                 }
                 (this_verts, this_indices) = draw_point(
                     &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
@@ -1834,7 +1843,7 @@ pub fn draw_points_and_kites(
         } else {
             color = group_color.into();
             if !selected_bone_ids.contains(&parent_id) {
-                color.a /= 2.;
+                color.a /= 2;
             }
         }
         #[rustfmt::skip]

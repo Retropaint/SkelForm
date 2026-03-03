@@ -1469,7 +1469,7 @@ pub fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
     verts
 }
 
-fn vert(pos: Option<Vec2>, col: Option<VertexColor>, uv: Option<Vec2>) -> Vertex {
+fn vert(pos: Option<Vec2>, col: Option<Color>, uv: Option<Vec2>) -> Vertex {
     Vertex {
         pos: pos.unwrap_or_default(),
         color: col.unwrap_or_default(),

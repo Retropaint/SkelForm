@@ -193,7 +193,7 @@ pub struct Vertex {
     pub uv: Vec2,
     pub init_pos: Vec2,
     #[serde(skip)]
-    pub color: VertexColor,
+    pub color: Color,
     #[serde(skip)]
     pub add_color: VertexColor,
     #[serde(skip)]
@@ -225,7 +225,7 @@ impl Default for Vertex {
             pos: Vec2::default(),
             uv: Vec2::default(),
             init_pos: Vec2::default(),
-            color: VertexColor::default(),
+            color: Color::default(),
             add_color: VertexColor::new(0., 0., 0., 0.),
             tint: TintColor::new(1., 1., 1., 1.),
             offset_rot: 0.,
@@ -238,7 +238,7 @@ impl From<Vertex> for GpuVertex {
         GpuVertex {
             pos: vert.pos,
             uv: vert.uv,
-            color: vert.color,
+            color: vert.color.as_f32(),
             add_color: vert.add_color,
             tint: vert.tint,
         }
@@ -301,19 +301,29 @@ pub struct Color {
     pub a: u8,
 }
 
-#[rustfmt::skip]
-#[repr(C)]
-#[derive(PartialEq, Copy, Clone, serde::Deserialize, serde::Serialize, Default, Debug, bytemuck::Pod,bytemuck::Zeroable)]
-pub struct TintColor {
-    pub r: f32,
-    pub g: f32,
-    pub b: f32,
-    pub a: f32,
-}
+impl Color {
+    pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
+        Color { r, g, b, a }
+    }
 
-impl TintColor {
-    pub const fn new(r: f32, g: f32, b: f32, a: f32) -> TintColor {
-        TintColor { r, g, b, a }
+    pub fn egui_rgba(self) -> egui::Color32 {
+        egui::Color32::from_rgba_premultiplied(self.r, self.g, self.b, self.a)
+    }
+
+    pub fn from_egui_rgba(&mut self, rhs: egui::Color32) {
+        self.r = rhs.r();
+        self.g = rhs.g();
+        self.b = rhs.b();
+        self.a = rhs.a();
+    }
+
+    pub fn as_f32(&self) -> VertexColor {
+        VertexColor::new(
+            self.r as f32 / 255.,
+            self.g as f32 / 255.,
+            self.b as f32 / 255.,
+            self.a as f32 / 255.,
+        )
     }
 }
 
@@ -366,31 +376,6 @@ impl std::ops::Add for Color {
         }
     }
 }
-impl Color {
-    pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
-        Color { r, g, b, a }
-    }
-
-    pub fn egui_rgba(self) -> egui::Color32 {
-        egui::Color32::from_rgba_premultiplied(self.r, self.g, self.b, self.a)
-    }
-
-    pub fn from_egui_rgba(&mut self, rhs: egui::Color32) {
-        self.r = rhs.r();
-        self.g = rhs.g();
-        self.b = rhs.b();
-        self.a = rhs.a();
-    }
-
-    pub fn as_f32(&self) -> VertexColor {
-        VertexColor::new(
-            self.r as f32 / 255.,
-            self.g as f32 / 255.,
-            self.b as f32 / 255.,
-            self.a as f32 / 255.,
-        )
-    }
-}
 
 impl From<egui::Color32> for Color {
     fn from(col: egui::Color32) -> Color {
@@ -410,6 +395,23 @@ impl Default for Color {
         Color {  r: 0, g: 0, b: 0, a: 255 }
     }
 }
+
+#[rustfmt::skip]
+#[repr(C)]
+#[derive(PartialEq, Copy, Clone, serde::Deserialize, serde::Serialize, Default, Debug, bytemuck::Pod,bytemuck::Zeroable)]
+pub struct TintColor {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub a: f32,
+}
+
+impl TintColor {
+    pub const fn new(r: f32, g: f32, b: f32, a: f32) -> TintColor {
+        TintColor { r, g, b, a }
+    }
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
 pub struct Camera {
     pub pos: Vec2,
