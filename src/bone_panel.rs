@@ -109,7 +109,7 @@ pub fn draw(
         let text = egui::RichText::new("🗑").size(15.).color(col);
         if ui.label(text).on_hover_cursor(hand).clicked() {
             let str = shared_ui.loc("polar.delete_bone").clone().to_string();
-            let context_id = "b_".to_owned() + &sel.bone_idx.to_string();
+            let context_id = format!("b_{}", sel.bone_idx.to_string());
             shared_ui.context_menu.id = context_id;
             shared_ui.context_menu.keep = true;
             events.open_polar_modal(PolarId::DeleteBone, str);
@@ -225,7 +225,7 @@ pub fn draw(
         .iter()
         .position(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
     if is_target_of != None {
-        let target_str = shared_ui.loc("bone_panel.target_bone").to_owned();
+        let target_str = shared_ui.loc("bone_panel.target_bone");
         ui.label(target_str + &armature.bones[is_target_of.unwrap()].name + ".");
         if ui.skf_button("Go to IK bone").clicked() {
             events.select_bone(is_target_of.unwrap(), false);
@@ -286,7 +286,7 @@ pub fn inverse_kinematics(
 
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
-            ui.label(str_heading.to_owned()).on_hover_text(str_desc);
+            ui.label(str_heading).on_hover_text(str_desc);
             let color = config.colors.inverse_kinematics;
             ui.label(egui::RichText::new("🔧").size(16.).color(color));
 
@@ -449,12 +449,12 @@ pub fn inverse_kinematics(
 
     ui.horizontal(|ui| {
         let ik = "bone_panel.inverse_kinematics.";
-        ui.label(&shared_ui.loc(&(ik.to_owned() + "constraint")));
+        ui.label(&shared_ui.loc(&format!("{}constraint", ik)));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let str_none = &shared_ui.loc("none").clone();
-            let str_clockwise = shared_ui.loc(&(ik.to_owned() + "Clockwise")).clone() + "  ⟳";
-            let str_ccw = shared_ui.loc(&(ik.to_owned() + "CounterClockwise")).clone() + "  ⟲";
-            let str_desc = &shared_ui.loc(&(ik.to_owned() + "constraint_desc")).clone();
+            let str_clockwise = shared_ui.loc(&format!("{}Clockwise", ik)) + "  ⟳";
+            let str_ccw = shared_ui.loc(&format!("{}CounterClockwise", ik)) + "  ⟲";
+            let str_desc = &shared_ui.loc(&format!("{}constraint_desc", ik));
             let selected = match bone.ik_constraint {
                 JointConstraint::Clockwise => str_clockwise.clone(),
                 JointConstraint::CounterClockwise => str_ccw.clone(),
@@ -545,7 +545,7 @@ pub fn mesh_deformation(
         .inner_margin(egui::Margin::same(5));
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
-            ui.label(str_heading.to_owned()).on_hover_text(str_desc);
+            ui.label(str_heading).on_hover_text(str_desc);
             let color = config.colors.meshdef;
             ui.label(egui::RichText::new("⬟").color(color));
 
@@ -842,7 +842,7 @@ pub fn texture_effects(
         .inner_margin(egui::Margin::same(5));
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
-            ui.label(str_heading.to_owned());
+            ui.label(str_heading);
             let color = config.colors.texture;
             ui.label(egui::RichText::new("🖻").color(color));
 

@@ -194,7 +194,7 @@ pub fn draw_hierarchy(
 
         ui.add_enabled_ui(!setting_ik_target, |ui| {
             ui.horizontal(|ui| {
-                let id = "bone_hidden".to_owned() + &b.to_string();
+                let id = format!("bone_hidden{}", b.to_string());
                 let hidden = armature.is_bone_hidden(true, config.propagate_visibility, bone_id);
                 let mut col = config.colors.text;
                 if hidden {
@@ -299,7 +299,7 @@ pub fn draw_hierarchy(
 
                     let folded = armature.bones[b].folded;
                     let fold_icon = if folded { "⏵" } else { "⏷" };
-                    let id = "bone_fold".to_owned() + &b.to_string();
+                    let id = format!("bone_fold{}", b.to_string());
                     let desc = shared_ui.loc("armature_panel.fold_desc");
                     let arrow_offset = Vec2::new(-2., 18.5);
                     if bone_label(fold_icon, ui, id, arrow_offset, desc, arrow_col).clicked() {
@@ -412,7 +412,7 @@ pub fn draw_hierarchy(
                                 }
                                 if is_target != None {
                                     let family_id = is_target.unwrap().ik_family_id.to_string();
-                                    let icon = "⌖".to_owned() + &family_id;
+                                    let icon = format!("⌖{}", family_id);
                                     let desc = shared_ui
                                         .loc("armature_panel.icons.ik_target")
                                         .replace("$family_id", &family_id);

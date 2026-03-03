@@ -124,7 +124,7 @@ pub fn settings_button(
         egui::Vec2::new(width, 21.),
     );
 
-    let id = egui::Id::new("setting_".to_owned() + &name);
+    let id = egui::Id::new(format!("setting_{}", name));
     let button = ui
         .interact(rect, id, egui::Sense::click())
         .on_hover_cursor(egui::CursorIcon::PointingHand);
@@ -198,7 +198,7 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
             let col = &shared_ui.updated_config.colors;
             let color = if alt_col { col.main } else { col.dark_accent };
             let str_color = shared_ui
-                .loc(&("settings_modal.user_interface.colors.".to_owned() + $title))
+                .loc(&format!("settings_modal.user_interface.colors.{}", $title))
                 .clone();
             color_row(str_color, $color, color, ui, false);
         };
@@ -356,7 +356,11 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
             shared_ui.updated_config.pixel_magnification = (value as i32).max(1);
         }
         let window = camera.window / shared_ui.updated_config.pixel_magnification as f32;
-        ui.label("= ".to_owned() + &window.x.to_string() + ", " + &window.y.to_string());
+        ui.label(format!(
+            "= {}, {}",
+            window.x.to_string(),
+            window.y.to_string()
+        ));
     });
 
     ui.add_space(7.);
@@ -368,7 +372,7 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
             let col = &shared_ui.updated_config.colors;
             let bg_color = if alt_col { col.main } else { col.dark_accent };
             let str_color = shared_ui
-                .loc(&("settings_modal.rendering.".to_owned() + $title))
+                .loc(&format!("settings_modal.rendering.{}", $title))
                 .clone();
             let mut col = $color.clone();
             color_row(str_color, &mut col, bg_color, ui, $alpha);
@@ -405,7 +409,7 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         let str_exact_bone = &shared_ui.loc("settings_modal.miscellaneous.select_exact_bone");
         let str_exact_bone_desc =
             &shared_ui.loc("settings_modal.miscellaneous.select_exact_bone_desc");
-        ui.label(str_exact_bone.to_owned())
+        ui.label(str_exact_bone)
             .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_exact_bone_desc);
         ui.checkbox(
@@ -417,7 +421,7 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         let str_keep_tex_str = &shared_ui.loc("settings_modal.miscellaneous.keep_tex_str");
         let str_keep_tex_str_desc =
             &shared_ui.loc("settings_modal.miscellaneous.keep_tex_str_desc");
-        ui.label(&(str_keep_tex_str.to_owned()))
+        ui.label(str_keep_tex_str)
             .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_keep_tex_str_desc);
         ui.checkbox(&mut shared_ui.updated_config.keep_tex_str, "".into_atoms());
@@ -509,7 +513,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     macro_rules! loc {
         ($label:expr) => {
             shared_ui
-                .loc(&("settings_modal.keyboard.".to_owned() + $label))
+                .loc(&format!("settings_modal.keyboard.{}", $label))
                 .clone()
         };
     }
@@ -523,7 +527,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
                 shared_ui.updated_config.colors.dark_accent
             };
             let text_col = shared_ui.updated_config.colors.text;
-            let label_desc = loc!(&($label.to_owned() + &"_desc"));
+            let label_desc = loc!(&format!("{}_desc", $label));
             #[rustfmt::skip]
             key(loc!($label), label_desc, &mut $field, ui, &mut shared_ui.changing_key, &shared_ui.last_pressed, color, text_col, $has_key);
         };

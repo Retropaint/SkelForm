@@ -92,7 +92,7 @@ pub fn draw(
                 [img.width() as usize, img.height() as usize],
                 img.as_flat_samples().as_slice(),
             );
-            let name = "anim_icon_".to_owned() + &x.to_string();
+            let name = format!("anim_icon_{}", x.to_string());
             let tex = context.load_texture(name, color_image, Default::default());
             shared_ui.anim.icon_images.push(tex);
         }
@@ -149,7 +149,7 @@ pub fn draw(
             events.open_modal("startup.error_update", false);
         } else if dl_links != "" {
             let ver_str = dl_links["version"].as_str().unwrap();
-            let this_ver_str = "v".to_owned() + env!("CARGO_PKG_VERSION");
+            let this_ver_str = format!("v{}", env!("CARGO_PKG_VERSION"));
             if ver_str.trim() != this_ver_str.trim() {
                 shared_ui.new_version = this_ver_str.to_string();
                 let loc = "startup.update_available";
@@ -367,7 +367,7 @@ pub fn draw(
         if formatted.to_string() == "1" {
             padding = ".00";
         }
-        let helper_str = "⏵ w: ".to_owned() + &formatted.to_string() + padding;
+        let helper_str = format!("⏵ w: {}{}", formatted.to_string(), padding);
         helper_text!(helper_str.to_string(), offset);
 
         let offset = Vec2::new(-1., -38.);
@@ -376,7 +376,7 @@ pub fn draw(
         if formatted.to_string() == "1" {
             padding = ".00";
         }
-        let helper_str = "h: ".to_owned() + &formatted.to_string() + padding + "\n     ⏶";
+        let helper_str = format!("h: {}{}\n     ⏶", &formatted.to_string(), padding);
         helper_text!(helper_str.to_string(), offset);
     }
 }
@@ -1002,7 +1002,7 @@ impl EguiUi for egui::Ui {
     ) {
         let str = shared_ui.loc("delete");
         if self.context_button(str, config).clicked() {
-            let str_del = &shared_ui.loc(&("polar.".to_owned() + &loc_code)).clone();
+            let str_del = &shared_ui.loc(&format!("polar.{}", loc_code)).clone();
             events.open_polar_modal(polar_id, str_del.to_string());
 
             // only hide the menu, as anim id is still needed for modal
@@ -1243,7 +1243,7 @@ fn edit_mode_bar(
                 ($label:expr, $edit_mode:expr, $event:ident, $check:expr, $key:expr) => {
                     ui.add_enabled_ui($check, |ui| {
                         let mut str = egui::text::LayoutJob::default();
-                        ui::job_text(&($label.to_owned() + &" "), None, &mut str);
+                        ui::job_text(&format!("{} ", $label), None, &mut str);
                         let mut col = config.colors.text;
                         col -= Color::new(50, 50, 50, 0);
                         ui::job_text(&$key, Some(col.into()), &mut str);
@@ -1385,11 +1385,11 @@ fn render_bar(
                     let str = if shared_ui.render_bar.expanded {
                         size = [90., 20.];
                         margin = egui::Margin { top: 3, bottom: 3, right: 5, left: 6 };
-                        $icon.to_owned() + " " + $str
+                        format!("{} {}", $icon, $str)
                     } else {
                         size = [13., 20.];
                         margin = egui::Margin { top: 3, bottom: 3, right: 5, left: 6 };
-                        $icon.to_owned()
+                        $icon.to_string()
                     };
                     let cursor = egui::CursorIcon::PointingHand;
                     let mut col = if $field {

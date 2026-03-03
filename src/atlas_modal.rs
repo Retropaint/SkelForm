@@ -180,7 +180,7 @@ pub fn draw(
                         if ui.skf_button("Done").clicked() {
                             for (t, tex) in shared_ui.pending_textures.iter_mut().enumerate() {
                                 if tex.name == "" {
-                                    tex.name = "Texture ".to_owned() + &t.to_string();
+                                    tex.name = format!("Texture {}", t.to_string());
                                 }
                             }
 

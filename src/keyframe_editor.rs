@@ -127,7 +127,7 @@ fn draw_animations_list(
             let mut hovered = false;
             for i in 0..armature.animations.len() {
                 let name = &mut armature.animations[i].name.clone();
-                let context_id = "anim_".to_owned() + &i.to_string();
+                let context_id = format!("anim_{}", i.to_string());
 
                 // show input field if renaming
                 if shared_ui.rename_id == context_id {
@@ -168,7 +168,7 @@ fn draw_animations_list(
                         egui::Pos2::new(ui.cursor().left(), ui.cursor().top()),
                         egui::Vec2::new(width, 21.),
                     );
-                    let id = egui::Id::new("anim_".to_owned() + &i.to_string());
+                    let id = egui::Id::new(format!("anim_{}", i.to_string()));
                     let button = ui
                         .interact(rect, id, egui::Sense::click())
                         .on_hover_cursor(cursor_icon);
@@ -390,8 +390,8 @@ pub fn draw_bones_list(
             added_elements.push(kf.element.clone());
             ui.horizontal(|ui| {
                 ui.add_space(30.);
-                let str = &("keyframe_editor.elements.".to_owned() + &kf.element.to_string());
-                let mut element_str = egui::RichText::new(shared_ui.loc(str));
+                let str = format!("keyframe_editor.elements.{}", kf.element.to_string());
+                let mut element_str = egui::RichText::new(shared_ui.loc(&str));
                 if highlighted {
                     element_str = element_str.strong();
                 }

@@ -498,7 +498,7 @@ pub fn video_export(
             }
 
             // get zip file
-            let resp = ureq::get(base_url.to_owned() + bin_name).call().unwrap();
+            let resp = ureq::get(base_url.to_string() + bin_name).call().unwrap();
             let mut ffmpeg_zip =
                 std::fs::File::create(utils::bin_path().join("ffmpeg.zip")).unwrap();
             let bytes_result: Result<Vec<u8>, _> = resp.into_body().into_reader().bytes().collect();
@@ -547,9 +547,10 @@ pub fn video_export(
         let str = if std::fs::exists(utils::bin_path().join("ffmpeg".to_string() + ext)).unwrap() {
             "Re-download ffmpeg if problems occur.".to_string()
         } else {
-            "ffmpeg is not installed.\nClick the above button to download it".to_owned()
-                + &size_warning
-                + "."
+            format!(
+                "ffmpeg is not installed.\nClick the above button to download it{}.",
+                &size_warning
+            )
         };
         ui.label(str);
     }

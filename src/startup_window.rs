@@ -211,7 +211,7 @@ fn startup_content(
                 ui.label(text);
                 ui.add_space(20.);
 
-                let name = "Skellington Sample".to_owned();
+                let name = "Skellington Sample".to_string();
                 let skf_name = SKEL_SKF.to_string();
                 let skel_file = include_bytes!(".././assets/skellington_icon.png").to_vec();
                 let desc = shared_ui.loc("startup.skellington_sample_desc");
@@ -219,7 +219,7 @@ fn startup_content(
                     name, skf_name, skel_file, ui, ctx, width, desc, shared_ui, conf,
                 );
 
-                let name = "Skellina Sample".to_owned();
+                let name = "Skellina Sample".to_string();
                 let skf_name = SKELA_SKF.to_string();
                 let skel_file = include_bytes!(".././assets/skellina_icon.png").to_vec();
                 let desc = shared_ui.loc("startup.skellina_sample_desc");
@@ -267,7 +267,7 @@ fn startup_content(
                     if item.update_checker && web {
                         continue;
                     }
-                    let str = &shared_ui.loc(&("startup.resources.".to_owned() + &item.code));
+                    let str = &shared_ui.loc(&format!("startup.resources.{}", &item.code));
                     let text = egui::RichText::new(str).color(link_color).size(header_size);
                     let heading = ui.clickable_label(text);
                     if heading.clicked() {
@@ -280,7 +280,7 @@ fn startup_content(
 
                     // show current version below update checker
                     if item.update_checker {
-                        let str = "Current: v".to_owned() + &env!("CARGO_PKG_VERSION").to_string();
+                        let str = format!("Current: v{}", &env!("CARGO_PKG_VERSION").to_string());
                         ui.horizontal(|ui| {
                             ui.add_space(4.);
                             let str = egui::RichText::new(str)
@@ -307,7 +307,7 @@ fn startup_content(
                             );
                             ui.add_space(sub_padding);
                             let sub_str =
-                                &shared_ui.loc(&("startup.resources.".to_owned() + &sub.code));
+                                &shared_ui.loc(&format!("startup.resources.{}", &sub.code));
 
                             let text = egui::RichText::new(sub_str)
                                 .color(link_color)
@@ -342,7 +342,7 @@ pub fn leftside_button(
     let gradient = egui::Rect::from_min_size(ui.cursor().left_top(), egui::Vec2::new(133., 48.));
 
     let button: egui::Response;
-    let id = egui::Id::new("leftside".to_owned() + &label);
+    let id = egui::Id::new(format!("leftside{}", &label));
 
     if tooltip != "" {
         button = ui
@@ -443,7 +443,7 @@ pub fn skf_file_button(
             egui::Pos2::new(ui.min_rect().right() + 25., ui.min_rect().bottom()),
         );
 
-        let id = egui::Id::new("frame rect".to_owned() + &filename);
+        let id = egui::Id::new(format!("frame rect{}", filename));
         let button = ui
             .interact(gradient_rect, id, egui::Sense::click())
             .on_hover_cursor(egui::CursorIcon::PointingHand);
@@ -571,7 +571,7 @@ pub fn web_sample_button(
             egui::Pos2::new(ui.min_rect().right() + 25., ui.min_rect().bottom()),
         );
 
-        let id = egui::Id::new("frame rect".to_owned() + &name);
+        let id = egui::Id::new(format!("frame rect{}", name));
         let button = ui
             .interact(gradient_rect, id, egui::Sense::click())
             .on_hover_cursor(egui::CursorIcon::PointingHand);
@@ -641,7 +641,7 @@ pub fn file_button_icon(
         egui::Vec2::splat(20.),
     );
 
-    let id = egui::Id::new("filebutton".to_owned() + icon);
+    let id = egui::Id::new(format!("filebutton{}", icon));
     let hovered = ui
         .interact(rect, id, egui::Sense::hover())
         .contains_pointer();

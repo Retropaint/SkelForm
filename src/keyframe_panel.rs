@@ -15,7 +15,7 @@ pub fn draw(
     shared_ui: &mut crate::Ui,
     config: &Config,
 ) {
-    ui.heading("Keyframe (".to_owned() + &selections.anim_frame.to_string() + ")");
+    ui.heading(format!("Keyframe ({})", selections.anim_frame.to_string()));
     let sel = selections.clone();
 
     #[allow(unreachable_code)]
@@ -55,7 +55,7 @@ pub fn draw(
             .show_ui(ui, |ui| {
                 macro_rules! preset {
                     ($name:expr) => {
-                        shared_ui.loc(&("keyframe_panel.presets.".to_owned() + $name))
+                        shared_ui.loc(&format!("keyframe_panel.presets.{}", $name))
                     };
                 }
                 ui.selectable_value(&mut selected, HandlePreset::Linear, preset!("linear"));

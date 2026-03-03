@@ -162,7 +162,7 @@ pub fn save_web(armature: &Armature, camera: &Camera, edit_mode: &EditMode, save
         ExportImgFormat::JPG => ".jpg",
     };
     for i in 0..png_bufs.len() {
-        let name = "atlas".to_owned() + &i.to_string() + atlas_ext;
+        let name = format!("atlas{}{}", i.to_string(), atlas_ext);
         zip.start_file(name, options.clone()).unwrap();
         zip.write(&png_bufs[i]).unwrap();
     }
@@ -722,7 +722,7 @@ pub fn prepare_files(
     };
     for s in 0..sizes.len() {
         atlases.push(TexAtlas {
-            filename: "atlas".to_owned() + &s.to_string() + atlas_ext,
+            filename: format!("atlas{}{}", s.to_string(), atlas_ext),
             size: Vec2I::new(sizes[s], sizes[s]),
         });
     }
@@ -804,7 +804,7 @@ pub fn import<R: Read + std::io::Seek>(
     let value: std::result::Result<serde_json::Value, _> =
         serde_json::from_reader(armature_file.unwrap());
     if let Err(ref e) = value {
-        custom_err!("armature.json:\n".to_owned() + &e.to_string());
+        custom_err!(format!("armature.json:\n{}", e.to_string()));
     }
     let (root, root_err) = backwards_compat::proceed(value.unwrap());
     if root_err != "" {
@@ -840,13 +840,11 @@ pub fn import<R: Read + std::io::Seek>(
             let bones = &mut temp_arm.bones;
             let mut bone = bones.iter_mut().find(|b| b.id == id);
             if bone == None {
-                custom_err!(
-                    "Bone of ID ".to_owned()
-                        + &id.to_string()
-                        + " of IK family #"
-                        + &temp_arm.bones[b].ik_family_id.to_string()
-                        + " could not be found."
-                );
+                custom_err!(format!(
+                    "Bone of ID {} of IK family #{} could not be found.",
+                    id.to_string(),
+                    temp_arm.bones[b].ik_family_id.to_string()
+                ));
             }
             bone.as_mut().unwrap().ik_family_id = fam_id;
             // don't reset Y of root bone
@@ -891,7 +889,7 @@ pub fn import<R: Read + std::io::Seek>(
             let filename = &root.atlases[a].filename;
             let texture_file = zip.as_mut().unwrap().by_name(filename);
             if let Err(_) = texture_file {
-                custom_err!("Texture file '".to_owned() + filename + "' could not be found.");
+                custom_err!(format!("Texture file '{}' could not be found.", filename));
             }
 
             let mut bytes = vec![];

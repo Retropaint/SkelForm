@@ -45,7 +45,7 @@ pub fn draw(
         ui.set_width(modal_size.x);
         ui.set_height(modal_size.y);
         let str_desc = shared_ui.loc("styles_modal.heading_desc");
-        let str_heading = shared_ui.loc(&("styles_modal.heading")).to_owned();
+        let str_heading = shared_ui.loc("styles_modal.heading");
         ui.heading(str_heading).on_hover_text(str_desc);
 
         ui.add_space(5.);
@@ -124,7 +124,7 @@ pub fn draw_styles_list(
 
             for s in 0..armature.styles.len() {
                 idx += 1;
-                let context_id = "style_".to_owned() + &s.to_string();
+                let context_id = format!("style_{}", &s.to_string());
 
                 if shared_ui.rename_id == context_id {
                     let (edited, value, _) = ui.text_input(
@@ -420,7 +420,7 @@ fn draw_bones_list(
     ui.vertical(|ui| {
         ui.horizontal(|ui| {
             let str_heading = &shared_ui.loc("styles_modal.bones");
-            ui.label(str_heading.to_owned())
+            ui.label(str_heading)
         });
 
         if selections.style == -1 {
@@ -501,7 +501,7 @@ pub fn draw_bone_buttons(
             } else {
                 let folded = armature.bones[b].folded;
                 let fold_icon = if folded { "⏵" } else { "⏷" };
-                let id = "bone_style_fold".to_owned() + &b.to_string();
+                let id = format!("bone_style_fold{}", &b.to_string());
                 let col = config.colors.text;
                 let desc = shared_ui.loc("armature_panel.fold_desc");
                 if armature_window::bone_label(fold_icon, ui, id, Vec2::new(-2., 18.), desc, col)
@@ -595,7 +595,7 @@ fn draw_assigned_list(
         ui.horizontal(|ui| {
             let str_heading = &shared_ui.loc("styles_modal.assigned_textures");
             let str_desc = &shared_ui.loc("styles_modal.assigned_textures_desc");
-            ui.label(str_heading.to_owned()).on_hover_text(str_desc)
+            ui.label(str_heading).on_hover_text(str_desc)
         });
 
         let default_width = 150.;
@@ -750,7 +750,7 @@ pub fn draw_tex_buttons(
         idx += 1;
         let og_name = armature.sel_style(&sel).unwrap().textures[i].name.clone();
         let trimmed_name = utils::trunc_str(ui, &og_name, width - 10.);
-        let context_id = "tex_".to_owned() + &i.to_string();
+        let context_id = format!("tex_{}", &i.to_string());
 
         let str_desc = &shared_ui.loc("styles_modal.texture_desc").clone();
 

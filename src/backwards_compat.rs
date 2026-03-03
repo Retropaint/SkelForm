@@ -13,7 +13,7 @@ pub fn proceed(mut raw: serde_json::Value) -> (Root, String) {
                 let mut deserializer = serde_json::Deserializer::from_str(&json_string);
                 let result: Result<Root, _> = serde_path_to_error::deserialize(&mut deserializer);
                 if let Err(invalid) = result {
-                    err = "from v".to_owned() + $ver + ": \n\n" + &invalid.to_string();
+                    err = format!("from v{}: \n\n{}", $ver, &invalid.to_string());
                 }
             }
         };

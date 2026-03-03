@@ -534,7 +534,7 @@ pub fn process_event(
         Events::NewAnimation => {
             armature.new_animation();
             let idx = armature.animations.len() - 1;
-            ui.rename_id = "anim_".to_owned() + &idx.to_string();
+            ui.rename_id = format!("anim_{}", idx.to_string());
             ui.edit_value = Some("".to_string());
         }
         Events::DuplicateAnim => armature

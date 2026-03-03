@@ -462,7 +462,7 @@ pub fn read_psd(
         let ik_id = start_eff_bone.ik_family_id;
 
         start_eff_bone.ik_target_id = target_id;
-        let target_name = start_eff_bone.name.to_owned() + " Target";
+        let target_name = format!("{} Target", start_eff_bone.name);
 
         // determine target's base position
         let bones = &shared.armature.bones;

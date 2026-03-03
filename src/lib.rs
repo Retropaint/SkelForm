@@ -1093,7 +1093,7 @@ impl BackendRenderer {
                 ExportImgFormat::JPG => ".jpg",
             };
             for i in 0..png_bufs.len() {
-                let atlas_name = "atlas".to_owned() + &i.to_string() + atlas_ext;
+                let atlas_name = format!("atlas{}{}", i.to_string(), atlas_ext);
                 zip.start_file(atlas_name, options.clone()).unwrap();
                 zip.write(&png_bufs[i]).unwrap();
             }
@@ -1261,13 +1261,13 @@ impl BackendRenderer {
                     // disabled: manual encoder codec - not needed for now
                     // "-c:v", codec, 
                     "-pix_fmt", "yuv420p",
-                    &(_path.to_owned() + &".mp4")])
+                    &format!("{}.mp4", _path.to_string())])
                 //.stderr(Stdio::piped())
                 .stdin(Stdio::piped())
                 .spawn();
 
             if let Err(e) = child {
-                return "spawn ffmpeg: ".to_owned() + &e.to_string();
+                return format!("spawn ffmpeg: {}", e.to_string());
             }
 
             {
@@ -1275,7 +1275,7 @@ impl BackendRenderer {
                 for frame in &rendered_frames {
                     let rgb = image::load_from_memory(&frame).unwrap();
                     if let Err(e) = stdin.write_all(&rgb.to_rgba8()) {
-                        return "stdin: ".to_owned() + &e.to_string();
+                        return format!("stdin: {}", e.to_string());
                     }
                 }
             }
@@ -1327,14 +1327,14 @@ impl BackendRenderer {
                  [a] palettegen=stats_mode=diff [p]; \
                  [b][p] paletteuse=dither=sierra2_4a",
                 "-loop", "0",
-                &(_path.to_owned() + &".gif")
+                &format!("{}.gif", _path)
             ])
             .stdin(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn();
 
             if let Err(e) = child {
-                return "spawn ffmpeg: ".to_owned() + &e.to_string();
+                return format!("spawn ffmpeg: {}", e.to_string());
             }
 
             {
