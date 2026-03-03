@@ -292,6 +292,7 @@ pub fn render(
         let idx = selections.bone_idx;
         if hover_bone_id == temp_arm.bones[b].id
             && (idx == usize::MAX || armature.bones[idx].id != click_on_hover_id)
+            && !renderer.on_point
         {
             let fade = (64. * ((edit_mode.time * 3.).sin()).abs()).min(255.);
             let min = 25;
@@ -1657,6 +1658,7 @@ pub fn draw_points_and_kites(
     let mut point_indices = vec![];
     let mut point_vert_pack_idx = 0;
     let mut kite_vert_pack_idx = 0;
+    let mut on_point = false;
     for p in 0..temp_arm.bones.len() {
         let bone = &temp_arm.bones[p];
 
@@ -1680,8 +1682,8 @@ pub fn draw_points_and_kites(
             }
 
             // play shrinking animation if this bone was just selected
-            let fade_speed = 20.;
-            let sel_size = config.center_point_radius * 2.;
+            let fade_speed = 0.1;
+            let sel_size = config.center_point_radius * 4.;
             let normal_size = config.center_point_radius;
             let elapsed = if selected_bone_ids.len() > 0 && bone.id == selected_bone_ids[0] {
                 (sel_size - edit_mode.sel_time * fade_speed).max(normal_size)
@@ -1709,6 +1711,7 @@ pub fn draw_points_and_kites(
                 if input.left_clicked {
                     events.select_bone(bone.id as usize, true);
                 }
+                on_point = true;
             }
 
             for idx in &mut this_indices {
@@ -1773,6 +1776,8 @@ pub fn draw_points_and_kites(
         setup_render_buffer(&mut renderer.kite_buffer, &kite_verts, &kite_indices, queue);
         draw(&renderer.kite_buffer, render_pass, 0, kite_indices.len());
     }
+
+    renderer.on_point = on_point;
 }
 
 // Add vertex and index data to the specified buffer.

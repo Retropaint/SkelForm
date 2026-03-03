@@ -2103,6 +2103,7 @@ pub struct Renderer {
     pub gridline_buffer: RenderBuffer,
     pub ring_buffer: RenderBuffer,
     pub selected_ring_buffer: RenderBuffer,
+    pub on_point: bool,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]
