@@ -430,7 +430,7 @@ pub fn render(
             && armature.bone_eff(bone.id) != JointEffector::Start;
     }
 
-    if !has_ik && !input.left_down && armature.sel_bone(&sel) != None {
+    if !edit_mode.showing_mesh && !has_ik && !input.left_down && armature.sel_bone(&sel) != None {
         #[rustfmt::skip]
         transform_ring(config, camera, armature, &mut temp_arm, render_pass, renderer, events, &mouse_world_vert, edit_mode, &sel, queue);
     }
