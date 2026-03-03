@@ -489,6 +489,7 @@ pub struct UiBar {
     pub pos: Vec2,
     pub scale: Vec2,
     pub expanded: bool,
+    pub prev_expanded: bool,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -881,8 +882,8 @@ pub struct KeyboardConfig {
     pub transform_rotate: egui::KeyboardShortcut,
     pub transform_scale: egui::KeyboardShortcut,
     pub toggle_animation: egui::KeyboardShortcut,
-    pub transform_modifier: egui::KeyboardShortcut,
-    pub snap_transforms: egui::KeyboardShortcut,
+    pub edit_modifier: egui::KeyboardShortcut,
+    pub edit_snap: egui::KeyboardShortcut,
 }
 
 pub trait Display {
@@ -961,9 +962,9 @@ impl Default for KeyboardConfig {
             transform_move:     regular_key!(egui::Key::Q),
             transform_rotate:   regular_key!(egui::Key::W),
             transform_scale:    regular_key!(egui::Key::E),
-            toggle_animation:    regular_key!(egui::Key::A),
-            transform_modifier: shortcut_key!(egui::Modifiers::SHIFT, egui::Key::F30),
-            snap_transforms:    shortcut_key!(egui::Modifiers::COMMAND, egui::Key::F30),
+            toggle_animation:   regular_key!(egui::Key::A),
+            edit_modifier:      shortcut_key!(egui::Modifiers::SHIFT, egui::Key::F30),
+            edit_snap:          shortcut_key!(egui::Modifiers::COMMAND, egui::Key::F30),
         }
     }
 }

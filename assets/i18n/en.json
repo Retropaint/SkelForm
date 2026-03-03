@@ -307,7 +307,9 @@
       "transform_move": "Move Mode",
       "transform_rotate": "Rotate Mode",
       "transform_scale": "Scale Mode",
-      "toggle_animation": "Toggle Animation Mode"
+      "toggle_animation": "Toggle Animation Mode",
+      "edit_modifier": "Edit Mode Modifier",
+      "edit_snap": "Edit Mode Snapping"
     },
     "miscellaneous": {
       "heading": "Miscellaneous",

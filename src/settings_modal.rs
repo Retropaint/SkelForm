@@ -544,6 +544,8 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("transform_rotate",   keys.transform_rotate,   true);
         key!("transform_scale",    keys.transform_scale,    true);
         key!("toggle_animation",   keys.toggle_animation,   true);
+        key!("edit_modifier",      keys.edit_modifier,      false);
+        key!("edit_snap",          keys.edit_snap,          false);
     };
     ui.add_space(10.);
     shared_ui.updated_config.keys = keys.clone();

@@ -549,7 +549,7 @@ pub fn kb_inputs(
         events.toggle_anim_panel_open(if edit_mode.anim_open { 0 } else { 1 });
     }
 
-    let mod_key = &config.keys.transform_modifier.modifiers;
+    let mod_key = &config.keys.edit_modifier.modifiers;
     let holding_edit_mod = input.modifiers.matches_any(*mod_key);
     if holding_edit_mod && !edit_mode.holding_edit_mod {
         events.toggle_edit_modifying(1);
@@ -557,7 +557,7 @@ pub fn kb_inputs(
         events.toggle_edit_modifying(0);
     }
 
-    let snap_key = &config.keys.snap_transforms.modifiers;
+    let snap_key = &config.keys.edit_snap.modifiers;
     let holding_edit_snap = input.modifiers.matches_any(*snap_key);
     if holding_edit_snap && !edit_mode.holding_edit_snap {
         events.toggle_edit_snapping(1);
@@ -1280,12 +1280,12 @@ fn edit_mode_bar(
             };
         }
         if edit_mode.is_moving {
-            edit_feature!("Snap X/Y", config.keys.snap_transforms);
+            edit_feature!("Snap X/Y", config.keys.edit_snap);
         } else if edit_mode.is_rotating {
-            edit_feature!("Snap to 22.5°", config.keys.snap_transforms);
+            edit_feature!("Snap to 22.5°", config.keys.edit_snap);
         } else if edit_mode.is_scaling {
-            edit_feature!("Snap X/Y", config.keys.snap_transforms);
-            edit_feature!("Maintain aspect ratio", config.keys.transform_modifier);
+            edit_feature!("Snap X/Y", config.keys.edit_snap);
+            edit_feature!("Maintain aspect ratio", config.keys.edit_modifier);
         }
     });
 }
@@ -1481,35 +1481,40 @@ fn camera_bar(
             });
         } else {
             ui.set_width(60.);
-            ui.set_height(60.);
-            macro_rules! input {
-                ($float:expr, $id:expr, $label:expr, $tip:expr) => {
-                    ui.horizontal(|ui| {
-                        ui.label($label).on_hover_text(&shared_ui.loc($tip));
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            let id = $id.to_string();
-                            let (edited, value, _) =
-                                ui.float_input(id, shared_ui, $float.round(), 1., None);
-                            if edited {
-                                let cam = &camera;
-                                if $id.to_string() == "cam_pos_x" {
-                                    events.edit_camera(value, cam.pos.y, cam.zoom);
-                                } else if $id.to_string() == "cam_pos_y" {
-                                    events.edit_camera(cam.pos.x, value, cam.zoom);
-                                } else if $id.to_string() == "cam_zoom" {
-                                    events.edit_camera(cam.pos.x, cam.pos.y, value);
-                                }
-                            }
-                        })
-                    })
-                };
-            }
+            ui.set_height(66.);
 
-            input!(camera.pos.x, "cam_pos_x", "X", "cam_x");
-            input!(camera.pos.y, "cam_pos_y", "Y", "cam_y");
-            input!(camera.zoom, "cam_zoom", "🔍", "cam_zoom");
+            // show inputs on 2nd frame of being expanded, to prevent visible layout jittering
+            if shared_ui.camera_bar.prev_expanded {
+                macro_rules! input {
+                    ($float:expr, $id:expr, $label:expr, $tip:expr) => {
+                        ui.horizontal(|ui| {
+                            ui.label($label).on_hover_text(&shared_ui.loc($tip));
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                let id = $id.to_string();
+                                let (edited, value, _) =
+                                    ui.float_input(id, shared_ui, $float.round(), 1., None);
+                                if edited {
+                                    let cam = &camera;
+                                    if $id.to_string() == "cam_pos_x" {
+                                        events.edit_camera(value, cam.pos.y, cam.zoom);
+                                    } else if $id.to_string() == "cam_pos_y" {
+                                        events.edit_camera(cam.pos.x, value, cam.zoom);
+                                    } else if $id.to_string() == "cam_zoom" {
+                                        events.edit_camera(cam.pos.x, cam.pos.y, value);
+                                    }
+                                }
+                            })
+                        })
+                    };
+                }
+
+                input!(camera.pos.x, "cam_pos_x", "X", "cam_x");
+                input!(camera.pos.y, "cam_pos_y", "Y", "cam_y");
+                input!(camera.zoom, "cam_zoom", "🔍", "cam_zoom");
+            }
         }
 
+        shared_ui.camera_bar.prev_expanded = shared_ui.camera_bar.expanded;
         shared_ui.camera_bar.expanded = ui.ui_contains_pointer();
         shared_ui.camera_bar.scale = ui.min_rect().size().into();
     });
