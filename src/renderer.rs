@@ -1318,32 +1318,6 @@ fn draw_point(
     rotation: f32,
     size: f32,
 ) -> (Vec<Vertex>, Vec<u32>) {
-    let point_size = size * (camera.zoom / 500.);
-    macro_rules! vert {
-        ($pos:expr, $uv:expr) => {
-            vert(Some($pos), Some(color), Some($uv))
-        };
-    }
-    let verts: [Vertex; 4] = [
-        vert!(Vec2::new(-point_size, point_size), Vec2::new(0., 1.)),
-        vert!(Vec2::new(point_size, point_size), Vec2::new(1., 1.)),
-        vert!(Vec2::new(-point_size, -point_size), Vec2::new(0., 0.)),
-        vert!(Vec2::new(point_size, -point_size), Vec2::new(1., 0.)),
-    ];
-
-    draw_rect(verts, offset, camera, config, pos, camera_pos, rotation)
-}
-
-fn draw_ring(
-    offset: &Vec2,
-    camera: &Camera,
-    config: &Config,
-    pos: &Vec2,
-    color: Color,
-    camera_pos: Vec2,
-    rotation: f32,
-    size: f32,
-) -> (Vec<Vertex>, Vec<u32>) {
     let point_size = size;
     macro_rules! vert {
         ($pos:expr, $uv:expr) => {
@@ -1707,13 +1681,13 @@ pub fn draw_points_and_kites(
 
             // play shrinking animation if this bone was just selected
             let fade_speed = 20.;
-            let sel_size = 20.;
-            let normal_size = 7.;
+            let sel_size = config.center_point_radius * 2.;
+            let normal_size = config.center_point_radius;
             let elapsed = if selected_bone_ids.len() > 0 && bone.id == selected_bone_ids[0] {
                 (sel_size - edit_mode.sel_time * fade_speed).max(normal_size)
             } else {
                 normal_size
-            };
+            } * camera.zoom;
 
             let (mut this_verts, mut this_indices) = draw_point(
                 &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
@@ -1883,9 +1857,9 @@ fn transform_ring(
     let mut scale_col = config.colors.transform_circle;
     scale_col -= Color::new(25, 25, 25, 0);
     #[rustfmt::skip]
-        let (mut verts_rot, mut indices_rot) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., distance_rot * camera.zoom);
+    let (mut verts_rot, mut indices_rot) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., distance_rot * camera.zoom);
     #[rustfmt::skip]
-        let (mut verts_scale, mut indices_scale) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., distance_scale * camera.zoom);
+    let (mut verts_scale, mut indices_scale) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., distance_scale * camera.zoom);
     verts_rot.extend_from_slice(&mut verts_scale);
     add_offseted_indices(&mut indices_scale, &mut indices_rot);
     setup_render_buffer(&mut renderer.ring_buffer, &verts_rot, &indices_rot, queue);
@@ -1897,7 +1871,7 @@ fn transform_ring(
     }
     render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
     #[rustfmt::skip]
-        let (mut sel_verts, mut sel_indices) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., distance_scale * camera.zoom);
+    let (mut sel_verts, mut sel_indices) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., distance_scale * camera.zoom);
 
     // setup scale background
     if temporary != 1 {
@@ -1905,7 +1879,7 @@ fn transform_ring(
     }
     render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
     #[rustfmt::skip]
-        let (mut sel_verts1, mut sel_indices1) = draw_ring(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., distance_rot * camera.zoom);
+    let (mut sel_verts1, mut sel_indices1) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., distance_rot * camera.zoom);
 
     // draw both backgrounds
     sel_verts.append(&mut sel_verts1);

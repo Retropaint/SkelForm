@@ -775,6 +775,7 @@ pub struct Config {
     pub ignore_donate: bool,
     pub pixel_magnification: i32,
     pub propagate_visibility: bool,
+    pub center_point_radius: f32,
     pub transform_rot_radius: f32,
     pub transform_scale_radius: f32,
 
@@ -823,6 +824,7 @@ impl Default for Config {
             ignore_donate: false,
             pixel_magnification: 1,
             propagate_visibility: false,
+            center_point_radius: 0.01,
             transform_rot_radius: 0.08,
             transform_scale_radius: 0.16,
         }

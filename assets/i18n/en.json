@@ -283,6 +283,7 @@
       "inactive_center_point": "Inactive Center Point",
       "gridline_front": "Render gridline in front: ",
       "transform_circle": "Transform Circle: ",
+      "center_point_radius": "Center point radius:",
       "transform_rot_radius": "Rotation radius:",
       "transform_scale_radius": "Scale radius:"
     },
