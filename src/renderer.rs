@@ -1,7 +1,5 @@
 //! Core rendering logic, abstracted from the rest of WGPU.
 
-use std::ops::SubAssign;
-
 use crate::*;
 use image::GenericImageView;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
@@ -71,8 +69,6 @@ pub fn render(
             (anim_bones[b].vertices, anim_bones[b].indices) = create_tex_rect(&size);
         }
     }
-
-    temp_arm.bones = anim_bones.clone();
 
     // animate next and previous frame armatures for onions
     let mut next_arm = Armature::default();
@@ -223,7 +219,7 @@ pub fn render(
         }
 
         for vert in &mut temp_arm.bones[b].world_verts {
-            vert.add_color = VertexColor::new(0., 0., 0., 0.);
+            vert.add_color = Color::new(0, 0, 0, 0);
         }
         if edit_mode.setting_bind_verts {
             continue;
@@ -296,14 +292,15 @@ pub fn render(
         if hover_bone_id == temp_arm.bones[b].id
             && (idx == usize::MAX || armature.bones[idx].id != click_on_hover_id)
         {
-            let fade = 0.25 * ((edit_mode.time * 3.).sin()).abs() as f32;
-            let min = 0.1;
+            let fade = (64. * ((edit_mode.time * 3.).sin()).abs()).min(255.);
+            let min = 25;
             for vert in &mut temp_arm.bones[b].world_verts {
-                vert.add_color = VertexColor::new(min + fade, min + fade, min + fade, 0.);
+                vert.add_color =
+                    Color::new(min + fade as u8, min + fade as u8, min + fade as u8, 0);
             }
         } else {
             for vert in &mut temp_arm.bones[b].world_verts {
-                vert.add_color = VertexColor::new(0., 0., 0., 0.);
+                vert.add_color = Color::new(0, 0, 0, 0);
             }
         }
 
@@ -354,8 +351,12 @@ pub fn render(
         let tex = armature.tex_of(bone.id).unwrap();
         let bind_group = &armature.tex_data(tex).unwrap().bind_group;
         let sel_bone_buffer = &mut renderer.sel_bone_buffer;
+        let mut world_verts = bone.world_verts.clone();
+        for vert in &mut world_verts {
+            vert.color = Color::new(255, 255, 255, 255);
+        }
         render_pass.set_bind_group(0, bind_group, &[]);
-        setup_render_buffer(sel_bone_buffer, &bone.world_verts, &bone.indices, queue);
+        setup_render_buffer(sel_bone_buffer, &world_verts, &bone.indices, queue);
         draw(&sel_bone_buffer, render_pass, 0, bone.indices.len());
 
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
@@ -374,9 +375,9 @@ pub fn render(
         // draw hovered triangle if neither a vertex nor a line is hovered
         let mut hovering_tri = bone_triangle(&bone, &mouse, wv);
         if hovering_tri.len() > 0 && !on_vert && !on_line && !camera.on_ui {
-            hovering_tri[0].add_color = VertexColor::new(-255., 0., -255., -0.75);
-            hovering_tri[1].add_color = VertexColor::new(-255., 0., -255., -0.75);
-            hovering_tri[2].add_color = VertexColor::new(-255., 0., -255., -0.75);
+            hovering_tri[0].color = Color::new(0, 200, 0, 100);
+            hovering_tri[1].color = Color::new(0, 200, 0, 100);
+            hovering_tri[2].color = Color::new(0, 200, 0, 100);
             verts.append(&mut hovering_tri.clone());
             add_offseted_indices(&mut vec![0, 1, 2], &mut indices);
 
@@ -451,12 +452,25 @@ pub fn render(
             if distance < distance_move {
                 temporary = 0;
                 events.set_temporary_edit_mode(0);
-            } else if distance < distance_rot {
-                temporary = 1;
-                events.set_temporary_edit_mode(1);
-            } else if distance < distance_scale {
-                temporary = 2;
-                events.set_temporary_edit_mode(2);
+            }
+
+            // prioritize rot or scale, depending on user-defined distance
+            if distance_scale > distance_rot {
+                if distance < distance_rot {
+                    temporary = 1;
+                    events.set_temporary_edit_mode(1);
+                } else if distance < distance_scale {
+                    temporary = 2;
+                    events.set_temporary_edit_mode(2);
+                }
+            } else {
+                if distance < distance_scale {
+                    temporary = 2;
+                    events.set_temporary_edit_mode(2);
+                } else if distance < distance_rot {
+                    temporary = 1;
+                    events.set_temporary_edit_mode(1);
+                }
             }
         }
 
@@ -496,11 +510,11 @@ pub fn render(
         let buffer = &mut renderer.selected_ring_buffer;
         setup_render_buffer(buffer, &sel_verts, &sel_indices, queue);
         draw(&buffer, render_pass, 0, indices_rot.len());
-    }
 
-    // set temporary mode to None only once, to prevent event spam
-    if temporary == 3 && edit_mode.temporary != None {
-        events.set_temporary_edit_mode(3);
+        // set temporary mode to None only once, to prevent event spam
+        if temporary == 3 && edit_mode.temporary != None {
+            events.set_temporary_edit_mode(3);
+        }
     }
 
     if !input.left_down {
@@ -615,8 +629,7 @@ pub fn draw_armature(
             vert.color = Color::new(255, 255, 255, 255);
         }
         bone_ids_to_draw.push(armature.bones[b].id);
-        let mut gpu_verts: Vec<GpuVertex> =
-            world_verts.iter().map(|vert| (*vert).into()).collect();
+        let mut gpu_verts: Vec<GpuVertex> = world_verts.iter().map(|vert| (*vert).into()).collect();
         all_gpu_verts.append(&mut gpu_verts);
         if all_indices.len() == 0 {
             all_indices.append(&mut bone.indices.clone());
@@ -1137,7 +1150,7 @@ pub fn bone_vertices(
         let mut col = if bound {
             Color::new(255, 255, 0, 255)
         } else {
-            Color::new(255, 0, 0, 255)
+            Color::new(0, 255, 0, 255)
         };
         col.a = if editable { 125 } else { 38 };
         let (mut verts, mut indices) = point!(wv, col);
@@ -1246,7 +1259,7 @@ pub fn vert_lines(
         let mut base = Vec2::new(width, width) / camera.zoom;
         base = utils::rotate(&base, dir.y.atan2(dir.x));
 
-        let mut col = Color::new(255, 0, 0, 255);
+        let mut col = Color::new(0, 255, 0, 255);
         col -= Color::new(125, 125, 125, 0);
         col.a = if editable { 77 } else { 25 };
 
@@ -1259,7 +1272,7 @@ pub fn vert_lines(
         let mut v1_bot = vert!(v1.pos - base, v1);
 
         let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
-        let add_color = VertexColor::new(0.2, 0.2, 0.2, 1.);
+        let add_color = Color::new(50, 50, 50, 255);
 
         let mut is_hovering = false;
 
