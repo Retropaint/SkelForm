@@ -557,7 +557,7 @@ pub fn render(
     }
 
     // move camera
-    if (input.holding_mod || input.right_down) && !camera.on_ui {
+    if input.right_down && !camera.on_ui {
         let vel = renderer::mouse_vel(&input, &camera) * camera.zoom;
         events.edit_camera(camera.pos.x + vel.x, camera.pos.y + vel.y, camera.zoom);
         return;
@@ -589,13 +589,8 @@ pub fn render(
             let aspect_ratio = camera.aspect_ratio();
             let cw = world_vert(center, cam, aspect_ratio, Vec2::new(0.5, 0.5));
             render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
-            draw_line(
-                cw.pos,
-                mouse,
-                &mut renderer.ring_buffer,
-                render_pass,
-                &queue,
-            );
+            let buffer = &mut renderer.ring_buffer;
+            draw_line(cw.pos, mouse, buffer, render_pass, &queue);
         }
 
         if !renderer.editing_bone {
