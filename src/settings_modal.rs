@@ -50,12 +50,12 @@ pub fn draw(
                     let str_ui_raw = "settings_modal.user_interface.heading";
                     let str_misc_raw = "settings_modal.miscellaneous.heading";
                     let str_ui = shared_ui.loc(str_ui_raw).clone();
-                    let str_anim = shared_ui.loc("settings_modal.animation.heading").clone();
+                    let str_edit = shared_ui.loc("settings_modal.editing.heading").clone();
                     let str_rendering = shared_ui.loc("settings_modal.rendering.heading").clone();
                     let str_keyboard = shared_ui.loc("settings_modal.keyboard.heading").clone();
                     let str_misc = shared_ui.loc(str_misc_raw).clone();
                     tab!(str_ui, shared::SettingsState::Ui);
-                    tab!(str_anim, shared::SettingsState::Animation);
+                    tab!(str_edit, shared::SettingsState::Editing);
                     tab!(str_rendering, shared::SettingsState::Rendering);
                     tab!(str_keyboard, shared::SettingsState::Keyboard);
                     tab!(str_misc, shared::SettingsState::Misc);
@@ -77,7 +77,7 @@ pub fn draw(
                     shared_ui.updated_config = config.clone();
                     ui.with_layout(layout, |ui| match shared_ui.settings_state {
                         shared::SettingsState::Ui => user_interface(ui, shared_ui),
-                        shared::SettingsState::Animation => animation(ui, shared_ui),
+                        shared::SettingsState::Editing => editing(ui, shared_ui),
                         shared::SettingsState::Rendering => rendering(ui, shared_ui, camera),
                         shared::SettingsState::Keyboard => keyboard(ui, shared_ui),
                         shared::SettingsState::Misc => misc(ui, shared_ui),
@@ -234,12 +234,27 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     ui.add_space(20.);
 }
 
-fn animation(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
-    let str_heading = &shared_ui.loc("settings_modal.animation.heading");
-    ui.heading(str_heading);
+fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     ui.horizontal(|ui| {
-        let str_edit = &shared_ui.loc("settings_modal.animation.edit_while_playing");
-        let str_edit_desc = &shared_ui.loc("settings_modal.animation.edit_while_playing_desc");
+        let str_heading = &shared_ui.loc("settings_modal.editing.heading");
+        ui.heading(str_heading);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let str_default = &shared_ui.loc("settings_modal.default");
+            if ui.skf_button(str_default).clicked() {
+                let config = &mut shared_ui.updated_config;
+                config.edit_while_playing = crate::Config::default().edit_while_playing;
+                config.propagate_visibility = crate::Config::default().propagate_visibility;
+                config.rot_snap_step = crate::Config::default().rot_snap_step;
+                config.transform_rot_radius = crate::Config::default().transform_rot_radius;
+                config.center_point_radius = crate::Config::default().center_point_radius;
+                config.transform_scale_radius = crate::Config::default().transform_scale_radius;
+            }
+        });
+    });
+
+    ui.horizontal(|ui| {
+        let str_edit = &shared_ui.loc("settings_modal.editing.edit_while_playing");
+        let str_edit_desc = &shared_ui.loc("settings_modal.editing.edit_while_playing_desc");
         ui.label(str_edit).on_hover_text(str_edit_desc);
         ui.checkbox(
             &mut shared_ui.updated_config.edit_while_playing,
@@ -248,33 +263,47 @@ fn animation(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     });
 
     ui.horizontal(|ui| {
-        let str_edit = &shared_ui.loc("settings_modal.animation.propagate_visibility");
-        let str_edit_desc = &shared_ui.loc("settings_modal.animation.propagate_visibility_desc");
+        let str_edit = &shared_ui.loc("settings_modal.editing.propagate_visibility");
+        let str_edit_desc = &shared_ui.loc("settings_modal.editing.propagate_visibility_desc");
         ui.label(str_edit).on_hover_text(str_edit_desc);
         ui.checkbox(
             &mut shared_ui.updated_config.propagate_visibility,
             "".into_atoms(),
         );
     });
+
+    shared_ui.updated_config.rot_snap_step = basic_input(
+        "settings_modal.editing.rot_snap_step",
+        shared_ui.updated_config.rot_snap_step,
+        shared_ui,
+        ui,
+    );
+
+    ui.add_space(10.);
+
+    shared_ui.updated_config.center_point_radius = basic_input(
+        "settings_modal.rendering.center_point_radius",
+        shared_ui.updated_config.center_point_radius,
+        shared_ui,
+        ui,
+    );
+    shared_ui.updated_config.transform_rot_radius = basic_input(
+        "settings_modal.rendering.transform_rot_radius",
+        shared_ui.updated_config.transform_rot_radius,
+        shared_ui,
+        ui,
+    );
+    shared_ui.updated_config.transform_scale_radius = basic_input(
+        "settings_modal.rendering.transform_scale_radius",
+        shared_ui.updated_config.transform_scale_radius,
+        shared_ui,
+        ui,
+    );
 }
 
 fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camera) {
     #[rustfmt::skip]
     macro_rules! colors { () => { shared_ui.updated_config.colors } }
-
-    macro_rules! radius_input {
-        ($loc:expr, $field:expr, $type:ident) => {
-            ui.horizontal(|ui| {
-                let str_rot_radius = &shared_ui.loc($loc);
-                ui.label(str_rot_radius);
-                let (edited, value, _) =
-                    ui.float_input($loc.to_string(), shared_ui, $field as f32, 1., None);
-                if edited {
-                    $field = value as $type;
-                }
-            });
-        };
-    }
 
     ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.rendering.heading");
@@ -300,19 +329,13 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
                 let config = &mut shared_ui.updated_config;
                 config.gridline_gap = crate::Config::default().gridline_gap;
                 config.pixel_magnification = crate::Config::default().pixel_magnification;
-                config.transform_rot_radius = crate::Config::default().transform_rot_radius;
-                config.center_point_radius = crate::Config::default().center_point_radius;
-                config.transform_scale_radius = crate::Config::default().transform_scale_radius;
-                config.transform_scale_radius = crate::Config::default().transform_scale_radius;
             }
         });
     });
 
-    radius_input!(
-        "settings_modal.rendering.gridline_gap",
-        shared_ui.updated_config.gridline_gap,
-        i32
-    );
+    let gap = shared_ui.updated_config.gridline_gap;
+    let gap_str = "settings_modal.rendering.gridline_gap";
+    shared_ui.updated_config.gridline_gap = basic_input(gap_str, gap as f32, shared_ui, ui) as i32;
 
     ui.horizontal(|ui| {
         let str_gridline_gap = &shared_ui.loc("settings_modal.rendering.gridline_front");
@@ -337,22 +360,6 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
     });
 
     ui.add_space(7.);
-
-    radius_input!(
-        "settings_modal.rendering.center_point_radius",
-        shared_ui.updated_config.center_point_radius,
-        f32
-    );
-    radius_input!(
-        "settings_modal.rendering.transform_rot_radius",
-        shared_ui.updated_config.transform_rot_radius,
-        f32
-    );
-    radius_input!(
-        "settings_modal.rendering.transform_scale_radius",
-        shared_ui.updated_config.transform_scale_radius,
-        f32
-    );
 
     let mut alt_col = true;
     macro_rules! color_row {
@@ -639,4 +646,17 @@ fn modifier_name(modifier: egui::Modifiers) -> String {
         _ => "??",
     }
     .to_string()
+}
+
+fn basic_input(label: &str, field: f32, shared_ui: &mut crate::Ui, ui: &mut egui::Ui) -> f32 {
+    let mut result = field;
+    ui.horizontal(|ui| {
+        let str = &shared_ui.loc(label);
+        ui.label(str);
+        let (edited, value, _) = ui.float_input(label.to_string(), shared_ui, field, 1., None);
+        if edited {
+            result = value
+        }
+    });
+    result
 }

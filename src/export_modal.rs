@@ -67,7 +67,7 @@ pub fn draw(
                     let str_image = shared_ui.loc("export_modal.header_image").clone();
                     let str_video = shared_ui.loc("export_modal.header_video").clone();
                     tab!(str_armature, crate::SettingsState::Ui);
-                    tab!(str_image, crate::SettingsState::Animation);
+                    tab!(str_image, crate::SettingsState::Editing);
                     tab!(str_video, crate::SettingsState::Keyboard);
 
                     if !is_hovered {
@@ -83,14 +83,14 @@ pub fn draw(
                         SettingsState::Ui => {
                             armature_export(ui, shared_ui, edit_mode, events, config)
                         }
-                        SettingsState::Animation => image_export(ui, shared_ui, config, armature),
+                        SettingsState::Editing => image_export(ui, shared_ui, config, armature),
                         SettingsState::Keyboard => video_export(ui, shared_ui, config, armature),
                         _ => {}
                     });
                 });
             });
 
-            let image_or_vid = shared_ui.settings_state == SettingsState::Animation
+            let image_or_vid = shared_ui.settings_state == SettingsState::Editing
                 || shared_ui.settings_state == SettingsState::Keyboard;
             if image_or_vid && armature.animations.len() == 0 {
                 return;
@@ -132,7 +132,7 @@ pub fn draw(
             );
             shared_ui.export_modal = false;
         }
-        SettingsState::Animation => {
+        SettingsState::Editing => {
             shared_ui.exporting_video_type = crate::ExportVideoType::None;
             #[cfg(target_arch = "wasm32")]
             {

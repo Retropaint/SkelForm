@@ -1062,7 +1062,7 @@ pub fn edit_bone(
         let mut rot = renderer.bone_init_rot + (rot - rot_init);
 
         // snap rot to user-defined steps if holding snap key
-        let step = 22.5 * 3.14 / 180.;
+        let step = config.rot_snap_step * 3.14 / 180.;
         if edit_mode.holding_edit_snap {
             rot = (rot / step).round() * step
         }

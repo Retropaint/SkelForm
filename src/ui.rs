@@ -1282,7 +1282,8 @@ fn edit_mode_bar(
         if edit_mode.is_moving {
             edit_feature!("Snap X/Y", config.keys.edit_snap);
         } else if edit_mode.is_rotating {
-            edit_feature!("Snap to 22.5°", config.keys.edit_snap);
+            let str = format!("Snap to {}°", config.rot_snap_step);
+            edit_feature!(str, config.keys.edit_snap);
         } else if edit_mode.is_scaling {
             edit_feature!("Snap X/Y", config.keys.edit_snap);
             edit_feature!("Maintain aspect ratio", config.keys.edit_modifier);

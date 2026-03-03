@@ -433,7 +433,7 @@ pub enum UiState {
 pub enum SettingsState {
     #[default]
     Ui,
-    Animation,
+    Editing,
     Rendering,
     Keyboard,
     Misc,
@@ -767,9 +767,7 @@ enum_string!(UiLayout);
 #[derive(Deserialize, Serialize, Clone)]
 #[serde(default)]
 pub struct Config {
-    #[serde(default = "default_one")]
     pub ui_scale: f32,
-    #[serde(default = "gridline_default")]
     pub gridline_gap: i32,
     pub skip_startup: bool,
     pub autosave_frequency: i32,
@@ -784,6 +782,7 @@ pub struct Config {
     pub center_point_radius: f32,
     pub transform_rot_radius: f32,
     pub transform_scale_radius: f32,
+    pub rot_snap_step: f32,
 
     #[serde(skip)]
     pub colors: ColorConfig,
@@ -833,6 +832,7 @@ impl Default for Config {
             center_point_radius: 0.015,
             transform_rot_radius: 0.08,
             transform_scale_radius: 0.16,
+            rot_snap_step: 22.5,
         }
     }
 }
