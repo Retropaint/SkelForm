@@ -1019,11 +1019,25 @@ pub fn edit_bone(
     let cam = &world_camera(&camera, &config);
     let bone_center = world_vert(vert, cam, camera.aspect_ratio(), Vec2::new(0.5, 0.5));
 
+    // mouse velocity to be used for moving and scaling
+    let mut mouse_vel = mouse_vel(&input, &camera) * camera.zoom;
+
+    // snap mouse velocity to X or Y, depending on which is faster
+    let strictness = 3.; // how much either X or Y have to be, to eliminate the other
+    let deadzone = 5.; // how far X or Y have to be, to consider their axis
+    if edit_mode.holding_edit_snap {
+        let norm = Vec2::new(mouse_vel.normalize().x.abs(), mouse_vel.normalize().y.abs());
+        if mouse_vel.x.abs() > deadzone && norm.x > norm.y * strictness {
+            mouse_vel.y = 0.;
+        } else if mouse_vel.y.abs() > deadzone && norm.y > norm.x * strictness {
+            mouse_vel.x = 0.;
+        } else {
+            mouse_vel = Vec2::new(0., 0.);
+        }
+    }
+
     if current_edit == EditModes::Move {
         let mut pos = bone.pos;
-        let mouse_vel = mouse_vel(&input, &camera) * camera.zoom;
-
-        // move position with mouse velocity
         pos -= mouse_vel;
 
         // restore universal position by offsetting against parents' attributes
@@ -1063,7 +1077,7 @@ pub fn edit_bone(
             scale /= parent.scale;
         }
 
-        scale -= mouse_vel(&input, &camera);
+        scale -= mouse_vel / camera.zoom;
 
         // maintain aspect ratio (same X and Y scale) if holding edit mod
         if edit_mode.holding_edit_mod {
