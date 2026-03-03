@@ -824,7 +824,7 @@ impl Default for Config {
             ignore_donate: false,
             pixel_magnification: 1,
             propagate_visibility: false,
-            center_point_radius: 0.01,
+            center_point_radius: 0.015,
             transform_rot_radius: 0.08,
             transform_scale_radius: 0.16,
         }
