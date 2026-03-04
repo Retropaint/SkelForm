@@ -1371,6 +1371,11 @@ fn render_bar(
         let mut hovered = false;
         let mut idx = -1;
 
+        if shared_ui.render_bar.expanded {
+            ui.set_width(101.);
+            ui.set_height(122.);
+        }
+
         macro_rules! button {
             ($field:expr, $str:expr, $icon:expr) => {
                 idx += 1;
@@ -1381,13 +1386,16 @@ fn render_bar(
                     }
                     let size;
                     let margin;
+                    let font_size;
                     #[rustfmt::skip]
-                    let str = if shared_ui.render_bar.expanded {
+                    let str = if shared_ui.render_bar.prev_expanded {
                         size = [90., 20.];
+                        font_size = 14;
                         margin = egui::Margin { top: 3, bottom: 3, right: 5, left: 6 };
                         format!("{} {}", $icon, $str)
                     } else {
-                        size = [13., 20.];
+                        size = [8., 20.];
+                        font_size = 8;
                         margin = egui::Margin { top: 3, bottom: 3, right: 5, left: 6 };
                         $icon.to_string()
                     };
@@ -1415,7 +1423,7 @@ fn render_bar(
                             ui.set_width(size[0]);
                             ui.scope(|ui| {
                                 ui.style_mut().interaction.selectable_labels = false;
-                                ui.label(str);
+                                ui.label(egui::RichText::new(str).size(font_size as f32));
                             });
                         })
                         .response;
@@ -1438,11 +1446,11 @@ fn render_bar(
         button!(shared_ui.render_mesh_wf, "Mesh Wires", "⬟");
         button!(shared_ui.render_rects, "Rects", "⬛");
 
+        shared_ui.render_bar.prev_expanded = shared_ui.render_bar.expanded;
         if !hovered {
             shared_ui.hovering_render_toggle = -1;
             shared_ui.render_bar.expanded = ui.ui_contains_pointer();
         }
-
         shared_ui.render_bar.scale = ui.min_rect().size().into();
     });
 }
