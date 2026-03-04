@@ -243,10 +243,10 @@ pub fn draw_hierarchy(
 
                     // adjust vertical line on first children, so the parent's fold arrow isn't blocked
                     let mut size = None;
-                    let mut offset = Vec2::new(0., -11.);
+                    let mut offset = Vec2::new(0., -12.);
                     if this_child_idx == 0 {
                         size = Some(Vec2::new(2., 20.));
-                        offset = Vec2::new(0., -7.);
+                        offset = Vec2::new(0., -8.);
                     }
 
                     // get appropriate color for this vertical line, based on the current parent
@@ -265,7 +265,7 @@ pub fn draw_hierarchy(
                     if parents.len() > 0 && group_colors.get(&parents[0].id).unwrap().a != 0 {
                         parent_col = *group_colors.get(&parents[0].id).unwrap();
                     }
-                    hor_line(Vec2::new(-8., 11.), ui, parent_col);
+                    hor_line(Vec2::new(-8., 10.), ui, parent_col);
                 }
 
                 let mut children = vec![];
@@ -278,7 +278,7 @@ pub fn draw_hierarchy(
                     if this_group_color.a != 0 {
                         col = this_group_color;
                     }
-                    hor_line(Vec2::new(0., 11.), ui, col);
+                    hor_line(Vec2::new(0., 10.), ui, col);
                 } else {
                     // render arrow border
                     let mut border_col = def_line_col;
