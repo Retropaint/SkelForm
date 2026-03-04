@@ -1279,6 +1279,11 @@ fn edit_mode_bar(
                 });
             };
         }
+
+        if edit_mode.is_moving || edit_mode.is_rotating || edit_mode.is_scaling {
+            ui.separator();
+        }
+        
         if edit_mode.is_moving {
             edit_feature!("Snap X/Y", config.keys.edit_snap);
         } else if edit_mode.is_rotating {
