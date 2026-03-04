@@ -2,6 +2,7 @@
 
 use crate::*;
 use image::GenericImageView;
+use utils::only_root_bones;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
 /// The `main` of this module.
@@ -30,7 +31,7 @@ pub fn render(
     renderer.sel_bone_buffer.init(device, 1000);
     renderer.gridline_buffer.init(device, 1000);
     renderer.meshframe_buffer.init(device, 1000);
-    renderer.ring_buffer.init(device, 10);
+    renderer.ring_buffer.init(device, 1000);
     renderer.selected_ring_buffer.init(device, 10);
     renderer.rect_buffer.init(device, 1000);
 
@@ -129,15 +130,16 @@ pub fn render(
 
     let mut mesh_onion_id = -1;
 
-    // get all children of selected bone
+    // get all children of selected bone(s)
     let mut selected_bone_ids = vec![];
     if armature.sel_bone(&sel) != None {
-        let id = armature.sel_bone(&sel).unwrap().id;
-        let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
-        let mut children = vec![bone.clone()];
-        armature_window::get_all_children(&temp_arm.bones, &mut children, &bone);
-        for child in children {
-            selected_bone_ids.push(child.id);
+        for id in &selections.bone_ids {
+            let bone = temp_arm.bones.iter().find(|bone| bone.id == *id).unwrap();
+            let mut children = vec![bone.clone()];
+            armature_window::get_all_children(&temp_arm.bones, &mut children, &bone);
+            for child in children {
+                selected_bone_ids.push(child.id);
+            }
         }
     }
 
@@ -431,11 +433,7 @@ pub fn render(
 
             verts.append(&mut world_verts);
             let mut bone_indices = bone.indices.clone();
-            if indices.len() == 0 {
-                indices = bone_indices;
-            } else {
-                add_offseted_indices(&mut bone_indices, &mut indices);
-            }
+            add_offseted_indices(&mut bone_indices, &mut indices);
         }
         setup_render_buffer(&mut renderer.rect_buffer, &verts, &indices, queue);
         draw(&renderer.rect_buffer, render_pass, 0, indices.len());
@@ -474,11 +472,7 @@ pub fn render(
 
             verts.append(&mut verts_p);
             verts.append(&mut verts_l);
-            if indices.len() == 0 {
-                indices = indices_p;
-            } else {
-                add_offseted_indices(&mut indices_p, &mut indices);
-            }
+            add_offseted_indices(&mut indices_p, &mut indices);
             add_offseted_indices(&mut indices_l, &mut indices);
         }
         setup_render_buffer(&mut renderer.meshframe_buffer, &verts, &indices, queue);
@@ -513,7 +507,7 @@ pub fn render(
     }
 
     #[rustfmt::skip]
-    draw_points_and_kites(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids, renderer, queue, render_pass, events);
+    draw_points_and_kites(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids, selections, renderer, queue, render_pass, events);
 
     // check if this bone is part of IK, to disable editing later
     let mut has_ik = false;
@@ -526,7 +520,7 @@ pub fn render(
     // show transform rings when editing a bone
     let ring_enabled = config.transform_rot_radius > 0. && config.transform_scale_radius > 0.;
     let idle_mouse = !input.left_down && !input.left_clicked || camera.on_ui;
-    let selected = armature.sel_bone(&sel) != None;
+    let selected = selections.bone_ids.len() == 1;
     if !edit_mode.showing_mesh && !has_ik && idle_mouse && selected && ring_enabled {
         #[rustfmt::skip]
         transform_ring(config, camera, armature, &mut temp_arm, render_pass, renderer, events, edit_mode, &sel, queue, &mouse_pos);
@@ -600,30 +594,40 @@ pub fn render(
             edit_mode.temporary.as_ref().unwrap()
         };
 
-        if *current_edit == EditModes::Rotate {
-            let mut mouse = utils::screen_to_world_space(input.mouse, camera.window);
-            mouse.x *= camera.aspect_ratio();
-            let id = armature.sel_bone(&sel).unwrap().id;
-            let bone = temp_arm.bones.iter().find(|b| b.id == id).unwrap();
-            let center = vert(Some(bone.pos), None, None);
-            let cam = &world_camera(&camera, &config);
-            let aspect_ratio = camera.aspect_ratio();
-            let cw = world_vert(center, cam, aspect_ratio, Vec2::new(0.5, 0.5));
-            render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
-            let buffer = &mut renderer.ring_buffer;
-            draw_line(cw.pos, mouse, buffer, render_pass, &queue);
-        }
-
         if !renderer.editing_bone {
             events.save_edited_bone(selections.bone_idx);
             renderer.editing_bone = true;
         }
 
-        let id = armature.sel_bone(&sel).unwrap().id;
-        let bone = temp_arm.bones.iter().find(|b| b.id == id).unwrap();
+        let mut line_verts = vec![];
+        let mut line_indices = vec![];
 
-        #[rustfmt::skip]
-        edit_bone(events, edit_mode, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones, &mouse_pos);
+        // move all selected (root) bones
+        for sel_id in &utils::only_root_bones(&armature.bones, &selections.bone_ids) {
+            if *current_edit == EditModes::Rotate {
+                let mut mouse = utils::screen_to_world_space(input.mouse, camera.window);
+                mouse.x *= camera.aspect_ratio();
+                let bone = temp_arm.bones.iter().find(|b| b.id == *sel_id).unwrap();
+                let center = vert(Some(bone.pos), None, None);
+                let cam = &world_camera(&camera, &config);
+                let aspect_ratio = camera.aspect_ratio();
+                let cw = world_vert(center, cam, aspect_ratio, Vec2::new(0.5, 0.5));
+                let (mut verts, mut indices) = draw_line(cw.pos, mouse);
+                line_verts.append(&mut verts);
+                add_offseted_indices(&mut indices, &mut line_indices);
+            }
+
+            let bone = temp_arm.bones.iter().find(|b| b.id == *sel_id).unwrap();
+            #[rustfmt::skip]
+            edit_bone(events, edit_mode, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones, &mouse_pos);
+        }
+
+        if *current_edit == EditModes::Rotate {
+            render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
+            setup_render_buffer(&mut renderer.ring_buffer, &line_verts, &line_indices, queue);
+            let buffer = &mut renderer.ring_buffer;
+            draw(buffer, render_pass, 0, line_indices.len());
+        }
     }
 }
 
@@ -657,11 +661,7 @@ pub fn draw_armature(
         }
         bone_ids_to_draw.push(armature.bones[b].id);
         all_verts.append(&mut world_verts);
-        if all_indices.len() == 0 {
-            all_indices.append(&mut bone.indices.clone());
-        } else {
-            add_offseted_indices(&mut bone.indices.clone(), &mut all_indices);
-        }
+        add_offseted_indices(&mut bone.indices.clone(), &mut all_indices);
     }
     setup_render_buffer(buffer, &all_verts, &all_indices, queue);
     let mut curr_indices = 0;
@@ -1391,13 +1391,7 @@ pub fn vert_lines(
     (all_verts, all_indices, hovered_once)
 }
 
-fn draw_line(
-    origin: Vec2,
-    target: Vec2,
-    buffer: &mut RenderBuffer,
-    render_pass: &mut RenderPass,
-    queue: &wgpu::Queue,
-) {
+fn draw_line(origin: Vec2, target: Vec2) -> (Vec<Vertex>, Vec<u32>) {
     let dir = target - origin;
 
     let width = 2.5;
@@ -1420,8 +1414,7 @@ fn draw_line(
     let verts = vec![v0_top, v0_bot, v1_top, v1_bot];
     let indices = vec![0, 1, 2, 1, 2, 3];
 
-    setup_render_buffer(buffer, &verts, &indices, queue);
-    draw(buffer, render_pass, 0, 6);
+    (verts, indices)
 }
 
 pub fn create_tex_rect(tex_size: &Vec2) -> (Vec<Vertex>, Vec<u32>) {
@@ -1755,6 +1748,10 @@ pub fn draw_vertical_line(
 }
 
 pub fn add_offseted_indices(src: &mut Vec<u32>, dst: &mut Vec<u32>) {
+    if dst.len() == 0 {
+        dst.append(src);
+        return;
+    }
     let mut highest = 0;
     dst.iter().for_each(|s| highest = highest.max(*s));
     highest += 1;
@@ -1771,6 +1768,7 @@ pub fn draw_points_and_kites(
     edit_mode: &EditMode,
     temp_arm: &mut Armature,
     selected_bone_ids: Vec<i32>,
+    selections: &SelectionState,
     renderer: &mut Renderer,
     queue: &wgpu::Queue,
     render_pass: &mut RenderPass,
@@ -1817,7 +1815,7 @@ pub fn draw_points_and_kites(
             let fade_speed = 0.1;
             let sel_size = config.center_point_radius * 4.;
             let normal_size = config.center_point_radius;
-            let elapsed = if selected_bone_ids.len() > 0 && bone.id == selected_bone_ids[0] {
+            let elapsed = if selected_bone_ids.len() > 0 && selections.bone_ids.contains(&bone.id) {
                 (sel_size - edit_mode.sel_time * fade_speed).max(normal_size)
             } else {
                 normal_size

@@ -163,6 +163,8 @@ pub fn draw_hierarchy(
         }
     }
 
+    let mut cached_children: std::collections::HashMap<i32, Vec<Bone>> = Default::default();
+
     for b in 0..armature.bones.len() {
         // stop rendering if bones go below this panel
         if panel != None && ui.cursor().top() > panel.unwrap().bottom() {
@@ -201,7 +203,7 @@ pub fn draw_hierarchy(
                     col -= Color::new(80, 80, 80, 0);
                 }
                 let desc = shared_ui.loc("hidden_desc");
-                if bone_label("👁", ui, id, Vec2::new(-2., 18.), desc, col).clicked() {
+                if bone_label("👁", ui, id, Vec2::new(-2., 18.), &desc, col).clicked() {
                     let hidden_f32 = if !hidden { 1. } else { 0. };
                     let sel = selections.anim;
                     let frame = selections.anim_frame;
@@ -231,8 +233,17 @@ pub fn draw_hierarchy(
                 // add space to the left if this is a child
                 for p in (0..parents.len()).rev() {
                     // don't add vertical line, if there are no more direct children to this parent beyond this bone
-                    let mut children = vec![];
-                    get_all_children(&armature.bones, &mut children, &parents[p]);
+                    if let Some(c) = cached_children.get(&parents[p].id) {
+                    } else {
+                        let id = parents[p].id;
+                        cached_children.insert(id, vec![]);
+                        get_all_children(
+                            &armature.bones,
+                            &mut cached_children.get_mut(&parents[p].id).unwrap(),
+                            &parents[p],
+                        );
+                    };
+                    let children = cached_children.get(&parents[p].id).unwrap();
                     let this_child_idx = children.iter().position(|b| b.id == bone_id).unwrap();
                     let direct_child_idx =
                         children.iter().rposition(|b| b.parent_id == parents[p].id);
@@ -287,7 +298,7 @@ pub fn draw_hierarchy(
                     }
                     let border_id = "bone_fold_border".to_string() + &b.to_string();
                     let ball_offset = Vec2::new(-2., 18.);
-                    bone_label("⏺", ui, border_id, ball_offset, "".to_string(), border_col);
+                    bone_label("⏺", ui, border_id, ball_offset, "", border_col);
 
                     // render folding arrow
 
@@ -302,7 +313,7 @@ pub fn draw_hierarchy(
                     let id = format!("bone_fold{}", b.to_string());
                     let desc = shared_ui.loc("armature_panel.fold_desc");
                     let arrow_offset = Vec2::new(-2., 18.5);
-                    if bone_label(fold_icon, ui, id, arrow_offset, desc, arrow_col).clicked() {
+                    if bone_label(fold_icon, ui, id, arrow_offset, &desc, arrow_col).clicked() {
                         events.toggle_bone_folded(idx as usize, !armature.bones[b].folded);
                     }
                 }
@@ -377,28 +388,38 @@ pub fn draw_hierarchy(
                                     .text_styles
                                     .insert(egui::TextStyle::Body, egui::FontId::monospace(14.0));
 
+                                let mut offset = Vec2::new(0., 20.);
+                                let colors = &config.colors;
                                 if armature.tex_of(bone.id) != None {
                                     let str = shared_ui
                                         .loc("armature_panel.icons.tex")
                                         .replace("$tex", &bone.tex);
-                                    icon_label(ui, "🖻", str, config.colors.texture);
+                                    let id = format!("{}tex", b.to_string());
+                                    bone_label("🖻", ui, id, offset, &str, config.colors.texture);
+                                    offset.x += 18.;
                                 } else if bone.tex != "" {
                                     let str = shared_ui
                                         .loc("armature_panel.icons.tex_inactive")
                                         .replace("$tex", &bone.tex);
-                                    icon_label(ui, "🗋", str, config.colors.texture);
+                                    let id = format!("{}tex_in", b.to_string());
+                                    bone_label("🗋", ui, id, offset, &str, config.colors.texture);
+                                    offset.x += 18.;
                                 };
                                 if bone.verts_edited {
-                                    let mesh_str = shared_ui.loc("armature_panel.icons.mesh");
-                                    icon_label(ui, "⬟", mesh_str, config.colors.meshdef);
+                                    let str = shared_ui.loc("armature_panel.icons.mesh");
+                                    let id = format!("{}mesh", b.to_string());
+                                    let off = Vec2::new(offset.x, 19.);
+                                    offset.x += 18.;
+                                    bone_label("⬟", ui, id, off, &str, config.colors.meshdef);
                                 }
                                 if bone.ik_family_id != -1 {
                                     let color = config.colors.inverse_kinematics;
                                     let desc = shared_ui
                                         .loc("armature_panel.icons.ik_family")
                                         .replace("$family_id", &bone.ik_family_id.to_string());
-                                    let offset = ui.cursor().min + [-1., 5.].into();
-                                    let rect = egui::Rect::from_min_size(offset, [13., 10.].into());
+                                    let img_offset = ui.cursor().min + [-1., 5.].into();
+                                    let rect =
+                                        egui::Rect::from_min_size(img_offset, [13., 10.].into());
                                     let img = shared_ui.ik_img.as_ref().unwrap();
                                     egui::Image::new(img).tint(color).paint_at(ui, rect);
                                     let response = ui
@@ -407,8 +428,11 @@ pub fn draw_hierarchy(
                                     if response.contains_pointer() {
                                         response.show_tooltip_text(&desc);
                                     }
-                                    let family_id = &bone.ik_family_id.to_string();
-                                    icon_label(ui, family_id, desc, color);
+                                    let family_id = bone.ik_family_id.to_string();
+                                    let id = format!("{}ik", b.to_string());
+                                    let color = colors.inverse_kinematics;
+                                    let id_offset = Vec2::new(offset.x, 18.);
+                                    bone_label(&family_id, ui, id, id_offset, &desc, color);
                                 }
                                 if is_target != None {
                                     let family_id = is_target.unwrap().ik_family_id.to_string();
@@ -419,7 +443,8 @@ pub fn draw_hierarchy(
                                     let inc = 20 * is_target.unwrap().ik_family_id as u8;
                                     let mut color = config.colors.ik_target;
                                     color += Color::new(0, inc, inc, 0);
-                                    icon_label(ui, &icon, desc, color);
+                                    let id = format!("⌖{}", family_id);
+                                    bone_label(&icon, ui, id, offset, &desc, color);
                                 }
                             });
                         });
@@ -474,7 +499,7 @@ pub fn bone_label(
     ui: &mut egui::Ui,
     id: String,
     offset: Vec2,
-    desc: String,
+    desc: &str,
     color: Color,
 ) -> egui::Response {
     let rect = ui.painter().text(

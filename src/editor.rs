@@ -245,14 +245,7 @@ pub fn iterate_events(
             selections.bone_ids = vec![dragging_id];
         } else {
             // only move root bones (in context of selected bones)
-            let c_bone_ids = selections.bone_ids.clone();
-            selections.bone_ids.retain(|id| {
-                let bone = armature.bones.iter().find(|b| b.id == *id);
-                if bone == None {
-                    return false;
-                }
-                !c_bone_ids.contains(&bone.unwrap().parent_id)
-            });
+            selections.bone_ids = utils::only_root_bones(&armature.bones, &selections.bone_ids)
         }
         drag_bone(armature, pointing_id, selections, is_above);
         events.events.remove(0);
@@ -551,7 +544,12 @@ pub fn process_event(
                 let anim = armature.animations[selections.anim as usize].clone();
                 undo_states.new_undo_anim(&anim);
             } else {
-                undo_states.new_undo_bone(&bone);
+                // save all bones, if multiple were edited
+                if selections.bone_ids.len() > 0 {
+                    undo_states.new_undo_bones(&armature.bones);
+                } else {
+                    undo_states.new_undo_bone(&bone);
+                }
             }
             *ui.saving.lock().unwrap() = Saving::Autosaving;
         }
