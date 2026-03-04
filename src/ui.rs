@@ -354,30 +354,32 @@ pub fn draw(
         }
     }
 
-    if edit_mode.is_rotating {
-        let offset = Vec2::new(50., 0.);
-        let rot = selected_bone.rot / 3.14 * 180.;
-        let formatted = (rot * 100.).round() / 100.;
-        helper_text!(formatted.to_string() + "°", offset);
-    }
-    if edit_mode.is_scaling {
-        let offset = Vec2::new(50., 0.);
-        let formatted = (selected_bone.scale.x * 100.).round() / 100.;
-        let mut padding = "";
-        if formatted.to_string() == "1" {
-            padding = ".00";
+    if selections.bone_ids.len() == 1 {
+        if edit_mode.is_rotating {
+            let offset = Vec2::new(50., 0.);
+            let rot = selected_bone.rot / 3.14 * 180.;
+            let formatted = (rot * 100.).round() / 100.;
+            helper_text!(formatted.to_string() + "°", offset);
         }
-        let helper_str = format!("⏵ w: {}{}", formatted.to_string(), padding);
-        helper_text!(helper_str.to_string(), offset);
+        if edit_mode.is_scaling {
+            let offset = Vec2::new(50., 0.);
+            let formatted = (selected_bone.scale.x * 100.).round() / 100.;
+            let mut padding = "";
+            if formatted.to_string() == "1" {
+                padding = ".00";
+            }
+            let helper_str = format!("⏵ w: {}{}", formatted.to_string(), padding);
+            helper_text!(helper_str.to_string(), offset);
 
-        let offset = Vec2::new(-1., -38.);
-        let formatted = (selected_bone.scale.y * 100.).round() / 100.;
-        let mut padding = "";
-        if formatted.to_string() == "1" {
-            padding = ".00";
+            let offset = Vec2::new(-1., -38.);
+            let formatted = (selected_bone.scale.y * 100.).round() / 100.;
+            let mut padding = "";
+            if formatted.to_string() == "1" {
+                padding = ".00";
+            }
+            let helper_str = format!("h: {}{}\n     ⏶", &formatted.to_string(), padding);
+            helper_text!(helper_str.to_string(), offset);
         }
-        let helper_str = format!("h: {}{}\n     ⏶", &formatted.to_string(), padding);
-        helper_text!(helper_str.to_string(), offset);
     }
 }
 
