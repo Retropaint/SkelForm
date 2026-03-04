@@ -1970,8 +1970,8 @@ fn transform_ring(
 
     // draw rot and scale rings
     let cam = world_camera(&camera, &config);
-    let mut rot_col = config.colors.transform_circle;
-    let mut scale_col = config.colors.transform_circle;
+    let mut rot_col = config.colors.transform_rings;
+    let mut scale_col = config.colors.transform_rings;
     scale_col -= Color::new(25, 25, 25, 0);
     #[rustfmt::skip]
     let (mut verts_rot, mut indices_rot) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., distance_rot * camera.zoom);

@@ -282,19 +282,19 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     ui.add_space(10.);
 
     shared_ui.updated_config.center_point_radius = basic_input(
-        "settings_modal.rendering.center_point_radius",
+        "settings_modal.editing.center_point_radius",
         shared_ui.updated_config.center_point_radius,
         shared_ui,
         ui,
     );
     shared_ui.updated_config.transform_rot_radius = basic_input(
-        "settings_modal.rendering.transform_rot_radius",
+        "settings_modal.editing.transform_rot_radius",
         shared_ui.updated_config.transform_rot_radius,
         shared_ui,
         ui,
     );
     shared_ui.updated_config.transform_scale_radius = basic_input(
-        "settings_modal.rendering.transform_scale_radius",
+        "settings_modal.editing.transform_scale_radius",
         shared_ui.updated_config.transform_scale_radius,
         shared_ui,
         ui,
@@ -325,7 +325,7 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
                 colors!().center_point = crate::Config::default().colors.center_point;
                 colors!().inactive_center_point =
                     crate::Config::default().colors.inactive_center_point;
-                colors!().transform_circle = crate::Config::default().colors.transform_circle;
+                colors!().transform_rings = crate::Config::default().colors.transform_rings;
                 let config = &mut shared_ui.updated_config;
                 config.gridline_gap = crate::Config::default().gridline_gap;
                 config.pixel_magnification = crate::Config::default().pixel_magnification;
@@ -390,7 +390,7 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
         colors!().inactive_center_point,
         true
     );
-    color_row!("transform_circle", colors!().transform_circle, true);
+    color_row!("transform_rings", colors!().transform_rings, true);
 }
 
 fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
