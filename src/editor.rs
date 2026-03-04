@@ -911,6 +911,7 @@ fn select_bone(
     edit_mode.setting_bind_verts = false;
     edit_mode.showing_mesh = false;
     edit_mode.sel_time = 0.;
+    edit_mode.temporary = None;
 
     // rename bone if already selected
     if sel.bone_idx == idx && !from_renderer {
@@ -959,6 +960,9 @@ fn select_bone(
         }
         return;
     } else {
+        if sel.bone_idx == usize::MAX {
+            sel.bone_idx = idx;
+        }
         if input.holding_mod {
             let id = armature.bones[idx as usize].id;
             sel.bone_ids.push(id);
