@@ -1270,11 +1270,20 @@ fn edit_mode_bar(
 
         // display edit features via shortcuts (snapping, etc) when actively editing
         macro_rules! edit_feature {
-            ($str:expr, $key:expr) => {
+            ($str:expr, $key:expr, $pressed:expr) => {
                 ui.horizontal(|ui| {
-                    ui.label($str);
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.label($key.display());
+                    let col = if $pressed {
+                        let mut col = config.colors.light_accent;
+                        col -= Color::new(10, 10, 10, 0);
+                        col
+                    } else {
+                        config.colors.main
+                    };
+                    egui::Frame::new().fill(col.into()).show(ui, |ui| {
+                        ui.label($str);
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            ui.label($key.display());
+                        });
                     });
                 });
             };
@@ -1283,15 +1292,27 @@ fn edit_mode_bar(
         if edit_mode.is_moving || edit_mode.is_rotating || edit_mode.is_scaling {
             ui.separator();
         }
-        
+
         if edit_mode.is_moving {
-            edit_feature!("Snap X/Y", config.keys.edit_snap);
+            edit_feature!(
+                "Snap X/Y",
+                config.keys.edit_snap,
+                edit_mode.holding_edit_snap
+            );
         } else if edit_mode.is_rotating {
             let str = format!("Snap to {}°", config.rot_snap_step);
-            edit_feature!(str, config.keys.edit_snap);
+            edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
         } else if edit_mode.is_scaling {
-            edit_feature!("Snap X/Y", config.keys.edit_snap);
-            edit_feature!("Maintain aspect ratio", config.keys.edit_modifier);
+            edit_feature!(
+                "Snap X/Y",
+                config.keys.edit_snap,
+                edit_mode.holding_edit_snap
+            );
+            edit_feature!(
+                "Maintain aspect ratio",
+                config.keys.edit_modifier,
+                edit_mode.holding_edit_mod
+            );
         }
     });
 }

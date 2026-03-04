@@ -1023,8 +1023,8 @@ pub fn edit_bone(
     let mut mouse_vel = mouse_vel(&input, &camera) * camera.zoom;
 
     // snap mouse velocity to X or Y, depending on which is faster
-    let strictness = 3.; // how much either X or Y have to be, to eliminate the other
-    let deadzone = 5.; // how far X or Y have to be, to consider their axis
+    let strictness = 3.; // when an axis is triggered, how much should the other be to overrride it?
+    let deadzone = 5.; // axis must be faster than this to be triggered
     if edit_mode.holding_edit_snap {
         let norm = Vec2::new(mouse_vel.normalize().x.abs(), mouse_vel.normalize().y.abs());
         if mouse_vel.x.abs() > deadzone && norm.x > norm.y * strictness {
