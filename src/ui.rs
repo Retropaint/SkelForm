@@ -1455,6 +1455,7 @@ fn camera_bar(
     events: &mut EventState,
 ) {
     let margin = 6.;
+    let mut hovered = false;
     let window = egui::Window::new("Camera")
         .resizable(false)
         .title_bar(false)
@@ -1475,6 +1476,15 @@ fn camera_bar(
             shared_ui.camera_bar.pos.y,
         ));
     window.show(egui_ctx, |ui| {
+        // invisible focus element, for expansion via Tab
+        let focus_id = ui.make_persistent_id("camera_bar_focus");
+        let rect = egui::Rect::from_min_size(ui.cursor().min, egui::vec2(0.0, 0.0));
+        let focus_response = ui.interact(rect, focus_id, egui::Sense::focusable_noninteractive());
+        if focus_response.has_focus() {
+            shared_ui.camera_bar.expanded = true;
+            hovered = true;
+        }
+
         if !shared_ui.camera_bar.expanded {
             ui.scope(|ui| {
                 ui.style_mut().interaction.selectable_labels = false;
@@ -1492,8 +1502,12 @@ fn camera_bar(
                             ui.label($label).on_hover_text(&shared_ui.loc($tip));
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                 let id = $id.to_string();
-                                let (edited, value, _) =
+                                let (edited, value, input) =
                                     ui.float_input(id, shared_ui, $float.round(), 1., None);
+                                if input.has_focus() {
+                                    hovered = true;
+                                    shared_ui.camera_bar.expanded = true;
+                                }
                                 if edited {
                                     let cam = &camera;
                                     if $id.to_string() == "cam_pos_x" {
@@ -1516,7 +1530,7 @@ fn camera_bar(
         }
 
         shared_ui.camera_bar.prev_expanded = shared_ui.camera_bar.expanded;
-        shared_ui.camera_bar.expanded = ui.ui_contains_pointer();
+        shared_ui.camera_bar.expanded = hovered || ui.ui_contains_pointer();
         shared_ui.camera_bar.scale = ui.min_rect().size().into();
     });
 }
