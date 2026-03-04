@@ -2,7 +2,6 @@
 
 use crate::*;
 use image::GenericImageView;
-use utils::only_root_bones;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
 /// The `main` of this module.

@@ -233,7 +233,7 @@ pub fn draw_hierarchy(
                 // add space to the left if this is a child
                 for p in (0..parents.len()).rev() {
                     // don't add vertical line, if there are no more direct children to this parent beyond this bone
-                    if let Some(c) = cached_children.get(&parents[p].id) {
+                    if let Some(_) = cached_children.get(&parents[p].id) {
                     } else {
                         let id = parents[p].id;
                         cached_children.insert(id, vec![]);
@@ -593,13 +593,6 @@ pub fn get_all_children(bones: &Vec<Bone>, children_vec: &mut Vec<Bone>, parent:
         }
         children_vec.push(bones[idx + j].clone());
         get_all_children(bones, children_vec, &bones[idx + j]);
-    }
-}
-
-fn icon_label(ui: &mut egui::Ui, icon: &str, desc: String, color: Color) {
-    let label = ui.label(egui::RichText::new(icon).color(color));
-    if label.contains_pointer() {
-        label.show_tooltip_text(desc);
     }
 }
 
