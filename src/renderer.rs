@@ -22,12 +22,6 @@ pub fn render(
         return;
     }
 
-    // unselect bone if clicking
-    // this will be overridden by any event later that selects a bone
-    if !camera.on_ui && armature.bones.len() > 0 && input.left_clicked {
-        events.select_bone(usize::MAX, true);
-    }
-
     renderer.bone_buffer.init(device, 1000);
     renderer.prev_onion_buffer.init(device, 1000);
     renderer.next_onion_buffer.init(device, 1000);
@@ -240,7 +234,7 @@ pub fn render(
                 && sel.bone_idx != usize::MAX
                 && armature.sel_bone(&sel).unwrap().id == tb.id;
         if hover_bone_id == -1
-            && !input.left_down
+            && (!input.left_down || input.left_pressed) // allow detection on LMB press
             && !camera.on_ui
             && selected_mesh
             && renderer.render_textures
@@ -321,7 +315,7 @@ pub fn render(
         }
 
         // select bone on click
-        if input.left_clicked && hover_bone_id == temp_arm.bones[b].id {
+        if input.left_pressed && hover_bone_id == temp_arm.bones[b].id {
             let id = temp_arm.bones[b].id;
             let bones = &armature.bones;
             let idx = bones.iter().position(|bone| bone.id == id).unwrap();
@@ -529,11 +523,32 @@ pub fn render(
             && armature.bone_eff(bone.id) != JointEffector::Start;
     }
 
-    if !edit_mode.showing_mesh && !has_ik && !input.left_down && armature.sel_bone(&sel) != None {
+    // show transform rings when editing a bone
+    if !edit_mode.showing_mesh
+        && !has_ik
+        && (!input.left_down && !input.left_clicked || camera.on_ui)
+        && armature.sel_bone(&sel) != None
+    {
         #[rustfmt::skip]
         transform_ring(config, camera, armature, &mut temp_arm, render_pass, renderer, events, edit_mode, &sel, queue, &mouse_pos);
     }
 
+    // if no SelectBone events have been called, unselect current if mouse is pressed
+    if !camera.on_ui && armature.bones.len() > 0 && edit_mode.sel_time > 0.25 && input.left_clicked
+    {
+        let mut unselect = true;
+        for event in &events.events {
+            if *event == Events::SelectBone {
+                unselect = false;
+                break;
+            }
+        }
+        if unselect {
+            events.select_bone(usize::MAX, true);
+        }
+    }
+
+    // dragging vert stuff
     if !input.left_down {
         renderer.dragging_verts = vec![];
         renderer.editing_bone = false;
@@ -550,6 +565,7 @@ pub fn render(
         return;
     }
 
+    // keep track of selected bone's initial rotation, if mouse isn't being pressed
     if input.mouse_init == None {
         if let Some(bone) = armature.sel_bone(&sel) {
             let anim_bones = &armature.animated_bones;
@@ -578,7 +594,7 @@ pub fn render(
     let input = &input;
     if camera.on_ui {
         renderer.editing_bone = false;
-    } else if idx != usize::MAX && input.left_down && hover_bone_id == -1 && input.down_dur > 5 {
+    } else if idx != usize::MAX && input.left_down && hover_bone_id == -1 {
         let current_edit = if edit_mode.temporary == None {
             &edit_mode.current
         } else {
@@ -1825,7 +1841,7 @@ pub fn draw_points_and_kites(
                 (this_verts, this_indices) = draw_point(
                     &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
                 );
-                if input.left_clicked {
+                if input.left_pressed {
                     events.select_bone(bone.id as usize, true);
                 }
                 on_point = true;

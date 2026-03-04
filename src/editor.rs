@@ -960,7 +960,7 @@ fn select_bone(
             bones.iter_mut().find(|b| b.id == p.id).unwrap().folded = false;
         }
         return;
-    } else if !from_renderer {
+    } else {
         if input.holding_mod {
             let id = armature.bones[idx as usize].id;
             sel.bone_ids.push(id);

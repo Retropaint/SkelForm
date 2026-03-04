@@ -401,7 +401,6 @@ pub struct InputStates {
     pub right_clicked: bool,
     pub left_down: bool,
     pub right_down: bool,
-    pub down_dur: i32,
     pub holding_mod: bool,
     pub holding_shift: bool,
     pub mouse_init: Option<Vec2>,

@@ -415,11 +415,6 @@ pub fn process_inputs(
         if i.pointer.primary_released() {
             input.mouse_init = None;
         }
-        if input.left_down {
-            input.down_dur += 1;
-        } else {
-            input.down_dur = -1;
-        }
         if shared_ui.mobile {
             input.left_clicked = i.pointer.any_pressed();
         }
