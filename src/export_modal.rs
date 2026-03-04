@@ -344,7 +344,7 @@ pub fn image_export(
                     let str = anim.fps.to_string()
                         + &" FPS  -  ".to_string()
                         + &total_frames.unwrap().frame.to_string()
-                        + &shared_ui.loc("export_modal.iamge.frames");
+                        + &shared_ui.loc("export_modal.image.frames");
                     ui.label(egui::RichText::new(str).color(meta_col));
                 });
             });

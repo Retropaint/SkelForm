@@ -196,9 +196,6 @@
       "target": "Target:",
       "set_target": "Set Target",
       "remove_target": "Remove Target",
-      "Start": "Start",
-      "Middle": "Middle",
-      "End": "End",
       "Clockwise": "CW",
       "CounterClockwise": "CCW",
       "cant_edit": "Transforms cannot be edited for IK child bones.\n\nTo adjust the distance between this bone and the previous, edit the Distance field in the IK section below.",
@@ -320,13 +317,7 @@
       "skip_startup_window": "Skip startup window",
       "clear_recent_files": "Clear recent files",
       "keep_tex_str": "Keep texture name after renaming ℹ:",
-      "keep_tex_str_desc": "By default, renaming a texture will also adjust bones using it to change their tex name. Tick this to preserve bone texture names after renaming.",
-      "beta": {
-        "heading": "Beta",
-        "warning": "*The following options will enable incomplete features.\nPlease save and backup your project before proceeding.*",
-        "nothing": "*No beta features as of this version ($version) release! Keep an eye out for new versions at the [Main Site](https://skelform.org).*",
-        "mesh_deformation": "Mesh Deformation:"
-      }
+      "keep_tex_str_desc": "By default, renaming a texture will also adjust bones using it to change their tex name. Tick this to preserve bone texture names after renaming."
     }
   },
   "keyframe_editor": {
