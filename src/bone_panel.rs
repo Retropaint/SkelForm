@@ -246,7 +246,15 @@ pub fn draw(
         //egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
     }
 
-    if bone.vertices.len() > 0 && armature.tex_of(bone.id) != None {
+    // show mesh deformation, if all selected bones are eligible
+    let mut all_can_mesh = true;
+    for id in &selections.bone_ids {
+        let bone = armature.bones.iter().find(|b| b.id == *id).unwrap().clone();
+        if bone.vertices.len() == 0 || armature.tex_of(bone.id) == None {
+            all_can_mesh = false;
+        }
+    }
+    if all_can_mesh {
         mesh_deformation(
             ui, &bone, shared_ui, events, config, selections, armature, edit_mode,
         );
@@ -914,6 +922,18 @@ pub fn texture_effects(
         for id in &bone_ids {
             events.set_bone_texture(*id as usize, selected_tex.clone());
         }
+    }
+
+    // don't show other options if not all selected bones have textures
+    let mut all_have_tex = true;
+    for id in &selections.bone_ids {
+        if armature.bones.iter().find(|b| b.id == *id).unwrap().tex == "" {
+            all_have_tex = false;
+            break;
+        }
+    }
+    if !all_have_tex {
+        return;
     }
 
     ui.horizontal(|ui| {
