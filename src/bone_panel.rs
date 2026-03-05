@@ -871,7 +871,8 @@ pub fn texture_effects(
         config.colors.light_accent + Color::new(60, 60, 60, 0)
     };
 
-    let mut selected_tex = bone.tex.clone();
+    // texture dropdown
+    let mut selected_tex = "".to_string();
     let mut tex_name = if bone.tex != "" {
         bone.tex.clone()
     } else {
@@ -905,11 +906,14 @@ pub fn texture_effects(
             });
         });
     });
-
     if selected_tex == "[Setup]" {
         shared_ui.styles_modal = true;
-    } else if selected_tex != bone.tex {
-        events.set_bone_texture(bone.id as usize, selected_tex);
+    } else if selected_tex != "" {
+        let bone_ids = selections.only_root_bones(&armature.bones);
+        events.save_edited_bone(selections.bone_idx);
+        for id in &bone_ids {
+            events.set_bone_texture(*id as usize, selected_tex.clone());
+        }
     }
 
     ui.horizontal(|ui| {
