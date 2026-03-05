@@ -10,6 +10,8 @@ use crate::{
 
 use crate::shared::*;
 
+const HIGHLIGHT: Color = Color::new(50, 50, 50, 0);
+
 pub fn draw(
     egui_ctx: &Context,
     events: &mut EventState,
@@ -223,6 +225,11 @@ pub fn draw_hierarchy(
                     .allocate_rect(rect, egui::Sense::click())
                     .on_hover_cursor(egui::CursorIcon::PointingHand)
                     .on_hover_text(shared_ui.loc("locked_desc"));
+                if response.hovered() || response.has_focus() {
+                    egui::Image::new(img)
+                        .tint(col + HIGHLIGHT)
+                        .paint_at(ui, rect);
+                }
                 if response.clicked() {
                     let locked_f32 = if !locked { 1. } else { 0. };
                     events.save_edited_bone(b);
@@ -419,15 +426,7 @@ pub fn draw_hierarchy(
                                     let str = shared_ui.loc("armature_panel.icons.mesh");
                                     let id = format!("{}mesh", b.to_string());
                                     let off = Vec2::new(offset.x, 19.);
-                                    bone_label(
-                                        "⬟",
-                                        false,
-                                        ui,
-                                        id,
-                                        off,
-                                        &str,
-                                        config.colors.meshdef,
-                                    );
+                                    bone_label("⬟", false, ui, id, off, &str, colors.meshdef);
                                     offset.x += 18.;
                                 }
                                 if bone.ik_family_id != -1 {
@@ -544,13 +543,13 @@ pub fn bone_label(
     }
 
     // highlight if hovered/focused
-    if rect.hovered() || rect.has_focus() {
+    if interactable && (rect.hovered() || rect.has_focus()) {
         ui.painter().text(
             ui.cursor().min + Vec2::new(offset.x, offset.y).into(),
             egui::Align2::LEFT_BOTTOM,
             icon,
             egui::FontId::default(),
-            (color + Color::new(25, 25, 25, 0)).into(),
+            (color + HIGHLIGHT).into(),
         );
     }
     rect

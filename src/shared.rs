@@ -309,20 +309,11 @@ impl std::ops::AddAssign for Color {
 }
 
 impl std::ops::SubAssign for Color {
-    fn sub_assign(&mut self, other: Color) {
-        macro_rules! sub {
-            ($col:expr, $other_col:expr) => {
-                $col = if let Some(col) = $col.checked_sub($other_col) {
-                    col
-                } else {
-                    0
-                }
-            };
-        }
-        sub!(self.r, other.r);
-        sub!(self.g, other.g);
-        sub!(self.b, other.b);
-        sub!(self.a, other.a);
+    fn sub_assign(&mut self, rhs: Color) {
+        self.r = self.r.saturating_sub(rhs.r);
+        self.g = self.g.saturating_sub(rhs.g);
+        self.b = self.b.saturating_sub(rhs.b);
+        self.a = self.a.saturating_sub(rhs.a);
     }
 }
 
@@ -332,10 +323,10 @@ impl std::ops::Add for Color {
     #[inline(always)]
     fn add(self, rhs: Self) -> Self {
         Self {
-            r: self.r + rhs.r,
-            g: self.g + rhs.g,
-            b: self.b + rhs.b,
-            a: self.a + rhs.a,
+            r: self.r.saturating_add(rhs.r),
+            g: self.g.saturating_add(rhs.g),
+            b: self.b.saturating_add(rhs.b),
+            a: self.a.saturating_add(rhs.a),
         }
     }
 }
@@ -2554,7 +2545,7 @@ pub struct SelectionState {
 }
 
 impl SelectionState {
-    pub fn only_root_bones(&self, bones: &Vec<Bone>) -> Vec<i32>{
+    pub fn only_root_bones(&self, bones: &Vec<Bone>) -> Vec<i32> {
         let mut c_bone_ids = self.bone_ids.clone();
         c_bone_ids.retain(|id| {
             let bone = bones.iter().find(|b| b.id == *id);
