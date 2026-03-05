@@ -311,7 +311,8 @@ pub fn draw_hierarchy(
                     let folded = armature.bones[b].folded;
                     let fold_icon = if folded { "⏵" } else { "⏷" };
                     let id = format!("bone_fold{}", b.to_string());
-                    let desc = shared_ui.loc("armature_panel.fold_desc");
+                    //let desc = shared_ui.loc("armature_panel.fold_desc");
+                    let desc = "";
                     let arrow_offset = Vec2::new(-2., 18.5);
                     if bone_label(fold_icon, ui, id, arrow_offset, &desc, arrow_col).clicked() {
                         events.toggle_bone_folded(idx as usize, !armature.bones[b].folded);
@@ -409,8 +410,8 @@ pub fn draw_hierarchy(
                                     let str = shared_ui.loc("armature_panel.icons.mesh");
                                     let id = format!("{}mesh", b.to_string());
                                     let off = Vec2::new(offset.x, 19.);
-                                    offset.x += 18.;
                                     bone_label("⬟", ui, id, off, &str, config.colors.meshdef);
+                                    offset.x += 18.;
                                 }
                                 if bone.ik_family_id != -1 {
                                     let color = config.colors.inverse_kinematics;
@@ -422,9 +423,7 @@ pub fn draw_hierarchy(
                                         egui::Rect::from_min_size(img_offset, [13., 10.].into());
                                     let img = shared_ui.ik_img.as_ref().unwrap();
                                     egui::Image::new(img).tint(color).paint_at(ui, rect);
-                                    let response = ui
-                                        .allocate_rect(rect, egui::Sense::hover())
-                                        .on_hover_text(shared_ui.loc("locked_desc"));
+                                    let response = ui.allocate_rect(rect, egui::Sense::hover());
                                     if response.contains_pointer() {
                                         response.show_tooltip_text(&desc);
                                     }
@@ -509,9 +508,13 @@ pub fn bone_label(
         egui::FontId::default(),
         color.into(),
     );
-    ui.interact(rect, id.into(), egui::Sense::CLICK)
-        .on_hover_cursor(egui::CursorIcon::PointingHand)
-        .on_hover_text(desc)
+    let rect = ui
+        .interact(rect, id.into(), egui::Sense::CLICK)
+        .on_hover_cursor(egui::CursorIcon::PointingHand);
+    if rect.contains_pointer() && desc != "" {
+        rect.show_tooltip_text(desc);
+    }
+    rect
 }
 
 fn check_bone_dragging(
