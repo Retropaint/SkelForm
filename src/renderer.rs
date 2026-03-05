@@ -241,7 +241,6 @@ pub fn render(
             && !camera.on_ui
             && selected_mesh
             && renderer.render_textures
-            && (sel.bone_ids.len() == 0 || temp_arm.bones[b].id != sel.bone_ids[0])
         {
             let wv = &temp_arm.bones[b].world_verts;
             for (i, chunk) in temp_arm.bones[b].indices.chunks_exact(3).enumerate() {
@@ -306,28 +305,25 @@ pub fn render(
 
         // hovering glow animation
         let idx = selections.bone_idx;
-        if hover_bone_id == temp_arm.bones[b].id
-            && (idx == usize::MAX || armature.bones[idx].id != click_on_hover_id)
-            && !renderer.on_point
-        {
+        let not_selected = idx == usize::MAX || armature.bones[idx].id != click_on_hover_id;
+        if hover_bone_id == temp_arm.bones[b].id && not_selected && !renderer.on_point {
             let fade = (64. * ((edit_mode.time * 3.).sin()).abs()).min(255.);
             let min = 25;
             for vert in &mut temp_arm.bones[b].world_verts {
                 vert.add_color =
                     Color::new(min + fade as u8, min + fade as u8, min + fade as u8, 0);
             }
+
+            if input.left_pressed && !renderer.on_point {
+                let id = temp_arm.bones[b].id;
+                let bones = &armature.bones;
+                let idx = bones.iter().position(|bone| bone.id == id).unwrap();
+                events.select_bone(idx, true);
+            }
         } else {
             for vert in &mut temp_arm.bones[b].world_verts {
                 vert.add_color = Color::new(0, 0, 0, 0);
             }
-        }
-
-        // select bone on click
-        if input.left_pressed && hover_bone_id == temp_arm.bones[b].id {
-            let id = temp_arm.bones[b].id;
-            let bones = &armature.bones;
-            let idx = bones.iter().position(|bone| bone.id == id).unwrap();
-            events.select_bone(idx, true);
         }
     }
 
