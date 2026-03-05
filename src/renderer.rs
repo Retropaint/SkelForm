@@ -1828,7 +1828,7 @@ pub fn draw_points_and_kites(
             let fade_speed = 0.1;
             let sel_size = config.center_point_radius * 4.;
             let normal_size = config.center_point_radius;
-            let elapsed = if selected_bone_ids.len() > 1 && selections.bone_ids.contains(&bone.id) {
+            let elapsed = if selections.bone_ids.len() > 1 && selections.bone_ids.contains(&bone.id) {
                 (sel_size - edit_mode.sel_time * fade_speed).max(normal_size)
             } else {
                 normal_size
