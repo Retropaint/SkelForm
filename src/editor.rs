@@ -149,7 +149,17 @@ pub fn iterate_events(
         let current_edit = if let Some(temporary) = &edit_mode.temporary {
             &temporary
         } else {
-            &edit_mode.current
+            if anim_el != AnimElement::PositionX
+                && anim_el != AnimElement::PositionY
+                && anim_el != AnimElement::Rotation
+                && anim_el != AnimElement::ScaleX
+                && anim_el != AnimElement::ScaleY
+            {
+                ui.cursor_icon = egui::CursorIcon::Default;
+                &EditModes::Other
+            } else {
+                &edit_mode.current
+            }
         };
 
         edit_mode.is_moving = *current_edit == EditModes::Move;

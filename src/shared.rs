@@ -1904,6 +1904,7 @@ pub enum EditModes {
     Move,
     Rotate,
     Scale,
+    Other,
 }
 
 #[derive(Default, PartialEq, Clone, FromRepr, serde::Serialize, serde::Deserialize, Debug)]
