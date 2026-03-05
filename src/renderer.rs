@@ -36,6 +36,7 @@ pub fn render(
 
     let sel = selections.clone();
 
+    // inform HTML if canvas has successfully loaded
     #[cfg(target_arch = "wasm32")]
     if !renderer.has_loaded {
         loaded();
@@ -57,6 +58,7 @@ pub fn render(
         draw_gridline(render_pass, renderer, &camera, &config, queue);
     }
 
+    // temporary armature, to be used for rendering
     let mut temp_arm = Armature::default();
     temp_arm.bones = armature.bones.clone();
     let mut anim_bones = armature.animated_bones.clone();
@@ -220,10 +222,10 @@ pub fn render(
                 tb.world_verts.push(vert);
             }
         }
-
         for vert in &mut temp_arm.bones[b].world_verts {
             vert.add_color = Color::new(0, 0, 0, 0);
         }
+
         if edit_mode.setting_bind_verts {
             continue;
         }
@@ -251,13 +253,16 @@ pub fn render(
                     continue;
                 }
 
+                // initiate vertex position
                 let bones = &temp_arm.bones;
                 let v = &bones.iter().find(|bone| bone.id == tb.id).unwrap().vertices;
                 let uv = v[c0].uv * bary.3 + v[c1].uv * bary.1 + v[c2].uv * bary.2;
                 let mut pos = (utils::rotate(&(v[c0].pos - tb.pos), -tb.rot)) * bary.3
                     + (utils::rotate(&(v[c1].pos - tb.pos), -tb.rot)) * bary.1
                     + (utils::rotate(&(v[c2].pos - tb.pos), -tb.rot)) * bary.2;
+                pos /= tb.scale;
 
+                // remove triangle if right clicked, unless there's only 2
                 if edit_mode.showing_mesh && input.right_clicked && !removed_vert {
                     if armature.sel_bone(&sel).unwrap().indices.len() == 6 {
                         events.open_modal("indices_limit", false);
@@ -268,12 +273,13 @@ pub fn render(
                     break;
                 }
 
+                // editing this bone's mesh, add this as new vertex candidate
                 if edit_mode.showing_mesh && input.left_clicked && new_vert == None {
-                    pos /= tb.scale;
                     new_vert = Some(vert(Some(pos), None, Some(uv)));
                     break;
                 }
 
+                // set this bone as hovered, if the cursor is on its texture
                 let tex = armature.tex_of(temp_arm.bones[b].id).unwrap();
                 let img = &armature.tex_data(tex).unwrap().image;
                 let pos = Vec2::new(
@@ -358,9 +364,12 @@ pub fn render(
         );
     }
 
+    // show selected bone's mesh wireframe if editing it
     if edit_mode.showing_mesh || edit_mode.setting_bind_verts {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
+
+        // render texture, so it appears above everything else
         if renderer.render_textures {
             let tex = armature.tex_of(bone.id).unwrap();
             let bind_group = &armature.tex_data(tex).unwrap().bind_group;
@@ -383,7 +392,6 @@ pub fn render(
         let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, edit_mode, events, armature, renderer);
         #[rustfmt::skip]
         let (mut lines_v, mut lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, nw, true, on_vert, camera, input, renderer);
-
         verts.append(&mut lines_v);
         add_offseted_indices(&mut lines_i, &mut indices);
 
@@ -406,6 +414,7 @@ pub fn render(
         draw(&renderer.meshframe_buffer, render_pass, 0, indices.len());
     }
 
+    // draw render rects if enabled
     if renderer.render_rects {
         let mut verts = vec![];
         let mut indices = vec![];
@@ -642,7 +651,10 @@ pub fn draw_armature(
 ) {
     let mut all_verts = vec![];
     let mut all_indices = vec![];
+
+    // keep track of which bones should be rendered
     let mut bone_ids_to_draw = vec![];
+
     for b in 0..armature.bones.len() {
         let tex = src_arm.tex_of(armature.bones[b].id);
         let id = armature.bones[b].id;
@@ -663,6 +675,7 @@ pub fn draw_armature(
         add_offseted_indices(&mut bone.indices.clone(), &mut all_indices);
     }
     setup_render_buffer(buffer, &all_verts, &all_indices, queue);
+
     let mut curr_indices = 0;
     for bone_id in bone_ids_to_draw {
         let tex = src_arm.tex_of(bone_id);
