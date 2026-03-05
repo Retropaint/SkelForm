@@ -1371,15 +1371,3 @@ pub fn shortest_angle_delta(from: f32, to: f32) -> f32 {
     delta = (delta + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;
     delta
 }
-
-pub fn only_root_bones(bones: &Vec<Bone>, bone_ids: &Vec<i32>) -> Vec<i32> {
-    let mut c_bone_ids = bone_ids.clone();
-    c_bone_ids.retain(|id| {
-        let bone = bones.iter().find(|b| b.id == *id);
-        if bone == None {
-            return false;
-        }
-        !bone_ids.contains(&bone.unwrap().parent_id)
-    });
-    c_bone_ids
-}

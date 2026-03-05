@@ -602,7 +602,7 @@ pub fn render(
         let mut line_indices = vec![];
 
         // move all selected (root) bones
-        for sel_id in &utils::only_root_bones(&armature.bones, &selections.bone_ids) {
+        for sel_id in &selections.only_root_bones(&armature.bones) {
             if *current_edit == EditModes::Rotate {
                 let mut mouse = utils::screen_to_world_space(input.mouse, camera.window);
                 mouse.x *= camera.aspect_ratio();

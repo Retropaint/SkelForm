@@ -245,7 +245,7 @@ pub fn iterate_events(
             selections.bone_ids = vec![dragging_id];
         } else {
             // only move root bones (in context of selected bones)
-            selections.bone_ids = utils::only_root_bones(&armature.bones, &selections.bone_ids)
+            selections.bone_ids = selections.only_root_bones(&armature.bones)
         }
         drag_bone(armature, pointing_id, selections, is_above);
         events.events.remove(0);

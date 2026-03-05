@@ -24,6 +24,7 @@ mod web {
 }
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
+type E = AnimElement;
 
 pub fn draw(
     mut bone: Bone,
@@ -78,7 +79,6 @@ pub fn draw(
         ui.color_edit_button_srgba_premultiplied(&mut col)
             .on_hover_text(tooltip);
         if col != og_col {
-            type E = AnimElement;
             events.edit_bone(bone.id, &E::GroupColorR, col[0] as f32, "", usize::MAX, -1);
             events.edit_bone(bone.id, &E::GroupColorG, col[1] as f32, "", usize::MAX, -1);
             events.edit_bone(bone.id, &E::GroupColorB, col[2] as f32, "", usize::MAX, -1);
@@ -141,7 +141,8 @@ pub fn draw(
 
                 let frame = selections.anim_frame;
                 events.save_edited_bone(selections.bone_idx);
-                events.edit_bone(bone.id, $element, $float, "", anim_id, frame);
+                let bone_ids = selections.only_root_bones(&armature.bones);
+                edit_bones(&bone_ids, $element, $float, "", anim_id, frame, events);
                 *shared_ui.saving.lock().unwrap() = shared::Saving::Autosaving;
             }
         };
@@ -189,23 +190,23 @@ pub fn draw(
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.position"), ui);
             ui.add_space(ui.available_width() - input_widths);
-            let pos_x = &AnimElement::PositionX;
+            let pos_x = AnimElement::PositionX;
             input!(bone.pos.x, "pos_x", pos_x, 1., ui, "X");
-            let pos_y = &AnimElement::PositionY;
+            let pos_y = AnimElement::PositionY;
             input!(bone.pos.y, "pos_y", pos_y, 1., ui, "Y");
         });
 
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.scale"), ui);
             ui.add_space(ui.available_width() - input_widths - 5.);
-            input!(bone.scale.x, "scale_x", &AnimElement::ScaleX, 1., ui, "W");
-            input!(bone.scale.y, "scale_y", &AnimElement::ScaleY, 1., ui, "H");
+            input!(bone.scale.x, "scale_x", AnimElement::ScaleX, 1., ui, "W");
+            input!(bone.scale.y, "scale_y", AnimElement::ScaleY, 1., ui, "H");
         });
 
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.rotation"), ui);
             ui.add_space(ui.available_width() - 40.);
-            let rot_el = &AnimElement::Rotation;
+            let rot_el = AnimElement::Rotation;
             let deg_mod = 180. / std::f32::consts::PI;
             input!(bone.rot, "rot", rot_el, deg_mod, ui, "");
         });
@@ -941,10 +942,25 @@ pub fn texture_effects(
                 usize::MAX
             };
             let frame = selections.anim_frame;
-            events.edit_bone(bone.id, &AnimElement::TintR, col[0], "", anim_id, frame);
-            events.edit_bone(bone.id, &AnimElement::TintG, col[1], "", anim_id, frame);
-            events.edit_bone(bone.id, &AnimElement::TintB, col[2], "", anim_id, frame);
-            events.edit_bone(bone.id, &AnimElement::TintA, col[3], "", anim_id, frame);
+            let bone_ids = &selections.only_root_bones(&armature.bones);
+            edit_bones(bone_ids, E::TintR, col[0], "", anim_id, frame, events);
+            edit_bones(bone_ids, E::TintG, col[1], "", anim_id, frame, events);
+            edit_bones(bone_ids, E::TintB, col[2], "", anim_id, frame, events);
+            edit_bones(bone_ids, E::TintA, col[3], "", anim_id, frame, events);
         });
     });
+}
+
+pub fn edit_bones(
+    bone_ids: &Vec<i32>,
+    element: AnimElement,
+    value: f32,
+    value_str: &str,
+    anim_sel: usize,
+    anim_frame: i32,
+    events: &mut EventState,
+) {
+    for id in bone_ids {
+        events.edit_bone(*id, &element, value, value_str, anim_sel, anim_frame);
+    }
 }

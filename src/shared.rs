@@ -2553,6 +2553,20 @@ pub struct SelectionState {
     pub anim_frame: i32,
 }
 
+impl SelectionState {
+    pub fn only_root_bones(&self, bones: &Vec<Bone>) -> Vec<i32>{
+        let mut c_bone_ids = self.bone_ids.clone();
+        c_bone_ids.retain(|id| {
+            let bone = bones.iter().find(|b| b.id == *id);
+            if bone == None {
+                return false;
+            }
+            !self.bone_ids.contains(&bone.unwrap().parent_id)
+        });
+        c_bone_ids
+    }
+}
+
 #[derive(Default)]
 pub struct Shared {
     pub armature: Armature,
