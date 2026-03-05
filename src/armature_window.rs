@@ -203,7 +203,7 @@ pub fn draw_hierarchy(
                     col -= Color::new(80, 80, 80, 0);
                 }
                 let desc = shared_ui.loc("hidden_desc");
-                if bone_label("👁", ui, id, Vec2::new(-2., 18.), &desc, col).clicked() {
+                if bone_label("👁", true, ui, id, Vec2::new(-2., 18.), &desc, col).clicked() {
                     let hidden_f32 = if !hidden { 1. } else { 0. };
                     let sel = selections.anim;
                     let frame = selections.anim_frame;
@@ -298,7 +298,7 @@ pub fn draw_hierarchy(
                     }
                     let border_id = "bone_fold_border".to_string() + &b.to_string();
                     let ball_offset = Vec2::new(-2., 18.);
-                    bone_label("⏺", ui, border_id, ball_offset, "", border_col);
+                    let border = bone_label("⏺", true, ui, border_id, ball_offset, "", border_col);
 
                     // render folding arrow
 
@@ -314,7 +314,8 @@ pub fn draw_hierarchy(
                     //let desc = shared_ui.loc("armature_panel.fold_desc");
                     let desc = "";
                     let arrow_offset = Vec2::new(-2., 18.5);
-                    if bone_label(fold_icon, ui, id, arrow_offset, &desc, arrow_col).clicked() {
+                    bone_label(fold_icon, false, ui, id, arrow_offset, &desc, arrow_col);
+                    if border.clicked() {
                         events.toggle_bone_folded(idx as usize, !armature.bones[b].folded);
                     }
                 }
@@ -396,21 +397,37 @@ pub fn draw_hierarchy(
                                         .loc("armature_panel.icons.tex")
                                         .replace("$tex", &bone.tex);
                                     let id = format!("{}tex", b.to_string());
-                                    bone_label("🖻", ui, id, offset, &str, config.colors.texture);
+                                    bone_label("🖻", false, ui, id, offset, &str, colors.texture);
                                     offset.x += 18.;
                                 } else if bone.tex != "" {
                                     let str = shared_ui
                                         .loc("armature_panel.icons.tex_inactive")
                                         .replace("$tex", &bone.tex);
                                     let id = format!("{}tex_in", b.to_string());
-                                    bone_label("🗋", ui, id, offset, &str, config.colors.texture);
+                                    bone_label(
+                                        "🗋",
+                                        false,
+                                        ui,
+                                        id,
+                                        offset,
+                                        &str,
+                                        config.colors.texture,
+                                    );
                                     offset.x += 18.;
                                 };
                                 if bone.verts_edited {
                                     let str = shared_ui.loc("armature_panel.icons.mesh");
                                     let id = format!("{}mesh", b.to_string());
                                     let off = Vec2::new(offset.x, 19.);
-                                    bone_label("⬟", ui, id, off, &str, config.colors.meshdef);
+                                    bone_label(
+                                        "⬟",
+                                        false,
+                                        ui,
+                                        id,
+                                        off,
+                                        &str,
+                                        config.colors.meshdef,
+                                    );
                                     offset.x += 18.;
                                 }
                                 if bone.ik_family_id != -1 {
@@ -431,7 +448,7 @@ pub fn draw_hierarchy(
                                     let id = format!("{}ik", b.to_string());
                                     let color = colors.inverse_kinematics;
                                     let id_offset = Vec2::new(offset.x, 18.);
-                                    bone_label(&family_id, ui, id, id_offset, &desc, color);
+                                    bone_label(&family_id, false, ui, id, id_offset, &desc, color);
                                 }
                                 if is_target != None {
                                     let family_id = is_target.unwrap().ik_family_id.to_string();
@@ -443,7 +460,7 @@ pub fn draw_hierarchy(
                                     let mut color = config.colors.ik_target;
                                     color += Color::new(0, inc, inc, 0);
                                     let id = format!("⌖{}", family_id);
-                                    bone_label(&icon, ui, id, offset, &desc, color);
+                                    bone_label(&icon, false, ui, id, offset, &desc, color);
                                 }
                             });
                         });
@@ -495,12 +512,14 @@ pub fn draw_hierarchy(
 
 pub fn bone_label(
     icon: &str,
+    interactable: bool,
     ui: &mut egui::Ui,
     id: String,
     offset: Vec2,
     desc: &str,
     color: Color,
 ) -> egui::Response {
+    // draw icon
     let rect = ui.painter().text(
         ui.cursor().min + Vec2::new(offset.x, offset.y).into(),
         egui::Align2::LEFT_BOTTOM,
@@ -508,11 +527,31 @@ pub fn bone_label(
         egui::FontId::default(),
         color.into(),
     );
+
+    // set sense based on whether it should be interactable
+    let sense = if interactable {
+        egui::Sense::click()
+    } else {
+        egui::Sense::empty()
+    };
     let rect = ui
-        .interact(rect, id.into(), egui::Sense::CLICK)
+        .interact(rect, id.into(), sense)
         .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+    // show tooltip if hovered
     if rect.contains_pointer() && desc != "" {
         rect.show_tooltip_text(desc);
+    }
+
+    // highlight if hovered/focused
+    if rect.hovered() || rect.has_focus() {
+        ui.painter().text(
+            ui.cursor().min + Vec2::new(offset.x, offset.y).into(),
+            egui::Align2::LEFT_BOTTOM,
+            icon,
+            egui::FontId::default(),
+            (color + Color::new(25, 25, 25, 0)).into(),
+        );
     }
     rect
 }
