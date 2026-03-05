@@ -872,7 +872,7 @@ pub fn texture_effects(
     };
 
     // texture dropdown
-    let mut selected_tex = "".to_string();
+    let mut selected_tex = bone.tex.to_string();
     let mut tex_name = if bone.tex != "" {
         bone.tex.clone()
     } else {
@@ -908,7 +908,7 @@ pub fn texture_effects(
     });
     if selected_tex == "[Setup]" {
         shared_ui.styles_modal = true;
-    } else if selected_tex != "" {
+    } else if selected_tex != bone.tex {
         let bone_ids = selections.only_root_bones(&armature.bones);
         events.save_edited_bone(selections.bone_idx);
         for id in &bone_ids {
