@@ -1807,7 +1807,7 @@ pub fn draw_points_and_kites(
         }
 
         let mut color;
-        if renderer.render_points {
+        if renderer.render_points || selections.bone_ids.contains(&bone.id) {
             if bone.group_color.a == 0 {
                 color = in_point_color;
                 if selected_bone_ids.contains(&bone.id) {
