@@ -155,6 +155,9 @@ fn startup_content(
 
                     let mut has_files = false;
 
+                    // maintain hovered states on file buttons, for tab behavior
+                    let mut hovered = false;
+
                     for p in 0..shared_ui.recent_file_paths.len() {
                         // safeguard for deleting a path during iteration
                         if p > shared_ui.recent_file_paths.len() - 1 {
@@ -181,8 +184,15 @@ fn startup_content(
                             continue;
                         }
 
-                        skf_file_button(&path, ui, ctx, available_width, shared_ui, conf, events);
+                        let width = available_width;
+                        if skf_file_button(&path, ui, ctx, width, shared_ui, conf, events, p) {
+                            hovered = true;
+                        }
                         ui.add_space(5.);
+                    }
+
+                    if !hovered {
+                        shared_ui.hovering_startup_file = -1;
                     }
 
                     if !has_files {
@@ -409,12 +419,13 @@ pub fn skf_file_button(
     shared_ui: &mut crate::Ui,
     config: &Config,
     events: &mut EventState,
-) {
+    idx: usize,
+) -> bool {
     let filename = path.file_name().unwrap().to_str().unwrap().to_string();
     let file = std::fs::File::open(path.clone()).unwrap();
     let mut zip = zip::ZipArchive::new(file);
     if let Err(_) = zip {
-        return;
+        return false;
     }
 
     // generate thumbnail UI texture
@@ -434,25 +445,36 @@ pub fn skf_file_button(
 
     let thumb_size = Vec2::new(64., 64.);
 
+    // maintain hover state if either this file button or its options
+    // (delete, open folder, etc) are hovered
+    let mut hovered = false;
+
     ui.horizontal(|ui| {
         ui.set_width(width);
         ui.set_height(85.);
 
-        let gradient_rect = egui::Rect::from_min_max(
+        // initiate interactable rect, to detect hover/focus before drawing button itself
+        let rect = egui::Rect::from_min_max(
             egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() - 5.),
             egui::Pos2::new(ui.min_rect().right() + 25., ui.min_rect().bottom()),
         );
-
         let id = egui::Id::new(format!("frame rect{}", filename));
         let button = ui
-            .interact(gradient_rect, id, egui::Sense::click())
+            .interact(rect, id, egui::Sense::click())
             .on_hover_cursor(egui::CursorIcon::PointingHand);
 
         if button.contains_pointer() || button.has_focus() {
-            let dark_accent = config.colors.dark_accent.into();
-            ui.gradient(gradient_rect, egui::Color32::TRANSPARENT, dark_accent);
+            shared_ui.hovering_startup_file = idx as i32;
+            hovered = true;
         }
 
+        // show gradient if this file is hovered
+        if shared_ui.hovering_startup_file == idx as i32 {
+            let dark_accent = config.colors.dark_accent.into();
+            ui.gradient(rect, egui::Color32::TRANSPARENT, dark_accent);
+        }
+
+        // draw file button
         let frame = egui::Frame::new()
             .inner_margin(egui::Margin::same(10))
             .fill(egui::Color32::TRANSPARENT);
@@ -460,13 +482,16 @@ pub fn skf_file_button(
             ui.set_width(width);
             ui.set_height(65.);
 
-            let rect = egui::Rect::from_min_size(
+            // draw thumbnail if it exists
+            let thumb_rect = egui::Rect::from_min_size(
                 egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
                 thumb_size.into(),
             );
             if let Some(thumb_tex) = shared_ui.thumb_ui_tex.get(&filename) {
-                egui::Image::new(thumb_tex).paint_at(ui, rect);
+                egui::Image::new(thumb_tex).paint_at(ui, thumb_rect);
             }
+
+            // draw file header
             let heading_pos = egui::Pos2::new(
                 ui.min_rect().left_top().x + 72.,
                 ui.min_rect().left_top().y + 18.,
@@ -478,6 +503,8 @@ pub fn skf_file_button(
                 egui::FontId::new(16., egui::FontFamily::Proportional),
                 config.colors.text.into(),
             );
+
+            // add autosave note, to bottom if this is an autosave file
             if filename == "autosave.skf" {
                 let heading_pos = egui::Pos2::new(
                     ui.min_rect().left_bottom().x + 72.,
@@ -495,6 +522,7 @@ pub fn skf_file_button(
             }
         });
 
+        // load file by importing it
         if button.clicked() {
             let mut buf = PathBuf::new();
             buf.push(path.clone());
@@ -504,19 +532,26 @@ pub fn skf_file_button(
             shared_ui.changed_window_name = false;
         }
 
-        let bottom = egui::Rect::from_min_size(
+        let line = egui::Rect::from_min_size(
             ui.min_rect().left_bottom(),
             egui::Vec2::new(ui.min_rect().right() - ui.min_rect().left(), 1.),
         );
         ui.painter()
-            .rect_filled(bottom, egui::CornerRadius::ZERO, config.colors.dark_accent);
+            .rect_filled(line, egui::CornerRadius::ZERO, config.colors.dark_accent);
 
-        if !button.contains_pointer() && !button.has_focus() {
+        // show this file's options if it's hovered
+        if shared_ui.hovering_startup_file != idx as i32 {
             return;
         }
-
         let mut pos = egui::Vec2::new(-21., 0.);
-        if file_button_icon("X", "Remove from list", egui::Vec2::new(-20., 8.), pos, ui).clicked() {
+
+        // button - Remove file from list
+        let remove_from_list =
+            file_button_icon("X", "Remove from list", egui::Vec2::new(-20., 8.), pos, ui);
+        if remove_from_list.hovered() || remove_from_list.has_focus() {
+            hovered = true;
+        }
+        if remove_from_list.clicked() {
             let recent = &shared_ui.recent_file_paths;
             let idx = recent
                 .iter()
@@ -527,20 +562,31 @@ pub fn skf_file_button(
         }
         pos += egui::Vec2::new(-21., 0.);
 
-        if file_button_icon("🗑", "Delete file", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
+        // button - Delete file
+        let delete = file_button_icon("🗑", "Delete file", egui::Vec2::new(-19., 8.), pos, ui);
+        if delete.hovered() || delete.has_focus() {
+            hovered = true;
+        }
+        if delete.clicked() {
             shared_ui.selected_path = path.to_str().unwrap().to_string().clone();
             let str_del = &shared_ui.loc("polar.delete_file").replace("$", &filename);
             events.open_polar_modal(PolarId::DeleteFile, str_del.to_string());
         }
         pos += egui::Vec2::new(-21., 0.);
 
-        if file_button_icon("🗁", "Open folder", egui::Vec2::new(-19., 8.), pos, ui).clicked() {
+        // button - Open file's folder
+        let open_folder = file_button_icon("🗁", "Open folder", egui::Vec2::new(-19., 8.), pos, ui);
+        if open_folder.hovered() || open_folder.has_focus() {
+            hovered = true;
+        }
+        if open_folder.clicked() {
             match open::that(std::path::Path::new(&path).parent().unwrap()) {
                 Ok(file) => file,
                 _ => {}
             }
         }
     });
+    hovered
 }
 
 #[cfg(target_arch = "wasm32")]
