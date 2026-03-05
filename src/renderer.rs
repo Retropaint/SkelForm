@@ -1962,7 +1962,7 @@ fn transform_ring(
     let id = armature.sel_bone(&sel).unwrap().id;
     let sel_bone = temp_arm.bones.iter().find(|b| b.id == id).unwrap();
     let adjusted = Vec2::new(sel_bone.pos.x - mouse_pos.x, sel_bone.pos.y - mouse_pos.y);
-    let expand_time = 0.25;
+    let expand_time = 0.15;
     let size_elapsed = (edit_mode.sel_time / expand_time).min(1.);
 
     // set temporary mode based on distance from bone to cursor
