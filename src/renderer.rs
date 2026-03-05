@@ -1828,7 +1828,8 @@ pub fn draw_points_and_kites(
             let fade_speed = 0.1;
             let sel_size = config.center_point_radius * 4.;
             let normal_size = config.center_point_radius;
-            let elapsed = if selections.bone_ids.len() > 1 && selections.bone_ids.contains(&bone.id) {
+            let elapsed = if selections.bone_ids.len() > 1 && selections.bone_ids.contains(&bone.id)
+            {
                 (sel_size - edit_mode.sel_time * fade_speed).max(normal_size)
             } else {
                 normal_size
@@ -1961,7 +1962,7 @@ fn transform_ring(
     let id = armature.sel_bone(&sel).unwrap().id;
     let sel_bone = temp_arm.bones.iter().find(|b| b.id == id).unwrap();
     let adjusted = Vec2::new(sel_bone.pos.x - mouse_pos.x, sel_bone.pos.y - mouse_pos.y);
-    let expand_time = 0.5;
+    let expand_time = 0.25;
     let size_elapsed = (edit_mode.sel_time / expand_time).min(1.);
 
     // set temporary mode based on distance from bone to cursor
