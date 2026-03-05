@@ -241,6 +241,7 @@ pub fn render(
             && !camera.on_ui
             && selected_mesh
             && renderer.render_textures
+            && (sel.bone_ids.len() == 0 || temp_arm.bones[b].id != sel.bone_ids[0])
         {
             let wv = &temp_arm.bones[b].world_verts;
             for (i, chunk) in temp_arm.bones[b].indices.chunks_exact(3).enumerate() {
@@ -1827,7 +1828,7 @@ pub fn draw_points_and_kites(
             let fade_speed = 0.1;
             let sel_size = config.center_point_radius * 4.;
             let normal_size = config.center_point_radius;
-            let elapsed = if selected_bone_ids.len() > 0 && selections.bone_ids.contains(&bone.id) {
+            let elapsed = if selected_bone_ids.len() > 1 && selections.bone_ids.contains(&bone.id) {
                 (sel_size - edit_mode.sel_time * fade_speed).max(normal_size)
             } else {
                 normal_size
@@ -1960,9 +1961,11 @@ fn transform_ring(
     let id = armature.sel_bone(&sel).unwrap().id;
     let sel_bone = temp_arm.bones.iter().find(|b| b.id == id).unwrap();
     let adjusted = Vec2::new(sel_bone.pos.x - mouse_pos.x, sel_bone.pos.y - mouse_pos.y);
+    let expand_time = 0.5;
+    let size_elapsed = (edit_mode.sel_time / expand_time).min(1.);
 
     // set temporary mode based on distance from bone to cursor
-    if !camera.on_ui {
+    if !camera.on_ui && size_elapsed == 1. {
         let distance = adjusted.mag() / camera.zoom;
         if distance < distance_move {
             temporary = 0;
@@ -1997,31 +2000,37 @@ fn transform_ring(
     let cam = world_camera(&camera, &config);
     let mut rot_col = config.colors.transform_rings;
     let mut scale_col = config.colors.transform_rings;
+    let rot_radius = distance_rot * camera.zoom * size_elapsed;
+    let scale_radius = distance_scale * camera.zoom * size_elapsed;
     scale_col -= Color::new(25, 25, 25, 0);
     #[rustfmt::skip]
-    let (mut verts_rot, mut indices_rot) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., distance_rot * camera.zoom);
+    let (mut verts_rot, mut indices_rot) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., rot_radius);
     #[rustfmt::skip]
-    let (mut verts_scale, mut indices_scale) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., distance_scale * camera.zoom);
+    let (mut verts_scale, mut indices_scale) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., scale_radius);
     verts_rot.extend_from_slice(&mut verts_scale);
     add_offseted_indices(&mut indices_scale, &mut indices_rot);
     setup_render_buffer(&mut renderer.ring_buffer, &verts_rot, &indices_rot, queue);
     draw(&renderer.ring_buffer, render_pass, 0, indices_rot.len());
 
     // setup rot background
-    if temporary != 2 {
-        scale_col.a -= 25;
+    if temporary != 1 {
+        rot_col -= Color::new(0, 0, 0, 200);
+    } else {
+        rot_col -= Color::new(0, 0, 0, 150);
     }
     render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
     #[rustfmt::skip]
-    let (mut sel_verts, mut sel_indices) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., distance_scale * camera.zoom);
+    let (mut sel_verts, mut sel_indices) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., rot_radius);
 
     // setup scale background
-    if temporary != 1 {
-        rot_col.a -= 25;
+    if temporary != 2 {
+        scale_col -= Color::new(0, 0, 0, 200);
+    } else {
+        scale_col -= Color::new(0, 0, 0, 150);
     }
     render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
     #[rustfmt::skip]
-    let (mut sel_verts1, mut sel_indices1) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, rot_col, cam.pos, 0., distance_rot * camera.zoom);
+    let (mut sel_verts1, mut sel_indices1) = draw_point(&Vec2::ZERO, camera, config, &sel_bone.pos, scale_col, cam.pos, 0., scale_radius);
 
     // draw both backgrounds
     sel_verts.append(&mut sel_verts1);

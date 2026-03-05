@@ -329,7 +329,8 @@ pub fn draw(
             let mouse_pos = input.mouse / shared_ui.scale + $offset;
             let painter = context.debug_painter();
 
-            let pos = (mouse_pos + Vec2::new(1., 1.)).into();
+            let gap = 1.;
+            let pos = (mouse_pos + Vec2::new(gap, gap)).into();
             painter.text(pos, align, $text, font.clone(), egui::Color32::BLACK);
 
             let point_col = config.colors.center_point.into();
