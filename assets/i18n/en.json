@@ -58,8 +58,7 @@
       "forum": "Forum",
       "check_update": "Check for Update",
       "language": "Language",
-      "lang_import_native": "Paste the localization JSON below.\nFor examples, see the i18n folder.",
-      "lang_import_web": "Paste the localization JSON below.\nFor examples, See the [i18n folder](https://github.com/Retropaint/SkelForm/tree/master/assets/i18n)."
+      "lang_import": "Paste the localization JSON below.\nFor examples, see the i18n folder."
     }
   },
   "top_bar": {

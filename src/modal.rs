@@ -196,26 +196,14 @@ pub fn lang_import_modal(
     events: &mut crate::EventState,
 ) {
     let mut input = shared_ui.lang_input.clone();
-    #[cfg(target_arch = "wasm32")]
-    let str_lang_import_web = shared_ui.loc("startup.resources.lang_import_web");
-    #[cfg(not(target_arch = "wasm32"))]
-    let str_lang_import_native = shared_ui.loc("startup.resources.lang_import_native");
+    let str_lang_import = shared_ui.loc("startup.resources.lang_import");
     modal_template(
         ctx,
         "lang_import".to_string(),
         config,
         |ui| {
             egui::TextEdit::multiline(&mut input).show(ui);
-            #[cfg(target_arch = "wasm32")]
-            {
-                let mut cache = egui_commonmark::CommonMarkCache::default();
-                let str = utils::markdown(str_lang_import_web);
-                egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
-            }
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                ui.label(str_lang_import_native);
-            }
+            ui.label(str_lang_import);
         },
         |ui| {
             if ui.skf_button("Import").clicked() {
@@ -231,9 +219,18 @@ pub fn lang_import_modal(
                 shared_ui.lang_input = "".to_string();
                 shared_ui.lang_import_modal = false;
             }
-            #[cfg(not(target_arch = "wasm32"))]
-            if ui.skf_button("Open i18n Folder").clicked() {
-                _ = open::that(utils::bin_path().join("assets").join("i18n"));
+            if ui.skf_button("Show i18n Folder").clicked() {
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    _ = open::that(utils::bin_path().join("assets").join("i18n"));
+                }
+                #[cfg(target_arch = "wasm32")]
+                {
+                    crate::openLink(
+                        "https://github.com/Retropaint/SkelForm/tree/master/assets/i18n"
+                            .to_string(),
+                    );
+                }
             }
         },
     );
