@@ -198,7 +198,7 @@ fn init_shared(shared: &mut Shared) {
     }
 
     // initialize languages
-    let bytes = include_bytes!("../assets/i18n/en-default.json").as_slice();
+    let bytes = include_bytes!("../assets/i18n/en.json").as_slice();
     let en: serde_json::Value = serde_json::from_slice(bytes).unwrap();
     shared.ui.init_default_lang(en);
 

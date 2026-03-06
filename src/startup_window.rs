@@ -315,19 +315,15 @@ fn startup_content(
                             .selected_text(egui::RichText::new(str_lang).size(header_size))
                             .show_ui(ui, |ui| {
                                 for item in &item.items {
-                                    ui.selectable_value(
-                                        &mut language,
-                                        item.url.to_string(),
-                                        &item.code,
-                                    );
+                                    let filename = item.url.to_string();
+                                    ui.selectable_value(&mut language, filename, &item.code);
                                 }
                             });
                         if language != shared_ui.language {
                             #[cfg(not(target_arch = "wasm32"))]
                             {
-                                let file = fs::read(
-                                    utils::bin_path().join("assets").join("i18n").join(language),
-                                );
+                                let assets = utils::bin_path().join("assets");
+                                let file = fs::read(assets.join("i18n").join(language));
                                 if let Ok(file) = file {
                                     shared_ui.init_lang(&file);
                                 }
