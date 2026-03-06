@@ -57,6 +57,20 @@
     {
       "code": "check_update",
       "update_checker": true
+    },
+    {
+      "code": "language",
+      "language": true,
+      "items": [
+        {
+          "code": "English",
+          "url": "en.json"
+        },
+        {
+          "code": "Bahasa Indonesia",
+          "url": "id.json"
+        }
+      ]
     }
   ]
 }

@@ -97,6 +97,9 @@ extern "C" {
     pub fn downloadMp4(data: Vec<u8>, resX: f32, resY: f32, name: &str, fps: i32);
     pub fn downloadGif(resX: f32, resY: f32, name: &str, fps: i32);
     pub fn addGifFrame(frame: Vec<u8>);
+    pub fn changeLang(filename: String);
+    pub fn getLang() -> Vec<u8>;
+    pub fn clearLang();
 }
 
 #[derive(Default)]

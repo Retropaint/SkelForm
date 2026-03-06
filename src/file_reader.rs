@@ -42,6 +42,15 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
         _ => {}
     }
 
+    #[cfg(target_arch = "wasm32")]
+    {
+        let file = crate::getLang();
+        if file.len() != 0 {
+            shared.ui.init_lang(&file);
+            crate::clearLang();
+        }
+    }
+
     func!(read_image_loaders);
     func!(read_import);
     if shared.ui.done_pending {

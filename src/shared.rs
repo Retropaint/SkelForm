@@ -636,6 +636,7 @@ pub struct Ui {
     pub new_version: String,
 
     loc_strings: std::collections::HashMap<String, String>,
+    default_loc_strings: std::collections::HashMap<String, String>,
     pub cursor_icon: egui::CursorIcon,
     pub last_pressed: Option<egui::Key>,
     pub recent_file_paths: Vec<String>,
@@ -688,6 +689,8 @@ pub struct Ui {
     pub render_textures: bool,
     pub render_mesh_wf: bool,
     pub render_rects: bool,
+    pub use_fallback: bool,
+    pub language: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -723,21 +726,48 @@ impl Ui {
     ///
     /// All localized text *must* be from this method, as edge cases and fallbacks must be handled as well.
     pub fn loc(&self, str: &str) -> String {
+        // get token from current lang
         let result = self.loc_strings.get(str);
         if let Some(string) = result {
             return string.to_string();
         }
 
+        // get token from default lang, if current lang failed and fallback is enabled
+        if self.use_fallback {
+            let result = self.default_loc_strings.get(str);
+            if let Some(string) = result {
+                return string.to_string();
+            }
+        }
+
+        // return token itself, so localizers know what's missing
         str.to_string()
     }
     pub fn init_empty_loc(&mut self) {
         self.loc_strings.insert("".to_string(), "".to_string());
     }
 
-    pub fn init_lang(&mut self, lang_json: serde_json::Value) {
-        let loc_strings = &mut self.loc_strings;
+    pub fn init_lang(&mut self, bytes: &[u8]) -> String {
+        match serde_json::from_slice(bytes) {
+            Ok(json) => {
+                let loc_strings = &mut self.loc_strings;
+                *loc_strings = std::collections::HashMap::default();
+                utils::flatten_json(&json, "".to_string(), loc_strings, "".to_string());
+                self.loc_strings.insert("".to_string(), "".to_string());
+            }
+            Err(e) => {
+                return e.to_string();
+            }
+        }
+
+        "".to_string()
+    }
+
+    pub fn init_default_lang(&mut self, lang_json: serde_json::Value) {
+        let loc_strings = &mut self.default_loc_strings;
         utils::flatten_json(&lang_json, "".to_string(), loc_strings, "".to_string());
-        self.loc_strings.insert("".to_string(), "".to_string());
+        self.default_loc_strings
+            .insert("".to_string(), "".to_string());
     }
 }
 
@@ -1978,6 +2008,7 @@ pub struct StartupResourceItem {
     pub url: String,
     pub items: Vec<StartupResourceItem>,
     pub update_checker: bool,
+    pub language: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default, PartialEq, Clone)]

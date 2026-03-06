@@ -55,7 +55,11 @@ Editor documentation is still sparse. Please check out
 - [Dev documentation](https://skelform.org/dev-docs) - Runtime development (from
   scratch & integrating)
 
-# Acknowledgements
+# Acknowledgements & Attributions
 
 This project was built on top of
 [matthewjberger/wgpu-example](https://github.com/matthewjberger/wgpu-example).
+
+Inverse Kinematics icon by lucysir
+
+Lock icon provided by [boxicons](https://boxicons.com/icons/lock-keyhole?free=true&q=lock-keyhole&p=filled)

@@ -6,6 +6,9 @@ use crate::*;
 
 const SKEL_SKF: &str = "_skellington.skf";
 const SKELA_SKF: &str = "_skellina.skf";
+#[cfg(target_arch = "wasm32")]
+//const LANG_BASE: &str = "https://github.com/Retropaint/SkelForm/tree/master/assets/i18n";
+const LANG_BASE: &str = "https://skelform.org/";
 
 pub fn startup_modal(
     ctx: &egui::Context,
@@ -273,18 +276,23 @@ fn startup_content(
                     web = false;
                 }
 
-                for item in &shared_ui.startup.resources {
+                for i in 0..shared_ui.startup.resources.len() {
+                    let item = shared_ui.startup.resources[i].clone();
+
                     if item.update_checker && web {
                         continue;
                     }
-                    let str = &shared_ui.loc(&format!("startup.resources.{}", &item.code));
-                    let text = egui::RichText::new(str).color(link_color).size(header_size);
-                    let heading = ui.clickable_label(text);
-                    if heading.clicked() {
-                        if !item.update_checker {
-                            open_link(&item, &item.url_type);
-                        } else {
-                            shared_ui.checking_update = true;
+
+                    if !item.language {
+                        let str = &shared_ui.loc(&format!("startup.resources.{}", &item.code));
+                        let text = egui::RichText::new(str).color(link_color).size(header_size);
+                        let heading = ui.clickable_label(text);
+                        if heading.clicked() {
+                            if !item.update_checker {
+                                open_link(&item, &item.url_type);
+                            } else {
+                                shared_ui.checking_update = true;
+                            }
                         }
                     }
 
@@ -300,7 +308,42 @@ fn startup_content(
                         });
                     }
 
+                    if item.language {
+                        let str_lang = shared_ui.loc("startup.resources.language");
+                        let mut language = shared_ui.language.clone();
+                        egui::ComboBox::new("language", "")
+                            .selected_text(egui::RichText::new(str_lang).size(header_size))
+                            .show_ui(ui, |ui| {
+                                for item in &item.items {
+                                    ui.selectable_value(
+                                        &mut language,
+                                        item.url.to_string(),
+                                        &item.code,
+                                    );
+                                }
+                            });
+                        if language != shared_ui.language {
+                            #[cfg(not(target_arch = "wasm32"))]
+                            {
+                                let file = fs::read(
+                                    utils::bin_path().join("assets").join("i18n").join(language),
+                                );
+                                if let Ok(file) = file {
+                                    shared_ui.init_lang(&file);
+                                }
+                            }
+                            #[cfg(target_arch = "wasm32")]
+                            {
+                                changeLang(format!("{}{}", LANG_BASE, language));
+                                shared_ui.language = language;
+                            }
+                        }
+                    }
+
                     for sub in &item.items {
+                        if item.language {
+                            break;
+                        }
                         ui.horizontal(|ui| {
                             let left_top = egui::Pos2::new(
                                 ui.min_rect().left_top().x + 5.,

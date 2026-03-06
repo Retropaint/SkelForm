@@ -141,6 +141,7 @@ fn init_shared(shared: &mut Shared) {
     shared.renderer.render_points = true;
     shared.renderer.render_kites = true;
     shared.renderer.render_textures = true;
+    shared.ui.use_fallback = true;
 
     #[cfg(feature = "debug")]
     {
@@ -197,9 +198,16 @@ fn init_shared(shared: &mut Shared) {
     }
 
     // initialize languages
-    let bytes = include_bytes!("../assets/i18n/en.json").as_slice();
+    let bytes = include_bytes!("../assets/i18n/en-default.json").as_slice();
     let en: serde_json::Value = serde_json::from_slice(bytes).unwrap();
-    shared.ui.init_lang(en);
+    shared.ui.init_default_lang(en);
+
+    //let bytes = include_bytes!("../assets/i18n/id.json").as_slice();
+    //let err = shared.ui.init_lang(bytes);
+    //if err != "" {
+    //    shared.ui.custom_error = err;
+    //    shared.events.open_modal("error_skf", false);
+    //}
 }
 
 #[cfg(not(target_arch = "wasm32"))]

@@ -175,6 +175,8 @@
             let config = {};
             let loadedAllImages = false;
             let realError = false;
+            let langData = [];
+            let langName = "";
             loadConfig();
 
             toggleElement(false, "ui-slider");
@@ -337,6 +339,23 @@
                         fileName = filename
                     })
             }
+
+            async function changeLang(filename) {
+                fetch(filename)
+                    .then(response => response.arrayBuffer())
+                    .then(arrayBuffer => {
+                        langData = new Uint8Array(arrayBuffer);
+                        langName = filename
+                    })
+            }
+
+            function getLang() {
+                return langData;
+            }
+
+            function clearLang() {
+                langData = [];
+            }            
 
             function downloadZip(binary, saving) {
                 var link = document.createElement("a");
@@ -514,7 +533,7 @@
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
-            }            
+            }
         </script>
 
         <script>

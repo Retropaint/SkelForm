@@ -409,9 +409,7 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         let str_exact_bone = &shared_ui.loc("settings_modal.miscellaneous.select_exact_bone");
         let str_exact_bone_desc =
             &shared_ui.loc("settings_modal.miscellaneous.select_exact_bone_desc");
-        ui.label(str_exact_bone)
-            .on_hover_cursor(egui::CursorIcon::Default)
-            .on_hover_text(str_exact_bone_desc);
+        ui.label(str_exact_bone).on_hover_text(str_exact_bone_desc);
         ui.checkbox(
             &mut shared_ui.updated_config.exact_bone_select,
             "".into_atoms(),
@@ -422,9 +420,14 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         let str_keep_tex_str_desc =
             &shared_ui.loc("settings_modal.miscellaneous.keep_tex_str_desc");
         ui.label(str_keep_tex_str)
-            .on_hover_cursor(egui::CursorIcon::Default)
             .on_hover_text(str_keep_tex_str_desc);
         ui.checkbox(&mut shared_ui.updated_config.keep_tex_str, "".into_atoms());
+    });
+    ui.horizontal(|ui| {
+        let str_fallback = &shared_ui.loc("settings_modal.miscellaneous.use_fallback");
+        let str_fallback_desc = &shared_ui.loc("settings_modal.miscellaneous.use_fallback_desc");
+        ui.label(str_fallback).on_hover_text(str_fallback_desc);
+        ui.checkbox(&mut shared_ui.use_fallback, "".into_atoms());
     });
 
     ui.add_space(20.);
