@@ -1,6 +1,6 @@
 //! Core user interface (UI) logic.
 use egui::{Color32, Context, Shadow, Stroke};
-use modal::modal_x;
+use modal::{lang_import_modal, modal_x};
 
 use crate::*;
 
@@ -132,6 +132,9 @@ pub fn draw(
     }
     if shared_ui.export_modal {
         export_modal::draw(context, shared_ui, &edit_mode, config, events, armature);
+    }
+    if shared_ui.lang_import_modal {
+        modal::lang_import_modal(context, shared_ui, &config, events);
     }
     #[cfg(not(target_arch = "wasm32"))]
     if shared_ui.checking_update {

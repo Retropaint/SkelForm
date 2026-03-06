@@ -310,6 +310,7 @@ fn startup_content(
 
                     if item.language {
                         let str_lang = shared_ui.loc("startup.resources.language");
+                        let str_import = shared_ui.loc("startup.import");
                         let mut language = shared_ui.language.clone();
                         egui::ComboBox::new("language", "")
                             .selected_text(egui::RichText::new(str_lang).size(header_size))
@@ -318,14 +319,19 @@ fn startup_content(
                                     let filename = item.url.to_string();
                                     ui.selectable_value(&mut language, filename, &item.code);
                                 }
+                                ui.selectable_value(
+                                    &mut language,
+                                    str_import.clone(),
+                                    str_import.clone(),
+                                );
                             });
-                        if language != shared_ui.language {
+                        if language != shared_ui.language && language != str_import {
                             #[cfg(not(target_arch = "wasm32"))]
                             {
                                 let assets = utils::bin_path().join("assets");
                                 let file = fs::read(assets.join("i18n").join(language));
                                 if let Ok(file) = file {
-                                    shared_ui.init_lang(&file);
+                                    shared_ui.init_lang(&file, "");
                                 }
                             }
                             #[cfg(target_arch = "wasm32")]
@@ -333,6 +339,8 @@ fn startup_content(
                                 changeLang(format!("{}{}", LANG_BASE, language));
                                 shared_ui.language = language;
                             }
+                        } else if language == str_import {
+                            shared_ui.lang_import_modal = true;
                         }
                     }
 

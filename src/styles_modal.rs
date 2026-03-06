@@ -118,7 +118,7 @@ pub fn draw_styles_list(
             if armature.styles.len() == 0 {
                 let mut cache = egui_commonmark::CommonMarkCache::default();
                 let loc = shared_ui.loc("styles_modal.styles_empty").to_string();
-                let str = utils::markdown(loc.to_string(), shared_ui.local_doc_url.to_string());
+                let str = utils::markdown(loc.to_string());
                 egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
             }
 
@@ -345,7 +345,7 @@ pub fn draw_textures_list(
                 if style.textures.len() == 0 {
                     let mut cache = egui_commonmark::CommonMarkCache::default();
                     let loc = shared_ui.loc("styles_modal.textures_empty").to_string();
-                    let str = utils::markdown(loc, shared_ui.local_doc_url.to_string());
+                    let str = utils::markdown(loc);
                     egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
                     return;
                 }
@@ -631,7 +631,7 @@ fn draw_assigned_list(
                 if set.textures.len() == 0 {
                     let mut cache = egui_commonmark::CommonMarkCache::default();
                     let loc = shared_ui.loc("styles_modal.assigned_empty").to_string();
-                    let str = utils::markdown(loc, shared_ui.local_doc_url.to_string());
+                    let str = utils::markdown(loc);
                     egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
                     return;
                 }

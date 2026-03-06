@@ -122,7 +122,7 @@ pub fn draw(
                 } else {
                     let mut cache = egui_commonmark::CommonMarkCache::default();
                     let armature_str = shared_ui.loc("armature_panel.empty_armature");
-                    let str = utils::markdown(armature_str, shared_ui.local_doc_url.clone());
+                    let str = utils::markdown(armature_str);
                     egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
                 }
                 ui.add_space(4.);

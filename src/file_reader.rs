@@ -46,7 +46,7 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
     {
         let file = crate::getLang();
         if file.len() != 0 {
-            shared.ui.init_lang(&file);
+            shared.ui.init_lang(&file, "");
             crate::clearLang();
         }
     }

@@ -1205,13 +1205,31 @@ pub fn process_screenshot_raw(
     rgba
 }
 
-pub fn markdown(str: String, local_doc_url: String) -> String {
-    let user_docs = if local_doc_url != "" {
-        local_doc_url.clone() + "user-docs"
-    } else {
-        "https://skelform.org/user-docs".to_string()
-    };
-    str.replace("user-docs", &user_docs)
+pub fn markdown(mut str: String) -> String {
+    let user_docs;
+    let dev_docs;
+    #[cfg(target_arch = "wasm32")]
+    {
+        user_docs = "https://skelform.org/user-docs";
+        dev_docs = "https://skelform.org/user-docs";
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let bin = utils::bin_path();
+        user_docs = format!(
+            "file://{}",
+            bin.join("user-docs").to_str().unwrap().to_string()
+        );
+        dev_docs = format!(
+            "file://{}",
+            bin.join("dev-docs").to_str().unwrap().to_string()
+        );
+    }
+
+    str = str
+        .replace("user-docs", &user_docs)
+        .replace("dev-docs", &dev_docs);
+    str
 }
 
 // Simulate text being added to egui and truncate it to fit the max width

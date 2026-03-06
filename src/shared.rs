@@ -691,6 +691,8 @@ pub struct Ui {
     pub render_rects: bool,
     pub use_fallback: bool,
     pub language: String,
+    pub lang_import_modal: bool,
+    pub lang_input: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -747,8 +749,14 @@ impl Ui {
         self.loc_strings.insert("".to_string(), "".to_string());
     }
 
-    pub fn init_lang(&mut self, bytes: &[u8]) -> String {
-        match serde_json::from_slice(bytes) {
+    pub fn init_lang(&mut self, bytes: &[u8], str: &str) -> String {
+        let serialize = if bytes.len() != 0 {
+            serde_json::from_slice(bytes)
+        } else {
+            serde_json::from_str(str)
+        };
+
+        match serialize {
             Ok(json) => {
                 let loc_strings = &mut self.loc_strings;
                 *loc_strings = std::collections::HashMap::default();

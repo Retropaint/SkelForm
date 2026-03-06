@@ -39,7 +39,7 @@ pub fn polar_modal(
         &config,
         |ui| {
             let mut cache = egui_commonmark::CommonMarkCache::default();
-            let str = utils::markdown(headline, local_doc);
+            let str = utils::markdown(headline);
             egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
         },
         |ui| {
@@ -124,7 +124,7 @@ pub fn modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &Config) {
         &config,
         |ui| {
             let mut cache = egui_commonmark::CommonMarkCache::default();
-            let str = utils::markdown(headline, shared_ui.local_doc_url.to_string());
+            let str = utils::markdown(headline);
             egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
         },
         |ui| {
@@ -147,7 +147,7 @@ pub fn donating_modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &C
         &config,
         |ui| {
             let mut cache = egui_commonmark::CommonMarkCache::default();
-            let str = utils::markdown(headline, "".to_string());
+            let str = utils::markdown(headline);
             egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
         },
         |ui| {
@@ -187,6 +187,57 @@ pub fn donating_modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &C
             shared_ui.headline = "".to_string();
         },
     )
+}
+
+pub fn lang_import_modal(
+    ctx: &egui::Context,
+    shared_ui: &mut crate::Ui,
+    config: &Config,
+    events: &mut crate::EventState,
+) {
+    let mut input = shared_ui.lang_input.clone();
+    #[cfg(target_arch = "wasm32")]
+    let str_lang_import_web = shared_ui.loc("startup.resources.lang_import_web");
+    #[cfg(not(target_arch = "wasm32"))]
+    let str_lang_import_native = shared_ui.loc("startup.resources.lang_import_native");
+    modal_template(
+        ctx,
+        "lang_import".to_string(),
+        config,
+        |ui| {
+            egui::TextEdit::multiline(&mut input).show(ui);
+            #[cfg(target_arch = "wasm32")]
+            {
+                let mut cache = egui_commonmark::CommonMarkCache::default();
+                let str = utils::markdown(str_lang_import_web);
+                egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                ui.label(str_lang_import_native);
+            }
+        },
+        |ui| {
+            if ui.skf_button("Import").clicked() {
+                let input = shared_ui.lang_input.clone();
+                let err = shared_ui.init_lang(&[], &input);
+                if err != "" {
+                    shared_ui.custom_error = err;
+                    events.open_modal("error_skf", false);
+                }
+                shared_ui.lang_import_modal = false;
+            }
+            if ui.skf_button("Cancel").clicked() {
+                shared_ui.lang_input = "".to_string();
+                shared_ui.lang_import_modal = false;
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            if ui.skf_button("Open i18n Folder").clicked() {
+                _ = open::that(utils::bin_path().join("assets").join("i18n"));
+            }
+        },
+    );
+    shared_ui.lang_input = input;
 }
 
 // top-right X label for modals
