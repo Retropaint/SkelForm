@@ -7,7 +7,7 @@ use crate::*;
 const SKEL_SKF: &str = "_skellington.skf";
 const SKELA_SKF: &str = "_skellina.skf";
 #[cfg(target_arch = "wasm32")]
-const LANG_BASE: &str = "https://github.com/Retropaint/SkelForm/tree/master/assets/i18n";
+const LANG_BASE: &str = "https://github.com/Retropaint/SkelForm/tree/master/assets/i18n/";
 
 pub fn startup_modal(
     ctx: &egui::Context,

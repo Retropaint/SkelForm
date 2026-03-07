@@ -65,10 +65,6 @@
         {
           "code": "English",
           "url": "en.json"
-        },
-        {
-          "code": "Bahasa Indonesia",
-          "url": "id.json"
         }
       ]
     }
