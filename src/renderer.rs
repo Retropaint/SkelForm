@@ -593,7 +593,7 @@ pub fn render(
     let mouse_moved = input.mouse != input.mouse_prev_left;
     if camera.on_ui {
         renderer.editing_bone = false;
-    } else if idx != usize::MAX && input.left_down && hover_bone_id == -1 && mouse_moved {
+    } else if idx != usize::MAX && input.left_down && hover_bone_id == -1 {
         let current_edit = if edit_mode.temporary == None {
             &edit_mode.current
         } else {
@@ -610,6 +610,9 @@ pub fn render(
 
         // move all selected (root) bones
         for sel_id in &selections.only_root_bones(&armature.bones) {
+            if !mouse_moved {
+                break;
+            }
             if *current_edit == EditModes::Rotate {
                 let mut mouse = utils::screen_to_world_space(input.mouse, camera.window);
                 mouse.x *= camera.aspect_ratio();
@@ -1075,8 +1078,12 @@ pub fn edit_bone(
             pos /= parent.scale;
         }
 
-        edit!(bone, AnimElement::PositionX, pos.x);
-        edit!(bone, AnimElement::PositionY, pos.y);
+        if pos.x != bone.pos.x {
+            edit!(bone, AnimElement::PositionX, pos.x);
+        }
+        if pos.y != bone.pos.y {
+            edit!(bone, AnimElement::PositionY, pos.y);
+        }
     } else if current_edit == EditModes::Rotate {
         let mouse_init = utils::screen_to_world_space(input.mouse_init.unwrap(), camera.window);
         let dir_init = mouse_init - bone_center.pos;
@@ -1094,7 +1101,9 @@ pub fn edit_bone(
             rot = (rot / step).round() * step
         }
 
-        edit!(bone, AnimElement::Rotation, rot);
+        if rot != bone.rot {
+            edit!(bone, AnimElement::Rotation, rot);
+        }
     } else if current_edit == EditModes::Scale {
         let mut scale = bone.scale;
 
@@ -1112,8 +1121,12 @@ pub fn edit_bone(
             scale = Vec2::new(distance, distance);
         }
 
-        edit!(bone, AnimElement::ScaleX, scale.x);
-        edit!(bone, AnimElement::ScaleY, scale.y);
+        if scale.x != bone.scale.x {
+            edit!(bone, AnimElement::ScaleX, scale.x);
+        }
+        if scale.y != bone.scale.y {
+            edit!(bone, AnimElement::ScaleY, scale.y);
+        }
     }
 }
 
