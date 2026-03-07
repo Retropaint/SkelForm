@@ -71,8 +71,10 @@ pub fn polar_modal(
             let mut str_yes = egui::text::LayoutJob::default();
             let str = &shared_ui.loc("polar.yes");
             crate::ui::job_text(str, Some(config.colors.text.into()), &mut str_yes);
-            let str_key = &format!(" ({})", &config.keys.polar_yes.display());
-            crate::ui::job_text(str_key, Some(key_col.into()), &mut str_yes);
+            if shared_ui.polar_id != PolarId::Exiting {
+                let str_key = &format!(" ({})", &config.keys.polar_yes.display());
+                crate::ui::job_text(str_key, Some(key_col.into()), &mut str_yes);
+            }
             let pressed_yes = ui.input_mut(|i| i.consume_shortcut(&config.keys.polar_yes));
             if ui.skf_button(str_yes).clicked()
                 || (pressed_yes && shared_ui.polar_id != PolarId::Exiting)
