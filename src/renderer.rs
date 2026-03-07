@@ -362,7 +362,7 @@ pub fn render(
     }
 
     // show selected bone's mesh wireframe if editing it
-    if edit_mode.showing_mesh || edit_mode.setting_bind_verts {
+    if (edit_mode.showing_mesh || edit_mode.setting_bind_verts) && armature.sel_bone(&sel) != None {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
 
@@ -389,8 +389,8 @@ pub fn render(
         let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, edit_mode, events, armature, renderer);
         #[rustfmt::skip]
         let (mut lines_v, mut lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, nw, true, on_vert, camera, input, renderer);
-        verts.append(&mut lines_v);
-        add_offseted_indices(&mut lines_i, &mut indices);
+        lines_v.append(&mut verts);
+        add_offseted_indices(&mut indices, &mut lines_i);
 
         // draw hovered triangle if neither a vertex nor a line is hovered
         let mut hovering_tri = bone_triangle(&bone, &mouse, wv);
@@ -398,8 +398,8 @@ pub fn render(
             hovering_tri[0].color = Color::new(0, 200, 0, 100);
             hovering_tri[1].color = Color::new(0, 200, 0, 100);
             hovering_tri[2].color = Color::new(0, 200, 0, 100);
-            verts.append(&mut hovering_tri.clone());
-            add_offseted_indices(&mut vec![0, 1, 2], &mut indices);
+            lines_v.append(&mut hovering_tri.clone());
+            add_offseted_indices(&mut vec![0, 1, 2], &mut lines_i);
 
             // verts of this triangle will be dragged
             if input.left_pressed {
@@ -407,8 +407,8 @@ pub fn render(
             }
         }
 
-        setup_render_buffer(&mut renderer.meshframe_buffer, &verts, &indices, queue);
-        draw(&renderer.meshframe_buffer, render_pass, 0, indices.len());
+        setup_render_buffer(&mut renderer.meshframe_buffer, &lines_v, &lines_i, queue);
+        draw(&renderer.meshframe_buffer, render_pass, 0, lines_i.len());
     }
 
     // draw render rects if enabled
@@ -660,7 +660,9 @@ pub fn draw_armature(
         if bone.world_verts.len() == 0 || tex == None || hidden {
             continue;
         }
-        if showing_mesh && src_arm.sel_bone(&sel).unwrap().id == id {
+        if showing_mesh
+            && (src_arm.sel_bone(&sel) != None && src_arm.sel_bone(&sel).unwrap().id == id)
+        {
             continue;
         }
         let mut world_verts = bone.world_verts.clone();
@@ -1182,7 +1184,7 @@ pub fn bone_vertices(
     #[rustfmt::skip]
     macro_rules! point {
         ($idx:expr, $color:expr) => {
-            draw_point(&world_verts[$idx].pos, &camera, &config, &v2z, $color, v2z, rotated, 5.)
+            draw_point(&world_verts[$idx].pos, &camera, &config, &v2z, $color, v2z, rotated, config.center_point_radius * camera.zoom)
         };
     }
     macro_rules! add_point {
@@ -1321,7 +1323,7 @@ pub fn vert_lines(
 
         let mut col = Color::new(0, 255, 0, 255);
         col -= Color::new(125, 125, 125, 0);
-        col.a = if editable { 77 } else { 25 };
+        col.a = if editable { 150 } else { 100 };
 
         #[rustfmt::skip]
         macro_rules! vert { ($pos:expr, $v:expr) => { Vertex { pos: $pos, color: col, ..$v } }; }
