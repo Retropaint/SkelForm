@@ -1287,20 +1287,16 @@ fn edit_mode_bar(
             };
         }
 
-        if edit_mode.is_moving || edit_mode.is_rotating || edit_mode.is_scaling {
-            ui.separator();
-        }
-
-        if edit_mode.is_moving {
+        if edit_mode.current == EditModes::Move {
             edit_feature!(
                 "Snap X/Y",
                 config.keys.edit_snap,
                 edit_mode.holding_edit_snap
             );
-        } else if edit_mode.is_rotating {
+        } else if edit_mode.current == EditModes::Rotate {
             let str = format!("Snap to {}°", config.rot_snap_step);
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
-        } else if edit_mode.is_scaling {
+        } else if edit_mode.current == EditModes::Scale {
             edit_feature!(
                 "Snap X/Y",
                 config.keys.edit_snap,
