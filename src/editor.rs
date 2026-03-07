@@ -577,7 +577,11 @@ pub fn process_event(
             }
             armature.bones[idx].name = "".to_string();
             let sel = selections;
-            select_bone(sel, ui, armature, edit_mode, input, idx, false);
+            // don't select first ever bone of armature, so newbies aren't
+            // overwhelmed with everything opening at once
+            if armature.bones.len() != 1 {
+                select_bone(sel, ui, armature, edit_mode, input, idx, false);
+            }
             ui.rename_id = "bone_".to_string() + &idx.to_string();
         }
         Events::SetBoneTexture => {
