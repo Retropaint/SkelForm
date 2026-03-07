@@ -298,7 +298,9 @@ fn startup_content(
 
                     // show current version below update checker
                     if item.update_checker {
-                        let str = format!("Current: v{}", &env!("CARGO_PKG_VERSION").to_string());
+                        let str_current = shared_ui.loc("startup.current_version");
+                        let str =
+                            format!("{}{}", str_current, &env!("CARGO_PKG_VERSION").to_string());
                         ui.horizontal(|ui| {
                             ui.add_space(4.);
                             let str = egui::RichText::new(str)

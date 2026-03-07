@@ -88,12 +88,12 @@ pub fn draw(
         });
 
         modal_ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.skf_button("Apply").clicked() {
+            if ui.skf_button(shared_ui.loc("settings_modal.apply")).clicked() {
                 events.apply_settings();
                 shared_ui.settings_modal = false;
                 shared_ui.translucent_settings = false;
             }
-            if ui.skf_button("Cancel").clicked() {
+            if ui.skf_button(shared_ui.loc("settings_modal.cancel")).clicked() {
                 events.reset_config();
                 shared_ui.settings_modal = false;
                 shared_ui.translucent_settings = false;
@@ -177,14 +177,17 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     });
 
     ui.horizontal(|ui| {
-        ui.label("Layout:");
+        ui.label(shared_ui.loc("settings_modal.user_interface.layout"));
         let combo_box = egui::ComboBox::new("layout", "")
             .selected_text(shared_ui.updated_config.layout.to_string());
         combo_box.show_ui(ui, |ui| {
+            let str_split = shared_ui.loc("settings_modal.user_interface.layout_split");
+            let str_left = shared_ui.loc("settings_modal.user_interface.layout_left");
+            let str_right = shared_ui.loc("settings_modal.user_interface.layout_right");
             let config = &mut shared_ui.updated_config.layout;
-            ui.selectable_value(config, shared::UiLayout::Split, "Split");
-            ui.selectable_value(config, shared::UiLayout::Right, "Right");
-            ui.selectable_value(config, shared::UiLayout::Left, "Left");
+            ui.selectable_value(config, shared::UiLayout::Split, str_split);
+            ui.selectable_value(config, shared::UiLayout::Right, str_right);
+            ui.selectable_value(config, shared::UiLayout::Left, str_left);
         });
     });
 
