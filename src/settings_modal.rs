@@ -540,9 +540,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     // iterable key config
     #[rustfmt::skip]
     {
-        key!("next_anim_frame",    keys.next_anim_frame,    true);
-        key!("prev_anim_frame",    keys.prev_anim_frame,    true);
-        key!("timeline_zoom_mode", keys.timeline_zoom_mode, false);
+        ui.heading("General");
         key!("zoom_camera_in",     keys.zoom_in_camera,     true);
         key!("zoom_camera_out",    keys.zoom_out_camera,    true);
         key!("undo",               keys.undo,               true);
@@ -554,12 +552,21 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("cancel",             keys.cancel,             true);
         key!("copy",               keys.copy,               true);
         key!("paste",              keys.paste,              true);
+        ui.separator();
+        ui.heading("Editing");
         key!("transform_move",     keys.transform_move,     true);
         key!("transform_rotate",   keys.transform_rotate,   true);
         key!("transform_scale",    keys.transform_scale,    true);
-        key!("toggle_animation",   keys.toggle_animation,   true);
         key!("edit_modifier",      keys.edit_modifier,      false);
         key!("edit_snap",          keys.edit_snap,          false);
+        ui.separator();
+        ui.heading("Animation");
+        key!("next_anim_frame",    keys.next_anim_frame,    true);
+        key!("prev_anim_frame",    keys.prev_anim_frame,    true);
+        key!("next_keyframe",      keys.next_keyframe,      true);
+        key!("prev_keyframe",      keys.prev_keyframe,      true);
+        key!("toggle_animation",   keys.toggle_animation,   true);
+        key!("timeline_zoom_mode", keys.timeline_zoom_mode, false);
     };
     ui.add_space(10.);
     shared_ui.updated_config.keys = keys.clone();

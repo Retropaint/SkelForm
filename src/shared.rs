@@ -891,6 +891,8 @@ impl Default for ColorConfig {
 pub struct KeyboardConfig {
     pub next_anim_frame: egui::KeyboardShortcut,
     pub prev_anim_frame: egui::KeyboardShortcut,
+    pub next_keyframe: egui::KeyboardShortcut,
+    pub prev_keyframe: egui::KeyboardShortcut,
     pub zoom_in_camera: egui::KeyboardShortcut,
     pub zoom_out_camera: egui::KeyboardShortcut,
     pub undo: egui::KeyboardShortcut,
@@ -902,13 +904,13 @@ pub struct KeyboardConfig {
     pub cancel: egui::KeyboardShortcut,
     pub copy: egui::KeyboardShortcut,
     pub paste: egui::KeyboardShortcut,
-    pub timeline_zoom_mode: egui::KeyboardShortcut,
     pub transform_move: egui::KeyboardShortcut,
     pub transform_rotate: egui::KeyboardShortcut,
     pub transform_scale: egui::KeyboardShortcut,
     pub toggle_animation: egui::KeyboardShortcut,
     pub edit_modifier: egui::KeyboardShortcut,
     pub edit_snap: egui::KeyboardShortcut,
+    pub timeline_zoom_mode: egui::KeyboardShortcut,
 }
 
 pub trait Display {
@@ -970,8 +972,10 @@ impl Default for KeyboardConfig {
     #[rustfmt::skip]
     fn default() -> Self {
         KeyboardConfig {
-            next_anim_frame:    regular_key!(egui::Key::ArrowRight),
-            prev_anim_frame:    regular_key!(egui::Key::ArrowLeft),
+            next_anim_frame:    regular_key!(egui::Key::F),
+            prev_anim_frame:    regular_key!(egui::Key::D),
+            next_keyframe:      shortcut_key!(egui::Modifiers::SHIFT, egui::Key::F),
+            prev_keyframe:      shortcut_key!(egui::Modifiers::SHIFT, egui::Key::D),
             zoom_in_camera:     regular_key!(egui::Key::Equals),
             zoom_out_camera:    regular_key!(egui::Key::Minus),
             cancel:             regular_key!(egui::Key::Escape),

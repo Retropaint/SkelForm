@@ -26,12 +26,34 @@ pub fn draw(
     let sel = selections.clone();
 
     // navigating frames with kb input
-    if shared_ui.rename_id == "" {
+    if shared_ui.rename_id == "" && selections.anim != usize::MAX {
+        let kfs = &armature.sel_anim(&sel).unwrap().keyframes;
+        let next_kf = egui_ctx.input_mut(|i| i.consume_shortcut(&config.keys.next_keyframe));
+        let prev_kf = egui_ctx.input_mut(|i| i.consume_shortcut(&config.keys.prev_keyframe));
         let right = egui_ctx.input_mut(|i| i.consume_shortcut(&config.keys.next_anim_frame));
         let left = egui_ctx.input_mut(|i| i.consume_shortcut(&config.keys.prev_anim_frame));
-        if right {
+
+        if next_kf {
+            for kf in kfs {
+                if kf.frame > selections.anim_frame {
+                    selections.anim_frame = kf.frame;
+                    println!("{}", kf.frame);
+                    break;
+                }
+            }
+        } else if prev_kf {
+            let mut prev = 0;
+            for kf in kfs {
+                if kf.frame < selections.anim_frame {
+                    prev = kf.frame;
+                } else {
+                    break;
+                }
+            }
+            selections.anim_frame = prev;
+        } else if right {
+            let last_frame = kfs.last();
             selections.anim_frame += 1;
-            let last_frame = armature.sel_anim(&sel).unwrap().keyframes.last();
             if last_frame != None && selections.anim_frame > last_frame.unwrap().frame {
                 selections.anim_frame = 0;
             }
@@ -639,7 +661,8 @@ pub fn draw_bottom_bar(
                     .add_sized([50., 20.], button)
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
 
-                let mut pressed = ui.input(|i| i.key_pressed(egui::Key::Space));
+                //let mut pressed = ui.input(|i| i.key_pressed(egui::Key::Space));
+                let mut pressed = false;
                 if button.clicked() {
                     pressed = true;
                 }
