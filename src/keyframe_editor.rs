@@ -37,7 +37,6 @@ pub fn draw(
             for kf in kfs {
                 if kf.frame > selections.anim_frame {
                     selections.anim_frame = kf.frame;
-                    println!("{}", kf.frame);
                     break;
                 }
             }
@@ -684,7 +683,7 @@ pub fn draw_bottom_bar(
                 shared_ui.anim.timeline_zoom = shared_ui.anim.timeline_zoom.min(3.);
             }
 
-            ui.add_space(20.);
+            ui.add_space(5.);
 
             ui.label(&shared_ui.loc("keyframe_editor.frame"));
             ui.add(egui::DragValue::new(&mut selections.anim_frame).speed(0.1));

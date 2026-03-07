@@ -31,7 +31,6 @@ pub fn polar_modal(
     events: &mut crate::EventState,
 ) {
     let headline = shared_ui.headline.to_string();
-    let local_doc = shared_ui.local_doc_url.to_string();
 
     modal_template(
         ctx,

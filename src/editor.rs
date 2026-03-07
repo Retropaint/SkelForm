@@ -912,16 +912,16 @@ fn select_bone(
     idx: usize,
     from_renderer: bool,
 ) {
+    edit_mode.setting_bind_verts = false;
+    edit_mode.showing_mesh = false;
+    edit_mode.sel_time = 0.;
+    edit_mode.temporary = None;
+
     if idx == usize::MAX {
         sel.bone_idx = usize::MAX;
         sel.bone_ids = vec![];
         return;
     }
-
-    edit_mode.setting_bind_verts = false;
-    edit_mode.showing_mesh = false;
-    edit_mode.sel_time = 0.;
-    edit_mode.temporary = None;
 
     // rename bone if already selected
     if sel.bone_idx == idx && !from_renderer {
