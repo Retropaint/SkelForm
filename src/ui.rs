@@ -1287,6 +1287,11 @@ fn edit_mode_bar(
             };
         }
 
+        // shortcuts won't do anything on IK bones, so don't show
+        if has_ik {
+            return;
+        }
+
         if edit_mode.current == EditModes::Move {
             edit_feature!(
                 "Snap X/Y",
