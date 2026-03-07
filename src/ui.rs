@@ -478,7 +478,6 @@ pub fn kb_inputs(
     let modal_open = shared_ui.styles_modal
         || shared_ui.modal
         || shared_ui.polar_modal
-        || shared_ui.forced_modal
         || shared_ui.settings_modal
         || shared_ui.export_modal
         || shared_ui.warnings_open
@@ -488,7 +487,6 @@ pub fn kb_inputs(
             shared_ui.styles_modal = false;
             shared_ui.modal = false;
             shared_ui.polar_modal = false;
-            shared_ui.forced_modal = false;
             shared_ui.settings_modal = false;
             shared_ui.atlas_modal = false;
             shared_ui.export_modal = false;
