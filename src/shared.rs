@@ -387,6 +387,7 @@ impl Camera {
 pub struct InputStates {
     pub mouse: Vec2,
     pub mouse_prev: Vec2,
+    pub mouse_prev_left: Vec2, // last mouse pos while left was down
     pub left_clicked: bool,
     pub left_pressed: bool,
     pub right_clicked: bool,

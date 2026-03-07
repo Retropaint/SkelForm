@@ -1231,7 +1231,7 @@ fn edit_bone(
     macro_rules! set {
         ($field:expr, $field_type:ident) => {{
             init_value = $field as f32;
-            if anim_id == usize::MAX {
+            if anim_frame == -1 {
                 $field = value as $field_type;
             }
         }};
@@ -1239,7 +1239,7 @@ fn edit_bone(
     macro_rules! set_str {
         ($field:expr, $enum:ident) => {{
             init_value_str = $field.to_string();
-            if anim_id == usize::MAX {
+            if anim_frame == -1 {
                 $field = $enum::from_str(&value_str).unwrap()
             }
         }};
@@ -1261,13 +1261,13 @@ fn edit_bone(
         AnimElement::IkConstraint => set_str!(bone.ik_constraint, JointConstraint),
         AnimElement::Hidden => {
             init_value = shared::bool_as_f32(bone.hidden);
-            if anim_id == usize::MAX {
+            if anim_frame == -1 {
                 bone.hidden = shared::f32_as_bool(value)
             }
         }
         AnimElement::Locked => {
             init_value = shared::bool_as_f32(bone.locked);
-            if anim_id == usize::MAX {
+            if anim_frame == -1 {
                 bone.locked = shared::f32_as_bool(value)
             }
         }
@@ -1278,7 +1278,7 @@ fn edit_bone(
         AnimElement::GroupColorA => set!(bone.group_color.a, u8),
     };
 
-    if anim_id == usize::MAX {
+    if anim_frame == -1 {
         return;
     }
 

@@ -590,9 +590,10 @@ pub fn render(
     // editing bone
     let idx = sel.bone_idx;
     let input = &input;
+    let mouse_moved = input.mouse != input.mouse_prev_left;
     if camera.on_ui {
         renderer.editing_bone = false;
-    } else if idx != usize::MAX && input.left_down && hover_bone_id == -1 {
+    } else if idx != usize::MAX && input.left_down && hover_bone_id == -1 && mouse_moved {
         let current_edit = if edit_mode.temporary == None {
             &edit_mode.current
         } else {

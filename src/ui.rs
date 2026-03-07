@@ -1,6 +1,6 @@
 //! Core user interface (UI) logic.
 use egui::{Color32, Context, Shadow, Stroke};
-use modal::{lang_import_modal, modal_x};
+use modal::modal_x;
 
 use crate::*;
 
@@ -421,10 +421,13 @@ pub fn process_inputs(
         if i.pointer.primary_released() {
             input.mouse_init = None;
         }
+        if input.left_down {
+            input.mouse_prev_left = input.mouse;
+        }
+        input.mouse_prev = input.mouse;
         if shared_ui.mobile {
             input.left_clicked = i.pointer.any_pressed();
         }
-        input.mouse_prev = input.mouse;
         if let Some(mouse) = i.pointer.latest_pos() {
             input.mouse = mouse.into();
             input.mouse *= shared_ui.scale;
@@ -474,6 +477,30 @@ pub fn kb_inputs(
     mouse_button_as_key(input, egui::PointerButton::Middle, egui::Key::F33);
     mouse_button_as_key(input, egui::PointerButton::Extra1, egui::Key::F34);
     mouse_button_as_key(input, egui::PointerButton::Extra2, egui::Key::F35);
+
+    // cancel all kb inputs if a modal is open, except cancel and yes
+    let modal_open = shared_ui.styles_modal
+        || shared_ui.modal
+        || shared_ui.polar_modal
+        || shared_ui.forced_modal
+        || shared_ui.settings_modal
+        || shared_ui.export_modal
+        || shared_ui.warnings_open
+        || shared_ui.lang_import_modal;
+    if modal_open {
+        if input.consume_shortcut(&config.keys.cancel) {
+            shared_ui.styles_modal = false;
+            shared_ui.modal = false;
+            shared_ui.polar_modal = false;
+            shared_ui.forced_modal = false;
+            shared_ui.settings_modal = false;
+            shared_ui.atlas_modal = false;
+            shared_ui.export_modal = false;
+            shared_ui.warnings_open = false;
+            shared_ui.context_menu.id = "".to_string();
+        }
+        return;
+    }
 
     if input.consume_shortcut(&config.keys.undo) {
         events.undo();
@@ -567,39 +594,9 @@ pub fn kb_inputs(
     }
 
     if input.consume_shortcut(&config.keys.cancel) {
-        let no_modals = !shared_ui.styles_modal
-            && !shared_ui.modal
-            && !shared_ui.polar_modal
-            && !shared_ui.forced_modal
-            && !shared_ui.settings_modal
-            && !shared_ui.export_modal
-            && !shared_ui.warnings_open;
-
-        shared_ui.styles_modal = false;
-        shared_ui.modal = false;
-        shared_ui.polar_modal = false;
-        shared_ui.forced_modal = false;
-        shared_ui.settings_modal = false;
-        shared_ui.atlas_modal = false;
-        shared_ui.export_modal = false;
-        shared_ui.warnings_open = false;
-
-        // if a context menu is open, cancel that instead
-        if shared_ui.context_menu.id != "" {
-            shared_ui.context_menu.id = "".to_string();
-            return;
-        }
-
-        if no_modals && !edit_mode.setting_ik_target {
+        if !edit_mode.setting_ik_target {
             events.unselect_all();
         }
-
-        #[cfg(target_arch = "wasm32")]
-        {
-            toggleElement(false, "image-dialog".to_string());
-            toggleElement(false, "file-dialog".to_string());
-        }
-
         events.toggle_setting_ik_target(0);
     }
 }
