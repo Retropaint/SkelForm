@@ -1,4 +1,4 @@
-use crate::{ui::EguiUi, utils, Config, PolarId};
+use crate::{shared::Display, ui::EguiUi, utils, Config, PolarId};
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     ctx: &egui::Context,
@@ -53,12 +53,30 @@ pub fn polar_modal(
                     yes = true;
                 }
             }
+            let mut key_col = config.colors.text;
+            key_col -= crate::Color::new(50, 50, 50, 0);
 
+            // No
+            let mut str_no = egui::text::LayoutJob::default();
+            let str = &shared_ui.loc("polar.no");
+            crate::ui::job_text(str, Some(config.colors.text.into()), &mut str_no);
+            let str_key = &format!(" ({})", &config.keys.cancel.display());
+            crate::ui::job_text(str_key, Some(key_col.into()), &mut str_no);
             let pressed_no = ui.input_mut(|i| i.consume_shortcut(&config.keys.cancel));
-            if ui.skf_button("No").clicked() || pressed_no {
+            if ui.skf_button(str_no).clicked() || pressed_no {
                 shared_ui.polar_modal = false;
             }
-            if ui.skf_button("Yes").clicked() {
+
+            // Yes
+            let mut str_yes = egui::text::LayoutJob::default();
+            let str = &shared_ui.loc("polar.yes");
+            crate::ui::job_text(str, Some(config.colors.text.into()), &mut str_yes);
+            let str_key = &format!(" ({})", &config.keys.polar_yes.display());
+            crate::ui::job_text(str_key, Some(key_col.into()), &mut str_yes);
+            let pressed_yes = ui.input_mut(|i| i.consume_shortcut(&config.keys.polar_yes));
+            if ui.skf_button(str_yes).clicked()
+                || (pressed_yes && shared_ui.polar_id != PolarId::Exiting)
+            {
                 shared_ui.polar_modal = false;
                 yes = true
             }

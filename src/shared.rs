@@ -903,6 +903,7 @@ pub struct KeyboardConfig {
     pub export: egui::KeyboardShortcut,
     pub open: egui::KeyboardShortcut,
     pub cancel: egui::KeyboardShortcut,
+    pub polar_yes: egui::KeyboardShortcut,
     pub copy: egui::KeyboardShortcut,
     pub paste: egui::KeyboardShortcut,
     pub transform_move: egui::KeyboardShortcut,
@@ -929,9 +930,9 @@ impl Display for egui::KeyboardShortcut {
 
         // replace mod sybols with names for now, since egui default font doesn't have them
         for key in &mut str {
-            *key = key.replace("⌥", "Opt");
-            *key = key.replace("⌃", "Ctrl");
-            *key = key.replace("⇧", "Shift");
+            *key = key.replace("⌥", "Opt ");
+            *key = key.replace("⌃", "Ctrl ");
+            *key = key.replace("⇧", "Shift ");
         }
 
         // ignore key if it's F30 (designated 'nothing' key)
@@ -939,7 +940,7 @@ impl Display for egui::KeyboardShortcut {
             return str[0].clone();
         }
 
-        str.join(" ")
+        str.join("")
     }
 }
 
@@ -980,6 +981,7 @@ impl Default for KeyboardConfig {
             zoom_in_camera:     regular_key!(egui::Key::Equals),
             zoom_out_camera:    regular_key!(egui::Key::Minus),
             cancel:             regular_key!(egui::Key::Escape),
+            polar_yes:          regular_key!(egui::Key::Space),
             undo:               shortcut_key!(egui::Modifiers::COMMAND, egui::Key::Z),
             redo:               shortcut_key!(egui::Modifiers::COMMAND, egui::Key::Y),
             save:               shortcut_key!(egui::Modifiers::COMMAND, egui::Key::S),

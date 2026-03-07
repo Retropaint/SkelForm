@@ -240,9 +240,6 @@
       "heading": "Texture & Visuals"
     }
   },
-  "polar": {
-    "delete_bone": "Are you sure to delete this bone?"
-  },
   "settings_modal": {
     "default": "Default",
     "cancel": "Cancel",
@@ -319,7 +316,8 @@
       "transform_scale": "Scale Mode",
       "toggle_animation": "Toggle Animation Mode",
       "edit_modifier": "(Hold) Edit Mode Modifier",
-      "edit_snap": "(Hold) Edit Mode Snapping"
+      "edit_snap": "(Hold) Edit Mode Snapping",
+      "polar_yes": "Yes"
     },
     "miscellaneous": {
       "heading": "Miscellaneous",
@@ -384,7 +382,9 @@
     "delete_tex": "Are you sure to delete this texture?",
     "delete_style": "Are you sure to delete this style?",
     "unsaved": "Are you sure you want to quit and discard unsaved changes?\n\n(Click 'Yes' to confirm)",
-    "delete_keyframe_line": "Are you sure to delete this keyframe line?"
+    "delete_keyframe_line": "Are you sure to delete this keyframe line?",
+    "yes": "Yes",
+    "no": "No"
   },
   "warnings": {
     "heading": "Warnings ℹ",
