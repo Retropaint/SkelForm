@@ -413,15 +413,19 @@ pub fn process_event(
         }
         Events::DeleteBone => {
             let mut ids_to_delete = vec![armature.bones[value as usize].id];
-            for id in &selections.bone_ids {
-                ids_to_delete.push(*id);
+
+            // delete all selected bones, if the one being deleted is also selected
+            let bone_id = &armature.bones[value as usize].id;
+            if selections.bone_ids.contains(bone_id) {
+                for id in &selections.bone_ids {
+                    ids_to_delete.push(*id);
+                }
             }
 
             for id in ids_to_delete {
-                let bone_result = &armature.bones.iter().find(|b| b.id == id);
                 let bone;
-                if *bone_result != None {
-                    bone = bone_result.unwrap();
+                if let Some(result) = armature.bones.iter().find(|b| b.id == id) {
+                    bone = result;
                 } else {
                     continue;
                 }
