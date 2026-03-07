@@ -882,7 +882,7 @@ impl Default for ColorConfig {
             texture: Color::new(200, 200, 200, 255),
             inverse_kinematics: Color::new(188, 188, 0, 255),
             ik_target: Color::new(90, 90, 150, 255),
-            transform_rings: Color::new(77, 144, 77, 125),
+            transform_rings: Color::new(173, 123, 255, 255),
         }
     }
 }
