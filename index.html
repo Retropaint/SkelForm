@@ -3,8 +3,8 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/editor/favicon.ico" type="image/x-icon">
-		    <meta name="description" content="Try out SkelForm online!" />
+        <link rel="icon" href="/editor/favicon.ico" type="image/x-icon" />
+        <meta name="description" content="Try out SkelForm online!" />
         <title>SkelForm Editor</title>
         <base data-trunk-public-url />
         <style type="text/css">
@@ -64,7 +64,7 @@
                 justify-content: center;
                 align-items: center;
                 flex-direction: column;
-                color: white
+                color: white;
             }
 
             .file-dialog {
@@ -79,10 +79,10 @@
                 padding: 5px;
                 border: 2px solid var(--color-border);
                 cursor: pointer;
-            }            
+            }
 
             .ui-slider {
-                .box{
+                .box {
                     color: #d6d6d6;
                     background: var(--color-main);
                     padding: 5px;
@@ -95,7 +95,7 @@
                 }
 
                 .button-container {
-                    display: flex
+                    display: flex;
                 }
             }
 
@@ -109,33 +109,68 @@
                 padding: 1rem;
 
                 p {
-                    margin: 0
+                    margin: 0;
                 }
             }
         </style>
     </head>
 
     <body>
+        <input
+            onchange="loadImage(event)"
+            type="file"
+            accept=".png"
+            id="img-input"
+            multiple
+            style="display: none"
+        />
+        <input
+            type="file"
+            onchange="loadFile(event)"
+            id="file-input"
+            style="display: none"
+        />
+
         <div id="ui-slider" class="modal ui-slider">
             <div class="box">
                 <p>
                     Use the slider below to adjust the UI scale.
-                    <br>
+                    <br />
                     The elements behind should be visible and readable.
                 </p>
                 <div class="horizontal">
-                    <input id="ui-slider-input" type="range" min="0" max="2.5" step="0.01"></input>
+                    <input
+                        id="ui-slider-input"
+                        type="range"
+                        min="0"
+                        max="2.5"
+                        step="0.01"
+                    />
                     <div class="button-container">
-                        <label id="fullscreenButton" class="button" onclick="goFullscreen()">Fullscreen</label>
-                        <label id="ui-slider-done" class="button" onclick="turnOffSlider()">Done</label>
+                        <label
+                            id="fullscreenButton"
+                            class="button"
+                            onclick="goFullscreen()"
+                            >Fullscreen</label
+                        >
+                        <label
+                            id="ui-slider-done"
+                            class="button"
+                            onclick="turnOffSlider()"
+                            >Done</label
+                        >
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="edit-input-modal" class="modal" keypress="onEditInputPress($event)">
+        <div
+            id="edit-input-modal"
+            class="modal"
+            keypress="onEditInputPress($event)"
+        >
             <form>
-                <input id="edit-input"></input>
+                <input id="edit-input" />
             </form>
             <label
                 class="button"
@@ -155,15 +190,22 @@
             data-target-name="SkelForm"
         />
         <div class="root">
-            <canvas class="main-canvas" id="canvas" style="visibility: hidden"></canvas>
+            <canvas
+                class="main-canvas"
+                id="canvas"
+                style="visibility: hidden"
+            ></canvas>
         </div>
 
         <div id="crash-box" style="visibility: hidden">
             <p>SkelForm has crashed.</p>
-            <br/>
-            <p>The crash log is in the console. Open via right clicking here > Inspect > Console, or F12.</p>
+            <br />
+            <p>
+                The crash log is in the console. Open via right clicking here >
+                Inspect > Console, or F12.
+            </p>
         </div>
-        
+
         <button id="fullscreenTest"></button>
 
         <script src="ffmpeg-wasm/ffmpeg.js"></script>
@@ -180,20 +222,20 @@
             loadConfig();
 
             toggleElement(false, "ui-slider");
-            toggleElement(true, "canvas")
+            toggleElement(true, "canvas");
             toggleElement(false, "edit-input-modal");
 
             async function loadConfig() {
                 let data = await localStorage.getItem("skelform_config");
                 if (data === undefined) {
-                    return
+                    return;
                 }
 
                 config = JSON.parse(data);
             }
 
             function toggleElement(open, id) {
-                if(!document.getElementById(id)) {
+                if (!document.getElementById(id)) {
                     return;
                 }
                 let str = open ? "visible" : "hidden";
@@ -205,18 +247,20 @@
             async function updateUiSlider() {
                 await loadConfig();
                 ui_scale = 1;
-                if(config) {
+                if (config) {
                     ui_scale = config.ui_scale;
                 }
                 document.getElementById("ui-slider-input").value = ui_scale;
             }
 
             function isModalActive(id) {
-                return document.getElementById(id).style.visibility == "visible";
-            } 
+                return (
+                    document.getElementById(id).style.visibility == "visible"
+                );
+            }
 
             function saveFontScale() {
-                if(!config.ui_scale) {
+                if (!config.ui_scale) {
                     config.ui_scale = 1;
                 }
                 config.ui_scale = parseFloat(getUiSliderValue());
@@ -237,14 +281,14 @@
                 for (file of event.target.files) {
                     var reader = new FileReader();
                     reader.readAsDataURL(file);
-                    let name = 'image-' + idx.toString();
-                    let filename = file.name
-                    let img = document.createElement('img');
+                    let name = "image-" + idx.toString();
+                    let filename = file.name;
+                    let img = document.createElement("img");
                     document.body.appendChild(img);
                     img.id = name;
                     img.src = await readFileData(file);
                     img.dataname = filename;
-                    idx++
+                    idx++;
                 }
                 loadedAllImages = true;
             }
@@ -256,7 +300,7 @@
                     reader.onerror = reject;
                     reader.readAsDataURL(file);
                 });
-            }            
+            }
 
             async function loadFile(event) {
                 const file = event.target.files[0];
@@ -274,7 +318,7 @@
             }
 
             function getImgName(id) {
-                return document.getElementById("image-"+id).dataname;
+                return document.getElementById("image-" + id).dataname;
             }
 
             function removeFile() {
@@ -284,16 +328,16 @@
 
             function removeImage() {
                 let idx = 0;
-                while(document.getElementById("image-" + idx)) {
-                    document.getElementById("image-" + idx).remove()
-                    idx++
+                while (document.getElementById("image-" + idx)) {
+                    document.getElementById("image-" + idx).remove();
+                    idx++;
                 }
                 loadedAllImages = false;
             }
 
             function resizeCanvas() {
                 const canvas = document.getElementById("canvas");
-               
+
                 //canvas.width = Math.ceil(window.innerWidth * 2);
                 //canvas.height = Math.ceil(window.innerHeight * 2);
                 //canvas.style.transform = "scale(0.5, 0.5)";
@@ -308,12 +352,12 @@
 
             function loaded() {
                 hasLoaded = true;
-                toggleElement(true, 'ui-slider');
+                toggleElement(true, "ui-slider");
             }
 
             function turnOffSlider() {
                 saveFontScale();
-                toggleElement(false, 'ui-slider');
+                toggleElement(false, "ui-slider");
             }
 
             function getUiSliderValue() {
@@ -333,20 +377,20 @@
 
             async function downloadSample(filename) {
                 fetch(filename)
-                    .then(response => response.arrayBuffer())
-                    .then(arrayBuffer => {
+                    .then((response) => response.arrayBuffer())
+                    .then((arrayBuffer) => {
                         fileData = new Uint8Array(arrayBuffer);
-                        fileName = filename
-                    })
+                        fileName = filename;
+                    });
             }
 
             async function changeLang(filename) {
                 fetch(filename)
-                    .then(response => response.arrayBuffer())
-                    .then(arrayBuffer => {
+                    .then((response) => response.arrayBuffer())
+                    .then((arrayBuffer) => {
                         langData = new Uint8Array(arrayBuffer);
-                        langName = filename
-                    })
+                        langName = filename;
+                    });
             }
 
             function getLang() {
@@ -355,7 +399,7 @@
 
             function clearLang() {
                 langData = [];
-            }            
+            }
 
             function downloadZip(binary, saving) {
                 var link = document.createElement("a");
@@ -363,11 +407,12 @@
                     new Blob([binary], { type: "zip" }),
                 );
                 var ext = ".skf";
-                switch(saving) {
-                    case "Exporting": 
-                        ext = ".skfe"
-                    break; case "Spritesheet": 
-                        ext = ".zip"
+                switch (saving) {
+                    case "Exporting":
+                        ext = ".skfe";
+                        break;
+                    case "Spritesheet":
+                        ext = ".zip";
                 }
                 link.setAttribute("test", "sk_a");
                 link.setAttribute("download", "SkelForm_armature" + ext);
@@ -375,10 +420,12 @@
                 link.remove();
             }
 
-            document.getElementById("edit-input-modal").addEventListener("submit", function(event) {
-                event.preventDefault();
-                toggleElement(false, "edit-input-modal")
-            });
+            document
+                .getElementById("edit-input-modal")
+                .addEventListener("submit", function (event) {
+                    event.preventDefault();
+                    toggleElement(false, "edit-input-modal");
+                });
 
             function getEditInput() {
                 return document.getElementById("edit-input").value;
@@ -394,140 +441,158 @@
 
             function openDocumentation(docs_name, path) {
                 var url = "https://skelform.org/" + docs_name + "/" + path;
-                window.open(url, '_blank');
+                window.open(url, "_blank");
             }
 
             function openLink(url) {
-                window.open(url)
+                window.open(url);
             }
 
             // https://medium.com/geekculture/detecting-mobile-vs-desktop-browsers-in-javascript-ad46e8d23ce5
             function isMobile() {
-              const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-              return regex.test(navigator.userAgent);
+                const regex =
+                    /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+                return regex.test(navigator.userAgent);
             }
 
             // https://stackoverflow.com/a/10311375
             function beforeUnload(e) {
                 e = e || window.event;
-                let text = "Are you sure you want to quit and discard unsaved changes?";
-            
+                let text =
+                    "Are you sure you want to quit and discard unsaved changes?";
+
                 // for IE and Firefox prior to version 4
                 if (e) {
                     e.returnValue = text;
                 }
-            
+
                 // for Safari
                 return text;
             }
 
             async function goFullscreen() {
-                el = document.documentElement; 
-                if (document.fullscreenEnabled) { 
+                el = document.documentElement;
+                if (document.fullscreenEnabled) {
                     el.requestFullscreen();
                 } else if (document.webkitFullscreenEnabled) {
-                 el.webkitRequestFullscreen();
+                    el.webkitRequestFullscreen();
                 } else if (document.mozFullScreenEnabled) {
-                  el.mozRequestFullScreen();
+                    el.mozRequestFullScreen();
                 } else if (document.msFullscreenEnabled) {
-                  el.msRequestFullscreen();
+                    el.msRequestFullscreen();
                 }
-                await screen.orientation.lock('landscape');
+                await screen.orientation.lock("landscape");
             }
 
             function clickFileInput(isImage) {
-                document.getElementById((isImage ? "img-input" : "file-input")).click();
+                document
+                    .getElementById(isImage ? "img-input" : "file-input")
+                    .click();
             }
 
             window.addEventListener("resize", resizeCanvas);
             window.addEventListener("load", resizeCanvas);
             window.addEventListener("beforeunload", beforeUnload);
             window.addEventListener("error", () => {
-                if(realError) {
-                    toggleElement(true, "crash-box")
+                if (realError) {
+                    toggleElement(true, "crash-box");
                 }
                 realError = true;
             });
 
             let ffmpeg;
             async function ensureFFmpeg() {
-              if (!ffmpeg) {
-                const { FFmpeg } = FFmpegWASM;
-                ffmpeg = new FFmpeg();
-                await ffmpeg.load({
-                    coreURL: "ffmpeg-core.js",
-                    wasmURL: "ffmpeg-core.wasm"
-                });
-              }
-            }            
+                if (!ffmpeg) {
+                    const { FFmpeg } = FFmpegWASM;
+                    ffmpeg = new FFmpeg();
+                    await ffmpeg.load({
+                        coreURL: "ffmpeg-core.js",
+                        wasmURL: "ffmpeg-core.wasm",
+                    });
+                }
+            }
 
             async function downloadMp4(data, resX, resY, anim_name, fps) {
                 await ensureFFmpeg();
-                let name = anim_name + ".mp4"
-                await ffmpeg.writeFile('input.rgb', data);
+                let name = anim_name + ".mp4";
+                await ffmpeg.writeFile("input.rgb", data);
 
                 await ffmpeg.exec([
-                  '-f', 'rawvideo',
-                  '-pixel_format', 'rgb24',
-                  '-video_size', `${resX}x${resY}`,
-                  '-r', fps.toString(),
-                  '-i', 'input.rgb',
-                  '-s', `${resX}:${resY}`,
-                  '-preset', 'veryfast',
-                  '-pix_fmt', 'yuv420p',
-                  '-y',
-                  name
+                    "-f",
+                    "rawvideo",
+                    "-pixel_format",
+                    "rgb24",
+                    "-video_size",
+                    `${resX}x${resY}`,
+                    "-r",
+                    fps.toString(),
+                    "-i",
+                    "input.rgb",
+                    "-s",
+                    `${resX}:${resY}`,
+                    "-preset",
+                    "veryfast",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-y",
+                    name,
                 ]);
 
                 // download mp4
                 const mp4Data = await ffmpeg.readFile(name);
-                const blob = new Blob([mp4Data.buffer], { type: 'video/mp4' });
+                const blob = new Blob([mp4Data.buffer], { type: "video/mp4" });
                 const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
+                const link = document.createElement("a");
                 link.href = url;
                 link.download = name;
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
-                
             }
 
             let gifFrames = [];
             function addGifFrame(frame) {
-                gifFrames.push(frame)
+                gifFrames.push(frame);
             }
 
             async function downloadGif(anim_name, resX, resY, fps) {
                 await ensureFFmpeg();
-                let name = anim_name + ".gif"
+                let name = anim_name + ".gif";
                 for (let i = 0; i < gifFrames.length; i++) {
-                    const name = `frame${String(i).padStart(3, '0')}.png`;
+                    const name = `frame${String(i).padStart(3, "0")}.png`;
                     await ffmpeg.writeFile(name, gifFrames[i]);
                 }
                 gifFrames = [];
 
                 await ffmpeg.exec([
-                    '-framerate', fps.toString(),
-                    '-i', 'frame%03d.png',
-                    '-vf', 'palettegen=stats_mode=full',
-                    'palette.png'
+                    "-framerate",
+                    fps.toString(),
+                    "-i",
+                    "frame%03d.png",
+                    "-vf",
+                    "palettegen=stats_mode=full",
+                    "palette.png",
                 ]);
 
                 await ffmpeg.exec([
-                    '-framerate', fps.toString(),
-                    '-i', 'frame%03d.png',
-                    '-i', 'palette.png',
-                    '-filter_complex',
-                    '[0:v]fps=30[v];[v][1:v]paletteuse=dither=sierra2_4a',
-                    '-loop', '0',
-                    name
+                    "-framerate",
+                    fps.toString(),
+                    "-i",
+                    "frame%03d.png",
+                    "-i",
+                    "palette.png",
+                    "-filter_complex",
+                    "[0:v]fps=30[v];[v][1:v]paletteuse=dither=sierra2_4a",
+                    "-loop",
+                    "0",
+                    name,
                 ]);
 
                 // download gif
                 const mp4Data = await ffmpeg.readFile(name);
-                const blob = new Blob([mp4Data.buffer], { type: 'image/gif' });
+                const blob = new Blob([mp4Data.buffer], { type: "image/gif" });
                 const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
+                const link = document.createElement("a");
                 link.href = url;
                 link.download = name;
                 document.body.appendChild(link);
@@ -537,7 +602,7 @@
         </script>
 
         <script>
-            document.addEventListener('ionBackButton', (event) => {});
+            document.addEventListener("ionBackButton", (event) => {});
         </script>
     </body>
 </html>
