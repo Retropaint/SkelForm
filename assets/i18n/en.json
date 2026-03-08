@@ -318,7 +318,8 @@
       "toggle_animation": "Toggle Animation Mode",
       "edit_modifier": "(Hold) Edit Mode Modifier",
       "edit_snap": "(Hold) Edit Mode Snapping",
-      "polar_yes": "Yes"
+      "polar_yes": "Yes",
+      "play_animation": "Play Animation"
     },
     "miscellaneous": {
       "heading": "Miscellaneous",

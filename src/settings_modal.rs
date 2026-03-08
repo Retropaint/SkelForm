@@ -570,6 +570,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("next_keyframe",      keys.next_keyframe,      true);
         key!("prev_keyframe",      keys.prev_keyframe,      true);
         key!("toggle_animation",   keys.toggle_animation,   true);
+        key!("play_animation",     keys.play_animation,     true);
         key!("timeline_zoom_mode", keys.timeline_zoom_mode, false);
     };
     ui.add_space(10.);

@@ -660,8 +660,7 @@ pub fn draw_bottom_bar(
                     .add_sized([50., 20.], button)
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
 
-                //let mut pressed = ui.input(|i| i.key_pressed(egui::Key::Space));
-                let mut pressed = false;
+                let mut pressed = ui.input_mut(|i| i.consume_shortcut(&config.keys.play_animation));
                 if button.clicked() {
                     pressed = true;
                 }
