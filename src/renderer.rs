@@ -529,7 +529,7 @@ pub fn render(
     // show transform rings when editing a bone
     let ring_enabled = config.transform_rot_radius > 0. && config.transform_scale_radius > 0.;
     let idle_mouse = !input.left_down && !input.left_clicked || camera.on_ui;
-    let selected = armature.sel_bone(&sel) != None;
+    let selected = armature.sel_bone(&sel) != None && selections.bone_ids.len() == 1;
     if !edit_mode.showing_mesh && !has_ik && idle_mouse && selected && ring_enabled {
         #[rustfmt::skip]
         transform_ring(config, camera, armature, &mut temp_arm, render_pass, renderer, events, edit_mode, &sel, queue, &mouse_pos);
