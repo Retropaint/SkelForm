@@ -1286,16 +1286,20 @@ fn edit_mode_bar(
             return;
         }
 
-        if edit_mode.current == EditModes::Move {
+        if edit_mode.is_moving || edit_mode.is_rotating || edit_mode.is_scaling {
+            shared_ui.cursor_icon = egui::CursorIcon::Crosshair;
+        }
+
+        if edit_mode.is_moving {
             edit_feature!(
                 "Snap X/Y",
                 config.keys.edit_snap,
                 edit_mode.holding_edit_snap
             );
-        } else if edit_mode.current == EditModes::Rotate {
+        } else if edit_mode.is_rotating {
             let str = format!("Snap to {}°", config.rot_snap_step);
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
-        } else if edit_mode.current == EditModes::Scale {
+        } else if edit_mode.is_scaling {
             edit_feature!(
                 "Snap X/Y",
                 config.keys.edit_snap,

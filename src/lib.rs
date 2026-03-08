@@ -730,10 +730,6 @@ impl BackendRenderer {
         self.init_buffers_and_bindgroups(&mut shared.renderer);
         self.check_export(shared);
 
-        shared.edit_mode.is_moving = false;
-        shared.edit_mode.is_rotating = false;
-        shared.edit_mode.is_scaling = false;
-
         if *shared.ui.save_finished.lock().unwrap() {
             shared.undo_states.unsaved_undo_actions = shared.undo_states.undo_actions.len();
             shared.undo_states.prev_undo_actions = shared.undo_states.undo_actions.len();

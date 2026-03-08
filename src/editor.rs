@@ -22,10 +22,6 @@ pub fn iterate_events(
     let mut last_event = Events::None;
     let event = events.events[0].clone();
 
-    edit_mode.is_moving = false;
-    edit_mode.is_rotating = false;
-    edit_mode.is_scaling = false;
-
     // for every new event, create a new undo state
     // note: `edit_bone` is not included, as its undo is conditional (see `save_edited_bone`)
     if last_event != event {
@@ -143,32 +139,11 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::EditBone {
-        ui.cursor_icon = egui::CursorIcon::Crosshair;
         let anim_el = AnimElement::from_repr(events.values[1] as usize).unwrap();
-
-        let current_edit = if let Some(temporary) = &edit_mode.temporary {
-            &temporary
-        } else {
-            if anim_el != AnimElement::PositionX
-                && anim_el != AnimElement::PositionY
-                && anim_el != AnimElement::Rotation
-                && anim_el != AnimElement::ScaleX
-                && anim_el != AnimElement::ScaleY
-            {
-                ui.cursor_icon = egui::CursorIcon::Default;
-                &EditModes::Other
-            } else {
-                &edit_mode.current
-            }
-        };
-
-        edit_mode.is_moving = *current_edit == EditModes::Move;
-        edit_mode.is_rotating = *current_edit == EditModes::Rotate;
-        edit_mode.is_scaling = *current_edit == EditModes::Scale;
-
         let mut anim_id = events.values[3] as usize;
         let anim_frame = events.values[4] as i32;
 
+        // don't record in anims if in Armature mode
         if !edit_mode.anim_open {
             anim_id = usize::MAX;
         }
@@ -877,6 +852,26 @@ pub fn process_event(
         }
         Events::ToggleEditModifying => edit_mode.holding_edit_mod = value == 1.,
         Events::ToggleEditSnapping => edit_mode.holding_edit_snap = value == 1.,
+        Events::UpdateCurrentEditing => {
+            if value == 1. {
+                edit_mode.is_moving = false;
+                edit_mode.is_rotating = false;
+                edit_mode.is_scaling = false;
+            } else {
+                ui.cursor_icon = egui::CursorIcon::Crosshair;
+                let current_edit = if let Some(temporary) = &edit_mode.temporary {
+                    temporary
+                } else {
+                    &edit_mode.current
+                };
+                if *current_edit == EditModes::Other {
+                    ui.cursor_icon = egui::CursorIcon::Default;
+                }
+                edit_mode.is_moving = *current_edit == EditModes::Move;
+                edit_mode.is_rotating = *current_edit == EditModes::Rotate;
+                edit_mode.is_scaling = *current_edit == EditModes::Scale;
+            }
+        }
         _ => {}
     }
 }

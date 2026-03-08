@@ -34,6 +34,10 @@ pub fn render(
     renderer.selected_ring_buffer.init(device, 10);
     renderer.rect_buffer.init(device, 1000);
 
+    if !input.left_down && (edit_mode.is_moving || edit_mode.is_rotating || edit_mode.is_scaling) {
+        events.update_current_editing(1);
+    }
+
     let sel = selections.clone();
 
     // inform HTML if canvas has successfully loaded
@@ -594,6 +598,10 @@ pub fn render(
     if camera.on_ui {
         renderer.editing_bone = false;
     } else if idx != usize::MAX && input.left_down && hover_bone_id == -1 {
+        if mouse_moved {
+            events.update_current_editing(0);
+        }
+
         let current_edit = if edit_mode.temporary == None {
             &edit_mode.current
         } else {
@@ -610,9 +618,6 @@ pub fn render(
 
         // move all selected (root) bones
         for sel_id in &selections.only_root_bones(&armature.bones) {
-            if !mouse_moved {
-                break;
-            }
             if *current_edit == EditModes::Rotate {
                 let mut mouse = utils::screen_to_world_space(input.mouse, camera.window);
                 mouse.x *= camera.aspect_ratio();
@@ -625,7 +630,9 @@ pub fn render(
                 line_verts.append(&mut verts);
                 add_offseted_indices(&mut indices, &mut line_indices);
             }
-
+            if !mouse_moved {
+                continue;
+            }
             let bone = temp_arm.bones.iter().find(|b| b.id == *sel_id).unwrap();
             #[rustfmt::skip]
             edit_bone(events, edit_mode, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones, &mouse_pos);

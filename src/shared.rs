@@ -2246,6 +2246,7 @@ pub enum Events {
     DuplicateAnim,
     ToggleBoneFolded,
     EditBone,
+    UpdateCurrentEditing,
     SaveEditedBone,
     SaveBone,
     SaveAnimation,
@@ -2378,6 +2379,7 @@ impl EventState {
     event_with_value!(set_temporary_edit_mode, E::SetTemporaryEditMode, mode, u32);
     event_with_value!(toggle_edit_modifying, E::ToggleEditModifying, mode, u32);
     event_with_value!(toggle_edit_snapping, E::ToggleEditSnapping, mode, u32);
+    event_with_value!(update_current_editing, E::UpdateCurrentEditing, mode, u32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
