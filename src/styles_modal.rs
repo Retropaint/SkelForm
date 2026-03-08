@@ -49,11 +49,8 @@ pub fn draw(
         ui.heading(str_heading).on_hover_text(str_desc);
 
         ui.add_space(5.);
-
         let frame_padding = 10.;
-
         let height = ui.available_height();
-
         ui.horizontal(|ui| {
             ui.set_height(height);
             let modal_width = ui.max_rect().width();
@@ -67,6 +64,7 @@ pub fn draw(
 
         modal::modal_x(ui, egui::Vec2::new(-5., 0.), || {
             shared_ui.styles_modal = false;
+            events.select_style(-1);
         });
 
         shared_ui.styles_modal_size = ui.min_rect().size().into();
@@ -140,7 +138,7 @@ pub fn draw_styles_list(
                         }),
                     );
                     if edited {
-                        events.select_style(armature.styles[s].id as usize);
+                        events.select_style(armature.styles[s].id as i32);
                         events.rename_style(armature.styles[s].id as usize, value);
                     }
                     continue;
@@ -185,7 +183,7 @@ pub fn draw_styles_list(
                         if selections.style == armature.styles[s].id {
                             shared_ui.rename_id = context_id.clone();
                         }
-                        events.select_style(armature.styles[s].id as usize);
+                        events.select_style(armature.styles[s].id as i32);
                     }
 
                     context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {

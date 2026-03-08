@@ -492,6 +492,7 @@ pub fn kb_inputs(
             shared_ui.export_modal = false;
             shared_ui.warnings_open = false;
             shared_ui.context_menu.id = "".to_string();
+            events.select_style(-1);
         }
         return;
     }

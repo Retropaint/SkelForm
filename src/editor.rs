@@ -374,10 +374,7 @@ pub fn process_event(
             selections.anim = if value == f32::MAX { usize::MAX } else { val };
             selections.anim_frame = 0;
         }
-        Events::SelectStyle => {
-            let val = value as i32;
-            selections.style = if value == f32::MAX { -1 } else { val };
-        }
+        Events::SelectStyle => selections.style = value as i32,
         Events::OpenModal => {
             open_modal(ui, value == 1., ui.loc(&str_value));
         }

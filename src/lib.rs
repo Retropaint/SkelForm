@@ -265,8 +265,26 @@ impl ApplicationHandler for App {
                 self.shared.ui.modal = false;
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    *self.shared.ui.file_path.lock().unwrap() = vec![_path_buf];
-                    *self.shared.ui.file_type.lock().unwrap() = 2;
+                    // check if it's an skf or image file
+                    let raw_name = _path_buf.as_path().file_name().unwrap();
+                    let name = raw_name.to_str().unwrap().to_string();
+                    if !name.contains(".") {
+                        return;
+                    }
+                    let ext = name.split('.').collect::<Vec<_>>()[1]
+                        .to_string()
+                        .to_lowercase();
+                    if ext == "png" || ext == "webp" {
+                        if self.shared.selections.style != -1 {
+                            self.shared.ui.dropped_file_path.push(_path_buf);
+                            self.shared.ui.file_elapsed = Some(Instant::now());
+                        } else {
+                            self.shared.events.open_modal("img_unselected_style", false);
+                        }
+                    } else if ext.contains("skf") {
+                        *self.shared.ui.file_path.lock().unwrap() = vec![_path_buf];
+                        *self.shared.ui.file_type.lock().unwrap() = 2;
+                    }
                 }
             }
             WindowEvent::CloseRequested => {
@@ -730,6 +748,31 @@ impl BackendRenderer {
     fn skf_render(&mut self, shared: &mut Shared, render_pass: &mut wgpu::RenderPass) {
         self.init_buffers_and_bindgroups(&mut shared.renderer);
         self.check_export(shared);
+
+        // import dropped files
+        // this uses file_elapsed since winit does not buffer multiple dropped files
+        if shared.ui.file_elapsed != None
+            && shared.ui.file_elapsed.unwrap().elapsed().as_millis() > 150
+        {
+            *shared.ui.file_path.lock().unwrap() = shared.ui.dropped_file_path.clone();
+            let name = shared.ui.file_path.lock().unwrap()[0]
+                .as_path()
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string();
+            let ext = name.split('.').collect::<Vec<_>>()[1]
+                .to_string()
+                .to_lowercase();
+            if ext == "png" || ext == "webp" {
+                *shared.ui.file_type.lock().unwrap() = 1;
+            } else if ext.contains("skf") {
+                *shared.ui.file_type.lock().unwrap() = 2;
+            }
+            shared.ui.file_elapsed = None;
+            shared.ui.dropped_file_path = vec![];
+        }
 
         if *shared.ui.save_finished.lock().unwrap() {
             shared.undo_states.unsaved_undo_actions = shared.undo_states.undo_actions.len();

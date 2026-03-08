@@ -57,6 +57,8 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
         func!(add_pending_textures);
         shared.ui.done_pending = false;
     }
+
+    *shared.ui.file_path.lock().unwrap() = vec![];
 }
 
 /// read temporary files created from file dialogs (native & WASM)
@@ -85,7 +87,7 @@ pub fn read_image_loaders(
             if name.contains(".") {
                 names.push(name.split('.').collect::<Vec<_>>()[0].to_string());
             } else {
-                names.push(name);
+                names.push(name.clone());
             }
 
             let path = file.as_path().to_str().unwrap().to_string();
@@ -139,7 +141,6 @@ pub fn read_image_loaders(
     }
 
     *shared.ui.file_path.lock().unwrap() = vec![];
-
     shared.ui.atlas_modal = images.len() == 1;
 }
 

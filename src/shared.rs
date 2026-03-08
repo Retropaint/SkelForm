@@ -643,7 +643,9 @@ pub struct Ui {
     pub recent_file_paths: Vec<String>,
 
     pub file_path: Arc<Mutex<Vec<PathBuf>>>,
+    pub dropped_file_path: Vec<PathBuf>,
     pub file_type: Arc<Mutex<i32>>, // 1: image, 2: skf
+    pub file_elapsed: Option<Instant>,
 
     pub saving: Arc<Mutex<Saving>>,
     pub save_finished: Arc<Mutex<bool>>,
@@ -2336,7 +2338,7 @@ impl EventState {
     generic_event!(save_animation, Events::SaveAnimation);
     generic_event!(update_render_options, Events::UpdateRenderOptions);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
-    event_with_value!(select_style, Events::SelectStyle, style_id, usize);
+    event_with_value!(select_style, Events::SelectStyle, style_id, i32);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
     event_with_value!(delete_anim, Events::DeleteAnim, anim_id, usize);
     event_with_value!(delete_tex, Events::DeleteTex, tex_id, usize);
