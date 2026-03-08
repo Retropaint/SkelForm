@@ -1083,6 +1083,12 @@ pub fn edit_bone(
             pos -= parent.pos;
             pos = utils::rotate(&pos, -parent.rot);
             pos /= parent.scale;
+            if pos.x.is_nan() {
+                pos.x = 0.;
+            }
+            if pos.y.is_nan() {
+                pos.y = 0.;
+            }
         }
 
         if pos.x != bone.pos.x {
