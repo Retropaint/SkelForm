@@ -824,7 +824,7 @@ pub fn open_file_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mu
     let filetype = Arc::clone(file_type);
     thread::spawn(move || {
         let task = rfd::FileDialog::new()
-            .add_filter("image", &["png", "jpg", "tif"])
+            .add_filter("image", &["png", "jpg", "webp"])
             .pick_files();
         if task == None {
             return;
