@@ -61,7 +61,6 @@ web-time = "1.1.0"
 default = ["wgpu/default"]
 webgl = ["wgpu/webgl"]
 webgpu = ["wgpu/webgpu"]
-debug = []
 
 [build-dependencies]
 winresource = "0.1.23"

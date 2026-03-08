@@ -67,12 +67,11 @@ pub fn draw(
     }
 
     if let Some(_pos) = context.pointer_latest_pos() {
-        if shared_ui.mobile {
-            #[cfg(feature = "debug")]
-            context
-                .debug_painter()
-                .circle_filled(_pos, 2., egui::Color32::GREEN);
-        }
+        //if shared_ui.mobile {
+        //    context
+        //        .debug_painter()
+        //        .circle_filled(_pos, 2., egui::Color32::GREEN);
+        //}
     }
 
     let ik_bytes = include_bytes!("../assets/lucysir_ik.png");

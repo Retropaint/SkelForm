@@ -142,10 +142,10 @@ fn init_shared(shared: &mut Shared) {
     shared.renderer.render_kites = true;
     shared.renderer.render_textures = true;
     shared.ui.use_fallback = true;
+    shared.ui.scale = shared.config.ui_scale;
 
-    #[cfg(feature = "debug")]
-    {
-        shared.debug = true;
+    if !shared.config.skip_startup {
+        shared.ui.startup_window = true;
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -177,16 +177,11 @@ fn init_shared(shared: &mut Shared) {
         shared.ui.use_system_ffmpeg = true;
     }
 
-    if !shared.config.skip_startup {
-        shared.ui.startup_window = true;
-    }
-
-    shared.ui.scale = shared.config.ui_scale;
-
     // if this were false, the first click would always
     // be considered non-UI
     shared.camera.on_ui = true;
 
+    // initialize files to show on startup
     #[cfg(not(target_arch = "wasm32"))]
     if recents_path().exists() {
         let mut str = String::new();
@@ -201,13 +196,6 @@ fn init_shared(shared: &mut Shared) {
     let bytes = include_bytes!("../assets/i18n/en.json").as_slice();
     let en: serde_json::Value = serde_json::from_slice(bytes).unwrap();
     shared.ui.init_default_lang(en);
-
-    //let bytes = include_bytes!("../assets/i18n/id.json").as_slice();
-    //let err = shared.ui.init_lang(bytes);
-    //if err != "" {
-    //    shared.ui.custom_error = err;
-    //    shared.events.open_modal("error_skf", false);
-    //}
 }
 
 #[cfg(not(target_arch = "wasm32"))]
