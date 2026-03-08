@@ -266,6 +266,7 @@ impl ApplicationHandler for App {
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     *self.shared.ui.file_path.lock().unwrap() = vec![_path_buf];
+                    *self.shared.ui.file_type.lock().unwrap() = 2;
                 }
             }
             WindowEvent::CloseRequested => {

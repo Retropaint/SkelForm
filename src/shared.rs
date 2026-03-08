@@ -643,7 +643,7 @@ pub struct Ui {
     pub recent_file_paths: Vec<String>,
 
     pub file_path: Arc<Mutex<Vec<PathBuf>>>,
-    pub file_type: Arc<Mutex<i32>>,
+    pub file_type: Arc<Mutex<i32>>, // 1: image, 2: skf
 
     pub saving: Arc<Mutex<Saving>>,
     pub save_finished: Arc<Mutex<bool>>,
