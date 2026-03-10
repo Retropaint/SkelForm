@@ -823,6 +823,11 @@ impl BackendRenderer {
 
         // animated bones will be used throughout the program
         utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
+        shared.armature.rendered_bones = shared.armature.bones.clone();
+        renderer::construction(
+            &mut shared.armature.rendered_bones,
+            &shared.armature.animated_bones,
+        );
 
         // core rendering logic handled in renderer.rs
         let s = shared;

@@ -1228,6 +1228,8 @@ pub struct Armature {
     pub tex_data: Vec<TextureData>,
     #[serde(skip)]
     pub animated_bones: Vec<Bone>,
+    #[serde(skip)]
+    pub rendered_bones: Vec<Bone>,
 }
 
 impl Armature {

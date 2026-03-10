@@ -64,11 +64,10 @@ pub fn render(
 
     // temporary armature, to be used for rendering
     let mut temp_arm = Armature::default();
-    temp_arm.bones = armature.bones.clone();
     let mut anim_bones = armature.animated_bones.clone();
 
     // adjust anim_bones' verts for new textrues mid-animations
-    temp_arm.bones = anim_bones.clone();
+    temp_arm.bones = armature.animated_bones.clone();
     for b in 0..armature.bones.len() {
         let tex = temp_arm.tex_of(armature.bones[b].id);
         if !armature.bones[b].verts_edited && tex != None {
@@ -112,7 +111,7 @@ pub fn render(
         init_vert_pos = temp_arm.bones[selections.bone_idx].vertices[vert_id].pos;
     }
 
-    construction(&mut temp_arm.bones, &anim_bones);
+    temp_arm.bones = armature.rendered_bones.clone();
 
     // adjust bound/unbound vert's pos after construction
     if renderer.changed_vert_id != -1 {
