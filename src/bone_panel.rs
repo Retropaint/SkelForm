@@ -938,17 +938,26 @@ pub fn texture_effects(
 
     ui.horizontal(|ui| {
         ui.label(&shared_ui.loc("bone_panel.zindex"));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let zindex = bone.zindex as f32;
-            let (edited, value, _) =
-                ui.float_input("zindex".to_string(), shared_ui, zindex, 1., None);
-            if edited {
-                let el = &AnimElement::Zindex;
-                events.save_edited_bone(selections.bone_idx);
-                #[rustfmt::skip]
+        let widgets_width = 70.;
+        ui.add_space(ui.available_width() - widgets_width);
+
+        // zindex input
+        let zindex = bone.zindex as f32;
+        let (edited, value, _) = ui.float_input("zindex".to_string(), shared_ui, zindex, 1., None);
+        if edited {
+            let el = &AnimElement::Zindex;
+            events.save_edited_bone(selections.bone_idx);
+            #[rustfmt::skip]
                 events.edit_bone(bone.id, el, value, "", selections.anim, selections.anim_frame);
-            }
-        });
+        }
+
+        // raise global zindex button
+        let global_str = shared_ui.loc("bone_panel.global_zindex_inc");
+        let global_desc_str = shared_ui.loc("bone_panel.global_zindex_inc_desc");
+        let button = ui.skf_button(global_str).on_hover_text(global_desc_str);
+        if button.clicked() {
+            events.raise_global_zindex(bone.id);
+        }
     });
 
     ui.horizontal(|ui| {

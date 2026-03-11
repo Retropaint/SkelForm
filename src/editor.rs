@@ -30,7 +30,7 @@ pub fn iterate_events(
         type E = Events;
         #[rustfmt::skip]
             match last_event {
-                E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone  => undo_states.new_undo_bones(&armature.bones),
+                E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone | E::RaiseGlobalZindex => undo_states.new_undo_bones(&armature.bones),
                 E::NewAnimation | E::DeleteAnim => undo_states.new_undo_anims(&armature.animations),
                 E::DeleteTex                    => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
                 E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
@@ -868,6 +868,18 @@ pub fn process_event(
                 edit_mode.is_rotating = *current_edit == EditModes::Rotate;
                 edit_mode.is_scaling = *current_edit == EditModes::Scale;
             }
+        }
+        Events::RaiseGlobalZindex => {
+            let bones = &armature.bones;
+            let zindex = bones.iter().find(|b| b.id == value as i32).unwrap().zindex;
+            for bone in &mut armature.bones {
+                if bone.zindex > zindex && bone.tex != "" {
+                    bone.zindex += 1;
+                }
+            }
+            let bones = &mut armature.bones;
+            let bone = bones.iter_mut().find(|b| b.id == value as i32).unwrap();
+            bone.zindex += 1;
         }
         _ => {}
     }
