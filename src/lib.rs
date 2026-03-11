@@ -274,16 +274,19 @@ impl ApplicationHandler for App {
                     let ext = name.split('.').collect::<Vec<_>>()[1]
                         .to_string()
                         .to_lowercase();
-                    if ext == "png" || ext == "webp" {
+
+                    if ext.contains("skf") {
+                        // load .skf or .skfe file
+                        *self.shared.ui.file_path.lock().unwrap() = vec![_path_buf];
+                        *self.shared.ui.file_type.lock().unwrap() = 2;
+                    } else {
+                        // only load images if a style is selected in styles modal
                         if self.shared.selections.style != -1 {
                             self.shared.ui.dropped_file_path.push(_path_buf);
                             self.shared.ui.file_elapsed = Some(Instant::now());
                         } else {
                             self.shared.events.open_modal("img_unselected_style", false);
                         }
-                    } else if ext.contains("skf") {
-                        *self.shared.ui.file_path.lock().unwrap() = vec![_path_buf];
-                        *self.shared.ui.file_type.lock().unwrap() = 2;
                     }
                 }
             }
