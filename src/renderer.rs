@@ -111,7 +111,7 @@ pub fn render(
         init_vert_pos = temp_arm.bones[selections.bone_idx].vertices[vert_id].pos;
     }
 
-    temp_arm.bones = armature.rendered_bones.clone();
+    temp_arm.bones = renderer.temp_bones.clone();
 
     // adjust bound/unbound vert's pos after construction
     if renderer.changed_vert_id != -1 {

@@ -817,7 +817,6 @@ pub fn import<R: Read + std::io::Seek>(
         styles: root.styles.clone(),
         tex_data: vec![],
         animated_bones: vec![],
-        rendered_bones: vec![],
     };
 
     for bone in &mut temp_arm.bones {
