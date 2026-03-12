@@ -40,7 +40,7 @@ pub fn iterate_events(
                 E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframes => {
                     undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
                 }
-                E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts => {
+                E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts | E::NewVertex => {
                     undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
                 }
                 _ => {}

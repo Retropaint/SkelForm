@@ -536,7 +536,11 @@ pub fn render(
     }
 
     // if no SelectBone events have been called, unselect current if mouse is pressed
-    if !camera.on_ui && armature.bones.len() > 0 && edit_mode.sel_time > 0.25 && input.left_clicked
+    if !camera.on_ui
+        && armature.bones.len() > 0
+        && edit_mode.sel_time > 0.25
+        && input.left_clicked
+        && !edit_mode.showing_mesh
     {
         let mut unselect = true;
         for event in &events.events {
