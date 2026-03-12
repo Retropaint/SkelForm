@@ -817,7 +817,7 @@ pub fn render_screenshot(
 }
 
 pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
-    inheritance(bones, std::collections::HashMap::new());
+    inheritance(bones, std::collections::HashMap::new(), &vec![]);
 
     let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
 
@@ -854,8 +854,83 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
 
     // re-construct bones, accounting for rotations saved from IK
     *bones = og_bones.clone();
-    inheritance(bones, ik_rot.clone());
+    inheritance(bones, ik_rot.clone(), &vec![]);
 
+    construct_verts(bones);
+}
+
+pub fn runtime_construction(
+    bones: &mut Vec<Bone>,
+    og_bones: &Vec<Bone>,
+    armature_bones: &mut Vec<Bone>,
+) {
+    inheritance(bones, std::collections::HashMap::new(), &vec![]);
+
+    let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
+
+    let mut done_ids: Vec<i32> = vec![];
+    for b in 0..bones.len() {
+        let ik_id = bones[b].ik_family_id;
+        if bones[b].ik_disabled || ik_id == -1 || done_ids.contains(&ik_id) {
+            continue;
+        }
+
+        done_ids.push(bones[b].ik_family_id);
+
+        let target = bones.iter().find(|bone| bone.id == bones[b].ik_target_id);
+        if target == None {
+            continue;
+        }
+
+        let family: Vec<&Bone> = bones.iter().filter(|b| b.ik_family_id == ik_id).collect();
+        let mut joints = vec![];
+        for bone in family {
+            joints.push(bone.clone());
+        }
+
+        inverse_kinematics(&mut joints, target.unwrap().pos);
+
+        // save rotations for the next forward kinematics call
+        for j in 0..joints.len() {
+            if j == joints.len() - 1 {
+                continue;
+            }
+            ik_rot.insert(joints[j].id, joints[j].rot);
+        }
+    }
+
+    // re-construct bones, accounting for rotations saved from IK
+    *bones = og_bones.clone();
+    inheritance(bones, ik_rot.clone(), &vec![]);
+
+    simulate_physics(armature_bones, bones);
+
+    // re-construct bones, accounting for physics
+    *bones = og_bones.clone();
+    inheritance(bones, ik_rot.clone(), &armature_bones);
+
+    construct_verts(bones);
+}
+
+// simulate physics on the armature, then apply it to constructed bones
+fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<Bone>) {
+    // interpolate global fields, based on constructed bones
+    for b in 0..armature_bones.len() {
+        if armature_bones[b].id > 0 {
+            let s = Vec2::new(0.3, 0.3);
+            let e = Vec2::new(0.6, 0.6);
+            let arm_bone = &mut armature_bones[b];
+            let const_bone = &constructed_bones[b];
+            #[rustfmt::skip] {
+                arm_bone.global_pos.x = utils::interp(2, 10 * b as i32, arm_bone.global_pos.x, const_bone.pos.x, s, e);
+                arm_bone.global_pos.y = utils::interp(2, 10 * b as i32, arm_bone.global_pos.y, const_bone.pos.y, s, e);
+                arm_bone.global_rot   = utils::interp(2, 10 * b as i32, arm_bone.global_rot, const_bone.rot, s, e);
+            };
+        }
+    }
+}
+
+pub fn construct_verts(bones: &mut Vec<Bone>) {
     for b in 0..bones.len() {
         let bone = bones[b].clone();
 
@@ -1142,7 +1217,11 @@ pub fn edit_bone(
     }
 }
 
-pub fn inheritance(bones: &mut Vec<Bone>, ik_rot: std::collections::HashMap<i32, f32>) {
+pub fn inheritance(
+    bones: &mut Vec<Bone>,
+    ik_rot: std::collections::HashMap<i32, f32>,
+    arm_bones: &Vec<Bone>,
+) {
     for i in 0..bones.len() {
         let mut parent: Option<Bone> = None;
         for b in 0..bones.len() {
@@ -1171,6 +1250,15 @@ pub fn inheritance(bones: &mut Vec<Bone>, ik_rot: std::collections::HashMap<i32,
         let ik_rot = ik_rot.get(&bones[i].id);
         if ik_rot != None {
             bones[i].rot = *ik_rot.unwrap();
+        }
+
+        // apply physics, if armature_bones is provided
+        if arm_bones.len() > 0 {
+            if bones[i].id > 0 {
+                bones[i].rot = arm_bones[i].global_rot;
+                bones[i].pos.x = arm_bones[i].global_pos.x;
+                bones[i].pos.y = arm_bones[i].global_pos.y;
+            }
         }
     }
 }

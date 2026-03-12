@@ -824,11 +824,11 @@ impl BackendRenderer {
         // animated bones will be used throughout the program
         utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
         shared.renderer.temp_bones = shared.armature.animated_bones.clone();
-        renderer::construction(
+        renderer::runtime_construction(
             &mut shared.renderer.temp_bones,
             &shared.armature.animated_bones,
+            &mut shared.armature.bones,
         );
-        // interpolated bones go here, after construction
 
         // core rendering logic handled in renderer.rs
         let s = shared;
