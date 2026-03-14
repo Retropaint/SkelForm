@@ -717,7 +717,6 @@ pub fn prepare_files(
 
     for b in 0..armature_copy.bones.len() {
         let bone = &mut armature_copy.bones[b];
-        continue;
         if !bone.phys_pos {
             bone.phys_pos_interp = f32::MAX;
             bone.phys_global_pos = Vec2::new(f32::MAX, f32::MAX);

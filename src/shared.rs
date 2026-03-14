@@ -1072,62 +1072,71 @@ pub struct Bone {
     pub id: i32,
     pub name: String,
     pub parent_id: i32,
-    #[serde(default, skip_serializing_if = "is_str_empty")]
+    #[serde(skip_serializing_if = "is_str_empty")]
     pub tex: String,
     #[serde(default = "default_tint", skip_serializing_if = "is_tint_white")]
     pub tint: TintColor,
-    #[serde(default, skip_serializing_if = "is_neg_one")]
+    #[serde(skip_serializing_if = "is_neg_one")]
     pub zindex: i32,
     pub pos: Vec2,
     pub scale: Vec2,
     pub rot: f32,
-    #[serde(default, skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_false")]
     pub hidden: bool,
 
     #[serde(default = "default_neg_one")]
     pub ik_family_id: i32,
     #[rustfmt::skip]
-    #[serde(default, skip_serializing_if = "no_constraints")]
+    #[serde(skip_serializing_if = "no_constraints")]
     pub ik_constraint: JointConstraint,
-    #[serde(default, skip_serializing_if = "no_ik_mode")]
+    #[serde(skip_serializing_if = "no_ik_mode")]
     pub ik_mode: InverseKinematicsMode,
     #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
     pub ik_target_id: i32,
-    #[serde(default, skip_serializing_if = "is_i32_empty")]
+    #[serde(skip_serializing_if = "is_i32_empty")]
     pub ik_bone_ids: Vec<i32>,
 
+    #[serde(skip_serializing_if = "is_false")]
     pub phys_pos: bool,
+    #[serde(skip_serializing_if = "is_vec2_max")]
     pub phys_global_pos: Vec2,
+    #[serde(skip_serializing_if = "is_max")]
     pub phys_pos_interp: f32,
 
+    #[serde(skip_serializing_if = "is_false")]
     pub phys_rot: bool,
+    #[serde(skip_serializing_if = "is_max")]
     pub phys_global_rot: f32,
+    #[serde(skip_serializing_if = "is_max")]
     pub phys_rot_interp: f32,
 
+    #[serde(skip_serializing_if = "is_false")]
     pub phys_scale: bool,
+    #[serde(skip_serializing_if = "is_vec2_max")]
     pub phys_global_scale: Vec2,
+    #[serde(skip_serializing_if = "is_max")]
     pub phys_scale_interp: f32,
 
     // todo:
     // these should be private, but that upsets
     // default constructor for some reason
-    #[serde(default, skip_deserializing)]
+    #[serde(skip_deserializing)]
     pub init_pos: Vec2,
-    #[serde(default, skip_deserializing)]
+    #[serde(skip_deserializing)]
     pub init_scale: Vec2,
-    #[serde(default, skip_deserializing)]
+    #[serde(skip_deserializing)]
     pub init_rot: f32,
-    #[serde(default, skip_serializing_if = "no_constraints", skip_deserializing)]
+    #[serde(skip_serializing_if = "no_constraints", skip_deserializing)]
     pub init_ik_constraint: JointConstraint,
-    #[serde(default, skip_serializing_if = "no_ik_mode", skip_deserializing)]
+    #[serde(skip_serializing_if = "no_ik_mode", skip_deserializing)]
     pub init_ik_mode: InverseKinematicsMode,
-    #[serde(default, skip_serializing_if = "is_false", skip_deserializing)]
+    #[serde(skip_serializing_if = "is_false", skip_deserializing)]
     pub init_hidden: bool,
-    #[serde(default, skip_serializing_if = "is_str_empty", skip_deserializing)]
+    #[serde(skip_serializing_if = "is_str_empty", skip_deserializing)]
     pub init_tex: String,
     #[serde(default = "default_tint", skip_serializing_if = "is_tint_white")]
     pub init_tint: TintColor,
-    #[serde(default, skip_serializing_if = "is_neg_one")]
+    #[serde(skip_serializing_if = "is_neg_one")]
     pub init_zindex: i32,
 
     #[serde(default, skip_serializing_if = "are_verts_empty")]
@@ -2735,6 +2744,10 @@ fn no_ik_mode(value: &InverseKinematicsMode) -> bool {
 
 fn is_false(value: &bool) -> bool {
     *value == false
+}
+
+fn is_vec2_max(value: &Vec2) -> bool {
+    *value == Vec2::new(f32::MAX, f32::MAX)
 }
 
 pub fn f32_as_bool(value: f32) -> bool {
