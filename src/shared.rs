@@ -2302,6 +2302,8 @@ pub enum Events {
     ToggleEditModifying,
     ToggleEditSnapping,
     RaiseGlobalZindex,
+
+    TogglePhysField,
 }
 
 enum_string!(Events);
@@ -2409,6 +2411,7 @@ impl EventState {
     event_with_value!(toggle_edit_snapping, E::ToggleEditSnapping, mode, u32);
     event_with_value!(update_current_editing, E::UpdateCurrentEditing, mode, u32);
     event_with_value!(raise_global_zindex, E::RaiseGlobalZindex, bone_id, i32);
+    event_with_value!(toggle_phys_field, E::TogglePhysField, field, i32); // 0 - pos, 1 - rot, 2 - scale
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

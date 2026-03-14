@@ -920,19 +920,21 @@ pub fn runtime_construction(
 fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<Bone>) {
     // interpolate global fields, based on constructed bones
     for b in 0..armature_bones.len() {
-        if armature_bones[b].id > 0 {
-            let s = Vec2::new(0.3, 0.3);
-            let e = Vec2::new(0.6, 0.6);
-            let arm_bone = &mut armature_bones[b];
-            let const_bone = &constructed_bones[b];
-            let prev_pos = arm_bone.phys_global_pos;
+        let s = Vec2::new(0.3, 0.3);
+        let e = Vec2::new(0.6, 0.6);
+        let arm_bone = &mut armature_bones[b];
+        let const_bone = &constructed_bones[b];
+        let prev_pos = arm_bone.phys_global_pos;
 
-            // interpolate position
-            #[rustfmt::skip] {
-                arm_bone.phys_global_pos.x = utils::interp(2, 10 * b as i32, arm_bone.phys_global_pos.x, const_bone.pos.x, s, e);
-                arm_bone.phys_global_pos.y = utils::interp(2, 10 * b as i32, arm_bone.phys_global_pos.y, const_bone.pos.y, s, e);
-            };
+        // interpolate position
+        if arm_bone.phys_pos || arm_bone.phys_rot {
+            let phys_pos = &mut arm_bone.phys_global_pos;
+            phys_pos.x = utils::interp(2, 10 * b as i32, phys_pos.x, const_bone.pos.x, s, e);
+            phys_pos.y = utils::interp(2, 10 * b as i32, phys_pos.y, const_bone.pos.y, s, e);
+        }
 
+        // interpolate rotation
+        if arm_bone.phys_rot {
             // swing rotation based on momentum
             let strength = (arm_bone.phys_global_pos - prev_pos).mag();
             let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
@@ -941,8 +943,15 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
             arm_bone.phys_global_rot += rot * strength / 750. * (b as f32 * 1.5);
 
             // slowly reset rotation back to rest
-            let rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, arm_bone.rot);
+            let rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, const_bone.rot);
             arm_bone.phys_global_rot += rot / 10.;
+        }
+
+        // interpolate scale
+        if arm_bone.phys_scale {
+            let phys_scale = &mut arm_bone.phys_global_scale;
+            phys_scale.x = utils::interp(2, 10 * b as i32, phys_scale.x, const_bone.scale.x, s, e);
+            phys_scale.y = utils::interp(2, 10 * b as i32, phys_scale.y, const_bone.scale.y, s, e);
         }
     }
 }
@@ -1271,10 +1280,14 @@ pub fn inheritance(
 
         // apply physics, if armature_bones is provided
         if arm_bones.len() > 0 {
-            if bones[i].id > 0 {
+            if bones[i].phys_rot {
                 bones[i].rot = arm_bones[i].phys_global_rot;
-                //bones[i].pos.x = arm_bones[i].global_pos.x;
-                //bones[i].pos.y = arm_bones[i].global_pos.y;
+            }
+            if bones[i].phys_pos {
+                bones[i].pos = arm_bones[i].phys_global_pos;
+            }
+            if bones[i].phys_scale {
+                bones[i].scale = arm_bones[i].phys_global_scale;
             }
         }
     }

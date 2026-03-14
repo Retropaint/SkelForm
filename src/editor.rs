@@ -881,6 +881,15 @@ pub fn process_event(
             let bone = bones.iter_mut().find(|b| b.id == value as i32).unwrap();
             bone.zindex += 1;
         }
+        Events::TogglePhysField => {
+            let bone = armature.sel_bone_mut(selections).unwrap();
+            match value as i32 {
+                0 => bone.phys_pos = !bone.phys_pos,
+                1 => bone.phys_rot = !bone.phys_rot,
+                2 => bone.phys_scale = !bone.phys_scale,
+                _ => {}
+            }
+        }
         _ => {}
     }
 }

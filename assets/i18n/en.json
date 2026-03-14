@@ -239,6 +239,12 @@
       "density_desc": "A higher gap spaces out potential points. Increase if there are too many points close to each other",
       "padding_desc": "Extra space around the image, allowing points to be more accurate around edges"
     },
+    "physics": {
+      "heading": "Physics",
+      "pos": "Position: ",
+      "rot": "Rotation: ",
+      "scale": "Scale: "
+    },
     "texture_effects": {
       "heading": "Texture & Visuals"
     }

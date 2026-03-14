@@ -268,6 +268,8 @@ pub fn draw(
         }
     }
 
+    physics(ui, &bone, selections, shared_ui, config, armature, events);
+
     ui.add_space(20.);
 }
 
@@ -996,4 +998,97 @@ pub fn edit_bones(
     for id in bone_ids {
         events.edit_bone(*id, &element, value, value_str, anim_sel, anim_frame);
     }
+}
+
+pub fn physics(
+    ui: &mut egui::Ui,
+    bone: &Bone,
+    selections: &mut SelectionState,
+    shared_ui: &mut crate::Ui,
+    config: &Config,
+    armature: &Armature,
+    events: &mut EventState,
+) {
+    let sel = selections.clone();
+    let str_heading = &shared_ui.loc("bone_panel.physics.heading").clone();
+    let str_desc = &shared_ui.loc("bone_panel.physics.desc").clone();
+    let frame = egui::Frame::new()
+        .fill(config.colors.dark_accent.into())
+        .inner_margin(egui::Margin::same(5));
+
+    frame.show(ui, |ui| {
+        ui.horizontal(|ui| {
+            ui.label(str_heading).on_hover_text(str_desc);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
+                let pointing_hand = egui::CursorIcon::PointingHand;
+                if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
+                    let ik_folded = armature.sel_bone(&sel).unwrap().ik_folded;
+                    events.toggle_ik_folded(if ik_folded { 0 } else { 1 });
+                }
+
+                if armature.bone_eff(bone.id) == JointEffector::None {
+                    return;
+                }
+
+                //let mut enabled = !bone.ik_disabled;
+                //let str_desc = &shared_ui.loc("bone_panel.inverse_kinematics.enabled_desc");
+                //let checkbox = ui
+                //    .add_enabled(is_root, egui::Checkbox::new(&mut enabled, "".into_atoms()))
+                //    .on_hover_text(str_desc);
+                //if checkbox.clicked() {
+                //    let mut bones = vec![];
+                //    armature_window::get_all_children(&armature.bones, &mut bones, &bone);
+                //    bones.push(bone.clone());
+                //    for b in 0..bones.len() {
+                //        let disabled = armature.bones[b].ik_disabled;
+                //        events.toggle_bone_ik_disabled(b, !disabled);
+                //    }
+
+                //    if is_root {
+                //        return;
+                //    }
+
+                //    // emable parents IK as well
+
+                //    let parents = armature.get_all_parents(bone.id);
+                //    for p in parents {
+                //        if armature.bone_eff(p.id) == JointEffector::None {
+                //            continue;
+                //        }
+
+                //        let idx = armature.bones.iter().position(|b| b.id == p.id).unwrap();
+                //        events.toggle_bone_ik_disabled(idx, false);
+                //    }
+                //}
+            })
+        });
+    });
+    ui.add_space(2.5);
+
+    if bone.ik_folded {
+        return;
+    }
+
+    macro_rules! checkbox {
+        ($label:expr, $toggle:expr, $toggle_int:expr) => {
+            ui.horizontal(|ui| {
+                ui.label($label);
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let mut field = $toggle;
+                    ui.checkbox(&mut field, "".into_atoms());
+                    if field != $toggle {
+                        events.toggle_phys_field($toggle_int);
+                    }
+                });
+            });
+        };
+    }
+    checkbox!(shared_ui.loc("bone_panel.physics.pos"), bone.phys_pos, 0);
+    checkbox!(shared_ui.loc("bone_panel.physics.rot"), bone.phys_rot, 1);
+    checkbox!(
+        shared_ui.loc("bone_panel.physics.scale"),
+        bone.phys_scale,
+        2
+    );
 }
