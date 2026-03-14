@@ -261,11 +261,11 @@ impl ApplicationHandler for App {
             WindowEvent::HoveredFileCancelled => {
                 self.shared.ui.modal = false;
             }
+            // process dragged and dropped files
             WindowEvent::DroppedFile(_path_buf) => {
                 self.shared.ui.modal = false;
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    // check if it's an skf or image file
                     let raw_name = _path_buf.as_path().file_name().unwrap();
                     let name = raw_name.to_str().unwrap().to_string();
                     if !name.contains(".") {
@@ -274,16 +274,19 @@ impl ApplicationHandler for App {
                     let ext = name.split('.').collect::<Vec<_>>()[1]
                         .to_string()
                         .to_lowercase();
-                    if ext == "png" || ext == "webp" {
+
+                    if ext.contains("skf") {
+                        // load .skf or .skfe file
+                        *self.shared.ui.file_path.lock().unwrap() = vec![_path_buf];
+                        *self.shared.ui.file_type.lock().unwrap() = 2;
+                    } else {
+                        // only load images if a style is selected in styles modal
                         if self.shared.selections.style != -1 {
                             self.shared.ui.dropped_file_path.push(_path_buf);
                             self.shared.ui.file_elapsed = Some(Instant::now());
                         } else {
                             self.shared.events.open_modal("img_unselected_style", false);
                         }
-                    } else if ext.contains("skf") {
-                        *self.shared.ui.file_path.lock().unwrap() = vec![_path_buf];
-                        *self.shared.ui.file_type.lock().unwrap() = 2;
                     }
                 }
             }
@@ -325,11 +328,15 @@ impl ApplicationHandler for App {
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     let undo = &mut self.shared.undo_states;
+
+                    // mark window as unsaved if prev_undo_actions doesn't match
                     if undo.prev_undo_actions != undo.undo_actions.len() {
                         self.shared.ui.changed_window_name = false;
                         undo.prev_undo_actions = undo.undo_actions.len();
                     }
+
                     if !self.shared.ui.changed_window_name {
+                        // show loaded filename as window name
                         let file = if self.shared.ui.save_path == None {
                             "SkelForm".to_string()
                         } else {
@@ -337,12 +344,15 @@ impl ApplicationHandler for App {
                             let filename = path.as_path().file_name().unwrap();
                             filename.to_str().unwrap().to_string()
                         };
+
+                        // show asterisk after name if unsaved
                         let undo = &self.shared.undo_states;
                         let unsaved = if undo.unsaved_undo_actions != undo.undo_actions.len() {
                             " *"
                         } else {
                             ""
                         };
+
                         let title =
                             file + " - v" + &env!("CARGO_PKG_VERSION").to_string() + unsaved;
                         window.set_title(&title);
@@ -755,6 +765,7 @@ impl BackendRenderer {
             && shared.ui.file_elapsed.unwrap().elapsed().as_millis() > 150
         {
             *shared.ui.file_path.lock().unwrap() = shared.ui.dropped_file_path.clone();
+            println!("{}", shared.ui.file_path.lock().unwrap().len());
             let name = shared.ui.file_path.lock().unwrap()[0]
                 .as_path()
                 .file_name()

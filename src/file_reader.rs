@@ -57,8 +57,6 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
         func!(add_pending_textures);
         shared.ui.done_pending = false;
     }
-
-    *shared.ui.file_path.lock().unwrap() = vec![];
 }
 
 /// read temporary files created from file dialogs (native & WASM)

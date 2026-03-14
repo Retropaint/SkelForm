@@ -1683,6 +1683,8 @@ pub struct Root {
     pub animations: Vec<Animation>,
     pub atlases: Vec<TexAtlas>,
     pub styles: Vec<Style>,
+    #[serde(default, skip_deserializing)]
+    pub cached_bones_comment: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
@@ -2290,6 +2292,7 @@ pub enum Events {
     SetTemporaryEditMode,
     ToggleEditModifying,
     ToggleEditSnapping,
+    RaiseGlobalZindex,
 }
 
 enum_string!(Events);
@@ -2396,6 +2399,7 @@ impl EventState {
     event_with_value!(toggle_edit_modifying, E::ToggleEditModifying, mode, u32);
     event_with_value!(toggle_edit_snapping, E::ToggleEditSnapping, mode, u32);
     event_with_value!(update_current_editing, E::UpdateCurrentEditing, mode, u32);
+    event_with_value!(raise_global_zindex, E::RaiseGlobalZindex, bone_id, i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

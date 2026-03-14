@@ -479,7 +479,6 @@ pub fn kb_inputs(
         || shared_ui.polar_modal
         || shared_ui.settings_modal
         || shared_ui.export_modal
-        || shared_ui.warnings_open
         || shared_ui.lang_import_modal;
     if modal_open {
         if input.consume_shortcut(&config.keys.cancel) {
@@ -489,7 +488,6 @@ pub fn kb_inputs(
             shared_ui.settings_modal = false;
             shared_ui.atlas_modal = false;
             shared_ui.export_modal = false;
-            shared_ui.warnings_open = false;
             shared_ui.context_menu.id = "".to_string();
             events.select_style(-1);
         }

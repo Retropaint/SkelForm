@@ -63,6 +63,7 @@ pub fn draw(
                         };
                     }
 
+                    // tab selectors (Armature, Sprite, etc)
                     let str_armature = shared_ui.loc("export_modal.header_armature").clone();
                     let str_image = shared_ui.loc("export_modal.header_image").clone();
                     let str_video = shared_ui.loc("export_modal.header_video").clone();
@@ -76,6 +77,7 @@ pub fn draw(
                 });
             });
 
+            // show selected tab
             egui::Frame::new().show(ui, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     let layout = egui::Layout::top_down(egui::Align::Min);
@@ -90,12 +92,14 @@ pub fn draw(
                 });
             });
 
+            // hide export button on these conditions
             let image_or_vid = shared_ui.settings_state == SettingsState::Editing
                 || shared_ui.settings_state == SettingsState::Keyboard;
             if image_or_vid && armature.animations.len() == 0 {
                 return;
             }
 
+            // export button
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                 ui.horizontal(|ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -115,6 +119,7 @@ pub fn draw(
         });
     });
 
+    // process selected export
     if !pressed_export {
         return;
     }
@@ -266,6 +271,8 @@ pub fn image_export(
     }
 
     ui.add_space(10.);
+
+    // export type (spritesheet, sequence, etc)
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.image.export_type"));
         let str_sequences = shared_ui.loc("export_modal.image.sequences");
@@ -284,6 +291,7 @@ pub fn image_export(
             .response;
     });
 
+    // sprites per row if spritesheet is selected
     ui.add_enabled_ui(!shared_ui.image_sequences, |ui: &mut egui::Ui| {
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("export_modal.image.sprites_per_row"));
@@ -296,6 +304,8 @@ pub fn image_export(
     });
 
     ui.add_space(10.);
+
+    // size per sprite (width & height)
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.image.size_per_sprite"));
         let x = shared_ui.sprite_size.x;
@@ -312,6 +322,8 @@ pub fn image_export(
     });
 
     ui.add_space(20.);
+
+    // selecting which animations to export
     egui::Frame::new()
         .fill(config.colors.dark_accent.into())
         .inner_margin(egui::Margin::same(5))
@@ -332,12 +344,13 @@ pub fn image_export(
                 ui.set_width(width + 10.);
                 ui.label(anim.name.to_string());
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let mut meta_col = config.colors.text;
-                    meta_col -= crate::Color::new(40, 40, 40, 0);
                     ui.checkbox(&mut shared_ui.exporting_anims[a], "".into_atoms())
                         .on_hover_text(shared_ui.loc("export_modal.image.animations_check_desc"));
                     ui.add_space(10.);
                     let total_frames = anim.keyframes.last();
+
+                    // show frame info, if this animation has any
+                    // (frameless anims are allowed for export)
                     if total_frames == None {
                         return;
                     }
@@ -345,6 +358,8 @@ pub fn image_export(
                         + &" FPS  -  ".to_string()
                         + &total_frames.unwrap().frame.to_string()
                         + &shared_ui.loc("export_modal.image.frames");
+                    let mut meta_col = config.colors.text;
+                    meta_col -= crate::Color::new(40, 40, 40, 0);
                     ui.label(egui::RichText::new(str).color(meta_col));
                 });
             });
@@ -361,11 +376,13 @@ pub fn video_export(
     ui.heading(shared_ui.loc("export_modal.video.header"));
     let _width = ui.available_width() - 20.;
 
+    // don't show video export if armature has no animations
     if armature.animations.len() == 0 {
         ui.label(shared_ui.loc("export_modal.no_anims"));
         return;
     }
 
+    // which animation to export as video
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.video.animation"));
         let anim_idx = shared_ui.exporting_video_anim;
@@ -380,6 +397,7 @@ pub fn video_export(
         });
     });
 
+    // video format (mp4, gif, etc)
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.video.format"));
         let dropdown = egui::ComboBox::new("export_video", "")
@@ -392,6 +410,7 @@ pub fn video_export(
         });
     });
 
+    // resolution (width & height)
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.video.resolution"));
         let x = shared_ui.sprite_size.x;
@@ -407,6 +426,7 @@ pub fn video_export(
         }
     });
 
+    // background (clear) color
     let is_mp4 = shared_ui.exporting_video_type == crate::ExportVideoType::Mp4;
     ui.add_enabled_ui(is_mp4, |ui| {
         ui.horizontal(|ui| {
@@ -418,6 +438,7 @@ pub fn video_export(
         });
     });
 
+    // loop cycles
     if !is_mp4 {
         shared_ui.anim_cycles = 1;
     }
@@ -463,12 +484,17 @@ pub fn video_export(
                 });
             });
         }
+
+        // allow using system (global) ffmpeg, if user already has it and prefers
+        // not to download local
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("export_modal.video.use_system_ffmpeg"))
                 .on_hover_text(shared_ui.loc("export_modal.video.use_system_ffmpeg_desc"));
             ui.checkbox(&mut shared_ui.use_system_ffmpeg, "".into_atoms());
         });
 
+        // don't allow downloading local for macos, since it's bundled by default
+        // due to file permission issues
         #[cfg(target_os = "macos")]
         {
             return;
@@ -497,7 +523,7 @@ pub fn video_export(
                 final_bin_name = "ffmpeg";
             }
 
-            // get zip file
+            // get downloaded zip file
             let resp = ureq::get(base_url.to_string() + bin_name).call().unwrap();
             let mut ffmpeg_zip =
                 std::fs::File::create(utils::bin_path().join("ffmpeg.zip")).unwrap();
@@ -506,6 +532,7 @@ pub fn video_export(
                 _ = ffmpeg_zip.write(&bytes);
             }
 
+            // extract ffmpeg from zip
             let options = OpenOptions::new()
                 .append(true)
                 .read(true)
@@ -525,6 +552,7 @@ pub fn video_export(
                 Err(_) => {}
             }
 
+            // set correct permissions for ffmpeg binary
             let ffmpeg_bin = std::fs::File::open(utils::bin_path().join(final_bin_name)).unwrap();
             let mut perms = ffmpeg_bin.metadata().unwrap().permissions();
             perms.set_readonly(false);
@@ -535,12 +563,17 @@ pub fn video_export(
             }
         }
         ui.add_space(2.5);
+
+        // note for downloading ffmpeg locally
         #[allow(unused_mut)]
         let mut size_warning = "";
         #[allow(unused_mut)]
         let mut ext = "";
         #[cfg(target_os = "windows")]
         {
+            // warn Windows users about comically large ffmpeg file
+            // the download is 30mb but install size is used to be safe,
+            // since most users don't know the difference
             size_warning = " (>100mb).\nThe program will freeze during download, do not close it";
             ext = ".exe";
         }

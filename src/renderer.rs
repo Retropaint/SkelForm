@@ -535,7 +535,11 @@ pub fn render(
     }
 
     // if no SelectBone events have been called, unselect current if mouse is pressed
-    if !camera.on_ui && armature.bones.len() > 0 && edit_mode.sel_time > 0.25 && input.left_clicked
+    if !camera.on_ui
+        && armature.bones.len() > 0
+        && edit_mode.sel_time > 0.25
+        && input.left_clicked
+        && !edit_mode.showing_mesh
     {
         let mut unselect = true;
         for event in &events.events {
@@ -1078,7 +1082,7 @@ pub fn arc_ik(bones: &mut Vec<Bone>, root: Vec2, target: Vec2) {
 
     for b in 1..bones.len() {
         bones[b].pos = Vec2::new(
-            root.x - (root.x - bones[b].pos.x) * valley,
+            bones[b].pos.x * valley,
             root.y + (1. - peak) * (dist[b] * 3.14).sin() * base_mag,
         );
 
