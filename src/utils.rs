@@ -1385,7 +1385,14 @@ pub fn color_within_range(src: [u8; 3], dst: [u8; 3], tol: u8) -> bool {
 // I admit defeat:
 // https://chatgpt.com/share/697de90a-5a08-8004-9551-326e2ba6aee2
 pub fn shortest_angle_delta(from: f32, to: f32) -> f32 {
+    let pi = 3.141592653589793;
+    let tau = pi * 2.0;
     let mut delta = to - from;
-    delta = (delta + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;
+    while delta > pi {
+        delta -= tau;
+    }
+    while delta < -pi {
+        delta += tau;
+    }
     delta
 }
