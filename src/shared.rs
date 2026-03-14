@@ -1096,10 +1096,17 @@ pub struct Bone {
     #[serde(default, skip_serializing_if = "is_i32_empty")]
     pub ik_bone_ids: Vec<i32>,
 
-    pub physics_interp: f32,
-    pub global_pos: Vec2,
-    pub global_rot: f32,
-    pub global_scale: Vec2,
+    pub phys_pos: bool,
+    pub phys_global_pos: Vec2,
+    pub phys_pos_interp: f32,
+
+    pub phys_rot: bool,
+    pub phys_global_rot: f32,
+    pub phys_rot_interp: f32,
+
+    pub phys_scale: bool,
+    pub phys_global_scale: Vec2,
+    pub phys_scale_interp: f32,
 
     // todo:
     // these should be private, but that upsets

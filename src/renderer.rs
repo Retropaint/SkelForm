@@ -921,24 +921,24 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
             let e = Vec2::new(0.6, 0.6);
             let arm_bone = &mut armature_bones[b];
             let const_bone = &constructed_bones[b];
-            let prev_pos = arm_bone.global_pos;
+            let prev_pos = arm_bone.phys_global_pos;
 
             // interpolate position
             #[rustfmt::skip] {
-                arm_bone.global_pos.x = utils::interp(2, 10 * b as i32, arm_bone.global_pos.x, const_bone.pos.x, s, e);
-                arm_bone.global_pos.y = utils::interp(2, 10 * b as i32, arm_bone.global_pos.y, const_bone.pos.y, s, e);
+                arm_bone.phys_global_pos.x = utils::interp(2, 10 * b as i32, arm_bone.phys_global_pos.x, const_bone.pos.x, s, e);
+                arm_bone.phys_global_pos.y = utils::interp(2, 10 * b as i32, arm_bone.phys_global_pos.y, const_bone.pos.y, s, e);
             };
 
             // swing rotation based on momentum
-            let strength = (arm_bone.global_pos - prev_pos).mag();
-            let vel = (arm_bone.global_pos - prev_pos).normalize();
+            let strength = (arm_bone.phys_global_pos - prev_pos).mag();
+            let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
             let angle = (-vel.y).atan2(-vel.x);
-            let rot = utils::shortest_angle_delta(arm_bone.global_rot, angle);
-            arm_bone.global_rot += rot * strength / 750. * (b as f32 * 1.5);
+            let rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, angle);
+            arm_bone.phys_global_rot += rot * strength / 750. * (b as f32 * 1.5);
 
             // slowly reset rotation back to rest
-            let rot = utils::shortest_angle_delta(arm_bone.global_rot, arm_bone.rot);
-            arm_bone.global_rot += rot / 10.;
+            let rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, arm_bone.rot);
+            arm_bone.phys_global_rot += rot / 10.;
         }
     }
 }
@@ -1268,7 +1268,7 @@ pub fn inheritance(
         // apply physics, if armature_bones is provided
         if arm_bones.len() > 0 {
             if bones[i].id > 0 {
-                bones[i].rot = arm_bones[i].global_rot;
+                bones[i].rot = arm_bones[i].phys_global_rot;
                 //bones[i].pos.x = arm_bones[i].global_pos.x;
                 //bones[i].pos.y = arm_bones[i].global_pos.y;
             }
