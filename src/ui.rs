@@ -1394,7 +1394,7 @@ fn render_bar(
 
         if shared_ui.render_bar.expanded {
             ui.set_width(101.);
-            ui.set_height(122.);
+            //ui.set_height(122.);
         }
 
         macro_rules! button {
