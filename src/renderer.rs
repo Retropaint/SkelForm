@@ -468,14 +468,25 @@ pub fn render(
             #[rustfmt::skip]
             let (mut verts_l, mut indices_l, _) = vert_lines(bone, &temp_arm.bones, &mouse, nw, false, false, camera, input, renderer);
 
-            // color wireframes based on bone group color
-            for vert in &mut verts_p {
-                vert.color = bone.group_color;
-                vert.color.a -= 75;
-            }
-            for vert in &mut verts_l {
-                vert.color = bone.group_color;
-                vert.color.a -= 125;
+            // color wireframes
+            if bone.group_color.a == 0 {
+                for vert in &mut verts_p {
+                    vert.color = config.colors.center_point;
+                    vert.color.a = vert.color.a.saturating_sub(75);
+                }
+                for vert in &mut verts_l {
+                    vert.color = config.colors.center_point;
+                    vert.color.a = vert.color.a.saturating_sub(125);
+                }
+            } else {
+                for vert in &mut verts_p {
+                    vert.color = bone.group_color;
+                    vert.color.a = vert.color.a.saturating_sub(75);
+                }
+                for vert in &mut verts_l {
+                    vert.color = bone.group_color;
+                    vert.color.a = vert.color.a.saturating_sub(125);
+                }
             }
 
             verts.append(&mut verts_p);
