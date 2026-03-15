@@ -552,6 +552,7 @@ pub fn render(
         && edit_mode.sel_time > 0.25
         && input.left_clicked
         && !edit_mode.showing_mesh
+        && !edit_mode.setting_bind_verts
     {
         let mut unselect = true;
         for event in &events.events {
