@@ -540,6 +540,7 @@ pub fn render(
         && edit_mode.sel_time > 0.25
         && input.left_clicked
         && !edit_mode.showing_mesh
+        && !edit_mode.setting_bind_verts
     {
         let mut unselect = true;
         for event in &events.events {
@@ -934,13 +935,16 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
         }
 
         // interpolate rotation
+        // 'interpolation' here is conceptual - to avoid roundabouts, shortest_delta is always used
         if arm_bone.phys_rot {
             // swing rotation based on momentum
-            let strength = (arm_bone.phys_global_pos - prev_pos).mag();
             let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
             let angle = (-vel.y).atan2(-vel.x);
             let rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, angle);
-            arm_bone.phys_global_rot += rot * strength / 750. * (b as f32 * 1.5);
+            if arm_bone.phys_rot_resistance > 50. {
+                let strength = (arm_bone.phys_global_pos - prev_pos).mag();
+                arm_bone.phys_global_rot += rot * strength / arm_bone.phys_rot_resistance;
+            }
 
             // slowly reset rotation back to rest
             let rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, const_bone.rot);

@@ -1108,7 +1108,7 @@ pub struct Bone {
     #[serde(skip_serializing_if = "is_max")]
     pub phys_global_rot: f32,
     #[serde(skip_serializing_if = "is_max")]
-    pub phys_rot_interp: f32,
+    pub phys_rot_resistance: f32,
 
     #[serde(skip_serializing_if = "is_false")]
     pub phys_scale: bool,
@@ -2304,6 +2304,7 @@ pub enum Events {
     RaiseGlobalZindex,
 
     TogglePhysField,
+    SetPhysResistance,
 }
 
 enum_string!(Events);
@@ -2412,6 +2413,7 @@ impl EventState {
     event_with_value!(update_current_editing, E::UpdateCurrentEditing, mode, u32);
     event_with_value!(raise_global_zindex, E::RaiseGlobalZindex, bone_id, i32);
     event_with_value!(toggle_phys_field, E::TogglePhysField, field, i32); // 0 - pos, 1 - rot, 2 - scale
+    event_with_value!(set_phys_resistance, E::SetPhysResistance, res, f32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

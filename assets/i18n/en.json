@@ -243,7 +243,8 @@
       "heading": "Physics",
       "pos": "Position: ",
       "rot": "Rotation: ",
-      "scale": "Scale: "
+      "scale": "Scale: ",
+      "resistance": "Resistance:"
     },
     "texture_effects": {
       "heading": "Texture & Visuals"

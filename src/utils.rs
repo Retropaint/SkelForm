@@ -722,7 +722,7 @@ pub fn prepare_files(
             bone.phys_global_pos = Vec2::new(f32::MAX, f32::MAX);
         }
         if !bone.phys_rot {
-            bone.phys_rot_interp = f32::MAX;
+            bone.phys_rot_resistance = f32::MAX;
             bone.phys_global_rot = f32::MAX;
         }
         if !bone.phys_scale {

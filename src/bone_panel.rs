@@ -1086,9 +1086,20 @@ pub fn physics(
     }
     checkbox!(shared_ui.loc("bone_panel.physics.pos"), bone.phys_pos, 0);
     checkbox!(shared_ui.loc("bone_panel.physics.rot"), bone.phys_rot, 1);
-    checkbox!(
-        shared_ui.loc("bone_panel.physics.scale"),
-        bone.phys_scale,
-        2
-    );
+    let sui = &shared_ui;
+    checkbox!(sui.loc("bone_panel.physics.scale"), bone.phys_scale, 2);
+
+    if bone.phys_rot {
+        ui.horizontal(|ui| {
+            ui.label(shared_ui.loc("bone_panel.physics.resistance"));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let res = bone.phys_rot_resistance;
+                let (edited, value, _) =
+                    ui.float_input("phys_rot_res".to_string(), shared_ui, res, 1., None);
+                if edited {
+                    events.set_phys_resistance(value);
+                }
+            });
+        });
+    }
 }

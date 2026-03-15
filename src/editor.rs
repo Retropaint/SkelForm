@@ -890,6 +890,10 @@ pub fn process_event(
                 _ => {}
             }
         }
+        Events::SetPhysResistance => {
+            let bone = armature.sel_bone_mut(selections).unwrap();
+            bone.phys_rot_resistance = value;
+        }
         _ => {}
     }
 }
