@@ -881,18 +881,17 @@ pub fn process_event(
             let bone = bones.iter_mut().find(|b| b.id == value as i32).unwrap();
             bone.zindex += 1;
         }
-        Events::TogglePhysField => {
-            let bone = armature.sel_bone_mut(selections).unwrap();
-            match value as i32 {
-                0 => bone.phys_pos = !bone.phys_pos,
-                1 => bone.phys_rot = !bone.phys_rot,
-                2 => bone.phys_scale = !bone.phys_scale,
-                _ => {}
-            }
-        }
-        Events::SetPhysResistance => {
+        Events::SetRotResistance => {
             let bone = armature.sel_bone_mut(selections).unwrap();
             bone.phys_rot_resistance = value;
+        }
+        Events::SetPosElasticity => {
+            let bone = armature.sel_bone_mut(selections).unwrap();
+            bone.phys_pos_elasticity = value;
+        }
+        Events::SetScaleElasticity => {
+            let bone = armature.sel_bone_mut(selections).unwrap();
+            bone.phys_scale_elasticity = value;
         }
         _ => {}
     }

@@ -717,16 +717,16 @@ pub fn prepare_files(
 
     for b in 0..armature_copy.bones.len() {
         let bone = &mut armature_copy.bones[b];
-        if !bone.phys_pos {
-            bone.phys_pos_interp = f32::MAX;
+        if bone.phys_pos_elasticity < 1. {
+            bone.phys_pos_elasticity = f32::MAX;
             bone.phys_global_pos = Vec2::new(f32::MAX, f32::MAX);
         }
-        if !bone.phys_rot {
+        if bone.phys_rot_resistance == 0. {
             bone.phys_rot_resistance = f32::MAX;
             bone.phys_global_rot = f32::MAX;
         }
-        if !bone.phys_scale {
-            bone.phys_scale_interp = f32::MAX;
+        if bone.phys_scale_elasticity == 0. {
+            bone.phys_scale_elasticity = f32::MAX;
             bone.phys_global_scale = Vec2::new(f32::MAX, f32::MAX);
         }
     }

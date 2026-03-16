@@ -244,7 +244,9 @@
       "pos": "Position: ",
       "rot": "Rotation: ",
       "scale": "Scale: ",
-      "resistance": "Resistance:"
+      "resistance": "Resistance:",
+      "pos_elasticity": "Pos. Elasticity:",
+      "scale_elasticity": "Scale Elasticity:"
     },
     "texture_effects": {
       "heading": "Texture & Visuals"

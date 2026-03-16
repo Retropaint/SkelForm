@@ -939,15 +939,16 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
         let prev_pos = arm_bone.phys_global_pos;
 
         // interpolate position
-        if arm_bone.phys_pos || arm_bone.phys_rot {
+        if arm_bone.phys_pos_elasticity > 0. || arm_bone.phys_rot_resistance > 0. {
             let phys_pos = &mut arm_bone.phys_global_pos;
-            phys_pos.x = utils::interp(2, 10 * b as i32, phys_pos.x, const_bone.pos.x, s, e);
-            phys_pos.y = utils::interp(2, 10 * b as i32, phys_pos.y, const_bone.pos.y, s, e);
+            let elasticity = arm_bone.phys_pos_elasticity;
+            phys_pos.x = utils::interp(2, elasticity as i32, phys_pos.x, const_bone.pos.x, s, e);
+            phys_pos.y = utils::interp(2, elasticity as i32, phys_pos.y, const_bone.pos.y, s, e);
         }
 
         // interpolate rotation
         // 'interpolation' here is conceptual - to avoid roundabouts, shortest_delta is always used
-        if arm_bone.phys_rot {
+        if arm_bone.phys_rot_resistance > 0. {
             // swing rotation based on momentum
             let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
             let angle = (-vel.y).atan2(-vel.x);
@@ -963,10 +964,11 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
         }
 
         // interpolate scale
-        if arm_bone.phys_scale {
+        if arm_bone.phys_scale_elasticity > 0. {
             let phys_scale = &mut arm_bone.phys_global_scale;
-            phys_scale.x = utils::interp(2, 10 * b as i32, phys_scale.x, const_bone.scale.x, s, e);
-            phys_scale.y = utils::interp(2, 10 * b as i32, phys_scale.y, const_bone.scale.y, s, e);
+            let elas = arm_bone.phys_scale_elasticity;
+            phys_scale.x = utils::interp(2, elas as i32, phys_scale.x, const_bone.scale.x, s, e);
+            phys_scale.y = utils::interp(2, elas as i32, phys_scale.y, const_bone.scale.y, s, e);
         }
     }
 }
@@ -1295,13 +1297,13 @@ pub fn inheritance(
 
         // apply physics, if armature_bones is provided
         if arm_bones.len() > 0 {
-            if bones[i].phys_rot {
+            if bones[i].phys_rot_resistance > 1. {
                 bones[i].rot = arm_bones[i].phys_global_rot;
             }
-            if bones[i].phys_pos {
+            if bones[i].phys_pos_elasticity > 0. {
                 bones[i].pos = arm_bones[i].phys_global_pos;
             }
-            if bones[i].phys_scale {
+            if bones[i].phys_scale_elasticity > 0. {
                 bones[i].scale = arm_bones[i].phys_global_scale;
             }
         }

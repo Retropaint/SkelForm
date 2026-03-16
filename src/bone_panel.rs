@@ -1070,36 +1070,34 @@ pub fn physics(
         return;
     }
 
-    macro_rules! checkbox {
-        ($label:expr, $toggle:expr, $toggle_int:expr) => {
+    macro_rules! input {
+        ($label:expr, $field:expr, $func:ident) => {
+            let loc = shared_ui.loc($label).to_string();
             ui.horizontal(|ui| {
-                ui.label($label);
+                ui.label(loc);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let mut field = $toggle;
-                    ui.checkbox(&mut field, "".into_atoms());
-                    if field != $toggle {
-                        events.toggle_phys_field($toggle_int);
+                    let (edited, value, _) =
+                        ui.float_input($label.to_string(), shared_ui, $field, 1., None);
+                    if edited {
+                        events.$func(value);
                     }
                 });
             });
         };
     }
-    checkbox!(shared_ui.loc("bone_panel.physics.pos"), bone.phys_pos, 0);
-    checkbox!(shared_ui.loc("bone_panel.physics.rot"), bone.phys_rot, 1);
-    let sui = &shared_ui;
-    checkbox!(sui.loc("bone_panel.physics.scale"), bone.phys_scale, 2);
-
-    if bone.phys_rot {
-        ui.horizontal(|ui| {
-            ui.label(shared_ui.loc("bone_panel.physics.resistance"));
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let res = bone.phys_rot_resistance;
-                let (edited, value, _) =
-                    ui.float_input("phys_rot_res".to_string(), shared_ui, res, 1., None);
-                if edited {
-                    events.set_phys_resistance(value);
-                }
-            });
-        });
-    }
+    input!(
+        "bone_panel.physics.resistance",
+        bone.phys_rot_resistance,
+        set_rot_resistance
+    );
+    input!(
+        "bone_panel.physics.pos_elasticity",
+        bone.phys_pos_elasticity,
+        set_pos_elasiticity
+    );
+    input!(
+        "bone_panel.physics.scale_elasticity",
+        bone.phys_scale_elasticity,
+        set_scale_elasiticity
+    );
 }

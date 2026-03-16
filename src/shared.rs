@@ -1096,26 +1096,20 @@ pub struct Bone {
     #[serde(skip_serializing_if = "is_i32_empty")]
     pub ik_bone_ids: Vec<i32>,
 
-    #[serde(skip_serializing_if = "is_false")]
-    pub phys_pos: bool,
     #[serde(skip_serializing_if = "is_vec2_max")]
     pub phys_global_pos: Vec2,
     #[serde(skip_serializing_if = "is_max")]
-    pub phys_pos_interp: f32,
+    pub phys_pos_elasticity: f32,
 
-    #[serde(skip_serializing_if = "is_false")]
-    pub phys_rot: bool,
     #[serde(skip_serializing_if = "is_max")]
     pub phys_global_rot: f32,
     #[serde(skip_serializing_if = "is_max")]
     pub phys_rot_resistance: f32,
 
-    #[serde(skip_serializing_if = "is_false")]
-    pub phys_scale: bool,
     #[serde(skip_serializing_if = "is_vec2_max")]
     pub phys_global_scale: Vec2,
     #[serde(skip_serializing_if = "is_max")]
-    pub phys_scale_interp: f32,
+    pub phys_scale_elasticity: f32,
 
     // todo:
     // these should be private, but that upsets
@@ -2304,7 +2298,9 @@ pub enum Events {
     RaiseGlobalZindex,
 
     TogglePhysField,
-    SetPhysResistance,
+    SetRotResistance,
+    SetPosElasticity,
+    SetScaleElasticity,
 }
 
 enum_string!(Events);
@@ -2413,7 +2409,9 @@ impl EventState {
     event_with_value!(update_current_editing, E::UpdateCurrentEditing, mode, u32);
     event_with_value!(raise_global_zindex, E::RaiseGlobalZindex, bone_id, i32);
     event_with_value!(toggle_phys_field, E::TogglePhysField, field, i32); // 0 - pos, 1 - rot, 2 - scale
-    event_with_value!(set_phys_resistance, E::SetPhysResistance, res, f32);
+    event_with_value!(set_rot_resistance, E::SetRotResistance, res, f32);
+    event_with_value!(set_pos_elasiticity, E::SetPosElasticity, elas, f32);
+    event_with_value!(set_scale_elasiticity, E::SetPosElasticity, elas, f32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
