@@ -268,6 +268,10 @@ pub fn draw(
         }
     }
 
+    // physics is not part of v0.4
+    #[cfg(not(debug_assertions))]
+    return;
+
     physics(ui, &bone, selections, shared_ui, config, armature, events);
 
     ui.add_space(20.);
