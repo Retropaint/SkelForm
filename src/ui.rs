@@ -219,19 +219,17 @@ pub fn draw(
                 let gradient = config.colors.gradient.into();
                 ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
 
-                egui::ScrollArea::vertical()
-                    .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
-                    .show(ui, |ui| {
-                        if selections.bone_idx != usize::MAX {
-                            #[rustfmt::skip]
-                            bone_panel::draw(selected_bone.clone(), ui, selections, shared_ui, armature, config, events, &input, edit_mode);
-                        } else if armature.sel_anim(&selections) != None
-                            && selections.anim_frame != -1
-                        {
-                            #[rustfmt::skip]
-                            keyframe_panel::draw(ui, &selections, &armature, events, shared_ui, config);
-                        }
-                    });
+                let scroll_area = egui::ScrollArea::vertical()
+                    .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
+                scroll_area.show(ui, |ui| {
+                    let sel = &selections;
+                    if selections.bone_idx != usize::MAX {
+                        #[rustfmt::skip]
+                        bone_panel::draw(selected_bone.clone(), ui, selections, shared_ui, armature, config, events, &input, edit_mode);
+                    } else if armature.sel_anim(&sel) != None && sel.anim_frame != -1 {
+                        keyframe_panel::draw(ui, &selections, &armature, events, shared_ui, config);
+                    }
+                });
             });
             shared_ui.bone_panel_rect = Some(ui.min_rect());
         }),
