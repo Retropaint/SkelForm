@@ -721,11 +721,11 @@ pub fn mesh_deformation(
             let combo_box = egui::ComboBox::new("bone_weights", "").selected_text(headline);
             combo_box.show_ui(ui, |ui| {
                 let mut selected_value: i32 = -1;
+                ui.selectable_value(&mut selected_value, -3, shared_ui.loc("none_option"));
                 for b in 0..bone.binds.len() {
                     ui.selectable_value(&mut selected_value, b as i32, b.to_string());
                 }
                 ui.selectable_value(&mut selected_value, -2, shared_ui.loc("new_option"));
-
                 events.select_bind(selected_value);
             });
         });
