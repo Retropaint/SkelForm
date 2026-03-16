@@ -53,7 +53,7 @@ pub fn iterate_events(
             selections.vert_ids = vec![];
         } else {
             let force_append = events.values[1] == 1.;
-            if input.holding_shift || force_append {
+            if input.holding_mod || input.holding_shift || force_append {
                 selections.vert_ids.push(vert_id as usize);
             } else {
                 selections.vert_ids = vec![vert_id as usize];

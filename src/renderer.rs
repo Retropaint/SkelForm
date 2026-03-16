@@ -169,6 +169,7 @@ pub fn render(
     // many fight for spot of newest vertex; only one will emerge victorious.
     let mut new_vert: Option<Vertex> = None;
     let mut removed_vert = false;
+    let mut hovered_vert = false;
 
     // pre-draw bone setup
     for b in 0..temp_arm.bones.len() {
@@ -385,13 +386,15 @@ pub fn render(
 
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         let mouse = mouse_world_vert;
-        let nw = &mut new_vert;
         let wv = bone.world_verts.clone();
 
         #[rustfmt::skip]
-        let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, edit_mode, events, armature, renderer);
+        let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, edit_mode, events, armature);
+        if on_vert {
+            new_vert = None;
+        }
         #[rustfmt::skip]
-        let (mut lines_v, mut lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, nw, true, on_vert, camera, input, selections, events);
+        let (mut lines_v, mut lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, &mut new_vert, true, on_vert, camera, input, selections, events);
         lines_v.append(&mut verts);
         add_offseted_indices(&mut indices, &mut lines_i);
 
@@ -411,6 +414,7 @@ pub fn render(
                 events.select_vertex(hovering_tri[2].id as i32, true);
             }
         }
+        hovered_vert = (hovering_tri.len() > 0 || on_vert || on_line) && !camera.on_ui;
 
         setup_render_buffer(&mut renderer.meshframe_buffer, &lines_v, &lines_i, queue);
         draw(&renderer.meshframe_buffer, render_pass, 0, lines_i.len());
@@ -466,7 +470,7 @@ pub fn render(
             let wv = bone.world_verts.clone();
 
             #[rustfmt::skip]
-            let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, camera, config, edit_mode, events, armature, renderer);
+            let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, camera, config, edit_mode, events, armature);
             #[rustfmt::skip]
             let (mut verts_l, mut indices_l, _) = vert_lines(bone, &temp_arm.bones, &mouse, nw, false, false, camera, input, selections, events);
 
@@ -519,6 +523,7 @@ pub fn render(
     if !edit_mode.setting_bind_verts {
         if new_vert != None {
             renderer.new_vert = new_vert;
+            events.select_vertex(-1, false);
             events.new_vertex();
         }
     }
@@ -567,9 +572,17 @@ pub fn render(
         }
     }
 
+    // if cursor is not hovering on any verts, unselect on click
+    if !camera.on_ui
+        && input.left_clicked
+        && (edit_mode.showing_mesh || edit_mode.setting_bind_verts)
+        && !hovered_vert
+    {
+        events.select_vertex(-1, false);
+    }
+
     // dragging vert stuff
     if !input.left_down {
-        events.select_vertex(-1, false);
         renderer.editing_bone = false;
         renderer.started_dragging_verts = false;
     } else if sel.vert_ids.len() > 0 {
@@ -1336,7 +1349,6 @@ pub fn bone_vertices(
     edit_mode: &EditMode,
     events: &mut EventState,
     armature: &Armature,
-    renderer: &mut Renderer,
 ) -> (Vec<Vertex>, Vec<u32>, bool) {
     let mut all_verts = vec![];
     let mut all_indices = vec![];
@@ -1372,23 +1384,29 @@ pub fn bone_vertices(
         }
 
         let bound = idx != -1 && verts.contains(&(world_verts[wv].id as i32));
+        let white = Color::new(255, 255, 255, 255);
         let mut col = if bound {
             Color::new(255, 255, 0, 255)
         } else {
             Color::new(0, 255, 0, 255)
         };
-        col.a = if editable { 125 } else { 38 };
+        if selections.vert_ids.contains(&(world_verts[wv].id as usize)) {
+            col = white;
+        } else {
+            col.a = if editable { 125 } else { 38 };
+        }
         let (mut verts, mut indices) = point!(wv, col);
         let mouse_on_it = utils::in_bounding_box(&input.mouse, &verts, &camera.window).1;
+        if mouse_on_it {
+            hovering_vert = true;
+        }
 
         if camera.on_ui || !mouse_on_it || !editable {
             add_point!(verts, indices, wv);
             continue;
         }
 
-        hovering_vert = true;
-
-        let (mut verts, mut indices) = point!(wv, Color::new(255, 255, 255, 255));
+        let (mut verts, mut indices) = point!(wv, white);
         add_point!(verts, indices, wv);
         if input.right_clicked {
             if world_verts.len() <= 4 {
@@ -1428,7 +1446,6 @@ fn bone_triangle(tb: &Bone, mouse_world_vert: &Vertex, wv: Vec<Vertex>) -> Vec<V
         hovering_tri.push(tb.world_verts[tb.indices[i * 3 + 1] as usize]);
         hovering_tri.push(tb.world_verts[tb.indices[i * 3 + 2] as usize]);
     }
-
     hovering_tri
 }
 
