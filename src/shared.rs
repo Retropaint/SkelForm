@@ -1989,7 +1989,6 @@ pub struct EditMode {
     pub is_scaling: bool,
     pub is_rotating: bool,
     pub showing_mesh: bool,
-    pub setting_bind_verts: bool,
     pub setting_bind_bone: bool,
     pub setting_ik_target: bool,
     pub anim_open: bool,

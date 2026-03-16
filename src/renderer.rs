@@ -230,7 +230,7 @@ pub fn render(
             vert.add_color = Color::new(0, 0, 0, 0);
         }
 
-        if edit_mode.setting_bind_verts {
+        if selections.bind != -1 {
             continue;
         }
 
@@ -366,7 +366,7 @@ pub fn render(
     }
 
     // show selected bone's mesh wireframe if editing it
-    if (edit_mode.showing_mesh || edit_mode.setting_bind_verts) && armature.sel_bone(&sel) != None {
+    if edit_mode.showing_mesh && armature.sel_bone(&sel) != None {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
 
@@ -389,7 +389,7 @@ pub fn render(
         let wv = bone.world_verts.clone();
 
         #[rustfmt::skip]
-        let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, edit_mode, events, armature);
+        let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, events, armature);
         if on_vert {
             new_vert = None;
         }
@@ -470,7 +470,7 @@ pub fn render(
             let wv = bone.world_verts.clone();
 
             #[rustfmt::skip]
-            let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, camera, config, edit_mode, events, armature);
+            let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, camera, config, events, armature);
             #[rustfmt::skip]
             let (mut verts_l, mut indices_l, _) = vert_lines(bone, &temp_arm.bones, &mouse, nw, false, false, camera, input, selections, events);
 
@@ -520,7 +520,7 @@ pub fn render(
         //draw(&None, &verts, &indices, render_pass, device);
     }
 
-    if !edit_mode.setting_bind_verts {
+    if selections.bind == -1 {
         if new_vert != None {
             renderer.new_vert = new_vert;
             events.select_vertex(-1, false);
@@ -558,7 +558,7 @@ pub fn render(
         && edit_mode.sel_time > 0.25
         && input.left_clicked
         && !edit_mode.showing_mesh
-        && !edit_mode.setting_bind_verts
+        && selections.bind == -1
     {
         let mut unselect = true;
         for event in &events.events {
@@ -575,7 +575,7 @@ pub fn render(
     // if cursor is not hovering on any verts, unselect on click
     if !camera.on_ui
         && input.left_clicked
-        && (edit_mode.showing_mesh || edit_mode.setting_bind_verts)
+        && (edit_mode.showing_mesh || selections.bind != -1)
         && !hovered_vert
     {
         events.select_vertex(-1, false);
@@ -1346,7 +1346,6 @@ pub fn bone_vertices(
     input: &InputStates,
     camera: &Camera,
     config: &Config,
-    edit_mode: &EditMode,
     events: &mut EventState,
     armature: &Armature,
 ) -> (Vec<Vertex>, Vec<u32>, bool) {
@@ -1416,11 +1415,9 @@ pub fn bone_vertices(
                 break;
             }
         }
-        if !edit_mode.setting_bind_verts {
-            if input.left_pressed {
-                events.select_vertex(world_verts[wv].id as i32, false);
-                break;
-            }
+        if input.left_pressed {
+            events.select_vertex(world_verts[wv].id as i32, false);
+            break;
         } else if input.left_clicked {
             events.click_vertex(wv);
             break;

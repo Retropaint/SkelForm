@@ -631,11 +631,13 @@ pub fn process_event(
             vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), -total_rot) / bone.scale;
         }
         Events::ClickVertex => {
+            if selections.bind == -1 {
+                return;
+            }
             let bone_mut = &mut armature.sel_bone_mut(&selections).unwrap();
             let idx = selections.bind as usize;
             let vert_id = bone_mut.vertices[value as usize].id;
             let verts = bone_mut.vertices.clone();
-
             let bind = &bone_mut.binds[idx];
             if let Some(v) = bind.verts.iter().position(|vert| vert.id == vert_id as i32) {
                 bone_mut.binds[idx].verts.remove(v);
@@ -759,16 +761,16 @@ pub fn process_event(
             }
         }
         Events::ToggleBindingVerts => {
-            edit_mode.setting_bind_verts = !edit_mode.setting_bind_verts;
-            let bind =
-                &mut armature.sel_bone_mut(&selections).unwrap().binds[selections.bind as usize];
-            if ui.was_editing_path {
-                bind.is_path = true;
-                ui.was_editing_path = false;
-            } else {
-                ui.was_editing_path = bind.is_path;
-                bind.is_path = false;
-            }
+            //edit_mode.setting_bind_verts = !edit_mode.setting_bind_verts;
+            //let bind =
+            //    &mut armature.sel_bone_mut(&selections).unwrap().binds[selections.bind as usize];
+            //if ui.was_editing_path {
+            //    bind.is_path = true;
+            //    ui.was_editing_path = false;
+            //} else {
+            //    ui.was_editing_path = bind.is_path;
+            //    bind.is_path = false;
+            //}
         }
         Events::CenterBoneVerts => {
             let verts = &mut armature.sel_bone_mut(&selections).unwrap().vertices;
@@ -953,7 +955,7 @@ fn select_bone(
     idx: usize,
     from_renderer: bool,
 ) {
-    edit_mode.setting_bind_verts = false;
+    sel.bind = -1;
     edit_mode.showing_mesh = false;
     edit_mode.sel_time = 0.;
     edit_mode.temporary = None;
@@ -990,7 +992,6 @@ fn select_bone(
     }
 
     sel.bind = -1;
-    edit_mode.setting_bind_verts = false;
     let bone_id = armature.bones[idx].id;
     // scroll to this bone in keyframe editor
     if let Some(bone) = ui.bone_tops.tops.iter().find(|b| b.id == bone_id) {
@@ -1042,7 +1043,6 @@ fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode) {
     selections.style = -1;
     edit_mode.showing_mesh = false;
     edit_mode.setting_ik_target = false;
-    edit_mode.setting_bind_verts = false;
 }
 
 pub fn undo_redo(

@@ -666,7 +666,7 @@ pub fn mesh_deformation(
             // reset button
             let str_reset = &shared_ui.loc("bone_panel.mesh_deformation.reset");
             let str_reset_desc = &shared_ui.loc("bone_panel.mesh_deformation.reset_desc");
-            let can_reset = !edit_mode.setting_bind_verts;
+            let can_reset = selections.bind == -1;
             ui.add_enabled_ui(can_reset, |ui| {
                 let button = ui
                     .add_sized([40., 20.], egui::Button::new(str_reset))
@@ -766,25 +766,25 @@ pub fn mesh_deformation(
     }
 
     let vert_id_len = armature.sel_bone(&sel).unwrap().binds[selected].verts.len();
-    ui.horizontal(|ui| {
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_set_verts = if edit_mode.setting_bind_verts {
-                shared_ui.loc("bone_panel.mesh_deformation.finish")
-            } else {
-                shared_ui.loc("bone_panel.mesh_deformation.bind_verts")
-            };
-            if ui.skf_button(&str_set_verts).clicked() {
-                events.toggle_binding_verts(if edit_mode.setting_bind_verts { 1 } else { 0 });
-            }
-        });
-    });
+    //ui.horizontal(|ui| {
+    //    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+    //        let str_set_verts = if selections.bind != -1 {
+    //            shared_ui.loc("bone_panel.mesh_deformation.finish")
+    //        } else {
+    //            shared_ui.loc("bone_panel.mesh_deformation.bind_verts")
+    //        };
+    //        if ui.skf_button(&str_set_verts).clicked() {
+    //            events.toggle_binding_verts(if selections.bind != -1 { 1 } else { 0 });
+    //        }
+    //    });
+    //});
 
     ui.horizontal(|ui| {
         if vert_id_len > 0 {
             ui.label(shared_ui.loc("bone_panel.mesh_deformation.weights_label"));
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let binding_verts = edit_mode.setting_bind_verts;
+            let binding_verts = selections.bind != -1;
             if binding_verts {
                 ui.add_enabled_ui(false, |ui| {
                     ui.checkbox(&mut shared_ui.was_editing_path, "".into_atoms());
