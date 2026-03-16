@@ -391,7 +391,7 @@ pub fn render(
         #[rustfmt::skip]
         let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, edit_mode, events, armature, renderer);
         #[rustfmt::skip]
-        let (mut lines_v, mut lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, nw, true, on_vert, camera, input, renderer);
+        let (mut lines_v, mut lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, nw, true, on_vert, camera, input, selections, events);
         lines_v.append(&mut verts);
         add_offseted_indices(&mut indices, &mut lines_i);
 
@@ -406,7 +406,9 @@ pub fn render(
 
             // verts of this triangle will be dragged
             if input.left_pressed {
-                renderer.dragging_verts = hovering_tri.iter().map(|v| v.id as usize).collect();
+                events.select_vertex(hovering_tri[0].id as i32, false);
+                events.select_vertex(hovering_tri[1].id as i32, true);
+                events.select_vertex(hovering_tri[2].id as i32, true);
             }
         }
 
@@ -466,7 +468,7 @@ pub fn render(
             #[rustfmt::skip]
             let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, camera, config, edit_mode, events, armature, renderer);
             #[rustfmt::skip]
-            let (mut verts_l, mut indices_l, _) = vert_lines(bone, &temp_arm.bones, &mouse, nw, false, false, camera, input, renderer);
+            let (mut verts_l, mut indices_l, _) = vert_lines(bone, &temp_arm.bones, &mouse, nw, false, false, camera, input, selections, events);
 
             // color wireframes
             if bone.group_color.a == 0 {
@@ -567,15 +569,15 @@ pub fn render(
 
     // dragging vert stuff
     if !input.left_down {
-        renderer.dragging_verts = vec![];
+        events.select_vertex(-1, false);
         renderer.editing_bone = false;
         renderer.started_dragging_verts = false;
-    } else if renderer.dragging_verts.len() > 0 {
+    } else if sel.vert_ids.len() > 0 {
         if !renderer.started_dragging_verts {
             events.save_bone(selections.bone_idx);
             renderer.started_dragging_verts = true
         }
-        for vert_id in renderer.dragging_verts.clone() {
+        for vert_id in sel.vert_ids.clone() {
             events.drag_vertex(vert_id);
         }
 
@@ -1398,7 +1400,7 @@ pub fn bone_vertices(
         }
         if !edit_mode.setting_bind_verts {
             if input.left_pressed {
-                renderer.dragging_verts = vec![world_verts[wv].id as usize];
+                events.select_vertex(world_verts[wv].id as i32, false);
                 break;
             }
         } else if input.left_clicked {
@@ -1439,7 +1441,8 @@ pub fn vert_lines(
     hovering_vert: bool,
     camera: &Camera,
     input: &InputStates,
-    renderer: &mut Renderer,
+    sel: &SelectionState,
+    events: &mut EventState,
 ) -> (Vec<Vertex>, Vec<u32>, bool) {
     let mut added_vert = false;
 
@@ -1518,8 +1521,8 @@ pub fn vert_lines(
 
                 if input.left_pressed {
                     let verts = &bone.vertices;
-                    renderer.dragging_verts.push(verts[i0 as usize].id as usize);
-                    renderer.dragging_verts.push(verts[i1 as usize].id as usize);
+                    events.select_vertex(verts[i0 as usize].id as i32, false);
+                    events.select_vertex(verts[i1 as usize].id as i32, true);
                 } else if input.left_clicked && !added_vert {
                     let bones = &bones;
                     let v = &bones.iter().find(|b| b.id == bone.id).unwrap().vertices;
@@ -1538,7 +1541,7 @@ pub fn vert_lines(
                 v1_bot.add_color += add_color;
             }
 
-            let mv = &renderer.dragging_verts;
+            let mv = &sel.vert_ids;
 
             if mv.len() == 2 && mv[0] == i0 as usize && mv[1] == i1 as usize {
                 v0_top.add_color += add_color;

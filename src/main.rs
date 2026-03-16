@@ -116,7 +116,7 @@ fn init_shared(shared: &mut Shared) {
         frame: -1,
         ..Default::default()
     };
-    shared.renderer.dragging_verts = vec![];
+    shared.selections.vert_ids = vec![];
     shared.ui.scale = 1.;
     shared.ui.context_menu.close();
     shared.ui.hovering_tex = -1;

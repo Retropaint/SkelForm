@@ -47,7 +47,22 @@ pub fn iterate_events(
             };
     }
 
-    if event == Events::UpdateKeyframeTransition {
+    if event == Events::SelectVertex {
+        let vert_id = events.values[0] as i32;
+        if vert_id == -1 {
+            selections.vert_ids = vec![];
+        } else {
+            let force_append = events.values[1] == 1.;
+            if input.holding_shift || force_append {
+                selections.vert_ids.push(vert_id as usize);
+            } else {
+                selections.vert_ids = vec![vert_id as usize];
+            }
+        }
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::UpdateKeyframeTransition {
         let frame = events.values[0] as usize;
         let is_in = events.values[1] == 1.;
         let handle = Vec2::new(events.values[2], events.values[3]);

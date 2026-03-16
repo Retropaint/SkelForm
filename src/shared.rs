@@ -2150,7 +2150,6 @@ impl RenderBuffer {
 #[derive(Default)]
 pub struct Renderer {
     pub editing_bone: bool,
-    pub dragging_verts: Vec<usize>,
     pub changed_vert_id: i32,
     pub changed_vert_init_pos: Option<Vec2>,
     pub initialized_window: bool,
@@ -2301,6 +2300,7 @@ pub enum Events {
     SetRotResistance,
     SetPosElasticity,
     SetScaleElasticity,
+    SelectVertex,
 }
 
 enum_string!(Events);
@@ -2614,6 +2614,12 @@ impl EventState {
         self.values.push(handle.y);
         self.values.push(preset as f32);
     }
+
+    pub fn select_vertex(&mut self, id: i32, force_append: bool) {
+        self.events.push(Events::SelectVertex);
+        self.values.push(id as f32);
+        self.values.push(if force_append { 1. } else { 0. });
+    }
 }
 
 #[derive(Default, Clone)]
@@ -2624,6 +2630,7 @@ pub struct SelectionState {
     pub bind: i32,
     pub anim: usize,
     pub anim_frame: i32,
+    pub vert_ids: Vec<usize>,
 }
 
 impl SelectionState {
