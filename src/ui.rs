@@ -153,7 +153,6 @@ pub fn draw(
             let ver_str = dl_links["version"].as_str().unwrap();
             let this_ver_str = format!("v{}", env!("CARGO_PKG_VERSION"));
             if ver_str.trim() != this_ver_str.trim() {
-                shared_ui.new_version = this_ver_str.to_string();
                 let loc = "startup.update_available";
                 let str = shared_ui.loc(loc).replace("$ver", ver_str);
                 events.open_polar_modal(PolarId::NewUpdate, str);

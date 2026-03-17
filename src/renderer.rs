@@ -389,7 +389,7 @@ pub fn render(
         let wv = bone.world_verts.clone();
 
         #[rustfmt::skip]
-        let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, events, armature);
+        let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, events, armature, renderer);
         if on_vert {
             new_vert = None;
         }
@@ -470,7 +470,7 @@ pub fn render(
             let wv = bone.world_verts.clone();
 
             #[rustfmt::skip]
-            let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, camera, config, events, armature);
+            let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, camera, config, events, armature, renderer);
             #[rustfmt::skip]
             let (mut verts_l, mut indices_l, _) = vert_lines(bone, &temp_arm.bones, &mouse, nw, false, false, camera, input, selections, events);
 
@@ -1348,6 +1348,7 @@ pub fn bone_vertices(
     config: &Config,
     events: &mut EventState,
     armature: &Armature,
+    renderer: &mut Renderer,
 ) -> (Vec<Vertex>, Vec<u32>, bool) {
     let mut all_verts = vec![];
     let mut all_indices = vec![];
@@ -1382,6 +1383,7 @@ pub fn bone_vertices(
             verts = sel_bind[idx as usize].verts.iter().map(|v| v.id).collect();
         }
 
+        // yellow vertex if bound
         let bound = idx != -1 && verts.contains(&(world_verts[wv].id as i32));
         let white = Color::new(255, 255, 255, 255);
         let mut col = if bound {
@@ -1389,11 +1391,15 @@ pub fn bone_vertices(
         } else {
             Color::new(0, 255, 0, 255)
         };
-        if selections.vert_ids.contains(&(world_verts[wv].id as usize)) {
+
+        // white vertex if selected
+        let selected = selections.vert_ids.contains(&(world_verts[wv].id as usize));
+        if selected {
             col = white;
         } else {
             col.a = if editable { 125 } else { 38 };
         }
+
         let (mut verts, mut indices) = point!(wv, col);
         let mouse_on_it = utils::in_bounding_box(&input.mouse, &verts, &camera.window).1;
         if mouse_on_it {
@@ -1415,11 +1421,20 @@ pub fn bone_vertices(
                 break;
             }
         }
+
+        if input.left_clicked {
+            if renderer.clicked_vert_id == -1 {
+                renderer.clicked_vert_id = world_verts[wv].id as i32;
+            } else if renderer.clicked_vert_id == world_verts[wv].id as i32 {
+                renderer.clicked_vert_id = -1;
+                events.click_vertex(wv);
+                events.select_vertex(-1, false);
+            }
+            break;
+        }
+
         if input.left_pressed {
             events.select_vertex(world_verts[wv].id as i32, false);
-            break;
-        } else if input.left_clicked {
-            events.click_vertex(wv);
             break;
         }
     }

@@ -51,6 +51,7 @@ pub fn iterate_events(
         let vert_id = events.values[0] as i32;
         if vert_id == -1 {
             selections.vert_ids = vec![];
+            renderer.clicked_vert_id = -1;
         } else {
             let force_append = events.values[1] == 1.;
             if input.holding_mod || input.holding_shift || force_append {

@@ -38,11 +38,7 @@ pub fn draw(
     edit_mode: &mut EditMode,
 ) {
     let sel = selections.clone();
-    if shared_ui.dragging_bone
-        || shared_ui.just_made_bone
-        || armature.bones.len() == 0
-        || sel.bone_idx > armature.bones.len() - 1
-    {
+    if armature.bones.len() == 0 || sel.bone_idx > armature.bones.len() - 1 {
         ui.disable();
         return;
     }

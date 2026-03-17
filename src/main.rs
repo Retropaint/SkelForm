@@ -143,6 +143,7 @@ fn init_shared(shared: &mut Shared) {
     shared.renderer.render_textures = true;
     shared.ui.use_fallback = true;
     shared.ui.scale = shared.config.ui_scale;
+    shared.renderer.clicked_vert_id = -1;
 
     if !shared.config.skip_startup {
         shared.ui.startup_window = true;

@@ -871,8 +871,7 @@ impl BackendRenderer {
         }
 
         if shared.ui.exporting_video_type != ExportVideoType::None {
-            #[rustfmt::skip]
-                let bufs = utils::encode_sequence(&shared.armature, &mut shared.ui, self);
+            let bufs = utils::encode_sequence(&shared.armature, &mut shared.ui, self);
             let anim_idx = shared.ui.exporting_video_anim;
             let name = &shared.armature.animations[anim_idx].name;
             let mut _path: String = "".to_string();
@@ -882,24 +881,15 @@ impl BackendRenderer {
                 _path = raw_path.as_path().to_str().unwrap().to_string();
             }
             let _ext;
+            #[rustfmt::skip]
             let ffmpeg_bin = if shared.ui.use_system_ffmpeg {
                 "ffmpeg".to_string()
             } else {
-                #[cfg(target_os = "windows")]
-                {
-                    utils::bin_path()
-                        .join("ffmpeg.exe")
-                        .to_str()
-                        .unwrap()
-                        .to_string()
+                #[cfg(target_os = "windows")] {
+                    utils::bin_path().join("ffmpeg.exe").to_str().unwrap().to_string()
                 }
-                #[cfg(not(target_os = "windows"))]
-                {
-                    utils::bin_path()
-                        .join("ffmpeg")
-                        .to_str()
-                        .unwrap()
-                        .to_string()
+                #[cfg(not(target_os = "windows"))] {
+                    utils::bin_path().join("ffmpeg").to_str().unwrap().to_string()
                 }
             };
             let size = shared.ui.sprite_size;

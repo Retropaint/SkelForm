@@ -2107,6 +2107,7 @@ pub struct Renderer {
     pub render_mesh_wf: bool,
     pub render_rects: bool,
     pub on_point: bool,
+    pub clicked_vert_id: i32,
 
     // bindgroups
     pub generic_bindgroup: Option<BindGroup>,
