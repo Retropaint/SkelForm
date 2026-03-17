@@ -477,25 +477,26 @@ pub fn kb_inputs(
     mouse_button_as_key(input, egui::PointerButton::Extra1, egui::Key::F34);
     mouse_button_as_key(input, egui::PointerButton::Extra2, egui::Key::F35);
 
-    // cancel all kb inputs if a modal is open, except cancel and yes
-    let modal_open = shared_ui.styles_modal
-        || shared_ui.modal
-        || shared_ui.polar_modal
-        || shared_ui.settings_modal
-        || shared_ui.export_modal
-        || shared_ui.lang_import_modal;
-    if modal_open {
-        if input.consume_shortcut(&config.keys.cancel) {
+    // cancel key
+    let ui = &shared_ui;
+    #[rustfmt::skip]
+    let modal_open = ui.styles_modal || ui.modal || ui.polar_modal || ui.settings_modal || ui.export_modal || ui.lang_import_modal;
+    if input.consume_shortcut(&config.keys.cancel) {
+        shared_ui.context_menu.id = "".to_string();
+        if edit_mode.setting_ik_target {
+            events.toggle_setting_ik_target(0);
+        } else if edit_mode.setting_bind_bone {
+            events.toggle_setting_bind_bone(0);
+        } else if modal_open {
             shared_ui.styles_modal = false;
             shared_ui.modal = false;
             shared_ui.polar_modal = false;
             shared_ui.settings_modal = false;
             shared_ui.atlas_modal = false;
             shared_ui.export_modal = false;
-            shared_ui.context_menu.id = "".to_string();
-            events.select_style(-1);
+        } else {
+            events.unselect_all();
         }
-        return;
     }
 
     if input.consume_shortcut(&config.keys.undo) {
@@ -587,13 +588,6 @@ pub fn kb_inputs(
         events.toggle_edit_snapping(1);
     } else if !holding_edit_snap && edit_mode.holding_edit_snap {
         events.toggle_edit_snapping(0);
-    }
-
-    if input.consume_shortcut(&config.keys.cancel) {
-        if !edit_mode.setting_ik_target {
-            events.unselect_all();
-        }
-        events.toggle_setting_ik_target(0);
     }
 }
 
