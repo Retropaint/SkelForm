@@ -413,13 +413,6 @@ pub enum SettingsState {
     Misc,
 }
 
-#[derive(Clone, Default, PartialEq)]
-pub enum ExportState {
-    #[default]
-    Armature,
-    Spritesheet,
-}
-
 #[derive(Clone, Default, PartialEq, Debug, FromRepr)]
 pub enum PolarId {
     #[default]
@@ -982,23 +975,6 @@ impl Default for KeyboardConfig {
 }
 
 #[derive(Clone, Default)]
-pub enum Keys {
-    #[default]
-    None,
-    NextAnimFrame,
-    PrevAnimFrame,
-    ZoomInCamera,
-    ZoomOutCamera,
-    ZoomOutUi,
-    ZoomInUi,
-    Undo,
-    Redo,
-    Save,
-    Open,
-    Cancel,
-}
-
-#[derive(Clone, Default)]
 pub struct UiAnim {
     pub hovering_frame: i32,
     pub timeline_zoom: f32,
@@ -1198,15 +1174,6 @@ pub enum InverseKinematicsMode {
     Skip,
 }
 enum_string!(InverseKinematicsMode);
-
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq, Debug)]
-#[serde(default)]
-pub struct IkFamily {
-    pub constraint: JointConstraint,
-    pub mode: InverseKinematicsMode,
-    pub target_id: i32,
-    pub bone_ids: Vec<i32>,
-}
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 #[serde(default)]
