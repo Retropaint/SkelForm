@@ -404,23 +404,6 @@ pub struct InputStates {
 }
 
 #[derive(Clone, Default, PartialEq)]
-pub enum UiState {
-    #[default]
-    StylesModal,
-    Exiting,
-    DraggingBone,
-    RemovingTexture,
-    ForcedModal,
-    Modal,
-    PolarModal,
-    SettingsModal,
-    StartupWindow,
-    Scaling,
-    Rotating,
-    FocusStyleDropdown,
-}
-
-#[derive(Clone, Default, PartialEq)]
 pub enum SettingsState {
     #[default]
     Ui,
@@ -561,8 +544,6 @@ pub struct Ui {
 
     pub headline: String,
 
-    pub states: Vec<UiState>,
-
     pub scale: f32,
 
     /// Ensures that auto-focused behaviour only runs once
@@ -608,12 +589,10 @@ pub struct Ui {
     pub done_pending: bool,
     pub init_pending_mouse: Vec2,
     pub is_dragging_pending: bool,
-    pub crashed_last_time: bool,
     pub never_donate: bool,
     pub atlas_image: Option<Vec2>,
     pub dragging_slice: usize,
     pub prev_pending_interp: Vec2,
-    pub just_made_bone: bool,
     pub just_made_anim: bool,
     pub just_made_style: bool,
 
@@ -621,8 +600,6 @@ pub struct Ui {
     pub styles_modal: bool,
     pub exiting: bool,
     pub confirmed_exit: bool,
-    pub dragging_bone: bool,
-    pub removing_textures: bool,
     pub forced_modal: bool,
     pub modal: bool,
     pub polar_modal: bool,
@@ -634,7 +611,6 @@ pub struct Ui {
     pub export_modal: bool,
     pub checking_update: bool,
     pub update_request_sent: bool,
-    pub new_version: String,
 
     loc_strings: std::collections::HashMap<String, String>,
     default_loc_strings: std::collections::HashMap<String, String>,
