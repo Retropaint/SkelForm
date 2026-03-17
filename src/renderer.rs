@@ -459,8 +459,10 @@ pub fn render(
         let mut indices = vec![];
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         for bone in &temp_arm.bones {
+            let already_editing = edit_mode.showing_mesh && armature.sel_bone(&sel).unwrap().id == bone.id;
             if !bone.verts_edited
                 || temp_arm.is_bone_hidden(false, config.propagate_visibility, bone.id)
+                || already_editing
             {
                 continue;
             }
