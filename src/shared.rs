@@ -664,7 +664,7 @@ pub struct Ui {
     pub language: String,
     pub lang_import_modal: bool,
     pub lang_input: String,
-    pub flash_armature_timer: Option<Instant>
+    pub flash_armature_timer: Option<Instant>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -2191,6 +2191,7 @@ pub enum Events {
     ToggleStyleActive,
     ToggleShowingMesh,
     ToggleSettingIkTarget,
+    ToggleSettingBindBone,
     ToggleAnimPanelOpen,
     ToggleIkFolded,
     ToggleIkDisabled,
@@ -2322,6 +2323,7 @@ impl EventState {
     event_with_value!(toggle_showing_mesh, E::ToggleShowingMesh, visible, usize);
     event_with_value!(select_bind, Events::SelectBind, idx, i32);
     event_with_value!(toggle_setting_ik_target, E::ToggleSettingIkTarget, idx, i32);
+    event_with_value!(toggle_setting_bind_bone, E::ToggleSettingBindBone, idx, i32);
     event_with_value!(toggle_ik_folded, Events::ToggleIkFolded, toggle, usize);
     event_with_value!(toggle_meshdef_folded, E::ToggleMeshdefFolded, toggle, usize);
     event_with_value!(toggle_effects_folded, E::ToggleEffectsFolded, toggle, usize);

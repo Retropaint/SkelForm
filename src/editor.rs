@@ -320,6 +320,12 @@ pub fn process_event(
                 ui.flash_armature_timer = Some(Instant::now());
             }
         }
+        Events::ToggleSettingBindBone => {
+            edit_mode.setting_bind_bone = value == 1.;
+            if edit_mode.setting_bind_bone {
+                ui.flash_armature_timer = Some(Instant::now());
+            }
+        }
         Events::ToggleOnionLayers => edit_mode.onion_layers = value == 1.,
         Events::RemoveIkTarget => armature.sel_bone_mut(selections).unwrap().ik_target_id = -1,
         Events::ToggleIkFolded => {

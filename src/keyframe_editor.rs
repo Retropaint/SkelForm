@@ -685,7 +685,11 @@ pub fn draw_bottom_bar(
             ui.add_space(5.);
 
             ui.label(&shared_ui.loc("keyframe_editor.frame"));
-            ui.add(egui::DragValue::new(&mut selections.anim_frame).speed(0.1).update_while_editing(false));
+            ui.add(
+                egui::DragValue::new(&mut selections.anim_frame)
+                    .speed(0.1)
+                    .update_while_editing(false),
+            );
 
             let fps = armature.sel_anim(&sel).unwrap().fps;
 

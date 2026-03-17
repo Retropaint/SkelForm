@@ -35,7 +35,7 @@ pub fn draw(
     config: &Config,
     events: &mut EventState,
     input: &InputStates,
-    edit_mode: &mut EditMode,
+    edit_mode: &EditMode,
 ) {
     let sel = selections.clone();
     if armature.bones.len() == 0 || sel.bone_idx > armature.bones.len() - 1 {
@@ -531,7 +531,7 @@ pub fn mesh_deformation(
     config: &Config,
     selections: &mut SelectionState,
     armature: &mut Armature,
-    edit_mode: &mut EditMode,
+    edit_mode: &EditMode,
 ) {
     let str_heading = &shared_ui.loc("bone_panel.mesh_deformation.heading").clone();
     let str_desc = &shared_ui.loc("bone_panel.mesh_deformation.desc").clone();
@@ -749,7 +749,7 @@ pub fn mesh_deformation(
                 shared_ui.loc("bone_panel.mesh_deformation.bone_set")
             };
             if ui.skf_button(&str_set_bone).clicked() {
-                edit_mode.setting_bind_bone = !edit_mode.setting_bind_bone;
+                events.toggle_setting_bind_bone(1);
                 // activate bone button flash, to indicate that they must be selected
                 if edit_mode.setting_bind_bone {
                     shared_ui.flash_armature_timer = Some(Instant::now());
