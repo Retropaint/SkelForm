@@ -762,35 +762,22 @@ pub fn mesh_deformation(
     }
 
     let vert_id_len = armature.sel_bone(&sel).unwrap().binds[selected].verts.len();
-    //ui.horizontal(|ui| {
-    //    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-    //        let str_set_verts = if selections.bind != -1 {
-    //            shared_ui.loc("bone_panel.mesh_deformation.finish")
-    //        } else {
-    //            shared_ui.loc("bone_panel.mesh_deformation.bind_verts")
-    //        };
-    //        if ui.skf_button(&str_set_verts).clicked() {
-    //            events.toggle_binding_verts(if selections.bind != -1 { 1 } else { 0 });
-    //        }
-    //    });
-    //});
-
-    ui.horizontal(|ui| {
-        if vert_id_len > 0 {
+    if vert_id_len > 0 {
+        ui.horizontal(|ui| {
             ui.label(shared_ui.loc("bone_panel.mesh_deformation.weights_label"));
-        }
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let bind = &armature.sel_bone(&sel).unwrap().binds[selected];
-            let mut new_path = bind.is_path;
-            ui.checkbox(&mut new_path, "".into_atoms());
-            if new_path != bind.is_path {
-                events.toggle_bind_pathing(selected, new_path);
-            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let bind = &armature.sel_bone(&sel).unwrap().binds[selected];
+                let mut new_path = bind.is_path;
+                ui.checkbox(&mut new_path, "".into_atoms());
+                if new_path != bind.is_path {
+                    events.toggle_bind_pathing(selected, new_path);
+                }
 
-            ui.label(shared_ui.loc("bone_panel.mesh_deformation.pathing_label"))
-                .on_hover_text(shared_ui.loc("bone_panel.mesh_deformation.pathing_desc"));
+                ui.label(shared_ui.loc("bone_panel.mesh_deformation.pathing_label"))
+                    .on_hover_text(shared_ui.loc("bone_panel.mesh_deformation.pathing_desc"));
+            });
         });
-    });
+    }
 
     let selected = selections.bind;
     let bind = armature.sel_bone(&sel).unwrap().binds[selected as usize].clone();

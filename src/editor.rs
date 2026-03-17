@@ -944,7 +944,6 @@ fn select_bone(
     idx: usize,
     from_renderer: bool,
 ) {
-    sel.bind = -1;
     edit_mode.showing_mesh = false;
     edit_mode.sel_time = 0.;
     edit_mode.temporary = None;
