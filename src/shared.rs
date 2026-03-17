@@ -571,7 +571,6 @@ pub struct Ui {
     pub local_doc_url: String,
 
     pub mobile: bool,
-    pub was_editing_path: bool,
     pub thumb_ui_tex: std::collections::HashMap<String, egui::TextureHandle>,
 
     pub styles_modal_size: Vec2,
@@ -2190,7 +2189,6 @@ pub enum Events {
     ToggleAnimPlaying,
     ToggleStyleActive,
     ToggleShowingMesh,
-    ToggleBindingVerts,
     ToggleSettingIkTarget,
     ToggleAnimPanelOpen,
     ToggleIkFolded,
@@ -2322,7 +2320,6 @@ impl EventState {
     event_with_value!(adjust_keyframes_by_fps, E::AdjustKeyframesByFPS, fps, usize);
     event_with_value!(toggle_showing_mesh, E::ToggleShowingMesh, visible, usize);
     event_with_value!(select_bind, Events::SelectBind, idx, i32);
-    event_with_value!(toggle_binding_verts, E::ToggleBindingVerts, toggle, usize);
     event_with_value!(toggle_setting_ik_target, E::ToggleSettingIkTarget, idx, i32);
     event_with_value!(toggle_ik_folded, Events::ToggleIkFolded, toggle, usize);
     event_with_value!(toggle_meshdef_folded, E::ToggleMeshdefFolded, toggle, usize);

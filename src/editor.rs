@@ -761,18 +761,6 @@ pub fn process_event(
                 selections.bind = value as i32;
             }
         }
-        Events::ToggleBindingVerts => {
-            //edit_mode.setting_bind_verts = !edit_mode.setting_bind_verts;
-            //let bind =
-            //    &mut armature.sel_bone_mut(&selections).unwrap().binds[selections.bind as usize];
-            //if ui.was_editing_path {
-            //    bind.is_path = true;
-            //    ui.was_editing_path = false;
-            //} else {
-            //    ui.was_editing_path = bind.is_path;
-            //    bind.is_path = false;
-            //}
-        }
         Events::CenterBoneVerts => {
             let verts = &mut armature.sel_bone_mut(&selections).unwrap().vertices;
             center_verts(verts)

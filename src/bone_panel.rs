@@ -780,18 +780,11 @@ pub fn mesh_deformation(
             ui.label(shared_ui.loc("bone_panel.mesh_deformation.weights_label"));
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let binding_verts = selections.bind != -1;
-            if binding_verts {
-                ui.add_enabled_ui(false, |ui| {
-                    ui.checkbox(&mut shared_ui.was_editing_path, "".into_atoms());
-                });
-            } else {
-                let bind = &armature.sel_bone(&sel).unwrap().binds[selected];
-                let mut new_path = bind.is_path;
-                ui.checkbox(&mut new_path, "".into_atoms());
-                if new_path != bind.is_path {
-                    events.toggle_bind_pathing(selected, new_path);
-                }
+            let bind = &armature.sel_bone(&sel).unwrap().binds[selected];
+            let mut new_path = bind.is_path;
+            ui.checkbox(&mut new_path, "".into_atoms());
+            if new_path != bind.is_path {
+                events.toggle_bind_pathing(selected, new_path);
             }
 
             ui.label(shared_ui.loc("bone_panel.mesh_deformation.pathing_label"))
