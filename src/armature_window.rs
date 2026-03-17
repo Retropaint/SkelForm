@@ -76,6 +76,7 @@ pub fn draw(
                             let mut name = armature.styles[s].name.to_string();
                             name = utils::trunc_str(ui, &name, ui.min_rect().width() - 20.);
                             let label = ui.selectable_value(&mut -1, s as i32, name);
+                            #[rustfmt::skip]
                             ui.painter().text(
                                 label.rect.right_center(),
                                 egui::Align2::RIGHT_CENTER,
@@ -376,6 +377,23 @@ pub fn draw_hierarchy(
                             text_col = config.colors.dark_accent;
                             text_col += Color::new(40, 40, 40, 0)
                         }
+
+                        // flash bone button if flash timer has been activated
+                        let timer = &mut shared_ui.flash_armature_timer;
+                        if *timer != None {
+                            let dur = 500.;
+                            let max_flash = 50.;
+
+                            let flash_percent = dur - timer.unwrap().elapsed().as_millis() as f32;
+                            let flash = max_flash * (flash_percent / dur);
+                            if flash <= 0. {
+                                *timer = None;
+                            } else {
+                                selected_col +=
+                                    Color::new(flash as u8, flash as u8, flash as u8, 0);
+                            }
+                        }
+
                         egui::Frame::new().fill(selected_col.into()).show(ui, |ui| {
                             ui.horizontal(|ui| {
                                 ui.set_width(width);
@@ -411,15 +429,8 @@ pub fn draw_hierarchy(
                                         .loc("armature_panel.icons.tex_inactive")
                                         .replace("$tex", &bone.tex);
                                     let id = format!("{}tex_in", b.to_string());
-                                    bone_label(
-                                        "🗋",
-                                        false,
-                                        ui,
-                                        id,
-                                        offset,
-                                        &str,
-                                        config.colors.texture,
-                                    );
+                                    let tex_col = config.colors.texture;
+                                    bone_label("🗋", false, ui, id, offset, &str, tex_col);
                                     offset.x += 18.;
                                 };
                                 if bone.verts_edited {

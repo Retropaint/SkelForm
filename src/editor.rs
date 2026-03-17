@@ -314,7 +314,12 @@ pub fn process_event(
                 ui.tracing = false
             }
         }
-        Events::ToggleSettingIkTarget => edit_mode.setting_ik_target = value == 1.,
+        Events::ToggleSettingIkTarget => {
+            edit_mode.setting_ik_target = value == 1.;
+            if edit_mode.setting_ik_target {
+                ui.flash_armature_timer = Some(Instant::now());
+            }
+        }
         Events::ToggleOnionLayers => edit_mode.onion_layers = value == 1.,
         Events::RemoveIkTarget => armature.sel_bone_mut(selections).unwrap().ik_target_id = -1,
         Events::ToggleIkFolded => {
@@ -1031,6 +1036,7 @@ fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode) {
     selections.style = -1;
     edit_mode.showing_mesh = false;
     edit_mode.setting_ik_target = false;
+    edit_mode.setting_bind_bone = false;
 }
 
 pub fn undo_redo(

@@ -186,7 +186,7 @@ pub fn draw(
 
     let mut enable_bone_panel = true;
     if let Some(_) = armature.sel_bone(&sel) {
-        enable_bone_panel = !edit_mode.setting_ik_target;
+        enable_bone_panel = !edit_mode.setting_ik_target && !edit_mode.setting_bind_bone;
     }
 
     // get current properties of selected bone, including animations

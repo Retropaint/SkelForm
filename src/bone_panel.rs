@@ -750,6 +750,10 @@ pub fn mesh_deformation(
             };
             if ui.skf_button(&str_set_bone).clicked() {
                 edit_mode.setting_bind_bone = !edit_mode.setting_bind_bone;
+                // activate bone button flash, to indicate that they must be selected
+                if edit_mode.setting_bind_bone {
+                    shared_ui.flash_armature_timer = Some(Instant::now());
+                }
             }
         });
     });
