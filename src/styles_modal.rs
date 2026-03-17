@@ -350,18 +350,11 @@ pub fn draw_textures_list(
 
                 if shared_ui.hovering_set == -1 || is_selected {
                     if selections.style != -1 {
-                        egui::ScrollArea::vertical()
-                            .id_salt("tex_list")
-                            .show(ui, |ui| {
-                                draw_tex_buttons(
-                                    shared_ui,
-                                    &armature,
-                                    &selections,
-                                    &config,
-                                    events,
-                                    ui,
-                                );
-                            });
+                        let scroll_area = egui::ScrollArea::vertical().id_salt("tex_list");
+                        scroll_area.show(ui, |ui| {
+                            #[rustfmt::skip]
+                            draw_tex_buttons(shared_ui, &armature, &selections, &config, events, ui);
+                        });
                     }
                     return;
                 }

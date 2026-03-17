@@ -415,7 +415,7 @@ pub fn draw_hierarchy(
                                     .text_styles
                                     .insert(egui::TextStyle::Body, egui::FontId::monospace(14.0));
 
-                                let mut offset = Vec2::new(0., 20.);
+                                let mut offset = Vec2::new(0., 18.);
                                 let colors = &config.colors;
                                 if armature.tex_of(bone.id) != None {
                                     let str = shared_ui
