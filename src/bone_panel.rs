@@ -440,18 +440,11 @@ pub fn inverse_kinematics(
                     let mut selected_mode = -1;
                     ui.selectable_value(&mut selected_mode, 0, "FABRIK");
                     ui.selectable_value(&mut selected_mode, 1, "Arc");
+                    #[rustfmt::skip]
                     if selected_mode != -1 {
-                        events.edit_bone(
-                            bone.id,
-                            &AnimElement::IkMode,
-                            f32::MAX,
-                            &InverseKinematicsMode::from_repr(selected_mode)
-                                .unwrap()
-                                .to_string(),
-                            selections.anim,
-                            selections.anim_frame,
-                        );
-                    }
+                        let mode = &InverseKinematicsMode::from_repr(selected_mode).unwrap().to_string();
+                        events.edit_bone(bone.id, &AnimElement::IkMode, f32::MAX, mode, selections.anim, selections.anim_frame);
+                    };
                 })
                 .response
                 .on_hover_text(str_desc);
@@ -481,14 +474,8 @@ pub fn inverse_kinematics(
                     ui.selectable_value(&mut ik, JointConstraint::Clockwise, str_clockwise);
                     ui.selectable_value(&mut ik, JointConstraint::CounterClockwise, str_ccw);
                     if ik != armature.sel_bone(&sel).unwrap().ik_constraint {
-                        events.edit_bone(
-                            bone.id,
-                            &AnimElement::IkConstraint,
-                            f32::MAX,
-                            &ik.to_string(),
-                            selections.anim,
-                            selections.anim_frame,
-                        );
+                        #[rustfmt::skip]
+                        events.edit_bone(bone.id, &AnimElement::IkConstraint, f32::MAX, &ik.to_string(), selections.anim, selections.anim_frame);
                     }
                 })
                 .response
@@ -743,7 +730,18 @@ pub fn mesh_deformation(
         if let Some(bone) = armature.bones.iter().find(|bone| bone.id == bone_id) {
             bone_name = bone.name.clone();
         }
-        ui.label(shared_ui.loc("bone_panel.mesh_deformation.bone_label") + &bone_name);
+
+        // bind bone label
+        ui.label(shared_ui.loc("bone_panel.mesh_deformation.bone_label"));
+        let hand = egui::CursorIcon::PointingHand;
+        let bone_name = ui.selectable_label(false, bone_name).on_hover_cursor(hand);
+        if bone_name.clicked() {
+            let bones = &armature.bones;
+            let idx = bones.iter().position(|b| b.id == bone_id).unwrap();
+            events.select_bone(idx, false);
+        };
+
+        // set bind bone toggle
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let str_set_bone = if edit_mode.setting_bind_bone {
                 shared_ui.loc("bone_panel.mesh_deformation.finish")

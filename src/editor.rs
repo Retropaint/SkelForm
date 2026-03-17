@@ -448,7 +448,7 @@ pub fn process_event(
                 // remove this bone from binds
                 for bone in &mut armature.bones {
                     for b in 0..bone.binds.len() {
-                        if bone.binds[b].bone_id == bone.id {
+                        if bone.binds[b].bone_id == id {
                             bone.binds.remove(b);
                         }
                     }

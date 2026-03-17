@@ -226,7 +226,7 @@
       "trace": "Trace",
       "trace_desc": "Generate a mesh based on the texture shape",
       "trace_finish_desc": "Finish tracing and hide tracing options",
-      "bone_label": "Bone: ",
+      "bone_label": "Bone:",
       "bone_set": "Set Bone",
       "binds_label": "Binds:",
       "pathing_label": "Pathing:",
