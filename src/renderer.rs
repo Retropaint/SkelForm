@@ -319,7 +319,7 @@ pub fn render(
             }
 
             if input.left_pressed && !renderer.on_point {
-                let id = temp_arm.bones[b].id;
+                let id = click_on_hover_id;
                 let bones = &armature.bones;
                 let idx = bones.iter().position(|bone| bone.id == id).unwrap();
                 events.select_bone(idx, true);
