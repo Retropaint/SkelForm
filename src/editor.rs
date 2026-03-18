@@ -914,7 +914,7 @@ pub fn process_event(
         }
         Events::SetRotBounce => {
             let bone = armature.sel_bone_mut(selections).unwrap();
-            bone.phys_rot_bounce = value;
+            bone.phys_rot_bounce = (value).max(0.).min(1.);
         }
         _ => {}
     }
