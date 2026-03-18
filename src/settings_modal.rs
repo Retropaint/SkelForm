@@ -563,6 +563,9 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("transform_scale",  keys.transform_scale,  true);
         key!("edit_modifier",    keys.edit_modifier,    false);
         key!("edit_snap",        keys.edit_snap,        false);
+        key!("next_bone",        keys.next_bone,        true);
+        key!("prev_bone",        keys.prev_bone,        true);
+        key!("toggle_bone_fold", keys.toggle_bone_fold, true);
         ui.add_space(10.);
         ui.heading("Keyframe Editor");
         key!("next_anim_frame",    keys.next_anim_frame,    true);

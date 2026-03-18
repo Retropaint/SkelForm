@@ -331,7 +331,10 @@
       "edit_modifier": "(Hold) Edit Mode Modifier",
       "edit_snap": "(Hold) Edit Mode Snapping",
       "polar_yes": "Yes",
-      "play_animation": "Play Animation"
+      "play_animation": "Play Animation",
+      "next_bone": "Next Bone",
+      "prev_bone": "Previous Bone",
+      "toggle_bone_fold": "Toggle Bone Fold"
     },
     "miscellaneous": {
       "heading": "Miscellaneous",

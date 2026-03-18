@@ -885,6 +885,9 @@ pub struct KeyboardConfig {
     pub edit_snap: egui::KeyboardShortcut,
     pub timeline_zoom_mode: egui::KeyboardShortcut,
     pub play_animation: egui::KeyboardShortcut,
+    pub next_bone: egui::KeyboardShortcut,
+    pub prev_bone: egui::KeyboardShortcut,
+    pub toggle_bone_fold: egui::KeyboardShortcut,
 }
 
 pub trait Display {
@@ -970,6 +973,9 @@ impl Default for KeyboardConfig {
             edit_modifier:      shortcut_key!(egui::Modifiers::SHIFT, egui::Key::F30),
             edit_snap:          shortcut_key!(egui::Modifiers::COMMAND, egui::Key::F30),
             play_animation:     regular_key!(egui::Key::Space),
+            next_bone:          regular_key!(egui::Key::X),
+            prev_bone:          regular_key!(egui::Key::Z),
+            toggle_bone_fold:   regular_key!(egui::Key::C),
         }
     }
 }

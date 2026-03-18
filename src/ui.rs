@@ -582,6 +582,57 @@ pub fn kb_inputs(
         events.toggle_edit_modifying(0);
     }
 
+    if input.consume_shortcut(&config.keys.next_bone) {
+        let mut idx;
+        if selections.bone_idx == usize::MAX {
+            idx = armature.bones.len() - 1;
+        } else {
+            idx = if selections.bone_idx == 0 {
+                armature.bones.len() - 1
+            } else {
+                selections.bone_idx - 1
+            };
+        }
+        while armature.is_bone_folded(armature.bones[idx].id) {
+            idx = idx.overflowing_sub(1).0;
+            if idx == usize::MAX {
+                break;
+            }
+        }
+        let id = if idx < 0 {
+            armature.bones.last().unwrap().id as usize
+        } else {
+            armature.bones[idx].id as usize
+        };
+        events.select_bone(id, false);
+    }
+
+    if input.consume_shortcut(&config.keys.prev_bone) {
+        let mut idx;
+        if selections.bone_idx == usize::MAX {
+            idx = 0;
+        } else {
+            idx = selections.bone_idx + 1;
+        }
+        while armature.is_bone_folded(armature.bones[idx].id) {
+            idx += 1;
+            if idx > armature.bones.len() - 1 {
+                break;
+            }
+        }
+        let id = if idx > armature.bones.len() - 1 {
+            armature.bones[0].id as usize
+        } else {
+            armature.bones[idx].id as usize
+        };
+        events.select_bone(id, false);
+    }
+
+    if input.consume_shortcut(&config.keys.toggle_bone_fold) {
+        let bone = &armature.sel_bone(selections).unwrap();
+        events.toggle_bone_folded(bone.id as usize, !bone.folded);
+    }
+
     let snap_key = &config.keys.edit_snap.modifiers;
     let holding_edit_snap = input.modifiers.matches_any(*snap_key);
     if holding_edit_snap && !edit_mode.holding_edit_snap {
