@@ -622,19 +622,24 @@ pub fn process_event(
                 return;
             }
 
+            // total rotation to cancel out when dragging vertex
             let mut total_rot = temp_vert.unwrap().offset_rot;
-            let mut is_in_path = false;
+
+            let mut is_in_bind = false;
             for bind in bone.binds {
                 let vert = bind.verts.iter().find(|v| v.id == value as i32);
+                if vert != None {
+                    is_in_bind = true;
+                }
+                // add bind bone's rotation
                 if vert != None && !bind.is_path {
                     let bones = &renderer.temp_bones;
                     let bind_bone = bones.iter().find(|b| b.id == bind.bone_id).unwrap();
                     total_rot += bind_bone.rot;
-                } else if bind.is_path {
-                    is_in_path = true;
                 }
             }
-            if !is_in_path {
+            // add mesh bone's own rotation, if this vert is not bound
+            if !is_in_bind {
                 total_rot += bone.rot;
             }
 
