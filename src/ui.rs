@@ -607,8 +607,7 @@ pub fn kb_inputs(
                 break;
             }
         }
-        let id = armature.bones[idx].id as usize;
-        events.select_bone(id, false);
+        events.select_bone(idx, false);
     }
 
     if input.consume_shortcut(&config.keys.prev_bone) {
@@ -616,25 +615,25 @@ pub fn kb_inputs(
         if selections.bone_idx == usize::MAX {
             idx = 0;
         } else {
-            idx = selections.bone_idx + 1;
+            idx = if selections.bone_idx == armature.bones.len() - 1 {
+                0
+            } else {
+                selections.bone_idx + 1
+            };
         }
         while armature.is_bone_folded(armature.bones[idx].id) {
             idx += 1;
             if idx > armature.bones.len() - 1 {
+                idx = 0;
                 break;
             }
         }
-        let id = if idx > armature.bones.len() - 1 {
-            armature.bones[0].id as usize
-        } else {
-            armature.bones[idx].id as usize
-        };
-        events.select_bone(id, false);
+        events.select_bone(idx, false);
     }
 
     if input.consume_shortcut(&config.keys.toggle_bone_fold) {
         let bone = &armature.sel_bone(selections).unwrap();
-        events.toggle_bone_folded(bone.id as usize, !bone.folded);
+        events.toggle_bone_folded(selections.bone_idx, !bone.folded);
     }
 
     let snap_key = &config.keys.edit_snap.modifiers;
