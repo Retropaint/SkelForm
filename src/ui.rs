@@ -599,11 +599,7 @@ pub fn kb_inputs(
                 break;
             }
         }
-        let id = if idx < 0 {
-            armature.bones.last().unwrap().id as usize
-        } else {
-            armature.bones[idx].id as usize
-        };
+        let id = armature.bones[idx].id as usize;
         events.select_bone(id, false);
     }
 
