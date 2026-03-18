@@ -586,6 +586,9 @@ pub fn process_event(
                 select_bone(sel, ui, armature, edit_mode, input, idx, false);
             }
             ui.rename_id = "bone_".to_string() + &idx.to_string();
+
+            // mark this bone as selected, so focus isn't taken away from bone name input
+            ui.prev_selected_bone_idx = idx;
         }
         Events::SetBoneTexture => {
             let frame = selections.anim_frame;
