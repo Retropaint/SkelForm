@@ -37,8 +37,8 @@ pub fn draw(
     input: &InputStates,
     edit_mode: &EditMode,
 ) {
-    let sel = selections.clone();
-    if armature.bones.len() == 0 || sel.bone_idx > armature.bones.len() - 1 {
+    let sel = &selections.clone();
+    if armature.bones.len() == 0 || armature.sel_bone(sel) == None {
         ui.disable();
         return;
     }

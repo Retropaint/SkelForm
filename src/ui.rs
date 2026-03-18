@@ -224,9 +224,17 @@ pub fn draw(
                     let sel = &selections;
                     if selections.bone_idx != usize::MAX {
                         #[rustfmt::skip]
-                        bone_panel::draw(selected_bone.clone(), ui, selections, shared_ui, armature, config, events, &input, edit_mode);
+                        bone_panel::draw(selected_bone.clone(),ui,selections,shared_ui,armature,config,events,&input,edit_mode,);
                     } else if armature.sel_anim(&sel) != None && sel.anim_frame != -1 {
                         keyframe_panel::draw(ui, &selections, &armature, events, shared_ui, config);
+                    } else if armature.bones.len() > 1 {
+                        ui.heading("Armature Shortcuts");
+                        ui.add_space(10.);
+                        #[rustfmt::skip] {
+                            keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.next_bone"), config.keys.next_bone);
+                            keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.prev_bone"), config.keys.prev_bone);
+                            keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.toggle_bone_fold"), config.keys.toggle_bone_fold);
+                        };
                     }
                 });
             });
@@ -1802,4 +1810,13 @@ pub fn load_png(
         &img.into_rgba8(),
     );
     *handle = Some(context.load_texture(id, egui_img, Default::default()))
+}
+
+pub fn keyboard_shortcut(ui: &mut egui::Ui, label: String, key: egui::KeyboardShortcut) {
+    ui.horizontal(|ui| {
+        ui.label(label);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.label(key.display());
+        });
+    });
 }

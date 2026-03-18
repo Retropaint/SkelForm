@@ -25,24 +25,14 @@ pub fn draw(
 
     // show keyframe editor shortcuts if there's no keyframe here
     if keyframes_in_frame.count() == 0 {
-        macro_rules! key {
-            ($label:expr, $key:expr) => {
-                ui.horizontal(|ui| {
-                    ui.label(shared_ui.loc($label));
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.label($key.display());
-                    });
-                });
-            };
-        }
         ui.add_space(10.);
         #[rustfmt::skip]
         {
-            key!("settings_modal.keyboard.prev_anim_frame",    config.keys.prev_anim_frame);
-            key!("settings_modal.keyboard.next_anim_frame",    config.keys.next_anim_frame);
-            key!("settings_modal.keyboard.next_keyframe",      config.keys.next_keyframe);
-            key!("settings_modal.keyboard.prev_keyframe",      config.keys.prev_keyframe);
-            key!("settings_modal.keyboard.timeline_zoom_mode", config.keys.timeline_zoom_mode);
+            ui::keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.prev_anim_frame"), config.keys.prev_anim_frame);
+            ui::keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.next_anim_frame"), config.keys.next_anim_frame);
+            ui::keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.next_keyframe"), config.keys.prev_keyframe);
+            ui::keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.prev_keyframe"), config.keys.next_keyframe);
+            ui::keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.timeline_zoom_mode"), config.keys.timeline_zoom_mode);
         };
 
         return;
