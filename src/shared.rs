@@ -665,6 +665,7 @@ pub struct Ui {
     pub lang_import_modal: bool,
     pub lang_input: String,
     pub flash_armature_timer: Option<Instant>,
+    pub prev_selected_bone_idx: usize,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

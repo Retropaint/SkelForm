@@ -72,8 +72,16 @@ pub fn draw(
         ];
         let mut col = og_col.clone();
         let tooltip = shared_ui.loc("bone_panel.group_color_desc");
-        ui.color_edit_button_srgba_premultiplied(&mut col)
+        let group_color_button = ui
+            .color_edit_button_srgba_premultiplied(&mut col)
             .on_hover_text(tooltip);
+
+        // focus on the first element of bone panel, upon selecting a new bone
+        if shared_ui.prev_selected_bone_idx != selections.bone_idx {
+            group_color_button.request_focus();
+            shared_ui.prev_selected_bone_idx = selections.bone_idx;
+        }
+
         if col != og_col {
             events.edit_bone(bone.id, &E::GroupColorR, col[0] as f32, "", usize::MAX, -1);
             events.edit_bone(bone.id, &E::GroupColorG, col[1] as f32, "", usize::MAX, -1);
