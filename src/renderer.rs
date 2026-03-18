@@ -330,6 +330,7 @@ pub fn render(
             }
         }
     }
+    renderer.on_point = false;
 
     renderer.temp_bones = temp_arm.bones.clone();
 
