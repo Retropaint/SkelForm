@@ -975,9 +975,16 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
                 arm_bone.phys_global_rot += rot * strength / arm_bone.phys_rot_resistance;
             }
 
-            // slowly reset rotation back to rest
-            let rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, const_bone.rot);
+            // reset rotation back to rest
+            let mut rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, const_bone.rot);
+            // bounciness
+            if arm_bone.phys_rot_bounce > 0. && arm_bone.phys_rot_bounce < 1. {
+                rot += arm_bone.phys_rot_velocity / (2. - arm_bone.phys_rot_bounce);
+            }
             arm_bone.phys_global_rot += rot / 10.;
+
+            // will be used in next frame to overshoot rotation, for bounciness
+            arm_bone.phys_rot_velocity = rot;
         }
 
         // interpolate scale

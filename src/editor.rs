@@ -912,6 +912,10 @@ pub fn process_event(
             let bone = armature.sel_bone_mut(selections).unwrap();
             bone.phys_scale_elasticity = value;
         }
+        Events::SetRotBounce => {
+            let bone = armature.sel_bone_mut(selections).unwrap();
+            bone.phys_rot_bounce = value;
+        }
         _ => {}
     }
 }

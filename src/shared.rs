@@ -1057,6 +1057,10 @@ pub struct Bone {
     pub phys_global_rot: f32,
     #[serde(skip_serializing_if = "is_max")]
     pub phys_rot_resistance: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub phys_rot_velocity: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub phys_rot_bounce: f32,
 
     #[serde(skip_serializing_if = "is_vec2_max")]
     pub phys_global_scale: Vec2,
@@ -2243,6 +2247,7 @@ pub enum Events {
     SetRotResistance,
     SetPosElasticity,
     SetScaleElasticity,
+    SetRotBounce,
     SelectVertex,
 }
 
@@ -2355,6 +2360,7 @@ impl EventState {
     event_with_value!(set_rot_resistance, E::SetRotResistance, res, f32);
     event_with_value!(set_pos_elasiticity, E::SetPosElasticity, elas, f32);
     event_with_value!(set_scale_elasiticity, E::SetPosElasticity, elas, f32);
+    event_with_value!(set_rot_bounce, E::SetRotBounce, bounce, f32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

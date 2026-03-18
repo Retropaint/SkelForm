@@ -1082,4 +1082,9 @@ pub fn physics(
         bone.phys_scale_elasticity,
         set_scale_elasiticity
     );
+    input!(
+        "bone_panel.physics.rot_bounce",
+        bone.phys_rot_bounce,
+        set_rot_bounce
+    );
 }

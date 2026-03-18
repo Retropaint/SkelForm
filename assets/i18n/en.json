@@ -246,7 +246,8 @@
       "scale": "Scale: ",
       "resistance": "Resistance:",
       "pos_elasticity": "Pos. Elasticity:",
-      "scale_elasticity": "Scale Elasticity:"
+      "scale_elasticity": "Scale Elasticity:",
+      "rot_bounce": "Rot. Bounce:"
     },
     "texture_effects": {
       "heading": "Texture & Visuals"
