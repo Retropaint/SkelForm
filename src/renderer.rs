@@ -2113,7 +2113,9 @@ pub fn draw_points_and_kites(
         draw(&renderer.point_buffer, render_pass, 0, point_indices.len());
     }
 
-    renderer.on_point = on_point;
+    if !renderer.on_point {
+        renderer.on_point = on_point;
+    }
 }
 
 // Add vertex and index data to the specified buffer.
@@ -2156,6 +2158,7 @@ fn transform_ring(
     let adjusted = Vec2::new(sel_bone.pos.x - mouse_pos.x, sel_bone.pos.y - mouse_pos.y);
     let expand_time = 0.15;
     let size_elapsed = (edit_mode.sel_time / expand_time).min(1.);
+    let mut on_point = false;
 
     // set temporary mode based on distance from bone to cursor
     if !camera.on_ui && size_elapsed == 1. {
@@ -2168,25 +2171,34 @@ fn transform_ring(
         // prioritize rot or scale, depending on user-defined distance
         if distance_scale > distance_rot {
             if distance < distance_rot {
+                on_point = true;
                 temporary = 1;
                 events.set_temporary_edit_mode(1);
             } else if distance < distance_scale {
+                on_point = true;
                 temporary = 2;
                 events.set_temporary_edit_mode(2);
             }
         } else {
             if distance < distance_scale {
+                on_point = true;
                 temporary = 2;
                 events.set_temporary_edit_mode(2);
             } else if distance < distance_rot {
+                on_point = true;
                 temporary = 1;
                 events.set_temporary_edit_mode(1);
             }
         }
         if distance < distance_move {
+            on_point = true;
             temporary = 0;
             events.set_temporary_edit_mode(0);
         }
+    }
+
+    if !renderer.on_point {
+        renderer.on_point = on_point;
     }
 
     // draw rot and scale rings
