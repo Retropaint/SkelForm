@@ -106,8 +106,6 @@ pub fn render(
 
     temp_arm.bones = renderer.temp_bones.clone();
 
-    let mut mesh_onion_id = -1;
-
     // get all children of selected bone(s)
     let mut selected_bone_ids = vec![];
     if armature.sel_bone(&sel) != None {
@@ -150,17 +148,6 @@ pub fn render(
         let tex = armature.tex_of(temp_arm.bones[b].id);
         let parents = armature.get_all_parents(false, temp_arm.bones[b].id);
 
-        let selected_bone = armature.sel_bone(&sel);
-        if selected_bone != None && selected_bone.unwrap().id == temp_arm.bones[b].id {
-            for parent in &parents {
-                let tex = armature.tex_of(parent.id);
-                if tex != None && parent.verts_edited {
-                    mesh_onion_id = parent.id;
-                    break;
-                }
-            }
-        }
-
         if tex == None
             || temp_arm.is_bone_hidden(false, config.propagate_visibility, temp_arm.bones[b].id)
         {
@@ -195,10 +182,6 @@ pub fn render(
         }
         for vert in &mut temp_arm.bones[b].world_verts {
             vert.add_color = Color::new(0, 0, 0, 0);
-        }
-
-        if selections.bind != -1 {
-            continue;
         }
 
         // check if cursor is on an opaque pixel of this bone's texture
@@ -473,28 +456,10 @@ pub fn render(
         draw(&renderer.meshframe_buffer, render_pass, 0, indices.len());
     }
 
-    if mesh_onion_id != -1 {
-        //render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
-        //let tp = &temp_arm.bones;
-        //let bone = tp.iter().find(|bone| bone.id == mesh_onion_id).unwrap();
-        //let wv = bone.world_verts.clone();
-        //let vertex = Vertex::default();
-
-        //#[rustfmt::skip]
-        //let (verts, indices, _) = vert_lines(bone, &tp, &vertex, &mut None, true, false, camera, input, renderer);
-        //draw(&None, &verts, &indices, render_pass, device);
-
-        //#[rustfmt::skip]
-        //let (verts, indices, _) = bone_vertices(&wv, false, selections, input, camera, config, edit_mode, events, armature, renderer);
-        //draw(&None, &verts, &indices, render_pass, device);
-    }
-
-    if selections.bind == -1 {
-        if new_vert != None {
-            renderer.new_vert = new_vert;
-            events.select_vertex(-1, false);
-            events.new_vertex();
-        }
+    if new_vert != None {
+        renderer.new_vert = new_vert;
+        events.select_vertex(-1, false);
+        events.new_vertex();
     }
 
     if config.gridline_front {
@@ -527,7 +492,6 @@ pub fn render(
         && edit_mode.sel_time > 0.25
         && input.left_clicked
         && !edit_mode.showing_mesh
-        && selections.bind == -1
     {
         let mut unselect = true;
         for event in &events.events {
