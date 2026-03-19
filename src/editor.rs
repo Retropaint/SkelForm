@@ -677,25 +677,21 @@ pub fn process_event(
             let temp_bone = renderer.temp_bones.iter().find(|b| b.id == id).unwrap();
             let temp_bones = &renderer.temp_bones;
             let bind_bone = temp_bones.iter().find(|b| b.id == bind.bone_id).unwrap();
-            let global_bind = bones.iter().find(|b| b.id == bind.bone_id).unwrap();
             let verts = &mut bone_mut.vertices;
             let vert = verts.iter_mut().find(|v| v.id == vert_id).unwrap();
 
-            // get the correct rotation to offset by, based on bind type (weight, path, etc)
-            let bind_idx = temp_bone
-                .binds
-                .iter()
-                .position(|b| b.bone_id == bind.bone_id)
-                .unwrap();
+            // get the rotation to offset by, based on bind type (weight, path, etc)
+            let bind_id = bind.bone_id;
+            let bind_idx = temp_bone.binds.iter().position(|b| b.bone_id == bind_id);
             let rot = if bind.is_path {
-                renderer::get_path_normal_angle(temp_bones, temp_bone, bind_idx)
+                renderer::get_path_normal_angle(temp_bones, temp_bone, bind_idx.unwrap())
             } else {
                 bind_bone.rot
             };
 
             // offset vertex such that it stays still after binding/unbinding
             if bound {
-                vert.pos /= global_bind.scale;
+                vert.pos /= bind_bone.scale / temp_bone.scale;
                 vert.pos = utils::rotate(&vert.pos, temp_bone.rot);
                 vert.pos -= (bind_bone.pos - temp_bone.pos) / bind_bone.scale;
                 vert.pos = utils::rotate(&vert.pos, -rot);
@@ -703,7 +699,7 @@ pub fn process_event(
                 vert.pos = utils::rotate(&vert.pos, rot);
                 vert.pos += (bind_bone.pos - temp_bone.pos) / bind_bone.scale;
                 vert.pos = utils::rotate(&vert.pos, -temp_bone.rot);
-                vert.pos *= global_bind.scale;
+                vert.pos *= bind_bone.scale / temp_bone.scale;
             }
         }
         Events::RemoveTriangle => {
