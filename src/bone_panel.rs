@@ -797,7 +797,9 @@ pub fn mesh_deformation(
         for w in 0..bind.verts.len() {
             ui.horizontal(|ui| {
                 let str_label = bind.verts[w].id.to_string() + ":";
-                ui.label(str_label);
+                if ui.clickable_label(str_label).clicked() {
+                    events.select_vertex(bind.verts[w].id, false);
+                }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let mut new_weight = bind.verts[w].weight;
                     ui.add(egui::Slider::new(&mut new_weight, (0.)..=1.));
