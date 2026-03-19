@@ -716,12 +716,17 @@ pub fn process_event(
             let tex_img = renderer::sel_tex_img(armature.sel_bone(sel).unwrap(), &armature);
             let bone_mut = armature.sel_bone_mut(sel).unwrap();
 
+            // give unique ID to vertex
             bone_mut.vertices.push(renderer.new_vert.unwrap());
-            bone_mut.vertices.last_mut().unwrap().id = 4.max(bone_mut.vertices.len() as u32);
+            let ids: Vec<i32> = bone_mut.vertices.iter().map(|v| v.id as i32).collect();
+            bone_mut.vertices.last_mut().unwrap().id = generate_id(ids) as u32;
+
+            // add vertex to mesh
             bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
             bone_mut.indices = triangulate(&mut bone_mut.vertices, &tex_img);
             cleanup_vertices(bone_mut);
 
+            // set this bone as having a mesh
             bone_mut.verts_edited = true;
         }
         Events::AdjustKeyframesByFPS => {
