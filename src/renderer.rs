@@ -901,10 +901,8 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
             let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
             let angle = (-vel.y).atan2(-vel.x);
             let rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, angle);
-            if arm_bone.phys_rot_resistance > 50. {
-                let strength = (arm_bone.phys_global_pos - prev_pos).mag();
-                arm_bone.phys_global_rot += rot * strength / arm_bone.phys_rot_resistance;
-            }
+            let strength = (arm_bone.phys_global_pos - prev_pos).mag();
+            arm_bone.phys_global_rot += rot * strength / arm_bone.phys_rot_resistance;
 
             // reset rotation back to rest
             let mut rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, const_bone.rot);
@@ -1261,7 +1259,7 @@ pub fn inheritance(
 
         // apply physics, if armature_bones is provided
         if arm_bones.len() > 0 {
-            if bones[i].phys_rot_resistance > 1. {
+            if bones[i].phys_rot_resistance > 0. {
                 bones[i].rot = arm_bones[i].phys_global_rot;
             }
             if bones[i].phys_pos_elasticity > 0. {
