@@ -2103,8 +2103,6 @@ impl RenderBuffer {
 #[derive(Default)]
 pub struct Renderer {
     pub editing_bone: bool,
-    pub changed_vert_id: i32,
-    pub changed_vert_init_pos: Option<Vec2>,
     pub initialized_window: bool,
     pub has_loaded: bool,
     pub bone_init_rot: f32,
@@ -2228,7 +2226,6 @@ pub enum Events {
     ResetConfig,
     EditCamera,
     ClickVertex,
-    AdjustVertex,
     CancelPendingTexture,
     AdjustKeyframesByFPS,
     ResetVertices,
@@ -2498,12 +2495,6 @@ impl EventState {
         self.events.push(Events::SetBoneTexture);
         self.values.push(bone_id as f32);
         self.str_values.push(tex);
-    }
-
-    pub fn adjust_vertex(&mut self, pos_x: f32, pos_y: f32) {
-        self.events.push(Events::AdjustVertex);
-        self.values.push(pos_x as f32);
-        self.values.push(pos_y as f32);
     }
 
     pub fn edit_camera(&mut self, pos_x: f32, pos_y: f32, zoom: f32) {

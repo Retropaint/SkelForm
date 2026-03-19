@@ -104,33 +104,7 @@ pub fn render(
         construction(&mut next_arm.bones, &next_arm.animated_bones);
     }
 
-    // store bound/unbound vert's pos before construction
-    let mut init_vert_pos = Vec2::default();
-    let vert_id = renderer.changed_vert_id as usize;
-    if renderer.changed_vert_id != -1 {
-        init_vert_pos = temp_arm.bones[selections.bone_idx].vertices[vert_id].pos;
-    }
-
     temp_arm.bones = renderer.temp_bones.clone();
-
-    // adjust bound/unbound vert's pos after construction
-    if renderer.changed_vert_id != -1 {
-        let temp_vert = temp_arm.bones[selections.bone_idx].vertices[vert_id];
-
-        let mut diff = temp_vert.pos - init_vert_pos - temp_arm.bones[selections.bone_idx].pos;
-
-        // if unbound, vert needs to account for pos in the previous frame
-        let vert = &armature.sel_bone(&sel).unwrap().vertices[vert_id];
-        if let Some(last_frame_pos) = renderer.changed_vert_init_pos {
-            diff = temp_vert.pos - last_frame_pos;
-        }
-
-        let scale = temp_arm.bones[selections.bone_idx].scale;
-        events.adjust_vertex(
-            (vert.pos.x + diff.x) / scale.x,
-            (vert.pos.y + diff.y) / scale.y,
-        );
-    }
 
     let mut mesh_onion_id = -1;
 
@@ -587,7 +561,7 @@ pub fn render(
     if !input.left_down {
         renderer.editing_bone = false;
         renderer.started_dragging_verts = false;
-    } else if sel.vert_ids.len() > 0 {
+    } else if sel.vert_ids.len() > 0 && armature.sel_bone(&sel) != None {
         if !renderer.started_dragging_verts {
             events.save_bone(selections.bone_idx);
             renderer.started_dragging_verts = true
@@ -1039,22 +1013,10 @@ pub fn construct_verts(bones: &mut Vec<Bone>) {
                 // Vertices will follow along this path.
 
                 // get previous and next bone
-                let binds = &bones[b].binds;
-                let prev = if bi > 0 { bi - 1 } else { bi };
-                let next = (bi + 1).min(binds.len() - 1);
-                if binds[prev].bone_id == -1 || binds[next].bone_id == -1 {
+                let normal_angle = get_path_normal_angle(bones, &bone, bi);
+                if normal_angle == f32::MAX {
                     continue;
                 }
-                let prev_bone = bones.iter().find(|bone| bone.id == binds[prev].bone_id);
-                let next_bone = bones.iter().find(|bone| bone.id == binds[next].bone_id);
-
-                // get the average of normals between previous bone, this bone, and next bone
-                let prev_dir = bind_bone.pos - prev_bone.unwrap().pos;
-                let next_dir = next_bone.unwrap().pos - bind_bone.pos;
-                let prev_normal = Vec2::new(-prev_dir.y, prev_dir.x).normalize();
-                let next_normal = Vec2::new(-next_dir.y, next_dir.x).normalize();
-                let average = prev_normal + next_normal;
-                let normal_angle = average.y.atan2(average.x);
 
                 // move vertex to bind bone, then just adjust it to 'bounce' off the line's surface
                 let vert = &mut bones[b].vertices[idx.unwrap()];
@@ -1065,6 +1027,27 @@ pub fn construct_verts(bones: &mut Vec<Bone>) {
             }
         }
     }
+}
+
+pub fn get_path_normal_angle(bones: &Vec<Bone>, bone: &Bone, bind_idx: usize) -> f32 {
+    let prev = if bind_idx > 0 { bind_idx - 1 } else { bind_idx };
+    let next = (bind_idx + 1).min(bone.binds.len() - 1);
+    if bone.binds[prev].bone_id == -1 || bone.binds[next].bone_id == -1 {
+        return f32::MAX;
+    }
+    let bind_bone = bones.iter().find(|b| b.id == bone.binds[bind_idx].bone_id);
+    let prev_bone = bones.iter().find(|b| b.id == bone.binds[prev].bone_id);
+    let next_bone = bones.iter().find(|b| b.id == bone.binds[next].bone_id);
+
+    // get the average of normals between previous bone, this bone, and next bone
+    let prev_dir = bind_bone.unwrap().pos - prev_bone.unwrap().pos;
+    let next_dir = next_bone.unwrap().pos - bind_bone.unwrap().pos;
+    let prev_normal = Vec2::new(-prev_dir.y, prev_dir.x).normalize();
+    let next_normal = Vec2::new(-next_dir.y, next_dir.x).normalize();
+    let average = prev_normal + next_normal;
+    let normal_angle = average.y.atan2(average.x);
+
+    normal_angle
 }
 
 pub fn inherit_vert(mut pos: Vec2, bone: &Bone) -> Vec2 {
@@ -1432,6 +1415,7 @@ pub fn bone_vertices(
         }
 
         if input.left_clicked {
+            // simulate double-click for binding verts
             if renderer.clicked_vert_id == -1 {
                 renderer.clicked_vert_id = world_verts[wv].id as i32;
             } else if renderer.clicked_vert_id == world_verts[wv].id as i32 {

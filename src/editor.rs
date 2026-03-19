@@ -146,14 +146,6 @@ pub fn iterate_events(
 
         events.events.remove(0);
         events.values.drain(0..=2);
-    } else if event == Events::AdjustVertex {
-        let vert = &mut armature.sel_bone_mut(&selections).unwrap().vertices
-            [renderer.changed_vert_id as usize];
-        vert.pos = Vec2::new(events.values[0], events.values[1]);
-        renderer.changed_vert_id = -1;
-
-        events.events.remove(0);
-        events.values.drain(0..=1);
     } else if event == Events::EditBone {
         let anim_el = AnimElement::from_repr(events.values[1] as usize).unwrap();
         let mut anim_id = events.values[3] as usize;
@@ -244,6 +236,10 @@ pub fn iterate_events(
         let dragging_id = events.values[2] as i32;
         if selections.bone_ids.len() < 2 {
             selections.bone_ids = vec![dragging_id];
+            let tex = armature.tex_of(dragging_id);
+            if tex == None {
+                edit_mode.showing_mesh = false;
+            }
         } else {
             // only move root bones (in context of selected bones)
             selections.bone_ids = selections.only_root_bones(&armature.bones)
@@ -654,31 +650,56 @@ pub fn process_event(
             if selections.bind == -1 {
                 return;
             }
+            let bones = armature.bones.clone();
             let bone_mut = &mut armature.sel_bone_mut(&selections).unwrap();
+            let id = bone_mut.id;
             let idx = selections.bind as usize;
             let vert_id = bone_mut.vertices[value as usize].id;
-            let verts = bone_mut.vertices.clone();
             let bind = &bone_mut.binds[idx];
+
+            // add/remove vertex to bind
+            let mut bound = false;
             if let Some(v) = bind.verts.iter().position(|vert| vert.id == vert_id as i32) {
                 bone_mut.binds[idx].verts.remove(v);
-
-                let changed_vert_id = verts.iter().position(|v| v.id == vert_id).unwrap();
-                renderer.changed_vert_id = changed_vert_id as i32;
-
-                let temp_bone = renderer.sel_temp_bone.as_ref().unwrap();
-                let vert_pos = temp_bone.vertices[changed_vert_id].pos;
-
-                // store this frame's vert pos for adjustment later
-                renderer.changed_vert_init_pos = Some(vert_pos);
             } else {
+                bound = true;
                 bone_mut.binds[idx].verts.push(BoneBindVert {
                     id: vert_id as i32,
                     weight: 1.,
                 });
+            }
 
-                let changed_vert_id = verts.iter().position(|v| v.id == vert_id).unwrap();
-                renderer.changed_vert_init_pos = None;
-                renderer.changed_vert_id = changed_vert_id as i32;
+            let bind = bone_mut.binds[idx].clone();
+            let temp_bone = renderer.temp_bones.iter().find(|b| b.id == id).unwrap();
+            let temp_bones = &renderer.temp_bones;
+            let bind_bone = temp_bones.iter().find(|b| b.id == bind.bone_id).unwrap();
+            let global_bind = bones.iter().find(|b| b.id == bind.bone_id).unwrap();
+            let verts = &mut bone_mut.vertices;
+            let vert = verts.iter_mut().find(|v| v.id == vert_id).unwrap();
+
+            // get the correct rotation to offset by, based on bind type (weight, path, etc)
+            let bind_idx = temp_bone
+                .binds
+                .iter()
+                .position(|b| b.bone_id == bind.bone_id)
+                .unwrap();
+            let rot = if bind.is_path {
+                renderer::get_path_normal_angle(temp_bones, temp_bone, bind_idx)
+            } else {
+                bind_bone.rot
+            };
+
+            // offset vertex such that it stays still after binding/unbinding
+            if bound {
+                vert.pos /= global_bind.scale;
+                vert.pos = utils::rotate(&vert.pos, temp_bone.rot);
+                vert.pos -= (bind_bone.pos - temp_bone.pos) / bind_bone.scale;
+                vert.pos = utils::rotate(&vert.pos, -rot);
+            } else {
+                vert.pos = utils::rotate(&vert.pos, rot);
+                vert.pos += (bind_bone.pos - temp_bone.pos) / bind_bone.scale;
+                vert.pos = utils::rotate(&vert.pos, -temp_bone.rot);
+                vert.pos *= global_bind.scale;
             }
         }
         Events::RemoveTriangle => {

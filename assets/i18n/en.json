@@ -233,7 +233,7 @@
       "pathing_desc": "Vertices will follow this bind along a path formed with adjacent binds.",
       "weights_label": "Weights",
       "bind_verts": "Bind Verts",
-      "no_bound_verts": "Double-click on vertices to add them to this bind. Double-click again to remove them.\n\nOnce added, their weights will be configurable here.\n\n",
+      "no_bound_verts": "Double-click on vertices to add them to this bind. Double-click again to remove them.\n\nOnce added, their weights will be configurable here.",
       "gap": "Point Gap ℹ:",
       "padding": "Padding ℹ:",
       "density_desc": "A higher gap spaces out potential points. Increase if there are too many points close to each other",

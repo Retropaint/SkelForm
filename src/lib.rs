@@ -835,6 +835,7 @@ impl BackendRenderer {
         // animated bones will be used throughout the program
         utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
         shared.renderer.temp_bones = shared.armature.animated_bones.clone();
+
         renderer::runtime_construction(
             &mut shared.renderer.temp_bones,
             &shared.armature.animated_bones,
@@ -846,7 +847,7 @@ impl BackendRenderer {
         #[rustfmt::skip]
         renderer::render(
             render_pass, &self.gpu.device, &self.gpu.queue, &s.camera, &s.input, &mut s.armature,
-            &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events
+            &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events, 
         );
 
         s.ui.warnings = warnings::check_warnings(&s.armature);
