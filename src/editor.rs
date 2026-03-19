@@ -612,7 +612,9 @@ pub fn process_event(
             }
         }
         Events::DragVertex => {
-            let bone = renderer.sel_temp_bone.clone().unwrap();
+            let bones = &renderer.temp_bones;
+            let sel_id = armature.sel_bone(selections).unwrap().id;
+            let bone = bones.iter().find(|b| b.id == sel_id).clone().unwrap();
             let temp_vert = bone.vertices.iter().find(|v| v.id == value as u32);
             if bone.vertices.len() == 0 || temp_vert == None {
                 return;
@@ -622,14 +624,14 @@ pub fn process_event(
             let mut total_rot = temp_vert.unwrap().offset_rot;
 
             let mut is_in_bind = false;
-            let mut bind_scale = Vec2::new(1., 1.);
-            for bind in bone.binds {
+            let mut scale = Vec2::new(1., 1.);
+            for bind in &bone.binds {
                 let vert = bind.verts.iter().find(|v| v.id == value as i32);
                 let bones = &renderer.temp_bones;
                 if vert != None {
                     is_in_bind = true;
                     let bind_bone = bones.iter().find(|b| b.id == bind.bone_id).unwrap();
-                    bind_scale = bind_bone.scale;
+                    scale = bind_bone.scale;
                     if !bind.is_path {
                         total_rot += bind_bone.rot;
                     }
@@ -638,6 +640,7 @@ pub fn process_event(
             // add mesh bone's own rotation, if this vert is not bound
             if !is_in_bind {
                 total_rot += bone.rot;
+                scale = bone.scale;
             }
 
             let mouse_vel = renderer::mouse_vel(&input, &camera);
@@ -645,7 +648,7 @@ pub fn process_event(
             let og_bone = &mut armature.sel_bone_mut(&selections).unwrap();
             og_bone.verts_edited = true;
             let vert_mut = og_bone.vertices.iter_mut().find(|v| v.id == value as u32);
-            vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), -total_rot) / bind_scale;
+            vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), -total_rot) / scale;
         }
         Events::ClickVertex => {
             if selections.bind == -1 {

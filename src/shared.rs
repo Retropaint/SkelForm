@@ -2108,7 +2108,6 @@ pub struct Renderer {
     pub bone_init_rot: f32,
     pub new_vert: Option<Vertex>,
     pub started_dragging_verts: bool,
-    pub sel_temp_bone: Option<Bone>,
     pub temp_bones: Vec<Bone>,
     pub render_points: bool,
     pub render_kites: bool,

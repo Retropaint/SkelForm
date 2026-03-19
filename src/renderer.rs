@@ -167,13 +167,6 @@ pub fn render(
             continue;
         }
 
-        // save constructed vertices for the ClickVertex event
-        if selections.bone_idx != usize::MAX
-            && temp_arm.bones[b].id == armature.sel_bone(&sel).unwrap().id
-        {
-            renderer.sel_temp_bone = Some(temp_arm.bones[b].clone());
-        }
-
         // setup world verts
         let cam = world_camera(&camera, &config);
         for v in 0..temp_arm.bones[b].vertices.len() {
