@@ -1833,7 +1833,7 @@ pub enum HandlePreset {
     SineIn,
     SineOut,
     SineInOut,
-    None,
+    Snap,
     Custom,
 }
 enum_string!(HandlePreset);

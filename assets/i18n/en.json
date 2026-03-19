@@ -381,16 +381,17 @@
   },
   "keyframe_panel": {
     "empty": "Nothing to edit, as this is the first frame.\n\nTo adjust this keyframe's transition, select the one after it.",
-    "transition_presets": "Transition Presets",
-    "presets": {
-      "linear": "Linear",
-      "sinein": "Sine-In",
-      "sineout": "Sine-Out",
-      "sineinout": "Sine-In-Out",
-      "none": "None"
-    },
+    "preset_label": "Preset: ",
+    "snap_note": "With this preset, values will snap between keyframes instead of interpolating.\n\nTo re-enable the graph, change the preset above.",
     "start": "Start:",
-    "end": "End:"
+    "end": "End:",
+    "presets": {
+      "Linear": "Linear",
+      "SineIn": "Sine-In",
+      "SineOut": "Sine-Out",
+      "SineInOut": "Sine-In-Out",
+      "Snap": "Snap"
+    }
   },
   "polar": {
     "delete_bone": "Are you sure to delete this bone?",

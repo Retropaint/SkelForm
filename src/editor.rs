@@ -654,7 +654,6 @@ pub fn process_event(
             if selections.bind == -1 {
                 return;
             }
-            let bones = armature.bones.clone();
             let bone_mut = &mut armature.sel_bone_mut(&selections).unwrap();
             let id = bone_mut.id;
             let idx = selections.bind as usize;

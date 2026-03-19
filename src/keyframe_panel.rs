@@ -34,7 +34,6 @@ pub fn draw(
             ui::keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.prev_keyframe"), config.keys.next_keyframe);
             ui::keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.timeline_zoom_mode"), config.keys.timeline_zoom_mode);
         };
-
         return;
     }
 
@@ -51,6 +50,7 @@ pub fn draw(
         ui.label(shared_ui.loc("keyframe_panel.empty"));
         return;
     }
+
     ui.horizontal(|ui| {
         if selections.anim_frame == -1
             || armature.sel_anim(&sel) == None
@@ -59,39 +59,49 @@ pub fn draw(
             return;
         }
 
-        let mut selected = keyframe.handle_preset;
-        let og_selected = selected.clone();
-        egui::ComboBox::new("transition".to_string(), "")
-            .selected_text(shared_ui.loc("keyframe_panel.transition_presets"))
-            .show_ui(ui, |ui| {
-                macro_rules! preset {
-                    ($name:expr) => {
-                        shared_ui.loc(&format!("keyframe_panel.presets.{}", $name))
-                    };
-                }
-                ui.selectable_value(&mut selected, HandlePreset::Linear, preset!("linear"));
-                ui.selectable_value(&mut selected, HandlePreset::SineIn, preset!("sinein"));
-                ui.selectable_value(&mut selected, HandlePreset::SineOut, preset!("sineout"));
-                ui.selectable_value(&mut selected, HandlePreset::SineInOut, preset!("sineinout"));
-                ui.selectable_value(&mut selected, HandlePreset::None, preset!("none"));
-            });
+        ui.label(shared_ui.loc("keyframe_panel.preset_label"));
 
-        if selected != og_selected {
-            let (start, end) = utils::interp_preset(selected.clone());
-            events.update_keyframe_transition(keyframe.frame, true, start, selected.clone() as i32);
-            events.update_keyframe_transition(keyframe.frame, false, end, selected as i32);
+        let mut sel = keyframe.handle_preset.clone();
+        let og_selected = sel.clone();
+        macro_rules! preset {
+            ($name:expr) => {
+                shared_ui.loc(&format!("keyframe_panel.presets.{}", $name))
+            };
         }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            egui::ComboBox::new("transition".to_string(), "")
+                .selected_text(preset!(keyframe.handle_preset))
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(&mut sel, HandlePreset::Linear, preset!("Linear"));
+                    ui.selectable_value(&mut sel, HandlePreset::SineIn, preset!("SineIn"));
+                    ui.selectable_value(&mut sel, HandlePreset::SineOut, preset!("SineOut"));
+                    ui.selectable_value(&mut sel, HandlePreset::SineInOut, preset!("SineInOut"));
+                    ui.selectable_value(&mut sel, HandlePreset::Snap, preset!("Snap"));
+                });
+
+            // update keyframe preset
+            if sel != og_selected {
+                let (start, end) = utils::interp_preset(sel.clone());
+                let sel = sel.clone() as i32;
+                events.update_keyframe_transition(keyframe.frame, true, start, sel);
+                events.update_keyframe_transition(keyframe.frame, false, end, sel as i32);
+            }
+        });
     });
 
     // render bezier curve
     let bezier_frame = egui::Frame::new().fill(config.colors.dark_accent.into());
     let mut dragged = false;
-    bezier_frame.show(ui, |ui| {
-        dragged = bezier_graph(ui, &mut keyframe.start_handle, &mut keyframe.end_handle);
+    ui.add_enabled_ui(keyframe.handle_preset != HandlePreset::Snap, |ui| {
+        bezier_frame.show(ui, |ui| {
+            dragged = bezier_graph(ui, &mut keyframe);
+        });
     });
+
     if !dragged {
         shared_ui.dragging_handles = false;
     } else {
+        // process bezier dragging
         if !shared_ui.dragging_handles {
             events.save_animation();
             shared_ui.dragging_handles = true;
@@ -121,23 +131,31 @@ pub fn draw(
     // handle input fields
     let start_handle = keyframe.start_handle;
     let end_handle = keyframe.end_handle;
-    ui.horizontal(|ui| {
-        ui.label(shared_ui.loc("keyframe_panel.start"));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            handle_input!("start_handle_y", start_handle, false, true, ui);
-            handle_input!("start_handle_x", start_handle, true, true, ui);
+    ui.add_enabled_ui(keyframe.handle_preset != HandlePreset::Snap, |ui| {
+        ui.horizontal(|ui| {
+            ui.label(shared_ui.loc("keyframe_panel.start"));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                handle_input!("start_handle_y", start_handle, false, true, ui);
+                handle_input!("start_handle_x", start_handle, true, true, ui);
+            });
+        });
+        ui.horizontal(|ui| {
+            ui.label(shared_ui.loc("keyframe_panel.end"));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                handle_input!("end_handle_y", end_handle, false, false, ui);
+                handle_input!("end_handle_x", end_handle, true, false, ui);
+            });
         });
     });
-    ui.horizontal(|ui| {
-        ui.label(shared_ui.loc("keyframe_panel.end"));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            handle_input!("end_handle_y", end_handle, false, false, ui);
-            handle_input!("end_handle_x", end_handle, true, false, ui);
-        });
-    });
+
+    // show snap note if that's the selected preset
+    if keyframe.handle_preset == HandlePreset::Snap {
+        ui.add_space(10.);
+        ui.label(shared_ui.loc("keyframe_panel.snap_note"));
+    }
 }
 
-pub fn bezier_graph(ui: &mut egui::Ui, start_handle: &mut Vec2, end_handle: &mut Vec2) -> bool {
+pub fn bezier_graph(ui: &mut egui::Ui, keyframe: &mut Keyframe) -> bool {
     let size = egui::Vec2::new(ui.available_width(), ui.available_width());
     let (response, painter) = ui.allocate_painter(size, Sense::hover());
     let mut dragged = false;
@@ -152,6 +170,8 @@ pub fn bezier_graph(ui: &mut egui::Ui, start_handle: &mut Vec2, end_handle: &mut
 
     let control_point_radius = 8.0;
 
+    let start_handle = keyframe.start_handle;
+    let end_handle = keyframe.end_handle;
     let mut control_points = [
         pos2(0.0, size.y),
         pos2(start_handle.x * size.x, size.y - (start_handle.y * size.y)),
@@ -203,10 +223,12 @@ pub fn bezier_graph(ui: &mut egui::Ui, start_handle: &mut Vec2, end_handle: &mut
     painter.add(shape);
 
     let points = control_points;
-    let p1 = Vec2::new(points[1].x / size.x, 1. - (points[1].y / size.y));
-    let p2 = Vec2::new(points[2].x / size.x, 1. - (points[2].y / size.y));
-    *start_handle = p1;
-    *end_handle = p2;
+    if keyframe.handle_preset != HandlePreset::Snap {
+        let p1 = Vec2::new(points[1].x / size.x, 1. - (points[1].y / size.y));
+        let p2 = Vec2::new(points[2].x / size.x, 1. - (points[2].y / size.y));
+        keyframe.start_handle = p1;
+        keyframe.end_handle = p2;
+    }
 
     let prev = Stroke::new(1., col_prev);
     let next = Stroke::new(1., col_next);
