@@ -622,16 +622,17 @@ pub fn process_event(
             let mut total_rot = temp_vert.unwrap().offset_rot;
 
             let mut is_in_bind = false;
+            let mut bind_scale = Vec2::new(1., 1.);
             for bind in bone.binds {
                 let vert = bind.verts.iter().find(|v| v.id == value as i32);
+                let bones = &renderer.temp_bones;
                 if vert != None {
                     is_in_bind = true;
-                }
-                // add bind bone's rotation
-                if vert != None && !bind.is_path {
-                    let bones = &renderer.temp_bones;
                     let bind_bone = bones.iter().find(|b| b.id == bind.bone_id).unwrap();
-                    total_rot += bind_bone.rot;
+                    bind_scale = bind_bone.scale;
+                    if !bind.is_path {
+                        total_rot += bind_bone.rot;
+                    }
                 }
             }
             // add mesh bone's own rotation, if this vert is not bound
@@ -644,7 +645,7 @@ pub fn process_event(
             let og_bone = &mut armature.sel_bone_mut(&selections).unwrap();
             og_bone.verts_edited = true;
             let vert_mut = og_bone.vertices.iter_mut().find(|v| v.id == value as u32);
-            vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), -total_rot) / bone.scale;
+            vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), -total_rot) / bind_scale;
         }
         Events::ClickVertex => {
             if selections.bind == -1 {
