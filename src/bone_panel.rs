@@ -270,7 +270,7 @@ pub fn draw(
 
             // vertex position inputs
             macro_rules! input {
-                ($field:expr, $id:expr, $event:ident, $is_x:expr, $ui:expr) => {
+                ($field:expr, $id:expr, $label:expr, $event:ident, $is_x:expr, $ui:expr) => {
                     let init_value = if $is_x { $field.x } else { $field.y };
                     let (edited, value, _) =
                         $ui.float_input($id.to_string(), shared_ui, init_value, 1., None);
@@ -283,26 +283,27 @@ pub fn draw(
                         }
                         events.$event(new.x, new.y);
                     }
+                    $ui.label($label.to_string());
                 };
             }
             ui.horizontal(|ui| {
-                ui.label("Vertex Position:");
+                ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_pos"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    input!(vert.pos, "vert_pos_x", edit_vertex_pos, false, ui);
-                    input!(vert.pos, "vert_pos_y", edit_vertex_pos, true, ui);
+                    input!(vert.pos, "vert_pos_y", "Y:", edit_vertex_pos, false, ui);
+                    input!(vert.pos, "vert_pos_x", "X:", edit_vertex_pos, true, ui);
                 });
             });
 
             // vertex UV sliders
             let mut new_uv = vert.uv;
             ui.horizontal(|ui| {
-                ui.label("Vert. U:");
+                ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_u"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.add(egui::Slider::new(&mut new_uv.x, (0.)..=1.));
                 });
             });
             ui.horizontal(|ui| {
-                ui.label("Vert. V:");
+                ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_v"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.add(egui::Slider::new(&mut new_uv.y, (0.)..=1.));
                 });
