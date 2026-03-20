@@ -1122,7 +1122,7 @@ pub struct Bone {
     #[serde(skip)]
     pub group_color: Color,
     #[serde(skip)]
-    pub blacklist: Vec<u32>
+    pub blacklist: Vec<u32>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
@@ -2255,6 +2255,9 @@ pub enum Events {
     SetScaleElasticity,
     SetRotBounce,
     SelectVertex,
+
+    EditVertexPos,
+    EditVertexUV,
 }
 
 enum_string!(Events);
@@ -2568,6 +2571,18 @@ impl EventState {
         self.events.push(Events::SelectVertex);
         self.values.push(id as f32);
         self.values.push(if force_append { 1. } else { 0. });
+    }
+
+    pub fn edit_vertex_pos(&mut self, x: f32, y: f32) {
+        self.events.push(Events::EditVertexPos);
+        self.values.push(x as f32);
+        self.values.push(y as f32);
+    }
+
+    pub fn edit_vertex_uv(&mut self, x: f32, y: f32) {
+        self.events.push(Events::EditVertexUV);
+        self.values.push(x as f32);
+        self.values.push(y as f32);
     }
 }
 

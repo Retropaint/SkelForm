@@ -526,7 +526,7 @@ pub fn render(
     if !input.left_down {
         renderer.editing_bone = false;
         renderer.started_dragging_verts = false;
-    } else if sel.vert_ids.len() > 0 && armature.sel_bone(&sel) != None {
+    } else if sel.vert_ids.len() > 0 && armature.sel_bone(&sel) != None && !camera.on_ui {
         if !renderer.started_dragging_verts {
             events.save_bone(selections.bone_idx);
             renderer.started_dragging_verts = true

@@ -262,6 +262,55 @@ pub fn draw(
         mesh_deformation(
             ui, &bone, shared_ui, events, config, selections, armature, edit_mode,
         );
+        // show vertex position and UV inputs, if one is selected
+        if selections.vert_ids.len() == 1 {
+            ui.add_space(10.);
+            let vert_id = selections.vert_ids[0] as u32;
+            let vert = bone.vertices.iter().find(|v| v.id == vert_id).unwrap();
+
+            // vertex position inputs
+            macro_rules! input {
+                ($field:expr, $id:expr, $event:ident, $is_x:expr, $ui:expr) => {
+                    let init_value = if $is_x { $field.x } else { $field.y };
+                    let (edited, value, _) =
+                        $ui.float_input($id.to_string(), shared_ui, init_value, 1., None);
+                    if edited {
+                        let mut new = $field;
+                        if $is_x {
+                            new.x = value;
+                        } else {
+                            new.y = value;
+                        }
+                        events.$event(new.x, new.y);
+                    }
+                };
+            }
+            ui.horizontal(|ui| {
+                ui.label("Vertex Position:");
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    input!(vert.pos, "vert_pos_x", edit_vertex_pos, false, ui);
+                    input!(vert.pos, "vert_pos_y", edit_vertex_pos, true, ui);
+                });
+            });
+
+            // vertex UV sliders
+            let mut new_uv = vert.uv;
+            ui.horizontal(|ui| {
+                ui.label("Vert. U:");
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.add(egui::Slider::new(&mut new_uv.x, (0.)..=1.));
+                });
+            });
+            ui.horizontal(|ui| {
+                ui.label("Vert. V:");
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.add(egui::Slider::new(&mut new_uv.y, (0.)..=1.));
+                });
+            });
+            if new_uv != vert.uv {
+                events.edit_vertex_uv(new_uv.x, new_uv.y);
+            }
+        }
         ui.add_space(20.);
     }
 
@@ -766,10 +815,6 @@ pub fn mesh_deformation(
         });
     });
     let selected = selections.bind as usize;
-
-    if binds[selected].bone_id == -1 {
-        return;
-    }
 
     let vert_id_len = armature.sel_bone(&sel).unwrap().binds[selected].verts.len();
     if vert_id_len > 0 {
