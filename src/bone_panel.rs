@@ -296,19 +296,36 @@ pub fn draw(
 
             // vertex UV sliders
             let mut new_uv = vert.uv;
+            let mut slider1dragged = false;
+            let mut slider2dragged = false;
             ui.horizontal(|ui| {
                 ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_u"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.add(egui::Slider::new(&mut new_uv.x, (0.)..=1.));
+                    let slider = ui.add(
+                        egui::Slider::new(&mut new_uv.x, (0.)..=1.).update_while_editing(false),
+                    );
+                    slider1dragged = slider.dragged();
+                    if slider.drag_started() {
+                        events.save_bone(selections.bone_idx);
+                    }
                 });
             });
             ui.horizontal(|ui| {
                 ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_v"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.add(egui::Slider::new(&mut new_uv.y, (0.)..=1.));
+                    let slider = ui.add(
+                        egui::Slider::new(&mut new_uv.y, (0.)..=1.).update_while_editing(false),
+                    );
+                    slider2dragged = slider.dragged();
+                    if slider.drag_started() {
+                        events.save_bone(selections.bone_idx);
+                    }
                 });
             });
             if new_uv != vert.uv {
+                if !slider1dragged && !slider2dragged {
+                    events.save_bone(selections.bone_idx);
+                }
                 events.edit_vertex_uv(new_uv.x, new_uv.y);
             }
         }
@@ -848,8 +865,14 @@ pub fn mesh_deformation(
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let mut new_weight = bind.verts[w].weight;
-                    ui.add(egui::Slider::new(&mut new_weight, (0.)..=1.));
+                    let slider = ui.add(egui::Slider::new(&mut new_weight, (0.)..=1.));
+                    if slider.drag_started() {
+                        events.save_bone(selections.bone_idx as usize);
+                    }
                     if new_weight != bind.verts[w].weight {
+                        if !slider.dragged() {
+                            events.save_bone(selections.bone_idx as usize);
+                        }
                         events.set_bind_weight(w, new_weight);
                     }
                 });
