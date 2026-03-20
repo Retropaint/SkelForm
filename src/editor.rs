@@ -602,7 +602,7 @@ pub fn process_event(
             let verts = verts!().clone();
             let bone = armature.sel_bone_mut(&sel).unwrap();
             bone.indices = triangulate(&verts, &tex_img);
-            remove_blacklisted_tris(&mut bone.indices, &bone.vertices, &bone.blacklist);
+            remove_blacklisted_tris(&mut bone.indices, &bone.vertices, &mut bone.blacklist);
 
             // remove this vert from its binds
             'bind: for bind in &mut armature.sel_bone_mut(&sel).unwrap().binds {
@@ -719,7 +719,7 @@ pub fn process_event(
                 .push(bone.vertices[bone.indices[value as usize + 1] as usize].id);
             bone.blacklist
                 .push(bone.vertices[bone.indices[value as usize + 2] as usize].id);
-            remove_blacklisted_tris(&mut bone.indices, &bone.vertices, &bone.blacklist);
+            remove_blacklisted_tris(&mut bone.indices, &bone.vertices, &mut bone.blacklist);
         }
         Events::NewVertex => {
             // remove drag vertex action, since it's always triggered
@@ -742,7 +742,7 @@ pub fn process_event(
             remove_blacklisted_tris(
                 &mut bone_mut.indices,
                 &bone_mut.vertices,
-                &bone_mut.blacklist,
+                &mut bone_mut.blacklist,
             );
 
             // set this bone as having a mesh
@@ -1701,7 +1701,23 @@ fn tri_point(p: &Vec2, a: &Vec2, b: &Vec2, c: &Vec2) -> (f32, f32, f32, f32) {
     (-1., -1., -1., -1.)
 }
 
-pub fn remove_blacklisted_tris(indices: &mut Vec<u32>, verts: &Vec<Vertex>, blacklist: &Vec<u32>) {
+pub fn remove_blacklisted_tris(
+    indices: &mut Vec<u32>,
+    verts: &Vec<Vertex>,
+    blacklist: &mut Vec<u32>,
+) {
+    // remove blacklists with vertices that don't exist (prevents lingering triangles)
+    let ids: Vec<u32> = verts.iter().map(|v| v.id).collect();
+    for (b, raw_bl_chunk) in blacklist.clone().chunks_exact_mut(3).enumerate() {
+        let mut chunk = vec![raw_bl_chunk[0], raw_bl_chunk[1], raw_bl_chunk[2]];
+        chunk.sort();
+        if !ids.contains(&chunk[0]) || !ids.contains(&chunk[1]) || !ids.contains(&chunk[2]) {
+            blacklist.remove(b * 3);
+            blacklist.remove(b * 3);
+            blacklist.remove(b * 3);
+        }
+    }
+
     for (_, raw_bl_chunk) in blacklist.chunks_exact(3).enumerate() {
         let mut bl_chunk = vec![raw_bl_chunk[0], raw_bl_chunk[1], raw_bl_chunk[2]];
         bl_chunk.sort();
