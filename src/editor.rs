@@ -36,11 +36,10 @@ pub fn iterate_events(
                 E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
                 E::RenameAnim  => if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap()); ui.just_made_anim  = false }
-
                 E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframes => {
                     undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
                 }
-                E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts | E::NewVertex => {
+                E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts | E::NewVertex | E::RemoveTriangle => {
                     undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
                 }
                 _ => {}
@@ -255,7 +254,7 @@ pub fn iterate_events(
         let str_value = events.str_values[0].clone().to_string();
 
         #[rustfmt::skip]
-        editor::process_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, copy_buffer, ui, renderer, config);
+        editor::simple_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, copy_buffer, ui, renderer, config);
 
         events.events.remove(0);
         events.values.remove(0);
@@ -263,7 +262,7 @@ pub fn iterate_events(
     }
 }
 
-pub fn process_event(
+pub fn simple_event(
     event: &crate::Events,
     value: f32,
     str_value: String,
@@ -1400,21 +1399,28 @@ fn edit_bone(
     anim[anim_id].keyframes[frame].value_str = value_str;
 }
 
-// remove vertices that are not in any triangle or binds
+// remove vertices that are not in any triangle
 pub fn cleanup_vertices(bone: &mut Bone) {
-    'verts: for v in (0..bone.vertices.len()).rev() {
+    for v in (0..bone.vertices.len()).rev() {
+        let vert = bone.vertices[v];
         if bone.indices.contains(&(v as u32)) {
             continue;
         }
-        for bind in &bone.binds {
-            let ids: Vec<i32> = bind.verts.iter().map(|v| v.id).collect();
-            if ids.contains(&(bone.vertices[v].id as i32)) {
-                continue 'verts;
-            }
-        }
         bone.vertices.remove(v);
+
+        // removed vertex causes an offset by +1 for indices higher than itself,
+        // so adjust indices to correct this
         for idx in &mut bone.indices {
             *idx -= if *idx >= v as u32 { 1 } else { 0 };
+        }
+
+        // remove this vertex from binds
+        for bind in &mut bone.binds {
+            let vert_id = vert.id as i32;
+            let idx = bind.verts.iter().position(|v| v.id == vert_id);
+            if idx != None {
+                bind.verts.remove(idx.unwrap());
+            }
         }
     }
 }
