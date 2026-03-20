@@ -217,15 +217,15 @@ pub fn render(
                 pos /= tb.scale;
 
                 // remove triangle if right clicked, unless there's only 2
-                if edit_mode.showing_mesh && input.right_clicked && !removed_vert {
-                    if armature.sel_bone(&sel).unwrap().indices.len() == 6 {
-                        events.open_modal("indices_limit", false);
-                    } else {
-                        events.remove_triangle(i * 3);
-                        removed_vert = true;
-                    }
-                    break;
-                }
+                //if edit_mode.showing_mesh && input.right_clicked && !removed_vert {
+                //    if armature.sel_bone(&sel).unwrap().indices.len() == 6 {
+                //        events.open_modal("indices_limit", false);
+                //    } else {
+                //        events.remove_triangle(i * 3);
+                //        removed_vert = true;
+                //    }
+                //    break;
+                //}
 
                 // editing this bone's mesh, add this as new vertex candidate
                 if edit_mode.showing_mesh && input.left_clicked && new_vert == None {
@@ -350,7 +350,7 @@ pub fn render(
         add_offseted_indices(&mut indices, &mut lines_i);
 
         // draw hovered triangle if neither a vertex nor a line is hovered
-        let mut hovering_tri = bone_triangle(&bone, &mouse, wv);
+        let (idx, mut hovering_tri) = bone_triangle(&bone, &mouse, wv);
         if hovering_tri.len() > 0 && !on_vert && !on_line && !camera.on_ui {
             hovering_tri[0].color = Color::new(0, 200, 0, 100);
             hovering_tri[1].color = Color::new(0, 200, 0, 100);
@@ -363,6 +363,14 @@ pub fn render(
                 events.select_vertex(hovering_tri[0].id as i32, false);
                 events.select_vertex(hovering_tri[1].id as i32, true);
                 events.select_vertex(hovering_tri[2].id as i32, true);
+            }
+
+            if edit_mode.showing_mesh && input.right_clicked && !removed_vert {
+                if armature.sel_bone(&sel).unwrap().indices.len() == 6 {
+                    events.open_modal("indices_limit", false);
+                } else {
+                    events.remove_triangle(idx as usize * 3);
+                }
             }
         }
         hovered_vert = (hovering_tri.len() > 0 || on_vert || on_line) && !camera.on_ui;
@@ -1390,8 +1398,9 @@ pub fn bone_vertices(
     (all_verts, all_indices, hovering_vert)
 }
 
-fn bone_triangle(tb: &Bone, mouse_world_vert: &Vertex, wv: Vec<Vertex>) -> Vec<Vertex> {
+fn bone_triangle(tb: &Bone, mouse_world_vert: &Vertex, wv: Vec<Vertex>) -> (u32, Vec<Vertex>) {
     let mut hovering_tri = vec![];
+    let mut idx: usize = 0;
     for (i, chunk) in tb.indices.chunks_exact(3).enumerate() {
         let c0 = chunk[0] as usize;
         let c1 = chunk[1] as usize;
@@ -1405,8 +1414,9 @@ fn bone_triangle(tb: &Bone, mouse_world_vert: &Vertex, wv: Vec<Vertex>) -> Vec<V
         hovering_tri.push(tb.world_verts[tb.indices[i * 3 + 0] as usize]);
         hovering_tri.push(tb.world_verts[tb.indices[i * 3 + 1] as usize]);
         hovering_tri.push(tb.world_verts[tb.indices[i * 3 + 2] as usize]);
+        idx = i;
     }
-    hovering_tri
+    (idx as u32, hovering_tri)
 }
 
 pub fn vert_lines(

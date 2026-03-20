@@ -594,17 +594,20 @@ pub fn process_event(
             let sel = &selections;
             #[rustfmt::skip]
             macro_rules! verts {() => { armature.sel_bone_mut(&sel).unwrap().vertices }}
+            let vert_id = verts!()[value as usize].id;
 
-            let verts = verts!().clone();
             let tex_img = renderer::sel_tex_img(&armature.sel_bone(&sel).unwrap(), &armature);
             verts!().remove(value as usize);
             verts!() = sort_vertices(verts!().clone());
-            armature.sel_bone_mut(&sel).unwrap().indices = triangulate(&verts!(), &tex_img);
+            let verts = verts!().clone();
+            let bone = armature.sel_bone_mut(&sel).unwrap();
+            bone.indices = triangulate(&verts, &tex_img);
+            remove_blacklisted_tris(&mut bone.indices, &bone.vertices, &bone.blacklist);
 
             // remove this vert from its binds
             'bind: for bind in &mut armature.sel_bone_mut(&sel).unwrap().binds {
                 for v in 0..bind.verts.len() {
-                    if bind.verts[v].id == verts[value as usize].id as i32 {
+                    if bind.verts[v].id == vert_id as i32 {
                         bind.verts.remove(v);
                         break 'bind;
                     }
@@ -626,6 +629,9 @@ pub fn process_event(
             let mut is_in_bind = false;
             let mut scale = Vec2::new(1., 1.);
             for bind in &bone.binds {
+                if bind.bone_id == -1 {
+                    continue;
+                }
                 let vert = bind.verts.iter().find(|v| v.id == value as i32);
                 let bones = &renderer.temp_bones;
                 if vert != None {
@@ -675,6 +681,10 @@ pub fn process_event(
             let bind = bone_mut.binds[idx].clone();
             let temp_bone = renderer.temp_bones.iter().find(|b| b.id == id).unwrap();
             let temp_bones = &renderer.temp_bones;
+            if bind.bone_id == -1 {
+                return;
+            }
+
             let bind_bone = temp_bones.iter().find(|b| b.id == bind.bone_id).unwrap();
             let verts = &mut bone_mut.vertices;
             let vert = verts.iter_mut().find(|v| v.id == vert_id).unwrap();
@@ -703,9 +713,13 @@ pub fn process_event(
         }
         Events::RemoveTriangle => {
             let bone = &mut armature.sel_bone_mut(&selections).unwrap();
-            bone.indices.remove(value as usize);
-            bone.indices.remove(value as usize);
-            bone.indices.remove(value as usize);
+            bone.blacklist
+                .push(bone.vertices[bone.indices[value as usize + 0] as usize].id);
+            bone.blacklist
+                .push(bone.vertices[bone.indices[value as usize + 1] as usize].id);
+            bone.blacklist
+                .push(bone.vertices[bone.indices[value as usize + 2] as usize].id);
+            remove_blacklisted_tris(&mut bone.indices, &bone.vertices, &bone.blacklist);
         }
         Events::NewVertex => {
             // remove drag vertex action, since it's always triggered
@@ -725,6 +739,11 @@ pub fn process_event(
             bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
             bone_mut.indices = triangulate(&mut bone_mut.vertices, &tex_img);
             cleanup_vertices(bone_mut);
+            remove_blacklisted_tris(
+                &mut bone_mut.indices,
+                &bone_mut.vertices,
+                &bone_mut.blacklist,
+            );
 
             // set this bone as having a mesh
             bone_mut.verts_edited = true;
@@ -1680,4 +1699,25 @@ fn tri_point(p: &Vec2, a: &Vec2, b: &Vec2, c: &Vec2) -> (f32, f32, f32, f32) {
     }
 
     (-1., -1., -1., -1.)
+}
+
+pub fn remove_blacklisted_tris(indices: &mut Vec<u32>, verts: &Vec<Vertex>, blacklist: &Vec<u32>) {
+    for (_, raw_bl_chunk) in blacklist.chunks_exact(3).enumerate() {
+        let mut bl_chunk = vec![raw_bl_chunk[0], raw_bl_chunk[1], raw_bl_chunk[2]];
+        bl_chunk.sort();
+        for (ref mut i, raw_chunk) in indices.clone().chunks_exact(3).enumerate() {
+            let mut chunk = vec![
+                verts[raw_chunk[0] as usize].id,
+                verts[raw_chunk[1] as usize].id,
+                verts[raw_chunk[2] as usize].id,
+            ];
+            chunk.sort();
+            if chunk == bl_chunk {
+                indices.remove(*i * 3);
+                indices.remove(*i * 3);
+                indices.remove(*i * 3);
+                break;
+            }
+        }
+    }
 }

@@ -634,6 +634,16 @@ pub fn prepare_files(
         }
     }
 
+    // index blacklist IDs
+    for b in 0..armature_copy.bones.len() {
+        let bone = &mut armature_copy.bones[b];
+        for i in 0..bone.blacklist.len() {
+            let id = bone.blacklist[i];
+            let idx = bone.vertices.iter().position(|v| v.id == id).unwrap();
+            bone.blacklist[i] = idx as u32;
+        }
+    }
+
     for b in 0..armature_copy.bones.len() {
         // if it's a regular rect, empty verts and indices
         let bone = &armature_copy.bones[b];
@@ -660,6 +670,7 @@ pub fn prepare_files(
         }
     }
 
+    // index parent IDs
     for b in 0..armature_copy.bones.len() {
         if armature_copy.bones[b].parent_id == -1 {
             continue;
@@ -670,7 +681,7 @@ pub fn prepare_files(
         *parent_id = bones.iter().position(|bone| bone.id == *parent_id).unwrap() as i32;
     }
 
-    // restructure bone ids
+    // index bone IDs
     for b in 0..armature_copy.bones.len() {
         let bone = &mut armature_copy.bones[b];
         if bone.tex == "" {
@@ -748,6 +759,32 @@ pub fn prepare_files(
         clear_color = Color::new(0, 0, 0, 0);
     }
 
+    // iterable editor bone exports
+    let mut editor = EditorOptions {
+        camera,
+        bones: vec![],
+        styles: vec![],
+    };
+    for bone in &armature_copy.bones {
+        editor.bones.push(EditorBone {
+            folded: bone.folded,
+            ik_folded: bone.ik_folded,
+            meshdef_folded: bone.meshdef_folded,
+            effects_folded: bone.effects_folded,
+            ik_disabled: bone.ik_disabled,
+            locked: bone.locked,
+            group_color: bone.group_color,
+            blacklist: bone.blacklist.clone(),
+        });
+    }
+    for style in &armature_copy.styles {
+        editor.styles.push(EditorStyle {
+            active: style.active,
+        })
+    }
+    let editor_json = serde_json::to_string(&editor).unwrap();
+
+    // prepare root and serlialize armature_copy into json
     let root = Root {
         version: env!("CARGO_PKG_VERSION").to_string(),
         ik_root_ids,
@@ -760,32 +797,7 @@ pub fn prepare_files(
         atlases,
         cached_bones_comment: "Create a cached_bones array that clones all bones during runtime. Check Construct() in dev docs for more info.".to_string(),
     };
-
     let armatures_json = serde_json::to_string(&root).unwrap();
-
-    // iterable editor bone exports
-    let mut editor = EditorOptions {
-        camera,
-        bones: vec![],
-        styles: vec![],
-    };
-    for bone in &armature.bones {
-        editor.bones.push(EditorBone {
-            folded: bone.folded,
-            ik_folded: bone.ik_folded,
-            meshdef_folded: bone.meshdef_folded,
-            effects_folded: bone.effects_folded,
-            ik_disabled: bone.ik_disabled,
-            locked: bone.locked,
-            group_color: bone.group_color,
-        });
-    }
-    for style in &armature.styles {
-        editor.styles.push(EditorStyle {
-            active: style.active,
-        })
-    }
-    let editor_json = serde_json::to_string(&editor).unwrap();
 
     (armatures_json, editor_json)
 }
@@ -888,6 +900,7 @@ pub fn import<R: Read + std::io::Seek>(
                 bone.ik_disabled = ed_bone.ik_disabled;
                 bone.locked = ed_bone.locked;
                 bone.group_color = ed_bone.group_color;
+                bone.blacklist = ed_bone.blacklist.clone();
             }
             for s in 0..temp_arm.styles.len() {
                 let style = &mut temp_arm.styles[s];

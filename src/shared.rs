@@ -1121,6 +1121,8 @@ pub struct Bone {
     pub locked: bool,
     #[serde(skip)]
     pub group_color: Color,
+    #[serde(skip)]
+    pub blacklist: Vec<u32>
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
@@ -1162,6 +1164,7 @@ pub struct EditorBone {
     pub effects_folded: bool,
     pub ik_disabled: bool,
     pub locked: bool,
+    pub blacklist: Vec<u32>,
     #[serde(default = "default_0_alpha")]
     pub group_color: Color,
 }
