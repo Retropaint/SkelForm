@@ -140,7 +140,6 @@ pub fn render(
 
     // many fight for spot of newest vertex; only one will emerge victorious.
     let mut new_vert: Option<Vertex> = None;
-    let mut removed_vert = false;
     let mut hovered_vert = false;
 
     // pre-draw bone setup
@@ -197,7 +196,7 @@ pub fn render(
             && renderer.render_textures
         {
             let wv = &temp_arm.bones[b].world_verts;
-            for (i, chunk) in temp_arm.bones[b].indices.chunks_exact(3).enumerate() {
+            for (_, chunk) in temp_arm.bones[b].indices.chunks_exact(3).enumerate() {
                 let c0 = chunk[0] as usize;
                 let c1 = chunk[1] as usize;
                 let c2 = chunk[2] as usize;
@@ -365,7 +364,8 @@ pub fn render(
                 events.select_vertex(hovering_tri[2].id as i32, true);
             }
 
-            if edit_mode.showing_mesh && input.right_clicked && !removed_vert {
+            // remove this triangle if right-clicking
+            if edit_mode.showing_mesh && input.right_clicked {
                 if armature.sel_bone(&sel).unwrap().indices.len() == 6 {
                     events.open_modal("indices_limit", false);
                 } else {
