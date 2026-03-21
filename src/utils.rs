@@ -809,7 +809,6 @@ pub fn prepare_files(
         animations: armature_copy.animations,
         styles: armature_copy.styles,
         atlases,
-        cached_bones_comment: "Create a cached_bones array that clones all bones during runtime. Check Construct() in dev docs for more info.".to_string(),
     };
     let armatures_json = serde_json::to_string(&root).unwrap();
 

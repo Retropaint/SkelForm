@@ -1642,8 +1642,6 @@ pub struct Root {
     pub animations: Vec<Animation>,
     pub atlases: Vec<TexAtlas>,
     pub styles: Vec<Style>,
-    #[serde(default, skip_deserializing)]
-    pub cached_bones_comment: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
