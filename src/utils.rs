@@ -726,17 +726,27 @@ pub fn prepare_files(
         }
     }
 
+    // remove physics fields if disabled
+
+    // disabled: v0.4 won't have physics, but this must be removed for v0.5
+    let mut disable_phys = true;
+    #[cfg(debug_assertions)]
+    {
+        disable_phys = false;
+    }
     for b in 0..armature_copy.bones.len() {
         let bone = &mut armature_copy.bones[b];
-        if bone.phys_pos_elasticity < 1. {
+        if bone.phys_pos_elasticity == 0. || disable_phys {
             bone.phys_pos_elasticity = f32::MAX;
             bone.phys_global_pos = Vec2::new(f32::MAX, f32::MAX);
         }
-        if bone.phys_rot_resistance == 0. {
-            bone.phys_rot_resistance = f32::MAX;
+        if bone.phys_rot_resistance == 0. || disable_phys {
             bone.phys_global_rot = f32::MAX;
+            bone.phys_rot_resistance = f32::MAX;
+            bone.phys_rot_velocity = f32::MAX;
+            bone.phys_rot_bounce = f32::MAX;
         }
-        if bone.phys_scale_elasticity == 0. {
+        if bone.phys_scale_elasticity == 0. || disable_phys {
             bone.phys_scale_elasticity = f32::MAX;
             bone.phys_global_scale = Vec2::new(f32::MAX, f32::MAX);
         }
