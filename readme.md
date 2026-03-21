@@ -1,6 +1,8 @@
 # SkelForm
 
-SkelForm is a 2D skeletal animator, designed for games.
+SkelForm is a 2D skeletal animator, designed for quick and easy integration into
+games or other software with streamlined techniques and developer-curated
+runtime documentation.
 
 [skelform.org](https://skelform.org)
 
@@ -71,4 +73,5 @@ This project was built on top of
 
 Inverse Kinematics icon by lucysir
 
-Lock icon provided by [boxicons](https://boxicons.com/icons/lock-keyhole?free=true&q=lock-keyhole&p=filled)
+Lock icon provided by
+[boxicons](https://boxicons.com/icons/lock-keyhole?free=true&q=lock-keyhole&p=filled)
