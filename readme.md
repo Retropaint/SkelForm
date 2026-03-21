@@ -1,7 +1,7 @@
 # SkelForm
 
 SkelForm is a 2D skeletal animator, designed for quick and easy integration into
-games or other software with streamlined techniques and developer-curated
+games or other software with simple techniques and developer-curated
 runtime documentation.
 
 [skelform.org](https://skelform.org)
@@ -71,7 +71,10 @@ Editor documentation is still sparse. Please check out
 This project was built on top of
 [matthewjberger/wgpu-example](https://github.com/matthewjberger/wgpu-example).
 
+FABRIK technique by [Programming Chaos](https://www.youtube.com/watch?v=NfuO66wsuRg)
+
 Inverse Kinematics icon by lucysir
 
 Lock icon provided by
 [boxicons](https://boxicons.com/icons/lock-keyhole?free=true&q=lock-keyhole&p=filled)
+
