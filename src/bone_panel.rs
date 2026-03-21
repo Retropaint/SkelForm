@@ -318,7 +318,10 @@ pub fn inverse_kinematics(
         ui.horizontal(|ui| {
             ui.label(str_heading).on_hover_text(str_desc);
             let color = config.colors.inverse_kinematics;
-            ui.label(egui::RichText::new("🔧").size(16.).color(color));
+            let pos = egui::Pos2::new(ui.cursor().left(), ui.cursor().top() + 4.);
+            let rect = egui::Rect::from_min_size(pos, [13., 10.].into());
+            let img = shared_ui.ik_img.as_ref().unwrap();
+            egui::Image::new(img).tint(color).paint_at(ui, rect);
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
