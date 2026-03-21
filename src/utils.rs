@@ -736,6 +736,9 @@ pub fn prepare_files(
     }
     for b in 0..armature_copy.bones.len() {
         let bone = &mut armature_copy.bones[b];
+        bone.has_physics = bone.phys_pos_elasticity > 0.
+            || bone.phys_rot_resistance > 0.
+            || bone.phys_scale_elasticity > 0.;
         if bone.phys_pos_elasticity == 0. || disable_phys {
             bone.phys_pos_elasticity = f32::MAX;
             bone.phys_global_pos = Vec2::new(f32::MAX, f32::MAX);
@@ -750,6 +753,7 @@ pub fn prepare_files(
             bone.phys_scale_elasticity = f32::MAX;
             bone.phys_global_scale = Vec2::new(f32::MAX, f32::MAX);
         }
+        bone.phys_rot_velocity = 0.;
     }
 
     let mut atlases = vec![];

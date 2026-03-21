@@ -915,7 +915,7 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
             // reset rotation back to rest
             let mut rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, const_bone.rot);
             // bounciness
-            if arm_bone.phys_rot_bounce > 0. && arm_bone.phys_rot_bounce < 1. {
+            if arm_bone.phys_rot_bounce > 0. && arm_bone.phys_rot_bounce <= 1. {
                 rot += arm_bone.phys_rot_velocity / (2. - arm_bone.phys_rot_bounce);
             }
             arm_bone.phys_global_rot += rot / 10.;

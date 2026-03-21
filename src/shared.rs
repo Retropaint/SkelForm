@@ -1055,6 +1055,9 @@ pub struct Bone {
     #[serde(skip_serializing_if = "is_i32_empty")]
     pub ik_bone_ids: Vec<i32>,
 
+    #[serde(skip_serializing_if = "is_false")]
+    pub has_physics: bool,
+
     #[serde(skip_serializing_if = "is_vec2_max")]
     pub phys_global_pos: Vec2,
     #[serde(skip_serializing_if = "is_max")]
@@ -1359,7 +1362,7 @@ impl Armature {
                 b.tint.g =  interpolate!(AnimElement::TintG,     b.tint.g);
                 b.tint.b =  interpolate!(AnimElement::TintB,     b.tint.b);
                 b.tint.a =  interpolate!(AnimElement::TintA,     b.tint.a);
-                b.zindex  = prev_frame!( AnimElement::Zindex,    b.zindex  as f32) as i32;
+                b.zindex  = prev_frame!( AnimElement::Zindex,    b.zindex as f32) as i32;
                 b.hidden  = prev_frame!( AnimElement::Hidden,    bool_as_f32(b.hidden)) != 0.;
                 b.tex     = prev_str!(   AnimElement::Texture,   b.tex.clone());
             };
