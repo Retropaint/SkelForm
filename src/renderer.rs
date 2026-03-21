@@ -339,8 +339,9 @@ pub fn render(
         let mouse = mouse_world_vert;
         let wv = bone.world_verts.clone();
 
+        let current_hover_id = selections.hovering_vert_id;
         #[rustfmt::skip]
-        let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, events, armature, renderer);
+        let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, events, armature, renderer, current_hover_id);
         if on_vert != -1 {
             new_vert = None;
             hovering_vert_id = on_vert;
@@ -380,11 +381,9 @@ pub fn render(
         setup_render_buffer(&mut renderer.meshframe_buffer, &lines_v, &lines_i, queue);
         draw(&renderer.meshframe_buffer, render_pass, 0, lines_i.len());
     }
-    // set hovering vert, to display ID on UI 
+    // set hovering vert, to display ID on UI
     if hovering_vert_id != -1 {
         events.set_hovering_id(hovering_vert_id);
-    } else if selections.hovering_vert_id != -1 {
-        events.set_hovering_id(-1);
     }
 
     // draw render rects if enabled
@@ -438,7 +437,7 @@ pub fn render(
             let wv = bone.world_verts.clone();
 
             #[rustfmt::skip]
-            let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, camera, config, events, armature, renderer);
+            let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, camera, config, events, armature, renderer, -1);
             #[rustfmt::skip]
             let (mut verts_l, mut indices_l, _) = vert_lines(bone, &temp_arm.bones, &mouse, nw, false, false, camera, input, selections, events);
 
@@ -1312,6 +1311,7 @@ pub fn bone_vertices(
     events: &mut EventState,
     armature: &Armature,
     renderer: &mut Renderer,
+    hover_id: i32,
 ) -> (Vec<Vertex>, Vec<u32>, i32) {
     let mut all_verts = vec![];
     let mut all_indices = vec![];
@@ -1319,10 +1319,12 @@ pub fn bone_vertices(
     let v2z = Vec2::ZERO;
     let rotated = 45. * 3.14 / 180.;
     let sel = selections.clone();
+    let radius = config.center_point_radius;
+
     #[rustfmt::skip]
     macro_rules! point {
-        ($idx:expr, $color:expr) => {
-            draw_point(&world_verts[$idx].pos, &camera, &config, &v2z, $color, v2z, rotated, config.center_point_radius * camera.zoom)
+        ($idx:expr, $color:expr, $size:expr) => {
+            draw_point(&world_verts[$idx].pos, &camera, &config, &v2z, $color, v2z, rotated, radius * camera.zoom * $size)
         };
     }
     macro_rules! add_point {
@@ -1336,6 +1338,11 @@ pub fn bone_vertices(
     }
 
     for wv in 0..world_verts.len() {
+        let size = if world_verts[wv].id == hover_id as u32 {
+            1.5
+        } else {
+            1.
+        };
         let idx = selections.bind;
         let verts: Vec<i32>;
         if idx == -1 {
@@ -1363,7 +1370,7 @@ pub fn bone_vertices(
             col.a = if editable { 125 } else { 38 };
         }
 
-        let (mut verts, mut indices) = point!(wv, col);
+        let (mut verts, mut indices) = point!(wv, col, size);
         let mouse_on_it = utils::in_bounding_box(&input.mouse, &verts, &camera.window).1;
         if mouse_on_it {
             hovering_vert_id = world_verts[wv].id as i32;
@@ -1374,7 +1381,7 @@ pub fn bone_vertices(
             continue;
         }
 
-        let (mut verts, mut indices) = point!(wv, white);
+        let (mut verts, mut indices) = point!(wv, white, size);
         add_point!(verts, indices, wv);
         if input.right_clicked {
             if world_verts.len() <= 4 {

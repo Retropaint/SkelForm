@@ -259,14 +259,19 @@ pub fn draw(
         }
     }
     if all_can_mesh {
-        mesh_deformation(
+        let mut is_hovering = mesh_deformation(
             ui, &bone, shared_ui, events, config, selections, armature, edit_mode,
         );
         // show vertex position and UV inputs, if one is selected
         if selections.vert_ids.len() > 0 {
             ui.add_space(10.);
             ui.separator();
-            selected_verts_inputs(ui, shared_ui, selections, &bone, events);
+            is_hovering =
+                selected_verts_inputs(ui, shared_ui, selections, &bone, events) || is_hovering;
+        }
+        // if no vertex labels were hovered from both funcs above, set hovered vert to none
+        if !is_hovering && selections.hovering_vert_id != -1 {
+            events.set_hovering_id(-1);
         }
         ui.add_space(20.);
     }
@@ -546,7 +551,7 @@ pub fn mesh_deformation(
     selections: &mut SelectionState,
     armature: &mut Armature,
     edit_mode: &EditMode,
-) {
+) -> bool {
     let str_heading = &shared_ui.loc("bone_panel.mesh_deformation.heading").clone();
     let str_desc = &shared_ui.loc("bone_panel.mesh_deformation.desc").clone();
 
@@ -574,7 +579,7 @@ pub fn mesh_deformation(
     ui.add_space(2.5);
 
     if bone.meshdef_folded {
-        return;
+        return false;
     }
 
     // check if this bone is a weight
@@ -602,11 +607,11 @@ pub fn mesh_deformation(
             });
         });
 
-        return;
+        return false;
     }
 
     if armature.tex_of(bone.id) == None {
-        return;
+        return false;
     }
 
     let str_edit = &shared_ui.loc("bone_panel.mesh_deformation.edit").clone();
@@ -729,13 +734,13 @@ pub fn mesh_deformation(
     });
 
     if selections.bind == -1 {
-        return;
+        return false;
     }
 
     let binds = armature.sel_bone(&sel).unwrap().binds.clone();
     if binds.len() == 0 || selections.bind as usize > binds.len() - 1 {
         selections.bind = -1;
-        return;
+        return false;
     }
 
     ui.horizontal(|ui| {
@@ -793,14 +798,17 @@ pub fn mesh_deformation(
 
     let selected = selections.bind;
     let bind = armature.sel_bone(&sel).unwrap().binds[selected as usize].clone();
+    let mut is_hovering = false;
     if bind.verts.len() == 0 {
         ui.label(shared_ui.loc("bone_panel.mesh_deformation.no_bound_verts"));
     } else {
         for w in 0..bind.verts.len() {
             ui.horizontal(|ui| {
                 let str_label = bind.verts[w].id.to_string() + ":";
-                if ui.clickable_label(str_label).clicked() {
-                    events.select_vertex(bind.verts[w].id, false);
+                let cursor = egui::CursorIcon::Default;
+                if ui.label(str_label).on_hover_cursor(cursor).hovered() {
+                    is_hovering = true;
+                    events.set_hovering_id(bind.verts[w].id);
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let mut new_weight = bind.verts[w].weight;
@@ -818,6 +826,7 @@ pub fn mesh_deformation(
             });
         }
     }
+    is_hovering
 }
 
 pub fn selected_verts_inputs(
@@ -826,7 +835,7 @@ pub fn selected_verts_inputs(
     selections: &SelectionState,
     bone: &Bone,
     events: &mut EventState,
-) {
+) -> bool {
     // vertex position inputs
     macro_rules! input {
         ($field:expr, $id:expr, $label:expr, $vert_id:expr, $event:ident, $is_x:expr, $ui:expr) => {
@@ -847,9 +856,19 @@ pub fn selected_verts_inputs(
         };
     }
 
+    let mut hovering_id = -1;
     for id in &selections.vert_ids {
         let vert = bone.vertices.iter().find(|v| v.id == *id as u32).unwrap();
-        ui.label(shared_ui.loc("bone_panel.mesh_deformation.vertex_header"));
+        let label = ui
+            .label(format!(
+                "{} #{}",
+                shared_ui.loc("bone_panel.mesh_deformation.vertex_header"),
+                id.to_string()
+            ))
+            .on_hover_cursor(egui::CursorIcon::Default);
+        if label.hovered() {
+            hovering_id = *id as i32;
+        }
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_pos"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -894,6 +913,12 @@ pub fn selected_verts_inputs(
         }
         ui.add_space(10.);
     }
+
+    if hovering_id != -1 {
+        events.set_hovering_id(hovering_id);
+    }
+
+    hovering_id != -1
 }
 
 #[cfg(not(target_arch = "wasm32"))]
