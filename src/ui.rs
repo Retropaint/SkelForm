@@ -332,19 +332,35 @@ pub fn draw(
         shared_ui.context_menu.close();
     }
 
+    // show ID of vertex being hovered
+    if selections.hovering_vert_id != -1 {
+        let pos: egui::Pos2 = egui::Pos2::new(
+            input.mouse.x / shared_ui.scale,
+            input.mouse.y / shared_ui.scale - 13.,
+        );
+        context.debug_painter().debug_text(
+            pos,
+            egui::Align2::CENTER_CENTER,
+            egui::Color32::GREEN,
+            format!("#{}", selections.hovering_vert_id),
+        );
+    }
+
     macro_rules! helper_text {
         ($text:expr, $offset:expr) => {
             let align = egui::Align2::CENTER_CENTER;
-            let font = egui::FontId::default();
+            //let font = egui::FontId::default();
             let mouse_pos = input.mouse / shared_ui.scale + $offset;
             let painter = context.debug_painter();
 
-            let gap = 1.;
-            let pos = (mouse_pos + Vec2::new(gap, gap)).into();
-            painter.text(pos, align, $text, font.clone(), egui::Color32::BLACK);
+            //// drop-shadow
+            //let gap = 1.;
+            //let pos = (mouse_pos + Vec2::new(gap, gap)).into();
+            //painter.text(pos, align, $text, font.clone(), egui::Color32::BLACK);
 
+            // helper text
             let point_col = config.colors.center_point.into();
-            painter.text(mouse_pos.into(), align, $text, font, point_col);
+            painter.debug_text(mouse_pos.into(), align, point_col, $text);
         };
     }
 

@@ -280,6 +280,7 @@ pub fn iterate_events(
     }
 }
 
+// process events that only have one numerical, and one string value
 pub fn simple_event(
     event: &crate::Events,
     value: f32,
@@ -984,6 +985,9 @@ pub fn simple_event(
         Events::SetRotBounce => {
             let bone = armature.sel_bone_mut(selections).unwrap();
             bone.phys_rot_bounce = (value).max(0.).min(1.);
+        }
+        Events::SetHoveringVertId => {
+            selections.hovering_vert_id = value as i32;
         }
         _ => {}
     }

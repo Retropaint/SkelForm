@@ -316,6 +316,7 @@ pub fn render(
     }
 
     // show selected bone's mesh wireframe if editing it
+    let mut hovering_vert_id = -1;
     if edit_mode.showing_mesh && armature.sel_bone(&sel) != None {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
@@ -340,17 +341,18 @@ pub fn render(
 
         #[rustfmt::skip]
         let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, events, armature, renderer);
-        if on_vert {
+        if on_vert != -1 {
             new_vert = None;
+            hovering_vert_id = on_vert;
         }
         #[rustfmt::skip]
-        let (mut lines_v, mut lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, &mut new_vert, true, on_vert, camera, input, selections, events);
+        let (mut lines_v, mut lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, &mut new_vert, true, on_vert != -1, camera, input, selections, events);
         lines_v.append(&mut verts);
         add_offseted_indices(&mut indices, &mut lines_i);
 
         // draw hovered triangle if neither a vertex nor a line is hovered
         let (idx, mut hovering_tri) = bone_triangle(&bone, &mouse, wv);
-        if hovering_tri.len() > 0 && !on_vert && !on_line && !camera.on_ui {
+        if hovering_tri.len() > 0 && on_vert == -1 && !on_line && !camera.on_ui {
             hovering_tri[0].color = Color::new(0, 200, 0, 100);
             hovering_tri[1].color = Color::new(0, 200, 0, 100);
             hovering_tri[2].color = Color::new(0, 200, 0, 100);
@@ -373,10 +375,16 @@ pub fn render(
                 }
             }
         }
-        hovered_vert = (hovering_tri.len() > 0 || on_vert || on_line) && !camera.on_ui;
+        hovered_vert = (hovering_tri.len() > 0 || on_vert != -1 || on_line) && !camera.on_ui;
 
         setup_render_buffer(&mut renderer.meshframe_buffer, &lines_v, &lines_i, queue);
         draw(&renderer.meshframe_buffer, render_pass, 0, lines_i.len());
+    }
+    // set hovering vert, to display ID on UI 
+    if hovering_vert_id != -1 {
+        events.set_hovering_id(hovering_vert_id);
+    } else if selections.hovering_vert_id != -1 {
+        events.set_hovering_id(-1);
     }
 
     // draw render rects if enabled
@@ -1304,10 +1312,10 @@ pub fn bone_vertices(
     events: &mut EventState,
     armature: &Armature,
     renderer: &mut Renderer,
-) -> (Vec<Vertex>, Vec<u32>, bool) {
+) -> (Vec<Vertex>, Vec<u32>, i32) {
     let mut all_verts = vec![];
     let mut all_indices = vec![];
-    let mut hovering_vert = false;
+    let mut hovering_vert_id = -1;
     let v2z = Vec2::ZERO;
     let rotated = 45. * 3.14 / 180.;
     let sel = selections.clone();
@@ -1358,7 +1366,7 @@ pub fn bone_vertices(
         let (mut verts, mut indices) = point!(wv, col);
         let mouse_on_it = utils::in_bounding_box(&input.mouse, &verts, &camera.window).1;
         if mouse_on_it {
-            hovering_vert = true;
+            hovering_vert_id = world_verts[wv].id as i32;
         }
 
         if camera.on_ui || !mouse_on_it || !editable {
@@ -1395,7 +1403,7 @@ pub fn bone_vertices(
         }
     }
 
-    (all_verts, all_indices, hovering_vert)
+    (all_verts, all_indices, hovering_vert_id)
 }
 
 fn bone_triangle(tb: &Bone, mouse_world_vert: &Vertex, wv: Vec<Vertex>) -> (u32, Vec<Vertex>) {

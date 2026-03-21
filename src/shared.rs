@@ -1322,12 +1322,6 @@ impl Armature {
         let kfs = &self.animations[anim_idx].keyframes;
 
         for b in &mut bones {
-            macro_rules! interpolate {
-                ($element:expr, $default:expr) => {{
-                    self.interpolate_keyframes(anim_idx, b.id, $element, $default, anim_frame)
-                }};
-            }
-
             macro_rules! prev_frame {
                 ($element:expr, $default:expr) => {{
                     let prev = utils::get_prev_frame(anim_frame, kfs, b.id, &$element);
@@ -1351,20 +1345,22 @@ impl Armature {
             }
 
             // iterable anim interps
+            type AE = AnimElement;
             #[rustfmt::skip]
             {
-                b.pos.x   = interpolate!(AnimElement::PositionX, b.pos.x  );
-                b.pos.y   = interpolate!(AnimElement::PositionY, b.pos.y  );
-                b.rot     = interpolate!(AnimElement::Rotation,  b.rot    );
-                b.scale.x = interpolate!(AnimElement::ScaleX,    b.scale.x);
-                b.scale.y = interpolate!(AnimElement::ScaleY,    b.scale.y);
-                b.tint.r =  interpolate!(AnimElement::TintR,     b.tint.r);
-                b.tint.g =  interpolate!(AnimElement::TintG,     b.tint.g);
-                b.tint.b =  interpolate!(AnimElement::TintB,     b.tint.b);
-                b.tint.a =  interpolate!(AnimElement::TintA,     b.tint.a);
-                b.zindex  = prev_frame!( AnimElement::Zindex,    b.zindex as f32) as i32;
-                b.hidden  = prev_frame!( AnimElement::Hidden,    bool_as_f32(b.hidden)) != 0.;
-                b.tex     = prev_str!(   AnimElement::Texture,   b.tex.clone());
+                    
+                b.pos.x   = self.interpolate_keyframes(anim_idx, b.id, AE::PositionX, b.pos.x,   anim_frame);
+                b.pos.y   = self.interpolate_keyframes(anim_idx, b.id, AE::PositionY, b.pos.y,   anim_frame);
+                b.rot     = self.interpolate_keyframes(anim_idx, b.id, AE::Rotation,  b.rot,     anim_frame);
+                b.scale.x = self.interpolate_keyframes(anim_idx, b.id, AE::ScaleX,    b.scale.x, anim_frame);
+                b.scale.y = self.interpolate_keyframes(anim_idx, b.id, AE::ScaleY,    b.scale.y, anim_frame);
+                b.tint.r =  self.interpolate_keyframes(anim_idx, b.id, AE::TintR,     b.tint.r,  anim_frame);
+                b.tint.g =  self.interpolate_keyframes(anim_idx, b.id, AE::TintG,     b.tint.g,  anim_frame);
+                b.tint.b =  self.interpolate_keyframes(anim_idx, b.id, AE::TintB,     b.tint.b,  anim_frame);
+                b.tint.a =  self.interpolate_keyframes(anim_idx, b.id, AE::TintA,     b.tint.a,  anim_frame);
+                b.zindex  = prev_frame!(AE::Zindex,  b.zindex as f32) as i32;
+                b.hidden  = prev_frame!(AE::Hidden,  bool_as_f32(b.hidden)) != 0.;
+                b.tex     = prev_str!(  AE::Texture, b.tex.clone());
             };
 
             macro_rules! prev_frame {
@@ -2261,6 +2257,7 @@ pub enum Events {
 
     EditVertexPos,
     EditVertexUV,
+    SetHoveringVertId
 }
 
 enum_string!(Events);
@@ -2373,6 +2370,7 @@ impl EventState {
     event_with_value!(set_pos_elasiticity, E::SetPosElasticity, elas, f32);
     event_with_value!(set_scale_elasiticity, E::SetPosElasticity, elas, f32);
     event_with_value!(set_rot_bounce, E::SetRotBounce, bounce, f32);
+    event_with_value!(set_hovering_id, E::SetHoveringVertId, vert_id, i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -2600,6 +2598,7 @@ pub struct SelectionState {
     pub anim: usize,
     pub anim_frame: i32,
     pub vert_ids: Vec<usize>,
+    pub hovering_vert_id: i32,
 }
 
 impl SelectionState {
