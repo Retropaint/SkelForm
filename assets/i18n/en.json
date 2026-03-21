@@ -238,9 +238,10 @@
       "padding": "Padding ℹ:",
       "density_desc": "A higher gap spaces out potential points. Increase if there are too many points close to each other",
       "padding_desc": "Extra space around the image, allowing points to be more accurate around edges",
-      "vert_pos": "Vert. Pos.: ",
-      "vert_u": "Vert. U: ",
-      "vert_v": "Vert. V: "
+      "vertex_header": "Vertex",
+      "vert_pos": "Position: ",
+      "vert_u": "U: ",
+      "vert_v": "V: "
     },
     "physics": {
       "heading": "Physics",

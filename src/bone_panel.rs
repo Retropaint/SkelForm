@@ -263,71 +263,10 @@ pub fn draw(
             ui, &bone, shared_ui, events, config, selections, armature, edit_mode,
         );
         // show vertex position and UV inputs, if one is selected
-        if selections.vert_ids.len() == 1 {
+        if selections.vert_ids.len() > 0 {
             ui.add_space(10.);
-            let vert_id = selections.vert_ids[0] as u32;
-            let vert = bone.vertices.iter().find(|v| v.id == vert_id).unwrap();
-
-            // vertex position inputs
-            macro_rules! input {
-                ($field:expr, $id:expr, $label:expr, $event:ident, $is_x:expr, $ui:expr) => {
-                    let init_value = if $is_x { $field.x } else { $field.y };
-                    let (edited, value, _) =
-                        $ui.float_input($id.to_string(), shared_ui, init_value, 1., None);
-                    if edited {
-                        let mut new = $field;
-                        if $is_x {
-                            new.x = value;
-                        } else {
-                            new.y = value;
-                        }
-                        events.$event(new.x, new.y);
-                    }
-                    $ui.label($label.to_string());
-                };
-            }
-            ui.horizontal(|ui| {
-                ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_pos"));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    input!(vert.pos, "vert_pos_y", "Y:", edit_vertex_pos, false, ui);
-                    input!(vert.pos, "vert_pos_x", "X:", edit_vertex_pos, true, ui);
-                });
-            });
-
-            // vertex UV sliders
-            let mut new_uv = vert.uv;
-            let mut slider1dragged = false;
-            let mut slider2dragged = false;
-            ui.horizontal(|ui| {
-                ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_u"));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let slider = ui.add(
-                        egui::Slider::new(&mut new_uv.x, (0.)..=1.).update_while_editing(false),
-                    );
-                    slider1dragged = slider.dragged();
-                    if slider.drag_started() {
-                        events.save_bone(selections.bone_idx);
-                    }
-                });
-            });
-            ui.horizontal(|ui| {
-                ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_v"));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let slider = ui.add(
-                        egui::Slider::new(&mut new_uv.y, (0.)..=1.).update_while_editing(false),
-                    );
-                    slider2dragged = slider.dragged();
-                    if slider.drag_started() {
-                        events.save_bone(selections.bone_idx);
-                    }
-                });
-            });
-            if new_uv != vert.uv {
-                if !slider1dragged && !slider2dragged {
-                    events.save_bone(selections.bone_idx);
-                }
-                events.edit_vertex_uv(new_uv.x, new_uv.y);
-            }
+            ui.separator();
+            selected_verts_inputs(ui, shared_ui, selections, &bone, events);
         }
         ui.add_space(20.);
     }
@@ -878,6 +817,82 @@ pub fn mesh_deformation(
                 });
             });
         }
+    }
+}
+
+pub fn selected_verts_inputs(
+    ui: &mut egui::Ui,
+    shared_ui: &mut crate::Ui,
+    selections: &SelectionState,
+    bone: &Bone,
+    events: &mut EventState,
+) {
+    // vertex position inputs
+    macro_rules! input {
+        ($field:expr, $id:expr, $label:expr, $vert_id:expr, $event:ident, $is_x:expr, $ui:expr) => {
+            let init_value = if $is_x { $field.x } else { $field.y };
+            let (edited, value, _) =
+                $ui.float_input($id.to_string(), shared_ui, init_value, 1., None);
+            if edited {
+                events.save_bone(selections.bone_idx);
+                let mut new = $field;
+                if $is_x {
+                    new.x = value;
+                } else {
+                    new.y = value;
+                }
+                events.$event($vert_id as u32, new.x, new.y);
+            }
+            $ui.label($label.to_string());
+        };
+    }
+
+    for id in &selections.vert_ids {
+        let vert = bone.vertices.iter().find(|v| v.id == *id as u32).unwrap();
+        ui.label(shared_ui.loc("bone_panel.mesh_deformation.vertex_header"));
+        ui.horizontal(|ui| {
+            ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_pos"));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let id_x = format!("vert_pos_x{}", id);
+                let id_y = format!("vert_pos_y{}", id);
+                input!(vert.pos, id_y, "Y:", *id, edit_vertex_pos, false, ui);
+                input!(vert.pos, id_x, "X:", *id, edit_vertex_pos, true, ui);
+            });
+        });
+
+        // vertex UV sliders
+        let mut new_uv = vert.uv;
+        let mut slider1dragged = false;
+        let mut slider2dragged = false;
+        ui.horizontal(|ui| {
+            ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_u"));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let slider =
+                    ui.add(egui::Slider::new(&mut new_uv.x, (0.)..=1.).update_while_editing(false));
+                slider1dragged = slider.dragged();
+                if slider.drag_started() {
+                    events.save_bone(selections.bone_idx);
+                }
+            });
+        });
+        ui.horizontal(|ui| {
+            ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_v"));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let slider =
+                    ui.add(egui::Slider::new(&mut new_uv.y, (0.)..=1.).update_while_editing(false));
+                slider2dragged = slider.dragged();
+                if slider.drag_started() {
+                    events.save_bone(selections.bone_idx);
+                }
+            });
+        });
+        if new_uv != vert.uv {
+            if !slider1dragged && !slider2dragged {
+                events.save_bone(selections.bone_idx);
+            }
+            events.edit_vertex_uv(*id as u32, new_uv.x, new_uv.y);
+        }
+        ui.add_space(10.);
     }
 }
 

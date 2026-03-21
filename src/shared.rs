@@ -2573,14 +2573,16 @@ impl EventState {
         self.values.push(if force_append { 1. } else { 0. });
     }
 
-    pub fn edit_vertex_pos(&mut self, x: f32, y: f32) {
+    pub fn edit_vertex_pos(&mut self, vert_id: u32, x: f32, y: f32) {
         self.events.push(Events::EditVertexPos);
+        self.values.push(vert_id as f32);
         self.values.push(x as f32);
         self.values.push(y as f32);
     }
 
-    pub fn edit_vertex_uv(&mut self, x: f32, y: f32) {
+    pub fn edit_vertex_uv(&mut self, vert_id: u32, x: f32, y: f32) {
         self.events.push(Events::EditVertexUV);
+        self.values.push(vert_id as f32);
         self.values.push(x as f32);
         self.values.push(y as f32);
     }

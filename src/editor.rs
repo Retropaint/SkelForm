@@ -49,21 +49,21 @@ pub fn iterate_events(
     if event == Events::EditVertexUV {
         let sel = &selections;
         let bone = armature.sel_bone_mut(sel).unwrap();
-        let vert_id = sel.vert_ids[0] as u32;
+        let vert_id = events.values[0] as u32;
         let vert = bone.vertices.iter_mut().find(|v| v.id == vert_id).unwrap();
-        vert.uv = Vec2::new(events.values[0], events.values[1]);
+        vert.uv = Vec2::new(events.values[1], events.values[2]);
 
         events.events.remove(0);
-        events.values.drain(0..=1);
+        events.values.drain(0..=2);
     } else if event == Events::EditVertexPos {
         let sel = &selections;
         let bone = armature.sel_bone_mut(sel).unwrap();
-        let vert_id = sel.vert_ids[0] as u32;
+        let vert_id = events.values[0] as u32;
         let vert = bone.vertices.iter_mut().find(|v| v.id == vert_id).unwrap();
-        vert.pos = Vec2::new(events.values[0], events.values[1]);
+        vert.pos = Vec2::new(events.values[1], events.values[2]);
 
         events.events.remove(0);
-        events.values.drain(0..=1);
+        events.values.drain(0..=2);
     } else if event == Events::SelectVertex {
         let vert_id = events.values[0] as i32;
         if vert_id == -1 {
