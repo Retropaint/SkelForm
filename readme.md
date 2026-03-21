@@ -12,6 +12,15 @@ Install Rust v1.85.0 or above.
 
 Then, run `cargo run` in the terminal.
 
+## Linux
+
+Dependencies:
+
+- glib2-devel - required for `rfd` crate (file dialogs)
+- gtk3-devel - ditto above
+
+Library names may be different across distributions.
+
 ## Web
 
 Install [Trunk](https://trunkrs.dev) v0.21.7 or above, as well as Python 3.13.6
