@@ -345,6 +345,8 @@ pub fn render(
         if on_vert != -1 {
             new_vert = None;
             hovering_vert_id = on_vert;
+        } else {
+            renderer.clicked_vert_id = -1;
         }
         #[rustfmt::skip]
         let (mut lines_v, mut lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, &mut new_vert, true, on_vert != -1, camera, input, selections, events);
@@ -376,7 +378,7 @@ pub fn render(
                 }
             }
         }
-        hovered_vert = (hovering_tri.len() > 0 || on_vert != -1 || on_line) && !camera.on_ui;
+        hovered_vert = on_vert != -1 && !camera.on_ui;
 
         setup_render_buffer(&mut renderer.meshframe_buffer, &lines_v, &lines_i, queue);
         draw(&renderer.meshframe_buffer, render_pass, 0, lines_i.len());
@@ -1381,7 +1383,7 @@ pub fn bone_vertices(
             continue;
         }
 
-        let (mut verts, mut indices) = point!(wv, white, size);
+        let (mut verts, mut indices) = point!(wv, col, size);
         add_point!(verts, indices, wv);
         if input.right_clicked {
             if world_verts.len() <= 4 {
@@ -1392,20 +1394,19 @@ pub fn bone_vertices(
             }
         }
 
+        if input.left_pressed {
+            events.select_vertex(world_verts[wv].id as i32, false);
+        }
+
         if input.left_clicked {
             // simulate double-click for binding verts
-            if renderer.clicked_vert_id == -1 {
+            if renderer.clicked_vert_id != world_verts[wv].id as i32 {
                 renderer.clicked_vert_id = world_verts[wv].id as i32;
-            } else if renderer.clicked_vert_id == world_verts[wv].id as i32 {
+            } else if selections.bind != -1 {
                 renderer.clicked_vert_id = -1;
                 events.click_vertex(wv);
                 events.select_vertex(-1, false);
             }
-            break;
-        }
-
-        if input.left_pressed {
-            events.select_vertex(world_verts[wv].id as i32, false);
             break;
         }
     }
