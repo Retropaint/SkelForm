@@ -652,6 +652,13 @@ pub fn kb_inputs(
         events.toggle_bone_folded(selections.bone_idx, !bone.folded);
     }
 
+    if input.consume_shortcut(&config.keys.toggle_edit_vertices) {
+        let bone = armature.sel_bone(selections);
+        if bone != None && armature.tex_of(bone.unwrap().id) != None {
+            events.toggle_showing_mesh(if edit_mode.showing_mesh { 0 } else { 1 });
+        }
+    }
+
     let snap_key = &config.keys.edit_snap.modifiers;
     let holding_edit_snap = input.modifiers.matches_any(*snap_key);
     if holding_edit_snap && !edit_mode.holding_edit_snap {

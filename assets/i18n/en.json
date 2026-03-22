@@ -338,7 +338,8 @@
       "play_animation": "Play Animation",
       "next_bone": "Next Bone",
       "prev_bone": "Previous Bone",
-      "toggle_bone_fold": "Toggle Bone Fold"
+      "toggle_bone_fold": "Toggle Bone Fold",
+      "toggle_edit_vertices": "Toggle Editing Vertices"
     },
     "miscellaneous": {
       "heading": "Miscellaneous",
