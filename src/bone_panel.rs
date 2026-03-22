@@ -816,6 +816,10 @@ pub fn mesh_deformation(
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let mut new_weight = bind.verts[w].weight;
                     let slider = ui.add(egui::Slider::new(&mut new_weight, (0.)..=1.));
+                    if slider.hovered() {
+                        is_hovering = true;
+                        events.set_hovering_id(bind.verts[w].id);
+                    }
                     if slider.drag_started() {
                         events.save_bone(selections.bone_idx as usize);
                     }
