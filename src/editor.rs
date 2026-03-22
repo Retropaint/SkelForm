@@ -611,7 +611,7 @@ pub fn simple_event(
             armature.set_bone_tex(value as i32, str_value.clone(), selections.anim, frame);
         }
         Events::RemoveVertex => {
-            let sel = &selections;
+            let sel = selections;
             #[rustfmt::skip]
             macro_rules! verts {() => { armature.sel_bone_mut(&sel).unwrap().vertices }}
             let vert_id = verts!()[value as usize].id;
@@ -623,6 +623,13 @@ pub fn simple_event(
             let bone = armature.sel_bone_mut(&sel).unwrap();
             bone.indices = triangulate(&verts, &tex_img);
             remove_blacklisted_tris(&mut bone.indices, &bone.vertices, &mut bone.blacklist);
+            cleanup_vertices(bone);
+
+            // remove vertex from selected IDs
+            let idx = sel.vert_ids.iter().position(|id| (*id) == vert_id as usize);
+            if idx != None {
+                sel.vert_ids.remove(idx.unwrap());
+            }
 
             // remove this vert from its binds
             'bind: for bind in &mut armature.sel_bone_mut(&sel).unwrap().binds {
@@ -646,13 +653,21 @@ pub fn simple_event(
             // total rotation to cancel out when dragging vertex
             let mut total_rot = temp_vert.unwrap().offset_rot;
 
-            let mut is_in_bind = false;
+            // if a bind has a weight of 1, all other binds have no effect
+            let mut overridden = false;
+
+            let mut binds = bone.binds.clone();
             let mut scale = Vec2::new(1., 1.);
-            for bind in &bone.binds {
+            binds.reverse();
+            for bind in &binds {
+                if overridden {
+                    break;
+                }
                 if bind.bone_id == -1 {
                     continue;
                 }
-                if bind.verts.iter().find(|v| v.id == value as i32) == None {
+                let vert = bind.verts.iter().find(|v| v.id == value as i32);
+                if vert == None {
                     continue;
                 }
 
@@ -660,12 +675,12 @@ pub fn simple_event(
                 let bind_bone = bones.iter().find(|b| b.id == bind.bone_id).unwrap();
                 scale = bind_bone.scale;
                 if !bind.is_path {
-                    total_rot += bind_bone.rot;
+                    total_rot += bind_bone.rot * vert.unwrap().weight;
                 }
-                is_in_bind = true;
+                overridden |= vert.unwrap().weight == 1.;
             }
             // add mesh bone's own rotation, if this vert is not bound
-            if !is_in_bind {
+            if !overridden {
                 total_rot += bone.rot;
                 scale = bone.scale;
             }
@@ -759,12 +774,12 @@ pub fn simple_event(
             // add vertex to mesh
             bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
             bone_mut.indices = triangulate(&mut bone_mut.vertices, &tex_img);
-            cleanup_vertices(bone_mut);
             remove_blacklisted_tris(
                 &mut bone_mut.indices,
                 &bone_mut.vertices,
                 &mut bone_mut.blacklist,
             );
+            cleanup_vertices(bone_mut);
 
             // set this bone as having a mesh
             bone_mut.verts_edited = true;
@@ -1094,6 +1109,7 @@ fn select_bone(
     } else {
         if sel.bone_idx == usize::MAX {
             sel.bone_idx = idx;
+            sel.bone_ids = vec![armature.bones[idx].id];
         }
         if input.holding_mod {
             let id = armature.bones[idx as usize].id;
