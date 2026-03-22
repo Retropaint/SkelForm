@@ -489,7 +489,7 @@ pub fn render(
     }
 
     #[rustfmt::skip]
-    draw_points_and_kites(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids, selections, renderer, queue, render_pass, events);
+    draw_points_and_kites(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids, selections, renderer, queue, render_pass, events, armature);
 
     // check if this bone is part of IK, to disable editing later
     let mut has_ik = false;
@@ -1956,6 +1956,7 @@ pub fn draw_points_and_kites(
     queue: &wgpu::Queue,
     render_pass: &mut RenderPass,
     events: &mut EventState,
+    armature: &Armature,
 ) {
     let point_color: Color = config.colors.center_point;
     let mut kite_color: Color = config.colors.center_point;
@@ -2022,8 +2023,14 @@ pub fn draw_points_and_kites(
                 (this_verts, this_indices) = draw_point(
                     &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
                 );
-                if input.left_pressed && bone.id != selections.bone_ids[0] {
-                    events.select_bone(bone.id as usize, true);
+                // select this bone if point is pressed, unless it was already selected
+                if input.left_pressed {
+                    let sel_bone = armature.sel_bone(selections);
+                    if sel_bone == None {
+                        events.select_bone(bone.id as usize, true);
+                    } else if sel_bone != None && sel_bone.unwrap().id != bone.id {
+                        events.select_bone(bone.id as usize, true);
+                    }
                 }
                 on_point = true;
             }
