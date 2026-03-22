@@ -325,7 +325,9 @@ pub fn simple_event(
         Events::ToggleShowingMesh => {
             edit_mode.showing_mesh = value == 1.;
             if value != 1. {
-                ui.tracing = false
+                ui.tracing = false;
+                selections.hovering_vert_id = -1;
+                selections.vert_ids = vec![];
             }
         }
         Events::ToggleSettingIkTarget => {
