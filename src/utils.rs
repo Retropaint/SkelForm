@@ -1249,24 +1249,24 @@ pub fn process_screenshot_raw(
 }
 
 pub fn markdown(mut str: String) -> String {
-    let user_docs;
-    let dev_docs;
-    #[cfg(target_arch = "wasm32")]
-    {
-        user_docs = "https://skelform.org/user-docs";
-        dev_docs = "https://skelform.org/user-docs";
-    }
+    let mut user_docs = "https://skelform.org/user-docs".to_string();
+    let mut dev_docs = "https://skelform.org/dev-docs".to_string();
+
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let bin = utils::bin_path();
-        user_docs = format!(
-            "file://{}",
-            bin.join("user-docs").to_str().unwrap().to_string()
-        );
-        dev_docs = format!(
-            "file://{}",
-            bin.join("dev-docs").to_str().unwrap().to_string()
-        );
+        // open local docs if it exists, otherwise use web
+        let test = bin_path().join("user-docs").join("index.html");
+        match fs::exists(test) {
+            Ok(exists) => {
+                if exists {
+                    let user_docs_str = bin_path().join("user-docs").to_str().unwrap().to_string();
+                    user_docs = format!("file://{}", user_docs_str);
+                    let dev_docs_str = bin_path().join("dev-docs").to_str().unwrap().to_string();
+                    dev_docs = format!("file://{}", dev_docs_str);
+                }
+            }
+            _ => {}
+        };
     }
 
     str = str
