@@ -2022,7 +2022,7 @@ pub fn draw_points_and_kites(
                 (this_verts, this_indices) = draw_point(
                     &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
                 );
-                if input.left_pressed {
+                if input.left_pressed && bone.id != selections.bone_ids[0] {
                     events.select_bone(bone.id as usize, true);
                 }
                 on_point = true;
@@ -2141,13 +2141,13 @@ fn transform_ring(
     // set temporary mode based on distance from bone to cursor
     if !camera.on_ui && size_elapsed == 1. {
         let distance = adjusted.mag() / camera.zoom;
-        if distance < distance_move {
-            temporary = 0;
-            events.set_temporary_edit_mode(0);
-        }
 
         // prioritize rot or scale, depending on user-defined distance
-        if distance_scale > distance_rot {
+        if distance < distance_move {
+            on_point = true;
+            temporary = 0;
+            events.set_temporary_edit_mode(0);
+        } else if distance_scale > distance_rot {
             if distance < distance_rot {
                 on_point = true;
                 temporary = 1;
@@ -2167,11 +2167,6 @@ fn transform_ring(
                 temporary = 1;
                 events.set_temporary_edit_mode(1);
             }
-        }
-        if distance < distance_move {
-            on_point = true;
-            temporary = 0;
-            events.set_temporary_edit_mode(0);
         }
     }
 
