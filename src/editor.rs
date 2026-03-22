@@ -1178,6 +1178,9 @@ pub fn undo_redo(
             let bone = armature.find_bone_mut(action.bones[0].id).unwrap();
             new_action.bones = vec![bone.clone()];
             *bone = action.bones[0].clone();
+            // remove selected vertices that no longer exist
+            let vert_ids: Vec<usize> = bone.vertices.iter().map(|v| v.id as usize).collect();
+            selections.vert_ids.retain(|id| vert_ids.contains(id));
         }
         ActionType::Bones => {
             new_action.bones = armature.bones.clone();
