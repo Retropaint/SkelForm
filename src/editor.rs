@@ -650,16 +650,17 @@ pub fn simple_event(
                 if bind.bone_id == -1 {
                     continue;
                 }
-                let vert = bind.verts.iter().find(|v| v.id == value as i32);
-                let bones = &renderer.temp_bones;
-                if vert != None {
-                    is_in_bind = true;
-                    let bind_bone = bones.iter().find(|b| b.id == bind.bone_id).unwrap();
-                    scale = bind_bone.scale;
-                    if !bind.is_path {
-                        total_rot += bind_bone.rot;
-                    }
+                if bind.verts.iter().find(|v| v.id == value as i32) == None {
+                    continue;
                 }
+
+                let bones = &renderer.temp_bones;
+                let bind_bone = bones.iter().find(|b| b.id == bind.bone_id).unwrap();
+                scale = bind_bone.scale;
+                if !bind.is_path {
+                    total_rot += bind_bone.rot;
+                }
+                is_in_bind = true;
             }
             // add mesh bone's own rotation, if this vert is not bound
             if !is_in_bind {
