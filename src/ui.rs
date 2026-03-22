@@ -333,7 +333,7 @@ pub fn draw(
     }
 
     // show ID of vertex being hovered
-    if selections.hovering_vert_id != -1 {
+    if selections.hovering_vert_id != -1 && !camera.on_ui {
         let pos: egui::Pos2 = egui::Pos2::new(
             input.mouse.x / shared_ui.scale,
             input.mouse.y / shared_ui.scale - 13.,
