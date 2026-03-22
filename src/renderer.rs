@@ -62,6 +62,11 @@ pub fn render(
         draw_gridline(render_pass, renderer, &camera, &config, queue);
     }
 
+    if !edit_mode.showing_mesh && selections.hovering_vert_id != -1 {
+        // turn off hovering vert
+        events.set_hovering_id(-1);
+    }
+
     // temporary armature, to be used for rendering
     let mut temp_arm = Armature::default();
     let mut anim_bones = armature.animated_bones.clone();
