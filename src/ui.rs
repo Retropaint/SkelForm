@@ -606,7 +606,7 @@ pub fn kb_inputs(
         events.toggle_edit_modifying(0);
     }
 
-    if input.consume_shortcut(&config.keys.next_bone) {
+    if input.consume_shortcut(&config.keys.next_bone) && armature.bones.len() > 0 {
         let mut idx;
         if selections.bone_idx == usize::MAX {
             idx = armature.bones.len() - 1;
@@ -626,7 +626,7 @@ pub fn kb_inputs(
         events.select_bone(idx, false);
     }
 
-    if input.consume_shortcut(&config.keys.prev_bone) {
+    if input.consume_shortcut(&config.keys.prev_bone) && armature.bones.len() > 0 {
         let mut idx;
         if selections.bone_idx == usize::MAX {
             idx = 0;
