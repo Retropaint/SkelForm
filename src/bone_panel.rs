@@ -866,13 +866,10 @@ pub fn selected_verts_inputs(
     let mut hovering_id = -1;
     for id in &selections.vert_ids {
         let vert = bone.vertices.iter().find(|v| v.id == *id as u32).unwrap();
-        let label = ui
-            .label(format!(
-                "{} #{}",
-                shared_ui.loc("bone_panel.mesh_deformation.vertex_header"),
-                id.to_string()
-            ))
-            .on_hover_cursor(egui::CursorIcon::Default);
+        let header_str = shared_ui.loc("bone_panel.mesh_deformation.vertex_header");
+        let label_str = format!("{} #{}", header_str, id.to_string());
+        let cursor_icon = egui::CursorIcon::Default;
+        let label = ui.label(label_str).on_hover_cursor(cursor_icon);
         if label.hovered() {
             hovering_id = *id as i32;
         }
@@ -912,15 +909,19 @@ pub fn selected_verts_inputs(
                 }
             });
         });
+
+        // update UV values if the sliders have been edited
         if new_uv != vert.uv {
             if !slider1dragged && !slider2dragged {
                 events.save_bone(selections.bone_idx);
             }
             events.edit_vertex_uv(*id as u32, new_uv.x, new_uv.y);
         }
+
         ui.add_space(10.);
     }
 
+    // set the vertex being hovered, so it enlarges
     if hovering_id != -1 {
         events.set_hovering_id(hovering_id);
     }
@@ -1193,24 +1194,11 @@ pub fn physics(
             });
         };
     }
-    input!(
-        "bone_panel.physics.resistance",
-        bone.phys_rot_resistance,
-        set_rot_resistance
-    );
-    input!(
-        "bone_panel.physics.pos_elasticity",
-        bone.phys_pos_elasticity,
-        set_pos_elasiticity
-    );
-    input!(
-        "bone_panel.physics.scale_elasticity",
-        bone.phys_scale_elasticity,
-        set_scale_elasiticity
-    );
-    input!(
-        "bone_panel.physics.rot_bounce",
-        bone.phys_rot_bounce,
-        set_rot_bounce
-    );
+    #[rustfmt::skip]
+    {
+        input!("bone_panel.physics.resistance",       bone.phys_rot_resistance,   set_rot_resistance);
+        input!("bone_panel.physics.pos_elasticity",   bone.phys_pos_elasticity,   set_pos_elasiticity);
+        input!("bone_panel.physics.scale_elasticity", bone.phys_scale_elasticity, set_scale_elasiticity);
+        input!("bone_panel.physics.rot_bounce",       bone.phys_rot_bounce,       set_rot_bounce);
+    };
 }

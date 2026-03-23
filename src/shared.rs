@@ -1350,7 +1350,6 @@ impl Armature {
             type AE = AnimElement;
             #[rustfmt::skip]
             {
-                    
                 b.pos.x   = self.interpolate_keyframes(anim_idx, b.id, AE::PositionX, b.pos.x,   anim_frame);
                 b.pos.y   = self.interpolate_keyframes(anim_idx, b.id, AE::PositionY, b.pos.y,   anim_frame);
                 b.rot     = self.interpolate_keyframes(anim_idx, b.id, AE::Rotation,  b.rot,     anim_frame);
@@ -2257,7 +2256,7 @@ pub enum Events {
 
     EditVertexPos,
     EditVertexUV,
-    SetHoveringVertId
+    SetHoveringVertId,
 }
 
 enum_string!(Events);

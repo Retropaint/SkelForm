@@ -135,13 +135,10 @@ pub fn settings_button(
             ui.set_height(21.);
             let mut text_pos = ui.min_rect().left_center();
             text_pos.x += 5.;
-            ui.painter().text(
-                text_pos,
-                egui::Align2::LEFT_CENTER,
-                name.clone(),
-                egui::FontId::new(13., egui::FontFamily::Proportional),
-                config.colors.text.into(),
-            );
+            let align = egui::Align2::LEFT_CENTER;
+            let font = egui::FontId::new(13., egui::FontFamily::Proportional);
+            #[rustfmt::skip]
+            ui.painter().text(text_pos, align, name.clone(), font, config.colors.text.into());
         });
     });
 

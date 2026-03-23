@@ -131,15 +131,12 @@ impl ApplicationHandler for App {
 
         #[cfg(target_arch = "wasm32")]
         {
+            use wgpu::web_sys;
             use winit::platform::web::WindowAttributesExtWebSys;
-            let canvas = wgpu::web_sys::window()
-                .unwrap()
-                .document()
-                .unwrap()
-                .get_element_by_id("canvas")
-                .unwrap()
-                .dyn_into::<wgpu::web_sys::HtmlCanvasElement>()
-                .unwrap();
+            #[rustfmt::skip]
+            let canvas =
+                window().unwrap().document().unwrap().get_element_by_id("canvas")
+                .unwrap().dyn_into::<HtmlCanvasElement>().unwrap();
             self.shared.camera.window = Vec2::new(canvas.width() as f32, canvas.height() as f32);
             attributes = attributes.with_canvas(Some(canvas));
         }
@@ -347,14 +344,11 @@ impl ApplicationHandler for App {
 
                         // show asterisk after name if unsaved
                         let undo = &self.shared.undo_states;
-                        let unsaved = if undo.unsaved_undo_actions != undo.undo_actions.len() {
-                            " *"
-                        } else {
-                            ""
-                        };
+                        let is_unsaved = undo.unsaved_undo_actions != undo.undo_actions.len();
+                        let asterisk = if is_unsaved { " *" } else { "" };
 
                         let title =
-                            file + " - v" + &env!("CARGO_PKG_VERSION").to_string() + unsaved;
+                            file + " - v" + &env!("CARGO_PKG_VERSION").to_string() + asterisk;
                         window.set_title(&title);
                         self.shared.ui.changed_window_name = true;
                     }
@@ -389,14 +383,10 @@ impl ApplicationHandler for App {
                 let paint_jobs = gui_state.egui_ctx().tessellate(shapes, pixels_per_point);
 
                 let size = window.inner_size();
-                let screen_descriptor = {
-                    egui_wgpu::ScreenDescriptor {
-                        size_in_pixels: [
-                            renderer.gpu.surface_config.width,
-                            renderer.gpu.surface_config.height,
-                        ],
-                        pixels_per_point,
-                    }
+                let config = &renderer.gpu.surface_config;
+                let screen_descriptor = egui_wgpu::ScreenDescriptor {
+                    size_in_pixels: [config.width, config.height],
+                    pixels_per_point,
                 };
 
                 if !self.shared.renderer.initialized_window && size.width != 0 && size.height != 0 {
@@ -451,6 +441,7 @@ impl ApplicationHandler for App {
             }
         }
 
+        // if an exit was attemped, first show unsaved changes modal if appropriate
         if self.shared.ui.exiting {
             let undo = &self.shared.undo_states;
             if undo.unsaved_undo_actions != undo.undo_actions.len() {
@@ -463,6 +454,7 @@ impl ApplicationHandler for App {
             self.shared.ui.exiting = false;
         }
 
+        // exit has been confirmed - execute and obliterate SkelForm
         if self.shared.ui.confirmed_exit {
             if self.shared.ui.never_donate {
                 self.shared.config.ignore_donate = true;
@@ -766,13 +758,8 @@ impl BackendRenderer {
         {
             *shared.ui.file_path.lock().unwrap() = shared.ui.dropped_file_path.clone();
             println!("{}", shared.ui.file_path.lock().unwrap().len());
-            let name = shared.ui.file_path.lock().unwrap()[0]
-                .as_path()
-                .file_name()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .to_string();
+            #[rustfmt::skip]
+            let name = shared.ui.file_path.lock().unwrap()[0].as_path().file_name().unwrap().to_str().unwrap().to_string();
             let ext = name.split('.').collect::<Vec<_>>()[1]
                 .to_string()
                 .to_lowercase();
@@ -847,7 +834,7 @@ impl BackendRenderer {
         #[rustfmt::skip]
         renderer::render(
             render_pass, &self.gpu.device, &self.gpu.queue, &s.camera, &s.input, &mut s.armature,
-            &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events, 
+            &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events,
         );
 
         s.ui.warnings = warnings::check_warnings(&s.armature);

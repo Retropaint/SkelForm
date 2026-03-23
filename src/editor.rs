@@ -1198,11 +1198,9 @@ pub fn undo_redo(
             }
         }
         ActionType::Animation => {
-            let anim = armature
-                .animations
-                .iter_mut()
-                .find(|a| a.id == action.animations[0].id)
-                .unwrap();
+            let anim_id = action.animations[0].id;
+            let animations = &mut armature.animations;
+            let anim = animations.iter_mut().find(|a| a.id == anim_id).unwrap();
             new_action.animations = vec![anim.clone()];
             *anim = action.animations[0].clone();
         }

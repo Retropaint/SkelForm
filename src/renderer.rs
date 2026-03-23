@@ -21,6 +21,7 @@ pub fn render(
     if camera.window == Vec2::ZERO {
         return;
     }
+    let sel = selections.clone();
 
     renderer.bone_buffer.init(device, 1000);
     renderer.prev_onion_buffer.init(device, 1000);
@@ -34,11 +35,10 @@ pub fn render(
     renderer.selected_ring_buffer.init(device, 10);
     renderer.rect_buffer.init(device, 1000);
 
+    // no edits are being made if the LMB isn't down
     if !input.left_down && (edit_mode.is_moving || edit_mode.is_rotating || edit_mode.is_scaling) {
         events.update_current_editing(1);
     }
-
-    let sel = selections.clone();
 
     // inform HTML if canvas has successfully loaded
     #[cfg(target_arch = "wasm32")]
@@ -62,8 +62,8 @@ pub fn render(
         draw_gridline(render_pass, renderer, &camera, &config, queue);
     }
 
+    // turn off hovering vert if not editing mesh
     if !edit_mode.showing_mesh && selections.hovering_vert_id != -1 {
-        // turn off hovering vert
         events.set_hovering_id(-1);
     }
 
@@ -80,6 +80,7 @@ pub fn render(
             (anim_bones[b].vertices, anim_bones[b].indices) = create_tex_rect(&size);
         }
     }
+    temp_arm.bones = renderer.temp_bones.clone();
 
     // animate next and previous frame armatures for onions
     let mut next_arm = Armature::default();
@@ -108,8 +109,6 @@ pub fn render(
         next_arm.bones = next_arm.animated_bones.clone();
         construction(&mut next_arm.bones, &next_arm.animated_bones);
     }
-
-    temp_arm.bones = renderer.temp_bones.clone();
 
     // get all children of selected bone(s)
     let mut selected_bone_ids = vec![];
@@ -220,17 +219,6 @@ pub fn render(
                     + (utils::rotate(&(v[c2].pos - tb.pos), -tb.rot)) * bary.2;
                 pos /= tb.scale;
 
-                // remove triangle if right clicked, unless there's only 2
-                //if edit_mode.showing_mesh && input.right_clicked && !removed_vert {
-                //    if armature.sel_bone(&sel).unwrap().indices.len() == 6 {
-                //        events.open_modal("indices_limit", false);
-                //    } else {
-                //        events.remove_triangle(i * 3);
-                //        removed_vert = true;
-                //    }
-                //    break;
-                //}
-
                 // editing this bone's mesh, add this as new vertex candidate
                 if edit_mode.showing_mesh && input.left_clicked && new_vert == None {
                     new_vert = Some(vert(Some(pos), None, Some(uv)));
@@ -272,6 +260,7 @@ pub fn render(
                     Color::new(min + fade as u8, min + fade as u8, min + fade as u8, 0);
             }
 
+            // select bone if clicked
             if input.left_pressed && !renderer.on_point {
                 let id = click_on_hover_id;
                 let bones = &armature.bones;
@@ -344,6 +333,7 @@ pub fn render(
         let mouse = mouse_world_vert;
         let wv = bone.world_verts.clone();
 
+        // prepare drawing buffers for vertex points and lines
         let current_hover_id = selections.hovering_vert_id;
         #[rustfmt::skip]
         let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, events, armature, renderer, current_hover_id);
@@ -385,6 +375,7 @@ pub fn render(
         }
         hovered_vert = on_vert != -1 && !camera.on_ui;
 
+        // draw vertex points and lines
         setup_render_buffer(&mut renderer.meshframe_buffer, &lines_v, &lines_i, queue);
         draw(&renderer.meshframe_buffer, render_pass, 0, lines_i.len());
     }
@@ -418,10 +409,13 @@ pub fn render(
                 }
             }
 
+            // add this rect to drawing buffers
             verts.append(&mut world_verts);
             let mut bone_indices = bone.indices.clone();
             add_offseted_indices(&mut bone_indices, &mut indices);
         }
+
+        // draw rects
         setup_render_buffer(&mut renderer.rect_buffer, &verts, &indices, queue);
         draw(&renderer.rect_buffer, render_pass, 0, indices.len());
     }
@@ -572,27 +566,31 @@ pub fn render(
         return;
     }
 
+    // bone's transforms can't be edited if editing its verts, or it has Ik
     if edit_mode.showing_mesh || has_ik {
         return;
     }
 
-    // editing bone
+    // editing bone transforms (move, rotate, scale)
     let idx = sel.bone_idx;
     let input = &input;
     let mouse_moved = input.mouse != input.mouse_prev_left;
     if camera.on_ui {
         renderer.editing_bone = false;
     } else if idx != usize::MAX && input.left_down && hover_bone_id == -1 {
+        // only register edits if mouse is moving
         if mouse_moved {
             events.update_current_editing(0);
         }
 
+        // prioritize temporary edits (from transform rings) over edit mode
         let current_edit = if edit_mode.temporary == None {
             &edit_mode.current
         } else {
             edit_mode.temporary.as_ref().unwrap()
         };
 
+        // save bone to undo stack
         if !renderer.editing_bone {
             events.save_edited_bone(selections.bone_idx);
             renderer.editing_bone = true;
