@@ -656,7 +656,11 @@ pub fn prepare_files(
         for w in 0..armature_copy.bones[b].binds.len() {
             let bones = armature_copy.bones.clone();
             let bone_id = &mut armature_copy.bones[b].binds[w].bone_id;
-            *bone_id = bones.iter().position(|bone| bone.id == *bone_id).unwrap() as i32;
+            if let Some(id) = bones.iter().position(|bone| bone.id == *bone_id) {
+                *bone_id = id as i32;
+            } else {
+                continue;
+            }
             for v in 0..armature_copy.bones[b].binds[w].verts.len() {
                 let vertices = armature_copy.bones[b].vertices.clone();
                 let v_id = &mut armature_copy.bones[b].binds[w].verts[v].id;
