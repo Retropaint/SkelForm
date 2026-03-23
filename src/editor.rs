@@ -636,7 +636,7 @@ pub fn simple_event(
                 for v in 0..bind.verts.len() {
                     if bind.verts[v].id == vert_id as i32 {
                         bind.verts.remove(v);
-                        break 'bind;
+                        continue 'bind;
                     }
                 }
             }
