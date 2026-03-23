@@ -843,11 +843,13 @@ pub fn selected_verts_inputs(
     bone: &Bone,
     events: &mut EventState,
 ) -> bool {
+    let mut hovering_id = -1;
+
     // vertex position inputs
     macro_rules! input {
         ($field:expr, $id:expr, $label:expr, $vert_id:expr, $event:ident, $is_x:expr, $ui:expr) => {
             let init_value = if $is_x { $field.x } else { $field.y };
-            let (edited, value, _) =
+            let (edited, value, input) =
                 $ui.float_input($id.to_string(), shared_ui, init_value, 1., None);
             if edited {
                 events.save_bone(selections.bone_idx);
@@ -859,22 +861,30 @@ pub fn selected_verts_inputs(
                 }
                 events.$event($vert_id as u32, new.x, new.y);
             }
-            $ui.label($label.to_string());
+            if input.hovered() {
+                hovering_id = $vert_id as i32;
+            }
+            if $ui.label($label.to_string()).hovered() {
+                hovering_id = $vert_id as i32;
+            }
         };
     }
 
-    let mut hovering_id = -1;
     for id in &selections.vert_ids {
+        macro_rules! with_hover {
+            ($widget:expr) => {
+                if $widget.hovered() {
+                    hovering_id = *id as i32;
+                }
+            };
+        }
         let vert = bone.vertices.iter().find(|v| v.id == *id as u32).unwrap();
         let header_str = shared_ui.loc("bone_panel.mesh_deformation.vertex_header");
         let label_str = format!("{} #{}", header_str, id.to_string());
         let cursor_icon = egui::CursorIcon::Default;
-        let label = ui.label(label_str).on_hover_cursor(cursor_icon);
-        if label.hovered() {
-            hovering_id = *id as i32;
-        }
-        ui.horizontal(|ui| {
-            ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_pos"));
+        with_hover!(ui.label(label_str).on_hover_cursor(cursor_icon));
+        let pos_inputs = ui.horizontal(|ui| {
+            with_hover!(ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_pos")));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let id_x = format!("vert_pos_x{}", id);
                 let id_y = format!("vert_pos_y{}", id);
@@ -882,13 +892,14 @@ pub fn selected_verts_inputs(
                 input!(vert.pos, id_x, "X:", *id, edit_vertex_pos, true, ui);
             });
         });
+        with_hover!(pos_inputs.response);
 
         // vertex UV sliders
         let mut new_uv = vert.uv;
         let mut slider1dragged = false;
         let mut slider2dragged = false;
-        ui.horizontal(|ui| {
-            ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_u"));
+        let u_input = ui.horizontal(|ui| {
+            with_hover!(ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_u")));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let slider =
                     ui.add(egui::Slider::new(&mut new_uv.x, (0.)..=1.).update_while_editing(false));
@@ -896,10 +907,12 @@ pub fn selected_verts_inputs(
                 if slider.drag_started() {
                     events.save_bone(selections.bone_idx);
                 }
+                with_hover!(slider);
             });
         });
-        ui.horizontal(|ui| {
-            ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_v"));
+        with_hover!(u_input.response);
+        let v_input = ui.horizontal(|ui| {
+            with_hover!(ui.label(shared_ui.loc("bone_panel.mesh_deformation.vert_v")));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let slider =
                     ui.add(egui::Slider::new(&mut new_uv.y, (0.)..=1.).update_while_editing(false));
@@ -907,8 +920,10 @@ pub fn selected_verts_inputs(
                 if slider.drag_started() {
                     events.save_bone(selections.bone_idx);
                 }
+                with_hover!(slider);
             });
         });
+        with_hover!(v_input.response);
 
         // update UV values if the sliders have been edited
         if new_uv != vert.uv {
