@@ -241,7 +241,8 @@
       "vertex_header": "Vertex",
       "vert_pos": "Position: ",
       "vert_u": "U: ",
-      "vert_v": "V: "
+      "vert_v": "V: ",
+      "bind_weights_header": "Bind Weights"
     },
     "physics": {
       "heading": "Physics",

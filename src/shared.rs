@@ -2521,8 +2521,9 @@ impl EventState {
         self.values.push(if toggle { 1. } else { 0. });
     }
 
-    pub fn set_bind_weight(&mut self, vert_idx: usize, weight: f32) {
+    pub fn set_bind_weight(&mut self, bind_idx: u32, vert_idx: usize, weight: f32) {
         self.events.push(Events::SetBindWeight);
+        self.values.push(bind_idx as f32);
         self.values.push(vert_idx as f32);
         self.values.push(weight);
     }

@@ -143,13 +143,13 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::SetBindWeight {
-        let vert = events.values[0] as usize;
-        let weight = events.values[1];
-        let sel_bind = selections.bind as usize;
+        let sel_bind = events.values[0] as usize;
+        let vert = events.values[1] as usize;
+        let weight = events.values[2];
         armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].verts[vert].weight = weight;
 
         events.events.remove(0);
-        events.values.drain(0..=1);
+        events.values.drain(0..=2);
     } else if event == Events::ToggleBindPathing {
         let sel_bind = events.values[0] as usize;
         let is_pathing = events.values[1] == 1.;

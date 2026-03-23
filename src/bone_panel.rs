@@ -827,7 +827,7 @@ pub fn mesh_deformation(
                         if !slider.dragged() {
                             events.save_bone(selections.bone_idx as usize);
                         }
-                        events.set_bind_weight(w, new_weight);
+                        events.set_bind_weight(selections.bind as u32, w, new_weight);
                     }
                 });
             });
@@ -933,7 +933,40 @@ pub fn selected_verts_inputs(
             events.edit_vertex_uv(*id as u32, new_uv.x, new_uv.y);
         }
 
-        ui.add_space(10.);
+        // weight binds for this vertex, if appropriate
+        ui.add_space(5.);
+        let mut has_binds = false;
+        for bi in 0..bone.binds.len() {
+            let vert_ids: Vec<usize> = bone.binds[bi].verts.iter().map(|v| v.id as usize).collect();
+            has_binds |= vert_ids.contains(id);
+        }
+        if !has_binds {
+            continue;
+        }
+
+        ui.label(shared_ui.loc("bone_panel.mesh_deformation.bind_weights_header"));
+        for bi in 0..bone.binds.len() {
+            ui.horizontal(|ui| {
+                // is this vertex in this bind?
+                let bind_vert_idx = bone.binds[bi].verts.iter().position(|v| v.id == *id as i32);
+                if bind_vert_idx == None {
+                    return;
+                }
+
+                // bind weight slider
+                ui.label(format!("{}:", bi));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let bind_vert = &bone.binds[bi].verts[bind_vert_idx.unwrap()];
+                    let mut new_weight = bind_vert.weight;
+                    ui.add(egui::Slider::new(&mut new_weight, (0.)..=1.));
+                    if new_weight != bind_vert.weight {
+                        events.set_bind_weight(bi as u32, bind_vert_idx.unwrap(), new_weight);
+                    }
+                });
+            });
+        }
+
+        ui.add_space(5.);
     }
 
     // set the vertex being hovered, so it enlarges
