@@ -311,6 +311,8 @@ pub fn render(
 
     // show selected bone's mesh wireframe if editing it
     let mut hovering_vert_id = -1;
+    let mut is_hovering_tri = false;
+    let mut is_hovering_line = false;
     if edit_mode.showing_mesh && armature.sel_bone(&sel) != None {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
@@ -345,12 +347,14 @@ pub fn render(
         }
         #[rustfmt::skip]
         let (mut lines_v, mut lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, &mut new_vert, true, on_vert != -1, camera, input, selections, events);
+        is_hovering_line |= on_line;
         lines_v.append(&mut verts);
         add_offseted_indices(&mut indices, &mut lines_i);
 
         // draw hovered triangle if neither a vertex nor a line is hovered
         let (idx, mut hovering_tri) = bone_triangle(&bone, &mouse, wv);
         if hovering_tri.len() > 0 && on_vert == -1 && !on_line && !camera.on_ui {
+            is_hovering_tri = true;
             hovering_tri[0].color = Color::new(0, 200, 0, 100);
             hovering_tri[1].color = Color::new(0, 200, 0, 100);
             hovering_tri[2].color = Color::new(0, 200, 0, 100);
@@ -379,6 +383,21 @@ pub fn render(
         setup_render_buffer(&mut renderer.meshframe_buffer, &lines_v, &lines_i, queue);
         draw(&renderer.meshframe_buffer, render_pass, 0, lines_i.len());
     }
+
+    // increment hovering tri countdown, to show tooltip on UI
+    if is_hovering_tri && input.mouse == input.mouse_prev {
+        events.set_hovering_tri(selections.hovering_tri_dur + 1);
+    } else if selections.hovering_tri_dur != 0 {
+        events.set_hovering_tri(0);
+    }
+
+    // increment hovering line countdown, to show tooltip on UI
+    if is_hovering_line && input.mouse == input.mouse_prev {
+        events.set_hovering_line(selections.hovering_line_dur + 1);
+    } else if selections.hovering_line_dur != 0 {
+        events.set_hovering_line(0);
+    }
+
     // set hovering vert, to display ID on UI
     if hovering_vert_id != -1 {
         events.set_hovering_id(hovering_vert_id);

@@ -1016,6 +1016,12 @@ pub fn simple_event(
         Events::SetHoveringVertId => {
             selections.hovering_vert_id = value as i32;
         }
+        Events::SetHoveringTri => {
+            selections.hovering_tri_dur = value as i32;
+        }
+        Events::SetHoveringLine => {
+            selections.hovering_line_dur = value as i32;
+        }
         _ => {}
     }
 }

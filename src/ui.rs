@@ -334,16 +334,29 @@ pub fn draw(
 
     // show ID of vertex being hovered
     if selections.hovering_vert_id != -1 && !camera.on_ui {
-        let pos: egui::Pos2 = egui::Pos2::new(
-            input.mouse.x / shared_ui.scale,
-            input.mouse.y / shared_ui.scale - 13.,
-        );
-        context.debug_painter().debug_text(
-            pos,
-            egui::Align2::CENTER_CENTER,
-            egui::Color32::GREEN,
-            format!("#{}", selections.hovering_vert_id),
-        );
+        let mouse = input.mouse / shared_ui.scale;
+        let pos = egui::Pos2::new(mouse.x, mouse.y - 13.);
+        let str = format!("#{}", selections.hovering_vert_id);
+        let painter = context.debug_painter();
+        painter.debug_text(pos, egui::Align2::CENTER_CENTER, egui::Color32::GREEN, str);
+    }
+
+    // show hovering triangle helpers
+    if selections.hovering_tri_dur > 25 {
+        let mouse = input.mouse / shared_ui.scale;
+        let pos = egui::Pos2::new(mouse.x, mouse.y - 20.);
+        let str = shared_ui.loc("bone_panel.mesh_deformation.hovering_tri_tooltip");
+        let painter = context.debug_painter();
+        painter.debug_text(pos, egui::Align2::CENTER_CENTER, egui::Color32::GREEN, str);
+    }
+
+    // show hovering line helpers
+    if selections.hovering_line_dur > 25 {
+        let mouse = input.mouse / shared_ui.scale;
+        let pos = egui::Pos2::new(mouse.x, mouse.y - 20.);
+        let str = shared_ui.loc("bone_panel.mesh_deformation.hovering_line_tooltip");
+        let painter = context.debug_painter();
+        painter.debug_text(pos, egui::Align2::CENTER_CENTER, egui::Color32::GREEN, str);
     }
 
     macro_rules! helper_text {

@@ -242,7 +242,9 @@
       "vert_pos": "Position: ",
       "vert_u": "U: ",
       "vert_v": "V: ",
-      "bind_weights_header": "Bind Weights"
+      "bind_weights_header": "Bind Weights",
+      "hovering_tri_tooltip": "Drag   - Hold LMB\nRemove - RMB",
+      "hovering_line_tooltip": "Drag - Hold LMB"
     },
     "physics": {
       "heading": "Physics",

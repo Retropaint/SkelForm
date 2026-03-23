@@ -2257,6 +2257,8 @@ pub enum Events {
     EditVertexPos,
     EditVertexUV,
     SetHoveringVertId,
+    SetHoveringTri,
+    SetHoveringLine,
 }
 
 enum_string!(Events);
@@ -2370,6 +2372,8 @@ impl EventState {
     event_with_value!(set_scale_elasiticity, E::SetPosElasticity, elas, f32);
     event_with_value!(set_rot_bounce, E::SetRotBounce, bounce, f32);
     event_with_value!(set_hovering_id, E::SetHoveringVertId, vert_id, i32);
+    event_with_value!(set_hovering_tri, E::SetHoveringTri, value, i32);
+    event_with_value!(set_hovering_line, E::SetHoveringLine, value, i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -2599,6 +2603,8 @@ pub struct SelectionState {
     pub anim_frame: i32,
     pub vert_ids: Vec<usize>,
     pub hovering_vert_id: i32,
+    pub hovering_tri_dur: i32,
+    pub hovering_line_dur: i32,
 }
 
 impl SelectionState {
