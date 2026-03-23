@@ -934,7 +934,7 @@ pub fn selected_verts_inputs(
         }
 
         // weight binds for this vertex, if appropriate
-        ui.add_space(5.);
+        ui.add_space(10.);
         let mut has_binds = false;
         for bi in 0..bone.binds.len() {
             let vert_ids: Vec<usize> = bone.binds[bi].verts.iter().map(|v| v.id as usize).collect();
@@ -946,15 +946,15 @@ pub fn selected_verts_inputs(
 
         ui.label(shared_ui.loc("bone_panel.mesh_deformation.bind_weights_header"));
         for bi in 0..bone.binds.len() {
-            ui.horizontal(|ui| {
-                // is this vertex in this bind?
-                let bind_vert_idx = bone.binds[bi].verts.iter().position(|v| v.id == *id as i32);
-                if bind_vert_idx == None {
-                    return;
-                }
+            // is this vertex in this bind?
+            let bind_vert_idx = bone.binds[bi].verts.iter().position(|v| v.id == *id as i32);
+            if bind_vert_idx == None {
+                continue;
+            }
 
-                // bind weight slider
-                ui.label(format!("{}:", bi));
+            // bind weight slider
+            ui.horizontal(|ui| {
+                ui.label(format!("#{}:", bi));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let bind_vert = &bone.binds[bi].verts[bind_vert_idx.unwrap()];
                     let mut new_weight = bind_vert.weight;
@@ -965,8 +965,6 @@ pub fn selected_verts_inputs(
                 });
             });
         }
-
-        ui.add_space(5.);
     }
 
     // set the vertex being hovered, so it enlarges
