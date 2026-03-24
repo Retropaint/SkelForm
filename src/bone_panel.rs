@@ -165,6 +165,7 @@ pub fn draw(
                 $modifier,
                 Some(crate::ui::TextInputOptions {
                     size: Vec2::new(40., 20.),
+                    drag_modifier: 1.,
                     ..Default::default()
                 }),
             );
@@ -807,7 +808,7 @@ pub fn mesh_deformation(
     } else {
         for w in 0..bind.verts.len() {
             ui.horizontal(|ui| {
-                let str_label = bind.verts[w].id.to_string() + ":";
+                let str_label = format!("#{}:", bind.verts[w].id);
                 let cursor = egui::CursorIcon::Default;
                 if ui.label(str_label).on_hover_cursor(cursor).hovered() {
                     is_hovering = true;

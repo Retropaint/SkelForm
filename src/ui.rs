@@ -459,6 +459,8 @@ pub fn process_inputs(
         }
         if input.left_down {
             input.mouse_prev_left = input.mouse;
+        } else {
+            shared_ui.started_edit_dragging = false;
         }
         input.mouse_prev = input.mouse;
         if shared_ui.mobile {
@@ -467,6 +469,38 @@ pub fn process_inputs(
         if let Some(mouse) = i.pointer.latest_pos() {
             input.mouse = mouse.into();
             input.mouse *= shared_ui.scale;
+        }
+
+        shared_ui.edited_dragging = false;
+        if shared_ui.rename_id != "" && input.mouse_init != None && shared_ui.drag_modifier != 0. {
+            let diff = input.mouse_init.unwrap() - input.mouse;
+            let vel = input.mouse - input.mouse_prev;
+            if shared_ui.edit_value != None && vel.x.abs() > 0. {
+                match shared_ui.edit_value.as_ref().unwrap().parse::<f32>() {
+                    Ok(mut output) => {
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            output += vel.x;
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            output -= diff.x;
+                        }
+                        *shared_ui.edit_value.as_mut().unwrap() = output.to_string();
+
+                        // since save_edited_bone won't save on drag, this will be set to true on
+                        // the frame after save_edited_bone() has been called
+                        shared_ui.edited_dragging = shared_ui.started_edit_dragging;
+
+                        // save bone just before beginning the drag
+                        if !shared_ui.started_edit_dragging {
+                            events.save_edited_bone(selections.bone_idx);
+                            shared_ui.started_edit_dragging = true;
+                        }
+                    }
+                    _ => {}
+                };
+            }
         }
 
         // don't record prev mouse on first frame of touch as it
@@ -492,6 +526,15 @@ pub fn process_inputs(
         edit_mode.sel_time += i.time as f32 - edit_mode.time;
         edit_mode.time = i.time as f32;
     });
+
+    // de-focus input if it has dragging enabled.
+    // prevents dragging from persisting outside of the input
+    if input.left_pressed && shared_ui.drag_modifier != 0. {
+        shared_ui.drag_modifier = 0.;
+        context.memory_mut(|m| {
+            m.request_focus("".into());
+        });
+    }
 }
 
 pub fn kb_inputs(
@@ -1035,8 +1078,9 @@ impl EguiUi for egui::Ui {
             })
         }
 
+        let mod_value = (value * modifier).to_string();
         let (edited, mut str_value, input) =
-            self.text_input(id, shared_ui, (value * modifier).to_string(), options);
+            self.text_input(id.clone(), shared_ui, mod_value, options.clone());
         if edited {
             shared_ui.rename_id = "".to_string();
             shared_ui.last_rename_id = "".to_string();
@@ -1047,6 +1091,17 @@ impl EguiUi for egui::Ui {
             match str_value.parse::<f32>() {
                 Ok(output) => return (true, output / modifier, input),
                 Err(_) => return (false, value, input),
+            }
+        }
+
+        if shared_ui.rename_id == id {
+            shared_ui.drag_modifier = options.as_ref().unwrap().drag_modifier;
+            // save edit if dragging input
+            if shared_ui.edited_dragging && options.unwrap().drag_modifier != 0. {
+                match shared_ui.edit_value.as_ref().unwrap().parse::<f32>() {
+                    Ok(output) => return (true, output / modifier, input),
+                    Err(_) => return (false, value, input),
+                }
             }
         }
 
@@ -1784,12 +1839,13 @@ pub fn top_bar_button(
     response
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub struct TextInputOptions {
     pub size: Vec2,
     pub focus: bool,
     pub placeholder: String,
     pub default: String,
+    pub drag_modifier: f32, // 0 - disabled
 }
 
 impl Default for TextInputOptions {
@@ -1799,6 +1855,7 @@ impl Default for TextInputOptions {
             focus: false,
             placeholder: "".to_string(),
             default: "".to_string(),
+            drag_modifier: 0.,
         }
     }
 }

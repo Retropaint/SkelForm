@@ -666,6 +666,9 @@ pub struct Ui {
     pub lang_input: String,
     pub flash_armature_timer: Option<Instant>,
     pub prev_selected_bone_idx: usize,
+    pub edited_dragging: bool,
+    pub started_edit_dragging: bool,
+    pub drag_modifier: f32,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

@@ -322,6 +322,13 @@ impl ApplicationHandler for App {
                 let now = Instant::now();
                 *last_render_time = now;
 
+                // keep cursor in place, while dragging input
+                if self.shared.ui.edited_dragging {
+                    let mouse = self.shared.input.mouse_init.unwrap();
+                    let _ = window
+                        .set_cursor_position(winit::dpi::PhysicalPosition::new(mouse.x, mouse.y));
+                }
+
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     let undo = &mut self.shared.undo_states;

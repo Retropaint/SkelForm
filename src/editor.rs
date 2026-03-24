@@ -568,6 +568,12 @@ pub fn simple_event(
             *ui.saving.lock().unwrap() = Saving::Autosaving;
         }
         Events::SaveEditedBone => {
+            // don't save if values are being edited to dragging the input.
+            // dragging directly edits bones, so this event would be spammed
+            if ui.edited_dragging {
+                return;
+            }
+
             let bone = armature.bones[value as usize].clone();
             if ui.is_animating(&edit_mode, &selections) && !bone.locked {
                 let anim = armature.animations[selections.anim as usize].clone();
