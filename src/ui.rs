@@ -203,7 +203,7 @@ pub fn draw(
 
     let bone_panel_id = "Bone";
     let mut side_panel = egui::SidePanel::right(bone_panel_id)
-        .resizable(true)
+        .resizable(false)
         .default_width(max_size);
     if config.layout == UiLayout::Left {
         side_panel = egui::SidePanel::left(bone_panel_id)
