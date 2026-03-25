@@ -472,7 +472,23 @@ pub fn process_inputs(
         }
 
         shared_ui.edited_dragging = false;
-        if shared_ui.rename_id != "" && input.mouse_init != None && shared_ui.drag_modifier != 0. {
+
+        // disabled: no dragging on web for now, until cursor locking is figured out
+        let can_drag;
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            can_drag = true;
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            can_drag = false;
+        }
+
+        if can_drag
+            && shared_ui.rename_id != ""
+            && input.mouse_init != None
+            && shared_ui.drag_modifier != 0.
+        {
             let diff = input.mouse_init.unwrap() - input.mouse;
             let vel = input.mouse - input.mouse_prev;
             if shared_ui.edit_value != None && vel.x.abs() > 0. {
