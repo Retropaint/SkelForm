@@ -480,11 +480,11 @@ pub fn process_inputs(
                     Ok(mut output) => {
                         #[cfg(target_arch = "wasm32")]
                         {
-                            output += vel.x;
+                            output += vel.x * shared_ui.drag_modifier;
                         }
                         #[cfg(not(target_arch = "wasm32"))]
                         {
-                            output -= diff.x;
+                            output -= diff.x * shared_ui.drag_modifier;
                         }
                         *shared_ui.edit_value.as_mut().unwrap() = output.to_string();
 

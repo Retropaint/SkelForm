@@ -154,7 +154,7 @@ pub fn draw(
 
     // main macro to use for editable bone fields
     macro_rules! input {
-        ($float:expr, $id:expr, $element:expr, $modifier:expr, $ui:expr, $label:expr) => {
+        ($float:expr, $id:expr, $element:expr, $modifier:expr, $drag_mod: expr, $ui:expr, $label:expr) => {
             if $label != "" {
                 $ui.label($label);
             }
@@ -165,7 +165,7 @@ pub fn draw(
                 $modifier,
                 Some(crate::ui::TextInputOptions {
                     size: Vec2::new(40., 20.),
-                    drag_modifier: 1.,
+                    drag_modifier: $drag_mod,
                     ..Default::default()
                 }),
             );
@@ -196,16 +196,16 @@ pub fn draw(
             label!(&shared_ui.loc("bone_panel.position"), ui);
             ui.add_space(ui.available_width() - input_widths);
             let pos_x = AnimElement::PositionX;
-            input!(bone.pos.x, "pos_x", pos_x, 1., ui, "X");
+            input!(bone.pos.x, "pos_x", pos_x, 1., 1., ui, "X");
             let pos_y = AnimElement::PositionY;
-            input!(bone.pos.y, "pos_y", pos_y, 1., ui, "Y");
+            input!(bone.pos.y, "pos_y", pos_y, 1., 1., ui, "Y");
         });
 
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.scale"), ui);
             ui.add_space(ui.available_width() - input_widths - 5.);
-            input!(bone.scale.x, "scale_x", AnimElement::ScaleX, 1., ui, "W");
-            input!(bone.scale.y, "scale_y", AnimElement::ScaleY, 1., ui, "H");
+            input!(bone.scale.x, "scale_x", AnimElement::ScaleX, 1., 0.05, ui, "W");
+            input!(bone.scale.y, "scale_y", AnimElement::ScaleY, 1., 0.05, ui, "H");
         });
 
         ui.horizontal(|ui| {
@@ -213,7 +213,7 @@ pub fn draw(
             ui.add_space(ui.available_width() - 40.);
             let rot_el = AnimElement::Rotation;
             let deg_mod = 180. / std::f32::consts::PI;
-            input!(bone.rot, "rot", rot_el, deg_mod, ui, "");
+            input!(bone.rot, "rot", rot_el, deg_mod, 0.25, ui, "");
         });
     })
     .response
