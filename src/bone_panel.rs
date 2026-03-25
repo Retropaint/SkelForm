@@ -855,8 +855,13 @@ pub fn selected_verts_inputs(
     macro_rules! input {
         ($field:expr, $id:expr, $label:expr, $vert_id:expr, $event:ident, $is_x:expr, $ui:expr) => {
             let init_value = if $is_x { $field.x } else { $field.y };
+            let options = Some(crate::ui::TextInputOptions {
+                size: Vec2::new(40., 20.),
+                drag_modifier: 1.,
+                ..Default::default()
+            });
             let (edited, value, input) =
-                $ui.float_input($id.to_string(), shared_ui, init_value, 1., None);
+                $ui.float_input($id.to_string(), shared_ui, init_value, 1., options);
             if edited {
                 events.save_bone(selections.bone_idx);
                 let mut new = $field;
