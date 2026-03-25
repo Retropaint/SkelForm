@@ -158,17 +158,13 @@ pub fn draw(
             if $label != "" {
                 $ui.label($label);
             }
-            (edited, $float, _) = $ui.float_input(
-                $id.to_string(),
-                shared_ui,
-                $float,
-                $modifier,
-                Some(crate::ui::TextInputOptions {
-                    size: Vec2::new(40., 20.),
-                    drag_modifier: $drag_mod,
-                    ..Default::default()
-                }),
-            );
+            let options = Some(crate::ui::TextInputOptions {
+                size: Vec2::new(40., 20.),
+                drag_modifier: $drag_mod,
+                ..Default::default()
+            });
+            let id = $id.to_string();
+            (edited, $float, _) = $ui.float_input(id, shared_ui, $float, $modifier, options);
             check_input_edit!($float, $element, $ui, $label)
         };
     }
@@ -227,10 +223,8 @@ pub fn draw(
     ui.add_space(20.);
 
     // show 'IK root bone' button if this is a target bone
-    let is_target_of = armature
-        .bones
-        .iter()
-        .position(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
+    let bones = &mut armature.bones.iter();
+    let is_target_of = bones.position(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
     if is_target_of != None {
         let target_str = shared_ui.loc("bone_panel.target_bone");
         ui.label(target_str + &armature.bones[is_target_of.unwrap()].name + ".");

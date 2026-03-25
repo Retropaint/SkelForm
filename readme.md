@@ -18,8 +18,8 @@ Then, run `cargo run` in the terminal.
 
 Dependencies:
 
-- glib2-devel - required for `rfd` crate (file dialogs)
-- gtk3-devel - ditto above
+- glib2-dev - required for `rfd` crate (file dialogs)
+- gtk3-dev - ditto above
 
 Library names may be different across distributions.
 

@@ -290,13 +290,13 @@ pub fn render(
     if renderer.render_textures && selections.anim_frame != -1 && edit_mode.onion_layers {
         #[rustfmt::skip]
         draw_armature(
-            &prev_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass,
-            &renderer.prev_onion_buffer
+            &prev_arm, armature, edit_mode.showing_mesh, &sel, config,
+            queue, render_pass, &renderer.prev_onion_buffer
         );
         #[rustfmt::skip]
         draw_armature(
-            &next_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass,
-            &renderer.next_onion_buffer
+            &next_arm, armature, edit_mode.showing_mesh, &sel, config,
+            queue, render_pass, &renderer.next_onion_buffer
         );
     }
 
