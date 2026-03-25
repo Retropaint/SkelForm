@@ -204,8 +204,9 @@ pub fn draw(
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.scale"), ui);
             ui.add_space(ui.available_width() - input_widths - 5.);
-            input!(bone.scale.x, "scale_x", AnimElement::ScaleX, 1., 0.05, ui, "W");
-            input!(bone.scale.y, "scale_y", AnimElement::ScaleY, 1., 0.05, ui, "H");
+            type AE = AnimElement;
+            input!(bone.scale.x, "scale_x", AE::ScaleX, 1., 0.05, ui, "W");
+            input!(bone.scale.y, "scale_y", AE::ScaleY, 1., 0.05, ui, "H");
         });
 
         ui.horizontal(|ui| {
@@ -618,18 +619,28 @@ pub fn mesh_deformation(
         return false;
     }
 
-    let str_edit = &shared_ui.loc("bone_panel.mesh_deformation.edit").clone();
-    let str_finish_edit = &shared_ui
-        .loc("bone_panel.mesh_deformation.finish_edit")
-        .clone();
-    let mut mesh_label = str_edit;
-    if edit_mode.showing_mesh {
-        mesh_label = str_finish_edit;
-    }
-
     ui.horizontal(|ui| {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.skf_button(mesh_label).clicked() {
+            // "edit vertices" / "finish editing" label
+            let str_edit = &shared_ui.loc("bone_panel.mesh_deformation.edit").clone();
+            let str_finish_edit = &shared_ui
+                .loc("bone_panel.mesh_deformation.finish_edit")
+                .clone();
+            let mut mesh_label = str_edit;
+            if edit_mode.showing_mesh {
+                mesh_label = str_finish_edit;
+            }
+
+            // formatted label with `Edit Vertices [toggle_key]`
+            let label = mesh_label;
+            let mut str = egui::text::LayoutJob::default();
+            ui::job_text(&format!("{}  ", label), None, &mut str);
+            let mut col = config.colors.text;
+            col -= Color::new(50, 50, 50, 0);
+            let key = config.keys.toggle_edit_vertices.display();
+            ui::job_text(&key, Some(col.into()), &mut str);
+
+            if ui.skf_button(str).clicked() {
                 events.toggle_showing_mesh(if edit_mode.showing_mesh { 0 } else { 1 });
             }
         });
