@@ -272,7 +272,7 @@ impl ApplicationHandler for App {
                         .to_string()
                         .to_lowercase();
 
-                    if ext.contains("skf") {
+                    if ext.contains("skf") || ext.contains("psd") {
                         // load .skf or .skfe file
                         *self.shared.ui.file_path.lock().unwrap() = vec![_path_buf];
                         *self.shared.ui.file_type.lock().unwrap() = 2;

@@ -617,7 +617,7 @@ pub fn read_import(
         "psd" => {
             #[cfg(not(target_arch = "wasm32"))]
             {
-                let file = std::fs::read(filename).unwrap();
+                let file = std::fs::read(filepath).unwrap();
                 read_psd(file, shared, queue, device, bgl, context);
             }
             #[cfg(target_arch = "wasm32")]
