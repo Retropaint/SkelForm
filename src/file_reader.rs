@@ -241,7 +241,7 @@ pub fn read_psd(
         active: true,
     });
 
-    let mut bone_psd_id: std::collections::HashMap<i32, u32> = Default::default();
+    let mut bone_psd_id: std::collections::HashMap<u32, i32> = Default::default();
     let mut start_eff_ids: Vec<i32> = vec![];
     let mut ik_family_ids: Vec<i32> = vec![];
     let dimensions = Vec2::new(psd.width() as f32, psd.height() as f32);
@@ -352,7 +352,7 @@ pub fn read_psd(
             }
 
             pivot_id = shared.armature.new_bone(-1).0.id;
-            bone_psd_id.insert(pivot_id, group_ids[g] as u32);
+            bone_psd_id.insert(group_ids[g] as u32, pivot_id);
             let pivot_bone = shared.armature.find_bone_mut(pivot_id).unwrap();
             pivot_pos = Vec2::new(layer.layer_left() as f32, -layer.layer_top() as f32);
             pivot_bone.parent_id = 0;
@@ -365,7 +365,7 @@ pub fn read_psd(
         // create texture bone
         let new_bone_id = shared.armature.new_bone(-1).0.id;
         if pivot_id == -1 {
-            bone_psd_id.insert(new_bone_id, group_ids[g] as u32);
+            bone_psd_id.insert(group_ids[g] as u32, new_bone_id);
         }
         let tex_name = shared.armature.styles[0].textures[tex_idx].name.clone();
         let bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
@@ -435,31 +435,23 @@ pub fn read_psd(
             new_bone_id
         };
 
+        // add this bone to parent, if appropriate
         if group.parent_id() == None {
-            continue;
-        }
+            if let Some(p_id) = bone_psd_id.get(&group.parent_id().unwrap()) {
+                let parent_id = *p_id as i32;
+                shared.armature.find_bone_mut(bone_id).unwrap().parent_id = parent_id;
+                shared.armature.find_bone_mut(parent_id).unwrap().folded = true;
 
-        // find parent by group id
-        for b in 0..shared.armature.bones.len() {
-            let id = shared.armature.bones[b].id;
-            let psd_id = bone_psd_id.get(&id);
-            if psd_id == None || group.parent_id().unwrap() != *psd_id.unwrap() {
-                continue;
-            }
-
-            shared.armature.find_bone_mut(bone_id).unwrap().parent_id = shared.armature.bones[b].id;
-            shared.armature.bones[b].folded = true;
-
-            // since child pos is relative to parent, offset against it
-            let bones = &shared.armature.bones;
-            let mut nb = bones.iter().find(|bo| bo.id == bone_id).unwrap().clone();
-            while nb.parent_id != -1 {
+                // since child pos is relative to parent, offset against it
                 let bones = &shared.armature.bones;
-                let id = nb.parent_id;
-                nb = bones.iter().find(|bo| bo.id == id).unwrap().clone();
-                shared.armature.find_bone_mut(bone_id).unwrap().pos -= nb.pos;
+                let mut nb = bones.iter().find(|bo| bo.id == bone_id).unwrap().clone();
+                while nb.parent_id != -1 {
+                    let bones = &shared.armature.bones;
+                    let id = nb.parent_id;
+                    nb = bones.iter().find(|bo| bo.id == id).unwrap().clone();
+                    shared.armature.find_bone_mut(bone_id).unwrap().pos -= nb.pos;
+                }
             }
-            break;
         }
     }
 
