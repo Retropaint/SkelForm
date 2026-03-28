@@ -323,17 +323,11 @@ pub fn read_psd(
                 }
             }
 
-            add_texture(
-                image::DynamicImage::ImageRgba8(image.0.clone()),
-                style_idx,
-                Vec2::new(dims.x, dims.y),
-                utils::without_unicode(tex_name),
-                &mut shared.armature,
-                queue,
-                device,
-                bind_group_layout,
-                ctx,
-            );
+            let img = image::DynamicImage::ImageRgba8(image.0.clone());
+            let tex_name = utils::without_unicode(tex_name);
+            let arm = &mut shared.armature;
+            let bgl = bind_group_layout;
+            add_texture(img, style_idx, dims, tex_name, arm, queue, device, bgl, ctx);
 
             tex_idx = shared.armature.styles[0].textures.len() - 1;
         }

@@ -525,25 +525,47 @@ pub fn simple_event(
             let mut insert_idx = usize::MAX;
             let mut id_refs: HashMap<i32, i32> = HashMap::new();
 
+            let mut highest_ik_family_id = 0;
+            for bone in &armature.bones {
+                highest_ik_family_id = bone.ik_family_id.max(highest_ik_family_id);
+            }
+
             for b in 0..copy_buffer.bones.len() {
                 let bone = &mut copy_buffer.bones[b];
 
                 highest_id += 1;
                 let new_id = highest_id;
 
+                // put IK bones in a new family index
                 id_refs.insert(bone.id, new_id);
                 bone.id = highest_id;
+                if bone.ik_family_id != -1 {
+                    bone.ik_family_id += highest_ik_family_id + 1;
+                }
 
-                let val = value as usize;
+                // set selected bone as the parent of pasted bone
+                let pasted_idx = value as usize;
                 if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
                     bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
-                } else if val != usize::MAX {
-                    insert_idx = val + 1;
-                    bone.parent_id = armature.bones[val].id;
+                } else if pasted_idx != usize::MAX {
+                    insert_idx = pasted_idx + 1;
+                    bone.parent_id = armature.bones[pasted_idx].id;
                 } else {
                     bone.parent_id = -1;
                 }
             }
+
+            // re-set binds that are pointing to child bones
+            for b in 0..copy_buffer.bones.len() {
+                let bone = &mut copy_buffer.bones[b];
+                for bind in &mut bone.binds {
+                    if let Some(new_id) = id_refs.get(&bind.bone_id) {
+                        bind.bone_id = *new_id;
+                    }
+                }
+            }
+
+            // insert pasted bones on proper position of the bone array
             if insert_idx == usize::MAX {
                 armature.bones.append(&mut copy_buffer.bones);
             } else {
