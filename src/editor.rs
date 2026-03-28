@@ -474,11 +474,7 @@ pub fn simple_event(
 
                 // remove this bone from binds
                 for bone in &mut armature.bones {
-                    for b in 0..bone.binds.len() {
-                        if bone.binds[b].bone_id == id {
-                            bone.binds.remove(b);
-                        }
-                    }
+                    bone.binds.retain(|bind| bind.bone_id != id);
                 }
 
                 // IK bones that target this are now -1
@@ -489,8 +485,10 @@ pub fn simple_event(
                     bone.ik_target_id = -1;
                 }
 
-                if selections.bone_idx == value as usize {
+                // de-select bone(s)
+                if selections.bone_idx == value as usize || selections.bone_ids.len() > 1 {
                     selections.bone_idx = usize::MAX;
+                    selections.bone_ids = vec![];
                 }
             }
         }
