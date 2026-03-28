@@ -987,7 +987,15 @@ pub fn construct_verts(bones: &mut Vec<Bone>) {
             if b_id == -1 {
                 continue;
             }
-            let bind_bone = bones.iter().find(|bone| bone.id == b_id).unwrap().clone();
+
+            // delete bind if its bind bone doesn't exist
+            let bind_bone_raw = bones.iter().find(|bone| bone.id == b_id);
+            if bind_bone_raw == None {
+                bones[b].binds.remove(bi);
+                break;
+            }
+
+            let bind_bone = bind_bone_raw.unwrap().clone();
             let bind = bones[b].binds[bi].clone();
             for v_id in 0..bind.verts.len() {
                 let id = bind.verts[v_id].id as u32;
