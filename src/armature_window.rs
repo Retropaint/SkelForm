@@ -466,7 +466,8 @@ pub fn draw_hierarchy(
                                     let desc = shared_ui
                                         .loc("armature_panel.icons.ik_target")
                                         .replace("$family_id", &family_id);
-                                    let inc = 20 * is_target.unwrap().ik_family_id as u8;
+                                    let inc = (20 as u8)
+                                        .saturating_mul(is_target.unwrap().ik_family_id as u8);
                                     let mut color = config.colors.ik_target;
                                     color += Color::new(0, inc, inc, 0);
                                     let id = format!("⌖{}", family_id);
