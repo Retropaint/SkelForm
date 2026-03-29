@@ -182,7 +182,6 @@ pub fn iterate_events(
     } else if event == Events::ToggleBoneFolded {
         let idx = events.values[0] as usize;
 
-        undo_states.new_undo_bone(&armature.bones[idx]);
         armature.bones[idx].folded = events.values[1] == 1.;
 
         events.events.remove(0);
