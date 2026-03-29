@@ -1,6 +1,5 @@
 //! Isolated set of helper functions.
 
-
 use crate::*;
 
 #[cfg(target_arch = "wasm32")]

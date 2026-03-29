@@ -142,9 +142,14 @@ pub fn modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &Config) {
         "modal".to_string(),
         &config,
         |ui| {
+            let psd_button = headline.contains("$psd_page");
             let mut cache = egui_commonmark::CommonMarkCache::default();
-            let str = utils::markdown(headline);
+            let str = utils::markdown(headline).replace("$psd_page", "");
             egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
+            ui.add_space(5.);
+            if psd_button && ui.clickable_label("PSD Rigging").clicked() {
+                utils::open_docs(false, "psd.html");
+            };
         },
         |ui| {
             if shared_ui.forced_modal || !ui.button("OK").clicked() {

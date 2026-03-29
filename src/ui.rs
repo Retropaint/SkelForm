@@ -88,8 +88,10 @@ pub fn draw(
         while full_img.width() > 0 && x < full_img.width() - 1 {
             let img = full_img.crop_imm(x, 0, 18, 18).into_rgba8();
             x += anim_icon_size;
-            let color_image =
-                egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_flat_samples().as_slice());
+            let color_image = egui::ColorImage::from_rgba_unmultiplied(
+                [img.width() as usize, img.height() as usize],
+                img.as_flat_samples().as_slice(),
+            );
             let name = format!("anim_icon_{}", x.to_string());
             let tex = context.load_texture(name, color_image, Default::default());
             shared_ui.anim.icon_images.push(tex);
@@ -110,7 +112,9 @@ pub fn draw(
         modal::modal(context, shared_ui, &config);
     }
     if shared_ui.styles_modal {
-        styles_modal::draw(context, shared_ui, config, camera, armature, selections, events);
+        styles_modal::draw(
+            context, shared_ui, config, camera, armature, selections, events,
+        );
     }
     if shared_ui.settings_modal {
         settings_modal::draw(shared_ui, config, camera, events, context);
@@ -122,7 +126,9 @@ pub fn draw(
         modal::donating_modal(context, shared_ui, &config);
     }
     if shared_ui.atlas_modal {
-        atlas_modal::draw(context, config, selections, armature, shared_ui, input, events);
+        atlas_modal::draw(
+            context, config, selections, armature, shared_ui, input, events,
+        );
     }
     if shared_ui.export_modal {
         export_modal::draw(context, shared_ui, &edit_mode, config, events, armature);
@@ -136,7 +142,9 @@ pub fn draw(
         let url = "https://skelform.org/download_links.json";
         let request = ureq::get(url).header("Example-Header", "header value");
         let dl_links: serde_json::Value = match request.call() {
-            Ok(mut data) => serde_json::from_str(&data.body_mut().read_to_string().unwrap()).unwrap(),
+            Ok(mut data) => {
+                serde_json::from_str(&data.body_mut().read_to_string().unwrap()).unwrap()
+            }
             Err(_) => serde_json::Value::default(),
         };
 
@@ -196,9 +204,13 @@ pub fn draw(
     }
 
     let bone_panel_id = "Bone";
-    let mut side_panel = egui::SidePanel::right(bone_panel_id).resizable(false).default_width(max_size);
+    let mut side_panel = egui::SidePanel::right(bone_panel_id)
+        .resizable(false)
+        .default_width(max_size);
     if config.layout == UiLayout::Left {
-        side_panel = egui::SidePanel::left(bone_panel_id).resizable(true).default_width(max_size);
+        side_panel = egui::SidePanel::left(bone_panel_id)
+            .resizable(true)
+            .default_width(max_size);
     }
     draw_resizable_panel(
         bone_panel_id,
@@ -247,7 +259,8 @@ pub fn draw(
             shared_ui.edit_bar.pos = Vec2::new(armature_panel.right(), top_panel.bottom());
 
             shared_ui.render_bar.pos.x = armature_panel.right() + 7.;
-            shared_ui.camera_bar.pos.x = bone_panel.left() - shared_ui.camera_bar.scale.x - ((6. * 3.3) as f32).ceil();
+            shared_ui.camera_bar.pos.x =
+                bone_panel.left() - shared_ui.camera_bar.scale.x - ((6. * 3.3) as f32).ceil();
             if keyframe_panel != None && edit_mode.anim_open {
                 shared_ui.render_bar.pos.y = keyframe_panel.unwrap().top();
                 shared_ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
@@ -284,7 +297,8 @@ pub fn draw(
             shared_ui.anim_bar.pos.y = top_panel.bottom();
 
             shared_ui.render_bar.pos.x = bone_panel.right() + 7.;
-            shared_ui.camera_bar.pos.x = context.content_rect().right() - shared_ui.camera_bar.scale.x - 15.;
+            shared_ui.camera_bar.pos.x =
+                context.content_rect().right() - shared_ui.camera_bar.scale.x - 15.;
             if keyframe_panel != None && edit_mode.anim_open {
                 shared_ui.render_bar.pos.y = keyframe_panel.unwrap().top();
                 shared_ui.camera_bar.pos.y = keyframe_panel.unwrap().top();
@@ -298,7 +312,9 @@ pub fn draw(
     }
 
     if selections.bone_idx != usize::MAX {
-        edit_mode_bar(context, armature, selections, edit_mode, events, shared_ui, config);
+        edit_mode_bar(
+            context, armature, selections, edit_mode, events, shared_ui, config,
+        );
     }
 
     if armature.bones.len() > 0 {
@@ -425,7 +441,9 @@ pub fn process_inputs(
         input.holding_mod = i.modifiers.command;
         input.holding_shift = i.modifiers.shift;
         if shared_ui.rename_id == "" {
-            kb_inputs(i, shared_ui, events, config, selections, edit_mode, armature, camera);
+            kb_inputs(
+                i, shared_ui, events, config, selections, edit_mode, armature, camera,
+            );
         }
         shared_ui.last_pressed = i.keys_down.iter().last().copied();
 
@@ -467,7 +485,11 @@ pub fn process_inputs(
             can_drag = false;
         }
 
-        if can_drag && shared_ui.rename_id != "" && input.mouse_init != None && shared_ui.drag_modifier != 0. {
+        if can_drag
+            && shared_ui.rename_id != ""
+            && input.mouse_init != None
+            && shared_ui.drag_modifier != 0.
+        {
             let diff = input.mouse_init.unwrap() - input.mouse;
             let vel = input.mouse - input.mouse_prev;
             if shared_ui.edit_value != None && vel.x.abs() > 0. {
@@ -716,7 +738,11 @@ pub fn kb_inputs(
     }
 }
 
-pub fn mouse_button_as_key(input: &mut egui::InputState, button: egui::PointerButton, fake_key: egui::Key) {
+pub fn mouse_button_as_key(
+    input: &mut egui::InputState,
+    button: egui::PointerButton,
+    fake_key: egui::Key,
+) {
     if !input.pointer.button_down(button) {
         input.keys_down.remove(&fake_key);
         return;
@@ -871,9 +897,16 @@ impl EguiUi for egui::Ui {
             .on_hover_cursor(egui::CursorIcon::PointingHand)
     }
 
-    fn sized_skf_button(&mut self, size: impl Into<egui::Vec2>, text: impl Into<egui::WidgetText>) -> egui::Response {
-        self.add_sized(size, egui::Button::new(text).corner_radius(egui::CornerRadius::ZERO))
-            .on_hover_cursor(egui::CursorIcon::PointingHand)
+    fn sized_skf_button(
+        &mut self,
+        size: impl Into<egui::Vec2>,
+        text: impl Into<egui::WidgetText>,
+    ) -> egui::Response {
+        self.add_sized(
+            size,
+            egui::Button::new(text).corner_radius(egui::CornerRadius::ZERO),
+        )
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
     }
 
     fn gradient(&mut self, rect: egui::Rect, top: Color32, bottom: Color32) {
@@ -892,7 +925,9 @@ impl EguiUi for egui::Ui {
 
     fn clickable_label(&mut self, text: impl Into<egui::WidgetText>) -> egui::Response {
         let hand = egui::CursorIcon::PointingHand;
-        let label = self.add(egui::Button::selectable(false, text)).on_hover_cursor(hand);
+        let label = self
+            .add(egui::Button::selectable(false, text))
+            .on_hover_cursor(hand);
 
         if label.contains_pointer() || label.has_focus() {
             return label.highlight();
@@ -901,7 +936,11 @@ impl EguiUi for egui::Ui {
         label
     }
 
-    fn context_button(&mut self, text: impl Into<egui::WidgetText>, config: &Config) -> egui::Response {
+    fn context_button(
+        &mut self,
+        text: impl Into<egui::WidgetText>,
+        config: &Config,
+    ) -> egui::Response {
         let button = self
             .allocate_ui([0., 0.].into(), |ui| {
                 ui.set_width(70.);
@@ -947,7 +986,8 @@ impl EguiUi for egui::Ui {
         // if the input was out of focus due to selecting another, save the value
         if shared_ui.last_rename_id != shared_ui.rename_id && shared_ui.last_rename_id == id {
             let singleline =
-                egui::TextEdit::singleline(shared_ui.last_edit_value.as_mut().unwrap()).hint_text(options.as_ref().unwrap().placeholder.clone());
+                egui::TextEdit::singleline(shared_ui.last_edit_value.as_mut().unwrap())
+                    .hint_text(options.as_ref().unwrap().placeholder.clone());
             input = self.add_sized(options.as_ref().unwrap().size, singleline);
             shared_ui.last_rename_id = "".to_string();
             return (true, shared_ui.last_edit_value.clone().unwrap(), input);
@@ -960,7 +1000,8 @@ impl EguiUi for egui::Ui {
         if shared_ui.rename_id != id {
             input = self.add_sized(
                 options.as_ref().unwrap().size,
-                egui::TextEdit::singleline(&mut value).hint_text(options.as_ref().unwrap().placeholder.clone()),
+                egui::TextEdit::singleline(&mut value)
+                    .hint_text(options.as_ref().unwrap().placeholder.clone()),
             );
             // extract value as a string and store it with edit_value
             if input.has_focus() {
@@ -971,8 +1012,8 @@ impl EguiUi for egui::Ui {
                 }
             }
         } else {
-            let singleline =
-                egui::TextEdit::singleline(shared_ui.edit_value.as_mut().unwrap()).hint_text(options.as_ref().unwrap().placeholder.clone());
+            let singleline = egui::TextEdit::singleline(shared_ui.edit_value.as_mut().unwrap())
+                .hint_text(options.as_ref().unwrap().placeholder.clone());
             input = self.add_sized(options.as_ref().unwrap().size, singleline);
 
             // save this as the last edited input, so its value can be saved if focus is lost
@@ -1048,7 +1089,8 @@ impl EguiUi for egui::Ui {
         }
 
         let mod_value = (value * modifier).to_string();
-        let (edited, mut str_value, input) = self.text_input(id.clone(), shared_ui, mod_value, options.clone());
+        let (edited, mut str_value, input) =
+            self.text_input(id.clone(), shared_ui, mod_value, options.clone());
         if edited {
             shared_ui.rename_id = "".to_string();
             shared_ui.last_rename_id = "".to_string();
@@ -1093,7 +1135,14 @@ impl EguiUi for egui::Ui {
         };
     }
 
-    fn context_delete(&mut self, shared_ui: &mut crate::Ui, config: &Config, events: &mut EventState, loc_code: &str, polar_id: PolarId) {
+    fn context_delete(
+        &mut self,
+        shared_ui: &mut crate::Ui,
+        config: &Config,
+        events: &mut EventState,
+        loc_code: &str,
+        polar_id: PolarId,
+    ) {
         let str = shared_ui.loc("delete");
         if self.context_button(str, config).clicked() {
             let str_del = &shared_ui.loc(&format!("polar.{}", loc_code)).clone();
@@ -1105,7 +1154,12 @@ impl EguiUi for egui::Ui {
     }
 }
 
-pub fn create_ui_texture(bytes: Vec<u8>, has_alpha: bool, ctx: &Context, name: &str) -> Option<egui::TextureHandle> {
+pub fn create_ui_texture(
+    bytes: Vec<u8>,
+    has_alpha: bool,
+    ctx: &Context,
+    name: &str,
+) -> Option<egui::TextureHandle> {
     let thumb_img;
     if let Ok(data) = image::load_from_memory(&bytes) {
         thumb_img = data;
@@ -1145,7 +1199,8 @@ fn menu_file_button(
     #[allow(unused_variables)] camera: &Camera,
 ) {
     let mut offset = 0.;
-    let title = egui::RichText::new(&shared_ui.loc("top_bar.file.heading")).color(config.colors.text);
+    let title =
+        egui::RichText::new(&shared_ui.loc("top_bar.file.heading")).color(config.colors.text);
     ui.menu_button(title, |ui| {
         ui.set_width(125.);
 
@@ -1166,7 +1221,12 @@ fn menu_file_button(
         let str_save = &shared_ui.loc("top_bar.file.save");
         if top_bar_button!(str_save, Some(&config.keys.save)).clicked() {
             #[cfg(target_arch = "wasm32")]
-            utils::save_web(armature, camera, edit_mode, shared_ui.saving.lock().unwrap().clone());
+            utils::save_web(
+                armature,
+                camera,
+                edit_mode,
+                shared_ui.saving.lock().unwrap().clone(),
+            );
             #[cfg(not(target_arch = "wasm32"))]
             utils::save_native(shared_ui);
             ui.close();
@@ -1194,7 +1254,10 @@ fn menu_file_button(
         if false && top_bar_button!("Export Video", None).clicked() {
             // check if ffmpeg exists and complain if it doesn't
             let mut ffmpeg = false;
-            match std::process::Command::new("ffmpeg").arg("-version").output() {
+            match std::process::Command::new("ffmpeg")
+                .arg("-version")
+                .output()
+            {
                 Ok(output) => {
                     if output.status.success() {
                         ffmpeg = true;
@@ -1237,7 +1300,12 @@ fn menu_file_button(
     });
 }
 
-fn menu_view_button(ui: &mut egui::Ui, config: &Config, shared_ui: &crate::Ui, events: &mut EventState) {
+fn menu_view_button(
+    ui: &mut egui::Ui,
+    config: &Config,
+    shared_ui: &crate::Ui,
+    events: &mut EventState,
+) {
     let mut offset = 0.;
 
     let str_view = &shared_ui.loc("top_bar.view.heading");
@@ -1276,20 +1344,23 @@ fn menu_edit_button(
         ui.set_width(90.);
         let str_undo = &shared_ui.loc("top_bar.edit.undo");
         let key_undo = Some(&config.keys.undo);
+        #[rustfmt::skip]
         if top_bar_button(ui, str_undo, key_undo, &mut offset, &config, true, &shared_ui).clicked() {
             events.undo();
             ui.close();
-        }
+        };
         let str_redo = &shared_ui.loc("top_bar.edit.redo");
         let key_redo = Some(&config.keys.redo);
+        #[rustfmt::skip]
         if top_bar_button(ui, str_redo, key_redo, &mut offset, &config, true, &shared_ui).clicked() {
             events.redo();
             ui.close();
-        }
+        };
 
         let str_copy = &shared_ui.loc("top_bar.edit.copy");
         let key_copy = Some(&config.keys.copy);
         let can_copy = selections.anim_frame != -1 || selections.bone_idx != usize::MAX;
+        #[rustfmt::skip]
         let button = top_bar_button(ui, str_copy, key_copy, &mut offset, &config, can_copy, &shared_ui);
         if can_copy && button.clicked() {
             if selections.anim_frame != -1 {
@@ -1303,6 +1374,7 @@ fn menu_edit_button(
         let can_paste = copy_buffer.bones.len() > 0 || copy_buffer.keyframes.len() > 0;
         let str_paste = &shared_ui.loc("top_bar.edit.paste");
         let key_paste = Some(&config.keys.paste);
+        #[rustfmt::skip]
         let button = top_bar_button(ui, str_paste, key_paste, &mut offset, &config, can_paste, &shared_ui);
         if can_paste && button.clicked() {
             if selections.anim_frame != -1 {
@@ -1327,7 +1399,9 @@ fn edit_mode_bar(
     let mut has_ik = true;
     let sel = selections.clone();
     if let Some(bone) = armature.sel_bone(&sel) {
-        has_ik = bone.ik_family_id != -1 && !bone.ik_disabled && armature.bone_eff(bone.id) != JointEffector::Start;
+        has_ik = bone.ik_family_id != -1
+            && !bone.ik_disabled
+            && armature.bone_eff(bone.id) != JointEffector::Start;
     }
 
     // edit mode window
@@ -1400,24 +1474,44 @@ fn edit_mode_bar(
         }
 
         if edit_mode.is_moving {
-            edit_feature!("Snap X/Y", config.keys.edit_snap, edit_mode.holding_edit_snap);
+            edit_feature!(
+                "Snap X/Y",
+                config.keys.edit_snap,
+                edit_mode.holding_edit_snap
+            );
         } else if edit_mode.is_rotating {
             let str = format!("Snap to {}°", config.rot_snap_step);
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
         } else if edit_mode.is_scaling {
-            edit_feature!("Snap X/Y", config.keys.edit_snap, edit_mode.holding_edit_snap);
-            edit_feature!("Maintain aspect ratio", config.keys.edit_modifier, edit_mode.holding_edit_mod);
+            edit_feature!(
+                "Snap X/Y",
+                config.keys.edit_snap,
+                edit_mode.holding_edit_snap
+            );
+            edit_feature!(
+                "Maintain aspect ratio",
+                config.keys.edit_modifier,
+                edit_mode.holding_edit_mod
+            );
         }
     });
 }
 
-fn animate_bar(egui_ctx: &Context, shared_ui: &mut crate::Ui, edit_mode: &EditMode, events: &mut EventState) {
+fn animate_bar(
+    egui_ctx: &Context,
+    shared_ui: &mut crate::Ui,
+    edit_mode: &EditMode,
+    events: &mut EventState,
+) {
     let window = egui::Window::new("Animating")
         .resizable(false)
         .title_bar(false)
         .max_width(100.)
         .movable(false)
-        .current_pos(egui::Pos2::new(shared_ui.anim_bar.pos.x, shared_ui.anim_bar.pos.y));
+        .current_pos(egui::Pos2::new(
+            shared_ui.anim_bar.pos.x,
+            shared_ui.anim_bar.pos.y,
+        ));
     window.show(egui_ctx, |ui| {
         ui.horizontal(|ui| {
             let str_armature = &shared_ui.loc("armature_panel.heading");
@@ -1434,7 +1528,13 @@ fn animate_bar(egui_ctx: &Context, shared_ui: &mut crate::Ui, edit_mode: &EditMo
     });
 }
 
-fn render_bar(egui_ctx: &Context, config: &Config, shared_ui: &mut crate::Ui, events: &mut EventState, armature: &Armature) {
+fn render_bar(
+    egui_ctx: &Context,
+    config: &Config,
+    shared_ui: &mut crate::Ui,
+    events: &mut EventState,
+    armature: &Armature,
+) {
     // check which toggles are eligible, and return if none are
     let mut eligibles = vec![false, false, false, false, false];
     for bone in &armature.bones {
@@ -1469,7 +1569,10 @@ fn render_bar(egui_ctx: &Context, config: &Config, shared_ui: &mut crate::Ui, ev
             },
             ..Default::default()
         })
-        .current_pos(egui::Pos2::new(shared_ui.render_bar.pos.x, shared_ui.render_bar.pos.y));
+        .current_pos(egui::Pos2::new(
+            shared_ui.render_bar.pos.x,
+            shared_ui.render_bar.pos.y,
+        ));
     window.show(egui_ctx, |ui| {
         let mut hovered = false;
         let mut idx = -1;
@@ -1549,7 +1652,13 @@ fn render_bar(egui_ctx: &Context, config: &Config, shared_ui: &mut crate::Ui, ev
     });
 }
 
-fn camera_bar(egui_ctx: &Context, config: &Config, shared_ui: &mut crate::Ui, camera: &Camera, events: &mut EventState) {
+fn camera_bar(
+    egui_ctx: &Context,
+    config: &Config,
+    shared_ui: &mut crate::Ui,
+    camera: &Camera,
+    events: &mut EventState,
+) {
     let margin = 6.;
     let mut hovered = false;
     let window = egui::Window::new("Camera")
@@ -1567,7 +1676,10 @@ fn camera_bar(egui_ctx: &Context, config: &Config, shared_ui: &mut crate::Ui, ca
             },
             ..Default::default()
         })
-        .current_pos(egui::Pos2::new(shared_ui.camera_bar.pos.x, shared_ui.camera_bar.pos.y));
+        .current_pos(egui::Pos2::new(
+            shared_ui.camera_bar.pos.x,
+            shared_ui.camera_bar.pos.y,
+        ));
     window.show(egui_ctx, |ui| {
         // invisible focus element, for expansion via Tab
         let focus_id = ui.make_persistent_id("camera_bar_focus");
@@ -1595,7 +1707,8 @@ fn camera_bar(egui_ctx: &Context, config: &Config, shared_ui: &mut crate::Ui, ca
                             ui.label($label).on_hover_text(&shared_ui.loc($tip));
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                 let id = $id.to_string();
-                                let (edited, value, input) = ui.float_input(id, shared_ui, $float.round(), 1., None);
+                                let (edited, value, input) =
+                                    ui.float_input(id, shared_ui, $float.round(), 1., None);
                                 if input.has_focus() {
                                     hovered = true;
                                     shared_ui.camera_bar.expanded = true;
@@ -1679,7 +1792,11 @@ pub fn default_styling(context: &Context, config: &Config) {
     context.set_visuals(visuals);
 }
 
-pub fn selection_button(text: impl Into<egui::WidgetText>, selected: bool, ui: &mut egui::Ui) -> egui::Response {
+pub fn selection_button(
+    text: impl Into<egui::WidgetText>,
+    selected: bool,
+    ui: &mut egui::Ui,
+) -> egui::Response {
     let mut cursor = egui::CursorIcon::PointingHand;
     let mut bg_col = ui.visuals().widgets.active.weak_bg_fill;
 
@@ -1688,7 +1805,9 @@ pub fn selection_button(text: impl Into<egui::WidgetText>, selected: bool, ui: &
         bg_col = bg_col + egui::Color32::from_rgb(20, 20, 20);
     }
 
-    let button = egui::Button::new(text).fill(bg_col).corner_radius(egui::CornerRadius::ZERO);
+    let button = egui::Button::new(text)
+        .fill(bg_col)
+        .corner_radius(egui::CornerRadius::ZERO);
 
     ui.add(button).on_hover_cursor(cursor)
 }
@@ -1727,19 +1846,31 @@ pub fn top_bar_button(
     painter.rect_filled(rect, egui::CornerRadius::ZERO, col);
 
     // text
-    let pos = egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() + *offset) + egui::vec2(5., 2.);
+    let pos =
+        egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() + *offset) + egui::vec2(5., 2.);
     let mut text_col = config.colors.text;
     if !enabled {
         text_col -= Color::new(60, 60, 60, 0);
     }
     let font = egui::FontId::new(13., egui::FontFamily::Proportional);
-    painter.text(pos, egui::Align2::LEFT_TOP, text, font.clone(), text_col.into());
+    painter.text(
+        pos,
+        egui::Align2::LEFT_TOP,
+        text,
+        font.clone(),
+        text_col.into(),
+    );
 
-    let key_str = if key != None { key.unwrap().display() } else { "".to_string() };
+    let key_str = if key != None {
+        key.unwrap().display()
+    } else {
+        "".to_string()
+    };
 
     // kb key text
     if !shared_ui.mobile {
-        let pos = egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset) + egui::vec2(-5., 2.5);
+        let pos = egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset)
+            + egui::vec2(-5., 2.5);
         let align = egui::Align2::RIGHT_TOP;
         painter.text(pos, align, key_str, font.clone(), egui::Color32::DARK_GRAY);
     }
@@ -1782,7 +1913,13 @@ fn open_mobile_input(_value: String) {
 
 // Wrapper for resizable panels.
 // Handles toggling on_ui if resizing the panel itself.
-pub fn draw_resizable_panel<T>(id: &str, panel: egui::InnerResponse<T>, events: &mut EventState, context: &egui::Context, camera: &Camera) {
+pub fn draw_resizable_panel<T>(
+    id: &str,
+    panel: egui::InnerResponse<T>,
+    events: &mut EventState,
+    context: &egui::Context,
+    camera: &Camera,
+) {
     if let Some(resize) = context.read_response(egui::Id::new(id).with("__resize")) {
         if resize.hovered() || panel.response.hovered() {
             if !camera.on_ui {
@@ -1792,12 +1929,20 @@ pub fn draw_resizable_panel<T>(id: &str, panel: egui::InnerResponse<T>, events: 
     }
 }
 
-pub fn load_png(handle: &mut Option<egui::TextureHandle>, bytes: &[u8], id: &str, context: &Context) {
+pub fn load_png(
+    handle: &mut Option<egui::TextureHandle>,
+    bytes: &[u8],
+    id: &str,
+    context: &Context,
+) {
     if *handle != None {
         return;
     }
     let img = image::load_from_memory(bytes).unwrap();
-    let egui_img = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], &img.into_rgba8());
+    let egui_img = egui::ColorImage::from_rgba_unmultiplied(
+        [img.width() as usize, img.height() as usize],
+        &img.into_rgba8(),
+    );
     *handle = Some(context.load_texture(id, egui_img, Default::default()))
 }
 
