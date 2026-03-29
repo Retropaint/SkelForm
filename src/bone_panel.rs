@@ -97,11 +97,14 @@ pub fn draw(
         let offset = ui.cursor().min + [0., 3.].into();
         let rect = egui::Rect::from_min_size(offset, [15., 15.].into());
         let img = shared_ui.lock_img.as_ref().unwrap();
-        egui::Image::new(img).tint(col).paint_at(ui, rect);
         let response: egui::Response = ui
             .allocate_rect(rect, egui::Sense::click())
             .on_hover_cursor(egui::CursorIcon::PointingHand)
             .on_hover_text(shared_ui.loc("locked_desc"));
+        if response.hovered() || response.has_focus() {
+            col += Color::new(60, 60, 60, 0);
+        }
+        egui::Image::new(img).tint(col).paint_at(ui, rect);
         if response.clicked() {
             let locked_f32 = if bone.locked { 0. } else { 1. };
             let locked = &AnimElement::Locked;
