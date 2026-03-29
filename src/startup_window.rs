@@ -261,7 +261,7 @@ fn startup_content(
                 let header_size = 15.;
                 let sub_size = 13.;
                 let sub_padding = 20.;
-                let sub_line_height = 2.;
+                let sub_line_height = 1.;
                 let separator = 15.;
 
                 let link_color = conf.colors.link;
@@ -353,12 +353,12 @@ fn startup_content(
                         ui.horizontal(|ui| {
                             let left_top = egui::Pos2::new(
                                 ui.min_rect().left_top().x + 5.,
-                                ui.min_rect().left_top().y - 10.,
+                                ui.min_rect().left_top().y - 7.,
                             );
                             let mut line_color = link_color;
                             let darker = 105;
                             line_color -= Color::new(darker, darker, darker, 0);
-                            let right_bot = egui::Vec2::new(2., sub_size + 8. + sub_line_height);
+                            let right_bot = egui::Vec2::new(2., sub_size + 9.);
                             ui.painter().rect_filled(
                                 egui::Rect::from_min_size(left_top, right_bot),
                                 egui::CornerRadius::ZERO,
