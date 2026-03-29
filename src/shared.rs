@@ -671,6 +671,7 @@ pub struct Ui {
     pub edited_dragging: bool,
     pub started_edit_dragging: bool,
     pub drag_modifier: f32,
+    pub selected_bone_first_time: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

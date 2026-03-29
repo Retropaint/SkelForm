@@ -122,13 +122,7 @@ pub fn draw(
                     draw_hierarchy(ui, shared_ui, &selections, &armature, &config, &edit_mode, events);
                 } else {
                     ui.add_space(5.);
-                    if ui.clickable_label("User Documentation").clicked() {
-                        utils::open_docs(false, "index.html");
-                    }
-                    ui.add_space(5.);
-                    if ui.clickable_label("Starter Guide").clicked() {
-                        utils::open_docs(false, "starter-guide/main.html");
-                    }
+                    ui::empty_armature_starters(shared_ui, config, ui);
                 }
                 ui.add_space(4.);
             });

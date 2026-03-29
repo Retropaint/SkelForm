@@ -236,6 +236,9 @@ pub fn draw(
                             keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.prev_bone"), config.keys.prev_bone);
                             keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.toggle_bone_fold"), config.keys.toggle_bone_fold);
                         };
+                    } else {
+                        ui.add_space(5.);
+                        empty_armature_starters(shared_ui, config, ui);
                     }
                 });
             });
@@ -1960,4 +1963,18 @@ pub fn keyboard_shortcut(ui: &mut egui::Ui, label: String, key: egui::KeyboardSh
             ui.label(key.display());
         });
     });
+}
+
+pub fn empty_armature_starters(shared_ui: &mut crate::Ui, config: &Config, ui: &mut egui::Ui) {
+    ui.label(shared_ui.loc("armature_panel.empty_armature"));
+    ui.add_space(5.);
+    let str = egui::RichText::new("User Documentation").color(config.colors.link);
+    if ui.clickable_label(str).clicked() {
+        utils::open_docs(false, "index.html");
+    }
+    ui.add_space(5.);
+    let str = egui::RichText::new("Starter Guide").color(config.colors.link);
+    if ui.clickable_label(str).clicked() {
+        utils::open_docs(false, "starter-guide/main.html");
+    }
 }

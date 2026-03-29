@@ -613,6 +613,7 @@ pub fn read_import(
             shared.events.open_modal("import_unrecognized", false);
         }
     };
+    shared.ui.selected_bone_first_time = true;
 
     #[cfg(target_arch = "wasm32")]
     removeFile();

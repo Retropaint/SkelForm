@@ -622,9 +622,9 @@ pub fn simple_event(
             }
             armature.bones[idx].name = "".to_string();
             let sel = selections;
-            // don't select first ever bone of armature, so newbies aren't
-            // overwhelmed with everything opening at once
-            if armature.bones.len() != 1 {
+            // don't select new bone until user has done it at least once this session.
+            // This is to prevent user from being overwhelmed with bone panel
+            if ui.selected_bone_first_time {
                 select_bone(sel, ui, armature, edit_mode, input, idx, false);
             }
             ui.rename_id = "bone_".to_string() + &idx.to_string();
@@ -1089,6 +1089,7 @@ fn select_bone(
     edit_mode.sel_time = 0.;
     edit_mode.temporary = None;
     sel.vert_ids = vec![];
+    ui.selected_bone_first_time = true;
 
     if idx == usize::MAX {
         sel.bone_idx = usize::MAX;
