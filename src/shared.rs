@@ -980,8 +980,8 @@ impl Default for KeyboardConfig {
             edit_modifier:        shortcut_key!(egui::Modifiers::SHIFT, egui::Key::F30),
             edit_snap:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::F30),
             play_animation:       regular_key!(egui::Key::Space),
-            next_bone:            regular_key!(egui::Key::X),
-            prev_bone:            regular_key!(egui::Key::Z),
+            next_bone:            regular_key!(egui::Key::Z),
+            prev_bone:            regular_key!(egui::Key::X),
             toggle_bone_fold:     regular_key!(egui::Key::C),
             toggle_edit_vertices: regular_key!(egui::Key::V),
         }

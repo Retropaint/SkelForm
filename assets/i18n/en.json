@@ -75,7 +75,9 @@
     "edit": {
       "heading": "Edit",
       "undo": "Undo",
-      "redo": "Redo"
+      "redo": "Redo",
+      "copy": "Copy",
+      "paste": "Paste"
     },
     "view": {
       "heading": "View",

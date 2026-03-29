@@ -565,7 +565,7 @@ pub fn simple_event(
 
             // insert pasted bones on proper position of the bone array
             if insert_idx == usize::MAX {
-                armature.bones.append(&mut copy_buffer.bones);
+                armature.bones.extend_from_slice(&copy_buffer.bones);
             } else {
                 for bone in &copy_buffer.bones {
                     armature.bones.insert(insert_idx, bone.clone());
