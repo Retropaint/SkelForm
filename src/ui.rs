@@ -1835,10 +1835,18 @@ pub fn top_bar_button(
         egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() + *offset),
         egui::Vec2::new(ui.min_rect().width(), height),
     );
-    let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click());
+
+    // give appropriate sense to allow/prevent button from being tab-focused
+    let sense = if enabled {
+        egui::Sense::click()
+    } else {
+        egui::Sense::empty()
+    };
+
+    let response: egui::Response = ui.allocate_rect(rect, sense);
     let painter = ui.painter_at(ui.min_rect());
 
-    let col = if response.hovered() && enabled {
+    let col = if (response.hovered() || response.has_focus()) && enabled {
         config.colors.light_accent.into()
     } else {
         egui::Color32::TRANSPARENT
