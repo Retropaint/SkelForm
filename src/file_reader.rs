@@ -430,7 +430,7 @@ pub fn read_psd(
         };
 
         // add this bone to parent, if appropriate
-        if group.parent_id() == None {
+        if group.parent_id() != None {
             if let Some(p_id) = bone_psd_id.get(&group.parent_id().unwrap()) {
                 let parent_id = *p_id as i32;
                 shared.armature.find_bone_mut(bone_id).unwrap().parent_id = parent_id;
