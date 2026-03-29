@@ -101,6 +101,8 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     app.shared.input.hotkey_manager = Some(global_hotkey::GlobalHotKeyManager::new().unwrap());
     app.shared.input.mod_q = Some(HotKey::new(Some(Modifiers::SUPER), Code::KeyQ));
     app.shared.input.mod_w = Some(HotKey::new(Some(Modifiers::SUPER), Code::KeyW));
+    app.shared.input.mod_c = Some(HotKey::new(Some(Modifiers::SUPER), Code::KeyC));
+    app.shared.input.mod_v = Some(HotKey::new(Some(Modifiers::SUPER), Code::KeyV));
 
     event_loop.run_app(&mut app)
 }

@@ -168,20 +168,19 @@ pub fn render(
 
         // setup onion world verts
         if selections.anim_frame != -1 && edit_mode.onion_layers {
-            for v in 0..prev_arm.bones[b].vertices.len() {
-                let tb = &mut prev_arm.bones[b];
-                let mut vert =
-                    world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
-                vert.tint = TintColor::new(255., 0., 0., 0.4);
-                tb.world_verts.push(vert);
+            macro_rules! prep_arm {
+                ($armature:expr, $color:expr) => {
+                    for v in 0..$armature.bones[b].vertices.len() {
+                        let tb = &mut $armature.bones[b];
+                        let ratio = camera.aspect_ratio();
+                        let mut vert = world_vert(tb.vertices[v], &camera, ratio, Vec2::default());
+                        vert.tint = TintColor::new(255., 0., 0., 0.4);
+                        tb.world_verts.push(vert);
+                    }
+                };
             }
-            for v in 0..next_arm.bones[b].vertices.len() {
-                let tb = &mut next_arm.bones[b];
-                let mut vert =
-                    world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
-                vert.tint = TintColor::new(0., 0., 255., 0.4);
-                tb.world_verts.push(vert);
-            }
+            prep_arm!(prev_arm, TintColor::new(255., 0., 0., 0.4));
+            prep_arm!(next_arm, TintColor::new(0., 0., 255., 0.4));
         }
         for vert in &mut temp_arm.bones[b].world_verts {
             vert.add_color = Color::new(0, 0, 0, 0);
@@ -289,24 +288,15 @@ pub fn render(
     // render onion layers
     if renderer.render_textures && selections.anim_frame != -1 && edit_mode.onion_layers {
         #[rustfmt::skip]
-        draw_armature(
-            &prev_arm, armature, edit_mode.showing_mesh, &sel, config,
-            queue, render_pass, &renderer.prev_onion_buffer
-        );
+        draw_armature(&prev_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass, &renderer.prev_onion_buffer);
         #[rustfmt::skip]
-        draw_armature(
-            &next_arm, armature, edit_mode.showing_mesh, &sel, config,
-            queue, render_pass, &renderer.next_onion_buffer
-        );
+        draw_armature(&next_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass, &renderer.next_onion_buffer);
     }
 
     // render bones
     if renderer.render_textures {
         #[rustfmt::skip]
-        draw_armature(
-            &temp_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass,
-            &renderer.bone_buffer
-        );
+        draw_armature(&temp_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass, &renderer.bone_buffer);
     }
 
     // show selected bone's mesh wireframe if editing it
@@ -338,7 +328,8 @@ pub fn render(
         // prepare drawing buffers for vertex points and lines
         let current_hover_id = selections.hovering_vert_id;
         #[rustfmt::skip]
-        let (mut verts, mut indices, on_vert) = bone_vertices(&wv, true, selections, input, camera, config, events, armature, renderer, current_hover_id);
+        let (mut verts, mut indices, on_vert) =
+            bone_vertices(&wv, true, selections, input, camera, config, events, armature, renderer, current_hover_id);
         if on_vert != -1 {
             new_vert = None;
             hovering_vert_id = on_vert;
@@ -346,7 +337,8 @@ pub fn render(
             renderer.clicked_vert_id = -1;
         }
         #[rustfmt::skip]
-        let (mut lines_v, mut lines_i, on_line) = vert_lines(bone, &temp_arm.bones, &mouse, &mut new_vert, true, on_vert != -1, camera, input, selections, events);
+        let (mut lines_v, mut lines_i, on_line) =
+            vert_lines(bone, &temp_arm.bones, &mouse, &mut new_vert, true, on_vert != -1, camera, input, selections, events);
         is_hovering_line |= on_line;
         lines_v.append(&mut verts);
         add_offseted_indices(&mut indices, &mut lines_i);

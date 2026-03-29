@@ -402,12 +402,8 @@ impl ApplicationHandler for App {
                 }
 
                 self.shared.camera.window = Vec2::new(size.width as f32, size.height as f32);
-                renderer.render_frame(
-                    screen_descriptor,
-                    paint_jobs,
-                    textures_delta,
-                    &mut self.shared,
-                );
+                let shared = &mut self.shared;
+                renderer.render_frame(screen_descriptor, paint_jobs, textures_delta, shared);
 
                 #[cfg(target_arch = "wasm32")]
                 {
@@ -440,11 +436,8 @@ impl ApplicationHandler for App {
             let pressing_w = event.id() == self.shared.input.mod_w.unwrap().id();
             let pressing_q = event.id() == self.shared.input.mod_q.unwrap().id();
             if (pressing_w || pressing_q) && self.shared.ui.can_quit {
-                utils::exit(
-                    &mut self.shared.undo_states,
-                    &self.shared.config,
-                    &mut self.shared.ui,
-                );
+                let shared = &mut self.shared;
+                utils::exit(&mut shared.undo_states, &shared.config, &mut shared.ui);
             }
         }
 
