@@ -701,11 +701,8 @@ pub fn kb_inputs(
         if selections.bone_idx == usize::MAX {
             idx = 0;
         } else {
-            idx = if selections.bone_idx == armature.bones.len() - 1 {
-                0
-            } else {
-                selections.bone_idx + 1
-            };
+            let is_last = selections.bone_idx == armature.bones.len() - 1;
+            idx = if is_last { 0 } else { selections.bone_idx + 1 };
         }
         while armature.is_bone_folded(armature.bones[idx].id) {
             idx += 1;
@@ -718,8 +715,10 @@ pub fn kb_inputs(
     }
 
     if input.consume_shortcut(&config.keys.toggle_bone_fold) {
-        let bone = &armature.sel_bone(selections).unwrap();
-        events.toggle_bone_folded(selections.bone_idx, !bone.folded);
+        let bone = &armature.sel_bone(selections);
+        if *bone != None {
+            events.toggle_bone_folded(selections.bone_idx, !bone.unwrap().folded);
+        }
     }
 
     if input.consume_shortcut(&config.keys.toggle_edit_vertices) {
