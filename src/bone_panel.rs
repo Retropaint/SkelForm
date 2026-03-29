@@ -210,7 +210,7 @@ pub fn draw(
             ui.add_space(ui.available_width() - 40.);
             let rot_el = AnimElement::Rotation;
             let deg_mod = 180. / std::f32::consts::PI;
-            input!(bone.rot, "rot", rot_el, deg_mod, 0.25, ui, "");
+            input!(bone.rot, "rot", rot_el, deg_mod, -0.25, ui, "");
         });
     })
     .response

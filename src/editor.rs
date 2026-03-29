@@ -181,9 +181,7 @@ pub fn iterate_events(
         events.str_values.remove(0);
     } else if event == Events::ToggleBoneFolded {
         let idx = events.values[0] as usize;
-
         armature.bones[idx].folded = events.values[1] == 1.;
-
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::MoveTexture {
@@ -269,9 +267,11 @@ pub fn iterate_events(
         let event = &events.events[0].clone();
         let value = events.values[0];
         let str_value = events.str_values[0].clone().to_string();
-
         #[rustfmt::skip]
-        editor::simple_event(event, value, str_value, camera, &input, edit_mode, selections, undo_states, armature, copy_buffer, ui, renderer, config);
+        editor::simple_event(
+            event, value, str_value, camera, &input, edit_mode, selections,
+            undo_states, armature, copy_buffer, ui, renderer, config
+        );
 
         events.events.remove(0);
         events.values.remove(0);
@@ -1140,7 +1140,6 @@ fn select_bone(
         for p in parents {
             bones.iter_mut().find(|b| b.id == p.id).unwrap().folded = false;
         }
-        return;
     } else {
         if sel.bone_idx == usize::MAX {
             sel.bone_idx = idx;
@@ -1418,6 +1417,14 @@ fn edit_bone(
             }
         }};
     }
+    macro_rules! set_bool {
+        ($field:expr) => {{
+            init_value = shared::bool_as_f32($field);
+            if anim_frame == -1 {
+                $field = shared::f32_as_bool(value)
+            }
+        }};
+    }
 
     match element {
         AnimElement::PositionX => set!(bone.pos.x, f32),
@@ -1433,18 +1440,8 @@ fn edit_bone(
         AnimElement::TintA => set!(bone.tint.a, f32),
         AnimElement::Texture => { /* handled in set_bone_tex() */ }
         AnimElement::IkConstraint => set_str!(bone.ik_constraint, JointConstraint),
-        AnimElement::Hidden => {
-            init_value = shared::bool_as_f32(bone.hidden);
-            if anim_frame == -1 {
-                bone.hidden = shared::f32_as_bool(value)
-            }
-        }
-        AnimElement::Locked => {
-            init_value = shared::bool_as_f32(bone.locked);
-            if anim_frame == -1 {
-                bone.locked = shared::f32_as_bool(value)
-            }
-        }
+        AnimElement::Hidden => set_bool!(bone.hidden),
+        AnimElement::Locked => set_bool!(bone.locked),
         AnimElement::IkMode => set_str!(bone.ik_mode, InverseKinematicsMode),
         AnimElement::GroupColorR => set!(bone.group_color.r, u8),
         AnimElement::GroupColorG => set!(bone.group_color.g, u8),
@@ -1703,7 +1700,6 @@ pub fn triangulate(verts: &Vec<Vertex>, tex: &image::DynamicImage) -> Vec<u32> {
             v1.uv.x.max(v2.uv.x).max(v3.uv.x),
             v1.uv.y.max(v2.uv.y).max(v3.uv.y),
         ) * size;
-
         'pixel_check: for x in (blt.x as i32)..(brb.x as i32) {
             for y in (blt.y as i32)..(brb.y as i32) {
                 let pos = &Vec2::new(x as f32, y as f32);
