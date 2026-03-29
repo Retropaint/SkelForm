@@ -485,41 +485,6 @@ pub fn process_inputs(
             can_drag = false;
         }
 
-        if can_drag
-            && shared_ui.rename_id != ""
-            && input.mouse_init != None
-            && shared_ui.drag_modifier != 0.
-        {
-            let diff = input.mouse_init.unwrap() - input.mouse;
-            let vel = input.mouse - input.mouse_prev;
-            if shared_ui.edit_value != None && vel.x.abs() > 0. {
-                match shared_ui.edit_value.as_ref().unwrap().parse::<f32>() {
-                    Ok(mut output) => {
-                        #[cfg(target_arch = "wasm32")]
-                        {
-                            output += vel.x * shared_ui.drag_modifier;
-                        }
-                        #[cfg(not(target_arch = "wasm32"))]
-                        {
-                            output -= diff.x * shared_ui.drag_modifier;
-                        }
-                        *shared_ui.edit_value.as_mut().unwrap() = output.to_string();
-
-                        // since save_edited_bone won't save on drag, this will be set to true on
-                        // the frame after save_edited_bone() has been called
-                        shared_ui.edited_dragging = shared_ui.started_edit_dragging;
-
-                        // save bone just before beginning the drag
-                        if !shared_ui.started_edit_dragging {
-                            events.save_edited_bone(selections.bone_idx);
-                            shared_ui.started_edit_dragging = true;
-                        }
-                    }
-                    _ => {}
-                };
-            }
-        }
-
         // don't record prev mouse on first frame of touch as it
         // goes all over the place
         if i.any_touches() && i.pointer.primary_pressed() {
@@ -542,6 +507,41 @@ pub fn process_inputs(
 
         edit_mode.sel_time += i.time as f32 - edit_mode.time;
         edit_mode.time = i.time as f32;
+
+        // dragging inputs
+        let drag_mod = shared_ui.drag_modifier;
+        if !(can_drag && shared_ui.rename_id != "" && input.mouse_init != None && drag_mod != 0.) {
+            return;
+        }
+        let diff = input.mouse_init.unwrap() - input.mouse;
+        let vel = input.mouse - input.mouse_prev;
+        if !(shared_ui.edit_value != None && vel.x.abs() > 0.) {
+            return;
+        }
+        match shared_ui.edit_value.as_ref().unwrap().parse::<f32>() {
+            Ok(mut output) => {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    output += vel.x * shared_ui.drag_modifier;
+                }
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    output -= diff.x * shared_ui.drag_modifier;
+                }
+                *shared_ui.edit_value.as_mut().unwrap() = output.to_string();
+
+                // since save_edited_bone won't save on drag, this will be set to true on
+                // the frame after save_edited_bone() has been called
+                shared_ui.edited_dragging = shared_ui.started_edit_dragging;
+
+                // save bone just before beginning the drag
+                if !shared_ui.started_edit_dragging {
+                    events.save_edited_bone(selections.bone_idx);
+                    shared_ui.started_edit_dragging = true;
+                }
+            }
+            _ => {}
+        };
     });
 
     // de-focus input if it has dragging enabled.
