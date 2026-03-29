@@ -744,7 +744,6 @@ fn draw_frame_lines(
     shared_ui.anim.lines_x = vec![];
 
     let mut selected_line_x = 0.;
-    let mut hovered_line_x = 0.;
 
     let panel = shared_ui.keyframe_panel_rect;
 
@@ -778,7 +777,6 @@ fn draw_frame_lines(
             color = egui::Color32::WHITE;
             selected_line_x = ui.min_rect().left() + x;
         } else if can_hover && cur.x < x + hitbox && cur.x > x - hitbox && above_bar {
-            hovered_line_x = ui.min_rect().left() + x;
             shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
             color = egui::Color32::WHITE;
 
@@ -799,12 +797,7 @@ fn draw_frame_lines(
     }
 
     let mut last_bone = -1;
-    let mut count = 0;
     for top in &shared_ui.bone_tops.tops {
-        if count < 2 {
-            count += 1;
-            continue;
-        }
         if last_bone != top.id {
             let range = egui::Rangef::new(0., ui.available_width());
             let mut col = config.colors.dark_accent;
@@ -815,16 +808,6 @@ fn draw_frame_lines(
         last_bone = top.id;
         continue;
     }
-
-    // draw selected line
-    ui.painter().vline(
-        hovered_line_x,
-        egui::Rangef { min: 0., max: 999. },
-        Stroke {
-            width: 2.,
-            color: egui::Color32::WHITE,
-        },
-    );
 
     // draw selected line
     ui.painter().vline(
