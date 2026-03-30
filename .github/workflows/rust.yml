@@ -32,7 +32,7 @@ jobs:
           python-version: "3.13.6"
           
       - name: build binary
-        run: cd release && python3 release.py
+        run: cd release && python3 release.py -nd
         
       - name: upload to release
         uses: softprops/action-gh-release@v2
@@ -66,7 +66,7 @@ jobs:
 
       - name: build windows binary
         shell: bash
-        run: cd release && python release.py
+        run: cd release && python release.py -nd
 
       - name: upload to release
         uses: softprops/action-gh-release@v2
@@ -99,7 +99,7 @@ jobs:
           python-version: "3.13.6"
           
       - name: build binary
-        run: cd release && python3 release.py --ubuntudeps
+        run: cd release && python3 release.py --ubuntudeps -nd
         
       - name: upload to release
         uses: softprops/action-gh-release@v2
