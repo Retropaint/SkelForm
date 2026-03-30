@@ -156,7 +156,6 @@ pub fn modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &Config) {
             if shared_ui.forced_modal || !ui.button("OK").clicked() {
                 return;
             }
-
             shared_ui.modal = false;
             shared_ui.headline = "".to_string();
         },

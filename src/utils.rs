@@ -1043,18 +1043,24 @@ pub fn open_docs(is_dev: bool, mut _path: &str) {
     // open the local docs, or online if it can't be found on default path
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let url = bin_path().join(docs_name).join(_path);
-        match open::that(url) {
-            Err(_) => {
-                let url =
-                    "https://skelform.org/".to_string() + docs_name + "/" + &_path.to_string();
-                match open::that(url) {
-                    Err(_) => println!("couldn't open"),
-                    Ok(file) => file,
+        let path = bin_path().join(docs_name).join(_path);
+        let mut url = path.to_str().unwrap().to_string();
+
+        // use web URL, if local files don't exist
+        let web_url = "https://skelform.org/".to_string() + docs_name + "/" + &_path.to_string();
+        match fs::exists(&url) {
+            Err(_) => url = web_url,
+            Ok(exists) => {
+                if !exists {
+                    url = web_url
                 }
             }
-            Ok(file) => file,
         };
+
+        match open::that(url) {
+            Err(_) => println!("couldn't open"),
+            Ok(file) => file,
+        }
     }
 }
 
