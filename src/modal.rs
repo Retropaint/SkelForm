@@ -147,7 +147,8 @@ pub fn modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &Config) {
             let str = utils::markdown(headline).replace("$psd_page", "");
             egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
             ui.add_space(5.);
-            if psd_button && ui.clickable_label("PSD Rigging").clicked() {
+            let str = egui::RichText::new("PSD Rigging").color(config.colors.link);
+            if psd_button && ui.clickable_label(str).clicked() {
                 utils::open_docs(false, "psd.html");
             };
         },
