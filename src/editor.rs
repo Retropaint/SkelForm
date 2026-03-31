@@ -881,7 +881,7 @@ pub fn simple_event(
             selections.bind = -1;
         }
         Events::SelectBind => {
-            if value == 3. {
+            if value == -3. {
                 selections.bind = -1;
             } else if value == -2. {
                 let binds = &mut armature.sel_bone_mut(&selections).unwrap().binds;
