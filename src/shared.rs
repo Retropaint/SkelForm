@@ -1625,6 +1625,13 @@ impl Armature {
 
         false
     }
+
+    pub fn has_physics(&self, bone_id: i32) -> bool {
+        let bone = &self.bones.iter().find(|b| b.id == bone_id).unwrap();
+        bone.phys_pos_elasticity > 0.
+            || bone.phys_rot_resistance > 0.
+            || bone.phys_scale_elasticity > 0.
+    }
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]

@@ -3,6 +3,7 @@
 use crate::*;
 use egui::IntoAtoms;
 use ui::EguiUi;
+type AE = AnimElement;
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
@@ -182,6 +183,9 @@ pub fn draw(
     }
 
     let input_widths = 120.;
+    let mut children = vec![];
+    armature_window::get_all_children(&armature.bones, &mut children, &bone);
+    let parents = armature.get_all_parents(false, bone.id);
 
     let has_ik = bone.ik_family_id != -1
         && !bone.ik_disabled
@@ -189,15 +193,15 @@ pub fn draw(
     let str_cant_edit = shared_ui
         .loc("bone_panel.inverse_kinematics.cant_edit")
         .clone();
+    let has_physics = parents.len() > 0 && parents[0].phys_rot_resistance > 0.;
 
-    ui.add_enabled_ui(!has_ik, |ui| {
+    type AE = AnimElement;
+    ui.add_enabled_ui(!has_ik && !has_physics, |ui| {
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.position"), ui);
             ui.add_space(ui.available_width() - input_widths);
-            let pos_x = AnimElement::PositionX;
-            input!(bone.pos.x, "pos_x", pos_x, 1., 1., ui, "X");
-            let pos_y = AnimElement::PositionY;
-            input!(bone.pos.y, "pos_y", pos_y, 1., 1., ui, "Y");
+            input!(bone.pos.x, "pos_x", AE::PositionX, 1., 1., ui, "X");
+            input!(bone.pos.y, "pos_y", AE::PositionY, 1., 1., ui, "Y");
         });
 
         ui.horizontal(|ui| {
@@ -219,9 +223,12 @@ pub fn draw(
     .response
     .on_disabled_hover_text(str_cant_edit);
 
-    let mut children = vec![];
-    armature_window::get_all_children(&armature.bones, &mut children, &bone);
-    let parents = armature.get_all_parents(false, bone.id);
+    // show note about the physics distance field, if this bone's parent has rotation physics
+    if has_physics {
+        ui.add_space(10.);
+        ui.label(shared_ui.loc("bone_panel.physics.parent_has_physics"))
+            .on_hover_text(shared_ui.loc("bone_panel.physics.parent_has_physics_desc"));
+    }
 
     ui.add_space(20.);
 
@@ -286,7 +293,16 @@ pub fn draw(
     #[cfg(not(debug_assertions))]
     return;
 
-    physics(ui, &bone, selections, shared_ui, config, armature, events);
+    physics(
+        ui,
+        &bone,
+        selections,
+        shared_ui,
+        config,
+        armature,
+        events,
+        has_physics,
+    );
 
     ui.add_space(20.);
 }
@@ -432,9 +448,8 @@ pub fn inverse_kinematics(
                 let id = "ik_distance".to_string();
                 let (edited, value, _) = ui.float_input(id, shared_ui, bone.pos.x, 1., None);
                 if edited {
-                    type A = AnimElement;
-                    events.edit_bone(bone.id, &A::PositionX, value, "", usize::MAX, -1);
-                    events.edit_bone(bone.id, &A::PositionY, 0., "", usize::MAX, -1);
+                    events.edit_bone(bone.id, &AE::PositionX, value, "", usize::MAX, -1);
+                    events.edit_bone(bone.id, &AE::PositionY, 0., "", usize::MAX, -1);
                 }
             });
         });
@@ -1177,6 +1192,7 @@ pub fn physics(
     config: &Config,
     armature: &Armature,
     events: &mut EventState,
+    has_physics: bool,
 ) {
     let sel = selections.clone();
     let str_heading = &shared_ui.loc("bone_panel.physics.heading").clone();
@@ -1254,8 +1270,21 @@ pub fn physics(
             });
         };
     }
-    #[rustfmt::skip]
-    {
+    if has_physics {
+        ui.horizontal(|ui| {
+            ui.label(shared_ui.loc("bone_panel.physics.distance"));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let id = "phys_dist".to_string();
+                let (edited, value, _) = ui.float_input(id, shared_ui, bone.pos.x, 1., None);
+                if edited {
+                    events.edit_bone(bone.id, &AE::PositionX, value, "", usize::MAX, -1);
+                    events.edit_bone(bone.id, &AE::PositionY, 0., "", usize::MAX, -1);
+                }
+            });
+        });
+        ui.add_space(10.);
+    }
+    #[rustfmt::skip] {
         input!("bone_panel.physics.resistance",       bone.phys_rot_resistance,   set_rot_resistance);
         input!("bone_panel.physics.pos_elasticity",   bone.phys_pos_elasticity,   set_pos_elasiticity);
         input!("bone_panel.physics.scale_elasticity", bone.phys_scale_elasticity, set_scale_elasiticity);

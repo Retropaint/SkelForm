@@ -1,4 +1,5 @@
 use crate::*;
+use armature_window::get_all_children;
 use image::DynamicImage;
 use spade::Triangulation;
 use std::collections::HashMap;
@@ -1025,6 +1026,19 @@ pub fn simple_event(
         Events::SetRotResistance => {
             let bone = armature.sel_bone_mut(selections).unwrap();
             bone.phys_rot_resistance = value;
+            if value == 0. {
+                let mut children = vec![];
+                let bone = armature.sel_bone(selections).unwrap();
+                get_all_children(&armature.bones, &mut children, bone);
+                for child in children {
+                    if child.parent_id != armature.sel_bone(selections).unwrap().id {
+                        continue;
+                    }
+                    let bones = &mut armature.bones;
+                    let bone = bones.iter_mut().find(|b| b.id == child.id).unwrap();
+                    bone.pos.y = 0.;
+                }
+            }
         }
         Events::SetPosElasticity => {
             let bone = armature.sel_bone_mut(selections).unwrap();

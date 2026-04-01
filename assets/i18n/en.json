@@ -256,7 +256,10 @@
       "resistance": "Resistance:",
       "pos_elasticity": "Pos. Elasticity:",
       "scale_elasticity": "Scale Elasticity:",
-      "rot_bounce": "Rot. Bounce:"
+      "rot_bounce": "Rot. Bounce:",
+      "distance": "Distance:",
+      "parent_has_physics": "This bone's parent has rotation physics. Adjust its distance in the Physics section below. ℹ",
+      "parent_has_physics_desc": "To accurately simulate wind/air resistance, bones should only be distanced horizontally to their parent."
     },
     "texture_effects": {
       "heading": "Texture & Visuals"

@@ -1476,25 +1476,16 @@ fn edit_mode_bar(
         }
 
         if edit_mode.is_moving {
-            edit_feature!(
-                "Snap X/Y",
-                config.keys.edit_snap,
-                edit_mode.holding_edit_snap
-            );
+            let str = "Snap X/Y";
+            edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
         } else if edit_mode.is_rotating {
             let str = format!("Snap to {}°", config.rot_snap_step);
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
         } else if edit_mode.is_scaling {
-            edit_feature!(
-                "Snap X/Y",
-                config.keys.edit_snap,
-                edit_mode.holding_edit_snap
-            );
-            edit_feature!(
-                "Maintain aspect ratio",
-                config.keys.edit_modifier,
-                edit_mode.holding_edit_mod
-            );
+            let str = "Snap X/Y";
+            edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
+            let str = "Maintain aspect ratio";
+            edit_feature!(str, config.keys.edit_modifier, edit_mode.holding_edit_mod);
         }
     });
 }

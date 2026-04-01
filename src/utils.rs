@@ -740,10 +740,9 @@ pub fn prepare_files(
         disable_phys = false;
     }
     for b in 0..armature_copy.bones.len() {
+        let bone_id = armature_copy.bones[b].id;
+        armature_copy.bones[b].has_physics = armature_copy.has_physics(bone_id);
         let bone = &mut armature_copy.bones[b];
-        bone.has_physics = bone.phys_pos_elasticity > 0.
-            || bone.phys_rot_resistance > 0.
-            || bone.phys_scale_elasticity > 0.;
         if bone.phys_pos_elasticity == 0. || disable_phys {
             bone.phys_pos_elasticity = f32::MAX;
             bone.phys_global_pos = Vec2::new(f32::MAX, f32::MAX);
