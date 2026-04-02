@@ -932,9 +932,10 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
             arm_bone.phys_global_rot += rot / 10.;
 
             let bones = &constructed_bones;
-            if let Some(parent) = bones.iter().find(|b| b.id == const_bone.parent_id) {
-                // interpolate to angle from this bone to its parent
-                let diff = (const_bone.pos - parent.pos).normalize();
+            let parent = bones.iter().find(|b| b.id == const_bone.parent_id);
+            if parent != None && arm_bone.ik_family_id == -1 {
+                // interpolate to the angle difference between bone and parent
+                let diff = (const_bone.pos - parent.unwrap().pos).normalize();
                 let diff_angle = diff.y.atan2(diff.x);
                 let mut rest_rot = shortest_angle_delta(arm_bone.phys_global_orbit, diff_angle);
                 // bounce the orbit
