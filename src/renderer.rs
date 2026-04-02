@@ -1287,13 +1287,12 @@ pub fn inheritance(
             // adjust bone's position based on parent's scale
             bones[i].pos *= parent.scale;
 
-            // rotate such that it will orbit the parent
+            // orbit the parent
+            let mut orbit_rot = parent.rot;
             if arm_bones.len() > 0 && bones[i].phys_rot_resistance != 0. {
-                let orbit_diff = bones[i].phys_global_orbit_diff;
-                bones[i].pos = utils::rotate(&bones[i].pos, parent.rot - orbit_diff);
-            } else {
-                bones[i].pos = utils::rotate(&bones[i].pos, parent.rot);
+                orbit_rot -= bones[i].phys_global_orbit_diff
             }
+            bones[i].pos = utils::rotate(&bones[i].pos, orbit_rot);
 
             // inherit position from parent
             bones[i].pos += parent.pos;
