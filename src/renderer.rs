@@ -2,6 +2,7 @@
 
 use crate::*;
 use image::GenericImageView;
+use utils::shortest_angle_delta;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 
 /// The `main` of this module.
@@ -926,29 +927,33 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
         }
 
         if arm_bone.phys_rot_resistance > 0. {
-            let bones = &constructed_bones;
-            let parent = bones.iter().find(|b| b.id == const_bone.parent_id).unwrap();
-
             // interpolate bone's own rotation
             let rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, const_bone.rot);
             arm_bone.phys_global_rot += rot / 10.;
 
-            // get angle from child to parent
-            let diff = (const_bone.pos - parent.pos).normalize();
-            let diff_angle = diff.y.atan2(diff.x);
-            // interpolate to angle above
-            let rot = utils::shortest_angle_delta(arm_bone.phys_global_orbit, diff_angle);
-            arm_bone.phys_global_orbit += rot / 10.;
+            let bones = &constructed_bones;
+            if let Some(parent) = bones.iter().find(|b| b.id == const_bone.parent_id) {
+                // interpolate to angle from this bone to its parent
+                let diff = (const_bone.pos - parent.pos).normalize();
+                let diff_angle = diff.y.atan2(diff.x);
+                let mut rest_rot = shortest_angle_delta(arm_bone.phys_global_orbit, diff_angle);
+                // bounce the orbit
+                if arm_bone.phys_rot_bounce > 0. && arm_bone.phys_rot_bounce <= 1. {
+                    rest_rot += arm_bone.phys_global_orbit_vel / (2. - arm_bone.phys_rot_bounce);
+                    arm_bone.phys_global_orbit_vel = rest_rot;
+                }
+                arm_bone.phys_global_orbit += rest_rot / 10.;
 
-            // swing orbit based on position momentum
-            let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
-            let angle = (-vel.y).atan2(-vel.x);
-            let rot = utils::shortest_angle_delta(arm_bone.phys_global_orbit, angle);
-            let strength = (arm_bone.phys_global_pos - prev_pos).mag();
-            arm_bone.phys_global_orbit += rot * strength / arm_bone.phys_rot_resistance;
+                // swing orbit based on position momentum
+                let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
+                let angle = (-vel.y).atan2(-vel.x);
+                let vel_rot = utils::shortest_angle_delta(arm_bone.phys_global_orbit, angle);
+                let strength = (arm_bone.phys_global_pos - prev_pos).mag();
+                arm_bone.phys_global_orbit += vel_rot * strength / arm_bone.phys_rot_resistance;
 
-            // apply difference in final angle and orbit
-            arm_bone.phys_global_orbit_diff = diff_angle - arm_bone.phys_global_orbit;
+                // apply difference in final angle and orbit
+                arm_bone.phys_global_orbit_diff = diff_angle - arm_bone.phys_global_orbit;
+            }
         }
 
         // interpolate scale
