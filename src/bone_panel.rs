@@ -193,10 +193,9 @@ pub fn draw(
     let str_cant_edit = shared_ui
         .loc("bone_panel.inverse_kinematics.cant_edit")
         .clone();
-    let has_physics = parents.len() > 0 && parents[0].phys_rot_resistance > 0.;
 
     type AE = AnimElement;
-    ui.add_enabled_ui(!has_ik && !has_physics, |ui| {
+    ui.add_enabled_ui(!has_ik, |ui| {
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.position"), ui);
             ui.add_space(ui.available_width() - input_widths);
@@ -222,13 +221,6 @@ pub fn draw(
     })
     .response
     .on_disabled_hover_text(str_cant_edit);
-
-    // show note about the physics distance field, if this bone's parent has rotation physics
-    if has_physics {
-        ui.add_space(10.);
-        ui.label(shared_ui.loc("bone_panel.physics.parent_has_physics"))
-            .on_hover_text(shared_ui.loc("bone_panel.physics.parent_has_physics_desc"));
-    }
 
     ui.add_space(20.);
 
@@ -293,16 +285,7 @@ pub fn draw(
     #[cfg(not(debug_assertions))]
     return;
 
-    physics(
-        ui,
-        &bone,
-        selections,
-        shared_ui,
-        config,
-        armature,
-        events,
-        has_physics,
-    );
+    physics(ui, &bone, selections, shared_ui, config, armature, events);
 
     ui.add_space(20.);
 }
@@ -1192,7 +1175,6 @@ pub fn physics(
     config: &Config,
     armature: &Armature,
     events: &mut EventState,
-    has_physics: bool,
 ) {
     let sel = selections.clone();
     let str_heading = &shared_ui.loc("bone_panel.physics.heading").clone();
@@ -1205,47 +1187,14 @@ pub fn physics(
         ui.horizontal(|ui| {
             ui.label(str_heading).on_hover_text(str_desc);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                // todo: add phys_folded
+                // don't add until v0.5 nightly is underway, though
                 let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
                 let pointing_hand = egui::CursorIcon::PointingHand;
                 if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
                     let ik_folded = armature.sel_bone(&sel).unwrap().ik_folded;
                     events.toggle_ik_folded(if ik_folded { 0 } else { 1 });
                 }
-
-                if armature.bone_eff(bone.id) == JointEffector::None {
-                    return;
-                }
-
-                //let mut enabled = !bone.ik_disabled;
-                //let str_desc = &shared_ui.loc("bone_panel.inverse_kinematics.enabled_desc");
-                //let checkbox = ui
-                //    .add_enabled(is_root, egui::Checkbox::new(&mut enabled, "".into_atoms()))
-                //    .on_hover_text(str_desc);
-                //if checkbox.clicked() {
-                //    let mut bones = vec![];
-                //    armature_window::get_all_children(&armature.bones, &mut bones, &bone);
-                //    bones.push(bone.clone());
-                //    for b in 0..bones.len() {
-                //        let disabled = armature.bones[b].ik_disabled;
-                //        events.toggle_bone_ik_disabled(b, !disabled);
-                //    }
-
-                //    if is_root {
-                //        return;
-                //    }
-
-                //    // emable parents IK as well
-
-                //    let parents = armature.get_all_parents(bone.id);
-                //    for p in parents {
-                //        if armature.bone_eff(p.id) == JointEffector::None {
-                //            continue;
-                //        }
-
-                //        let idx = armature.bones.iter().position(|b| b.id == p.id).unwrap();
-                //        events.toggle_bone_ik_disabled(idx, false);
-                //    }
-                //}
             })
         });
     });
@@ -1270,21 +1219,8 @@ pub fn physics(
             });
         };
     }
-    if has_physics {
-        ui.horizontal(|ui| {
-            ui.label(shared_ui.loc("bone_panel.physics.distance"));
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let id = "phys_dist".to_string();
-                let (edited, value, _) = ui.float_input(id, shared_ui, bone.pos.x, 1., None);
-                if edited {
-                    events.edit_bone(bone.id, &AE::PositionX, value, "", usize::MAX, -1);
-                    events.edit_bone(bone.id, &AE::PositionY, 0., "", usize::MAX, -1);
-                }
-            });
-        });
-        ui.add_space(10.);
-    }
-    #[rustfmt::skip] {
+    #[rustfmt::skip]
+    {
         input!("bone_panel.physics.resistance",       bone.phys_rot_resistance,   set_rot_resistance);
         input!("bone_panel.physics.pos_elasticity",   bone.phys_pos_elasticity,   set_pos_elasiticity);
         input!("bone_panel.physics.scale_elasticity", bone.phys_scale_elasticity, set_scale_elasiticity);

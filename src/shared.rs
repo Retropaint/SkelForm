@@ -1074,9 +1074,11 @@ pub struct Bone {
     #[serde(skip_serializing_if = "is_max")]
     pub phys_global_rot: f32,
     #[serde(skip_serializing_if = "is_max")]
-    pub phys_rot_resistance: f32,
+    pub phys_global_orbit: f32,
     #[serde(skip_serializing_if = "is_max")]
-    pub phys_rot_velocity: f32,
+    pub phys_global_orbit_diff: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub phys_rot_resistance: f32,
     #[serde(skip_serializing_if = "is_max")]
     pub phys_rot_bounce: f32,
 

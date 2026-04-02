@@ -750,14 +750,14 @@ pub fn prepare_files(
         if bone.phys_rot_resistance == 0. || disable_phys {
             bone.phys_global_rot = f32::MAX;
             bone.phys_rot_resistance = f32::MAX;
-            bone.phys_rot_velocity = f32::MAX;
             bone.phys_rot_bounce = f32::MAX;
+            bone.phys_global_orbit = f32::MAX;
+            bone.phys_global_orbit_diff = f32::MAX;
         }
         if bone.phys_scale_elasticity == 0. || disable_phys {
             bone.phys_scale_elasticity = f32::MAX;
             bone.phys_global_scale = Vec2::new(f32::MAX, f32::MAX);
         }
-        bone.phys_rot_velocity = 0.;
     }
 
     let mut atlases = vec![];

@@ -925,26 +925,30 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
             phys_pos.y = utils::interp(2, elasticity as i32, phys_pos.y, const_bone.pos.y, s, e);
         }
 
-        // interpolate rotation
-        // 'interpolation' here is conceptual - to avoid roundabouts, shortest_delta is always used
         if arm_bone.phys_rot_resistance > 0. {
-            // swing rotation based on momentum
-            let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
-            let angle = (-vel.y).atan2(-vel.x);
-            let rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, angle);
-            let strength = (arm_bone.phys_global_pos - prev_pos).mag();
-            arm_bone.phys_global_rot += rot * strength / arm_bone.phys_rot_resistance;
+            let bones = &constructed_bones;
+            let parent = bones.iter().find(|b| b.id == const_bone.parent_id).unwrap();
 
-            // reset rotation back to rest
-            let mut rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, const_bone.rot);
-            // bounciness
-            if arm_bone.phys_rot_bounce > 0. && arm_bone.phys_rot_bounce <= 1. {
-                rot += arm_bone.phys_rot_velocity / (2. - arm_bone.phys_rot_bounce);
-            }
+            // interpolate bone's own rotation
+            let rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, const_bone.rot);
             arm_bone.phys_global_rot += rot / 10.;
 
-            // will be used in next frame to overshoot rotation, for bounciness
-            arm_bone.phys_rot_velocity = rot;
+            // get angle from child to parent
+            let diff = (const_bone.pos - parent.pos).normalize();
+            let diff_angle = diff.y.atan2(diff.x);
+            // interpolate to angle above
+            let rot = utils::shortest_angle_delta(arm_bone.phys_global_orbit, diff_angle);
+            arm_bone.phys_global_orbit += rot / 10.;
+
+            // swing orbit based on position momentum
+            let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
+            let angle = (-vel.y).atan2(-vel.x);
+            let rot = utils::shortest_angle_delta(arm_bone.phys_global_orbit, angle);
+            let strength = (arm_bone.phys_global_pos - prev_pos).mag();
+            arm_bone.phys_global_orbit += rot * strength / arm_bone.phys_rot_resistance;
+
+            // apply difference in final angle and orbit
+            arm_bone.phys_global_orbit_diff = diff_angle - arm_bone.phys_global_orbit;
         }
 
         // interpolate scale
@@ -1284,7 +1288,12 @@ pub fn inheritance(
             bones[i].pos *= parent.scale;
 
             // rotate such that it will orbit the parent
-            bones[i].pos = utils::rotate(&bones[i].pos, parent.rot);
+            if arm_bones.len() > 0 && bones[i].phys_rot_resistance != 0. {
+                let orbit_diff = bones[i].phys_global_orbit_diff;
+                bones[i].pos = utils::rotate(&bones[i].pos, parent.rot - orbit_diff);
+            } else {
+                bones[i].pos = utils::rotate(&bones[i].pos, parent.rot);
+            }
 
             // inherit position from parent
             bones[i].pos += parent.pos;
