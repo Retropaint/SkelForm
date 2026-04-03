@@ -910,7 +910,6 @@ pub fn runtime_construction(
 
 // simulate physics on the armature, then apply it to constructed bones
 fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<Bone>) {
-    // interpolate global fields, based on constructed bones
     for b in 0..armature_bones.len() {
         let s = Vec2::new(0.3, 0.3);
         let e = Vec2::new(0.6, 0.6);
@@ -924,6 +923,14 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
             let damping = arm_bone.phys_pos_damping;
             phys_pos.x = utils::interp(2, damping as i32, phys_pos.x, const_bone.pos.x, s, e);
             phys_pos.y = utils::interp(2, damping as i32, phys_pos.y, const_bone.pos.y, s, e);
+        }
+
+        // interpolate scale
+        if arm_bone.phys_scale_damping > 0. {
+            let phys_scale = &mut arm_bone.phys_global_scale;
+            let elas = arm_bone.phys_scale_damping;
+            phys_scale.x = utils::interp(2, elas as i32, phys_scale.x, const_bone.scale.x, s, e);
+            phys_scale.y = utils::interp(2, elas as i32, phys_scale.y, const_bone.scale.y, s, e);
         }
 
         // interpolate rotation
@@ -956,14 +963,6 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
 
             // apply difference in final angle and orbit
             arm_bone.phys_global_orbit_diff = diff_angle - arm_bone.phys_global_orbit;
-        }
-
-        // interpolate scale
-        if arm_bone.phys_scale_damping > 0. {
-            let phys_scale = &mut arm_bone.phys_global_scale;
-            let elas = arm_bone.phys_scale_damping;
-            phys_scale.x = utils::interp(2, elas as i32, phys_scale.x, const_bone.scale.x, s, e);
-            phys_scale.y = utils::interp(2, elas as i32, phys_scale.y, const_bone.scale.y, s, e);
         }
     }
 }
