@@ -413,7 +413,7 @@
     "delete_file": "Are you sure to delete $?",
     "delete_tex": "Are you sure to delete this texture?",
     "delete_style": "Are you sure to delete this style?",
-    "unsaved": "Are you sure you want to quit and discard unsaved changes?\n\n(Click 'Yes' to confirm)",
+    "unsaved": "Quit and discard unsaved changes?\n\n(Click 'Yes' to confirm)",
     "delete_keyframe_line": "Are you sure to delete this keyframe line?",
     "yes": "Yes",
     "no": "No"
