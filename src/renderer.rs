@@ -926,34 +926,36 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
             phys_pos.y = utils::interp(2, damping as i32, phys_pos.y, const_bone.pos.y, s, e);
         }
 
-        if arm_bone.phys_rot_resistance > 0. {
-            // interpolate bone's own rotation
+        // interpolate rotation
+        if arm_bone.phys_rot_damping > 0. {
             let rot = utils::shortest_angle_delta(arm_bone.phys_global_rot, const_bone.rot);
-            arm_bone.phys_global_rot += rot / 10.;
+            arm_bone.phys_global_rot += rot / arm_bone.phys_rot_damping;
+        }
 
-            let bones = &constructed_bones;
-            if let Some(parent) = bones.iter().find(|b| b.id == const_bone.parent_id) {
-                // interpolate to the angle difference between bone and parent
-                let diff = (const_bone.pos - parent.pos).normalize();
-                let diff_angle = diff.y.atan2(diff.x);
-                let mut rest_rot = shortest_angle_delta(arm_bone.phys_global_orbit, diff_angle);
-                // bounce the orbit
-                if arm_bone.phys_rot_bounce > 0. && arm_bone.phys_rot_bounce <= 1. {
-                    rest_rot += arm_bone.phys_global_orbit_vel / (2. - arm_bone.phys_rot_bounce);
-                    arm_bone.phys_global_orbit_vel = rest_rot;
-                }
-                arm_bone.phys_global_orbit += rest_rot / 10.;
-
-                // swing orbit based on position momentum
-                let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
-                let angle = (-vel.y).atan2(-vel.x);
-                let vel_rot = utils::shortest_angle_delta(arm_bone.phys_global_orbit, angle);
-                let strength = (arm_bone.phys_global_pos - prev_pos).mag();
-                arm_bone.phys_global_orbit += vel_rot * strength / arm_bone.phys_rot_resistance;
-
-                // apply difference in final angle and orbit
-                arm_bone.phys_global_orbit_diff = diff_angle - arm_bone.phys_global_orbit;
+        // interpolate parent orbit (rot res, bounce, etc)
+        let bones = &constructed_bones;
+        let parent = bones.iter().find(|b| b.id == const_bone.parent_id);
+        if arm_bone.phys_rot_resistance > 0. && parent != None {
+            // interpolate to the angle difference between bone and parent
+            let diff = (const_bone.pos - parent.unwrap().pos).normalize();
+            let diff_angle = diff.y.atan2(diff.x);
+            let mut rest_rot = shortest_angle_delta(arm_bone.phys_global_orbit, diff_angle);
+            // apply bounce
+            if arm_bone.phys_rot_bounce > 0. && arm_bone.phys_rot_bounce <= 1. {
+                rest_rot += arm_bone.phys_global_orbit_vel / (2. - arm_bone.phys_rot_bounce);
+                arm_bone.phys_global_orbit_vel = rest_rot;
             }
+            arm_bone.phys_global_orbit += rest_rot / 10.;
+
+            // swing orbit based on position momentum
+            let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
+            let angle = (-vel.y).atan2(-vel.x);
+            let vel_rot = utils::shortest_angle_delta(arm_bone.phys_global_orbit, angle);
+            let strength = (arm_bone.phys_global_pos - prev_pos).mag();
+            arm_bone.phys_global_orbit += vel_rot * strength / arm_bone.phys_rot_resistance;
+
+            // apply difference in final angle and orbit
+            arm_bone.phys_global_orbit_diff = diff_angle - arm_bone.phys_global_orbit;
         }
 
         // interpolate scale
@@ -1311,7 +1313,7 @@ pub fn inheritance(
 
         // apply physics, if armature_bones is provided
         if arm_bones.len() > 0 {
-            if bones[i].phys_rot_resistance > 0. {
+            if bones[i].phys_rot_damping > 0. {
                 bones[i].rot = arm_bones[i].phys_global_rot;
             }
             if bones[i].phys_pos_damping > 0. {

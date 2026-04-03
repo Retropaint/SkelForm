@@ -1048,6 +1048,10 @@ pub fn simple_event(
             let bone = armature.sel_bone_mut(selections).unwrap();
             bone.phys_scale_damping = value;
         }
+        Events::SetRotDamping => {
+            let bone = armature.sel_bone_mut(selections).unwrap();
+            bone.phys_rot_damping = value;
+        }
         Events::SetRotBounce => {
             let bone = armature.sel_bone_mut(selections).unwrap();
             bone.phys_rot_bounce = (value).max(0.).min(1.);

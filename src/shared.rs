@@ -2270,6 +2270,7 @@ pub enum Events {
     SetRotResistance,
     SetPosDamping,
     SetScaleDamping,
+    SetRotDamping,
     SetRotBounce,
     SelectVertex,
 
@@ -2387,8 +2388,9 @@ impl EventState {
     event_with_value!(raise_global_zindex, E::RaiseGlobalZindex, bone_id, i32);
     event_with_value!(toggle_phys_field, E::TogglePhysField, field, i32); // 0 - pos, 1 - rot, 2 - scale
     event_with_value!(set_rot_resistance, E::SetRotResistance, res, f32);
-    event_with_value!(set_pos_damping, E::SetPosDamping, elas, f32);
-    event_with_value!(set_scale_damping, E::SetScaleDamping, elas, f32);
+    event_with_value!(set_pos_damping, E::SetPosDamping, damp, f32);
+    event_with_value!(set_scale_damping, E::SetScaleDamping, damp, f32);
+    event_with_value!(set_rot_damping, E::SetRotDamping, damp, f32);
     event_with_value!(set_rot_bounce, E::SetRotBounce, bounce, f32);
     event_with_value!(set_hovering_id, E::SetHoveringVertId, vert_id, i32);
     event_with_value!(set_hovering_tri, E::SetHoveringTri, value, i32);

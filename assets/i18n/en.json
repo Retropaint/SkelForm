@@ -254,10 +254,10 @@
       "rot": "Rotation: ",
       "scale": "Scale: ",
       "resistance": "Resistance:",
-      "pos_damping": "Pos. Damping:",
+      "pos_damping": "Position Damping:",
       "scale_damping": "Scale Damping:",
-      "rot_damping": "Rot Damping:",
-      "rot_bounce": "Rot. Bounce:",
+      "rot_damping": "Rotation Damping:",
+      "rot_bounce": "Rotation Bounce:",
       "distance": "Distance:",
       "parent_has_physics": "This bone's parent has rotation physics. Adjust its distance in the Physics section below. ℹ",
       "parent_has_physics_desc": "To accurately simulate wind/air resistance, bones should only be distanced horizontally to their parent."
