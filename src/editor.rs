@@ -1040,13 +1040,13 @@ pub fn simple_event(
                 }
             }
         }
-        Events::SetPosElasticity => {
+        Events::SetPosDamping => {
             let bone = armature.sel_bone_mut(selections).unwrap();
-            bone.phys_pos_elasticity = value;
+            bone.phys_pos_damping = value;
         }
-        Events::SetScaleElasticity => {
+        Events::SetScaleDamping => {
             let bone = armature.sel_bone_mut(selections).unwrap();
-            bone.phys_scale_elasticity = value;
+            bone.phys_scale_damping = value;
         }
         Events::SetRotBounce => {
             let bone = armature.sel_bone_mut(selections).unwrap();

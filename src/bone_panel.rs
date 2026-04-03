@@ -1204,26 +1204,52 @@ pub fn physics(
         return;
     }
 
-    macro_rules! input {
-        ($label:expr, $field:expr, $func:ident) => {
-            let loc = shared_ui.loc($label).to_string();
-            ui.horizontal(|ui| {
-                ui.label(loc);
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let (edited, value, _) =
-                        ui.float_input($label.to_string(), shared_ui, $field, 1., None);
-                    if edited {
-                        events.$func(value);
-                    }
+    
+    ui.scope(|ui| {
+        macro_rules! slider_input {
+            ($label:expr, $field:expr, $func:ident, $min:expr, $max:expr) => {
+                let loc = shared_ui.loc($label).to_string();
+                ui.horizontal(|ui| {
+                    ui.label(loc);
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let (edited, value, _) = ui.float_input($label.to_string(), shared_ui, $field, 1., None);
+                        if edited {
+                            events.$func(value);
+                        }
+                    });
                 });
-            });
+                ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let mut new_field = $field;
+                        let slider = ui.add(egui::Slider::new(&mut new_field, $min..=$max).show_value(false));
+                        if $field > $max && !slider.dragged() {
+                            new_field = $field;
+                        }
+                        if new_field != $field {
+                            events.$func(new_field);
+                        }
+                    });
+                });
+            };
+        }
+        ui.style_mut().spacing.slider_width = ui.available_width();
+        #[rustfmt::skip] {
+            slider_input!(
+                "bone_panel.physics.resistance", bone.phys_rot_resistance, set_rot_resistance,
+                0., 3000.
+            );
+            slider_input!(
+                "bone_panel.physics.pos_damping", bone.phys_pos_damping, set_pos_damping,
+                0., 200.
+            );
+            slider_input!(
+                "bone_panel.physics.scale_damping", bone.phys_scale_damping, set_scale_damping,
+                0., 200.
+            );
+            slider_input!(
+                "bone_panel.physics.rot_bounce", bone.phys_rot_bounce, set_rot_bounce,
+                0., 1.
+            );
         };
-    }
-    #[rustfmt::skip]
-    {
-        input!("bone_panel.physics.resistance",       bone.phys_rot_resistance,   set_rot_resistance);
-        input!("bone_panel.physics.pos_elasticity",   bone.phys_pos_elasticity,   set_pos_elasiticity);
-        input!("bone_panel.physics.scale_elasticity", bone.phys_scale_elasticity, set_scale_elasiticity);
-        input!("bone_panel.physics.rot_bounce",       bone.phys_rot_bounce,       set_rot_bounce);
-    };
+    });
 }

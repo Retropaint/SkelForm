@@ -919,11 +919,11 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
         let prev_pos = arm_bone.phys_global_pos;
 
         // interpolate position
-        if arm_bone.phys_pos_elasticity > 0. || arm_bone.phys_rot_resistance > 0. {
+        if arm_bone.phys_pos_damping > 0. || arm_bone.phys_rot_resistance > 0. {
             let phys_pos = &mut arm_bone.phys_global_pos;
-            let elasticity = arm_bone.phys_pos_elasticity;
-            phys_pos.x = utils::interp(2, elasticity as i32, phys_pos.x, const_bone.pos.x, s, e);
-            phys_pos.y = utils::interp(2, elasticity as i32, phys_pos.y, const_bone.pos.y, s, e);
+            let damping = arm_bone.phys_pos_damping;
+            phys_pos.x = utils::interp(2, damping as i32, phys_pos.x, const_bone.pos.x, s, e);
+            phys_pos.y = utils::interp(2, damping as i32, phys_pos.y, const_bone.pos.y, s, e);
         }
 
         if arm_bone.phys_rot_resistance > 0. {
@@ -932,10 +932,9 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
             arm_bone.phys_global_rot += rot / 10.;
 
             let bones = &constructed_bones;
-            let parent = bones.iter().find(|b| b.id == const_bone.parent_id);
-            if parent != None && arm_bone.ik_family_id == -1 {
+            if let Some(parent) = bones.iter().find(|b| b.id == const_bone.parent_id) {
                 // interpolate to the angle difference between bone and parent
-                let diff = (const_bone.pos - parent.unwrap().pos).normalize();
+                let diff = (const_bone.pos - parent.pos).normalize();
                 let diff_angle = diff.y.atan2(diff.x);
                 let mut rest_rot = shortest_angle_delta(arm_bone.phys_global_orbit, diff_angle);
                 // bounce the orbit
@@ -958,9 +957,9 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
         }
 
         // interpolate scale
-        if arm_bone.phys_scale_elasticity > 0. {
+        if arm_bone.phys_scale_damping > 0. {
             let phys_scale = &mut arm_bone.phys_global_scale;
-            let elas = arm_bone.phys_scale_elasticity;
+            let elas = arm_bone.phys_scale_damping;
             phys_scale.x = utils::interp(2, elas as i32, phys_scale.x, const_bone.scale.x, s, e);
             phys_scale.y = utils::interp(2, elas as i32, phys_scale.y, const_bone.scale.y, s, e);
         }
@@ -1315,10 +1314,10 @@ pub fn inheritance(
             if bones[i].phys_rot_resistance > 0. {
                 bones[i].rot = arm_bones[i].phys_global_rot;
             }
-            if bones[i].phys_pos_elasticity > 0. {
+            if bones[i].phys_pos_damping > 0. {
                 bones[i].pos = arm_bones[i].phys_global_pos;
             }
-            if bones[i].phys_scale_elasticity > 0. {
+            if bones[i].phys_scale_damping > 0. {
                 bones[i].scale = arm_bones[i].phys_global_scale;
             }
         }

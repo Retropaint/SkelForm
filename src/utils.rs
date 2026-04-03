@@ -743,8 +743,8 @@ pub fn prepare_files(
         let bone_id = armature_copy.bones[b].id;
         armature_copy.bones[b].has_physics = armature_copy.has_physics(bone_id);
         let bone = &mut armature_copy.bones[b];
-        if bone.phys_pos_elasticity == 0. || disable_phys {
-            bone.phys_pos_elasticity = f32::MAX;
+        if bone.phys_pos_damping == 0. || disable_phys {
+            bone.phys_pos_damping = f32::MAX;
             bone.phys_global_pos = Vec2::new(f32::MAX, f32::MAX);
         }
         if bone.phys_rot_resistance == 0. || disable_phys {
@@ -754,8 +754,8 @@ pub fn prepare_files(
             bone.phys_global_orbit = f32::MAX;
             bone.phys_global_orbit_diff = f32::MAX;
         }
-        if bone.phys_scale_elasticity == 0. || disable_phys {
-            bone.phys_scale_elasticity = f32::MAX;
+        if bone.phys_scale_damping == 0. || disable_phys {
+            bone.phys_scale_damping = f32::MAX;
             bone.phys_global_scale = Vec2::new(f32::MAX, f32::MAX);
         }
     }
