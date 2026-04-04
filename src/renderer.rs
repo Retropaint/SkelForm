@@ -2043,7 +2043,7 @@ pub fn draw_points_and_kites(
 
             // bones can be selected by clicking on their point
             let mouse_on_it = utils::in_bounding_box(&input.mouse, &this_verts, &camera.window).1;
-            if mouse_on_it {
+            if mouse_on_it && !camera.on_ui {
                 color = bone.group_color.into();
                 if bone.group_color.a == 0 {
                     color = point_color;
