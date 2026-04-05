@@ -309,9 +309,9 @@ pub fn render(
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
 
         // render texture, so it appears above everything else
-        if renderer.render_textures {
-            let tex = armature.tex_of(bone.id).unwrap();
-            let bind_group = &armature.tex_data(tex).unwrap().bind_group;
+        let tex = armature.tex_of(bone.id);
+        if renderer.render_textures && tex != None{
+            let bind_group = &armature.tex_data(tex.unwrap()).unwrap().bind_group;
             let sel_bone_buffer = &mut renderer.sel_bone_buffer;
             let mut world_verts = bone.world_verts.clone();
             for vert in &mut world_verts {
@@ -1295,7 +1295,8 @@ pub fn inheritance(
 
             // orbit the parent
             let mut orbit_rot = parent.rot;
-            if arm_bones.len() > 0 && bones[i].phys_rot_resistance != 0. {
+            // apply orbital difference, if rotation resistance physics is active
+            if arm_bones.len() > 0 && bones[i].phys_rot_resistance > 0. {
                 orbit_rot -= bones[i].phys_global_orbit_diff
             }
             bones[i].pos = utils::rotate(&bones[i].pos, orbit_rot);
