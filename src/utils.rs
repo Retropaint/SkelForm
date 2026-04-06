@@ -638,10 +638,16 @@ pub fn prepare_files(
     // index blacklist IDs
     for b in 0..armature_copy.bones.len() {
         let bone = &mut armature_copy.bones[b];
+
+        // only keep IDs that point to existing vertices
+        bone.blacklist
+            .retain(|id| bone.vertices.iter().position(|v| v.id == *id) != None);
+
         for i in 0..bone.blacklist.len() {
             let id = bone.blacklist[i];
-            let idx = bone.vertices.iter().position(|v| v.id == id).unwrap();
-            bone.blacklist[i] = idx as u32;
+            if let Some(idx) = bone.vertices.iter().position(|v| v.id == id) {
+                bone.blacklist[i] = idx as u32;
+            }
         }
     }
 
