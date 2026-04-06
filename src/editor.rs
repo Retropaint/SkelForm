@@ -913,6 +913,7 @@ pub fn simple_event(
             bone.vertices = verts;
             bone.indices = indices;
             bone.binds = vec![];
+            bone.blacklist = vec![];
             bone.verts_edited = true;
             cleanup_vertices(bone);
             selections.bind = -1;
