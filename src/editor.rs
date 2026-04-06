@@ -1805,7 +1805,7 @@ pub fn remove_blacklisted_tris(
 ) {
     // remove blacklists with vertices that don't exist (prevents lingering triangles)
     let ids: Vec<u32> = verts.iter().map(|v| v.id).collect();
-    for (b, raw_bl_chunk) in blacklist.clone().chunks_exact_mut(3).enumerate() {
+    for (b, raw_bl_chunk) in blacklist.clone().chunks_exact_mut(3).enumerate().rev() {
         let mut chunk = vec![raw_bl_chunk[0], raw_bl_chunk[1], raw_bl_chunk[2]];
         chunk.sort();
         if !ids.contains(&chunk[0]) || !ids.contains(&chunk[1]) || !ids.contains(&chunk[2]) {
