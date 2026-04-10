@@ -113,7 +113,9 @@
     "same_name": "There is already a texture with the same name in this style.",
     "styles_empty": "All textures must be in a style.\n\nStyles are batches of textures, used to represent outfits or skins.\n\nTo add a style, click 'New' above.",
     "textures_empty": "This style's textures will appear here.\n\nClick 'Import' above to import an image to add as a texture.",
-    "assigned_empty": "Once a texture is added, the bone hierarchy will be shown on the left.\n\nAll bones' assigned textures will be shown here."
+    "assigned_empty": "Once a texture is added, the bone hierarchy will be shown on the left.\n\nAll bones' assigned textures will be shown here.",
+    "import_desc": "Import image",
+    "empty_desc": "Create empty texture"
   },
   "atlas_modal": {
     "no_pending": "If the imported image is a single texture, simply click 'Done'.\n\nIf it's a texture atlas, drag the image or click 'Add Texture' to add a new slice of texture.\n\nThe atlas will be discarded once done, and will need to be re-imported to add more textures."

@@ -1634,9 +1634,7 @@ impl Armature {
 
     pub fn has_physics(&self, bone_id: i32) -> bool {
         let bone = &self.bones.iter().find(|b| b.id == bone_id).unwrap();
-        bone.phys_pos_damping > 0.
-            || bone.phys_sway > 0.
-            || bone.phys_scale_damping > 0.
+        bone.phys_pos_damping > 0. || bone.phys_sway > 0. || bone.phys_scale_damping > 0.
     }
 }
 
@@ -2279,6 +2277,7 @@ pub enum Events {
     SetHoveringVertId,
     SetHoveringTri,
     SetHoveringLine,
+    CreateEmptyTexture,
 }
 
 enum_string!(Events);
@@ -2340,6 +2339,7 @@ impl EventState {
     generic_event!(copy_keyframes_in_frame, Events::CopyKeyframesInFrame);
     generic_event!(save_animation, Events::SaveAnimation);
     generic_event!(update_render_options, Events::UpdateRenderOptions);
+    generic_event!(create_empty_texture, Events::CreateEmptyTexture);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, i32);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);

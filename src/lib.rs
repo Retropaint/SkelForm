@@ -402,8 +402,12 @@ impl ApplicationHandler for App {
                 }
 
                 self.shared.camera.window = Vec2::new(size.width as f32, size.height as f32);
-                let shared = &mut self.shared;
-                renderer.render_frame(screen_descriptor, paint_jobs, textures_delta, shared);
+                renderer.render_frame(
+                    screen_descriptor,
+                    paint_jobs,
+                    textures_delta,
+                    &mut self.shared,
+                );
 
                 #[cfg(target_arch = "wasm32")]
                 {
@@ -418,6 +422,26 @@ impl ApplicationHandler for App {
                 gui_state
                     .egui_ctx()
                     .set_pixels_per_point(self.shared.ui.scale);
+
+                // create empty texture if the appropriate event is called.
+                // this is separate from other event processing, since it requires wgpu stuff
+                for event in &self.shared.events.events {
+                    if *event != Events::CreateEmptyTexture {
+                        continue;
+                    }
+                    bone_panel::add_texture(
+                        image::DynamicImage::new(1, 1, image::ColorType::Rgba8),
+                        self.shared.selections.style,
+                        Vec2::new(1., 1.),
+                        "empty",
+                        &mut self.shared.armature,
+                        Some(&self.renderer.as_ref().unwrap().gpu.queue),
+                        Some(&self.renderer.as_ref().unwrap().gpu.device),
+                        Some(&self.renderer.as_ref().unwrap().bind_group_layout),
+                        Some(&gui_state.egui_ctx()),
+                    );
+                    break;
+                }
 
                 while self.shared.events.events.len() > 0 {
                     let s = &mut self.shared;

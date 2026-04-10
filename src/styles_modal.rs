@@ -1,3 +1,4 @@
+use bone_panel::add_texture;
 use ui::TextInputOptions;
 
 use crate::{ui::EguiUi, *};
@@ -55,10 +56,9 @@ pub fn draw(
             ui.set_height(height);
             let modal_width = ui.max_rect().width();
             let height = ui.available_height();
-            #[rustfmt::skip]
-            draw_styles_list(ui, armature, shared_ui, config, selections, events, modal_width, height, frame_padding);
-            draw_textures_list(ui, modal_width, height, frame_padding, shared_ui, events, armature, selections, config);
-            draw_bones_list(ui, modal_width, height, armature, config, shared_ui, selections, events);
+            #[rustfmt::skip] draw_styles_list(ui, armature, shared_ui, config, selections, events, modal_width, height, frame_padding);
+            #[rustfmt::skip] draw_textures_list(ui, modal_width, height, frame_padding, shared_ui, events, armature, selections, config);
+            #[rustfmt::skip] draw_bones_list(ui, modal_width, height, armature, config, shared_ui, selections, events);
             draw_assigned_list(ui, height, shared_ui, config, selections, armature, events);
         });
 
@@ -292,12 +292,19 @@ pub fn draw_textures_list(
             let naming_first_style =
                 armature.styles.len() == 1 && shared_ui.rename_id == "tex_set 0";
 
+            let tex_button = ui
+                .skf_button("🖻")
+                .on_hover_text(shared_ui.loc("styles_modal.import_desc"));
+            let empty_tex_button = ui
+                .skf_button("🗋")
+                .on_hover_text(shared_ui.loc("styles_modal.empty_desc"));
+            if empty_tex_button.clicked() {
+                events.create_empty_texture();
+            }
             if naming_first_style
                 || set_idx == usize::MAX
                 || selections.style == -1
-                || !ui
-                    .skf_button(&shared_ui.loc("styles_modal.import"))
-                    .clicked()
+                || !tex_button.clicked()
             {
                 return;
             }
@@ -352,8 +359,7 @@ pub fn draw_textures_list(
                     if selections.style != -1 {
                         let scroll_area = egui::ScrollArea::vertical().id_salt("tex_list");
                         scroll_area.show(ui, |ui| {
-                            #[rustfmt::skip]
-                            draw_tex_buttons(shared_ui, &armature, &selections, &config, events, ui);
+                            #[rustfmt::skip] draw_tex_buttons(shared_ui, &armature, &selections, &config, events, ui);
                         });
                     }
                     return;
@@ -689,6 +695,9 @@ pub fn draw_tex_preview(
     );
     let rect = egui::Rect::from_min_size(left_top, size.into());
     let data = armature.tex_data(tex).unwrap();
+    if data.ui_img == None {
+        return;
+    }
     egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, rect);
 
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {

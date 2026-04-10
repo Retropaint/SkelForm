@@ -310,7 +310,7 @@ pub fn render(
 
         // render texture, so it appears above everything else
         let tex = armature.tex_of(bone.id);
-        if renderer.render_textures && tex != None{
+        if renderer.render_textures && tex != None {
             let bind_group = &armature.tex_data(tex.unwrap()).unwrap().bind_group;
             let sel_bone_buffer = &mut renderer.sel_bone_buffer;
             let mut world_verts = bone.world_verts.clone();

@@ -606,8 +606,6 @@ pub fn mesh_deformation(
                 }
             });
         });
-
-        return false;
     }
 
     if armature.tex_of(bone.id) == None {
