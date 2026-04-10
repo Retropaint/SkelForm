@@ -753,9 +753,9 @@ pub fn prepare_files(
             bone.phys_pos_damping = f32::MAX;
             bone.phys_global_pos = Vec2::new(f32::MAX, f32::MAX);
         }
-        if (bone.phys_rot_resistance == 0. && bone.phys_rot_damping == 0.) || disable_phys {
+        if (bone.phys_sway == 0. && bone.phys_rot_damping == 0.) || disable_phys {
             bone.phys_global_rot = f32::MAX;
-            bone.phys_rot_resistance = f32::MAX;
+            bone.phys_sway = f32::MAX;
             bone.phys_rot_damping = f32::MAX;
             bone.phys_rot_bounce = f32::MAX;
             bone.phys_global_orbit = f32::MAX;

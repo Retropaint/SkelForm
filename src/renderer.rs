@@ -918,7 +918,7 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
         let prev_pos = arm_bone.phys_global_pos;
 
         // interpolate position
-        if arm_bone.phys_pos_damping > 0. || arm_bone.phys_rot_resistance > 0. {
+        if arm_bone.phys_pos_damping > 0. || arm_bone.phys_sway > 0. {
             let phys_pos = &mut arm_bone.phys_global_pos;
             let damping = arm_bone.phys_pos_damping;
             phys_pos.x = utils::interp(2, damping as i32, phys_pos.x, const_bone.pos.x, s, e);
@@ -942,7 +942,7 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
         // interpolate parent orbit (rot res, bounce, etc)
         let bones = &constructed_bones;
         let parent = bones.iter().find(|b| b.id == const_bone.parent_id);
-        if arm_bone.phys_rot_resistance > 0. && parent != None {
+        if arm_bone.phys_sway > 0. && parent != None {
             // interpolate to the angle difference between bone and parent
             let diff = (const_bone.pos - parent.unwrap().pos).normalize();
             let diff_angle = diff.y.atan2(diff.x);
@@ -958,8 +958,8 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
             let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
             let angle = (-vel.y).atan2(-vel.x);
             let vel_rot = utils::shortest_angle_delta(arm_bone.phys_global_orbit, angle);
-            let strength = (arm_bone.phys_global_pos - prev_pos).mag();
-            arm_bone.phys_global_orbit += vel_rot * strength / arm_bone.phys_rot_resistance;
+            let strength = (arm_bone.phys_global_pos - prev_pos).mag() / 1000.;
+            arm_bone.phys_global_orbit += vel_rot * strength * arm_bone.phys_sway;
 
             // apply difference in final angle and orbit
             arm_bone.phys_global_orbit_diff = diff_angle - arm_bone.phys_global_orbit;
@@ -1296,7 +1296,7 @@ pub fn inheritance(
             // orbit the parent
             let mut orbit_rot = parent.rot;
             // apply orbital difference, if rotation resistance physics is active
-            if arm_bones.len() > 0 && bones[i].phys_rot_resistance > 0. {
+            if arm_bones.len() > 0 && bones[i].phys_sway > 0. {
                 orbit_rot -= bones[i].phys_global_orbit_diff
             }
             bones[i].pos = utils::rotate(&bones[i].pos, orbit_rot);

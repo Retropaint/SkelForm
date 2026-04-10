@@ -1209,7 +1209,15 @@ pub fn physics(
         ($label:expr, $field:expr, $func:ident, $min:expr, $max:expr) => {
             let loc = shared_ui.loc($label).to_string();
             ui.horizontal(|ui| {
-                ui.label(loc);
+                let label = ui.label(loc);
+
+                // show tooltip, if it exists
+                let desc_code = &format!("{}{}", $label, "_desc");
+                let desc_loc = shared_ui.loc(desc_code).to_string();
+                if desc_loc != *desc_code {
+                    label.on_hover_text(desc_loc);
+                }
+
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let (edited, value, _) =
                         ui.float_input($label.to_string(), shared_ui, $field, 1., None);
@@ -1248,8 +1256,8 @@ pub fn physics(
         );
         if bone.parent_id != -1 {
             slider_input!(
-                "bone_panel.physics.resistance", bone.phys_rot_resistance, set_rot_resistance,
-                0., 3000.
+                "bone_panel.physics.sway", bone.phys_sway, set_rot_resistance,
+                0., 10.
             );
             slider_input!(
                 "bone_panel.physics.rot_bounce", bone.phys_rot_bounce, set_rot_bounce,

@@ -1082,7 +1082,7 @@ pub struct Bone {
     #[serde(skip_serializing_if = "is_max")]
     pub phys_rot_damping: f32,
     #[serde(skip_serializing_if = "is_max")]
-    pub phys_rot_resistance: f32,
+    pub phys_sway: f32,
     #[serde(skip_serializing_if = "is_max")]
     pub phys_rot_bounce: f32,
 
@@ -1635,7 +1635,7 @@ impl Armature {
     pub fn has_physics(&self, bone_id: i32) -> bool {
         let bone = &self.bones.iter().find(|b| b.id == bone_id).unwrap();
         bone.phys_pos_damping > 0.
-            || bone.phys_rot_resistance > 0.
+            || bone.phys_sway > 0.
             || bone.phys_scale_damping > 0.
     }
 }

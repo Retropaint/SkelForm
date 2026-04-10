@@ -1026,7 +1026,7 @@ pub fn simple_event(
         }
         Events::SetRotResistance => {
             let bone = armature.sel_bone_mut(selections).unwrap();
-            bone.phys_rot_resistance = value;
+            bone.phys_sway = value;
             if value == 0. {
                 let mut children = vec![];
                 let bone = armature.sel_bone(selections).unwrap();
