@@ -1,4 +1,3 @@
-use bone_panel::add_texture;
 use ui::TextInputOptions;
 
 use crate::{ui::EguiUi, *};
@@ -295,12 +294,15 @@ pub fn draw_textures_list(
             let tex_button = ui
                 .skf_button("🖻")
                 .on_hover_text(shared_ui.loc("styles_modal.import_desc"));
+           
+            // empty texture button
             let empty_tex_button = ui
                 .skf_button("🗋")
                 .on_hover_text(shared_ui.loc("styles_modal.empty_desc"));
             if empty_tex_button.clicked() {
                 events.create_empty_texture();
             }
+
             if naming_first_style
                 || set_idx == usize::MAX
                 || selections.style == -1
