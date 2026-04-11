@@ -1070,6 +1070,8 @@ pub struct Bone {
     pub phys_global_pos: Vec2,
     #[serde(skip_serializing_if = "is_max")]
     pub phys_pos_damping: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub phys_pos_ratio: f32,
 
     #[serde(skip_serializing_if = "is_max")]
     pub phys_global_rot: f32,
@@ -1090,6 +1092,8 @@ pub struct Bone {
     pub phys_global_scale: Vec2,
     #[serde(skip_serializing_if = "is_max")]
     pub phys_scale_damping: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub phys_scale_ratio: f32,
 
     // todo:
     // these should be private, but that upsets
@@ -2270,6 +2274,8 @@ pub enum Events {
     SetScaleDamping,
     SetRotDamping,
     SetRotBounce,
+    SetPosRatio,
+    SetScaleRatio,
     SelectVertex,
 
     EditVertexPos,
@@ -2395,6 +2401,8 @@ impl EventState {
     event_with_value!(set_hovering_id, E::SetHoveringVertId, vert_id, i32);
     event_with_value!(set_hovering_tri, E::SetHoveringTri, value, i32);
     event_with_value!(set_hovering_line, E::SetHoveringLine, value, i32);
+    event_with_value!(set_pos_ratio, E::SetPosRatio, value, f32);
+    event_with_value!(set_scale_ratio, E::SetScaleRatio, value, f32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

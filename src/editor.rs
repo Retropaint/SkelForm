@@ -1057,6 +1057,14 @@ pub fn simple_event(
             let bone = armature.sel_bone_mut(selections).unwrap();
             bone.phys_rot_bounce = (value).max(0.).min(1.);
         }
+        Events::SetPosRatio => {
+            let bone = armature.sel_bone_mut(selections).unwrap();
+            bone.phys_pos_ratio = (value).max(-1.).min(1.);
+        }
+        Events::SetScaleRatio => {
+            let bone = armature.sel_bone_mut(selections).unwrap();
+            bone.phys_scale_ratio = (value).max(-1.).min(1.);
+        }
         Events::SetHoveringVertId => selections.hovering_vert_id = value as i32,
         Events::SetHoveringTri => selections.hovering_tri_dur = value as i32,
         Events::SetHoveringLine => selections.hovering_line_dur = value as i32,

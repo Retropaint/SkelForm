@@ -261,6 +261,8 @@
       "scale_damping": "Scale Damping:",
       "rot_damping": "Rotation Damping:",
       "rot_bounce": "Rotation Bounce:",
+      "pos_ratio": "Ratio:",
+      "scale_ratio": "Ratio:",
       "distance": "Distance:",
       "parent_has_physics": "This bone's parent has rotation physics. Adjust its distance in the Physics section below. ℹ",
       "parent_has_physics_desc": "To accurately simulate wind/air resistance, bones should only be distanced horizontally to their parent."

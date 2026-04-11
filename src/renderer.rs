@@ -920,17 +920,33 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
         // interpolate position
         if arm_bone.phys_pos_damping > 0. || arm_bone.phys_sway > 0. {
             let phys_pos = &mut arm_bone.phys_global_pos;
-            let damping = arm_bone.phys_pos_damping;
-            phys_pos.x = utils::interp(2, damping as i32, phys_pos.x, const_bone.pos.x, s, e);
-            phys_pos.y = utils::interp(2, damping as i32, phys_pos.y, const_bone.pos.y, s, e);
+            let mut damping = Vec2::new(arm_bone.phys_pos_damping, arm_bone.phys_pos_damping);
+
+            // ratio
+            if arm_bone.phys_pos_ratio < 0. {
+                damping.y *= 1. - arm_bone.phys_pos_ratio.abs();
+            } else if arm_bone.phys_pos_ratio > 0. {
+                damping.x *= 1. - arm_bone.phys_pos_ratio;
+            }
+
+            phys_pos.x = utils::interp(2, damping.x as i32, phys_pos.x, const_bone.pos.x, s, e);
+            phys_pos.y = utils::interp(2, damping.y as i32, phys_pos.y, const_bone.pos.y, s, e);
         }
 
         // interpolate scale
         if arm_bone.phys_scale_damping > 0. {
             let phys_scale = &mut arm_bone.phys_global_scale;
-            let elas = arm_bone.phys_scale_damping;
-            phys_scale.x = utils::interp(2, elas as i32, phys_scale.x, const_bone.scale.x, s, e);
-            phys_scale.y = utils::interp(2, elas as i32, phys_scale.y, const_bone.scale.y, s, e);
+            let mut damping = Vec2::new(arm_bone.phys_scale_damping, arm_bone.phys_scale_damping);
+
+            // ratio
+            if arm_bone.phys_scale_ratio < 0. {
+                damping.y *= 1. - arm_bone.phys_scale_ratio.abs();
+            } else if arm_bone.phys_scale_ratio > 0. {
+                damping.x *= 1. - arm_bone.phys_scale_ratio;
+            }
+
+            phys_scale.x = utils::interp(2, damping.x as i32, phys_scale.x, const_bone.scale.x, s, e);
+            phys_scale.y = utils::interp(2, damping.y as i32, phys_scale.y, const_bone.scale.y, s, e);
         }
 
         // interpolate rotation

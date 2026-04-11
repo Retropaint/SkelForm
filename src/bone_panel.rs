@@ -1211,11 +1211,15 @@ pub fn physics(
     }
 
     #[rustfmt::skip] let pos_damping = phys_slider(bone.phys_pos_damping, "bone_panel.physics.pos_damping", 0., 200., shared_ui, ui);
+    #[rustfmt::skip] let pos_ratio = ratio_slider(bone.phys_pos_ratio, "bone_panel.physics.pos_ratio", -1., 1., shared_ui, ui);
     #[rustfmt::skip] let scale_damping = phys_slider(bone.phys_scale_damping, "bone_panel.physics.scale_damping", 0., 200., shared_ui, ui);
-    #[rustfmt::skip] let rot_damping= phys_slider(bone.phys_rot_damping, "bone_panel.physics.rot_damping", 0., 200., shared_ui, ui);
+    #[rustfmt::skip] let scale_ratio = ratio_slider(bone.phys_scale_ratio, "bone_panel.physics.scale_ratio", -1., 1., shared_ui, ui);
+    #[rustfmt::skip] let rot_damping = phys_slider(bone.phys_rot_damping, "bone_panel.physics.rot_damping", 0., 200., shared_ui, ui);
     edited!(pos_damping, bone.phys_pos_damping, set_pos_damping);
     edited!(scale_damping, bone.phys_scale_damping, set_scale_damping);
     edited!(rot_damping, bone.phys_rot_damping, set_rot_damping);
+    edited!(pos_ratio, bone.phys_pos_ratio, set_pos_ratio);
+    edited!(scale_ratio, bone.phys_scale_ratio, set_scale_ratio);
     if bone.parent_id != -1 {
         #[rustfmt::skip] let sway = phys_slider(bone.phys_sway, "bone_panel.physics.sway", 0., 10., shared_ui, ui);
         #[rustfmt::skip] let bounce = phys_slider(bone.phys_rot_bounce, "bone_panel.physics.rot_bounce", 0., 1., shared_ui, ui);
@@ -1268,5 +1272,61 @@ pub fn phys_slider(
         });
     });
 
-    return result;
+    result
+}
+
+pub fn ratio_slider(
+    field: f32,
+    label_code: &str,
+    min: f32,
+    max: f32,
+    shared_ui: &mut crate::Ui,
+    ui: &mut egui::Ui,
+) -> f32 {
+    let mut result = field;
+
+    ui.horizontal(|ui| {
+        ui.add_space(30.);
+        let loc = shared_ui.loc(&label_code).to_string();
+        let label = ui.label(loc);
+
+        // show tooltip, if it exists
+        let desc_code = &format!("{}{}", label_code, "_desc");
+        let desc_loc = shared_ui.loc(desc_code).to_string();
+        if desc_loc != *desc_code {
+            label.on_hover_text(desc_loc);
+        }
+
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let (edited, value, _) =
+                ui.float_input(label_code.to_string(), shared_ui, field, 1., None);
+            if edited {
+                result = value;
+            }
+            let mut ratio = Vec2::new(1., 1.);
+            if field < 0. {
+                ratio.y = 1. - field.abs();
+            } else if field > 0. {
+                ratio.x = 1. - field;
+            }
+            ui.label(format!("{:.2} : {:.2}", ratio.x, ratio.y));
+        });
+    });
+    ui.horizontal(|ui| {
+        ui.add_space(30.);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.style_mut().spacing.slider_width = ui.available_width();
+            let mut new_field = field;
+            let slider = ui.add(egui::Slider::new(&mut new_field, min..=max).show_value(false));
+            if !slider.dragged() {
+                return;
+            }
+            if field > max {
+                new_field = max;
+            }
+            result = new_field;
+        });
+    });
+
+    result
 }
