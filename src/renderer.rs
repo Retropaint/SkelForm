@@ -955,7 +955,7 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
             arm_bone.phys_global_rot += rot / arm_bone.phys_rot_damping;
         }
 
-        // interpolate parent orbit (rot res, bounce, etc)
+        // interpolate parent orbit (sway, bounce, etc)
         let bones = &constructed_bones;
         let parent = bones.iter().find(|b| b.id == const_bone.parent_id);
         if arm_bone.phys_sway > 0. && parent != None {

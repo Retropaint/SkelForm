@@ -1210,20 +1210,35 @@ pub fn physics(
         };
     }
 
+    // pos damping
     #[rustfmt::skip] let pos_damping = phys_slider(bone.phys_pos_damping, "bone_panel.physics.pos_damping", 0., 200., shared_ui, ui);
-    #[rustfmt::skip] let pos_ratio = ratio_slider(bone.phys_pos_ratio, "bone_panel.physics.pos_ratio", -1., 1., shared_ui, ui);
-    #[rustfmt::skip] let scale_damping = phys_slider(bone.phys_scale_damping, "bone_panel.physics.scale_damping", 0., 200., shared_ui, ui);
-    #[rustfmt::skip] let scale_ratio = ratio_slider(bone.phys_scale_ratio, "bone_panel.physics.scale_ratio", -1., 1., shared_ui, ui);
-    #[rustfmt::skip] let rot_damping = phys_slider(bone.phys_rot_damping, "bone_panel.physics.rot_damping", 0., 200., shared_ui, ui);
     edited!(pos_damping, bone.phys_pos_damping, set_pos_damping);
+    if bone.phys_pos_damping > 0. {
+        // pos ratio
+        #[rustfmt::skip] let pos_ratio = phys_sub_slider(bone.phys_pos_ratio, "bone_panel.physics.pos_ratio", -1., 1., true, shared_ui, ui);
+        edited!(pos_ratio, bone.phys_pos_ratio, set_pos_ratio);
+    }
+
+    // scale damping
+    #[rustfmt::skip] let scale_damping = phys_slider(bone.phys_scale_damping, "bone_panel.physics.scale_damping", 0., 200., shared_ui, ui);
     edited!(scale_damping, bone.phys_scale_damping, set_scale_damping);
+    if bone.phys_scale_damping > 0. {
+        // scale ratio
+        #[rustfmt::skip] let scale_ratio = phys_sub_slider(bone.phys_scale_ratio, "bone_panel.physics.scale_ratio", -1., 1., true, shared_ui, ui);
+        edited!(scale_ratio, bone.phys_scale_ratio, set_scale_ratio);
+    }
+
+    // rot damping
+    #[rustfmt::skip] let rot_damping = phys_slider(bone.phys_rot_damping, "bone_panel.physics.rot_damping", 0., 200., shared_ui, ui);
     edited!(rot_damping, bone.phys_rot_damping, set_rot_damping);
-    edited!(pos_ratio, bone.phys_pos_ratio, set_pos_ratio);
-    edited!(scale_ratio, bone.phys_scale_ratio, set_scale_ratio);
+
     if bone.parent_id != -1 {
+        // sway
         #[rustfmt::skip] let sway = phys_slider(bone.phys_sway, "bone_panel.physics.sway", 0., 10., shared_ui, ui);
-        #[rustfmt::skip] let bounce = phys_slider(bone.phys_rot_bounce, "bone_panel.physics.rot_bounce", 0., 1., shared_ui, ui);
         edited!(sway, bone.phys_sway, set_rot_resistance);
+
+        // bounce
+        #[rustfmt::skip] let bounce = phys_slider(bone.phys_rot_bounce, "bone_panel.physics.rot_bounce", 0., 1., shared_ui, ui);
         edited!(bounce, bone.phys_rot_bounce, set_rot_bounce);
     }
 }
@@ -1275,11 +1290,12 @@ pub fn phys_slider(
     result
 }
 
-pub fn ratio_slider(
+pub fn phys_sub_slider(
     field: f32,
     label_code: &str,
     min: f32,
     max: f32,
+    is_ratio: bool,
     shared_ui: &mut crate::Ui,
     ui: &mut egui::Ui,
 ) -> f32 {
@@ -1303,13 +1319,16 @@ pub fn ratio_slider(
             if edited {
                 result = value;
             }
-            let mut ratio = Vec2::new(1., 1.);
-            if field < 0. {
-                ratio.y = 1. - field.abs();
-            } else if field > 0. {
-                ratio.x = 1. - field;
+
+            if is_ratio {
+                let mut ratio = Vec2::new(1., 1.);
+                if field < 0. {
+                    ratio.y = 1. - field.abs();
+                } else if field > 0. {
+                    ratio.x = 1. - field;
+                }
+                ui.label(format!("{:.2} : {:.2}", ratio.x, ratio.y));
             }
-            ui.label(format!("{:.2} : {:.2}", ratio.x, ratio.y));
         });
     });
     ui.horizontal(|ui| {
@@ -1318,13 +1337,12 @@ pub fn ratio_slider(
             ui.style_mut().spacing.slider_width = ui.available_width();
             let mut new_field = field;
             let slider = ui.add(egui::Slider::new(&mut new_field, min..=max).show_value(false));
-            if !slider.dragged() {
-                return;
+            if slider.dragged() {
+                if field > max {
+                    new_field = max;
+                }
+                result = new_field;
             }
-            if field > max {
-                new_field = max;
-            }
-            result = new_field;
         });
     });
 
