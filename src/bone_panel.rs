@@ -1265,6 +1265,7 @@ pub fn phys_slider(
             label.on_hover_text(desc_loc);
         }
 
+        // text input
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let options = ui::TextInputOptions {
                 size: Vec2::new(0., 0.),
@@ -1278,24 +1279,28 @@ pub fn phys_slider(
             }
         });
     });
+
+    // slider
     ui.horizontal(|ui| {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             ui.style_mut().spacing.slider_width = ui.available_width();
             let mut new_field = field;
             let slider = ui.add(egui::Slider::new(&mut new_field, min..=max).show_value(false));
+
+            // result must be updated only if slider is dragged
             if !slider.dragged() {
-                return;
+                if field > max {
+                    new_field = max;
+                }
+                result = new_field;
             }
-            if field > max {
-                new_field = max;
-            }
-            result = new_field;
         });
     });
 
     result
 }
 
+/// Physics fields that relate to another, eg; ratio.
 pub fn phys_sub_slider(
     field: f32,
     label_code: &str,
@@ -1319,6 +1324,7 @@ pub fn phys_sub_slider(
             label.on_hover_text(desc_loc);
         }
 
+        // text input
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let (edited, value, _) =
                 ui.float_input(label_code.to_string(), shared_ui, field, 1., None);
@@ -1327,6 +1333,7 @@ pub fn phys_sub_slider(
             }
 
             if is_ratio {
+                // show X:Y ratio
                 let mut ratio = Vec2::new(1., 1.);
                 if field < 0. {
                     ratio.y = 1. - field.abs();
@@ -1337,12 +1344,16 @@ pub fn phys_sub_slider(
             }
         });
     });
+
+    // slider
     ui.horizontal(|ui| {
         ui.add_space(30.);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             ui.style_mut().spacing.slider_width = ui.available_width();
             let mut new_field = field;
             let slider = ui.add(egui::Slider::new(&mut new_field, min..=max).show_value(false));
+
+            // result must be updated only if slider is dragged
             if slider.dragged() {
                 if field > max {
                     new_field = max;
