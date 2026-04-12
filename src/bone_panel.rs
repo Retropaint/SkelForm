@@ -1211,7 +1211,7 @@ pub fn physics(
     }
 
     // pos damping
-    #[rustfmt::skip] let pos_damping = phys_slider(bone.phys_pos_damping, "bone_panel.physics.pos_damping", 0., 200., shared_ui, ui);
+    #[rustfmt::skip] let pos_damping = phys_slider(bone.phys_pos_damping, "bone_panel.physics.pos_damping", 0., 200., 1., shared_ui, ui);
     edited!(pos_damping, bone.phys_pos_damping, set_pos_damping);
     if bone.phys_pos_damping > 0. {
         // pos ratio
@@ -1220,7 +1220,7 @@ pub fn physics(
     }
 
     // scale damping
-    #[rustfmt::skip] let scale_damping = phys_slider(bone.phys_scale_damping, "bone_panel.physics.scale_damping", 0., 200., shared_ui, ui);
+    #[rustfmt::skip] let scale_damping = phys_slider(bone.phys_scale_damping, "bone_panel.physics.scale_damping", 0., 200., 1., shared_ui, ui);
     edited!(scale_damping, bone.phys_scale_damping, set_scale_damping);
     if bone.phys_scale_damping > 0. {
         // scale ratio
@@ -1229,16 +1229,16 @@ pub fn physics(
     }
 
     // rot damping
-    #[rustfmt::skip] let rot_damping = phys_slider(bone.phys_rot_damping, "bone_panel.physics.rot_damping", 0., 200., shared_ui, ui);
+    #[rustfmt::skip] let rot_damping = phys_slider(bone.phys_rot_damping, "bone_panel.physics.rot_damping", 0., 200., 1., shared_ui, ui);
     edited!(rot_damping, bone.phys_rot_damping, set_rot_damping);
 
     if bone.parent_id != -1 {
         // sway
-        #[rustfmt::skip] let sway = phys_slider(bone.phys_sway, "bone_panel.physics.sway", 0., 10., shared_ui, ui);
+        #[rustfmt::skip] let sway = phys_slider(bone.phys_sway, "bone_panel.physics.sway", 0., 10., 0.1, shared_ui, ui);
         edited!(sway, bone.phys_sway, set_rot_resistance);
 
         // bounce
-        #[rustfmt::skip] let bounce = phys_slider(bone.phys_rot_bounce, "bone_panel.physics.rot_bounce", 0., 1., shared_ui, ui);
+        #[rustfmt::skip] let bounce = phys_slider(bone.phys_rot_bounce, "bone_panel.physics.rot_bounce", 0., 1., 0.01, shared_ui, ui);
         edited!(bounce, bone.phys_rot_bounce, set_rot_bounce);
     }
 }
@@ -1248,6 +1248,7 @@ pub fn phys_slider(
     label_code: &str,
     min: f32,
     max: f32,
+    drag_modifier: f32,
     shared_ui: &mut crate::Ui,
     ui: &mut egui::Ui,
 ) -> f32 {
@@ -1265,8 +1266,13 @@ pub fn phys_slider(
         }
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let options = ui::TextInputOptions {
+                size: Vec2::new(0., 0.),
+                drag_modifier,
+                ..Default::default()
+            };
             let (edited, value, _) =
-                ui.float_input(label_code.to_string(), shared_ui, field, 1., None);
+                ui.float_input(label_code.to_string(), shared_ui, field, 1., Some(options));
             if edited {
                 result = value;
             }

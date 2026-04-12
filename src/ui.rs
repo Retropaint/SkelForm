@@ -1083,11 +1083,14 @@ impl EguiUi for egui::Ui {
         modifier: f32,
         mut options: Option<TextInputOptions>,
     ) -> (bool, f32, egui::Response) {
+        let default_size = Vec2::new(40., 20.);
         if options == None {
             options = Some(TextInputOptions {
-                size: Vec2::new(40., 20.),
+                size: default_size,
                 ..Default::default()
             })
+        } else if options.as_ref().unwrap().size == Vec2::new(0., 0.) {
+            options.as_mut().unwrap().size = default_size;
         }
 
         let mod_value = (value * modifier).to_string();
