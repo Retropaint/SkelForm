@@ -740,7 +740,7 @@ pub fn prepare_files(
     // remove physics fields if disabled
 
     // disabled: v0.4 won't have physics, but this must be removed for v0.5
-    let mut disable_phys = true;
+    let mut disable_phys = false;
     #[cfg(debug_assertions)]
     {
         disable_phys = false;
