@@ -429,7 +429,7 @@ impl ApplicationHandler for App {
                     if *event != Events::CreateEmptyTexture {
                         continue;
                     }
-                    bone_panel::add_texture(
+                    file_reader::add_texture(
                         image::DynamicImage::new(1, 1, image::ColorType::Rgba8),
                         self.shared.selections.style,
                         Vec2::new(1., 1.),

@@ -44,7 +44,7 @@ if args.release and not args.mobile:
     if not args.serve and not args.baseurl:
         generic += " --public-url=/editor"
     elif args.baseurl:
-        generic += " --public-url=/" + args.baseurl
+        generic += " --public-url=" + args.baseurl
 if args.mobile:
     features += " mobile"
 if args.debug and not args.release:
