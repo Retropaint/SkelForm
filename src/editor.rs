@@ -730,8 +730,10 @@ pub fn simple_event(
 
             // add/remove vertex to bind
             let mut bound = false;
+            let mut unbound_bone_id = -1; // track the unbound bone id, to adjust position later
             if let Some(v) = bind.verts.iter().position(|vert| vert.id == vert_id as i32) {
                 bone_mut.binds[idx].verts.remove(v);
+                unbound_bone_id = bone_mut.binds[idx].bone_id;
             } else {
                 bound = true;
                 bone_mut.binds[idx].verts.push(BoneBindVert {
@@ -740,16 +742,12 @@ pub fn simple_event(
                 });
             }
 
-            let bind = bone_mut.binds[idx].clone();
             let temp_bone = renderer.temp_bones.iter().find(|b| b.id == id).unwrap();
             let temp_bones = &renderer.temp_bones;
-            if bind.bone_id == -1 {
-                return;
-            }
 
             for bind in &mut bone_mut.binds {
                 let ids: Vec<u32> = bind.verts.iter().map(|v| v.id as u32).collect();
-                if !ids.contains(&vert_id) {
+                if !ids.contains(&vert_id) && unbound_bone_id != bind.bone_id {
                     continue;
                 }
 
