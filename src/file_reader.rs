@@ -529,6 +529,9 @@ pub fn add_texture(
     });
 
     let style = &mut armature.styles.iter_mut().find(|set| set.id == style_id);
+    if *style == None {
+        return;
+    }
     style.as_mut().unwrap().textures.push(crate::Texture {
         offset: Vec2::ZERO,
         size: dimensions,

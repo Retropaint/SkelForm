@@ -291,10 +291,14 @@ pub fn draw_textures_list(
             let naming_first_style =
                 armature.styles.len() == 1 && shared_ui.rename_id == "tex_set 0";
 
+            if naming_first_style || set_idx == usize::MAX || selections.style == -1 {
+                return;
+            }
+
             let tex_button = ui
                 .skf_button("🖻")
                 .on_hover_text(shared_ui.loc("styles_modal.import_desc"));
-           
+
             // empty texture button
             let empty_tex_button = ui
                 .skf_button("🗋")
@@ -303,19 +307,14 @@ pub fn draw_textures_list(
                 events.create_empty_texture();
             }
 
-            if naming_first_style
-                || set_idx == usize::MAX
-                || selections.style == -1
-                || !tex_button.clicked()
-            {
-                return;
+            if tex_button.clicked() {
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    bone_panel::open_file_dialog(&shared_ui.file_path, &shared_ui.file_type);
+                }
+                #[cfg(target_arch = "wasm32")]
+                crate::clickFileInput(true);
             }
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                bone_panel::open_file_dialog(&shared_ui.file_path, &shared_ui.file_type);
-            }
-            #[cfg(target_arch = "wasm32")]
-            crate::clickFileInput(true);
         });
 
         let size = ui.available_size();
