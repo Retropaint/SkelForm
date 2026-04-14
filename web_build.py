@@ -37,14 +37,12 @@ args = parser.parse_args()
 
 if args.nightly:
     args.release = True
-    args.baseurl = "editor-nightly"
+
+if not args.baseurl:
+    args.baseurl = "\"./\""
 
 if args.release and not args.mobile:
     generic += " --release"
-    if not args.serve and not args.baseurl:
-        generic += " --public-url=/editor"
-    elif args.baseurl:
-        generic += " --public-url=" + args.baseurl
 if args.mobile:
     features += " mobile"
 if args.debug and not args.release:
@@ -57,6 +55,7 @@ else:
 features += '"'
 
 build_command = "trunk build --features " + features + generic
+build_command += " --public-url="+args.baseurl
 print("\nBuild command:\n" + build_command + "\n")
 
 # build /dist via trunk
