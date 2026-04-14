@@ -847,11 +847,26 @@ impl BackendRenderer {
         utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
         shared.renderer.temp_bones = shared.armature.animated_bones.clone();
 
-        renderer::runtime_construction(
-            &mut shared.renderer.temp_bones,
-            &shared.armature.animated_bones,
-            &mut shared.armature.bones,
-        );
+        // disable physics if current edited bone has physics properties.
+        // this prevents the bone from being uncontrollable.
+        let mut physics_active = false;
+        if shared.edit_mode.is_moving || shared.edit_mode.is_scaling || shared.edit_mode.is_rotating
+        {
+            let bone = shared.armature.sel_bone(&shared.selections).unwrap();
+            physics_active = shared.armature.has_physics(bone.id);
+        }
+        if !physics_active {
+            renderer::runtime_construction(
+                &mut shared.renderer.temp_bones,
+                &shared.armature.animated_bones,
+                &mut shared.armature.bones,
+            );
+        } else {
+            renderer::construction(
+                &mut shared.renderer.temp_bones,
+                &shared.armature.animated_bones,
+            );
+        }
 
         // core rendering logic handled in renderer.rs
         let s = shared;
