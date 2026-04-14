@@ -282,7 +282,7 @@ pub fn draw(
     }
 
     // physics is not part of v0.4
-    #[cfg(not(debug_assertions))]
+    //#[cfg(not(debug_assertions))]
     //return;
 
     physics(ui, &bone, selections, shared_ui, config, armature, events);
@@ -1288,7 +1288,7 @@ pub fn phys_slider(
             let slider = ui.add(egui::Slider::new(&mut new_field, min..=max).show_value(false));
 
             // result must be updated only if slider is dragged
-            if !slider.dragged() {
+            if slider.dragged() {
                 if field > max {
                     new_field = max;
                 }
