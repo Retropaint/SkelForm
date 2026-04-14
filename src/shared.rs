@@ -1638,7 +1638,10 @@ impl Armature {
 
     pub fn has_physics(&self, bone_id: i32) -> bool {
         let bone = &self.bones.iter().find(|b| b.id == bone_id).unwrap();
-        bone.phys_pos_damping > 0. || bone.phys_sway > 0. || bone.phys_scale_damping > 0.
+        bone.phys_pos_damping > 0.
+            || bone.phys_sway > 0.
+            || bone.phys_scale_damping > 0.
+            || bone.phys_rot_damping > 0.
     }
 }
 
