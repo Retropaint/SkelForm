@@ -156,6 +156,25 @@ pub fn iterate_events(
         let is_pathing = events.values[1] == 1.;
         armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].is_path = is_pathing;
 
+        // adjust vertices, so they stay in place
+        let bind = &armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].clone();
+        let sel_bone = &mut armature.sel_bone_mut(&selections).unwrap();
+        let temp_bone = renderer
+            .temp_bones
+            .iter()
+            .find(|b| b.id == sel_bone.id)
+            .unwrap();
+        let temp_bones = &renderer.temp_bones;
+        for vert in &bind.verts {
+            let id = vert.id as u32;
+            let vert = sel_bone.vertices.iter_mut().find(|v| v.id == id).unwrap();
+            let mut rot = renderer::get_path_normal_angle(temp_bones, temp_bone, sel_bind);
+            if is_pathing {
+                rot = -rot;
+            }
+            vert.pos = utils::rotate(&vert.pos, rot);
+        }
+
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::EditCamera {
