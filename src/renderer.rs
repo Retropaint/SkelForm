@@ -945,8 +945,10 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
                 damping.x *= 1. - arm_bone.phys_scale_ratio;
             }
 
-            phys_scale.x = utils::interp(2, damping.x as i32, phys_scale.x, const_bone.scale.x, s, e);
-            phys_scale.y = utils::interp(2, damping.y as i32, phys_scale.y, const_bone.scale.y, s, e);
+            phys_scale.x =
+                utils::interp(2, damping.x as i32, phys_scale.x, const_bone.scale.x, s, e);
+            phys_scale.y =
+                utils::interp(2, damping.y as i32, phys_scale.y, const_bone.scale.y, s, e);
         }
 
         // interpolate rotation

@@ -728,7 +728,10 @@ pub fn mesh_deformation(
             } else {
                 selections.bind.to_string()
             };
-            let combo_box = egui::ComboBox::new("bone_weights", "").selected_text(headline);
+            let id = format!("bone_weights{}", bone.binds.len().to_string());
+            let combo_box = egui::ComboBox::new(id, "")
+                .selected_text(headline)
+                .height(1000.);
             combo_box.show_ui(ui, |ui| {
                 let mut selected_value: i32 = -1;
                 ui.selectable_value(&mut selected_value, -3, shared_ui.loc("none_option"));
@@ -1059,6 +1062,7 @@ pub fn texture_effects(
             tex_name = utils::trunc_str(ui, &tex_name, 100.);
             let combo_box = egui::ComboBox::new("tex_selector", "")
                 .width(100.)
+                .height(1000.)
                 .selected_text(egui::RichText::new(tex_name).color(tex_name_col));
             combo_box.show_ui(ui, |ui| {
                 let mut texes = vec![];

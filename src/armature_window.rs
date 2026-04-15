@@ -64,9 +64,11 @@ pub fn draw(
                 if armature.bones.len() == 0 {
                     return;
                 }
-                let dropdown = egui::ComboBox::new("styles", "")
+                let id = format!("styles{}", armature.styles.len().to_string());
+                let dropdown = egui::ComboBox::new(id, "")
                     .selected_text(&shared_ui.loc("armature_panel.styles"))
                     .width(80.)
+                    .height(500.)
                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                     .show_ui(ui, |ui| {
                         for s in 0..armature.styles.len() {

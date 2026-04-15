@@ -159,12 +159,8 @@ pub fn iterate_events(
         // adjust vertices, so they stay in place
         let bind = &armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].clone();
         let sel_bone = &mut armature.sel_bone_mut(&selections).unwrap();
-        let temp_bone = renderer
-            .temp_bones
-            .iter()
-            .find(|b| b.id == sel_bone.id)
-            .unwrap();
         let temp_bones = &renderer.temp_bones;
+        let temp_bone = temp_bones.iter().find(|b| b.id == sel_bone.id).unwrap();
         for vert in &bind.verts {
             let id = vert.id as u32;
             let vert = sel_bone.vertices.iter_mut().find(|v| v.id == id).unwrap();
