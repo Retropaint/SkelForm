@@ -215,7 +215,7 @@ pub fn read_psd(
 
     // reset armature (but not all of it) to make way for the psd rig
     shared.psd_armature.bones = vec![];
-    shared.psd_armature.styles = vec![];
+    shared.psd_armature.styles = shared.armature.styles.clone();
 
     // create root bone, where all except targets will go
     shared.psd_armature.new_bone(-1);
@@ -483,8 +483,14 @@ pub fn read_psd(
         target_bone.zindex = 0;
     }
 
+    // immediately import textures to real armature
+    shared.armature.styles = shared.psd_armature.styles.clone();
+    shared.armature.tex_data = shared.psd_armature.tex_data.clone();
+
+    // show polar modal to replace real armature bones as well
     let str = shared.ui.loc("psd_imported");
     shared.events.open_polar_modal(PolarId::ImportedPsd, str);
+
     shared.ui.startup_window = false;
 }
 
