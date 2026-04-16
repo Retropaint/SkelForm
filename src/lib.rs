@@ -448,7 +448,7 @@ impl ApplicationHandler for App {
                     #[rustfmt::skip]
                     editor::iterate_events(
                         &s.input, &mut s.config, &mut s.events, &mut s.camera, &mut s.edit_mode, &mut s.selections,
-                        &mut s.undo_states, &mut s.armature, &mut s.copy_buffer, &mut s.ui, &mut s.renderer
+                        &mut s.undo_states, &mut s.armature, &mut s.psd_armature, &mut s.copy_buffer, &mut s.ui, &mut s.renderer
                     );
                 }
             }

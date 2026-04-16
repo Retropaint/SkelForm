@@ -38,7 +38,7 @@ pub fn polar_modal(
         &config,
         |ui| {
             let mut cache = egui_commonmark::CommonMarkCache::default();
-            let str = utils::markdown(headline);
+            let str = utils::markdown(headline.clone()).replace("$psd_page", "");
             egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
         },
         |ui| {
@@ -82,6 +82,15 @@ pub fn polar_modal(
                 shared_ui.polar_modal = false;
                 yes = true
             }
+
+            // psd help page link, if $psd_page is in the loc
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                let psd_button = headline.contains("$psd_page");
+                let str = egui::RichText::new(shared_ui.loc("psd_help")).color(config.colors.link);
+                if psd_button && ui.clickable_label(str).clicked() {
+                    utils::open_docs(false, "psd.html");
+                };
+            });
 
             if !yes {
                 return;
@@ -129,6 +138,9 @@ pub fn polar_modal(
                         shared_ui.anim.deleting_line_bone_id as usize,
                         &shared_ui.anim.deleting_line_element,
                     );
+                }
+                PolarId::ImportedPsd => {
+                    events.import_psd_armature();
                 }
             }
         },

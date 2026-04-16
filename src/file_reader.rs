@@ -214,13 +214,13 @@ pub fn read_psd(
     let psd = psd::Psd::from_bytes(&bytes).unwrap();
 
     // reset armature (but not all of it) to make way for the psd rig
-    shared.armature.bones = vec![];
-    shared.armature.styles = vec![];
+    shared.psd_armature.bones = vec![];
+    shared.psd_armature.styles = vec![];
 
     // create root bone, where all except targets will go
-    shared.armature.new_bone(-1);
-    shared.armature.bones[0].name = "Root".to_string();
-    shared.armature.bones[0].folded = true;
+    shared.psd_armature.new_bone(-1);
+    shared.psd_armature.bones[0].name = "Root".to_string();
+    shared.psd_armature.bones[0].folded = true;
 
     // collect group ids, to be used later
     let mut group_ids: Vec<u32> = vec![];
@@ -234,8 +234,9 @@ pub fn read_psd(
         }
     }
 
-    shared.armature.styles.push(Style {
-        id: 0,
+    shared.psd_armature.styles.retain(|s| s.name != "Default");
+    shared.psd_armature.styles.push(Style {
+        id: shared.psd_armature.styles.len() as i32,
         name: "Default".to_string(),
         textures: vec![],
         active: true,
@@ -287,9 +288,9 @@ pub fn read_psd(
 
         // add tex if not a duplicate
         let mut tex_idx = usize::MAX;
-        for t in 0..shared.armature.styles[0].textures.len() {
-            let tex = &shared.armature.styles[0].textures[t];
-            let img = &shared.armature.tex_data(tex).unwrap().image;
+        for t in 0..shared.psd_armature.styles[0].textures.len() {
+            let tex = &shared.psd_armature.styles[0].textures[t];
+            let img = &shared.psd_armature.tex_data(tex).unwrap().image;
             if img.to_rgba8().to_vec() == image.0.to_vec() {
                 tex_idx = t;
                 break;
@@ -302,7 +303,7 @@ pub fn read_psd(
 
             if group.name().contains("$\"") {
                 let split: Vec<&str> = group.name().split('"').collect();
-                let styles = &shared.armature.styles;
+                let styles = &shared.psd_armature.styles;
 
                 let p_id = &group.parent_id().unwrap();
                 tex_name = psd.groups().get(p_id).unwrap().name();
@@ -313,23 +314,26 @@ pub fn read_psd(
                 if let Some(idx) = styles.iter().position(|s| s.name.to_lowercase() == low) {
                     style_idx = idx as i32;
                 } else {
-                    shared.armature.styles.push(Style {
-                        id: shared.armature.styles.len() as i32,
-                        name: split[1].to_string(),
+                    let name = split[1].to_string();
+                    let armature = &mut shared.psd_armature;
+                    armature.styles.retain(|s| s.name != name);
+                    shared.psd_armature.styles.push(Style {
+                        id: shared.psd_armature.styles.len() as i32,
+                        name,
                         active: true,
                         textures: vec![],
                     });
-                    style_idx = shared.armature.styles.len() as i32 - 1;
+                    style_idx = shared.psd_armature.styles.len() as i32 - 1;
                 }
             }
 
             let img = image::DynamicImage::ImageRgba8(image.0.clone());
             let tex_name = utils::without_unicode(tex_name);
-            let arm = &mut shared.armature;
+            let arm = &mut shared.psd_armature;
             let bgl = bind_group_layout;
             add_texture(img, style_idx, dims, tex_name, arm, queue, device, bgl, ctx);
 
-            tex_idx = shared.armature.styles[0].textures.len() - 1;
+            tex_idx = shared.psd_armature.styles[0].textures.len() - 1;
         }
 
         if group.name().contains("$\"") {
@@ -345,9 +349,9 @@ pub fn read_psd(
                 continue;
             }
 
-            pivot_id = shared.armature.new_bone(-1).0.id;
+            pivot_id = shared.psd_armature.new_bone(-1).0.id;
             bone_psd_id.insert(group_ids[g] as u32, pivot_id);
-            let pivot_bone = shared.armature.find_bone_mut(pivot_id).unwrap();
+            let pivot_bone = shared.psd_armature.find_bone_mut(pivot_id).unwrap();
             pivot_pos = Vec2::new(layer.layer_left() as f32, -layer.layer_top() as f32);
             pivot_bone.parent_id = 0;
             pivot_bone.pos = pivot_pos - Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
@@ -357,15 +361,15 @@ pub fn read_psd(
         }
 
         // create texture bone
-        let new_bone_id = shared.armature.new_bone(-1).0.id;
+        let new_bone_id = shared.psd_armature.new_bone(-1).0.id;
         if pivot_id == -1 {
             bone_psd_id.insert(group_ids[g] as u32, new_bone_id);
         }
-        let tex_name = shared.armature.styles[0].textures[tex_idx].name.clone();
-        let bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
+        let tex_name = shared.psd_armature.styles[0].textures[tex_idx].name.clone();
+        let bone = shared.psd_armature.find_bone_mut(new_bone_id).unwrap();
         bone.parent_id = 0;
         shared
-            .armature
+            .psd_armature
             .set_bone_tex(new_bone_id, tex_name.clone(), usize::MAX, 0);
 
         // process inverse kinematics layers ($ik_)
@@ -377,9 +381,9 @@ pub fn read_psd(
 
             let bone;
             if pivot_id != -1 {
-                bone = shared.armature.find_bone_mut(pivot_id).unwrap();
+                bone = shared.psd_armature.find_bone_mut(pivot_id).unwrap();
             } else {
-                bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
+                bone = shared.psd_armature.find_bone_mut(new_bone_id).unwrap();
             }
 
             if layer.name().contains("counterclockwise") {
@@ -401,7 +405,7 @@ pub fn read_psd(
             }
         }
 
-        let new_bone = shared.armature.find_bone_mut(new_bone_id).unwrap();
+        let new_bone = shared.psd_armature.find_bone_mut(new_bone_id).unwrap();
         new_bone.name = tex_name.clone();
         new_bone.tex = tex_name;
 
@@ -433,17 +437,21 @@ pub fn read_psd(
         if group.parent_id() != None {
             if let Some(p_id) = bone_psd_id.get(&group.parent_id().unwrap()) {
                 let parent_id = *p_id as i32;
-                shared.armature.find_bone_mut(bone_id).unwrap().parent_id = parent_id;
-                shared.armature.find_bone_mut(parent_id).unwrap().folded = true;
+                shared
+                    .psd_armature
+                    .find_bone_mut(bone_id)
+                    .unwrap()
+                    .parent_id = parent_id;
+                shared.psd_armature.find_bone_mut(parent_id).unwrap().folded = true;
 
                 // since child pos is relative to parent, offset against it
-                let bones = &shared.armature.bones;
+                let bones = &shared.psd_armature.bones;
                 let mut nb = bones.iter().find(|bo| bo.id == bone_id).unwrap().clone();
                 while nb.parent_id != -1 {
-                    let bones = &shared.armature.bones;
+                    let bones = &shared.psd_armature.bones;
                     let id = nb.parent_id;
                     nb = bones.iter().find(|bo| bo.id == id).unwrap().clone();
-                    shared.armature.find_bone_mut(bone_id).unwrap().pos -= nb.pos;
+                    shared.psd_armature.find_bone_mut(bone_id).unwrap().pos -= nb.pos;
                 }
             }
         }
@@ -451,15 +459,15 @@ pub fn read_psd(
 
     // add IK targets
     for eff_id in start_eff_ids {
-        let target_id = shared.armature.new_bone(-1).0.id;
-        let start_eff_bone = &mut shared.armature.find_bone_mut(eff_id).unwrap();
+        let target_id = shared.psd_armature.new_bone(-1).0.id;
+        let start_eff_bone = &mut shared.psd_armature.find_bone_mut(eff_id).unwrap();
         let ik_id = start_eff_bone.ik_family_id;
 
         start_eff_bone.ik_target_id = target_id;
         let target_name = format!("{} Target", start_eff_bone.name);
 
         // determine target's base position
-        let bones = &shared.armature.bones;
+        let bones = &shared.psd_armature.bones;
         let effs = bones.iter().filter(|bone| bone.ik_family_id == ik_id);
         let mut pos = effs.clone().last().unwrap().pos;
         let parents = shared
@@ -469,13 +477,14 @@ pub fn read_psd(
             pos += bone.pos;
         }
 
-        let target_bone = shared.armature.find_bone_mut(target_id).unwrap();
+        let target_bone = shared.psd_armature.find_bone_mut(target_id).unwrap();
         target_bone.name = target_name;
         target_bone.pos = pos;
         target_bone.zindex = 0;
     }
 
-    shared.events.open_modal("psd_imported", false);
+    let str = shared.ui.loc("psd_imported");
+    shared.events.open_polar_modal(PolarId::ImportedPsd, str);
     shared.ui.startup_window = false;
 }
 

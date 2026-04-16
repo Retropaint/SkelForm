@@ -427,6 +427,7 @@ pub enum PolarId {
     DeleteKeyframeLine,
     NewUpdate,
     OpenCrashlog,
+    ImportedPsd
 }
 enum_string!(PolarId);
 
@@ -2287,6 +2288,7 @@ pub enum Events {
     SetHoveringTri,
     SetHoveringLine,
     CreateEmptyTexture,
+    ImportPsdArmature
 }
 
 enum_string!(Events);
@@ -2349,6 +2351,7 @@ impl EventState {
     generic_event!(save_animation, Events::SaveAnimation);
     generic_event!(update_render_options, Events::UpdateRenderOptions);
     generic_event!(create_empty_texture, Events::CreateEmptyTexture);
+    generic_event!(import_psd_armature, Events::ImportPsdArmature);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, i32);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
@@ -2668,6 +2671,9 @@ pub struct Shared {
     pub copy_buffer: CopyBuffer,
     pub last_autosave: f32,
     pub screenshot_res: Vec2,
+
+    // buffered armature from imported PSD
+    pub psd_armature: Armature,
 }
 
 // generate non-clashing id

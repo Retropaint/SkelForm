@@ -16,6 +16,7 @@ pub fn iterate_events(
     selections: &mut SelectionState,
     undo_states: &mut UndoStates,
     armature: &mut Armature,
+    psd_armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
     renderer: &mut crate::Renderer,
@@ -286,7 +287,7 @@ pub fn iterate_events(
         #[rustfmt::skip]
         editor::simple_event(
             event, value, str_value, camera, &input, edit_mode, selections,
-            undo_states, armature, copy_buffer, ui, renderer, config
+            undo_states, armature, psd_armature, copy_buffer, ui, renderer, config
         );
 
         events.events.remove(0);
@@ -306,6 +307,7 @@ pub fn simple_event(
     selections: &mut SelectionState,
     undo_states: &mut UndoStates,
     armature: &mut Armature,
+    psd_armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
     renderer: &mut crate::Renderer,
@@ -1081,6 +1083,12 @@ pub fn simple_event(
         Events::SetHoveringVertId => selections.hovering_vert_id = value as i32,
         Events::SetHoveringTri => selections.hovering_tri_dur = value as i32,
         Events::SetHoveringLine => selections.hovering_line_dur = value as i32,
+        Events::ImportPsdArmature => {
+            armature.bones = psd_armature.bones.clone();
+            armature.styles = psd_armature.styles.clone();
+            armature.tex_data = psd_armature.tex_data.clone();
+            *psd_armature = Armature::default();
+        },
         _ => {}
     }
 }
