@@ -149,15 +149,15 @@ fn startup_content(
             ui.set_max_width((width.min(max_width) - right_margin).max(1.));
             ui.set_min_width(0.);
 
+            let msg = &shared_ui.loc("startup.early_access_warning");
+            let mut orange: crate::Color = egui::Color32::ORANGE.into();
+            orange -= crate::Color::new(30, 30, 30, 0);
+            let early_access_str = egui::RichText::new(msg).size(14.).color(orange);
+
             #[cfg(not(target_arch = "wasm32"))]
             ui.vertical(|ui| {
                 let available_width = ui.available_width();
-
-                let msg = &shared_ui.loc("startup.early_access_warning");
-                let mut orange: crate::Color = egui::Color32::ORANGE.into();
-                orange -= crate::Color::new(30, 30, 30, 0);
-                let text = egui::RichText::new(msg).size(14.).color(orange);
-                ui.label(text);
+                ui.label(early_access_str);
 
                 ui.add_space(10.);
 
@@ -221,6 +221,8 @@ fn startup_content(
                 let width = ui.available_width();
                 let msg = &shared_ui.loc("startup.web_note");
                 let text = egui::RichText::new(msg).size(14.);
+                ui.label(early_access_str);
+                ui.add_space(5.);
                 ui.label(text);
                 ui.add_space(20.);
 
