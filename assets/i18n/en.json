@@ -261,7 +261,7 @@
       "pos_damping": "Position Damping:",
       "scale_damping": "Scale Damping:",
       "rot_damping": "Rotation Damping:",
-      "rot_bounce": "Rotation Bounce:",
+      "rot_bounce": "Sway Bounce:",
       "pos_ratio": "Ratio ℹ:",
       "scale_ratio": "Ratio ℹ:",
       "distance": "Distance:",
