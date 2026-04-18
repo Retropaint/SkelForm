@@ -295,26 +295,31 @@ pub fn draw_textures_list(
                 return;
             }
 
-            let tex_button = ui
-                .skf_button("🖻")
-                .on_hover_text(shared_ui.loc("styles_modal.import_desc"));
-
-            // empty texture button
-            let empty_tex_button = ui
-                .skf_button("🗋")
-                .on_hover_text(shared_ui.loc("styles_modal.empty_desc"));
-            if empty_tex_button.clicked() {
-                events.create_empty_texture();
-            }
-
-            if tex_button.clicked() {
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    bone_panel::open_file_dialog(&shared_ui.file_path, &shared_ui.file_type);
-                }
-                #[cfg(target_arch = "wasm32")]
-                crate::clickFileInput(true);
-            }
+            // dropdown for new texture types
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                egui::ComboBox::new("new_tex", "")
+                    .selected_text(shared_ui.loc("new"))
+                    .width(40.)
+                    .show_ui(ui, |ui| {
+                        let mut selected = -1;
+                        ui.selectable_value(&mut selected, 0, shared_ui.loc("styles_modal.import"));
+                        ui.selectable_value(&mut selected, 1, shared_ui.loc("styles_modal.empty"));
+                        if selected == 0 {
+                            // import texture (via file dialog)
+                            #[cfg(not(target_arch = "wasm32"))]
+                            {
+                                bone_panel::open_file_dialog(
+                                    &shared_ui.file_path,
+                                    &shared_ui.file_type,
+                                );
+                            }
+                            #[cfg(target_arch = "wasm32")]
+                            crate::clickFileInput(true);
+                        } else if selected == 1 {
+                            events.create_empty_texture()
+                        }
+                    });
+            });
         });
 
         let size = ui.available_size();
@@ -360,7 +365,14 @@ pub fn draw_textures_list(
                     if selections.style != -1 {
                         let scroll_area = egui::ScrollArea::vertical().id_salt("tex_list");
                         scroll_area.show(ui, |ui| {
-                            #[rustfmt::skip] draw_tex_buttons(shared_ui, &armature, &selections, &config, events, ui);
+                            draw_tex_buttons(
+                                shared_ui,
+                                &armature,
+                                &selections,
+                                &config,
+                                events,
+                                ui,
+                            );
                         });
                     }
                     return;

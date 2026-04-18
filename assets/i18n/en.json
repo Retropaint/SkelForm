@@ -105,6 +105,7 @@
     "texture_desc": "Drag to a bone to set this as it's texture.\nDrag above/below another texture to change order.",
     "new_style": "New Style",
     "import": "Import",
+    "empty": "Empty",
     "img_name": "Name: ",
     "img_size": "Size: ",
     "active_desc": "Should this style be active?",
