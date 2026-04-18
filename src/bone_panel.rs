@@ -1241,9 +1241,11 @@ pub fn physics(
         #[rustfmt::skip] let sway = phys_slider(bone.phys_sway, "bone_panel.physics.sway", 0., 10., 0.1, shared_ui, ui);
         edited!(sway, bone.phys_sway, set_rot_resistance);
 
-        // bounce
-        #[rustfmt::skip] let bounce = phys_slider(bone.phys_rot_bounce, "bone_panel.physics.rot_bounce", 0., 1., 0.01, shared_ui, ui);
-        edited!(bounce, bone.phys_rot_bounce, set_rot_bounce);
+        if bone.phys_sway > 0. {
+            // bounce
+            #[rustfmt::skip] let bounce = phys_slider(bone.phys_rot_bounce, "bone_panel.physics.rot_bounce", 0., 1., 0.01, shared_ui, ui);
+            edited!(bounce, bone.phys_rot_bounce, set_rot_bounce);
+        }
     }
 }
 
