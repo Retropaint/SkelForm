@@ -2010,7 +2010,7 @@ pub fn draw_points_and_kites(
 ) {
     let point_color: Color = config.colors.center_point;
     let mut kite_color: Color = config.colors.center_point;
-    kite_color.a -= 128;
+    kite_color.a = kite_color.a.saturating_sub(128);
     let in_point_color: Color = config.colors.inactive_center_point;
     let mut in_kite_color: Color = config.colors.inactive_center_point;
     in_kite_color.a = in_kite_color.a.saturating_sub(64);
