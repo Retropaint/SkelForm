@@ -355,7 +355,9 @@ pub fn read_psd(
             let bgl = bind_group_layout;
             add_texture(img, style_id, dims, tex_name, arm, queue, device, bgl, ctx);
 
-            tex_idx = shared.psd_armature.styles[0].textures.len() - 1;
+            let styles = &shared.psd_armature.styles;
+            let default_style = &styles.iter().find(|s| s.name == "Default").unwrap();
+            tex_idx = default_style.textures.len() - 1;
         }
 
         if group.name().contains("$\"") {
@@ -387,7 +389,10 @@ pub fn read_psd(
         if pivot_id == -1 {
             bone_psd_id.insert(group_ids[g] as u32, new_bone_id);
         }
-        let tex_name = shared.psd_armature.styles[0].textures[tex_idx].name.clone();
+
+        let styles = &shared.psd_armature.styles;
+        let default_style = &styles.iter().find(|s| s.name == "Default").unwrap();
+        let tex_name = default_style.textures[tex_idx].name.clone();
         let bone = shared.psd_armature.find_bone_mut(new_bone_id).unwrap();
         bone.parent_id = 0;
         shared
@@ -457,14 +462,10 @@ pub fn read_psd(
 
         // add this bone to parent, if appropriate
         if group.parent_id() != None {
-            if let Some(p_id) = bone_psd_id.get(&group.parent_id().unwrap()) {
-                let parent_id = *p_id as i32;
-                shared
-                    .psd_armature
-                    .find_bone_mut(bone_id)
-                    .unwrap()
-                    .parent_id = parent_id;
-                shared.psd_armature.find_bone_mut(parent_id).unwrap().folded = true;
+            if let Some(parent_id) = bone_psd_id.get(&group.parent_id().unwrap()) {
+                let parent = shared.psd_armature.find_bone_mut(bone_id).unwrap();
+                parent.parent_id = *parent_id;
+                parent.folded = true;
 
                 // since child pos is relative to parent, offset against it
                 let bones = &shared.psd_armature.bones;
