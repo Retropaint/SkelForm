@@ -112,17 +112,21 @@ pub fn draw_styles_list(
                 return;
             }
 
+            // if there are no styles, show text only
             if armature.styles.len() == 0 {
                 let mut cache = egui_commonmark::CommonMarkCache::default();
                 let loc = shared_ui.loc("styles_modal.styles_empty").to_string();
                 let str = utils::markdown(loc.to_string());
                 egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
+                shared_ui.hovering_set = -1;
+                return;
             }
 
             for s in 0..armature.styles.len() {
                 idx += 1;
                 let context_id = format!("style_{}", &s.to_string());
 
+                // show renaming input field, if this is the style being renamed
                 if shared_ui.rename_id == context_id {
                     let (edited, value, _) = ui.text_input(
                         context_id,
@@ -143,6 +147,7 @@ pub fn draw_styles_list(
                     continue;
                 }
 
+                // brighten button if style is selected and/or hovered
                 let mut col = config.colors.dark_accent;
                 if armature.styles[s].id == selections.style {
                     col += crate::Color::new(20, 20, 20, 0);
@@ -150,6 +155,7 @@ pub fn draw_styles_list(
                 if s == shared_ui.hovering_set as usize {
                     col += crate::Color::new(20, 20, 20, 0);
                 }
+
                 let cursor_icon = if selections.style != armature.styles[s].id {
                     egui::CursorIcon::PointingHand
                 } else {
@@ -158,6 +164,7 @@ pub fn draw_styles_list(
                 let width = ui.available_width();
                 let checkbox_width = 30.;
                 ui.horizontal(|ui| {
+                    // render style button (also as draggable element)
                     let button = ui
                         .dnd_drag_source(egui::Id::new(("style", idx, 0)), idx, |ui| {
                             egui::Frame::new().fill(col.into()).show(ui, |ui| {
@@ -171,12 +178,14 @@ pub fn draw_styles_list(
                         .response
                         .on_hover_cursor(cursor_icon)
                         .interact(egui::Sense::click());
+
                     if (button.contains_pointer() || button.has_focus()) && !shared_ui.dragging_tex
                     {
                         shared_ui.hovering_set = s as i32;
                         hovered = true;
                     }
 
+                    // select style if clicked, or rename if already selected
                     if button.clicked() {
                         shared_ui.rename_id = "".to_string();
                         if selections.style == armature.styles[s].id {
@@ -191,6 +200,7 @@ pub fn draw_styles_list(
                         ui.context_delete(shared_ui, config, events, str, PolarId::DeleteStyle);
                     });
 
+                    // visibility checkbox
                     let str_style_active_desc = &shared_ui.loc("styles_modal.active_desc");
                     let visible_checkbox = ui
                         .allocate_rect(
@@ -203,11 +213,8 @@ pub fn draw_styles_list(
                     if visible_checkbox.contains_pointer() || visible_checkbox.has_focus() {
                         visible_col += Color::new(60, 60, 60, 0);
                     }
-                    let visible = if armature.styles[s].active {
-                        "👁"
-                    } else {
-                        "---"
-                    };
+                    let style = &armature.styles[s];
+                    let visible = if style.active { "👁" } else { "---" };
                     ui.painter().text(
                         visible_checkbox.rect.left_top(),
                         egui::Align2::LEFT_TOP,
@@ -219,6 +226,8 @@ pub fn draw_styles_list(
                         events.toggle_style_active(s, false);
                     }
 
+                    // dragging stuff below
+
                     let pointer = ui.input(|i| i.pointer.interact_pos());
                     let hovered_payload = button.dnd_hover_payload::<i32>();
                     let dragged_payload = button.dnd_release_payload::<i32>();
@@ -229,8 +238,9 @@ pub fn draw_styles_list(
 
                     let rect = button.rect;
                     let stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
-
                     ui.painter().hline(rect.x_range(), rect.top(), stroke);
+
+                    // highlight entire button if a texture is being dragged onto it
                     if shared_ui.dragging_tex {
                         ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
                         ui.painter().vline(rect.right(), rect.y_range(), stroke);
@@ -316,7 +326,11 @@ pub fn draw_textures_list(
                             #[cfg(target_arch = "wasm32")]
                             crate::clickFileInput(true);
                         } else if selected == 1 {
-                            events.create_empty_texture()
+                            events.create_empty_texture();
+
+                            // immediately start renaming empty texture when created
+                            let len = armature.styles[set_idx].textures.len();
+                            shared_ui.rename_id = "tex_".to_owned() + &len.to_string();
                         }
                     });
             });
@@ -325,6 +339,7 @@ pub fn draw_textures_list(
         let size = ui.available_size();
         let tex_frame_padding = Vec2::new(10., 15.);
 
+        // if no style is selected, show an empty darkened frame
         if selections.style == -1 {
             let mut darker = config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
@@ -352,6 +367,7 @@ pub fn draw_textures_list(
                     return;
                 }
 
+                // if this style has no textures, show text only
                 let style = &armature.sel_style(selections).unwrap();
                 if style.textures.len() == 0 {
                     let mut cache = egui_commonmark::CommonMarkCache::default();
@@ -361,23 +377,16 @@ pub fn draw_textures_list(
                     return;
                 }
 
-                if shared_ui.hovering_set == -1 || is_selected {
-                    if selections.style != -1 {
-                        let scroll_area = egui::ScrollArea::vertical().id_salt("tex_list");
-                        scroll_area.show(ui, |ui| {
-                            draw_tex_buttons(
-                                shared_ui,
-                                &armature,
-                                &selections,
-                                &config,
-                                events,
-                                ui,
-                            );
-                        });
-                    }
+                // show texture list
+                if selections.style != -1 && (shared_ui.hovering_set == -1 || is_selected) {
+                    let scroll_area = egui::ScrollArea::vertical().id_salt("tex_list");
+                    scroll_area.show(ui, |ui| {
+                        draw_tex_buttons(shared_ui, &armature, &selections, &config, events, ui);
+                    });
                     return;
                 }
 
+                // if this style has no textures and is being hovered on, show text only
                 let is_empty = armature.styles[shared_ui.hovering_set as usize]
                     .textures
                     .len()
@@ -388,6 +397,7 @@ pub fn draw_textures_list(
                     return;
                 }
 
+                // lay out the texture thumbnails for this style's preview
                 let mut offset = Vec2::new(0., 0.);
                 let mut row_height = 0.;
                 for tex in &armature.styles[shared_ui.hovering_set as usize].textures {
@@ -774,6 +784,7 @@ pub fn draw_tex_buttons(
         }
 
         ui.horizontal(|ui| {
+            // show renaming input field if this texture is being renamed
             if shared_ui.rename_id == context_id {
                 let (edited, value, _) = ui.text_input(
                     context_id.clone(),
@@ -791,6 +802,8 @@ pub fn draw_tex_buttons(
                 }
                 return;
             }
+
+            // render texture button (as draggable element)
             let bin_width = 13.;
             let button_id = egui::Id::new(("tex", idx));
             let button = ui
@@ -808,6 +821,8 @@ pub fn draw_tex_buttons(
                 .on_hover_text(str_desc)
                 .interact(egui::Sense::click());
 
+            // set dragging_tex true later, so styles will know that the element being
+            // dropped is a texture (migration)
             let drag_id = ui.ctx().dragged_id();
             if drag_id != None && drag_id.unwrap() == button_id {
                 dragged = true;
@@ -832,8 +847,9 @@ pub fn draw_tex_buttons(
 
             ui.add_space(5.);
 
-            let rect = button.rect;
+            // dragging stuff
 
+            let rect = button.rect;
             let pointer = ui.input(|i| i.pointer.interact_pos());
             let hovered_payload = button.dnd_hover_payload::<i32>();
             let dragged_payload = button.dnd_release_payload::<i32>();
@@ -858,12 +874,12 @@ pub fn draw_tex_buttons(
                 return;
             };
 
+            // if the dragged texture was dropped on another, move the dragged one above or below
             let mut old_name_order: Vec<String> = vec![];
             let sel = selections.clone();
             for tex in &armature.sel_style(&sel).unwrap().textures {
                 old_name_order.push(tex.name.clone());
             }
-
             events.move_texture(dp as usize, idx as usize + is_below as usize);
         });
     }

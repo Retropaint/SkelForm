@@ -433,7 +433,7 @@ impl ApplicationHandler for App {
                         image::DynamicImage::new(1, 1, image::ColorType::Rgba8),
                         self.shared.selections.style,
                         Vec2::new(1., 1.),
-                        "empty",
+                        "",
                         &mut self.shared.armature,
                         Some(&self.renderer.as_ref().unwrap().gpu.queue),
                         Some(&self.renderer.as_ref().unwrap().gpu.device),
