@@ -949,7 +949,7 @@ pub fn simple_event(
 
             if !config.keep_tex_str {
                 for bone in &mut armature.bones {
-                    if bone.tex == og_name {
+                    if bone.tex != "" && bone.tex == og_name {
                         bone.tex = trimmed.clone();
                     }
                 }
@@ -1088,7 +1088,7 @@ pub fn simple_event(
             armature.styles = psd_armature.styles.clone();
             armature.tex_data = psd_armature.tex_data.clone();
             *psd_armature = Armature::default();
-        },
+        }
         _ => {}
     }
 }
