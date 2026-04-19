@@ -216,6 +216,7 @@ pub fn read_psd(
     // reset armature (but not all of it) to make way for the psd rig
     shared.psd_armature.bones = vec![];
     shared.psd_armature.styles = shared.armature.styles.clone();
+    shared.psd_armature.tex_data = shared.armature.tex_data.clone();
 
     // create root bone, where all except targets will go
     shared.psd_armature.new_bone(-1);
@@ -234,13 +235,17 @@ pub fn read_psd(
         }
     }
 
-    shared.psd_armature.styles.retain(|s| s.name != "Default");
-    shared.psd_armature.styles.push(Style {
-        id: shared.psd_armature.styles.len() as i32,
-        name: "Default".to_string(),
-        textures: vec![],
-        active: true,
-    });
+    // add Default style, if it doesn't already exist
+    let styles = &shared.psd_armature.styles;
+    if styles.iter().find(|s| s.name == "Default") == None {
+        let ids = shared.psd_armature.styles.iter().map(|s| s.id).collect();
+        shared.psd_armature.styles.push(Style {
+            id: generate_id(ids),
+            name: "Default".to_string(),
+            textures: vec![],
+            active: true,
+        });
+    }
 
     let mut bone_psd_id: std::collections::HashMap<u32, i32> = Default::default();
     let mut start_eff_ids: Vec<i32> = vec![];
@@ -250,6 +255,7 @@ pub fn read_psd(
     type ImageType = (ImageBuffer<Rgba<u8>, Vec<u8>>, Vec2);
     let _images: Arc<Mutex<Vec<ImageType>>> = Arc::new(vec![].into());
 
+    // add images via threads (native only)
     #[cfg(not(target_arch = "wasm32"))]
     {
         let mut processes = vec![];
@@ -277,6 +283,7 @@ pub fn read_psd(
             image = _images.lock().unwrap()[g].clone();
         }
 
+        // load image one-by-one (web only)
         #[cfg(target_arch = "wasm32")]
         {
             let cpsd = psd::Psd::from_bytes(&bytes).unwrap();
@@ -284,54 +291,69 @@ pub fn read_psd(
             image = load_psd_tex(cpsd, cgroup.clone());
         }
 
-        let dims = Vec2::new(image.0.width() as f32, image.0.height() as f32);
+        let mut dims = Vec2::new(image.0.width() as f32, image.0.height() as f32);
 
         // add tex if not a duplicate
         let mut tex_idx = usize::MAX;
         for t in 0..shared.psd_armature.styles[0].textures.len() {
             let tex = &shared.psd_armature.styles[0].textures[t];
-            let img = &shared.psd_armature.tex_data(tex).unwrap().image;
-            if img.to_rgba8().to_vec() == image.0.to_vec() {
+            let img = &shared.psd_armature.tex_data(tex);
+            if *img == None {
+                continue;
+            }
+            if img.unwrap().image.to_rgba8().to_vec() == image.0.to_vec() {
                 tex_idx = t;
                 break;
             }
         }
 
         if tex_idx == usize::MAX {
-            let mut style_idx: i32 = 0;
+            let styles = &shared.psd_armature.styles;
+            let mut style_id = styles.iter().find(|s| s.name == "Default").unwrap().id;
             let mut tex_name = group.name();
 
             if group.name().contains("$\"") {
                 let split: Vec<&str> = group.name().split('"').collect();
-                let styles = &shared.psd_armature.styles;
 
-                let p_id = &group.parent_id().unwrap();
-                tex_name = psd.groups().get(p_id).unwrap().name();
+                let parent_id = &group.parent_id().unwrap();
+                tex_name = psd.groups().get(parent_id).unwrap().name();
 
-                let low = split[1].to_lowercase();
+                let low = split[1].to_lowercase().trim().to_string();
 
                 // find this style. Create if it doesn't exist
-                if let Some(idx) = styles.iter().position(|s| s.name.to_lowercase() == low) {
-                    style_idx = idx as i32;
+                if let Some(style) = styles.iter().find(|s| s.name.to_lowercase().trim() == low) {
+                    style_id = style.id;
                 } else {
                     let name = split[1].to_string();
-                    let armature = &mut shared.psd_armature;
-                    armature.styles.retain(|s| s.name != name);
+                    let ids = shared.psd_armature.styles.iter().map(|s| s.id).collect();
                     shared.psd_armature.styles.push(Style {
-                        id: shared.psd_armature.styles.len() as i32,
+                        id: generate_id(ids),
                         name,
                         active: true,
                         textures: vec![],
                     });
-                    style_idx = shared.psd_armature.styles.len() as i32 - 1;
+                    style_id = shared.psd_armature.styles.last().unwrap().id;
                 }
             }
 
-            let img = image::DynamicImage::ImageRgba8(image.0.clone());
+            let styles = &mut shared.psd_armature.styles;
+            let style = &mut styles.iter_mut().find(|s| s.id == style_id).unwrap();
             let tex_name = utils::without_unicode(tex_name);
+
+            // remove existing texture with same name
+            style.textures.retain(|t| t.name != tex_name);
+
+            let mut img = image::DynamicImage::ImageRgba8(image.0.clone());
+
+            // create empty image (1x1) if layer is empty
+            if img.dimensions().0 == 0 || img.dimensions().0 == 0 {
+                img = image::DynamicImage::new(1, 1, image::ColorType::Rgba8);
+                dims = Vec2::new(1., 1.);
+            }
+
             let arm = &mut shared.psd_armature;
             let bgl = bind_group_layout;
-            add_texture(img, style_idx, dims, tex_name, arm, queue, device, bgl, ctx);
+            add_texture(img, style_id, dims, tex_name, arm, queue, device, bgl, ctx);
 
             tex_idx = shared.psd_armature.styles[0].textures.len() - 1;
         }
@@ -471,7 +493,7 @@ pub fn read_psd(
         let effs = bones.iter().filter(|bone| bone.ik_family_id == ik_id);
         let mut pos = effs.clone().last().unwrap().pos;
         let parents = shared
-            .armature
+            .psd_armature
             .get_all_parents(false, effs.last().unwrap().id);
         for bone in parents {
             pos += bone.pos;
@@ -482,6 +504,15 @@ pub fn read_psd(
         target_bone.pos = pos;
         target_bone.zindex = 0;
     }
+
+    // remove unused texture data
+    shared.psd_armature.tex_data.retain(|d| {
+        let mut retain = false;
+        for style in &shared.psd_armature.styles {
+            retain |= style.textures.iter().find(|t| t.data_id == d.id) != None;
+        }
+        retain
+    });
 
     // immediately import textures to real armature
     shared.armature.styles = shared.psd_armature.styles.clone();
@@ -514,7 +545,6 @@ pub fn add_texture(
     .unwrap();
 
     let mut bind_group = None;
-
     if queue != None && device != None && bind_group_layout != None {
         bind_group = Some(renderer::create_texture_bind_group(
             image.clone().into_rgba8().to_vec(),
@@ -535,7 +565,8 @@ pub fn add_texture(
         ));
     }
 
-    let id = armature.tex_data.len() as i32;
+    let ids = armature.tex_data.iter().map(|td| td.id).collect();
+    let id = generate_id(ids);
     armature.tex_data.push(TextureData {
         id,
         image,

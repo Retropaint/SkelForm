@@ -427,7 +427,7 @@ pub enum PolarId {
     DeleteKeyframeLine,
     NewUpdate,
     OpenCrashlog,
-    ImportedPsd
+    ImportedPsd,
 }
 enum_string!(PolarId);
 
@@ -1713,15 +1713,11 @@ pub struct Texture {
     pub data_id: i32,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub struct TextureData {
-    #[serde(skip)]
     pub id: i32,
-    #[serde(skip)]
     pub image: image::DynamicImage,
-    #[serde(skip)]
     pub bind_group: Option<BindGroup>,
-    #[serde(skip)]
     pub ui_img: Option<egui::TextureHandle>,
 }
 
@@ -2288,7 +2284,7 @@ pub enum Events {
     SetHoveringTri,
     SetHoveringLine,
     CreateEmptyTexture,
-    ImportPsdArmature
+    ImportPsdArmature,
 }
 
 enum_string!(Events);
