@@ -8,7 +8,7 @@ use wgpu::*;
 use crate::*;
 use image::Rgba;
 
-use image::ImageBuffer;
+use image::{GenericImageView, ImageBuffer};
 
 // web-only imports
 #[cfg(target_arch = "wasm32")]
@@ -17,7 +17,6 @@ mod web {
     pub use wasm_bindgen::prelude::wasm_bindgen;
     pub use web_sys::*;
 }
-
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
