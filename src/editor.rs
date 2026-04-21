@@ -233,7 +233,9 @@ pub fn iterate_events(
             !armature.styles[events.values[0] as usize].active;
         for b in 0..armature.bones.len() {
             let bone = &armature.bones[b];
-            armature.set_bone_tex(bone.id, bone.tex.clone(), usize::MAX, -1);
+            if bone.tex != "" {
+                armature.set_bone_tex(bone.id, bone.tex.clone(), usize::MAX, -1);
+            }
         }
         events.events.remove(0);
         events.values.drain(0..=1);
