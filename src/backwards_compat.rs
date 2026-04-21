@@ -21,7 +21,7 @@ pub fn proceed(mut raw: serde_json::Value) -> (Root, String) {
 
     from_ver!("0.2", v0d2_to_v0d3);
     from_ver!("0.3", v0d3_to_v0d4);
-    from_ver!("0.4", v0d4_to_v0d4d1);
+    from_ver!("0.4.0", v0d4_to_v0d4d1);
 
     if err == "" {
         return (serde_json::from_value(raw).unwrap(), "".to_string());
