@@ -417,7 +417,7 @@ pub fn draw_hierarchy(
 
                                 let mut offset = Vec2::new(0., 18.);
                                 let colors = &config.colors;
-                                if armature.tex_of(bone.id) != None {
+                                if armature.anim_tex_of(bone.id) != None {
                                     let str = shared_ui
                                         .loc("armature_panel.icons.tex")
                                         .replace("$tex", &bone.tex);
@@ -446,8 +446,10 @@ pub fn draw_hierarchy(
                                         .loc("armature_panel.icons.ik_family")
                                         .replace("$family_id", &bone.ik_family_id.to_string());
                                     let img_offset = ui.cursor().min + [-1., 5.].into();
-                                    let rect =
-                                        egui::Rect::from_min_size(img_offset, [13., 10.].into());
+                                    let rect = egui::Rect::from_min_size(
+                                        img_offset + [offset.x, 0.].into(),
+                                        [13., 10.].into(),
+                                    );
                                     let img = shared_ui.ik_img.as_ref().unwrap();
                                     egui::Image::new(img).tint(color).paint_at(ui, rect);
                                     let response = ui.allocate_rect(rect, egui::Sense::hover());
@@ -457,8 +459,9 @@ pub fn draw_hierarchy(
                                     let family_id = bone.ik_family_id.to_string();
                                     let id = format!("{}ik", b.to_string());
                                     let color = colors.inverse_kinematics;
-                                    let id_offset = Vec2::new(offset.x, 18.);
+                                    let id_offset = Vec2::new(offset.x - 18., 18.);
                                     bone_label(&family_id, false, ui, id, id_offset, &desc, color);
+                                    offset.x += 18.;
                                 }
                                 if is_target != None {
                                     let family_id = is_target.unwrap().ik_family_id.to_string();
@@ -472,6 +475,7 @@ pub fn draw_hierarchy(
                                     color += Color::new(0, inc, inc, 0);
                                     let id = format!("⌖{}", family_id);
                                     bone_label(&icon, false, ui, id, offset, &desc, color);
+                                    offset.x += 18.;
                                 }
                             });
                         });
