@@ -1236,7 +1236,7 @@ impl Armature {
         selected_anim: usize,
         selected_frame: i32,
     ) {
-        if selected_anim == usize::MAX {
+        if selected_anim == usize::MAX || selected_frame == -1 {
             let bone_mut = self.bones.iter_mut().find(|b| b.id == bone_id).unwrap();
             bone_mut.tex = new_tex_str;
             let new_tex = self.tex_of(bone_id);
@@ -1256,14 +1256,16 @@ impl Armature {
 
             // record texture change in animation
             let anim = &mut self.animations[selected_anim];
-            let kf = anim.check_if_in_keyframe(bone_id as i32, selected_frame, tx.clone());
+            let kf = anim
+                .check_if_in_keyframe(bone_id, selected_frame, tx.clone())
+                .1;
             anim.keyframes[kf].value_str = new_tex_str;
 
             // add 0th keyframe if that wasn't the selected frame
             if selected_frame != 0 {
-                let first = anim.check_if_in_keyframe(bone_id as i32, 0, tx.clone());
-                if first == usize::MAX {
-                    anim.keyframes[first].value_str = bone.tex.clone();
+                let (existed, frame) = anim.check_if_in_keyframe(bone_id, 0, tx.clone());
+                if !existed {
+                    anim.keyframes[frame].value_str = bone.tex.clone();
                 }
             }
         }
@@ -1734,7 +1736,12 @@ pub struct Animation {
 
 impl Animation {
     /// Return which frame has these attributes, or create a new one
-    pub fn check_if_in_keyframe(&mut self, id: i32, frame: i32, element: AnimElement) -> usize {
+    pub fn check_if_in_keyframe(
+        &mut self,
+        id: i32,
+        frame: i32,
+        element: AnimElement,
+    ) -> (bool, usize) {
         macro_rules! is_same_frame {
             ($kf:expr) => {
                 $kf.frame == frame && $kf.bone_id == id && $kf.element == element
@@ -1752,9 +1759,10 @@ impl Animation {
         }
 
         if exists_at != usize::MAX {
-            return exists_at;
+            return (true, exists_at);
         }
 
+        // create keyframe and return it
         self.keyframes.push(Keyframe {
             frame,
             bone_id: id,
@@ -1763,17 +1771,15 @@ impl Animation {
             end_handle: utils::interp_preset(HandlePreset::Linear).1,
             ..Default::default()
         });
-
         self.sort_keyframes();
-
         for i in 0..self.keyframes.len() {
             let kf = &self.keyframes[i];
             if is_same_frame!(kf) {
-                return i;
+                return (false, i);
             }
         }
 
-        usize::MAX
+        (false, usize::MAX)
     }
 
     pub fn sort_keyframes(&mut self) {

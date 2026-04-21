@@ -1516,7 +1516,9 @@ fn edit_bone(
         oth_frame.as_mut().unwrap().value = init_value;
         oth_frame.as_mut().unwrap().value_str = init_value_str;
     }
-    let frame = anim[anim_id].check_if_in_keyframe(bone_id, anim_frame, element.clone());
+    let frame = anim[anim_id]
+        .check_if_in_keyframe(bone_id, anim_frame, element.clone())
+        .1;
     anim[anim_id].keyframes[frame].value = value;
     anim[anim_id].keyframes[frame].value_str = value_str;
 }
