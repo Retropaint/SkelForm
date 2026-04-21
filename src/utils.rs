@@ -742,7 +742,9 @@ pub fn prepare_files(
     // disabled: v0.4 won't have physics, but this must be removed for v0.5
     for b in 0..armature_copy.bones.len() {
         let bone_id = armature_copy.bones[b].id;
-        armature_copy.bones[b].has_physics = armature_copy.has_physics(bone_id);
+        if PHYSICS {
+            armature_copy.bones[b].has_physics = armature_copy.has_physics(bone_id);
+        }
         let bone = &mut armature_copy.bones[b];
         if bone.phys_pos_damping == 0. || !PHYSICS {
             bone.phys_pos_damping = f32::MAX;
