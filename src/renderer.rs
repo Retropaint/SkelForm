@@ -659,7 +659,7 @@ pub fn draw_armature(
     let mut bone_ids_to_draw = vec![];
 
     for b in 0..armature.bones.len() {
-        let tex = src_arm.tex_of(armature.bones[b].id);
+        let tex = src_arm.anim_tex_of(armature.bones[b].id);
         let id = armature.bones[b].id;
         let bone = &armature.bones[b];
         let hidden = armature.is_bone_hidden(false, config.propagate_visibility, id);
@@ -683,10 +683,9 @@ pub fn draw_armature(
 
     let mut curr_indices = 0;
     for bone_id in bone_ids_to_draw {
-        let tex = src_arm.tex_of(bone_id);
+        let tex = src_arm.anim_tex_of(bone_id);
         let bone = &armature.bones.iter().find(|b| b.id == bone_id).unwrap();
-        let t = tex.unwrap();
-        let bg = &src_arm.tex_data(t).unwrap().bind_group;
+        let bg = &src_arm.tex_data(tex.unwrap()).unwrap().bind_group;
         let indices_end = curr_indices + bone.indices.len();
         render_pass.set_bind_group(0, bg, &[]);
         draw(&buffer, render_pass, curr_indices, indices_end);
