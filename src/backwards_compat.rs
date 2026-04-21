@@ -21,6 +21,7 @@ pub fn proceed(mut raw: serde_json::Value) -> (Root, String) {
 
     from_ver!("0.2", v0d2_to_v0d3);
     from_ver!("0.3", v0d3_to_v0d4);
+    from_ver!("0.4", v0d4_to_v0d4d1);
 
     if err == "" {
         return (serde_json::from_value(raw).unwrap(), "".to_string());
@@ -48,4 +49,15 @@ pub fn v0d3_to_v0d4(raw: &mut serde_json::Value) {
         }
     }
     raw["version"] = "v0.4.0".into();
+}
+
+pub fn v0d4_to_v0d4d1(raw: &mut serde_json::Value) {
+    for anim in raw.get_mut("animations").unwrap().as_array_mut().unwrap() {
+        for keyframe in anim.get_mut("keyframes").unwrap().as_array_mut().unwrap() {
+            if keyframe["frame"] == -1 {
+                keyframe["frame"] = serde_json::to_value(0).unwrap();
+            }
+        }
+    }
+    raw["version"] = "v0.4.1".into();
 }
