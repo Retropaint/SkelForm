@@ -1051,6 +1051,7 @@ pub fn texture_effects(
 
     // texture dropdown
     let mut selected_tex = bone.tex.to_string();
+    let mut changed = false;
     let mut tex_name = if bone.tex != "" {
         bone.tex.clone()
     } else {
@@ -1076,21 +1077,24 @@ pub fn texture_effects(
                 texes.sort_unstable();
                 texes.dedup();
 
-                ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
+                let none = ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
+                changed |= none.clicked();
                 for tex in texes {
                     let name = utils::trunc_str(ui, &tex.clone(), ui.min_rect().width());
-                    ui.selectable_value(&mut selected_tex, tex.clone(), &name);
+                    let button = ui.selectable_value(&mut selected_tex, tex.clone(), &name);
+                    changed |= button.clicked();
                 }
-                ui.selectable_value(&mut selected_tex, "[Setup]".to_string(), "[Setup]");
+                let setup =
+                    ui.selectable_value(&mut selected_tex, "[Setup]".to_string(), "[Setup]");
+                changed |= setup.clicked();
             });
         });
     });
     if selected_tex == "[Setup]" {
         shared_ui.styles_modal = true;
-    } else if selected_tex != bone.tex {
-        let bone_ids = selections.only_root_bones(&armature.bones);
+    } else if changed {
         events.save_edited_bone(selections.bone_idx);
-        for id in &bone_ids {
+        for id in &selections.bone_ids {
             events.set_bone_texture(*id as usize, selected_tex.clone());
         }
     }
