@@ -52,12 +52,18 @@ pub fn v0d3_to_v0d4(raw: &mut serde_json::Value) {
 }
 
 pub fn v0d4_to_v0d4d1(raw: &mut serde_json::Value) {
-    for anim in raw.get_mut("animations").unwrap().as_array_mut().unwrap() {
-        for keyframe in anim.get_mut("keyframes").unwrap().as_array_mut().unwrap() {
-            if keyframe["frame"] == -1 {
-                keyframe["frame"] = serde_json::to_value(0).unwrap();
+    if raw.get_mut("animations") != None {
+        for anim in raw.get_mut("animations").unwrap().as_array_mut().unwrap() {
+            if anim.get_mut("keyframes") == None {
+                continue;
+            }
+            for keyframe in anim.get_mut("keyframes").unwrap().as_array_mut().unwrap() {
+                if keyframe["frame"] == -1 {
+                    keyframe["frame"] = serde_json::to_value(0).unwrap();
+                }
             }
         }
     }
+
     raw["version"] = "v0.4.1".into();
 }
