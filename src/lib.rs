@@ -17,7 +17,7 @@ use egui_wgpu::wgpu::ExperimentalFeatures;
 use shared::*;
 use wgpu::{util::DeviceExt, BindGroupLayout, Buffer, InstanceDescriptor};
 
-const PHYSICS: bool = false;
+const PHYSICS: bool = true;
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
