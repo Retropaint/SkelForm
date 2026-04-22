@@ -131,6 +131,12 @@
             style="display: none"
         />
 
+        <div
+            style="width: 100%; height: 100%; position: absolute; z-index: 99"
+            onclick="clickedOnce()"
+            id="focusInitiator"
+        ></div>
+
         <div id="ui-slider" class="modal ui-slider">
             <div class="box">
                 <p>
@@ -352,7 +358,7 @@
 
             function loaded() {
                 hasLoaded = true;
-                toggleElement(true, "ui-slider");
+                toggleElement(false, "ui-slider");
             }
 
             function turnOffSlider() {
@@ -598,6 +604,22 @@
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
+            }
+
+            function sendFeedback(content) {
+                fetch("https://forums.skelform.org/feedback.php", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        content: content,
+                    }),
+                    headers: {
+                        "Content-type": "application/json",
+                    },
+                });
+            }
+
+            function clickedOnce() {
+                focusInitiator.style.pointerEvents = "none";
             }
         </script>
 

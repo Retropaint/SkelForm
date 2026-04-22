@@ -136,6 +136,9 @@ pub fn draw(
     if shared_ui.lang_import_modal {
         modal::lang_import_modal(context, shared_ui, &config, events);
     }
+    if shared_ui.feedback_modal {
+        modal::feedback_modal(context, shared_ui, &config);
+    }    
     #[cfg(not(target_arch = "wasm32"))]
     if shared_ui.checking_update {
         modal::modal(context, shared_ui, &config);
@@ -567,10 +570,6 @@ pub fn kb_inputs(
     #[allow(unused_variables)] armature: &Armature,
     #[allow(unused_variables)] camera: &Camera,
 ) {
-    if shared_ui.startup_window {
-        return;
-    }
-
     mouse_button_as_key(input, egui::PointerButton::Primary, egui::Key::F31);
     mouse_button_as_key(input, egui::PointerButton::Secondary, egui::Key::F32);
     mouse_button_as_key(input, egui::PointerButton::Middle, egui::Key::F33);
@@ -580,7 +579,7 @@ pub fn kb_inputs(
     // cancel key
     let ui = &shared_ui;
     #[rustfmt::skip]
-    let modal_open = ui.styles_modal || ui.modal || ui.polar_modal || ui.settings_modal || ui.export_modal || ui.lang_import_modal;
+    let modal_open = ui.styles_modal || ui.modal || ui.polar_modal || ui.settings_modal || ui.export_modal || ui.lang_import_modal || ui.feedback_modal;
     if input.consume_shortcut(&config.keys.cancel) {
         shared_ui.context_menu.id = "".to_string();
         if edit_mode.setting_ik_target {
@@ -594,9 +593,15 @@ pub fn kb_inputs(
             shared_ui.settings_modal = false;
             shared_ui.atlas_modal = false;
             shared_ui.export_modal = false;
+            shared_ui.feedback_modal = false;
+            shared_ui.lang_input = "".to_string();
         } else {
             events.unselect_all();
         }
+    }
+
+    if shared_ui.feedback_modal {
+        return;
     }
 
     if input.consume_shortcut(&config.keys.undo) {
@@ -628,7 +633,7 @@ pub fn kb_inputs(
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    if input.consume_shortcut(&config.keys.save_as) {
+    if input.consume_shortcut(&config.keys.save_as) && !shared_ui.startup_window {
         shared_ui.save_path = None;
         utils::save_native(shared_ui);
     }
@@ -844,6 +849,12 @@ fn top_panel(
                 }
             });
 
+            let str_feedback = title!(&shared_ui.loc("top_bar.feedback"));
+            let button = ui.menu_button(str_feedback, |ui| ui.close());
+            if button.response.clicked() {
+                shared_ui.feedback_modal = true;
+            }
+            
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if shared_ui.warnings.len() == 0 {

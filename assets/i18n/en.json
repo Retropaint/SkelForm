@@ -92,7 +92,8 @@
       "dev_docs": "Dev Docs",
       "binary_folder": "Binary Folder",
       "config_folder": "Config Folder"
-    }
+    },
+    "feedback": "Feedback"
   },
   "styles_modal": {
     "heading": "Styles ℹ",

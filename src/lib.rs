@@ -102,6 +102,7 @@ extern "C" {
     pub fn changeLang(filename: String);
     pub fn getLang() -> Vec<u8>;
     pub fn clearLang();
+    pub fn sendFeedback(content: &str);
 }
 
 #[derive(Default)]

@@ -1442,6 +1442,15 @@ pub fn color_within_range(src: [u8; 3], dst: [u8; 3], tol: u8) -> bool {
         && (src[2] >= dst[2].saturating_sub(tol) && src[2] <= dst[2].saturating_add(tol))
 }
 
+pub fn open_link(url: &str) {
+    #[cfg(target_arch = "wasm32")]
+    crate::openLink(url.to_string());
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        _ = open::that(url);
+    }
+}
+
 // I admit defeat:
 // https://chatgpt.com/share/697de90a-5a08-8004-9551-326e2ba6aee2
 pub fn shortest_angle_delta(from: f32, to: f32) -> f32 {

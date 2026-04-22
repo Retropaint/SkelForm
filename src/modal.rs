@@ -273,6 +273,81 @@ pub fn lang_import_modal(
     shared_ui.lang_input = input;
 }
 
+pub fn feedback_modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &Config) {
+    let mut input = shared_ui.lang_input.clone();
+    let mut cancelled = false;
+    modal_template(
+        ctx,
+        "feedback_modal".to_string(),
+        config,
+        |ui| {
+            ui.label("All suggestions/bug reports welcome!\nImages may be uploaded as links.");
+            ui.add_space(5.);
+            egui::TextEdit::multiline(&mut input)
+                .hint_text("I think you should add/fix...")
+                .show(ui);
+            ui.add_space(5.);
+            ui.label("Social channels:");
+            ui.horizontal(|ui| {
+                let col = config.colors.link;
+                let discord = ui.clickable_label(egui::RichText::new("Discord").color(col));
+                if discord.clicked() {
+                    utils::open_link("https://discord.com/invite/V9gm4p4cAB");
+                }
+                ui.label("|");
+                let reddit = ui.clickable_label(egui::RichText::new("Reddit").color(col));
+                if reddit.clicked() {
+                    utils::open_link("https://reddit.com/r/SkelForm");
+                }
+                ui.label("|");
+                let forums = ui.clickable_label(egui::RichText::new("Forums").color(col));
+                if forums.clicked() {
+                    utils::open_link("https://forums.skelform.org");
+                }
+                ui.label("|");
+                let github = ui.clickable_label(egui::RichText::new("Github").color(col));
+                if github.clicked() {
+                    utils::open_link("https://github.com/Retropaint/SkelForm/issues");
+                }
+            });
+        },
+        |ui| {
+            // send to /feedback.php on submit
+            if ui.skf_button("Cancel").clicked() {
+                shared_ui.feedback_modal = false;
+                cancelled = true;
+            }
+            ui.add_enabled_ui(shared_ui.lang_input != "", |ui| {
+                if !ui.skf_button("Submit").clicked() {
+                    return;
+                }
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    let formatted = shared_ui.lang_input.replace("\n", "\\n");
+                    let request = ureq::post("https://forums.skelform.org/feedback.php")
+                        .header("Content-Type", "application/json")
+                        .send(format!("{{\"content\":\"{}\"}}", formatted));
+                    if let Ok(mut request) = request {
+                        let response = request.body_mut().read_to_string();
+                        if let Err(err) = response {
+                            eprintln!("{}", err);
+                        }
+                    }
+                }
+                #[cfg(target_arch = "wasm32")]
+                {
+                    crate::sendFeedback(&shared_ui.lang_input);
+                }
+            });
+        },
+    );
+    if !cancelled {
+        shared_ui.lang_input = input;
+    } else {
+        shared_ui.lang_input = "".to_string()
+    }
+}
+
 // top-right X label for modals
 pub fn modal_x<T: FnOnce()>(ui: &mut egui::Ui, offset: egui::Vec2, after_close: T) {
     let x_rect = egui::Rect::from_min_size(ui.min_rect().right_top() + offset, egui::Vec2::ZERO);
