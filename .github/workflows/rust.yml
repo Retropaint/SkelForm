@@ -37,7 +37,6 @@ jobs:
       - name: upload to release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: nightly
           name: Nightly Build
           draft: false
           prerelease: false
@@ -71,7 +70,6 @@ jobs:
       - name: upload to release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: nightly
           name: Nightly Build
           draft: false
           prerelease: false
@@ -104,7 +102,6 @@ jobs:
       - name: upload to release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: nightly
           name: Nightly Build
           draft: false
           prerelease: false
