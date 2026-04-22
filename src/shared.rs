@@ -606,6 +606,7 @@ pub struct Ui {
     pub export_modal: bool,
     pub checking_update: bool,
     pub feedback_modal: bool,
+    pub feedback_sent_modal: bool,
 
     loc_strings: std::collections::HashMap<String, String>,
     default_loc_strings: std::collections::HashMap<String, String>,

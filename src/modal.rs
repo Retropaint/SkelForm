@@ -338,6 +338,8 @@ pub fn feedback_modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &C
                 {
                     crate::sendFeedback(&shared_ui.lang_input);
                 }
+                shared_ui.feedback_modal = false;
+                shared_ui.feedback_sent_modal = true;
             });
         },
     );
