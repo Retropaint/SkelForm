@@ -14,12 +14,15 @@ The only files necessary for parsing are `armature.json` and `textures.png`.
 - All IDs are sequential and start at 0. They may be used directly as array
   indexes
 
-- String fields (`name`, `*_str`) are debugging aid, and not required to be
-  parsed. For `*_str` fields, it is recommended to use their integer counterpart
-
 - IK (inverse kinematics) data is stored in the family's respective root bone(s)
 
 - All IK root bone IDs are stored and can be iterated via `ik_root_ids`
 
 - Bone init fields (`init_*`) should be immutable, and are used to reset their
   respective fields if animation blending is implemented (more info in dev docs)
+
+- Animation keyframes always store a single unit of any vector field.
+  Example: position is stored as `PositionX` and `PositionY` keyframes,
+  separately
+
+- Tint is stored as a Vector4 (red, green, blue, alpha)
