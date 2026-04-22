@@ -2,7 +2,8 @@ name: Rust
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "nightly" ]
+    tags: ['v*']
 
 env:
   USER_DOCS: https://github.com/Retropaint/skelform_user_docs
@@ -34,10 +35,25 @@ jobs:
       - name: build binary
         run: cd release && python3 release.py -nd
         
+      - name: upload to nightly
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/nightly'
+        with:
+          tag_name: "nightly-build"
+          name: Nightly Build
+          draft: false
+          prerelease: true
+          overwrite_files: true
+          files: |
+            release/SkelForm*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: upload to release
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: Nightly Build
+          name: ${{ github.ref_name }}
           draft: false
           prerelease: false
           files: |
@@ -67,10 +83,25 @@ jobs:
         shell: bash
         run: cd release && python release.py -nd
 
+      - name: upload to nightly
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/nightly'
+        with:
+          tag_name: "nightly-build"
+          name: Nightly Build
+          draft: false
+          prerelease: true
+          overwrite_files: true
+          files: |
+            release/skelform_windows*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: upload to release
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: Nightly Build
+          name: ${{ github.ref_name }}
           draft: false
           prerelease: false
           files: |
@@ -99,10 +130,25 @@ jobs:
       - name: build binary
         run: cd release && python3 release.py --ubuntudeps -nd
         
+      - name: upload to nightly
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/nightly'
+        with:
+          tag_name: "nightly-build"
+          name: Nightly Build
+          draft: false
+          prerelease: true
+          overwrite_files: true
+          files: |
+            release/skelform_linux*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: upload to release
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: Nightly Build
+          name: ${{ github.ref_name }}
           draft: false
           prerelease: false
           files: |
