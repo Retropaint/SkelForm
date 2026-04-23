@@ -138,7 +138,7 @@ pub fn draw(
     }
     if shared_ui.feedback_modal {
         modal::feedback_modal(context, shared_ui, &config, events);
-    }    
+    }
     #[cfg(not(target_arch = "wasm32"))]
     if shared_ui.checking_update {
         modal::modal(context, shared_ui, &config);
@@ -578,19 +578,23 @@ pub fn kb_inputs(
 
     // cancel key
     let ui = &shared_ui;
+
     #[rustfmt::skip]
-    let modal_open = ui.styles_modal || ui.modal || ui.polar_modal || ui.settings_modal
+    let modal_open = ui.styles_modal || ui.polar_modal || ui.settings_modal
         || ui.export_modal || ui.lang_import_modal || ui.feedback_modal;
+
     if input.consume_shortcut(&config.keys.cancel) {
         shared_ui.context_menu.id = "".to_string();
         if edit_mode.setting_ik_target {
             events.toggle_setting_ik_target(0);
         } else if edit_mode.setting_bind_bone {
             events.toggle_setting_bind_bone(0);
+        } else if shared_ui.modal {
+            shared_ui.modal = false;
+        } else if shared_ui.polar_modal {
+            shared_ui.polar_modal = false;
         } else if modal_open {
             shared_ui.styles_modal = false;
-            shared_ui.modal = false;
-            shared_ui.polar_modal = false;
             shared_ui.settings_modal = false;
             shared_ui.atlas_modal = false;
             shared_ui.export_modal = false;
@@ -760,14 +764,24 @@ pub fn mouse_button_as_key(
 
     if input.pointer.button_pressed(button) {
         input.keys_down.insert(fake_key);
-        #[rustfmt::skip]
-        input.events.push(egui::Event::Key { key: fake_key, physical_key: None, pressed: true, repeat: false, modifiers: none });
+        input.events.push(egui::Event::Key {
+            key: fake_key,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: none,
+        });
     }
 
     if input.pointer.button_released(button) {
         input.keys_down.remove(&fake_key);
-        #[rustfmt::skip]
-        input.events.push(egui::Event::Key { key: fake_key, physical_key: None, pressed: false, repeat: false, modifiers: none });
+        input.events.push(egui::Event::Key {
+            key: fake_key,
+            physical_key: None,
+            pressed: false,
+            repeat: false,
+            modifiers: none,
+        });
     }
 }
 
@@ -797,8 +811,16 @@ fn top_panel(
             return;
         }
         egui::MenuBar::new().ui(ui, |ui| {
-            #[rustfmt::skip]
-            menu_file_button(ui, &config, shared_ui, events, &selections, &armature, edit_mode, &camera);
+            menu_file_button(
+                ui,
+                &config,
+                shared_ui,
+                events,
+                &selections,
+                &armature,
+                edit_mode,
+                &camera,
+            );
             menu_edit_button(ui, &config, &shared_ui, selections, events, copy_buffer);
             menu_view_button(ui, &config, &shared_ui, events);
 
@@ -820,17 +842,22 @@ fn top_panel(
                 ui.set_width(90.);
                 //let str_user_docs = &shared.ui.loc("top_bar.help.user_docs");
                 let str_user_docs = &shared_ui.loc("top_bar.help.user_docs");
-                if top_bar_button(ui, str_user_docs, None, &mut offset, config, true, s_ui).clicked() {
+                if top_bar_button(ui, str_user_docs, None, &mut offset, config, true, s_ui)
+                    .clicked()
+                {
                     utils::open_docs(true, "");
                 }
                 let str_dev_docs = &shared_ui.loc("top_bar.help.dev_docs");
-                if top_bar_button(ui, str_dev_docs, None, &mut offset, config, true, s_ui).clicked() {
+                if top_bar_button(ui, str_dev_docs, None, &mut offset, config, true, s_ui).clicked()
+                {
                     utils::open_docs(false, "");
                 }
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     let str_binary = &shared_ui.loc("top_bar.help.binary_folder");
-                    if top_bar_button(ui, str_binary, None, &mut offset, config, true, s_ui).clicked() {
+                    if top_bar_button(ui, str_binary, None, &mut offset, config, true, s_ui)
+                        .clicked()
+                    {
                         match open::that(utils::bin_path()) {
                             Err(_) => {}
                             Ok(file) => file,
@@ -841,7 +868,9 @@ fn top_panel(
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     let str_config = &shared_ui.loc("top_bar.help.config_folder");
-                    if top_bar_button(ui, str_config, None, &mut offset, config, true, s_ui).clicked() {
+                    if top_bar_button(ui, str_config, None, &mut offset, config, true, s_ui)
+                        .clicked()
+                    {
                         match open::that(config_path().parent().unwrap()) {
                             Err(_) => {}
                             Ok(file) => file,
@@ -855,16 +884,19 @@ fn top_panel(
             if button.response.clicked() {
                 shared_ui.feedback_modal = true;
             }
-            
+
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if shared_ui.warnings.len() == 0 {
                         return;
                     }
                     ui.add_space(10.);
-                    let count = egui::RichText::new(shared_ui.warnings.len().to_string() + " ⚠").color(config.colors.warning_text);
+                    let count = egui::RichText::new(shared_ui.warnings.len().to_string() + " ⚠")
+                        .color(config.colors.warning_text);
                     let pointing_hand = egui::CursorIcon::PointingHand;
-                    let header = ui.add(egui::Button::selectable(false, count)).on_hover_cursor(pointing_hand);
+                    let header = ui
+                        .add(egui::Button::selectable(false, count))
+                        .on_hover_cursor(pointing_hand);
                     if header.clicked() {
                         shared_ui.warnings_open = !shared_ui.warnings_open;
                     }
@@ -888,7 +920,9 @@ fn top_panel(
                                 ui.horizontal(|ui| {
                                     ui.set_height(21.);
                                     ui.add_space(5.);
-                                    warnings::warning_line(ui, &warning, shared_ui, &armature, config, events);
+                                    warnings::warning_line(
+                                        ui, &warning, shared_ui, &armature, config, events,
+                                    );
                                 });
                             });
 
