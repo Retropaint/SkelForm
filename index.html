@@ -621,6 +621,11 @@
             function clickedOnce() {
                 focusInitiator.style.pointerEvents = "none";
             }
+
+            // remove focuser if this isn't in the standalone editor page(s)
+            if (window.location.href.indexOf("skelform.org/editor") == -1) {
+                clickedOnce();
+            }
         </script>
 
         <script>
