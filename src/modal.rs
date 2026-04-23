@@ -332,11 +332,18 @@ pub fn feedback_modal(
                     let request = ureq::post("https://forums.skelform.org/feedback.php")
                         .header("Content-Type", "application/json")
                         .send(format!("{{\"content\":\"{}\"}}", formatted));
+                    let mut is_error = true;
                     if let Ok(mut request) = request {
+                        is_error = false;
                         let response = request.body_mut().read_to_string();
                         if let Err(err) = response {
+                            is_error = true;
                             eprintln!("{}", err);
                         }
+                    }
+                    if is_error {
+                        events.open_modal(&shared_ui.loc("feedback_sent_err"), false);
+                        return;
                     }
                 }
                 #[cfg(target_arch = "wasm32")]
