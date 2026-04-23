@@ -137,10 +137,7 @@ pub fn draw(
         modal::lang_import_modal(context, shared_ui, &config, events);
     }
     if shared_ui.feedback_modal {
-        modal::feedback_modal(context, shared_ui, &config);
-    }    
-    if shared_ui.feedback_sent_modal {
-        events.open_modal(&shared_ui.loc("feedback_sent"), false);
+        modal::feedback_modal(context, shared_ui, &config, events);
     }    
     #[cfg(not(target_arch = "wasm32"))]
     if shared_ui.checking_update {
@@ -583,7 +580,7 @@ pub fn kb_inputs(
     let ui = &shared_ui;
     #[rustfmt::skip]
     let modal_open = ui.styles_modal || ui.modal || ui.polar_modal || ui.settings_modal
-        || ui.export_modal || ui.lang_import_modal || ui.feedback_modal || ui.feedback_sent_modal;
+        || ui.export_modal || ui.lang_import_modal || ui.feedback_modal;
     if input.consume_shortcut(&config.keys.cancel) {
         shared_ui.context_menu.id = "".to_string();
         if edit_mode.setting_ik_target {
@@ -598,7 +595,6 @@ pub fn kb_inputs(
             shared_ui.atlas_modal = false;
             shared_ui.export_modal = false;
             shared_ui.feedback_modal = false;
-            shared_ui.feedback_sent_modal = false;
             shared_ui.lang_input = "".to_string();
         } else {
             events.unselect_all();

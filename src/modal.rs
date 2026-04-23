@@ -273,7 +273,12 @@ pub fn lang_import_modal(
     shared_ui.lang_input = input;
 }
 
-pub fn feedback_modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &Config) {
+pub fn feedback_modal(
+    ctx: &egui::Context,
+    shared_ui: &mut crate::Ui,
+    config: &Config,
+    events: &mut crate::EventState,
+) {
     let mut input = shared_ui.lang_input.clone();
     let mut cancelled = false;
     modal_template(
@@ -339,7 +344,7 @@ pub fn feedback_modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &C
                     crate::sendFeedback(&shared_ui.lang_input);
                 }
                 shared_ui.feedback_modal = false;
-                shared_ui.feedback_sent_modal = true;
+                events.open_modal(&shared_ui.loc("feedback_sent"), false);
             });
         },
     );
