@@ -2203,7 +2203,7 @@ pub enum Events {
     PasteBone,
     CopyKeyframe,
     CopyKeyframesInFrame,
-    PasteKeyframes,
+    PasteKeyframesOnFrame,
 
     NewAnimation,
     NewStyle,
@@ -2346,7 +2346,6 @@ impl EventState {
     generic_event!(new_armature, Events::NewArmature);
     generic_event!(new_vertex, Events::NewVertex);
     generic_event!(cancel_pending_texture, Events::CancelPendingTexture);
-    generic_event!(paste_keyframes, Events::PasteKeyframes);
     generic_event!(reset_vertices, Events::ResetVertices);
     generic_event!(remove_ik_target, Events::RemoveIkTarget);
     generic_event!(center_bone_verts, Events::CenterBoneVerts);
@@ -2414,7 +2413,18 @@ impl EventState {
     event_with_value!(set_hovering_line, E::SetHoveringLine, value, i32);
     event_with_value!(set_pos_ratio, E::SetPosRatio, value, f32);
     event_with_value!(set_scale_ratio, E::SetScaleRatio, value, f32);
-    event_with_value!(copy_keyframes_in_frame, Events::CopyKeyframesInFrame, frame, i32);
+    event_with_value!(
+        copy_keyframes_in_frame,
+        Events::CopyKeyframesInFrame,
+        frame,
+        i32
+    );
+    event_with_value!(
+        paste_keyframes_on_frame,
+        Events::PasteKeyframesOnFrame,
+        frame,
+        i32
+    );
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

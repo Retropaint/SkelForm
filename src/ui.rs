@@ -666,7 +666,7 @@ pub fn kb_inputs(
     // paste shortcut
     if input.consume_shortcut(&config.keys.paste) {
         if selections.anim_frame != -1 {
-            events.paste_keyframes();
+            events.paste_keyframes_on_frame(selections.anim_frame);
         } else {
             events.paste_bone(selections.bone_idx);
         }
@@ -833,12 +833,12 @@ fn context_menu_content(
             shared_ui.context_menu.close();
         }
         if ui.context_button("Paste", &config).clicked() {
-            events.paste_keyframes();
+            events.paste_keyframes_on_frame(split[3].parse().unwrap());
             shared_ui.context_menu.close();
         }
     } else if id == "kfline" {
         if ui.context_button("Paste", &config).clicked() {
-            events.paste_keyframes();
+            events.paste_keyframes_on_frame(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
     } else if id == "kfdiamond" {
@@ -847,7 +847,7 @@ fn context_menu_content(
             shared_ui.context_menu.close();
         }
         if ui.context_button("Paste", &config).clicked() {
-            events.paste_keyframes();
+            events.paste_keyframes_on_frame(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
     }
@@ -1497,7 +1497,7 @@ fn menu_edit_button(
         let button = top_bar_button(ui, str_paste, key_paste, &mut offset, &config, can_paste, &shared_ui);
         if can_paste && button.clicked() {
             if selections.anim_frame != -1 {
-                events.paste_keyframes();
+                events.paste_keyframes_on_frame(selections.anim_frame);
             } else {
                 events.paste_bone(selections.bone_idx);
             }

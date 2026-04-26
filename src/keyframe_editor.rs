@@ -496,7 +496,8 @@ pub fn draw_top_bar(
 
                 // create dragging area for diamond
                 let rect = egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5.));
-                let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click_and_drag());
+                let response: egui::Response =
+                    ui.allocate_rect(rect, egui::Sense::click_and_drag());
 
                 if response.drag_started() {
                     events.select_anim_frame(frame as usize, false);
@@ -711,7 +712,7 @@ pub fn draw_bottom_bar(
 
             let paste_str = &shared_ui.loc("keyframe_editor.paste");
             if ui.skf_button(paste_str).clicked() {
-                events.paste_keyframes();
+                events.paste_keyframes_on_frame(selections.anim_frame);
             }
 
             let mut col = config.colors.text;
@@ -772,21 +773,24 @@ fn draw_frame_lines(
             && shared_ui.context_menu.hide
             && !shared_ui.export_modal;
         let cur = cursor;
+        let is_in = can_hover && cur.x < x + hitbox && cur.x > x - hitbox && above_bar;
 
         if selections.anim_frame == i {
             color = egui::Color32::WHITE;
             selected_line_x = ui.min_rect().left() + x;
-        } else if can_hover && cur.x < x + hitbox && cur.x > x - hitbox && above_bar {
+        } else if is_in {
             shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
             color = egui::Color32::WHITE;
 
             // select this frame if clicked
             if input.left_clicked && shared_ui.context_menu.id == "" {
                 events.select_anim_frame(i as usize, false);
-            } else if input.right_clicked {
-                let context_id = format!("kfline_{}", i.to_string());
-                shared_ui.context_menu.show(&context_id);
             }
+        }
+
+        if is_in && input.right_clicked {
+            let context_id = format!("kfline_{}", i.to_string());
+            shared_ui.context_menu.show(&context_id);
         }
 
         // draw the line!

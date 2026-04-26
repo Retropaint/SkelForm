@@ -38,7 +38,7 @@ pub fn iterate_events(
                 E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
                 E::RenameAnim  => if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap()); ui.just_made_anim  = false }
-                E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframes => {
+                E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframesOnFrame => {
                     undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
                 }
                 E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts | E::NewVertex | E::RemoveTriangle => {
@@ -867,8 +867,8 @@ pub fn simple_event(
                 open_modal(ui, value == 1., ui.loc("keyframe_editor.invalid_fps"));
             }
         }
-        Events::PasteKeyframes => {
-            let frame = selections.anim_frame;
+        Events::PasteKeyframesOnFrame => {
+            let frame = value as i32;
             let mut buffer_frames = copy_buffer.keyframes.clone();
             let anim = &mut armature.sel_anim_mut(&selections).unwrap();
 
