@@ -780,7 +780,7 @@ fn draw_frame_lines(
             selected_line_x = ui.min_rect().left() + x;
         } else if is_in {
             shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
-            color = egui::Color32::WHITE;
+            color = egui::Color32::from_rgb(175, 175, 175);
 
             // select this frame if clicked
             if input.left_clicked && shared_ui.context_menu.id == "" {
