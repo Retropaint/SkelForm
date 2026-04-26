@@ -451,7 +451,6 @@ pub fn draw_top_bar(
     config: &Config,
     events: &mut EventState,
 ) {
-    let mut drew_drag = false;
     let scroll_area = egui::ScrollArea::horizontal()
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
         .scroll_offset(egui::Vec2::new(shared_ui.anim.timeline_offset.x, 0.));
@@ -518,7 +517,10 @@ pub fn draw_top_bar(
                         bone_id: -1,
                         ..Default::default()
                     };
+
+                    // draw diamond following mouse
                     let color = if cursor.y < 0. {
+                        // red diamond if dragged above keyframe bar (being removed)
                         egui::Color32::RED
                     } else {
                         egui::Color32::WHITE
@@ -528,12 +530,14 @@ pub fn draw_top_bar(
                 }
 
                 let kf = &shared_ui.anim.dragged_keyframe;
-                if kf.frame != frame || kf.bone_id != -1 {
+                let is_dragging = kf.frame != frame || kf.bone_id != -1;
+                if !is_dragging {
+                    // draw regular stationary diamond
                     draw_diamond(ui.painter(), pos, egui::Color32::WHITE);
-                } else if !drew_drag {
+                } else {
+                    // draw stationary diamond with lower opacity when dragging
                     let white = egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30);
                     draw_diamond(ui.painter(), pos, white);
-                    drew_drag = true;
                 }
 
                 if !response.drag_stopped() || input.left_clicked {
