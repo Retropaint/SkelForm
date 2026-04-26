@@ -18,25 +18,6 @@ pub trait EguiUi {
     fn context_button(&mut self, text: impl Into<egui::WidgetText>, config: &Config) -> egui::Response;
 }
 
-// all context menus must be opened through this.
-// `content` is a closure with a `&mut egui::Ui` parameter.
-#[macro_export]
-macro_rules! context_menu {
-    ($button:expr, $ui:expr, $id:expr, $content:expr) => {
-        if $button.secondary_clicked() {
-            $ui.context_menu.show(&$id)
-        }
-        if $ui.context_menu.is(&$id) {
-            $button.show_tooltip_ui(|ui| {
-                $content(ui);
-                if ui.ui_contains_pointer() {
-                    $ui.context_menu.keep = true;
-                }
-            });
-        }
-    };
-}
-
 /// The `main` of this module.
 pub fn draw(
     context: &Context,
@@ -58,6 +39,33 @@ pub fn draw(
     shared_ui.cursor_icon = egui::CursorIcon::Default;
 
     default_styling(context, &config);
+
+    // context menu
+    if shared_ui.context_menu.id == "" {
+        // context menu will be where mouse last was, before it opened
+        context.input_mut(|i| {
+            if let Some(pointer) = i.pointer.latest_pos() {
+                shared_ui.ctx_pos = pointer.into();
+            }
+        });
+    } else {
+        egui::Area::new("context_menu".into())
+            .fixed_pos(Vec2::new(shared_ui.ctx_pos.x, shared_ui.ctx_pos.y))
+            .order(egui::Order::Foreground)
+            .show(context, |ui| {
+                let id = shared_ui.context_menu.id.clone();
+                let frame = egui::Frame::popup(ui.style())
+                    .show(ui, |ui| {
+                        context_menu_content(config, shared_ui, events, ui, id);
+                    })
+                    .response;
+
+                // close if clicked out of it
+                if ui.input(|i| i.pointer.any_click()) && !frame.contains_pointer() {
+                    shared_ui.context_menu.close();
+                }
+            });
+    }
 
     // apply individual element styling once, then immediately go back to default
     macro_rules! style_once {
@@ -332,11 +340,6 @@ pub fn draw(
     // this check always returns false on mouse click, so it's only checked when the mouse isn't clicked
     if !input.left_down && camera.on_ui != context.is_pointer_over_area() {
         events.toggle_pointer_on_ui(context.is_pointer_over_area());
-    }
-
-    // close all context menus if clicking outside of them
-    if input.left_clicked && !shared_ui.context_menu.keep {
-        shared_ui.context_menu.close();
     }
 
     // show ID of vertex being hovered
@@ -782,6 +785,56 @@ pub fn mouse_button_as_key(
             repeat: false,
             modifiers: none,
         });
+    }
+}
+
+fn context_menu_content(
+    config: &Config,
+    shared_ui: &mut crate::Ui,
+    events: &mut EventState,
+    ui: &mut egui::Ui,
+    context_id: String,
+) {
+    let raw_split = shared_ui.context_id_parsed();
+    let split: Vec<String> = raw_split.iter().map(|s| s.to_string()).collect();
+    let id = &split[0];
+    if id == "bone" {
+        ui.context_rename(shared_ui, &config, context_id.clone());
+        let delete_bone = PolarId::DeleteBone;
+        ui.context_delete(shared_ui, &config, events, "delete_bone", delete_bone);
+        if ui.context_button("Copy", &config).clicked() {
+            events.copy_bone(split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
+        if ui.context_button("Paste", &config).clicked() {
+            events.paste_bone(split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
+    } else if id == "style" {
+        ui.context_rename(shared_ui, config, context_id);
+        let str = "delete_style";
+        ui.context_delete(shared_ui, config, events, str, PolarId::DeleteStyle);
+    } else if id == "tex" {
+        ui.context_rename(shared_ui, &config, context_id);
+        ui.context_delete(shared_ui, &config, events, "delete_tex", PolarId::DeleteTex);
+    } else if id == "anim" {
+        ui.context_rename(shared_ui, config, context_id);
+        let del_anim = PolarId::DeleteAnim;
+        ui.context_delete(shared_ui, config, events, "delete_anim", del_anim);
+        let duplicate_str = shared_ui.loc("keyframe_editor.duplicate");
+        if ui.context_button(duplicate_str, config).clicked() {
+            events.duplicate_anim(split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
+    } else if id == "keyframe" {
+        if ui.context_button("Copy", &config).clicked() {
+            events.copy_keyframe(split[4].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
+        if ui.context_button("Paste", &config).clicked() {
+            events.paste_keyframes();
+            shared_ui.context_menu.close();
+        }
     }
 }
 

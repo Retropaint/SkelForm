@@ -148,7 +148,7 @@ fn draw_animations_list(
             let mut hovered = false;
             for i in 0..armature.animations.len() {
                 let name = &mut armature.animations[i].name.clone();
-                let context_id = format!("anim_{}", i.to_string());
+                let context_id = format!("anim_{}", armature.animations[i].id.to_string());
 
                 // show input field if renaming
                 if shared_ui.rename_id == context_id {
@@ -218,6 +218,9 @@ fn draw_animations_list(
                             shared_ui.edit_value = Some(name.to_string());
                         }
                     }
+                    if button.secondary_clicked() {
+                        shared_ui.context_menu.show(&context_id);
+                    }
 
                     if armature.animations[i].keyframes.len() > 0 {
                         let anim = &armature.animations[i];
@@ -229,17 +232,6 @@ fn draw_animations_list(
                             }
                         });
                     }
-
-                    context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {
-                        ui.context_rename(shared_ui, config, context_id);
-                        let del_anim = PolarId::DeleteAnim;
-                        ui.context_delete(shared_ui, config, events, "delete_anim", del_anim);
-                        let duplicate_str = shared_ui.loc("keyframe_editor.duplicate");
-                        if ui.context_button(duplicate_str, config).clicked() {
-                            events.duplicate_anim(i);
-                            shared_ui.context_menu.close();
-                        }
-                    });
                 });
             }
 
@@ -876,26 +868,17 @@ fn draw_frame_lines(
             }
         }
 
-        let context_id = &("keyframe_".to_string()
-            + &(kf.element as usize).to_string()
-            + &kf.bone_id.to_string()
-            + &kf.frame.to_string());
+        let context_id = format!(
+            "keyframe_{}_{}_{}_{}",
+            &(kf.element as usize).to_string(),
+            &kf.bone_id.to_string(),
+            &kf.frame.to_string(),
+            &i.to_string()
+        );
 
         if response.secondary_clicked() {
-            shared_ui.context_menu.show(context_id);
+            shared_ui.context_menu.show(&context_id.to_string());
         }
-
-        context_menu!(response, shared_ui, context_id, |ui: &mut egui::Ui| {
-            if ui.context_button("Copy", &config).clicked() {
-                events.copy_keyframe(i);
-                shared_ui.context_menu.close();
-            }
-
-            if ui.context_button("Paste", &config).clicked() {
-                events.paste_keyframes();
-                shared_ui.context_menu.close();
-            }
-        });
 
         if !response.drag_stopped() {
             continue;

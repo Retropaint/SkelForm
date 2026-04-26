@@ -193,12 +193,9 @@ pub fn draw_styles_list(
                         }
                         events.select_style(armature.styles[s].id as i32);
                     }
-
-                    context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {
-                        ui.context_rename(shared_ui, config, context_id);
-                        let str = "delete_style";
-                        ui.context_delete(shared_ui, config, events, str, PolarId::DeleteStyle);
-                    });
+                    if button.secondary_clicked() {
+                        shared_ui.context_menu.show(&context_id);
+                    }
 
                     // visibility checkbox
                     let str_style_active_desc = &shared_ui.loc("styles_modal.active_desc");
@@ -834,11 +831,9 @@ pub fn draw_tex_buttons(
                 }
                 shared_ui.selected_tex = i as i32;
             }
-
-            context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {
-                ui.context_rename(shared_ui, &config, context_id);
-                ui.context_delete(shared_ui, &config, events, "delete_tex", PolarId::DeleteTex);
-            });
+            if button.secondary_clicked() {
+                shared_ui.context_menu.show(&context_id);
+            }
 
             if button.contains_pointer() || button.has_focus() {
                 shared_ui.hovering_tex = i as i32;

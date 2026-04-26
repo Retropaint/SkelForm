@@ -452,13 +452,6 @@ pub fn simple_event(
         Events::DeleteBone => {
             let mut ids_to_delete = vec![armature.bones[value as usize].id];
 
-            // stop if context ID is corrupt
-            let ctx_split = ui.context_id_parsed();
-            let ctx0: Result<i32, _> = ctx_split[0].parse();
-            if let Err(_) = ctx0 {
-                return;
-            }
-
             // delete all selected bones, if the one being deleted is also selected
             let bone_id = &armature.bones[value as usize].id;
             if selections.bone_ids.contains(bone_id) {
@@ -509,8 +502,7 @@ pub fn simple_event(
 
                 // IK bones that target this are now -1
                 let bones = &mut armature.bones;
-                let id = ctx0.clone().unwrap();
-                let targeters = bones.iter_mut().filter(|b| b.ik_target_id == id);
+                let targeters = bones.iter_mut().filter(|b| b.ik_target_id == value as i32);
                 for bone in targeters {
                     bone.ik_target_id = -1;
                 }
@@ -609,9 +601,11 @@ pub fn simple_event(
             ui.rename_id = format!("anim_{}", idx.to_string());
             ui.edit_value = Some("".to_string());
         }
-        Events::DuplicateAnim => armature
-            .animations
-            .push(armature.animations[value as usize].clone()),
+        Events::DuplicateAnim => {
+            let anims = &armature.animations;
+            let id = anims.iter().position(|a| a.id == value as i32).unwrap();
+            armature.animations.push(anims[id].clone())
+        }
         Events::SaveBone => {
             let bone = armature.bones[value as usize].clone();
             undo_states.new_undo_bone(&bone);

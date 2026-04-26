@@ -96,8 +96,13 @@ pub fn polar_modal(
                 return;
             }
 
-            let parsed_context = shared_ui.context_id_parsed();
-            let ctx0: usize = parsed_context[1].parse().unwrap();
+            let mut ctx0: usize = 0;
+            if shared_ui.context_menu.id != "" {
+                let parsed_context = shared_ui.context_id_parsed();
+                ctx0 = parsed_context[1].parse().unwrap();
+            }
+            shared_ui.context_menu.close();
+
             match shared_ui.polar_id {
                 PolarId::DeleteBone => {
                     events.delete_bone(ctx0);

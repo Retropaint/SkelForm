@@ -447,6 +447,7 @@ impl ContextMenu {
     pub fn close(&mut self) {
         self.hide = true;
         self.keep = false;
+        self.id = "".to_string();
     }
 
     pub fn is(&self, id: &String) -> bool {
@@ -673,6 +674,7 @@ pub struct Ui {
     pub started_edit_dragging: bool,
     pub drag_modifier: f32,
     pub selected_bone_first_time: bool,
+    pub ctx_pos: Vec2,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -2363,7 +2365,7 @@ impl EventState {
     event_with_value!(delete_tex, Events::DeleteTex, tex_id, usize);
     event_with_value!(delete_style, Events::DeleteStyle, style_id, usize);
     event_with_value!(delete_keyframe, Events::DeleteKeyframe, kf_idx, usize);
-    event_with_value!(duplicate_anim, Events::DuplicateAnim, anim_idx, usize);
+    event_with_value!(duplicate_anim, Events::DuplicateAnim, anim_id, usize);
     event_with_value!(copy_bone, Events::CopyBone, bone_id, usize);
     event_with_value!(paste_bone, Events::PasteBone, bone_id, usize);
     event_with_value!(remove_vertex, Events::RemoveVertex, vert_idx, usize);

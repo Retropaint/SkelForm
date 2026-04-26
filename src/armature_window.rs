@@ -492,22 +492,9 @@ pub fn draw_hierarchy(
                 if button.clicked() {
                     events.select_bone(idx as usize, false);
                 }
-
-                crate::context_menu!(button, shared_ui, context_id, |ui: &mut egui::Ui| {
-                    ui.context_rename(shared_ui, &config, context_id.clone());
-                    let delete_bone = PolarId::DeleteBone;
-                    ui.context_delete(shared_ui, &config, events, "delete_bone", delete_bone);
-
-                    if ui.context_button("Copy", &config).clicked() {
-                        events.copy_bone(b);
-                        shared_ui.context_menu.close();
-                    }
-
-                    if ui.context_button("Paste", &config).clicked() {
-                        events.paste_bone(b);
-                        shared_ui.context_menu.close();
-                    }
-                });
+                if button.secondary_clicked() {
+                    shared_ui.context_menu.show(&context_id);
+                }
 
                 if check_bone_dragging(events, &armature, ui, button, idx as usize) {
                     dragged = true;
