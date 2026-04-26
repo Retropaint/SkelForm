@@ -589,8 +589,9 @@ pub fn kb_inputs(
         || ui.export_modal || ui.lang_import_modal || ui.feedback_modal;
 
     if input.consume_shortcut(&config.keys.cancel) {
-        shared_ui.context_menu.id = "".to_string();
-        if edit_mode.setting_ik_target {
+        if shared_ui.context_menu.id != "" {
+            shared_ui.context_menu.close();
+        } else if edit_mode.setting_ik_target {
             events.toggle_setting_ik_target(0);
         } else if edit_mode.setting_bind_bone {
             events.toggle_setting_bind_bone(0);
