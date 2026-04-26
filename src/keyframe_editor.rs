@@ -530,8 +530,8 @@ pub fn draw_top_bar(
                 }
 
                 let kf = &shared_ui.anim.dragged_keyframe;
-                let is_dragging = kf.frame != frame || kf.bone_id != -1;
-                if !is_dragging {
+                let not_dragging = kf.frame != frame || kf.bone_id != -1;
+                if not_dragging {
                     // draw regular stationary diamond
                     draw_diamond(ui.painter(), pos, egui::Color32::WHITE);
                 } else {
