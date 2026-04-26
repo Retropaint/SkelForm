@@ -123,50 +123,43 @@ pub fn draw(
     if !pressed_export {
         return;
     }
-    match shared_ui.settings_state {
+    let sui = shared_ui;
+    match sui.settings_state {
+        // Armature Export
+        // this triggers the same saving flow, and export options are handled in utils::prepare_files()
         SettingsState::Ui => {
             #[cfg(target_arch = "wasm32")]
             {
                 *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
             }
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(
-                &shared_ui.file_path,
-                &shared_ui.saving,
-                crate::Saving::Exporting,
-            );
-            shared_ui.export_modal = false;
+            utils::open_save_dialog(&sui.file_path, &sui.saving, crate::Saving::Exporting);
+            sui.export_modal = false;
         }
+        // Image Export
         SettingsState::Editing => {
-            shared_ui.exporting_video_type = crate::ExportVideoType::None;
+            sui.exporting_video_type = crate::ExportVideoType::None;
             #[cfg(target_arch = "wasm32")]
             {
                 *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
                 shared_ui.spritesheet_elapsed = Some(Instant::now());
             }
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(
-                &shared_ui.file_path,
-                &shared_ui.saving,
-                crate::Saving::Spritesheet,
-            );
+            utils::open_save_dialog(&sui.file_path, &sui.saving, crate::Saving::Spritesheet);
         }
+        // Video Export
         SettingsState::Keyboard => {
-            for anim in &mut shared_ui.exporting_anims {
+            for anim in &mut sui.exporting_anims {
                 *anim = false;
             }
-            shared_ui.exporting_anims[shared_ui.exporting_video_anim] = true;
+            sui.exporting_anims[sui.exporting_video_anim] = true;
             #[cfg(target_arch = "wasm32")]
             {
                 *shared_ui.saving.lock().unwrap() = crate::Saving::Video;
                 shared_ui.spritesheet_elapsed = Some(Instant::now());
             }
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(
-                &shared_ui.file_path,
-                &shared_ui.saving,
-                crate::Saving::Video,
-            );
+            utils::open_save_dialog(&sui.file_path, &sui.saving, crate::Saving::Video);
         }
         _ => {}
     }

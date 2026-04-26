@@ -813,8 +813,10 @@ impl BackendRenderer {
         }
 
         let saving = shared.ui.saving.lock().unwrap().clone();
-        let recording_spritesheets = saving == Saving::Spritesheet || saving == Saving::Video;
-        if saving != Saving::None && !recording_spritesheets {
+        let recording = saving == Saving::Spritesheet || saving == Saving::Video;
+        if saving != Saving::None && !recording {
+            // saving .skf or .skfe (exporting)
+
             #[cfg(target_arch = "wasm32")]
             {
                 let saving_type = shared.ui.saving.lock().unwrap().clone();
@@ -826,7 +828,8 @@ impl BackendRenderer {
 
             #[cfg(not(target_arch = "wasm32"))]
             self.save(shared);
-        } else if recording_spritesheets {
+        } else if recording {
+            // recording animations for images/videos
             shared.events.open_modal("exporting", true);
             #[rustfmt::skip]
             utils::render_spritesheets(&shared.armature, &mut shared.ui, &shared.camera, &shared.config, self, &shared.renderer);
