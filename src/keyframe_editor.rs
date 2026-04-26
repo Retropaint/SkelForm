@@ -508,6 +508,10 @@ pub fn draw_top_bar(
                         events.select_anim_frame(frame as usize, true);
                     }
                 }
+                if response.secondary_clicked() {
+                    let context_id = format!("kfdiamond_{}", frame);
+                    shared_ui.context_menu.show(&context_id);
+                }
 
                 let cursor = get_cursor(ui);
                 if response.dragged() {
@@ -702,7 +706,7 @@ pub fn draw_bottom_bar(
                 .skf_button(&shared_ui.loc("keyframe_editor.copy"))
                 .clicked()
             {
-                events.copy_keyframes_in_frame();
+                events.copy_keyframes_in_frame(selections.anim_frame);
             }
 
             let paste_str = &shared_ui.loc("keyframe_editor.paste");

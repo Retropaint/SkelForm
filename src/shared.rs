@@ -2353,7 +2353,6 @@ impl EventState {
     generic_event!(trace_bone_verts, Events::TraceBoneVerts);
     generic_event!(open_export_modal, Events::OpenExportModal);
     generic_event!(update_config, Events::UpdateConfig);
-    generic_event!(copy_keyframes_in_frame, Events::CopyKeyframesInFrame);
     generic_event!(save_animation, Events::SaveAnimation);
     generic_event!(update_render_options, Events::UpdateRenderOptions);
     generic_event!(create_empty_texture, Events::CreateEmptyTexture);
@@ -2415,6 +2414,7 @@ impl EventState {
     event_with_value!(set_hovering_line, E::SetHoveringLine, value, i32);
     event_with_value!(set_pos_ratio, E::SetPosRatio, value, f32);
     event_with_value!(set_scale_ratio, E::SetScaleRatio, value, f32);
+    event_with_value!(copy_keyframes_in_frame, Events::CopyKeyframesInFrame, frame, i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

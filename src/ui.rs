@@ -56,7 +56,7 @@ pub fn draw(
                 let id = shared_ui.context_menu.id.clone();
                 let frame = egui::Frame::popup(ui.style())
                     .show(ui, |ui| {
-                        context_menu_content(config, shared_ui, events, ui, id, copy_buffer);
+                        context_menu_content(config, shared_ui, events, ui, id);
                     })
                     .response;
 
@@ -658,7 +658,7 @@ pub fn kb_inputs(
     // copy shortcut
     if input.consume_shortcut(&config.keys.copy) {
         if selections.anim_frame != -1 {
-            events.copy_keyframes_in_frame();
+            events.copy_keyframes_in_frame(selections.anim_frame);
         } else if selections.bone_idx != usize::MAX {
             events.copy_bone(selections.bone_idx);
         }
@@ -796,7 +796,6 @@ fn context_menu_content(
     events: &mut EventState,
     ui: &mut egui::Ui,
     context_id: String,
-    copy_buffer: &CopyBuffer,
 ) {
     let raw_split = shared_ui.context_id_parsed();
     let split: Vec<String> = raw_split.iter().map(|s| s.to_string()).collect();
@@ -839,6 +838,15 @@ fn context_menu_content(
             shared_ui.context_menu.close();
         }
     } else if id == "kfline" {
+        if ui.context_button("Paste", &config).clicked() {
+            events.paste_keyframes();
+            shared_ui.context_menu.close();
+        }
+    } else if id == "kfdiamond" {
+        if ui.context_button("Copy", &config).clicked() {
+            events.copy_keyframes_in_frame(split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
         if ui.context_button("Paste", &config).clicked() {
             events.paste_keyframes();
             shared_ui.context_menu.close();
@@ -1476,7 +1484,7 @@ fn menu_edit_button(
         let button = top_bar_button(ui, str_copy, key_copy, &mut offset, &config, can_copy, &shared_ui);
         if can_copy && button.clicked() {
             if selections.anim_frame != -1 {
-                events.copy_keyframes_in_frame();
+                events.copy_keyframes_in_frame(selections.anim_frame);
             } else if selections.bone_idx != usize::MAX {
                 events.copy_bone(selections.bone_idx);
             }

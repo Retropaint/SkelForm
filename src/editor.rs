@@ -988,8 +988,7 @@ pub fn simple_event(
         Events::CopyKeyframesInFrame => {
             *copy_buffer = CopyBuffer::default();
             for kf in 0..armature.sel_anim(&selections).unwrap().keyframes.len() {
-                let frame = selections.anim_frame;
-                if armature.sel_anim(&selections).unwrap().keyframes[kf].frame == frame {
+                if armature.sel_anim(&selections).unwrap().keyframes[kf].frame == value as i32 {
                     let keyframe = armature.sel_anim(&selections).unwrap().keyframes[kf].clone();
                     copy_buffer.keyframes.push(keyframe);
                 }
