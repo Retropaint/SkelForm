@@ -247,6 +247,22 @@ pub fn armature_export(
             events.set_export_clear_color(col[0], col[1], col[2]);
         });
     });
+
+    ui.horizontal(|ui| {
+        ui.label("Padding:");
+        let pad = edit_mode.export_tex_padding;
+        let mut either = false;
+        let mut result = pad;
+        let (edited, value, _) = ui.float_input("padding_x".into(), shared_ui, pad.x, 1., None);
+        either |= edited;
+        result.x = value;
+        let (edited, value, _) = ui.float_input("padding_y".into(), shared_ui, pad.y, 1., None);
+        either |= edited;
+        result.y = value;
+        if either {
+            events.set_export_tex_padding(result);
+        }
+    });
 }
 
 pub fn image_export(

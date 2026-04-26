@@ -48,7 +48,11 @@ pub fn iterate_events(
             };
     }
 
-    if event == Events::EditVertexUV {
+    if event == Events::SetExportTexPadding {
+        edit_mode.export_tex_padding = Vec2::new(events.values[0], events.values[1]);
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::EditVertexUV {
         let sel = &selections;
         let bone = armature.sel_bone_mut(sel).unwrap();
         let vert_id = events.values[0] as u32;

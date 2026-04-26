@@ -1980,6 +1980,7 @@ pub struct EditMode {
     pub export_exclude_ik: bool,
     pub export_img_format: ExportImgFormat,
     pub export_clear_color: Color,
+    pub export_tex_padding: Vec2,
     pub onion_layers: bool,
     pub holding_edit_mod: bool,
     pub holding_edit_snap: bool,
@@ -2264,6 +2265,7 @@ pub enum Events {
     OpenFileErrModal,
     SetExportClearColor,
     SetExportImgFormat,
+    SetExportTexPadding,
     OpenExportModal,
     UpdateConfig,
     UpdateKeyframeTransition,
@@ -2627,6 +2629,12 @@ impl EventState {
         self.values.push(vert_id as f32);
         self.values.push(x as f32);
         self.values.push(y as f32);
+    }
+
+    pub fn set_export_tex_padding(&mut self, padding: Vec2) {
+        self.events.push(Events::SetExportTexPadding);
+        self.values.push(padding.x);
+        self.values.push(padding.y);
     }
 }
 

@@ -378,14 +378,21 @@ pub fn create_tex_sheet(armature: &mut Armature, edit_mode: &EditMode) -> (Vec<V
 
     atlases.push(vec![]);
     sizes.push(0);
+    let pad = edit_mode.export_tex_padding;
 
     for s in 0..armature.styles.len() {
         let mut style_boxes = vec![];
+
+        // add textures to max_rect's bin
         for t in 0..armature.styles[s].textures.len() {
             let tex = &armature.styles[s].textures[t];
             let image = &armature.tex_data(tex).unwrap().image;
-            boxes.push(PackingBox::new(image.width() as i32, image.height() as i32));
-            style_boxes.push(PackingBox::new(image.width() as i32, image.height() as i32));
+
+            // add padding
+            let size = Vec2::new(image.width() as f32 + pad.x, image.height() as f32 + pad.y);
+
+            boxes.push(PackingBox::new(size.x as i32, size.y as i32));
+            style_boxes.push(PackingBox::new(size.x as i32, size.y as i32));
         }
 
         'atlas_maker: loop {
@@ -427,7 +434,6 @@ pub fn create_tex_sheet(armature: &mut Armature, edit_mode: &EditMode) -> (Vec<V
     }
 
     let mut bufs = vec![];
-
     for i in 0..atlases.len() {
         let mut raw_buf =
             <image::ImageBuffer<image::Rgba<u8>, _>>::new(sizes[i] as u32, sizes[i] as u32);
@@ -435,28 +441,34 @@ pub fn create_tex_sheet(armature: &mut Armature, edit_mode: &EditMode) -> (Vec<V
         for s in 0..armature.styles.len() {
             for t in 0..armature.styles[s].textures.len() {
                 let tex = &armature.styles[s].textures[t];
+
+                // skip texture if this not the right atlas
                 if tex.atlas_idx != i as i32 {
                     continue;
                 }
 
-                let p = atlases[i]
-                    .iter()
-                    .position(|pl| pl.width == tex.size.x as i32 && pl.height == tex.size.y as i32);
+                // find where this texture was assigned in the atlas
+                let p = atlases[i].iter().position(|pl| {
+                    pl.width == tex.size.x as i32 + pad.x as i32
+                        && pl.height == tex.size.y as i32 + pad.y as i32
+                });
 
                 if p == None {
                     continue;
                 }
 
-                let offset_x = atlases[i][p.unwrap()].get_coords().0 as u32;
-                let offset_y = atlases[i][p.unwrap()].get_coords().2 as u32;
+                // where the texture will be positioned
+                let offset_x = atlases[i][p.unwrap()].get_coords().0 as u32 + pad.x as u32 / 2;
+                let offset_y = atlases[i][p.unwrap()].get_coords().2 as u32 + pad.y as u32 / 2;
 
                 // ensure another tex of the same size won't overwrite this one
                 atlases[i].remove(p.unwrap());
 
-                raw_buf
-                    .copy_from(&armature.tex_data(tex).unwrap().image, offset_x, offset_y)
-                    .unwrap();
+                // apply texture image onto atlas
+                let img = &armature.tex_data(tex).unwrap().image;
+                raw_buf.copy_from(img, offset_x, offset_y).unwrap();
 
+                // save offsets into armature
                 armature.styles[s].textures[t].offset = Vec2::new(offset_x as f32, offset_y as f32);
             }
         }

@@ -634,7 +634,7 @@ pub fn read_import(
         "swf" => {
             shared.events.open_modal("import_swf", false);
         }
-        "skf" => {
+        "skf" | "skfe" => {
             #[cfg(target_arch = "wasm32")]
             {
                 let cursor = std::io::Cursor::new(getFile());
