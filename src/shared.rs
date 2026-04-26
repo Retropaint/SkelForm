@@ -697,9 +697,9 @@ impl Ui {
         edit_mode.anim_open && selections.anim != usize::MAX
     }
 
-    pub fn context_id_parsed(&self) -> i32 {
-        let raw_id = self.context_menu.id.split('_').collect::<Vec<_>>();
-        raw_id[1].parse::<i32>().unwrap()
+    pub fn context_id_parsed(&self) -> Vec<&str> {
+        let split: Vec<&str> = self.context_menu.id.split('_').collect();
+        split
     }
 
     /// Localization

@@ -452,6 +452,13 @@ pub fn simple_event(
         Events::DeleteBone => {
             let mut ids_to_delete = vec![armature.bones[value as usize].id];
 
+            // stop if context ID is corrupt
+            let ctx_split = ui.context_id_parsed();
+            let ctx0: Result<i32, _> = ctx_split[0].parse();
+            if let Err(_) = ctx0 {
+                return;
+            }
+
             // delete all selected bones, if the one being deleted is also selected
             let bone_id = &armature.bones[value as usize].id;
             if selections.bone_ids.contains(bone_id) {
@@ -501,9 +508,9 @@ pub fn simple_event(
                 }
 
                 // IK bones that target this are now -1
-                let context_id = ui.context_id_parsed();
                 let bones = &mut armature.bones;
-                let targeters = bones.iter_mut().filter(|b| b.ik_target_id == context_id);
+                let id = ctx0.clone().unwrap();
+                let targeters = bones.iter_mut().filter(|b| b.ik_target_id == id);
                 for bone in targeters {
                     bone.ik_target_id = -1;
                 }

@@ -96,9 +96,11 @@ pub fn polar_modal(
                 return;
             }
 
+            let parsed_context = shared_ui.context_id_parsed();
+            let ctx0: usize = parsed_context[1].parse().unwrap();
             match shared_ui.polar_id {
                 PolarId::DeleteBone => {
-                    events.delete_bone(shared_ui.context_id_parsed() as usize);
+                    events.delete_bone(ctx0);
                 }
                 PolarId::Exiting => {
                     if config.ignore_donate {
@@ -108,17 +110,17 @@ pub fn polar_modal(
                     }
                 }
                 PolarId::DeleteAnim => {
-                    events.delete_anim(shared_ui.context_id_parsed() as usize);
+                    events.delete_anim(ctx0);
                     shared_ui.context_menu.close();
                 }
                 PolarId::DeleteFile => {
                     std::fs::remove_file(&shared_ui.selected_path).unwrap();
                 }
                 PolarId::DeleteTex => {
-                    events.delete_tex(shared_ui.context_id_parsed() as usize);
+                    events.delete_tex(ctx0);
                 }
                 PolarId::DeleteStyle => {
-                    events.delete_style(shared_ui.context_id_parsed() as usize);
+                    events.delete_style(ctx0);
                 }
                 PolarId::NewUpdate => {
                     #[cfg(not(target_arch = "wasm32"))]
