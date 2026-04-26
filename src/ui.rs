@@ -583,11 +583,9 @@ pub fn kb_inputs(
 
     // cancel key
     let ui = &shared_ui;
-
     #[rustfmt::skip]
     let modal_open = ui.styles_modal || ui.polar_modal || ui.settings_modal
         || ui.export_modal || ui.lang_import_modal || ui.feedback_modal;
-
     if input.consume_shortcut(&config.keys.cancel) {
         if shared_ui.context_menu.id != "" {
             shared_ui.context_menu.close();

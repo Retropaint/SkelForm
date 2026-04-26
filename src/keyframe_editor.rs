@@ -496,7 +496,7 @@ pub fn draw_top_bar(
 
                 // create dragging area for diamond
                 let rect = egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5.));
-                let response: egui::Response = ui.allocate_rect(rect, egui::Sense::drag());
+                let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click_and_drag());
 
                 if response.drag_started() {
                     events.select_anim_frame(frame as usize, false);
