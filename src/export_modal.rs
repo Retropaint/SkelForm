@@ -3,7 +3,10 @@ use std::os::unix::fs::PermissionsExt;
 
 use egui::IntoAtoms;
 
-use crate::{ui::EguiUi, Armature, Config, EditMode, EventState, ExportImgFormat, SettingsState};
+use crate::{
+    settings_modal::settings_button, ui::EguiUi, Armature, Config, EditMode, EventState,
+    ExportImgFormat, SettingsState,
+};
 
 #[cfg(target_arch = "wasm32")]
 mod web {
@@ -51,15 +54,8 @@ pub fn draw(
 
                     macro_rules! tab {
                         ($name:expr, $state:expr) => {
-                            crate::settings_modal::settings_button(
-                                $name,
-                                $state,
-                                ui,
-                                shared_ui,
-                                &config,
-                                width,
-                                &mut is_hovered,
-                            )
+                            let h = &mut is_hovered;
+                            settings_button($name, $state, ui, shared_ui, &config, width, h)
                         };
                     }
 
