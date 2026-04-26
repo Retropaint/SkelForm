@@ -773,8 +773,11 @@ fn draw_frame_lines(
             color = egui::Color32::WHITE;
 
             // select this frame if clicked
-            if input.left_clicked {
+            if input.left_clicked && shared_ui.context_menu.id == "" {
                 events.select_anim_frame(i as usize, false);
+            } else if input.right_clicked {
+                let context_id = format!("kfline_{}", i.to_string());
+                shared_ui.context_menu.show(&context_id);
             }
         }
 

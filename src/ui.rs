@@ -56,7 +56,7 @@ pub fn draw(
                 let id = shared_ui.context_menu.id.clone();
                 let frame = egui::Frame::popup(ui.style())
                     .show(ui, |ui| {
-                        context_menu_content(config, shared_ui, events, ui, id);
+                        context_menu_content(config, shared_ui, events, ui, id, copy_buffer);
                     })
                     .response;
 
@@ -456,7 +456,9 @@ pub fn process_inputs(
         }
         shared_ui.last_pressed = i.keys_down.iter().last().copied();
 
-        input.left_clicked = i.pointer.primary_clicked();
+        if shared_ui.context_menu.id == "" {
+            input.left_clicked = i.pointer.primary_clicked();
+        }
         input.right_clicked = i.pointer.secondary_clicked();
         input.left_down = i.pointer.primary_down();
         input.left_pressed = i.pointer.primary_pressed();
@@ -794,6 +796,7 @@ fn context_menu_content(
     events: &mut EventState,
     ui: &mut egui::Ui,
     context_id: String,
+    copy_buffer: &CopyBuffer,
 ) {
     let raw_split = shared_ui.context_id_parsed();
     let split: Vec<String> = raw_split.iter().map(|s| s.to_string()).collect();
@@ -831,6 +834,11 @@ fn context_menu_content(
             events.copy_keyframe(split[4].parse().unwrap());
             shared_ui.context_menu.close();
         }
+        if ui.context_button("Paste", &config).clicked() {
+            events.paste_keyframes();
+            shared_ui.context_menu.close();
+        }
+    } else if id == "kfline" {
         if ui.context_button("Paste", &config).clicked() {
             events.paste_keyframes();
             shared_ui.context_menu.close();
