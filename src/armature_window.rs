@@ -336,7 +336,8 @@ pub fn draw_hierarchy(
                     selected_col = config.colors.dark_accent;
                 }
 
-                if shared_ui.hovering_bone == idx {
+                let hovering_on_texture = selections.hovering_bone_id == armature.bones[b].id;
+                if shared_ui.hovering_bone == idx || hovering_on_texture {
                     selected_col += Color::new(20, 20, 20, 0);
                 }
 
