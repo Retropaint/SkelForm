@@ -2292,6 +2292,7 @@ pub enum Events {
     EditVertexPos,
     EditVertexUV,
     SetHoveringVertId,
+    SetHoveringBoneId,
     SetHoveringTri,
     SetHoveringLine,
     CreateEmptyTexture,
@@ -2410,6 +2411,7 @@ impl EventState {
     event_with_value!(set_rot_damping, E::SetRotDamping, damp, f32);
     event_with_value!(set_rot_bounce, E::SetRotBounce, bounce, f32);
     event_with_value!(set_hovering_vert_id, E::SetHoveringVertId, vert_id, i32);
+    event_with_value!(set_hovering_bone_id, E::SetHoveringBoneId, bone_id, i32);
     event_with_value!(set_hovering_tri, E::SetHoveringTri, value, i32);
     event_with_value!(set_hovering_line, E::SetHoveringLine, value, i32);
     event_with_value!(set_pos_ratio, E::SetPosRatio, value, f32);

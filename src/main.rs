@@ -146,6 +146,7 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.scale = shared.config.ui_scale;
     shared.renderer.clicked_vert_id = -1;
     shared.selections.hovering_vert_id = -1;
+    shared.selections.hovering_bone_id = -1;
 
     if !shared.config.skip_startup {
         shared.ui.startup_window = true;

@@ -142,6 +142,7 @@ pub fn render(
     next_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
 
     let mut hover_bone_id = -1;
+    let mut on_click_id = -1;
 
     // many fight for spot of newest vertex; only one will emerge victorious.
     let mut new_vert: Option<Vertex> = None;
@@ -235,23 +236,23 @@ pub fn render(
                 let pixel_alpha = img.get_pixel(pos.x as u32, pos.y as u32).0[3];
                 if pixel_alpha == 255 && !edit_mode.showing_mesh {
                     hover_bone_id = temp_arm.bones[b].id;
+                    on_click_id = hover_bone_id;
                     break;
                 }
             }
         }
 
-        let mut click_on_hover_id = temp_arm.bones[b].id;
-        if !config.exact_bone_select {
+        if !config.exact_bone_select && on_click_id == temp_arm.bones[b].id {
             // QoL: select parent of textured bone if it's called 'Texture'
             // this is because most textured bones are meant to represent their parents
             if parents.len() != 0 && temp_arm.bones[b].name.to_lowercase() == "texture" {
-                click_on_hover_id = parents[0].id;
+                on_click_id = parents[0].id;
             }
         }
 
         // hovering glow animation
         let idx = selections.bone_idx;
-        let not_selected = idx == usize::MAX || armature.bones[idx].id != click_on_hover_id;
+        let not_selected = idx == usize::MAX || armature.bones[idx].id != on_click_id;
         if hover_bone_id == temp_arm.bones[b].id && not_selected && !renderer.on_point {
             let fade = (64. * ((edit_mode.time * 3.).sin()).abs()).min(255.);
             let min = 25;
@@ -262,7 +263,7 @@ pub fn render(
 
             // select bone if clicked
             if input.left_pressed && !renderer.on_point {
-                let id = click_on_hover_id;
+                let id = on_click_id;
                 let bones = &armature.bones;
                 let idx = bones.iter().position(|bone| bone.id == id).unwrap();
                 events.select_bone(idx, true);
@@ -272,6 +273,11 @@ pub fn render(
                 vert.add_color = Color::new(0, 0, 0, 0);
             }
         }
+    }
+    if !renderer.on_point && on_click_id == -1 && selections.hovering_bone_id != -1 {
+        events.set_hovering_bone_id(-1);
+    } else if on_click_id != -1 && selections.hovering_bone_id != on_click_id {
+        events.set_hovering_bone_id(on_click_id);
     }
     renderer.on_point = false;
 
@@ -2084,6 +2090,7 @@ pub fn draw_points_and_kites(
                         events.select_bone(bone.id as usize, true);
                     }
                 }
+                events.set_hovering_bone_id(bone.id);
                 on_point = true;
             }
 

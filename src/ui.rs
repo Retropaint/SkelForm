@@ -369,6 +369,19 @@ pub fn draw(
         painter.debug_text(pos, egui::Align2::CENTER_CENTER, egui::Color32::GREEN, str);
     }
 
+    // show hovered bone's name
+    let hbid = selections.hovering_bone_id;
+    let sel_bone = armature.sel_bone(selections);
+    if hbid != -1 && (sel_bone == None || hbid != sel_bone.unwrap().id) {
+        let mouse = input.mouse / shared_ui.scale;
+        let pos = egui::Pos2::new(mouse.x, mouse.y - 13.);
+        let bones = &armature.bones;
+        let bone = bones.iter().find(|b| b.id == hbid);
+        let str = format!("{}", bone.unwrap().name);
+        let painter = context.debug_painter();
+        painter.debug_text(pos, egui::Align2::CENTER_CENTER, egui::Color32::GREEN, str);
+    }
+
     // show hovering triangle helpers
     if selections.hovering_tri_dur > 25 {
         let mouse = input.mouse / shared_ui.scale;
