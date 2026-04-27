@@ -463,11 +463,23 @@ pub fn draw_top_bar(
 
             let mut second = -1;
             for (i, x) in shared_ui.anim.lines_x.iter().enumerate() {
+                second += 1;
+                let pos = Vec2::new(ui.min_rect().left() + x, ui.min_rect().top() + 10.);
+                if shared_ui.anim.hovering_frame == i as i32 {
+                    let color = egui::Color32::from_rgb(175, 175, 175);
+                    ui.painter_at(ui.min_rect()).vline(
+                        pos.x + 3.,
+                        egui::Rangef {
+                            min: 100.,
+                            max: 475.,
+                        },
+                        Stroke { width: 2., color },
+                    );
+                }
+
                 if i as i32 % armature.sel_anim(&sel).unwrap().fps != 0 {
                     continue;
                 }
-                second += 1;
-                let pos = Vec2::new(ui.min_rect().left() + x, ui.min_rect().top() + 10.);
                 let center = egui::Align2::CENTER_CENTER;
                 let fontid = egui::FontId::default();
                 let col = config.colors.text;
@@ -743,16 +755,13 @@ fn draw_frame_lines(
     cursor: Vec2,
 ) {
     shared_ui.anim.lines_x = vec![];
-
     let mut selected_line_x = 0.;
-
     let panel = shared_ui.keyframe_panel_rect;
 
     let mut x = 0.;
     let mut i = 0;
     while x < ui.min_rect().width() {
         x = i as f32 * hitbox * 2. + LINE_OFFSET;
-
         shared_ui.anim.lines_x.push(x);
 
         let mut color: egui::Color32 = config.colors.frameline.into();
@@ -765,15 +774,12 @@ fn draw_frame_lines(
             color = color + egui::Color32::from_rgb(60, 60, 60);
         }
 
-        let above_bar = cursor.y < ui.min_rect().height() - 13.;
-        let in_ui = cursor.y > 0.;
-        let can_hover = in_ui
-            && !shared_ui.modal
-            && !shared_ui.settings_modal
-            && shared_ui.context_menu.hide
-            && !shared_ui.export_modal;
+        let below_top_bar = cursor.y < ui.min_rect().height() - 13.;
+        let in_ui = cursor.y > -25.;
+        let can_hover =
+            in_ui && !shared_ui.modal && !shared_ui.settings_modal && !shared_ui.export_modal;
         let cur = cursor;
-        let is_in = can_hover && cur.x < x + hitbox && cur.x > x - hitbox && above_bar;
+        let is_in = can_hover && cur.x < x + hitbox && cur.x > x - hitbox && below_top_bar;
 
         if selections.anim_frame == i {
             color = egui::Color32::WHITE;
@@ -781,6 +787,7 @@ fn draw_frame_lines(
         } else if is_in {
             shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
             color = egui::Color32::from_rgb(175, 175, 175);
+            shared_ui.anim.hovering_frame = i;
 
             // select this frame if clicked
             if input.left_clicked && shared_ui.context_menu.id == "" {

@@ -56,7 +56,9 @@ pub fn draw(
                 let id = shared_ui.context_menu.id.clone();
                 let frame = egui::Frame::popup(ui.style())
                     .show(ui, |ui| {
-                        context_menu_content(config, shared_ui, events, ui, id);
+                        let s = &selections;
+                        let cb = &copy_buffer;
+                        context_menu_content(config, shared_ui, events, ui, id, &armature, &s, &cb);
                     })
                     .response;
 
@@ -795,6 +797,9 @@ fn context_menu_content(
     events: &mut EventState,
     ui: &mut egui::Ui,
     context_id: String,
+    armature: &Armature,
+    selections: &SelectionState,
+    copy_buffer: &CopyBuffer,
 ) {
     let raw_split = shared_ui.context_id_parsed();
     let split: Vec<String> = raw_split.iter().map(|s| s.to_string()).collect();
@@ -837,8 +842,23 @@ fn context_menu_content(
             shared_ui.context_menu.close();
         }
     } else if id == "kfline" {
-        if ui.context_button("Paste", &config).clicked() {
+        // copy option, if there are any keyframes in this frame
+        let frame = split[1].parse().unwrap();
+        let anim = armature.sel_anim(&selections).unwrap();
+        let has_kf = anim.keyframes.iter().find(|kf| kf.frame == frame) != None;
+        if has_kf && ui.context_button("Copy", &config).clicked() {
+            events.copy_keyframes_in_frame(frame);
+            shared_ui.context_menu.close();
+        }
+
+        // paste option, if there are keyframes in copy buffer
+        if copy_buffer.keyframes.len() > 0 && ui.context_button("Paste", &config).clicked() {
             events.paste_keyframes_on_frame(split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
+
+        // immediately close menu if there's nothing to show
+        if !has_kf && copy_buffer.keyframes.len() == 0 {
             shared_ui.context_menu.close();
         }
     } else if id == "kfdiamond" {
