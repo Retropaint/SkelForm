@@ -1259,8 +1259,11 @@ pub fn edit_bone(
             rot = (rot / step).round() * step
         }
 
+        // get difference in angle, so that it doesn't lock to 0-360
+        let diff = utils::shortest_angle_delta(bone.rot, rot);
+
         if rot != bone.rot {
-            edit!(bone, AnimElement::Rotation, rot);
+            edit!(bone, AnimElement::Rotation, bone.rot + diff);
         }
     } else if current_edit == EditModes::Scale {
         let mut scale = bone.scale;
