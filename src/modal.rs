@@ -293,7 +293,7 @@ pub fn feedback_modal(
         "feedback_modal".to_string(),
         config,
         |ui| {
-            ui.label("All suggestions/bug reports welcome!\nImages may be uploaded as links.");
+            ui.label("All suggestions and/or bug reports welcome!\nImages may be uploaded as links.");
             ui.add_space(5.);
             egui::TextEdit::multiline(&mut input)
                 .hint_text("I think you should add/fix...")

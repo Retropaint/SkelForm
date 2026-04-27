@@ -869,9 +869,7 @@ fn context_menu_content(
 
         // paste option, if there are keyframes in copy buffer
         if copy_buffer.keyframes.len() > 0
-            && ui
-                .context_button("Paste Keyframes, then do something else", &config)
-                .clicked()
+            && ui.context_button("Paste Keyframes", &config).clicked()
         {
             events.paste_keyframes_on_frame(split[1].parse().unwrap());
             shared_ui.context_menu.close();
