@@ -2409,7 +2409,7 @@ impl EventState {
     event_with_value!(set_scale_damping, E::SetScaleDamping, damp, f32);
     event_with_value!(set_rot_damping, E::SetRotDamping, damp, f32);
     event_with_value!(set_rot_bounce, E::SetRotBounce, bounce, f32);
-    event_with_value!(set_hovering_id, E::SetHoveringVertId, vert_id, i32);
+    event_with_value!(set_hovering_vert_id, E::SetHoveringVertId, vert_id, i32);
     event_with_value!(set_hovering_tri, E::SetHoveringTri, value, i32);
     event_with_value!(set_hovering_line, E::SetHoveringLine, value, i32);
     event_with_value!(set_pos_ratio, E::SetPosRatio, value, f32);
@@ -2663,6 +2663,7 @@ pub struct SelectionState {
     pub hovering_vert_id: i32,
     pub hovering_tri_dur: i32,
     pub hovering_line_dur: i32,
+    pub hovering_bone_id: i32,
 }
 
 impl SelectionState {

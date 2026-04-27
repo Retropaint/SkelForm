@@ -65,7 +65,7 @@ pub fn render(
 
     // turn off hovering vert if not editing mesh
     if !edit_mode.showing_mesh && selections.hovering_vert_id != -1 {
-        events.set_hovering_id(-1);
+        events.set_hovering_vert_id(-1);
     }
 
     // temporary armature, to be used for rendering
@@ -393,7 +393,7 @@ pub fn render(
 
     // set hovering vert, to display ID on UI
     if hovering_vert_id != -1 {
-        events.set_hovering_id(hovering_vert_id);
+        events.set_hovering_vert_id(hovering_vert_id);
     }
 
     // draw render rects if enabled

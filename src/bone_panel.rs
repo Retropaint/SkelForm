@@ -269,7 +269,7 @@ pub fn draw(
         }
         // if no vertex labels were hovered from both funcs above, set hovered vert to none
         if !is_hovering && selections.hovering_vert_id != -1 {
-            events.set_hovering_id(-1);
+            events.set_hovering_vert_id(-1);
         }
         ui.add_space(20.);
     }
@@ -818,14 +818,14 @@ pub fn mesh_deformation(
                 let cursor = egui::CursorIcon::Default;
                 if ui.label(str_label).on_hover_cursor(cursor).hovered() {
                     is_hovering = true;
-                    events.set_hovering_id(bind.verts[w].id);
+                    events.set_hovering_vert_id(bind.verts[w].id);
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let mut new_weight = bind.verts[w].weight;
                     let slider = ui.add(egui::Slider::new(&mut new_weight, (0.)..=1.));
                     if slider.hovered() {
                         is_hovering = true;
-                        events.set_hovering_id(bind.verts[w].id);
+                        events.set_hovering_vert_id(bind.verts[w].id);
                     }
                     if slider.drag_started() {
                         events.save_bone(selections.bone_idx as usize);
@@ -981,7 +981,7 @@ pub fn selected_verts_inputs(
 
     // set the vertex being hovered, so it enlarges
     if hovering_id != -1 {
-        events.set_hovering_id(hovering_id);
+        events.set_hovering_vert_id(hovering_id);
     }
 
     hovering_id != -1
