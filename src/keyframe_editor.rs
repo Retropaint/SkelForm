@@ -463,10 +463,18 @@ pub fn draw_top_bar(
 
             let mut second = -1;
             for (i, x) in shared_ui.anim.lines_x.iter().enumerate() {
-                second += 1;
                 let pos = Vec2::new(ui.min_rect().left() + x, ui.min_rect().top() + 10.);
+
+                // show hovered line
                 if shared_ui.anim.hovering_frame == i as i32 {
-                    let color = egui::Color32::from_rgb(175, 175, 175);
+                    // white color if this line is selected, otherwise gray
+                    let color = if selections.anim_frame == i as i32 {
+                        egui::Color32::WHITE
+                    } else {
+                        egui::Color32::from_rgb(175, 175, 175)
+                    };
+
+                    // draw line
                     ui.painter_at(ui.min_rect()).vline(
                         pos.x + 3.,
                         egui::Rangef {
@@ -480,6 +488,10 @@ pub fn draw_top_bar(
                 if i as i32 % armature.sel_anim(&sel).unwrap().fps != 0 {
                     continue;
                 }
+
+                // if this frame line represents a second (1s, 2s, etc),
+                // draw the number
+                second += 1;
                 let center = egui::Align2::CENTER_CENTER;
                 let fontid = egui::FontId::default();
                 let col = config.colors.text;
@@ -757,6 +769,7 @@ fn draw_frame_lines(
     shared_ui.anim.lines_x = vec![];
     let mut selected_line_x = 0.;
     let panel = shared_ui.keyframe_panel_rect;
+    let mut hovering = false;
 
     let mut x = 0.;
     let mut i = 0;
@@ -784,10 +797,12 @@ fn draw_frame_lines(
         if selections.anim_frame == i {
             color = egui::Color32::WHITE;
             selected_line_x = ui.min_rect().left() + x;
-        } else if is_in {
+        }
+        if is_in {
             shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
             color = egui::Color32::from_rgb(175, 175, 175);
             shared_ui.anim.hovering_frame = i;
+            hovering = true;
 
             // select this frame if clicked
             if input.left_clicked && shared_ui.context_menu.id == "" {
@@ -808,6 +823,10 @@ fn draw_frame_lines(
         );
 
         i += 1;
+    }
+
+    if !hovering {
+        shared_ui.anim.hovering_frame = -1;
     }
 
     let mut last_bone = -1;
