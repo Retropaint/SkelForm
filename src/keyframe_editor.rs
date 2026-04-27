@@ -799,7 +799,12 @@ fn draw_frame_lines(
             selected_line_x = ui.min_rect().left() + x;
         }
         if is_in {
-            shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
+            // only show cursor pointing if diamond isn't being dragged
+            let dkf = &shared_ui.anim.dragged_keyframe;
+            if dkf.bone_id != -1 {
+                shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
+            }
+
             color = egui::Color32::from_rgb(175, 175, 175);
             shared_ui.anim.hovering_frame = i;
             hovering = true;
@@ -901,6 +906,7 @@ fn draw_frame_lines(
 
         if response.dragged() {
             shared_ui.anim.dragged_keyframe = kf.clone();
+            shared_ui.cursor_icon = egui::CursorIcon::Grabbing;
             if let Some(cursor) = ui.ctx().pointer_latest_pos() {
                 let pos = egui::Pos2::new(cursor.x - offset.x, cursor.y - offset.y);
                 let drag_rect = egui::Rect::from_min_size(pos, size.into());
