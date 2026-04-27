@@ -15,7 +15,7 @@ pub trait EguiUi {
     fn debug_rect(&mut self, rect: egui::Rect);
     fn context_rename(&mut self, shared_ui: &mut crate::Ui, config: &Config, id: String);
     fn context_delete(&mut self, shared_ui: &mut crate::Ui, config: &Config, events: &mut EventState, loc_code: &str, polar_id: PolarId);
-    fn context_button(&mut self, text: impl Into<egui::WidgetText>, config: &Config) -> egui::Response;
+    fn context_button(&mut self, text: &str, config: &Config) -> egui::Response;
 }
 
 /// The `main` of this module.
@@ -41,21 +41,37 @@ pub fn draw(
     default_styling(context, &config);
 
     // context menu
-    if shared_ui.context_menu.id == "" {
-        // context menu will be where mouse last was, before it opened
-        context.input_mut(|i| {
-            if let Some(pointer) = i.pointer.latest_pos() {
-                shared_ui.ctx_pos = pointer.into();
-            }
-        });
+    let is_different = shared_ui.context_menu.id != shared_ui.context_menu.last_id;
+    let is_closed = shared_ui.context_menu.id == "";
+    if is_different || is_closed {
+        // (-1, -1) pos is used to reset menu width
+        shared_ui.context_menu.pos = Vec2::new(-1., -1.);
+        shared_ui.context_menu.last_id = shared_ui.context_menu.id.clone();
     } else {
+        let pos = shared_ui.context_menu.pos;
         egui::Area::new("context_menu".into())
-            .fixed_pos(Vec2::new(shared_ui.ctx_pos.x, shared_ui.ctx_pos.y))
+            .fixed_pos(Vec2::new(pos.x, pos.y))
             .order(egui::Order::Foreground)
             .show(context, |ui| {
                 let id = shared_ui.context_menu.id.clone();
                 let frame = egui::Frame::popup(ui.style())
                     .show(ui, |ui| {
+                        if shared_ui.context_menu.pos == Vec2::new(-1., -1.) {
+                            // menu width won't re-adjust if it's bigger than its content,
+                            // so reset it
+                            ui.set_width(0.);
+
+                            // get last mouse pos, to stick menu on
+                            context.input_mut(|i| {
+                                let pointer = i.pointer.latest_pos();
+                                if pointer != None {
+                                    shared_ui.context_menu.pos = pointer.unwrap().into();
+                                }
+                            });
+
+                            // don't draw menu yet, since it'll be at (-1, -1) in this frame
+                            return;
+                        }
                         let s = &selections;
                         let cb = &copy_buffer;
                         context_menu_content(config, shared_ui, events, ui, id, &armature, &s, &cb);
@@ -808,11 +824,11 @@ fn context_menu_content(
         ui.context_rename(shared_ui, &config, context_id.clone());
         let delete_bone = PolarId::DeleteBone;
         ui.context_delete(shared_ui, &config, events, "delete_bone", delete_bone);
-        if ui.context_button("Copy", &config).clicked() {
+        if ui.context_button("Copy Bone", &config).clicked() {
             events.copy_bone(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
-        if ui.context_button("Paste", &config).clicked() {
+        if ui.context_button("Paste Bone", &config).clicked() {
             events.paste_bone(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
@@ -828,16 +844,16 @@ fn context_menu_content(
         let del_anim = PolarId::DeleteAnim;
         ui.context_delete(shared_ui, config, events, "delete_anim", del_anim);
         let duplicate_str = shared_ui.loc("keyframe_editor.duplicate");
-        if ui.context_button(duplicate_str, config).clicked() {
+        if ui.context_button(&duplicate_str, config).clicked() {
             events.duplicate_anim(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
     } else if id == "keyframe" {
-        if ui.context_button("Copy", &config).clicked() {
+        if ui.context_button("Copy Keyframe", &config).clicked() {
             events.copy_keyframe(split[4].parse().unwrap());
             shared_ui.context_menu.close();
         }
-        if ui.context_button("Paste", &config).clicked() {
+        if ui.context_button("Paste Keyframe", &config).clicked() {
             events.paste_keyframes_on_frame(split[3].parse().unwrap());
             shared_ui.context_menu.close();
         }
@@ -846,13 +862,17 @@ fn context_menu_content(
         let frame = split[1].parse().unwrap();
         let anim = armature.sel_anim(&selections).unwrap();
         let has_kf = anim.keyframes.iter().find(|kf| kf.frame == frame) != None;
-        if has_kf && ui.context_button("Copy", &config).clicked() {
+        if has_kf && ui.context_button("Copy Keyframes", &config).clicked() {
             events.copy_keyframes_in_frame(frame);
             shared_ui.context_menu.close();
         }
 
         // paste option, if there are keyframes in copy buffer
-        if copy_buffer.keyframes.len() > 0 && ui.context_button("Paste", &config).clicked() {
+        if copy_buffer.keyframes.len() > 0
+            && ui
+                .context_button("Paste Keyframes, then do something else", &config)
+                .clicked()
+        {
             events.paste_keyframes_on_frame(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
@@ -862,11 +882,11 @@ fn context_menu_content(
             shared_ui.context_menu.close();
         }
     } else if id == "kfdiamond" {
-        if ui.context_button("Copy", &config).clicked() {
+        if ui.context_button("Copy Keyframes", &config).clicked() {
             events.copy_keyframes_in_frame(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
-        if ui.context_button("Paste", &config).clicked() {
+        if ui.context_button("Paste Keyframes", &config).clicked() {
             events.paste_keyframes_on_frame(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
@@ -1072,14 +1092,11 @@ impl EguiUi for egui::Ui {
         label
     }
 
-    fn context_button(
-        &mut self,
-        text: impl Into<egui::WidgetText>,
-        config: &Config,
-    ) -> egui::Response {
+    fn context_button(&mut self, text: &str, config: &Config) -> egui::Response {
+        let self_width = self.available_width();
         let button = self
             .allocate_ui([0., 0.].into(), |ui| {
-                ui.set_width(70.);
+                ui.set_min_width(self_width);
                 ui.set_height(20.);
                 let width = ui.available_width();
                 let mut col = config.colors.main;
@@ -1088,11 +1105,12 @@ impl EguiUi for egui::Ui {
                 }
                 egui::Frame::new().fill(col.into()).show(ui, |ui| {
                     ui.style_mut().interaction.selectable_labels = false;
-                    ui.set_width(width);
+                    ui.set_min_width(width);
                     ui.set_height(20.);
                     ui.horizontal(|ui| {
                         ui.add_space(5.);
-                        ui.label(text)
+                        ui.label(text);
+                        ui.add_space(5.);
                     });
                 });
             })
@@ -1268,7 +1286,7 @@ impl EguiUi for egui::Ui {
 
     fn context_rename(&mut self, shared_ui: &mut crate::Ui, config: &Config, id: String) {
         let str = shared_ui.loc("rename");
-        if self.context_button(str, config).clicked() {
+        if self.context_button(&str, config).clicked() {
             shared_ui.rename_id = id;
             shared_ui.context_menu.close();
         };
@@ -1283,7 +1301,7 @@ impl EguiUi for egui::Ui {
         polar_id: PolarId,
     ) {
         let str = shared_ui.loc("delete");
-        if self.context_button(str, config).clicked() {
+        if self.context_button(&str, config).clicked() {
             let str_del = &shared_ui.loc(&format!("polar.{}", loc_code)).clone();
             events.open_polar_modal(polar_id, str_del.to_string());
 

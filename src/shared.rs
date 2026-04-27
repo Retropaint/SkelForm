@@ -434,8 +434,10 @@ enum_string!(PolarId);
 #[derive(Clone, Default)]
 pub struct ContextMenu {
     pub id: String,
+    pub last_id: String,
     pub hide: bool,
     pub keep: bool,
+    pub pos: Vec2,
 }
 
 impl ContextMenu {
@@ -674,7 +676,6 @@ pub struct Ui {
     pub started_edit_dragging: bool,
     pub drag_modifier: f32,
     pub selected_bone_first_time: bool,
-    pub ctx_pos: Vec2,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

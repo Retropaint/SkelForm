@@ -120,7 +120,7 @@ fn init_shared(shared: &mut Shared) {
     };
     shared.selections.vert_ids = vec![];
     shared.ui.scale = 1.;
-    shared.ui.context_menu.close();
+    shared.ui.context_menu.show(&"init".to_string());
     shared.ui.hovering_tex = -1;
     shared.selections.style = -1;
     shared.selections.style = -1;
