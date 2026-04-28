@@ -24,18 +24,6 @@ pub fn render(
     }
     let sel = selections.clone();
 
-    renderer.bone_buffer.init(device, 1000);
-    renderer.prev_onion_buffer.init(device, 1000);
-    renderer.next_onion_buffer.init(device, 1000);
-    renderer.point_buffer.init(device, 1000);
-    renderer.kite_buffer.init(device, 1000);
-    renderer.sel_bone_buffer.init(device, 1000);
-    renderer.gridline_buffer.init(device, 1000);
-    renderer.meshframe_buffer.init(device, 1000);
-    renderer.ring_buffer.init(device, 1000);
-    renderer.selected_ring_buffer.init(device, 10);
-    renderer.rect_buffer.init(device, 1000);
-
     // no edits are being made if the LMB isn't down
     if !input.left_down && (edit_mode.is_moving || edit_mode.is_rotating || edit_mode.is_scaling) {
         events.update_current_editing(1);

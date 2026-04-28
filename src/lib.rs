@@ -964,14 +964,18 @@ impl BackendRenderer {
 
     fn init_buffers_and_bindgroups(&self, renderer: &mut Renderer) {
         if renderer.meshframe_buffer.index == None {
-            renderer.bone_buffer.init(&self.gpu.device, 1000);
-            renderer.prev_onion_buffer.init(&self.gpu.device, 1000);
-            renderer.next_onion_buffer.init(&self.gpu.device, 1000);
-            renderer.point_buffer.init(&self.gpu.device, 1000);
-            renderer.kite_buffer.init(&self.gpu.device, 1000);
-            renderer.sel_bone_buffer.init(&self.gpu.device, 1000);
-            renderer.gridline_buffer.init(&self.gpu.device, 1000);
-            renderer.meshframe_buffer.init(&self.gpu.device, 1000);
+            let max = 5000;
+            renderer.bone_buffer.init(&self.gpu.device, max);
+            renderer.prev_onion_buffer.init(&self.gpu.device, max);
+            renderer.next_onion_buffer.init(&self.gpu.device, max);
+            renderer.point_buffer.init(&self.gpu.device, max);
+            renderer.kite_buffer.init(&self.gpu.device, max);
+            renderer.sel_bone_buffer.init(&self.gpu.device, max);
+            renderer.gridline_buffer.init(&self.gpu.device, max);
+            renderer.meshframe_buffer.init(&self.gpu.device, max);
+            renderer.ring_buffer.init(&self.gpu.device, 100);
+            renderer.selected_ring_buffer.init(&self.gpu.device, 100);
+            renderer.rect_buffer.init(&self.gpu.device, max);
         }
         let bytes = include_bytes!("../assets/flow-kite.png");
         self.load_bindgroup(&mut renderer.flow_kite_bindgroup, bytes);
