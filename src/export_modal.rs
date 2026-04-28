@@ -126,7 +126,7 @@ pub fn draw(
         SettingsState::Ui => {
             #[cfg(target_arch = "wasm32")]
             {
-                *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
+                *sui.saving.lock().unwrap() = crate::Saving::Spritesheet;
             }
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog(&sui.file_path, &sui.saving, crate::Saving::Exporting);
@@ -137,8 +137,8 @@ pub fn draw(
             sui.exporting_video_type = crate::ExportVideoType::None;
             #[cfg(target_arch = "wasm32")]
             {
-                *shared_ui.saving.lock().unwrap() = crate::Saving::Spritesheet;
-                shared_ui.spritesheet_elapsed = Some(Instant::now());
+                *sui.saving.lock().unwrap() = crate::Saving::Spritesheet;
+                sui.spritesheet_elapsed = Some(Instant::now());
             }
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog(&sui.file_path, &sui.saving, crate::Saving::Spritesheet);
@@ -151,8 +151,8 @@ pub fn draw(
             sui.exporting_anims[sui.exporting_video_anim] = true;
             #[cfg(target_arch = "wasm32")]
             {
-                *shared_ui.saving.lock().unwrap() = crate::Saving::Video;
-                shared_ui.spritesheet_elapsed = Some(Instant::now());
+                *sui.saving.lock().unwrap() = crate::Saving::Video;
+                sui.spritesheet_elapsed = Some(Instant::now());
             }
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog(&sui.file_path, &sui.saving, crate::Saving::Video);
