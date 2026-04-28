@@ -263,9 +263,15 @@ pub fn draw_hierarchy(
                         );
                     };
                     let children = cached_children.get(&parents[p].id).unwrap();
+
+                    // get index of this bone in the parent
                     let this_child_idx = children.iter().position(|b| b.id == bone_id).unwrap();
+
+                    // get index of this parent's last child
                     let direct_child_idx =
                         children.iter().rposition(|b| b.parent_id == parents[p].id);
+
+                    // don't add vertical line if this bone is the last child of this parent
                     if direct_child_idx.unwrap() < this_child_idx {
                         ui.add_space(15.);
                         continue;
@@ -298,12 +304,10 @@ pub fn draw_hierarchy(
                     hor_line(Vec2::new(-8., 10.), ui, parent_col);
                 }
 
-                let mut children = vec![];
                 let bone = &armature.bones[b];
-                get_all_children(&armature.bones, &mut children, bone);
 
-                // show folding button if this bone has children
-                if children.len() == 0 {
+                // show folding button if this bone has at least 1 child
+                if b > armature.bones.len() - 2 || armature.bones[b + 1].parent_id != bone.id {
                     let mut col = def_line_col;
                     if this_group_color.a != 0 {
                         col = this_group_color;
