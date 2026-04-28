@@ -184,6 +184,12 @@ pub fn draw_hierarchy(
             continue;
         }
         let bone_id = armature.bones[b].id;
+
+        // stop rendering if not all hiddens have been initialized
+        if hiddens.get(&bone_id) == None {
+            return;
+        }
+
         let bone_hidden = *hiddens.get(&bone_id).unwrap();
 
         let mut dragged = false;
