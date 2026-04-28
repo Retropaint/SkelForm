@@ -151,11 +151,13 @@ pub fn render(
     // pre-draw bone setup
     for b in 0..temp_arm.bones.len() {
         let tex = armature.tex_of(temp_arm.bones[b].id);
-        let parents = armature.get_all_parents(false, temp_arm.bones[b].id);
+        let parent_id = temp_arm.bones[b].parent_id;
+        if parent_id != -1 {
+            let parent = temp_arm.bones.iter().find(|b| b.id == parent_id);
+            temp_arm.bones[b].hidden |= parent.unwrap().hidden;
+        }
 
-        if tex == None
-            || temp_arm.is_bone_hidden(false, config.propagate_visibility, temp_arm.bones[b].id)
-        {
+        if tex == None || temp_arm.bones[b].hidden {
             continue;
         }
 
@@ -245,8 +247,8 @@ pub fn render(
         if !config.exact_bone_select && on_click_id == temp_arm.bones[b].id {
             // QoL: select parent of textured bone if it's called 'Texture'
             // this is because most textured bones are meant to represent their parents
-            if parents.len() != 0 && temp_arm.bones[b].name.to_lowercase() == "texture" {
-                on_click_id = parents[0].id;
+            if parent_id != -1 && temp_arm.bones[b].name.to_lowercase() == "texture" {
+                on_click_id = parent_id;
             }
         }
 
@@ -408,9 +410,7 @@ pub fn render(
         let mut indices = vec![];
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         for bone in &temp_arm.bones {
-            if bone.verts_edited
-                || temp_arm.is_bone_hidden(false, config.propagate_visibility, bone.id)
-            {
+            if bone.verts_edited || bone.hidden {
                 continue;
             }
 
@@ -446,8 +446,7 @@ pub fn render(
         for bone in &temp_arm.bones {
             let already_editing =
                 edit_mode.showing_mesh && armature.sel_bone(&sel).unwrap().id == bone.id;
-            let is_hidden = temp_arm.is_bone_hidden(false, config.propagate_visibility, bone.id);
-            if !bone.verts_edited || is_hidden || already_editing {
+            if !bone.verts_edited || bone.hidden || already_editing {
                 continue;
             }
 
@@ -664,12 +663,13 @@ pub fn draw_armature(
     // keep track of which bones should be rendered
     let mut bone_ids_to_draw = vec![];
 
+    let hiddens = src_arm.get_propagated_hidden();
+
     for b in 0..armature.bones.len() {
         let tex = src_arm.anim_tex_of(armature.bones[b].id);
         let id = armature.bones[b].id;
         let bone = &armature.bones[b];
-        let hidden = armature.is_bone_hidden(false, config.propagate_visibility, id);
-        if bone.world_verts.len() == 0 || tex == None || hidden {
+        if bone.world_verts.len() == 0 || tex == None || *hiddens.get(&id).unwrap() {
             continue;
         }
         if showing_mesh
@@ -799,10 +799,12 @@ pub fn render_screenshot(
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
     let sel = SelectionState::default();
 
+    let hiddens = armature.get_propagated_hidden();
+
     for b in 0..temp_arm.bones.len() {
-        if armature.tex_of(temp_arm.bones[b].id) == None
-            || temp_arm.is_bone_hidden(false, config.propagate_visibility, temp_arm.bones[b].id)
-        {
+        let id = &temp_arm.bones[b].id;
+        let is_hidden = hiddens.get(&id) == None || *hiddens.get(&id).unwrap();
+        if armature.tex_of(*id) == None || is_hidden {
             continue;
         }
 
@@ -1899,12 +1901,12 @@ fn draw_gridline(
 
     // draw vertical lines
     let mut x = (cam.pos.x - cam.zoom / camera.aspect_ratio()).round();
+
+    // snap to first line
+    x += (x % config.gridline_gap as f32).abs();
+
     let right_side = cam.pos.x + cam.zoom / camera.aspect_ratio();
     while x < right_side {
-        if x % config.gridline_gap as f32 != 0. {
-            x += 1.;
-            continue;
-        }
         let color = if x == 0. {
             highlight_color
         } else {
@@ -1913,17 +1915,17 @@ fn draw_gridline(
         verts.append(&mut draw_vertical_line(x, width, camera, config, color));
         indices.append(&mut vec![i, i + 1, i + 2]);
         i += 3;
-        x += 1.;
+        x += config.gridline_gap as f32;
     }
 
     // draw horizontal lines
     let mut y = (cam.pos.y - cam.zoom).round();
+
+    // snap to first line
+    y += (y % config.gridline_gap as f32).abs();
+
     let top_side = cam.pos.y + cam.zoom;
     while y < top_side {
-        if y % config.gridline_gap as f32 != 0. {
-            y += 1.;
-            continue;
-        }
         let color = if y == 0. {
             highlight_color
         } else {
@@ -1932,7 +1934,7 @@ fn draw_gridline(
         verts.append(&mut draw_horizontal_line(y, width, camera, config, color));
         indices.append(&mut vec![i, i + 1, i + 2]);
         i += 3;
-        y += 1.;
+        y += config.gridline_gap as f32;
     }
 
     if verts.len() == 0 {

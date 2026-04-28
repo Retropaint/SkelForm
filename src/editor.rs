@@ -1190,7 +1190,7 @@ fn select_bone(
         edit_mode.showing_mesh = false;
 
         // unfold this bone's parents to reveal it in the hierarchy
-        let parents = utils::get_all_parents(&armature.bones, armature.sel_bone(sel).unwrap().id);
+        let parents = armature.get_all_parents(false, armature.sel_bone(sel).unwrap().id);
         let bones = &mut armature.bones;
         for p in parents {
             bones.iter_mut().find(|b| b.id == p.id).unwrap().folded = false;

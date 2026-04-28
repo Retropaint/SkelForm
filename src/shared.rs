@@ -1613,33 +1613,24 @@ impl Armature {
         None
     }
 
-    pub fn is_bone_hidden(&self, is_anim: bool, propagate: bool, bone_id: i32) -> bool {
-        let bones = if is_anim {
-            &self.animated_bones
-        } else {
-            &self.bones
-        };
+    pub fn get_propagated_hidden(&self) -> std::collections::HashMap<i32, bool> {
+        let mut hiddens: std::collections::HashMap<i32, bool> = Default::default();
+        let bones = &self.animated_bones;
+        for b in 0..bones.len() {
+            let bone = &bones[b];
+            let mut hidden = bone.hidden;
 
-        let bone = bones.iter().find(|b| b.id == bone_id);
-
-        if bone == None {
-            return false;
-        }
-        if !propagate {
-            return bone.unwrap().hidden;
-        }
-        if bone.unwrap().hidden {
-            return true;
-        }
-
-        let parents = self.get_all_parents(is_anim, bone_id);
-        for parent in &parents {
-            if parent.hidden {
-                return true;
+            let parent_id = bone.parent_id;
+            if parent_id == -1 {
+                hiddens.insert(bone.id, hidden);
+                continue;
             }
-        }
+            let parent = *hiddens.get(&bone.parent_id).unwrap();
+            hidden |= parent;
 
-        false
+            hiddens.insert(bone.id, hidden);
+        }
+        hiddens
     }
 
     pub fn has_physics(&self, bone_id: i32) -> bool {

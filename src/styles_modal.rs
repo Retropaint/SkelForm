@@ -496,6 +496,7 @@ pub fn draw_bone_buttons(
     let mut idx = -1;
     let mut def_line_col = config.colors.dark_accent;
     def_line_col += Color::new(20, 20, 20, 0);
+    let hiddens = armature.get_propagated_hidden();
     for b in 0..armature.bones.len() {
         idx += 1;
         if armature.is_bone_folded(armature.bones[b].id) {
@@ -542,7 +543,7 @@ pub fn draw_bone_buttons(
 
             let name = armature.bones[b].name.to_string();
             let mut text_col = config.colors.text;
-            if armature.is_bone_hidden(false, config.propagate_visibility, armature.bones[b].id) {
+            if *hiddens.get(&armature.bones[b].id).unwrap() {
                 text_col = config.colors.dark_accent;
                 text_col += crate::Color::new(40, 40, 40, 0)
             }
