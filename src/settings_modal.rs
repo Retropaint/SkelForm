@@ -550,6 +550,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("export",          keys.export,          true);
         key!("open",            keys.open,            true);
         key!("cancel",          keys.cancel,          true);
+        key!("delete",          keys.delete,          true);
         key!("polar_yes",       keys.polar_yes,       true);
         key!("copy",            keys.copy,            true);
         key!("paste",           keys.paste,           true);

@@ -307,7 +307,10 @@ pub fn draw_hierarchy(
                 let bone = &armature.bones[b];
 
                 // show folding button if this bone has at least 1 child
-                if b > armature.bones.len() - 2 || armature.bones[b + 1].parent_id != bone.id {
+                if armature.bones.len() == 1
+                    || b > armature.bones.len() - 2
+                    || armature.bones[b + 1].parent_id != bone.id
+                {
                     let mut col = def_line_col;
                     if this_group_color.a != 0 {
                         col = this_group_color;

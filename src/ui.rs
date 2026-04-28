@@ -47,7 +47,7 @@ pub fn draw(
         // (-1, -1) pos is used to reset menu width
         shared_ui.context_menu.pos = Vec2::new(-1., -1.);
         shared_ui.context_menu.last_id = shared_ui.context_menu.id.clone();
-    } else {
+    } else if !shared_ui.context_menu.hide {
         let pos = shared_ui.context_menu.pos;
         egui::Area::new("context_menu".into())
             .fixed_pos(Vec2::new(pos.x, pos.y))
@@ -618,7 +618,7 @@ pub fn kb_inputs(
     let modal_open = ui.styles_modal || ui.polar_modal || ui.settings_modal
         || ui.export_modal || ui.lang_import_modal || ui.feedback_modal;
     if input.consume_shortcut(&config.keys.cancel) {
-        if shared_ui.context_menu.id != "" {
+        if shared_ui.context_menu.id != "" && !shared_ui.context_menu.hide {
             shared_ui.context_menu.close();
         } else if edit_mode.setting_ik_target {
             events.toggle_setting_ik_target(0);
@@ -638,6 +638,7 @@ pub fn kb_inputs(
         } else {
             events.unselect_all();
         }
+        shared_ui.context_menu.id = "".to_string();
     }
 
     if shared_ui.feedback_modal {
@@ -656,6 +657,16 @@ pub fn kb_inputs(
     }
     if input.consume_shortcut(&config.keys.zoom_out_camera) {
         events.cam_zoom_out();
+    }
+
+    if input.consume_shortcut(&config.keys.delete) {
+        // delete selected bone(s)
+        if selections.bone_idx != usize::MAX {
+            events.open_polar_modal(PolarId::DeleteBone, shared_ui.loc("polar.delete_bone"));
+            let context_id = &format!("bone_{}", selections.bone_idx);
+            shared_ui.context_menu.show(context_id);
+            shared_ui.context_menu.hide = true;
+        }
     }
 
     if input.consume_shortcut(&config.keys.save) {
