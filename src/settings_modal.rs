@@ -243,7 +243,6 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
             if ui.skf_button(str_default).clicked() {
                 let config = &mut shared_ui.updated_config;
                 config.edit_while_playing = crate::Config::default().edit_while_playing;
-                config.propagate_visibility = crate::Config::default().propagate_visibility;
                 config.rot_snap_step = crate::Config::default().rot_snap_step;
                 config.transform_rot_radius = crate::Config::default().transform_rot_radius;
                 config.center_point_radius = crate::Config::default().center_point_radius;
@@ -258,16 +257,6 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         ui.label(str_edit).on_hover_text(str_edit_desc);
         ui.checkbox(
             &mut shared_ui.updated_config.edit_while_playing,
-            "".into_atoms(),
-        );
-    });
-
-    ui.horizontal(|ui| {
-        let str_edit = &shared_ui.loc("settings_modal.editing.propagate_visibility");
-        let str_edit_desc = &shared_ui.loc("settings_modal.editing.propagate_visibility_desc");
-        ui.label(str_edit).on_hover_text(str_edit_desc);
-        ui.checkbox(
-            &mut shared_ui.updated_config.propagate_visibility,
             "".into_atoms(),
         );
     });
