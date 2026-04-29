@@ -672,6 +672,11 @@ pub fn kb_inputs(
             let context_id = &format!("anim_{}", selections.anim);
             shared_ui.context_menu.show(context_id);
             shared_ui.context_menu.hide = true;
+        } else if last == "style" {
+            events.open_polar_modal(PolarId::DeleteStyle, shared_ui.loc("polar.delete_style"));
+            let context_id = &format!("style_{}", selections.style_id);
+            shared_ui.context_menu.show(context_id);
+            shared_ui.context_menu.hide = true;
         }
     }
 

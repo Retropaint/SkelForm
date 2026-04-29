@@ -149,14 +149,14 @@ pub fn draw_styles_list(
 
                 // brighten button if style is selected and/or hovered
                 let mut col = config.colors.dark_accent;
-                if armature.styles[s].id == selections.style {
+                if armature.styles[s].id == selections.style_id {
                     col += crate::Color::new(20, 20, 20, 0);
                 }
                 if s == shared_ui.hovering_set as usize {
                     col += crate::Color::new(20, 20, 20, 0);
                 }
 
-                let cursor_icon = if selections.style != armature.styles[s].id {
+                let cursor_icon = if selections.style_id != armature.styles[s].id {
                     egui::CursorIcon::PointingHand
                 } else {
                     egui::CursorIcon::Default
@@ -188,7 +188,7 @@ pub fn draw_styles_list(
                     // select style if clicked, or rename if already selected
                     if button.clicked() {
                         shared_ui.rename_id = "".to_string();
-                        if selections.style == armature.styles[s].id {
+                        if selections.style_id == armature.styles[s].id {
                             shared_ui.rename_id = context_id.clone();
                         }
                         events.select_style(armature.styles[s].id as i32);
@@ -251,7 +251,7 @@ pub fn draw_styles_list(
                     let hov = *hovered_payload.clone().unwrap() as usize;
                     if !shared_ui.dragging_tex {
                         events.move_style(hov as usize, idx as usize);
-                    } else if armature.styles[s].id != selections.style {
+                    } else if armature.styles[s].id != selections.style_id {
                         events.migrate_texture(hov, idx as usize);
                     }
                 });
@@ -278,7 +278,7 @@ pub fn draw_textures_list(
     let frame = egui::Frame::default().inner_margin(5.);
     let mut set_idx: usize = usize::MAX;
     let styles = &armature.styles;
-    if let Some(idx) = styles.iter().position(|set| set.id == selections.style) {
+    if let Some(idx) = styles.iter().position(|set| set.id == selections.style_id) {
         set_idx = idx;
     }
     let is_selected = set_idx == shared_ui.hovering_set as usize;
@@ -298,7 +298,7 @@ pub fn draw_textures_list(
             let naming_first_style =
                 armature.styles.len() == 1 && shared_ui.rename_id == "tex_set 0";
 
-            if naming_first_style || set_idx == usize::MAX || selections.style == -1 {
+            if naming_first_style || set_idx == usize::MAX || selections.style_id == -1 {
                 return;
             }
 
@@ -337,7 +337,7 @@ pub fn draw_textures_list(
         let tex_frame_padding = Vec2::new(10., 15.);
 
         // if no style is selected, show an empty darkened frame
-        if selections.style == -1 {
+        if selections.style_id == -1 {
             let mut darker = config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
             egui::Frame::new()
@@ -352,7 +352,7 @@ pub fn draw_textures_list(
 
         ui.dnd_drop_zone::<i32, _>(frame, |ui| {
             let mut darker = config.colors.dark_accent;
-            if selections.style == -1 {
+            if selections.style_id == -1 {
                 darker -= Color::new(5, 5, 5, 0);
             }
             let frame = egui::Frame::new().fill(darker.into()).inner_margin(2.);
@@ -375,7 +375,7 @@ pub fn draw_textures_list(
                 }
 
                 // show texture list
-                if selections.style != -1 && (shared_ui.hovering_set == -1 || is_selected) {
+                if selections.style_id != -1 && (shared_ui.hovering_set == -1 || is_selected) {
                     let scroll_area = egui::ScrollArea::vertical().id_salt("tex_list");
                     scroll_area.show(ui, |ui| {
                         draw_tex_buttons(shared_ui, &armature, &selections, &config, events, ui);
@@ -440,7 +440,7 @@ fn draw_bones_list(
             ui.label(str_heading)
         });
 
-        if selections.style == -1 {
+        if selections.style_id == -1 {
             let mut darker = config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
             egui::Frame::new()
@@ -463,7 +463,7 @@ fn draw_bones_list(
                 ui.set_height(height - padding.y);
 
                 let styles = &armature.styles;
-                let tex_id = selections.style;
+                let tex_id = selections.style_id;
 
                 let set = styles.iter().find(|style| style.id == tex_id).unwrap();
 
@@ -619,7 +619,7 @@ fn draw_assigned_list(
 
         let default_width = 150.;
 
-        if selections.style == -1 {
+        if selections.style_id == -1 {
             let size = ui.available_size();
             let mut darker = config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
@@ -642,7 +642,7 @@ fn draw_assigned_list(
                 ui.set_height(height - padding.y);
 
                 let styles = &armature.styles;
-                let tex_id = selections.style;
+                let tex_id = selections.style_id;
 
                 let set = styles.iter().find(|style| style.id == tex_id).unwrap();
 
@@ -675,7 +675,7 @@ fn draw_assigned_list(
                         ui.add_space(1.5);
                         ui.horizontal(|ui| {
                             egui::containers::menu::MenuButton::new(str_idx).ui(ui, |ui| {
-                                let style_id = selections.style;
+                                let style_id = selections.style_id;
                                 let styles = &armature.styles;
                                 let set = styles.iter().find(|s| s.id == style_id).unwrap();
                                 let mut tex_str = bone.tex.clone();

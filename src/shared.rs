@@ -1582,12 +1582,12 @@ impl Armature {
         self.tex_data.iter().find(|d| d.id == tex.data_id)
     }
 
-    pub fn sel_style(&self, selection: &SelectionState) -> Option<&Style> {
-        self.styles.iter().find(|s| s.id == selection.style)
+    pub fn sel_style(&self, selections: &SelectionState) -> Option<&Style> {
+        self.styles.iter().find(|s| s.id == selections.style_id)
     }
 
-    pub fn sel_style_mut(&mut self, selection: &SelectionState) -> Option<&mut Style> {
-        self.styles.iter_mut().find(|s| s.id == selection.style)
+    pub fn sel_style_mut(&mut self, selections: &SelectionState) -> Option<&mut Style> {
+        self.styles.iter_mut().find(|s| s.id == selections.style_id)
     }
 
     pub fn sel_anim(&self, selection: &SelectionState) -> Option<&Animation> {
@@ -2652,7 +2652,7 @@ impl EventState {
 pub struct SelectionState {
     pub bone_idx: usize,
     pub bone_ids: Vec<i32>,
-    pub style: i32,
+    pub style_id: i32,
     pub bind: i32,
     pub anim: usize,
     pub anim_frame: i32,

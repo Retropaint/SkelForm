@@ -440,7 +440,10 @@ pub fn simple_event(
             selections.anim = if value == f32::MAX { usize::MAX } else { val };
             selections.anim_frame = 0;
         }
-        Events::SelectStyle => selections.style = value as i32,
+        Events::SelectStyle => {
+            selections.style_id = value as i32;
+            ui.last_selected = if value as i32 == -1 { "" } else { "style" }.to_string();
+        }
         Events::OpenModal => {
             open_modal(ui, value == 1., ui.loc(&str_value));
         }
@@ -520,8 +523,8 @@ pub fn simple_event(
         Events::DeleteStyle => {
             let styles = &mut armature.styles;
             let idx = styles.iter().position(|s| s.id == value as i32).unwrap();
-            if selections.style == value as i32 {
-                selections.style = -1;
+            if selections.style_id == value as i32 {
+                selections.style_id = -1;
             }
             styles.remove(idx);
         }
@@ -1225,7 +1228,7 @@ fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode, ui: &
     selections.anim_frame = -1;
     selections.anim = usize::MAX;
     selections.bind = -1;
-    selections.style = -1;
+    selections.style_id = -1;
     edit_mode.showing_mesh = false;
     edit_mode.setting_ik_target = false;
     edit_mode.setting_bind_bone = false;
@@ -1305,8 +1308,8 @@ pub fn undo_redo(
             new_action.styles = armature.styles.clone();
             armature.styles = action.styles.clone();
             let style_ids: Vec<i32> = armature.styles.iter().map(|s| s.id).collect();
-            if !style_ids.contains(&selections.style) {
-                selections.style = -1;
+            if !style_ids.contains(&selections.style_id) {
+                selections.style_id = -1;
             }
         }
         _ => {}

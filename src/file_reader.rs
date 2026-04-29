@@ -134,7 +134,7 @@ pub fn read_image_loaders(
         }
 
         #[rustfmt::skip]
-        add_texture(image, shared.selections.style, dims, &names[i], &mut shared.armature, queue, device, bind_group_layout, ctx);
+        add_texture(image, shared.selections.style_id, dims, &names[i], &mut shared.armature, queue, device, bind_group_layout, ctx);
     }
 
     *shared.ui.file_path.lock().unwrap() = vec![];
@@ -196,7 +196,7 @@ pub fn add_pending_textures(
         let crop = image.crop_imm(tex.offset.x as u32, tex.offset.y as u32, tex.size.x as u32, tex.size.y as u32);
         let crop_size = Vec2::new(crop.width() as f32, crop.height() as f32);
         #[rustfmt::skip]
-        add_texture(crop.clone(), shared.selections.style, crop_size, &tex.name, &mut shared.armature, queue, device, bind_group_layout, ctx);
+        add_texture(crop.clone(), shared.selections.style_id, crop_size, &tex.name, &mut shared.armature, queue, device, bind_group_layout, ctx);
     }
 
     shared.ui.pending_textures = vec![];

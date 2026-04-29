@@ -122,8 +122,8 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.scale = 1.;
     shared.ui.context_menu.close();
     shared.ui.hovering_tex = -1;
-    shared.selections.style = -1;
-    shared.selections.style = -1;
+    shared.selections.style_id = -1;
+    shared.selections.style_id = -1;
     shared.selections.bind = -1;
     shared.ui.styles_modal_size = Vec2::new(500., 500.);
     shared.screenshot_res = Vec2::new(128., 128.);

@@ -281,7 +281,7 @@ impl ApplicationHandler for App {
                         *self.shared.ui.file_type.lock().unwrap() = 2;
                     } else {
                         // only load images if a style is selected in styles modal
-                        if self.shared.selections.style != -1 {
+                        if self.shared.selections.style_id != -1 {
                             self.shared.ui.dropped_file_path.push(_path_buf);
                             self.shared.ui.file_elapsed = Some(Instant::now());
                         } else {
@@ -434,7 +434,7 @@ impl ApplicationHandler for App {
                     }
                     file_reader::add_texture(
                         image::DynamicImage::new(1, 1, image::ColorType::Rgba8),
-                        self.shared.selections.style,
+                        self.shared.selections.style_id,
                         Vec2::new(1., 1.),
                         "",
                         &mut self.shared.armature,
