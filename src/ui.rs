@@ -925,6 +925,14 @@ fn context_menu_content(
             events.paste_keyframes_on_frame(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
+    } else if id == "armature" {
+        if copy_buffer.bones.len() > 0 && ui.context_button("Paste Bones", &config).clicked() {
+            events.paste_bone(usize::MAX);
+            shared_ui.context_menu.close();
+        }
+        if copy_buffer.bones.len() == 0 {
+            shared_ui.context_menu.close();
+        }
     }
 }
 

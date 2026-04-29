@@ -107,28 +107,39 @@ pub fn draw(
         });
         ui.add_space(3.);
         let scroll_area = egui::ScrollArea::both().max_height(ui.available_height() - 10.);
-        scroll_area.show(ui, |ui| {
-            // hierarchy
-            let frame = Frame::default().inner_margin(5.);
-            ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-                ui.set_min_height(ui.available_height());
-                ui.set_width(ui.available_width());
+        let response = scroll_area
+            .show(ui, |ui| {
+                // hierarchy
+                let frame = Frame::default().inner_margin(5.);
+                ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                    ui.set_min_height(ui.available_height());
+                    ui.set_width(ui.available_width());
 
-                // The empty armature text should have blue hyperlinks to attract the user's
-                // attention. The blue makes it clear of being a hyperlink, while also sticking
-                // out (without being too jarring).
-                ui.style_mut().visuals.hyperlink_color = egui::Color32::from_rgb(94, 156, 255);
+                    // The empty armature text should have blue hyperlinks to attract the user's
+                    // attention. The blue makes it clear of being a hyperlink, while also sticking
+                    // out (without being too jarring).
+                    ui.style_mut().visuals.hyperlink_color = egui::Color32::from_rgb(94, 156, 255);
 
-                if armature.bones.len() != 0 {
-                    #[rustfmt::skip]
-                    draw_hierarchy(ui, shared_ui, &selections, &armature, &config, &edit_mode, events);
-                } else {
-                    ui.add_space(5.);
-                    ui::empty_armature_starters(shared_ui, config, ui);
-                }
-                ui.add_space(4.);
-            });
-        });
+                    if armature.bones.len() != 0 {
+                        let sel = &selections;
+                        draw_hierarchy(ui, shared_ui, sel, &armature, &config, &edit_mode, events);
+                    } else {
+                        ui.add_space(5.);
+                        ui::empty_armature_starters(shared_ui, config, ui);
+                    }
+                    ui.add_space(4.);
+                })
+            })
+            .inner
+            .0
+            .response;
+
+        // open context menu if right clicking on hierarchy frame
+        let right_clicked = ui.ctx().input(|i| i.pointer.secondary_clicked());
+        if response.hovered() && right_clicked {
+            shared_ui.context_menu.show(&"armature".to_string());
+        }
+
         shared_ui.armature_panel_rect = Some(ui.min_rect());
     });
 
