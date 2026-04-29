@@ -478,10 +478,16 @@ pub fn draw_top_bar(
                     // draw line
                     ui.painter_at(ui.min_rect()).vline(
                         pos.x + 3.,
-                        egui::Rangef {
-                            min: 100.,
-                            max: 475.,
-                        },
+                        egui::Rangef::new(100., 475.),
+                        Stroke { width: 2., color },
+                    );
+                } else if selections.anim_frame == i as i32 {
+                    let color = egui::Color32::WHITE;
+
+                    // draw line
+                    ui.painter_at(ui.min_rect()).vline(
+                        pos.x + 3.,
+                        egui::Rangef::new(100., 475.),
                         Stroke { width: 2., color },
                     );
                 }
