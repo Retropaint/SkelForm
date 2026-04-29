@@ -96,6 +96,11 @@ pub fn polar_modal(
                 return;
             }
 
+            // reset the last selected element, so deletion won't accidentally
+            // allow it again
+            shared_ui.last_selected = "".to_string();
+
+            // extract first arg from context ID
             let mut ctx0: usize = 0;
             if shared_ui.context_menu.id != "" {
                 let parsed_context = shared_ui.context_id_parsed();
@@ -293,7 +298,9 @@ pub fn feedback_modal(
         "feedback_modal".to_string(),
         config,
         |ui| {
-            ui.label("All suggestions and/or bug reports welcome!\nImages may be uploaded as links.");
+            ui.label(
+                "All suggestions and/or bug reports welcome!\nImages may be uploaded as links.",
+            );
             ui.add_space(5.);
             egui::TextEdit::multiline(&mut input)
                 .hint_text("I think you should add/fix...")

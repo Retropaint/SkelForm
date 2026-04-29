@@ -148,7 +148,7 @@ fn draw_animations_list(
             let mut hovered = false;
             for i in 0..armature.animations.len() {
                 let name = &mut armature.animations[i].name.clone();
-                let context_id = format!("anim_{}", armature.animations[i].id.to_string());
+                let context_id = format!("anim_{}", armature.animations[i].id);
 
                 // show input field if renaming
                 if shared_ui.rename_id == context_id {
@@ -217,6 +217,7 @@ fn draw_animations_list(
                             shared_ui.rename_id = context_id.clone();
                             shared_ui.edit_value = Some(name.to_string());
                         }
+                        shared_ui.last_selected = "anim".to_string();
                     }
                     if button.secondary_clicked() {
                         shared_ui.context_menu.show(&context_id);

@@ -460,6 +460,9 @@ pub fn simple_event(
                 }
             }
 
+            undo_states.new_undo_anims(&armature.animations);
+            undo_states.undo_actions.last_mut().unwrap().continued = true;
+
             for id in ids_to_delete {
                 let bone;
                 if let Some(result) = armature.bones.iter().find(|b| b.id == id) {
@@ -478,19 +481,12 @@ pub fn simple_event(
                 }
 
                 // remove all references to this bone and it's children from all animations
-                let mut set_undo_bone_continued = false;
                 for bone in &children {
                     for a in 0..armature.animations.len() {
                         let anim = &mut armature.animations[a];
-                        let last_len = anim.keyframes.len();
 
-                        // if an animation has this bone, save it in undo data
                         let mut temp_kfs = anim.keyframes.clone();
                         temp_kfs.retain(|kf| kf.bone_id != bone.id);
-                        if last_len != temp_kfs.len() && !set_undo_bone_continued {
-                            set_undo_bone_continued = true;
-                        }
-
                         armature.animations[a].keyframes = temp_kfs;
                     }
                 }
@@ -498,6 +494,9 @@ pub fn simple_event(
                 // remove this bone from binds
                 for bone in &mut armature.bones {
                     bone.binds.retain(|bind| bind.bone_id != id);
+                    for child in &children {
+                        bone.binds.retain(|bind| bind.bone_id != child.id);
+                    }
                 }
 
                 // IK bones that target this are now -1
@@ -1251,6 +1250,7 @@ pub fn undo_redo(
         }
         action = undo_states.redo_actions.last().unwrap().clone();
     }
+    println!("{}", action.action);
 
     // store the state prior to undoing/redoing the action,
     // to add to the opposite stack later
@@ -1339,6 +1339,7 @@ pub fn undo_redo(
 
     // actions tagged with `continue` are part of an action chain
     if action.continued {
+        println!("{}", action.action);
         undo_redo(undo, undo_states, armature, selections);
     }
 }
