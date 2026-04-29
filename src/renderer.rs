@@ -1300,18 +1300,18 @@ pub fn inheritance(
 
         // inherit parent
         if let Some(parent) = parent.clone() {
-            bones[i].rot += parent.rot;
-            bones[i].scale *= parent.scale;
-
-            // adjust bone's position based on parent's scale
-            bones[i].pos *= parent.scale;
-
-            // orbit the parent
             let mut orbit_rot = parent.rot;
             // apply orbital difference, if rotation resistance physics is active
             if arm_bones.len() > 0 && bones[i].phys_sway > 0. {
                 orbit_rot -= bones[i].phys_global_orbit_diff
             }
+
+            bones[i].rot += orbit_rot;
+            bones[i].scale *= parent.scale;
+
+            // adjust bone's position based on parent's scale
+            bones[i].pos *= parent.scale;
+
             bones[i].pos = utils::rotate(&bones[i].pos, orbit_rot);
 
             // inherit position from parent
