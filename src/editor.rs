@@ -565,13 +565,13 @@ pub fn simple_event(
                     bone.ik_family_id += highest_ik_family_id + 1;
                 }
 
-                // set selected bone as the parent of pasted bone
+                // selected bone's parent is also pasted bone's
                 let pasted_idx = value as usize;
                 if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
                     bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
                 } else if pasted_idx != usize::MAX {
-                    insert_idx = pasted_idx + 1;
-                    bone.parent_id = armature.bones[pasted_idx].id;
+                    insert_idx = pasted_idx;
+                    bone.parent_id = armature.bones[pasted_idx].parent_id;
                 } else {
                     bone.parent_id = -1;
                 }
@@ -1253,7 +1253,6 @@ pub fn undo_redo(
         }
         action = undo_states.redo_actions.last().unwrap().clone();
     }
-    println!("{}", action.action);
 
     // store the state prior to undoing/redoing the action,
     // to add to the opposite stack later
