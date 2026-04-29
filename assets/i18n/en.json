@@ -347,6 +347,7 @@
       "cancel": "Cancel",
       "copy": "Copy",
       "paste": "Paste",
+      "delete": "Delete",
       "timeline_zoom_mode": "(Hold) Timeline Zoom Mode",
       "timeline_zoom_mode_desc": "The timeline editor will zoom, instead of scroll, when scrolling and holding this modifier.",
       "transform_move": "Move Mode",
