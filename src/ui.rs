@@ -660,10 +660,16 @@ pub fn kb_inputs(
     }
 
     if input.consume_shortcut(&config.keys.delete) {
+        let last = shared_ui.last_selected.as_str();
         // delete selected bone(s)
-        if selections.bone_idx != usize::MAX {
+        if last == "bone" {
             events.open_polar_modal(PolarId::DeleteBone, shared_ui.loc("polar.delete_bone"));
             let context_id = &format!("bone_{}", selections.bone_idx);
+            shared_ui.context_menu.show(context_id);
+            shared_ui.context_menu.hide = true;
+        } else if last == "anim" {
+            events.open_polar_modal(PolarId::DeleteAnim, shared_ui.loc("polar.delete_anim"));
+            let context_id = &format!("anim_{}", selections.anim);
             shared_ui.context_menu.show(context_id);
             shared_ui.context_menu.hide = true;
         }
