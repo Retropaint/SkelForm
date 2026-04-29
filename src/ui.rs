@@ -698,19 +698,21 @@ pub fn kb_inputs(
 
     // copy shortcut
     if input.consume_shortcut(&config.keys.copy) {
-        if selections.anim_frame != -1 {
-            events.copy_keyframes_in_frame(selections.anim_frame);
-        } else if selections.bone_idx != usize::MAX {
-            events.copy_bone(selections.bone_idx);
+        let last = &shared_ui.last_selected;
+        match last.as_str() {
+            "keyframe" => events.copy_keyframes_in_frame(selections.anim_frame),
+            "bone" => events.copy_bone(selections.bone_idx),
+            _ => {}
         }
     }
 
     // paste shortcut
     if input.consume_shortcut(&config.keys.paste) {
-        if selections.anim_frame != -1 {
-            events.paste_keyframes_on_frame(selections.anim_frame);
-        } else {
-            events.paste_bone(selections.bone_idx);
+        let last = &shared_ui.last_selected;
+        match last.as_str() {
+            "keyframe" => events.paste_keyframes_on_frame(selections.anim_frame),
+            "bone" => events.paste_bone(selections.bone_idx),
+            _ => {}
         }
     }
 

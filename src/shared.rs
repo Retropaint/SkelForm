@@ -676,6 +676,11 @@ pub struct Ui {
     pub started_edit_dragging: bool,
     pub drag_modifier: f32,
     pub selected_bone_first_time: bool,
+
+    // last selected element (bone, anim, keyframe, etc).
+    // element-dependent actions (copying/pasting, deleting, etc)
+    // use this to determien which element to target
+    pub last_selected: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

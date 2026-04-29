@@ -878,7 +878,7 @@ impl BackendRenderer {
         let s = shared;
         #[rustfmt::skip]
         renderer::render(
-            render_pass, &self.gpu.device, &self.gpu.queue, &s.camera, &s.input, &mut s.armature,
+            render_pass, &self.gpu.queue, &s.camera, &s.input, &mut s.armature,
             &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events,
         );
 
@@ -1122,7 +1122,7 @@ impl BackendRenderer {
         #[rustfmt::skip]
         self.take_screenshot(
             shared.screenshot_res, &shared.armature, &shared.camera, &shared.config.colors.background,
-            &mut frames, &mut shared.ui.mapped_frames, &shared.config, &shared.renderer
+            &mut frames, &mut shared.ui.mapped_frames, &shared.renderer
         );
         let buffer = frames[0].buffer.clone();
         let screenshot_res = shared.screenshot_res;
@@ -1208,7 +1208,6 @@ impl BackendRenderer {
         clear_color: &Color,
         rendered_frames: &mut Vec<RenderedFrame>,
         mapped_frames: &mut Arc<Mutex<usize>>,
-        config: &Config,
         renderer: &Renderer,
     ) {
         let width = screenshot_res.x as u32;
@@ -1270,7 +1269,6 @@ impl BackendRenderer {
                 &mut capture_pass,
                 &armature,
                 &camera,
-                &config,
                 renderer,
                 &self.gpu.queue,
             );

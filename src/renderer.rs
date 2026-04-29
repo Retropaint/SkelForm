@@ -8,7 +8,6 @@ use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
 /// The `main` of this module.
 pub fn render(
     render_pass: &mut RenderPass,
-    device: &Device,
     queue: &wgpu::Queue,
     camera: &Camera,
     input: &InputStates,
@@ -285,15 +284,15 @@ pub fn render(
     // render onion layers
     if renderer.render_textures && selections.anim_frame != -1 && edit_mode.onion_layers {
         #[rustfmt::skip]
-        draw_armature(&prev_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass, &renderer.prev_onion_buffer);
+        draw_armature(&prev_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass, &renderer.prev_onion_buffer);
         #[rustfmt::skip]
-        draw_armature(&next_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass, &renderer.next_onion_buffer);
+        draw_armature(&next_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass, &renderer.next_onion_buffer);
     }
 
     // render bones
     if renderer.render_textures {
         #[rustfmt::skip]
-        draw_armature(&temp_arm, armature, edit_mode.showing_mesh, &sel, config, queue, render_pass, &renderer.bone_buffer);
+        draw_armature(&temp_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass, &renderer.bone_buffer);
     }
 
     // show selected bone's mesh wireframe if editing it
@@ -640,7 +639,6 @@ pub fn draw_armature(
     src_arm: &Armature,
     showing_mesh: bool,
     sel: &SelectionState,
-    config: &Config,
     queue: &wgpu::Queue,
     render_pass: &mut RenderPass,
     buffer: &RenderBuffer,
@@ -777,7 +775,6 @@ pub fn render_screenshot(
     render_pass: &mut RenderPass,
     armature: &Armature,
     camera: &Camera,
-    config: &Config,
     renderer: &Renderer,
     queue: &wgpu::Queue,
 ) {
@@ -804,7 +801,7 @@ pub fn render_screenshot(
         }
     }
     #[rustfmt::skip]
-    draw_armature(&temp_arm, armature, false, &sel, config, queue, render_pass, &renderer.bone_buffer);
+    draw_armature(&temp_arm, armature, false, &sel, queue, render_pass, &renderer.bone_buffer);
 }
 
 pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {

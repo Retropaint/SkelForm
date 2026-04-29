@@ -135,7 +135,7 @@ pub fn iterate_events(
         let selected_anim = selections.anim;
         let selected_bone_idx = selections.bone_idx;
         let selected_bone_ids = selections.bone_ids.clone();
-        unselect_all(selections, edit_mode);
+        unselect_all(selections, edit_mode, ui);
         selections.anim = selected_anim;
         if events.values[1] != 1. {
             selections.bone_idx = selected_bone_idx;
@@ -325,7 +325,7 @@ pub fn simple_event(
         Events::EditModeMove => edit_mode.current = EditModes::Move,
         Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
         Events::EditModeScale => edit_mode.current = EditModes::Scale,
-        Events::UnselectAll => unselect_all(selections, edit_mode),
+        Events::UnselectAll => unselect_all(selections, edit_mode, ui),
         Events::Undo => {
             undo_redo(true, undo_states, armature, selections);
             ui.changed_window_name = false;
@@ -408,7 +408,7 @@ pub fn simple_event(
             ui.just_made_style = false
         }
         Events::NewArmature => {
-            unselect_all(selections, edit_mode);
+            unselect_all(selections, edit_mode, ui);
             edit_mode.anim_open = false;
             camera.pos = Vec2::new(0., 0.);
             camera.zoom = 2000.;
@@ -1151,6 +1151,8 @@ fn select_bone(
         return;
     }
 
+    ui.last_selected = "bone".to_string();
+
     // rename bone if already selected
     if sel.bone_idx == idx && !from_renderer {
         ui.rename_id = "bone_".to_string() + &sel.bone_idx.to_string().clone();
@@ -1218,7 +1220,7 @@ fn select_bone(
     }
 }
 
-fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode) {
+fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode, ui: &mut crate::Ui) {
     selections.bone_idx = usize::MAX;
     selections.bone_ids = vec![];
     selections.anim_frame = -1;
@@ -1228,6 +1230,7 @@ fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode) {
     edit_mode.showing_mesh = false;
     edit_mode.setting_ik_target = false;
     edit_mode.setting_bind_bone = false;
+    ui.last_selected = "".to_string();
 }
 
 pub fn undo_redo(

@@ -223,16 +223,7 @@ pub fn render_spritesheets(
             let clear = &shared_ui.video_clear_bg;
             let mapped_frames = &mut shared_ui.mapped_frames;
             let size = shared_ui.sprite_size;
-            backend.take_screenshot(
-                size,
-                &new_arm,
-                &cam,
-                clear,
-                frames,
-                mapped_frames,
-                config,
-                renderer,
-            );
+            backend.take_screenshot(size, &new_arm, &cam, clear, frames, mapped_frames, renderer);
         }
 
         spritesheet_idx += 1;

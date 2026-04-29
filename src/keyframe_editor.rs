@@ -812,6 +812,7 @@ fn draw_frame_lines(
             // select this frame if clicked
             if input.left_clicked && shared_ui.context_menu.id == "" {
                 events.select_anim_frame(i as usize, false);
+                shared_ui.last_selected = "keyframe".to_string();
             }
         }
 
