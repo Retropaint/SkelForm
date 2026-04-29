@@ -124,7 +124,7 @@ pub fn draw_styles_list(
 
             for s in 0..armature.styles.len() {
                 idx += 1;
-                let context_id = format!("style_{}", &s.to_string());
+                let context_id = format!("style_{}", &armature.styles[s].id);
 
                 // show renaming input field, if this is the style being renamed
                 if shared_ui.rename_id == context_id {
