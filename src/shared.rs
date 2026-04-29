@@ -1827,7 +1827,6 @@ pub struct Keyframe {
     pub frame: i32,
     pub bone_id: i32,
 
-    #[serde(default)]
     pub element: AnimElement,
 
     #[serde(default, skip_serializing_if = "is_str_empty")]
@@ -1835,13 +1834,13 @@ pub struct Keyframe {
     #[serde(default, skip_serializing_if = "is_max")]
     pub value: f32,
 
-    #[serde(default)]
     pub start_handle: Vec2,
-    #[serde(default)]
     pub end_handle: Vec2,
+
+    pub next_kf: i32,
+
     // unused in editor and official runtimes - just a helper for personal runtimes
     // to hardcode interpolations instead of implementing beziers
-    #[serde(default)]
     pub handle_preset: HandlePreset,
 
     #[serde(skip)]

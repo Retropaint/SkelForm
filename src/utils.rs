@@ -514,6 +514,7 @@ pub fn prepare_files(
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
+    // add baked IK keyframes, if enabled
     for a in 0..armature_copy.animations.len() {
         if !edit_mode.export_bake_ik {
             break;
@@ -558,6 +559,7 @@ pub fn prepare_files(
                 let exists = extra_keyframes.iter().find(|kf| {
                     kf.frame == keyframe.frame && kf.bone_id == family[i].id && kf.element == ae_rot
                 });
+
                 if exists == None {
                     extra_keyframes.push(Keyframe {
                         frame: keyframe.frame,
@@ -567,6 +569,7 @@ pub fn prepare_files(
                         value: family[i].rot,
                         start_handle: Vec2::new(1. / 3., 0.),
                         end_handle: Vec2::new(1. / 3., 0.),
+                        next_kf: -1,
                         label_top: 0.,
                         handle_preset: HandlePreset::Linear,
                     });
@@ -580,7 +583,26 @@ pub fn prepare_files(
         armature_copy.animations[a].sort_keyframes();
     }
 
+    // populate next_kf
+    for a in 0..armature_copy.animations.len() {
+        for k in 0..armature_copy.animations[a].keyframes.len() {
+            let keyframes = armature_copy.animations[a].keyframes.clone();
+            let kf = &mut armature_copy.animations[a].keyframes[k];
+
+            // -1 by default
+            kf.next_kf = -1;
+
+            // find later keyframe that has the same bone ID and element as this
+            if let Some(next) = keyframes.iter().position(|find| {
+                find.bone_id == kf.bone_id && find.element == kf.element && find.frame > kf.frame
+            }) {
+                kf.next_kf = next as i32;
+            }
+        }
+    }
+
     if edit_mode.export_bake_ik && edit_mode.export_exclude_ik {
+        // remove all bones from IK families, if set in export
         for bone in &mut armature_copy.bones {
             bone.ik_family_id = -1;
         }
@@ -732,6 +754,7 @@ pub fn prepare_files(
         bone.init_ik_constraint = bone.ik_constraint;
     }
 
+    // populate ik_root_ids
     let mut ik_root_ids = vec![];
     for bone in &armature_copy.bones {
         if bone.ik_family_id != -1 {
