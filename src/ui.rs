@@ -873,6 +873,11 @@ fn context_menu_content(
         ui.context_rename(shared_ui, config, context_id);
         let str = "delete_style";
         ui.context_delete(shared_ui, config, events, str, PolarId::DeleteStyle);
+        if ui.context_button("Export", &config).clicked() {
+            shared_ui.export_style_id = split[1].parse().unwrap();
+            utils::open_style_dialog(&shared_ui.export_style_path);
+            shared_ui.context_menu.close();
+        }
     } else if id == "tex" {
         ui.context_rename(shared_ui, &config, context_id);
         ui.context_delete(shared_ui, &config, events, "delete_tex", PolarId::DeleteTex);

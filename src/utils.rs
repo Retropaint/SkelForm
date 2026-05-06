@@ -111,6 +111,22 @@ pub fn open_save_dialog(
     });
 }
 
+pub fn open_style_dialog(file_path: &Arc<Mutex<PathBuf>>) {
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let filepath = Arc::clone(&file_path);
+        std::thread::spawn(move || {
+            let task = rfd::FileDialog::new()
+                .add_filter("test", &["zip"])
+                .save_file();
+            if task == None {
+                return;
+            }
+            *filepath.lock().unwrap() = task.unwrap();
+        });
+    }
+}
+
 #[cfg(not(target_arch = "wasm32"))]
 pub fn open_import_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mutex<i32>>) {
     let filepath = Arc::clone(&file_path);

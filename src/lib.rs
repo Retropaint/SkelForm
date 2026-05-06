@@ -42,6 +42,8 @@ use std::sync::Arc;
 #[cfg(target_arch = "wasm32")]
 use web::*;
 
+use image::ImageEncoder;
+
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
@@ -838,6 +840,8 @@ impl BackendRenderer {
             shared.ui.export_modal = false;
         }
 
+        self.check_export_style(&shared.armature, &mut shared.ui);
+
         // animated bones will be used throughout the program
         utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
         shared.renderer.temp_bones = shared.armature.animated_bones.clone();
@@ -875,14 +879,85 @@ impl BackendRenderer {
         }
 
         // core rendering logic handled in renderer.rs
-        let s = shared;
         #[rustfmt::skip]
         renderer::render(
-            render_pass, &self.gpu.queue, &s.camera, &s.input, &mut s.armature,
-            &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events,
+            render_pass, &self.gpu.queue, &shared.camera, &shared.input, &mut shared.armature,
+            &shared.config, &shared.edit_mode, &mut shared.selections, &mut shared.renderer, &mut shared.events,
         );
 
-        s.ui.warnings = warnings::check_warnings(&s.armature);
+        shared.ui.warnings = warnings::check_warnings(&shared.armature);
+    }
+
+    // processes style to export, if appropriate
+    fn check_export_style(&self, armature: &Armature, shared_ui: &mut Ui) {
+        let path = shared_ui.export_style_path.lock().unwrap();
+        let mut _web_buf: Vec<u8>;
+
+        #[cfg(not(target_arch = "wasm32"))]
+        let path_str = path.to_str().unwrap().to_string();
+        #[cfg(target_arch = "wasm32")]
+        let path_str = " ";
+
+        if shared_ui.export_style_id == usize::MAX || path_str == "" {
+            return;
+        }
+
+        // initialize zip file (native/web)
+        let mut zip;
+        let options;
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            zip = zip::ZipWriter::new(
+                std::fs::File::create(path.as_path().to_str().unwrap().to_string()).unwrap(),
+            );
+            options = zip::write::FullFileOptions::default()
+                .compression_method(zip::CompressionMethod::Stored);
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            // create zip file
+            _web_buf = vec![];
+            let cursor = std::io::Cursor::new(&mut _web_buf);
+            zip = zip::ZipWriter::new(cursor);
+            options = zip::write::SimpleFileOptions::default()
+                .compression_method(zip::CompressionMethod::Stored);
+        }
+
+        // go thru all textures of this style, and save them as png in the zip
+        let style = &armature.styles[shared_ui.export_style_id as usize];
+        for tex in &style.textures {
+            let tex_data = &armature.tex_data;
+            let data = tex_data.iter().find(|t| t.id == tex.data_id);
+            if data == None {
+                continue;
+            }
+
+            // encode texture to png
+            let img = &data.unwrap().image;
+            let mut buf = vec![];
+            let encoder = image::codecs::png::PngEncoder::new(&mut buf);
+            let rgba8 = image::ExtendedColorType::Rgba8;
+            encoder
+                .write_image(&img.to_rgba8(), img.width(), img.height(), rgba8)
+                .unwrap();
+
+            // save texture into zip
+            zip.start_file(format!("{}.png", tex.name), options.clone())
+                .unwrap();
+            zip.write(&buf).unwrap();
+        }
+
+        // save zip (native/web)
+        #[cfg(not(target_arch = "wasm32"))]
+        zip.finish().unwrap();
+        #[cfg(target_arch = "wasm32")]
+        {
+            let bytes = zip.finish().unwrap().into_inner().to_vec();
+            downloadZip(bytes, "Spritesheet".to_string());
+        }
+
+        // turn off exporting style
+        shared_ui.export_style_id = usize::MAX;
     }
 
     fn check_export(&self, shared: &mut shared::Shared) {

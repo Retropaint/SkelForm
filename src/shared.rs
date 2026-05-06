@@ -681,6 +681,9 @@ pub struct Ui {
     // element-dependent actions (copying/pasting, deleting, etc)
     // use this to determien which element to target
     pub last_selected: String,
+
+    pub export_style_id: usize,
+    pub export_style_path: Arc<Mutex<PathBuf>>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

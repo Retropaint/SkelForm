@@ -144,6 +144,7 @@ fn init_shared(shared: &mut Shared) {
     shared.renderer.render_textures = true;
     shared.ui.use_fallback = true;
     shared.ui.scale = shared.config.ui_scale;
+    shared.ui.export_style_id = usize::MAX;
     shared.renderer.clicked_vert_id = -1;
     shared.selections.hovering_vert_id = -1;
     shared.selections.hovering_bone_id = -1;
