@@ -838,20 +838,20 @@ impl BackendRenderer {
             shared.ui.export_modal = false;
         }
 
+        // animated bones will be used throughout the program
+        utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
+        shared.renderer.temp_bones = shared.armature.animated_bones.clone();
+
         // initialize non-mesh bone verts and indices
         for b in 0..shared.armature.bones.len() {
-            let tex = shared.armature.tex_of(shared.armature.bones[b].id);
-            if tex != None && shared.armature.bones[b].vertices.len() == 0 {
+            let tex = shared.armature.anim_tex_of(shared.armature.bones[b].id);
+            if tex != None && !shared.armature.bones[b].verts_edited {
                 let size = tex.unwrap().size;
                 let bone = &mut shared.armature.bones[b];
                 (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
                 bone.verts_edited = false;
             }
         }
-
-        // animated bones will be used throughout the program
-        utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
-        shared.renderer.temp_bones = shared.armature.animated_bones.clone();
 
         // disable physics if current edited bone has physics properties.
         // this prevents the bone from being uncontrollable.
