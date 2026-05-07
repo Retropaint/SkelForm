@@ -128,12 +128,12 @@ pub fn render(
     prev_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
     next_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
 
-    let mut hover_bone_id = -1;
-    let mut on_click_id = -1;
-
     // many fight for spot of newest vertex; only one will emerge victorious.
     let mut new_vert: Option<Vertex> = None;
     let mut hovered_vert = false;
+
+    let mut hovering_bone_id = -1;
+    let mut on_click_id = -1;
 
     // pre-draw bone setup
     for b in 0..temp_arm.bones.len() {
@@ -183,7 +183,7 @@ pub fn render(
             || edit_mode.showing_mesh
                 && sel.bone_idx != usize::MAX
                 && armature.sel_bone(&sel).unwrap().id == tb.id;
-        if hover_bone_id == -1
+        if on_click_id == -1
             && (!input.left_down || input.left_pressed) // allow detection on LMB press
             && !camera.on_ui
             && selected_mesh
@@ -224,13 +224,14 @@ pub fn render(
                 );
                 let pixel_alpha = img.get_pixel(pos.x as u32, pos.y as u32).0[3];
                 if pixel_alpha == 255 && !edit_mode.showing_mesh {
-                    hover_bone_id = temp_arm.bones[b].id;
-                    on_click_id = hover_bone_id;
+                    events.set_hovering_bone_id(temp_arm.bones[b].id);
+                    hovering_bone_id = temp_arm.bones[b].id;
                     break;
                 }
             }
         }
 
+        on_click_id = hovering_bone_id;
         if !config.exact_bone_select && on_click_id == temp_arm.bones[b].id {
             // QoL: select parent of textured bone if it's called 'Texture'
             // this is because most textured bones are meant to represent their parents
@@ -242,7 +243,8 @@ pub fn render(
         // hovering glow animation
         let idx = selections.bone_idx;
         let not_selected = idx == usize::MAX || armature.bones[idx].id != on_click_id;
-        if hover_bone_id == temp_arm.bones[b].id && not_selected && !renderer.on_point {
+        if selections.hovering_bone_id == temp_arm.bones[b].id && not_selected && !renderer.on_point
+        {
             let fade = (64. * ((edit_mode.time * 3.).sin()).abs()).min(255.);
             let min = 25;
             for vert in &mut temp_arm.bones[b].world_verts {
@@ -263,9 +265,8 @@ pub fn render(
             }
         }
     }
-    if !renderer.on_point && on_click_id == -1 && selections.hovering_bone_id != -1 {
-        events.set_hovering_bone_id(-1);
-    } else if on_click_id != -1 && selections.hovering_bone_id != on_click_id {
+
+    if on_click_id != -1 && selections.hovering_bone_id != on_click_id {
         events.set_hovering_bone_id(on_click_id);
     }
     renderer.on_point = false;
@@ -489,6 +490,8 @@ pub fn render(
     #[rustfmt::skip]
     draw_points_and_kites(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids, selections, renderer, queue, render_pass, events, armature);
 
+    renderer.is_hovering_bone = renderer.on_point || on_click_id != -1;
+
     // check if this bone is part of IK, to disable editing later
     let mut has_ik = false;
     if let Some(bone) = armature.sel_bone(&sel) {
@@ -581,7 +584,7 @@ pub fn render(
     let mouse_moved = input.mouse != input.mouse_prev_left;
     if camera.on_ui {
         renderer.editing_bone = false;
-    } else if idx != usize::MAX && input.left_down && hover_bone_id == -1 {
+    } else if idx != usize::MAX && input.left_down && selections.hovering_bone_id == -1 {
         // only register edits if mouse is moving
         if mouse_moved {
             events.update_current_editing(0);

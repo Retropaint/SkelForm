@@ -559,13 +559,16 @@ pub struct Ui {
     pub changing_key: String,
 
     pub hovering_tex: i32,
-    pub hovering_bone: i32,
     pub hovering_set: i32,
     pub hovering_anim: i32,
     pub hovering_style_bone: i32,
     pub hovering_setting: Option<shared::SettingsState>,
     pub hovering_render_toggle: i32,
     pub hovering_startup_file: i32,
+
+    // used with renderer's is_hovering_bone to determine whether a
+    // bone is being hovered on either the armature window, or renderer
+    pub is_hovering_bone: bool,
 
     pub showing_samples: bool,
 
@@ -2146,6 +2149,7 @@ pub struct Renderer {
     pub render_rects: bool,
     pub on_point: bool,
     pub clicked_vert_id: i32,
+    pub is_hovering_bone: bool,
 
     // bindgroups
     pub generic_bindgroup: Option<BindGroup>,

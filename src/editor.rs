@@ -1341,7 +1341,6 @@ pub fn undo_redo(
 
     // actions tagged with `continue` are part of an action chain
     if action.continued {
-        println!("{}", action.action);
         undo_redo(undo, undo_states, armature, selections);
     }
 }

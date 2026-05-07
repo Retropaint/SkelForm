@@ -366,7 +366,9 @@ pub fn draw_hierarchy(
                 }
 
                 let hovering_on_texture = selections.hovering_bone_id == armature.bones[b].id;
-                if shared_ui.hovering_bone == idx || hovering_on_texture {
+                if selections.hovering_bone_id == armature.bones[idx as usize].id
+                    || hovering_on_texture
+                {
                     selected_col += Color::new(20, 20, 20, 0);
                 }
 
@@ -519,7 +521,7 @@ pub fn draw_hierarchy(
 
                 if button.contains_pointer() || button.has_focus() {
                     is_hovering = true;
-                    shared_ui.hovering_bone = idx;
+                    events.set_hovering_bone_id(armature.bones[b].id);
                 }
 
                 if button.clicked() {
@@ -540,9 +542,7 @@ pub fn draw_hierarchy(
         }
     }
 
-    if !is_hovering {
-        shared_ui.hovering_bone = -1;
-    }
+    shared_ui.is_hovering_bone = is_hovering;
 }
 
 pub fn bone_label(

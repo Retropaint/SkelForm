@@ -428,6 +428,11 @@ impl ApplicationHandler for App {
                     .egui_ctx()
                     .set_pixels_per_point(self.shared.ui.scale);
 
+                // set hovering bone to -1 if neither the renderer nor UI have it
+                if !self.shared.renderer.is_hovering_bone && !self.shared.ui.is_hovering_bone {
+                    self.shared.selections.hovering_bone_id = -1;
+                }
+
                 // create empty texture if the appropriate event is called.
                 // this is separate from other event processing, since it requires wgpu stuff
                 for event in &self.shared.events.events {
@@ -448,6 +453,7 @@ impl ApplicationHandler for App {
                     break;
                 }
 
+                // iterate and process all events for this frame
                 while self.shared.events.events.len() > 0 {
                     let s = &mut self.shared;
                     #[rustfmt::skip]
@@ -786,7 +792,6 @@ impl BackendRenderer {
             && shared.ui.file_elapsed.unwrap().elapsed().as_millis() > 150
         {
             *shared.ui.file_path.lock().unwrap() = shared.ui.dropped_file_path.clone();
-            println!("{}", shared.ui.file_path.lock().unwrap().len());
             #[rustfmt::skip]
             let name = shared.ui.file_path.lock().unwrap()[0].as_path().file_name().unwrap().to_str().unwrap().to_string();
             let ext = name.split('.').collect::<Vec<_>>()[1]

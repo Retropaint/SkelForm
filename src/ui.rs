@@ -372,7 +372,7 @@ pub fn draw(
     // show hovered bone's name
     let hbid = selections.hovering_bone_id;
     let sel_bone = armature.sel_bone(selections);
-    if hbid != -1 && (sel_bone == None || hbid != sel_bone.unwrap().id) {
+    if hbid != -1 && !camera.on_ui && (sel_bone == None || hbid != sel_bone.unwrap().id) {
         let mouse = input.mouse / shared_ui.scale;
         let pos = egui::Pos2::new(mouse.x, mouse.y - 13.);
         let bones = &armature.bones;
