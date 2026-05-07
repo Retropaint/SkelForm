@@ -415,15 +415,17 @@
                     new Blob([binary], { type: "zip" }),
                 );
                 var ext = ".skf";
+                var name = "skelform_armature";
                 switch (saving) {
                     case "Exporting":
                         ext = ".skfe";
                         break;
                     case "Spritesheet":
                         ext = ".zip";
+                        name = "skelform_spritesheet";
                 }
                 link.setAttribute("test", "sk_a");
-                link.setAttribute("download", "SkelForm_armature" + ext);
+                link.setAttribute("download", name + ext);
                 link.click();
                 link.remove();
             }
