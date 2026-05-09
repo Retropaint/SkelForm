@@ -253,7 +253,7 @@ pub fn render(
             }
 
             // select bone if clicked
-            if input.left_pressed && !renderer.on_point {
+            if !camera.on_ui && input.left_pressed && !renderer.on_point {
                 let id = on_click_id;
                 let bones = &armature.bones;
                 let idx = bones.iter().position(|bone| bone.id == id).unwrap();
@@ -487,9 +487,11 @@ pub fn render(
         draw_gridline(render_pass, renderer, &camera, &config, queue);
     }
 
+    // draw bone center points, and kites representing hierarchy
     #[rustfmt::skip]
     draw_points_and_kites(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids, selections, renderer, queue, render_pass, events, armature);
 
+    // is a bone being hovered on, in the renderer?
     renderer.is_hovering_bone = renderer.on_point || on_click_id != -1;
 
     // check if this bone is part of IK, to disable editing later
