@@ -57,17 +57,6 @@ pub fn render(
 
     // temporary armature, to be used for rendering
     let mut temp_arm = Armature::default();
-    let mut anim_bones = armature.animated_bones.clone();
-
-    // adjust anim_bones' verts for new textrues mid-animations
-    temp_arm.bones = armature.animated_bones.clone();
-    for b in 0..armature.bones.len() {
-        let tex = temp_arm.tex_of(armature.bones[b].id);
-        if !armature.bones[b].verts_edited && tex != None {
-            let size = tex.unwrap().size;
-            (anim_bones[b].vertices, anim_bones[b].indices) = create_tex_rect(&size);
-        }
-    }
     temp_arm.bones = renderer.temp_bones.clone();
 
     // animate next and previous frame armatures for onions
@@ -784,7 +773,7 @@ pub fn render_screenshot(
     queue: &wgpu::Queue,
 ) {
     let mut temp_arm = Armature::default();
-    temp_arm.bones = armature.bones.clone();
+    temp_arm.bones = armature.animated_bones.clone();
     construction(&mut temp_arm.bones, &armature.bones);
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
     let sel = SelectionState::default();
