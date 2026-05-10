@@ -24,6 +24,7 @@ pub fn draw(
     }
 
     let sel = selections.clone();
+    let mut sel_frame = selections.anim_frame;
 
     // navigating frames with kb input
     if shared_ui.rename_id == "" && selections.anim != usize::MAX {
@@ -35,34 +36,37 @@ pub fn draw(
 
         if next_kf {
             for kf in kfs {
-                if kf.frame > selections.anim_frame {
-                    selections.anim_frame = kf.frame;
+                if kf.frame > sel_frame {
+                    sel_frame = kf.frame;
                     break;
                 }
             }
         } else if prev_kf {
             let mut prev = 0;
             for kf in kfs {
-                if kf.frame < selections.anim_frame {
+                if kf.frame < sel_frame {
                     prev = kf.frame;
                 } else {
                     break;
                 }
             }
-            selections.anim_frame = prev;
+            sel_frame = prev;
         } else if right {
             let last_frame = kfs.last();
-            selections.anim_frame += 1;
-            if last_frame != None && selections.anim_frame > last_frame.unwrap().frame {
-                selections.anim_frame = 0;
+            sel_frame += 1;
+            if last_frame != None && sel_frame > last_frame.unwrap().frame {
+                sel_frame = 0;
             }
         } else if left {
-            selections.anim_frame -= 1;
+            sel_frame -= 1;
             let last_frame = armature.sel_anim(&sel).unwrap().keyframes.last();
-            if last_frame != None && selections.anim_frame < 0 {
-                selections.anim_frame = last_frame.unwrap().frame;
+            if last_frame != None && sel_frame < 0 {
+                sel_frame = last_frame.unwrap().frame;
             }
         }
+    }
+    if sel_frame != selections.anim_frame {
+        events.select_anim_frame(sel_frame as usize, false);
     }
 
     let panel_id = "Keyframe";
