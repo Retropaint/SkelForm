@@ -856,8 +856,14 @@ impl BackendRenderer {
             let tex = shared.armature.anim_tex_of(shared.armature.bones[b].id);
             if tex != None && !shared.armature.bones[b].verts_edited {
                 let size = tex.unwrap().size;
+
                 let bone = &mut shared.armature.bones[b];
                 (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
+                let bone = &mut shared.armature.animated_bones[b];
+                (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
+                let bone = &mut shared.renderer.temp_bones[b];
+                (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
+
                 bone.verts_edited = false;
             }
         }
@@ -1345,13 +1351,8 @@ impl BackendRenderer {
             capture_pass.set_pipeline(&self.scene.pipeline);
 
             // core rendering logic handled in renderer.rs
-            renderer::render_screenshot(
-                &mut capture_pass,
-                &armature,
-                &camera,
-                renderer,
-                &self.gpu.queue,
-            );
+            let queue = &self.gpu.queue;
+            renderer::render_screenshot(&mut capture_pass, &armature, &camera, renderer, queue);
         }
 
         // pad screenshot width to a multiple of 256
