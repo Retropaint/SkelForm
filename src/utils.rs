@@ -235,6 +235,21 @@ pub fn render_spritesheets(
         // take screenshots of each frame
         for f in 0..all_frames {
             new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
+            new_arm.animated_bones = new_arm.bones.clone();
+
+            // initialize non-mesh bone verts and indices
+            for b in 0..new_arm.bones.len() {
+                let tex = new_arm.anim_tex_of(new_arm.bones[b].id);
+                if tex != None && !new_arm.bones[b].verts_edited {
+                    let size = tex.unwrap().size;
+                    let bone = &mut new_arm.bones[b];
+                    (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
+                    let bone = &mut new_arm.animated_bones[b];
+                    (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
+                    bone.verts_edited = false;
+                }
+            }
+
             let frames = &mut shared_ui.rendered_spritesheets[spritesheet_idx];
             let clear = &shared_ui.video_clear_bg;
             let mapped_frames = &mut shared_ui.mapped_frames;
