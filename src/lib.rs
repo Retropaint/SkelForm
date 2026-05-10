@@ -1350,7 +1350,7 @@ impl BackendRenderer {
 
             capture_pass.set_pipeline(&self.scene.pipeline);
 
-            // core rendering logic handled in renderer.rs
+            // render armature with for screenshot purposes
             let queue = &self.gpu.queue;
             renderer::render_screenshot(&mut capture_pass, &armature, &camera, renderer, queue);
         }
