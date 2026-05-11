@@ -406,8 +406,11 @@ pub fn inverse_kinematics(
                         } else if selected == -3 {
                             id = -1;
                         } else {
-                            // reset Y pos if this is a child IK bone
+                            let mag = bone.pos.mag();
+
+                            // reset Y pos and set X pos as distance, if this is a child IK bone
                             events.edit_bone(bone.id, &A::PositionY, 0., "", usize::MAX, -1);
+                            events.edit_bone(bone.id, &A::PositionX, mag, "", usize::MAX, -1);
                         }
                         events.edit_bone(bone.id, &A::IkFamilyId, id as f32, "", usize::MAX, -1);
                     }
