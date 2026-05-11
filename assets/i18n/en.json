@@ -417,7 +417,8 @@
       "SineIn": "Sine-In",
       "SineOut": "Sine-Out",
       "SineInOut": "Sine-In-Out",
-      "Snap": "Snap"
+      "Snap": "Snap",
+      "Custom": "Custom"
     }
   },
   "polar": {
