@@ -1010,17 +1010,10 @@ pub struct UiAnim {
     pub timeline_zoom: f32,
     pub lines_x: Vec<f32>,
 
-    // the frame at which playing started
-    pub played_frame: i32,
-
-    pub exported_frame: String,
-
     pub timeline_offset: Vec2,
     pub dragged_keyframe: Keyframe,
     pub icon_images: Vec<egui::TextureHandle>,
-    pub loops: i32,
 
-    pub bottom_bar_top: f32,
     pub deleting_line_bone_id: i32,
     pub deleting_line_element: AnimElement,
 }

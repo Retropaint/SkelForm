@@ -112,7 +112,6 @@ fn init_shared(shared: &mut Shared) {
     shared.camera.zoom = 2000.;
     shared.selections.anim = usize::MAX;
     shared.ui.anim.timeline_zoom = 1.;
-    shared.ui.anim.exported_frame = "".to_string();
     shared.selections.anim_frame = -1;
     shared.ui.anim.dragged_keyframe = Keyframe {
         frame: -1,

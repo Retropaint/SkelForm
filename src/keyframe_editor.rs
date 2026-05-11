@@ -655,7 +655,6 @@ pub fn draw_timeline_graph(
             if ui.ui_contains_pointer() {
                 shared_ui.anim.timeline_offset = response.state.offset.into();
             }
-            shared_ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
         });
     });
 }
@@ -706,7 +705,6 @@ pub fn draw_bottom_bar(
 
                 let anim = armature.sel_anim(&sel).unwrap();
                 events.toggle_anim_playing(selections.anim, anim.elapsed == None);
-                shared_ui.anim.played_frame = selections.anim_frame;
             });
 
             if ui.skf_button("+").clicked() {
@@ -736,7 +734,6 @@ pub fn draw_bottom_bar(
             if edited {
                 events.adjust_keyframes_by_fps(value as usize);
             }
-            shared_ui.anim.bottom_bar_top = ui.min_rect().bottom() + 3.;
 
             if ui
                 .skf_button(&shared_ui.loc("keyframe_editor.copy"))

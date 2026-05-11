@@ -1499,7 +1499,6 @@ fn menu_file_button(
             //edit_mode.anim_open = true;
             //edit_mode.done_recording = true;
             events.select_anim_frame(0, false);
-            shared_ui.anim.loops = 1;
             ui.close();
         }
     });
