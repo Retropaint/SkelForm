@@ -899,6 +899,10 @@ fn context_menu_content(
             events.paste_keyframes_on_frame(split[3].parse().unwrap());
             shared_ui.context_menu.close();
         }
+        if ui.context_button("Delete Keyframe", &config).clicked() {
+            events.delete_keyframe(split[4].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
     } else if id == "kfline" {
         // copy option, if there are any keyframes in this frame
         let frame = split[1].parse().unwrap();
