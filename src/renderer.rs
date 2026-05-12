@@ -351,7 +351,7 @@ pub fn render(
                 if armature.sel_bone(&sel).unwrap().indices.len() == 6 {
                     events.open_modal("indices_limit", false);
                 } else {
-                    events.remove_triangle(idx as usize * 3);
+                    events.delete_triangle(idx as usize * 3);
                 }
             }
         }
@@ -1433,7 +1433,7 @@ pub fn bone_vertices(
             if world_verts.len() <= 4 {
                 events.open_modal("vert_limit", false);
             } else {
-                events.remove_vertex(wv);
+                events.delete_vertex(wv);
                 break;
             }
         }

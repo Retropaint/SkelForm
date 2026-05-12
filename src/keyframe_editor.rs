@@ -589,7 +589,7 @@ pub fn draw_top_bar(
 
                 // remove keyframe if dragged out
                 if cursor.y < 0. {
-                    events.remove_keyframes_by_frame(anim.keyframes[i].frame);
+                    events.delete_keyframes_by_frame(anim.keyframes[i].frame);
                     // break loop to prevent OOB errors
                     break;
                 }

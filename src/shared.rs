@@ -2190,9 +2190,9 @@ pub enum Events {
     DeleteTex,
     DeleteStyle,
     DeleteKeyframe,
-    RemoveVertex,
-    RemoveTriangle,
-    RemoveKeyframesByFrame,
+    DeleteVertex,
+    DeleteTriangle,
+    DeleteKeyframesByFrame,
     DeleteKeyframeLine,
 
     CopyBone,
@@ -2256,7 +2256,7 @@ pub enum Events {
     AdjustKeyframesByFPS,
     ResetVertices,
     SelectBind,
-    RemoveIkTarget,
+    DeleteIkTarget,
     CenterBoneVerts,
     TraceBoneVerts,
     SetBindWeight,
@@ -2344,7 +2344,7 @@ impl EventState {
     generic_event!(new_vertex, Events::NewVertex);
     generic_event!(cancel_pending_texture, Events::CancelPendingTexture);
     generic_event!(reset_vertices, Events::ResetVertices);
-    generic_event!(remove_ik_target, Events::RemoveIkTarget);
+    generic_event!(delete_ik_target, Events::DeleteIkTarget);
     generic_event!(center_bone_verts, Events::CenterBoneVerts);
     generic_event!(trace_bone_verts, Events::TraceBoneVerts);
     generic_event!(open_export_modal, Events::OpenExportModal);
@@ -2363,10 +2363,10 @@ impl EventState {
     event_with_value!(duplicate_anim, Events::DuplicateAnim, anim_id, usize);
     event_with_value!(copy_bone, Events::CopyBone, bone_id, usize);
     event_with_value!(paste_bone, Events::PasteBone, bone_id, usize);
-    event_with_value!(remove_vertex, Events::RemoveVertex, vert_idx, usize);
+    event_with_value!(delete_vertex, Events::DeleteVertex, vert_idx, usize);
     event_with_value!(drag_vertex, Events::DragVertex, vert_id, usize);
     event_with_value!(click_vertex, Events::ClickVertex, vert_id, usize);
-    event_with_value!(remove_triangle, Events::RemoveTriangle, idx, usize);
+    event_with_value!(delete_triangle, Events::DeleteTriangle, idx, usize);
     event_with_value!(adjust_keyframes_by_fps, E::AdjustKeyframesByFPS, fps, usize);
     event_with_value!(toggle_showing_mesh, E::ToggleShowingMesh, visible, usize);
     event_with_value!(select_bind, Events::SelectBind, idx, i32);
@@ -2389,8 +2389,8 @@ impl EventState {
         usize
     );
     event_with_value!(
-        remove_keyframes_by_frame,
-        E::RemoveKeyframesByFrame,
+        delete_keyframes_by_frame,
+        E::DeleteKeyframesByFrame,
         frame,
         i32
     );

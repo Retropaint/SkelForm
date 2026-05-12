@@ -533,7 +533,7 @@ pub fn inverse_kinematics(
             ui.add_enabled_ui(remove_enabled, |ui| {
                 let button = ui.skf_button("🗑");
                 if button.on_hover_text(str_remove_target).clicked() {
-                    events.remove_ik_target();
+                    events.delete_ik_target();
                 }
             });
 

@@ -41,7 +41,7 @@ pub fn iterate_events(
                 E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframesOnFrame => {
                     undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
                 }
-                E::ResetVertices | E::CenterBoneVerts | E::RemoveVertex | E::TraceBoneVerts | E::NewVertex | E::RemoveTriangle => {
+                E::ResetVertices | E::CenterBoneVerts | E::DeleteVertex | E::TraceBoneVerts | E::NewVertex | E::DeleteTriangle => {
                     undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
                 }
                 _ => {}
@@ -366,7 +366,7 @@ pub fn simple_event(
             }
         }
         Events::ToggleOnionLayers => edit_mode.onion_layers = value == 1.,
-        Events::RemoveIkTarget => armature.sel_bone_mut(selections).unwrap().ik_target_id = -1,
+        Events::DeleteIkTarget => armature.sel_bone_mut(selections).unwrap().ik_target_id = -1,
         Events::ToggleIkFolded => {
             armature.sel_bone_mut(&selections).unwrap().ik_folded = value == 1.
         }
@@ -662,7 +662,7 @@ pub fn simple_event(
             let frame = selections.anim_frame;
             armature.set_bone_tex(value as i32, str_value.clone(), selections.anim, frame);
         }
-        Events::RemoveVertex => {
+        Events::DeleteVertex => {
             let sel = selections;
             #[rustfmt::skip]
             macro_rules! verts {() => { armature.sel_bone_mut(&sel).unwrap().vertices }}
@@ -806,7 +806,7 @@ pub fn simple_event(
                 }
             }
         }
-        Events::RemoveTriangle => {
+        Events::DeleteTriangle => {
             let bone = &mut armature.sel_bone_mut(&selections).unwrap();
             bone.blacklist
                 .push(bone.vertices[bone.indices[value as usize + 0] as usize].id);
@@ -890,7 +890,7 @@ pub fn simple_event(
 
             armature.sel_anim_mut(&selections).unwrap().sort_keyframes();
         }
-        Events::RemoveKeyframesByFrame => {
+        Events::DeleteKeyframesByFrame => {
             let anim = armature.sel_anim_mut(&selections).unwrap();
             anim.keyframes.retain(|kf| kf.frame != value as i32);
         }
