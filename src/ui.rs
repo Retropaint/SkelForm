@@ -921,17 +921,14 @@ fn context_menu_content(
             shared_ui.context_menu.close();
         }
 
+        // delete option, if there are keyframes in this frame
+        if has_kf && ui.context_button("Delete Keyframes", &config).clicked() {
+            events.delete_keyframes_by_frame(split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
+
         // immediately close menu if there's nothing to show
         if !has_kf && copy_buffer.keyframes.len() == 0 {
-            shared_ui.context_menu.close();
-        }
-    } else if id == "kfdiamond" {
-        if ui.context_button("Copy Keyframes", &config).clicked() {
-            events.copy_keyframes_in_frame(split[1].parse().unwrap());
-            shared_ui.context_menu.close();
-        }
-        if ui.context_button("Paste Keyframes", &config).clicked() {
-            events.paste_keyframes_on_frame(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
     } else if id == "armature" {
