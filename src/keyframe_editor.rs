@@ -544,10 +544,6 @@ pub fn draw_top_bar(
                         events.select_anim_frame(frame as usize, true);
                     }
                 }
-                if response.secondary_clicked() {
-                    let context_id = format!("kfdiamond_{}", frame);
-                    shared_ui.context_menu.show(&context_id);
-                }
 
                 let cursor = get_cursor(ui);
                 if response.dragged() {
