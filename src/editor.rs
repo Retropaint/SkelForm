@@ -1110,6 +1110,11 @@ pub fn simple_event(
 
             // set target's parent as new bone
             armature.find_bone_mut(bone_id).unwrap().parent_id = bone.id;
+
+            // activate renaming for new bone
+            armature.find_bone_mut(bone.id).unwrap().name = "".to_string();
+            let idx = &armature.bones.iter().position(|b| b.id == bone.id).unwrap();
+            ui.rename_id = format!("bone_{}", idx);
         }
         _ => {}
     }
