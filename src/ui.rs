@@ -860,7 +860,7 @@ fn context_menu_content(
             events.copy_bone(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
-        if ui.context_button("Paste Bone", &config).clicked() {
+        if copy_buffer.bones.len() > 0 && ui.context_button("Paste Bone", &config).clicked() {
             events.paste_bone(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
