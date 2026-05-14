@@ -49,40 +49,36 @@ pub fn draw(
         shared_ui.context_menu.last_id = shared_ui.context_menu.id.clone();
     } else if !shared_ui.context_menu.hide {
         let pos = shared_ui.context_menu.pos;
-        egui::Area::new("context_menu".into())
+        let area = egui::Area::new("context_menu".into())
             .fixed_pos(Vec2::new(pos.x, pos.y))
-            .order(egui::Order::Foreground)
-            .show(context, |ui| {
-                let id = shared_ui.context_menu.id.clone();
-                let frame = egui::Frame::popup(ui.style())
-                    .show(ui, |ui| {
-                        if shared_ui.context_menu.pos == Vec2::new(-1., -1.) {
-                            // menu width won't re-adjust if it's bigger than its content,
-                            // so reset it
-                            ui.set_width(0.);
+            .order(egui::Order::Foreground);
+        area.show(context, |ui| {
+            let id = shared_ui.context_menu.id.clone();
+            let frame = egui::Frame::popup(ui.style());
+            let response = frame.show(ui, |ui| {
+                if shared_ui.context_menu.pos == Vec2::new(-1., -1.) {
+                    // menu width won't re-adjust if it's bigger than its content,
+                    // so reset it
+                    ui.set_width(0.);
 
-                            // get last mouse pos, to stick menu on
-                            context.input_mut(|i| {
-                                let pointer = i.pointer.latest_pos();
-                                if pointer != None {
-                                    shared_ui.context_menu.pos = pointer.unwrap().into();
-                                }
-                            });
+                    // get last mouse pos, to stick menu on
+                    if let Some(pointer) = context.input_mut(|i| i.pointer.latest_pos()) {
+                        shared_ui.context_menu.pos = pointer.into();
+                    }
 
-                            // don't draw menu yet, since it'll be at (-1, -1) in this frame
-                            return;
-                        }
-                        let s = &selections;
-                        let cb = &copy_buffer;
-                        context_menu_content(config, shared_ui, events, ui, id, &armature, &s, &cb);
-                    })
-                    .response;
-
-                // close if clicked out of it
-                if ui.input(|i| i.pointer.any_click()) && !frame.contains_pointer() {
-                    shared_ui.context_menu.close();
+                    // don't draw menu yet, since it'll be at (-1, -1) in this frame
+                    return;
                 }
+                let s = &selections;
+                let cb = &copy_buffer;
+                context_menu_content(config, shared_ui, events, ui, id, &armature, &s, &cb);
             });
+
+            // close if clicked out of it
+            if ui.input(|i| i.pointer.any_click()) && !response.response.contains_pointer() {
+                shared_ui.context_menu.close();
+            }
+        });
     }
 
     // apply individual element styling once, then immediately go back to default
@@ -101,15 +97,14 @@ pub fn draw(
         //}
     }
 
+    // load UI icons
     let ik_bytes = include_bytes!("../assets/lucysir_ik.png");
     load_png(&mut shared_ui.ik_img, ik_bytes, "lucysir_ik", context);
     let lock_bytes = include_bytes!("../assets/lock.png");
     load_png(&mut shared_ui.lock_img, lock_bytes, "lock", context);
-
     let anim_icon_size = 18;
     if shared_ui.anim.icon_images.len() == 0 {
         let full_img = image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
-
         let mut x = 0;
         while full_img.width() > 0 && x < full_img.width() - 1 {
             let img = full_img.crop_imm(x, 0, 18, 18).into_rgba8();
@@ -249,22 +244,27 @@ pub fn draw(
                 let gradient = config.colors.gradient.into();
                 ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
 
-                let scroll_area = egui::ScrollArea::vertical().scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
+                let scroll_area = egui::ScrollArea::vertical()
+                    .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
                 scroll_area.show(ui, |ui| {
                     let sel = &selections;
                     if selections.bone_idx != usize::MAX {
-                        #[rustfmt::skip]
-                        bone_panel::draw(selected_bone.clone(),ui,selections,shared_ui,armature,config,events,&input,edit_mode,);
+                        let bone = selected_bone.clone();
+                        bone_panel::draw(
+                            bone, ui, selections, shared_ui, armature, config, events, &input,
+                            edit_mode,
+                        );
                     } else if armature.sel_anim(&sel) != None && sel.anim_frame != -1 {
                         keyframe_panel::draw(ui, &selections, &armature, events, shared_ui, config);
                     } else if armature.bones.len() > 1 {
                         ui.heading("Armature Shortcuts");
                         ui.add_space(10.);
-                        #[rustfmt::skip] {
-                            keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.next_bone"), config.keys.next_bone);
-                            keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.prev_bone"), config.keys.prev_bone);
-                            keyboard_shortcut(ui, shared_ui.loc("settings_modal.keyboard.toggle_bone_fold"), config.keys.toggle_bone_fold);
-                        };
+                        let next_bone = shared_ui.loc("settings_modal.keyboard.next_bone");
+                        let prev_bone = shared_ui.loc("settings_modal.keyboard.prev_bone");
+                        let bone_fold = shared_ui.loc("settings_modal.keyboard.toggle_bone_fold");
+                        keyboard_shortcut(ui, next_bone, config.keys.next_bone);
+                        keyboard_shortcut(ui, prev_bone, config.keys.prev_bone);
+                        keyboard_shortcut(ui, bone_fold, config.keys.toggle_bone_fold);
                     } else {
                         ui.add_space(5.);
                         empty_armature_starters(shared_ui, config, ui);
@@ -441,8 +441,7 @@ pub fn draw(
             let rot = selected_bone.rot / 3.14 * 180.;
             let formatted = (rot * 100.).round() / 100.;
             helper_text!(formatted.to_string() + "°", offset);
-        }
-        if edit_mode.is_scaling {
+        } else if edit_mode.is_scaling {
             let offset = Vec2::new(50., 0.);
             let formatted = (selected_bone.scale.x * 100.).round() / 100.;
             let mut padding = "";
@@ -560,30 +559,27 @@ pub fn process_inputs(
         if !(shared_ui.edit_value != None && vel.x.abs() > 0.) {
             return;
         }
-        match shared_ui.edit_value.as_ref().unwrap().parse::<f32>() {
-            Ok(mut output) => {
-                #[cfg(target_arch = "wasm32")]
-                {
-                    output += vel.x * shared_ui.drag_modifier;
-                }
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    output -= diff.x * shared_ui.drag_modifier;
-                }
-                *shared_ui.edit_value.as_mut().unwrap() = output.to_string();
-
-                // since save_edited_bone won't save on drag, this will be set to true on
-                // the frame after save_edited_bone() has been called
-                shared_ui.edited_dragging = shared_ui.started_edit_dragging;
-
-                // save bone just before beginning the drag
-                if !shared_ui.started_edit_dragging {
-                    events.save_edited_bone(selections.bone_idx);
-                    shared_ui.started_edit_dragging = true;
-                }
+        if let Ok(mut output) = shared_ui.edit_value.as_ref().unwrap().parse::<f32>() {
+            #[cfg(target_arch = "wasm32")]
+            {
+                output += vel.x * shared_ui.drag_modifier;
             }
-            _ => {}
-        };
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                output -= diff.x * shared_ui.drag_modifier;
+            }
+            *shared_ui.edit_value.as_mut().unwrap() = output.to_string();
+
+            // since save_edited_bone won't save on drag, this will be set to true on
+            // the frame after save_edited_bone() has been called
+            shared_ui.edited_dragging = shared_ui.started_edit_dragging;
+
+            // save bone just before beginning the drag
+            if !shared_ui.started_edit_dragging {
+                events.save_edited_bone(selections.bone_idx);
+                shared_ui.started_edit_dragging = true;
+            }
+        }
     });
 
     // de-focus input if it has dragging enabled.
@@ -820,7 +816,6 @@ pub fn mouse_button_as_key(
     }
 
     let none = egui::Modifiers::NONE;
-
     if input.pointer.button_pressed(button) {
         input.keys_down.insert(fake_key);
         input.events.push(egui::Event::Key {
@@ -867,6 +862,10 @@ fn context_menu_content(
         }
         if ui.context_button("Paste Bone", &config).clicked() {
             events.paste_bone(split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
+        if ui.context_button("New Parent", &config).clicked() {
+            events.create_parent_bone(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
     } else if id == "style" {

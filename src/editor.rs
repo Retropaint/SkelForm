@@ -281,7 +281,10 @@ pub fn iterate_events(
             // only move root bones (in context of selected bones)
             selections.bone_ids = selections.only_root_bones(&armature.bones)
         }
-        drag_bone(armature, pointing_id, selections, is_above);
+        let new_bone_idx = drag_bone(armature, pointing_id, &selections.bone_ids, is_above);
+        if new_bone_idx != usize::MAX {
+            selections.bone_idx = new_bone_idx;
+        }
         events.events.remove(0);
         events.values.drain(0..=2);
     } else {
@@ -1098,6 +1101,12 @@ pub fn simple_event(
             armature.tex_data = psd_armature.tex_data.clone();
             *psd_armature = Armature::default();
         }
+        Events::CreateParentBone => {
+            let bone_id = armature.bones[value as usize].id;
+            let (bone, _) = armature.new_bone(bone_id);
+            drag_bone(armature, bone_id, &vec![bone.id], true);
+            armature.find_bone_mut(bone_id).unwrap().parent_id = bone.id;
+        }
         _ => {}
     }
 }
@@ -1371,27 +1380,27 @@ pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_p
 pub fn drag_bone(
     armature: &mut Armature,
     pointing_id: i32,
-    sel: &mut SelectionState,
+    bone_ids: &Vec<i32>,
     is_above: bool,
-) {
-    if sel.bone_ids.contains(&pointing_id) {
-        return;
+) -> usize {
+    if bone_ids.contains(&pointing_id) {
+        return usize::MAX;
     }
 
     // ignore if pointing bone is a child of this
-    if sel.bone_ids.len() != 0 {
+    if bone_ids.len() != 0 {
         let mut children: Vec<Bone> = vec![];
-        let id = sel.bone_ids[0];
+        let id = bone_ids[0];
         let dragged_bone = armature.bones.iter().find(|b| b.id == id).unwrap();
         let db = dragged_bone;
         armature_window::get_all_children(&armature.bones, &mut children, &db);
         let children_ids: Vec<i32> = children.iter().map(|c| c.id).collect();
         if children_ids.contains(&pointing_id) {
-            return;
+            return usize::MAX;
         }
     }
 
-    let mut sorted_ids = sel.bone_ids.clone();
+    let mut sorted_ids = bone_ids.clone();
     sorted_ids.sort_by(|a, b| {
         let mut first = *b;
         let mut second = *a;
@@ -1430,7 +1439,7 @@ pub fn drag_bone(
     }
 
     let bones = &armature.bones;
-    sel.bone_idx = bones.iter().position(|b| b.id == sel.bone_ids[0]).unwrap();
+    bones.iter().position(|b| b.id == bone_ids[0]).unwrap()
 }
 
 fn edit_bone(

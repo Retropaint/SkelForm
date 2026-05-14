@@ -2292,6 +2292,7 @@ pub enum Events {
     SetHoveringLine,
     CreateEmptyTexture,
     ImportPsdArmature,
+    CreateParentBone,
 }
 
 enum_string!(Events);
@@ -2421,6 +2422,12 @@ impl EventState {
         paste_keyframes_on_frame,
         Events::PasteKeyframesOnFrame,
         frame,
+        i32
+    );
+    event_with_value!(
+        create_parent_bone,
+        Events::CreateParentBone,
+        of_bone_id,
         i32
     );
 
