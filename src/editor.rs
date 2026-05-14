@@ -1104,7 +1104,11 @@ pub fn simple_event(
         Events::CreateParentBone => {
             let bone_id = armature.bones[value as usize].id;
             let (bone, _) = armature.new_bone(bone_id);
+
+            // move new bone above target
             drag_bone(armature, bone_id, &vec![bone.id], true);
+
+            // set target's parent as new bone
             armature.find_bone_mut(bone_id).unwrap().parent_id = bone.id;
         }
         _ => {}
