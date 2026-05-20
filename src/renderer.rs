@@ -213,27 +213,33 @@ pub fn render(
                 );
                 let pixel_alpha = img.get_pixel(pos.x as u32, pos.y as u32).0[3];
                 if pixel_alpha == 255 && !edit_mode.showing_mesh {
-                    events.set_hovering_bone_id(temp_arm.bones[b].id);
                     hovering_bone_id = temp_arm.bones[b].id;
                     break;
                 }
             }
         }
 
-        on_click_id = hovering_bone_id;
-        if !config.exact_bone_select && on_click_id == temp_arm.bones[b].id {
+        let mut parent_selected = false;
+        if on_click_id == -1 {
+            on_click_id = hovering_bone_id;
+
             // QoL: select parent of textured bone if it's called 'Texture'
             // this is because most textured bones are meant to represent their parents
-            if parent_id != -1 && temp_arm.bones[b].name.to_lowercase() == "texture" {
+            if !config.exact_bone_select
+                && on_click_id == temp_arm.bones[b].id
+                && parent_id != -1
+                && temp_arm.bones[b].name.to_lowercase() == "texture"
+            {
                 on_click_id = parent_id;
+                parent_selected = true;
             }
         }
 
         // hovering glow animation
         let idx = selections.bone_idx;
-        let not_selected = idx == usize::MAX || armature.bones[idx].id != on_click_id;
-        if selections.hovering_bone_id == temp_arm.bones[b].id && not_selected && !renderer.on_point
-        {
+        let not_selected = idx == usize::MAX || armature.bones[idx].id != hovering_bone_id;
+        let is_hovering = selections.hovering_bone_id == temp_arm.bones[b].id || parent_selected;
+        if is_hovering && not_selected && !renderer.on_point {
             let fade = (64. * ((edit_mode.time * 3.).sin()).abs()).min(255.);
             let min = 25;
             for vert in &mut temp_arm.bones[b].world_verts {
@@ -2065,13 +2071,19 @@ pub fn draw_points_and_kites(
                 // select this bone if point is pressed, unless it was already selected
                 if input.left_pressed {
                     let sel_bone = armature.sel_bone(selections);
-                    if sel_bone == None {
-                        events.select_bone(bone.id as usize, true);
-                    } else if sel_bone != None && sel_bone.unwrap().id != bone.id {
-                        events.select_bone(bone.id as usize, true);
+                    let mut on_click_id = bone.id;
+
+                    // QoL: select parent of textured bone if it's called 'Texture'
+                    // this is because most textured bones are meant to represent their parents
+                    let tex_name = bone.name.to_lowercase();
+                    if !config.exact_bone_select && bone.parent_id != -1 && tex_name == "texture" {
+                        on_click_id = bone.parent_id;
+                    }
+
+                    if sel_bone == None || (sel_bone != None && sel_bone.unwrap().id != bone.id) {
+                        events.select_bone(on_click_id as usize, true);
                     }
                 }
-                events.set_hovering_bone_id(bone.id);
                 on_point = true;
             }
 
