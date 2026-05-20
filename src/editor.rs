@@ -532,14 +532,26 @@ pub fn simple_event(
             styles.remove(idx);
         }
         Events::CopyBone => {
-            if value as usize == usize::MAX {
-                return;
+            copy_buffer.bones = vec![];
+
+            // either get the bone ID from event, or selected bones if more than 1
+            let mut bones_to_copy = vec![armature.bones[value as usize].id];
+            if selections.bone_ids.len() > 1 {
+                bones_to_copy = selections.bone_ids.clone();
             }
-            let arm_bones = &armature.bones;
-            let mut bones = vec![];
-            armature_window::get_all_children(&arm_bones, &mut bones, &arm_bones[value as usize]);
-            bones.insert(0, armature.bones[value as usize].clone());
-            copy_buffer.bones = bones;
+
+            // add appropriate bones to copy buffer
+            for bone_id in &bones_to_copy {
+                let bone = armature.bones.iter().find(|b| b.id == *bone_id);
+                let not_root = bones_to_copy.contains(&bone.unwrap().parent_id);
+                if bone == None || not_root {
+                    continue;
+                }
+                let mut bones = vec![];
+                armature_window::get_all_children(&armature.bones, &mut bones, bone.unwrap());
+                bones.insert(0, bone.unwrap().clone());
+                copy_buffer.bones.extend_from_slice(&bones);
+            }
         }
         Events::PasteBone => {
             // determine which id to give the new bone(s), based on the highest current id
@@ -602,6 +614,11 @@ pub fn simple_event(
                     insert_idx += 1;
                 }
             }
+
+            // select pasted bones
+            selections.bone_ids = id_refs.into_values().collect();
+            let sel_id = selections.bone_ids[0];
+            selections.bone_idx = armature.bones.iter().position(|b| b.id == sel_id).unwrap();
         }
         Events::NewAnimation => {
             armature.new_animation();
@@ -1240,6 +1257,10 @@ fn select_bone(
                 sel.bone_ids.push(bone.id);
             }
         }
+
+        // remove any duplicate IDs
+        sel.bone_ids.sort();
+        sel.bone_ids.dedup();
     }
 }
 
