@@ -532,6 +532,9 @@ pub fn simple_event(
             styles.remove(idx);
         }
         Events::CopyBone => {
+            if value as usize == usize::MAX {
+                return;
+            }
             let arm_bones = &armature.bones;
             let mut bones = vec![];
             armature_window::get_all_children(&arm_bones, &mut bones, &arm_bones[value as usize]);
