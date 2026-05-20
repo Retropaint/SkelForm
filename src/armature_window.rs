@@ -134,6 +134,12 @@ pub fn draw(
             .0
             .response;
 
+        // unselect all bones if frame is clicked
+        let left_clicked = ui.ctx().input(|i| i.pointer.primary_clicked());
+        if response.hovered() && left_clicked {
+            events.select_bone(usize::MAX, false);
+        }
+
         // open context menu if right clicking on hierarchy frame
         let right_clicked = ui.ctx().input(|i| i.pointer.secondary_clicked());
         if response.hovered() && right_clicked {
