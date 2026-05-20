@@ -374,12 +374,13 @@ pub fn draw(
     let sel_bone = armature.sel_bone(selections);
     if hbid != -1 && !camera.on_ui && (sel_bone == None || hbid != sel_bone.unwrap().id) {
         let mouse = input.mouse / shared_ui.scale;
-        let pos = egui::Pos2::new(mouse.x, mouse.y - 13.);
-        let bones = &armature.bones;
-        let bone = bones.iter().find(|b| b.id == hbid);
-        let str = format!("{}", bone.unwrap().name);
-        let painter = context.debug_painter();
-        painter.debug_text(pos, egui::Align2::CENTER_CENTER, egui::Color32::GREEN, str);
+        let bone = armature.bones.iter().find(|b| b.id == hbid);
+        context.debug_painter().debug_text(
+            egui::Pos2::new(mouse.x, mouse.y - 13.),
+            egui::Align2::CENTER_CENTER,
+            egui::Color32::GREEN,
+            bone.unwrap().name.to_string(),
+        );
     }
 
     // show hovering triangle helpers
