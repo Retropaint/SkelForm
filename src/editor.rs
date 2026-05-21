@@ -1122,19 +1122,35 @@ pub fn simple_event(
             *psd_armature = Armature::default();
         }
         Events::CreateParentBone => {
-            let bone_id = armature.bones[value as usize].id;
-            let (bone, _) = armature.new_bone(bone_id);
+            // either get the bone ID from event, or selected bones if more than 1
+            let mut bones_to_copy = vec![armature.bones[value as usize].id];
+            if selections.bone_ids.len() > 1 {
+                bones_to_copy = selections.bone_ids.clone();
+            }
 
-            // move new bone above target
-            drag_bone(armature, bone_id, &vec![bone.id], true);
+            let (parent, _) = armature.new_bone(bones_to_copy[0]);
 
-            // set target's parent as new bone
-            armature.find_bone_mut(bone_id).unwrap().parent_id = bone.id;
+            // move new bone(s) above target
+            drag_bone(armature, bones_to_copy[0], &vec![parent.id], true);
+
+            // set targets' parent as new bone
+            for bone_id in &bones_to_copy {
+                let bone = armature.bones.iter().find(|b| b.id == *bone_id);
+                if bone == None || bones_to_copy.contains(&bone.unwrap().parent_id) {
+                    continue;
+                }
+                armature.find_bone_mut(*bone_id).unwrap().parent_id = parent.id;
+            }
 
             // activate renaming for new bone
-            armature.find_bone_mut(bone.id).unwrap().name = "".to_string();
-            let idx = &armature.bones.iter().position(|b| b.id == bone.id).unwrap();
+            armature.find_bone_mut(parent.id).unwrap().name = "".to_string();
+            let bones = &armature.bones;
+            let idx = bones.iter().position(|b| b.id == parent.id).unwrap();
             ui.rename_id = format!("bone_{}", idx);
+
+            // select new parent
+            selections.bone_ids = vec![parent.id];
+            selections.bone_idx = bones.iter().position(|b| b.id == parent.id).unwrap();
         }
         _ => {}
     }
