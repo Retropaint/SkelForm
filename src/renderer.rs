@@ -249,10 +249,11 @@ pub fn render(
 
             // select bone if clicked
             if !camera.on_ui && input.left_pressed && !renderer.on_point {
-                let id = on_click_id;
                 let bones = &armature.bones;
-                let idx = bones.iter().position(|bone| bone.id == id).unwrap();
-                events.select_bone(idx, true);
+                let idx = bones.iter().position(|bone| bone.id == on_click_id);
+                if idx != None {
+                    events.select_bone(idx.unwrap(), true);
+                }
             }
         } else {
             for vert in &mut temp_arm.bones[b].world_verts {
