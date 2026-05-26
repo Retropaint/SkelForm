@@ -154,7 +154,7 @@ pub fn render(
                         let tb = &mut $armature.bones[b];
                         let ratio = camera.aspect_ratio();
                         let mut vert = world_vert(tb.vertices[v], &camera, ratio, Vec2::default());
-                        vert.tint = TintColor::new(255., 0., 0., 0.4);
+                        vert.tint = $color;
                         tb.world_verts.push(vert);
                     }
                 };
