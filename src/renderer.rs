@@ -1349,10 +1349,8 @@ pub fn draw(
     indices_end: usize,
 ) {
     render_pass.set_vertex_buffer(0, buffer.vertex.as_ref().unwrap().slice(..));
-    render_pass.set_index_buffer(
-        buffer.index.as_ref().unwrap().slice(..),
-        wgpu::IndexFormat::Uint32,
-    );
+    let slice = buffer.index.as_ref().unwrap().slice(..);
+    render_pass.set_index_buffer(slice, wgpu::IndexFormat::Uint32);
     render_pass.draw_indexed(indices_start as u32..indices_end as u32, 0, 0..1);
 }
 
@@ -2117,7 +2115,6 @@ pub fn draw_kites(
 
     for p in 0..temp_arm.bones.len() {
         let bone = &temp_arm.bones[p];
-        let mut color;
 
         // skip kites for this bone if editing its mesh
         if !renderer.render_kites
@@ -2130,11 +2127,8 @@ pub fn draw_kites(
         if parent == None {
             continue;
         }
-        let parent_pos = parent.unwrap().pos;
-        let parent_id = parent.unwrap().id;
-        let group_color = parent.unwrap().group_color;
 
-        let diff = parent_pos - bone.pos;
+        let diff = parent.unwrap().pos - bone.pos;
         let kite_width = diff.mag() / 1.;
         let kite_rot = diff.y.atan2(diff.x);
         // skip 0 width kites, caused by the child being directly on the parent
@@ -2142,14 +2136,15 @@ pub fn draw_kites(
             continue;
         }
 
-        if group_color.a == 0 {
+        let mut color;
+        if parent.unwrap().group_color.a == 0 {
             color = config.colors.inactive_center_point;
-            if selected_bone_ids.contains(&parent_id) {
+            if selected_bone_ids.contains(&parent.unwrap().id) {
                 color = config.colors.center_point
             }
         } else {
-            color = group_color.into();
-            if !selected_bone_ids.contains(&parent_id) {
+            color = parent.unwrap().group_color.into();
+            if !selected_bone_ids.contains(&parent.unwrap().id) {
                 color.a /= 2;
             }
         }
