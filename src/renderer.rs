@@ -2119,7 +2119,7 @@ pub fn draw_kites(
         let bone = &temp_arm.bones[p];
         let mut color;
 
-        // skip points & kites for this bone if editing its mesh
+        // skip kites for this bone if editing its mesh
         if !renderer.render_kites
             || (edit_mode.showing_mesh && selected_bone_ids.contains(&bone.id))
         {
