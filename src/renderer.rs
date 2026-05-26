@@ -485,7 +485,9 @@ pub fn render(
 
     // draw bone center points, and kites representing hierarchy
     #[rustfmt::skip]
-    draw_points_and_kites(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids, selections, renderer, queue, render_pass, events, armature);
+    draw_points(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids.clone(), selections, renderer, queue, render_pass, events, armature);
+    #[rustfmt::skip]
+    draw_kites(config, camera, edit_mode, &mut temp_arm, selected_bone_ids, renderer, queue, render_pass);
 
     // is a bone being hovered on, in the renderer?
     renderer.is_hovering_bone = renderer.on_point || on_click_id != -1;
@@ -1982,7 +1984,9 @@ pub fn add_offseted_indices(src: &mut Vec<u32>, dst: &mut Vec<u32>) {
         return;
     }
     let mut highest = 0;
-    dst.iter().for_each(|s| highest = highest.max(*s));
+    for s in &mut *dst {
+        highest = highest.max(*s);
+    }
     highest += 1;
     for idx in &mut *src {
         *idx += highest;
@@ -1990,7 +1994,7 @@ pub fn add_offseted_indices(src: &mut Vec<u32>, dst: &mut Vec<u32>) {
     dst.append(src);
 }
 
-pub fn draw_points_and_kites(
+pub fn draw_points(
     config: &Config,
     camera: &Camera,
     input: &InputStates,
@@ -2004,100 +2008,122 @@ pub fn draw_points_and_kites(
     events: &mut EventState,
     armature: &Armature,
 ) {
-    let point_color: Color = config.colors.center_point;
-    let mut kite_color: Color = config.colors.center_point;
-    kite_color.a = kite_color.a.saturating_sub(128);
-    let in_point_color: Color = config.colors.inactive_center_point;
-    let mut in_kite_color: Color = config.colors.inactive_center_point;
-    in_kite_color.a = in_kite_color.a.saturating_sub(64);
     let cam = world_camera(&camera, &config);
     let zero = Vec2::default();
-    let mut kite_verts = vec![];
-    let mut kite_indices = vec![];
     let mut point_verts = vec![];
     let mut point_indices = vec![];
-    let mut point_vert_pack_idx = 0;
-    let mut kite_vert_pack_idx = 0;
     let mut on_point = false;
+
     for p in 0..temp_arm.bones.len() {
         let bone = &temp_arm.bones[p];
+        let mut color;
 
         // skip points & kites for this bone if editing its mesh
         if edit_mode.showing_mesh && selected_bone_ids.contains(&bone.id) {
             continue;
         }
 
-        let mut color;
-        if renderer.render_points || selections.bone_ids.contains(&bone.id) {
-            if bone.group_color.a == 0 {
-                color = in_point_color;
-                if selected_bone_ids.contains(&bone.id) {
-                    color = point_color
-                }
-            } else {
-                color = bone.group_color.into();
-                if !selected_bone_ids.contains(&bone.id) {
-                    color.a /= 2;
-                }
+        // skip points if they shouldn't be rendered, and this isn't a selected bone
+        if !renderer.render_points && !selections.bone_ids.contains(&bone.id) {
+            continue;
+        }
+
+        if bone.group_color.a == 0 {
+            color = config.colors.inactive_center_point;
+            if selected_bone_ids.contains(&bone.id) {
+                color = config.colors.center_point
             }
+        } else {
+            color = bone.group_color.into();
+            if !selected_bone_ids.contains(&bone.id) {
+                color.a /= 2;
+            }
+        }
 
-            // play shrinking animation if this bone was just selected
-            let fade_speed = 0.1;
-            let sel_size = config.center_point_radius * 4.;
-            let normal_size = config.center_point_radius;
-            let elapsed = if selections.bone_ids.len() > 1 && selections.bone_ids.contains(&bone.id)
-            {
-                (sel_size - edit_mode.sel_time * fade_speed).max(normal_size)
-            } else {
-                normal_size
-            } * camera.zoom;
+        // play shrinking animation if this bone was just selected
+        let fade_speed = 0.1;
+        let sel_size = config.center_point_radius * 4.;
+        let normal_size = config.center_point_radius;
+        let elapsed = if selections.bone_ids.len() > 1 && selections.bone_ids.contains(&bone.id) {
+            (sel_size - edit_mode.sel_time * fade_speed).max(normal_size)
+        } else {
+            normal_size
+        } * camera.zoom;
 
-            let (mut this_verts, mut this_indices) = draw_point(
+        let (mut this_verts, mut this_indices) = draw_point(
+            &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
+        );
+
+        // bones can be selected by clicking on their point
+        let mouse_on_it = utils::in_bounding_box(&input.mouse, &this_verts, &camera.window).1;
+        if mouse_on_it && !camera.on_ui {
+            color = bone.group_color.into();
+            if bone.group_color.a == 0 {
+                color = config.colors.center_point;
+            }
+            if selected_bone_ids.contains(&bone.id) {
+                color += Color::new(64, 64, 64, 255);
+            }
+            (this_verts, this_indices) = draw_point(
                 &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
             );
 
-            // bones can be selected by clicking on their point
-            let mouse_on_it = utils::in_bounding_box(&input.mouse, &this_verts, &camera.window).1;
-            if mouse_on_it && !camera.on_ui {
-                color = bone.group_color.into();
-                if bone.group_color.a == 0 {
-                    color = point_color;
-                }
-                if selected_bone_ids.contains(&bone.id) {
-                    color += Color::new(64, 64, 64, 255);
-                }
-                (this_verts, this_indices) = draw_point(
-                    &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
-                );
-                // select this bone if point is pressed, unless it was already selected
-                if input.left_pressed {
-                    let sel_bone = armature.sel_bone(selections);
-                    let mut on_click_id = bone.id;
-
-                    // QoL: select parent of textured bone if it's called 'Texture'
-                    // this is because most textured bones are meant to represent their parents
-                    let tex_name = bone.name.to_lowercase();
-                    if !config.exact_bone_select && bone.parent_id != -1 && tex_name == "texture" {
-                        on_click_id = bone.parent_id;
-                    }
-
-                    if sel_bone == None || (sel_bone != None && sel_bone.unwrap().id != bone.id) {
-                        events.select_bone(on_click_id as usize, true);
-                    }
-                }
-                on_point = true;
+            let mut on_click_id = bone.id;
+            // QoL: select parent of textured bone if it's called 'Texture'
+            // this is because most textured bones are meant to represent their parents
+            let tex_name = bone.name.to_lowercase();
+            if !config.exact_bone_select && bone.parent_id != -1 && tex_name == "texture" {
+                on_click_id = bone.parent_id;
             }
+            events.set_hovering_bone_id(on_click_id);
 
-            for idx in &mut this_indices {
-                *idx += point_vert_pack_idx as u32 * 4;
+            // select this bone if point is pressed, unless it was already selected
+            if input.left_pressed {
+                let sel_bone = armature.sel_bone(selections);
+                if sel_bone == None || (sel_bone != None && sel_bone.unwrap().id != bone.id) {
+                    events.select_bone(on_click_id as usize, true);
+                }
             }
-
-            point_verts.append(&mut this_verts);
-            point_indices.append(&mut this_indices.clone());
-            point_vert_pack_idx += 1;
+            on_point = true;
         }
 
-        if !renderer.render_kites {
+        point_verts.append(&mut this_verts);
+        add_offseted_indices(&mut this_indices, &mut point_indices);
+    }
+
+    if point_indices.len() > 0 {
+        render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
+        let point_buffer = &mut renderer.point_buffer;
+        setup_render_buffer(point_buffer, &point_verts, &point_indices, queue);
+        draw(&renderer.point_buffer, render_pass, 0, point_indices.len());
+    }
+
+    renderer.on_point |= on_point;
+}
+
+pub fn draw_kites(
+    config: &Config,
+    camera: &Camera,
+    edit_mode: &EditMode,
+    temp_arm: &mut Armature,
+    selected_bone_ids: Vec<i32>,
+    renderer: &mut Renderer,
+    queue: &wgpu::Queue,
+    render_pass: &mut RenderPass,
+) {
+    let cam = world_camera(&camera, &config);
+    let zero = Vec2::default();
+    let mut kite_verts = vec![];
+    let mut kite_indices = vec![];
+
+    for p in 0..temp_arm.bones.len() {
+        let bone = &temp_arm.bones[p];
+        let mut color;
+
+        // skip points & kites for this bone if editing its mesh
+        if !renderer.render_kites
+            || (edit_mode.showing_mesh && selected_bone_ids.contains(&bone.id))
+        {
             continue;
         }
 
@@ -2118,9 +2144,9 @@ pub fn draw_points_and_kites(
         }
 
         if group_color.a == 0 {
-            color = in_point_color;
+            color = config.colors.inactive_center_point;
             if selected_bone_ids.contains(&parent_id) {
-                color = point_color
+                color = config.colors.center_point
             }
         } else {
             color = group_color.into();
@@ -2132,27 +2158,14 @@ pub fn draw_points_and_kites(
         let (mut this_verts, mut this_indices) = draw_flow_kite(
             &zero, &camera, &config, &temp_arm.bones[p].pos, color, cam.pos, kite_rot, kite_width
         );
-        for idx in &mut this_indices {
-            *idx += kite_vert_pack_idx * 4;
-        }
         kite_verts.append(&mut this_verts);
-        kite_indices.append(&mut this_indices);
-        kite_vert_pack_idx += 1;
+        add_offseted_indices(&mut this_indices, &mut kite_indices);
     }
+
     if kite_indices.len() > 0 {
         render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
         setup_render_buffer(&mut renderer.kite_buffer, &kite_verts, &kite_indices, queue);
         draw(&renderer.kite_buffer, render_pass, 0, kite_indices.len());
-    }
-    if point_indices.len() > 0 {
-        render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
-        let point_buffer = &mut renderer.point_buffer;
-        setup_render_buffer(point_buffer, &point_verts, &point_indices, queue);
-        draw(&renderer.point_buffer, render_pass, 0, point_indices.len());
-    }
-
-    if !renderer.on_point {
-        renderer.on_point = on_point;
     }
 }
 
