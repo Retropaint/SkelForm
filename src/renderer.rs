@@ -2112,7 +2112,6 @@ pub fn draw_kites(
     render_pass: &mut RenderPass,
 ) {
     let cam = world_camera(&camera, &config);
-    let zero = Vec2::default();
     let mut kite_verts = vec![];
     let mut kite_indices = vec![];
 
@@ -2156,7 +2155,7 @@ pub fn draw_kites(
         }
         #[rustfmt::skip]
         let (mut this_verts, mut this_indices) = draw_flow_kite(
-            &zero, &camera, &config, &temp_arm.bones[p].pos, color, cam.pos, kite_rot, kite_width
+            &Vec2::new(0., 0.), &camera, &config, &temp_arm.bones[p].pos, color, cam.pos, kite_rot, kite_width
         );
         kite_verts.append(&mut this_verts);
         add_offseted_indices(&mut this_indices, &mut kite_indices);
