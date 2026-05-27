@@ -236,47 +236,42 @@ pub fn draw(
             .resizable(true)
             .default_width(max_size);
     }
-    draw_resizable_panel(
-        bone_panel_id,
-        side_panel.show(context, |ui| {
-            ui.set_width(min_default_size);
-            ui.add_enabled_ui(enable_bone_panel, |ui| {
-                let gradient = config.colors.gradient.into();
-                ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
+    let panel = side_panel.show(context, |ui| {
+        ui.set_width(min_default_size);
+        ui.add_enabled_ui(enable_bone_panel, |ui| {
+            let gradient = config.colors.gradient.into();
+            ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
 
-                let scroll_area = egui::ScrollArea::vertical()
-                    .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
-                scroll_area.show(ui, |ui| {
-                    let sel = &selections;
-                    if selections.bone_idx != usize::MAX {
-                        let bone = selected_bone.clone();
-                        bone_panel::draw(
-                            bone, ui, selections, shared_ui, armature, config, events, &input,
-                            edit_mode,
-                        );
-                    } else if armature.sel_anim(&sel) != None && sel.anim_frame != -1 {
-                        keyframe_panel::draw(ui, &selections, &armature, events, shared_ui, config);
-                    } else if armature.bones.len() > 1 {
-                        ui.heading("Armature Shortcuts");
-                        ui.add_space(10.);
-                        let next_bone = shared_ui.loc("settings_modal.keyboard.next_bone");
-                        let prev_bone = shared_ui.loc("settings_modal.keyboard.prev_bone");
-                        let bone_fold = shared_ui.loc("settings_modal.keyboard.toggle_bone_fold");
-                        keyboard_shortcut(ui, next_bone, config.keys.next_bone);
-                        keyboard_shortcut(ui, prev_bone, config.keys.prev_bone);
-                        keyboard_shortcut(ui, bone_fold, config.keys.toggle_bone_fold);
-                    } else {
-                        ui.add_space(5.);
-                        empty_armature_starters(shared_ui, config, ui);
-                    }
-                });
+            let scroll_area = egui::ScrollArea::vertical()
+                .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
+            scroll_area.show(ui, |ui| {
+                let sel = &selections;
+                if selections.bone_idx != usize::MAX {
+                    let bone = selected_bone.clone();
+                    bone_panel::draw(
+                        bone, ui, selections, shared_ui, armature, config, events, &input,
+                        edit_mode,
+                    );
+                } else if armature.sel_anim(&sel) != None && sel.anim_frame != -1 {
+                    keyframe_panel::draw(ui, &selections, &armature, events, shared_ui, config);
+                } else if armature.bones.len() > 1 {
+                    ui.heading("Armature Shortcuts");
+                    ui.add_space(10.);
+                    let next_bone = shared_ui.loc("settings_modal.keyboard.next_bone");
+                    let prev_bone = shared_ui.loc("settings_modal.keyboard.prev_bone");
+                    let bone_fold = shared_ui.loc("settings_modal.keyboard.toggle_bone_fold");
+                    keyboard_shortcut(ui, next_bone, config.keys.next_bone);
+                    keyboard_shortcut(ui, prev_bone, config.keys.prev_bone);
+                    keyboard_shortcut(ui, bone_fold, config.keys.toggle_bone_fold);
+                } else {
+                    ui.add_space(5.);
+                    empty_armature_starters(shared_ui, config, ui);
+                }
             });
-            shared_ui.bone_panel_rect = Some(ui.min_rect());
-        }),
-        events,
-        context,
-        camera,
-    );
+        });
+        shared_ui.bone_panel_rect = Some(ui.min_rect());
+    });
+    draw_resizable_panel(bone_panel_id, panel, events, context, camera);
 
     // adjust bar positions
     let bone_panel = shared_ui.bone_panel_rect.unwrap();
