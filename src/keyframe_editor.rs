@@ -465,6 +465,8 @@ pub fn draw_top_bar(
         egui::Frame::new().show(ui, |ui| {
             ui.set_width(width);
             ui.set_height(20.);
+            let painter = ui.painter_at(ui.min_rect());
+            let range = egui::Rangef::new(100., 475.);
 
             let mut second = -1;
             for (i, x) in shared_ui.anim.lines_x.iter().enumerate() {
@@ -478,22 +480,10 @@ pub fn draw_top_bar(
                     } else {
                         egui::Color32::from_rgb(175, 175, 175)
                     };
-
-                    // draw line
-                    ui.painter_at(ui.min_rect()).vline(
-                        pos.x + 3.,
-                        egui::Rangef::new(100., 475.),
-                        Stroke { width: 2., color },
-                    );
+                    painter.vline(pos.x + 3., range, Stroke { width: 2., color });
                 } else if selections.anim_frame == i as i32 {
                     let color = egui::Color32::WHITE;
-
-                    // draw line
-                    ui.painter_at(ui.min_rect()).vline(
-                        pos.x + 3.,
-                        egui::Rangef::new(100., 475.),
-                        Stroke { width: 2., color },
-                    );
+                    painter.vline(pos.x + 3., range, Stroke { width: 2., color });
                 }
 
                 if i as i32 % armature.sel_anim(&sel).unwrap().fps != 0 {
