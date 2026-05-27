@@ -772,8 +772,12 @@ fn draw_frame_lines(
 ) {
     shared_ui.anim.lines_x = vec![];
     let mut selected_line_x = 0.;
+    let mut hovered_line_x = -1.;
     let panel = shared_ui.keyframe_panel_rect;
     let mut hovering = false;
+
+    let range = egui::Rangef { min: 0., max: 999. };
+    let painter = ui.painter();
 
     let mut x = 0.;
     let mut i = 0;
@@ -812,6 +816,7 @@ fn draw_frame_lines(
             color = egui::Color32::from_rgb(175, 175, 175);
             shared_ui.anim.hovering_frame = i;
             hovering = true;
+            hovered_line_x = ui.min_rect().left() + x;
 
             // select this frame if clicked
             if input.left_clicked && shared_ui.context_menu.id == "" {
@@ -826,11 +831,7 @@ fn draw_frame_lines(
         }
 
         // draw the line!
-        ui.painter().vline(
-            ui.min_rect().left() + x,
-            egui::Rangef { min: 0., max: 999. },
-            Stroke { width: 2., color },
-        );
+        painter.vline(ui.min_rect().left() + x, range, Stroke { width: 2., color });
 
         i += 1;
     }
@@ -852,15 +853,15 @@ fn draw_frame_lines(
         continue;
     }
 
+    // draw hovered line
+    if hovered_line_x != -1. {
+        let color = egui::Color32::from_rgb(175, 175, 175);
+        painter.vline(hovered_line_x, range, Stroke { width: 2., color });
+    }
+
     // draw selected line
-    ui.painter().vline(
-        selected_line_x,
-        egui::Rangef { min: 0., max: 999. },
-        Stroke {
-            width: 2.,
-            color: egui::Color32::WHITE,
-        },
-    );
+    let color = egui::Color32::WHITE;
+    painter.vline(selected_line_x, range, Stroke { width: 2., color });
 
     // draw per-change icons
     let sel_anim = &armature.animations[selections.anim];
