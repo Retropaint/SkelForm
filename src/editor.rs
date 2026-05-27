@@ -1274,8 +1274,14 @@ fn select_bone(
             }
         }
 
+        // sort bone IDs by their order in the hierarchy
+        sel.bone_ids.sort_by(|a, b| {
+            let a_pos = armature.bones.iter().position(|bo| bo.id == *a).unwrap();
+            let b_pos = armature.bones.iter().position(|bo| bo.id == *b).unwrap();
+            a_pos.cmp(&b_pos)
+        });
+
         // remove any duplicate IDs
-        sel.bone_ids.sort();
         sel.bone_ids.dedup();
     }
 }
