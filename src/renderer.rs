@@ -625,7 +625,7 @@ pub fn render(
             }
             let bone = temp_arm.bones.iter().find(|b| b.id == *sel_id).unwrap();
             #[rustfmt::skip]
-            edit_bone(events, edit_mode, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones, &mouse_pos);
+            edit_bone(events, edit_mode, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones);
         }
 
         if *current_edit == EditModes::Rotate {
@@ -1179,7 +1179,6 @@ pub fn edit_bone(
     renderer: &Renderer,
     bone: &Bone,
     bones: &Vec<Bone>,
-    mouse_pos: &Vec2,
 ) {
     let mut anim_id = selections.anim;
     let anim_frame = selections.anim_frame;

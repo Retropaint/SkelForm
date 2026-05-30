@@ -136,7 +136,6 @@ impl ApplicationHandler for App {
 
         #[cfg(target_arch = "wasm32")]
         {
-            use wgpu::web_sys;
             use winit::platform::web::WindowAttributesExtWebSys;
             #[rustfmt::skip]
             let canvas =
@@ -901,11 +900,11 @@ impl BackendRenderer {
 
     // processes style to export, if appropriate
     fn check_export_style(&self, armature: &Armature, shared_ui: &mut Ui) {
-        let path = shared_ui.export_style_path.lock().unwrap();
+        let _path = shared_ui.export_style_path.lock().unwrap();
         let mut _web_buf: Vec<u8>;
 
         #[cfg(not(target_arch = "wasm32"))]
-        let path_str = path.to_str().unwrap().to_string();
+        let path_str = _path.to_str().unwrap().to_string();
         #[cfg(target_arch = "wasm32")]
         let path_str = " ";
 
@@ -919,7 +918,7 @@ impl BackendRenderer {
         #[cfg(not(target_arch = "wasm32"))]
         {
             zip = zip::ZipWriter::new(
-                std::fs::File::create(path.as_path().to_str().unwrap().to_string()).unwrap(),
+                std::fs::File::create(_path.as_path().to_str().unwrap().to_string()).unwrap(),
             );
             options = zip::write::FullFileOptions::default()
                 .compression_method(zip::CompressionMethod::Stored);

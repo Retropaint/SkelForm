@@ -550,7 +550,6 @@ pub fn process_inputs(
         if !(can_drag && shared_ui.rename_id != "" && input.mouse_init != None && drag_mod != 0.) {
             return;
         }
-        let diff = input.mouse_init.unwrap() - input.mouse;
         let vel = input.mouse - input.mouse_prev;
         if !(shared_ui.edit_value != None && vel.x.abs() > 0.) {
             return;
@@ -562,6 +561,7 @@ pub fn process_inputs(
             }
             #[cfg(not(target_arch = "wasm32"))]
             {
+                let diff = input.mouse_init.unwrap() - input.mouse;
                 output -= diff.x * shared_ui.drag_modifier;
             }
             *shared_ui.edit_value.as_mut().unwrap() = output.to_string();
@@ -869,8 +869,12 @@ fn context_menu_content(
         let str = "delete_style";
         ui.context_delete(shared_ui, config, events, str, PolarId::DeleteStyle);
         if ui.context_button("Export", &config).clicked() {
+            // setting export_style_id will initiate the style exporting process
             shared_ui.export_style_id = split[1].parse().unwrap();
-            utils::open_style_dialog(&shared_ui.export_style_path);
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                utils::open_style_dialog(&shared_ui.export_style_path);
+            }
             shared_ui.context_menu.close();
         }
     } else if id == "tex" {

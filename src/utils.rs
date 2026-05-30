@@ -111,20 +111,18 @@ pub fn open_save_dialog(
     });
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn open_style_dialog(file_path: &Arc<Mutex<PathBuf>>) {
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let filepath = Arc::clone(&file_path);
-        std::thread::spawn(move || {
-            let task = rfd::FileDialog::new()
-                .add_filter("test", &["zip"])
-                .save_file();
-            if task == None {
-                return;
-            }
-            *filepath.lock().unwrap() = task.unwrap();
-        });
-    }
+    let filepath = Arc::clone(&file_path);
+    std::thread::spawn(move || {
+        let task = rfd::FileDialog::new()
+            .add_filter("test", &["zip"])
+            .save_file();
+        if task == None {
+            return;
+        }
+        *filepath.lock().unwrap() = task.unwrap();
+    });
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -1323,7 +1321,9 @@ pub fn process_screenshot_raw(
 }
 
 pub fn markdown(mut str: String) -> String {
+    #[allow(unused_mut)]
     let mut user_docs = "https://skelform.org/user-docs".to_string();
+    #[allow(unused_mut)]
     let mut dev_docs = "https://skelform.org/dev-docs".to_string();
 
     #[cfg(not(target_arch = "wasm32"))]
