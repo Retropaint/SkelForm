@@ -222,8 +222,6 @@ pub fn draw(
     .response
     .on_disabled_hover_text(str_cant_edit);
 
-    ui.add_space(20.);
-
     // show 'IK root bone' button if this is a target bone
     let bones = &mut armature.bones.iter();
     let is_target_of = bones.position(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
@@ -237,6 +235,8 @@ pub fn draw(
                 events.select_bone(is_target_of.unwrap(), false);
             }
         });
+        ui.add_space(10.);
+    } else {
         ui.add_space(20.);
     }
 
