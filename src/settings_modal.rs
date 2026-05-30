@@ -40,10 +40,17 @@ pub fn draw(
                 ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                     let mut is_hovered = false;
 
-                    #[rustfmt::skip]
                     macro_rules! tab {
                         ($name:expr, $state:expr) => {
-                            settings_button($name, $state, ui, shared_ui, &config, width, &mut is_hovered)
+                            settings_button(
+                                $name,
+                                $state,
+                                ui,
+                                shared_ui,
+                                &config,
+                                width,
+                                &mut is_hovered,
+                            )
                         };
                     }
 
@@ -71,12 +78,21 @@ pub fn draw(
                     }
                 });
             });
-            egui::Frame::new().show(ui, |ui| {
-                ui.set_width(window.x.min(400.));
-                ui.set_height(window.y.min(475.));
-                egui::ScrollArea::vertical().show(ui, |ui| {
+
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                // add padding to the right, for the scrollbar
+                let frame = egui::Frame::new().outer_margin(egui::Margin {
+                    right: 13,
+                    ..Default::default()
+                });
+
+                frame.show(ui, |ui| {
+                    ui.set_width(window.x.min(400.));
+                    ui.set_height(window.y.min(475.));
                     let layout = egui::Layout::top_down(egui::Align::Min);
                     shared_ui.updated_config = config.clone();
+
+                    // show selected section
                     ui.with_layout(layout, |ui| match shared_ui.settings_state {
                         shared::SettingsState::Ui => user_interface(ui, shared_ui),
                         shared::SettingsState::Editing => editing(ui, shared_ui),
@@ -85,19 +101,25 @@ pub fn draw(
                         shared::SettingsState::Colors => colors(ui, shared_ui),
                         shared::SettingsState::Misc => misc(ui, shared_ui),
                     });
+
                     events.update_config();
                 });
             })
         });
-
+        modal_ui.add_space(5.);
         modal_ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.skf_button(shared_ui.loc("settings_modal.apply")).clicked() {
-                events.apply_settings();
+            // apply button
+            let str = shared_ui.loc("settings_modal.cancel");
+            if ui.skf_button(str).clicked() {
+                events.reset_config();
                 shared_ui.settings_modal = false;
                 shared_ui.translucent_settings = false;
             }
-            if ui.skf_button(shared_ui.loc("settings_modal.cancel")).clicked() {
-                events.reset_config();
+
+            // cancel button
+            let str = shared_ui.loc("settings_modal.apply");
+            if ui.skf_button(str).clicked() {
+                events.apply_settings();
                 shared_ui.settings_modal = false;
                 shared_ui.translucent_settings = false;
             }
