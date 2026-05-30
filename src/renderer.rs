@@ -1193,9 +1193,9 @@ pub fn edit_bone(
         };
     }
 
-    let vert = vert(Some(bone.pos), None, None);
+    let bone_vert = vert(Some(bone.pos), None, None);
     let cam = &world_camera(&camera, &config);
-    let bone_center = world_vert(vert, cam, camera.aspect_ratio(), Vec2::new(0.5, 0.5));
+    let bone_center = world_vert(bone_vert, cam, camera.aspect_ratio(), Vec2::new(0.5, 0.5));
 
     // mouse velocity to be used for moving and scaling
     let mut mouse_vel = mouse_vel(&input, &camera) * camera.zoom;
@@ -1239,17 +1239,24 @@ pub fn edit_bone(
             edit!(bone, AnimElement::PositionY, pos.y);
         }
     } else if current_edit == EditModes::Rotate {
+        // remember the initial mouse world position
         let mouse_init = utils::screen_to_world_space(input.mouse_init.unwrap(), camera.window);
-        let dir_init = mouse_init - bone_center.pos;
+        let mut mouse_init_vert = vert(Some(mouse_init), None, None);
+        mouse_init_vert.pos.x *= camera.window.y / camera.window.x;
+        let dir_init = mouse_init_vert.pos - bone_center.pos;
         let rot_init = dir_init.y.atan2(dir_init.x);
 
-        let mouse = utils::screen_to_world_space(input.mouse, camera.window);
-        let dir = mouse - bone_center.pos;
+        // create a vertex on the mouse, as a reference for its world space position
+        let mouse_pos = utils::screen_to_world_space(input.mouse, camera.window);
+        let mut mouse_vert = vert(Some(mouse_pos), None, None);
+        mouse_vert.pos.x *= camera.window.y / camera.window.x;
+        let dir = mouse_vert.pos - bone_center.pos;
         let rot = dir.y.atan2(dir.x);
 
+        // get the target rotation from bone to mouse
         let mut rot = renderer.bone_init_rot + (rot - rot_init);
 
-        // snap rot to user-defined steps if holding snap key
+        // snap target rotation to user-defined steps if holding snap key
         let step = config.rot_snap_step * 3.14 / 180.;
         if edit_mode.holding_edit_snap {
             rot = (rot / step).round() * step
