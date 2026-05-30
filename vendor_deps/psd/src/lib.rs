@@ -5,8 +5,8 @@
 //!
 //! psd spec: https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/
 
- #![allow(warnings)]
- #![deny(missing_docs)]
+#![allow(warnings)]
+#![deny(missing_docs)]
 
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -263,8 +263,8 @@ impl Psd {
             br_x = br_x.max(layer.layer_right() as usize);
             br_y = br_y.max(layer.layer_bottom() as usize);
         }
-        let width = br_x - tl_x;
-        let height = br_y - tl_y;
+        let width = br_x.saturating_sub(tl_x);
+        let height = br_y.saturating_sub(tl_y);
         let pixel_count = width * height;
         let mut flattened_pixels = Vec::with_capacity((pixel_count * 4) as usize);
 
