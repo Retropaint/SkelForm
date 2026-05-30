@@ -1502,13 +1502,19 @@ fn edit_bone(
     config: &Config,
     bone_id: i32,
     element: AnimElement,
-    value: f32,
+    mut value: f32,
     value_str: String,
     mut anim_id: usize,
     mut anim_frame: i32,
 ) {
     let bones = &mut armature.bones;
     let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
+
+    // set rotation to 0 if this bone is part of IK
+    if bone.ik_family_id != -1 && element == AnimElement::Rotation {
+        value = 0.;
+    }
+
     let mut init_value = 0.;
     let mut init_value_str = "".to_string();
 
