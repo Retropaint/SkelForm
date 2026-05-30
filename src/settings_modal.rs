@@ -53,11 +53,13 @@ pub fn draw(
                     let str_edit = shared_ui.loc("settings_modal.editing.heading").clone();
                     let str_rendering = shared_ui.loc("settings_modal.rendering.heading").clone();
                     let str_keyboard = shared_ui.loc("settings_modal.keyboard.heading").clone();
+                    let str_colors = shared_ui.loc("settings_modal.colors.heading").clone();
                     let str_misc = shared_ui.loc(str_misc_raw).clone();
                     tab!(str_ui, shared::SettingsState::Ui);
                     tab!(str_edit, shared::SettingsState::Editing);
                     tab!(str_rendering, shared::SettingsState::Rendering);
                     tab!(str_keyboard, shared::SettingsState::Keyboard);
+                    tab!(str_colors, shared::SettingsState::Colors);
                     tab!(str_misc, shared::SettingsState::Misc);
 
                     if shared_ui.settings_state != shared::SettingsState::Rendering {
@@ -80,6 +82,7 @@ pub fn draw(
                         shared::SettingsState::Editing => editing(ui, shared_ui),
                         shared::SettingsState::Rendering => rendering(ui, shared_ui, camera),
                         shared::SettingsState::Keyboard => keyboard(ui, shared_ui),
+                        shared::SettingsState::Colors => colors(ui, shared_ui),
                         shared::SettingsState::Misc => misc(ui, shared_ui),
                     });
                     events.update_config();
@@ -152,7 +155,7 @@ pub fn settings_button(
 }
 
 fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
-    let str_general = &shared_ui.loc("settings_modal.user_interface.general");
+    let str_general = &shared_ui.loc("settings_modal.user_interface.heading");
     ui.heading(str_general);
     ui.horizontal(|ui| {
         let str_ui_scale = &shared_ui.loc("settings_modal.user_interface.ui_scale");
@@ -188,49 +191,6 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         });
     });
 
-    ui.add_space(20.);
-
-    let mut alt_col = true;
-
-    macro_rules! color_row {
-        ($title:expr, $color:expr) => {
-            alt_col = !alt_col;
-            let col = &shared_ui.updated_config.colors;
-            let color = if alt_col { col.main } else { col.dark_accent };
-            let str_color = shared_ui
-                .loc(&format!("settings_modal.user_interface.colors.{}", $title))
-                .clone();
-            color_row(str_color, $color, color, ui, false);
-        };
-    }
-
-    ui.horizontal(|ui| {
-        let str_colors = &shared_ui.loc("settings_modal.user_interface.colors_heading");
-        ui.heading(str_colors);
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_default = &shared_ui.loc("settings_modal.default");
-            if ui.skf_button(str_default).clicked() {
-                shared_ui.updated_config.colors = crate::ColorConfig::default();
-            }
-        });
-    });
-
-    // iterable color config
-    #[rustfmt::skip]
-    {
-        color_row!("main",               &mut shared_ui.updated_config.colors.main              );
-        color_row!("light_accent",       &mut shared_ui.updated_config.colors.light_accent      );
-        color_row!("dark_accent",        &mut shared_ui.updated_config.colors.dark_accent       );
-        color_row!("text",               &mut shared_ui.updated_config.colors.text              );
-        color_row!("frameline",          &mut shared_ui.updated_config.colors.frameline         );
-        color_row!("gradient",           &mut shared_ui.updated_config.colors.gradient          );
-        color_row!("link",               &mut shared_ui.updated_config.colors.link              );
-        color_row!("warning_text",       &mut shared_ui.updated_config.colors.warning_text      );
-        color_row!("inverse_kinematics", &mut shared_ui.updated_config.colors.inverse_kinematics);
-        color_row!("meshdef",            &mut shared_ui.updated_config.colors.meshdef           );
-        color_row!("texture",            &mut shared_ui.updated_config.colors.texture           );
-        color_row!("ik_target",          &mut shared_ui.updated_config.colors.ik_target         );
-    };
     ui.add_space(20.);
 }
 
@@ -353,33 +313,6 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
     });
 
     ui.add_space(7.);
-
-    let mut alt_col = true;
-    macro_rules! color_row {
-        ($title:expr, $color:expr, $alpha:expr) => {
-            alt_col = !alt_col;
-            let col = &shared_ui.updated_config.colors;
-            let bg_color = if alt_col { col.main } else { col.dark_accent };
-            let str_color = shared_ui
-                .loc(&format!("settings_modal.rendering.{}", $title))
-                .clone();
-            let mut col = $color.clone();
-            color_row(str_color, &mut col, bg_color, ui, $alpha);
-            $color = col;
-        };
-    }
-
-    ui.add_space(7.);
-
-    color_row!("background", colors!().background, false);
-    color_row!("gridline", colors!().gridline, false);
-    color_row!("center_point", colors!().center_point, true);
-    color_row!(
-        "inactive_center_point",
-        colors!().inactive_center_point,
-        true
-    );
-    color_row!("transform_rings", colors!().transform_rings, true);
 }
 
 fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
@@ -566,6 +499,59 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     };
     ui.add_space(10.);
     shared_ui.updated_config.keys = keys.clone();
+}
+
+fn colors(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
+    // heading & default button
+    ui.horizontal(|ui| {
+        let str_colors = &shared_ui.loc("settings_modal.user_interface.colors_heading");
+        ui.heading(str_colors);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let str_default = &shared_ui.loc("settings_modal.default");
+            if ui.skf_button(str_default).clicked() {
+                shared_ui.updated_config.colors = crate::ColorConfig::default();
+            }
+        });
+    });
+
+    let mut alt_col = true;
+    macro_rules! color_row {
+        ($title:expr, $color:expr) => {
+            alt_col = !alt_col;
+            let col = &shared_ui.updated_config.colors;
+            let color = if alt_col { col.main } else { col.dark_accent };
+            let str_color = shared_ui
+                .loc(&format!("settings_modal.colors.{}", $title))
+                .clone();
+            color_row(str_color, $color, color, ui, false);
+        };
+    }
+
+    // iterable color buttons
+    #[rustfmt::skip]
+    {
+        ui.heading(shared_ui.loc("settings_modal.user_interface.heading"));
+        color_row!("main",               &mut shared_ui.updated_config.colors.main              );
+        color_row!("light_accent",       &mut shared_ui.updated_config.colors.light_accent      );
+        color_row!("dark_accent",        &mut shared_ui.updated_config.colors.dark_accent       );
+        color_row!("text",               &mut shared_ui.updated_config.colors.text              );
+        color_row!("frameline",          &mut shared_ui.updated_config.colors.frameline         );
+        color_row!("gradient",           &mut shared_ui.updated_config.colors.gradient          );
+        color_row!("link",               &mut shared_ui.updated_config.colors.link              );
+        color_row!("warning_text",       &mut shared_ui.updated_config.colors.warning_text      );
+        color_row!("inverse_kinematics", &mut shared_ui.updated_config.colors.inverse_kinematics);
+        color_row!("meshdef",            &mut shared_ui.updated_config.colors.meshdef           );
+        color_row!("texture",            &mut shared_ui.updated_config.colors.texture           );
+        color_row!("ik_target",          &mut shared_ui.updated_config.colors.ik_target         );
+        ui.add_space(10.);
+        ui.heading(shared_ui.loc("settings_modal.rendering.heading"));
+        color_row!("background",            &mut shared_ui.updated_config.colors.background           );
+        color_row!("gridline",              &mut shared_ui.updated_config.colors.gridline             );
+        color_row!("center_point",          &mut shared_ui.updated_config.colors.center_point         );
+        color_row!("inactive_center_point", &mut shared_ui.updated_config.colors.inactive_center_point);
+        color_row!("transform_rings",       &mut shared_ui.updated_config.colors.transform_rings      );
+
+    };
 }
 
 fn key(

@@ -292,21 +292,7 @@
       "layout": "Layout:",
       "layout_split": "Split",
       "layout_right": "Right",
-      "layout_left": "Left",
-      "colors": {
-        "main": "Main",
-        "light_accent": "Light Accent",
-        "dark_accent": "Dark Accent",
-        "text": "Text",
-        "frameline": "Frameline",
-        "gradient": "Gradient",
-        "link": "Link",
-        "warning_text": "Warning Text",
-        "inverse_kinematics": "Inverse Kinematics Icon",
-        "meshdef": "Mesh Deformation Icon",
-        "texture": "Texture Icon",
-        "ik_target": "Inverse Kinematics Target Icon"
-      }
+      "layout_left": "Left"
     },
     "editing": {
       "heading": "Editing",
@@ -324,12 +310,7 @@
       "gridline_gap": "Gridline gap (pixels): ",
       "pixel_mag": "Pixel Magnification: ",
       "translucent_desc": "Makes this box translucent to preview rendering changes",
-      "background": "Background",
-      "gridline": "Gridline",
-      "center_point": "Center Point",
-      "inactive_center_point": "Inactive Center Point",
-      "gridline_front": "Render gridline in front: ",
-      "transform_rings": "Transform Rings"
+      "gridline_front": "Render gridline in front: "
     },
     "keyboard": {
       "heading": "Keyboard",
@@ -363,6 +344,26 @@
       "prev_bone": "Previous Bone",
       "toggle_bone_fold": "Toggle Bone Fold",
       "toggle_edit_vertices": "Toggle Editing Vertices"
+    },
+    "colors": {
+      "heading": "Colors",
+      "main": "Main",
+      "light_accent": "Light Accent",
+      "dark_accent": "Dark Accent",
+      "text": "Text",
+      "frameline": "Frameline",
+      "gradient": "Gradient",
+      "link": "Link",
+      "warning_text": "Warning Text",
+      "inverse_kinematics": "Inverse Kinematics Icon",
+      "meshdef": "Mesh Deformation Icon",
+      "texture": "Texture Icon",
+      "ik_target": "Inverse Kinematics Target Icon",
+      "background": "Background",
+      "gridline": "Gridline",
+      "center_point": "Center Point",
+      "inactive_center_point": "Inactive Center Point",
+      "transform_rings": "Transform Rings"
     },
     "miscellaneous": {
       "heading": "Miscellaneous",

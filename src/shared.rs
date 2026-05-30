@@ -412,6 +412,7 @@ pub enum SettingsState {
     Editing,
     Rendering,
     Keyboard,
+    Colors,
     Misc,
 }
 
