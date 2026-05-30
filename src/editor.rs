@@ -373,6 +373,9 @@ pub fn simple_event(
         Events::ToggleIkFolded => {
             armature.sel_bone_mut(&selections).unwrap().ik_folded = value == 1.
         }
+        Events::TogglePhysFolded => {
+            armature.sel_bone_mut(&selections).unwrap().phys_folded = value == 1.
+        }
         Events::ToggleIkDisabled => {
             armature.sel_bone_mut(&selections).unwrap().ik_disabled = value == 1.
         }

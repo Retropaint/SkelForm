@@ -1143,6 +1143,8 @@ pub struct Bone {
     #[serde(skip)]
     pub effects_folded: bool,
     #[serde(skip)]
+    pub phys_folded: bool,
+    #[serde(skip)]
     pub world_verts: Vec<Vertex>,
     #[serde(skip)]
     pub ik_disabled: bool,
@@ -2229,6 +2231,7 @@ pub enum Events {
     ToggleSettingBindBone,
     ToggleAnimPanelOpen,
     ToggleIkFolded,
+    TogglePhysFolded,
     ToggleIkDisabled,
     ToggleMeshdefFolded,
     ToggleEffectsFolded,
@@ -2374,6 +2377,7 @@ impl EventState {
     event_with_value!(toggle_setting_ik_target, E::ToggleSettingIkTarget, idx, i32);
     event_with_value!(toggle_setting_bind_bone, E::ToggleSettingBindBone, idx, i32);
     event_with_value!(toggle_ik_folded, Events::ToggleIkFolded, toggle, usize);
+    event_with_value!(toggle_phys_folded, Events::TogglePhysFolded, toggle, usize);
     event_with_value!(toggle_meshdef_folded, E::ToggleMeshdefFolded, toggle, usize);
     event_with_value!(toggle_effects_folded, E::ToggleEffectsFolded, toggle, usize);
     event_with_value!(save_edited_bone, Events::SaveEditedBone, bone_idx, usize);

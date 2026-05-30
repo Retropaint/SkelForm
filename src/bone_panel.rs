@@ -264,7 +264,9 @@ pub fn draw(
 
     #[rustfmt::skip]
     texture_effects(ui, &mut bone, shared_ui, &selections, config, &edit_mode, &input, armature, events);
-    ui.add_space(20.);
+    if !bone.effects_folded {
+        ui.add_space(20.);
+    }
 
     if children.len() == 0 && parents.len() == 0 && bone.tex == "" {
         ui.add_space(10.);
@@ -299,19 +301,22 @@ pub fn draw(
         if !is_hovering && selections.hovering_vert_id != -1 {
             events.set_hovering_vert_id(-1);
         }
-        ui.add_space(20.);
+        if !bone.meshdef_folded {
+            ui.add_space(20.);
+        }
     }
 
     if children.len() > 0 || parents.len() > 0 {
         inverse_kinematics(ui, &bone, selections, shared_ui, config, armature, events);
         if !bone.ik_folded {
-            ui.add_space(20.);
+            ui.add_space(10.);
         }
     }
 
     // physics is not part of v0.4
-    if PHYSICS {
-        physics(ui, &bone, selections, shared_ui, config, armature, events);
+    physics(ui, &bone, selections, shared_ui, config, armature, events);
+    if !bone.phys_folded {
+        ui.add_space(20.);
     }
 
     ui.add_space(20.);
@@ -1230,20 +1235,18 @@ pub fn physics(
         ui.horizontal(|ui| {
             ui.label(str_heading).on_hover_text(str_desc);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                // todo: add phys_folded
-                // don't add until v0.5 nightly is underway, though
-                let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
+                let fold_icon = if bone.phys_folded { "⏴" } else { "⏷" };
                 let pointing_hand = egui::CursorIcon::PointingHand;
                 if ui.label(fold_icon).on_hover_cursor(pointing_hand).clicked() {
-                    let ik_folded = armature.sel_bone(&sel).unwrap().ik_folded;
-                    events.toggle_ik_folded(if ik_folded { 0 } else { 1 });
+                    let phys_folded = armature.sel_bone(&sel).unwrap().phys_folded;
+                    events.toggle_phys_folded(if phys_folded { 0 } else { 1 });
                 }
             })
         });
     });
     ui.add_space(2.5);
 
-    if bone.ik_folded {
+    if bone.phys_folded {
         return;
     }
 
