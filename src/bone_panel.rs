@@ -231,7 +231,11 @@ pub fn draw(
             let width = ui.available_width();
             let name = utils::trunc_str(ui, &armature.bones[is_target_of.unwrap()].name, width);
             ui.label(target_str);
-            if ui.clickable_label(&name).clicked() {
+            let name_label = ui.clickable_label(&name);
+            if name_label.hovered() {
+                events.set_hovering_bone_id(armature.bones[is_target_of.unwrap()].id);
+            }
+            if name_label.clicked() {
                 events.select_bone(is_target_of.unwrap(), false);
             }
         });
@@ -446,7 +450,11 @@ pub fn inverse_kinematics(
             let root = root_bone.unwrap();
             let str = shared_ui.loc("bone_panel.inverse_kinematics.root_bone");
             ui.label(str);
-            if ui.clickable_label(&root.name).clicked() {
+            let bone_label = ui.clickable_label(&root.name);
+            if bone_label.hovered() {
+                events.set_hovering_bone_id(root.id);
+            }
+            if bone_label.clicked() {
                 let idx = bones.iter().position(|b| b.id == root.id).unwrap();
                 events.select_bone(idx, false);
             }
@@ -512,11 +520,14 @@ pub fn inverse_kinematics(
     ui.horizontal(|ui| {
         ui.label(&shared_ui.loc("bone_panel.inverse_kinematics.target"));
 
-        let bone_id = bone.ik_target_id;
-        if let Some(target) = armature.bones.iter().find(|b| b.id == bone_id) {
+        if let Some(target) = armature.bones.iter().find(|b| b.id == bone.ik_target_id) {
             let width = ui.available_width();
             let tr_name = utils::trunc_str(ui, &target.name.clone(), width - target_buttons_width);
-            if ui.selectable_label(false, tr_name).clicked() {
+            let bone_label = ui.selectable_label(false, tr_name);
+            if bone_label.hovered() {
+                events.set_hovering_bone_id(bone.ik_target_id);
+            }
+            if bone_label.clicked() {
                 let bones = &armature.bones;
                 let ik_id = bone.ik_target_id;
                 let idx = bones.iter().position(|b| b.id == ik_id).unwrap();
