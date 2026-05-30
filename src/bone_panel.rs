@@ -65,6 +65,7 @@ pub fn draw(
         //}
         ui.add_space(ui.available_width() - icon_widths);
 
+        // group color button
         let og_col: [u8; 4] = [
             bone.group_color.r,
             bone.group_color.g,
@@ -76,13 +77,11 @@ pub fn draw(
         let group_color_button = ui
             .color_edit_button_srgba_premultiplied(&mut col)
             .on_hover_text(tooltip);
-
         // focus on the first element of bone panel, upon selecting a new bone
         if shared_ui.prev_selected_bone_idx != selections.bone_idx {
             group_color_button.request_focus();
             shared_ui.prev_selected_bone_idx = selections.bone_idx;
         }
-
         if col != og_col {
             events.edit_bone(bone.id, &E::GroupColorR, col[0] as f32, "", usize::MAX, -1);
             events.edit_bone(bone.id, &E::GroupColorG, col[1] as f32, "", usize::MAX, -1);
@@ -90,11 +89,27 @@ pub fn draw(
             events.edit_bone(bone.id, &E::GroupColorA, col[3] as f32, "", usize::MAX, -1);
         }
 
+        // hidden toggle
+        let mut col = config.colors.text;
+        if bone.hidden {
+            col -= Color::new(60, 60, 60, 0);
+        }
+        let text = egui::RichText::new("👁").size(15.).color(col);
+        let desc = shared_ui.loc("hidden_desc");
+        let label = ui.label(text).on_hover_cursor(hand).on_hover_text(desc);
+        if label.clicked() {
+            let hidden_f32 = if !bone.hidden { 1. } else { 0. };
+            let sel = selections.anim;
+            let frame = selections.anim_frame;
+            events.save_edited_bone(selections.bone_idx);
+            events.edit_bone(bone.id, &AnimElement::Hidden, hidden_f32, "", sel, frame);
+        }
+
+        // animation lock toggle
         let mut col = config.colors.text;
         if !bone.locked {
             col -= Color::new(60, 60, 60, 0);
         }
-
         let offset = ui.cursor().min + [0., 3.].into();
         let rect = egui::Rect::from_min_size(offset, [15., 15.].into());
         let img = shared_ui.lock_img.as_ref().unwrap();
@@ -112,6 +127,7 @@ pub fn draw(
             events.edit_bone(bone.id, locked, locked_f32, "", usize::MAX, -1);
         }
 
+        // delete button
         let mut col = config.colors.text;
         col -= Color::new(60, 60, 60, 0);
         let text = egui::RichText::new("🗑").size(15.).color(col);
