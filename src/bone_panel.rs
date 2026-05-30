@@ -112,19 +112,21 @@ pub fn draw(
         }
         let offset = ui.cursor().min + [0., 3.].into();
         let rect = egui::Rect::from_min_size(offset, [15., 15.].into());
-        let img = shared_ui.lock_img.as_ref().unwrap();
-        let response: egui::Response = ui
-            .allocate_rect(rect, egui::Sense::click())
-            .on_hover_cursor(egui::CursorIcon::PointingHand)
-            .on_hover_text(shared_ui.loc("locked_desc"));
-        if response.hovered() || response.has_focus() {
-            col += Color::new(60, 60, 60, 0);
-        }
-        egui::Image::new(img).tint(col).paint_at(ui, rect);
-        if response.clicked() {
-            let locked_f32 = if bone.locked { 0. } else { 1. };
-            let locked = &AnimElement::Locked;
-            events.edit_bone(bone.id, locked, locked_f32, "", usize::MAX, -1);
+        if shared_ui.lock_img != None {
+            let response: egui::Response = ui
+                .allocate_rect(rect, egui::Sense::click())
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .on_hover_text(shared_ui.loc("locked_desc"));
+            if response.hovered() || response.has_focus() {
+                col += Color::new(60, 60, 60, 0);
+            }
+            let img = shared_ui.lock_img.as_ref().unwrap();
+            egui::Image::new(img).tint(col).paint_at(ui, rect);
+            if response.clicked() {
+                let locked_f32 = if bone.locked { 0. } else { 1. };
+                let locked = &AnimElement::Locked;
+                events.edit_bone(bone.id, locked, locked_f32, "", usize::MAX, -1);
+            }
         }
 
         // delete button
@@ -241,18 +243,18 @@ pub fn draw(
     // show 'IK root bone' button if this is a target bone
     let bones = &mut armature.bones.iter();
     let is_target_of = bones.position(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
-    if is_target_of != None {
+    if let Some(is_target_of) = is_target_of {
         let target_str = shared_ui.loc("bone_panel.target_bone");
         ui.horizontal(|ui| {
             let width = ui.available_width();
-            let name = utils::trunc_str(ui, &armature.bones[is_target_of.unwrap()].name, width);
+            let name = utils::trunc_str(ui, &armature.bones[is_target_of].name, width);
             ui.label(target_str);
             let name_label = ui.clickable_label(&name);
             if name_label.hovered() {
-                events.set_hovering_bone_id(armature.bones[is_target_of.unwrap()].id);
+                events.set_hovering_bone_id(armature.bones[is_target_of].id);
             }
             if name_label.clicked() {
-                events.select_bone(is_target_of.unwrap(), false);
+                events.select_bone(is_target_of, false);
             }
         });
         ui.add_space(10.);
@@ -275,9 +277,11 @@ pub fn draw(
     // show mesh deformation, if all selected bones are eligible
     let mut all_can_mesh = true;
     for id in &selections.bone_ids {
-        let bone = armature.bones.iter().find(|b| b.id == *id).unwrap().clone();
-        if bone.vertices.len() == 0 || armature.tex_of(bone.id) == None {
-            all_can_mesh = false;
+        let bone = armature.bones.iter().find(|b| b.id == *id);
+        if let Some(bone) = bone {
+            if bone.vertices.len() == 0 || armature.tex_of(bone.id) == None {
+                all_can_mesh = false;
+            }
         }
     }
     if all_can_mesh {
@@ -337,11 +341,12 @@ pub fn inverse_kinematics(
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
             ui.label(str_heading).on_hover_text(str_desc);
-            let color = config.colors.inverse_kinematics;
-            let pos = egui::Pos2::new(ui.cursor().left(), ui.cursor().top() + 4.);
-            let rect = egui::Rect::from_min_size(pos, [13., 10.].into());
-            let img = shared_ui.ik_img.as_ref().unwrap();
-            egui::Image::new(img).tint(color).paint_at(ui, rect);
+            if let Some(img) = &shared_ui.ik_img {
+                let color = config.colors.inverse_kinematics;
+                let pos = egui::Pos2::new(ui.cursor().left(), ui.cursor().top() + 4.);
+                let rect = egui::Rect::from_min_size(pos, [13., 10.].into());
+                egui::Image::new(img).tint(color).paint_at(ui, rect);
+            }
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let fold_icon = if bone.ik_folded { "⏴" } else { "⏷" };
