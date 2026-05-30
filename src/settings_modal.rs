@@ -156,8 +156,22 @@ pub fn settings_button(
 
 fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     let str_general = &shared_ui.loc("settings_modal.user_interface.heading");
-    ui.heading(str_general);
     ui.horizontal(|ui| {
+        ui.heading(str_general);
+
+        // default button
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let str_default = &shared_ui.loc("settings_modal.default");
+            if ui.skf_button(str_default).clicked() {
+                let config = &mut shared_ui.updated_config;
+                config.layout = shared::UiLayout::Split;
+                config.ui_scale = 1.;
+            }
+        });
+    });
+
+    ui.horizontal(|ui| {
+        // UI scale
         let str_ui_scale = &shared_ui.loc("settings_modal.user_interface.ui_scale");
         ui.label(str_ui_scale);
         let scale = shared_ui.updated_config.ui_scale;
@@ -166,6 +180,7 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
             shared_ui.updated_config.ui_scale = value;
         }
 
+        // UI slider (web only)
         #[cfg(target_arch = "wasm32")]
         {
             let str = shared_ui.loc("settings_modal.user_interface.ui_slider");
@@ -176,6 +191,7 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         }
     });
 
+    // Layout dropdown (Split, Left, Right)
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("settings_modal.user_interface.layout"));
         let combo_box = egui::ComboBox::new("layout", "")
