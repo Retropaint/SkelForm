@@ -411,6 +411,7 @@ pub fn inverse_kinematics(
                             // reset Y pos and set X pos as distance, if this is a child IK bone
                             events.edit_bone(bone.id, &A::PositionY, 0., "", usize::MAX, -1);
                             events.edit_bone(bone.id, &A::PositionX, mag, "", usize::MAX, -1);
+                            events.edit_bone(bone.id, &A::Rotation, 0., "", usize::MAX, -1);
                         }
                         events.edit_bone(bone.id, &A::IkFamilyId, id as f32, "", usize::MAX, -1);
                     }
