@@ -267,9 +267,6 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
 }
 
 fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camera) {
-    #[rustfmt::skip]
-    macro_rules! colors { () => { shared_ui.updated_config.colors } }
-
     ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.rendering.heading");
         ui.heading(str_heading);
@@ -285,12 +282,6 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
             }
             let str_default = &shared_ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
-                colors!().background = crate::Config::default().colors.background;
-                colors!().gridline = crate::Config::default().colors.gridline;
-                colors!().center_point = crate::Config::default().colors.center_point;
-                colors!().inactive_center_point =
-                    crate::Config::default().colors.inactive_center_point;
-                colors!().transform_rings = crate::Config::default().colors.transform_rings;
                 let config = &mut shared_ui.updated_config;
                 config.gridline_gap = crate::Config::default().gridline_gap;
                 config.pixel_magnification = crate::Config::default().pixel_magnification;
@@ -305,10 +296,8 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
     ui.horizontal(|ui| {
         let str_gridline_gap = &shared_ui.loc("settings_modal.rendering.gridline_front");
         ui.label(str_gridline_gap);
-        ui.checkbox(
-            &mut shared_ui.updated_config.gridline_front,
-            "".into_atoms(),
-        );
+        let gridline_front = &mut shared_ui.updated_config.gridline_front;
+        ui.checkbox(gridline_front, "".into_atoms());
     });
 
     ui.horizontal(|ui| {
@@ -321,11 +310,7 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
             shared_ui.updated_config.pixel_magnification = (value as i32).max(1);
         }
         let window = camera.window / shared_ui.updated_config.pixel_magnification as f32;
-        ui.label(format!(
-            "= {}, {}",
-            window.x.to_string(),
-            window.y.to_string()
-        ));
+        ui.label(format!("= {}, {}", window.x, window.y));
     });
 
     ui.add_space(7.);
