@@ -148,10 +148,6 @@ fn init_shared(shared: &mut Shared) {
     shared.selections.hovering_vert_id = -1;
     shared.selections.hovering_bone_id = -1;
 
-    if !shared.config.skip_startup {
-        shared.ui.startup_window = true;
-    }
-
     #[cfg(not(target_arch = "wasm32"))]
     {
         match std::fs::exists(utils::bin_path().join("dev-docs")) {
@@ -179,6 +175,10 @@ fn init_shared(shared: &mut Shared) {
         utils::save_config(&shared.config);
         // prevents calling utils::bin_path (crashes on web)
         shared.ui.use_system_ffmpeg = true;
+    }
+
+    if !shared.config.skip_startup {
+        shared.ui.startup_window = true;
     }
 
     // if this were false, the first click would always
