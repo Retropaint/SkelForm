@@ -229,10 +229,14 @@ pub fn draw(
     let is_target_of = bones.position(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
     if is_target_of != None {
         let target_str = shared_ui.loc("bone_panel.target_bone");
-        ui.label(target_str + &armature.bones[is_target_of.unwrap()].name + ".");
-        if ui.skf_button("Go to IK bone").clicked() {
-            events.select_bone(is_target_of.unwrap(), false);
-        };
+        ui.horizontal(|ui| {
+            let width = ui.available_width();
+            let name = utils::trunc_str(ui, &armature.bones[is_target_of.unwrap()].name, width);
+            ui.label(target_str);
+            if ui.clickable_label(&name).clicked() {
+                events.select_bone(is_target_of.unwrap(), false);
+            }
+        });
         ui.add_space(20.);
     }
 
@@ -309,7 +313,6 @@ pub fn inverse_kinematics(
 
     let bones = &armature.bones;
     let ik_id = bone.ik_family_id;
-    let root_id = bones.iter().find(|b| b.ik_family_id == ik_id).unwrap().id;
 
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
@@ -425,8 +428,8 @@ pub fn inverse_kinematics(
         return;
     }
 
-    let go_to_root_str = shared_ui.loc("bone_panel.inverse_kinematics.go_to_root");
-    if root_id != bone.id {
+    let root_bone = bones.iter().find(|b| b.ik_family_id == ik_id);
+    if root_bone != None && root_bone.unwrap().id != bone.id {
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("bone_panel.inverse_kinematics.distance"))
                 .on_hover_text(shared_ui.loc("bone_panel.inverse_kinematics.distance_desc"));
@@ -439,15 +442,14 @@ pub fn inverse_kinematics(
                 }
             });
         });
-
         ui.horizontal(|ui| {
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.skf_button(&go_to_root_str).clicked() {
-                    let idx = bones.iter().position(|b| b.id == root_id).unwrap();
-                    events.select_bone(idx, false);
-                    selections.bone_ids = vec![];
-                }
-            });
+            let root = root_bone.unwrap();
+            let str = shared_ui.loc("bone_panel.inverse_kinematics.root_bone");
+            ui.label(str);
+            if ui.clickable_label(&root.name).clicked() {
+                let idx = bones.iter().position(|b| b.id == root.id).unwrap();
+                events.select_bone(idx, false);
+            }
         });
         return;
     }
