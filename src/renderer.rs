@@ -1277,14 +1277,17 @@ pub fn edit_bone(
             scale /= parent.scale;
         }
 
-        scale -= mouse_vel / camera.zoom;
-
         // maintain aspect ratio (same X and Y scale) if holding edit mod
         if edit_mode.holding_edit_mod {
-            let distance = (*mouse_pos - bone.pos).mag() / camera.zoom * 3.;
-            scale = Vec2::new(distance, distance);
+            let norm = mouse_vel.normalize();
+            if norm.x.abs() > norm.y.abs() {
+                mouse_vel.y = mouse_vel.x;
+            } else {
+                mouse_vel.x = mouse_vel.y;
+            }
         }
 
+        scale -= mouse_vel / camera.zoom;
         if scale.x != bone.scale.x {
             edit!(bone, AnimElement::ScaleX, scale.x);
         }
