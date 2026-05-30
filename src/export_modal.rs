@@ -99,15 +99,31 @@ pub fn draw(
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                 ui.horizontal(|ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        // export button
                         let str = &shared_ui.loc("export_modal.save_button");
-                        //let pressed_enter = ui.input(|i| i.key_pressed(egui::Key::Enter));
                         if ui.skf_button(str).clicked() {
                             pressed_export = true;
                         }
-                        #[cfg(not(target_arch = "wasm32"))]
                         if shared_ui.settings_state == SettingsState::Keyboard {
                             ui.checkbox(&mut shared_ui.open_after_export, "".into_atoms());
                             ui.label(shared_ui.loc("export_modal.video.open_after_export"));
+                        }
+                    });
+                });
+
+                if shared_ui.warnings.len() == 0 {
+                    return;
+                }
+
+                // show warning note, if the armature has any
+                ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let warn_str = shared_ui.loc("export_modal.armature.warnings");
+                        let str = format!("{} {}", shared_ui.warnings.len(), warn_str);
+                        let text = egui::RichText::new(str).color(config.colors.warning_text);
+                        if ui.clickable_label(text).clicked() {
+                            shared_ui.export_modal = false;
+                            shared_ui.warnings_open = true;
                         }
                     });
                 });

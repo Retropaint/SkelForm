@@ -309,7 +309,7 @@ pub fn draw(
     if children.len() > 0 || parents.len() > 0 {
         inverse_kinematics(ui, &bone, selections, shared_ui, config, armature, events);
         if !bone.ik_folded {
-            ui.add_space(10.);
+            ui.add_space(20.);
         }
     }
 

@@ -142,7 +142,8 @@
       "clear_color": "Clear Color ℹ:",
       "clear_color_desc": "The color that transparent pixels will be represented by",
       "inverse_kinematics": "Inverse Kinematics",
-      "tex_atlas": "Texture Atlas(es)"
+      "tex_atlas": "Texture Atlas(es)",
+      "warnings": "warning(s)"
     },
     "image": {
       "header": "Export Image",
