@@ -797,16 +797,14 @@ pub fn prepare_files(
     // disabled: v0.4 won't have physics, but this must be removed for v0.5
     for b in 0..armature_copy.bones.len() {
         let bone_id = armature_copy.bones[b].id;
-        if PHYSICS {
-            armature_copy.bones[b].has_physics = armature_copy.has_physics(bone_id);
-        }
+        armature_copy.bones[b].has_physics = armature_copy.has_physics(bone_id);
         let bone = &mut armature_copy.bones[b];
-        if bone.phys_pos_damping == 0. || !PHYSICS {
+        if bone.phys_pos_damping == 0. {
             bone.phys_pos_damping = f32::MAX;
             bone.phys_pos_ratio = f32::MAX;
             bone.phys_global_pos = Vec2::new(f32::MAX, f32::MAX);
         }
-        if (bone.phys_sway == 0. && bone.phys_rot_damping == 0.) || !PHYSICS {
+        if bone.phys_sway == 0. && bone.phys_rot_damping == 0. {
             bone.phys_global_rot = f32::MAX;
             bone.phys_sway = f32::MAX;
             bone.phys_rot_damping = f32::MAX;
@@ -815,7 +813,7 @@ pub fn prepare_files(
             bone.phys_global_orbit_diff = f32::MAX;
             bone.phys_global_orbit_vel = f32::MAX;
         }
-        if bone.phys_scale_damping == 0. || !PHYSICS {
+        if bone.phys_scale_damping == 0. {
             bone.phys_scale_damping = f32::MAX;
             bone.phys_scale_ratio = f32::MAX;
             bone.phys_global_scale = Vec2::new(f32::MAX, f32::MAX);
