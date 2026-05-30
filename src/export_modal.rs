@@ -99,6 +99,12 @@ pub fn draw(
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                 ui.horizontal(|ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        // cancel button
+                        let str = &shared_ui.loc("settings_modal.cancel");
+                        if ui.skf_button(str).clicked() {
+                            shared_ui.export_modal = false;
+                        }
+
                         // export button
                         let str = &shared_ui.loc("export_modal.save_button");
                         if ui.skf_button(str).clicked() {
@@ -185,6 +191,7 @@ pub fn armature_export(
     config: &Config,
 ) {
     ui.heading(shared_ui.loc("export_modal.armature.header"));
+
     ui.add_space(10.);
     let width = ui.available_width() - 20.;
     egui::Frame::new()
