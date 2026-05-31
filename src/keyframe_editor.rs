@@ -502,12 +502,19 @@ pub fn draw_top_bar(
             }
 
             let mut last_unique_frame = -1;
+            let mut diamond_color = config.colors.text;
             for i in 0..armature.sel_anim(&sel).unwrap().keyframes.len() {
                 let frame = armature.sel_anim(&sel).unwrap().keyframes[i].frame;
                 if frame == last_unique_frame {
                     continue;
                 }
                 last_unique_frame = frame;
+
+                if diamond_color == config.colors.text {
+                    diamond_color = Color::new(255, 255, 255, 255);
+                } else {
+                    diamond_color = Color::new(255, 255, 255, 255);
+                }
 
                 // don't draw diamond if it's beyond the recorded lines
                 if shared_ui.anim.lines_x.len() - 1 < frame as usize {
@@ -552,7 +559,7 @@ pub fn draw_top_bar(
                         // red diamond if dragged above keyframe bar (being removed)
                         egui::Color32::RED
                     } else {
-                        egui::Color32::WHITE
+                        diamond_color.into()
                     };
                     let pos = cursor + ui.min_rect().left_top().into();
                     draw_diamond(&ui.ctx().debug_painter(), pos, color, 5.);
@@ -562,10 +569,15 @@ pub fn draw_top_bar(
                 let not_dragging = kf.frame != frame || kf.bone_id != -1;
                 if not_dragging {
                     // draw regular stationary diamond
-                    draw_diamond(ui.painter(), pos, egui::Color32::WHITE, diamond_size);
+                    draw_diamond(ui.painter(), pos, diamond_color.into(), diamond_size);
                 } else {
                     // draw stationary diamond with lower opacity when dragging
-                    let white = egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30);
+                    let white = egui::Color32::from_rgba_unmultiplied(
+                        diamond_color.r,
+                        diamond_color.g,
+                        diamond_color.b,
+                        30,
+                    );
                     draw_diamond(ui.painter(), pos, white, 5.);
                 }
 
@@ -1006,7 +1018,7 @@ pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32, si
 
     painter.add(egui::Shape::convex_polygon(
         points,
-        egui::Color32::WHITE,
+        color,
         egui::Stroke::new(2.0, color),
     ));
 }
