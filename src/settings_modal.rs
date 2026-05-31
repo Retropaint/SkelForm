@@ -315,13 +315,6 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
     shared_ui.updated_config.gridline_gap = basic_input(gap_str, gap as f32, shared_ui, ui) as i32;
 
     ui.horizontal(|ui| {
-        let str_gridline_gap = &shared_ui.loc("settings_modal.rendering.gridline_front");
-        ui.label(str_gridline_gap);
-        let gridline_front = &mut shared_ui.updated_config.gridline_front;
-        ui.checkbox(gridline_front, "".into_atoms());
-    });
-
-    ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.rendering.pixel_mag");
         ui.label(str_heading);
         let id = "pixelmag".to_string();
@@ -334,6 +327,13 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
         ui.label(format!("= {}, {}", window.x, window.y));
     });
 
+    ui.horizontal(|ui| {
+        let str_gridline_gap = &shared_ui.loc("settings_modal.rendering.gridline_front");
+        ui.label(str_gridline_gap);
+        let gridline_front = &mut shared_ui.updated_config.gridline_front;
+        ui.checkbox(gridline_front, "".into_atoms());
+    });
+
     ui.add_space(7.);
 }
 
@@ -341,6 +341,8 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.miscellaneous.heading");
         ui.heading(str_heading);
+
+        // default button
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let str_default = &shared_ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
