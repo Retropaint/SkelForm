@@ -1798,8 +1798,8 @@ fn render_bar(
                         size = [8., 20.];
                         font_size = 8;
                         margin = egui::Margin { top: 3, bottom: 3, right: 5, left: 6 };
-                                                                                                                                        $icon.to_string()
-                                                                                                                                    };
+                        $icon.to_string()
+                    };
                     let cursor = egui::CursorIcon::PointingHand;
                     let mut col = if $field { config.colors.light_accent } else { config.colors.dark_accent };
                     if shared_ui.hovering_render_toggle == idx {
