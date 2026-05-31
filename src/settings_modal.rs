@@ -407,9 +407,13 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     //egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
     //ui.add_space(20.);
 
-    if ui.button("Intentionally Crash").clicked() {
-        panic!();
-    }
+    ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+        ui.horizontal(|ui| {
+            if ui.skf_button("Intentionally Crash").clicked() {
+                panic!();
+            }
+        })
+    });
 }
 
 fn color_row(
