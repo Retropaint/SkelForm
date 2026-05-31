@@ -538,14 +538,20 @@ fn colors(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
 
     let mut alt_col = true;
     macro_rules! color_row {
-        ($title:expr, $color:expr) => {
+        ($title:expr, $color:expr, $alpha:expr) => {
             alt_col = !alt_col;
             let col = &shared_ui.updated_config.colors;
             let color = if alt_col { col.main } else { col.dark_accent };
             let str_color = shared_ui
                 .loc(&format!("settings_modal.colors.{}", $title))
                 .clone();
-            color_row(str_color, $color, color, ui, false);
+            color_row(str_color, $color, color, ui, $alpha);
+        };
+    }
+
+    macro_rules! colors {
+        () => {
+            shared_ui.updated_config.colors
         };
     }
 
@@ -553,25 +559,25 @@ fn colors(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     #[rustfmt::skip]
     {
         ui.heading(shared_ui.loc("settings_modal.user_interface.heading"));
-        color_row!("main",               &mut shared_ui.updated_config.colors.main              );
-        color_row!("light_accent",       &mut shared_ui.updated_config.colors.light_accent      );
-        color_row!("dark_accent",        &mut shared_ui.updated_config.colors.dark_accent       );
-        color_row!("text",               &mut shared_ui.updated_config.colors.text              );
-        color_row!("frameline",          &mut shared_ui.updated_config.colors.frameline         );
-        color_row!("gradient",           &mut shared_ui.updated_config.colors.gradient          );
-        color_row!("link",               &mut shared_ui.updated_config.colors.link              );
-        color_row!("warning_text",       &mut shared_ui.updated_config.colors.warning_text      );
-        color_row!("inverse_kinematics", &mut shared_ui.updated_config.colors.inverse_kinematics);
-        color_row!("meshdef",            &mut shared_ui.updated_config.colors.meshdef           );
-        color_row!("texture",            &mut shared_ui.updated_config.colors.texture           );
-        color_row!("ik_target",          &mut shared_ui.updated_config.colors.ik_target         );
+        color_row!("main",               &mut colors!().main,               false);
+        color_row!("light_accent",       &mut colors!().light_accent,       false);
+        color_row!("dark_accent",        &mut colors!().dark_accent,        false);
+        color_row!("text",               &mut colors!().text,               false);
+        color_row!("frameline",          &mut colors!().frameline,          false);
+        color_row!("gradient",           &mut colors!().gradient,           false);
+        color_row!("link",               &mut colors!().link,               false);
+        color_row!("warning_text",       &mut colors!().warning_text,       false);
+        color_row!("inverse_kinematics", &mut colors!().inverse_kinematics, false);
+        color_row!("meshdef",            &mut colors!().meshdef,            false);
+        color_row!("texture",            &mut colors!().texture,            false);
+        color_row!("ik_target",          &mut colors!().ik_target,          false);
         ui.add_space(10.);
         ui.heading(shared_ui.loc("settings_modal.rendering.heading"));
-        color_row!("background",            &mut shared_ui.updated_config.colors.background           );
-        color_row!("gridline",              &mut shared_ui.updated_config.colors.gridline             );
-        color_row!("center_point",          &mut shared_ui.updated_config.colors.center_point         );
-        color_row!("inactive_center_point", &mut shared_ui.updated_config.colors.inactive_center_point);
-        color_row!("transform_rings",       &mut shared_ui.updated_config.colors.transform_rings      );
+        color_row!("background",            &mut colors!().background,            false);
+        color_row!("gridline",              &mut colors!().gridline,              false);
+        color_row!("center_point",          &mut colors!().center_point,          true);
+        color_row!("inactive_center_point", &mut colors!().inactive_center_point, true);
+        color_row!("transform_rings",       &mut colors!().transform_rings,       true);
 
     };
 }
