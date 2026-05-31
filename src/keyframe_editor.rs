@@ -510,6 +510,7 @@ pub fn draw_top_bar(
                 }
                 last_unique_frame = frame;
 
+                // alternate diamond color
                 if diamond_color == config.colors.text {
                     diamond_color = Color::new(255, 255, 255, 255);
                 } else {
@@ -572,12 +573,8 @@ pub fn draw_top_bar(
                     draw_diamond(ui.painter(), pos, diamond_color.into(), diamond_size);
                 } else {
                     // draw stationary diamond with lower opacity when dragging
-                    let white = egui::Color32::from_rgba_unmultiplied(
-                        diamond_color.r,
-                        diamond_color.g,
-                        diamond_color.b,
-                        30,
-                    );
+                    let dc = diamond_color;
+                    let white = egui::Color32::from_rgba_unmultiplied(dc.r, dc.g, dc.b, 30);
                     draw_diamond(ui.painter(), pos, white, 5.);
                 }
 
@@ -999,10 +996,8 @@ fn draw_frame_lines(
 
     // create extra space at the bottom
     if shared_ui.bone_tops.tops.len() > 0 {
-        let rect = egui::Rect::from_min_size(
-            egui::pos2(0., shared_ui.bone_tops.tops.last().unwrap().height),
-            egui::Vec2::new(1., 40.),
-        );
+        let height = shared_ui.bone_tops.tops.last().unwrap().height;
+        let rect = egui::Rect::from_min_size(egui::pos2(0., height), egui::Vec2::new(1., 40.));
         ui.add_space(40.);
         ui.allocate_rect(rect, egui::Sense::empty());
     }
