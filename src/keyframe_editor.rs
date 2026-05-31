@@ -528,8 +528,10 @@ pub fn draw_top_bar(
                     events.select_anim_frame(frame as usize, false);
                 }
 
+                let mut diamond_size = 5.;
                 if response.hovered() {
                     shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
+                    diamond_size = 9.;
                     if input.left_clicked {
                         events.select_anim_frame(frame as usize, true);
                     }
@@ -552,18 +554,18 @@ pub fn draw_top_bar(
                         egui::Color32::WHITE
                     };
                     let pos = cursor + ui.min_rect().left_top().into();
-                    draw_diamond(&ui.ctx().debug_painter(), pos, color);
+                    draw_diamond(&ui.ctx().debug_painter(), pos, color, 5.);
                 }
 
                 let kf = &shared_ui.anim.dragged_keyframe;
                 let not_dragging = kf.frame != frame || kf.bone_id != -1;
                 if not_dragging {
                     // draw regular stationary diamond
-                    draw_diamond(ui.painter(), pos, egui::Color32::WHITE);
+                    draw_diamond(ui.painter(), pos, egui::Color32::WHITE, diamond_size);
                 } else {
                     // draw stationary diamond with lower opacity when dragging
                     let white = egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30);
-                    draw_diamond(ui.painter(), pos, white);
+                    draw_diamond(ui.painter(), pos, white, 5.);
                 }
 
                 if !response.drag_stopped() || input.left_clicked {
@@ -872,12 +874,10 @@ fn draw_frame_lines(
         }
         let x = shared_ui.anim.lines_x[kf.frame as usize] + ui.min_rect().left();
         let pos = Vec2::new(x, top + size.y / 2.);
-        let offset = size / 2.;
         if panel != None && pos.y > panel.unwrap().bottom() {
             continue;
         }
 
-        let rect = egui::Rect::from_min_size((pos - offset).into(), size.into());
         let mut idx = kf.element.clone().clone() as usize;
         if idx > shared::ANIM_ICON_ID.len() - 1 {
             idx = shared::ANIM_ICON_ID.len() - 1;
@@ -889,16 +889,20 @@ fn draw_frame_lines(
             color = egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30);
         }
 
-        egui::Image::new(&shared_ui.anim.icon_images[shared::ANIM_ICON_ID[idx]])
-            .tint(color)
-            .paint_at(ui, rect);
-
         let rect = egui::Rect::from_center_size(pos.into(), (size * 0.5).into());
         let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click_and_drag());
 
+        let mut icon_size: egui::Vec2 = [17., 17.].into();
         if response.hovered() {
             shared_ui.cursor_icon = egui::CursorIcon::Grab;
+            icon_size = [24., 24.].into();
         }
+        let offset: Vec2 = (icon_size / 2.).into();
+
+        let img_rect = egui::Rect::from_min_size((pos - offset).into(), icon_size.into());
+        egui::Image::new(&shared_ui.anim.icon_images[shared::ANIM_ICON_ID[idx]])
+            .tint(color)
+            .paint_at(ui, img_rect);
 
         if response.dragged() {
             shared_ui.anim.dragged_keyframe = kf.clone();
@@ -976,9 +980,7 @@ fn draw_frame_lines(
     }
 }
 
-pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32) {
-    let size = 5.0;
-
+pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32, size: f32) {
     let points = vec![
         egui::Pos2::new(pos.x, pos.y - size), // Top
         egui::Pos2::new(pos.x + size, pos.y), // Right
@@ -988,7 +990,7 @@ pub fn draw_diamond(painter: &egui::Painter, pos: Vec2, color: egui::Color32) {
 
     painter.add(egui::Shape::convex_polygon(
         points,
-        egui::Color32::TRANSPARENT,
+        egui::Color32::WHITE,
         egui::Stroke::new(2.0, color),
     ));
 }
