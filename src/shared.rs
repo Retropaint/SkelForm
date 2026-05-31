@@ -688,6 +688,8 @@ pub struct Ui {
 
     pub export_style_id: usize,
     pub export_style_path: Arc<Mutex<PathBuf>>,
+
+    pub hovering_diamond: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

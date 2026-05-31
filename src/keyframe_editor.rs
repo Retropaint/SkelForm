@@ -530,6 +530,7 @@ pub fn draw_top_bar(
 
                 let mut diamond_size = 5.;
                 if response.hovered() {
+                    shared_ui.hovering_diamond = true;
                     shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
                     diamond_size = 9.;
                     if input.left_clicked {
@@ -566,6 +567,10 @@ pub fn draw_top_bar(
                     // draw stationary diamond with lower opacity when dragging
                     let white = egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30);
                     draw_diamond(ui.painter(), pos, white, 5.);
+                }
+
+                if response.clicked() {
+                    events.select_anim_frame(frame as usize, false);
                 }
 
                 if !response.drag_stopped() || input.left_clicked {
@@ -798,7 +803,7 @@ fn draw_frame_lines(
             color = egui::Color32::WHITE;
             selected_line_x = ui.min_rect().left() + x;
         }
-        if is_in {
+        if is_in && !shared_ui.hovering_diamond {
             // only show cursor pointing if diamond isn't being dragged
             let dkf = &shared_ui.anim.dragged_keyframe;
             if dkf.bone_id != -1 {
@@ -855,6 +860,8 @@ fn draw_frame_lines(
     let color = egui::Color32::WHITE;
     painter.vline(selected_line_x, range, Stroke { width: 2., color });
 
+    shared_ui.hovering_diamond = false;
+
     // draw per-change icons
     let sel_anim = &armature.animations[selections.anim];
     for i in 0..sel_anim.keyframes.len() {
@@ -885,6 +892,8 @@ fn draw_frame_lines(
 
         let dkf = &shared_ui.anim.dragged_keyframe;
         let mut color = egui::Color32::WHITE;
+
+        // make icon translucent if being dragged
         if *dkf == kf {
             color = egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30);
         }
@@ -893,11 +902,18 @@ fn draw_frame_lines(
         let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click_and_drag());
 
         let mut icon_size: egui::Vec2 = [17., 17.].into();
+        // expand icon if hovered on
         if response.hovered() {
+            shared_ui.hovering_diamond = true;
             shared_ui.cursor_icon = egui::CursorIcon::Grab;
             icon_size = [24., 24.].into();
         }
         let offset: Vec2 = (icon_size / 2.).into();
+
+        // select this frame if icon is clicked
+        if response.clicked() {
+            events.select_anim_frame(kf.frame as usize, false);
+        }
 
         let img_rect = egui::Rect::from_min_size((pos - offset).into(), icon_size.into());
         egui::Image::new(&shared_ui.anim.icon_images[shared::ANIM_ICON_ID[idx]])
