@@ -1825,7 +1825,7 @@ impl Animation {
     }
 }
 
-#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
+#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
 #[serde(default)]
 pub struct Keyframe {
     pub frame: i32,
@@ -2294,6 +2294,8 @@ pub enum Events {
     CreateEmptyTexture,
     ImportPsdArmature,
     CreateParentBone,
+    DeleteSelectedKeyframes,
+    MoveSelectedKeyframes,
 }
 
 enum_string!(Events);
@@ -2355,6 +2357,7 @@ impl EventState {
     generic_event!(update_render_options, Events::UpdateRenderOptions);
     generic_event!(create_empty_texture, Events::CreateEmptyTexture);
     generic_event!(import_psd_armature, Events::ImportPsdArmature);
+    generic_event!(delete_selected_keyframes, Events::DeleteSelectedKeyframes);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, i32);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
@@ -2407,6 +2410,7 @@ impl EventState {
     #[rustfmt::skip]    event_with_value!(copy_keyframes_in_frame, Events::CopyKeyframesInFrame, frame, i32);
     #[rustfmt::skip]    event_with_value!(paste_keyframes_on_frame, Events::PasteKeyframesOnFrame, frame, i32);
     #[rustfmt::skip]    event_with_value!(create_parent_bone, Events::CreateParentBone, of_bone_id, i32);
+    #[rustfmt::skip]    event_with_value!(move_selected_keyframes, Events::MoveSelectedKeyframes, dropped_frame, i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

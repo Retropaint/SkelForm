@@ -19,10 +19,6 @@ pub fn draw(
     edit_mode: &EditMode,
     camera: &Camera,
 ) {
-    if !input.left_down {
-        shared_ui.dragged_keyframe.frame = -1;
-    }
-
     let sel = selections.clone();
     let mut sel_frame = selections.anim_frame;
 
@@ -921,7 +917,12 @@ fn draw_frame_lines(
             }
         }
 
+        // draw icon
         let offset: Vec2 = (icon_size / 2.).into();
+        let img_rect = egui::Rect::from_min_size((pos - offset).into(), icon_size.into());
+        egui::Image::new(&shared_ui.icon_images[shared::ANIM_ICON_ID[idx]])
+            .tint(color)
+            .paint_at(ui, img_rect);
 
         // select this frame if icon is clicked
         if response.clicked() {
@@ -935,13 +936,15 @@ fn draw_frame_lines(
             }
         }
 
-        let img_rect = egui::Rect::from_min_size((pos - offset).into(), icon_size.into());
-        egui::Image::new(&shared_ui.icon_images[shared::ANIM_ICON_ID[idx]])
-            .tint(color)
-            .paint_at(ui, img_rect);
-
+        // put this keyframe in selected if it's going to be dragged
         if response.drag_started() && !shared_ui.selected_keyframes.contains(&kf) {
-            shared_ui.selected_keyframes.push(kf.clone());
+            if input.holding_shift {
+                if !shared_ui.selected_keyframes.contains(&kf) {
+                    shared_ui.selected_keyframes.push(kf.clone());
+                }
+            } else {
+                shared_ui.selected_keyframes = vec![kf.clone()];
+            }
         }
 
         if response.dragged() {
@@ -956,23 +959,19 @@ fn draw_frame_lines(
         }
 
         if response.secondary_clicked() {
-            let context_id = format!(
+            shared_ui.context_menu.show(&format!(
                 "keyframe_{}_{}_{}_{}",
-                &(kf.element as usize).to_string(),
-                &kf.bone_id.to_string(),
-                &kf.frame.to_string(),
-                &i.to_string()
-            );
-            shared_ui.context_menu.show(&context_id.to_string());
+                &(kf.element as usize),
+                &kf.bone_id,
+                &kf.frame,
+                &i
+            ));
         }
 
         if response.drag_stopped() {
             // delete keyframes if cursor is above keyframe editor
             if cursor.y < 0. {
-                for skf in &shared_ui.selected_keyframes {
-                    let idx = sel_anim.keyframes.iter().position(|kf| kf == skf).unwrap();
-                    events.delete_keyframe(idx);
-                }
+                events.delete_selected_keyframes();
                 // break the loop to prevent OOB errors
                 break;
             }
@@ -981,35 +980,14 @@ fn draw_frame_lines(
             let mut dropped_frame = 0;
             for j in 0..shared_ui.lines_x.len() {
                 let x = shared_ui.lines_x[j];
-                if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
-                    continue;
+                if cursor.x < x + hitbox && cursor.x > x - hitbox {
+                    dropped_frame = j;
+                    break;
                 }
-                dropped_frame = j;
-                break;
             }
 
-            // ignore if icon is dragged to the same line
-            if sel_anim.keyframes[i].frame == dropped_frame as i32 {
-                return;
-            }
-
-            // remove keyframe that is the same as this
-            let keyframes = sel_anim.keyframes.clone();
-            let k = keyframes.iter().position(|kf| {
-                kf.bone_id == sel_anim.keyframes[i].bone_id
-                    && kf.element == sel_anim.keyframes[i].element
-                    && kf.frame == dropped_frame as i32
-            });
-            let mut curr = i;
-            if k != None {
-                events.delete_keyframe(k.unwrap());
-                curr -= 1;
-            }
-
-            events.save_animation();
-            events.set_keyframe_frame(curr, dropped_frame);
-            shared_ui.selected_keyframes = vec![];
-            return;
+            events.move_selected_keyframes(dropped_frame as i32);
+            break;
         }
     }
 

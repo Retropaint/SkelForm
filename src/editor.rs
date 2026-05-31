@@ -1155,6 +1155,47 @@ pub fn simple_event(
             selections.bone_ids = vec![parent.id];
             selections.bone_idx = bones.iter().position(|b| b.id == parent.id).unwrap();
         }
+        Events::DeleteSelectedKeyframes => {
+            let anim = &mut armature.sel_anim_mut(&selections).unwrap();
+            for skf in &ui.selected_keyframes {
+                let idx = anim.keyframes.iter().position(|kf| skf == kf).unwrap();
+                anim.keyframes.remove(idx);
+            }
+            ui.selected_keyframes = vec![];
+        }
+        Events::MoveSelectedKeyframes => {
+            if value as i32 == ui.dragged_keyframe.frame {
+                ui.dragged_keyframe.frame = -1;
+                return;
+            }
+
+            undo_states.new_undo_anim(&armature.sel_anim(&selections).unwrap());
+            let sel_anim = &mut armature.sel_anim_mut(&selections).unwrap();
+
+            for skf in &mut ui.selected_keyframes {
+                // get difference between
+                let diff = skf.frame - ui.dragged_keyframe.frame;
+
+                // remove keyframe that is the same as this
+                if let Some(k) = sel_anim.keyframes.iter().position(|kf| {
+                    kf.bone_id == skf.bone_id
+                        && kf.element == skf.element
+                        && kf.frame == value as i32 + diff
+                }) {
+                    sel_anim.keyframes.remove(k);
+                }
+
+                // set this keyframe's frame to the dropped one
+                if let Some(idx) = sel_anim.keyframes.iter().position(|kf| kf == skf) {
+                    let new_frame = (value as i32 + diff).max(1);
+                    sel_anim.keyframes[idx].frame = new_frame;
+                    skf.frame = new_frame;
+                    sel_anim.sort_keyframes();
+                }
+            }
+
+            ui.dragged_keyframe.frame = -1;
+        }
         _ => {}
     }
 }
