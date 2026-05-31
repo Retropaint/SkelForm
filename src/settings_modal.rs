@@ -20,8 +20,8 @@ pub fn draw(
         ..Default::default()
     });
     modal.show(ctx, |modal_ui| {
-        let window = shared::Vec2::new(camera.window.x / 3., camera.window.y / 3.);
-        modal_ui.set_width(window.x.min(500.));
+        let window = shared::Vec2::new(camera.window.x / 4., camera.window.y / 3.);
+        modal_ui.set_width(window.x.min(375.));
         modal_ui.set_height(window.y.min(500.));
 
         modal_ui.horizontal(|ui| {
@@ -86,7 +86,7 @@ pub fn draw(
                 });
 
                 frame.show(ui, |ui| {
-                    ui.set_width(window.x.min(400.));
+                    ui.set_width(window.x.min(375.));
                     ui.set_height(window.y.min(475.));
                     let layout = egui::Layout::top_down(egui::Align::Min);
                     shared_ui.updated_config = config.clone();
