@@ -103,7 +103,7 @@ pub fn draw(
     let lock_bytes = include_bytes!("../assets/lock.png");
     load_png(&mut shared_ui.lock_img, lock_bytes, "lock", context);
     let anim_icon_size = 18;
-    if shared_ui.anim.icon_images.len() == 0 {
+    if shared_ui.icon_images.len() == 0 {
         let full_img = image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
         let mut x = 0;
         while full_img.width() > 0 && x < full_img.width() - 1 {
@@ -115,7 +115,7 @@ pub fn draw(
             );
             let name = format!("anim_icon_{}", x.to_string());
             let tex = context.load_texture(name, color_image, Default::default());
-            shared_ui.anim.icon_images.push(tex);
+            shared_ui.icon_images.push(tex);
         }
     }
     if !shared_ui.startup_window {
@@ -535,8 +535,8 @@ pub fn process_inputs(
             let timeline_mode = i.modifiers.matches_any(timeline_mod);
             if timeline_mode && shared_ui.pointer_on_timeline {
                 // zoom timeline instead of scrolling
-                shared_ui.anim.timeline_zoom -= input.scroll_delta / 10.;
-                shared_ui.anim.timeline_zoom = shared_ui.anim.timeline_zoom.min(10.).max(0.1);
+                shared_ui.timeline_zoom -= input.scroll_delta / 10.;
+                shared_ui.timeline_zoom = shared_ui.timeline_zoom.min(10.).max(0.1);
             } else if !camera.on_ui {
                 events.cam_zoom_scroll();
             }

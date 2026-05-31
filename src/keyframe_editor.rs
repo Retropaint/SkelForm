@@ -20,7 +20,7 @@ pub fn draw(
     camera: &Camera,
 ) {
     if !input.left_down {
-        shared_ui.anim.dragged_keyframe.frame = -1;
+        shared_ui.dragged_keyframe.frame = -1;
     }
 
     let sel = selections.clone();
@@ -287,7 +287,7 @@ fn timeline_editor(
         // calculate how far apart each keyframe should visually be
         let gap = 400.;
         let fps = armature.sel_anim(&sel).unwrap().fps as f32;
-        let hitbox = gap / shared_ui.anim.timeline_zoom / fps / 2.;
+        let hitbox = gap / shared_ui.timeline_zoom / fps / 2.;
 
         // add 1 second worth of frames after the last keyframe
         let frames: i32;
@@ -317,7 +317,7 @@ fn timeline_editor(
             let zero_corner = egui::CornerRadius::ZERO;
             ui.painter().rect_filled(rect, zero_corner, light_accent);
 
-            if shared_ui.anim.lines_x.len() > 0 {
+            if shared_ui.lines_x.len() > 0 {
                 draw_top_bar(
                     ui, width, hitbox, shared_ui, selections, armature, input, config, events,
                 );
@@ -351,7 +351,7 @@ pub fn draw_bones_list(
     let sel = &selections;
     let scroll_area = egui::ScrollArea::vertical()
         .id_salt("bones_list")
-        .vertical_scroll_offset(shared_ui.anim.timeline_offset.y)
+        .vertical_scroll_offset(shared_ui.timeline_offset.y)
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
     let response = scroll_area.show(ui, |ui| {
         // sort keyframes by element & bone
@@ -421,8 +421,8 @@ pub fn draw_bones_list(
                     let pointing_hand = egui::CursorIcon::PointingHand;
                     let label = ui.label(text).on_hover_cursor(pointing_hand);
                     if label.clicked() {
-                        shared_ui.anim.deleting_line_bone_id = kf.bone_id;
-                        shared_ui.anim.deleting_line_element = kf.element.clone();
+                        shared_ui.deleting_line_bone_id = kf.bone_id;
+                        shared_ui.deleting_line_element = kf.element.clone();
                         events.open_polar_modal(
                             PolarId::DeleteKeyframeLine,
                             shared_ui.loc("polar.delete_keyframe_line"),
@@ -441,7 +441,7 @@ pub fn draw_bones_list(
     });
 
     if ui.ui_contains_pointer() {
-        shared_ui.anim.timeline_offset.y = response.state.offset.y;
+        shared_ui.timeline_offset.y = response.state.offset.y;
     }
 }
 
@@ -458,7 +458,7 @@ pub fn draw_top_bar(
 ) {
     let scroll_area = egui::ScrollArea::horizontal()
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
-        .scroll_offset(egui::Vec2::new(shared_ui.anim.timeline_offset.x, 0.));
+        .scroll_offset(egui::Vec2::new(shared_ui.timeline_offset.x, 0.));
     let sel = selections.clone();
 
     scroll_area.show(ui, |ui| {
@@ -469,11 +469,11 @@ pub fn draw_top_bar(
             let range = egui::Rangef::new(100., 475.);
 
             let mut second = -1;
-            for (i, x) in shared_ui.anim.lines_x.iter().enumerate() {
+            for (i, x) in shared_ui.lines_x.iter().enumerate() {
                 let pos = Vec2::new(ui.min_rect().left() + x, ui.min_rect().top() + 10.);
 
                 // show hovered line
-                if shared_ui.anim.hovering_frame == i as i32 {
+                if shared_ui.hovering_frame == i as i32 {
                     // white color if this line is selected, otherwise gray
                     let color = if selections.anim_frame == i as i32 {
                         egui::Color32::WHITE
@@ -518,12 +518,12 @@ pub fn draw_top_bar(
                 }
 
                 // don't draw diamond if it's beyond the recorded lines
-                if shared_ui.anim.lines_x.len() - 1 < frame as usize {
+                if shared_ui.lines_x.len() - 1 < frame as usize {
                     break;
                 }
 
                 let pos = Vec2::new(
-                    ui.min_rect().left() + shared_ui.anim.lines_x[frame as usize] + 3.,
+                    ui.min_rect().left() + shared_ui.lines_x[frame as usize] + 3.,
                     ui.min_rect().top() + 10.,
                 );
 
@@ -549,7 +549,7 @@ pub fn draw_top_bar(
                 let cursor = get_cursor(ui);
                 if response.dragged() {
                     shared_ui.cursor_icon = egui::CursorIcon::Grabbing;
-                    shared_ui.anim.dragged_keyframe = Keyframe {
+                    shared_ui.dragged_keyframe = Keyframe {
                         frame,
                         bone_id: -1,
                         ..Default::default()
@@ -566,7 +566,7 @@ pub fn draw_top_bar(
                     draw_diamond(&ui.ctx().debug_painter(), pos, color, 5.);
                 }
 
-                let kf = &shared_ui.anim.dragged_keyframe;
+                let kf = &shared_ui.dragged_keyframe;
                 let not_dragging = kf.frame != frame || kf.bone_id != -1;
                 if not_dragging {
                     // draw regular stationary diamond
@@ -597,8 +597,8 @@ pub fn draw_top_bar(
                 }
 
                 // move all keyframes under this one over
-                for j in 0..shared_ui.anim.lines_x.len() {
-                    let x = shared_ui.anim.lines_x[j];
+                for j in 0..shared_ui.lines_x.len() {
+                    let x = shared_ui.lines_x[j];
                     if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
                         continue;
                     }
@@ -628,19 +628,19 @@ pub fn draw_timeline_graph(
             .fill(config.colors.light_accent.into())
             .inner_margin(3);
         frame.show(ui, |ui| {
-            let response = egui::ScrollArea::both().scroll_offset(shared_ui.anim.timeline_offset.into()).id_salt("test").show(ui, |ui| {
+            let response = egui::ScrollArea::both().scroll_offset(shared_ui.timeline_offset.into()).id_salt("test").show(ui, |ui| {
                 ui.set_width(width);
                 ui.set_height(ui.available_height());
 
                 let mut cursor = get_cursor(ui);
                 // keep cursor on the frame
-                cursor.y -= shared_ui.anim.timeline_offset.y;
+                cursor.y -= shared_ui.timeline_offset.y;
 
                 // render darkened background after last keyframe
                 let sel = selections.clone();
                 let lkf = armature.sel_anim(&sel).unwrap().keyframes.last();
-                if lkf != None && (lkf.unwrap().frame as usize) < shared_ui.anim.lines_x.len() {
-                    let left_top_rect = egui::vec2(shared_ui.anim.lines_x[lkf.unwrap().frame as usize], -3.);
+                if lkf != None && (lkf.unwrap().frame as usize) < shared_ui.lines_x.len() {
+                    let left_top_rect = egui::vec2(shared_ui.lines_x[lkf.unwrap().frame as usize], -3.);
                     let right_bottom_rect = egui::vec2(0., shared_ui.bone_tops.tops.last().unwrap().height);
 
                     let rect_to_fill = egui::Rect::from_min_size(
@@ -655,7 +655,7 @@ pub fn draw_timeline_graph(
                 draw_frame_lines(ui, shared_ui, armature, config, input, selections, events, hitbox, cursor);
             });
             if ui.ui_contains_pointer() {
-                shared_ui.anim.timeline_offset = response.state.offset.into();
+                shared_ui.timeline_offset = response.state.offset.into();
             }
         });
     });
@@ -710,12 +710,12 @@ pub fn draw_bottom_bar(
             });
 
             if ui.skf_button("+").clicked() {
-                shared_ui.anim.timeline_zoom -= 0.1;
-                shared_ui.anim.timeline_zoom = shared_ui.anim.timeline_zoom.max(0.1);
+                shared_ui.timeline_zoom -= 0.1;
+                shared_ui.timeline_zoom = shared_ui.timeline_zoom.max(0.1);
             }
             if ui.skf_button("-").clicked() {
-                shared_ui.anim.timeline_zoom += 0.1;
-                shared_ui.anim.timeline_zoom = shared_ui.anim.timeline_zoom.min(3.);
+                shared_ui.timeline_zoom += 0.1;
+                shared_ui.timeline_zoom = shared_ui.timeline_zoom.min(3.);
             }
 
             ui.add_space(5.);
@@ -776,7 +776,7 @@ fn draw_frame_lines(
     hitbox: f32,
     cursor: Vec2,
 ) {
-    shared_ui.anim.lines_x = vec![];
+    shared_ui.lines_x = vec![];
     let mut selected_line_x = 0.;
     let mut hovered_line_x = -1.;
     let panel = shared_ui.keyframe_panel_rect;
@@ -789,7 +789,7 @@ fn draw_frame_lines(
     let mut i = 0;
     while x < ui.min_rect().width() {
         x = i as f32 * hitbox * 2. + LINE_OFFSET;
-        shared_ui.anim.lines_x.push(x);
+        shared_ui.lines_x.push(x);
 
         let mut color: egui::Color32 = config.colors.frameline.into();
         let last_keyframe = armature.animations[selections.anim].keyframes.last();
@@ -814,13 +814,13 @@ fn draw_frame_lines(
         }
         if is_in && !shared_ui.hovering_diamond {
             // only show cursor pointing if diamond isn't being dragged
-            let dkf = &shared_ui.anim.dragged_keyframe;
+            let dkf = &shared_ui.dragged_keyframe;
             if dkf.bone_id != -1 {
                 shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
             }
 
             color = egui::Color32::from_rgb(175, 175, 175);
-            shared_ui.anim.hovering_frame = i;
+            shared_ui.hovering_frame = i;
             hovering = true;
             hovered_line_x = ui.min_rect().left() + x;
 
@@ -843,7 +843,7 @@ fn draw_frame_lines(
     }
 
     if !hovering {
-        shared_ui.anim.hovering_frame = -1;
+        shared_ui.hovering_frame = -1;
     }
 
     let mut last_bone = -1;
@@ -888,7 +888,7 @@ fn draw_frame_lines(
         } else {
             return;
         }
-        let x = shared_ui.anim.lines_x[kf.frame as usize] + ui.min_rect().left();
+        let x = shared_ui.lines_x[kf.frame as usize] + ui.min_rect().left();
         let pos = Vec2::new(x, top + size.y / 2.);
         if panel != None && pos.y > panel.unwrap().bottom() {
             continue;
@@ -899,7 +899,7 @@ fn draw_frame_lines(
             idx = shared::ANIM_ICON_ID.len() - 1;
         }
 
-        let dkf = &shared_ui.anim.dragged_keyframe;
+        let dkf = &shared_ui.dragged_keyframe;
         let mut color = egui::Color32::WHITE;
 
         // make icon translucent if being dragged
@@ -925,30 +925,29 @@ fn draw_frame_lines(
         }
 
         let img_rect = egui::Rect::from_min_size((pos - offset).into(), icon_size.into());
-        egui::Image::new(&shared_ui.anim.icon_images[shared::ANIM_ICON_ID[idx]])
+        egui::Image::new(&shared_ui.icon_images[shared::ANIM_ICON_ID[idx]])
             .tint(color)
             .paint_at(ui, img_rect);
 
         if response.dragged() {
-            shared_ui.anim.dragged_keyframe = kf.clone();
+            shared_ui.dragged_keyframe = kf.clone();
             shared_ui.cursor_icon = egui::CursorIcon::Grabbing;
             if let Some(cursor) = ui.ctx().pointer_latest_pos() {
                 let pos = egui::Pos2::new(cursor.x - offset.x, cursor.y - offset.y);
                 let drag_rect = egui::Rect::from_min_size(pos, size.into());
-                egui::Image::new(&shared_ui.anim.icon_images[shared::ANIM_ICON_ID[idx]])
+                egui::Image::new(&shared_ui.icon_images[shared::ANIM_ICON_ID[idx]])
                     .paint_at(ui, drag_rect);
             }
         }
 
-        let context_id = format!(
-            "keyframe_{}_{}_{}_{}",
-            &(kf.element as usize).to_string(),
-            &kf.bone_id.to_string(),
-            &kf.frame.to_string(),
-            &i.to_string()
-        );
-
         if response.secondary_clicked() {
+            let context_id = format!(
+                "keyframe_{}_{}_{}_{}",
+                &(kf.element as usize).to_string(),
+                &kf.bone_id.to_string(),
+                &kf.frame.to_string(),
+                &i.to_string()
+            );
             shared_ui.context_menu.show(&context_id.to_string());
         }
 
@@ -962,8 +961,8 @@ fn draw_frame_lines(
             break;
         }
 
-        for j in 0..shared_ui.anim.lines_x.len() {
-            let x = shared_ui.anim.lines_x[j];
+        for j in 0..shared_ui.lines_x.len() {
+            let x = shared_ui.lines_x[j];
             if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
                 continue;
             }

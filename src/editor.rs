@@ -1240,8 +1240,8 @@ fn select_bone(
     let bone_id = armature.bones[idx].id;
     // scroll to this bone in keyframe editor
     if let Some(bone) = ui.bone_tops.tops.iter().find(|b| b.id == bone_id) {
-        ui.anim.timeline_offset.y =
-            bone.height + ui.anim.timeline_offset.y - ui.keyframe_panel_rect.unwrap().top() - 47.;
+        ui.timeline_offset.y =
+            bone.height + ui.timeline_offset.y - ui.keyframe_panel_rect.unwrap().top() - 47.;
     }
 
     // select only this bone if not holding modifiers

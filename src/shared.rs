@@ -520,7 +520,6 @@ impl Warning {
 
 #[derive(Clone, Default)]
 pub struct Ui {
-    pub anim: UiAnim,
     pub startup: Startup,
 
     pub edit_bar: UiBar,
@@ -690,6 +689,16 @@ pub struct Ui {
     pub export_style_path: Arc<Mutex<PathBuf>>,
 
     pub hovering_diamond: bool,
+    pub hovering_frame: i32,
+    pub timeline_zoom: f32,
+    pub lines_x: Vec<f32>,
+
+    pub timeline_offset: Vec2,
+    pub dragged_keyframe: Keyframe,
+    pub icon_images: Vec<egui::TextureHandle>,
+
+    pub deleting_line_bone_id: i32,
+    pub deleting_line_element: AnimElement,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -1005,20 +1014,6 @@ impl Default for KeyboardConfig {
             toggle_edit_vertices: regular_key!(egui::Key::V),
         }
     }
-}
-
-#[derive(Clone, Default)]
-pub struct UiAnim {
-    pub hovering_frame: i32,
-    pub timeline_zoom: f32,
-    pub lines_x: Vec<f32>,
-
-    pub timeline_offset: Vec2,
-    pub dragged_keyframe: Keyframe,
-    pub icon_images: Vec<egui::TextureHandle>,
-
-    pub deleting_line_bone_id: i32,
-    pub deleting_line_element: AnimElement,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq, Debug)]
