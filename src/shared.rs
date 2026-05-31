@@ -688,17 +688,17 @@ pub struct Ui {
     pub export_style_id: usize,
     pub export_style_path: Arc<Mutex<PathBuf>>,
 
+    // Keyframe editor stuff
     pub hovering_diamond: bool,
     pub hovering_frame: i32,
     pub timeline_zoom: f32,
     pub lines_x: Vec<f32>,
-
     pub timeline_offset: Vec2,
     pub dragged_keyframe: Keyframe,
     pub icon_images: Vec<egui::TextureHandle>,
-
     pub deleting_line_bone_id: i32,
     pub deleting_line_element: AnimElement,
+    pub selected_keyframes: Vec<Keyframe>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

@@ -826,6 +826,7 @@ fn draw_frame_lines(
 
             // select this frame if clicked
             if input.left_clicked && shared_ui.context_menu.id == "" {
+                shared_ui.selected_keyframes = vec![];
                 events.select_anim_frame(i as usize, false);
                 shared_ui.last_selected = "keyframe".to_string();
             }
@@ -912,22 +913,36 @@ fn draw_frame_lines(
 
         let mut icon_size: egui::Vec2 = [17., 17.].into();
         // expand icon if hovered on
-        if response.hovered() {
-            shared_ui.hovering_diamond = true;
-            shared_ui.cursor_icon = egui::CursorIcon::Grab;
+        if response.hovered() || shared_ui.selected_keyframes.contains(&kf) {
             icon_size = [24., 24.].into();
+            if response.hovered() {
+                shared_ui.hovering_diamond = true;
+                shared_ui.cursor_icon = egui::CursorIcon::Grab;
+            }
         }
+
         let offset: Vec2 = (icon_size / 2.).into();
 
         // select this frame if icon is clicked
         if response.clicked() {
             events.select_anim_frame(kf.frame as usize, false);
+            if input.holding_shift {
+                if !shared_ui.selected_keyframes.contains(&kf) {
+                    shared_ui.selected_keyframes.push(kf.clone());
+                }
+            } else {
+                shared_ui.selected_keyframes = vec![kf.clone()];
+            }
         }
 
         let img_rect = egui::Rect::from_min_size((pos - offset).into(), icon_size.into());
         egui::Image::new(&shared_ui.icon_images[shared::ANIM_ICON_ID[idx]])
             .tint(color)
             .paint_at(ui, img_rect);
+
+        if response.drag_started() && !shared_ui.selected_keyframes.contains(&kf) {
+            shared_ui.selected_keyframes.push(kf.clone());
+        }
 
         if response.dragged() {
             shared_ui.dragged_keyframe = kf.clone();
@@ -951,35 +966,39 @@ fn draw_frame_lines(
             shared_ui.context_menu.show(&context_id.to_string());
         }
 
-        if !response.drag_stopped() {
-            continue;
-        }
-
-        if cursor.y < 0. {
-            events.delete_keyframe(i);
-            // break the loop to prevent OOB errors
-            break;
-        }
-
-        for j in 0..shared_ui.lines_x.len() {
-            let x = shared_ui.lines_x[j];
-            if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
-                continue;
+        if response.drag_stopped() {
+            // delete keyframes if cursor is above keyframe editor
+            if cursor.y < 0. {
+                for skf in &shared_ui.selected_keyframes {
+                    let idx = sel_anim.keyframes.iter().position(|kf| kf == skf).unwrap();
+                    events.delete_keyframe(idx);
+                }
+                // break the loop to prevent OOB errors
+                break;
             }
 
-            let curr_kf = &sel_anim.keyframes[i];
+            // get the frame that cursor is on
+            let mut dropped_frame = 0;
+            for j in 0..shared_ui.lines_x.len() {
+                let x = shared_ui.lines_x[j];
+                if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
+                    continue;
+                }
+                dropped_frame = j;
+                break;
+            }
 
             // ignore if icon is dragged to the same line
-            if curr_kf.frame == j as i32 {
+            if sel_anim.keyframes[i].frame == dropped_frame as i32 {
                 return;
             }
 
             // remove keyframe that is the same as this
             let keyframes = sel_anim.keyframes.clone();
             let k = keyframes.iter().position(|kf| {
-                kf.bone_id == curr_kf.bone_id
-                    && kf.element == curr_kf.element
-                    && kf.frame == j as i32
+                kf.bone_id == sel_anim.keyframes[i].bone_id
+                    && kf.element == sel_anim.keyframes[i].element
+                    && kf.frame == dropped_frame as i32
             });
             let mut curr = i;
             if k != None {
@@ -988,7 +1007,8 @@ fn draw_frame_lines(
             }
 
             events.save_animation();
-            events.set_keyframe_frame(curr, j);
+            events.set_keyframe_frame(curr, dropped_frame);
+            shared_ui.selected_keyframes = vec![];
             return;
         }
     }
