@@ -1,6 +1,6 @@
 use egui::IntoAtoms;
 
-use crate::{shared, ui::EguiUi, Display};
+use crate::{shared, ui::EguiUi, Config, Display};
 
 pub fn draw(
     shared_ui: &mut crate::Ui,
@@ -338,6 +338,21 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
 }
 
 fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
+    ui.horizontal(|ui| {
+        let str_heading = &shared_ui.loc("settings_modal.miscellaneous.heading");
+        ui.heading(str_heading);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let str_default = &shared_ui.loc("settings_modal.default");
+            if ui.skf_button(str_default).clicked() {
+                let config = &mut shared_ui.updated_config;
+                config.autosave_frequency = Config::default().autosave_frequency;
+                config.exact_bone_select = Config::default().exact_bone_select;
+                config.keep_tex_str = Config::default().keep_tex_str;
+                config.skip_startup = Config::default().skip_startup;
+            }
+        });
+    });
+
     #[cfg(not(target_arch = "wasm32"))]
     ui.horizontal(|ui| {
         let str_autosave_freq = &shared_ui.loc("settings_modal.miscellaneous.autosave_frequency");
