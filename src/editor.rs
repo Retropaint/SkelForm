@@ -1197,7 +1197,7 @@ pub fn simple_event(
 
                 // set this keyframe's frame to the dropped one
                 if let Some(idx) = sel_anim.keyframes.iter().position(|kf| kf == skf) {
-                    let new_frame = (value as i32 + diff).max(1);
+                    let new_frame = (value as i32 + diff).max(0);
                     sel_anim.keyframes[idx].frame = new_frame;
                     skf.frame = new_frame;
                     sel_anim.sort_keyframes();
