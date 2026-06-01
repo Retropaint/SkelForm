@@ -531,7 +531,7 @@ pub fn draw_top_bar(
                     ui.allocate_rect(rect, egui::Sense::click_and_drag());
 
                 if response.drag_started() {
-                    events.select_anim_frame(frame as usize, false);
+                    events.select_anim_frame(frame as usize, true);
                 }
 
                 let mut diamond_size = 5.;
@@ -598,12 +598,11 @@ pub fn draw_top_bar(
                 // move all keyframes under this one over
                 for j in 0..shared_ui.lines_x.len() {
                     let x = shared_ui.lines_x[j];
-                    if !(cursor.x < x + hitbox && cursor.x > x - hitbox) {
-                        continue;
+                    if cursor.x < x + hitbox && cursor.x > x - hitbox {
+                        events.save_animation();
+                        events.move_selected_keyframes(j as i32);
+                        return;
                     }
-                    events.save_animation();
-                    events.set_all_keyframe_frame(frame as usize, j);
-                    return;
                 }
             }
         });
