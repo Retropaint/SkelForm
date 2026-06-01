@@ -245,14 +245,13 @@ pub fn draw(
             let scroll_area = egui::ScrollArea::vertical()
                 .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
             scroll_area.show(ui, |ui| {
-                let sel = &selections;
-                if selections.bone_idx != usize::MAX {
+                if shared_ui.last_selected == "bone" {
                     let bone = selected_bone.clone();
                     bone_panel::draw(
                         bone, ui, selections, shared_ui, armature, config, events, &input,
                         edit_mode,
                     );
-                } else if armature.sel_anim(&sel) != None && sel.anim_frame != -1 {
+                } else if shared_ui.last_selected == "keyframe" {
                     keyframe_panel::draw(ui, &selections, &armature, events, shared_ui, config);
                 } else if armature.bones.len() > 1 {
                     ui.heading("Armature Shortcuts");

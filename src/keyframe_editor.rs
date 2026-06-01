@@ -575,6 +575,7 @@ pub fn draw_top_bar(
                 }
 
                 if response.clicked() {
+                    shared_ui.last_selected = "keyframe".to_string();
                     events.select_anim_frame(frame as usize, false);
                 }
 
@@ -926,6 +927,7 @@ fn draw_frame_lines(
 
         // select this frame if icon is clicked
         if response.clicked() {
+            shared_ui.last_selected = "keyframe".to_string();
             events.select_anim_frame(kf.frame as usize, false);
             if input.holding_shift {
                 if !shared_ui.selected_keyframes.contains(&kf) {

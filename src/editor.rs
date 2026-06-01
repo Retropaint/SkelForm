@@ -136,6 +136,7 @@ pub fn iterate_events(
         let selected_bone_idx = selections.bone_idx;
         let selected_bone_ids = selections.bone_ids.clone();
         unselect_all(selections, edit_mode, ui);
+        ui.last_selected = "keyframe".to_string();
         selections.anim = selected_anim;
         selections.anim_frame = events.values[0] as i32;
 
