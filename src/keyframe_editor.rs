@@ -461,29 +461,10 @@ pub fn draw_top_bar(
         egui::Frame::new().show(ui, |ui| {
             ui.set_width(width);
             ui.set_height(20.);
-            let painter = ui.painter_at(ui.min_rect());
-            let range = egui::Rangef::new(100., 475.);
 
             let mut second = -1;
             for (i, x) in shared_ui.lines_x.iter().enumerate() {
                 let pos = Vec2::new(ui.min_rect().left() + x, ui.min_rect().top() + 10.);
-
-                // show hovered line
-                if shared_ui.hovering_frame == i as i32 {
-                    // white color if this line is selected, otherwise gray
-                    let color = if selections.anim_frame == i as i32 {
-                        egui::Color32::from_rgb(175, 175, 175)
-                    } else {
-                        egui::Color32::from_rgb(175, 175, 175)
-                    };
-                    painter.vline(pos.x + 3., range, Stroke { width: 2., color });
-                } else if selections.anim_frame == i as i32 {
-                    let color = (config.colors.frameline
-                        + egui::Color32::from_rgb(100, 100, 100).into())
-                    .into();
-                    painter.vline(pos.x + 3., range, Stroke { width: 2., color });
-                }
-
                 if i as i32 % armature.sel_anim(&sel).unwrap().fps != 0 {
                     continue;
                 }
