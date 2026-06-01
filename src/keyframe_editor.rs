@@ -472,13 +472,15 @@ pub fn draw_top_bar(
                 if shared_ui.hovering_frame == i as i32 {
                     // white color if this line is selected, otherwise gray
                     let color = if selections.anim_frame == i as i32 {
-                        egui::Color32::WHITE
+                        egui::Color32::from_rgb(175, 175, 175)
                     } else {
                         egui::Color32::from_rgb(175, 175, 175)
                     };
                     painter.vline(pos.x + 3., range, Stroke { width: 2., color });
                 } else if selections.anim_frame == i as i32 {
-                    let color = egui::Color32::WHITE;
+                    let color = (config.colors.frameline
+                        + egui::Color32::from_rgb(100, 100, 100).into())
+                    .into();
                     painter.vline(pos.x + 3., range, Stroke { width: 2., color });
                 }
 
