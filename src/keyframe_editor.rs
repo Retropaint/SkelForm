@@ -908,10 +908,10 @@ fn draw_frame_lines(
         let rect = egui::Rect::from_center_size(pos.into(), (size * 0.5).into());
         let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click_and_drag());
 
-        let mut icon_size: egui::Vec2 = [17., 17.].into();
+        let mut icon_size: egui::Vec2 = [20., 20.].into();
         // expand icon if hovered on
         if response.hovered() || shared_ui.selected_keyframes.contains(&kf) {
-            icon_size = [24., 24.].into();
+            icon_size += [4., 4.].into();
             if response.hovered() {
                 shared_ui.hovering_diamond = true;
                 shared_ui.cursor_icon = egui::CursorIcon::Grab;
