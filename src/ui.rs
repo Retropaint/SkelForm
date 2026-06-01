@@ -102,13 +102,13 @@ pub fn draw(
     load_png(&mut shared_ui.ik_img, ik_bytes, "lucysir_ik", context);
     let lock_bytes = include_bytes!("../assets/lock.png");
     load_png(&mut shared_ui.lock_img, lock_bytes, "lock", context);
-    let anim_icon_size = 18;
+    let icon_size = 200;
     if shared_ui.icon_images.len() == 0 {
         let full_img = image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
         let mut x = 0;
         while full_img.width() > 0 && x < full_img.width() - 1 {
-            let img = full_img.crop_imm(x, 0, 18, 18).into_rgba8();
-            x += anim_icon_size;
+            let img = full_img.crop_imm(x, 0, icon_size, icon_size).into_rgba8();
+            x += icon_size;
             let color_image = egui::ColorImage::from_rgba_unmultiplied(
                 [img.width() as usize, img.height() as usize],
                 img.as_flat_samples().as_slice(),
