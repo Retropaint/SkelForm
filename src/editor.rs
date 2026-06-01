@@ -137,11 +137,20 @@ pub fn iterate_events(
         let selected_bone_ids = selections.bone_ids.clone();
         unselect_all(selections, edit_mode, ui);
         selections.anim = selected_anim;
-        if events.values[1] != 1. {
-            selections.bone_idx = selected_bone_idx;
-            selections.bone_ids = selected_bone_ids;
-        }
         selections.anim_frame = events.values[0] as i32;
+
+        // select all keyframes in this frame if requested
+        if events.values[1] == 1. {
+            ui.selected_keyframes = vec![];
+            for kf in &armature.sel_anim(&selections).unwrap().keyframes {
+                if kf.frame == selections.anim_frame {
+                    ui.selected_keyframes.push(kf.clone());
+                }
+            }
+        }
+
+        selections.bone_idx = selected_bone_idx;
+        selections.bone_ids = selected_bone_ids;
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::ToggleIkDisabled {
