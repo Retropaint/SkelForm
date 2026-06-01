@@ -806,7 +806,6 @@ fn draw_frame_lines(
         let is_in = can_hover && cur.x < x + hitbox && cur.x > x - hitbox && below_top_bar;
 
         if selections.anim_frame == i {
-            color = egui::Color32::WHITE;
             selected_line_x = ui.min_rect().left() + x;
         }
         if is_in && !shared_ui.hovering_diamond {
@@ -864,7 +863,7 @@ fn draw_frame_lines(
     }
 
     // draw selected line
-    let color = egui::Color32::WHITE;
+    let color = (config.colors.frameline + egui::Color32::from_rgb(100, 100, 100).into()).into();
     painter.vline(selected_line_x, range, Stroke { width: 2., color });
 
     shared_ui.hovering_diamond = false;
