@@ -1207,6 +1207,9 @@ fn select_bone(
     if idx == usize::MAX {
         sel.bone_idx = usize::MAX;
         sel.bone_ids = vec![];
+        sel.bind = -1;
+        edit_mode.setting_ik_target = false;
+        edit_mode.setting_bind_bone = false;
         return;
     }
 
@@ -1230,8 +1233,11 @@ fn select_bone(
     if edit_mode.setting_bind_bone {
         let bone_idx = sel.bind as usize;
         let id = armature.bones[idx].id;
-        let bind = &mut armature.sel_bone_mut(&sel).unwrap().binds[bone_idx];
-        bind.bone_id = id;
+        if let Some(bone) = armature.sel_bone_mut(&sel) {
+            if let Some(bind) = bone.binds.get_mut(bone_idx) {
+                bind.bone_id = id;
+            }
+        }
         edit_mode.setting_bind_bone = false;
         return;
     }
