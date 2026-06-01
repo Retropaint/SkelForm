@@ -914,7 +914,7 @@ fn draw_frame_lines(
         let mut icon_size: egui::Vec2 = [20., 20.].into();
         // expand icon if hovered on
         if response.hovered() || shared_ui.selected_keyframes.contains(&kf) {
-            icon_size += [4., 4.].into();
+            icon_size += [6., 6.].into();
             if response.hovered() {
                 shared_ui.hovering_diamond = true;
                 shared_ui.cursor_icon = egui::CursorIcon::Grab;

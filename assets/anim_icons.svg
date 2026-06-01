@@ -9,7 +9,7 @@
    id="svg1"
    inkscape:version="1.3.2 (091e20e, 2023-11-25)"
    sodipodi:docname="skf_icons.svg"
-   inkscape:export-filename="skf_icons.png"
+   inkscape:export-filename="skf_icons_black.png"
    inkscape:export-xdpi="50.799999"
    inkscape:export-ydpi="50.799999"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -29,7 +29,7 @@
      showguides="true"
      showgrid="true"
      inkscape:zoom="0.33589188"
-     inkscape:cx="3844.9873"
+     inkscape:cx="3323.9863"
      inkscape:cy="187.56036"
      inkscape:window-width="1440"
      inkscape:window-height="847"
@@ -37,7 +37,7 @@
      inkscape:window-y="25"
      inkscape:window-maximized="1"
      inkscape:current-layer="g14"
-     inkscape:export-bgcolor="#ffffff00">
+     inkscape:export-bgcolor="#000000ff">
     <inkscape:grid
        id="grid3"
        units="cm"
