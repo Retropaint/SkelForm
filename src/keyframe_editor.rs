@@ -809,6 +809,8 @@ fn draw_frame_lines(
 
         if selections.anim_frame == i {
             selected_line_x = ui.min_rect().left() + x;
+        } else if i != 0 && i % anim.fps == 0 {
+            color = color + egui::Color32::from_rgb(20, 20, 20);
         }
         if is_in && !shared_ui.hovering_diamond {
             // only show cursor pointing if diamond isn't being dragged
