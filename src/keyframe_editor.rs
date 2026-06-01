@@ -472,6 +472,11 @@ pub fn draw_top_bar(
                 // if this frame line represents a second (1s, 2s, etc),
                 // draw the number
                 second += 1;
+                // don't show 0s
+                if second == 0 {
+                    continue;
+                }
+
                 let center = egui::Align2::CENTER_CENTER;
                 let fontid = egui::FontId::default();
                 let col = config.colors.text;
