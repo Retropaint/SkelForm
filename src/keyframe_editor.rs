@@ -612,7 +612,10 @@ pub fn draw_timeline_graph(
             .fill(config.colors.light_accent.into())
             .inner_margin(3);
         frame.show(ui, |ui| {
-            let response = egui::ScrollArea::both().scroll_offset(shared_ui.timeline_offset.into()).id_salt("test").show(ui, |ui| {
+            let area = egui::ScrollArea::both()
+                .scroll_offset(shared_ui.timeline_offset.into())
+                .id_salt("test");
+            let response = area.show(ui, |ui| {
                 ui.set_width(width);
                 ui.set_height(ui.available_height());
 
@@ -624,19 +627,20 @@ pub fn draw_timeline_graph(
                 let sel = selections.clone();
                 let lkf = armature.sel_anim(&sel).unwrap().keyframes.last();
                 if lkf != None && (lkf.unwrap().frame as usize) < shared_ui.lines_x.len() {
-                    let left_top_rect = egui::vec2(shared_ui.lines_x[lkf.unwrap().frame as usize], -3.);
-                    let right_bottom_rect = egui::vec2(0., shared_ui.bone_tops.tops.last().unwrap().height);
+                    let left_top = egui::vec2(shared_ui.lines_x[lkf.unwrap().frame as usize], -3.);
+                    let right_bot = egui::vec2(0., shared_ui.bone_tops.tops.last().unwrap().height);
 
                     let rect_to_fill = egui::Rect::from_min_size(
-                        ui.min_rect().left_top() + left_top_rect,
-                        ui.min_rect().size() + right_bottom_rect,
+                        ui.min_rect().left_top() + left_top,
+                        ui.min_rect().size() + right_bot,
                     );
                     ui.painter()
                         .rect_filled(rect_to_fill, 0., config.colors.dark_accent);
                 }
 
-                #[rustfmt::skip]
-                draw_frame_lines(ui, shared_ui, armature, config, input, selections, events, hitbox, cursor);
+                draw_frame_lines(
+                    ui, shared_ui, armature, config, input, selections, events, hitbox, cursor,
+                );
             });
             if ui.ui_contains_pointer() {
                 shared_ui.timeline_offset = response.state.offset.into();
