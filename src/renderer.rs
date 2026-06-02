@@ -1405,20 +1405,17 @@ pub fn bone_vertices(
         } else {
             1.
         };
-        let idx = selections.bind;
-        let verts: Vec<i32> = if idx == -1 {
-            vec![]
-        } else if let Some(bind) = armature
-            .sel_bone(&sel)
-            .and_then(|selected| selected.binds.get(idx as usize))
-        {
-            bind.verts.iter().map(|v| v.id).collect()
-        } else {
-            vec![]
-        };
+
+        // get vertices of selected bind
+        let idx = selections.bind as usize;
+        let mut verts_in_bind = vec![];
+        if let Some(bind) = armature.sel_bone(&sel).and_then(|bone| bone.binds.get(idx)) {
+            verts_in_bind = bind.verts.iter().map(|v| v.id).collect()
+        }
 
         // yellow vertex if bound
-        let bound = idx != -1 && verts.contains(&(world_verts[wv].id as i32));
+        let idx = selections.bind;
+        let bound = idx != -1 && verts_in_bind.contains(&(world_verts[wv].id as i32));
         let white = Color::new(255, 255, 255, 255);
         let mut col = if bound {
             Color::new(255, 255, 0, 255)

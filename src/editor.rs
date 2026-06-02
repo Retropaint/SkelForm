@@ -1282,12 +1282,12 @@ fn select_bone(
 
     // set this bone as bind if in bind mode
     if edit_mode.setting_bind_bone {
-        let bone_idx = sel.bind as usize;
         let id = armature.bones[idx].id;
-        if let Some(bone) = armature.sel_bone_mut(&sel) {
-            if let Some(bind) = bone.binds.get_mut(bone_idx) {
-                bind.bone_id = id;
-            }
+        if let Some(bind) = armature
+            .sel_bone_mut(&sel)
+            .and_then(|bone| bone.binds.get_mut(sel.bind as usize))
+        {
+            bind.bone_id = id;
         }
         edit_mode.setting_bind_bone = false;
         return;
