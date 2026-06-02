@@ -1406,14 +1406,16 @@ pub fn bone_vertices(
             1.
         };
         let idx = selections.bind;
-        let verts: Vec<i32>;
-        if idx == -1 {
-            verts = vec![];
+        let verts: Vec<i32> = if idx == -1 {
+            vec![]
+        } else if let Some(bind) = armature
+            .sel_bone(&sel)
+            .and_then(|selected| selected.binds.get(idx as usize))
+        {
+            bind.verts.iter().map(|v| v.id).collect()
         } else {
-            let selected = armature.sel_bone(&sel).unwrap();
-            let sel_bind = &selected.binds;
-            verts = sel_bind[idx as usize].verts.iter().map(|v| v.id).collect();
-        }
+            vec![]
+        };
 
         // yellow vertex if bound
         let bound = idx != -1 && verts.contains(&(world_verts[wv].id as i32));
