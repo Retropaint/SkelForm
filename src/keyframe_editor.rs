@@ -526,6 +526,7 @@ pub fn draw_top_bar(
                     shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
                     diamond_size = 9.;
                     if input.left_clicked {
+                        shared_ui.last_selected = "keyframe".to_string();
                         events.select_anim_frame(frame as usize, true);
                     }
                 }
@@ -562,12 +563,7 @@ pub fn draw_top_bar(
                     draw_diamond(ui.painter(), pos, white, 5.);
                 }
 
-                if response.clicked() {
-                    shared_ui.last_selected = "keyframe".to_string();
-                    events.select_anim_frame(frame as usize, false);
-                }
-
-                if !response.drag_stopped() || input.left_clicked {
+                if !response.drag_stopped() {
                     continue;
                 }
 
@@ -585,7 +581,6 @@ pub fn draw_top_bar(
                 for j in 0..shared_ui.lines_x.len() {
                     let x = shared_ui.lines_x[j];
                     if cursor.x < x + hitbox && cursor.x > x - hitbox {
-                        events.save_animation();
                         events.move_selected_keyframes(j as i32);
                         return;
                     }
@@ -922,9 +917,7 @@ fn draw_frame_lines(
             shared_ui.last_selected = "keyframe".to_string();
             events.select_anim_frame(kf.frame as usize, false);
             if input.holding_shift {
-                if !shared_ui.selected_keyframes.contains(&kf) {
-                    shared_ui.selected_keyframes.push(kf.clone());
-                }
+                add_selected_keyframes(&mut shared_ui.selected_keyframes, &kf);
             } else {
                 shared_ui.selected_keyframes = vec![kf.clone()];
             }
@@ -933,9 +926,7 @@ fn draw_frame_lines(
         // put this keyframe in selected if it's going to be dragged
         if response.drag_started() && !shared_ui.selected_keyframes.contains(&kf) {
             if input.holding_shift {
-                if !shared_ui.selected_keyframes.contains(&kf) {
-                    shared_ui.selected_keyframes.push(kf.clone());
-                }
+                add_selected_keyframes(&mut shared_ui.selected_keyframes, &kf);
             } else {
                 shared_ui.selected_keyframes = vec![kf.clone()];
             }
@@ -1018,4 +1009,10 @@ pub fn get_cursor(ui: &egui::Ui) -> Vec2 {
         }
     });
     (cursor_pos - ui.min_rect().left_top()).into()
+}
+
+fn add_selected_keyframes(selected_keyframes: &mut Vec<Keyframe>, kf: &Keyframe) {
+    if !selected_keyframes.contains(&kf) {
+        selected_keyframes.push(kf.clone());
+    }
 }

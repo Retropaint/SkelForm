@@ -142,9 +142,11 @@ pub fn iterate_events(
 
         // select all keyframes in this frame if requested
         if events.values[1] == 1. {
-            ui.selected_keyframes = vec![];
+            if !input.holding_shift {
+                ui.selected_keyframes = vec![];
+            }
             for kf in &armature.sel_anim(&selections).unwrap().keyframes {
-                if kf.frame == selections.anim_frame {
+                if kf.frame == selections.anim_frame && !ui.selected_keyframes.contains(&kf) {
                     ui.selected_keyframes.push(kf.clone());
                 }
             }
@@ -1187,6 +1189,8 @@ pub fn simple_event(
                 let diff = skf.frame - ui.dragged_keyframe.frame;
                 let new_frame = (value as i32 + diff).max(0);
 
+                println!("{} {}", skf.frame, ui.dragged_keyframe.frame);
+
                 // remove keyframe that is the same as this
                 if let Some(k) = sel_anim.keyframes.iter().position(|kf| {
                     kf.bone_id == skf.bone_id && kf.element == skf.element && kf.frame == new_frame
@@ -2006,3 +2010,5 @@ pub fn remove_blacklisted_tris(
         }
     }
 }
+
+fn add_selected_keyframes(selected_keyframes: &mut Vec<Keyframe>, kf: Keyframe) {}
