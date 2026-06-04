@@ -1185,25 +1185,23 @@ pub fn simple_event(
             for skf in &mut ui.selected_keyframes {
                 // get difference between
                 let diff = skf.frame - ui.dragged_keyframe.frame;
+                let new_frame = (value as i32 + diff).max(0);
 
                 // remove keyframe that is the same as this
                 if let Some(k) = sel_anim.keyframes.iter().position(|kf| {
-                    kf.bone_id == skf.bone_id
-                        && kf.element == skf.element
-                        && kf.frame == value as i32 + diff
+                    kf.bone_id == skf.bone_id && kf.element == skf.element && kf.frame == new_frame
                 }) {
                     sel_anim.keyframes.remove(k);
                 }
 
                 // set this keyframe's frame to the dropped one
                 if let Some(idx) = sel_anim.keyframes.iter().position(|kf| kf == skf) {
-                    let new_frame = (value as i32 + diff).max(0);
                     sel_anim.keyframes[idx].frame = new_frame;
                     skf.frame = new_frame;
-                    sel_anim.sort_keyframes();
                 }
             }
 
+            sel_anim.sort_keyframes();
             ui.dragged_keyframe.frame = -1;
         }
         _ => {}
