@@ -642,7 +642,8 @@ pub fn draw_timeline_graph(
                 let lkf = armature.sel_anim(&sel).unwrap().keyframes.last();
                 if lkf != None && (lkf.unwrap().frame as usize) < shared_ui.lines_x.len() {
                     let left_top = egui::vec2(shared_ui.lines_x[lkf.unwrap().frame as usize], -3.);
-                    let right_bot = egui::vec2(0., shared_ui.bone_tops.tops.last().unwrap().height);
+                    let right_bot =
+                        egui::vec2(0., shared_ui.bone_tops.tops.last().unwrap().height + 999.);
 
                     let rect_to_fill = egui::Rect::from_min_size(
                         ui.min_rect().left_top() + left_top,
