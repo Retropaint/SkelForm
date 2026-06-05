@@ -104,7 +104,22 @@ pub fn draw(
     load_png(&mut shared_ui.lock_img, lock_bytes, "lock", context);
     let icon_size = 200;
     if shared_ui.icon_images.len() == 0 {
-        let full_img = image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
+        // default animation icon file (baked-in)
+        let default_img =
+            image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
+
+        // attempt to load a custom assets/anim_icons.png. If failed, use default
+        let mut full_img = if let Ok(custom) =
+            ImageReader::open("./assets/anim_icons_test.png").and_then(|file| Ok(file.decode()))
+        {
+            custom.unwrap()
+        } else {
+            default_img.clone()
+        };
+        if full_img.height() < default_img.height() && full_img.width() < default_img.width() {
+            full_img = default_img;
+        }
+
         let mut x = 0;
         while full_img.width() > 0 && x < full_img.width() - 1 {
             let img = full_img.crop_imm(x, 0, icon_size, icon_size).into_rgba8();
