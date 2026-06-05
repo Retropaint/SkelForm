@@ -1185,11 +1185,9 @@ pub fn simple_event(
             let sel_anim = &mut armature.sel_anim_mut(&selections).unwrap();
 
             for skf in &mut ui.selected_keyframes {
-                // get difference between
+                // get difference between this frame and the frame being dragged
                 let diff = skf.frame - ui.dragged_keyframe.frame;
                 let new_frame = (value as i32 + diff).max(0);
-
-                println!("{} {}", skf.frame, ui.dragged_keyframe.frame);
 
                 // remove keyframe that is the same as this
                 if let Some(k) = sel_anim.keyframes.iter().position(|kf| {
@@ -2010,5 +2008,3 @@ pub fn remove_blacklisted_tris(
         }
     }
 }
-
-fn add_selected_keyframes(selected_keyframes: &mut Vec<Keyframe>, kf: Keyframe) {}
