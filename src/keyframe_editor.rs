@@ -522,10 +522,28 @@ pub fn draw_top_bar(
                 }
 
                 let mut diamond_size = 5.;
+
+                // enlarge diamond if all of its keyframes are selected
+                let keyframes = &armature.sel_anim(&sel).unwrap().keyframes;
+                if shared_ui.selected_keyframes.len() > 0 {
+                    let this_keyframes: Vec<&Keyframe> = keyframes
+                        .iter()
+                        .filter(|kf| kf.frame == last_unique_frame)
+                        .collect();
+                    let this_sel_kf: Vec<&Keyframe> = shared_ui
+                        .selected_keyframes
+                        .iter()
+                        .filter(|kf| kf.frame == last_unique_frame)
+                        .collect();
+                    if this_keyframes.len() == this_sel_kf.len() {
+                        diamond_size += 2.;
+                    }
+                }
+
                 if response.hovered() {
                     shared_ui.hovering_diamond = true;
                     shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
-                    diamond_size = 9.;
+                    diamond_size += 2.;
                     if input.left_clicked {
                         shared_ui.last_selected = "keyframe".to_string();
                         events.select_anim_frame(frame as usize, true);
