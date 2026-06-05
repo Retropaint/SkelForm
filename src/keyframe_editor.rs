@@ -495,10 +495,11 @@ pub fn draw_top_bar(
                 last_unique_frame = frame;
 
                 // alternate diamond color
-                if diamond_color == config.colors.text {
-                    diamond_color = Color::new(255, 255, 255, 255);
+                if diamond_color == Color::new(255, 255, 255, 0) {
+                    diamond_color = Color::new(255, 255, 255, 0);
+                    diamond_color -= Color::new(40, 40, 40, 0)
                 } else {
-                    diamond_color = Color::new(255, 255, 255, 255);
+                    diamond_color = Color::new(255, 255, 255, 0);
                 }
 
                 // don't draw diamond if it's beyond the recorded lines
