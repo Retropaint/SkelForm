@@ -1073,7 +1073,31 @@ fn top_panel(
                         return;
                     }
                     let bg = egui::LayerId::background();
-                    let popup = egui::Popup::new("warnings".into(), ui.ctx().clone(), &header, bg);
+
+                    // flash warning frame for clarity.
+                    // this occurs when clicking on the warning label in export modal
+                    let flash = if let Some(timer) = shared_ui.flash_warn_timer {
+                        let dur = 1000.;
+                        let curr = dur - timer.elapsed().as_millis() as f32;
+                        Color::new(
+                            (100. * (curr / dur)) as u8,
+                            (100. * (curr / dur)) as u8,
+                            (100. * (curr / dur)) as u8,
+                            0,
+                        )
+                    } else {
+                        Color::new(0, 0, 0, 0)
+                    };
+
+                    let frame = egui::Frame {
+                        corner_radius: 0.into(),
+                        fill: (config.colors.main + flash).into(),
+                        inner_margin: egui::Margin::same(5),
+                        stroke: egui::Stroke::new(1., config.colors.light_accent),
+                        ..Default::default()
+                    };
+                    let popup = egui::Popup::new("warnings".into(), ui.ctx().clone(), &header, bg)
+                        .frame(frame);
                     popup.show(|ui| {
                         ui.set_width(350.);
                         ui.heading(shared_ui.loc("warnings.heading"))

@@ -1,5 +1,6 @@
 #[cfg(all(not(target_os = "windows"), not(target_arch = "wasm32")))]
 use std::os::unix::fs::PermissionsExt;
+use std::time::Instant;
 
 use egui::IntoAtoms;
 
@@ -133,6 +134,7 @@ pub fn draw(
                         let str = format!("{} {}", shared_ui.warnings.len(), warn_str);
                         let text = egui::RichText::new(str).color(config.colors.warning_text);
                         if ui.clickable_label(text).clicked() {
+                            shared_ui.flash_warn_timer = Some(Instant::now());
                             shared_ui.export_modal = false;
                             shared_ui.warnings_open = true;
                         }
