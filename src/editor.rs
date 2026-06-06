@@ -1178,14 +1178,14 @@ fn select_bone(
         return;
     }
 
-    ui.last_selected = "bone".to_string();
-
-    // rename bone if already selected
-    if sel.bone_idx == idx && !from_renderer {
+    // rename bone if already selected and in right-side panel
+    if sel.bone_idx == idx && !from_renderer && ui.last_selected == "bone" {
         ui.rename_id = "bone_".to_string() + &sel.bone_idx.to_string().clone();
         ui.edit_value = Some(armature.sel_bone(&sel).unwrap().name.clone());
         return;
     }
+
+    ui.last_selected = "bone".to_string();
 
     // set this bone as IK target if in IK target mode
     if edit_mode.setting_ik_target {
