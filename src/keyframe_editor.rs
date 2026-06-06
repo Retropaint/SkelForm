@@ -18,6 +18,7 @@ pub fn draw(
     events: &mut EventState,
     edit_mode: &EditMode,
     camera: &Camera,
+    copy_buffer: &CopyBuffer,
 ) {
     let sel = selections.clone();
     let mut sel_frame = selections.anim_frame;
@@ -101,7 +102,15 @@ pub fn draw(
 
                 if selections.anim != usize::MAX {
                     timeline_editor(
-                        ui, selections, armature, events, shared_ui, config, input, edit_mode,
+                        ui,
+                        selections,
+                        armature,
+                        events,
+                        shared_ui,
+                        config,
+                        input,
+                        edit_mode,
+                        copy_buffer,
                     );
                 }
             });
@@ -252,6 +261,7 @@ fn timeline_editor(
     config: &Config,
     input: &InputStates,
     edit_mode: &EditMode,
+    copy_buffer: &CopyBuffer,
 ) {
     let frame = egui::Frame::new().outer_margin(egui::Margin {
         left: 0,
@@ -323,7 +333,14 @@ fn timeline_editor(
             // so that the remaining height can be taken up by timeline graph.
             let timeline = ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                 draw_bottom_bar(
-                    ui, selections, &config, &armature, shared_ui, events, edit_mode,
+                    ui,
+                    selections,
+                    &config,
+                    &armature,
+                    shared_ui,
+                    events,
+                    edit_mode,
+                    copy_buffer,
                 );
                 draw_timeline_graph(
                     ui, width, hitbox, shared_ui, config, selections, armature, events, input,
@@ -672,6 +689,7 @@ pub fn draw_bottom_bar(
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     edit_mode: &EditMode,
+    copy_buffer: &CopyBuffer,
 ) {
     let sel = selections.clone();
     egui::Frame::new().show(ui, |ui| {
@@ -743,18 +761,6 @@ pub fn draw_bottom_bar(
                 ui.float_input("fps".to_string(), shared_ui, fps as f32, 1., None);
             if edited {
                 events.adjust_keyframes_by_fps(value as usize);
-            }
-
-            if ui
-                .skf_button(&shared_ui.loc("keyframe_editor.copy"))
-                .clicked()
-            {
-                events.copy_keyframes_in_frame(selections.anim_frame);
-            }
-
-            let paste_str = &shared_ui.loc("keyframe_editor.paste");
-            if ui.skf_button(paste_str).clicked() {
-                events.paste_keyframes_on_frame(selections.anim_frame);
             }
 
             let mut col = config.colors.text;

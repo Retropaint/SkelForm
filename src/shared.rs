@@ -2197,8 +2197,7 @@ pub enum Events {
 
     CopyBone,
     PasteBone,
-    CopyKeyframe,
-    CopyKeyframesInFrame,
+    CopySelectedKeyframes,
     PasteKeyframesOnFrame,
 
     NewAnimation,
@@ -2296,6 +2295,8 @@ pub enum Events {
     CreateParentBone,
     DeleteSelectedKeyframes,
     MoveSelectedKeyframes,
+    GenericCopy,
+    GenericPaste,
 }
 
 enum_string!(Events);
@@ -2358,6 +2359,9 @@ impl EventState {
     generic_event!(create_empty_texture, Events::CreateEmptyTexture);
     generic_event!(import_psd_armature, Events::ImportPsdArmature);
     generic_event!(delete_selected_keyframes, Events::DeleteSelectedKeyframes);
+    generic_event!(generic_copy, Events::GenericCopy);
+    generic_event!(generic_paste, Events::GenericPaste);
+    generic_event!(copy_selected_keyframes, Events::CopySelectedKeyframes);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, i32);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
@@ -2386,8 +2390,8 @@ impl EventState {
     event_with_value!(toggle_baking_ik, Events::ToggleBakingIk, toggle, usize);
     event_with_value!(toggle_exclude_ik, Events::ToggleExcludeIk, toggle, usize);
     event_with_value!(set_export_img_format, E::SetExportImgFormat, idx, usize);
-    event_with_value!(copy_keyframe, Events::CopyKeyframe, idx, usize);
     event_with_value!(toggle_onion_layers, E::ToggleOnionLayers, toggle, usize);
+    #[rustfmt::skip]    event_with_value!(paste_keyframes_on_frame, Events::PasteKeyframesOnFrame, frame, i32);
     #[rustfmt::skip]    event_with_value!(toggle_anim_panel_open, E::ToggleAnimPanelOpen, toggle, usize);
     #[rustfmt::skip]    event_with_value!(delete_keyframes_by_frame, E::DeleteKeyframesByFrame, frame, i32);
     event_with_value!(set_temporary_edit_mode, E::SetTemporaryEditMode, mode, u32);
@@ -2407,8 +2411,6 @@ impl EventState {
     event_with_value!(set_hovering_line, E::SetHoveringLine, value, i32);
     event_with_value!(set_pos_ratio, E::SetPosRatio, value, f32);
     event_with_value!(set_scale_ratio, E::SetScaleRatio, value, f32);
-    #[rustfmt::skip]    event_with_value!(copy_keyframes_in_frame, Events::CopyKeyframesInFrame, frame, i32);
-    #[rustfmt::skip]    event_with_value!(paste_keyframes_on_frame, Events::PasteKeyframesOnFrame, frame, i32);
     #[rustfmt::skip]    event_with_value!(create_parent_bone, Events::CreateParentBone, of_bone_id, i32);
     #[rustfmt::skip]    event_with_value!(move_selected_keyframes, Events::MoveSelectedKeyframes, dropped_frame, i32);
 

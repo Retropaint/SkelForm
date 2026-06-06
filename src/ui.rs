@@ -210,7 +210,7 @@ pub fn draw(
 
     if edit_mode.anim_open {
         #[rustfmt::skip]
-        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, &edit_mode, camera));
+        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, &edit_mode, camera, &copy_buffer));
     }
 
     style_once!(armature_window::draw(
@@ -715,22 +715,12 @@ pub fn kb_inputs(
 
     // copy shortcut
     if input.consume_shortcut(&config.keys.copy) {
-        let last = &shared_ui.last_selected;
-        match last.as_str() {
-            "keyframe" => events.copy_keyframes_in_frame(selections.anim_frame),
-            "bone" => events.copy_bone(selections.bone_idx),
-            _ => {}
-        }
+        events.generic_copy();
     }
 
     // paste shortcut
     if input.consume_shortcut(&config.keys.paste) {
-        let last = &shared_ui.last_selected;
-        match last.as_str() {
-            "keyframe" => events.paste_keyframes_on_frame(selections.anim_frame),
-            "bone" => events.paste_bone(selections.bone_idx),
-            _ => {}
-        }
+        events.generic_paste();
     }
 
     if input.consume_shortcut(&config.keys.transform_move) {
@@ -904,8 +894,8 @@ fn context_menu_content(
             shared_ui.context_menu.close();
         }
     } else if id == "keyframe" {
-        if ui.context_button("Copy Keyframe", &config).clicked() {
-            events.copy_keyframe(split[4].parse().unwrap());
+        if ui.context_button("Copy Keyframe(s)", &config).clicked() {
+            events.copy_selected_keyframes();
             shared_ui.context_menu.close();
         }
         if ui.context_button("Paste Keyframe", &config).clicked() {
@@ -918,13 +908,9 @@ fn context_menu_content(
         }
     } else if id == "kfline" {
         // copy option, if there are any keyframes in this frame
-        let frame = split[1].parse().unwrap();
+        let frame: i32 = split[1].parse().unwrap();
         let anim = armature.sel_anim(&selections).unwrap();
         let has_kf = anim.keyframes.iter().find(|kf| kf.frame == frame) != None;
-        if has_kf && ui.context_button("Copy Keyframes", &config).clicked() {
-            events.copy_keyframes_in_frame(frame);
-            shared_ui.context_menu.close();
-        }
 
         // paste option, if there are keyframes in copy buffer
         if copy_buffer.keyframes.len() > 0
@@ -1577,15 +1563,11 @@ fn menu_edit_button(
 
         let str_copy = &shared_ui.loc("top_bar.edit.copy");
         let key_copy = Some(&config.keys.copy);
-        let can_copy = selections.anim_frame != -1 || selections.bone_idx != usize::MAX;
+        let can_copy = shared_ui.last_selected != "";
         #[rustfmt::skip]
         let button = top_bar_button(ui, str_copy, key_copy, &mut offset, &config, can_copy, &shared_ui);
         if can_copy && button.clicked() {
-            if selections.anim_frame != -1 {
-                events.copy_keyframes_in_frame(selections.anim_frame);
-            } else if selections.bone_idx != usize::MAX {
-                events.copy_bone(selections.bone_idx);
-            }
+            events.generic_copy();
             ui.close();
         }
 
@@ -1595,11 +1577,7 @@ fn menu_edit_button(
         #[rustfmt::skip]
         let button = top_bar_button(ui, str_paste, key_paste, &mut offset, &config, can_paste, &shared_ui);
         if can_paste && button.clicked() {
-            if selections.anim_frame != -1 {
-                events.paste_keyframes_on_frame(selections.anim_frame);
-            } else {
-                events.paste_bone(selections.bone_idx);
-            }
+            events.generic_paste();
             ui.close();
         }
     });

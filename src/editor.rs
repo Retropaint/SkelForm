@@ -546,95 +546,8 @@ pub fn simple_event(
             }
             styles.remove(idx);
         }
-        Events::CopyBone => {
-            copy_buffer.bones = vec![];
-
-            // either get the bone ID from event, or selected bones if more than 1
-            let mut bones_to_copy = vec![armature.bones[value as usize].id];
-            if selections.bone_ids.len() > 1 {
-                bones_to_copy = selections.bone_ids.clone();
-            }
-
-            // add appropriate bones to copy buffer
-            for bone_id in &bones_to_copy {
-                let bone = armature.bones.iter().find(|b| b.id == *bone_id);
-                let not_root = bones_to_copy.contains(&bone.unwrap().parent_id);
-                if bone == None || not_root {
-                    continue;
-                }
-                let mut bones = vec![];
-                armature_window::get_all_children(&armature.bones, &mut bones, bone.unwrap());
-                bones.insert(0, bone.unwrap().clone());
-                copy_buffer.bones.extend_from_slice(&bones);
-            }
-        }
-        Events::PasteBone => {
-            // determine which id to give the new bone(s), based on the highest current id
-            let ids: Vec<i32> = armature.bones.iter().map(|bone| bone.id).collect();
-            let mut highest_id = 0;
-            for id in ids {
-                highest_id = id.max(highest_id);
-            }
-            highest_id += 1;
-
-            let mut insert_idx = usize::MAX;
-            let mut id_refs: HashMap<i32, i32> = HashMap::new();
-
-            let mut highest_ik_family_id = 0;
-            for bone in &armature.bones {
-                highest_ik_family_id = bone.ik_family_id.max(highest_ik_family_id);
-            }
-
-            for b in 0..copy_buffer.bones.len() {
-                let bone = &mut copy_buffer.bones[b];
-
-                highest_id += 1;
-                let new_id = highest_id;
-
-                // put IK bones in a new family index
-                id_refs.insert(bone.id, new_id);
-                bone.id = highest_id;
-                if bone.ik_family_id != -1 {
-                    bone.ik_family_id += highest_ik_family_id + 1;
-                }
-
-                // selected bone's parent is also pasted bone's
-                let pasted_idx = value as usize;
-                if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
-                    bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
-                } else if pasted_idx != usize::MAX {
-                    insert_idx = pasted_idx;
-                    bone.parent_id = armature.bones[pasted_idx].parent_id;
-                } else {
-                    bone.parent_id = -1;
-                }
-            }
-
-            // re-set binds that are pointing to child bones
-            for b in 0..copy_buffer.bones.len() {
-                let bone = &mut copy_buffer.bones[b];
-                for bind in &mut bone.binds {
-                    if let Some(new_id) = id_refs.get(&bind.bone_id) {
-                        bind.bone_id = *new_id;
-                    }
-                }
-            }
-
-            // insert pasted bones on proper position of the bone array
-            if insert_idx == usize::MAX {
-                armature.bones.extend_from_slice(&copy_buffer.bones);
-            } else {
-                for bone in &copy_buffer.bones {
-                    armature.bones.insert(insert_idx, bone.clone());
-                    insert_idx += 1;
-                }
-            }
-
-            // select pasted bones
-            selections.bone_ids = id_refs.into_values().collect();
-            let sel_id = selections.bone_ids[0];
-            selections.bone_idx = armature.bones.iter().position(|b| b.id == sel_id).unwrap();
-        }
+        Events::CopyBone => copy_bone(copy_buffer, selections, armature, value as usize),
+        Events::PasteBone => paste_bone(copy_buffer, selections, armature, value as usize),
         Events::NewAnimation => {
             armature.new_animation();
             let idx = armature.animations.len() - 1;
@@ -1021,18 +934,8 @@ pub fn simple_event(
             }
         }
         Events::UpdateConfig => *config = ui.updated_config.clone(),
-        Events::CopyKeyframe => {
-            copy_buffer.keyframes =
-                vec![armature.sel_anim(selections).unwrap().keyframes[value as usize].clone()];
-        }
-        Events::CopyKeyframesInFrame => {
-            *copy_buffer = CopyBuffer::default();
-            for kf in 0..armature.sel_anim(&selections).unwrap().keyframes.len() {
-                if armature.sel_anim(&selections).unwrap().keyframes[kf].frame == value as i32 {
-                    let keyframe = armature.sel_anim(&selections).unwrap().keyframes[kf].clone();
-                    copy_buffer.keyframes.push(keyframe);
-                }
-            }
+        Events::CopySelectedKeyframes => {
+            copy_selected_keyframes(copy_buffer, ui);
         }
         Events::SaveAnimation => {
             undo_states.new_undo_anim(&armature.sel_anim(&selections).unwrap());
@@ -1206,6 +1109,22 @@ pub fn simple_event(
             sel_anim.sort_keyframes();
             ui.dragged_keyframe.frame = -1;
         }
+        Events::GenericCopy => match ui.last_selected.as_str() {
+            "keyframe" => copy_selected_keyframes(copy_buffer, ui),
+            "bone" => copy_bone(copy_buffer, selections, armature, selections.bone_idx),
+            _ => {}
+        },
+        Events::GenericPaste => match ui.last_selected.as_str() {
+            "keyframe" => {
+                undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap());
+                paste_keyframes_on_frame(copy_buffer, armature, selections, selections.anim_frame);
+            }
+            "bone" => {
+                undo_states.new_undo_bones(&armature.bones);
+                paste_bone(copy_buffer, selections, armature, selections.bone_idx);
+            }
+            _ => {}
+        },
         _ => {}
     }
 }
@@ -2007,4 +1926,135 @@ pub fn remove_blacklisted_tris(
             }
         }
     }
+}
+
+pub fn copy_bone(
+    copy_buffer: &mut CopyBuffer,
+    selections: &mut SelectionState,
+    armature: &mut Armature,
+    bone_idx: usize,
+) {
+    copy_buffer.bones = vec![];
+
+    // either get the bone ID from event, or selected bones if more than 1
+    let mut bones_to_copy = vec![armature.bones[bone_idx].id];
+    if selections.bone_ids.len() > 1 {
+        bones_to_copy = selections.bone_ids.clone();
+    }
+
+    // add appropriate bones to copy buffer
+    for bone_id in &bones_to_copy {
+        let bone = armature.bones.iter().find(|b| b.id == *bone_id);
+        let not_root = bones_to_copy.contains(&bone.unwrap().parent_id);
+        if bone == None || not_root {
+            continue;
+        }
+        let mut bones = vec![];
+        armature_window::get_all_children(&armature.bones, &mut bones, bone.unwrap());
+        bones.insert(0, bone.unwrap().clone());
+        copy_buffer.bones.extend_from_slice(&bones);
+    }
+}
+
+fn paste_bone(
+    copy_buffer: &mut CopyBuffer,
+    selections: &mut SelectionState,
+    armature: &mut Armature,
+    pasted_idx: usize,
+) {
+    // determine which id to give the new bone(s), based on the highest current id
+    let ids: Vec<i32> = armature.bones.iter().map(|bone| bone.id).collect();
+    let mut highest_id = 0;
+    for id in ids {
+        highest_id = id.max(highest_id);
+    }
+    highest_id += 1;
+
+    let mut insert_idx = usize::MAX;
+    let mut id_refs: HashMap<i32, i32> = HashMap::new();
+
+    let mut highest_ik_family_id = 0;
+    for bone in &armature.bones {
+        highest_ik_family_id = bone.ik_family_id.max(highest_ik_family_id);
+    }
+
+    for b in 0..copy_buffer.bones.len() {
+        let bone = &mut copy_buffer.bones[b];
+
+        highest_id += 1;
+        let new_id = highest_id;
+
+        // put IK bones in a new family index
+        id_refs.insert(bone.id, new_id);
+        bone.id = highest_id;
+        if bone.ik_family_id != -1 {
+            bone.ik_family_id += highest_ik_family_id + 1;
+        }
+
+        // selected bone's parent is also pasted bone's
+        if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
+            bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
+        } else if pasted_idx != usize::MAX {
+            insert_idx = pasted_idx;
+            bone.parent_id = armature.bones[pasted_idx].parent_id;
+        } else {
+            bone.parent_id = -1;
+        }
+    }
+
+    // re-set binds that are pointing to child bones
+    for b in 0..copy_buffer.bones.len() {
+        let bone = &mut copy_buffer.bones[b];
+        for bind in &mut bone.binds {
+            if let Some(new_id) = id_refs.get(&bind.bone_id) {
+                bind.bone_id = *new_id;
+            }
+        }
+    }
+
+    // insert pasted bones on proper position of the bone array
+    if insert_idx == usize::MAX {
+        armature.bones.extend_from_slice(&copy_buffer.bones);
+    } else {
+        for bone in &copy_buffer.bones {
+            armature.bones.insert(insert_idx, bone.clone());
+            insert_idx += 1;
+        }
+    }
+
+    // select pasted bones
+    selections.bone_ids = id_refs.into_values().collect();
+    let sel_id = selections.bone_ids[0];
+    selections.bone_idx = armature.bones.iter().position(|b| b.id == sel_id).unwrap();
+}
+
+fn copy_selected_keyframes(copy_buffer: &mut CopyBuffer, ui: &mut crate::Ui) {
+    *copy_buffer = CopyBuffer::default();
+    copy_buffer.keyframes = ui.selected_keyframes.clone();
+}
+
+fn paste_keyframes_on_frame(
+    copy_buffer: &mut CopyBuffer,
+    armature: &mut Armature,
+    selections: &mut SelectionState,
+    frame: i32,
+) {
+    let mut buffer_frames = copy_buffer.keyframes.clone();
+    let anim = &mut armature.sel_anim_mut(&selections).unwrap();
+
+    // set copy buffer to new frames, for the retain() later
+    for kf in &mut buffer_frames {
+        kf.frame = frame;
+    }
+
+    // remove identical keyframes in the new frame
+    anim.keyframes
+        .retain(|kf| buffer_frames.iter().find(|bkf| **bkf == *kf) == None);
+
+    for kf in 0..buffer_frames.len() {
+        let keyframe = buffer_frames[kf].clone();
+        anim.keyframes.push(Keyframe { frame, ..keyframe })
+    }
+
+    armature.sel_anim_mut(&selections).unwrap().sort_keyframes();
 }
