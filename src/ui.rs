@@ -1094,6 +1094,13 @@ fn top_panel(
                         fill: (config.colors.main + flash).into(),
                         inner_margin: egui::Margin::same(5),
                         stroke: egui::Stroke::new(1., config.colors.light_accent),
+                        // shadow helps warning popup stand out from right-side panel
+                        shadow: egui::Shadow {
+                            offset: [7, 7],
+                            blur: 10,
+                            spread: 0,
+                            color: egui::Color32::BLACK,
+                        },
                         ..Default::default()
                     };
                     let popup = egui::Popup::new("warnings".into(), ui.ctx().clone(), &header, bg)
