@@ -119,10 +119,6 @@ pub fn draw(
                         if ui.skf_button(str).clicked() {
                             pressed_export = true;
                         }
-                        if shared_ui.settings_state == SettingsState::Keyboard {
-                            ui.checkbox(&mut shared_ui.open_after_export, "".into_atoms());
-                            ui.label(shared_ui.loc("export_modal.video.open_after_export"));
-                        }
                     });
                 });
 

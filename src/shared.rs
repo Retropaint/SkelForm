@@ -641,7 +641,6 @@ pub struct Ui {
     pub exporting_video_type: ExportVideoType,
     pub exporting_video_anim: usize,
     pub exporting_video_encoder: ExportVideoEncoder,
-    pub open_after_export: bool,
     pub use_system_ffmpeg: bool,
     pub video_clear_bg: Color,
     pub anim_cycles: i32,

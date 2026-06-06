@@ -1026,7 +1026,7 @@ impl BackendRenderer {
             }
             if shared.ui.custom_error != "" {
                 shared.events.open_modal("error_vid_export", false);
-            } else if shared.ui.open_after_export {
+            } else {
                 #[cfg(not(target_arch = "wasm32"))]
                 if let Err(e) = open::that(_path + _ext) {
                     println!("{}", e);
