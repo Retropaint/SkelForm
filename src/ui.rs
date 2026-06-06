@@ -713,14 +713,25 @@ pub fn kb_inputs(
         crate::clickFileInput(false);
     }
 
-    // copy shortcut
-    if input.consume_shortcut(&config.keys.copy) {
-        events.generic_copy();
+    // use egui events for copy/paste if they're default,
+    // and consume_shortcut if otherwise
+    let is_copy_default = config.keys.copy == Config::default().keys.copy;
+    let is_paste_default = config.keys.paste == Config::default().keys.paste;
+    for event in &input.events {
+        if is_copy_default && *event == egui::Event::Copy {
+            events.global_copy();
+        }
+        if is_paste_default {
+            if let egui::Event::Paste(_) = event {
+                events.global_paste();
+            }
+        }
     }
-
-    // paste shortcut
-    if input.consume_shortcut(&config.keys.paste) {
-        events.generic_paste();
+    if !is_copy_default && input.consume_shortcut(&config.keys.copy) {
+        events.global_copy();
+    }
+    if !is_paste_default && input.consume_shortcut(&config.keys.paste) {
+        events.global_paste();
     }
 
     if input.consume_shortcut(&config.keys.transform_move) {
@@ -815,7 +826,6 @@ pub fn mouse_button_as_key(
         return;
     }
 
-    let none = egui::Modifiers::NONE;
     if input.pointer.button_pressed(button) {
         input.keys_down.insert(fake_key);
         input.events.push(egui::Event::Key {
@@ -823,7 +833,7 @@ pub fn mouse_button_as_key(
             physical_key: None,
             pressed: true,
             repeat: false,
-            modifiers: none,
+            modifiers: egui::Modifiers::NONE,
         });
     }
 
@@ -834,7 +844,7 @@ pub fn mouse_button_as_key(
             physical_key: None,
             pressed: false,
             repeat: false,
-            modifiers: none,
+            modifiers: egui::Modifiers::NONE,
         });
     }
 }
