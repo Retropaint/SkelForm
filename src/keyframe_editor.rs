@@ -486,7 +486,7 @@ pub fn draw_top_bar(
             }
 
             let mut last_unique_frame = -1;
-            let mut diamond_color = config.colors.text;
+            let mut diamond_color = Color::new(255, 255, 255, 0);
             for i in 0..armature.sel_anim(&sel).unwrap().keyframes.len() {
                 let frame = armature.sel_anim(&sel).unwrap().keyframes[i].frame;
                 if frame == last_unique_frame {
@@ -878,9 +878,22 @@ fn draw_frame_lines(
 
     // draw per-change icons
     let sel_anim = &armature.animations[selections.anim];
+    let mut last_unique_frame = -1;
+    let mut base_color = Color::new(255, 255, 255, 0);
     for i in 0..sel_anim.keyframes.len() {
         let kf = sel_anim.keyframes[i].clone();
         let size = Vec2::new(17., 17.);
+
+        // alternate colors between unique frames
+        if last_unique_frame != kf.frame {
+            last_unique_frame = kf.frame;
+            if base_color == Color::new(255, 255, 255, base_color.a) {
+                base_color = Color::new(255, 255, 255, 0);
+                base_color -= Color::new(40, 40, 40, 0)
+            } else {
+                base_color = Color::new(255, 255, 255, 0);
+            }
+        }
 
         // the Y position is based on this diamond's respective label
         let top: f32;
@@ -905,11 +918,10 @@ fn draw_frame_lines(
         }
 
         let dkf = &shared_ui.dragged_keyframe;
-        let mut color = egui::Color32::WHITE;
 
         // make icon translucent if being dragged
         if *dkf == kf {
-            color = egui::Color32::from_rgba_unmultiplied(255, 255, 255, 30);
+            base_color.a = 30;
         }
 
         let rect = egui::Rect::from_center_size(pos.into(), (size * 0.5).into());
@@ -929,7 +941,7 @@ fn draw_frame_lines(
         let offset: Vec2 = (icon_size / 2.).into();
         let img_rect = egui::Rect::from_min_size((pos - offset).into(), icon_size.into());
         egui::Image::new(&shared_ui.icon_images[shared::ANIM_ICON_ID[idx]])
-            .tint(color)
+            .tint(base_color)
             .paint_at(ui, img_rect);
 
         // select this frame if icon is clicked
