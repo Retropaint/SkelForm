@@ -400,8 +400,6 @@ pub struct InputStates {
 
     pub mod_q: Option<global_hotkey::hotkey::HotKey>,
     pub mod_w: Option<global_hotkey::hotkey::HotKey>,
-    pub mod_c: Option<global_hotkey::hotkey::HotKey>,
-    pub mod_v: Option<global_hotkey::hotkey::HotKey>,
     pub hotkey_manager: Option<global_hotkey::GlobalHotKeyManager>,
 }
 
@@ -998,8 +996,8 @@ impl Default for KeyboardConfig {
             save_as:              shortcut_key!(egui::Modifiers::SHIFT, egui::Key::S),
             export:               shortcut_key!(egui::Modifiers::COMMAND, egui::Key::E),
             open:                 shortcut_key!(egui::Modifiers::COMMAND, egui::Key::O),
-            copy:                 shortcut_key!(egui::Modifiers::CTRL, egui::Key::C),
-            paste:                shortcut_key!(egui::Modifiers::CTRL, egui::Key::V),
+            copy:                 shortcut_key!(egui::Modifiers::COMMAND, egui::Key::C),
+            paste:                shortcut_key!(egui::Modifiers::COMMAND, egui::Key::V),
             timeline_zoom_mode:   shortcut_key!(egui::Modifiers::COMMAND, egui::Key::F30),
             transform_move:       regular_key!(egui::Key::Q),
             transform_rotate:     regular_key!(egui::Key::W),
@@ -2295,8 +2293,8 @@ pub enum Events {
     CreateParentBone,
     DeleteSelectedKeyframes,
     MoveSelectedKeyframes,
-    GenericCopy,
-    GenericPaste,
+    GlobalCopy,
+    GlobalPaste,
 }
 
 enum_string!(Events);
@@ -2359,8 +2357,8 @@ impl EventState {
     generic_event!(create_empty_texture, Events::CreateEmptyTexture);
     generic_event!(import_psd_armature, Events::ImportPsdArmature);
     generic_event!(delete_selected_keyframes, Events::DeleteSelectedKeyframes);
-    generic_event!(generic_copy, Events::GenericCopy);
-    generic_event!(generic_paste, Events::GenericPaste);
+    generic_event!(global_copy, Events::GlobalCopy);
+    generic_event!(global_paste, Events::GlobalPaste);
     generic_event!(copy_selected_keyframes, Events::CopySelectedKeyframes);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, i32);

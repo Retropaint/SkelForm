@@ -1109,12 +1109,12 @@ pub fn simple_event(
             sel_anim.sort_keyframes();
             ui.dragged_keyframe.frame = -1;
         }
-        Events::GenericCopy => match ui.last_selected.as_str() {
+        Events::GlobalCopy => match ui.last_selected.as_str() {
             "keyframe" => copy_selected_keyframes(copy_buffer, ui),
             "bone" => copy_bone(copy_buffer, selections, armature, selections.bone_idx),
             _ => {}
         },
-        Events::GenericPaste => match ui.last_selected.as_str() {
+        Events::GlobalPaste => match ui.last_selected.as_str() {
             "keyframe" => {
                 undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap());
                 paste_keyframes_on_frame(copy_buffer, armature, selections, selections.anim_frame);

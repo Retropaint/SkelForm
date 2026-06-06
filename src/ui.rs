@@ -1577,7 +1577,7 @@ fn menu_edit_button(
         #[rustfmt::skip]
         let button = top_bar_button(ui, str_copy, key_copy, &mut offset, &config, can_copy, &shared_ui);
         if can_copy && button.clicked() {
-            events.generic_copy();
+            events.global_copy();
             ui.close();
         }
 
@@ -1587,7 +1587,7 @@ fn menu_edit_button(
         #[rustfmt::skip]
         let button = top_bar_button(ui, str_paste, key_paste, &mut offset, &config, can_paste, &shared_ui);
         if can_paste && button.clicked() {
-            events.generic_paste();
+            events.global_paste();
             ui.close();
         }
     });
