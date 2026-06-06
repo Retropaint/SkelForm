@@ -36,7 +36,16 @@ pub fn draw(
     armature: &Armature,
 ) {
     let mut pressed_export = false;
-    egui::Modal::new("export_modal".into()).show(ctx, |ui| {
+
+    let frame = egui::Frame {
+        corner_radius: 0.into(),
+        fill: config.colors.main.into(),
+        inner_margin: egui::Margin::same(5),
+        stroke: egui::Stroke::new(1., config.colors.light_accent),
+        ..Default::default()
+    };
+    let modal = egui::Modal::new("export_modal".into()).frame(frame);
+    modal.show(ctx, |ui| {
         ui.set_width(400.);
         ui.set_height(350.);
 

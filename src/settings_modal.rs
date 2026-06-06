@@ -17,6 +17,7 @@ pub fn draw(
         corner_radius: 0.into(),
         fill: col,
         inner_margin: egui::Margin::same(5),
+        stroke: egui::Stroke::new(1., config.colors.light_accent),
         ..Default::default()
     });
     modal.show(ctx, |modal_ui| {
