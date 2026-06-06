@@ -145,15 +145,29 @@ pub fn iterate_events(
             if !input.holding_mod && !input.holding_shift && events.values[2] == 0. {
                 ui.selected_keyframes = vec![];
             }
-            for kf in &armature.sel_anim(&selections).unwrap().keyframes {
-                if kf.frame == selections.anim_frame && !ui.selected_keyframes.contains(&kf) {
-                    ui.selected_keyframes.push(kf.clone());
+            if !input.holding_shift {
+                // select just this diamond's keyframes
+                for kf in &armature.sel_anim(&selections).unwrap().keyframes {
+                    if kf.frame == selections.anim_frame && !ui.selected_keyframes.contains(&kf) {
+                        ui.selected_keyframes.push(kf.clone());
+                    }
+                }
+            } else {
+                // select all diamonds' keyframes between this and last selected one
+                let left = ui.last_selected_frame.min(selections.anim_frame);
+                let right = ui.last_selected_frame.max(selections.anim_frame);
+                for kf in &armature.sel_anim(&selections).unwrap().keyframes {
+                    if kf.frame >= left && kf.frame <= right && !ui.selected_keyframes.contains(&kf)
+                    {
+                        ui.selected_keyframes.push(kf.clone());
+                    }
                 }
             }
         }
 
         selections.bone_idx = selected_bone_idx;
         selections.bone_ids = selected_bone_ids;
+        ui.last_selected_frame = selections.anim_frame;
         events.events.remove(0);
         events.values.drain(0..=2);
     } else if event == Events::ToggleIkDisabled {

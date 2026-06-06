@@ -681,6 +681,7 @@ pub struct Ui {
     // element-dependent actions (copying/pasting, deleting, etc)
     // use this to determien which element to target
     pub last_selected: String,
+    pub last_selected_frame: i32,
 
     pub export_style_id: usize,
     pub export_style_path: Arc<Mutex<PathBuf>>,
