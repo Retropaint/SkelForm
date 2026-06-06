@@ -485,7 +485,7 @@ pub fn draw_top_bar(
             }
 
             let mut last_unique_frame = -1;
-            let mut diamond_color = Color::new(255, 255, 255, 0);
+            let mut alt = false;
             for i in 0..armature.sel_anim(&sel).unwrap().keyframes.len() {
                 let frame = armature.sel_anim(&sel).unwrap().keyframes[i].frame;
                 if frame == last_unique_frame {
@@ -494,9 +494,10 @@ pub fn draw_top_bar(
                 last_unique_frame = frame;
 
                 // alternate diamond color
-                if diamond_color == Color::new(255, 255, 255, 0) {
+                let mut diamond_color;
+                if alt {
                     diamond_color = Color::new(255, 255, 255, 0);
-                    diamond_color -= Color::new(40, 40, 40, 0)
+                    diamond_color -= Color::new(40, 40, 40, 0);
                 } else {
                     diamond_color = Color::new(255, 255, 255, 0);
                 }
@@ -535,6 +536,7 @@ pub fn draw_top_bar(
                         .filter(|kf| kf.frame == last_unique_frame)
                         .collect();
                     if this_keyframes.len() == this_sel_kf.len() {
+                        diamond_color = Color::new(100, 255, 100, 0);
                         diamond_size += 2.;
                     }
                 }
@@ -925,9 +927,13 @@ fn draw_frame_lines(
         let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click_and_drag());
 
         let mut icon_size: egui::Vec2 = [20., 20.].into();
+        let mut final_color = base_color;
         // expand icon if hovered on
         if response.hovered() || shared_ui.selected_keyframes.contains(&kf) {
             icon_size += [6., 6.].into();
+            if shared_ui.selected_keyframes.contains(&kf) {
+                final_color = Color::new(100, 255, 100, 0);
+            }
             if response.hovered() {
                 shared_ui.hovering_diamond = true;
                 shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
@@ -938,7 +944,7 @@ fn draw_frame_lines(
         let offset: Vec2 = (icon_size / 2.).into();
         let img_rect = egui::Rect::from_min_size((pos - offset).into(), icon_size.into());
         egui::Image::new(&shared_ui.icon_images[shared::ANIM_ICON_ID[idx]])
-            .tint(base_color)
+            .tint(final_color)
             .paint_at(ui, img_rect);
 
         // select this frame if icon is clicked
