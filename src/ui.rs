@@ -911,7 +911,9 @@ fn context_menu_content(
             events.copy_selected_keyframes();
             shared_ui.context_menu.close();
         }
-        if ui.context_button("Paste Keyframe(s)", &config).clicked() {
+        if copy_buffer.keyframes.len() > 0
+            && ui.context_button("Paste Keyframe(s)", &config).clicked()
+        {
             events.paste_keyframes_on_frame(split[3].parse().unwrap());
             shared_ui.context_menu.close();
         }
@@ -1536,7 +1538,7 @@ fn menu_file_button(
             //edit_mode.recording = true;
             //edit_mode.anim_open = true;
             //edit_mode.done_recording = true;
-            events.select_anim_frame(0, false);
+            events.select_anim_frame(0, false, false);
             ui.close();
         }
     });
