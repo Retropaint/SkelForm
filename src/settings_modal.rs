@@ -521,6 +521,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("paste",           keys.paste,           true);
         ui.add_space(10.);
         ui.heading("Editing");
+        alt_col = true;
         key!("transform_move",       keys.transform_move,       true);
         key!("transform_rotate",     keys.transform_rotate,     true);
         key!("transform_scale",      keys.transform_scale,      true);
@@ -532,6 +533,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("toggle_edit_vertices", keys.toggle_edit_vertices, true);
         ui.add_space(10.);
         ui.heading("Keyframe Editor");
+        alt_col = true;
         key!("next_anim_frame",    keys.next_anim_frame,    true);
         key!("prev_anim_frame",    keys.prev_anim_frame,    true);
         key!("next_keyframe",      keys.next_keyframe,      true);
@@ -594,6 +596,7 @@ fn colors(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         color_row!("ik_target",          &mut colors!().ik_target,          false);
         ui.add_space(10.);
         ui.heading(shared_ui.loc("settings_modal.rendering.heading"));
+        alt_col = true;
         color_row!("background",            &mut colors!().background,            false);
         color_row!("gridline",              &mut colors!().gridline,              false);
         color_row!("center_point",          &mut colors!().center_point,          true);
