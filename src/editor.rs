@@ -824,25 +824,7 @@ pub fn simple_event(
             }
         }
         Events::PasteKeyframesOnFrame => {
-            let frame = value as i32;
-            let mut buffer_frames = copy_buffer.keyframes.clone();
-            let anim = &mut armature.sel_anim_mut(&selections).unwrap();
-
-            // set copy buffer to new frames, for the retain() later
-            for kf in &mut buffer_frames {
-                kf.frame = frame;
-            }
-
-            // remove identical keyframes in the new frame
-            anim.keyframes
-                .retain(|kf| buffer_frames.iter().find(|bkf| **bkf == *kf) == None);
-
-            for kf in 0..buffer_frames.len() {
-                let keyframe = buffer_frames[kf].clone();
-                anim.keyframes.push(Keyframe { frame, ..keyframe })
-            }
-
-            armature.sel_anim_mut(&selections).unwrap().sort_keyframes();
+            paste_keyframes_on_frame(copy_buffer, armature, selections, value as i32)
         }
         Events::DeleteKeyframesByFrame => {
             let anim = armature.sel_anim_mut(&selections).unwrap();
@@ -1108,7 +1090,7 @@ pub fn simple_event(
         Events::GlobalPaste => match ui.last_selected.as_str() {
             "keyframe" => {
                 undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap());
-                paste_keyframes_on_frame(copy_buffer, armature, selections, selections.anim_frame);
+                paste_keyframes_on_frame(copy_buffer, armature, selections, value as i32);
             }
             "bone" => {
                 undo_states.new_undo_bones(&armature.bones);
@@ -2030,21 +2012,34 @@ fn paste_keyframes_on_frame(
     selections: &mut SelectionState,
     frame: i32,
 ) {
+    if copy_buffer.keyframes.len() == 0 {
+        return;
+    }
+
+    copy_buffer.keyframes.sort_by(|a, b| a.frame.cmp(&b.frame));
+    let base_frame = copy_buffer.keyframes[0].frame;
+
     let mut buffer_frames = copy_buffer.keyframes.clone();
     let anim = &mut armature.sel_anim_mut(&selections).unwrap();
 
     // set copy buffer to new frames, for the retain() later
     for kf in &mut buffer_frames {
-        kf.frame = frame;
+        let diff = kf.frame - base_frame;
+        kf.frame = frame + diff;
     }
 
     // remove identical keyframes in the new frame
     anim.keyframes
         .retain(|kf| buffer_frames.iter().find(|bkf| **bkf == *kf) == None);
 
-    for kf in 0..buffer_frames.len() {
-        let keyframe = buffer_frames[kf].clone();
-        anim.keyframes.push(Keyframe { frame, ..keyframe })
+    let base_frame = buffer_frames[0].frame;
+    for k in 0..buffer_frames.len() {
+        let keyframe = buffer_frames[k].clone();
+        let diff = keyframe.frame - base_frame;
+        anim.keyframes.push(Keyframe {
+            frame: frame + diff,
+            ..keyframe
+        })
     }
 
     armature.sel_anim_mut(&selections).unwrap().sort_keyframes();
