@@ -107,15 +107,18 @@ pub fn draw(
         // default animation icon file (baked-in)
         let default_img =
             image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
+        let mut full_img = default_img.clone();
 
-        // attempt to load a custom assets/anim_icons.png. If failed, use default
-        let mut full_img = if let Ok(custom) =
-            ImageReader::open("./assets/anim_icons_test.png").and_then(|file| Ok(file.decode()))
+        #[cfg(not(target_arch = "wasm32"))]
         {
-            custom.unwrap()
-        } else {
-            default_img.clone()
-        };
+            // attempt to load a custom assets/anim_icons.png. If failed, use default
+            if let Ok(custom) =
+                ImageReader::open("./assets/anim_icons_test.png").and_then(|file| Ok(file.decode()))
+            {
+                full_img = custom.unwrap()
+            }
+        }
+
         if full_img.height() < default_img.height() && full_img.width() < default_img.width() {
             full_img = default_img;
         }
