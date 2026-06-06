@@ -501,6 +501,7 @@ pub fn draw_top_bar(
                 } else {
                     diamond_color = Color::new(255, 255, 255, 0);
                 }
+                alt = !alt;
 
                 // don't draw diamond if it's beyond the recorded lines
                 if shared_ui.lines_x.len() - 1 < frame as usize {
@@ -879,6 +880,7 @@ fn draw_frame_lines(
     let sel_anim = &armature.animations[selections.anim];
     let mut last_unique_frame = -1;
     let mut base_color = Color::new(255, 255, 255, 0);
+    base_color -= Color::new(40, 40, 40, 0);
     for i in 0..sel_anim.keyframes.len() {
         let kf = sel_anim.keyframes[i].clone();
         let size = Vec2::new(17., 17.);
