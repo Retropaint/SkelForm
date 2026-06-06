@@ -213,7 +213,7 @@ pub fn draw(
 
     if edit_mode.anim_open {
         #[rustfmt::skip]
-        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, &edit_mode, camera, &copy_buffer));
+        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, &edit_mode, camera));
     }
 
     style_once!(armature_window::draw(
@@ -990,7 +990,7 @@ fn top_panel(
                 edit_mode,
                 &camera,
             );
-            menu_edit_button(ui, &config, &shared_ui, selections, events, copy_buffer);
+            menu_edit_button(ui, &config, &shared_ui, events, copy_buffer);
             menu_view_button(ui, &config, &shared_ui, events);
 
             macro_rules! title {
@@ -1550,7 +1550,6 @@ fn menu_edit_button(
     ui: &mut egui::Ui,
     config: &Config,
     shared_ui: &crate::Ui,
-    selections: &SelectionState,
     events: &mut EventState,
     copy_buffer: &CopyBuffer,
 ) {

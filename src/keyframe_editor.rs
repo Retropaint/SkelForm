@@ -18,7 +18,6 @@ pub fn draw(
     events: &mut EventState,
     edit_mode: &EditMode,
     camera: &Camera,
-    copy_buffer: &CopyBuffer,
 ) {
     let sel = selections.clone();
     let mut sel_frame = selections.anim_frame;
@@ -102,15 +101,7 @@ pub fn draw(
 
                 if selections.anim != usize::MAX {
                     timeline_editor(
-                        ui,
-                        selections,
-                        armature,
-                        events,
-                        shared_ui,
-                        config,
-                        input,
-                        edit_mode,
-                        copy_buffer,
+                        ui, selections, armature, events, shared_ui, config, input, edit_mode,
                     );
                 }
             });
@@ -261,7 +252,6 @@ fn timeline_editor(
     config: &Config,
     input: &InputStates,
     edit_mode: &EditMode,
-    copy_buffer: &CopyBuffer,
 ) {
     let frame = egui::Frame::new().outer_margin(egui::Margin {
         left: 0,
@@ -325,7 +315,7 @@ fn timeline_editor(
 
             if shared_ui.lines_x.len() > 0 {
                 draw_top_bar(
-                    ui, width, hitbox, shared_ui, selections, armature, input, config, events,
+                    ui, width, hitbox, shared_ui, selections, armature, config, events,
                 );
             }
 
@@ -333,14 +323,7 @@ fn timeline_editor(
             // so that the remaining height can be taken up by timeline graph.
             let timeline = ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                 draw_bottom_bar(
-                    ui,
-                    selections,
-                    &config,
-                    &armature,
-                    shared_ui,
-                    events,
-                    edit_mode,
-                    copy_buffer,
+                    ui, selections, &config, &armature, shared_ui, events, edit_mode,
                 );
                 draw_timeline_graph(
                     ui, width, hitbox, shared_ui, config, selections, armature, events, input,
@@ -465,7 +448,6 @@ pub fn draw_top_bar(
     shared_ui: &mut crate::Ui,
     selections: &SelectionState,
     armature: &Armature,
-    input: &InputStates,
     config: &Config,
     events: &mut EventState,
 ) {
@@ -700,7 +682,6 @@ pub fn draw_bottom_bar(
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     edit_mode: &EditMode,
-    copy_buffer: &CopyBuffer,
 ) {
     let sel = selections.clone();
     egui::Frame::new().show(ui, |ui| {
@@ -839,12 +820,6 @@ fn draw_frame_lines(
             color = color + egui::Color32::from_rgb(20, 20, 20);
         }
         if is_in && !shared_ui.hovering_diamond {
-            // only show cursor pointing if diamond isn't being dragged
-            let dkf = &shared_ui.dragged_keyframe;
-            if dkf.bone_id != -1 {
-                shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
-            }
-
             color = egui::Color32::from_rgb(175, 175, 175);
             shared_ui.hovering_frame = i;
             hovering = true;
@@ -955,7 +930,7 @@ fn draw_frame_lines(
             icon_size += [6., 6.].into();
             if response.hovered() {
                 shared_ui.hovering_diamond = true;
-                shared_ui.cursor_icon = egui::CursorIcon::Grab;
+                shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
             }
         }
 
