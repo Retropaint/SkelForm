@@ -833,7 +833,7 @@ fn draw_frame_lines(
 
             // select this frame if clicked
             if input.left_clicked && shared_ui.context_menu.id == "" {
-                if !input.holding_mod {
+                if !input.holding_mod && !input.holding_shift {
                     shared_ui.selected_keyframes = vec![];
                 }
                 events.select_anim_frame(i as usize, false, false);
@@ -880,6 +880,8 @@ fn draw_frame_lines(
     painter.vline(selected_line_x, range, Stroke { width: 2., color });
 
     shared_ui.hovering_diamond = false;
+
+    let is_multi = input.holding_mod || input.holding_shift;
 
     // draw per-change icons
     let sel_anim = &armature.animations[selections.anim];
@@ -958,7 +960,7 @@ fn draw_frame_lines(
         if response.clicked() {
             shared_ui.last_selected = "keyframe".to_string();
             events.select_anim_frame(kf.frame as usize, false, false);
-            if input.holding_mod {
+            if is_multi {
                 add_selected_keyframes(&mut shared_ui.selected_keyframes, &kf);
             } else {
                 shared_ui.selected_keyframes = vec![kf.clone()];
@@ -967,7 +969,7 @@ fn draw_frame_lines(
 
         // put this keyframe in selected if it's going to be dragged
         if response.drag_started() {
-            if input.holding_mod || shared_ui.selected_keyframes.contains(&kf) {
+            if is_multi || shared_ui.selected_keyframes.contains(&kf) {
                 add_selected_keyframes(&mut shared_ui.selected_keyframes, &kf);
             } else {
                 shared_ui.selected_keyframes = vec![kf.clone()];
@@ -993,7 +995,7 @@ fn draw_frame_lines(
                 &kf.frame,
                 &i
             );
-            if input.holding_mod || shared_ui.selected_keyframes.contains(&kf) {
+            if is_multi || shared_ui.selected_keyframes.contains(&kf) {
                 add_selected_keyframes(&mut shared_ui.selected_keyframes, &kf);
             } else {
                 shared_ui.selected_keyframes = vec![kf.clone()];
