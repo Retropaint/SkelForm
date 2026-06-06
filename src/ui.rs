@@ -552,7 +552,7 @@ pub fn process_inputs(
             let timeline_mode = i.modifiers.matches_any(timeline_mod);
             if timeline_mode && shared_ui.pointer_on_timeline {
                 // zoom timeline instead of scrolling
-                shared_ui.timeline_zoom -= input.scroll_delta / 10.;
+                shared_ui.timeline_zoom -= input.scroll_delta / 25.;
                 shared_ui.timeline_zoom = shared_ui.timeline_zoom.min(10.).max(0.1);
             } else if !camera.on_ui {
                 events.cam_zoom_scroll();
