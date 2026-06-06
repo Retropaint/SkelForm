@@ -915,7 +915,7 @@ fn context_menu_content(
             events.paste_keyframes_on_frame(split[3].parse().unwrap());
             shared_ui.context_menu.close();
         }
-        if ui.context_button("Delete Keyframe", &config).clicked() {
+        if ui.context_button("Delete Keyframe(s)", &config).clicked() {
             events.delete_selected_keyframes();
             shared_ui.context_menu.close();
         }
