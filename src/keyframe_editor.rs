@@ -712,11 +712,16 @@ pub fn draw_bottom_bar(
                 events.toggle_anim_playing(selections.anim, anim.elapsed == None);
             });
 
-            if ui.skf_button("+").clicked() {
+            let desc = shared_ui.loc("top_bar.view.zoom_in");
+            let kb_tip = shared_ui
+                .loc("keyframe_editor.zoom_kb_tip")
+                .replace("$kb", &config.keys.timeline_zoom_mode.display());
+            if ui.skf_button("+").on_hover_text(desc + &kb_tip).clicked() {
                 shared_ui.timeline_zoom -= 0.1;
                 shared_ui.timeline_zoom = shared_ui.timeline_zoom.max(0.1);
             }
-            if ui.skf_button("-").clicked() {
+            let desc = shared_ui.loc("top_bar.view.zoom_out");
+            if ui.skf_button("-").on_hover_text(desc + &kb_tip).clicked() {
                 shared_ui.timeline_zoom += 0.1;
                 shared_ui.timeline_zoom = shared_ui.timeline_zoom.min(3.);
             }
