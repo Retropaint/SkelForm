@@ -561,10 +561,21 @@ pub fn draw_top_bar(
                     shared_ui.hovering_diamond = true;
                     shared_ui.cursor_icon = egui::CursorIcon::PointingHand;
                     diamond_size += 2.;
-                    if input.left_clicked {
-                        shared_ui.last_selected = "keyframe".to_string();
-                        events.select_anim_frame(frame as usize, true);
-                    }
+                }
+
+                if response.clicked() {
+                    shared_ui.last_selected = "keyframe".to_string();
+                    events.select_anim_frame(frame as usize, true);
+                }
+
+                if response.secondary_clicked() {
+                    events.select_anim_frame(frame as usize, true);
+                    shared_ui.last_selected = "keyframe".to_string();
+                    let kf = &armature.sel_anim(&sel).unwrap().keyframes[i];
+                    let el = &(kf.element.clone() as usize);
+                    let context_id =
+                        &format!("keyframe_{}_{}_{}_{}", el, &kf.bone_id, &kf.frame, &i);
+                    shared_ui.context_menu.show(context_id);
                 }
 
                 let cursor = get_cursor(ui);
@@ -847,7 +858,7 @@ fn draw_frame_lines(
             }
         }
 
-        if is_in && input.right_clicked {
+        if !shared_ui.hovering_diamond && is_in && input.right_clicked {
             let context_id = format!("kfline_{}", i.to_string());
             shared_ui.context_menu.show(&context_id);
         }
@@ -987,13 +998,14 @@ fn draw_frame_lines(
         }
 
         if response.secondary_clicked() {
-            shared_ui.context_menu.show(&format!(
+            let context_id = &format!(
                 "keyframe_{}_{}_{}_{}",
                 &(kf.element as usize),
                 &kf.bone_id,
                 &kf.frame,
                 &i
-            ));
+            );
+            shared_ui.context_menu.show(context_id);
         }
 
         if response.drag_stopped() {

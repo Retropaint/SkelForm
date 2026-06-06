@@ -911,7 +911,7 @@ fn context_menu_content(
             events.copy_selected_keyframes();
             shared_ui.context_menu.close();
         }
-        if ui.context_button("Paste Keyframe", &config).clicked() {
+        if ui.context_button("Paste Keyframe(s)", &config).clicked() {
             events.paste_keyframes_on_frame(split[3].parse().unwrap());
             shared_ui.context_menu.close();
         }
