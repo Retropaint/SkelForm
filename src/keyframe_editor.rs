@@ -62,7 +62,7 @@ pub fn draw(
         }
     }
     if sel_frame != selections.anim_frame {
-        events.select_anim_frame(sel_frame as usize, false);
+        events.select_anim_frame(sel_frame as usize, false, false);
     }
 
     let panel_id = "Keyframe";
@@ -517,15 +517,13 @@ pub fn draw_top_bar(
                 let rect = egui::Rect::from_center_size(pos.into(), egui::Vec2::splat(5.));
                 let response: egui::Response =
                     ui.allocate_rect(rect, egui::Sense::click_and_drag());
-
-                if response.drag_started() {
-                    events.select_anim_frame(frame as usize, true);
-                }
-
                 let mut diamond_size = 5.;
 
                 // enlarge diamond if all of its keyframes are selected
                 let keyframes = &armature.sel_anim(&sel).unwrap().keyframes;
+                // used to determine if 'cmd' should be held when selecting
+                // this diamond
+                let mut is_selected = false;
                 if shared_ui.selected_keyframes.len() > 0 {
                     let this_keyframes: Vec<&Keyframe> = keyframes
                         .iter()
@@ -536,10 +534,15 @@ pub fn draw_top_bar(
                         .iter()
                         .filter(|kf| kf.frame == last_unique_frame)
                         .collect();
-                    if this_keyframes.len() == this_sel_kf.len() {
+                    is_selected = this_keyframes.len() == this_sel_kf.len();
+                    if is_selected {
                         diamond_color = Color::new(100, 255, 100, 0);
                         diamond_size += 2.;
                     }
+                }
+
+                if response.drag_started() {
+                    events.select_anim_frame(frame as usize, true, is_selected);
                 }
 
                 if response.hovered() {
@@ -550,11 +553,11 @@ pub fn draw_top_bar(
 
                 if response.clicked() {
                     shared_ui.last_selected = "keyframe".to_string();
-                    events.select_anim_frame(frame as usize, true);
+                    events.select_anim_frame(frame as usize, true, is_selected);
                 }
 
                 if response.secondary_clicked() {
-                    events.select_anim_frame(frame as usize, true);
+                    events.select_anim_frame(frame as usize, true, is_selected);
                     shared_ui.last_selected = "keyframe".to_string();
                     let kf = &armature.sel_anim(&sel).unwrap().keyframes[i];
                     let el = &(kf.element.clone() as usize);
@@ -830,8 +833,10 @@ fn draw_frame_lines(
 
             // select this frame if clicked
             if input.left_clicked && shared_ui.context_menu.id == "" {
-                shared_ui.selected_keyframes = vec![];
-                events.select_anim_frame(i as usize, false);
+                if !input.holding_mod {
+                    shared_ui.selected_keyframes = vec![];
+                }
+                events.select_anim_frame(i as usize, false, false);
                 shared_ui.last_selected = "keyframe".to_string();
             }
         }
@@ -952,8 +957,8 @@ fn draw_frame_lines(
         // select this frame if icon is clicked
         if response.clicked() {
             shared_ui.last_selected = "keyframe".to_string();
-            events.select_anim_frame(kf.frame as usize, false);
-            if input.holding_shift {
+            events.select_anim_frame(kf.frame as usize, false, false);
+            if input.holding_mod {
                 add_selected_keyframes(&mut shared_ui.selected_keyframes, &kf);
             } else {
                 shared_ui.selected_keyframes = vec![kf.clone()];
@@ -961,8 +966,8 @@ fn draw_frame_lines(
         }
 
         // put this keyframe in selected if it's going to be dragged
-        if response.drag_started() && !shared_ui.selected_keyframes.contains(&kf) {
-            if input.holding_shift {
+        if response.drag_started() {
+            if input.holding_mod || shared_ui.selected_keyframes.contains(&kf) {
                 add_selected_keyframes(&mut shared_ui.selected_keyframes, &kf);
             } else {
                 shared_ui.selected_keyframes = vec![kf.clone()];
@@ -983,11 +988,16 @@ fn draw_frame_lines(
         if response.secondary_clicked() {
             let context_id = &format!(
                 "keyframe_{}_{}_{}_{}",
-                &(kf.element as usize),
+                &(kf.element.clone() as usize),
                 &kf.bone_id,
                 &kf.frame,
                 &i
             );
+            if input.holding_mod || shared_ui.selected_keyframes.contains(&kf) {
+                add_selected_keyframes(&mut shared_ui.selected_keyframes, &kf);
+            } else {
+                shared_ui.selected_keyframes = vec![kf.clone()];
+            }
             shared_ui.context_menu.show(context_id);
         }
 

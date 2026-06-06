@@ -2573,10 +2573,11 @@ impl EventState {
         self.str_values.push(err);
     }
 
-    pub fn select_anim_frame(&mut self, frame: usize, select_keyframes: bool) {
+    pub fn select_anim_frame(&mut self, frame: usize, select_keyframes: bool, perma_shift: bool) {
         self.events.push(Events::SelectAnimFrame);
         self.values.push(frame as f32);
         self.values.push(if select_keyframes { 1. } else { 0. });
+        self.values.push(if perma_shift { 1. } else { 0. });
     }
 
     pub fn delete_keyframe_line(&mut self, bone_id: usize, element: &AnimElement) {

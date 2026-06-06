@@ -142,7 +142,7 @@ pub fn iterate_events(
 
         // select all keyframes in this frame if requested
         if events.values[1] == 1. {
-            if !input.holding_shift {
+            if !input.holding_mod && !input.holding_shift && events.values[2] == 0. {
                 ui.selected_keyframes = vec![];
             }
             for kf in &armature.sel_anim(&selections).unwrap().keyframes {
@@ -155,7 +155,7 @@ pub fn iterate_events(
         selections.bone_idx = selected_bone_idx;
         selections.bone_ids = selected_bone_ids;
         events.events.remove(0);
-        events.values.drain(0..=1);
+        events.values.drain(0..=2);
     } else if event == Events::ToggleIkDisabled {
         armature.bones[events.values[0] as usize].ik_disabled = events.values[1] == 1.;
         events.events.remove(0);
