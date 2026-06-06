@@ -1869,26 +1869,26 @@ enum_string!(HandlePreset);
 #[rustfmt::skip]
 pub enum AnimElement {
     #[default]
-     PositionX,
-     PositionY,
-     Rotation,
-     ScaleX,
-     ScaleY,
-     Zindex,
-     Texture,
-     IkConstraint,
-     Hidden,
-     IkMode,
-     IkFamilyId,
-     TintR,
-     TintG,
-     TintB,
-     TintA,
-     Locked,      // NA
-     GroupColorR, // NA
-     GroupColorG, // NA
-     GroupColorB, // NA
-     GroupColorA, // NA
+     /* 0 */ PositionX,
+     /* 1 */ PositionY,
+     /* 2 */ Rotation,
+     /* 3 */ ScaleX,
+     /* 4 */ ScaleY,
+     /* 5 */ Zindex,
+     /* 6 */ Texture,
+     /* 7 */ IkConstraint,
+     /* 8 */ Hidden,
+     /* 9 */ IkMode,
+     /* A */ IkFamilyId,
+     /* B */ TintR,
+     /* C */ TintG,
+     /* D */ TintB,
+     /* E */ TintA,
+     /* F */ Locked,      // NA
+     /* G */ GroupColorR, // NA
+     /* H */ GroupColorG, // NA
+     /* I */ GroupColorB, // NA
+     /* J */ GroupColorA, // NA
 }
 
 // iterable anim change icons IDs
@@ -1902,13 +1902,13 @@ pub const ANIM_ICON_ID: [usize; 15] = [
     /* 5 */ 5,
     /* 6 */ 6,
     /* 7 */ 5,
-    /* 8 */ 5,
+    /* 8 */ 7,
     /* 9 */ 7,
-    /* 10 */ 5,
-    /* 11 */ 8,
-    /* 12 */ 9,
-    /* 13 */ 10,
-    /* 14 */ 11,
+    /* A */ 5,
+    /* B */ 8,
+    /* C */ 9,
+    /* D */ 10,
+    /* E */ 11,
 ];
 
 #[derive(Default, Clone, PartialEq, Debug)]
