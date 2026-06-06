@@ -916,7 +916,7 @@ fn context_menu_content(
             shared_ui.context_menu.close();
         }
         if ui.context_button("Delete Keyframe", &config).clicked() {
-            events.delete_keyframe(split[4].parse().unwrap());
+            events.delete_selected_keyframes();
             shared_ui.context_menu.close();
         }
     } else if id == "kfline" {

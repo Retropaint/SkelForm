@@ -2187,7 +2187,6 @@ pub enum Events {
     DeleteAnim,
     DeleteTex,
     DeleteStyle,
-    DeleteKeyframe,
     DeleteVertex,
     DeleteTriangle,
     DeleteKeyframesByFrame,
@@ -2366,7 +2365,6 @@ impl EventState {
     event_with_value!(delete_anim, Events::DeleteAnim, anim_id, usize);
     event_with_value!(delete_tex, Events::DeleteTex, tex_id, usize);
     event_with_value!(delete_style, Events::DeleteStyle, style_id, usize);
-    event_with_value!(delete_keyframe, Events::DeleteKeyframe, kf_idx, usize);
     event_with_value!(duplicate_anim, Events::DuplicateAnim, anim_id, usize);
     event_with_value!(copy_bone, Events::CopyBone, bone_id, usize);
     event_with_value!(paste_bone, Events::PasteBone, bone_id, usize);

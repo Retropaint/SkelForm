@@ -38,7 +38,7 @@ pub fn iterate_events(
                 E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
                 E::RenameAnim  => if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap()); ui.just_made_anim  = false }
-                E::DeleteKeyframe | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframesOnFrame => {
+                E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframesOnFrame => {
                     undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
                 }
                 E::ResetVertices | E::CenterBoneVerts | E::DeleteVertex | E::TraceBoneVerts | E::NewVertex | E::DeleteTriangle => {
@@ -443,10 +443,13 @@ pub fn simple_event(
             ui.rename_id = "style_".to_string() + &(armature.styles.len() - 1).to_string();
             ui.just_made_style = true;
         }
-        Events::DeleteKeyframe => {
-            _ = armature.animations[selections.anim]
-                .keyframes
-                .remove(value as usize)
+        Events::DeleteSelectedKeyframes => {
+            for skf in &ui.selected_keyframes {
+                let keyframes = &mut armature.sel_anim_mut(&selections).unwrap().keyframes;
+                keyframes.retain(|kf| {
+                    kf.frame != skf.frame || kf.element != skf.element || kf.bone_id != skf.bone_id
+                });
+            }
         }
         Events::SelectBone => {
             let render = str_value == "t";
@@ -1069,14 +1072,6 @@ pub fn simple_event(
             // select new parent
             selections.bone_ids = vec![parent.id];
             selections.bone_idx = bones.iter().position(|b| b.id == parent.id).unwrap();
-        }
-        Events::DeleteSelectedKeyframes => {
-            let anim = &mut armature.sel_anim_mut(&selections).unwrap();
-            for skf in &ui.selected_keyframes {
-                let idx = anim.keyframes.iter().position(|kf| skf == kf).unwrap();
-                anim.keyframes.remove(idx);
-            }
-            ui.selected_keyframes = vec![];
         }
         Events::MoveSelectedKeyframes => {
             if value as i32 == ui.dragged_keyframe.frame {
