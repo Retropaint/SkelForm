@@ -1041,7 +1041,6 @@ impl BackendRenderer {
 
         shared.ui.spritesheet_elapsed = None;
         shared.ui.modal = false;
-        shared.ui.sprite_size = shared.screenshot_res;
         *shared.ui.mapped_frames.lock().unwrap() = 0;
     }
 

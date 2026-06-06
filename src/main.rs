@@ -145,6 +145,11 @@ fn init_shared(shared: &mut Shared) {
     shared.selections.hovering_vert_id = -1;
     shared.selections.hovering_bone_id = -1;
 
+    shared.ui.video_clear_bg = shared.config.colors.background;
+    shared.ui.exporting_video_type = ExportVideoType::Mp4;
+    shared.ui.exporting_anims = vec![];
+    shared.ui.anim_cycles = 1;
+
     #[cfg(not(target_arch = "wasm32"))]
     {
         match std::fs::exists(utils::bin_path().join("dev-docs")) {

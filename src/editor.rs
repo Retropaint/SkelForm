@@ -928,10 +928,6 @@ pub fn simple_event(
         }
         Events::OpenExportModal => {
             ui.export_modal = true;
-            ui.video_clear_bg = config.colors.background;
-            ui.exporting_video_type = ExportVideoType::Mp4;
-            ui.exporting_anims = vec![];
-            ui.anim_cycles = 1;
             for _ in &armature.animations {
                 ui.exporting_anims.push(true);
             }
