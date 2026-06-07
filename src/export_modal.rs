@@ -1,6 +1,5 @@
 #[cfg(all(not(target_os = "windows"), not(target_arch = "wasm32")))]
 use std::os::unix::fs::PermissionsExt;
-use std::time::Instant;
 
 use egui::IntoAtoms;
 
@@ -22,6 +21,7 @@ mod native {
     pub use std::{
         fs::OpenOptions,
         io::{Read, Write},
+        time::Instant,
     };
     pub use zip::ZipArchive;
 }
