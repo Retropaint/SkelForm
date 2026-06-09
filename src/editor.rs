@@ -37,7 +37,6 @@ pub fn iterate_events(
                 E::DeleteTex                    => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
                 E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
-                E::RenameAnim  => if !ui.just_made_anim  { undo_states.new_undo_anim( &armature.sel_anim( &selections).unwrap()); ui.just_made_anim  = false }
                 E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframesOnFrame => {
                     undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
                 }
@@ -372,7 +371,13 @@ pub fn simple_event(
             }
         }
         Events::RenameBone => armature.bones[value as usize].name = str_value,
-        Events::RenameAnim => armature.animations[value as usize].name = str_value,
+        Events::RenameAnim => {
+            if !ui.just_made_anim {
+                undo_states.new_undo_anim(&armature.animations[value as usize]);
+            }
+            armature.animations[value as usize].name = str_value;
+            ui.just_made_anim = false;
+        }
         Events::PointerOnUi => camera.on_ui = value == 1.,
         Events::ToggleShowingMesh => {
             edit_mode.showing_mesh = value == 1.;
