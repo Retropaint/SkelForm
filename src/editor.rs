@@ -574,7 +574,10 @@ pub fn simple_event(
         Events::DuplicateAnim => {
             let anims = &armature.animations;
             let id = anims.iter().position(|a| a.id == value as i32).unwrap();
-            armature.animations.push(anims[id].clone())
+            let mut new_anim = anims[id].clone();
+            let ids: Vec<i32> = anims.iter().map(|anim| anim.id).collect();
+            new_anim.id = generate_id(ids);
+            armature.animations.push(new_anim);
         }
         Events::SaveBone => {
             let bone = armature.bones[value as usize].clone();
