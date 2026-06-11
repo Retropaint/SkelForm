@@ -519,7 +519,7 @@ pub fn skf_file_button(
             egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top() - 5.),
             egui::Pos2::new(ui.min_rect().right() + 25., ui.min_rect().bottom()),
         );
-        let id = egui::Id::new(format!("frame rect{}", filename));
+        let id = egui::Id::new(format!("frame rect{}", idx));
         let button = ui
             .interact(rect, id, egui::Sense::click())
             .on_hover_cursor(egui::CursorIcon::PointingHand);
