@@ -33,6 +33,7 @@ pub fn startup_modal(
 
         let available_size = ui.available_size();
 
+        // render all startup content (left, middle, right)
         let layout = egui::Layout::centered_and_justified(egui::Direction::LeftToRight);
         ui.with_layout(layout, |ui| {
             let padding = 600.;
@@ -41,24 +42,23 @@ pub fn startup_modal(
             ui.horizontal(|ui| {
                 ui.set_width(size.x);
                 ui.set_height(size.y);
-                startup_content(&ctx, ui, size, shared_ui, events, config);
+                left(&ctx, ui, shared_ui, events, config);
+                middle(&ctx, ui, shared_ui, events, config, size);
+                right(ui, shared_ui, config);
             });
         })
     });
 }
 
-fn startup_content(
+fn left(
     ctx: &egui::Context,
     ui: &mut egui::Ui,
-    available_size: egui::Vec2,
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     conf: &Config,
 ) {
-    ui.add_space(10.);
-
     let padding = 5.;
-
+    ui.add_space(10.);
     ui.vertical(|ui| {
         ui.set_width(133.);
         ui.add_space(10.);
@@ -133,7 +133,16 @@ fn startup_content(
             }
         }
     });
+}
 
+fn middle(
+    ctx: &egui::Context,
+    ui: &mut egui::Ui,
+    shared_ui: &mut crate::Ui,
+    events: &mut EventState,
+    conf: &Config,
+    available_size: egui::Vec2,
+) {
     ui.add_space(10.);
     ui.separator();
 
@@ -244,9 +253,10 @@ fn startup_content(
             })
         });
     });
+}
 
+fn right(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, conf: &Config) {
     ui.separator();
-
     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
         ui.add_space(15.);
         let width = 200.;
