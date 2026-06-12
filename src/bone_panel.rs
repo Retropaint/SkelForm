@@ -472,6 +472,24 @@ pub fn inverse_kinematics(
                 }
             });
         });
+
+        // show 'mimic target rotation' for last IK bones
+        if armature.bone_eff(bone.id) == JointEffector::End {
+            ui.horizontal(|ui| {
+                ui.label("Mimic Target Rotation:");
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let mut checked = bone.ik_mimic_target;
+                    ui.checkbox(&mut checked, "".into_atoms());
+                    if checked != bone.ik_mimic_target {
+                        let target = &AnimElement::MimicTarget;
+                        println!("{}", checked);
+                        let cf32 = if checked { 1. } else { 0. };
+                        let sel = &selections;
+                        events.edit_bone(bone.id, target, cf32, "", sel.anim, sel.anim_frame);
+                    }
+                });
+            });
+        }
         ui.horizontal(|ui| {
             let root = root_bone.unwrap();
             let str = shared_ui.loc("bone_panel.inverse_kinematics.root_bone");

@@ -1067,6 +1067,8 @@ pub struct Bone {
     pub ik_target_id: i32,
     #[serde(skip_serializing_if = "is_i32_empty")]
     pub ik_bone_ids: Vec<i32>,
+    #[serde(skip_serializing_if = "is_false")]
+    pub ik_mimic_target: bool,
 
     #[serde(skip_serializing_if = "is_false")]
     pub has_physics: bool,
@@ -1121,6 +1123,8 @@ pub struct Bone {
     pub init_tint: TintColor,
     #[serde(skip_serializing_if = "is_neg_one")]
     pub init_zindex: i32,
+    #[serde(skip_serializing_if = "is_false")]
+    pub init_ik_mimic_target: bool,
 
     #[serde(default, skip_serializing_if = "are_verts_empty")]
     pub vertices: Vec<Vertex>,
@@ -1380,16 +1384,19 @@ impl Armature {
                 b.rot     = self.interpolate_keyframes(anim_idx, b.id, AE::Rotation,  b.rot,     anim_frame);
                 b.scale.x = self.interpolate_keyframes(anim_idx, b.id, AE::ScaleX,    b.scale.x, anim_frame);
                 b.scale.y = self.interpolate_keyframes(anim_idx, b.id, AE::ScaleY,    b.scale.y, anim_frame);
-                b.tint.r =  self.interpolate_keyframes(anim_idx, b.id, AE::TintR,     b.tint.r,  anim_frame);
-                b.tint.g =  self.interpolate_keyframes(anim_idx, b.id, AE::TintG,     b.tint.g,  anim_frame);
-                b.tint.b =  self.interpolate_keyframes(anim_idx, b.id, AE::TintB,     b.tint.b,  anim_frame);
-                b.tint.a =  self.interpolate_keyframes(anim_idx, b.id, AE::TintA,     b.tint.a,  anim_frame);
-                b.zindex  = prev_frame!(AE::Zindex,  b.zindex as f32) as i32;
-                b.hidden  = prev_frame!(AE::Hidden,  bool_as_f32(b.hidden)) != 0.;
-                b.tex     = prev_str!(  AE::Texture, b.tex.clone());
+                b.tint.r  = self.interpolate_keyframes(anim_idx, b.id, AE::TintR,     b.tint.r,  anim_frame);
+                b.tint.g  = self.interpolate_keyframes(anim_idx, b.id, AE::TintG,     b.tint.g,  anim_frame);
+                b.tint.b  = self.interpolate_keyframes(anim_idx, b.id, AE::TintB,     b.tint.b,  anim_frame);
+                b.tint.a  = self.interpolate_keyframes(anim_idx, b.id, AE::TintA,     b.tint.a,  anim_frame);
+
+                b.zindex          = prev_frame!(AE::Zindex,      b.zindex as f32) as i32;
+                b.hidden          = prev_frame!(AE::Hidden,      bool_as_f32(b.hidden)) != 0.;
+                b.ik_mimic_target = prev_frame!(AE::MimicTarget, bool_as_f32(b.ik_mimic_target)) != 0.;
+
+                b.tex = prev_str!(AE::Texture, b.tex.clone());
             };
 
-            macro_rules! prev_frame {
+            macro_rules! prev_enum {
                 ($field:expr, $anim_element:expr, $enum:ident) => {
                     let kfs = &self.animations[anim_idx].keyframes;
                     let prev_frame = utils::get_prev_frame(anim_frame, kfs, b.id, &$anim_element);
@@ -1399,8 +1406,8 @@ impl Armature {
                 };
             }
 
-            prev_frame!(b.ik_constraint, AnimElement::IkConstraint, JointConstraint);
-            prev_frame!(b.ik_mode, AnimElement::IkMode, InverseKinematicsMode);
+            prev_enum!(b.ik_constraint, AnimElement::IkConstraint, JointConstraint);
+            prev_enum!(b.ik_mode, AnimElement::IkMode, InverseKinematicsMode);
         }
 
         bones
@@ -1890,16 +1897,17 @@ pub enum AnimElement {
      /* H */ GroupColorG, // NA
      /* I */ GroupColorB, // NA
      /* J */ GroupColorA, // NA
+     /* K */ MimicTarget, // NA
 }
 
 // iterable anim change icons IDs
 #[rustfmt::skip]
-pub const ANIM_ICON_ID: [usize; 15] = [
+pub const ANIM_ICON_ID: [usize; 21] = [
     /* 0 */ 0,
     /* 1 */ 1,
     /* 2 */ 2,
     /* 3 */ 3,
-    /* 5 */ 4,
+    /* 4 */ 4,
     /* 5 */ 5,
     /* 6 */ 6,
     /* 7 */ 5,
@@ -1909,7 +1917,13 @@ pub const ANIM_ICON_ID: [usize; 15] = [
     /* B */ 8,
     /* C */ 9,
     /* D */ 10,
-    /* E */ 11,
+    /* E */ 10,
+    /* F */ 10,
+    /* G */ 10,
+    /* H */ 10,
+    /* I */ 10,
+    /* J */ 10,
+    /* K */ 10,
 ];
 
 #[derive(Default, Clone, PartialEq, Debug)]

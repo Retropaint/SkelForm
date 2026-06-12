@@ -764,6 +764,7 @@ pub fn prepare_files(
         bone.init_hidden = bone.hidden;
         bone.init_tint = bone.tint;
         bone.init_zindex = bone.zindex;
+        bone.init_ik_mimic_target = bone.init_ik_mimic_target;
         if bone.ik_bone_ids.len() == 0 {
             bone.ik_constraint = JointConstraint::Skip;
             bone.ik_mode = InverseKinematicsMode::Skip;

@@ -1481,11 +1481,12 @@ fn edit_bone(
     mut anim_id: usize,
     mut anim_frame: i32,
 ) {
+    let eff = armature.bone_eff(bone_id);
     let bones = &mut armature.bones;
     let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
 
     // set rotation to 0 if this bone is part of IK
-    if bone.ik_family_id != -1 && element == AnimElement::Rotation {
+    if bone.ik_family_id != -1 && eff != JointEffector::End && element == AnimElement::Rotation {
         value = 0.;
     }
 
@@ -1530,6 +1531,8 @@ fn edit_bone(
         }};
     }
 
+    println!("{}", value);
+
     match element {
         AnimElement::PositionX => set!(bone.pos.x, f32),
         AnimElement::PositionY => set!(bone.pos.y, f32),
@@ -1551,6 +1554,7 @@ fn edit_bone(
         AnimElement::GroupColorG => set!(bone.group_color.g, u8),
         AnimElement::GroupColorB => set!(bone.group_color.b, u8),
         AnimElement::GroupColorA => set!(bone.group_color.a, u8),
+        AnimElement::MimicTarget => set_bool!(bone.ik_mimic_target),
     };
 
     if anim_frame == -1 {
