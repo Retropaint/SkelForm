@@ -406,7 +406,8 @@
       "TintG": "Green Tint",
       "TintB": "Blue Tint",
       "TintA": "Alpha Tint",
-      "IkMode": "IK Mode"
+      "IkMode": "IK Mode",
+      "MimicTarget": "Mimic Target"
     }
   },
   "keyframe_panel": {
