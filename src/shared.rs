@@ -1126,6 +1126,13 @@ pub struct Bone {
     #[serde(skip_serializing_if = "is_false")]
     pub init_ik_mimic_target: bool,
 
+    #[serde(skip_serializing_if = "is_neg_one")]
+    pub inverse_kinematics_id: i32,
+    #[serde(skip_serializing_if = "is_neg_one")]
+    pub physics_id: i32,
+    #[serde(skip_serializing_if = "is_neg_one")]
+    pub visuals_id: i32,
+
     #[serde(default, skip_serializing_if = "are_verts_empty")]
     pub vertices: Vec<Vertex>,
     #[serde(skip)]
@@ -1659,6 +1666,23 @@ pub struct TexAtlas {
     pub size: Vec2I,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+pub struct InverseKinematics {
+    #[serde(default = "default_neg_one")]
+    pub ik_family_id: i32,
+    #[rustfmt::skip]
+    #[serde(skip_serializing_if = "no_constraints")]
+    pub ik_constraint: JointConstraint,
+    #[serde(skip_serializing_if = "no_ik_mode")]
+    pub ik_mode: InverseKinematicsMode,
+    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
+    pub ik_target_id: i32,
+    #[serde(skip_serializing_if = "is_i32_empty")]
+    pub ik_bone_ids: Vec<i32>,
+    #[serde(skip_serializing_if = "is_false")]
+    pub ik_mimic_target: bool,
+}
+
 // used for the json
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 #[serde(default)]
@@ -1674,6 +1698,7 @@ pub struct Root {
     pub animations: Vec<Animation>,
     pub atlases: Vec<TexAtlas>,
     pub styles: Vec<Style>,
+    pub inverse_kinematics: Vec<InverseKinematics>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]

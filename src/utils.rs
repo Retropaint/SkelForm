@@ -863,6 +863,11 @@ pub fn prepare_files(
     }
     let editor_json = serde_json::to_string(&editor).unwrap();
 
+    let inverse_kinematics: Vec<InverseKinematics>;
+    for bone in &armature_copy.bones {
+        if bone.ik_family_id != -1 {}
+    }
+
     // prepare root and serlialize armature_copy into json
     let root = Root {
         version: env!("CARGO_PKG_VERSION").to_string(),
@@ -874,6 +879,7 @@ pub fn prepare_files(
         animations: armature_copy.animations,
         styles: armature_copy.styles,
         atlases,
+        inverse_kinematics: vec![],
     };
     let armatures_json = serde_json::to_string(&root).unwrap();
 
