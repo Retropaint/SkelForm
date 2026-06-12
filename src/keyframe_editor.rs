@@ -804,15 +804,20 @@ fn draw_frame_lines(
         shared_ui.lines_x.push(x);
 
         let mut color: egui::Color32 = config.colors.frameline.into();
+
+        // use different color for frameline if it exceeds last keyframe
         let last_keyframe = armature.animations[selections.anim].keyframes.last();
         if last_keyframe != None && i > last_keyframe.unwrap().frame {
             color = config.colors.dark_accent.into();
         }
+
+        // brighten frameline if current animation is playing, and on this frame
         let anim = &armature.animations[selections.anim];
         if i == anim.get_frame() && anim.elapsed != None {
             color = color + egui::Color32::from_rgb(60, 60, 60);
         }
 
+        // several checks for whether frameline can/is being hovered on
         let below_top_bar = cursor.y < ui.min_rect().height() - 13.;
         let in_ui = cursor.y > -25.;
         let can_hover =
