@@ -768,19 +768,10 @@ pub fn prepare_files(
         if bone.ik_bone_ids.len() == 0 {
             bone.ik_constraint = JointConstraint::Skip;
             bone.ik_mode = InverseKinematicsMode::Skip;
-            bone.ik_family_id = -1;
             bone.ik_bone_ids = vec![];
         }
         bone.init_ik_mode = bone.ik_mode;
         bone.init_ik_constraint = bone.ik_constraint;
-    }
-
-    // populate ik_root_ids
-    let mut ik_root_ids = vec![];
-    for bone in &armature_copy.bones {
-        if bone.ik_family_id != -1 {
-            ik_root_ids.push(bone.id);
-        }
     }
 
     // populate texture ser_offset and ser_size
@@ -863,15 +854,39 @@ pub fn prepare_files(
     }
     let editor_json = serde_json::to_string(&editor).unwrap();
 
-    let inverse_kinematics: Vec<InverseKinematics>;
+    // populate inverse_kinematics
+    let mut ik_root_ids = vec![];
     for bone in &armature_copy.bones {
-        if bone.ik_family_id != -1 {}
+        let eff = armature_copy.bone_eff(bone.id);
+        if bone.ik_family_id != -1 && eff == JointEffector::Start {
+            ik_root_ids.push(bone.id);
+        }
+    }
+    let mut inverse_kinematics: Vec<InverseKinematics> =
+        vec![InverseKinematics::default(); ik_root_ids.len()];
+    for bone in &armature_copy.bones {
+        if bone.ik_family_id == -1 {
+            continue;
+        }
+        let eff = armature_copy.bone_eff(bone.id);
+        let this_ik = &mut inverse_kinematics[bone.ik_family_id as usize];
+        if eff == JointEffector::Start {
+            *this_ik = InverseKinematics {
+                id: bone.ik_family_id,
+                ik_constraint: bone.ik_constraint,
+                ik_mode: bone.ik_mode,
+                ik_target_id: bone.ik_target_id,
+                ik_bone_ids: bone.ik_bone_ids.clone(),
+                ..Default::default()
+            };
+        } else if eff == JointEffector::End {
+            this_ik.ik_mimic_target = bone.ik_mimic_target;
+        }
     }
 
     // prepare root and serlialize armature_copy into json
     let root = Root {
         version: env!("CARGO_PKG_VERSION").to_string(),
-        ik_root_ids,
         baked_ik: edit_mode.export_bake_ik,
         img_format: edit_mode.export_img_format.clone(),
         clear_color,
@@ -879,7 +894,7 @@ pub fn prepare_files(
         animations: armature_copy.animations,
         styles: armature_copy.styles,
         atlases,
-        inverse_kinematics: vec![],
+        inverse_kinematics,
     };
     let armatures_json = serde_json::to_string(&root).unwrap();
 
@@ -947,23 +962,37 @@ pub fn import<R: Read + std::io::Seek>(
 
     // populate bone IK data
     for b in 0..temp_arm.bones.len() {
-        for i in 0..temp_arm.bones[b].ik_bone_ids.len() {
-            let id = temp_arm.bones[b].ik_bone_ids[i] as i32;
+        if temp_arm.bones[b].ik_family_id == -1 {
+            continue;
+        }
+        let ik_family = &root.inverse_kinematics[temp_arm.bones[b].ik_family_id as usize];
+        for i in 0..ik_family.ik_bone_ids.len() {
+            // find this IK bone
+            let id = ik_family.ik_bone_ids[i] as i32;
             let fam_id = temp_arm.bones[b].ik_family_id;
-            let bones = &mut temp_arm.bones;
-            let mut bone = bones.iter_mut().find(|b| b.id == id);
-            if bone == None {
+            if let Some(bone) = temp_arm.bones.iter_mut().find(|b| b.id == id) {
+                bone.ik_family_id = fam_id;
+            } else {
                 custom_err!(format!(
                     "Bone of ID {} of IK family #{} could not be found.",
                     id.to_string(),
-                    temp_arm.bones[b].ik_family_id.to_string()
+                    fam_id.to_string()
                 ));
             }
-            bone.as_mut().unwrap().ik_family_id = fam_id;
-            // don't reset Y of root bone
-            if i != 0 {
-                bone.as_mut().unwrap().pos.y = 0.;
-            }
+        }
+
+        // populate IK data on appropriate bones
+        let eff = temp_arm.bone_eff(temp_arm.bones[b].id);
+        let bone = &mut temp_arm.bones[b];
+        if eff == JointEffector::Start {
+            bone.ik_target_id = ik_family.ik_target_id;
+            bone.ik_constraint = ik_family.ik_constraint;
+            bone.ik_mode = ik_family.ik_mode;
+        } else if eff == JointEffector::End {
+            bone.ik_mimic_target = ik_family.ik_mimic_target;
+            bone.pos.y = 0.;
+        } else {
+            bone.pos.y = 0.;
         }
     }
 

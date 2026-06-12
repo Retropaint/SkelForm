@@ -1058,16 +1058,15 @@ pub struct Bone {
 
     #[serde(default = "default_neg_one")]
     pub ik_family_id: i32,
-    #[rustfmt::skip]
-    #[serde(skip_serializing_if = "no_constraints")]
+    #[serde(skip)]
     pub ik_constraint: JointConstraint,
-    #[serde(skip_serializing_if = "no_ik_mode")]
+    #[serde(skip)]
     pub ik_mode: InverseKinematicsMode,
-    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
+    #[serde(skip)]
     pub ik_target_id: i32,
-    #[serde(skip_serializing_if = "is_i32_empty")]
+    #[serde(skip)]
     pub ik_bone_ids: Vec<i32>,
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip)]
     pub ik_mimic_target: bool,
 
     #[serde(skip_serializing_if = "is_false")]
@@ -1126,8 +1125,6 @@ pub struct Bone {
     #[serde(skip_serializing_if = "is_false")]
     pub init_ik_mimic_target: bool,
 
-    #[serde(skip_serializing_if = "is_neg_one")]
-    pub inverse_kinematics_id: i32,
     #[serde(skip_serializing_if = "is_neg_one")]
     pub physics_id: i32,
     #[serde(skip_serializing_if = "is_neg_one")]
@@ -1666,10 +1663,11 @@ pub struct TexAtlas {
     pub size: Vec2I,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
+#[serde(default)]
 pub struct InverseKinematics {
     #[serde(default = "default_neg_one")]
-    pub ik_family_id: i32,
+    pub id: i32,
     #[rustfmt::skip]
     #[serde(skip_serializing_if = "no_constraints")]
     pub ik_constraint: JointConstraint,
@@ -1688,7 +1686,6 @@ pub struct InverseKinematics {
 #[serde(default)]
 pub struct Root {
     pub version: String,
-    pub ik_root_ids: Vec<i32>,
     pub baked_ik: bool,
     pub img_format: ExportImgFormat,
     #[serde(default, skip_serializing_if = "is_color_empty")]
