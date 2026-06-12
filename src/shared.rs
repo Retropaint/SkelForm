@@ -1892,12 +1892,12 @@ pub enum AnimElement {
      /* C */ TintG,
      /* D */ TintB,
      /* E */ TintA,
+     /* K */ MimicTarget,
      /* F */ Locked,      // NA
      /* G */ GroupColorR, // NA
      /* H */ GroupColorG, // NA
      /* I */ GroupColorB, // NA
      /* J */ GroupColorA, // NA
-     /* K */ MimicTarget, // NA
 }
 
 // iterable anim change icons IDs
@@ -1917,13 +1917,13 @@ pub const ANIM_ICON_ID: [usize; 21] = [
     /* B */ 8,
     /* C */ 9,
     /* D */ 10,
-    /* E */ 10,
+    /* E */ 6,
+    /* K */ 5,
     /* F */ 10,
     /* G */ 10,
     /* H */ 10,
     /* I */ 10,
     /* J */ 10,
-    /* K */ 10,
 ];
 
 #[derive(Default, Clone, PartialEq, Debug)]
