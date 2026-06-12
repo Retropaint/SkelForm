@@ -482,7 +482,6 @@ pub fn inverse_kinematics(
                     ui.checkbox(&mut checked, "".into_atoms());
                     if checked != bone.ik_mimic_target {
                         let target = &AnimElement::MimicTarget;
-                        println!("{}", checked);
                         let cf32 = if checked { 1. } else { 0. };
                         let sel = &selections;
                         events.edit_bone(bone.id, target, cf32, "", sel.anim, sel.anim_frame);

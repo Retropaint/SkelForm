@@ -1531,8 +1531,6 @@ fn edit_bone(
         }};
     }
 
-    println!("{}", value);
-
     match element {
         AnimElement::PositionX => set!(bone.pos.x, f32),
         AnimElement::PositionY => set!(bone.pos.y, f32),

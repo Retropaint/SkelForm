@@ -952,7 +952,6 @@ fn draw_frame_lines(
         // draw icon
         let offset: Vec2 = (icon_size / 2.).into();
         let img_rect = egui::Rect::from_min_size((pos - offset).into(), icon_size.into());
-        println!("{}", shared::ANIM_ICON_ID[idx]);
         egui::Image::new(&shared_ui.icon_images[shared::ANIM_ICON_ID[idx]])
             .tint(final_color)
             .paint_at(ui, img_rect);
