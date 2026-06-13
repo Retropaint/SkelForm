@@ -834,6 +834,26 @@ pub fn prepare_files(
     }
     let editor_json = serde_json::to_string(&editor).unwrap();
 
+    // populate visuals
+    let mut visuals: Vec<Visuals> = vec![];
+    for bone in &mut armature_copy.bones {
+        if bone.tex == "" {
+            bone.visuals_id = -1;
+            continue;
+        }
+        visuals.push(Visuals {
+            tex: bone.tex.clone(),
+            tint: bone.tint,
+            zindex: bone.zindex,
+            vertices: bone.vertices.clone(),
+            indices: bone.indices.clone(),
+            binds: bone.binds.clone(),
+            init_tex: bone.tex.clone(),
+            init_tint: bone.tint,
+        });
+        bone.visuals_id = visuals.len() as i32 - 1;
+    }
+
     // populate inverse_kinematics
     let mut ik_root_ids = vec![];
     for bone in &armature_copy.bones {
@@ -868,9 +888,7 @@ pub fn prepare_files(
         bone.init_pos = bone.pos;
         bone.init_rot = bone.rot;
         bone.init_scale = bone.scale;
-        bone.init_tex = bone.tex.clone();
         bone.init_hidden = bone.hidden;
-        bone.init_tint = bone.tint;
         bone.init_zindex = bone.zindex;
         if bone.ik_family_id == -1 {
             continue;
@@ -897,6 +915,7 @@ pub fn prepare_files(
         styles: armature_copy.styles,
         atlases,
         inverse_kinematics,
+        visuals,
     };
     let armatures_json = serde_json::to_string(&root).unwrap();
 
@@ -948,6 +967,21 @@ pub fn import<R: Read + std::io::Seek>(
         tex_data: vec![],
         animated_bones: vec![],
     };
+
+    // populate visuals data
+    for b in 0..temp_arm.bones.len() {
+        if temp_arm.bones[b].visuals_id == -1 {
+            continue;
+        }
+        let bone = &mut temp_arm.bones[b];
+        let visuals = &root.visuals[bone.visuals_id as usize];
+        bone.tex = visuals.tex.clone();
+        bone.tint = visuals.tint.clone();
+        bone.zindex = visuals.zindex;
+        bone.vertices = visuals.vertices.clone();
+        bone.indices = visuals.indices.clone();
+        bone.binds = visuals.binds.clone();
+    }
 
     for bone in &mut temp_arm.bones {
         for (i, vert) in bone.vertices.iter_mut().enumerate() {
@@ -1329,7 +1363,7 @@ pub fn process_screenshot_raw(
     let width = resolution.x as usize;
     let height = resolution.y as usize;
 
-    // screenshot widths are always a multiple of 256, so get the proepr width
+    // screenshot widths are always a multiple of 256, so get the proper width
     let unpadded_bytes_per_row = width * 4;
     let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT as usize;
     let padded_bytes_per_row = ((unpadded_bytes_per_row + align - 1) / align) * align;

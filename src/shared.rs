@@ -1040,6 +1040,30 @@ enum_string!(JointConstraint);
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 #[serde(default)]
+pub struct Visuals {
+    #[serde(skip_serializing_if = "is_str_empty")]
+    pub tex: String,
+    #[serde(default = "default_tint", skip_serializing_if = "is_tint_white")]
+    pub tint: TintColor,
+    #[serde(skip_serializing_if = "is_neg_one")]
+    pub zindex: i32,
+
+    // mesh data
+    #[serde(default, skip_serializing_if = "are_verts_empty")]
+    pub vertices: Vec<Vertex>,
+    #[serde(default, skip_serializing_if = "are_indices_empty")]
+    pub indices: Vec<u32>,
+    #[serde(default, skip_serializing_if = "are_weights_empty")]
+    pub binds: Vec<BoneBind>,
+
+    #[serde(skip_serializing_if = "is_str_empty", skip_deserializing)]
+    pub init_tex: String,
+    #[serde(skip_serializing_if = "is_tint_white", skip_deserializing)]
+    pub init_tint: TintColor,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
+#[serde(default)]
 pub struct Bone {
     pub id: i32,
     pub name: String,
@@ -1112,25 +1136,21 @@ pub struct Bone {
     pub init_rot: f32,
     #[serde(skip_serializing_if = "is_false", skip_deserializing)]
     pub init_hidden: bool,
-    #[serde(skip_serializing_if = "is_str_empty", skip_deserializing)]
-    pub init_tex: String,
-    #[serde(default = "default_tint", skip_serializing_if = "is_tint_white")]
-    pub init_tint: TintColor,
     #[serde(skip_serializing_if = "is_neg_one")]
     pub init_zindex: i32,
 
-    #[serde(skip_serializing_if = "is_neg_one")]
+    #[serde(default = "default_neg_one")]
     pub physics_id: i32,
-    #[serde(skip_serializing_if = "is_neg_one")]
+    #[serde(default = "default_neg_one")]
     pub visuals_id: i32,
 
-    #[serde(default, skip_serializing_if = "are_verts_empty")]
+    #[serde(skip)]
     pub vertices: Vec<Vertex>,
     #[serde(skip)]
     pub verts_edited: bool,
-    #[serde(default, skip_serializing_if = "are_indices_empty")]
+    #[serde(skip)]
     pub indices: Vec<u32>,
-    #[serde(default, skip_serializing_if = "are_weights_empty")]
+    #[serde(skip)]
     pub binds: Vec<BoneBind>,
 
     #[serde(skip)]
@@ -1696,6 +1716,7 @@ pub struct Root {
     pub atlases: Vec<TexAtlas>,
     pub styles: Vec<Style>,
     pub inverse_kinematics: Vec<InverseKinematics>,
+    pub visuals: Vec<Visuals>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
