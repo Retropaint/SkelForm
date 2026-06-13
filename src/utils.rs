@@ -756,24 +756,6 @@ pub fn prepare_files(
         bone.id = b as i32;
     }
 
-    for bone in &mut armature_copy.bones {
-        bone.init_pos = bone.pos;
-        bone.init_rot = bone.rot;
-        bone.init_scale = bone.scale;
-        bone.init_tex = bone.tex.clone();
-        bone.init_hidden = bone.hidden;
-        bone.init_tint = bone.tint;
-        bone.init_zindex = bone.zindex;
-        bone.init_ik_mimic_target = bone.init_ik_mimic_target;
-        if bone.ik_bone_ids.len() == 0 {
-            bone.ik_constraint = JointConstraint::Skip;
-            bone.ik_mode = InverseKinematicsMode::Skip;
-            bone.ik_bone_ids = vec![];
-        }
-        bone.init_ik_mode = bone.ik_mode;
-        bone.init_ik_constraint = bone.ik_constraint;
-    }
-
     // populate texture ser_offset and ser_size
     for s in 0..armature.styles.len() {
         armature_copy.styles[s].id = s as i32;
@@ -784,9 +766,7 @@ pub fn prepare_files(
         }
     }
 
-    // remove physics fields if disabled
-
-    // disabled: v0.4 won't have physics, but this must be removed for v0.5
+    // remove physics fields if not relevant
     for b in 0..armature_copy.bones.len() {
         let bone_id = armature_copy.bones[b].id;
         armature_copy.bones[b].has_physics = armature_copy.has_physics(bone_id);
@@ -882,6 +862,28 @@ pub fn prepare_files(
         } else if eff == JointEffector::End {
             this_ik.ik_mimic_target = bone.ik_mimic_target;
         }
+    }
+
+    for bone in &mut armature_copy.bones {
+        bone.init_pos = bone.pos;
+        bone.init_rot = bone.rot;
+        bone.init_scale = bone.scale;
+        bone.init_tex = bone.tex.clone();
+        bone.init_hidden = bone.hidden;
+        bone.init_tint = bone.tint;
+        bone.init_zindex = bone.zindex;
+        if bone.ik_family_id == -1 {
+            continue;
+        }
+        let ik = &mut inverse_kinematics[bone.ik_family_id as usize];
+        ik.init_ik_mimic_target = ik.ik_mimic_target;
+        if bone.ik_bone_ids.len() == 0 {
+            bone.ik_constraint = JointConstraint::Skip;
+            bone.ik_mode = InverseKinematicsMode::Skip;
+            bone.ik_bone_ids = vec![];
+        }
+        ik.init_ik_mode = ik.ik_mode;
+        ik.init_ik_constraint = ik.ik_constraint;
     }
 
     // prepare root and serlialize armature_copy into json

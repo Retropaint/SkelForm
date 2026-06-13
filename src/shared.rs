@@ -1110,10 +1110,6 @@ pub struct Bone {
     pub init_scale: Vec2,
     #[serde(skip_deserializing)]
     pub init_rot: f32,
-    #[serde(skip_serializing_if = "no_constraints", skip_deserializing)]
-    pub init_ik_constraint: JointConstraint,
-    #[serde(skip_serializing_if = "no_ik_mode", skip_deserializing)]
-    pub init_ik_mode: InverseKinematicsMode,
     #[serde(skip_serializing_if = "is_false", skip_deserializing)]
     pub init_hidden: bool,
     #[serde(skip_serializing_if = "is_str_empty", skip_deserializing)]
@@ -1122,8 +1118,6 @@ pub struct Bone {
     pub init_tint: TintColor,
     #[serde(skip_serializing_if = "is_neg_one")]
     pub init_zindex: i32,
-    #[serde(skip_serializing_if = "is_false")]
-    pub init_ik_mimic_target: bool,
 
     #[serde(skip_serializing_if = "is_neg_one")]
     pub physics_id: i32,
@@ -1679,6 +1673,12 @@ pub struct InverseKinematics {
     pub ik_bone_ids: Vec<i32>,
     #[serde(skip_serializing_if = "is_false")]
     pub ik_mimic_target: bool,
+    #[serde(skip_serializing_if = "no_constraints", skip_deserializing)]
+    pub init_ik_constraint: JointConstraint,
+    #[serde(skip_serializing_if = "no_ik_mode", skip_deserializing)]
+    pub init_ik_mode: InverseKinematicsMode,
+    #[serde(skip_serializing_if = "is_false")]
+    pub init_ik_mimic_target: bool,
 }
 
 // used for the json
