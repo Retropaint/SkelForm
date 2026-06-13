@@ -853,14 +853,14 @@ pub fn prepare_files(
         if eff == JointEffector::Start {
             *this_ik = InverseKinematics {
                 id: bone.ik_family_id,
-                ik_constraint: bone.ik_constraint,
-                ik_mode: bone.ik_mode,
-                ik_target_id: bone.ik_target_id,
-                ik_bone_ids: bone.ik_bone_ids.clone(),
+                constraint: bone.ik_constraint,
+                mode: bone.ik_mode,
+                target_id: bone.ik_target_id,
+                bone_ids: bone.ik_bone_ids.clone(),
                 ..Default::default()
             };
         } else if eff == JointEffector::End {
-            this_ik.ik_mimic_target = bone.ik_mimic_target;
+            this_ik.mimic_target = bone.ik_mimic_target;
         }
     }
 
@@ -876,14 +876,14 @@ pub fn prepare_files(
             continue;
         }
         let ik = &mut inverse_kinematics[bone.ik_family_id as usize];
-        ik.init_ik_mimic_target = ik.ik_mimic_target;
+        ik.init_mimic_target = ik.mimic_target;
         if bone.ik_bone_ids.len() == 0 {
             bone.ik_constraint = JointConstraint::Skip;
             bone.ik_mode = InverseKinematicsMode::Skip;
             bone.ik_bone_ids = vec![];
         }
-        ik.init_ik_mode = ik.ik_mode;
-        ik.init_ik_constraint = ik.ik_constraint;
+        ik.init_mode = ik.mode;
+        ik.init_constraint = ik.constraint;
     }
 
     // prepare root and serlialize armature_copy into json
@@ -968,9 +968,9 @@ pub fn import<R: Read + std::io::Seek>(
             continue;
         }
         let ik_family = &root.inverse_kinematics[temp_arm.bones[b].ik_family_id as usize];
-        for i in 0..ik_family.ik_bone_ids.len() {
+        for i in 0..ik_family.bone_ids.len() {
             // find this IK bone
-            let id = ik_family.ik_bone_ids[i] as i32;
+            let id = ik_family.bone_ids[i] as i32;
             let fam_id = temp_arm.bones[b].ik_family_id;
             if let Some(bone) = temp_arm.bones.iter_mut().find(|b| b.id == id) {
                 bone.ik_family_id = fam_id;
@@ -987,11 +987,11 @@ pub fn import<R: Read + std::io::Seek>(
         let eff = temp_arm.bone_eff(temp_arm.bones[b].id);
         let bone = &mut temp_arm.bones[b];
         if eff == JointEffector::Start {
-            bone.ik_target_id = ik_family.ik_target_id;
-            bone.ik_constraint = ik_family.ik_constraint;
-            bone.ik_mode = ik_family.ik_mode;
+            bone.ik_target_id = ik_family.target_id;
+            bone.ik_constraint = ik_family.constraint;
+            bone.ik_mode = ik_family.mode;
         } else if eff == JointEffector::End {
-            bone.ik_mimic_target = ik_family.ik_mimic_target;
+            bone.ik_mimic_target = ik_family.mimic_target;
             bone.pos.y = 0.;
         } else {
             bone.pos.y = 0.;

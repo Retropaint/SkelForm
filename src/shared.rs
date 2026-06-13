@@ -1664,21 +1664,21 @@ pub struct InverseKinematics {
     pub id: i32,
     #[rustfmt::skip]
     #[serde(skip_serializing_if = "no_constraints")]
-    pub ik_constraint: JointConstraint,
+    pub constraint: JointConstraint,
     #[serde(skip_serializing_if = "no_ik_mode")]
-    pub ik_mode: InverseKinematicsMode,
+    pub mode: InverseKinematicsMode,
     #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
-    pub ik_target_id: i32,
+    pub target_id: i32,
     #[serde(skip_serializing_if = "is_i32_empty")]
-    pub ik_bone_ids: Vec<i32>,
+    pub bone_ids: Vec<i32>,
     #[serde(skip_serializing_if = "is_false")]
-    pub ik_mimic_target: bool,
+    pub mimic_target: bool,
     #[serde(skip_serializing_if = "no_constraints", skip_deserializing)]
-    pub init_ik_constraint: JointConstraint,
+    pub init_constraint: JointConstraint,
     #[serde(skip_serializing_if = "no_ik_mode", skip_deserializing)]
-    pub init_ik_mode: InverseKinematicsMode,
+    pub init_mode: InverseKinematicsMode,
     #[serde(skip_serializing_if = "is_false")]
-    pub init_ik_mimic_target: bool,
+    pub init_mimic_target: bool,
 }
 
 // used for the json
