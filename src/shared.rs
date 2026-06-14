@@ -1709,7 +1709,7 @@ pub struct TexAtlas {
     pub size: Vec2I,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, Debug, PartialEq)]
 #[serde(default)]
 pub struct InverseKinematics {
     #[serde(default = "default_neg_one")]
