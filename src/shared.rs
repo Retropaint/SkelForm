@@ -1060,6 +1060,8 @@ pub struct Visuals {
     pub init_tex: String,
     #[serde(skip_serializing_if = "is_tint_white", skip_deserializing)]
     pub init_tint: TintColor,
+    #[serde(skip_serializing_if = "is_neg_one", skip_deserializing)]
+    pub init_zindex: i32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]

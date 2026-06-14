@@ -876,6 +876,7 @@ pub fn prepare_files(
             binds: bone.binds.clone(),
             init_tex: bone.tex.clone(),
             init_tint: bone.tint,
+            init_zindex: bone.zindex,
         });
         bone.visuals_id = visuals.len() as i32 - 1;
     }
@@ -915,7 +916,6 @@ pub fn prepare_files(
         bone.init_rot = bone.rot;
         bone.init_scale = bone.scale;
         bone.init_hidden = bone.hidden;
-        bone.init_zindex = bone.zindex;
         if bone.ik_family_id == -1 {
             continue;
         }
