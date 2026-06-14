@@ -112,6 +112,20 @@ pub fn open_save_dialog(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+pub fn open_style_dialog(file_path: &Arc<Mutex<PathBuf>>) {
+    let filepath = Arc::clone(&file_path);
+    std::thread::spawn(move || {
+        let task = rfd::FileDialog::new()
+            .add_filter("test", &["zip"])
+            .save_file();
+        if task == None {
+            return;
+        }
+        *filepath.lock().unwrap() = task.unwrap();
+    });
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub fn open_import_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mutex<i32>>) {
     let filepath = Arc::clone(&file_path);
     let filetype = Arc::clone(&file_type);
@@ -219,6 +233,21 @@ pub fn render_spritesheets(
         // take screenshots of each frame
         for f in 0..all_frames {
             new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
+            new_arm.animated_bones = new_arm.bones.clone();
+
+            // initialize non-mesh bone verts and indices
+            for b in 0..new_arm.bones.len() {
+                let tex = new_arm.anim_tex_of(new_arm.bones[b].id);
+                if tex != None && !new_arm.bones[b].verts_edited {
+                    let size = tex.unwrap().size;
+                    let bone = &mut new_arm.bones[b];
+                    (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
+                    let bone = &mut new_arm.animated_bones[b];
+                    (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
+                    bone.verts_edited = false;
+                }
+            }
+
             let frames = &mut shared_ui.rendered_spritesheets[spritesheet_idx];
             let clear = &shared_ui.video_clear_bg;
             let mapped_frames = &mut shared_ui.mapped_frames;
@@ -727,32 +756,6 @@ pub fn prepare_files(
         bone.id = b as i32;
     }
 
-    for bone in &mut armature_copy.bones {
-        bone.init_pos = bone.pos;
-        bone.init_rot = bone.rot;
-        bone.init_scale = bone.scale;
-        bone.init_tex = bone.tex.clone();
-        bone.init_hidden = bone.hidden;
-        bone.init_tint = bone.tint;
-        bone.init_zindex = bone.zindex;
-        if bone.ik_bone_ids.len() == 0 {
-            bone.ik_constraint = JointConstraint::Skip;
-            bone.ik_mode = InverseKinematicsMode::Skip;
-            bone.ik_family_id = -1;
-            bone.ik_bone_ids = vec![];
-        }
-        bone.init_ik_mode = bone.ik_mode;
-        bone.init_ik_constraint = bone.ik_constraint;
-    }
-
-    // populate ik_root_ids
-    let mut ik_root_ids = vec![];
-    for bone in &armature_copy.bones {
-        if bone.ik_family_id != -1 {
-            ik_root_ids.push(bone.id);
-        }
-    }
-
     // populate texture ser_offset and ser_size
     for s in 0..armature.styles.len() {
         armature_copy.styles[s].id = s as i32;
@@ -763,21 +766,20 @@ pub fn prepare_files(
         }
     }
 
-    // remove physics fields if disabled
+    let mut physics: Vec<Physics> = vec![];
 
-    // disabled: v0.4 won't have physics, but this must be removed for v0.5
+    // remove physics fields if not relevant
     for b in 0..armature_copy.bones.len() {
-        let bone_id = armature_copy.bones[b].id;
-        if PHYSICS {
-            armature_copy.bones[b].has_physics = armature_copy.has_physics(bone_id);
-        }
         let bone = &mut armature_copy.bones[b];
-        if bone.phys_pos_damping == 0. || !PHYSICS {
+        let mut phys_score = 3;
+        if bone.phys_pos_damping == 0. {
+            phys_score -= 1;
             bone.phys_pos_damping = f32::MAX;
             bone.phys_pos_ratio = f32::MAX;
             bone.phys_global_pos = Vec2::new(f32::MAX, f32::MAX);
         }
-        if (bone.phys_sway == 0. && bone.phys_rot_damping == 0.) || !PHYSICS {
+        if bone.phys_sway == 0. && bone.phys_rot_damping == 0. {
+            phys_score -= 1;
             bone.phys_global_rot = f32::MAX;
             bone.phys_sway = f32::MAX;
             bone.phys_rot_damping = f32::MAX;
@@ -786,11 +788,34 @@ pub fn prepare_files(
             bone.phys_global_orbit_diff = f32::MAX;
             bone.phys_global_orbit_vel = f32::MAX;
         }
-        if bone.phys_scale_damping == 0. || !PHYSICS {
+        if bone.phys_scale_damping == 0. {
+            phys_score -= 1;
             bone.phys_scale_damping = f32::MAX;
             bone.phys_scale_ratio = f32::MAX;
             bone.phys_global_scale = Vec2::new(f32::MAX, f32::MAX);
         }
+        if phys_score > 0 {
+            physics.push(Physics {
+                global_pos: bone.phys_global_pos,
+                pos_damping: bone.phys_pos_damping,
+                pos_ratio: bone.phys_pos_ratio,
+                global_rot: bone.phys_global_rot,
+                global_orbit: bone.phys_global_orbit,
+                global_orbit_diff: bone.phys_global_orbit_diff,
+                global_orbit_vel: bone.phys_global_orbit_vel,
+                rot_damping: bone.phys_rot_damping,
+                sway: bone.phys_sway,
+                rot_bounce: bone.phys_rot_bounce,
+                global_scale: bone.phys_global_scale,
+                scale_damping: bone.phys_scale_damping,
+                scale_ratio: bone.phys_scale_ratio,
+            });
+        }
+        bone.physics_id = if phys_score == 0 {
+            -1
+        } else {
+            physics.len() as i32 - 1
+        };
     }
 
     let mut atlases = vec![];
@@ -835,10 +860,79 @@ pub fn prepare_files(
     }
     let editor_json = serde_json::to_string(&editor).unwrap();
 
+    // populate visuals
+    let mut visuals: Vec<Visuals> = vec![];
+    for bone in &mut armature_copy.bones {
+        if bone.tex == "" {
+            bone.visuals_id = -1;
+            continue;
+        }
+        visuals.push(Visuals {
+            tex: bone.tex.clone(),
+            tint: bone.tint,
+            zindex: bone.zindex,
+            vertices: bone.vertices.clone(),
+            indices: bone.indices.clone(),
+            binds: bone.binds.clone(),
+            init_tex: bone.tex.clone(),
+            init_tint: bone.tint,
+            init_zindex: bone.zindex,
+        });
+        bone.visuals_id = visuals.len() as i32 - 1;
+    }
+
+    // populate inverse_kinematics
+    let mut ik_root_ids = vec![];
+    for bone in &armature_copy.bones {
+        let eff = armature_copy.bone_eff(bone.id);
+        if bone.ik_family_id != -1 && eff == JointEffector::Start {
+            ik_root_ids.push(bone.id);
+        }
+    }
+    let mut inverse_kinematics: Vec<InverseKinematics> =
+        vec![InverseKinematics::default(); ik_root_ids.len()];
+    for bone in &armature_copy.bones {
+        if bone.ik_family_id == -1 {
+            continue;
+        }
+        let eff = armature_copy.bone_eff(bone.id);
+        let this_ik = &mut inverse_kinematics[bone.ik_family_id as usize];
+        if eff == JointEffector::Start {
+            *this_ik = InverseKinematics {
+                id: bone.ik_family_id,
+                constraint: bone.ik_constraint,
+                mode: bone.ik_mode,
+                target_id: bone.ik_target_id,
+                bone_ids: bone.ik_bone_ids.clone(),
+                ..Default::default()
+            };
+        } else if eff == JointEffector::End {
+            this_ik.mimic_target = bone.ik_mimic_target;
+        }
+    }
+
+    for bone in &mut armature_copy.bones {
+        bone.init_pos = bone.pos;
+        bone.init_rot = bone.rot;
+        bone.init_scale = bone.scale;
+        bone.init_hidden = bone.hidden;
+        if bone.ik_family_id == -1 {
+            continue;
+        }
+        let ik = &mut inverse_kinematics[bone.ik_family_id as usize];
+        ik.init_mimic_target = ik.mimic_target;
+        if bone.ik_bone_ids.len() == 0 {
+            bone.ik_constraint = JointConstraint::Skip;
+            bone.ik_mode = InverseKinematicsMode::Skip;
+            bone.ik_bone_ids = vec![];
+        }
+        ik.init_mode = ik.mode;
+        ik.init_constraint = ik.constraint;
+    }
+
     // prepare root and serlialize armature_copy into json
     let root = Root {
         version: env!("CARGO_PKG_VERSION").to_string(),
-        ik_root_ids,
         baked_ik: edit_mode.export_bake_ik,
         img_format: edit_mode.export_img_format.clone(),
         clear_color,
@@ -846,6 +940,9 @@ pub fn prepare_files(
         animations: armature_copy.animations,
         styles: armature_copy.styles,
         atlases,
+        visuals,
+        inverse_kinematics,
+        physics,
     };
     let armatures_json = serde_json::to_string(&root).unwrap();
 
@@ -898,11 +995,48 @@ pub fn import<R: Read + std::io::Seek>(
         animated_bones: vec![],
     };
 
+    // populate visuals data
+    for b in 0..temp_arm.bones.len() {
+        if temp_arm.bones[b].visuals_id == -1 {
+            continue;
+        }
+        let bone = &mut temp_arm.bones[b];
+        let visuals = &root.visuals[bone.visuals_id as usize];
+        bone.tex = visuals.tex.clone();
+        bone.tint = visuals.tint.clone();
+        bone.zindex = visuals.zindex;
+        bone.vertices = visuals.vertices.clone();
+        bone.indices = visuals.indices.clone();
+        bone.binds = visuals.binds.clone();
+    }
+
+    // populate physics data
+    for b in 0..temp_arm.bones.len() {
+        if temp_arm.bones[b].physics_id == -1 {
+            continue;
+        }
+        let bone = &mut temp_arm.bones[b];
+        let physics = &root.physics[bone.physics_id as usize];
+        bone.phys_global_pos = physics.global_pos;
+        bone.phys_pos_damping = physics.pos_damping;
+        bone.phys_pos_ratio = physics.pos_ratio;
+        bone.phys_global_rot = physics.global_rot;
+        bone.phys_global_orbit = physics.global_orbit;
+        bone.phys_global_orbit_diff = physics.global_orbit_diff;
+        bone.phys_global_orbit_vel = physics.global_orbit_vel;
+        bone.phys_rot_damping = physics.rot_damping;
+        bone.phys_sway = physics.sway;
+        bone.phys_rot_bounce = physics.rot_bounce;
+        bone.phys_global_scale = physics.global_scale;
+        bone.phys_scale_damping = physics.scale_damping;
+        bone.phys_scale_ratio = physics.scale_ratio;
+    }
+
+    // set verts_edited for mesh bones
     for bone in &mut temp_arm.bones {
         for (i, vert) in bone.vertices.iter_mut().enumerate() {
             vert.id = i as u32;
         }
-
         bone.verts_edited = bone.vertices.len() > 0;
     }
 
@@ -913,23 +1047,37 @@ pub fn import<R: Read + std::io::Seek>(
 
     // populate bone IK data
     for b in 0..temp_arm.bones.len() {
-        for i in 0..temp_arm.bones[b].ik_bone_ids.len() {
-            let id = temp_arm.bones[b].ik_bone_ids[i] as i32;
+        if temp_arm.bones[b].ik_family_id == -1 {
+            continue;
+        }
+        let ik_family = &root.inverse_kinematics[temp_arm.bones[b].ik_family_id as usize];
+        for i in 0..ik_family.bone_ids.len() {
+            // find this IK bone
+            let id = ik_family.bone_ids[i] as i32;
             let fam_id = temp_arm.bones[b].ik_family_id;
-            let bones = &mut temp_arm.bones;
-            let mut bone = bones.iter_mut().find(|b| b.id == id);
-            if bone == None {
+            if let Some(bone) = temp_arm.bones.iter_mut().find(|b| b.id == id) {
+                bone.ik_family_id = fam_id;
+            } else {
                 custom_err!(format!(
                     "Bone of ID {} of IK family #{} could not be found.",
                     id.to_string(),
-                    temp_arm.bones[b].ik_family_id.to_string()
+                    fam_id.to_string()
                 ));
             }
-            bone.as_mut().unwrap().ik_family_id = fam_id;
-            // don't reset Y of root bone
-            if i != 0 {
-                bone.as_mut().unwrap().pos.y = 0.;
-            }
+        }
+
+        // populate IK data on appropriate bones
+        let eff = temp_arm.bone_eff(temp_arm.bones[b].id);
+        let bone = &mut temp_arm.bones[b];
+        if eff == JointEffector::Start {
+            bone.ik_target_id = ik_family.target_id;
+            bone.ik_constraint = ik_family.constraint;
+            bone.ik_mode = ik_family.mode;
+        } else if eff == JointEffector::End {
+            bone.ik_mimic_target = ik_family.mimic_target;
+            bone.pos.y = 0.;
+        } else {
+            bone.pos.y = 0.;
         }
     }
 
@@ -1264,7 +1412,7 @@ pub fn process_screenshot_raw(
     let width = resolution.x as usize;
     let height = resolution.y as usize;
 
-    // screenshot widths are always a multiple of 256, so get the proepr width
+    // screenshot widths are always a multiple of 256, so get the proper width
     let unpadded_bytes_per_row = width * 4;
     let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT as usize;
     let padded_bytes_per_row = ((unpadded_bytes_per_row + align - 1) / align) * align;
@@ -1292,7 +1440,9 @@ pub fn process_screenshot_raw(
 }
 
 pub fn markdown(mut str: String) -> String {
+    #[allow(unused_mut)]
     let mut user_docs = "https://skelform.org/user-docs".to_string();
+    #[allow(unused_mut)]
     let mut dev_docs = "https://skelform.org/dev-docs".to_string();
 
     #[cfg(not(target_arch = "wasm32"))]

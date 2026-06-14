@@ -101,8 +101,6 @@ fn main() -> Result<(), winit::error::EventLoopError> {
     app.shared.input.hotkey_manager = Some(global_hotkey::GlobalHotKeyManager::new().unwrap());
     app.shared.input.mod_q = Some(HotKey::new(Some(Modifiers::SUPER), Code::KeyQ));
     app.shared.input.mod_w = Some(HotKey::new(Some(Modifiers::SUPER), Code::KeyW));
-    app.shared.input.mod_c = Some(HotKey::new(Some(Modifiers::SUPER), Code::KeyC));
-    app.shared.input.mod_v = Some(HotKey::new(Some(Modifiers::SUPER), Code::KeyV));
 
     event_loop.run_app(&mut app)
 }
@@ -111,10 +109,9 @@ fn init_shared(shared: &mut Shared) {
     shared.selections.bone_idx = usize::MAX;
     shared.camera.zoom = 2000.;
     shared.selections.anim = usize::MAX;
-    shared.ui.anim.timeline_zoom = 1.;
-    shared.ui.anim.exported_frame = "".to_string();
+    shared.ui.timeline_zoom = 1.;
     shared.selections.anim_frame = -1;
-    shared.ui.anim.dragged_keyframe = Keyframe {
+    shared.ui.dragged_keyframe = Keyframe {
         frame: -1,
         ..Default::default()
     };
@@ -132,7 +129,6 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.dragging_slice = usize::MAX;
     shared.edit_mode.export_exclude_ik = true;
     shared.ui.can_quit = true;
-    shared.ui.open_after_export = true;
     shared.edit_mode.onion_layers = false;
     shared.ui.tracing_gap = 25.;
     shared.ui.tracing_padding = 50.;
@@ -144,13 +140,15 @@ fn init_shared(shared: &mut Shared) {
     shared.renderer.render_textures = true;
     shared.ui.use_fallback = true;
     shared.ui.scale = shared.config.ui_scale;
+    shared.ui.export_style_id = usize::MAX;
     shared.renderer.clicked_vert_id = -1;
     shared.selections.hovering_vert_id = -1;
     shared.selections.hovering_bone_id = -1;
 
-    if !shared.config.skip_startup {
-        shared.ui.startup_window = true;
-    }
+    shared.ui.video_clear_bg = shared.config.colors.background;
+    shared.ui.exporting_video_type = ExportVideoType::Mp4;
+    shared.ui.exporting_anims = vec![];
+    shared.ui.anim_cycles = 1;
 
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -179,6 +177,10 @@ fn init_shared(shared: &mut Shared) {
         utils::save_config(&shared.config);
         // prevents calling utils::bin_path (crashes on web)
         shared.ui.use_system_ffmpeg = true;
+    }
+
+    if !shared.config.skip_startup {
+        shared.ui.startup_window = true;
     }
 
     // if this were false, the first click would always

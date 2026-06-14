@@ -134,6 +134,12 @@ pub fn draw(
             .0
             .response;
 
+        // unselect all bones if frame is clicked
+        let left_clicked = ui.ctx().input(|i| i.pointer.primary_clicked());
+        if response.hovered() && left_clicked {
+            events.select_bone(usize::MAX, false);
+        }
+
         // open context menu if right clicking on hierarchy frame
         let right_clicked = ui.ctx().input(|i| i.pointer.secondary_clicked());
         if response.hovered() && right_clicked {
@@ -366,7 +372,9 @@ pub fn draw_hierarchy(
                 }
 
                 let hovering_on_texture = selections.hovering_bone_id == armature.bones[b].id;
-                if shared_ui.hovering_bone == idx || hovering_on_texture {
+                if selections.hovering_bone_id == armature.bones[idx as usize].id
+                    || hovering_on_texture
+                {
                     selected_col += Color::new(20, 20, 20, 0);
                 }
 
@@ -471,6 +479,7 @@ pub fn draw_hierarchy(
                                     offset.x += 18.;
                                 }
                                 if bone.ik_family_id != -1 {
+                                    // drawing IK icon
                                     let color = config.colors.inverse_kinematics;
                                     let desc = shared_ui
                                         .loc("armature_panel.icons.ik_family")
@@ -486,10 +495,12 @@ pub fn draw_hierarchy(
                                     if response.contains_pointer() {
                                         response.show_tooltip_text(&desc);
                                     }
+
+                                    // drawing family ID number
                                     let family_id = bone.ik_family_id.to_string();
                                     let id = format!("{}ik", b.to_string());
                                     let color = colors.inverse_kinematics;
-                                    let id_offset = Vec2::new(offset.x - 18., 18.);
+                                    let id_offset = Vec2::new(0., 18.);
                                     bone_label(&family_id, false, ui, id, id_offset, &desc, color);
                                     offset.x += 18.;
                                 }
@@ -516,7 +527,7 @@ pub fn draw_hierarchy(
 
                 if button.contains_pointer() || button.has_focus() {
                     is_hovering = true;
-                    shared_ui.hovering_bone = idx;
+                    events.set_hovering_bone_id(armature.bones[b].id);
                 }
 
                 if button.clicked() {
@@ -537,9 +548,7 @@ pub fn draw_hierarchy(
         }
     }
 
-    if !is_hovering {
-        shared_ui.hovering_bone = -1;
-    }
+    shared_ui.is_hovering_bone = is_hovering;
 }
 
 pub fn bone_label(

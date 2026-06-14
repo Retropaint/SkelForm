@@ -57,17 +57,6 @@ pub fn render(
 
     // temporary armature, to be used for rendering
     let mut temp_arm = Armature::default();
-    let mut anim_bones = armature.animated_bones.clone();
-
-    // adjust anim_bones' verts for new textrues mid-animations
-    temp_arm.bones = armature.animated_bones.clone();
-    for b in 0..armature.bones.len() {
-        let tex = temp_arm.tex_of(armature.bones[b].id);
-        if !armature.bones[b].verts_edited && tex != None {
-            let size = tex.unwrap().size;
-            (anim_bones[b].vertices, anim_bones[b].indices) = create_tex_rect(&size);
-        }
-    }
     temp_arm.bones = renderer.temp_bones.clone();
 
     // animate next and previous frame armatures for onions
@@ -128,12 +117,12 @@ pub fn render(
     prev_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
     next_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
 
-    let mut hover_bone_id = -1;
-    let mut on_click_id = -1;
-
     // many fight for spot of newest vertex; only one will emerge victorious.
     let mut new_vert: Option<Vertex> = None;
     let mut hovered_vert = false;
+
+    let mut hovering_bone_id = -1;
+    let mut on_click_id = -1;
 
     // pre-draw bone setup
     for b in 0..temp_arm.bones.len() {
@@ -165,7 +154,7 @@ pub fn render(
                         let tb = &mut $armature.bones[b];
                         let ratio = camera.aspect_ratio();
                         let mut vert = world_vert(tb.vertices[v], &camera, ratio, Vec2::default());
-                        vert.tint = TintColor::new(255., 0., 0., 0.4);
+                        vert.tint = $color;
                         tb.world_verts.push(vert);
                     }
                 };
@@ -183,7 +172,7 @@ pub fn render(
             || edit_mode.showing_mesh
                 && sel.bone_idx != usize::MAX
                 && armature.sel_bone(&sel).unwrap().id == tb.id;
-        if hover_bone_id == -1
+        if on_click_id == -1
             && (!input.left_down || input.left_pressed) // allow detection on LMB press
             && !camera.on_ui
             && selected_mesh
@@ -224,25 +213,33 @@ pub fn render(
                 );
                 let pixel_alpha = img.get_pixel(pos.x as u32, pos.y as u32).0[3];
                 if pixel_alpha == 255 && !edit_mode.showing_mesh {
-                    hover_bone_id = temp_arm.bones[b].id;
-                    on_click_id = hover_bone_id;
+                    hovering_bone_id = temp_arm.bones[b].id;
                     break;
                 }
             }
         }
 
-        if !config.exact_bone_select && on_click_id == temp_arm.bones[b].id {
+        let mut parent_selected = false;
+        if on_click_id == -1 {
+            on_click_id = hovering_bone_id;
+
             // QoL: select parent of textured bone if it's called 'Texture'
             // this is because most textured bones are meant to represent their parents
-            if parent_id != -1 && temp_arm.bones[b].name.to_lowercase() == "texture" {
+            if !config.exact_bone_select
+                && on_click_id == temp_arm.bones[b].id
+                && parent_id != -1
+                && temp_arm.bones[b].name.to_lowercase() == "texture"
+            {
                 on_click_id = parent_id;
+                parent_selected = true;
             }
         }
 
         // hovering glow animation
         let idx = selections.bone_idx;
-        let not_selected = idx == usize::MAX || armature.bones[idx].id != on_click_id;
-        if hover_bone_id == temp_arm.bones[b].id && not_selected && !renderer.on_point {
+        let not_selected = idx == usize::MAX || armature.bones[idx].id != hovering_bone_id;
+        let is_hovering = selections.hovering_bone_id == temp_arm.bones[b].id || parent_selected;
+        if is_hovering && not_selected && !renderer.on_point {
             let fade = (64. * ((edit_mode.time * 3.).sin()).abs()).min(255.);
             let min = 25;
             for vert in &mut temp_arm.bones[b].world_verts {
@@ -251,11 +248,12 @@ pub fn render(
             }
 
             // select bone if clicked
-            if input.left_pressed && !renderer.on_point {
-                let id = on_click_id;
+            if !camera.on_ui && input.left_pressed && !renderer.on_point {
                 let bones = &armature.bones;
-                let idx = bones.iter().position(|bone| bone.id == id).unwrap();
-                events.select_bone(idx, true);
+                let idx = bones.iter().position(|bone| bone.id == on_click_id);
+                if idx != None {
+                    events.select_bone(idx.unwrap(), true);
+                }
             }
         } else {
             for vert in &mut temp_arm.bones[b].world_verts {
@@ -263,9 +261,8 @@ pub fn render(
             }
         }
     }
-    if !renderer.on_point && on_click_id == -1 && selections.hovering_bone_id != -1 {
-        events.set_hovering_bone_id(-1);
-    } else if on_click_id != -1 && selections.hovering_bone_id != on_click_id {
+
+    if on_click_id != -1 && selections.hovering_bone_id != on_click_id {
         events.set_hovering_bone_id(on_click_id);
     }
     renderer.on_point = false;
@@ -361,7 +358,7 @@ pub fn render(
                 if armature.sel_bone(&sel).unwrap().indices.len() == 6 {
                     events.open_modal("indices_limit", false);
                 } else {
-                    events.remove_triangle(idx as usize * 3);
+                    events.delete_triangle(idx as usize * 3);
                 }
             }
         }
@@ -486,8 +483,14 @@ pub fn render(
         draw_gridline(render_pass, renderer, &camera, &config, queue);
     }
 
+    // draw bone center points, and kites representing hierarchy
     #[rustfmt::skip]
-    draw_points_and_kites(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids, selections, renderer, queue, render_pass, events, armature);
+    draw_points(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids.clone(), selections, renderer, queue, render_pass, events, armature);
+    #[rustfmt::skip]
+    draw_kites(config, camera, edit_mode, &mut temp_arm, selected_bone_ids, renderer, queue, render_pass);
+
+    // is a bone being hovered on, in the renderer?
+    renderer.is_hovering_bone = renderer.on_point || on_click_id != -1;
 
     // check if this bone is part of IK, to disable editing later
     let mut has_ik = false;
@@ -581,7 +584,7 @@ pub fn render(
     let mouse_moved = input.mouse != input.mouse_prev_left;
     if camera.on_ui {
         renderer.editing_bone = false;
-    } else if idx != usize::MAX && input.left_down && hover_bone_id == -1 {
+    } else if idx != usize::MAX && input.left_down && selections.hovering_bone_id == -1 {
         // only register edits if mouse is moving
         if mouse_moved {
             events.update_current_editing(0);
@@ -622,7 +625,7 @@ pub fn render(
             }
             let bone = temp_arm.bones.iter().find(|b| b.id == *sel_id).unwrap();
             #[rustfmt::skip]
-            edit_bone(events, edit_mode, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones, &mouse_pos);
+            edit_bone(events, edit_mode, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones);
         }
 
         if *current_edit == EditModes::Rotate {
@@ -779,7 +782,7 @@ pub fn render_screenshot(
     queue: &wgpu::Queue,
 ) {
     let mut temp_arm = Armature::default();
-    temp_arm.bones = armature.bones.clone();
+    temp_arm.bones = armature.animated_bones.clone();
     construction(&mut temp_arm.bones, &armature.bones);
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
     let sel = SelectionState::default();
@@ -834,6 +837,7 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
         // save rotations for the next forward kinematics call
         for j in 0..joints.len() {
             if j == joints.len() - 1 {
+                ik_rot.insert(joints[j].id, target.unwrap().rot);
                 continue;
             }
             ik_rot.insert(joints[j].id, joints[j].rot);
@@ -880,7 +884,12 @@ pub fn runtime_construction(
 
         // save rotations for the next forward kinematics call
         for j in 0..joints.len() {
+            let bone = bones.iter().find(|b| b.id == joints[j].id).unwrap();
             if j == joints.len() - 1 {
+                // if mimicking is on, follow rotation based on target bone
+                if bone.ik_mimic_target {
+                    ik_rot.insert(joints[j].id, target.unwrap().rot);
+                }
                 continue;
             }
             ik_rot.insert(joints[j].id, joints[j].rot);
@@ -1176,7 +1185,6 @@ pub fn edit_bone(
     renderer: &Renderer,
     bone: &Bone,
     bones: &Vec<Bone>,
-    mouse_pos: &Vec2,
 ) {
     let mut anim_id = selections.anim;
     let anim_frame = selections.anim_frame;
@@ -1190,9 +1198,9 @@ pub fn edit_bone(
         };
     }
 
-    let vert = vert(Some(bone.pos), None, None);
+    let bone_vert = vert(Some(bone.pos), None, None);
     let cam = &world_camera(&camera, &config);
-    let bone_center = world_vert(vert, cam, camera.aspect_ratio(), Vec2::new(0.5, 0.5));
+    let bone_center = world_vert(bone_vert, cam, camera.aspect_ratio(), Vec2::new(0.5, 0.5));
 
     // mouse velocity to be used for moving and scaling
     let mut mouse_vel = mouse_vel(&input, &camera) * camera.zoom;
@@ -1236,17 +1244,24 @@ pub fn edit_bone(
             edit!(bone, AnimElement::PositionY, pos.y);
         }
     } else if current_edit == EditModes::Rotate {
+        // remember the initial mouse world position
         let mouse_init = utils::screen_to_world_space(input.mouse_init.unwrap(), camera.window);
-        let dir_init = mouse_init - bone_center.pos;
+        let mut mouse_init_vert = vert(Some(mouse_init), None, None);
+        mouse_init_vert.pos.x *= camera.window.y / camera.window.x;
+        let dir_init = mouse_init_vert.pos - bone_center.pos;
         let rot_init = dir_init.y.atan2(dir_init.x);
 
-        let mouse = utils::screen_to_world_space(input.mouse, camera.window);
-        let dir = mouse - bone_center.pos;
+        // create a vertex on the mouse, as a reference for its world space position
+        let mouse_pos = utils::screen_to_world_space(input.mouse, camera.window);
+        let mut mouse_vert = vert(Some(mouse_pos), None, None);
+        mouse_vert.pos.x *= camera.window.y / camera.window.x;
+        let dir = mouse_vert.pos - bone_center.pos;
         let rot = dir.y.atan2(dir.x);
 
+        // get the target rotation from bone to mouse
         let mut rot = renderer.bone_init_rot + (rot - rot_init);
 
-        // snap rot to user-defined steps if holding snap key
+        // snap target rotation to user-defined steps if holding snap key
         let step = config.rot_snap_step * 3.14 / 180.;
         if edit_mode.holding_edit_snap {
             rot = (rot / step).round() * step
@@ -1267,14 +1282,17 @@ pub fn edit_bone(
             scale /= parent.scale;
         }
 
-        scale -= mouse_vel / camera.zoom;
-
         // maintain aspect ratio (same X and Y scale) if holding edit mod
         if edit_mode.holding_edit_mod {
-            let distance = (*mouse_pos - bone.pos).mag() / camera.zoom * 3.;
-            scale = Vec2::new(distance, distance);
+            let norm = mouse_vel.normalize();
+            if norm.x.abs() > norm.y.abs() {
+                mouse_vel.y = mouse_vel.x;
+            } else {
+                mouse_vel.x = mouse_vel.y;
+            }
         }
 
+        scale -= mouse_vel / camera.zoom;
         if scale.x != bone.scale.x {
             edit!(bone, AnimElement::ScaleX, scale.x);
         }
@@ -1346,10 +1364,8 @@ pub fn draw(
     indices_end: usize,
 ) {
     render_pass.set_vertex_buffer(0, buffer.vertex.as_ref().unwrap().slice(..));
-    render_pass.set_index_buffer(
-        buffer.index.as_ref().unwrap().slice(..),
-        wgpu::IndexFormat::Uint32,
-    );
+    let slice = buffer.index.as_ref().unwrap().slice(..);
+    render_pass.set_index_buffer(slice, wgpu::IndexFormat::Uint32);
     render_pass.draw_indexed(indices_start as u32..indices_end as u32, 0, 0..1);
 }
 
@@ -1395,18 +1411,17 @@ pub fn bone_vertices(
         } else {
             1.
         };
-        let idx = selections.bind;
-        let verts: Vec<i32>;
-        if idx == -1 {
-            verts = vec![];
-        } else {
-            let selected = armature.sel_bone(&sel).unwrap();
-            let sel_bind = &selected.binds;
-            verts = sel_bind[idx as usize].verts.iter().map(|v| v.id).collect();
+
+        // get vertices of selected bind
+        let idx = selections.bind as usize;
+        let mut verts_in_bind = vec![];
+        if let Some(bind) = armature.sel_bone(&sel).and_then(|bone| bone.binds.get(idx)) {
+            verts_in_bind = bind.verts.iter().map(|v| v.id).collect()
         }
 
         // yellow vertex if bound
-        let bound = idx != -1 && verts.contains(&(world_verts[wv].id as i32));
+        let idx = selections.bind;
+        let bound = idx != -1 && verts_in_bind.contains(&(world_verts[wv].id as i32));
         let white = Color::new(255, 255, 255, 255);
         let mut col = if bound {
             Color::new(255, 255, 0, 255)
@@ -1439,7 +1454,7 @@ pub fn bone_vertices(
             if world_verts.len() <= 4 {
                 events.open_modal("vert_limit", false);
             } else {
-                events.remove_vertex(wv);
+                events.delete_vertex(wv);
                 break;
             }
         }
@@ -1886,10 +1901,10 @@ fn draw_gridline(
 
     // draw vertical lines
     let mut x = (cam.pos.x - cam.zoom / camera.aspect_ratio()).round();
+    x = -x.abs();
 
     // snap to first line
     x += (x % config.gridline_gap as f32).abs();
-
     let right_side = cam.pos.x + cam.zoom / camera.aspect_ratio();
     while x < right_side {
         let color = if x == 0. {
@@ -1905,10 +1920,10 @@ fn draw_gridline(
 
     // draw horizontal lines
     let mut y = (cam.pos.y - cam.zoom).round();
+    y = -y.abs();
 
     // snap to first line
     y += (y % config.gridline_gap as f32).abs();
-
     let top_side = cam.pos.y + cam.zoom;
     while y < top_side {
         let color = if y == 0. {
@@ -1981,7 +1996,9 @@ pub fn add_offseted_indices(src: &mut Vec<u32>, dst: &mut Vec<u32>) {
         return;
     }
     let mut highest = 0;
-    dst.iter().for_each(|s| highest = highest.max(*s));
+    for s in &mut *dst {
+        highest = highest.max(*s);
+    }
     highest += 1;
     for idx in &mut *src {
         *idx += highest;
@@ -1989,7 +2006,7 @@ pub fn add_offseted_indices(src: &mut Vec<u32>, dst: &mut Vec<u32>) {
     dst.append(src);
 }
 
-pub fn draw_points_and_kites(
+pub fn draw_points(
     config: &Config,
     camera: &Camera,
     input: &InputStates,
@@ -2003,140 +2020,89 @@ pub fn draw_points_and_kites(
     events: &mut EventState,
     armature: &Armature,
 ) {
-    let point_color: Color = config.colors.center_point;
-    let mut kite_color: Color = config.colors.center_point;
-    kite_color.a = kite_color.a.saturating_sub(128);
-    let in_point_color: Color = config.colors.inactive_center_point;
-    let mut in_kite_color: Color = config.colors.inactive_center_point;
-    in_kite_color.a = in_kite_color.a.saturating_sub(64);
     let cam = world_camera(&camera, &config);
     let zero = Vec2::default();
-    let mut kite_verts = vec![];
-    let mut kite_indices = vec![];
     let mut point_verts = vec![];
     let mut point_indices = vec![];
-    let mut point_vert_pack_idx = 0;
-    let mut kite_vert_pack_idx = 0;
     let mut on_point = false;
+
     for p in 0..temp_arm.bones.len() {
         let bone = &temp_arm.bones[p];
+        let mut color;
 
         // skip points & kites for this bone if editing its mesh
         if edit_mode.showing_mesh && selected_bone_ids.contains(&bone.id) {
             continue;
         }
 
-        let mut color;
-        if renderer.render_points || selections.bone_ids.contains(&bone.id) {
-            if bone.group_color.a == 0 {
-                color = in_point_color;
-                if selected_bone_ids.contains(&bone.id) {
-                    color = point_color
-                }
-            } else {
-                color = bone.group_color.into();
-                if !selected_bone_ids.contains(&bone.id) {
-                    color.a /= 2;
-                }
-            }
-
-            // play shrinking animation if this bone was just selected
-            let fade_speed = 0.1;
-            let sel_size = config.center_point_radius * 4.;
-            let normal_size = config.center_point_radius;
-            let elapsed = if selections.bone_ids.len() > 1 && selections.bone_ids.contains(&bone.id)
-            {
-                (sel_size - edit_mode.sel_time * fade_speed).max(normal_size)
-            } else {
-                normal_size
-            } * camera.zoom;
-
-            let (mut this_verts, mut this_indices) = draw_point(
-                &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
-            );
-
-            // bones can be selected by clicking on their point
-            let mouse_on_it = utils::in_bounding_box(&input.mouse, &this_verts, &camera.window).1;
-            if mouse_on_it && !camera.on_ui {
-                color = bone.group_color.into();
-                if bone.group_color.a == 0 {
-                    color = point_color;
-                }
-                if selected_bone_ids.contains(&bone.id) {
-                    color += Color::new(64, 64, 64, 255);
-                }
-                (this_verts, this_indices) = draw_point(
-                    &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
-                );
-                // select this bone if point is pressed, unless it was already selected
-                if input.left_pressed {
-                    let sel_bone = armature.sel_bone(selections);
-                    if sel_bone == None {
-                        events.select_bone(bone.id as usize, true);
-                    } else if sel_bone != None && sel_bone.unwrap().id != bone.id {
-                        events.select_bone(bone.id as usize, true);
-                    }
-                }
-                events.set_hovering_bone_id(bone.id);
-                on_point = true;
-            }
-
-            for idx in &mut this_indices {
-                *idx += point_vert_pack_idx as u32 * 4;
-            }
-
-            point_verts.append(&mut this_verts);
-            point_indices.append(&mut this_indices.clone());
-            point_vert_pack_idx += 1;
-        }
-
-        if !renderer.render_kites {
+        // skip points if they shouldn't be rendered, and this isn't a selected bone
+        if !renderer.render_points && !selections.bone_ids.contains(&bone.id) {
             continue;
         }
 
-        let parent = temp_arm.bones.iter().find(|b| b.id == bone.parent_id);
-        if parent == None {
-            continue;
-        }
-        let parent_pos = parent.unwrap().pos;
-        let parent_id = parent.unwrap().id;
-        let group_color = parent.unwrap().group_color;
-
-        let diff = parent_pos - bone.pos;
-        let kite_width = diff.mag() / 1.;
-        let kite_rot = diff.y.atan2(diff.x);
-        // skip 0 width kites, caused by the child being directly on the parent
-        if kite_width == 0. {
-            continue;
-        }
-
-        if group_color.a == 0 {
-            color = in_point_color;
-            if selected_bone_ids.contains(&parent_id) {
-                color = point_color
+        if bone.group_color.a == 0 {
+            color = config.colors.inactive_center_point;
+            if selected_bone_ids.contains(&bone.id) {
+                color = config.colors.center_point
             }
         } else {
-            color = group_color.into();
-            if !selected_bone_ids.contains(&parent_id) {
+            color = bone.group_color.into();
+            if !selected_bone_ids.contains(&bone.id) {
                 color.a /= 2;
             }
         }
-        #[rustfmt::skip]
-        let (mut this_verts, mut this_indices) = draw_flow_kite(
-            &zero, &camera, &config, &temp_arm.bones[p].pos, color, cam.pos, kite_rot, kite_width
+
+        // play shrinking animation if this bone was just selected
+        let fade_speed = 0.1;
+        let sel_size = config.center_point_radius * 4.;
+        let normal_size = config.center_point_radius;
+        let elapsed = if selections.bone_ids.len() > 1 && selections.bone_ids.contains(&bone.id) {
+            (sel_size - edit_mode.sel_time * fade_speed).max(normal_size)
+        } else {
+            normal_size
+        } * camera.zoom;
+
+        let (mut this_verts, mut this_indices) = draw_point(
+            &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
         );
-        for idx in &mut this_indices {
-            *idx += kite_vert_pack_idx * 4;
+
+        // bones can be selected by clicking on their point
+        let mouse_on_it = utils::in_bounding_box(&input.mouse, &this_verts, &camera.window).1;
+        if mouse_on_it && !camera.on_ui {
+            color = bone.group_color.into();
+            if bone.group_color.a == 0 {
+                color = config.colors.center_point;
+            }
+            if selected_bone_ids.contains(&bone.id) {
+                color += Color::new(64, 64, 64, 255);
+            }
+            (this_verts, this_indices) = draw_point(
+                &zero, &camera, &config, &bone.pos, color, cam.pos, 0., elapsed,
+            );
+
+            let mut on_click_id = bone.id;
+            // QoL: select parent of textured bone if it's called 'Texture'
+            // this is because most textured bones are meant to represent their parents
+            let tex_name = bone.name.to_lowercase();
+            if !config.exact_bone_select && bone.parent_id != -1 && tex_name == "texture" {
+                on_click_id = bone.parent_id;
+            }
+            events.set_hovering_bone_id(on_click_id);
+
+            // select this bone if point is pressed, unless it was already selected
+            if input.left_pressed {
+                let sel_bone = armature.sel_bone(selections);
+                if sel_bone == None || (sel_bone != None && sel_bone.unwrap().id != bone.id) {
+                    events.select_bone(on_click_id as usize, true);
+                }
+            }
+            on_point = true;
         }
-        kite_verts.append(&mut this_verts);
-        kite_indices.append(&mut this_indices);
-        kite_vert_pack_idx += 1;
+
+        point_verts.append(&mut this_verts);
+        add_offseted_indices(&mut this_indices, &mut point_indices);
     }
-    if kite_indices.len() > 0 {
-        render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
-        setup_render_buffer(&mut renderer.kite_buffer, &kite_verts, &kite_indices, queue);
-        draw(&renderer.kite_buffer, render_pass, 0, kite_indices.len());
-    }
+
     if point_indices.len() > 0 {
         render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
         let point_buffer = &mut renderer.point_buffer;
@@ -2144,8 +2110,70 @@ pub fn draw_points_and_kites(
         draw(&renderer.point_buffer, render_pass, 0, point_indices.len());
     }
 
-    if !renderer.on_point {
-        renderer.on_point = on_point;
+    renderer.on_point |= on_point;
+}
+
+pub fn draw_kites(
+    config: &Config,
+    camera: &Camera,
+    edit_mode: &EditMode,
+    temp_arm: &mut Armature,
+    selected_bone_ids: Vec<i32>,
+    renderer: &mut Renderer,
+    queue: &wgpu::Queue,
+    render_pass: &mut RenderPass,
+) {
+    let cam = world_camera(&camera, &config);
+    let mut kite_verts = vec![];
+    let mut kite_indices = vec![];
+
+    for p in 0..temp_arm.bones.len() {
+        let bone = &temp_arm.bones[p];
+
+        // skip kites for this bone if editing its mesh
+        if !renderer.render_kites
+            || (edit_mode.showing_mesh && selected_bone_ids.contains(&bone.id))
+        {
+            continue;
+        }
+
+        let parent = temp_arm.bones.iter().find(|b| b.id == bone.parent_id);
+        if parent == None {
+            continue;
+        }
+
+        let diff = parent.unwrap().pos - bone.pos;
+        let kite_width = diff.mag() / 1.;
+        let kite_rot = diff.y.atan2(diff.x);
+        // skip 0 width kites, caused by the child being directly on the parent
+        if kite_width == 0. {
+            continue;
+        }
+
+        let mut color;
+        if parent.unwrap().group_color.a == 0 {
+            color = config.colors.inactive_center_point;
+            if selected_bone_ids.contains(&parent.unwrap().id) {
+                color = config.colors.center_point
+            }
+        } else {
+            color = parent.unwrap().group_color.into();
+            if !selected_bone_ids.contains(&parent.unwrap().id) {
+                color.a /= 2;
+            }
+        }
+        #[rustfmt::skip]
+        let (mut this_verts, mut this_indices) = draw_flow_kite(
+            &Vec2::new(0., 0.), &camera, &config, &temp_arm.bones[p].pos, color, cam.pos, kite_rot, kite_width
+        );
+        kite_verts.append(&mut this_verts);
+        add_offseted_indices(&mut this_indices, &mut kite_indices);
+    }
+
+    if kite_indices.len() > 0 {
+        render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
+        setup_render_buffer(&mut renderer.kite_buffer, &kite_verts, &kite_indices, queue);
+        draw(&renderer.kite_buffer, render_pass, 0, kite_indices.len());
     }
 }
 

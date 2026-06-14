@@ -400,8 +400,6 @@ pub struct InputStates {
 
     pub mod_q: Option<global_hotkey::hotkey::HotKey>,
     pub mod_w: Option<global_hotkey::hotkey::HotKey>,
-    pub mod_c: Option<global_hotkey::hotkey::HotKey>,
-    pub mod_v: Option<global_hotkey::hotkey::HotKey>,
     pub hotkey_manager: Option<global_hotkey::GlobalHotKeyManager>,
 }
 
@@ -412,6 +410,7 @@ pub enum SettingsState {
     Editing,
     Rendering,
     Keyboard,
+    Colors,
     Misc,
 }
 
@@ -519,7 +518,6 @@ impl Warning {
 
 #[derive(Clone, Default)]
 pub struct Ui {
-    pub anim: UiAnim,
     pub startup: Startup,
 
     pub edit_bar: UiBar,
@@ -559,13 +557,16 @@ pub struct Ui {
     pub changing_key: String,
 
     pub hovering_tex: i32,
-    pub hovering_bone: i32,
     pub hovering_set: i32,
     pub hovering_anim: i32,
     pub hovering_style_bone: i32,
     pub hovering_setting: Option<shared::SettingsState>,
     pub hovering_render_toggle: i32,
     pub hovering_startup_file: i32,
+
+    // used with renderer's is_hovering_bone to determine whether a
+    // bone is being hovered on either the armature window, or renderer
+    pub is_hovering_bone: bool,
 
     pub showing_samples: bool,
 
@@ -640,7 +641,6 @@ pub struct Ui {
     pub exporting_video_type: ExportVideoType,
     pub exporting_video_anim: usize,
     pub exporting_video_encoder: ExportVideoEncoder,
-    pub open_after_export: bool,
     pub use_system_ffmpeg: bool,
     pub video_clear_bg: Color,
     pub anim_cycles: i32,
@@ -681,6 +681,23 @@ pub struct Ui {
     // element-dependent actions (copying/pasting, deleting, etc)
     // use this to determien which element to target
     pub last_selected: String,
+    pub last_selected_frame: i32,
+
+    pub export_style_id: usize,
+    pub export_style_path: Arc<Mutex<PathBuf>>,
+
+    // Keyframe editor stuff
+    pub hovering_diamond: bool,
+    pub hovering_frame: i32,
+    pub timeline_zoom: f32,
+    pub lines_x: Vec<f32>,
+    pub timeline_offset: Vec2,
+    pub dragged_keyframe: Keyframe,
+    pub icon_images: Vec<egui::TextureHandle>,
+    pub deleting_line_bone_id: i32,
+    pub deleting_line_element: AnimElement,
+    pub selected_keyframes: Vec<Keyframe>,
+    pub flash_warn_timer: Option<Instant>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -980,8 +997,8 @@ impl Default for KeyboardConfig {
             save_as:              shortcut_key!(egui::Modifiers::SHIFT, egui::Key::S),
             export:               shortcut_key!(egui::Modifiers::COMMAND, egui::Key::E),
             open:                 shortcut_key!(egui::Modifiers::COMMAND, egui::Key::O),
-            copy:                 shortcut_key!(egui::Modifiers::CTRL, egui::Key::C),
-            paste:                shortcut_key!(egui::Modifiers::CTRL, egui::Key::V),
+            copy:                 shortcut_key!(egui::Modifiers::COMMAND, egui::Key::C),
+            paste:                shortcut_key!(egui::Modifiers::COMMAND, egui::Key::V),
             timeline_zoom_mode:   shortcut_key!(egui::Modifiers::COMMAND, egui::Key::F30),
             transform_move:       regular_key!(egui::Key::Q),
             transform_rotate:     regular_key!(egui::Key::W),
@@ -996,27 +1013,6 @@ impl Default for KeyboardConfig {
             toggle_edit_vertices: regular_key!(egui::Key::V),
         }
     }
-}
-
-#[derive(Clone, Default)]
-pub struct UiAnim {
-    pub hovering_frame: i32,
-    pub timeline_zoom: f32,
-    pub lines_x: Vec<f32>,
-
-    // the frame at which playing started
-    pub played_frame: i32,
-
-    pub exported_frame: String,
-
-    pub timeline_offset: Vec2,
-    pub dragged_keyframe: Keyframe,
-    pub icon_images: Vec<egui::TextureHandle>,
-    pub loops: i32,
-
-    pub bottom_bar_top: f32,
-    pub deleting_line_bone_id: i32,
-    pub deleting_line_element: AnimElement,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq, Debug)]
@@ -1044,6 +1040,67 @@ enum_string!(JointConstraint);
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 #[serde(default)]
+pub struct Visuals {
+    #[serde(skip_serializing_if = "is_str_empty")]
+    pub tex: String,
+    #[serde(default = "default_tint", skip_serializing_if = "is_tint_white")]
+    pub tint: TintColor,
+    #[serde(skip_serializing_if = "is_neg_one")]
+    pub zindex: i32,
+
+    // mesh data
+    #[serde(default, skip_serializing_if = "are_verts_empty")]
+    pub vertices: Vec<Vertex>,
+    #[serde(default, skip_serializing_if = "are_indices_empty")]
+    pub indices: Vec<u32>,
+    #[serde(default, skip_serializing_if = "are_weights_empty")]
+    pub binds: Vec<BoneBind>,
+
+    #[serde(skip_serializing_if = "is_str_empty", skip_deserializing)]
+    pub init_tex: String,
+    #[serde(skip_serializing_if = "is_tint_white", skip_deserializing)]
+    pub init_tint: TintColor,
+    #[serde(skip_serializing_if = "is_neg_one", skip_deserializing)]
+    pub init_zindex: i32,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
+#[serde(default)]
+pub struct Physics {
+    #[serde(skip_serializing_if = "is_vec2_max")]
+    pub global_pos: Vec2,
+    #[serde(skip_serializing_if = "is_max")]
+    pub global_rot: f32,
+    #[serde(skip_serializing_if = "is_vec2_max")]
+    pub global_scale: Vec2,
+
+    #[serde(skip_serializing_if = "is_max")]
+    pub pos_damping: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub scale_damping: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub rot_damping: f32,
+
+    #[serde(skip_serializing_if = "is_max")]
+    pub pos_ratio: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub scale_ratio: f32,
+
+    #[serde(skip_serializing_if = "is_max")]
+    pub global_orbit: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub global_orbit_diff: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub global_orbit_vel: f32,
+
+    #[serde(skip_serializing_if = "is_max")]
+    pub sway: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub rot_bounce: f32,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
+#[serde(default)]
 pub struct Bone {
     pub id: i32,
     pub name: String,
@@ -1060,48 +1117,44 @@ pub struct Bone {
     #[serde(skip_serializing_if = "is_false")]
     pub hidden: bool,
 
-    #[serde(default = "default_neg_one")]
-    pub ik_family_id: i32,
-    #[rustfmt::skip]
-    #[serde(skip_serializing_if = "no_constraints")]
+    #[serde(skip)]
     pub ik_constraint: JointConstraint,
-    #[serde(skip_serializing_if = "no_ik_mode")]
+    #[serde(skip)]
     pub ik_mode: InverseKinematicsMode,
-    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
+    #[serde(skip)]
     pub ik_target_id: i32,
-    #[serde(skip_serializing_if = "is_i32_empty")]
+    #[serde(skip)]
     pub ik_bone_ids: Vec<i32>,
+    #[serde(skip)]
+    pub ik_mimic_target: bool,
 
-    #[serde(skip_serializing_if = "is_false")]
-    pub has_physics: bool,
-
-    #[serde(skip_serializing_if = "is_vec2_max")]
+    #[serde(skip)]
     pub phys_global_pos: Vec2,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_pos_damping: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_pos_ratio: f32,
 
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_global_rot: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_global_orbit: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_global_orbit_diff: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_global_orbit_vel: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_rot_damping: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_sway: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_rot_bounce: f32,
 
-    #[serde(skip_serializing_if = "is_vec2_max")]
+    #[serde(skip)]
     pub phys_global_scale: Vec2,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_scale_damping: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_scale_ratio: f32,
 
     // todo:
@@ -1110,29 +1163,26 @@ pub struct Bone {
     #[serde(skip_deserializing)]
     pub init_pos: Vec2,
     #[serde(skip_deserializing)]
-    pub init_scale: Vec2,
-    #[serde(skip_deserializing)]
     pub init_rot: f32,
-    #[serde(skip_serializing_if = "no_constraints", skip_deserializing)]
-    pub init_ik_constraint: JointConstraint,
-    #[serde(skip_serializing_if = "no_ik_mode", skip_deserializing)]
-    pub init_ik_mode: InverseKinematicsMode,
+    #[serde(skip_deserializing)]
+    pub init_scale: Vec2,
     #[serde(skip_serializing_if = "is_false", skip_deserializing)]
     pub init_hidden: bool,
-    #[serde(skip_serializing_if = "is_str_empty", skip_deserializing)]
-    pub init_tex: String,
-    #[serde(default = "default_tint", skip_serializing_if = "is_tint_white")]
-    pub init_tint: TintColor,
-    #[serde(skip_serializing_if = "is_neg_one")]
-    pub init_zindex: i32,
 
-    #[serde(default, skip_serializing_if = "are_verts_empty")]
+    #[serde(default = "default_neg_one")]
+    pub ik_family_id: i32,
+    #[serde(default = "default_neg_one")]
+    pub physics_id: i32,
+    #[serde(default = "default_neg_one")]
+    pub visuals_id: i32,
+
+    #[serde(skip)]
     pub vertices: Vec<Vertex>,
     #[serde(skip)]
     pub verts_edited: bool,
-    #[serde(default, skip_serializing_if = "are_indices_empty")]
+    #[serde(skip)]
     pub indices: Vec<u32>,
-    #[serde(default, skip_serializing_if = "are_weights_empty")]
+    #[serde(skip)]
     pub binds: Vec<BoneBind>,
 
     #[serde(skip)]
@@ -1143,6 +1193,8 @@ pub struct Bone {
     pub meshdef_folded: bool,
     #[serde(skip)]
     pub effects_folded: bool,
+    #[serde(skip)]
+    pub phys_folded: bool,
     #[serde(skip)]
     pub world_verts: Vec<Vertex>,
     #[serde(skip)]
@@ -1382,16 +1434,19 @@ impl Armature {
                 b.rot     = self.interpolate_keyframes(anim_idx, b.id, AE::Rotation,  b.rot,     anim_frame);
                 b.scale.x = self.interpolate_keyframes(anim_idx, b.id, AE::ScaleX,    b.scale.x, anim_frame);
                 b.scale.y = self.interpolate_keyframes(anim_idx, b.id, AE::ScaleY,    b.scale.y, anim_frame);
-                b.tint.r =  self.interpolate_keyframes(anim_idx, b.id, AE::TintR,     b.tint.r,  anim_frame);
-                b.tint.g =  self.interpolate_keyframes(anim_idx, b.id, AE::TintG,     b.tint.g,  anim_frame);
-                b.tint.b =  self.interpolate_keyframes(anim_idx, b.id, AE::TintB,     b.tint.b,  anim_frame);
-                b.tint.a =  self.interpolate_keyframes(anim_idx, b.id, AE::TintA,     b.tint.a,  anim_frame);
-                b.zindex  = prev_frame!(AE::Zindex,  b.zindex as f32) as i32;
-                b.hidden  = prev_frame!(AE::Hidden,  bool_as_f32(b.hidden)) != 0.;
-                b.tex     = prev_str!(  AE::Texture, b.tex.clone());
+                b.tint.r  = self.interpolate_keyframes(anim_idx, b.id, AE::TintR,     b.tint.r,  anim_frame);
+                b.tint.g  = self.interpolate_keyframes(anim_idx, b.id, AE::TintG,     b.tint.g,  anim_frame);
+                b.tint.b  = self.interpolate_keyframes(anim_idx, b.id, AE::TintB,     b.tint.b,  anim_frame);
+                b.tint.a  = self.interpolate_keyframes(anim_idx, b.id, AE::TintA,     b.tint.a,  anim_frame);
+
+                b.zindex          = prev_frame!(AE::Zindex,      b.zindex as f32) as i32;
+                b.hidden          = prev_frame!(AE::Hidden,      bool_as_f32(b.hidden)) != 0.;
+                b.ik_mimic_target = prev_frame!(AE::MimicTarget, bool_as_f32(b.ik_mimic_target)) != 0.;
+
+                b.tex = prev_str!(AE::Texture, b.tex.clone());
             };
 
-            macro_rules! prev_frame {
+            macro_rules! prev_enum {
                 ($field:expr, $anim_element:expr, $enum:ident) => {
                     let kfs = &self.animations[anim_idx].keyframes;
                     let prev_frame = utils::get_prev_frame(anim_frame, kfs, b.id, &$anim_element);
@@ -1401,8 +1456,8 @@ impl Armature {
                 };
             }
 
-            prev_frame!(b.ik_constraint, AnimElement::IkConstraint, JointConstraint);
-            prev_frame!(b.ik_mode, AnimElement::IkMode, InverseKinematicsMode);
+            prev_enum!(b.ik_constraint, AnimElement::IkConstraint, JointConstraint);
+            prev_enum!(b.ik_mode, AnimElement::IkMode, InverseKinematicsMode);
         }
 
         bones
@@ -1654,12 +1709,35 @@ pub struct TexAtlas {
     pub size: Vec2I,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, Debug, PartialEq)]
+#[serde(default)]
+pub struct InverseKinematics {
+    #[serde(default = "default_neg_one")]
+    pub id: i32,
+    #[rustfmt::skip]
+    #[serde(skip_serializing_if = "no_constraints")]
+    pub constraint: JointConstraint,
+    #[serde(skip_serializing_if = "no_ik_mode")]
+    pub mode: InverseKinematicsMode,
+    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
+    pub target_id: i32,
+    #[serde(skip_serializing_if = "is_i32_empty")]
+    pub bone_ids: Vec<i32>,
+    #[serde(skip_serializing_if = "is_false")]
+    pub mimic_target: bool,
+    #[serde(skip_serializing_if = "no_constraints", skip_deserializing)]
+    pub init_constraint: JointConstraint,
+    #[serde(skip_serializing_if = "no_ik_mode", skip_deserializing)]
+    pub init_mode: InverseKinematicsMode,
+    #[serde(skip_serializing_if = "is_false")]
+    pub init_mimic_target: bool,
+}
+
 // used for the json
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 #[serde(default)]
 pub struct Root {
     pub version: String,
-    pub ik_root_ids: Vec<i32>,
     pub baked_ik: bool,
     pub img_format: ExportImgFormat,
     #[serde(default, skip_serializing_if = "is_color_empty")]
@@ -1669,6 +1747,9 @@ pub struct Root {
     pub animations: Vec<Animation>,
     pub atlases: Vec<TexAtlas>,
     pub styles: Vec<Style>,
+    pub visuals: Vec<Visuals>,
+    pub inverse_kinematics: Vec<InverseKinematics>,
+    pub physics: Vec<Physics>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
@@ -1826,7 +1907,7 @@ impl Animation {
     }
 }
 
-#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default)]
+#[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default, Debug)]
 #[serde(default)]
 pub struct Keyframe {
     pub frame: i32,
@@ -1872,46 +1953,53 @@ enum_string!(HandlePreset);
 #[rustfmt::skip]
 pub enum AnimElement {
     #[default]
-     PositionX,
-     PositionY,
-     Rotation,
-     ScaleX,
-     ScaleY,
-     Zindex,
-     Texture,
-     IkConstraint,
-     Hidden,
-     IkMode,
-     IkFamilyId,
-     TintR,
-     TintG,
-     TintB,
-     TintA,
-     Locked,      // NA
-     GroupColorR, // NA
-     GroupColorG, // NA
-     GroupColorB, // NA
-     GroupColorA, // NA
+     /* 0 */ PositionX,
+     /* 1 */ PositionY,
+     /* 2 */ Rotation,
+     /* 3 */ ScaleX,
+     /* 4 */ ScaleY,
+     /* 5 */ Zindex,
+     /* 6 */ Texture,
+     /* 7 */ IkConstraint,
+     /* 8 */ Hidden,
+     /* 9 */ IkMode,
+     /* A */ IkFamilyId,
+     /* B */ TintR,
+     /* C */ TintG,
+     /* D */ TintB,
+     /* E */ TintA,
+     /* K */ MimicTarget,
+     /* F */ Locked,      // NA
+     /* G */ GroupColorR, // NA
+     /* H */ GroupColorG, // NA
+     /* I */ GroupColorB, // NA
+     /* J */ GroupColorA, // NA
 }
 
 // iterable anim change icons IDs
 #[rustfmt::skip]
-pub const ANIM_ICON_ID: [usize; 15] = [
+pub const ANIM_ICON_ID: [usize; 21] = [
     /* 0 */ 0,
     /* 1 */ 1,
     /* 2 */ 2,
     /* 3 */ 3,
-    /* 5 */ 4,
+    /* 4 */ 4,
     /* 5 */ 5,
     /* 6 */ 6,
     /* 7 */ 5,
-    /* 8 */ 5,
+    /* 8 */ 7,
     /* 9 */ 7,
-    /* 10 */ 5,
-    /* 11 */ 8,
-    /* 12 */ 9,
-    /* 13 */ 10,
-    /* 14 */ 11,
+    /* A */ 5,
+    /* B */ 8,
+    /* C */ 9,
+    /* D */ 10,
+    /* E */ 6,
+    /* K */ 5,
+    /* F */ 10,
+    /* G */ 10,
+    /* H */ 10,
+    /* I */ 10,
+    /* J */ 10,
 ];
 
 #[derive(Default, Clone, PartialEq, Debug)]
@@ -2143,6 +2231,7 @@ pub struct Renderer {
     pub render_rects: bool,
     pub on_point: bool,
     pub clicked_vert_id: i32,
+    pub is_hovering_bone: bool,
 
     // bindgroups
     pub generic_bindgroup: Option<BindGroup>,
@@ -2189,16 +2278,14 @@ pub enum Events {
     DeleteAnim,
     DeleteTex,
     DeleteStyle,
-    DeleteKeyframe,
-    RemoveVertex,
-    RemoveTriangle,
-    RemoveKeyframesByFrame,
+    DeleteVertex,
+    DeleteTriangle,
+    DeleteKeyframesByFrame,
     DeleteKeyframeLine,
 
     CopyBone,
     PasteBone,
-    CopyKeyframe,
-    CopyKeyframesInFrame,
+    CopySelectedKeyframes,
     PasteKeyframesOnFrame,
 
     NewAnimation,
@@ -2229,6 +2316,7 @@ pub enum Events {
     ToggleSettingBindBone,
     ToggleAnimPanelOpen,
     ToggleIkFolded,
+    TogglePhysFolded,
     ToggleIkDisabled,
     ToggleMeshdefFolded,
     ToggleEffectsFolded,
@@ -2256,7 +2344,7 @@ pub enum Events {
     AdjustKeyframesByFPS,
     ResetVertices,
     SelectBind,
-    RemoveIkTarget,
+    DeleteIkTarget,
     CenterBoneVerts,
     TraceBoneVerts,
     SetBindWeight,
@@ -2292,6 +2380,11 @@ pub enum Events {
     SetHoveringLine,
     CreateEmptyTexture,
     ImportPsdArmature,
+    CreateParentBone,
+    DeleteSelectedKeyframes,
+    MoveSelectedKeyframes,
+    GlobalCopy,
+    GlobalPaste,
 }
 
 enum_string!(Events);
@@ -2344,7 +2437,7 @@ impl EventState {
     generic_event!(new_vertex, Events::NewVertex);
     generic_event!(cancel_pending_texture, Events::CancelPendingTexture);
     generic_event!(reset_vertices, Events::ResetVertices);
-    generic_event!(remove_ik_target, Events::RemoveIkTarget);
+    generic_event!(delete_ik_target, Events::DeleteIkTarget);
     generic_event!(center_bone_verts, Events::CenterBoneVerts);
     generic_event!(trace_bone_verts, Events::TraceBoneVerts);
     generic_event!(open_export_modal, Events::OpenExportModal);
@@ -2353,26 +2446,30 @@ impl EventState {
     generic_event!(update_render_options, Events::UpdateRenderOptions);
     generic_event!(create_empty_texture, Events::CreateEmptyTexture);
     generic_event!(import_psd_armature, Events::ImportPsdArmature);
+    generic_event!(delete_selected_keyframes, Events::DeleteSelectedKeyframes);
+    generic_event!(global_copy, Events::GlobalCopy);
+    generic_event!(global_paste, Events::GlobalPaste);
+    generic_event!(copy_selected_keyframes, Events::CopySelectedKeyframes);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, i32);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
     event_with_value!(delete_anim, Events::DeleteAnim, anim_id, usize);
     event_with_value!(delete_tex, Events::DeleteTex, tex_id, usize);
     event_with_value!(delete_style, Events::DeleteStyle, style_id, usize);
-    event_with_value!(delete_keyframe, Events::DeleteKeyframe, kf_idx, usize);
     event_with_value!(duplicate_anim, Events::DuplicateAnim, anim_id, usize);
     event_with_value!(copy_bone, Events::CopyBone, bone_id, usize);
     event_with_value!(paste_bone, Events::PasteBone, bone_id, usize);
-    event_with_value!(remove_vertex, Events::RemoveVertex, vert_idx, usize);
+    event_with_value!(delete_vertex, Events::DeleteVertex, vert_idx, usize);
     event_with_value!(drag_vertex, Events::DragVertex, vert_id, usize);
     event_with_value!(click_vertex, Events::ClickVertex, vert_id, usize);
-    event_with_value!(remove_triangle, Events::RemoveTriangle, idx, usize);
+    event_with_value!(delete_triangle, Events::DeleteTriangle, idx, usize);
     event_with_value!(adjust_keyframes_by_fps, E::AdjustKeyframesByFPS, fps, usize);
     event_with_value!(toggle_showing_mesh, E::ToggleShowingMesh, visible, usize);
     event_with_value!(select_bind, Events::SelectBind, idx, i32);
     event_with_value!(toggle_setting_ik_target, E::ToggleSettingIkTarget, idx, i32);
     event_with_value!(toggle_setting_bind_bone, E::ToggleSettingBindBone, idx, i32);
     event_with_value!(toggle_ik_folded, Events::ToggleIkFolded, toggle, usize);
+    event_with_value!(toggle_phys_folded, Events::TogglePhysFolded, toggle, usize);
     event_with_value!(toggle_meshdef_folded, E::ToggleMeshdefFolded, toggle, usize);
     event_with_value!(toggle_effects_folded, E::ToggleEffectsFolded, toggle, usize);
     event_with_value!(save_edited_bone, Events::SaveEditedBone, bone_idx, usize);
@@ -2380,20 +2477,10 @@ impl EventState {
     event_with_value!(toggle_baking_ik, Events::ToggleBakingIk, toggle, usize);
     event_with_value!(toggle_exclude_ik, Events::ToggleExcludeIk, toggle, usize);
     event_with_value!(set_export_img_format, E::SetExportImgFormat, idx, usize);
-    event_with_value!(copy_keyframe, Events::CopyKeyframe, idx, usize);
     event_with_value!(toggle_onion_layers, E::ToggleOnionLayers, toggle, usize);
-    event_with_value!(
-        toggle_anim_panel_open,
-        E::ToggleAnimPanelOpen,
-        toggle,
-        usize
-    );
-    event_with_value!(
-        remove_keyframes_by_frame,
-        E::RemoveKeyframesByFrame,
-        frame,
-        i32
-    );
+    #[rustfmt::skip]    event_with_value!(paste_keyframes_on_frame, Events::PasteKeyframesOnFrame, frame, i32);
+    #[rustfmt::skip]    event_with_value!(toggle_anim_panel_open, E::ToggleAnimPanelOpen, toggle, usize);
+    #[rustfmt::skip]    event_with_value!(delete_keyframes_by_frame, E::DeleteKeyframesByFrame, frame, i32);
     event_with_value!(set_temporary_edit_mode, E::SetTemporaryEditMode, mode, u32);
     event_with_value!(toggle_edit_modifying, E::ToggleEditModifying, mode, u32);
     event_with_value!(toggle_edit_snapping, E::ToggleEditSnapping, mode, u32);
@@ -2411,18 +2498,8 @@ impl EventState {
     event_with_value!(set_hovering_line, E::SetHoveringLine, value, i32);
     event_with_value!(set_pos_ratio, E::SetPosRatio, value, f32);
     event_with_value!(set_scale_ratio, E::SetScaleRatio, value, f32);
-    event_with_value!(
-        copy_keyframes_in_frame,
-        Events::CopyKeyframesInFrame,
-        frame,
-        i32
-    );
-    event_with_value!(
-        paste_keyframes_on_frame,
-        Events::PasteKeyframesOnFrame,
-        frame,
-        i32
-    );
+    #[rustfmt::skip]    event_with_value!(create_parent_bone, Events::CreateParentBone, of_bone_id, i32);
+    #[rustfmt::skip]    event_with_value!(move_selected_keyframes, Events::MoveSelectedKeyframes, dropped_frame, i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -2587,10 +2664,11 @@ impl EventState {
         self.str_values.push(err);
     }
 
-    pub fn select_anim_frame(&mut self, frame: usize, show_panel: bool) {
+    pub fn select_anim_frame(&mut self, frame: usize, select_keyframes: bool, perma_shift: bool) {
         self.events.push(Events::SelectAnimFrame);
         self.values.push(frame as f32);
-        self.values.push(if show_panel { 1. } else { 0. });
+        self.values.push(if select_keyframes { 1. } else { 0. });
+        self.values.push(if perma_shift { 1. } else { 0. });
     }
 
     pub fn delete_keyframe_line(&mut self, bone_id: usize, element: &AnimElement) {

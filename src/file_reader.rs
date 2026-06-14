@@ -480,9 +480,9 @@ pub fn read_psd(
     }
 
     // add IK targets
-    for eff_id in start_eff_ids {
+    for eff_id in &start_eff_ids {
         let target_id = shared.psd_armature.new_bone(-1).0.id;
-        let start_eff_bone = &mut shared.psd_armature.find_bone_mut(eff_id).unwrap();
+        let start_eff_bone = &mut shared.psd_armature.find_bone_mut(*eff_id).unwrap();
         let ik_id = start_eff_bone.ik_family_id;
 
         start_eff_bone.ik_target_id = target_id;
@@ -503,6 +503,49 @@ pub fn read_psd(
         target_bone.name = target_name;
         target_bone.pos = pos;
         target_bone.zindex = 0;
+    }
+
+    // adjust IK boens' distance (position X)
+    for b in 0..shared.psd_armature.bones.len() {
+        let bone = &mut shared.psd_armature.bones[b];
+        if bone.ik_family_id == -1 || start_eff_ids.contains(&bone.id) {
+            continue;
+        }
+        bone.pos.x = bone.pos.mag();
+        bone.pos.y = 0.;
+    }
+
+    // point and orbit non-IK children of IK bones in the correct direction
+    for b in 0..shared.psd_armature.bones.len() {
+        let bone = &shared.psd_armature.bones[b];
+        let bones = &shared.psd_armature.bones;
+        let parent_raw = bones.iter().find(|b| b.id == bone.parent_id);
+        if parent_raw == None || parent_raw.unwrap().ik_family_id == -1 || bone.ik_family_id != -1 {
+            continue;
+        }
+        let parent = parent_raw.unwrap();
+
+        // get starting bone of this family
+        let start_bone_raw = bones.iter().find(|b| b.ik_family_id == parent.ik_family_id);
+        if start_bone_raw == None {
+            continue;
+        }
+        let start_bone = start_bone_raw.unwrap();
+
+        // get target bone of this family
+        let target_raw = bones.iter().find(|b| b.id == start_bone.ik_target_id);
+        if target_raw == None {
+            continue;
+        }
+        let target = target_raw.unwrap();
+
+        // rotate this bone to point correctly
+        let diff = target.pos - start_bone.pos;
+        let angle = diff.y.atan2(diff.x);
+        shared.psd_armature.bones[b].rot = -angle;
+
+        // adjust this bone such that it orbits its parent
+        shared.psd_armature.bones[b].pos = utils::rotate(&shared.psd_armature.bones[b].pos, -angle);
     }
 
     // remove unused texture data

@@ -17,8 +17,6 @@ use egui_wgpu::wgpu::ExperimentalFeatures;
 use shared::*;
 use wgpu::{util::DeviceExt, BindGroupLayout, Buffer, InstanceDescriptor};
 
-const PHYSICS: bool = true;
-
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
@@ -41,6 +39,8 @@ mod web {
 use std::sync::Arc;
 #[cfg(target_arch = "wasm32")]
 use web::*;
+
+use image::ImageEncoder;
 
 use winit::{
     application::ApplicationHandler,
@@ -134,7 +134,6 @@ impl ApplicationHandler for App {
 
         #[cfg(target_arch = "wasm32")]
         {
-            use wgpu::web_sys;
             use winit::platform::web::WindowAttributesExtWebSys;
             #[rustfmt::skip]
             let canvas =
@@ -426,6 +425,11 @@ impl ApplicationHandler for App {
                     .egui_ctx()
                     .set_pixels_per_point(self.shared.ui.scale);
 
+                // set hovering bone to -1 if neither the renderer nor UI have it
+                if !self.shared.renderer.is_hovering_bone && !self.shared.ui.is_hovering_bone {
+                    self.shared.selections.hovering_bone_id = -1;
+                }
+
                 // create empty texture if the appropriate event is called.
                 // this is separate from other event processing, since it requires wgpu stuff
                 for event in &self.shared.events.events {
@@ -446,6 +450,7 @@ impl ApplicationHandler for App {
                     break;
                 }
 
+                // iterate and process all events for this frame
                 while self.shared.events.events.len() > 0 {
                     let s = &mut self.shared;
                     #[rustfmt::skip]
@@ -784,7 +789,6 @@ impl BackendRenderer {
             && shared.ui.file_elapsed.unwrap().elapsed().as_millis() > 150
         {
             *shared.ui.file_path.lock().unwrap() = shared.ui.dropped_file_path.clone();
-            println!("{}", shared.ui.file_path.lock().unwrap().len());
             #[rustfmt::skip]
             let name = shared.ui.file_path.lock().unwrap()[0].as_path().file_name().unwrap().to_str().unwrap().to_string();
             let ext = name.split('.').collect::<Vec<_>>()[1]
@@ -838,20 +842,28 @@ impl BackendRenderer {
             shared.ui.export_modal = false;
         }
 
-        // initialize non-mesh bone verts and indices
-        for b in 0..shared.armature.bones.len() {
-            let tex = shared.armature.tex_of(shared.armature.bones[b].id);
-            if tex != None && shared.armature.bones[b].vertices.len() == 0 {
-                let size = tex.unwrap().size;
-                let bone = &mut shared.armature.bones[b];
-                (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
-                bone.verts_edited = false;
-            }
-        }
+        self.check_export_style(&shared.armature, &mut shared.ui);
 
         // animated bones will be used throughout the program
         utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
         shared.renderer.temp_bones = shared.armature.animated_bones.clone();
+
+        // initialize non-mesh bone verts and indices
+        for b in 0..shared.armature.bones.len() {
+            let tex = shared.armature.anim_tex_of(shared.armature.bones[b].id);
+            if tex != None && !shared.armature.bones[b].verts_edited {
+                let size = tex.unwrap().size;
+
+                let bone = &mut shared.armature.bones[b];
+                (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
+                let bone = &mut shared.armature.animated_bones[b];
+                (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
+                let bone = &mut shared.renderer.temp_bones[b];
+                (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
+
+                bone.verts_edited = false;
+            }
+        }
 
         // disable physics if current edited bone has physics properties.
         // this prevents the bone from being uncontrollable.
@@ -875,14 +887,85 @@ impl BackendRenderer {
         }
 
         // core rendering logic handled in renderer.rs
-        let s = shared;
         #[rustfmt::skip]
         renderer::render(
-            render_pass, &self.gpu.queue, &s.camera, &s.input, &mut s.armature,
-            &s.config, &s.edit_mode, &mut s.selections, &mut s.renderer, &mut s.events,
+            render_pass, &self.gpu.queue, &shared.camera, &shared.input, &mut shared.armature,
+            &shared.config, &shared.edit_mode, &mut shared.selections, &mut shared.renderer, &mut shared.events,
         );
 
-        s.ui.warnings = warnings::check_warnings(&s.armature);
+        shared.ui.warnings = warnings::check_warnings(&shared.armature);
+    }
+
+    // processes style to export, if appropriate
+    fn check_export_style(&self, armature: &Armature, shared_ui: &mut Ui) {
+        let _path = shared_ui.export_style_path.lock().unwrap();
+        let mut _web_buf: Vec<u8>;
+
+        #[cfg(not(target_arch = "wasm32"))]
+        let path_str = _path.to_str().unwrap().to_string();
+        #[cfg(target_arch = "wasm32")]
+        let path_str = " ";
+
+        if shared_ui.export_style_id == usize::MAX || path_str == "" {
+            return;
+        }
+
+        // initialize zip file (native/web)
+        let mut zip;
+        let options;
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            zip = zip::ZipWriter::new(
+                std::fs::File::create(_path.as_path().to_str().unwrap().to_string()).unwrap(),
+            );
+            options = zip::write::FullFileOptions::default()
+                .compression_method(zip::CompressionMethod::Stored);
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            // create zip file
+            _web_buf = vec![];
+            let cursor = std::io::Cursor::new(&mut _web_buf);
+            zip = zip::ZipWriter::new(cursor);
+            options = zip::write::SimpleFileOptions::default()
+                .compression_method(zip::CompressionMethod::Stored);
+        }
+
+        // go thru all textures of this style, and save them as png in the zip
+        let style = &armature.styles[shared_ui.export_style_id as usize];
+        for tex in &style.textures {
+            let tex_data = &armature.tex_data;
+            let data = tex_data.iter().find(|t| t.id == tex.data_id);
+            if data == None {
+                continue;
+            }
+
+            // encode texture to png
+            let img = &data.unwrap().image;
+            let mut buf = vec![];
+            let encoder = image::codecs::png::PngEncoder::new(&mut buf);
+            let rgba8 = image::ExtendedColorType::Rgba8;
+            encoder
+                .write_image(&img.to_rgba8(), img.width(), img.height(), rgba8)
+                .unwrap();
+
+            // save texture into zip
+            zip.start_file(format!("{}.png", tex.name), options.clone())
+                .unwrap();
+            zip.write(&buf).unwrap();
+        }
+
+        // save zip (native/web)
+        #[cfg(not(target_arch = "wasm32"))]
+        zip.finish().unwrap();
+        #[cfg(target_arch = "wasm32")]
+        {
+            let bytes = zip.finish().unwrap().into_inner().to_vec();
+            downloadZip(bytes, "Spritesheet".to_string());
+        }
+
+        // turn off exporting style
+        shared_ui.export_style_id = usize::MAX;
     }
 
     fn check_export(&self, shared: &mut shared::Shared) {
@@ -943,7 +1026,7 @@ impl BackendRenderer {
             }
             if shared.ui.custom_error != "" {
                 shared.events.open_modal("error_vid_export", false);
-            } else if shared.ui.open_after_export {
+            } else {
                 #[cfg(not(target_arch = "wasm32"))]
                 if let Err(e) = open::that(_path + _ext) {
                     println!("{}", e);
@@ -958,7 +1041,6 @@ impl BackendRenderer {
 
         shared.ui.spritesheet_elapsed = None;
         shared.ui.modal = false;
-        shared.ui.sprite_size = shared.screenshot_res;
         *shared.ui.mapped_frames.lock().unwrap() = 0;
     }
 
@@ -1264,14 +1346,9 @@ impl BackendRenderer {
 
             capture_pass.set_pipeline(&self.scene.pipeline);
 
-            // core rendering logic handled in renderer.rs
-            renderer::render_screenshot(
-                &mut capture_pass,
-                &armature,
-                &camera,
-                renderer,
-                &self.gpu.queue,
-            );
+            // render armature with for screenshot purposes
+            let queue = &self.gpu.queue;
+            renderer::render_screenshot(&mut capture_pass, &armature, &camera, renderer, queue);
         }
 
         // pad screenshot width to a multiple of 256

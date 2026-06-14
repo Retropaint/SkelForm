@@ -1,6 +1,6 @@
 use egui::IntoAtoms;
 
-use crate::{shared, ui::EguiUi, Display};
+use crate::{shared, ui::EguiUi, Config, Display};
 
 pub fn draw(
     shared_ui: &mut crate::Ui,
@@ -21,8 +21,8 @@ pub fn draw(
         ..Default::default()
     });
     modal.show(ctx, |modal_ui| {
-        let window = shared::Vec2::new(camera.window.x / 3., camera.window.y / 3.);
-        modal_ui.set_width(window.x.min(500.));
+        let window = shared::Vec2::new(camera.window.x / 4., camera.window.y / 3.);
+        modal_ui.set_width(window.x.min(375.));
         modal_ui.set_height(window.y.min(500.));
 
         modal_ui.horizontal(|ui| {
@@ -40,10 +40,17 @@ pub fn draw(
                 ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                     let mut is_hovered = false;
 
-                    #[rustfmt::skip]
                     macro_rules! tab {
                         ($name:expr, $state:expr) => {
-                            settings_button($name, $state, ui, shared_ui, &config, width, &mut is_hovered)
+                            settings_button(
+                                $name,
+                                $state,
+                                ui,
+                                shared_ui,
+                                &config,
+                                width,
+                                &mut is_hovered,
+                            )
                         };
                     }
 
@@ -53,11 +60,13 @@ pub fn draw(
                     let str_edit = shared_ui.loc("settings_modal.editing.heading").clone();
                     let str_rendering = shared_ui.loc("settings_modal.rendering.heading").clone();
                     let str_keyboard = shared_ui.loc("settings_modal.keyboard.heading").clone();
+                    let str_colors = shared_ui.loc("settings_modal.colors.heading").clone();
                     let str_misc = shared_ui.loc(str_misc_raw).clone();
                     tab!(str_ui, shared::SettingsState::Ui);
                     tab!(str_edit, shared::SettingsState::Editing);
                     tab!(str_rendering, shared::SettingsState::Rendering);
                     tab!(str_keyboard, shared::SettingsState::Keyboard);
+                    tab!(str_colors, shared::SettingsState::Colors);
                     tab!(str_misc, shared::SettingsState::Misc);
 
                     if shared_ui.settings_state != shared::SettingsState::Rendering {
@@ -69,32 +78,48 @@ pub fn draw(
                     }
                 });
             });
-            egui::Frame::new().show(ui, |ui| {
-                ui.set_width(window.x.min(400.));
-                ui.set_height(window.y.min(475.));
-                egui::ScrollArea::vertical().show(ui, |ui| {
+
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                // add padding to the right, for the scrollbar
+                let frame = egui::Frame::new().outer_margin(egui::Margin {
+                    right: 13,
+                    ..Default::default()
+                });
+
+                frame.show(ui, |ui| {
+                    ui.set_width(window.x.min(375.));
+                    ui.set_height(window.y.min(475.));
                     let layout = egui::Layout::top_down(egui::Align::Min);
                     shared_ui.updated_config = config.clone();
+
+                    // show selected section
                     ui.with_layout(layout, |ui| match shared_ui.settings_state {
                         shared::SettingsState::Ui => user_interface(ui, shared_ui),
                         shared::SettingsState::Editing => editing(ui, shared_ui),
                         shared::SettingsState::Rendering => rendering(ui, shared_ui, camera),
                         shared::SettingsState::Keyboard => keyboard(ui, shared_ui),
+                        shared::SettingsState::Colors => colors(ui, shared_ui),
                         shared::SettingsState::Misc => misc(ui, shared_ui),
                     });
+
                     events.update_config();
                 });
             })
         });
-
+        modal_ui.add_space(5.);
         modal_ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.skf_button(shared_ui.loc("settings_modal.apply")).clicked() {
-                events.apply_settings();
+            // apply button
+            let str = shared_ui.loc("settings_modal.cancel");
+            if ui.skf_button(str).clicked() {
+                events.reset_config();
                 shared_ui.settings_modal = false;
                 shared_ui.translucent_settings = false;
             }
-            if ui.skf_button(shared_ui.loc("settings_modal.cancel")).clicked() {
-                events.reset_config();
+
+            // cancel button
+            let str = shared_ui.loc("settings_modal.apply");
+            if ui.skf_button(str).clicked() {
+                events.apply_settings();
                 shared_ui.settings_modal = false;
                 shared_ui.translucent_settings = false;
             }
@@ -152,9 +177,23 @@ pub fn settings_button(
 }
 
 fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
-    let str_general = &shared_ui.loc("settings_modal.user_interface.general");
-    ui.heading(str_general);
+    let str_general = &shared_ui.loc("settings_modal.user_interface.heading");
     ui.horizontal(|ui| {
+        ui.heading(str_general);
+
+        // default button
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let str_default = &shared_ui.loc("settings_modal.default");
+            if ui.skf_button(str_default).clicked() {
+                let config = &mut shared_ui.updated_config;
+                config.layout = shared::UiLayout::Split;
+                config.ui_scale = 1.;
+            }
+        });
+    });
+
+    ui.horizontal(|ui| {
+        // UI scale
         let str_ui_scale = &shared_ui.loc("settings_modal.user_interface.ui_scale");
         ui.label(str_ui_scale);
         let scale = shared_ui.updated_config.ui_scale;
@@ -163,6 +202,7 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
             shared_ui.updated_config.ui_scale = value;
         }
 
+        // UI slider (web only)
         #[cfg(target_arch = "wasm32")]
         {
             let str = shared_ui.loc("settings_modal.user_interface.ui_slider");
@@ -173,6 +213,7 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         }
     });
 
+    // Layout dropdown (Split, Left, Right)
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("settings_modal.user_interface.layout"));
         let combo_box = egui::ComboBox::new("layout", "")
@@ -188,49 +229,6 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         });
     });
 
-    ui.add_space(20.);
-
-    let mut alt_col = true;
-
-    macro_rules! color_row {
-        ($title:expr, $color:expr) => {
-            alt_col = !alt_col;
-            let col = &shared_ui.updated_config.colors;
-            let color = if alt_col { col.main } else { col.dark_accent };
-            let str_color = shared_ui
-                .loc(&format!("settings_modal.user_interface.colors.{}", $title))
-                .clone();
-            color_row(str_color, $color, color, ui, false);
-        };
-    }
-
-    ui.horizontal(|ui| {
-        let str_colors = &shared_ui.loc("settings_modal.user_interface.colors_heading");
-        ui.heading(str_colors);
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let str_default = &shared_ui.loc("settings_modal.default");
-            if ui.skf_button(str_default).clicked() {
-                shared_ui.updated_config.colors = crate::ColorConfig::default();
-            }
-        });
-    });
-
-    // iterable color config
-    #[rustfmt::skip]
-    {
-        color_row!("main",               &mut shared_ui.updated_config.colors.main              );
-        color_row!("light_accent",       &mut shared_ui.updated_config.colors.light_accent      );
-        color_row!("dark_accent",        &mut shared_ui.updated_config.colors.dark_accent       );
-        color_row!("text",               &mut shared_ui.updated_config.colors.text              );
-        color_row!("frameline",          &mut shared_ui.updated_config.colors.frameline         );
-        color_row!("gradient",           &mut shared_ui.updated_config.colors.gradient          );
-        color_row!("link",               &mut shared_ui.updated_config.colors.link              );
-        color_row!("warning_text",       &mut shared_ui.updated_config.colors.warning_text      );
-        color_row!("inverse_kinematics", &mut shared_ui.updated_config.colors.inverse_kinematics);
-        color_row!("meshdef",            &mut shared_ui.updated_config.colors.meshdef           );
-        color_row!("texture",            &mut shared_ui.updated_config.colors.texture           );
-        color_row!("ik_target",          &mut shared_ui.updated_config.colors.ik_target         );
-    };
     ui.add_space(20.);
 }
 
@@ -291,9 +289,6 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
 }
 
 fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camera) {
-    #[rustfmt::skip]
-    macro_rules! colors { () => { shared_ui.updated_config.colors } }
-
     ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.rendering.heading");
         ui.heading(str_heading);
@@ -309,12 +304,6 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
             }
             let str_default = &shared_ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
-                colors!().background = crate::Config::default().colors.background;
-                colors!().gridline = crate::Config::default().colors.gridline;
-                colors!().center_point = crate::Config::default().colors.center_point;
-                colors!().inactive_center_point =
-                    crate::Config::default().colors.inactive_center_point;
-                colors!().transform_rings = crate::Config::default().colors.transform_rings;
                 let config = &mut shared_ui.updated_config;
                 config.gridline_gap = crate::Config::default().gridline_gap;
                 config.pixel_magnification = crate::Config::default().pixel_magnification;
@@ -327,15 +316,6 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
     shared_ui.updated_config.gridline_gap = basic_input(gap_str, gap as f32, shared_ui, ui) as i32;
 
     ui.horizontal(|ui| {
-        let str_gridline_gap = &shared_ui.loc("settings_modal.rendering.gridline_front");
-        ui.label(str_gridline_gap);
-        ui.checkbox(
-            &mut shared_ui.updated_config.gridline_front,
-            "".into_atoms(),
-        );
-    });
-
-    ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.rendering.pixel_mag");
         ui.label(str_heading);
         let id = "pixelmag".to_string();
@@ -345,44 +325,37 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
             shared_ui.updated_config.pixel_magnification = (value as i32).max(1);
         }
         let window = camera.window / shared_ui.updated_config.pixel_magnification as f32;
-        ui.label(format!(
-            "= {}, {}",
-            window.x.to_string(),
-            window.y.to_string()
-        ));
+        ui.label(format!("= {}, {}", window.x, window.y));
+    });
+
+    ui.horizontal(|ui| {
+        let str_gridline_gap = &shared_ui.loc("settings_modal.rendering.gridline_front");
+        ui.label(str_gridline_gap);
+        let gridline_front = &mut shared_ui.updated_config.gridline_front;
+        ui.checkbox(gridline_front, "".into_atoms());
     });
 
     ui.add_space(7.);
-
-    let mut alt_col = true;
-    macro_rules! color_row {
-        ($title:expr, $color:expr, $alpha:expr) => {
-            alt_col = !alt_col;
-            let col = &shared_ui.updated_config.colors;
-            let bg_color = if alt_col { col.main } else { col.dark_accent };
-            let str_color = shared_ui
-                .loc(&format!("settings_modal.rendering.{}", $title))
-                .clone();
-            let mut col = $color.clone();
-            color_row(str_color, &mut col, bg_color, ui, $alpha);
-            $color = col;
-        };
-    }
-
-    ui.add_space(7.);
-
-    color_row!("background", colors!().background, false);
-    color_row!("gridline", colors!().gridline, false);
-    color_row!("center_point", colors!().center_point, true);
-    color_row!(
-        "inactive_center_point",
-        colors!().inactive_center_point,
-        true
-    );
-    color_row!("transform_rings", colors!().transform_rings, true);
 }
 
 fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
+    ui.horizontal(|ui| {
+        let str_heading = &shared_ui.loc("settings_modal.miscellaneous.heading");
+        ui.heading(str_heading);
+
+        // default button
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let str_default = &shared_ui.loc("settings_modal.default");
+            if ui.skf_button(str_default).clicked() {
+                let config = &mut shared_ui.updated_config;
+                config.autosave_frequency = Config::default().autosave_frequency;
+                config.exact_bone_select = Config::default().exact_bone_select;
+                config.keep_tex_str = Config::default().keep_tex_str;
+                config.skip_startup = Config::default().skip_startup;
+            }
+        });
+    });
+
     #[cfg(not(target_arch = "wasm32"))]
     ui.horizontal(|ui| {
         let str_autosave_freq = &shared_ui.loc("settings_modal.miscellaneous.autosave_frequency");
@@ -452,9 +425,13 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     //egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
     //ui.add_space(20.);
 
-    if ui.button("Intentionally Crash").clicked() {
-        panic!();
-    }
+    ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+        ui.horizontal(|ui| {
+            if ui.skf_button("Intentionally Crash").clicked() {
+                panic!();
+            }
+        })
+    });
 }
 
 fn color_row(
@@ -545,6 +522,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("paste",           keys.paste,           true);
         ui.add_space(10.);
         ui.heading("Editing");
+        alt_col = true;
         key!("transform_move",       keys.transform_move,       true);
         key!("transform_rotate",     keys.transform_rotate,     true);
         key!("transform_scale",      keys.transform_scale,      true);
@@ -556,6 +534,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("toggle_edit_vertices", keys.toggle_edit_vertices, true);
         ui.add_space(10.);
         ui.heading("Keyframe Editor");
+        alt_col = true;
         key!("next_anim_frame",    keys.next_anim_frame,    true);
         key!("prev_anim_frame",    keys.prev_anim_frame,    true);
         key!("next_keyframe",      keys.next_keyframe,      true);
@@ -566,6 +545,66 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     };
     ui.add_space(10.);
     shared_ui.updated_config.keys = keys.clone();
+}
+
+fn colors(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
+    // heading & default button
+    ui.horizontal(|ui| {
+        let str_colors = &shared_ui.loc("settings_modal.user_interface.colors_heading");
+        ui.heading(str_colors);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let str_default = &shared_ui.loc("settings_modal.default");
+            if ui.skf_button(str_default).clicked() {
+                shared_ui.updated_config.colors = crate::ColorConfig::default();
+            }
+        });
+    });
+
+    let mut alt_col = true;
+    macro_rules! color_row {
+        ($title:expr, $color:expr, $alpha:expr) => {
+            alt_col = !alt_col;
+            let col = &shared_ui.updated_config.colors;
+            let color = if alt_col { col.main } else { col.dark_accent };
+            let str_color = shared_ui
+                .loc(&format!("settings_modal.colors.{}", $title))
+                .clone();
+            color_row(str_color, $color, color, ui, $alpha);
+        };
+    }
+
+    macro_rules! colors {
+        () => {
+            shared_ui.updated_config.colors
+        };
+    }
+
+    // iterable color buttons
+    #[rustfmt::skip]
+    {
+        ui.heading(shared_ui.loc("settings_modal.user_interface.heading"));
+        color_row!("main",               &mut colors!().main,               false);
+        color_row!("light_accent",       &mut colors!().light_accent,       false);
+        color_row!("dark_accent",        &mut colors!().dark_accent,        false);
+        color_row!("text",               &mut colors!().text,               false);
+        color_row!("frameline",          &mut colors!().frameline,          false);
+        color_row!("gradient",           &mut colors!().gradient,           false);
+        color_row!("link",               &mut colors!().link,               false);
+        color_row!("warning_text",       &mut colors!().warning_text,       false);
+        color_row!("inverse_kinematics", &mut colors!().inverse_kinematics, false);
+        color_row!("meshdef",            &mut colors!().meshdef,            false);
+        color_row!("texture",            &mut colors!().texture,            false);
+        color_row!("ik_target",          &mut colors!().ik_target,          false);
+        ui.add_space(10.);
+        ui.heading(shared_ui.loc("settings_modal.rendering.heading"));
+        alt_col = true;
+        color_row!("background",            &mut colors!().background,            false);
+        color_row!("gridline",              &mut colors!().gridline,              false);
+        color_row!("center_point",          &mut colors!().center_point,          true);
+        color_row!("inactive_center_point", &mut colors!().inactive_center_point, true);
+        color_row!("transform_rings",       &mut colors!().transform_rings,       true);
+
+    };
 }
 
 fn key(

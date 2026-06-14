@@ -21,6 +21,7 @@ mod native {
     pub use std::{
         fs::OpenOptions,
         io::{Read, Write},
+        time::Instant,
     };
     pub use zip::ZipArchive;
 }
@@ -36,7 +37,16 @@ pub fn draw(
     armature: &Armature,
 ) {
     let mut pressed_export = false;
-    egui::Modal::new("export_modal".into()).show(ctx, |ui| {
+
+    let frame = egui::Frame {
+        corner_radius: 0.into(),
+        fill: config.colors.main.into(),
+        inner_margin: egui::Margin::same(5),
+        stroke: egui::Stroke::new(1., config.colors.light_accent),
+        ..Default::default()
+    };
+    let modal = egui::Modal::new("export_modal".into()).frame(frame);
+    modal.show(ctx, |ui| {
         ui.set_width(400.);
         ui.set_height(350.);
 
@@ -99,15 +109,34 @@ pub fn draw(
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                 ui.horizontal(|ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        // cancel button
+                        let str = &shared_ui.loc("settings_modal.cancel");
+                        if ui.skf_button(str).clicked() {
+                            shared_ui.export_modal = false;
+                        }
+
+                        // export button
                         let str = &shared_ui.loc("export_modal.save_button");
-                        //let pressed_enter = ui.input(|i| i.key_pressed(egui::Key::Enter));
                         if ui.skf_button(str).clicked() {
                             pressed_export = true;
                         }
-                        #[cfg(not(target_arch = "wasm32"))]
-                        if shared_ui.settings_state == SettingsState::Keyboard {
-                            ui.checkbox(&mut shared_ui.open_after_export, "".into_atoms());
-                            ui.label(shared_ui.loc("export_modal.video.open_after_export"));
+                    });
+                });
+
+                if shared_ui.warnings.len() == 0 {
+                    return;
+                }
+
+                // show warning note, if the armature has any
+                ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let warn_str = shared_ui.loc("export_modal.armature.warnings");
+                        let str = format!("{} {}", shared_ui.warnings.len(), warn_str);
+                        let text = egui::RichText::new(str).color(config.colors.warning_text);
+                        if ui.clickable_label(text).clicked() {
+                            shared_ui.flash_warn_timer = Some(Instant::now());
+                            shared_ui.export_modal = false;
+                            shared_ui.warnings_open = true;
                         }
                     });
                 });
@@ -169,6 +198,7 @@ pub fn armature_export(
     config: &Config,
 ) {
     ui.heading(shared_ui.loc("export_modal.armature.header"));
+
     ui.add_space(10.);
     let width = ui.available_width() - 20.;
     egui::Frame::new()

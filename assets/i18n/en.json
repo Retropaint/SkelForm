@@ -142,7 +142,8 @@
       "clear_color": "Clear Color ℹ:",
       "clear_color_desc": "The color that transparent pixels will be represented by",
       "inverse_kinematics": "Inverse Kinematics",
-      "tex_atlas": "Texture Atlas(es)"
+      "tex_atlas": "Texture Atlas(es)",
+      "warnings": "warning(s)"
     },
     "image": {
       "header": "Export Image",
@@ -199,8 +200,8 @@
     "global_zindex_inc": "⬆",
     "global_zindex_inc_desc": "Raise this z-index, as well as all z-indexes higher than this, by 1.\n\nUseful for fixing 'same z-index' warnings.",
     "bone_empty": "This bone currently has no texture and is an invisible point.\n\nTo add a texture to it, assign one via the Textures setup above.\n\nThis bone may be dragged in the Armature list, to change its order or to assign it as a child to another bone.",
-    "target_bone": "This is a target bone to ",
-    "group_color_desc": "Color used for this bone and it's children.\n\nSet alpha to 0 to use default color.",
+    "target_bone": "Target of: ",
+    "group_color_desc": "Color used to represent this bone and it's children.\n\nSet alpha to 0 to use default color.",
     "inverse_kinematics": {
       "heading": "Inverse Kinematics",
       "desc": "Automatically adjust and bend bones to reach a specified target.\nBest used for joints like shoulders and legs.\n\nAfter the joints have been set up, click the checkbox next to this header to activate IK.",
@@ -208,7 +209,7 @@
       "effector": "Effector: ",
       "effector_desc": "Create or assign a new family to this bone.\n\nIf this is the first bone in the hierarchy with the family index, it is the root bone.\nAssign the same index to other bones to form a proper IK family.",
       "constraint": "Constraint:",
-      "constraint_desc": "CC: Clockwise, all Middle effectors will move up/right (ie; legs)\n\nCCW: Counter-clockwise, all Middle effectors will move down/left (ie; shoulders)",
+      "constraint_desc": "CC: Clockwise, all middle bones of this family will move up/right (ie; legs)\n\nCCW: Counter-clockwise, all middle bones of this family will move down/left (ie; shoulders)",
       "target": "Target:",
       "set_target": "Set Target",
       "remove_target": "Remove Target",
@@ -217,7 +218,7 @@
       "cant_edit": "Transforms cannot be edited for IK child bones.\n\nTo adjust the distance between this bone and the previous, edit the Distance field in the IK section below.",
       "family_index": "Family Index:",
       "mode_label": "Mode:",
-      "go_to_root": "Go to root joint",
+      "root_bone": "Root: ",
       "distance": "Distance ℹ: ",
       "distance_desc": "Adjust the distance between this bone, and the previous one in the IK family."
     },
@@ -291,21 +292,7 @@
       "layout": "Layout:",
       "layout_split": "Split",
       "layout_right": "Right",
-      "layout_left": "Left",
-      "colors": {
-        "main": "Main",
-        "light_accent": "Light Accent",
-        "dark_accent": "Dark Accent",
-        "text": "Text",
-        "frameline": "Frameline",
-        "gradient": "Gradient",
-        "link": "Link",
-        "warning_text": "Warning Text",
-        "inverse_kinematics": "Inverse Kinematics Icon",
-        "meshdef": "Mesh Deformation Icon",
-        "texture": "Texture Icon",
-        "ik_target": "Inverse Kinematics Target Icon"
-      }
+      "layout_left": "Left"
     },
     "editing": {
       "heading": "Editing",
@@ -323,12 +310,7 @@
       "gridline_gap": "Gridline gap (pixels): ",
       "pixel_mag": "Pixel Magnification: ",
       "translucent_desc": "Makes this box translucent to preview rendering changes",
-      "background": "Background",
-      "gridline": "Gridline",
-      "center_point": "Center Point",
-      "inactive_center_point": "Inactive Center Point",
-      "gridline_front": "Render gridline in front: ",
-      "transform_rings": "Transform Rings"
+      "gridline_front": "Render gridline in front: "
     },
     "keyboard": {
       "heading": "Keyboard",
@@ -363,6 +345,26 @@
       "toggle_bone_fold": "Toggle Bone Fold",
       "toggle_edit_vertices": "Toggle Editing Vertices"
     },
+    "colors": {
+      "heading": "Colors",
+      "main": "Main",
+      "light_accent": "Light Accent",
+      "dark_accent": "Dark Accent",
+      "text": "Text",
+      "frameline": "Frameline",
+      "gradient": "Gradient",
+      "link": "Link",
+      "warning_text": "Warning Text",
+      "inverse_kinematics": "Inverse Kinematics Icon",
+      "meshdef": "Mesh Deformation Icon",
+      "texture": "Texture Icon",
+      "ik_target": "Inverse Kinematics Target Icon",
+      "background": "Background",
+      "gridline": "Gridline",
+      "center_point": "Center Point",
+      "inactive_center_point": "Inactive Center Point",
+      "transform_rings": "Transform Rings"
+    },
     "miscellaneous": {
       "heading": "Miscellaneous",
       "autosave_frequency": "Autosave frequency (seconds):",
@@ -381,14 +383,15 @@
     "new_animation": "New Animation",
     "play": "Play",
     "pause": "Pause",
-    "frame": "Frame: ",
-    "fps": "FPS: ",
+    "frame": "Frame:",
+    "fps": "FPS:",
     "frames_per_second": "Frames Per Second",
     "invalid_fps": "Some keyframes will be lost.\n\nPotential fixes:\n- Spread out keyframes\n- Incrementally change FPS",
     "copy": "Copy",
     "paste": "Paste",
     "duplicate": "Duplicate",
     "onion_desc": "Toggle onion layers",
+    "zoom_kb_tip": "\nTip - hold $kb to zoom in/out by scrolling",
     "elements": {
       "PositionX": "Position X",
       "PositionY": "Position Y",
@@ -403,7 +406,8 @@
       "TintG": "Green Tint",
       "TintB": "Blue Tint",
       "TintA": "Alpha Tint",
-      "IkMode": "IK Mode"
+      "IkMode": "IK Mode",
+      "MimicTarget": "Mimic Target"
     }
   },
   "keyframe_panel": {
@@ -417,7 +421,8 @@
       "SineIn": "Sine-In",
       "SineOut": "Sine-Out",
       "SineInOut": "Sine-In-Out",
-      "Snap": "Snap"
+      "Snap": "Snap",
+      "Custom": "Custom"
     }
   },
   "polar": {

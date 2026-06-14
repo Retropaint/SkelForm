@@ -55,6 +55,7 @@
             }
 
             .modal {
+                visibility: hidden;
                 position: absolute;
                 width: 100%;
                 height: 100%;
@@ -82,6 +83,7 @@
             }
 
             .ui-slider {
+                visibility: hidden;
                 .box {
                     color: #d6d6d6;
                     background: var(--color-main);
@@ -413,15 +415,17 @@
                     new Blob([binary], { type: "zip" }),
                 );
                 var ext = ".skf";
+                var name = "skelform_armature";
                 switch (saving) {
                     case "Exporting":
                         ext = ".skfe";
                         break;
                     case "Spritesheet":
                         ext = ".zip";
+                        name = "skelform_spritesheet";
                 }
                 link.setAttribute("test", "sk_a");
-                link.setAttribute("download", "SkelForm_armature" + ext);
+                link.setAttribute("download", name + ext);
                 link.click();
                 link.remove();
             }
