@@ -1064,6 +1064,41 @@ pub struct Visuals {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 #[serde(default)]
+pub struct Physics {
+    #[serde(skip_serializing_if = "is_vec2_max")]
+    pub global_pos: Vec2,
+    #[serde(skip_serializing_if = "is_max")]
+    pub global_rot: f32,
+    #[serde(skip_serializing_if = "is_vec2_max")]
+    pub global_scale: Vec2,
+
+    #[serde(skip_serializing_if = "is_max")]
+    pub pos_damping: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub scale_damping: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub rot_damping: f32,
+
+    #[serde(skip_serializing_if = "is_max")]
+    pub pos_ratio: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub scale_ratio: f32,
+
+    #[serde(skip_serializing_if = "is_max")]
+    pub global_orbit: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub global_orbit_diff: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub global_orbit_vel: f32,
+
+    #[serde(skip_serializing_if = "is_max")]
+    pub sway: f32,
+    #[serde(skip_serializing_if = "is_max")]
+    pub rot_bounce: f32,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
+#[serde(default)]
 pub struct Bone {
     pub id: i32,
     pub name: String,
@@ -1080,8 +1115,6 @@ pub struct Bone {
     #[serde(skip_serializing_if = "is_false")]
     pub hidden: bool,
 
-    #[serde(default = "default_neg_one")]
-    pub ik_family_id: i32,
     #[serde(skip)]
     pub ik_constraint: JointConstraint,
     #[serde(skip)]
@@ -1093,36 +1126,33 @@ pub struct Bone {
     #[serde(skip)]
     pub ik_mimic_target: bool,
 
-    #[serde(skip_serializing_if = "is_false")]
-    pub has_physics: bool,
-
-    #[serde(skip_serializing_if = "is_vec2_max")]
+    #[serde(skip)]
     pub phys_global_pos: Vec2,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_pos_damping: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_pos_ratio: f32,
 
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_global_rot: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_global_orbit: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_global_orbit_diff: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_global_orbit_vel: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_rot_damping: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_sway: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_rot_bounce: f32,
 
-    #[serde(skip_serializing_if = "is_vec2_max")]
+    #[serde(skip)]
     pub phys_global_scale: Vec2,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_scale_damping: f32,
-    #[serde(skip_serializing_if = "is_max")]
+    #[serde(skip)]
     pub phys_scale_ratio: f32,
 
     // todo:
@@ -1131,14 +1161,14 @@ pub struct Bone {
     #[serde(skip_deserializing)]
     pub init_pos: Vec2,
     #[serde(skip_deserializing)]
-    pub init_scale: Vec2,
-    #[serde(skip_deserializing)]
     pub init_rot: f32,
+    #[serde(skip_deserializing)]
+    pub init_scale: Vec2,
     #[serde(skip_serializing_if = "is_false", skip_deserializing)]
     pub init_hidden: bool,
-    #[serde(skip_serializing_if = "is_neg_one")]
-    pub init_zindex: i32,
 
+    #[serde(default = "default_neg_one")]
+    pub ik_family_id: i32,
     #[serde(default = "default_neg_one")]
     pub physics_id: i32,
     #[serde(default = "default_neg_one")]
@@ -1715,8 +1745,9 @@ pub struct Root {
     pub animations: Vec<Animation>,
     pub atlases: Vec<TexAtlas>,
     pub styles: Vec<Style>,
-    pub inverse_kinematics: Vec<InverseKinematics>,
     pub visuals: Vec<Visuals>,
+    pub inverse_kinematics: Vec<InverseKinematics>,
+    pub physics: Vec<Physics>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]

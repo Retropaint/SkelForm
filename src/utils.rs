@@ -766,17 +766,20 @@ pub fn prepare_files(
         }
     }
 
+    let mut physics: Vec<Physics> = vec![];
+
     // remove physics fields if not relevant
     for b in 0..armature_copy.bones.len() {
-        let bone_id = armature_copy.bones[b].id;
-        armature_copy.bones[b].has_physics = armature_copy.has_physics(bone_id);
         let bone = &mut armature_copy.bones[b];
+        let mut phys_score = 3;
         if bone.phys_pos_damping == 0. {
+            phys_score -= 1;
             bone.phys_pos_damping = f32::MAX;
             bone.phys_pos_ratio = f32::MAX;
             bone.phys_global_pos = Vec2::new(f32::MAX, f32::MAX);
         }
         if bone.phys_sway == 0. && bone.phys_rot_damping == 0. {
+            phys_score -= 1;
             bone.phys_global_rot = f32::MAX;
             bone.phys_sway = f32::MAX;
             bone.phys_rot_damping = f32::MAX;
@@ -786,10 +789,33 @@ pub fn prepare_files(
             bone.phys_global_orbit_vel = f32::MAX;
         }
         if bone.phys_scale_damping == 0. {
+            phys_score -= 1;
             bone.phys_scale_damping = f32::MAX;
             bone.phys_scale_ratio = f32::MAX;
             bone.phys_global_scale = Vec2::new(f32::MAX, f32::MAX);
         }
+        if phys_score > 0 {
+            physics.push(Physics {
+                global_pos: bone.phys_global_pos,
+                pos_damping: bone.phys_pos_damping,
+                pos_ratio: bone.phys_pos_ratio,
+                global_rot: bone.phys_global_rot,
+                global_orbit: bone.phys_global_orbit,
+                global_orbit_diff: bone.phys_global_orbit_diff,
+                global_orbit_vel: bone.phys_global_orbit_vel,
+                rot_damping: bone.phys_rot_damping,
+                sway: bone.phys_sway,
+                rot_bounce: bone.phys_rot_bounce,
+                global_scale: bone.phys_global_scale,
+                scale_damping: bone.phys_scale_damping,
+                scale_ratio: bone.phys_scale_ratio,
+            });
+        }
+        bone.physics_id = if phys_score == 0 {
+            -1
+        } else {
+            physics.len() as i32 - 1
+        };
     }
 
     let mut atlases = vec![];
@@ -914,8 +940,9 @@ pub fn prepare_files(
         animations: armature_copy.animations,
         styles: armature_copy.styles,
         atlases,
-        inverse_kinematics,
         visuals,
+        inverse_kinematics,
+        physics,
     };
     let armatures_json = serde_json::to_string(&root).unwrap();
 
@@ -983,11 +1010,33 @@ pub fn import<R: Read + std::io::Seek>(
         bone.binds = visuals.binds.clone();
     }
 
+    // populate physics data
+    for b in 0..temp_arm.bones.len() {
+        if temp_arm.bones[b].physics_id == -1 {
+            continue;
+        }
+        let bone = &mut temp_arm.bones[b];
+        let physics = &root.physics[bone.physics_id as usize];
+        bone.phys_global_pos = physics.global_pos;
+        bone.phys_pos_damping = physics.pos_damping;
+        bone.phys_pos_ratio = physics.pos_ratio;
+        bone.phys_global_rot = physics.global_rot;
+        bone.phys_global_orbit = physics.global_orbit;
+        bone.phys_global_orbit_diff = physics.global_orbit_diff;
+        bone.phys_global_orbit_vel = physics.global_orbit_vel;
+        bone.phys_rot_damping = physics.rot_damping;
+        bone.phys_sway = physics.sway;
+        bone.phys_rot_bounce = physics.rot_bounce;
+        bone.phys_global_scale = physics.global_scale;
+        bone.phys_scale_damping = physics.scale_damping;
+        bone.phys_scale_ratio = physics.scale_ratio;
+    }
+
+    // set verts_edited for mesh bones
     for bone in &mut temp_arm.bones {
         for (i, vert) in bone.vertices.iter_mut().enumerate() {
             vert.id = i as u32;
         }
-
         bone.verts_edited = bone.vertices.len() > 0;
     }
 
