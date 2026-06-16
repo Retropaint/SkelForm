@@ -1933,6 +1933,11 @@ pub fn copy_bone(
 ) {
     copy_buffer.bones = vec![];
 
+    // ignore copying if there isn't a target bone 
+    if bone_idx == usize::MAX {
+        return;
+    }
+
     // either get the bone ID from event, or selected bones if more than 1
     let mut bones_to_copy = vec![armature.bones[bone_idx].id];
     if selections.bone_ids.len() > 1 {
