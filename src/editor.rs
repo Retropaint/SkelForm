@@ -1933,7 +1933,7 @@ pub fn copy_bone(
 ) {
     copy_buffer.bones = vec![];
 
-    // ignore copying if there isn't a target bone 
+    // ignore copying if there isn't a target bone
     if bone_idx == usize::MAX {
         return;
     }
