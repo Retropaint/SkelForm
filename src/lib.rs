@@ -290,7 +290,7 @@ impl ApplicationHandler for App {
                 }
             }
             WindowEvent::CloseRequested => {
-                utils::exit(
+                utils::attempt_exit(
                     &mut self.shared.undo_states,
                     &self.shared.config,
                     &mut self.shared.ui,
@@ -469,7 +469,7 @@ impl ApplicationHandler for App {
             let pressing_q = event.id() == self.shared.input.mod_q.unwrap().id();
             if (pressing_w || pressing_q) && self.shared.ui.can_quit {
                 let shared = &mut self.shared;
-                utils::exit(&mut shared.undo_states, &shared.config, &mut shared.ui);
+                utils::attempt_exit(&mut shared.undo_states, &shared.config, &mut shared.ui);
             }
         }
 
@@ -486,7 +486,7 @@ impl ApplicationHandler for App {
             self.shared.ui.exiting = false;
         }
 
-        // exit has been confirmed - execute and obliterate SkelForm
+        // exit has been confirmed - eviscerate and obliterate SkelForm
         if self.shared.ui.confirmed_exit {
             if self.shared.ui.never_donate {
                 self.shared.config.ignore_donate = true;

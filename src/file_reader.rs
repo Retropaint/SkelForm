@@ -236,11 +236,12 @@ pub fn read_psd(
 
     // add Default style, if it doesn't already exist
     let styles = &shared.psd_armature.styles;
-    if styles.iter().find(|s| s.name == "Default") == None {
+    let str_default = shared.ui.loc("settings_modal.default");
+    if styles.iter().find(|s| s.name == str_default) == None {
         let ids = shared.psd_armature.styles.iter().map(|s| s.id).collect();
         shared.psd_armature.styles.push(Style {
             id: generate_id(ids),
-            name: "Default".to_string(),
+            name: str_default.clone(),
             textures: vec![],
             active: true,
         });
@@ -308,7 +309,8 @@ pub fn read_psd(
 
         if tex_idx == usize::MAX {
             let styles = &shared.psd_armature.styles;
-            let mut style_id = styles.iter().find(|s| s.name == "Default").unwrap().id;
+            let str_default = str_default.clone();
+            let mut style_id = styles.iter().find(|s| s.name == str_default).unwrap().id;
             let mut tex_name = group.name();
 
             if group.name().contains("$\"") {
@@ -355,7 +357,8 @@ pub fn read_psd(
             add_texture(img, style_id, dims, tex_name, arm, queue, device, bgl, ctx);
 
             let styles = &shared.psd_armature.styles;
-            let default_style = &styles.iter().find(|s| s.name == "Default").unwrap();
+            let str_default = str_default.clone();
+            let default_style = &styles.iter().find(|s| s.name == str_default).unwrap();
             tex_idx = default_style.textures.len() - 1;
         }
 
@@ -390,7 +393,8 @@ pub fn read_psd(
         }
 
         let styles = &shared.psd_armature.styles;
-        let default_style = &styles.iter().find(|s| s.name == "Default").unwrap();
+        let str_default = str_default.clone();
+        let default_style = &styles.iter().find(|s| s.name == str_default).unwrap();
         let tex_name = default_style.textures[tex_idx].name.clone();
         let bone = shared.psd_armature.find_bone_mut(new_bone_id).unwrap();
         bone.parent_id = 0;

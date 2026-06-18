@@ -214,14 +214,19 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     });
 
     // Layout dropdown (Split, Left, Right)
+    let str_split = shared_ui.loc("settings_modal.user_interface.layout_split");
+    let str_left = shared_ui.loc("settings_modal.user_interface.layout_left");
+    let str_right = shared_ui.loc("settings_modal.user_interface.layout_right");
+    let used_str = match shared_ui.updated_config.layout {
+        shared::UiLayout::Split => str_split.clone(),
+        shared::UiLayout::Right => str_right.clone(),
+        shared::UiLayout::Left => str_left.clone(),
+    };
+
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("settings_modal.user_interface.layout"));
-        let combo_box = egui::ComboBox::new("layout", "")
-            .selected_text(shared_ui.updated_config.layout.to_string());
+        let combo_box = egui::ComboBox::new("layout", "").selected_text(used_str);
         combo_box.show_ui(ui, |ui| {
-            let str_split = shared_ui.loc("settings_modal.user_interface.layout_split");
-            let str_left = shared_ui.loc("settings_modal.user_interface.layout_left");
-            let str_right = shared_ui.loc("settings_modal.user_interface.layout_right");
             let config = &mut shared_ui.updated_config.layout;
             ui.selectable_value(config, shared::UiLayout::Split, str_split);
             ui.selectable_value(config, shared::UiLayout::Right, str_right);
@@ -506,7 +511,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     // iterable key config
     #[rustfmt::skip]
     {
-        ui.heading("General");
+        ui.heading(shared_ui.loc("settings_modal.keyboard.sections.general"));
         key!("zoom_camera_in",  keys.zoom_in_camera,  true);
         key!("zoom_camera_out", keys.zoom_out_camera, true);
         key!("undo",            keys.undo,            true);
@@ -521,7 +526,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("copy",            keys.copy,            true);
         key!("paste",           keys.paste,           true);
         ui.add_space(10.);
-        ui.heading("Editing");
+        ui.heading(shared_ui.loc("settings_modal.keyboard.sections.editing"));
         alt_col = true;
         key!("transform_move",       keys.transform_move,       true);
         key!("transform_rotate",     keys.transform_rotate,     true);
@@ -533,7 +538,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("toggle_bone_fold",     keys.toggle_bone_fold,     true);
         key!("toggle_edit_vertices", keys.toggle_edit_vertices, true);
         ui.add_space(10.);
-        ui.heading("Keyframe Editor");
+        ui.heading(shared_ui.loc("settings_modal.keyboard.sections.keyframe_editor"));
         alt_col = true;
         key!("next_anim_frame",    keys.next_anim_frame,    true);
         key!("prev_anim_frame",    keys.prev_anim_frame,    true);

@@ -99,6 +99,7 @@
   },
   "styles_modal": {
     "heading": "Styles ℹ",
+    "default": "Default",
     "heading_desc": "Styles allow hotswapping of textures to create multiple outfits/skins.\n\nThe first active style containing the bone's texture name will be used.",
     "texture_preview": "Texture Preview",
     "style_preview": "Style Preview",
@@ -276,7 +277,8 @@
       "parent_has_physics_desc": "To accurately simulate wind/air resistance, bones should only be distanced horizontally to their parent."
     },
     "texture_effects": {
-      "heading": "Texture & Visuals"
+      "heading": "Texture & Visuals",
+      "tint": "Tint: "
     }
   },
   "settings_modal": {
@@ -343,7 +345,12 @@
       "next_bone": "Next Bone",
       "prev_bone": "Previous Bone",
       "toggle_bone_fold": "Toggle Bone Fold",
-      "toggle_edit_vertices": "Toggle Editing Vertices"
+      "toggle_edit_vertices": "Toggle Editing Vertices",
+      "sections": {
+        "general": "General",
+        "editing": "Editing",
+        "keyframe_editor": "Keyframe Editor"
+      }
     },
     "colors": {
       "heading": "Colors",

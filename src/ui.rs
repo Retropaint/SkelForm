@@ -2192,12 +2192,14 @@ pub fn keyboard_shortcut(ui: &mut egui::Ui, label: String, key: egui::KeyboardSh
 pub fn empty_armature_starters(shared_ui: &mut crate::Ui, config: &Config, ui: &mut egui::Ui) {
     ui.label(shared_ui.loc("armature_panel.empty_armature"));
     ui.add_space(5.);
-    let str = egui::RichText::new("User Documentation").color(config.colors.link);
+    let str_user_docs = shared_ui.loc("startup.resources.user_docs");
+    let str = egui::RichText::new(str_user_docs).color(config.colors.link);
     if ui.clickable_label(str).clicked() {
         utils::open_docs(false, "index.html");
     }
     ui.add_space(5.);
-    let str = egui::RichText::new("Starter Guide").color(config.colors.link);
+    let str_guide = shared_ui.loc("startup.resources.starter_guide");
+    let str = egui::RichText::new(str_guide).color(config.colors.link);
     if ui.clickable_label(str).clicked() {
         utils::open_docs(false, "starter-guide/main.html");
     }

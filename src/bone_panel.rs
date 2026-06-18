@@ -1116,6 +1116,7 @@ pub fn texture_effects(
     } else {
         shared_ui.loc("none")
     };
+    let str_setup = shared_ui.loc("setup_option");
     ui.horizontal(|ui| {
         ui.label(&shared_ui.loc("bone_panel.texture"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -1136,20 +1137,20 @@ pub fn texture_effects(
                 texes.sort_unstable();
                 texes.dedup();
 
-                let none = ui.selectable_value(&mut selected_tex, "".to_string(), "[None]");
+                let str_none = shared_ui.loc("none_option");
+                let none = ui.selectable_value(&mut selected_tex, "".to_string(), str_none);
                 changed |= none.clicked();
                 for tex in texes {
                     let name = utils::trunc_str(ui, &tex.clone(), ui.min_rect().width());
                     let button = ui.selectable_value(&mut selected_tex, tex.clone(), &name);
                     changed |= button.clicked();
                 }
-                let setup =
-                    ui.selectable_value(&mut selected_tex, "[Setup]".to_string(), "[Setup]");
+                let setup = ui.selectable_value(&mut selected_tex, str_setup.clone(), &str_setup);
                 changed |= setup.clicked();
             });
         });
     });
-    if selected_tex == "[Setup]" {
+    if selected_tex == str_setup {
         shared_ui.styles_modal = true;
     } else if changed {
         events.save_edited_bone(selections.bone_idx);
@@ -1195,7 +1196,7 @@ pub fn texture_effects(
     });
 
     ui.horizontal(|ui| {
-        ui.label("Tint: ");
+        ui.label(shared_ui.loc("bone_panel.texture_effects.tint"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let og_col: [f32; 4] = [bone.tint.r, bone.tint.g, bone.tint.b, bone.tint.a];
             let mut col = og_col.clone();

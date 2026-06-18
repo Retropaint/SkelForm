@@ -90,7 +90,8 @@ pub fn draw(
                                 events.toggle_style_active(s, !armature.styles[s].active);
                             }
                         }
-                        let label = ui.selectable_value(&mut -1, -2, "[Setup]");
+                        let str_setup = shared_ui.loc("setup_option");
+                        let label = ui.selectable_value(&mut -1, -2, str_setup);
                         if label.clicked() {
                             shared_ui.styles_modal = true;
                             ui.close();

@@ -1491,7 +1491,7 @@ pub fn trunc_str(ui: &egui::Ui, text: &str, max_width: f32) -> String {
     ctext
 }
 
-pub fn exit(undo_states: &mut UndoStates, config: &Config, ui: &mut Ui) {
+pub fn attempt_exit(undo_states: &mut UndoStates, config: &Config, ui: &mut Ui) {
     if undo_states.undo_actions.len() == 0 && !config.ignore_donate {
         ui.donating_modal = true;
     } else if !ui.donating_modal {
