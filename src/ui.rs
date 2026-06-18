@@ -668,7 +668,7 @@ pub fn kb_inputs(
         events.cam_zoom_out();
     }
 
-    if input.consume_shortcut(&config.keys.delete) {
+    if !shared_ui.startup_window && input.consume_shortcut(&config.keys.delete) {
         let last = shared_ui.last_selected.as_str();
         // delete selected bone(s)
         if last == "bone" {

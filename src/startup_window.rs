@@ -323,23 +323,26 @@ fn right(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, conf: &Config) {
                     }
 
                     if item.language {
+                        // language dropdown
                         let str_lang = shared_ui.loc("startup.resources.language");
                         let str_import = shared_ui.loc("startup.import");
                         let mut language = shared_ui.language.clone();
-                        egui::ComboBox::new("language", "")
-                            .selected_text(egui::RichText::new(str_lang).size(header_size))
-                            .show_ui(ui, |ui| {
-                                for item in &item.items {
-                                    let filename = item.url.to_string();
-                                    ui.selectable_value(&mut language, filename, &item.code);
-                                }
-                                ui.selectable_value(
-                                    &mut language,
-                                    str_import.clone(),
-                                    str_import.clone(),
-                                );
-                            });
+                        let combo_box = egui::ComboBox::new("language", "")
+                            .selected_text(egui::RichText::new(str_lang).size(header_size));
+                        combo_box.show_ui(ui, |ui| {
+                            for item in &item.items {
+                                let filename = item.url.to_string();
+                                ui.selectable_value(&mut language, filename, &item.code);
+                            }
+                            ui.selectable_value(
+                                &mut language,
+                                str_import.clone(),
+                                str_import.clone(),
+                            );
+                        });
+
                         if language != shared_ui.language && language != str_import {
+                            // change language
                             #[cfg(not(target_arch = "wasm32"))]
                             {
                                 let assets = utils::bin_path().join("assets");
@@ -354,6 +357,7 @@ fn right(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, conf: &Config) {
                                 shared_ui.language = language;
                             }
                         } else if language == str_import {
+                            // open language modal if selecting 'Import'
                             shared_ui.lang_import_modal = true;
                         }
                     }

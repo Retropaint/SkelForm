@@ -250,7 +250,13 @@ pub fn lang_import_modal(
         "lang_import".to_string(),
         config,
         |ui| {
-            egui::TextEdit::multiline(&mut input).show(ui);
+            // language multi-line input field
+            let scroll_area = egui::ScrollArea::vertical().max_height(100.);
+            scroll_area.show(ui, |ui| {
+                egui::TextEdit::multiline(&mut input)
+                    .clip_text(true)
+                    .show(ui);
+            });
             ui.label(str_lang_import);
         },
         |ui| {
