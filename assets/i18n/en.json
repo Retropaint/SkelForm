@@ -423,6 +423,7 @@
     "snap_note": "With this preset, values will snap between keyframes instead of interpolating.\n\nTo re-enable the graph, change the preset above.",
     "start": "Start:",
     "end": "End:",
+    "header": "Keyframe",
     "presets": {
       "Linear": "Linear",
       "SineIn": "Sine-In",

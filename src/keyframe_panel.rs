@@ -15,7 +15,8 @@ pub fn draw(
     shared_ui: &mut crate::Ui,
     config: &Config,
 ) {
-    ui.heading(format!("Keyframe ({})", selections.anim_frame.to_string()));
+    let str_header = shared_ui.loc("keyframe_panel.header");
+    ui.heading(format!("{} ({})", str_header, selections.anim_frame));
     let sel = selections.clone();
 
     #[allow(unreachable_code)]
