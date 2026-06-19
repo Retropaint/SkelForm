@@ -3,6 +3,7 @@
 
 use std::sync::Mutex;
 
+use egui::TextureHandle;
 use wgpu::*;
 
 use crate::*;
@@ -125,16 +126,16 @@ pub fn read_image_loaders(
 
     for i in 0..images.len() {
         // trim transparent padding
-        let image: image::DynamicImage = trim_transparent(&images[i]).into();
-        let dims = Vec2::new(image.width() as f32, image.height() as f32);
+        //let image: image::DynamicImage = trim_transparent(&images[i]).into();
+        let dims = Vec2::new(images[i].width() as f32, images[i].height() as f32);
 
-        if image.clone().into_rgba8().to_vec().len() == 0 {
+        if images[i].clone().into_rgba8().to_vec().len() == 0 {
             shared.events.open_modal("img_err", false);
             return;
         }
 
         #[rustfmt::skip]
-        add_texture(image, shared.selections.style_id, dims, &names[i], &mut shared.armature, queue, device, bind_group_layout, ctx);
+        add_texture(images[i].clone(), shared.selections.style_id, dims, &names[i], &mut shared.armature, queue, device, bind_group_layout, ctx);
     }
 
     *shared.ui.file_path.lock().unwrap() = vec![];
@@ -571,19 +572,14 @@ pub fn read_psd(
 
     shared.ui.startup_window = false;
 }
-
-/// add texture to style, including it's bind group and UI image.
-pub fn add_texture(
-    image: image::DynamicImage,
-    style_id: i32,
+pub fn create_texture(
+    image: &image::DynamicImage,
     dimensions: Vec2,
-    tex_name: &str,
-    armature: &mut Armature,
     queue: Option<&Queue>,
     device: Option<&Device>,
     bind_group_layout: Option<&BindGroupLayout>,
     ctx: Option<&egui::Context>,
-) {
+) -> (Option<BindGroup>, Option<TextureHandle>) {
     let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
         dimensions.x as u32,
         dimensions.y as u32,
@@ -608,9 +604,27 @@ pub fn add_texture(
             &ctx.unwrap(),
             img_buf,
             Vec2::new(300., 300.),
-            tex_name,
+            &format!("{}_{}", dimensions.x, dimensions.y),
         ));
     }
+
+    (bind_group, ui_img)
+}
+
+/// add texture to style, including it's bind group and UI image.
+pub fn add_texture(
+    image: image::DynamicImage,
+    style_id: i32,
+    dimensions: Vec2,
+    tex_name: &str,
+    armature: &mut Armature,
+    queue: Option<&Queue>,
+    device: Option<&Device>,
+    bind_group_layout: Option<&BindGroupLayout>,
+    ctx: Option<&egui::Context>,
+) {
+    let (bind_group, ui_img) =
+        create_texture(&image, dimensions, queue, device, bind_group_layout, ctx);
 
     let ids = armature.tex_data.iter().map(|td| td.id).collect();
     let id = generate_id(ids);

@@ -47,7 +47,10 @@ pub fn iterate_events(
             };
     }
 
-    if event == Events::SetExportTexPadding {
+    if event == Events::TrimTexture {
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::SetExportTexPadding {
         edit_mode.export_tex_padding = Vec2::new(events.values[0], events.values[1]);
         events.events.remove(0);
         events.values.drain(0..=1);

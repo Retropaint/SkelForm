@@ -2385,6 +2385,7 @@ pub enum Events {
     MoveSelectedKeyframes,
     GlobalCopy,
     GlobalPaste,
+    TrimTexture,
 }
 
 enum_string!(Events);
@@ -2723,6 +2724,12 @@ impl EventState {
         self.events.push(Events::SetExportTexPadding);
         self.values.push(padding.x);
         self.values.push(padding.y);
+    }
+
+    pub fn trim_texture(&mut self, style_idx: usize, tex_idx: usize) {
+        self.events.push(Events::TrimTexture);
+        self.values.push(style_idx as f32);
+        self.values.push(tex_idx as f32);
     }
 }
 

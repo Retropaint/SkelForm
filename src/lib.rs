@@ -430,28 +430,36 @@ impl ApplicationHandler for App {
                     self.shared.selections.hovering_bone_id = -1;
                 }
 
-                // create empty texture if the appropriate event is called.
-                // this is separate from other event processing, since it requires wgpu stuff
-                for event in &self.shared.events.events {
-                    if *event != Events::CreateEmptyTexture {
-                        continue;
-                    }
-                    file_reader::add_texture(
-                        image::DynamicImage::new(1, 1, image::ColorType::Rgba8),
-                        self.shared.selections.style_id,
-                        Vec2::new(1., 1.),
-                        "",
-                        &mut self.shared.armature,
-                        Some(&self.renderer.as_ref().unwrap().gpu.queue),
-                        Some(&self.renderer.as_ref().unwrap().gpu.device),
-                        Some(&self.renderer.as_ref().unwrap().bind_group_layout),
-                        Some(&gui_state.egui_ctx()),
-                    );
-                    break;
-                }
-
                 // iterate and process all events for this frame
                 while self.shared.events.events.len() > 0 {
+                    // these events are processed here due to using WGPU features
+                    let queue = Some(&self.renderer.as_ref().unwrap().gpu.queue);
+                    let device = Some(&self.renderer.as_ref().unwrap().gpu.device);
+                    let bgl = Some(&self.renderer.as_ref().unwrap().bind_group_layout);
+                    let ctx = Some(gui_state.egui_ctx());
+                    if self.shared.events.events[0] == Events::CreateEmptyTexture {
+                        let img = image::DynamicImage::new(1, 1, image::ColorType::Rgba8);
+                        let style_id = self.shared.selections.style_id;
+                        let armature = &mut self.shared.armature;
+                        let dims = Vec2::new(1., 1.);
+                        file_reader::add_texture(
+                            img, style_id, dims, "", armature, queue, device, bgl, ctx,
+                        );
+                    } else if self.shared.events.events[0] == Events::TrimTexture {
+                        let s = self.shared.events.values[0] as usize;
+                        let t = self.shared.events.values[1] as usize;
+                        let data_id = self.shared.armature.styles[s].textures[t].data_id;
+                        let tex_data = &mut self.shared.armature.tex_data[data_id as usize];
+                        let img = file_reader::trim_transparent(&tex_data.image);
+                        let dims = Vec2::new(img.dimensions().0 as f32, img.dimensions().1 as f32);
+                        let (bind_group, ui_img) =
+                            file_reader::create_texture(&img, dims, queue, device, bgl, ctx);
+                        tex_data.image = img;
+                        tex_data.bind_group = bind_group;
+                        tex_data.ui_img = ui_img;
+                    }
+
+                    // all other events go here
                     let s = &mut self.shared;
                     #[rustfmt::skip]
                     editor::iterate_events(

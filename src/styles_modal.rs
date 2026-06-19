@@ -304,32 +304,32 @@ pub fn draw_textures_list(
 
             // dropdown for new texture types
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                egui::ComboBox::new("new_tex", "")
+                let combo_box = egui::ComboBox::new("new_tex", "")
                     .selected_text(shared_ui.loc("new"))
-                    .width(40.)
-                    .show_ui(ui, |ui| {
-                        let mut selected = -1;
-                        ui.selectable_value(&mut selected, 0, shared_ui.loc("styles_modal.import"));
-                        ui.selectable_value(&mut selected, 1, shared_ui.loc("styles_modal.empty"));
-                        if selected == 0 {
-                            // import texture (via file dialog)
-                            #[cfg(not(target_arch = "wasm32"))]
-                            {
-                                bone_panel::open_file_dialog(
-                                    &shared_ui.file_path,
-                                    &shared_ui.file_type,
-                                );
-                            }
-                            #[cfg(target_arch = "wasm32")]
-                            crate::clickFileInput(true);
-                        } else if selected == 1 {
-                            events.create_empty_texture();
-
-                            // immediately start renaming empty texture when created
-                            let len = armature.styles[set_idx].textures.len();
-                            shared_ui.rename_id = "tex_".to_owned() + &len.to_string();
+                    .width(40.);
+                combo_box.show_ui(ui, |ui| {
+                    let mut selected = -1;
+                    ui.selectable_value(&mut selected, 0, shared_ui.loc("styles_modal.import"));
+                    ui.selectable_value(&mut selected, 1, shared_ui.loc("styles_modal.empty"));
+                    if selected == 0 {
+                        // import texture (via file dialog)
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            bone_panel::open_file_dialog(
+                                &shared_ui.file_path,
+                                &shared_ui.file_type,
+                            );
                         }
-                    });
+                        #[cfg(target_arch = "wasm32")]
+                        crate::clickFileInput(true);
+                    } else if selected == 1 {
+                        events.create_empty_texture();
+
+                        // immediately start renaming empty texture when created
+                        let len = armature.styles[set_idx].textures.len();
+                        shared_ui.rename_id = "tex_".to_owned() + &len.to_string();
+                    }
+                });
             });
         });
 
@@ -340,13 +340,11 @@ pub fn draw_textures_list(
         if selections.style_id == -1 {
             let mut darker = config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
-            egui::Frame::new()
-                .inner_margin(5.)
-                .fill(darker.into())
-                .show(ui, |ui| {
-                    ui.set_width(size.x);
-                    ui.set_height(size.y - 10.);
-                });
+            let frame = egui::Frame::new().inner_margin(5.).fill(darker.into());
+            frame.show(ui, |ui| {
+                ui.set_width(size.x);
+                ui.set_height(size.y - 10.);
+            });
             return;
         }
 
@@ -784,17 +782,14 @@ pub fn draw_tex_buttons(
         ui.horizontal(|ui| {
             // show renaming input field if this texture is being renamed
             if shared_ui.rename_id == context_id {
-                let (edited, value, _) = ui.text_input(
-                    context_id.clone(),
-                    shared_ui,
-                    og_name.to_string(),
-                    Some(TextInputOptions {
-                        focus: true,
-                        placeholder: "Texture".to_string(),
-                        default: "Texture".to_string(),
-                        ..Default::default()
-                    }),
-                );
+                let input = Some(TextInputOptions {
+                    focus: true,
+                    placeholder: "Texture".to_string(),
+                    default: "Texture".to_string(),
+                    ..Default::default()
+                });
+                let (edited, value, _) =
+                    ui.text_input(context_id.clone(), shared_ui, og_name.to_string(), input);
                 if edited {
                     events.rename_texture(i, value);
                 }

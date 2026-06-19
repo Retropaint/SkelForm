@@ -897,6 +897,14 @@ fn context_menu_content(
     } else if id == "tex" {
         ui.context_rename(shared_ui, &config, context_id);
         ui.context_delete(shared_ui, &config, events, "delete_tex", PolarId::DeleteTex);
+        let style_idx = armature
+            .styles
+            .iter()
+            .position(|style| style.id == selections.style_id);
+        if ui.context_button("Trim", config).clicked() {
+            events.trim_texture(style_idx.unwrap(), split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
     } else if id == "anim" {
         ui.context_rename(shared_ui, config, context_id);
         let del_anim = PolarId::DeleteAnim;
