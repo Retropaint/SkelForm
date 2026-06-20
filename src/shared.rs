@@ -636,7 +636,6 @@ pub struct Ui {
     pub exporting_anims: Vec<bool>,
     pub image_sequences: bool,
     pub exporting_video_type: ExportVideoType,
-    pub exporting_video_anim: usize,
     pub exporting_video_encoder: ExportVideoEncoder,
     pub use_system_ffmpeg: bool,
     pub video_clear_bg: Color,

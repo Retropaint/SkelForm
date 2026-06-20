@@ -10,6 +10,7 @@
 
 use std::{
     io::{Seek, Write},
+    path::PathBuf,
     sync::Mutex,
 };
 
@@ -1000,66 +1001,21 @@ impl BackendRenderer {
             *elapsed = Some(Instant::now());
         }
 
-        if *elapsed == None || elapsed.unwrap().elapsed().as_millis() < duration_in_millis {
-            return;
-        }
+        if *elapsed != None && elapsed.unwrap().elapsed().as_millis() > duration_in_millis {
+            if shared.ui.exporting_video_type != ExportVideoType::None {
+                #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
+                self.skf_export_videos(&shared.armature, &mut shared.ui);
+            } else {
+                #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
+                self.skf_native_spritesheet(&shared.armature, &mut shared.ui);
+                #[rustfmt::skip] #[cfg(target_arch = "wasm32")]
+                self.skf_web_spritesheet(&shared.armature, &mut shared.ui);
+            }
 
-        if shared.ui.exporting_video_type != ExportVideoType::None {
-            let bufs = utils::encode_sequence(&shared.armature, &mut shared.ui, self);
-            let anim_idx = shared.ui.exporting_video_anim;
-            let name = &shared.armature.animations[anim_idx].name;
-            let mut _path: String = "".to_string();
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                let raw_path = &shared.ui.file_path.lock().unwrap()[0];
-                _path = raw_path.as_path().to_str().unwrap().to_string();
-            }
-            let _ext;
-            #[rustfmt::skip]
-            let ffmpeg_bin = if shared.ui.use_system_ffmpeg {
-                "ffmpeg".to_string()
-            } else {
-                #[cfg(target_os = "windows")] {
-                    utils::bin_path().join("ffmpeg.exe").to_str().unwrap().to_string()
-                }
-                #[cfg(not(target_os = "windows"))] {
-                    utils::bin_path().join("ffmpeg").to_str().unwrap().to_string()
-                }
-            };
-            let size = shared.ui.sprite_size;
-            let this_anim = bufs[0].clone();
-            let fps = shared.armature.animations[anim_idx].fps;
-            if shared.ui.exporting_video_type == ExportVideoType::Gif {
-                shared.ui.custom_error =
-                    Self::encode_gif(this_anim, fps, size, name, &_path, ffmpeg_bin);
-                _ext = ".gif";
-            } else {
-                let codec_str = match shared.ui.exporting_video_encoder {
-                    ExportVideoEncoder::Libx264 => "libx264",
-                    ExportVideoEncoder::AV1 => "libsvtav1",
-                };
-                shared.ui.custom_error =
-                    Self::encode_video(this_anim, fps, size, name, codec_str, &_path, ffmpeg_bin);
-                _ext = ".mp4";
-            }
-            if shared.ui.custom_error != "" {
-                shared.events.open_modal("error_vid_export", false);
-            } else {
-                #[cfg(not(target_arch = "wasm32"))]
-                if let Err(e) = open::that(_path + _ext) {
-                    println!("{}", e);
-                }
-            }
-        } else {
-            #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
-            self._skf_native_spritesheet(&shared.armature, &mut shared.ui);
-            #[rustfmt::skip] #[cfg(target_arch = "wasm32")]
-            self.skf_web_spritesheet(&shared.armature, &mut shared.ui);
+            shared.ui.spritesheet_elapsed = None;
+            shared.ui.modal = false;
+            *shared.ui.mapped_frames.lock().unwrap() = 0;
         }
-
-        shared.ui.spritesheet_elapsed = None;
-        shared.ui.modal = false;
-        *shared.ui.mapped_frames.lock().unwrap() = 0;
     }
 
     fn init_buffers_and_bindgroups(&self, renderer: &mut Renderer) {
@@ -1110,13 +1066,19 @@ impl BackendRenderer {
         }
     }
 
-    fn _skf_native_spritesheet(&self, armature: &Armature, shared_ui: &mut Ui) {
+    fn skf_export_videos(&self, armature: &Armature, shared_ui: &mut Ui) {
+        let path = shared_ui.file_path.lock().unwrap()[0].clone();
+        let _ = std::fs::create_dir(&path).unwrap();
+        self.skf_pack_videos(armature, shared_ui, &path);
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn skf_native_spritesheet(&self, armature: &Armature, shared_ui: &mut Ui) {
         let path = shared_ui.file_path.lock().unwrap()[0].clone();
         let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
         let options = zip::write::FullFileOptions::default()
             .compression_method(zip::CompressionMethod::Stored);
 
-        #[rustfmt::skip]
         self.skf_pack_sprites(armature, shared_ui, &mut zip, &options);
 
         _ = zip.finish();
@@ -1130,7 +1092,6 @@ impl BackendRenderer {
         let options = zip::write::FullFileOptions::default()
             .compression_method(zip::CompressionMethod::Stored);
 
-        #[rustfmt::skip]
         self.skf_pack_sprites(armature, shared_ui, &mut zip, &options);
 
         let bytes = zip.finish().unwrap().into_inner().to_vec();
@@ -1170,6 +1131,33 @@ impl BackendRenderer {
                 zip.start_file(png_name, options.clone()).unwrap();
                 zip.write(&bufs[b]).unwrap();
             }
+        }
+    }
+
+    fn skf_pack_videos(&self, armature: &Armature, shared_ui: &mut Ui, path: &PathBuf) {
+        #[rustfmt::skip]
+        let ffmpeg_bin = if shared_ui.use_system_ffmpeg {
+            "ffmpeg".to_string()
+        } else {
+            #[cfg(target_os = "windows")] {
+            utils::bin_path().join("ffmpeg.exe").to_str().unwrap().to_string() }
+            #[cfg(not(target_os = "windows"))] {
+            utils::bin_path().join("ffmpeg").to_str().unwrap().to_string() }
+        };
+
+        let bufs = utils::encode_sequence(armature, shared_ui, self);
+        let size = shared_ui.sprite_size;
+        for a in 0..armature.animations.len() {
+            let mut base = path.clone();
+            if !shared_ui.exporting_anims[a] {
+                continue;
+            }
+            base = base.join(armature.animations[a].name.clone());
+            let path_str = &base.to_str().unwrap().to_string();
+            let fps = armature.animations[a].fps;
+            shared_ui.custom_error =
+                Self::encode_video(bufs[a].clone(), fps, size, path_str, &ffmpeg_bin);
+            if shared_ui.custom_error != "" {}
         }
     }
 
@@ -1427,10 +1415,8 @@ impl BackendRenderer {
         rendered_frames: Vec<Vec<u8>>,
         fps: i32,
         window: Vec2,
-        _name: &str,
-        _codec: &str,
         _path: &String,
-        _ffmpeg_bin: String,
+        _ffmpeg_bin: &String,
     ) -> String {
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -1442,7 +1428,6 @@ impl BackendRenderer {
                     // "-c:v", codec, 
                     "-pix_fmt", "yuv420p",
                     &format!("{}.mp4", _path.to_string())])
-                //.stderr(Stdio::piped())
                 .stdin(Stdio::piped())
                 .spawn();
 
@@ -1450,13 +1435,12 @@ impl BackendRenderer {
                 return format!("spawn ffmpeg: {}", e.to_string());
             }
 
-            {
-                let stdin = child.as_mut().unwrap().stdin.as_mut().unwrap();
-                for frame in &rendered_frames {
-                    let rgb = image::load_from_memory(&frame).unwrap();
-                    if let Err(e) = stdin.write_all(&rgb.to_rgba8()) {
-                        return format!("stdin: {}", e.to_string());
-                    }
+            // process video frames
+            let stdin = child.as_mut().unwrap().stdin.as_mut().unwrap();
+            for frame in &rendered_frames {
+                let rgb = image::load_from_memory(&frame).unwrap();
+                if let Err(e) = stdin.write_all(&rgb.to_rgba8()) {
+                    return format!("stdin: {}", e.to_string());
                 }
             }
 
@@ -1475,7 +1459,6 @@ impl BackendRenderer {
                     raw_video.push(chunk[2]);
                 }
             }
-            downloadMp4(raw_video, window.x, window.y, _name, fps);
         }
 
         "".to_string()
@@ -1517,13 +1500,11 @@ impl BackendRenderer {
                 return format!("spawn ffmpeg: {}", e.to_string());
             }
 
-            {
-                let stdin = child.as_mut().unwrap().stdin.as_mut().unwrap();
-                for frame in &rendered_frames {
-                    let rgb = image::load_from_memory(&frame).unwrap();
-                    if let Err(e) = stdin.write_all(&rgb.to_rgba8()) {
-                        return "stdin: ".to_string() + &e.to_string();
-                    }
+            let stdin = child.as_mut().unwrap().stdin.as_mut().unwrap();
+            for frame in &rendered_frames {
+                let rgb = image::load_from_memory(&frame).unwrap();
+                if let Err(e) = stdin.write_all(&rgb.to_rgba8()) {
+                    return "stdin: ".to_string() + &e.to_string();
                 }
             }
 
