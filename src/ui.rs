@@ -152,7 +152,7 @@ pub fn draw(
     }
     if shared_ui.styles_modal {
         styles_modal::draw(
-            context, shared_ui, config, camera, armature, selections, events,
+            context, shared_ui, config, camera, armature, selections, events, input,
         );
     }
     if shared_ui.settings_modal {

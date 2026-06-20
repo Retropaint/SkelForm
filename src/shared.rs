@@ -572,9 +572,6 @@ pub struct Ui {
 
     pub selected_path: String,
 
-    // not visually indicated; just used for `double click > rename` logic
-    pub selected_tex: i32,
-
     pub local_doc_url: String,
 
     pub mobile: bool,
@@ -2386,6 +2383,7 @@ pub enum Events {
     GlobalCopy,
     GlobalPaste,
     TrimTexture,
+    ToggleSelectedTexture,
 }
 
 enum_string!(Events);
@@ -2731,12 +2729,19 @@ impl EventState {
         self.values.push(style_idx as f32);
         self.values.push(tex_idx as f32);
     }
+
+    pub fn toggle_sel_tex(&mut self, tex_id: i32, select: bool) {
+        self.events.push(Events::ToggleSelectedTexture);
+        self.values.push(tex_id as f32);
+        self.values.push(if select { 1. } else { 0. });
+    }
 }
 
 #[derive(Default, Clone)]
 pub struct SelectionState {
     pub bone_idx: usize,
     pub bone_ids: Vec<i32>,
+    pub tex_ids: Vec<i32>,
     pub style_id: i32,
     pub bind: i32,
     pub anim: usize,

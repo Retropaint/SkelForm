@@ -10,6 +10,7 @@ pub fn draw(
     armature: &Armature,
     selections: &SelectionState,
     events: &mut EventState,
+    input: &InputStates,
 ) {
     let modal_size = Vec2::new(500., 500.);
     let frame = egui::Frame {
@@ -56,7 +57,7 @@ pub fn draw(
             let modal_width = ui.max_rect().width();
             let height = ui.available_height();
             #[rustfmt::skip] draw_styles_list(ui, armature, shared_ui, config, selections, events, modal_width, height, frame_padding);
-            #[rustfmt::skip] draw_textures_list(ui, modal_width, height, frame_padding, shared_ui, events, armature, selections, config);
+            #[rustfmt::skip] draw_textures_list(ui, modal_width, height, frame_padding, shared_ui, events, armature, selections, config, input);
             #[rustfmt::skip] draw_bones_list(ui, modal_width, height, armature, config, shared_ui, selections, events);
             draw_assigned_list(ui, height, shared_ui, config, selections, armature, events);
         });
@@ -274,6 +275,7 @@ pub fn draw_textures_list(
     armature: &Armature,
     selections: &SelectionState,
     config: &Config,
+    input: &InputStates,
 ) {
     let frame = egui::Frame::default().inner_margin(5.);
     let mut set_idx: usize = usize::MAX;
@@ -376,7 +378,15 @@ pub fn draw_textures_list(
                 if selections.style_id != -1 && (shared_ui.hovering_set == -1 || is_selected) {
                     let scroll_area = egui::ScrollArea::vertical().id_salt("tex_list");
                     scroll_area.show(ui, |ui| {
-                        draw_tex_buttons(shared_ui, &armature, &selections, &config, events, ui);
+                        draw_tex_buttons(
+                            shared_ui,
+                            &armature,
+                            &selections,
+                            &config,
+                            events,
+                            ui,
+                            input,
+                        );
                     });
                     return;
                 }
@@ -758,6 +768,7 @@ pub fn draw_tex_buttons(
     config: &crate::Config,
     events: &mut crate::EventState,
     ui: &mut egui::Ui,
+    input: &InputStates,
 ) {
     let mut idx: i32 = -1;
 
@@ -775,7 +786,7 @@ pub fn draw_tex_buttons(
         let str_desc = &shared_ui.loc("styles_modal.texture_desc").clone();
 
         let mut col = config.colors.dark_accent;
-        if i == shared_ui.hovering_tex as usize {
+        if i == shared_ui.hovering_tex as usize || selections.tex_ids.contains(&(i as i32)) {
             col += crate::Color::new(20, 20, 20, 0);
         }
 
@@ -812,6 +823,7 @@ pub fn draw_tex_buttons(
                 })
                 .response
                 .on_hover_text(str_desc)
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
                 .interact(egui::Sense::click());
 
             // set dragging_tex true later, so styles will know that the element being
@@ -822,13 +834,36 @@ pub fn draw_tex_buttons(
             }
 
             if button.clicked() {
-                if shared_ui.selected_tex == i as i32 {
+                if selections.tex_ids.contains(&(i as i32)) {
                     shared_ui.rename_id = context_id.clone();
                 }
-                shared_ui.selected_tex = i as i32;
+                if !input.holding_shift && !input.holding_mod {
+                    // unselect every other texture if no modifiers are being held
+                    for id in &selections.tex_ids {
+                        events.toggle_sel_tex(*id, false);
+                    }
+                } else if input.holding_shift {
+                    // select all textures between top-most and this one
+                    let top = selections.tex_ids[0].min(i as i32);
+                    let bottom = selections.tex_ids[0].max(i as i32);
+                    for i in 0..(bottom - top) {
+                        events.toggle_sel_tex(i as i32 + top, true);
+                    }
+                }
+
+                // select this texture
+                events.toggle_sel_tex(i as i32, true);
             }
             if button.secondary_clicked() {
                 shared_ui.context_menu.show(&context_id);
+
+                // unselect other textures if this wasn't selected prior to being right-clicked
+                if !selections.tex_ids.contains(&(i as i32)) {
+                    for id in &selections.tex_ids {
+                        events.toggle_sel_tex(*id, false);
+                    }
+                }
+                events.toggle_sel_tex(i as i32, true);
             }
 
             if button.contains_pointer() || button.has_focus() {

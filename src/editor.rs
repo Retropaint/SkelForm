@@ -47,7 +47,21 @@ pub fn iterate_events(
             };
     }
 
-    if event == Events::TrimTexture {
+    if event == Events::ToggleSelectedTexture {
+        let tex_id = events.values[0] as i32;
+        let select = events.values[1] == 1.;
+        if select {
+            if !selections.tex_ids.contains(&tex_id) {
+                selections.tex_ids.push(tex_id);
+            }
+        } else {
+            selections.tex_ids.retain(|id| *id != tex_id);
+        }
+        selections.tex_ids.sort();
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::TrimTexture {
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::SetExportTexPadding {
