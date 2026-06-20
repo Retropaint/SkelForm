@@ -94,12 +94,14 @@ pub fn draw(
 
                     // show selected section
                     ui.with_layout(layout, |ui| match shared_ui.settings_state {
-                        shared::SettingsState::Ui => user_interface(ui, shared_ui),
-                        shared::SettingsState::Editing => editing(ui, shared_ui),
-                        shared::SettingsState::Rendering => rendering(ui, shared_ui, camera),
+                        shared::SettingsState::Ui => user_interface(ui, shared_ui, config),
+                        shared::SettingsState::Editing => editing(ui, shared_ui, config),
+                        shared::SettingsState::Rendering => {
+                            rendering(ui, shared_ui, camera, config)
+                        }
                         shared::SettingsState::Keyboard => keyboard(ui, shared_ui),
                         shared::SettingsState::Colors => colors(ui, shared_ui),
-                        shared::SettingsState::Misc => misc(ui, shared_ui),
+                        shared::SettingsState::Misc => misc(ui, shared_ui, config),
                     });
 
                     events.update_config();
@@ -176,7 +178,7 @@ pub fn settings_button(
     }
 }
 
-fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
+fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config) {
     let str_general = &shared_ui.loc("settings_modal.user_interface.heading");
     ui.horizontal(|ui| {
         ui.heading(str_general);
@@ -192,7 +194,7 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         });
     });
 
-    ui.horizontal(|ui| {
+    alt_hor(ui, config, true, |ui| {
         // UI scale
         let str_ui_scale = &shared_ui.loc("settings_modal.user_interface.ui_scale");
         ui.label(str_ui_scale);
@@ -242,7 +244,7 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     ui.add_space(20.);
 }
 
-fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
+fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config) {
     ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.editing.heading");
         ui.heading(str_heading);
@@ -264,6 +266,8 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         &shared_ui.loc("settings_modal.editing.edit_while_playing"),
         &shared_ui.loc("settings_modal.editing.edit_while_playing_desc"),
         &mut shared_ui.updated_config.edit_while_playing,
+        config,
+        true,
     );
 
     shared_ui.updated_config.rot_snap_step = basic_input(
@@ -271,6 +275,8 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         shared_ui.updated_config.rot_snap_step,
         shared_ui,
         ui,
+        config,
+        false,
     );
 
     ui.add_space(10.);
@@ -280,22 +286,33 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         shared_ui.updated_config.center_point_radius,
         shared_ui,
         ui,
+        config,
+        true,
     );
     shared_ui.updated_config.transform_rot_radius = basic_input(
         "settings_modal.editing.transform_rot_radius",
         shared_ui.updated_config.transform_rot_radius,
         shared_ui,
         ui,
+        config,
+        false,
     );
     shared_ui.updated_config.transform_scale_radius = basic_input(
         "settings_modal.editing.transform_scale_radius",
         shared_ui.updated_config.transform_scale_radius,
         shared_ui,
         ui,
+        config,
+        true,
     );
 }
 
-fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camera) {
+fn rendering(
+    ui: &mut egui::Ui,
+    shared_ui: &mut crate::Ui,
+    camera: &crate::Camera,
+    config: &crate::Config,
+) {
     ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.rendering.heading");
         ui.heading(str_heading);
@@ -320,9 +337,10 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
 
     let gap = shared_ui.updated_config.gridline_gap;
     let gap_str = "settings_modal.rendering.gridline_gap";
-    shared_ui.updated_config.gridline_gap = basic_input(gap_str, gap as f32, shared_ui, ui) as i32;
+    shared_ui.updated_config.gridline_gap =
+        basic_input(gap_str, gap as f32, shared_ui, ui, config, true) as i32;
 
-    ui.horizontal(|ui| {
+    alt_hor(ui, config, false, |ui| {
         let str_heading = &shared_ui.loc("settings_modal.rendering.pixel_mag");
         ui.label(str_heading);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -337,13 +355,19 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
         });
     });
 
-    let str = &shared_ui.loc("settings_modal.rendering.gridline_front");
-    basic_checkbox(ui, str, "", &mut shared_ui.updated_config.gridline_front);
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("settings_modal.rendering.gridline_front"),
+        "",
+        &mut shared_ui.updated_config.gridline_front,
+        config,
+        true,
+    );
 
     ui.add_space(7.);
 }
 
-fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
+fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config) {
     ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.miscellaneous.heading");
         ui.heading(str_heading);
@@ -362,7 +386,7 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     });
 
     #[cfg(not(target_arch = "wasm32"))]
-    ui.horizontal(|ui| {
+    alt_hor(ui, config, true, |ui| {
         let str_autosave_freq = &shared_ui.loc("settings_modal.miscellaneous.autosave_frequency");
         ui.label(str_autosave_freq);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -379,18 +403,24 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         &shared_ui.loc("settings_modal.miscellaneous.select_exact_bone"),
         &shared_ui.loc("settings_modal.miscellaneous.select_exact_bone_desc"),
         &mut shared_ui.updated_config.exact_bone_select,
+        config,
+        false,
     );
     basic_checkbox(
         ui,
         &shared_ui.loc("settings_modal.miscellaneous.keep_tex_str"),
         &shared_ui.loc("settings_modal.miscellaneous.keep_tex_str_desc"),
         &mut shared_ui.updated_config.keep_tex_str,
+        config,
+        true,
     );
     basic_checkbox(
         ui,
         &shared_ui.loc("settings_modal.miscellaneous.use_fallback"),
         &shared_ui.loc("settings_modal.miscellaneous.use_fallback_desc"),
         &mut shared_ui.use_fallback,
+        config,
+        false,
     );
 
     ui.add_space(20.);
@@ -398,8 +428,14 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     let str_startup = &shared_ui.loc("top_bar.file.startup");
     ui.heading(str_startup);
 
-    let str = &shared_ui.loc("settings_modal.miscellaneous.skip_startup_window");
-    basic_checkbox(ui, str, "", &mut shared_ui.use_fallback);
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("settings_modal.miscellaneous.skip_startup_window"),
+        "",
+        &mut shared_ui.use_fallback,
+        config,
+        true,
+    );
 
     #[cfg(not(target_arch = "wasm32"))]
     ui.horizontal(|ui| {
@@ -689,9 +725,16 @@ fn modifier_name(modifier: egui::Modifiers) -> String {
     .to_string()
 }
 
-fn basic_input(label: &str, field: f32, shared_ui: &mut crate::Ui, ui: &mut egui::Ui) -> f32 {
+fn basic_input(
+    label: &str,
+    field: f32,
+    shared_ui: &mut crate::Ui,
+    ui: &mut egui::Ui,
+    config: &crate::Config,
+    alt: bool,
+) -> f32 {
     let mut result = field;
-    ui.horizontal(|ui| {
+    alt_hor(ui, config, alt, |ui| {
         let str = &shared_ui.loc(label);
         ui.label(str);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -704,8 +747,15 @@ fn basic_input(label: &str, field: f32, shared_ui: &mut crate::Ui, ui: &mut egui
     result
 }
 
-fn basic_checkbox(ui: &mut egui::Ui, label: &str, desc: &str, field: &mut bool) {
-    ui.horizontal(|ui| {
+fn basic_checkbox(
+    ui: &mut egui::Ui,
+    label: &str,
+    desc: &str,
+    field: &mut bool,
+    config: &crate::Config,
+    alt: bool,
+) {
+    alt_hor(ui, config, alt, |ui| {
         if desc == "" {
             ui.label(label);
         } else {
@@ -713,6 +763,27 @@ fn basic_checkbox(ui: &mut egui::Ui, label: &str, desc: &str, field: &mut bool) 
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             ui.checkbox(field, "".into_atoms());
+        });
+    });
+}
+
+fn alt_hor<T: FnOnce(&mut egui::Ui)>(
+    ui: &mut egui::Ui,
+    config: &crate::Config,
+    alt: bool,
+    content: T,
+) {
+    let frame = egui::Frame {
+        fill: if alt {
+            config.colors.dark_accent.into()
+        } else {
+            config.colors.main.into()
+        },
+        ..Default::default()
+    };
+    ui.horizontal(|ui| {
+        frame.show(ui, |ui| {
+            content(ui);
         });
     });
 }
