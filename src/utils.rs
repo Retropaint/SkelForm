@@ -354,13 +354,9 @@ pub fn encode_sequence(
             let encoder = image::codecs::png::PngEncoder::new(&mut png_buf);
 
             let rgba8 = image::ExtendedColorType::Rgba8;
+            let img_rgba = new_img.as_rgba8().unwrap();
             encoder
-                .write_image(
-                    new_img.as_rgba8().unwrap(),
-                    new_img.width(),
-                    new_img.height(),
-                    rgba8,
-                )
+                .write_image(img_rgba, new_img.width(), new_img.height(), rgba8)
                 .unwrap();
 
             bufs.last_mut().unwrap().push(png_buf);

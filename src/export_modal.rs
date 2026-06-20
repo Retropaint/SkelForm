@@ -317,13 +317,12 @@ pub fn image_export(
         } else {
             &str_spritesheets
         };
-        egui::ComboBox::new("transition_dropdown".to_string(), "")
-            .selected_text(selected_str.to_string())
-            .show_ui(ui, |ui| {
-                ui.selectable_value(&mut shared_ui.image_sequences, false, str_spritesheets);
-                ui.selectable_value(&mut shared_ui.image_sequences, true, str_sequences);
-            })
-            .response;
+        let combo_box = egui::ComboBox::new("transition_dropdown".to_string(), "")
+            .selected_text(selected_str.to_string());
+        combo_box.show_ui(ui, |ui| {
+            ui.selectable_value(&mut shared_ui.image_sequences, false, str_spritesheets);
+            ui.selectable_value(&mut shared_ui.image_sequences, true, str_sequences);
+        });
     });
 
     // sprites per row if spritesheet is selected
@@ -359,15 +358,14 @@ pub fn image_export(
     ui.add_space(20.);
 
     // selecting which animations to export
-    egui::Frame::new()
+    let frame = egui::Frame::new()
         .fill(config.colors.dark_accent.into())
-        .inner_margin(egui::Margin::same(5))
-        .show(ui, |ui| {
-            ui.set_width(width);
-            let text =
-                egui::RichText::new(shared_ui.loc("export_modal.image.animations")).size(15.);
-            ui.label(text);
-        });
+        .inner_margin(egui::Margin::same(5));
+    frame.show(ui, |ui| {
+        ui.set_width(width);
+        let text = egui::RichText::new(shared_ui.loc("export_modal.image.animations")).size(15.);
+        ui.label(text);
+    });
     ui.add_space(5.);
     for a in 0..armature.animations.len() {
         #[rustfmt::skip]
@@ -421,14 +419,20 @@ pub fn video_export(
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.video.animation"));
         let anim_idx = shared_ui.exporting_video_anim;
+        let anim_name = if anim_idx != usize::MAX {
+            armature.animations[anim_idx as usize].name.clone()
+        } else {
+            "[All]".to_string()
+        };
         let dropdown = egui::ComboBox::new("animation_to_export", "")
-            .selected_text(armature.animations[anim_idx as usize].name.clone())
+            .selected_text(anim_name)
             .width(80.);
         dropdown.show_ui(ui, |ui| {
             let export = &mut shared_ui.exporting_video_anim;
             for a in 0..armature.animations.len() {
                 ui.selectable_value(export, a, armature.animations[a].name.to_string());
             }
+            ui.selectable_value(export, usize::MAX, "[All]");
         });
     });
 
@@ -492,15 +496,15 @@ pub fn video_export(
     #[cfg(not(target_arch = "wasm32"))]
     {
         ui.add_space(20.);
-        egui::Frame::new()
+        let frame = egui::Frame::new()
             .fill(_config.colors.dark_accent.into())
-            .inner_margin(egui::Margin::same(5))
-            .show(ui, |ui| {
-                ui.set_width(_width);
-                let text = egui::RichText::new(shared_ui.loc("export_modal.video.compatibility"))
-                    .size(15.);
-                ui.label(text);
-            });
+            .inner_margin(egui::Margin::same(5));
+        frame.show(ui, |ui| {
+            ui.set_width(_width);
+            let text =
+                egui::RichText::new(shared_ui.loc("export_modal.video.compatibility")).size(15.);
+            ui.label(text);
+        });
 
         // disabled: encoder dropdown - default is always used for now
         if false {
