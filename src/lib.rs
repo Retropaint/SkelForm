@@ -1156,8 +1156,12 @@ impl BackendRenderer {
             base = base.join(armature.animations[a].name.clone());
             let path_str = &base.to_str().unwrap().to_string();
             let fps = armature.animations[a].fps;
-            shared_ui.custom_error =
-                Self::encode_video(bufs[a].clone(), fps, size, path_str, &ffmpeg_bin);
+            shared_ui.custom_error = if shared_ui.exporting_video_type == ExportVideoType::Mp4 {
+                Self::encode_video(bufs[a].clone(), fps, size, path_str, &ffmpeg_bin)
+            } else {
+                Self::encode_gif(bufs[a].clone(), fps, size, path_str, &ffmpeg_bin)
+            };
+
             if shared_ui.custom_error != "" {}
         }
     }
@@ -1469,9 +1473,8 @@ impl BackendRenderer {
         rendered_frames: Vec<Vec<u8>>,
         fps: i32,
         window: Vec2,
-        _name: &str,
         _path: &String,
-        _ffmpeg_bin: String,
+        _ffmpeg_bin: &String,
     ) -> String {
         #[cfg(target_arch = "wasm32")]
         {
