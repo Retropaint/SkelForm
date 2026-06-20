@@ -197,6 +197,28 @@ pub fn render_spritesheets(
 ) {
     shared_ui.rendered_spritesheets = vec![];
 
+    // get the biggest animation's boundaries, if global_bounds is true
+    let mut left_top = Vec2::new(f32::MAX, -f32::MAX);
+    let mut right_bot = Vec2::new(-f32::MAX, f32::MAX);
+    if shared_ui.export_global_bounds {
+        for a in 0..armature.animations.len() {
+            let anim = &armature.animations[a];
+            let last_frame = if let Some(kf) = anim.keyframes.last() {
+                kf.frame + 1
+            } else {
+                1
+            };
+            let all_frames = last_frame * shared_ui.anim_cycles;
+            let mut new_arm = armature.clone();
+            for f in 0..all_frames {
+                new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
+                let (lt, br) = renderer::get_sprite_boundary(&new_arm, camera, config);
+                left_top = Vec2::new(left_top.x.min(lt.x), left_top.y.max(lt.y));
+                right_bot = Vec2::new(right_bot.x.max(br.x), right_bot.y.min(br.y));
+            }
+        }
+    }
+
     let mut spritesheet_idx = 0;
     for a in 0..armature.animations.len() {
         if !shared_ui.exporting_anims[a] {
@@ -212,14 +234,16 @@ pub fn render_spritesheets(
         let all_frames = last_frame * shared_ui.anim_cycles;
         let mut new_arm = armature.clone();
 
-        // get maximum sprite boundary, based on the biggest frame of this animation
-        let mut left_top = Vec2::new(f32::MAX, -f32::MAX);
-        let mut right_bot = Vec2::new(-f32::MAX, f32::MAX);
-        for f in 0..all_frames {
-            new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
-            let (lt, br) = renderer::get_sprite_boundary(&new_arm, camera, config);
-            left_top = Vec2::new(left_top.x.min(lt.x), left_top.y.max(lt.y));
-            right_bot = Vec2::new(right_bot.x.max(br.x), right_bot.y.min(br.y));
+        // get maximum boundary of this animation alone, if global_bounds is false
+        if !shared_ui.export_global_bounds {
+            left_top = Vec2::new(f32::MAX, -f32::MAX);
+            right_bot = Vec2::new(-f32::MAX, f32::MAX);
+            for f in 0..all_frames {
+                new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
+                let (lt, br) = renderer::get_sprite_boundary(&new_arm, camera, config);
+                left_top = Vec2::new(left_top.x.min(lt.x), left_top.y.max(lt.y));
+                right_bot = Vec2::new(right_bot.x.max(br.x), right_bot.y.min(br.y));
+            }
         }
 
         // adjust camera to the biggest boundary

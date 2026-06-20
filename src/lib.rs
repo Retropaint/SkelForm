@@ -1069,6 +1069,26 @@ impl BackendRenderer {
 
     fn skf_export_videos(&self, armature: &Armature, shared_ui: &mut Ui) {
         let path = shared_ui.file_path.lock().unwrap()[0].clone();
+
+        // attempt to remove the existing dir, if it exists
+        let can_proceed = if let Ok(exists) = std::fs::exists(&path) {
+            if exists {
+                if let Err(e) = std::fs::remove_dir_all(&path) {
+                    eprintln!("{}", e);
+                    false
+                } else {
+                    true
+                }
+            } else {
+                true
+            }
+        } else {
+            true
+        };
+        if !can_proceed {
+            return;
+        }
+
         let _ = std::fs::create_dir(&path).unwrap();
         self.skf_pack_videos(armature, shared_ui, &path);
     }

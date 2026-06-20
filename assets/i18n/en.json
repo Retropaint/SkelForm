@@ -170,7 +170,8 @@
       "use_system_ffmpeg_desc": "SkelForm comes with its own binary for ffmpeg, but this will make it call 'ffmpeg' globally instead.",
       "background_color": "Background Color: ",
       "cycles": "Cycles: ",
-      "open_after_export": "Open after export: "
+      "open_after_export": "Open after export: ",
+      "global_bounds": "Use global boundaries:"
     }
   },
   "armature_panel": {

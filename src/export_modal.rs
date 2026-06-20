@@ -405,6 +405,8 @@ pub fn video_export(
     ui.heading(shared_ui.loc("export_modal.video.header"));
     let _width = ui.available_width() - 20.;
 
+    ui.add_space(10.);
+
     // don't show video export if armature has no animations
     if armature.animations.len() == 0 {
         ui.label(shared_ui.loc("export_modal.no_anims"));
@@ -465,6 +467,13 @@ pub fn video_export(
             if edited {
                 shared_ui.anim_cycles = value as i32;
             }
+        });
+    });
+
+    ui.add_enabled_ui(is_mp4, |ui| {
+        ui.horizontal(|ui| {
+            ui.label(shared_ui.loc("export_modal.video.global_bounds"));
+            ui.checkbox(&mut shared_ui.export_global_bounds, "".into_atoms());
         });
     });
 
