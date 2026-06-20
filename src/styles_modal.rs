@@ -42,6 +42,7 @@ pub fn draw(
         modal = egui::Modal::new("styles_modal".into()).frame(frame);
     }
 
+    // render main content
     modal.show(ctx, |ui| {
         ui.set_width(modal_size.x);
         ui.set_height(modal_size.y);
@@ -378,15 +379,8 @@ pub fn draw_textures_list(
                 if selections.style_id != -1 && (shared_ui.hovering_set == -1 || is_selected) {
                     let scroll_area = egui::ScrollArea::vertical().id_salt("tex_list");
                     scroll_area.show(ui, |ui| {
-                        draw_tex_buttons(
-                            shared_ui,
-                            &armature,
-                            &selections,
-                            &config,
-                            events,
-                            ui,
-                            input,
-                        );
+                        let sel = &selections;
+                        draw_tex_buttons(shared_ui, &armature, sel, &config, events, ui, input);
                     });
                     return;
                 }
@@ -451,13 +445,11 @@ fn draw_bones_list(
         if selections.style_id == -1 {
             let mut darker = config.colors.dark_accent;
             darker -= Color::new(5, 5, 5, 0);
-            egui::Frame::new()
-                .inner_margin(5.)
-                .fill(darker.into())
-                .show(ui, |ui| {
-                    ui.set_width((modal_width / 3.) - padding.x);
-                    ui.set_height(height - 31.);
-                });
+            let frame = egui::Frame::new().inner_margin(5.).fill(darker.into());
+            frame.show(ui, |ui| {
+                ui.set_width((modal_width / 3.) - padding.x);
+                ui.set_height(height - 31.);
+            });
             return;
         }
 
@@ -786,7 +778,10 @@ pub fn draw_tex_buttons(
         let str_desc = &shared_ui.loc("styles_modal.texture_desc").clone();
 
         let mut col = config.colors.dark_accent;
-        if i == shared_ui.hovering_tex as usize || selections.tex_ids.contains(&(i as i32)) {
+        if i == shared_ui.hovering_tex as usize {
+            col += crate::Color::new(20, 20, 20, 0);
+        }
+        if selections.tex_ids.contains(&(i as i32)) {
             col += crate::Color::new(20, 20, 20, 0);
         }
 
