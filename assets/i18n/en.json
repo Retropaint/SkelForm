@@ -171,7 +171,8 @@
       "background_color": "Background Color: ",
       "cycles": "Cycles: ",
       "open_after_export": "Open after export: ",
-      "global_bounds": "Use global boundaries:"
+      "global_bounds": "Use global boundaries:",
+      "global_bounds_desc": "If enabled, all videos will have consistent dimensions"
     }
   },
   "armature_panel": {

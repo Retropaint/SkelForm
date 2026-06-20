@@ -769,7 +769,11 @@ pub fn basic_checkbox(
                     config.colors.dark_accent
                 }
                 .into();
-                ui.checkbox(field, "".into_atoms());
+                if desc == "" {
+                    ui.checkbox(field, "".into_atoms());
+                } else {
+                    ui.checkbox(field, "".into_atoms()).on_hover_text(desc);
+                }
             })
         });
     });

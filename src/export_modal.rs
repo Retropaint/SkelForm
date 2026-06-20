@@ -4,7 +4,7 @@ use std::os::unix::fs::PermissionsExt;
 use egui::IntoAtoms;
 
 use crate::{
-    settings_modal::{alt_hor, settings_button},
+    settings_modal::{alt_hor, basic_checkbox, settings_button},
     ui::EguiUi,
     Armature, Config, EditMode, EventState, ExportImgFormat, SettingsState,
 };
@@ -441,17 +441,14 @@ pub fn video_export(
         });
     });
 
-    ui.add_enabled_ui(is_mp4, |ui| {
-        alt_hor(ui, config, true, |ui| {
-            ui.label(shared_ui.loc("export_modal.video.global_bounds"));
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.scope(|ui| {
-                    ui.style_mut().visuals.widgets.inactive.bg_fill = config.colors.main.into();
-                    ui.checkbox(&mut shared_ui.export_global_bounds, "".into_atoms());
-                });
-            });
-        });
-    });
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("export_modal.video.global_bounds"),
+        &shared_ui.loc("export_modal.video.global_bounds_desc"),
+        &mut shared_ui.export_global_bounds,
+        config,
+        true,
+    );
 
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -475,13 +472,15 @@ pub fn video_export(
 
         // allow using system (global) ffmpeg, if user already has it and prefers
         // not to download local
-        ui.horizontal(|ui| {
-            ui.label(shared_ui.loc("export_modal.video.use_system_ffmpeg"))
-                .on_hover_text(shared_ui.loc("export_modal.video.use_system_ffmpeg_desc"));
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.checkbox(&mut shared_ui.use_system_ffmpeg, "".into_atoms());
-            });
-        });
+
+        basic_checkbox(
+            ui,
+            &shared_ui.loc("export_modal.video.use_system_ffmpeg"),
+            &shared_ui.loc("export_modal.video.use_system_ffmpeg_desc"),
+            &mut shared_ui.use_system_ffmpeg,
+            config,
+            false,
+        );
 
         // download ffmpeg button (not needed for macos)
         #[cfg(not(target_os = "macos"))]
