@@ -351,7 +351,7 @@ fn rendering(
                 shared_ui.updated_config.pixel_magnification = (value as i32).max(1);
             }
             let window = camera.window / shared_ui.updated_config.pixel_magnification as f32;
-            ui.label(format!("= {}, {}", window.x, window.y));
+            ui.label(format!("{}, {}", window.x, window.y));
         });
     });
 
