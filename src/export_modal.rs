@@ -532,98 +532,98 @@ pub fn video_export(
             ui.checkbox(&mut shared_ui.use_system_ffmpeg, "".into_atoms());
         });
 
-        // don't allow downloading local for macos, since it's bundled by default
-        // due to file permission issues
+        // download ffmpeg button (not needed for macos)
+        #[cfg(not(target_os = "macos"))]
+        {
+            download_ffmpeg_button(ui);
+        }
+    }
+}
+
+pub fn download_ffmpeg_button(ui: &mut egui::Ui) {
+    #[allow(unreachable_code)]
+    ui.add_space(10.);
+    if ui.skf_button("Download ffmpeg").clicked() {
+        let base_url =
+            "https://github.com/Retropaint/SkelForm/raw/refs/heads/master/ffmpeg/native/";
+        let bin_name;
+        let final_bin_name;
         #[cfg(target_os = "macos")]
         {
-            return;
+            bin_name = "ffmpeg-mac-arm.zip";
+            final_bin_name = "ffmpeg";
         }
-
-        #[allow(unreachable_code)]
-        ui.add_space(10.);
-        if ui.skf_button("Download ffmpeg").clicked() {
-            let base_url =
-                "https://github.com/Retropaint/SkelForm/raw/refs/heads/master/ffmpeg/native/";
-            let bin_name;
-            let final_bin_name;
-            #[cfg(target_os = "macos")]
-            {
-                bin_name = "ffmpeg-mac-arm.zip";
-                final_bin_name = "ffmpeg";
-            }
-            #[cfg(target_os = "windows")]
-            {
-                bin_name = "ffmpeg-win.zip";
-                final_bin_name = "ffmpeg.exe";
-            }
-            #[cfg(target_os = "linux")]
-            {
-                bin_name = "ffmpeg-linux.zip";
-                final_bin_name = "ffmpeg";
-            }
-
-            // get downloaded zip file
-            let resp = ureq::get(base_url.to_string() + bin_name).call().unwrap();
-            let mut ffmpeg_zip =
-                std::fs::File::create(utils::bin_path().join("ffmpeg.zip")).unwrap();
-            let bytes_result: Result<Vec<u8>, _> = resp.into_body().into_reader().bytes().collect();
-            if let Ok(bytes) = bytes_result {
-                _ = ffmpeg_zip.write(&bytes);
-            }
-
-            // extract ffmpeg from zip
-            let options = OpenOptions::new()
-                .append(true)
-                .read(true)
-                .open(utils::bin_path().join("ffmpeg.zip").clone());
-            match options {
-                Ok(file) => {
-                    // unzip it
-                    let mut zip = ZipArchive::new(file).unwrap();
-                    let download = zip.by_index(0).unwrap();
-                    let mut ffmpeg_bin =
-                        std::fs::File::create(utils::bin_path().join(final_bin_name)).unwrap();
-                    let bytes_result: Result<Vec<u8>, _> = download.bytes().collect();
-                    if let Ok(bytes) = bytes_result {
-                        _ = ffmpeg_bin.write(&bytes);
-                    }
-                }
-                Err(_) => {}
-            }
-
-            // set correct permissions for ffmpeg binary
-            let ffmpeg_bin = std::fs::File::open(utils::bin_path().join(final_bin_name)).unwrap();
-            let mut perms = ffmpeg_bin.metadata().unwrap().permissions();
-            perms.set_readonly(false);
-            #[cfg(not(target_os = "windows"))]
-            {
-                perms.set_mode(0o755);
-                ffmpeg_bin.set_permissions(perms).unwrap();
-            }
-        }
-        ui.add_space(2.5);
-
-        // note for downloading ffmpeg locally
-        #[allow(unused_mut)]
-        let mut size_warning = "";
-        #[allow(unused_mut)]
-        let mut ext = "";
         #[cfg(target_os = "windows")]
         {
-            // warn Windows users about comically large ffmpeg file
-            // the download is 30mb but install size is used to be safe,
-            // since most users don't know the difference
-            size_warning = " (>100mb).\nThe program will freeze during download, do not close it";
-            ext = ".exe";
+            bin_name = "ffmpeg-win.zip";
+            final_bin_name = "ffmpeg.exe";
         }
-        let str = if std::fs::exists(utils::bin_path().join("ffmpeg".to_string() + ext)).unwrap() {
-            "Re-download ffmpeg if problems occur.".to_string()
-        } else {
-            format!(
-                "ffmpeg is not installed.\nClick the above button to download it{}.",
-                &size_warning
-            )
-        };
-        ui.label(str);
+        #[cfg(target_os = "linux")]
+        {
+            bin_name = "ffmpeg-linux.zip";
+            final_bin_name = "ffmpeg";
+        }
+
+        // get downloaded zip file
+        let resp = ureq::get(base_url.to_string() + bin_name).call().unwrap();
+        let mut ffmpeg_zip = std::fs::File::create(utils::bin_path().join("ffmpeg.zip")).unwrap();
+        let bytes_result: Result<Vec<u8>, _> = resp.into_body().into_reader().bytes().collect();
+        if let Ok(bytes) = bytes_result {
+            _ = ffmpeg_zip.write(&bytes);
+        }
+
+        // extract ffmpeg from zip
+        let options = OpenOptions::new()
+            .append(true)
+            .read(true)
+            .open(utils::bin_path().join("ffmpeg.zip").clone());
+        match options {
+            Ok(file) => {
+                // unzip it
+                let mut zip = ZipArchive::new(file).unwrap();
+                let download = zip.by_index(0).unwrap();
+                let mut ffmpeg_bin =
+                    std::fs::File::create(utils::bin_path().join(final_bin_name)).unwrap();
+                let bytes_result: Result<Vec<u8>, _> = download.bytes().collect();
+                if let Ok(bytes) = bytes_result {
+                    _ = ffmpeg_bin.write(&bytes);
+                }
+            }
+            Err(_) => {}
+        }
+
+        // set correct permissions for ffmpeg binary
+        let ffmpeg_bin = std::fs::File::open(utils::bin_path().join(final_bin_name)).unwrap();
+        let mut perms = ffmpeg_bin.metadata().unwrap().permissions();
+        perms.set_readonly(false);
+        #[cfg(not(target_os = "windows"))]
+        {
+            perms.set_mode(0o755);
+            ffmpeg_bin.set_permissions(perms).unwrap();
+        }
     }
+    ui.add_space(2.5);
+
+    // note for downloading ffmpeg locally
+    #[allow(unused_mut)]
+    let mut size_warning = "";
+    #[allow(unused_mut)]
+    let mut ext = "";
+    #[cfg(target_os = "windows")]
+    {
+        // warn Windows users about comically large ffmpeg file
+        // the download is 30mb but install size is used to be safe,
+        // since most users don't know the difference
+        size_warning = " (>100mb).\nThe program will freeze during download, do not close it";
+        ext = ".exe";
+    }
+    let str = if std::fs::exists(utils::bin_path().join("ffmpeg".to_string() + ext)).unwrap() {
+        "Re-download ffmpeg if problems occur.".to_string()
+    } else {
+        format!(
+            "ffmpeg is not installed.\nClick the above button to download it{}.",
+            &size_warning
+        )
+    };
+    ui.label(str);
 }
