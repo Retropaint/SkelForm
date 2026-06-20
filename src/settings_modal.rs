@@ -196,21 +196,24 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         // UI scale
         let str_ui_scale = &shared_ui.loc("settings_modal.user_interface.ui_scale");
         ui.label(str_ui_scale);
-        let scale = shared_ui.updated_config.ui_scale;
-        let (edited, value, _) = ui.float_input("ui_scale".to_string(), shared_ui, scale, 1., None);
-        if edited {
-            shared_ui.updated_config.ui_scale = value;
-        }
-
-        // UI slider (web only)
-        #[cfg(target_arch = "wasm32")]
-        {
-            let str = shared_ui.loc("settings_modal.user_interface.ui_slider");
-            if ui.skf_button(&str).clicked() {
-                shared_ui.settings_modal = false;
-                crate::toggleElement(true, "ui-slider".to_string())
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let scale = shared_ui.updated_config.ui_scale;
+            let (edited, value, _) =
+                ui.float_input("ui_scale".to_string(), shared_ui, scale, 1., None);
+            if edited {
+                shared_ui.updated_config.ui_scale = value;
             }
-        }
+
+            // UI slider (web only)
+            #[cfg(target_arch = "wasm32")]
+            {
+                let str = shared_ui.loc("settings_modal.user_interface.ui_slider");
+                if ui.skf_button(&str).clicked() {
+                    shared_ui.settings_modal = false;
+                    crate::toggleElement(true, "ui-slider".to_string())
+                }
+            }
+        });
     });
 
     // Layout dropdown (Split, Left, Right)
@@ -225,12 +228,14 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
 
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("settings_modal.user_interface.layout"));
-        let combo_box = egui::ComboBox::new("layout", "").selected_text(used_str);
-        combo_box.show_ui(ui, |ui| {
-            let config = &mut shared_ui.updated_config.layout;
-            ui.selectable_value(config, shared::UiLayout::Split, str_split);
-            ui.selectable_value(config, shared::UiLayout::Right, str_right);
-            ui.selectable_value(config, shared::UiLayout::Left, str_left);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let combo_box = egui::ComboBox::new("layout", "").selected_text(used_str);
+            combo_box.show_ui(ui, |ui| {
+                let config = &mut shared_ui.updated_config.layout;
+                ui.selectable_value(config, shared::UiLayout::Split, str_split);
+                ui.selectable_value(config, shared::UiLayout::Right, str_right);
+                ui.selectable_value(config, shared::UiLayout::Left, str_left);
+            });
         });
     });
 
@@ -254,15 +259,12 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         });
     });
 
-    ui.horizontal(|ui| {
-        let str_edit = &shared_ui.loc("settings_modal.editing.edit_while_playing");
-        let str_edit_desc = &shared_ui.loc("settings_modal.editing.edit_while_playing_desc");
-        ui.label(str_edit).on_hover_text(str_edit_desc);
-        ui.checkbox(
-            &mut shared_ui.updated_config.edit_while_playing,
-            "".into_atoms(),
-        );
-    });
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("settings_modal.editing.edit_while_playing"),
+        &shared_ui.loc("settings_modal.editing.edit_while_playing_desc"),
+        &mut shared_ui.updated_config.edit_while_playing,
+    );
 
     shared_ui.updated_config.rot_snap_step = basic_input(
         "settings_modal.editing.rot_snap_step",
@@ -323,22 +325,20 @@ fn rendering(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, camera: &crate::Camer
     ui.horizontal(|ui| {
         let str_heading = &shared_ui.loc("settings_modal.rendering.pixel_mag");
         ui.label(str_heading);
-        let id = "pixelmag".to_string();
-        let mag = shared_ui.updated_config.pixel_magnification as f32;
-        let (edited, value, _) = ui.float_input(id, shared_ui, mag, 1., None);
-        if edited {
-            shared_ui.updated_config.pixel_magnification = (value as i32).max(1);
-        }
-        let window = camera.window / shared_ui.updated_config.pixel_magnification as f32;
-        ui.label(format!("= {}, {}", window.x, window.y));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let id = "pixelmag".to_string();
+            let mag = shared_ui.updated_config.pixel_magnification as f32;
+            let (edited, value, _) = ui.float_input(id, shared_ui, mag, 1., None);
+            if edited {
+                shared_ui.updated_config.pixel_magnification = (value as i32).max(1);
+            }
+            let window = camera.window / shared_ui.updated_config.pixel_magnification as f32;
+            ui.label(format!("= {}, {}", window.x, window.y));
+        });
     });
 
-    ui.horizontal(|ui| {
-        let str_gridline_gap = &shared_ui.loc("settings_modal.rendering.gridline_front");
-        ui.label(str_gridline_gap);
-        let gridline_front = &mut shared_ui.updated_config.gridline_front;
-        ui.checkbox(gridline_front, "".into_atoms());
-    });
+    let str = &shared_ui.loc("settings_modal.rendering.gridline_front");
+    basic_checkbox(ui, str, "", &mut shared_ui.updated_config.gridline_front);
 
     ui.add_space(7.);
 }
@@ -365,70 +365,57 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     ui.horizontal(|ui| {
         let str_autosave_freq = &shared_ui.loc("settings_modal.miscellaneous.autosave_frequency");
         ui.label(str_autosave_freq);
-        let id = "autosave_freq".to_string();
-        let auto_freq = shared_ui.updated_config.autosave_frequency as f32;
-        let (edited, value, _) = ui.float_input(id, shared_ui, auto_freq, 1., None);
-        if edited && value > 0. {
-            shared_ui.updated_config.autosave_frequency = value as i32;
-        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let id = "autosave_freq".to_string();
+            let auto_freq = shared_ui.updated_config.autosave_frequency as f32;
+            let (edited, value, _) = ui.float_input(id, shared_ui, auto_freq, 1., None);
+            if edited && value > 0. {
+                shared_ui.updated_config.autosave_frequency = value as i32;
+            }
+        });
     });
-    ui.horizontal(|ui| {
-        let str_exact_bone = &shared_ui.loc("settings_modal.miscellaneous.select_exact_bone");
-        let str_exact_bone_desc =
-            &shared_ui.loc("settings_modal.miscellaneous.select_exact_bone_desc");
-        ui.label(str_exact_bone).on_hover_text(str_exact_bone_desc);
-        ui.checkbox(
-            &mut shared_ui.updated_config.exact_bone_select,
-            "".into_atoms(),
-        );
-    });
-    ui.horizontal(|ui| {
-        let str_keep_tex_str = &shared_ui.loc("settings_modal.miscellaneous.keep_tex_str");
-        let str_keep_tex_str_desc =
-            &shared_ui.loc("settings_modal.miscellaneous.keep_tex_str_desc");
-        ui.label(str_keep_tex_str)
-            .on_hover_text(str_keep_tex_str_desc);
-        ui.checkbox(&mut shared_ui.updated_config.keep_tex_str, "".into_atoms());
-    });
-    ui.horizontal(|ui| {
-        let str_fallback = &shared_ui.loc("settings_modal.miscellaneous.use_fallback");
-        let str_fallback_desc = &shared_ui.loc("settings_modal.miscellaneous.use_fallback_desc");
-        ui.label(str_fallback).on_hover_text(str_fallback_desc);
-        ui.checkbox(&mut shared_ui.use_fallback, "".into_atoms());
-    });
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("settings_modal.miscellaneous.select_exact_bone"),
+        &shared_ui.loc("settings_modal.miscellaneous.select_exact_bone_desc"),
+        &mut shared_ui.updated_config.exact_bone_select,
+    );
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("settings_modal.miscellaneous.keep_tex_str"),
+        &shared_ui.loc("settings_modal.miscellaneous.keep_tex_str_desc"),
+        &mut shared_ui.updated_config.keep_tex_str,
+    );
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("settings_modal.miscellaneous.use_fallback"),
+        &shared_ui.loc("settings_modal.miscellaneous.use_fallback_desc"),
+        &mut shared_ui.use_fallback,
+    );
 
     ui.add_space(20.);
 
     let str_startup = &shared_ui.loc("top_bar.file.startup");
     ui.heading(str_startup);
-    ui.horizontal(|ui| {
-        let str_skip_startup = &shared_ui.loc("settings_modal.miscellaneous.skip_startup_window");
-        ui.label(str_skip_startup);
-        ui.checkbox(&mut shared_ui.updated_config.skip_startup, "".into_atoms());
-    });
+
+    let str = &shared_ui.loc("settings_modal.miscellaneous.skip_startup_window");
+    basic_checkbox(ui, str, "", &mut shared_ui.use_fallback);
+
     #[cfg(not(target_arch = "wasm32"))]
     ui.horizontal(|ui| {
         if shared_ui.recent_file_paths.len() == 0 {
             ui.disable();
         }
         let str_clear_recents = &shared_ui.loc("settings_modal.miscellaneous.clear_recent_files");
-        if ui.skf_button(str_clear_recents).clicked() {
-            shared_ui.recent_file_paths = vec![];
-            crate::utils::save_to_recent_files(&vec![]);
-        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if ui.skf_button(str_clear_recents).clicked() {
+                shared_ui.recent_file_paths = vec![];
+                crate::utils::save_to_recent_files(&vec![]);
+            }
+        });
     });
 
     ui.add_space(20.);
-
-    //let str_startup = &shared_ui.loc("settings_modal.miscellaneous.beta.heading");
-    //ui.heading(str_startup);
-    ////let text = shared.ui.loc("settings_modal.miscellaneous.beta.warning");
-    //let mut text = shared_ui.loc("settings_modal.miscellaneous.beta.nothing");
-    //text = text.replace("$version", env!("CARGO_PKG_VERSION"));
-    //let mut cache = egui_commonmark::CommonMarkCache::default();
-    //let str = utils::markdown(text, shared_ui.local_doc_url.to_string());
-    //egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
-    //ui.add_space(20.);
 
     ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
         ui.horizontal(|ui| {
@@ -707,10 +694,25 @@ fn basic_input(label: &str, field: f32, shared_ui: &mut crate::Ui, ui: &mut egui
     ui.horizontal(|ui| {
         let str = &shared_ui.loc(label);
         ui.label(str);
-        let (edited, value, _) = ui.float_input(label.to_string(), shared_ui, field, 1., None);
-        if edited {
-            result = value
-        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let (edited, value, _) = ui.float_input(label.to_string(), shared_ui, field, 1., None);
+            if edited {
+                result = value
+            }
+        });
     });
     result
+}
+
+fn basic_checkbox(ui: &mut egui::Ui, label: &str, desc: &str, field: &mut bool) {
+    ui.horizontal(|ui| {
+        if desc == "" {
+            ui.label(label);
+        } else {
+            ui.label(label).on_hover_text(desc);
+        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.checkbox(field, "".into_atoms());
+        });
+    });
 }
