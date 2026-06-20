@@ -207,13 +207,13 @@ pub fn armature_export(
             ui.label(text);
         });
 
-    ui.add_space(2.);
-
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.armature.bake_ik"))
             .on_hover_text(shared_ui.loc("export_modal.armature.bake_ik_desc"));
         let mut bake_ik = edit_mode.export_bake_ik;
-        ui.checkbox(&mut bake_ik, "".into_atoms());
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.checkbox(&mut bake_ik, "".into_atoms());
+        });
         if bake_ik != edit_mode.export_bake_ik {
             events.toggle_baking_ik(if bake_ik { 1 } else { 0 });
         }
@@ -224,14 +224,16 @@ pub fn armature_export(
             ui.label(shared_ui.loc("export_modal.armature.exclude_ik"))
                 .on_hover_text(shared_ui.loc("export_modal.armature.exclude_ik_desc"));
             let mut exclude_ik = edit_mode.export_exclude_ik;
-            ui.checkbox(&mut exclude_ik, "".into_atoms());
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.checkbox(&mut exclude_ik, "".into_atoms());
+            });
             if exclude_ik != edit_mode.export_exclude_ik {
                 events.toggle_exclude_ik(if exclude_ik { 1 } else { 0 });
             }
         });
     });
 
-    ui.add_space(30.);
+    ui.add_space(20.);
 
     egui::Frame::new()
         .fill(config.colors.dark_accent.into())
@@ -246,16 +248,18 @@ pub fn armature_export(
 
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.armature.img_format"));
-        let dropdown = egui::ComboBox::new("img_format", "")
-            .selected_text(&edit_mode.export_img_format.to_string())
-            .width(80.);
-        dropdown.show_ui(ui, |ui| {
-            let mut selected = edit_mode.export_img_format.clone();
-            ui.selectable_value(&mut selected, ExportImgFormat::PNG, "PNG");
-            ui.selectable_value(&mut selected, ExportImgFormat::JPG, "JPG");
-            if selected != edit_mode.export_img_format {
-                events.set_export_img_format(selected as usize);
-            }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let dropdown = egui::ComboBox::new("img_format", "")
+                .selected_text(&edit_mode.export_img_format.to_string())
+                .width(80.);
+            dropdown.show_ui(ui, |ui| {
+                let mut selected = edit_mode.export_img_format.clone();
+                ui.selectable_value(&mut selected, ExportImgFormat::PNG, "PNG");
+                ui.selectable_value(&mut selected, ExportImgFormat::JPG, "JPG");
+                if selected != edit_mode.export_img_format {
+                    events.set_export_img_format(selected as usize);
+                }
+            });
         });
     });
 
@@ -263,27 +267,32 @@ pub fn armature_export(
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("export_modal.armature.clear_color"))
                 .on_hover_text(shared_ui.loc("export_modal.armature.clear_color_desc"));
-            let cc = &edit_mode.export_clear_color;
-            let mut col: [f32; 3] = [cc.r as f32 / 255., cc.g as f32 / 255., cc.b as f32 / 255.];
-            ui.color_edit_button_rgb(&mut col);
-            events.set_export_clear_color(col[0], col[1], col[2]);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let cc = &edit_mode.export_clear_color;
+                let mut col: [f32; 3] =
+                    [cc.r as f32 / 255., cc.g as f32 / 255., cc.b as f32 / 255.];
+                ui.color_edit_button_rgb(&mut col);
+                events.set_export_clear_color(col[0], col[1], col[2]);
+            });
         });
     });
 
     ui.horizontal(|ui| {
         ui.label("Padding:");
-        let pad = edit_mode.export_tex_padding;
-        let mut either = false;
-        let mut result = pad;
-        let (edited, value, _) = ui.float_input("padding_x".into(), shared_ui, pad.x, 1., None);
-        either |= edited;
-        result.x = value;
-        let (edited, value, _) = ui.float_input("padding_y".into(), shared_ui, pad.y, 1., None);
-        either |= edited;
-        result.y = value;
-        if either {
-            events.set_export_tex_padding(result);
-        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let pad = edit_mode.export_tex_padding;
+            let mut either = false;
+            let mut result = pad;
+            let (edited, value, _) = ui.float_input("padding_x".into(), shared_ui, pad.x, 1., None);
+            either |= edited;
+            result.x = value;
+            let (edited, value, _) = ui.float_input("padding_y".into(), shared_ui, pad.y, 1., None);
+            either |= edited;
+            result.y = value;
+            if either {
+                events.set_export_tex_padding(result);
+            }
+        });
     });
 }
 
@@ -306,18 +315,20 @@ pub fn image_export(
     // export type (spritesheet, sequence, etc)
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.image.export_type"));
-        let str_sequences = shared_ui.loc("export_modal.image.sequences");
-        let str_spritesheets = shared_ui.loc("export_modal.image.spritesheets");
-        let selected_str = if shared_ui.image_sequences {
-            &str_sequences
-        } else {
-            &str_spritesheets
-        };
-        let combo_box = egui::ComboBox::new("transition_dropdown".to_string(), "")
-            .selected_text(selected_str.to_string());
-        combo_box.show_ui(ui, |ui| {
-            ui.selectable_value(&mut shared_ui.image_sequences, false, str_spritesheets);
-            ui.selectable_value(&mut shared_ui.image_sequences, true, str_sequences);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let str_sequences = shared_ui.loc("export_modal.image.sequences");
+            let str_spritesheets = shared_ui.loc("export_modal.image.spritesheets");
+            let selected_str = if shared_ui.image_sequences {
+                &str_sequences
+            } else {
+                &str_spritesheets
+            };
+            let combo_box = egui::ComboBox::new("transition_dropdown".to_string(), "")
+                .selected_text(selected_str.to_string());
+            combo_box.show_ui(ui, |ui| {
+                ui.selectable_value(&mut shared_ui.image_sequences, false, str_spritesheets);
+                ui.selectable_value(&mut shared_ui.image_sequences, true, str_sequences);
+            });
         });
     });
 
@@ -325,30 +336,33 @@ pub fn image_export(
     ui.add_enabled_ui(!shared_ui.image_sequences, |ui: &mut egui::Ui| {
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("export_modal.image.sprites_per_row"));
-            let spr = shared_ui.sprites_per_row as f32;
-            let (edited, value, _) = ui.float_input("sprite_row".into(), shared_ui, spr, 1., None);
-            if edited {
-                shared_ui.sprites_per_row = value as i32;
-            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let spr = shared_ui.sprites_per_row as f32;
+                let (edited, value, _) =
+                    ui.float_input("sprite_row".into(), shared_ui, spr, 1., None);
+                if edited {
+                    shared_ui.sprites_per_row = value as i32;
+                }
+            });
         });
     });
-
-    ui.add_space(10.);
 
     // size per sprite (width & height)
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.image.size_per_sprite"));
-        let x = shared_ui.sprite_size.x;
-        let (edited, value, _) = ui.float_input("sprite_size_x".into(), shared_ui, x, 1., None);
-        if edited {
-            shared_ui.sprite_size.x = value;
-        }
-        ui.label("x");
-        let y = shared_ui.sprite_size.y;
-        let (edited, value, _) = ui.float_input("sprite_size_y".into(), shared_ui, y, 1., None);
-        if edited {
-            shared_ui.sprite_size.y = value;
-        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let x = shared_ui.sprite_size.x;
+            let (edited, value, _) = ui.float_input("sprite_size_x".into(), shared_ui, x, 1., None);
+            if edited {
+                shared_ui.sprite_size.x = value;
+            }
+            ui.label("x");
+            let y = shared_ui.sprite_size.y;
+            let (edited, value, _) = ui.float_input("sprite_size_y".into(), shared_ui, y, 1., None);
+            if edited {
+                shared_ui.sprite_size.y = value;
+            }
+        });
     });
 
     ui.add_space(20.);
@@ -416,30 +430,34 @@ pub fn video_export(
     // video format (mp4, gif, etc)
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.video.format"));
-        let dropdown = egui::ComboBox::new("export_video", "")
-            .selected_text(&shared_ui.exporting_video_type.to_string().to_uppercase())
-            .width(80.);
-        dropdown.show_ui(ui, |ui| {
-            let export = &mut shared_ui.exporting_video_type;
-            ui.selectable_value(export, crate::ExportVideoType::Mp4, "MP4");
-            ui.selectable_value(export, crate::ExportVideoType::Gif, "GIF");
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let dropdown = egui::ComboBox::new("export_video", "")
+                .selected_text(&shared_ui.exporting_video_type.to_string().to_uppercase())
+                .width(80.);
+            dropdown.show_ui(ui, |ui| {
+                let export = &mut shared_ui.exporting_video_type;
+                ui.selectable_value(export, crate::ExportVideoType::Mp4, "MP4");
+                ui.selectable_value(export, crate::ExportVideoType::Gif, "GIF");
+            });
         });
     });
 
     // resolution (width & height)
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("export_modal.video.resolution"));
-        let x = shared_ui.sprite_size.x;
-        let (edited, value, _) = ui.float_input("sprite_size_x".into(), shared_ui, x, 1., None);
-        if edited {
-            shared_ui.sprite_size.x = value;
-        }
-        ui.label("x");
-        let y = shared_ui.sprite_size.y;
-        let (edited, value, _) = ui.float_input("sprite_size_y".into(), shared_ui, y, 1., None);
-        if edited {
-            shared_ui.sprite_size.y = value;
-        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let x = shared_ui.sprite_size.x;
+            let (edited, value, _) = ui.float_input("sprite_size_x".into(), shared_ui, x, 1., None);
+            if edited {
+                shared_ui.sprite_size.x = value;
+            }
+            ui.label("x");
+            let y = shared_ui.sprite_size.y;
+            let (edited, value, _) = ui.float_input("sprite_size_y".into(), shared_ui, y, 1., None);
+            if edited {
+                shared_ui.sprite_size.y = value;
+            }
+        });
     });
 
     // background (clear) color
@@ -447,10 +465,12 @@ pub fn video_export(
     ui.add_enabled_ui(is_mp4, |ui| {
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("export_modal.video.background_color"));
-            let real = &mut shared_ui.video_clear_bg;
-            let mut col: [u8; 3] = [real.r, real.g, real.b];
-            ui.color_edit_button_srgb(&mut col);
-            *real = crate::shared::Color::new(col[0], col[1], col[2], 255);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let real = &mut shared_ui.video_clear_bg;
+                let mut col: [u8; 3] = [real.r, real.g, real.b];
+                ui.color_edit_button_srgb(&mut col);
+                *real = crate::shared::Color::new(col[0], col[1], col[2], 255);
+            });
         });
     });
 
@@ -461,19 +481,23 @@ pub fn video_export(
     ui.add_enabled_ui(is_mp4, |ui| {
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("export_modal.video.cycles"));
-            let cycles = "anim_cycles".to_string();
-            let (edited, value, _) =
-                ui.float_input(cycles, shared_ui, shared_ui.anim_cycles as f32, 1., None);
-            if edited {
-                shared_ui.anim_cycles = value as i32;
-            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let cycles = "anim_cycles".to_string();
+                let (edited, value, _) =
+                    ui.float_input(cycles, shared_ui, shared_ui.anim_cycles as f32, 1., None);
+                if edited {
+                    shared_ui.anim_cycles = value as i32;
+                }
+            });
         });
     });
 
     ui.add_enabled_ui(is_mp4, |ui| {
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("export_modal.video.global_bounds"));
-            ui.checkbox(&mut shared_ui.export_global_bounds, "".into_atoms());
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.checkbox(&mut shared_ui.export_global_bounds, "".into_atoms());
+            });
         });
     });
 
@@ -502,13 +526,19 @@ pub fn video_export(
         ui.horizontal(|ui| {
             ui.label(shared_ui.loc("export_modal.video.use_system_ffmpeg"))
                 .on_hover_text(shared_ui.loc("export_modal.video.use_system_ffmpeg_desc"));
-            ui.checkbox(&mut shared_ui.use_system_ffmpeg, "".into_atoms());
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.checkbox(&mut shared_ui.use_system_ffmpeg, "".into_atoms());
+            });
         });
 
         // download ffmpeg button (not needed for macos)
         #[cfg(not(target_os = "macos"))]
         {
-            download_ffmpeg_button(ui);
+            ui.horizontal(|ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    download_ffmpeg_button(ui);
+                });
+            });
         }
     }
 
