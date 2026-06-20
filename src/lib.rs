@@ -1073,7 +1073,6 @@ impl BackendRenderer {
         {
             path = PathBuf::new();
         }
-
         #[cfg(not(target_arch = "wasm32"))]
         {
             path = shared_ui.file_path.lock().unwrap()[0].clone();
@@ -1182,16 +1181,16 @@ impl BackendRenderer {
                 continue;
             }
             base = base.join(armature.animations[a].name.clone());
-            let mut path_str = &base.to_str().unwrap().to_string();
+            let mut _path_str = &base.to_str().unwrap().to_string();
             let fps = armature.animations[a].fps;
             #[cfg(target_arch = "wasm32")]
             {
                 path_str = &armature.animations[a].name;
             }
             shared_ui.custom_error = if shared_ui.exporting_video_type == ExportVideoType::Mp4 {
-                Self::encode_video(bufs[a].clone(), fps, size, path_str, &ffmpeg_bin)
+                Self::encode_video(bufs[a].clone(), fps, size, _path_str, &ffmpeg_bin)
             } else {
-                Self::encode_gif(bufs[a].clone(), fps, size, path_str, &ffmpeg_bin)
+                Self::encode_gif(bufs[a].clone(), fps, size, _path_str, &ffmpeg_bin)
             };
 
             if shared_ui.custom_error != "" {}
