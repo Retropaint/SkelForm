@@ -18,7 +18,6 @@ pub use web::*;
 
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
-    pub use crate::utils;
     pub use std::{
         fs::OpenOptions,
         io::{Read, Write},
@@ -28,6 +27,8 @@ mod native {
 }
 #[cfg(not(target_arch = "wasm32"))]
 pub use native::*;
+
+pub use crate::utils;
 
 pub fn draw(
     ctx: &egui::Context,
@@ -563,6 +564,7 @@ pub fn video_export(
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn download_ffmpeg_button(ui: &mut egui::Ui) {
     #[allow(unreachable_code)]
     ui.add_space(10.);

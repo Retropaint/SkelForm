@@ -41,6 +41,7 @@ use std::sync::Arc;
 #[cfg(target_arch = "wasm32")]
 use web::*;
 
+use image::GenericImageView;
 use image::ImageEncoder;
 
 use winit::{
@@ -1004,7 +1005,6 @@ impl BackendRenderer {
 
         if *elapsed != None && elapsed.unwrap().elapsed().as_millis() > duration_in_millis {
             if shared.ui.exporting_video_type != ExportVideoType::None {
-                #[cfg(not(target_arch = "wasm32"))]
                 self.skf_export_videos(&shared.armature, &mut shared.ui);
             } else {
                 #[cfg(not(target_arch = "wasm32"))]
@@ -1068,28 +1068,36 @@ impl BackendRenderer {
     }
 
     fn skf_export_videos(&self, armature: &Armature, shared_ui: &mut Ui) {
-        let path = shared_ui.file_path.lock().unwrap()[0].clone();
+        let path;
+        #[cfg(target_arch = "wasm32")]
+        {
+            path = PathBuf::new();
+        }
 
-        // attempt to remove the existing dir, if it exists
-        let can_proceed = if let Ok(exists) = std::fs::exists(&path) {
-            if exists {
-                if let Err(e) = std::fs::remove_dir_all(&path) {
-                    eprintln!("{}", e);
-                    false
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            path = shared_ui.file_path.lock().unwrap()[0].clone();
+
+            // attempt to remove the existing dir, if it exists
+            let can_proceed = if let Ok(exists) = std::fs::exists(&path) {
+                if exists {
+                    if let Err(e) = std::fs::remove_dir_all(&path) {
+                        eprintln!("{}", e);
+                        false
+                    } else {
+                        true
+                    }
                 } else {
                     true
                 }
             } else {
                 true
+            };
+            if !can_proceed {
+                return;
             }
-        } else {
-            true
-        };
-        if !can_proceed {
-            return;
+            let _ = std::fs::create_dir(&path).unwrap();
         }
-
-        let _ = std::fs::create_dir(&path).unwrap();
         self.skf_pack_videos(armature, shared_ui, &path);
     }
 
@@ -1174,8 +1182,12 @@ impl BackendRenderer {
                 continue;
             }
             base = base.join(armature.animations[a].name.clone());
-            let path_str = &base.to_str().unwrap().to_string();
+            let mut path_str = &base.to_str().unwrap().to_string();
             let fps = armature.animations[a].fps;
+            #[cfg(target_arch = "wasm32")]
+            {
+                path_str = &armature.animations[a].name;
+            }
             shared_ui.custom_error = if shared_ui.exporting_video_type == ExportVideoType::Mp4 {
                 Self::encode_video(bufs[a].clone(), fps, size, path_str, &ffmpeg_bin)
             } else {
@@ -1440,7 +1452,7 @@ impl BackendRenderer {
         rendered_frames: Vec<Vec<u8>>,
         fps: i32,
         window: Vec2,
-        _path: &String,
+        path: &String,
         _ffmpeg_bin: &String,
     ) -> String {
         #[cfg(not(target_arch = "wasm32"))]
@@ -1452,7 +1464,7 @@ impl BackendRenderer {
                     // disabled: manual encoder codec - not needed for now
                     // "-c:v", codec, 
                     "-pix_fmt", "yuv420p",
-                    &format!("{}.mp4", _path.to_string())])
+                    &format!("{}.mp4", path.to_string())])
                 .stdin(Stdio::piped())
                 .spawn();
 
@@ -1484,6 +1496,8 @@ impl BackendRenderer {
                     raw_video.push(chunk[2]);
                 }
             }
+            let split: Vec<&str> = path.split('/').collect();
+            downloadMp4(raw_video, window.x, window.y, split.last().unwrap(), fps);
         }
 
         "".to_string()
@@ -1493,15 +1507,16 @@ impl BackendRenderer {
         rendered_frames: Vec<Vec<u8>>,
         fps: i32,
         window: Vec2,
-        _path: &String,
+        path: &String,
         _ffmpeg_bin: &String,
     ) -> String {
         #[cfg(target_arch = "wasm32")]
         {
+            let split: Vec<&str> = path.split('/').collect();
             for frame in rendered_frames {
                 addGifFrame(frame);
             }
-            downloadGif(window.x, window.y, _name, fps);
+            downloadGif(window.x, window.y, split.last().unwrap(), fps);
         }
 
         #[cfg(not(target_arch = "wasm32"))]
@@ -1514,7 +1529,7 @@ impl BackendRenderer {
                  [a] palettegen=stats_mode=diff [p]; \
                  [b][p] paletteuse=dither=sierra2_4a",
                 "-loop", "0",
-                &format!("{}.gif", _path)
+                &format!("{}.gif", path)
             ])
             .stdin(Stdio::piped())
             .stderr(Stdio::inherit())
