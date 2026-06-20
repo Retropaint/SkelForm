@@ -437,26 +437,36 @@ impl ApplicationHandler for App {
                     let device = Some(&self.renderer.as_ref().unwrap().gpu.device);
                     let bgl = Some(&self.renderer.as_ref().unwrap().bind_group_layout);
                     let ctx = Some(gui_state.egui_ctx());
-                    if self.shared.events.events[0] == Events::CreateEmptyTexture {
+
+                    let shared = &mut self.shared;
+
+                    if shared.events.events[0] == Events::CreateEmptyTexture {
                         let img = image::DynamicImage::new(1, 1, image::ColorType::Rgba8);
-                        let style_id = self.shared.selections.style_id;
-                        let armature = &mut self.shared.armature;
+                        let style_id = shared.selections.style_id;
+                        let armature = &mut shared.armature;
                         let dims = Vec2::new(1., 1.);
                         file_reader::add_texture(
                             img, style_id, dims, "", armature, queue, device, bgl, ctx,
                         );
-                    } else if self.shared.events.events[0] == Events::TrimTexture {
-                        let s = self.shared.events.values[0] as usize;
-                        let t = self.shared.events.values[1] as usize;
-                        let data_id = self.shared.armature.styles[s].textures[t].data_id;
-                        let tex_data = &mut self.shared.armature.tex_data[data_id as usize];
-                        let img = file_reader::trim_transparent(&tex_data.image);
-                        let dims = Vec2::new(img.dimensions().0 as f32, img.dimensions().1 as f32);
-                        let (bind_group, ui_img) =
-                            file_reader::create_texture(&img, dims, queue, device, bgl, ctx);
-                        tex_data.image = img;
-                        tex_data.bind_group = bind_group;
-                        tex_data.ui_img = ui_img;
+                    } else if shared.events.events[0] == Events::TrimTexture {
+                        for id in &shared.selections.tex_ids {
+                            // get texture data of this selected texture
+                            let style = shared.armature.sel_style(&shared.selections).unwrap();
+                            let data_id = style.textures[*id as usize].data_id;
+                            let tex_data = &mut shared.armature.tex_data[data_id as usize];
+
+                            // trim transparent edges off
+                            let img = file_reader::trim_transparent(&tex_data.image);
+
+                            // replace this texture data with new, trimmed img
+                            let dims =
+                                Vec2::new(img.dimensions().0 as f32, img.dimensions().1 as f32);
+                            let (bind_group, ui_img) =
+                                file_reader::create_texture(&img, dims, queue, device, bgl, ctx);
+                            tex_data.image = img;
+                            tex_data.bind_group = bind_group;
+                            tex_data.ui_img = ui_img;
+                        }
                     }
 
                     // all other events go here
