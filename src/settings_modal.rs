@@ -762,7 +762,15 @@ pub fn basic_checkbox(
             ui.label(label).on_hover_text(desc);
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            ui.checkbox(field, "".into_atoms());
+            ui.scope(|ui| {
+                ui.style_mut().visuals.widgets.inactive.bg_fill = if alt {
+                    config.colors.main
+                } else {
+                    config.colors.dark_accent
+                }
+                .into();
+                ui.checkbox(field, "".into_atoms());
+            })
         });
     });
 }

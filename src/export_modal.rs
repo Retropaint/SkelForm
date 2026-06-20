@@ -207,7 +207,10 @@ pub fn armature_export(
             .on_hover_text(shared_ui.loc("export_modal.armature.bake_ik_desc"));
         let mut bake_ik = edit_mode.export_bake_ik;
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            ui.checkbox(&mut bake_ik, "".into_atoms());
+            ui.scope(|ui| {
+                ui.style_mut().visuals.widgets.inactive.bg_fill = config.colors.main.into();
+                ui.checkbox(&mut bake_ik, "".into_atoms());
+            });
         });
         if bake_ik != edit_mode.export_bake_ik {
             events.toggle_baking_ik(if bake_ik { 1 } else { 0 });
@@ -353,43 +356,7 @@ pub fn image_export(
     });
 
     ui.add_space(20.);
-
-    // selecting which animations to export
-    let text = shared_ui.loc("export_modal.image.animations");
-    ui.heading(text);
-
-    ui.add_space(5.);
-    for a in 0..armature.animations.len() {
-        #[rustfmt::skip]
-        let col = if a % 2 == 0 { config.colors.dark_accent } else { config.colors.main };
-
-        let anim = &armature.animations[a];
-        egui::Frame::new().fill(col.into()).show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.set_width(width + 10.);
-                ui.label(anim.name.to_string());
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.checkbox(&mut shared_ui.exporting_anims[a], "".into_atoms())
-                        .on_hover_text(shared_ui.loc("export_modal.image.animations_check_desc"));
-                    ui.add_space(10.);
-                    let total_frames = anim.keyframes.last();
-
-                    // show frame info, if this animation has any
-                    // (frameless anims are allowed for export)
-                    if total_frames == None {
-                        return;
-                    }
-                    let str = anim.fps.to_string()
-                        + &" FPS  -  ".to_string()
-                        + &total_frames.unwrap().frame.to_string()
-                        + &shared_ui.loc("export_modal.image.frames");
-                    let mut meta_col = config.colors.text;
-                    meta_col -= crate::Color::new(40, 40, 40, 0);
-                    ui.label(egui::RichText::new(str).color(meta_col));
-                });
-            });
-        });
-    }
+    animations_list(ui, shared_ui, armature, width, config);
 }
 
 pub fn video_export(
@@ -478,7 +445,10 @@ pub fn video_export(
         alt_hor(ui, config, true, |ui| {
             ui.label(shared_ui.loc("export_modal.video.global_bounds"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.checkbox(&mut shared_ui.export_global_bounds, "".into_atoms());
+                ui.scope(|ui| {
+                    ui.style_mut().visuals.widgets.inactive.bg_fill = config.colors.main.into();
+                    ui.checkbox(&mut shared_ui.export_global_bounds, "".into_atoms());
+                });
             });
         });
     });
@@ -525,43 +495,7 @@ pub fn video_export(
     }
 
     ui.add_space(20.);
-
-    // selecting which animations to export
-    let text = shared_ui.loc("export_modal.image.animations");
-    ui.heading(text);
-
-    ui.add_space(5.);
-    for a in 0..armature.animations.len() {
-        #[rustfmt::skip]
-        let col = if a % 2 == 0 { config.colors.dark_accent } else { config.colors.main };
-
-        let anim = &armature.animations[a];
-        egui::Frame::new().fill(col.into()).show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.set_width(_width + 10.);
-                ui.label(anim.name.to_string());
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.checkbox(&mut shared_ui.exporting_anims[a], "".into_atoms())
-                        .on_hover_text(shared_ui.loc("export_modal.image.animations_check_desc"));
-                    ui.add_space(10.);
-                    let total_frames = anim.keyframes.last();
-
-                    // show frame info, if this animation has any
-                    // (frameless anims are allowed for export)
-                    if total_frames == None {
-                        return;
-                    }
-                    let str = anim.fps.to_string()
-                        + &" FPS  -  ".to_string()
-                        + &total_frames.unwrap().frame.to_string()
-                        + &shared_ui.loc("export_modal.image.frames");
-                    let mut meta_col = config.colors.text;
-                    meta_col -= crate::Color::new(40, 40, 40, 0);
-                    ui.label(egui::RichText::new(str).color(meta_col));
-                });
-            });
-        });
-    }
+    animations_list(ui, shared_ui, armature, _width, config);
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -651,4 +585,62 @@ pub fn download_ffmpeg_button(ui: &mut egui::Ui) {
         )
     };
     ui.label(str);
+}
+
+fn animations_list(
+    ui: &mut egui::Ui,
+    shared_ui: &mut crate::Ui,
+    armature: &Armature,
+    width: f32,
+    config: &Config,
+) {
+    // selecting which animations to export
+    let text = shared_ui.loc("export_modal.image.animations");
+    ui.heading(text);
+
+    ui.add_space(5.);
+    for a in 0..armature.animations.len() {
+        #[rustfmt::skip]
+        let col = if a % 2 == 0 { config.colors.dark_accent } else { config.colors.main };
+
+        let anim = &armature.animations[a];
+        egui::Frame::new().fill(col.into()).show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.set_width(width + 20.);
+                ui.label(anim.name.to_string());
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.scope(|ui| {
+                        // different colored checkbox bg against the stripe
+                        ui.style_mut().visuals.widgets.inactive.bg_fill = if a % 2 == 0 {
+                            config.colors.main
+                        } else {
+                            config.colors.dark_accent
+                        }
+                        .into();
+
+                        ui.checkbox(&mut shared_ui.exporting_anims[a], "".into_atoms())
+                            .on_hover_text(
+                                shared_ui.loc("export_modal.image.animations_check_desc"),
+                            );
+                    });
+
+                    ui.add_space(10.);
+
+                    // show frame info, if this animation has any
+                    // (frameless anims are allowed for export)
+                    let total_frames = anim.keyframes.last();
+                    if total_frames == None {
+                        return;
+                    }
+                    let str = anim.fps.to_string()
+                        + &" FPS  -  ".to_string()
+                        + &total_frames.unwrap().frame.to_string()
+                        + &shared_ui.loc("export_modal.image.frames");
+                    let mut meta_col = config.colors.text;
+                    meta_col -= crate::Color::new(40, 40, 40, 0);
+                    ui.label(egui::RichText::new(str).color(meta_col));
+                });
+            });
+        });
+    }
 }
