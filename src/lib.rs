@@ -668,8 +668,9 @@ impl BackendRenderer {
             self.egui_renderer.free_texture(id);
         }
 
-        #[rustfmt::skip]
-        let desc = &wgpu::CommandEncoderDescriptor { label: Some("Render Encoder") };
+        let desc = &wgpu::CommandEncoderDescriptor {
+            label: Some("Render Encoder"),
+        };
         let mut encoder = self.gpu.device.create_command_encoder(desc);
         encoder.insert_debug_marker("Render scene");
 
@@ -1003,12 +1004,12 @@ impl BackendRenderer {
 
         if *elapsed != None && elapsed.unwrap().elapsed().as_millis() > duration_in_millis {
             if shared.ui.exporting_video_type != ExportVideoType::None {
-                #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
+                #[cfg(not(target_arch = "wasm32"))]
                 self.skf_export_videos(&shared.armature, &mut shared.ui);
             } else {
-                #[rustfmt::skip] #[cfg(not(target_arch = "wasm32"))]
+                #[cfg(not(target_arch = "wasm32"))]
                 self.skf_native_spritesheet(&shared.armature, &mut shared.ui);
-                #[rustfmt::skip] #[cfg(target_arch = "wasm32")]
+                #[cfg(target_arch = "wasm32")]
                 self.skf_web_spritesheet(&shared.armature, &mut shared.ui);
             }
 
