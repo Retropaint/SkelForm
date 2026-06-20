@@ -126,8 +126,8 @@ pub fn polar_modal(
                 PolarId::DeleteFile => {
                     std::fs::remove_file(&shared_ui.selected_path).unwrap();
                 }
-                PolarId::DeleteTex => {
-                    events.delete_tex(ctx0);
+                PolarId::DeleteSelectedTextures => {
+                    events.delete_sel_texes();
                 }
                 PolarId::DeleteStyle => {
                     events.delete_style(ctx0);

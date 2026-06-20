@@ -34,7 +34,7 @@ pub fn iterate_events(
             match last_event {
                 E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone | E::RaiseGlobalZindex => undo_states.new_undo_bones(&armature.bones),
                 E::NewAnimation | E::DeleteAnim => undo_states.new_undo_anims(&armature.animations),
-                E::DeleteTex                    => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
+                E::DeleteSelectedTextures       => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
                 E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
                 E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframesOnFrame => {
@@ -573,9 +573,14 @@ pub fn simple_event(
                 }
             }
         }
-        Events::DeleteTex => {
+        Events::DeleteSelectedTextures => {
             let style = &mut armature.sel_style_mut(selections).unwrap();
-            style.textures.remove(value as usize);
+            let mut t = -1;
+            style.textures.retain(|_| {
+                t += 1;
+                !selections.tex_ids.contains(&t)
+            });
+            selections.tex_ids = vec![];
         }
         Events::DeleteStyle => {
             let styles = &mut armature.styles;

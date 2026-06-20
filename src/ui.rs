@@ -896,7 +896,8 @@ fn context_menu_content(
         }
     } else if id == "tex" {
         ui.context_rename(shared_ui, &config, context_id);
-        ui.context_delete(shared_ui, &config, events, "delete_tex", PolarId::DeleteTex);
+        let polar_id = PolarId::DeleteSelectedTextures;
+        ui.context_delete(shared_ui, &config, events, "delete_tex", polar_id);
         let style_idx = armature
             .styles
             .iter()

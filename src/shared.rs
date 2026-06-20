@@ -421,7 +421,7 @@ pub enum PolarId {
     Exiting,
     DeleteAnim,
     DeleteFile,
-    DeleteTex,
+    DeleteSelectedTextures,
     DeleteStyle,
     DeleteKeyframeLine,
     NewUpdate,
@@ -2273,7 +2273,7 @@ pub enum Events {
 
     DeleteBone,
     DeleteAnim,
-    DeleteTex,
+    DeleteSelectedTextures,
     DeleteStyle,
     DeleteVertex,
     DeleteTriangle,
@@ -2449,11 +2449,11 @@ impl EventState {
     generic_event!(global_copy, Events::GlobalCopy);
     generic_event!(global_paste, Events::GlobalPaste);
     generic_event!(copy_selected_keyframes, Events::CopySelectedKeyframes);
+    generic_event!(delete_sel_texes, Events::DeleteSelectedTextures);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, i32);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);
     event_with_value!(delete_anim, Events::DeleteAnim, anim_id, usize);
-    event_with_value!(delete_tex, Events::DeleteTex, tex_id, usize);
     event_with_value!(delete_style, Events::DeleteStyle, style_id, usize);
     event_with_value!(duplicate_anim, Events::DuplicateAnim, anim_id, usize);
     event_with_value!(copy_bone, Events::CopyBone, bone_id, usize);
