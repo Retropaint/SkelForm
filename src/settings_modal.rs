@@ -747,7 +747,7 @@ fn basic_input(
     result
 }
 
-fn basic_checkbox(
+pub fn basic_checkbox(
     ui: &mut egui::Ui,
     label: &str,
     desc: &str,
@@ -767,7 +767,7 @@ fn basic_checkbox(
     });
 }
 
-fn alt_hor<T: FnOnce(&mut egui::Ui)>(
+pub fn alt_hor<T: FnOnce(&mut egui::Ui)>(
     ui: &mut egui::Ui,
     config: &crate::Config,
     alt: bool,

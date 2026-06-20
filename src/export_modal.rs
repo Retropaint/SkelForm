@@ -4,8 +4,9 @@ use std::os::unix::fs::PermissionsExt;
 use egui::IntoAtoms;
 
 use crate::{
-    settings_modal::settings_button, ui::EguiUi, Armature, Config, EditMode, EventState,
-    ExportImgFormat, SettingsState,
+    settings_modal::{alt_hor, settings_button},
+    ui::EguiUi,
+    Armature, Config, EditMode, EventState, ExportImgFormat, SettingsState,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -196,18 +197,11 @@ pub fn armature_export(
     ui.heading(shared_ui.loc("export_modal.armature.header"));
 
     ui.add_space(10.);
-    let width = ui.available_width() - 20.;
-    egui::Frame::new()
-        .fill(config.colors.dark_accent.into())
-        .inner_margin(egui::Margin::same(5))
-        .show(ui, |ui| {
-            ui.set_width(width);
-            let ik_str = shared_ui.loc("export_modal.armature.inverse_kinematics");
-            let text = egui::RichText::new(ik_str).size(15.);
-            ui.label(text);
-        });
 
-    ui.horizontal(|ui| {
+    let ik_str = shared_ui.loc("export_modal.armature.inverse_kinematics");
+    ui.heading(ik_str);
+
+    alt_hor(ui, config, true, |ui| {
         ui.label(shared_ui.loc("export_modal.armature.bake_ik"))
             .on_hover_text(shared_ui.loc("export_modal.armature.bake_ik_desc"));
         let mut bake_ik = edit_mode.export_bake_ik;
@@ -235,18 +229,10 @@ pub fn armature_export(
 
     ui.add_space(20.);
 
-    egui::Frame::new()
-        .fill(config.colors.dark_accent.into())
-        .inner_margin(egui::Margin::same(5))
-        .show(ui, |ui| {
-            ui.set_width(width);
-            let text =
-                egui::RichText::new(shared_ui.loc("export_modal.armature.tex_atlas")).size(15.);
-            ui.label(text);
-        });
-    ui.add_space(5.);
+    let text = shared_ui.loc("export_modal.armature.tex_atlas");
+    ui.heading(text);
 
-    ui.horizontal(|ui| {
+    alt_hor(ui, config, true, |ui| {
         ui.label(shared_ui.loc("export_modal.armature.img_format"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let dropdown = egui::ComboBox::new("img_format", "")
@@ -277,7 +263,7 @@ pub fn armature_export(
         });
     });
 
-    ui.horizontal(|ui| {
+    alt_hor(ui, config, true, |ui| {
         ui.label("Padding:");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let pad = edit_mode.export_tex_padding;
@@ -313,7 +299,7 @@ pub fn image_export(
     ui.add_space(10.);
 
     // export type (spritesheet, sequence, etc)
-    ui.horizontal(|ui| {
+    alt_hor(ui, config, true, |ui| {
         ui.label(shared_ui.loc("export_modal.image.export_type"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let str_sequences = shared_ui.loc("export_modal.image.sequences");
@@ -348,7 +334,7 @@ pub fn image_export(
     });
 
     // size per sprite (width & height)
-    ui.horizontal(|ui| {
+    alt_hor(ui, config, true, |ui| {
         ui.label(shared_ui.loc("export_modal.image.size_per_sprite"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let x = shared_ui.sprite_size.x;
@@ -368,18 +354,13 @@ pub fn image_export(
     ui.add_space(20.);
 
     // selecting which animations to export
-    let frame = egui::Frame::new()
-        .fill(config.colors.dark_accent.into())
-        .inner_margin(egui::Margin::same(5));
-    frame.show(ui, |ui| {
-        ui.set_width(width);
-        let text = egui::RichText::new(shared_ui.loc("export_modal.image.animations")).size(15.);
-        ui.label(text);
-    });
+    let text = shared_ui.loc("export_modal.image.animations");
+    ui.heading(text);
+
     ui.add_space(5.);
     for a in 0..armature.animations.len() {
         #[rustfmt::skip]
-        let col = if a % 2 == 1 { config.colors.dark_accent } else { config.colors.main };
+        let col = if a % 2 == 0 { config.colors.dark_accent } else { config.colors.main };
 
         let anim = &armature.animations[a];
         egui::Frame::new().fill(col.into()).show(ui, |ui| {
@@ -413,7 +394,7 @@ pub fn image_export(
 pub fn video_export(
     ui: &mut egui::Ui,
     shared_ui: &mut crate::Ui,
-    _config: &Config,
+    config: &Config,
     armature: &Armature,
 ) {
     ui.heading(shared_ui.loc("export_modal.video.header"));
@@ -428,7 +409,7 @@ pub fn video_export(
     }
 
     // video format (mp4, gif, etc)
-    ui.horizontal(|ui| {
+    alt_hor(ui, config, true, |ui| {
         ui.label(shared_ui.loc("export_modal.video.format"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let dropdown = egui::ComboBox::new("export_video", "")
@@ -463,7 +444,7 @@ pub fn video_export(
     // background (clear) color
     let is_mp4 = shared_ui.exporting_video_type == crate::ExportVideoType::Mp4;
     ui.add_enabled_ui(is_mp4, |ui| {
-        ui.horizontal(|ui| {
+        alt_hor(ui, config, true, |ui| {
             ui.label(shared_ui.loc("export_modal.video.background_color"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let real = &mut shared_ui.video_clear_bg;
@@ -493,7 +474,7 @@ pub fn video_export(
     });
 
     ui.add_enabled_ui(is_mp4, |ui| {
-        ui.horizontal(|ui| {
+        alt_hor(ui, config, true, |ui| {
             ui.label(shared_ui.loc("export_modal.video.global_bounds"));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.checkbox(&mut shared_ui.export_global_bounds, "".into_atoms());
@@ -545,18 +526,13 @@ pub fn video_export(
     ui.add_space(20.);
 
     // selecting which animations to export
-    let frame = egui::Frame::new()
-        .fill(_config.colors.dark_accent.into())
-        .inner_margin(egui::Margin::same(5));
-    frame.show(ui, |ui| {
-        ui.set_width(_width);
-        let text = egui::RichText::new(shared_ui.loc("export_modal.image.animations")).size(15.);
-        ui.label(text);
-    });
+    let text = shared_ui.loc("export_modal.image.animations");
+    ui.heading(text);
+
     ui.add_space(5.);
     for a in 0..armature.animations.len() {
         #[rustfmt::skip]
-        let col = if a % 2 == 1 { _config.colors.dark_accent } else { _config.colors.main };
+        let col = if a % 2 == 0 { config.colors.dark_accent } else { config.colors.main };
 
         let anim = &armature.animations[a];
         egui::Frame::new().fill(col.into()).show(ui, |ui| {
@@ -578,7 +554,7 @@ pub fn video_export(
                         + &" FPS  -  ".to_string()
                         + &total_frames.unwrap().frame.to_string()
                         + &shared_ui.loc("export_modal.image.frames");
-                    let mut meta_col = _config.colors.text;
+                    let mut meta_col = config.colors.text;
                     meta_col -= crate::Color::new(40, 40, 40, 0);
                     ui.label(egui::RichText::new(str).color(meta_col));
                 });
