@@ -470,17 +470,6 @@ pub fn video_export(
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        ui.add_space(20.);
-        let frame = egui::Frame::new()
-            .fill(_config.colors.dark_accent.into())
-            .inner_margin(egui::Margin::same(5));
-        frame.show(ui, |ui| {
-            ui.set_width(_width);
-            let text =
-                egui::RichText::new(shared_ui.loc("export_modal.video.compatibility")).size(15.);
-            ui.label(text);
-        });
-
         // disabled: encoder dropdown - default is always used for now
         if false {
             ui.horizontal(|ui| {
@@ -513,6 +502,8 @@ pub fn video_export(
             download_ffmpeg_button(ui);
         }
     }
+
+    ui.add_space(20.);
 
     // selecting which animations to export
     let frame = egui::Frame::new()
