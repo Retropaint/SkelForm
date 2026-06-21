@@ -1222,16 +1222,21 @@ pub fn visuals(
         let input_widths = 120.;
         ui.add_space(ui.available_width() - input_widths - 5.);
 
+        let options = Some(ui::TextInputOptions {
+            drag_modifier: 0.01,
+            ..Default::default()
+        });
+
         ui.label("X: ");
-        let (edited, value, _) =
-            ui.float_input("pivot_x".to_string(), shared_ui, bone.pivot.x, 1., None);
+        let id = "pivot_x".to_string();
+        let (edited, value, _) = ui.float_input(id, shared_ui, bone.pivot.x, 1., options.clone());
         if edited {
             events.edit_bone(bone.id, &AnimElement::PivotX, value, "", usize::MAX, -1);
         }
 
         ui.label("Y: ");
-        let (edited, value, _) =
-            ui.float_input("pivot_y".to_string(), shared_ui, bone.pivot.y, 1., None);
+        let id = "pivot_y".to_string();
+        let (edited, value, _) = ui.float_input(id, shared_ui, bone.pivot.y, 1., options);
         if edited {
             events.edit_bone(bone.id, &AnimElement::PivotY, value, "", usize::MAX, -1);
         }
