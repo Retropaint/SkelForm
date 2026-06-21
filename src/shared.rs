@@ -1044,6 +1044,8 @@ pub struct Visuals {
     pub tint: TintColor,
     #[serde(skip_serializing_if = "is_neg_one")]
     pub zindex: i32,
+    #[serde(default = "default_pivot")]
+    pub pivot: Vec2,
 
     // mesh data
     #[serde(default, skip_serializing_if = "are_verts_empty")]
@@ -1102,11 +1104,13 @@ pub struct Bone {
     pub id: i32,
     pub name: String,
     pub parent_id: i32,
-    #[serde(skip_serializing_if = "is_str_empty")]
+    #[serde(skip)]
     pub tex: String,
-    #[serde(default = "default_tint", skip_serializing_if = "is_tint_white")]
+    #[serde(skip)]
     pub tint: TintColor,
-    #[serde(skip_serializing_if = "is_neg_one")]
+    #[serde(default = "default_pivot")]
+    pub pivot: Vec2,
+    #[serde(skip)]
     pub zindex: i32,
     pub pos: Vec2,
     pub scale: Vec2,
@@ -1971,6 +1975,8 @@ pub enum AnimElement {
      /* H */ GroupColorG, // NA
      /* I */ GroupColorB, // NA
      /* J */ GroupColorA, // NA
+     /* K */ PivotX, // NA
+     /* L */ PivotY, // NA
 }
 
 // iterable anim change icons IDs
@@ -2821,6 +2827,10 @@ fn gridline_default() -> i32 {
 
 fn default_tint() -> TintColor {
     TintColor::new(1., 1., 1., 1.)
+}
+
+fn default_pivot() -> Vec2 {
+    Vec2::new(0., 0.)
 }
 
 fn default_0_alpha() -> Color {

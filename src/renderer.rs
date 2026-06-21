@@ -141,7 +141,8 @@ pub fn render(
         let cam = world_camera(&camera, &config);
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &mut temp_arm.bones[b];
-            let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), Vec2::default());
+            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot), -tb.rot);
+            let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), final_pivot);
             vert.tint = tb.tint;
             tb.world_verts.push(vert);
         }
@@ -615,7 +616,7 @@ pub fn render(
                 let center = vert(Some(bone.pos), None, None);
                 let cam = &world_camera(&camera, &config);
                 let aspect_ratio = camera.aspect_ratio();
-                let cw = world_vert(center, cam, aspect_ratio, Vec2::new(0.5, 0.5));
+                let cw = world_vert(center, cam, aspect_ratio, Vec2::default());
                 let (mut verts, mut indices) = draw_line(cw.pos, mouse);
                 line_verts.append(&mut verts);
                 add_offseted_indices(&mut indices, &mut line_indices);
@@ -791,14 +792,16 @@ pub fn render_screenshot(
 
     for b in 0..temp_arm.bones.len() {
         let id = &temp_arm.bones[b].id;
+        let tex = armature.tex_of(*id);
         let is_hidden = hiddens.get(&id) == None || *hiddens.get(&id).unwrap();
-        if armature.tex_of(*id) == None || is_hidden {
+        if tex == None || is_hidden {
             continue;
         }
 
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &temp_arm.bones[b];
-            let mut new_vert = world_vert(tb.vertices[v], camera, 1., Vec2::default());
+            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot), -tb.rot);
+            let mut new_vert = world_vert(tb.vertices[v], camera, 1., final_pivot);
             new_vert.tint = temp_arm.bones[b].tint;
             temp_arm.bones[b].world_verts.push(new_vert);
         }
@@ -1202,7 +1205,7 @@ pub fn edit_bone(
 
     let bone_vert = vert(Some(bone.pos), None, None);
     let cam = &world_camera(&camera, &config);
-    let bone_center = world_vert(bone_vert, cam, camera.aspect_ratio(), Vec2::new(0.5, 0.5));
+    let bone_center = world_vert(bone_vert, cam, camera.aspect_ratio(), Vec2::default());
 
     // mouse velocity to be used for moving and scaling
     let mut mouse_vel = mouse_vel(&input, &camera) * camera.zoom;

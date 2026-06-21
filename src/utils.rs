@@ -897,6 +897,7 @@ pub fn prepare_files(
             init_tex: bone.tex.clone(),
             init_tint: bone.tint,
             init_zindex: bone.zindex,
+            pivot: bone.pivot,
         });
         bone.visuals_id = visuals.len() as i32 - 1;
     }

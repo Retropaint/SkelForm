@@ -1575,6 +1575,8 @@ fn edit_bone(
         AnimElement::GroupColorB => set!(bone.group_color.b, u8),
         AnimElement::GroupColorA => set!(bone.group_color.a, u8),
         AnimElement::MimicTarget => set_bool!(bone.ik_mimic_target),
+        AnimElement::PivotX => set!(bone.pivot.x, f32),
+        AnimElement::PivotY => set!(bone.pivot.y, f32),
     };
 
     if anim_frame == -1 {

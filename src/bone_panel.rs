@@ -263,7 +263,7 @@ pub fn draw(
     }
 
     #[rustfmt::skip]
-    texture_effects(ui, &mut bone, shared_ui, &selections, config, &edit_mode, &input, armature, events);
+    visuals(ui, &mut bone, shared_ui, &selections, config, &edit_mode, &input, armature, events);
     if !bone.effects_folded {
         ui.add_space(20.);
     }
@@ -1063,7 +1063,7 @@ pub fn open_file_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mu
     });
 }
 
-pub fn texture_effects(
+pub fn visuals(
     ui: &mut egui::Ui,
     bone: &mut Bone,
     shared_ui: &mut crate::Ui,
@@ -1216,6 +1216,25 @@ pub fn texture_effects(
             edit_bones(bone_ids, E::TintB, col[2], "", anim_id, frame, events);
             edit_bones(bone_ids, E::TintA, col[3], "", anim_id, frame, events);
         });
+    });
+    ui.horizontal(|ui| {
+        ui.label("Pivot: ");
+        let input_widths = 120.;
+        ui.add_space(ui.available_width() - input_widths - 5.);
+
+        ui.label("X: ");
+        let (edited, value, _) =
+            ui.float_input("pivot_x".to_string(), shared_ui, bone.pivot.x, 1., None);
+        if edited {
+            events.edit_bone(bone.id, &AnimElement::PivotX, value, "", usize::MAX, -1);
+        }
+
+        ui.label("Y: ");
+        let (edited, value, _) =
+            ui.float_input("pivot_y".to_string(), shared_ui, bone.pivot.y, 1., None);
+        if edited {
+            events.edit_bone(bone.id, &AnimElement::PivotY, value, "", usize::MAX, -1);
+        }
     });
 }
 
