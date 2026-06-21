@@ -141,7 +141,7 @@ pub fn render(
         let cam = world_camera(&camera, &config);
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &mut temp_arm.bones[b];
-            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot), -tb.rot);
+            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot), tb.rot);
             let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), final_pivot);
             vert.tint = tb.tint;
             tb.world_verts.push(vert);
@@ -800,7 +800,7 @@ pub fn render_screenshot(
 
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &temp_arm.bones[b];
-            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot), -tb.rot);
+            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot), tb.rot);
             let mut new_vert = world_vert(tb.vertices[v], camera, 1., final_pivot);
             new_vert.tint = temp_arm.bones[b].tint;
             temp_arm.bones[b].world_verts.push(new_vert);
@@ -1863,7 +1863,7 @@ pub fn vertex_buffer(vertices: &Vec<Vertex>, device: &Device) -> wgpu::Buffer {
 }
 
 pub fn world_vert(mut vert: Vertex, camera: &Camera, aspect_ratio: f32, pivot: Vec2) -> Vertex {
-    vert.pos.x -= pivot.x;
+    vert.pos.x += pivot.x;
     vert.pos.y += pivot.y;
 
     // offset bone with camera
