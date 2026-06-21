@@ -955,7 +955,18 @@ pub fn simple_event(
         Events::OpenExportModal => {
             ui.export_modal = true;
             for _ in &armature.animations {
-                ui.exporting_anims.push(true);
+                ui.exporting_anims.push({
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        // since web doesn't support multi-exports,
+                        // don't select any anim
+                        false
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        true
+                    }
+                });
             }
         }
         Events::UpdateConfig => *config = ui.updated_config.clone(),

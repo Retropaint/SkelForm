@@ -137,7 +137,7 @@ pub fn settings_button(
     config: &crate::Config,
     width: f32,
     is_hovered: &mut bool,
-) {
+) -> egui::Response {
     let mut col = config.colors.dark_accent;
     if shared_ui.hovering_setting == Some(state.clone()) {
         col += shared::Color::new(20, 20, 20, 0);
@@ -176,6 +176,7 @@ pub fn settings_button(
     if button.clicked() {
         shared_ui.settings_state = state;
     }
+    button
 }
 
 fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config) {

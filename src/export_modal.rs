@@ -64,20 +64,23 @@ pub fn draw(
                 ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
                     let mut is_hovered = false;
 
-                    macro_rules! tab {
-                        ($name:expr, $state:expr) => {
-                            let h = &mut is_hovered;
-                            settings_button($name, $state, ui, shared_ui, &config, width, h)
-                        };
-                    }
-
                     // tab selectors (Armature, Sprite, etc)
                     let str_armature = shared_ui.loc("export_modal.header_armature").clone();
                     let str_image = shared_ui.loc("export_modal.header_image").clone();
                     let str_video = shared_ui.loc("export_modal.header_video").clone();
-                    tab!(str_armature, crate::SettingsState::Ui);
-                    tab!(str_image, crate::SettingsState::Editing);
-                    tab!(str_video, crate::SettingsState::Keyboard);
+
+                    let h = &mut is_hovered;
+                    type SS = SettingsState;
+                    settings_button(str_armature, SS::Ui, ui, shared_ui, &config, width, h);
+                    settings_button(str_image, SS::Editing, ui, shared_ui, &config, width, h);
+                    if settings_button(str_video, SS::Keyboard, ui, shared_ui, &config, width, h)
+                        .clicked()
+                    {
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            crate::ensureFFmpeg();
+                        }
+                    };
 
                     if !is_hovered {
                         shared_ui.hovering_setting = None;
@@ -617,10 +620,24 @@ fn animations_list(
                         }
                         .into();
 
+                        #[cfg(not(target_arch = "wasm32"))]
                         ui.checkbox(&mut shared_ui.exporting_anims[a], "".into_atoms())
                             .on_hover_text(
                                 shared_ui.loc("export_modal.image.animations_check_desc"),
                             );
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            let mut chosen = shared_ui.exporting_anims[a];
+                            ui.checkbox(&mut chosen, "".into_atoms()).on_hover_text(
+                                shared_ui.loc("export_modal.image.animations_check_desc"),
+                            );
+                            if chosen != shared_ui.exporting_anims[a] {
+                                for anim in &mut shared_ui.exporting_anims {
+                                    *anim = false;
+                                }
+                                shared_ui.exporting_anims[a] = chosen;
+                            }
+                        }
                     });
 
                     ui.add_space(10.);

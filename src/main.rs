@@ -148,6 +148,10 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.video_clear_bg = shared.config.colors.background;
     shared.ui.exporting_video_type = ExportVideoType::Mp4;
     shared.ui.exporting_anims = vec![];
+    #[cfg(not(target_arch = "wasm32"))]
+    for anim in &mut shared.ui.exporting_anims {
+        *anim = true;
+    }
     shared.ui.anim_cycles = 1;
 
     #[cfg(not(target_arch = "wasm32"))]

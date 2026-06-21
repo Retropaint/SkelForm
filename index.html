@@ -565,9 +565,13 @@
                 gifFrames.push(frame);
             }
 
-            async function downloadGif(anim_name, resX, resY, fps) {
+            async function downloadGif(resX, resY, anim_name, fps) {
                 await ensureFFmpeg();
                 let name = anim_name + ".gif";
+
+                // first frame is empty
+                gifFrames.shift();
+
                 for (let i = 0; i < gifFrames.length; i++) {
                     const name = `frame${String(i).padStart(3, "0")}.png`;
                     await ffmpeg.writeFile(name, gifFrames[i]);

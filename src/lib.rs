@@ -105,6 +105,7 @@ extern "C" {
     pub fn getLang() -> Vec<u8>;
     pub fn clearLang();
     pub fn sendFeedback(content: &str);
+    pub fn ensureFFmpeg();
 }
 
 #[derive(Default)]
@@ -1174,6 +1175,7 @@ impl BackendRenderer {
         };
 
         let bufs = utils::encode_sequence(armature, shared_ui, self);
+        let mut buf_idx = 0;
         let size = shared_ui.sprite_size;
         for a in 0..armature.animations.len() {
             let mut base = path.clone();
@@ -1185,15 +1187,16 @@ impl BackendRenderer {
             let fps = armature.animations[a].fps;
             #[cfg(target_arch = "wasm32")]
             {
-                path_str = &armature.animations[a].name;
+                _path_str = &armature.animations[a].name;
             }
             shared_ui.custom_error = if shared_ui.exporting_video_type == ExportVideoType::Mp4 {
-                Self::encode_video(bufs[a].clone(), fps, size, _path_str, &ffmpeg_bin)
+                Self::encode_video(bufs[buf_idx].clone(), fps, size, _path_str, &ffmpeg_bin)
             } else {
-                Self::encode_gif(bufs[a].clone(), fps, size, _path_str, &ffmpeg_bin)
+                Self::encode_gif(bufs[buf_idx].clone(), fps, size, _path_str, &ffmpeg_bin)
             };
 
             if shared_ui.custom_error != "" {}
+            buf_idx += 1;
         }
     }
 
