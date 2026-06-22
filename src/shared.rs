@@ -938,7 +938,8 @@ impl Display for egui::KeyboardShortcut {
 
         // replace mod sybols with names for now, since egui default font doesn't have them
         for key in &mut str {
-            *key = key.replace("⌥", "Opt ");
+            *key = key.replace("⌥", "Option ");
+            *key = key.replace("⌘", "⌘ ");
             *key = key.replace("⌃", "Ctrl ");
             *key = key.replace("⇧", "Shift ");
         }

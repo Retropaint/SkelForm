@@ -1729,6 +1729,8 @@ fn edit_mode_bar(
         if edit_mode.is_moving {
             let str = "Snap X/Y";
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
+            let str = "Move Texture Pivot";
+            edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
         } else if edit_mode.is_rotating {
             let str = format!("Snap to {}°", config.rot_snap_step);
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
