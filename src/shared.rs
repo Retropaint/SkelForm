@@ -695,6 +695,8 @@ pub struct Ui {
     pub deleting_line_element: AnimElement,
     pub selected_keyframes: Vec<Keyframe>,
     pub flash_warn_timer: Option<Instant>,
+
+    pub first_startup: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

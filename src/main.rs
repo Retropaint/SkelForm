@@ -144,6 +144,7 @@ fn init_shared(shared: &mut Shared) {
     shared.renderer.clicked_vert_id = -1;
     shared.selections.hovering_vert_id = -1;
     shared.selections.hovering_bone_id = -1;
+    shared.ui.first_startup = true;
 
     shared.ui.video_clear_bg = shared.config.colors.background;
     shared.ui.exporting_video_type = ExportVideoType::Mp4;

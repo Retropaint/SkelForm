@@ -62,12 +62,26 @@ fn left(
     ui.vertical(|ui| {
         ui.set_width(133.);
         ui.add_space(10.);
+
+        // Back button (if startup opened from top bar)
+        let empty = "".to_string();
+        let offset = Some(egui::Vec2::new(0., 2.));
+        if !shared_ui.first_startup
+            && leftside_button("⮨", &shared_ui.loc("back"), ui, offset, None, empty, conf).clicked()
+        {
+            shared_ui.startup_window = false;
+        }
+
+        // New button
         let empty = "".to_string();
         if leftside_button("+", &shared_ui.loc("new"), ui, None, None, empty, conf).clicked() {
             events.new_armature();
             shared_ui.startup_window = false;
         }
+
         ui.add_space(padding);
+
+        // Import button
         let import_pos = Some(egui::Vec2::new(-5., 2.5));
         let str_import = &shared_ui.loc("startup.import");
         let empty = "".to_string();
@@ -78,6 +92,7 @@ fn left(
             utils::open_import_dialog(&shared_ui.file_path, &shared_ui.file_type);
         }
 
+        // Sample button and list (native only)
         #[cfg(not(target_arch = "wasm32"))]
         {
             ui.add_space(padding);

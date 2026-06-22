@@ -1501,6 +1501,7 @@ fn menu_file_button(
         }
         let str_startup = &shared_ui.loc("top_bar.file.startup");
         if top_bar_button!(str_startup, None).clicked() {
+            shared_ui.first_startup = false;
             shared_ui.startup_window = true;
             ui.close();
         }
