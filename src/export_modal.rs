@@ -495,13 +495,8 @@ pub fn video_export(
         );
 
         // download ffmpeg button (not needed for macos)
-        #[cfg(not(target_os = "macos"))]
         {
-            ui.horizontal(|ui| {
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    download_ffmpeg_button(ui);
-                });
-            });
+            download_ffmpeg_button(ui);
         }
     }
 
@@ -513,7 +508,14 @@ pub fn video_export(
 pub fn download_ffmpeg_button(ui: &mut egui::Ui) {
     #[allow(unreachable_code)]
     ui.add_space(10.);
-    if ui.skf_button("Download ffmpeg").clicked() {
+    ui.horizontal(|ui| {
+        let pressed = ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.skf_button("Download ffmpeg").clicked()
+        });
+        if !pressed.inner {
+            return;
+        }
+
         let base_url =
             "https://github.com/Retropaint/SkelForm/raw/refs/heads/master/ffmpeg/native/";
         let bin_name;
@@ -571,7 +573,8 @@ pub fn download_ffmpeg_button(ui: &mut egui::Ui) {
             perms.set_mode(0o755);
             ffmpeg_bin.set_permissions(perms).unwrap();
         }
-    }
+    });
+
     ui.add_space(2.5);
 
     // note for downloading ffmpeg locally
@@ -587,15 +590,20 @@ pub fn download_ffmpeg_button(ui: &mut egui::Ui) {
         size_warning = " (>100mb).\nThe program will freeze during download, do not close it";
         ext = ".exe";
     }
-    let str = if std::fs::exists(utils::bin_path().join("ffmpeg".to_string() + ext)).unwrap() {
-        "Re-download ffmpeg if problems occur.".to_string()
-    } else {
-        format!(
-            "ffmpeg is not installed.\nClick the above button to download it{}.",
-            &size_warning
-        )
-    };
-    ui.label(str);
+    ui.horizontal(|ui| {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let str =
+                if std::fs::exists(utils::bin_path().join("ffmpeg".to_string() + ext)).unwrap() {
+                    "Re-download ffmpeg if problems occur.".to_string()
+                } else {
+                    format!(
+                        "ffmpeg is not installed.\nClick the above button to download it{}.",
+                        &size_warning
+                    )
+                };
+            ui.label(str);
+        })
+    });
 }
 
 fn animations_list(
