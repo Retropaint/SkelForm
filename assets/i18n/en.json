@@ -341,6 +341,7 @@
       "transform_scale": "Scale Mode",
       "toggle_animation": "Toggle Animation Mode",
       "edit_modifier": "(Hold) Edit Mode Modifier",
+      "edit_alt": "(Hold) Edit Mode Alternative",
       "edit_snap": "(Hold) Edit Mode Snapping",
       "polar_yes": "Yes",
       "play_animation": "Play Animation",

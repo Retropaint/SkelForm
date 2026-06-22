@@ -817,6 +817,14 @@ pub fn kb_inputs(
     } else if !holding_edit_snap && edit_mode.holding_edit_snap {
         events.toggle_edit_snapping(0);
     }
+
+    let alt_key = &config.keys.edit_alt.modifiers;
+    let holding_edit_alt = input.modifiers.matches_any(*alt_key);
+    if holding_edit_alt && !edit_mode.holding_edit_alt {
+        events.toggle_edit_alt(1);
+    } else if !holding_edit_alt && edit_mode.holding_edit_alt {
+        events.toggle_edit_alt(0);
+    }
 }
 
 pub fn mouse_button_as_key(

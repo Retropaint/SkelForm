@@ -913,6 +913,7 @@ pub struct KeyboardConfig {
     pub transform_scale: egui::KeyboardShortcut,
     pub toggle_animation: egui::KeyboardShortcut,
     pub edit_modifier: egui::KeyboardShortcut,
+    pub edit_alt: egui::KeyboardShortcut,
     pub edit_snap: egui::KeyboardShortcut,
     pub timeline_zoom_mode: egui::KeyboardShortcut,
     pub play_animation: egui::KeyboardShortcut,
@@ -1005,6 +1006,7 @@ impl Default for KeyboardConfig {
             toggle_animation:     regular_key!(egui::Key::A),
             edit_modifier:        shortcut_key!(egui::Modifiers::SHIFT, egui::Key::F30),
             edit_snap:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::F30),
+            edit_alt:            shortcut_key!(egui::Modifiers::ALT, egui::Key::F30),
             play_animation:       regular_key!(egui::Key::Space),
             next_bone:            regular_key!(egui::Key::Z),
             prev_bone:            regular_key!(egui::Key::X),
@@ -2075,6 +2077,7 @@ pub struct EditMode {
     pub onion_layers: bool,
     pub holding_edit_mod: bool,
     pub holding_edit_snap: bool,
+    pub holding_edit_alt: bool,
 }
 
 #[derive(Default, PartialEq, Debug, Clone)]
@@ -2365,6 +2368,7 @@ pub enum Events {
     SetTemporaryEditMode,
     ToggleEditModifying,
     ToggleEditSnapping,
+    ToggleEditAlt,
     RaiseGlobalZindex,
 
     TogglePhysField,
@@ -2507,6 +2511,7 @@ impl EventState {
     event_with_value!(set_scale_ratio, E::SetScaleRatio, value, f32);
     #[rustfmt::skip]    event_with_value!(create_parent_bone, Events::CreateParentBone, of_bone_id, i32);
     #[rustfmt::skip]    event_with_value!(move_selected_keyframes, Events::MoveSelectedKeyframes, dropped_frame, i32);
+    #[rustfmt::skip]    event_with_value!(toggle_edit_alt, Events::ToggleEditAlt, toggle, i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

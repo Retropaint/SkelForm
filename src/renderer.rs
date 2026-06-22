@@ -626,7 +626,7 @@ pub fn render(
             }
             let bone = temp_arm.bones.iter().find(|b| b.id == *sel_id).unwrap();
             #[rustfmt::skip]
-            edit_bone(events, edit_mode, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &temp_arm.bones);
+            edit_bone(events, edit_mode, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &armature);
         }
 
         if *current_edit == EditModes::Rotate {
@@ -1189,7 +1189,7 @@ pub fn edit_bone(
     input: &InputStates,
     renderer: &Renderer,
     bone: &Bone,
-    bones: &Vec<Bone>,
+    armature: &Armature,
 ) {
     let mut anim_id = selections.anim;
     let anim_frame = selections.anim_frame;
@@ -1230,6 +1230,7 @@ pub fn edit_bone(
 
         // restore universal position by offsetting against parents' attributes
         if bone.parent_id != -1 {
+            let bones = &armature.bones;
             let parent = bones.iter().find(|b| b.id == bone.parent_id).unwrap();
             pos -= parent.pos;
             pos = utils::rotate(&pos, -parent.rot);
@@ -1242,11 +1243,29 @@ pub fn edit_bone(
             }
         }
 
-        if pos.x != bone.pos.x {
-            edit!(bone, AnimElement::PositionX, pos.x);
-        }
-        if pos.y != bone.pos.y {
-            edit!(bone, AnimElement::PositionY, pos.y);
+        let tex = armature.tex_of(bone.id);
+        if tex != None && edit_mode.holding_edit_alt {
+            // move texture pivot if holding edit_alt key
+            let mut vel = mouse_vel;
+            vel = utils::rotate(&vel, -bone.rot);
+
+            let mut pivot = bone.pivot;
+            pivot -= vel / tex.unwrap().size;
+
+            if pivot.x != bone.pivot.x {
+                edit!(bone, AnimElement::PivotX, pivot.x);
+            }
+            if pivot.y != bone.pivot.y {
+                edit!(bone, AnimElement::PivotY, pivot.y);
+            }
+        } else {
+            // move bone
+            if pos.x != bone.pos.x {
+                edit!(bone, AnimElement::PositionX, pos.x);
+            };
+            if pos.y != bone.pos.y {
+                edit!(bone, AnimElement::PositionY, pos.y);
+            }
         }
     } else if current_edit == EditModes::Rotate {
         // remember the initial mouse world position
@@ -1283,6 +1302,7 @@ pub fn edit_bone(
 
         // restore universal scale, by offsetting against parent's
         if bone.parent_id != -1 {
+            let bones = &armature.bones;
             let parent = bones.iter().find(|b| b.id == bone.parent_id).unwrap();
             scale /= parent.scale;
         }
