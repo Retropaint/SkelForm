@@ -95,15 +95,20 @@ pub fn draw(
                 let bottom_height = 50.;
                 ui.set_max_height(height - bottom_height);
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    let layout = egui::Layout::top_down(egui::Align::Min);
-                    ui.with_layout(layout, |ui| match shared_ui.settings_state {
-                        SettingsState::Ui => {
-                            armature_export(ui, shared_ui, edit_mode, events, config)
-                        }
-                        SettingsState::Editing => image_export(ui, shared_ui, config, armature),
-                        SettingsState::Keyboard => video_export(ui, shared_ui, config, armature),
-                        _ => {}
-                    });
+                    ui.horizontal(|ui| {
+                        let layout = egui::Layout::top_down(egui::Align::Min);
+                        ui.with_layout(layout, |ui| match shared_ui.settings_state {
+                            SettingsState::Ui => {
+                                armature_export(ui, shared_ui, edit_mode, events, config)
+                            }
+                            SettingsState::Editing => image_export(ui, shared_ui, config, armature),
+                            SettingsState::Keyboard => {
+                                video_export(ui, shared_ui, config, armature)
+                            }
+                            _ => {}
+                        });
+                        ui.add_space(5.);
+                    })
                 });
             });
 
