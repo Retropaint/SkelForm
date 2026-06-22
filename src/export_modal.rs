@@ -504,6 +504,7 @@ pub fn video_export(
         );
 
         // download ffmpeg button (not needed for macos)
+        #[cfg(not(target_os = "macos"))]
         {
             download_ffmpeg_button(ui);
         }
@@ -596,7 +597,7 @@ pub fn download_ffmpeg_button(ui: &mut egui::Ui) {
         // warn Windows users about comically large ffmpeg file
         // the download is 30mb but install size is used to be safe,
         // since most users don't know the difference
-        size_warning = " (>100mb).\nThe program will freeze during download, do not close it";
+        size_warning = " (>100mb).\nDo not close SkelForm during download.";
         ext = ".exe";
     }
     ui.horizontal(|ui| {
@@ -606,7 +607,7 @@ pub fn download_ffmpeg_button(ui: &mut egui::Ui) {
                     "Re-download ffmpeg if problems occur.".to_string()
                 } else {
                     format!(
-                        "ffmpeg is not installed.\nClick the above button to download it{}.",
+                        "ffmpeg is not installed.\nClick above to download it{}.",
                         &size_warning
                     )
                 };
