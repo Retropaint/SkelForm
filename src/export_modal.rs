@@ -88,8 +88,12 @@ pub fn draw(
                 });
             });
 
+            let height = ui.available_height();
+
             // show selected tab
-            egui::Frame::new().show(ui, |ui| {
+            ui.vertical(|ui| {
+                let bottom_height = 50.;
+                ui.set_max_height(height - bottom_height);
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     let layout = egui::Layout::top_down(egui::Align::Min);
                     ui.with_layout(layout, |ui| match shared_ui.settings_state {
