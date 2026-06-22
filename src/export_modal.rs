@@ -358,6 +358,15 @@ pub fn image_export(
         });
     });
 
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("export_modal.video.global_bounds"),
+        &shared_ui.loc("export_modal.video.global_bounds_desc"),
+        &mut shared_ui.export_global_bounds,
+        config,
+        false,
+    );
+
     ui.add_space(20.);
     animations_list(ui, shared_ui, armature, width, config);
 }
