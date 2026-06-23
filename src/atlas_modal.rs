@@ -1,3 +1,4 @@
+use egui::RichText;
 use ui::{EguiUi, TextInputOptions};
 
 use crate::*;
@@ -25,7 +26,7 @@ pub fn draw(
         let height = 400.;
         ui.set_height(height);
         ui.set_width(475.);
-        ui.heading("Importing Texture(s)");
+        ui.heading(shared_ui.loc("atlas_modal.heading"));
         ui.add_space(10.);
         let sel = &selections;
         let style = &armature.sel_style(sel).unwrap();
@@ -165,7 +166,8 @@ pub fn draw(
                 ui.set_height(height);
                 ui.horizontal(|ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
-                        if ui.skf_button("Add Texture").clicked() {
+                        let str = shared_ui.loc("atlas_modal.add_texture");
+                        if ui.skf_button(str).clicked() {
                             shared_ui.pending_textures.push(Texture::default());
                         };
                     });
@@ -177,10 +179,11 @@ pub fn draw(
                 }
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
-                        if ui.skf_button("Done").clicked() {
+                        if ui.skf_button(shared_ui.loc("atlas_modal.done")).clicked() {
+                            let default_base = shared_ui.loc("atlas_modal.default_name");
                             for (t, tex) in shared_ui.pending_textures.iter_mut().enumerate() {
                                 if tex.name == "" {
-                                    tex.name = format!("Texture {}", t.to_string());
+                                    tex.name = format!("{} {}", default_base, t.to_string());
                                 }
                             }
 
@@ -193,7 +196,7 @@ pub fn draw(
                             shared_ui.atlas_modal = false;
                             shared_ui.atlas_image = None;
                         }
-                        if ui.skf_button("Cancel").clicked() {
+                        if ui.skf_button(shared_ui.loc("atlas_modal.cancel")).clicked() {
                             shared_ui.pending_textures = vec![];
                             shared_ui.atlas_modal = false;
                             shared_ui.atlas_image = None;
@@ -227,23 +230,19 @@ fn textures_list(ui: &mut egui::Ui, atlas: Texture, height: f32, shared_ui: &mut
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
                     ui.add_space(10.);
-                    let trash = ui
-                        .label("🗑")
-                        .on_hover_cursor(egui::CursorIcon::PointingHand);
+                    let hand = egui::CursorIcon::PointingHand;
+                    let trash = ui.label("🗑").on_hover_cursor(hand);
                     if trash.clicked() {
                         shared_ui.pending_textures.remove(t);
                         removed = true;
                         return;
                     }
-                    let (edited, value, _) = ui.text_input(
-                        t.to_string() + "name",
-                        shared_ui,
-                        tex.name.clone(),
-                        Some(TextInputOptions {
-                            placeholder: "Texture Name...".to_string(),
-                            ..Default::default()
-                        }),
-                    );
+                    let options = Some(TextInputOptions {
+                        placeholder: shared_ui.loc("atlas_modal.input_placeholder"),
+                        ..Default::default()
+                    });
+                    let (edited, value, _) =
+                        ui.text_input(t.to_string(), shared_ui, tex.name.clone(), options);
                     if edited {
                         tex.name = value;
                     }
@@ -256,20 +255,32 @@ fn textures_list(ui: &mut egui::Ui, atlas: Texture, height: f32, shared_ui: &mut
 
             // offset inputs
             ui.horizontal(|ui| {
-                ui.label(egui::RichText::new("L:").monospace());
+                let str = shared_ui.loc("atlas_modal.left");
+                let desc = shared_ui.loc("atlas_modal.left_desc");
+                ui.label(RichText::new(str).monospace()).on_hover_text(desc);
                 input!(t.to_string() + "texox", tex.offset.x, ui);
-                ui.label(egui::RichText::new("T:").monospace());
+
+                let str = shared_ui.loc("atlas_modal.top");
+                let desc = shared_ui.loc("atlas_modal.top_desc");
+                ui.label(RichText::new(str).monospace()).on_hover_text(desc);
                 input!(t.to_string() + "texoy", tex.offset.y, ui);
+
                 tex.offset.x = tex.offset.x.min(atlas.size.x);
                 tex.offset.y = tex.offset.y.min(atlas.size.y);
             });
 
             // size inputs
             ui.horizontal(|ui| {
-                ui.label(egui::RichText::new("R:").monospace());
+                let str = shared_ui.loc("atlas_modal.width");
+                let desc = shared_ui.loc("atlas_modal.width_desc");
+                ui.label(RichText::new(str).monospace()).on_hover_text(desc);
                 input!(t.to_string() + "texsx", tex.size.x, ui);
-                ui.label(egui::RichText::new("B:").monospace());
+
+                let str = shared_ui.loc("atlas_modal.height");
+                let desc = shared_ui.loc("atlas_modal.height_desc");
+                ui.label(RichText::new(str).monospace()).on_hover_text(desc);
                 input!(t.to_string() + "texsy", tex.size.y, ui);
+
                 tex.size.x = tex.size.x.min(atlas.size.x - tex.offset.x);
                 tex.size.y = tex.size.y.min(atlas.size.y - tex.offset.y);
             });

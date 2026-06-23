@@ -2,7 +2,6 @@
   "language": "English (US/UK)",
   "psd_imported": "Textures have been imported and/or replaced from the PSD.\n\nReplace armature as well? $psd_page",
   "psd_help": "PSD Help Page",
-
   "new": "New",
   "none": "None",
   "new_option": "[New]",
@@ -28,7 +27,7 @@
   "crashed": "SkelForm crashed last time.\n\nThe crash log is located in the same path as the binary.\n\nOpen log file?",
   "error_vid_export": "Something went wrong with this export:\n\n$err\n\nTry changing compability settings, or click 'download ffmpeg' in export if you don't have it.\n\nIf nothing works, you may export sprite sequences and create a video using an online converter.",
   "error_skf": "Something went wrong:\n\n$err",
-  "hidden_desc": "Toggle this bone's visibility.\nTo propagate it to all children, toggle it in Settings > Animation.",
+  "hidden_desc": "Toggle this bone's visibility",
   "locked_desc": "Lock this bone to prevent edits from being recorded in animations",
   "feedback_sent": "Thank you for the feedback!\nIt has been sent anonymously, and only the developer can see it.",
   "feedback_sent_err": "Something went wrong while attempting to send your feedback.\n\nPlease check your internet connection. Otherwise, it may be an issue on SkelForm's end.",
@@ -122,7 +121,21 @@
     "empty_desc": "Create empty texture"
   },
   "atlas_modal": {
-    "no_pending": "If the imported image is a single texture, simply click 'Done'.\n\nIf it's a texture atlas, drag the image or click 'Add Texture' to add a new slice of texture.\n\nThe atlas will be discarded once done, and will need to be re-imported to add more textures."
+    "heading": "Importing Texture(s)",
+    "add_texture": "Add Texture",
+    "done": "Done",
+    "cancel": "Cancel",
+    "default_name": "Texture ",
+    "no_pending": "If the imported image is a single texture, simply click 'Done'.\n\nIf it's a texture atlas, drag the image or click 'Add Texture' to add a new slice of texture.\n\nThe atlas will be discarded once done, and will need to be re-imported to add more textures.",
+    "input_placeholder": "Texture Name...",
+    "left": "L:",
+    "top": "T:",
+    "width": "W:",
+    "height": "H:",
+    "left_desc": "Left",
+    "top_desc": "Top",
+    "width_desc": "Width",
+    "height_desc": "Height"
   },
   "export_modal": {
     "heading": "Export",
@@ -453,7 +466,7 @@
     "UnboundBind": "$bone's bind $bind has no bone attached.",
     "NoVertsInBind": "$bone's bind $bind has no vertices.",
     "OnlyPath": "$bone can't have a single bind that's a path.",
-    "OnlyIk": "$bone is the only bone IK family $ik_family_id.",
+    "OnlyIk": "$bone is the only bone with IK family $ik_family_id.",
     "NoWeights": "$bone's bind $bind has all weights set to 0.",
     "BoneOutOfFamily": "Bones of IK family $ik_family_id are not all within the same root.",
     "BoneOutOfFamilyCulprits": "Culprits:",
