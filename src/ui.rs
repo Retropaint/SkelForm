@@ -1734,6 +1734,8 @@ fn edit_mode_bar(
         } else if edit_mode.is_rotating {
             let str = format!("Snap to {}°", config.rot_snap_step);
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
+            let str = "Rotate Texture Pivot";
+            edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
         } else if edit_mode.is_scaling {
             let str = "Snap X/Y";
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);

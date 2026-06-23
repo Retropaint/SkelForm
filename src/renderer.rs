@@ -560,6 +560,7 @@ pub fn render(
             let anim_bones = &armature.animated_bones;
             let sel_anim_bone = anim_bones.iter().find(|b| b.id == bone.id).unwrap();
             renderer.bone_init_rot = sel_anim_bone.rot;
+            renderer.bone_init_pivot_rot = sel_anim_bone.pivot_rot;
         }
     }
 
@@ -1249,7 +1250,8 @@ pub fn edit_bone(
         }
 
         let tex = armature.tex_of(bone.id);
-        if tex != None && edit_mode.holding_edit_alt {
+        let is_editing_pivot = edit_mode.holding_edit_alt;
+        if is_editing_pivot {
             // move texture pivot if holding edit_alt key
             let mut vel = mouse_vel;
             vel = utils::rotate(&vel, -bone.rot);
@@ -1287,20 +1289,39 @@ pub fn edit_bone(
         let dir = mouse_vert.pos - bone_center.pos;
         let rot = dir.y.atan2(dir.x);
 
-        // get the target rotation from bone to mouse
-        let mut rot = renderer.bone_init_rot + (rot - rot_init);
+        let is_editing_pivot = armature.tex_of(bone.id) != None && edit_mode.holding_edit_alt;
+        if is_editing_pivot {
+            // get the target rotation from bone to mouse
+            let mut rot = renderer.bone_init_pivot_rot + (rot - rot_init);
 
-        // snap target rotation to user-defined steps if holding snap key
-        let step = config.rot_snap_step * 3.14 / 180.;
-        if edit_mode.holding_edit_snap {
-            rot = (rot / step).round() * step
-        }
+            // snap target rotation to user-defined steps if holding snap key
+            let step = config.rot_snap_step * 3.14 / 180.;
+            if edit_mode.holding_edit_snap {
+                rot = (rot / step).round() * step
+            }
 
-        // get difference in angle, so that it doesn't lock to 0-360
-        let diff = utils::shortest_angle_delta(bone.rot, rot);
+            // get difference in angle, so that it doesn't lock to 0-360
+            let diff = utils::shortest_angle_delta(bone.pivot_rot, rot);
 
-        if rot != bone.rot {
-            edit!(bone, AnimElement::Rotation, bone.rot + diff);
+            if rot != bone.rot {
+                edit!(bone, AnimElement::PivotRot, bone.pivot_rot + diff);
+            }
+        } else {
+            // get the target rotation from bone to mouse
+            let mut rot = renderer.bone_init_rot + (rot - rot_init);
+
+            // snap target rotation to user-defined steps if holding snap key
+            let step = config.rot_snap_step * 3.14 / 180.;
+            if edit_mode.holding_edit_snap {
+                rot = (rot / step).round() * step
+            }
+
+            // get difference in angle, so that it doesn't lock to 0-360
+            let diff = utils::shortest_angle_delta(bone.rot, rot);
+
+            if rot != bone.rot {
+                edit!(bone, AnimElement::Rotation, bone.rot + diff);
+            }
         }
     } else if current_edit == EditModes::Scale {
         let mut scale = bone.scale;

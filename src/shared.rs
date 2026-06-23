@@ -2233,6 +2233,7 @@ pub struct Renderer {
     pub initialized_window: bool,
     pub has_loaded: bool,
     pub bone_init_rot: f32,
+    pub bone_init_pivot_rot: f32,
     pub new_vert: Option<Vertex>,
     pub started_dragging_verts: bool,
     pub temp_bones: Vec<Bone>,
