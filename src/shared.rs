@@ -1050,7 +1050,8 @@ pub struct Visuals {
     #[serde(skip_serializing_if = "is_neg_one")]
     pub zindex: i32,
     #[serde(default = "default_pivot")]
-    pub pivot: Vec2,
+    pub pivot_pos: Vec2,
+    pub pivot_rot: f32,
 
     // mesh data
     #[serde(default, skip_serializing_if = "are_verts_empty")]
@@ -1114,7 +1115,8 @@ pub struct Bone {
     #[serde(skip)]
     pub tint: TintColor,
     #[serde(default = "default_pivot")]
-    pub pivot: Vec2,
+    pub pivot_pos: Vec2,
+    pub pivot_rot: f32,
     #[serde(skip)]
     pub zindex: i32,
     pub pos: Vec2,
@@ -1982,6 +1984,7 @@ pub enum AnimElement {
      /* J */ GroupColorA, // NA
      /* K */ PivotX, // NA
      /* L */ PivotY, // NA
+     /* M */ PivotRot, // NA
 }
 
 // iterable anim change icons IDs

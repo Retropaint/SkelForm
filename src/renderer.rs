@@ -141,7 +141,7 @@ pub fn render(
         let cam = world_camera(&camera, &config);
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &mut temp_arm.bones[b];
-            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot), tb.rot);
+            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot);
             let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), final_pivot);
             vert.tint = tb.tint;
             tb.world_verts.push(vert);
@@ -626,7 +626,10 @@ pub fn render(
             }
             let bone = temp_arm.bones.iter().find(|b| b.id == *sel_id).unwrap();
             #[rustfmt::skip]
-            edit_bone(events, edit_mode, current_edit.clone(), &selections, &camera, &config, &input, &renderer, bone, &armature);
+            edit_bone(
+                events, edit_mode, current_edit.clone(), &selections, &camera,
+                &config, &input, &renderer, bone, &temp_arm.bones, &armature
+            );
         }
 
         if *current_edit == EditModes::Rotate {
@@ -800,7 +803,7 @@ pub fn render_screenshot(
 
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &temp_arm.bones[b];
-            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot), tb.rot);
+            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot);
             let mut new_vert = world_vert(tb.vertices[v], camera, 1., final_pivot);
             new_vert.tint = temp_arm.bones[b].tint;
             temp_arm.bones[b].world_verts.push(new_vert);
@@ -1004,7 +1007,7 @@ pub fn construct_verts(bones: &mut Vec<Bone>) {
         // move vertex to main bone.
         // this will be overridden if vertex has a bind.
         for vert in &mut bones[b].vertices {
-            vert.pos = inherit_vert(vert.pos, &bone);
+            vert.pos = inherit_vert(vert.pos, &bone, bone.pivot_rot);
             vert.offset_rot = 0.;
         }
 
@@ -1031,7 +1034,9 @@ pub fn construct_verts(bones: &mut Vec<Bone>) {
                     // weights
                     let vert = &mut bones[b].vertices[idx.unwrap()];
                     let weight = bind.verts[v_id].weight;
-                    let end_pos = inherit_vert(init_vert_pos[idx.unwrap()], &bind_bone) - vert.pos;
+                    let end_pos =
+                        inherit_vert(init_vert_pos[idx.unwrap()], &bind_bone, bone.pivot_rot)
+                            - vert.pos;
                     vert.pos += end_pos * weight;
                     continue;
                 }
@@ -1078,9 +1083,9 @@ pub fn get_path_normal_angle(bones: &Vec<Bone>, bone: &Bone, bind_idx: usize) ->
     normal_angle
 }
 
-pub fn inherit_vert(mut pos: Vec2, bone: &Bone) -> Vec2 {
+pub fn inherit_vert(mut pos: Vec2, bone: &Bone, pivot_rot: f32) -> Vec2 {
     pos *= bone.scale;
-    pos = utils::rotate(&pos, bone.rot);
+    pos = utils::rotate(&pos, bone.rot + pivot_rot);
     pos += bone.pos;
     pos
 }
@@ -1189,6 +1194,7 @@ pub fn edit_bone(
     input: &InputStates,
     renderer: &Renderer,
     bone: &Bone,
+    temp_bones: &Vec<Bone>,
     armature: &Armature,
 ) {
     let mut anim_id = selections.anim;
@@ -1230,8 +1236,7 @@ pub fn edit_bone(
 
         // restore universal position by offsetting against parents' attributes
         if bone.parent_id != -1 {
-            let bones = &armature.bones;
-            let parent = bones.iter().find(|b| b.id == bone.parent_id).unwrap();
+            let parent = temp_bones.iter().find(|b| b.id == bone.parent_id).unwrap();
             pos -= parent.pos;
             pos = utils::rotate(&pos, -parent.rot);
             pos /= parent.scale;
@@ -1249,13 +1254,13 @@ pub fn edit_bone(
             let mut vel = mouse_vel;
             vel = utils::rotate(&vel, -bone.rot);
 
-            let mut pivot = bone.pivot;
+            let mut pivot = bone.pivot_pos;
             pivot -= vel / tex.unwrap().size;
 
-            if pivot.x != bone.pivot.x {
+            if pivot.x != bone.pivot_pos.x {
                 edit!(bone, AnimElement::PivotX, pivot.x);
             }
-            if pivot.y != bone.pivot.y {
+            if pivot.y != bone.pivot_pos.y {
                 edit!(bone, AnimElement::PivotY, pivot.y);
             }
         } else {
@@ -1302,8 +1307,7 @@ pub fn edit_bone(
 
         // restore universal scale, by offsetting against parent's
         if bone.parent_id != -1 {
-            let bones = &armature.bones;
-            let parent = bones.iter().find(|b| b.id == bone.parent_id).unwrap();
+            let parent = temp_bones.iter().find(|b| b.id == bone.parent_id).unwrap();
             scale /= parent.scale;
         }
 
