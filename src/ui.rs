@@ -1687,9 +1687,9 @@ fn edit_mode_bar(
             let key_move = keys.transform_move.display();
             let key_rotate = keys.transform_rotate.display();
             let key_scale = keys.transform_scale.display();
-            let move_str = &shared_ui.loc("move");
-            let rotate_str = &shared_ui.loc("rotate");
-            let scale_str = &shared_ui.loc("scale");
+            let move_str = &shared_ui.loc("edit_bar.move.heading");
+            let rotate_str = &shared_ui.loc("edit_bar.rotate.heading");
+            let scale_str = &shared_ui.loc("edit_bar.scale.heading");
             edit_mode_button!(move_str, E::Move, edit_mode_move, ikd, key_move);
             edit_mode_button!(rotate_str, E::Rotate, edit_mode_rotate, ikd, key_rotate);
             edit_mode_button!(scale_str, E::Scale, edit_mode_scale, ikd, key_scale);
@@ -1727,19 +1727,20 @@ fn edit_mode_bar(
         }
 
         if edit_mode.is_moving {
-            let str = "Snap X/Y";
+            let str = shared_ui.loc("edit_bar.move.snap");
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
-            let str = "Move Texture Pivot";
+            let str = shared_ui.loc("edit_bar.move.pivot");
             edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
         } else if edit_mode.is_rotating {
-            let str = format!("Snap to {}°", config.rot_snap_step);
-            edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
-            let str = "Rotate Texture Pivot";
+            let loc = shared_ui.loc("edit_bar.rotate.snap");
+            let str = format!("{} {}°", loc, config.rot_snap_step);
+            edit_feature!(&str, config.keys.edit_snap, edit_mode.holding_edit_snap);
+            let str = shared_ui.loc("edit_bar.rotate.pivot");
             edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
         } else if edit_mode.is_scaling {
-            let str = "Snap X/Y";
+            let str = shared_ui.loc("edit_bar.scale.snap");
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
-            let str = "Maintain aspect ratio";
+            let str = shared_ui.loc("edit_bar.scale.ratio");
             edit_feature!(str, config.keys.edit_modifier, edit_mode.holding_edit_mod);
         }
     });

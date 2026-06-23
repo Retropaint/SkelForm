@@ -2,9 +2,7 @@
   "language": "English (US/UK)",
   "psd_imported": "Textures have been imported and/or replaced from the PSD.\n\nReplace armature as well? $psd_page",
   "psd_help": "PSD Help Page",
-  "move": "Move",
-  "rotate": "Rotate",
-  "scale": "Scale",
+
   "new": "New",
   "none": "None",
   "new_option": "[New]",
@@ -461,5 +459,22 @@
     "BoneOutOfFamilyCulprits": "Culprits:",
     "EmptyStyles": "Styles with no textures:",
     "UnusedTextures": "Unused textures:"
+  },
+  "edit_bar": {
+    "move": {
+      "heading": "Move",
+      "snap": "Snap X/Y",
+      "pivot": "Move texture pivot"
+    },
+    "rotate": {
+      "heading": "Rotate",
+      "snap": "Snap to ",
+      "pivot": "Rotate texture pivot"
+    },
+    "scale": {
+      "heading": "Scale",
+      "snap": "Snap X/Y",
+      "ratio": "Maintain aspect ratio"
+    }
   }
 }
