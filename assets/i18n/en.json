@@ -487,7 +487,8 @@
     "scale": {
       "heading": "Scale",
       "snap": "Snap X/Y",
-      "ratio": "Maintain aspect ratio"
+      "ratio": "Maintain aspect ratio",
+      "pivot": "Scale texture pivot"
     }
   }
 }

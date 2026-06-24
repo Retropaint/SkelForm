@@ -448,15 +448,27 @@ pub fn draw(
         }
     }
 
+    // show rotation/scale values (either bone or pivot) above cursor
     if selections.bone_ids.len() == 1 {
         if edit_mode.is_rotating {
             let offset = Vec2::new(50., 0.);
-            let rot = selected_bone.rot / 3.14 * 180.;
+            let rot = if edit_mode.holding_edit_alt {
+                selected_bone.pivot_rot
+            } else {
+                selected_bone.rot
+            } / 3.14
+                * 180.;
             let formatted = (rot * 100.).round() / 100.;
             helper_text!(formatted.to_string() + "°", offset);
         } else if edit_mode.is_scaling {
             let offset = Vec2::new(50., 0.);
-            let formatted = (selected_bone.scale.x * 100.).round() / 100.;
+            let scale = if edit_mode.holding_edit_alt {
+                selected_bone.pivot_scale
+            } else {
+                selected_bone.scale
+            };
+
+            let formatted = (scale.x * 100.).round() / 100.;
             let mut padding = "";
             if formatted.to_string() == "1" {
                 padding = ".00";
@@ -465,7 +477,7 @@ pub fn draw(
             helper_text!(helper_str.to_string(), offset);
 
             let offset = Vec2::new(-1., -38.);
-            let formatted = (selected_bone.scale.y * 100.).round() / 100.;
+            let formatted = (scale.y * 100.).round() / 100.;
             let mut padding = "";
             if formatted.to_string() == "1" {
                 padding = ".00";
@@ -1742,6 +1754,8 @@ fn edit_mode_bar(
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
             let str = shared_ui.loc("edit_bar.scale.ratio");
             edit_feature!(str, config.keys.edit_modifier, edit_mode.holding_edit_mod);
+            let str = shared_ui.loc("edit_bar.scale.pivot");
+            edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
         }
     });
 }
