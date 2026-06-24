@@ -575,8 +575,10 @@ pub fn render(
         return;
     }
 
-    // bone's transforms can't be edited if editing its verts, or it has Ik
-    if edit_mode.showing_mesh || has_ik {
+    // bone's transforms can't be edited if editing its verts or it's IK,
+    // but an exception is made if editing pivot
+    let is_editing_pivot = !has_ik || edit_mode.holding_edit_alt;
+    if edit_mode.showing_mesh || !is_editing_pivot {
         return;
     }
 
