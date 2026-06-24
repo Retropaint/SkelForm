@@ -1050,6 +1050,7 @@ pub struct Visuals {
     pub zindex: i32,
     pub pivot_pos: Vec2,
     pub pivot_rot: f32,
+    pub pivot_scale: Vec2,
 
     // mesh data
     #[serde(default, skip_serializing_if = "are_verts_empty")]

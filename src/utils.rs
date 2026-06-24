@@ -899,6 +899,7 @@ pub fn prepare_files(
             init_zindex: bone.zindex,
             pivot_pos: bone.pivot_pos,
             pivot_rot: bone.pivot_rot,
+            pivot_scale: bone.pivot_scale,
         });
         bone.visuals_id = visuals.len() as i32 - 1;
     }
