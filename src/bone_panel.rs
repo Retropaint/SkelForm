@@ -1171,6 +1171,68 @@ pub fn visuals(
         return;
     }
 
+    let options = Some(ui::TextInputOptions {
+        drag_modifier: 0.01,
+        ..Default::default()
+    });
+
+    ui.horizontal(|ui| {
+        ui.label("Pivot Position: ");
+        let input_widths = 120.;
+        ui.add_space(ui.available_width() - input_widths - 5.);
+
+        ui.label("X ");
+        let id = "pivot_x".to_string();
+        let (edited, value, _) =
+            ui.float_input(id, shared_ui, bone.pivot_pos.x, 1., options.clone());
+        if edited {
+            events.edit_bone(bone.id, &AnimElement::PivotX, value, "", usize::MAX, -1);
+        }
+
+        ui.label("Y ");
+        let id = "pivot_y".to_string();
+        let (edited, value, _) =
+            ui.float_input(id, shared_ui, bone.pivot_pos.y, 1., options.clone());
+        if edited {
+            events.edit_bone(bone.id, &AnimElement::PivotY, value, "", usize::MAX, -1);
+        }
+    });
+
+    ui.horizontal(|ui| {
+        ui.label("Pivot Scale: ");
+        let input_widths = 120.;
+        ui.add_space(ui.available_width() - input_widths - 10.);
+
+        ui.label("W ");
+        let id = "pivot_scale_x".to_string();
+        let (edited, value, _) =
+            ui.float_input(id, shared_ui, bone.pivot_scale.x, 1., options.clone());
+        if edited {
+            events.edit_bone(bone.id, &AE::PivotScaleX, value, "", usize::MAX, -1);
+        }
+
+        ui.label("H ");
+        let id = "pivot_scale_y".to_string();
+        let (edited, value, _) =
+            ui.float_input(id, shared_ui, bone.pivot_scale.y, 1., options.clone());
+        if edited {
+            events.edit_bone(bone.id, &AE::PivotScaleY, value, "", usize::MAX, -1);
+        }
+    });
+
+    ui.horizontal(|ui| {
+        ui.label("Pivot Rotation: ");
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let deg_mod = 180. / std::f32::consts::PI;
+            let id = "pivot_rot".to_string();
+            let (edited, value, _) =
+                ui.float_input(id, shared_ui, bone.pivot_rot, deg_mod, options);
+            if edited {
+                events.edit_bone(bone.id, &AnimElement::PivotRot, value, "", usize::MAX, -1);
+            }
+        });
+    });
+
     ui.horizontal(|ui| {
         ui.label(&shared_ui.loc("bone_panel.zindex"));
         let widgets_width = 70.;
@@ -1215,68 +1277,6 @@ pub fn visuals(
             edit_bones(bone_ids, E::TintG, col[1], "", anim_id, frame, events);
             edit_bones(bone_ids, E::TintB, col[2], "", anim_id, frame, events);
             edit_bones(bone_ids, E::TintA, col[3], "", anim_id, frame, events);
-        });
-    });
-
-    let options = Some(ui::TextInputOptions {
-        drag_modifier: 0.01,
-        ..Default::default()
-    });
-
-    ui.horizontal(|ui| {
-        ui.label("Pivot Position: ");
-        let input_widths = 120.;
-        ui.add_space(ui.available_width() - input_widths - 5.);
-
-        ui.label("X: ");
-        let id = "pivot_x".to_string();
-        let (edited, value, _) =
-            ui.float_input(id, shared_ui, bone.pivot_pos.x, 1., options.clone());
-        if edited {
-            events.edit_bone(bone.id, &AnimElement::PivotX, value, "", usize::MAX, -1);
-        }
-
-        ui.label("Y: ");
-        let id = "pivot_y".to_string();
-        let (edited, value, _) =
-            ui.float_input(id, shared_ui, bone.pivot_pos.y, 1., options.clone());
-        if edited {
-            events.edit_bone(bone.id, &AnimElement::PivotY, value, "", usize::MAX, -1);
-        }
-    });
-
-    ui.horizontal(|ui| {
-        ui.label("Pivot Scale: ");
-        let input_widths = 120.;
-        ui.add_space(ui.available_width() - input_widths - 5.);
-
-        ui.label("X: ");
-        let id = "pivot_scale_x".to_string();
-        let (edited, value, _) =
-            ui.float_input(id, shared_ui, bone.pivot_scale.x, 1., options.clone());
-        if edited {
-            events.edit_bone(bone.id, &AE::PivotScaleX, value, "", usize::MAX, -1);
-        }
-
-        ui.label("Y: ");
-        let id = "pivot_scale_y".to_string();
-        let (edited, value, _) =
-            ui.float_input(id, shared_ui, bone.pivot_scale.y, 1., options.clone());
-        if edited {
-            events.edit_bone(bone.id, &AE::PivotScaleY, value, "", usize::MAX, -1);
-        }
-    });
-
-    ui.horizontal(|ui| {
-        ui.label("Pivot Rotation: ");
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let deg_mod = 180. / std::f32::consts::PI;
-            let id = "pivot_rot".to_string();
-            let (edited, value, _) =
-                ui.float_input(id, shared_ui, bone.pivot_rot, deg_mod, options);
-            if edited {
-                events.edit_bone(bone.id, &AnimElement::PivotRot, value, "", usize::MAX, -1);
-            }
         });
     });
 }
