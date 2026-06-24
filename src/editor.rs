@@ -1590,6 +1590,8 @@ fn edit_bone(
         AnimElement::PivotX => set!(bone.pivot_pos.x, f32),
         AnimElement::PivotY => set!(bone.pivot_pos.y, f32),
         AnimElement::PivotRot => set!(bone.pivot_rot, f32),
+        AnimElement::PivotScaleX => set!(bone.pivot_scale.x, f32),
+        AnimElement::PivotScaleY => set!(bone.pivot_scale.y, f32),
     };
 
     if anim_frame == -1 {

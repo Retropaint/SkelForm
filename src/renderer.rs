@@ -141,8 +141,7 @@ pub fn render(
         let cam = world_camera(&camera, &config);
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &mut temp_arm.bones[b];
-            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot)
-                * utils::rotate(&tb.scale, -tb.pivot_rot);
+            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot) * tb.scale;
             let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), final_pivot);
             vert.tint = tb.tint;
             tb.world_verts.push(vert);
@@ -1011,7 +1010,7 @@ pub fn construct_verts(bones: &mut Vec<Bone>) {
         // move vertex to main bone.
         // this will be overridden if vertex has a bind.
         for vert in &mut bones[b].vertices {
-            vert.pos = inherit_vert(vert.pos, &bone, bone.pivot_rot);
+            vert.pos = inherit_vert(vert.pos, &bone, bone.pivot_rot, bone.pivot_scale);
             vert.offset_rot = 0.;
         }
 
@@ -1038,9 +1037,12 @@ pub fn construct_verts(bones: &mut Vec<Bone>) {
                     // weights
                     let vert = &mut bones[b].vertices[idx.unwrap()];
                     let weight = bind.verts[v_id].weight;
-                    let end_pos =
-                        inherit_vert(init_vert_pos[idx.unwrap()], &bind_bone, bone.pivot_rot)
-                            - vert.pos;
+                    let end_pos = inherit_vert(
+                        init_vert_pos[idx.unwrap()],
+                        &bind_bone,
+                        bone.pivot_rot,
+                        bone.pivot_scale,
+                    ) - vert.pos;
                     vert.pos += end_pos * weight;
                     continue;
                 }
@@ -1087,8 +1089,8 @@ pub fn get_path_normal_angle(bones: &Vec<Bone>, bone: &Bone, bind_idx: usize) ->
     normal_angle
 }
 
-pub fn inherit_vert(mut pos: Vec2, bone: &Bone, pivot_rot: f32) -> Vec2 {
-    pos *= bone.scale;
+pub fn inherit_vert(mut pos: Vec2, bone: &Bone, pivot_rot: f32, pivot_scale: Vec2) -> Vec2 {
+    pos *= bone.scale * pivot_scale;
     pos = utils::rotate(&pos, bone.rot + pivot_rot);
     pos += bone.pos;
     pos

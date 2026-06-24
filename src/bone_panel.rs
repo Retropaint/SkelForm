@@ -1246,6 +1246,28 @@ pub fn visuals(
     });
 
     ui.horizontal(|ui| {
+        ui.label("Pivot Scale: ");
+        let input_widths = 120.;
+        ui.add_space(ui.available_width() - input_widths - 5.);
+
+        ui.label("X: ");
+        let id = "pivot_scale_x".to_string();
+        let (edited, value, _) =
+            ui.float_input(id, shared_ui, bone.pivot_scale.x, 1., options.clone());
+        if edited {
+            events.edit_bone(bone.id, &AE::PivotScaleX, value, "", usize::MAX, -1);
+        }
+
+        ui.label("Y: ");
+        let id = "pivot_scale_y".to_string();
+        let (edited, value, _) =
+            ui.float_input(id, shared_ui, bone.pivot_scale.y, 1., options.clone());
+        if edited {
+            events.edit_bone(bone.id, &AE::PivotScaleY, value, "", usize::MAX, -1);
+        }
+    });
+
+    ui.horizontal(|ui| {
         ui.label("Pivot Rotation: ");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let deg_mod = 180. / std::f32::consts::PI;

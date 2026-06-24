@@ -1047,9 +1047,7 @@ pub struct Visuals {
     pub tex: String,
     #[serde(default = "default_tint", skip_serializing_if = "is_tint_white")]
     pub tint: TintColor,
-    #[serde(skip_serializing_if = "is_neg_one")]
     pub zindex: i32,
-    #[serde(default = "default_pivot")]
     pub pivot_pos: Vec2,
     pub pivot_rot: f32,
 
@@ -1117,6 +1115,8 @@ pub struct Bone {
     #[serde(default = "default_pivot")]
     pub pivot_pos: Vec2,
     pub pivot_rot: f32,
+    #[serde(default = "default_scale")]
+    pub pivot_scale: Vec2,
     #[serde(skip)]
     pub zindex: i32,
     pub pos: Vec2,
@@ -1129,7 +1129,7 @@ pub struct Bone {
     pub ik_constraint: JointConstraint,
     #[serde(skip)]
     pub ik_mode: InverseKinematicsMode,
-    #[serde(skip)]
+    #[serde(default = "default_neg_one", skip)]
     pub ik_target_id: i32,
     #[serde(skip)]
     pub ik_bone_ids: Vec<i32>,
@@ -1727,7 +1727,7 @@ pub struct InverseKinematics {
     pub constraint: JointConstraint,
     #[serde(skip_serializing_if = "no_ik_mode")]
     pub mode: InverseKinematicsMode,
-    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
+    #[serde(default = "default_neg_one")]
     pub target_id: i32,
     #[serde(skip_serializing_if = "is_i32_empty")]
     pub bone_ids: Vec<i32>,
@@ -1737,7 +1737,7 @@ pub struct InverseKinematics {
     pub init_constraint: JointConstraint,
     #[serde(skip_serializing_if = "no_ik_mode", skip_deserializing)]
     pub init_mode: InverseKinematicsMode,
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_false", skip_deserializing)]
     pub init_mimic_target: bool,
 }
 
@@ -1985,6 +1985,8 @@ pub enum AnimElement {
      /* K */ PivotX, // NA
      /* L */ PivotY, // NA
      /* M */ PivotRot, // NA
+     /* N */ PivotScaleX, // NA
+     /* O */ PivotScaleY, // NA
 }
 
 // iterable anim change icons IDs
@@ -2831,6 +2833,10 @@ fn default_neg_one() -> i32 {
 
 fn default_one() -> f32 {
     1.
+}
+
+fn default_scale() -> Vec2 {
+    Vec2::new(1., 1.)
 }
 
 fn gridline_default() -> i32 {
