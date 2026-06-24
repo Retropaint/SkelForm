@@ -141,7 +141,8 @@ pub fn render(
         let cam = world_camera(&camera, &config);
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &mut temp_arm.bones[b];
-            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot);
+            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot)
+                * utils::rotate(&tb.scale, -tb.pivot_rot);
             let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), final_pivot);
             vert.tint = tb.tint;
             tb.world_verts.push(vert);
