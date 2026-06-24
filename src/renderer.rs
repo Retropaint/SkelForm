@@ -1329,7 +1329,11 @@ pub fn edit_bone(
             }
         }
     } else if current_edit == EditModes::Scale {
-        let mut scale = bone.scale;
+        let mut scale = if edit_mode.holding_edit_alt {
+            bone.pivot_scale
+        } else {
+            bone.scale
+        };
 
         // restore universal scale, by offsetting against parent's
         if bone.parent_id != -1 {
@@ -1348,11 +1352,20 @@ pub fn edit_bone(
         }
 
         scale -= mouse_vel / camera.zoom;
-        if scale.x != bone.scale.x {
-            edit!(bone, AnimElement::ScaleX, scale.x);
-        }
-        if scale.y != bone.scale.y {
-            edit!(bone, AnimElement::ScaleY, scale.y);
+        if edit_mode.holding_edit_alt {
+            if scale.x != bone.scale.x {
+                edit!(bone, AnimElement::PivotScaleX, scale.x);
+            }
+            if scale.y != bone.scale.y {
+                edit!(bone, AnimElement::PivotScaleY, scale.y);
+            }
+        } else {
+            if scale.x != bone.scale.x {
+                edit!(bone, AnimElement::ScaleX, scale.x);
+            }
+            if scale.y != bone.scale.y {
+                edit!(bone, AnimElement::ScaleY, scale.y);
+            }
         }
     }
 }
