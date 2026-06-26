@@ -1031,6 +1031,9 @@ pub fn import<R: Read + std::io::Seek>(
         bone.vertices = visuals.vertices.clone();
         bone.indices = visuals.indices.clone();
         bone.binds = visuals.binds.clone();
+        bone.pivot_pos = visuals.pivot_pos;
+        bone.pivot_rot = visuals.pivot_rot;
+        bone.pivot_scale = visuals.pivot_scale;
     }
 
     // populate physics data
