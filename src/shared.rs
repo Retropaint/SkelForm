@@ -1113,10 +1113,11 @@ pub struct Bone {
     pub tex: String,
     #[serde(skip)]
     pub tint: TintColor,
-    #[serde(default = "default_pivot")]
+    #[serde(skip)]
     pub pivot_pos: Vec2,
+    #[serde(skip)]
     pub pivot_rot: f32,
-    #[serde(default = "default_scale")]
+    #[serde(default = "default_scale", skip)]
     pub pivot_scale: Vec2,
     #[serde(skip)]
     pub zindex: i32,
