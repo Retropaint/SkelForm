@@ -1738,24 +1738,32 @@ fn edit_mode_bar(
             shared_ui.cursor_icon = egui::CursorIcon::Crosshair;
         }
 
+        let bone = armature.sel_bone(&selections).unwrap();
+
         if edit_mode.is_moving {
             let str = shared_ui.loc("edit_bar.move.snap");
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
-            let str = shared_ui.loc("edit_bar.move.pivot");
-            edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
+            if bone.tex != "" {
+                let str = shared_ui.loc("edit_bar.move.pivot");
+                edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
+            }
         } else if edit_mode.is_rotating {
             let loc = shared_ui.loc("edit_bar.rotate.snap");
             let str = format!("{} {}°", loc, config.rot_snap_step);
             edit_feature!(&str, config.keys.edit_snap, edit_mode.holding_edit_snap);
-            let str = shared_ui.loc("edit_bar.rotate.pivot");
-            edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
+            if bone.tex != "" {
+                let str = shared_ui.loc("edit_bar.rotate.pivot");
+                edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
+            }
         } else if edit_mode.is_scaling {
             let str = shared_ui.loc("edit_bar.scale.snap");
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
             let str = shared_ui.loc("edit_bar.scale.ratio");
             edit_feature!(str, config.keys.edit_modifier, edit_mode.holding_edit_mod);
-            let str = shared_ui.loc("edit_bar.scale.pivot");
-            edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
+            if bone.tex != "" {
+                let str = shared_ui.loc("edit_bar.scale.pivot");
+                edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
+            }
         }
     });
 }
