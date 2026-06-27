@@ -2849,10 +2849,6 @@ fn default_tint() -> TintColor {
     TintColor::new(1., 1., 1., 1.)
 }
 
-fn default_pivot() -> Vec2 {
-    Vec2::new(0., 0.)
-}
-
 fn default_0_alpha() -> Color {
     Color::new(0, 0, 0, 0)
 }
