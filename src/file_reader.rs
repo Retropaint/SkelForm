@@ -367,41 +367,40 @@ pub fn read_psd(
             continue;
         }
 
+        // create texture bone
+        let bone_id = shared.psd_armature.new_bone(-1).0.id;
+        bone_psd_id.insert(group_ids[g] as u32, bone_id);
+
+        let styles = &shared.psd_armature.styles;
+        let str_default = str_default.clone();
+        let default_style = &styles.iter().find(|s| s.name == str_default).unwrap();
+        let tex = default_style.textures[tex_idx].clone();
+        let bone = shared.psd_armature.find_bone_mut(bone_id).unwrap();
+        bone.parent_id = 0;
+        bone.name = group.name().to_string();
+        bone.tex = tex.name.clone();
+        shared
+            .psd_armature
+            .set_bone_tex(bone_id, tex.name.clone(), usize::MAX, -1);
+
         // check if this group has a pivot, and create it if so
-        let mut pivot_id = -1;
-        let mut pivot_pos = Vec2::default();
         for l in 0..psd.layers().len() {
             let layer = &psd.layers()[l];
             if layer.parent_id() != Some(group_ids[g]) || !layer.name().contains("$pivot") {
                 continue;
             }
 
-            pivot_id = shared.psd_armature.new_bone(-1).0.id;
-            bone_psd_id.insert(group_ids[g] as u32, pivot_id);
-            let pivot_bone = shared.psd_armature.find_bone_mut(pivot_id).unwrap();
-            pivot_pos = Vec2::new(layer.layer_left() as f32, -layer.layer_top() as f32);
-            pivot_bone.parent_id = 0;
-            pivot_bone.pos = pivot_pos - Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
-            pivot_bone.name = utils::without_unicode(group.name()).to_string();
-            pivot_bone.folded = true;
-            pivot_bone.zindex = 0;
+            let pivot_pos = Vec2::new(
+                layer.layer_left() as f32 + layer.width() as f32 / 2.,
+                layer.layer_top() as f32 + layer.height() as f32 / 2.,
+            );
+            let bone = shared.psd_armature.find_bone_mut(bone_id).unwrap();
+            let pivot = Vec2::new(
+                -(pivot_pos.x - image.1.x - image.0.width() as f32 / 2.) / image.0.width() as f32,
+                (pivot_pos.y - image.1.y - image.0.height() as f32 / 2.) / image.0.height() as f32,
+            );
+            bone.pivot_pos = pivot;
         }
-
-        // create texture bone
-        let new_bone_id = shared.psd_armature.new_bone(-1).0.id;
-        if pivot_id == -1 {
-            bone_psd_id.insert(group_ids[g] as u32, new_bone_id);
-        }
-
-        let styles = &shared.psd_armature.styles;
-        let str_default = str_default.clone();
-        let default_style = &styles.iter().find(|s| s.name == str_default).unwrap();
-        let tex_name = default_style.textures[tex_idx].name.clone();
-        let bone = shared.psd_armature.find_bone_mut(new_bone_id).unwrap();
-        bone.parent_id = 0;
-        shared
-            .psd_armature
-            .set_bone_tex(new_bone_id, tex_name.clone(), usize::MAX, -1);
 
         // process inverse kinematics layers ($ik_)
         for l in 0..psd.layers().len() {
@@ -410,12 +409,7 @@ pub fn read_psd(
                 continue;
             }
 
-            let bone;
-            if pivot_id != -1 {
-                bone = shared.psd_armature.find_bone_mut(pivot_id).unwrap();
-            } else {
-                bone = shared.psd_armature.find_bone_mut(new_bone_id).unwrap();
-            }
+            let bone = shared.psd_armature.find_bone_mut(bone_id).unwrap();
 
             if layer.name().contains("counterclockwise") {
                 bone.ik_constraint = JointConstraint::CounterClockwise;
@@ -436,33 +430,18 @@ pub fn read_psd(
             }
         }
 
-        let new_bone = shared.psd_armature.find_bone_mut(new_bone_id).unwrap();
-        new_bone.name = tex_name.clone();
-        new_bone.tex = tex_name;
+        let new_bone = shared.psd_armature.find_bone_mut(bone_id).unwrap();
+        new_bone.pivot_scale = Vec2::new(1., 1.);
 
         // layers start from top-left, so push bone down and right to reflect that
-        new_bone.pos = Vec2::new(dims.x / 2., -dims.y / 2.);
+        new_bone.pos = Vec2::new(image.0.width() as f32 / 2., image.0.height() as f32 / -2.);
 
         // push bone to wherever it would have been on the canvas
         new_bone.pos.x += image.1.x;
         new_bone.pos.y -= image.1.y;
 
-        // set up texture to be part of it's pivot, if it exists
-        if pivot_id != -1 {
-            new_bone.parent_id = pivot_id;
-            new_bone.name = "Texture".to_string();
-
-            new_bone.pos.x -= pivot_pos.x;
-            new_bone.pos.y -= pivot_pos.y;
-        } else {
-            new_bone.pos -= Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
-        }
-
-        let bone_id = if pivot_id != -1 {
-            pivot_id
-        } else {
-            new_bone_id
-        };
+        new_bone.pos -= Vec2::new(dimensions.x / 2., -dimensions.y / 2.);
+        new_bone.pos -= new_bone.pivot_pos * dims;
 
         // add this bone to parent, if appropriate
         if group.parent_id() != None {
@@ -510,7 +489,7 @@ pub fn read_psd(
         target_bone.zindex = 0;
     }
 
-    // adjust IK boens' distance (position X)
+    // adjust IK bones' distance (position X)
     for b in 0..shared.psd_armature.bones.len() {
         let bone = &mut shared.psd_armature.bones[b];
         if bone.ik_family_id == -1 || start_eff_ids.contains(&bone.id) {
@@ -520,18 +499,16 @@ pub fn read_psd(
         bone.pos.y = 0.;
     }
 
-    // point and orbit non-IK children of IK bones in the correct direction
+    // point IK bones in the correct direction
     for b in 0..shared.psd_armature.bones.len() {
         let bone = &shared.psd_armature.bones[b];
         let bones = &shared.psd_armature.bones;
-        let parent_raw = bones.iter().find(|b| b.id == bone.parent_id);
-        if parent_raw == None || parent_raw.unwrap().ik_family_id == -1 || bone.ik_family_id != -1 {
+        if bone.ik_family_id == -1 {
             continue;
         }
-        let parent = parent_raw.unwrap();
 
         // get starting bone of this family
-        let start_bone_raw = bones.iter().find(|b| b.ik_family_id == parent.ik_family_id);
+        let start_bone_raw = bones.iter().find(|b| b.ik_family_id == bone.ik_family_id);
         if start_bone_raw == None {
             continue;
         }
@@ -547,10 +524,17 @@ pub fn read_psd(
         // rotate this bone to point correctly
         let diff = target.pos - start_bone.pos;
         let angle = diff.y.atan2(diff.x);
-        shared.psd_armature.bones[b].rot = -angle;
+        let bone = &mut shared.psd_armature.bones[b];
+        bone.pivot_rot = -angle;
 
-        // adjust this bone such that it orbits its parent
-        shared.psd_armature.bones[b].pos = utils::rotate(&shared.psd_armature.bones[b].pos, -angle);
+        // adjust pivot based on its rotation
+        let styles = &shared.psd_armature.styles;
+        let str_default = str_default.clone();
+        let default_style = &styles.iter().find(|s| s.name == str_default).unwrap();
+        let textures = &default_style.textures;
+        let tex = textures.iter().find(|t| t.name == bone.tex).unwrap();
+        let size = utils::rotate(&tex.size, -angle);
+        bone.pivot_pos = utils::rotate(&bone.pivot_pos, angle) * (size / tex.size);
     }
 
     // remove unused texture data
