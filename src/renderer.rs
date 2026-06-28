@@ -577,7 +577,7 @@ pub fn render(
 
     // bone's transforms can't be edited if editing its verts or it's IK,
     // but an exception is made if editing pivot
-    let is_editing_pivot = !has_ik || edit_mode.holding_edit_alt;
+    let is_editing_pivot = !has_ik || edit_mode.editing_pivot;
     if edit_mode.showing_mesh || !is_editing_pivot {
         return;
     }
@@ -1255,7 +1255,7 @@ pub fn edit_bone(
         }
 
         let tex = armature.tex_of(bone.id);
-        let is_editing_pivot = edit_mode.holding_edit_alt;
+        let is_editing_pivot = edit_mode.editing_pivot && tex != None;
         if is_editing_pivot {
             // move texture pivot if holding edit_alt key
             let mut vel = mouse_vel;
@@ -1294,7 +1294,7 @@ pub fn edit_bone(
         let dir = mouse_vert.pos - bone_center.pos;
         let rot = dir.y.atan2(dir.x);
 
-        let is_editing_pivot = armature.tex_of(bone.id) != None && edit_mode.holding_edit_alt;
+        let is_editing_pivot = armature.tex_of(bone.id) != None && edit_mode.editing_pivot;
         if is_editing_pivot {
             // get the target rotation from bone to mouse
             let mut rot = renderer.bone_init_pivot_rot + (rot - rot_init);
@@ -1329,7 +1329,7 @@ pub fn edit_bone(
             }
         }
     } else if current_edit == EditModes::Scale {
-        let mut scale = if edit_mode.holding_edit_alt {
+        let mut scale = if edit_mode.editing_pivot {
             bone.pivot_scale
         } else {
             bone.scale
@@ -1352,7 +1352,7 @@ pub fn edit_bone(
         }
 
         scale -= mouse_vel / camera.zoom;
-        if edit_mode.holding_edit_alt {
+        if edit_mode.editing_pivot {
             if scale.x != bone.scale.x {
                 edit!(bone, AnimElement::PivotScaleX, scale.x);
             }

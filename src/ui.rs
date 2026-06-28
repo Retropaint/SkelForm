@@ -359,6 +359,9 @@ pub fn draw(
         edit_mode_bar(
             context, armature, selections, edit_mode, events, shared_ui, config,
         );
+        bone_pivot_bar(
+            context, armature, selections, edit_mode, events, shared_ui, config,
+        );
     }
 
     if armature.bones.len() > 0 {
@@ -452,7 +455,7 @@ pub fn draw(
     if selections.bone_ids.len() == 1 {
         if edit_mode.is_rotating {
             let offset = Vec2::new(50., 0.);
-            let rot = if edit_mode.holding_edit_alt {
+            let rot = if edit_mode.editing_pivot {
                 selected_bone.pivot_rot
             } else {
                 selected_bone.rot
@@ -462,7 +465,7 @@ pub fn draw(
             helper_text!(formatted.to_string() + "°", offset);
         } else if edit_mode.is_scaling {
             let offset = Vec2::new(50., 0.);
-            let scale = if edit_mode.holding_edit_alt {
+            let scale = if edit_mode.editing_pivot {
                 selected_bone.pivot_scale
             } else {
                 selected_bone.scale
@@ -758,6 +761,9 @@ pub fn kb_inputs(
     if input.consume_shortcut(&config.keys.transform_scale) {
         events.edit_mode_scale();
     }
+    if input.consume_shortcut(&config.keys.toggle_edit_pivot) {
+        events.toggle_editing_pivot();
+    }
     if input.consume_shortcut(&config.keys.toggle_animation) && armature.bones.len() > 0 {
         events.toggle_anim_panel_open(if edit_mode.anim_open { 0 } else { 1 });
     }
@@ -830,11 +836,9 @@ pub fn kb_inputs(
         events.toggle_edit_snapping(0);
     }
 
-    let alt_key = &config.keys.edit_alt.modifiers;
-    let holding_edit_alt = input.modifiers.matches_any(*alt_key);
-    if holding_edit_alt && !edit_mode.holding_edit_alt {
+    if edit_mode.editing_pivot && !edit_mode.editing_pivot {
         events.toggle_edit_alt(1);
-    } else if !holding_edit_alt && edit_mode.holding_edit_alt {
+    } else if !edit_mode.editing_pivot && edit_mode.editing_pivot {
         events.toggle_edit_alt(0);
     }
 }
@@ -1738,33 +1742,71 @@ fn edit_mode_bar(
             shared_ui.cursor_icon = egui::CursorIcon::Crosshair;
         }
 
-        let bone = armature.sel_bone(&selections).unwrap();
-
         if edit_mode.is_moving {
+            ui.add_space(40.);
             let str = shared_ui.loc("edit_bar.move.snap");
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
-            if bone.tex != "" {
-                let str = shared_ui.loc("edit_bar.move.pivot");
-                edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
-            }
         } else if edit_mode.is_rotating {
+            ui.add_space(40.);
             let loc = shared_ui.loc("edit_bar.rotate.snap");
             let str = format!("{} {}°", loc, config.rot_snap_step);
             edit_feature!(&str, config.keys.edit_snap, edit_mode.holding_edit_snap);
-            if bone.tex != "" {
-                let str = shared_ui.loc("edit_bar.rotate.pivot");
-                edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
-            }
         } else if edit_mode.is_scaling {
+            ui.add_space(40.);
             let str = shared_ui.loc("edit_bar.scale.snap");
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
             let str = shared_ui.loc("edit_bar.scale.ratio");
             edit_feature!(str, config.keys.edit_modifier, edit_mode.holding_edit_mod);
-            if bone.tex != "" {
-                let str = shared_ui.loc("edit_bar.scale.pivot");
-                edit_feature!(str, config.keys.edit_alt, edit_mode.holding_edit_alt);
-            }
         }
+    });
+}
+
+fn bone_pivot_bar(
+    egui_ctx: &egui::Context,
+    armature: &Armature,
+    selections: &SelectionState,
+    edit_mode: &EditMode,
+    events: &mut EventState,
+    shared_ui: &mut crate::Ui,
+    config: &Config,
+) {
+    let sel = selections.clone();
+    let bone = armature.sel_bone(&sel).unwrap();
+
+    // edit mode window
+    #[rustfmt::skip]
+    let window = egui::Window::new("BonePivot").resizable(false).title_bar(false).max_width(100.).movable(false)
+        .current_pos(egui::Pos2::new(
+            shared_ui.edit_bar.pos.x + 7.5,
+            shared_ui.edit_bar.pos.y + 30.,
+        ));
+    window.show(egui_ctx, |ui| {
+        ui.horizontal(|ui| {
+            macro_rules! edit_mode_button {
+                ($label:expr, $check:expr, $key:expr) => {
+                    ui.add_enabled_ui(bone.tex != "", |ui| {
+                        let mut str = egui::text::LayoutJob::default();
+                        ui::job_text(&format!("{} ", $label), None, &mut str);
+                        let mut col = config.colors.text;
+                        col -= Color::new(50, 50, 50, 0);
+                        ui::job_text(&$key, Some(col.into()), &mut str);
+                        if selection_button(str, $check, ui).clicked() {
+                            events.toggle_editing_pivot()
+                        };
+                    })
+                };
+            }
+
+            edit_mode_button!("Bone", !edit_mode.editing_pivot, "");
+            edit_mode_button!("Pivot", edit_mode.editing_pivot, "");
+
+            if bone.tex != "" {
+                let mut col = config.colors.text;
+                col -= Color::new(50, 50, 50, 0);
+                let str = format!("{}", config.keys.toggle_edit_pivot.display());
+                ui.label(egui::RichText::new(str).color(col));
+            }
+        });
     });
 }
 

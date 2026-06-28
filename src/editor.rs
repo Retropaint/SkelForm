@@ -992,7 +992,7 @@ pub fn simple_event(
         }
         Events::ToggleEditModifying => edit_mode.holding_edit_mod = value == 1.,
         Events::ToggleEditSnapping => edit_mode.holding_edit_snap = value == 1.,
-        Events::ToggleEditAlt => edit_mode.holding_edit_alt = value == 1.,
+        Events::ToggleEditAlt => edit_mode.editing_pivot = value == 1.,
         Events::UpdateCurrentEditing => {
             if value == 1. {
                 edit_mode.is_moving = false;
@@ -1154,6 +1154,7 @@ pub fn simple_event(
             }
             _ => {}
         },
+        Events::ToggleEditingPivot => edit_mode.editing_pivot = !edit_mode.editing_pivot,
         _ => {}
     }
 }

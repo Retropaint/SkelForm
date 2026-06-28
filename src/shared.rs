@@ -913,7 +913,7 @@ pub struct KeyboardConfig {
     pub transform_scale: egui::KeyboardShortcut,
     pub toggle_animation: egui::KeyboardShortcut,
     pub edit_modifier: egui::KeyboardShortcut,
-    pub edit_alt: egui::KeyboardShortcut,
+    pub toggle_edit_pivot: egui::KeyboardShortcut,
     pub edit_snap: egui::KeyboardShortcut,
     pub timeline_zoom_mode: egui::KeyboardShortcut,
     pub play_animation: egui::KeyboardShortcut,
@@ -1007,7 +1007,7 @@ impl Default for KeyboardConfig {
             toggle_animation:     regular_key!(egui::Key::A),
             edit_modifier:        shortcut_key!(egui::Modifiers::SHIFT, egui::Key::F30),
             edit_snap:            shortcut_key!(egui::Modifiers::COMMAND, egui::Key::F30),
-            edit_alt:            shortcut_key!(egui::Modifiers::ALT, egui::Key::F30),
+            toggle_edit_pivot:    regular_key!(egui::Key::R),
             play_animation:       regular_key!(egui::Key::Space),
             next_bone:            regular_key!(egui::Key::Z),
             prev_bone:            regular_key!(egui::Key::X),
@@ -2085,7 +2085,7 @@ pub struct EditMode {
     pub onion_layers: bool,
     pub holding_edit_mod: bool,
     pub holding_edit_snap: bool,
-    pub holding_edit_alt: bool,
+    pub editing_pivot: bool,
 }
 
 #[derive(Default, PartialEq, Debug, Clone)]
@@ -2405,6 +2405,7 @@ pub enum Events {
     GlobalPaste,
     TrimTexture,
     ToggleSelectedTexture,
+    ToggleEditingPivot,
 }
 
 enum_string!(Events);
@@ -2471,6 +2472,7 @@ impl EventState {
     generic_event!(global_paste, Events::GlobalPaste);
     generic_event!(copy_selected_keyframes, Events::CopySelectedKeyframes);
     generic_event!(delete_sel_texes, Events::DeleteSelectedTextures);
+    generic_event!(toggle_editing_pivot, Events::ToggleEditingPivot);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, i32);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);

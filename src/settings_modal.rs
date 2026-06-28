@@ -557,7 +557,7 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         key!("transform_scale",      keys.transform_scale,      true);
         key!("edit_modifier",        keys.edit_modifier,        false);
         key!("edit_snap",            keys.edit_snap,            false);
-        key!("edit_alt",             keys.edit_alt,             false);
+        key!("toggle_edit_pivot",    keys.toggle_edit_pivot,    true);
         key!("next_bone",            keys.next_bone,            true);
         key!("prev_bone",            keys.prev_bone,            true);
         key!("toggle_bone_fold",     keys.toggle_bone_fold,     true);
