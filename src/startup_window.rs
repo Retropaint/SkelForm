@@ -51,7 +51,7 @@ pub fn startup_modal(
 }
 
 fn left(
-    ctx: &egui::Context,
+    _ctx: &egui::Context,
     ui: &mut egui::Ui,
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
@@ -111,7 +111,7 @@ fn left(
                             let skel_file = include_bytes!($filename).to_vec();
                             shared_ui.thumb_ui_tex.insert(
                                 $key.to_string(),
-                                ui::create_ui_texture(skel_file, true, ctx, $filename).unwrap(),
+                                ui::create_ui_texture(skel_file, true, _ctx, $filename).unwrap(),
                             );
                         }
                     };
@@ -154,7 +154,7 @@ fn middle(
     ctx: &egui::Context,
     ui: &mut egui::Ui,
     shared_ui: &mut crate::Ui,
-    events: &mut EventState,
+    _events: &mut EventState,
     conf: &Config,
     available_size: egui::Vec2,
 ) {
@@ -220,7 +220,7 @@ fn middle(
                         }
 
                         let width = available_width;
-                        if skf_file_button(&path, ui, ctx, width, shared_ui, conf, events, p) {
+                        if skf_file_button(&path, ui, ctx, width, shared_ui, conf, _events, p) {
                             hovered = true;
                         }
                         ui.add_space(5.);
