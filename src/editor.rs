@@ -1155,6 +1155,13 @@ pub fn simple_event(
             _ => {}
         },
         Events::ToggleEditingPivot => edit_mode.editing_pivot = !edit_mode.editing_pivot,
+        Events::ReduceGlobalIkFamilyIds => {
+            for bone in &mut armature.bones {
+                if bone.ik_family_id > value as i32 {
+                    bone.ik_family_id -= 1;
+                }
+            }
+        }
         _ => {}
     }
 }

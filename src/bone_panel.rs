@@ -432,6 +432,7 @@ pub fn inverse_kinematics(
                     ui.selectable_value(&mut selected, -2, "New");
 
                     if selected != -1 {
+                        let this_id = bone.ik_family_id;
                         type A = AnimElement;
                         let mut id = selected;
                         if selected == -2 {
@@ -447,6 +448,14 @@ pub fn inverse_kinematics(
                             events.edit_bone(bone.id, &A::Rotation, 0., "", usize::MAX, -1);
                         }
                         events.edit_bone(bone.id, &A::IkFamilyId, id as f32, "", usize::MAX, -1);
+
+                        // reduce higher ik_family_ids if this one will longer exist
+                        let bones = &armature.bones;
+                        let bones_in_family: Vec<&Bone> =
+                            bones.iter().filter(|b| b.ik_family_id == this_id).collect();
+                        if bones_in_family.len() == 1 {
+                            events.reduce_global_ik_family_ids(this_id);
+                        }
                     }
                 })
                 .response

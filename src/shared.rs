@@ -1181,6 +1181,7 @@ pub struct Bone {
 
     #[serde(default = "default_neg_one")]
     pub ik_family_id: i32,
+    pub ik_family_name: String,
     #[serde(default = "default_neg_one")]
     pub physics_id: i32,
     #[serde(default = "default_neg_one")]
@@ -2406,6 +2407,7 @@ pub enum Events {
     TrimTexture,
     ToggleSelectedTexture,
     ToggleEditingPivot,
+    ReduceGlobalIkFamilyIds,
 }
 
 enum_string!(Events);
@@ -2523,6 +2525,7 @@ impl EventState {
     #[rustfmt::skip]    event_with_value!(create_parent_bone, Events::CreateParentBone, of_bone_id, i32);
     #[rustfmt::skip]    event_with_value!(move_selected_keyframes, Events::MoveSelectedKeyframes, dropped_frame, i32);
     #[rustfmt::skip]    event_with_value!(toggle_edit_alt, Events::ToggleEditAlt, toggle, i32);
+    #[rustfmt::skip]    event_with_value!(reduce_global_ik_family_ids, Events::ReduceGlobalIkFamilyIds, base, i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

@@ -1665,7 +1665,7 @@ fn edit_mode_bar(
     shared_ui: &mut crate::Ui,
     config: &Config,
 ) {
-    let mut has_ik = true;
+    let has_ik;
     let sel = selections.clone();
     let bone = armature.sel_bone(&sel);
     if bone != None {
