@@ -500,6 +500,7 @@ pub fn simple_event(
         Events::SelectStyle => {
             selections.style_id = value as i32;
             ui.last_selected = if value as i32 == -1 { "" } else { "style" }.to_string();
+            selections.tex_ids = vec![];
         }
         Events::OpenModal => {
             open_modal(ui, value == 1., ui.loc(&str_value));

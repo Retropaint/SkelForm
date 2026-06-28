@@ -908,5 +908,11 @@ pub fn draw_tex_buttons(
     if !hovered || dragged {
         shared_ui.hovering_tex = -1;
     }
+    let left_clicked = ui.ctx().input(|i| i.pointer.primary_clicked());
+    if !hovered && left_clicked {
+        for id in &selections.tex_ids {
+            events.toggle_sel_tex(*id, false);
+        }
+    }
     shared_ui.dragging_tex = dragged;
 }
