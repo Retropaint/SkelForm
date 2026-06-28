@@ -1667,10 +1667,13 @@ fn edit_mode_bar(
 ) {
     let mut has_ik = true;
     let sel = selections.clone();
-    if let Some(bone) = armature.sel_bone(&sel) {
-        has_ik = bone.ik_family_id != -1
-            && !bone.ik_disabled
-            && armature.bone_eff(bone.id) != JointEffector::Start;
+    let bone = armature.sel_bone(&sel);
+    if bone != None {
+        has_ik = bone.unwrap().ik_family_id != -1
+            && !bone.unwrap().ik_disabled
+            && armature.bone_eff(bone.unwrap().id) != JointEffector::Start;
+    } else {
+        return;
     }
 
     // edit mode window
@@ -1742,17 +1745,19 @@ fn edit_mode_bar(
             shared_ui.cursor_icon = egui::CursorIcon::Crosshair;
         }
 
+        let space = if bone.unwrap().tex != "" { 40. } else { 0. };
+
         if edit_mode.is_moving {
-            ui.add_space(40.);
+            ui.add_space(space);
             let str = shared_ui.loc("edit_bar.move.snap");
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
         } else if edit_mode.is_rotating {
-            ui.add_space(40.);
+            ui.add_space(space);
             let loc = shared_ui.loc("edit_bar.rotate.snap");
             let str = format!("{} {}°", loc, config.rot_snap_step);
             edit_feature!(&str, config.keys.edit_snap, edit_mode.holding_edit_snap);
         } else if edit_mode.is_scaling {
-            ui.add_space(40.);
+            ui.add_space(space);
             let str = shared_ui.loc("edit_bar.scale.snap");
             edit_feature!(str, config.keys.edit_snap, edit_mode.holding_edit_snap);
             let str = shared_ui.loc("edit_bar.scale.ratio");
@@ -1770,8 +1775,11 @@ fn bone_pivot_bar(
     shared_ui: &mut crate::Ui,
     config: &Config,
 ) {
-    let sel = selections.clone();
-    let bone = armature.sel_bone(&sel).unwrap();
+    let bone = armature.sel_bone(&selections).unwrap();
+
+    if bone.tex == "" {
+        return;
+    }
 
     // edit mode window
     #[rustfmt::skip]
@@ -1800,12 +1808,10 @@ fn bone_pivot_bar(
             edit_mode_button!("Bone", !edit_mode.editing_pivot, "");
             edit_mode_button!("Pivot", edit_mode.editing_pivot, "");
 
-            if bone.tex != "" {
-                let mut col = config.colors.text;
-                col -= Color::new(50, 50, 50, 0);
-                let str = format!("{}", config.keys.toggle_edit_pivot.display());
-                ui.label(egui::RichText::new(str).color(col));
-            }
+            let mut col = config.colors.text;
+            col -= Color::new(50, 50, 50, 0);
+            let str = format!("{}", config.keys.toggle_edit_pivot.display());
+            ui.label(egui::RichText::new(str).color(col));
         });
     });
 }

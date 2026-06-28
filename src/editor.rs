@@ -1203,6 +1203,7 @@ fn select_bone(
     edit_mode.temporary = None;
     sel.vert_ids = vec![];
     ui.selected_bone_first_time = true;
+    edit_mode.editing_pivot = false;
 
     if idx == usize::MAX {
         sel.bone_idx = usize::MAX;
