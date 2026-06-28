@@ -447,7 +447,11 @@ pub fn inverse_kinematics(
                             events.edit_bone(bone.id, &A::PositionX, mag, "", usize::MAX, -1);
                             events.edit_bone(bone.id, &A::Rotation, 0., "", usize::MAX, -1);
                         }
-                        events.edit_bone(bone.id, &A::IkFamilyId, id as f32, "", usize::MAX, -1);
+
+                        for bone_id in &selections.bone_ids {
+                            let iki = &A::IkFamilyId;
+                            events.edit_bone(*bone_id, iki, id as f32, "", usize::MAX, -1);
+                        }
 
                         // reduce higher ik_family_ids if this one will longer exist
                         let bones = &armature.bones;
@@ -476,8 +480,10 @@ pub fn inverse_kinematics(
                 let id = "ik_distance".to_string();
                 let (edited, value, _) = ui.float_input(id, shared_ui, bone.pos.x, 1., None);
                 if edited {
-                    events.edit_bone(bone.id, &AE::PositionX, value, "", usize::MAX, -1);
-                    events.edit_bone(bone.id, &AE::PositionY, 0., "", usize::MAX, -1);
+                    for bone_id in &selections.bone_ids {
+                        events.edit_bone(*bone_id, &AE::PositionX, value, "", usize::MAX, -1);
+                        events.edit_bone(*bone_id, &AE::PositionY, 0., "", usize::MAX, -1);
+                    }
                 }
             });
         });
@@ -493,7 +499,9 @@ pub fn inverse_kinematics(
                         let target = &AnimElement::MimicTarget;
                         let cf32 = if checked { 1. } else { 0. };
                         let sel = &selections;
-                        events.edit_bone(bone.id, target, cf32, "", sel.anim, sel.anim_frame);
+                        for bone_id in &selections.bone_ids {
+                            events.edit_bone(*bone_id, target, cf32, "", sel.anim, sel.anim_frame);
+                        }
                     }
                 });
             });
@@ -527,7 +535,9 @@ pub fn inverse_kinematics(
                     #[rustfmt::skip]
                     if selected_mode != -1 {
                         let mode = &InverseKinematicsMode::from_repr(selected_mode).unwrap().to_string();
-                        events.edit_bone(bone.id, &AnimElement::IkMode, f32::MAX, mode, selections.anim, selections.anim_frame);
+                        for bone_id in &selections.bone_ids {
+                            events.edit_bone(*bone_id, &AnimElement::IkMode, f32::MAX, mode, selections.anim, selections.anim_frame);
+                        }
                     };
                 })
                 .response
@@ -559,7 +569,9 @@ pub fn inverse_kinematics(
                     ui.selectable_value(&mut ik, JointConstraint::CounterClockwise, str_ccw);
                     if ik != armature.sel_bone(&sel).unwrap().ik_constraint {
                         #[rustfmt::skip]
-                        events.edit_bone(bone.id, &AnimElement::IkConstraint, f32::MAX, &ik.to_string(), selections.anim, selections.anim_frame);
+                        for bone_id in &selections.bone_ids {
+                            events.edit_bone(*bone_id, &AnimElement::IkConstraint, f32::MAX, &ik.to_string(), selections.anim, selections.anim_frame);
+                        };
                     }
                 })
                 .response
