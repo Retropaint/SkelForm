@@ -3,40 +3,12 @@
     {
       "code": "user_docs",
       "url_type": "UserDocs",
-      "url": "introduction.html",
-      "items": [
-        {
-          "code": "starter_guide",
-          "url": "starter-guide/main.html"
-        },
-        {
-          "code": "psd",
-          "url": "psd.html"
-        },
-        {
-          "code": "runtime_api",
-          "url": "runtime-api.html"
-        }
-      ]
+      "url": "introduction.html"
     },
     {
       "code": "dev_docs",
       "url_type": "DevDocs",
-      "url": "how-to-read-this.html",
-      "items": [
-        {
-          "code": "skf",
-          "url": "file-specs.html"
-        },
-        {
-          "code": "generic_runtime",
-          "url": "generic-runtimes.html"
-        },
-        {
-          "code": "engine_runtime",
-          "url": "engine-runtimes.html"
-        }
-      ]
+      "url": ""
     },
     {
       "code": "main_site",
