@@ -1309,6 +1309,11 @@ impl Armature {
     ) {
         if selected_anim == usize::MAX || selected_frame == -1 {
             let bone_mut = self.bones.iter_mut().find(|b| b.id == bone_id).unwrap();
+            if bone_mut.tex == "" {
+                bone_mut.pivot_scale = Vec2::new(1., 1.);
+                bone_mut.tint = default_tint();
+            }
+
             bone_mut.tex = new_tex_str;
             let new_tex = self.tex_of(bone_id);
             if new_tex == None {
