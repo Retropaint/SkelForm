@@ -1210,8 +1210,12 @@ pub fn edit_bone(
     }
 
     macro_rules! edit {
-        ($bone:expr, $element:expr, $value:expr) => {
-            events.edit_bone($bone.id, &$element, $value, "", anim_id, anim_frame);
+        ($bone:expr, $element:expr, $value:expr, $animate:expr) => {
+            if $animate {
+                events.edit_bone($bone.id, &$element, $value, "", anim_id, anim_frame);
+            } else {
+                events.edit_bone($bone.id, &$element, $value, "", usize::MAX, -1);
+            }
         };
     }
 
@@ -1265,18 +1269,18 @@ pub fn edit_bone(
             pivot -= vel / tex.unwrap().size;
 
             if pivot.x != bone.pivot_pos.x {
-                edit!(bone, AnimElement::PivotX, pivot.x);
+                edit!(bone, AnimElement::PivotX, pivot.x, false);
             }
             if pivot.y != bone.pivot_pos.y {
-                edit!(bone, AnimElement::PivotY, pivot.y);
+                edit!(bone, AnimElement::PivotY, pivot.y, false);
             }
         } else {
             // move bone
             if pos.x != bone.pos.x {
-                edit!(bone, AnimElement::PositionX, pos.x);
+                edit!(bone, AnimElement::PositionX, pos.x, true);
             };
             if pos.y != bone.pos.y {
-                edit!(bone, AnimElement::PositionY, pos.y);
+                edit!(bone, AnimElement::PositionY, pos.y, true);
             }
         }
     } else if current_edit == EditModes::Rotate {
@@ -1309,7 +1313,7 @@ pub fn edit_bone(
             let diff = utils::shortest_angle_delta(bone.pivot_rot, rot);
 
             if rot != bone.rot {
-                edit!(bone, AnimElement::PivotRot, bone.pivot_rot + diff);
+                edit!(bone, AnimElement::PivotRot, bone.pivot_rot + diff, false);
             }
         } else {
             // get the target rotation from bone to mouse
@@ -1325,7 +1329,7 @@ pub fn edit_bone(
             let diff = utils::shortest_angle_delta(bone.rot, rot);
 
             if rot != bone.rot {
-                edit!(bone, AnimElement::Rotation, bone.rot + diff);
+                edit!(bone, AnimElement::Rotation, bone.rot + diff, true);
             }
         }
     } else if current_edit == EditModes::Scale {
@@ -1354,17 +1358,17 @@ pub fn edit_bone(
         scale -= mouse_vel / camera.zoom;
         if edit_mode.editing_pivot {
             if scale.x != bone.scale.x {
-                edit!(bone, AnimElement::PivotScaleX, scale.x);
+                edit!(bone, AnimElement::PivotScaleX, scale.x, false);
             }
             if scale.y != bone.scale.y {
-                edit!(bone, AnimElement::PivotScaleY, scale.y);
+                edit!(bone, AnimElement::PivotScaleY, scale.y, false);
             }
         } else {
             if scale.x != bone.scale.x {
-                edit!(bone, AnimElement::ScaleX, scale.x);
+                edit!(bone, AnimElement::ScaleX, scale.x, true);
             }
             if scale.y != bone.scale.y {
-                edit!(bone, AnimElement::ScaleY, scale.y);
+                edit!(bone, AnimElement::ScaleY, scale.y, true);
             }
         }
     }
