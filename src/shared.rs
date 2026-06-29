@@ -1367,6 +1367,7 @@ impl Armature {
             ik_family_id: -1,
             tint: default_tint(),
             group_color: Color::new(0, 0, 0, 0),
+            pivot_scale: Vec2::new(1., 1.),
             ..Default::default()
         };
         if id == -1 {
