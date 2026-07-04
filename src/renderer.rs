@@ -137,6 +137,8 @@ pub fn render(
             continue;
         }
 
+        let parents = temp_arm.get_all_parents(false, temp_arm.bones[b].id);
+
         // setup world verts
         let cam = world_camera(&camera, &config);
         for v in 0..temp_arm.bones[b].vertices.len() {
@@ -144,6 +146,15 @@ pub fn render(
             let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot) * tb.scale;
             let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), final_pivot);
             vert.tint = tb.tint;
+
+            // make this translucent if not the selected bone
+            if selections.bone_idx != usize::MAX {
+                let not_child = parents.iter().find(|b| b.id == selections.bone_ids[0]) == None;
+                if not_child && selections.bone_ids[0] != tb.id {
+                    vert.tint.a = 0.25;
+                }
+            }
+
             tb.world_verts.push(vert);
         }
 
