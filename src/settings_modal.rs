@@ -356,14 +356,16 @@ fn rendering(
         });
     });
 
-    basic_checkbox(
-        ui,
-        &shared_ui.loc("settings_modal.rendering.gridline_front"),
-        "",
-        &mut shared_ui.updated_config.gridline_front,
-        config,
-        true,
-    );
+    let trans_str = "settings_modal.rendering.bone_translucency";
+    let trans = shared_ui.updated_config.bone_translucency;
+    shared_ui.updated_config.bone_translucency =
+        basic_input(trans_str, trans, shared_ui, ui, config, true)
+            .max(0.)
+            .min(1.);
+
+    let str = &shared_ui.loc("settings_modal.rendering.gridline_front");
+    let mut_front = &mut shared_ui.updated_config.gridline_front;
+    basic_checkbox(ui, str, "", mut_front, config, false);
 
     ui.add_space(7.);
 }

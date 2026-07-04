@@ -151,7 +151,7 @@ pub fn render(
             if selections.bone_idx != usize::MAX {
                 let not_child = parents.iter().find(|b| b.id == selections.bone_ids[0]) == None;
                 if not_child && selections.bone_ids[0] != tb.id {
-                    vert.tint.a = 0.25;
+                    vert.tint.a = config.bone_translucency;
                 }
             }
 
