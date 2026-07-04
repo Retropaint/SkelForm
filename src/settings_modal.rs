@@ -1,6 +1,6 @@
 use egui::IntoAtoms;
 
-use crate::{shared, ui::EguiUi, Config, Display};
+use crate::{shared, ui::EguiUi, Display};
 
 macro_rules! default {
     ($config:expr, $field:ident) => {
@@ -264,6 +264,7 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config)
                 default!(config, transform_rot_radius);
                 default!(config, center_point_radius);
                 default!(config, transform_scale_radius);
+                default!(config, bone_translucency);
             }
         });
     });
@@ -286,6 +287,13 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config)
         false,
     );
 
+    let trans_str = "settings_modal.editing.bone_translucency";
+    let trans = shared_ui.updated_config.bone_translucency;
+    shared_ui.updated_config.bone_translucency =
+        basic_input(trans_str, trans, shared_ui, ui, config, true)
+            .max(0.)
+            .min(1.);
+
     ui.add_space(10.);
 
     shared_ui.updated_config.center_point_radius = basic_input(
@@ -304,6 +312,7 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config)
         config,
         false,
     );
+
     shared_ui.updated_config.transform_scale_radius = basic_input(
         "settings_modal.editing.transform_scale_radius",
         shared_ui.updated_config.transform_scale_radius,
@@ -339,7 +348,6 @@ fn rendering(
                 default!(config, gridline_gap);
                 default!(config, pixel_magnification);
                 default!(config, gridline_front);
-                default!(config, bone_translucency);
             }
         });
     });
@@ -363,13 +371,6 @@ fn rendering(
             ui.label(format!("{}, {}", window.x, window.y));
         });
     });
-
-    let trans_str = "settings_modal.rendering.bone_translucency";
-    let trans = shared_ui.updated_config.bone_translucency;
-    shared_ui.updated_config.bone_translucency =
-        basic_input(trans_str, trans, shared_ui, ui, config, true)
-            .max(0.)
-            .min(1.);
 
     let str = &shared_ui.loc("settings_modal.rendering.gridline_front");
     let mut_front = &mut shared_ui.updated_config.gridline_front;
