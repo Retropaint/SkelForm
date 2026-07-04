@@ -210,7 +210,7 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::
             let (edited, value, _) =
                 ui.float_input("ui_scale".to_string(), shared_ui, scale, 1., None);
             if edited {
-                shared_ui.updated_config.ui_scale = value;
+                shared_ui.updated_config.ui_scale = value.max(0.1);
             }
 
             // UI slider (web only)
