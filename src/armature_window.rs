@@ -61,7 +61,7 @@ pub fn draw(
                 events.new_bone();
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if armature.bones.len() == 0 {
+                if armature.bones.len() == 0 && armature.styles.len() == 0 {
                     return;
                 }
                 let id = format!("styles{}", armature.styles.len().to_string());
