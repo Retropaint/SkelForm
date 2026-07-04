@@ -316,11 +316,14 @@
       "propagate_visibility": "Propagate visibility ℹ:",
       "propagate_visibility_desc": "By default, bones do not propagate their current visibily onto their children.\n\nThis is to replicate simple runtime behavior, where propagation is likely to not be implemented.\n\n",
       "rot_snap_step": "Rotation snap step (degrees): ",
-      "center_point_radius": "Center point radius:",
-      "transform_rot_radius": "Rotation radius:",
-      "transform_scale_radius": "Scale radius:",
       "bone_translucency": "Bone translucency:",
-      "bone_translucency_desc": "How transparent (0-1) other bones should be if not selected"
+      "bone_translucency_desc": "How transparent (0-1) other bones should be if not selected",
+      "transform_rings": {
+        "heading": "Transform Rings",
+        "center_point_radius": "Center point radius:",
+        "transform_rot_radius": "Rotation radius:",
+        "transform_scale_radius": "Scale radius:"
+      }
     },
     "rendering": {
       "heading": "Rendering",

@@ -295,9 +295,10 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config)
             .min(1.);
 
     ui.add_space(10.);
+    ui.heading(shared_ui.loc("settings_modal.editing.transform_rings.heading"));
 
     shared_ui.updated_config.center_point_radius = basic_input(
-        "settings_modal.editing.center_point_radius",
+        "settings_modal.editing.transform_rings.center_point_radius",
         shared_ui.updated_config.center_point_radius,
         shared_ui,
         ui,
@@ -305,7 +306,7 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config)
         true,
     );
     shared_ui.updated_config.transform_rot_radius = basic_input(
-        "settings_modal.editing.transform_rot_radius",
+        "settings_modal.editing.transform_rings.transform_rot_radius",
         shared_ui.updated_config.transform_rot_radius,
         shared_ui,
         ui,
@@ -314,7 +315,7 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config)
     );
 
     shared_ui.updated_config.transform_scale_radius = basic_input(
-        "settings_modal.editing.transform_scale_radius",
+        "settings_modal.editing.transform_rings.transform_scale_radius",
         shared_ui.updated_config.transform_scale_radius,
         shared_ui,
         ui,
