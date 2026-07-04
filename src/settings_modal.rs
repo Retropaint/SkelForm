@@ -2,6 +2,12 @@ use egui::IntoAtoms;
 
 use crate::{shared, ui::EguiUi, Config, Display};
 
+macro_rules! default {
+    ($config:expr, $field:ident) => {
+        $config.$field = crate::Config::default().$field;
+    };
+}
+
 pub fn draw(
     shared_ui: &mut crate::Ui,
     config: &crate::Config,
@@ -189,8 +195,8 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::
             let str_default = &shared_ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
                 let config = &mut shared_ui.updated_config;
-                config.layout = shared::UiLayout::Split;
-                config.ui_scale = 1.;
+                default!(config, layout);
+                default!(config, ui_scale);
             }
         });
     });
@@ -253,11 +259,11 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config)
             let str_default = &shared_ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
                 let config = &mut shared_ui.updated_config;
-                config.edit_while_playing = crate::Config::default().edit_while_playing;
-                config.rot_snap_step = crate::Config::default().rot_snap_step;
-                config.transform_rot_radius = crate::Config::default().transform_rot_radius;
-                config.center_point_radius = crate::Config::default().center_point_radius;
-                config.transform_scale_radius = crate::Config::default().transform_scale_radius;
+                default!(config, edit_while_playing);
+                default!(config, rot_snap_step);
+                default!(config, transform_rot_radius);
+                default!(config, center_point_radius);
+                default!(config, transform_scale_radius);
             }
         });
     });
@@ -330,8 +336,10 @@ fn rendering(
             let str_default = &shared_ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
                 let config = &mut shared_ui.updated_config;
-                config.gridline_gap = crate::Config::default().gridline_gap;
-                config.pixel_magnification = crate::Config::default().pixel_magnification;
+                default!(config, gridline_gap);
+                default!(config, pixel_magnification);
+                default!(config, gridline_front);
+                default!(config, bone_translucency);
             }
         });
     });
@@ -380,10 +388,10 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config) {
             let str_default = &shared_ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
                 let config = &mut shared_ui.updated_config;
-                config.autosave_frequency = Config::default().autosave_frequency;
-                config.exact_bone_select = Config::default().exact_bone_select;
-                config.keep_tex_str = Config::default().keep_tex_str;
-                config.skip_startup = Config::default().skip_startup;
+                default!(config, autosave_frequency);
+                default!(config, exact_bone_select);
+                default!(config, keep_tex_str);
+                default!(config, skip_startup);
             }
         });
     });
