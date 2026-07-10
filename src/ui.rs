@@ -514,13 +514,27 @@ pub fn process_inputs(
         }
         shared_ui.last_pressed = i.keys_down.iter().last().copied();
 
+        // UI elements should not receive left click if context menu is open
         if shared_ui.context_menu.id == "" {
-            input.left_clicked = i.pointer.primary_clicked();
+            if shared_ui.mobile {
+                input.left_clicked = i.pointer.primary_clicked();
+            } else {
+                input.left_clicked = i.pointer.any_click();
+            }
         }
+
         input.right_clicked = i.pointer.secondary_clicked();
-        input.left_down = i.pointer.primary_down();
-        input.left_pressed = i.pointer.primary_pressed();
         input.right_down = i.pointer.secondary_down();
+
+        if shared_ui.mobile {
+            input.left_clicked = i.pointer.any_click();
+            input.left_pressed = i.pointer.any_pressed();
+            input.left_down = i.pointer.any_down();
+        } else {
+            input.left_down = i.pointer.primary_down();
+            input.left_pressed = i.pointer.primary_pressed();
+        }
+
         if input.left_pressed {
             input.mouse_init = Some(input.mouse);
         }
@@ -533,9 +547,7 @@ pub fn process_inputs(
             shared_ui.started_edit_dragging = false;
         }
         input.mouse_prev = input.mouse;
-        if shared_ui.mobile {
-            input.left_clicked = i.pointer.any_pressed();
-        }
+
         if let Some(mouse) = i.pointer.latest_pos() {
             input.mouse = mouse.into();
             input.mouse *= shared_ui.scale;
