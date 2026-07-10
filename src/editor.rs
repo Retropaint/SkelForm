@@ -735,6 +735,7 @@ pub fn simple_event(
                 total_rot += bone.rot;
                 scale = bone.scale;
             }
+            total_rot += bone.pivot_rot;
 
             let mouse_vel = renderer::mouse_vel(&input, &camera);
             let zoom = camera.zoom;
