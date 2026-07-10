@@ -1681,16 +1681,25 @@ impl Armature {
         Some(&mut self.animations[selections.anim as usize])
     }
 
+    // return selected bone based on first bone_ids
     pub fn sel_bone(&self, selections: &SelectionState) -> Option<&Bone> {
         if selections.bone_idx != usize::MAX && selections.bone_idx < self.bones.len() {
-            return Some(&self.bones[selections.bone_idx]);
+            let id = selections.bone_ids[0];
+            return Some(&self.bones.iter().find(|bone| bone.id == id).unwrap());
+        } else if self.bones.len() > 0 {
+            // safeguard: select first bone
+            return Some(&self.bones[0]);
         }
         None
     }
 
     pub fn sel_bone_mut(&mut self, selections: &SelectionState) -> Option<&mut Bone> {
         if selections.bone_idx != usize::MAX && selections.bone_idx < self.bones.len() {
-            return Some(&mut self.bones[selections.bone_idx]);
+            let id = selections.bone_ids[0];
+            return Some(self.bones.iter_mut().find(|bone| bone.id == id).unwrap());
+        } else if self.bones.len() > 0 {
+            // safeguard: select first bone
+            return Some(&mut self.bones[0]);
         }
         None
     }
