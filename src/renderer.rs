@@ -308,7 +308,8 @@ pub fn render(
     let mut hovering_vert_id = -1;
     let mut is_hovering_tri = false;
     let mut is_hovering_line = false;
-    if edit_mode.showing_mesh && armature.sel_bone(&sel) != None {
+    let sel_bone = temp_arm.sel_bone(&sel);
+    if edit_mode.showing_mesh && sel_bone != None && !sel_bone.unwrap().hidden {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
 
