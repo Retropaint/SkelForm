@@ -375,7 +375,7 @@ fn rendering(
 
     let str = &shared_ui.loc("settings_modal.rendering.gridline_front");
     let mut_front = &mut shared_ui.updated_config.gridline_front;
-    basic_checkbox(ui, str, "", mut_front, config, false);
+    basic_checkbox(ui, str, "", mut_front, config, true);
 
     ui.add_space(7.);
 }
