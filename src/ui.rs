@@ -517,9 +517,9 @@ pub fn process_inputs(
         // UI elements should not receive left click if context menu is open
         if shared_ui.context_menu.id == "" {
             if shared_ui.mobile {
-                input.left_clicked = i.pointer.primary_clicked();
-            } else {
                 input.left_clicked = i.pointer.any_click();
+            } else {
+                input.left_clicked = i.pointer.primary_clicked();
             }
         }
 
