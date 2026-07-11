@@ -404,6 +404,7 @@ pub fn simple_event(
                 selections.vert_ids = vec![];
             }
         }
+        Events::ToggleEditingMesh => edit_mode.editing_mesh = !edit_mode.editing_mesh,
         Events::ToggleSettingIkTarget => {
             edit_mode.setting_ik_target = value == 1.;
             if edit_mode.setting_ik_target {

@@ -1683,23 +1683,27 @@ impl Armature {
 
     // return selected bone based on first bone_ids
     pub fn sel_bone(&self, selections: &SelectionState) -> Option<&Bone> {
-        if selections.bone_idx != usize::MAX && selections.bone_idx < self.bones.len() {
-            let id = selections.bone_ids[0];
-            return Some(&self.bones.iter().find(|bone| bone.id == id).unwrap());
-        } else if self.bones.len() > 0 {
-            // safeguard: select first bone
-            return Some(&self.bones[0]);
+        if selections.bone_idx != usize::MAX {
+            if selections.bone_idx < self.bones.len() {
+                let id = selections.bone_ids[0];
+                return Some(&self.bones.iter().find(|bone| bone.id == id).unwrap());
+            } else if self.bones.len() > 0 {
+                // safeguard: select first bone
+                return Some(&self.bones[0]);
+            }
         }
         None
     }
 
     pub fn sel_bone_mut(&mut self, selections: &SelectionState) -> Option<&mut Bone> {
-        if selections.bone_idx != usize::MAX && selections.bone_idx < self.bones.len() {
-            let id = selections.bone_ids[0];
-            return Some(self.bones.iter_mut().find(|bone| bone.id == id).unwrap());
-        } else if self.bones.len() > 0 {
-            // safeguard: select first bone
-            return Some(&mut self.bones[0]);
+        if selections.bone_idx != usize::MAX {
+            if selections.bone_idx < self.bones.len() {
+                let id = selections.bone_ids[0];
+                return Some(self.bones.iter_mut().find(|bone| bone.id == id).unwrap());
+            } else if self.bones.len() > 0 {
+                // safeguard: select first bone
+                return Some(&mut self.bones[0]);
+            }
         }
         None
     }
@@ -2093,6 +2097,7 @@ pub struct EditMode {
     pub is_scaling: bool,
     pub is_rotating: bool,
     pub showing_mesh: bool,
+    pub editing_mesh: bool,
     pub setting_bind_bone: bool,
     pub setting_ik_target: bool,
     pub anim_open: bool,
@@ -2350,6 +2355,7 @@ pub enum Events {
     ToggleAnimPlaying,
     ToggleStyleActive,
     ToggleShowingMesh,
+    ToggleEditingMesh,
     ToggleSettingIkTarget,
     ToggleSettingBindBone,
     ToggleAnimPanelOpen,
@@ -2495,6 +2501,7 @@ impl EventState {
     generic_event!(copy_selected_keyframes, Events::CopySelectedKeyframes);
     generic_event!(delete_sel_texes, Events::DeleteSelectedTextures);
     generic_event!(toggle_editing_pivot, Events::ToggleEditingPivot);
+    generic_event!(toggle_editing_mesh, Events::ToggleEditingMesh);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, i32);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);

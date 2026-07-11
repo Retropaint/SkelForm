@@ -437,6 +437,7 @@ pub fn inverse_kinematics(
                         let mut id = selected;
                         if selected == -2 {
                             id = generate_id(ik_family_ids);
+                            //events.edit_bone(bone.id, &A::Rotation, 0., "", usize::MAX, -1);
                         } else if selected == -3 {
                             id = -1;
                         } else {
@@ -700,7 +701,7 @@ pub fn mesh_deformation(
                 .loc("bone_panel.mesh_deformation.finish_edit")
                 .clone();
             let mut mesh_label = str_edit;
-            if edit_mode.showing_mesh {
+            if edit_mode.editing_mesh {
                 mesh_label = str_finish_edit;
             }
 
@@ -714,7 +715,7 @@ pub fn mesh_deformation(
             ui::job_text(&key, Some(col.into()), &mut str);
 
             if ui.skf_button(str).clicked() {
-                events.toggle_showing_mesh(if edit_mode.showing_mesh { 0 } else { 1 });
+                events.toggle_editing_mesh();
             }
         });
     });

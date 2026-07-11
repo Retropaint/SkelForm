@@ -51,7 +51,7 @@ pub fn render(
     }
 
     // turn off hovering vert if not editing mesh
-    if !edit_mode.showing_mesh && selections.hovering_vert_id != -1 {
+    if !edit_mode.editing_mesh && selections.hovering_vert_id != -1 {
         events.set_hovering_vert_id(-1);
     }
 
@@ -180,8 +180,8 @@ pub fn render(
 
         // check if cursor is on an opaque pixel of this bone's texture
         let tb = &temp_arm.bones[b];
-        let selected_mesh = !edit_mode.showing_mesh
-            || edit_mode.showing_mesh
+        let selected_mesh = !edit_mode.editing_mesh
+            || edit_mode.editing_mesh
                 && sel.bone_idx != usize::MAX
                 && armature.sel_bone(&sel).unwrap().id == tb.id;
         if on_click_id == -1
@@ -211,7 +211,7 @@ pub fn render(
                 pos /= tb.scale;
 
                 // editing this bone's mesh, add this as new vertex candidate
-                if edit_mode.showing_mesh && input.left_clicked && new_vert == None {
+                if edit_mode.editing_mesh && input.left_clicked && new_vert == None {
                     new_vert = Some(vert(Some(pos), None, Some(uv)));
                     break;
                 }
@@ -224,7 +224,7 @@ pub fn render(
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
                 );
                 let pixel_alpha = img.get_pixel(pos.x as u32, pos.y as u32).0[3];
-                if pixel_alpha == 255 && !edit_mode.showing_mesh {
+                if pixel_alpha == 255 && !edit_mode.editing_mesh {
                     hovering_bone_id = temp_arm.bones[b].id;
                     break;
                 }
@@ -309,7 +309,7 @@ pub fn render(
     let mut is_hovering_tri = false;
     let mut is_hovering_line = false;
     let sel_bone = temp_arm.sel_bone(&sel);
-    if edit_mode.showing_mesh && sel_bone != None && !sel_bone.unwrap().hidden {
+    if edit_mode.editing_mesh && sel_bone != None && !sel_bone.unwrap().hidden {
         let id = armature.sel_bone(&sel).unwrap().id;
         let bone = temp_arm.bones.iter().find(|bone| bone.id == id).unwrap();
 
@@ -367,7 +367,7 @@ pub fn render(
             }
 
             // remove this triangle if right-clicking
-            if edit_mode.showing_mesh && input.right_clicked {
+            if edit_mode.editing_mesh && input.right_clicked {
                 if armature.sel_bone(&sel).unwrap().indices.len() == 6 {
                     events.open_modal("indices_limit", false);
                 } else {
@@ -442,7 +442,7 @@ pub fn render(
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         for bone in &temp_arm.bones {
             let already_editing =
-                edit_mode.showing_mesh && armature.sel_bone(&sel).unwrap().id == bone.id;
+                edit_mode.editing_mesh && armature.sel_bone(&sel).unwrap().id == bone.id;
             if !bone.verts_edited || bone.hidden || already_editing {
                 continue;
             }
@@ -517,9 +517,11 @@ pub fn render(
     let ring_enabled = config.transform_rot_radius > 0. && config.transform_scale_radius > 0.;
     let idle_mouse = !input.left_down && !input.left_clicked || camera.on_ui;
     let selected = armature.sel_bone(&sel) != None && selections.bone_ids.len() == 1;
-    if !edit_mode.showing_mesh && !has_ik && idle_mouse && selected && ring_enabled {
+    if !edit_mode.editing_mesh && !has_ik && idle_mouse && selected && ring_enabled {
         #[rustfmt::skip]
         transform_ring(config, camera, armature, &mut temp_arm, render_pass, renderer, events, edit_mode, &sel, queue, &mouse_pos);
+    } else if edit_mode.temporary != None {
+        events.set_temporary_edit_mode(3);
     }
 
     // if no SelectBone events have been called, unselect current if mouse is pressed
@@ -527,7 +529,7 @@ pub fn render(
         && armature.bones.len() > 0
         && edit_mode.sel_time > 0.25
         && input.left_clicked
-        && !edit_mode.showing_mesh
+        && !edit_mode.editing_mesh
     {
         let mut unselect = true;
         for event in &events.events {
@@ -544,7 +546,7 @@ pub fn render(
     // if cursor is not hovering on any verts, unselect on click
     if !camera.on_ui
         && input.left_clicked
-        && (edit_mode.showing_mesh || selections.bind != -1)
+        && (edit_mode.editing_mesh || selections.bind != -1)
         && !hovered_vert
     {
         events.select_vertex(-1, false);
@@ -590,7 +592,7 @@ pub fn render(
     // bone's transforms can't be edited if editing its verts or it's IK,
     // but an exception is made if editing pivot
     let is_editing_pivot = !has_ik || edit_mode.editing_pivot;
-    if edit_mode.showing_mesh || !is_editing_pivot {
+    if edit_mode.editing_mesh || !is_editing_pivot {
         return;
     }
 
@@ -2096,7 +2098,7 @@ pub fn draw_points(
     input: &InputStates,
     edit_mode: &EditMode,
     temp_arm: &mut Armature,
-    selected_bone_ids: Vec<i32>,
+    sel_bone_ids: Vec<i32>,
     selections: &SelectionState,
     renderer: &mut Renderer,
     queue: &wgpu::Queue,
@@ -2114,8 +2116,7 @@ pub fn draw_points(
         let bone = &temp_arm.bones[p];
         let mut color;
 
-        // skip points & kites for this bone if editing its mesh
-        if edit_mode.showing_mesh && selected_bone_ids.contains(&bone.id) {
+        if edit_mode.editing_mesh && !sel_bone_ids.contains(&bone.id) {
             continue;
         }
 
@@ -2126,12 +2127,12 @@ pub fn draw_points(
 
         if bone.group_color.a == 0 {
             color = config.colors.inactive_center_point;
-            if selected_bone_ids.contains(&bone.id) {
+            if sel_bone_ids.contains(&bone.id) {
                 color = config.colors.center_point
             }
         } else {
             color = bone.group_color.into();
-            if !selected_bone_ids.contains(&bone.id) {
+            if !sel_bone_ids.contains(&bone.id) {
                 color.a /= 2;
             }
         }
@@ -2157,7 +2158,7 @@ pub fn draw_points(
             if bone.group_color.a == 0 {
                 color = config.colors.center_point;
             }
-            if selected_bone_ids.contains(&bone.id) {
+            if sel_bone_ids.contains(&bone.id) {
                 color += Color::new(64, 64, 64, 255);
             }
             (this_verts, this_indices) = draw_point(
@@ -2202,7 +2203,7 @@ pub fn draw_kites(
     camera: &Camera,
     edit_mode: &EditMode,
     temp_arm: &mut Armature,
-    selected_bone_ids: Vec<i32>,
+    sel_bone_ids: Vec<i32>,
     renderer: &mut Renderer,
     queue: &wgpu::Queue,
     render_pass: &mut RenderPass,
@@ -2214,10 +2215,7 @@ pub fn draw_kites(
     for p in 0..temp_arm.bones.len() {
         let bone = &temp_arm.bones[p];
 
-        // skip kites for this bone if editing its mesh
-        if !renderer.render_kites
-            || (edit_mode.showing_mesh && selected_bone_ids.contains(&bone.id))
-        {
+        if !renderer.render_kites || (edit_mode.editing_mesh && !sel_bone_ids.contains(&bone.id)) {
             continue;
         }
 
@@ -2237,12 +2235,12 @@ pub fn draw_kites(
         let mut color;
         if parent.unwrap().group_color.a == 0 {
             color = config.colors.inactive_center_point;
-            if selected_bone_ids.contains(&parent.unwrap().id) {
+            if sel_bone_ids.contains(&parent.unwrap().id) {
                 color = config.colors.center_point
             }
         } else {
             color = parent.unwrap().group_color.into();
-            if !selected_bone_ids.contains(&parent.unwrap().id) {
+            if !sel_bone_ids.contains(&parent.unwrap().id) {
                 color.a /= 2;
             }
         }
