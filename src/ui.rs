@@ -836,7 +836,7 @@ pub fn kb_inputs(
     if input.consume_shortcut(&config.keys.toggle_edit_vertices) {
         let bone = armature.sel_bone(selections);
         if bone != None && armature.tex_of(bone.unwrap().id) != None {
-            events.toggle_showing_mesh(if edit_mode.showing_mesh { 0 } else { 1 });
+            events.toggle_editing_mesh();
         }
     }
 
