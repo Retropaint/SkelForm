@@ -530,6 +530,7 @@ pub fn render(
         && edit_mode.sel_time > 0.25
         && input.left_clicked
         && !edit_mode.editing_mesh
+        && !renderer.mobile
     {
         let mut unselect = true;
         for event in &events.events {

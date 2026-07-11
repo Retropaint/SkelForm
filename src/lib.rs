@@ -418,6 +418,7 @@ impl ApplicationHandler for App {
                 {
                     self.shared.ui.scale = getUiSliderValue() * window.scale_factor() as f32;
                     self.shared.ui.mobile = isMobile();
+                    self.shared.renderer.mobile = isMobile();
                 }
                 #[cfg(not(target_arch = "wasm32"))]
                 {
