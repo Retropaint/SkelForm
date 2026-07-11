@@ -964,15 +964,17 @@ pub fn selected_verts_inputs(
         };
     }
 
-    for id in &selections.vert_ids {
+    for i in 0..selections.vert_ids.len() {
+        let id = selections.vert_ids[i];
+
         macro_rules! with_hover {
             ($widget:expr) => {
                 if $widget.hovered() {
-                    hovering_id = *id as i32;
+                    hovering_id = id as i32;
                 }
             };
         }
-        let vert = bone.vertices.iter().find(|v| v.id == *id as u32).unwrap();
+        let vert = bone.vertices.iter().find(|v| v.id == id as u32).unwrap();
         let header_str = shared_ui.loc("bone_panel.mesh_deformation.vertex_header");
         let label_str = format!("{} #{}", header_str, id.to_string());
         let cursor_icon = egui::CursorIcon::Default;
@@ -982,8 +984,8 @@ pub fn selected_verts_inputs(
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let id_x = format!("vert_pos_x{}", id);
                 let id_y = format!("vert_pos_y{}", id);
-                input!(vert.pos, id_y, "Y:", *id, edit_vertex_pos, false, ui);
-                input!(vert.pos, id_x, "X:", *id, edit_vertex_pos, true, ui);
+                input!(vert.pos, id_y, "Y:", id, edit_vertex_pos, false, ui);
+                input!(vert.pos, id_x, "X:", id, edit_vertex_pos, true, ui);
             });
         });
         with_hover!(pos_inputs.response);
@@ -1024,15 +1026,14 @@ pub fn selected_verts_inputs(
             if !slider1dragged && !slider2dragged {
                 events.save_bone(selections.bone_idx);
             }
-            events.edit_vertex_uv(*id as u32, new_uv.x, new_uv.y);
+            events.edit_vertex_uv(id as u32, new_uv.x, new_uv.y);
         }
 
         // weight binds for this vertex, if appropriate
-        ui.add_space(10.);
         let mut has_binds = false;
         for bi in 0..bone.binds.len() {
             let vert_ids: Vec<usize> = bone.binds[bi].verts.iter().map(|v| v.id as usize).collect();
-            has_binds |= vert_ids.contains(id);
+            has_binds |= vert_ids.contains(&id);
         }
         if !has_binds {
             continue;
@@ -1041,7 +1042,7 @@ pub fn selected_verts_inputs(
         ui.label(shared_ui.loc("bone_panel.mesh_deformation.bind_weights_header"));
         for bi in 0..bone.binds.len() {
             // is this vertex in this bind?
-            let bind_vert_idx = bone.binds[bi].verts.iter().position(|v| v.id == *id as i32);
+            let bind_vert_idx = bone.binds[bi].verts.iter().position(|v| v.id == id as i32);
             if bind_vert_idx == None {
                 continue;
             }
@@ -1058,6 +1059,9 @@ pub fn selected_verts_inputs(
                     }
                 });
             });
+        }
+        if i < selections.vert_ids.len() - 1 {
+            ui.separator();
         }
     }
 
