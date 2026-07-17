@@ -720,7 +720,7 @@ pub fn mesh_deformation(
         });
     });
 
-    ui.add_enabled_ui(edit_mode.showing_mesh, |ui| {
+    ui.add_enabled_ui(edit_mode.editing_mesh, |ui| {
         ui.horizontal(|ui| {
             let button_widths = 149.;
             ui.add_space(ui.available_width() - button_widths);
