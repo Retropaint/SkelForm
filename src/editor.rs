@@ -1209,6 +1209,7 @@ fn select_bone(
     from_renderer: bool,
 ) {
     edit_mode.showing_mesh = false;
+    edit_mode.editing_mesh = false;
     edit_mode.sel_time = 0.;
     edit_mode.temporary = None;
     sel.vert_ids = vec![];
