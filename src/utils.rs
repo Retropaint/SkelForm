@@ -256,7 +256,7 @@ pub fn render_spritesheets(
 
         // take screenshots of each frame
         for f in 0..all_frames {
-            new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
+            new_arm.bones = new_arm.animate(a, f % last_frame, None);
             new_arm.animated_bones = new_arm.bones.clone();
 
             // initialize non-mesh bone verts and indices
@@ -276,7 +276,15 @@ pub fn render_spritesheets(
             let clear = &shared_ui.video_clear_bg;
             let mapped_frames = &mut shared_ui.mapped_frames;
             let size = shared_ui.sprite_size;
-            backend.take_screenshot(size, &new_arm, &cam, clear, frames, mapped_frames, renderer);
+            backend.take_screenshot(
+                size,
+                &mut new_arm,
+                &cam,
+                clear,
+                frames,
+                mapped_frames,
+                renderer,
+            );
         }
 
         spritesheet_idx += 1;

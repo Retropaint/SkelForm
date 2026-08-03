@@ -897,10 +897,10 @@ impl BackendRenderer {
             physics_active = shared.armature.has_physics(bone.id);
         }
         if !physics_active {
-            renderer::runtime_construction(
+            shared.armature.bones = renderer::runtime_construction(
                 &mut shared.renderer.temp_bones,
                 &shared.armature.animated_bones,
-                &mut shared.armature.bones,
+                shared.armature.bones.clone(),
             );
         } else {
             renderer::construction(
@@ -955,7 +955,11 @@ impl BackendRenderer {
         }
 
         // go thru all textures of this style, and save them as png in the zip
-        let style = &armature.styles[shared_ui.export_style_id as usize];
+        let style = &armature
+            .styles
+            .iter()
+            .find(|s| s.id == shared_ui.export_style_id as i32)
+            .unwrap();
         for tex in &style.textures {
             let tex_data = &armature.tex_data;
             let data = tex_data.iter().find(|t| t.id == tex.data_id);
@@ -1249,7 +1253,7 @@ impl BackendRenderer {
         let mut frames = vec![];
         #[rustfmt::skip]
         self.take_screenshot(
-            shared.screenshot_res, &shared.armature, &shared.camera, &shared.config.colors.background,
+            shared.screenshot_res, &mut shared.armature, &shared.camera, &shared.config.colors.background,
             &mut frames, &mut shared.ui.mapped_frames, &shared.renderer
         );
         let buffer = frames[0].buffer.clone();
@@ -1331,7 +1335,7 @@ impl BackendRenderer {
     pub fn take_screenshot(
         &self,
         screenshot_res: Vec2,
-        armature: &Armature,
+        armature: &mut Armature,
         camera: &Camera,
         clear_color: &Color,
         rendered_frames: &mut Vec<RenderedFrame>,
@@ -1394,7 +1398,7 @@ impl BackendRenderer {
 
             // render armature with for screenshot purposes
             let queue = &self.gpu.queue;
-            renderer::render_screenshot(&mut capture_pass, &armature, &camera, renderer, queue);
+            renderer::render_screenshot(&mut capture_pass, armature, &camera, renderer, queue);
         }
 
         // pad screenshot width to a multiple of 256
