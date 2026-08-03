@@ -778,6 +778,10 @@ pub fn simple_event(
                     continue;
                 }
 
+                if temp_bones.iter().find(|b| b.id == bind.bone_id) == None {
+                    continue;
+                }
+
                 let bind_bone = temp_bones.iter().find(|b| b.id == bind.bone_id).unwrap();
                 let verts = &mut bone_mut.vertices;
                 let vert = verts.iter_mut().find(|v| v.id == vert_id).unwrap();
