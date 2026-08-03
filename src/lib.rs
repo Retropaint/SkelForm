@@ -470,6 +470,10 @@ impl ApplicationHandler for App {
                             tex_data.image = img;
                             tex_data.bind_group = bind_group;
                             tex_data.ui_img = ui_img;
+
+                            // update texture size in armature as well
+                            let style = shared.armature.sel_style_mut(&shared.selections).unwrap();
+                            style.textures[*id as usize].size = dims;
                         }
                     }
 
