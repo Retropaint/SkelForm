@@ -547,6 +547,7 @@ pub fn read_psd(
     });
 
     // immediately import textures to real armature
+    shared.psd_armature.styles.reverse();
     shared.armature.styles = shared.psd_armature.styles.clone();
     shared.armature.tex_data = shared.psd_armature.tex_data.clone();
 
