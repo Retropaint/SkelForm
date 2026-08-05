@@ -2114,8 +2114,12 @@ fn paste_keyframes_on_frame(
     }
 
     // remove identical keyframes in the new frame
-    anim.keyframes
-        .retain(|kf| buffer_frames.iter().find(|bkf| **bkf == *kf) == None);
+    anim.keyframes.retain(|kf| {
+        buffer_frames
+            .iter()
+            .find(|bkf| bkf.frame == kf.frame && bkf.element == kf.element)
+            == None
+    });
 
     let base_frame = buffer_frames[0].frame;
     for k in 0..buffer_frames.len() {
