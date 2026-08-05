@@ -86,10 +86,20 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 
         // load .skf based on first arg
         if args.len() > 1 {
-            let mut buf = PathBuf::new();
-            buf.push(&args[1].to_string());
-            *app.shared.ui.file_path.lock().unwrap() = vec![buf];
-            *app.shared.ui.file_type.lock().unwrap() = 2;
+            let arg = &args[1].to_string();
+            if arg == "autosave" {
+                // load autosave if arg is "autosave"
+                let mut buf = PathBuf::new();
+                buf.push(config_path().parent().unwrap().join("autosave.skf"));
+                *app.shared.ui.file_path.lock().unwrap() = vec![buf];
+                *app.shared.ui.file_type.lock().unwrap() = 2;
+            } else {
+                // attempt to load specified skf file
+                let mut buf = PathBuf::new();
+                buf.push(arg);
+                *app.shared.ui.file_path.lock().unwrap() = vec![buf];
+                *app.shared.ui.file_type.lock().unwrap() = 2;
+            }
         }
     }
 
