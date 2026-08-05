@@ -895,6 +895,10 @@ fn draw_frame_lines(
     base_color -= Color::new(40, 40, 40, 0);
     for i in 0..sel_anim.keyframes.len() {
         let kf = sel_anim.keyframes[i].clone();
+        if kf.frame == -1 {
+            continue;
+        }
+
         let size = Vec2::new(17., 17.);
 
         // alternate colors between unique frames
