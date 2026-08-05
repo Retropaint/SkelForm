@@ -404,7 +404,12 @@ pub fn simple_event(
                 selections.vert_ids = vec![];
             }
         }
-        Events::ToggleEditingMesh => edit_mode.editing_mesh = !edit_mode.editing_mesh,
+        Events::ToggleEditingMesh => {
+            edit_mode.editing_mesh = !edit_mode.editing_mesh;
+
+            // unselect all verts when switching modes
+            selections.vert_ids = vec![]
+        }
         Events::ToggleSettingIkTarget => {
             edit_mode.setting_ik_target = value == 1.;
             if edit_mode.setting_ik_target {
