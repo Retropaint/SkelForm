@@ -1,7 +1,6 @@
 //! Reading uploaded images to turn into textures.
 // test
 
-use std::path::Path;
 use std::sync::Mutex;
 
 use egui::TextureHandle;

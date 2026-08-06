@@ -718,7 +718,7 @@ impl BackendRenderer {
         if size.x == 0. || size.y == 0. {
             return;
         }
-        let pixel_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
+        let blit_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
                 width: size.x as u32,
                 height: size.y as u32,
@@ -734,12 +734,11 @@ impl BackendRenderer {
             label: Some("Pixel Texture"),
             view_formats: &[],
         });
-        let pixel_view = pixel_texture.create_view(&wgpu::TextureViewDescriptor::default());
-
-        let mut pixel_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        let blit_view = blit_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let mut blit_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &pixel_view,
+                view: &blit_view,
                 resolve_target: None,
                 ops: clear,
                 depth_slice: None,
@@ -748,8 +747,8 @@ impl BackendRenderer {
             timestamp_writes: None,
             occlusion_query_set: None,
         });
-        pixel_pass.set_pipeline(&self.scene.pipeline);
-        self.skf_render(shared, &mut pixel_pass.forget_lifetime());
+        blit_pass.set_pipeline(&self.scene.pipeline);
+        self.skf_render(shared, &mut blit_pass.forget_lifetime());
 
         let sampler = self.gpu.device.create_sampler(&wgpu::SamplerDescriptor {
             mag_filter: wgpu::FilterMode::Nearest,
@@ -764,7 +763,7 @@ impl BackendRenderer {
                 entries: &[
                     wgpu::BindGroupEntry {
                         binding: 0,
-                        resource: wgpu::BindingResource::TextureView(&pixel_view),
+                        resource: wgpu::BindingResource::TextureView(&blit_view),
                     },
                     wgpu::BindGroupEntry {
                         binding: 1,
@@ -777,7 +776,7 @@ impl BackendRenderer {
                 ],
                 label: Some("LowRes Blit BindGroup"),
             });
-        let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        let mut final_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 view: &surface_texture_view,
@@ -789,12 +788,12 @@ impl BackendRenderer {
             timestamp_writes: None,
             occlusion_query_set: None,
         });
-        render_pass.set_pipeline(&self.scene.blit_pipeline);
-        render_pass.set_bind_group(0, &blit_bind_group, &[]);
-        render_pass.draw(0..3, 0..1);
+        final_pass.set_pipeline(&self.scene.blit_pipeline);
+        final_pass.set_bind_group(0, &blit_bind_group, &[]);
+        final_pass.draw(0..3, 0..1);
 
         self.egui_renderer.render(
-            &mut render_pass.forget_lifetime(),
+            &mut final_pass.forget_lifetime(),
             &paint_jobs,
             &screen_descriptor,
         );
