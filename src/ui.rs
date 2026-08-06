@@ -697,22 +697,23 @@ pub fn kb_inputs(
 
     if !shared_ui.startup_window && input.consume_shortcut(&config.keys.delete) {
         let last = shared_ui.last_selected.as_str();
+
         // delete selected bone(s)
         if last == "bone" {
             events.open_polar_modal(PolarId::DeleteBone, shared_ui.loc("polar.delete_bone"));
-            let context_id = &format!("bone_{}", selections.bone_idx);
-            shared_ui.context_menu.show(context_id);
-            shared_ui.context_menu.hide = true;
+            shared_ui.context_menu.id = format!("bone_{}", selections.bone_idx);
         } else if last == "anim" {
             events.open_polar_modal(PolarId::DeleteAnim, shared_ui.loc("polar.delete_anim"));
-            let context_id = &format!("anim_{}", selections.anim);
-            shared_ui.context_menu.show(context_id);
-            shared_ui.context_menu.hide = true;
+            shared_ui.context_menu.id = format!("anim_{}", selections.anim);
         } else if last == "style" {
             events.open_polar_modal(PolarId::DeleteStyle, shared_ui.loc("polar.delete_style"));
-            let context_id = &format!("style_{}", selections.style_id);
-            shared_ui.context_menu.show(context_id);
-            shared_ui.context_menu.hide = true;
+            shared_ui.context_menu.id = format!("style_{}", selections.style_id);
+        } else if last == "texture" {
+            events.open_polar_modal(
+                PolarId::DeleteSelectedTextures,
+                shared_ui.loc("polar.delete_tex"),
+            );
+            shared_ui.context_menu.id = format!("tex_{}", selections.style_id);
         }
     }
 
