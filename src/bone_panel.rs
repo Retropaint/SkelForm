@@ -2,7 +2,7 @@
 
 use crate::*;
 use egui::IntoAtoms;
-use ui::EguiUi;
+use ui::{EguiUi, TextInputOptions};
 type AE = AnimElement;
 
 // native-only imports
@@ -1266,7 +1266,12 @@ pub fn visuals(
 
         // zindex input
         let zindex = bone.zindex as f32;
-        let (edited, value, _) = ui.float_input("zindex".to_string(), shared_ui, zindex, 1., None);
+        let options = Some(TextInputOptions {
+            drag_modifier: 0.01,
+            ..Default::default()
+        });
+        let (edited, value, _) =
+            ui.float_input("zindex".to_string(), shared_ui, zindex, 1., options);
         if edited {
             let el = &AnimElement::Zindex;
             events.save_edited_bone(selections.bone_idx);

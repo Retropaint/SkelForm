@@ -1229,14 +1229,13 @@ pub fn import<R: Read + std::io::Seek>(
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn save_to_recent_files(mut paths: Vec<String>) {
-
     // clean up paths and remove any that start with _
     paths.retain(|path| {
         let filename = Path::new(path).file_name().unwrap();
         let first_letter = filename.to_str().unwrap().to_string().chars().next();
-        println!("{}", first_letter.unwrap());
         first_letter.unwrap() != '_'
     });
+    paths.dedup();
 
     fs::create_dir_all(recents_path().parent().unwrap()).unwrap();
     let mut file = std::fs::File::create(&recents_path()).unwrap();
