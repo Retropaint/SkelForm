@@ -638,7 +638,7 @@ pub fn skf_file_button(
                 .position(|rfp| PathBuf::from(rfp) == *path)
                 .unwrap();
             shared_ui.recent_file_paths.remove(idx);
-            utils::save_to_recent_files(&shared_ui.recent_file_paths);
+            utils::save_to_recent_files(shared_ui.recent_file_paths.clone());
         }
         pos += egui::Vec2::new(-21., 0.);
 

@@ -459,7 +459,7 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config) {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if ui.skf_button(str_clear_recents).clicked() {
                 shared_ui.recent_file_paths = vec![];
-                crate::utils::save_to_recent_files(&vec![]);
+                crate::utils::save_to_recent_files(vec![]);
             }
         });
     });

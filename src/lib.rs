@@ -1232,7 +1232,7 @@ impl BackendRenderer {
                 shared.events.open_modal("exporting", true);
                 *shared.ui.export_finished.lock().unwrap() = false;
                 shared.ui.can_quit = false;
-                utils::save_to_recent_files(&shared.ui.recent_file_paths);
+                utils::save_to_recent_files(shared.ui.recent_file_paths.clone());
             }
             Saving::Autosaving => {
                 let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
@@ -1252,7 +1252,7 @@ impl BackendRenderer {
             _ => {}
         }
 
-        utils::save_to_recent_files(&shared.ui.recent_file_paths);
+        utils::save_to_recent_files(shared.ui.recent_file_paths.clone());
 
         let mut frames = vec![];
         #[rustfmt::skip]

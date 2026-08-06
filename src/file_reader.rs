@@ -1,6 +1,7 @@
 //! Reading uploaded images to turn into textures.
 // test
 
+use std::path::Path;
 use std::sync::Mutex;
 
 use egui::TextureHandle;
@@ -692,7 +693,7 @@ pub fn read_import(
                 if !shared.ui.recent_file_paths.contains(&filepath) {
                     shared.ui.recent_file_paths.push(filepath);
                 }
-                utils::save_to_recent_files(&shared.ui.recent_file_paths);
+                utils::save_to_recent_files(shared.ui.recent_file_paths.clone());
             }
         }
         "psd" => {

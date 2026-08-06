@@ -22,6 +22,7 @@ use std::{collections::HashMap, path::PathBuf};
 use zip::read::ZipFile;
 
 use std::io::{Read, Write};
+use std::path::Path;
 
 /// Convert a point from screen to world space.
 pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
@@ -1227,7 +1228,16 @@ pub fn import<R: Read + std::io::Seek>(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn save_to_recent_files(paths: &Vec<String>) {
+pub fn save_to_recent_files(mut paths: Vec<String>) {
+
+    // clean up paths and remove any that start with _
+    paths.retain(|path| {
+        let filename = Path::new(path).file_name().unwrap();
+        let first_letter = filename.to_str().unwrap().to_string().chars().next();
+        println!("{}", first_letter.unwrap());
+        first_letter.unwrap() != '_'
+    });
+
     fs::create_dir_all(recents_path().parent().unwrap()).unwrap();
     let mut file = std::fs::File::create(&recents_path()).unwrap();
     file.write_all(serde_json::to_string(&paths).unwrap().as_bytes())
