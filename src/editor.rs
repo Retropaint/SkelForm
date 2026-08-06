@@ -58,6 +58,7 @@ pub fn iterate_events(
             selections.tex_ids.retain(|id| *id != tex_id);
         }
         selections.tex_ids.sort();
+        ui.last_selected = "texture".to_string();
 
         events.events.remove(0);
         events.values.drain(0..=1);
