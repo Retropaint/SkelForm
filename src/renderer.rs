@@ -165,7 +165,9 @@ pub fn render(
                     for v in 0..$armature.bones[b].vertices.len() {
                         let tb = &mut $armature.bones[b];
                         let ratio = camera.aspect_ratio();
-                        let mut vert = world_vert(tb.vertices[v], &camera, ratio, Vec2::default());
+                        let final_pivot =
+                            utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot) * tb.scale;
+                        let mut vert = world_vert(tb.vertices[v], &camera, ratio, final_pivot);
                         vert.tint = $color;
                         tb.world_verts.push(vert);
                     }
