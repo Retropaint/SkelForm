@@ -744,6 +744,7 @@ pub fn draw_bottom_bar(
 
             ui.add_space(5.);
 
+            // current frame input
             ui.label(&shared_ui.loc("keyframe_editor.frame"));
             ui.add(
                 egui::DragValue::new(&mut selections.anim_frame)
@@ -751,8 +752,8 @@ pub fn draw_bottom_bar(
                     .update_while_editing(false),
             );
 
+            // FPS input
             let fps = armature.sel_anim(&sel).unwrap().fps;
-
             ui.label(&shared_ui.loc("keyframe_editor.fps"))
                 .on_hover_text(&shared_ui.loc("keyframe_editor.frames_per_second"));
             let (edited, value, _) =
@@ -761,15 +762,17 @@ pub fn draw_bottom_bar(
                 events.adjust_keyframes_by_fps(value as usize);
             }
 
+            // onion toggle
             let mut col = config.colors.text;
             if !edit_mode.onion_layers {
                 col -= Color::new(60, 60, 60, 0);
             }
-            if ui
-                .skf_button(egui::RichText::new("🌓").color(col))
-                .on_hover_text(shared_ui.loc("keyframe_editor.onion_desc"))
-                .clicked()
-            {
+            let has_keyframes = armature.sel_anim(&sel).unwrap().keyframes.len() > 0;
+            let button = ui.add_enabled_ui(has_keyframes, |ui| {
+                ui.skf_button(egui::RichText::new("🌓").color(col))
+                    .on_hover_text(shared_ui.loc("keyframe_editor.onion_desc"))
+            });
+            if button.inner.clicked() {
                 events.toggle_onion_layers(if edit_mode.onion_layers { 0 } else { 1 });
             }
         });
