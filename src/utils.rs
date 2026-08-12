@@ -563,6 +563,11 @@ pub fn prepare_files(
     // clone armature and make some edits, then serialize it
     let mut armature_copy = armature.clone();
 
+    // remove keyframes with a frame of -1
+    for anim in &mut armature_copy.animations {
+        anim.keyframes.retain(|kf| kf.frame != -1);
+    }
+
     // add baked IK keyframes, if enabled
     for a in 0..armature_copy.animations.len() {
         if !edit_mode.export_bake_ik {
