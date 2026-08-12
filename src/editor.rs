@@ -37,7 +37,7 @@ pub fn iterate_events(
                 E::DeleteSelectedTextures       => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
                 E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
                 E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
-                E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::SetKeyframeFrame | E::SetAllKeyframesFrame | E::PasteKeyframesOnFrame => {
+                E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::PasteKeyframesOnFrame => {
                     undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
                 }
                 E::ResetVertices | E::CenterBoneVerts | E::DeleteVertex | E::TraceBoneVerts | E::NewVertex | E::DeleteTriangle => {
@@ -290,23 +290,6 @@ pub fn iterate_events(
         let anim = &mut armature.animations[events.values[0] as usize];
         let playing = events.values[1] == 1.;
         anim.elapsed = if playing { Some(Instant::now()) } else { None };
-        events.events.remove(0);
-        events.values.drain(0..=1);
-    } else if event == Events::SetAllKeyframesFrame {
-        for kf in &mut armature.sel_anim_mut(&selections).unwrap().keyframes {
-            if kf.frame == events.values[0] as i32 {
-                kf.frame = events.values[1] as i32
-            }
-        }
-        armature.animations[selections.anim].sort_keyframes();
-
-        events.events.remove(0);
-        events.values.drain(0..=1);
-    } else if event == Events::SetKeyframeFrame {
-        armature.sel_anim_mut(&selections).unwrap().keyframes[events.values[0] as usize].frame =
-            events.values[1] as i32;
-        armature.animations[selections.anim].sort_keyframes();
-
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::DragBone {
