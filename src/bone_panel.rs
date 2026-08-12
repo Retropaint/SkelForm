@@ -482,7 +482,8 @@ pub fn inverse_kinematics(
                 let (edited, value, _) = ui.float_input(id, shared_ui, bone.pos.x, 1., None);
                 if edited {
                     for bone_id in &selections.bone_ids {
-                        events.edit_bone(*bone_id, &AE::PositionX, value, "", usize::MAX, -1);
+                        let posx = &AE::PositionX;
+                        events.edit_bone(*bone_id, posx, value, "", sel.anim, sel.anim_frame);
                         events.edit_bone(*bone_id, &AE::PositionY, 0., "", usize::MAX, -1);
                     }
                 }
