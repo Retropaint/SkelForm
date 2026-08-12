@@ -143,7 +143,9 @@ pub fn render(
         let cam = world_camera(&camera, &config);
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &mut temp_arm.bones[b];
-            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot) * tb.scale;
+            let left = if is_facing_left(tb.scale) { -1. } else { 1. };
+            let final_pivot =
+                utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot * left) * tb.scale;
             let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), final_pivot);
             vert.tint = tb.tint;
 
