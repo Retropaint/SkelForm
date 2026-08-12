@@ -1421,6 +1421,10 @@ pub fn inheritance(
                 orbit_rot -= bones[i].phys_global_orbit_diff
             }
 
+            if is_facing_left(parent.scale) {
+                bones[i].rot = -bones[i].rot;
+            }
+
             bones[i].rot += orbit_rot;
             bones[i].scale *= parent.scale;
 
@@ -2395,4 +2399,10 @@ fn transform_ring(
     if temporary == 3 && edit_mode.temporary != None {
         events.set_temporary_edit_mode(3);
     }
+}
+
+pub fn is_facing_left(scale: Vec2) -> bool {
+    let both = scale.x < 0. && scale.y < 0.;
+    let either = scale.x < 0. || scale.y < 0.;
+    either && !both
 }
