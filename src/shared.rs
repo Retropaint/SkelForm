@@ -2343,8 +2343,6 @@ pub enum Events {
     RenameTex,
     RenameBone,
 
-    SetKeyframeFrame,
-    SetAllKeyframesFrame,
     SetBoneTexture,
 
     DragBone,
@@ -2594,18 +2592,6 @@ impl EventState {
         self.values.push(if is_above { 1. } else { 0. });
         self.values.push(point_id as f32);
         self.values.push(drag_id as f32);
-    }
-
-    pub fn set_keyframe_frame(&mut self, keyframe: usize, frame: usize) {
-        self.events.push(Events::SetKeyframeFrame);
-        self.values.push(keyframe as f32);
-        self.values.push(frame as f32);
-    }
-
-    pub fn set_all_keyframe_frame(&mut self, from_frame: usize, to_frame: usize) {
-        self.events.push(Events::SetAllKeyframesFrame);
-        self.values.push(from_frame as f32);
-        self.values.push(to_frame as f32);
     }
 
     pub fn rename_animation(&mut self, anim_idx: usize, name: String) {
