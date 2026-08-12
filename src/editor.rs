@@ -1121,7 +1121,10 @@ pub fn simple_event(
             selections.bone_idx = bones.iter().position(|b| b.id == parent.id).unwrap();
         }
         Events::MoveSelectedKeyframes => {
-            if value as i32 == ui.dragged_keyframe.frame {
+            if value as i32 == ui.dragged_keyframe.frame
+                || ui.dragged_keyframe.frame == -1
+                || value as i32 == -1
+            {
                 ui.dragged_keyframe.frame = -1;
                 return;
             }
