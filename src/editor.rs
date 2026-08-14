@@ -47,7 +47,18 @@ pub fn iterate_events(
             };
     }
 
-    if event == Events::ToggleSelectedTexture {
+    if event == Events::MoveAnimation {
+        let drag = events.values[0] as usize;
+        let hov = events.values[1] as usize;
+        let anim = armature.animations[drag].clone();
+        armature.animations.remove(drag);
+        armature.animations.insert(hov, anim);
+
+        selections.anim = hov;
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::ToggleSelectedTexture {
         let tex_id = events.values[0] as i32;
         let select = events.values[1] == 1.;
         if select {

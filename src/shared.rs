@@ -2350,6 +2350,7 @@ pub enum Events {
     MigrateTexture,
     MoveTexture,
     MoveStyle,
+    MoveAnimation,
 
     ToggleAnimPlaying,
     ToggleStyleActive,
@@ -2775,6 +2776,12 @@ impl EventState {
         self.events.push(Events::ToggleSelectedTexture);
         self.values.push(tex_id as f32);
         self.values.push(if select { 1. } else { 0. });
+    }
+
+    pub fn move_animation(&mut self, hov_id: i32, drag_id: i32) {
+        self.events.push(Events::MoveAnimation);
+        self.values.push(hov_id as f32);
+        self.values.push(drag_id as f32);
     }
 }
 

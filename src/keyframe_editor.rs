@@ -1,6 +1,6 @@
 //! Animation keyframe editor. Very early and only proof-of-concept.
 
-use egui::Stroke;
+use egui::{HoveredFile, Stroke};
 
 use ui::{EguiUi, TextInputOptions};
 
@@ -143,12 +143,14 @@ fn draw_animations_list(
                 right: 13,
                 ..Default::default()
             });
-        frame.show(ui, |ui| {
+        ui.dnd_drop_zone::<i32, _>(frame, |ui| {
             let width = ui.available_width();
             let mut hovered = false;
+            let mut idx = -1;
             for i in 0..armature.animations.len() {
                 let name = &mut armature.animations[i].name.clone();
                 let context_id = format!("anim_{}", armature.animations[i].id);
+                idx += 1;
 
                 // show input field if renaming
                 if shared_ui.rename_id == context_id {
@@ -168,72 +170,96 @@ fn draw_animations_list(
                     continue;
                 }
 
-                ui.horizontal(|ui| {
-                    let has_kf = armature.animations[i].keyframes.len() > 0;
-                    let button_padding = if has_kf { 25. } else { 0. };
-                    let mut col = config.colors.dark_accent;
-                    if i == shared_ui.hovering_anim as usize {
-                        col += crate::Color::new(20, 20, 20, 0);
-                    }
-                    if i == selections.anim {
-                        col += crate::Color::new(20, 20, 20, 0);
-                    }
-                    let cursor_icon = if selections.anim != i {
-                        egui::CursorIcon::PointingHand
-                    } else {
-                        egui::CursorIcon::Default
-                    };
+                let id = egui::Id::new(format!("anim_{}", idx.to_string()));
+                let dnd_button = ui
+                    .dnd_drag_source(id, idx, |ui| {
+                        ui.horizontal(|ui| {
+                            let has_kf = armature.animations[i].keyframes.len() > 0;
+                            let button_padding = if has_kf { 25. } else { 0. };
+                            let mut col = config.colors.dark_accent;
+                            if i == shared_ui.hovering_anim as usize {
+                                col += crate::Color::new(20, 20, 20, 0);
+                            }
+                            if i == selections.anim {
+                                col += crate::Color::new(20, 20, 20, 0);
+                            }
+                            let cursor_icon = if selections.anim != i {
+                                egui::CursorIcon::PointingHand
+                            } else {
+                                egui::CursorIcon::Default
+                            };
 
-                    // set up a focusable frame for the animation button
-                    let rect = egui::Rect::from_min_size(
-                        egui::Pos2::new(ui.cursor().left(), ui.cursor().top()),
-                        egui::Vec2::new(width, 21.),
-                    );
-                    let id = egui::Id::new(format!("anim_{}", i.to_string()));
-                    let button = ui
-                        .interact(rect, id, egui::Sense::click())
-                        .on_hover_cursor(cursor_icon);
-                    ui.scope(|ui| {
-                        ui.style_mut().interaction.selectable_labels = false;
-                        egui::Frame::new().fill(col.into()).show(ui, |ui| {
-                            ui.horizontal(|ui| {
-                                ui.set_width(width - button_padding);
-                                ui.set_height(21.);
-                                ui.add_space(5.);
-                                let col = config.colors.text;
-                                ui.label(egui::RichText::new(name.clone()).color(col));
+                            // set up a focusable frame for the animation button
+                            let rect = egui::Rect::from_min_size(
+                                egui::Pos2::new(ui.cursor().left(), ui.cursor().top()),
+                                egui::Vec2::new(width, 21.),
+                            );
+                            let button = ui
+                                .interact(rect, id, egui::Sense::click())
+                                .on_hover_cursor(cursor_icon);
+                            ui.scope(|ui| {
+                                ui.style_mut().interaction.selectable_labels = false;
+                                egui::Frame::new().fill(col.into()).show(ui, |ui| {
+                                    ui.horizontal(|ui| {
+                                        ui.set_width(width - button_padding);
+                                        ui.set_height(21.);
+                                        ui.add_space(5.);
+                                        let col = config.colors.text;
+                                        ui.label(egui::RichText::new(name.clone()).color(col));
+                                    });
+                                });
                             });
-                        });
-                    });
 
-                    if button.contains_pointer() || button.has_focus() {
-                        shared_ui.hovering_anim = i as i32;
-                        hovered = true;
-                    }
-                    if button.clicked() {
-                        if selections.anim != i {
-                            events.select_anim(i);
-                        } else {
-                            shared_ui.rename_id = context_id.clone();
-                            shared_ui.edit_value = Some(name.to_string());
-                        }
-                        shared_ui.last_selected = "anim".to_string();
-                    }
-                    if button.secondary_clicked() {
-                        shared_ui.context_menu.show(&context_id);
-                    }
+                            if button.contains_pointer() || button.has_focus() {
+                                shared_ui.hovering_anim = i as i32;
+                                hovered = true;
+                            }
+                            if button.clicked() {
+                                if selections.anim != i {
+                                    events.select_anim(i);
+                                } else {
+                                    shared_ui.rename_id = context_id.clone();
+                                    shared_ui.edit_value = Some(name.to_string());
+                                }
+                                shared_ui.last_selected = "anim".to_string();
+                            }
+                            if button.secondary_clicked() {
+                                shared_ui.context_menu.show(&context_id);
+                            }
 
-                    if armature.animations[i].keyframes.len() > 0 {
-                        let anim = &armature.animations[i];
-                        let align = egui::Layout::right_to_left(egui::Align::Center);
-                        ui.with_layout(align, |ui| {
-                            let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
-                            if ui.skf_button(icon).clicked() {
-                                events.toggle_anim_playing(i, anim.elapsed == None);
+                            if armature.animations[i].keyframes.len() > 0 {
+                                let anim = &armature.animations[i];
+                                let align = egui::Layout::right_to_left(egui::Align::Center);
+                                ui.with_layout(align, |ui| {
+                                    let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
+                                    if ui.skf_button(icon).clicked() {
+                                        events.toggle_anim_playing(i, anim.elapsed == None);
+                                    }
+                                });
                             }
                         });
-                    }
-                });
+                    })
+                    .response
+                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                    .interact(egui::Sense::click());
+
+                let pointer = ui.input(|i| i.pointer.interact_pos());
+                let hovered_payload = dnd_button.dnd_hover_payload::<i32>();
+                let dragged_payload = dnd_button.dnd_release_payload::<i32>();
+
+                if pointer == None || hovered_payload == None {
+                    continue;
+                }
+
+                let rect = dnd_button.rect;
+                let stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
+                ui.painter().hline(rect.x_range(), rect.top(), stroke);
+
+                if dragged_payload == None {
+                    continue;
+                }
+
+                events.move_animation(*hovered_payload.clone().unwrap(), idx);
             }
 
             if !hovered {
