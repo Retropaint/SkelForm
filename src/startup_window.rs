@@ -541,7 +541,8 @@ pub fn skf_file_button(
         let id = egui::Id::new(format!("frame rect{}", idx));
         let button = ui
             .interact(rect, id, egui::Sense::click())
-            .on_hover_cursor(egui::CursorIcon::PointingHand);
+            .on_hover_cursor(egui::CursorIcon::PointingHand)
+            .on_hover_text(path.to_str().unwrap());
 
         if button.contains_pointer() || button.has_focus() {
             shared_ui.hovering_startup_file = idx as i32;
@@ -666,6 +667,7 @@ pub fn skf_file_button(
             }
         }
     });
+
     hovered
 }
 
