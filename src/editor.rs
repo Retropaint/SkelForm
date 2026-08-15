@@ -886,6 +886,7 @@ pub fn simple_event(
             let tex_size = armature.tex_of(sel_bone.id).unwrap().size.clone();
             let (verts, indices) = renderer::create_tex_rect(&tex_size);
             let bone = armature.sel_bone_mut(&selections).unwrap();
+            selections.vert_ids = vec![];
             bone.vertices = verts;
             bone.indices = indices;
             bone.binds = vec![];
@@ -921,6 +922,7 @@ pub fn simple_event(
                 return;
             }
             let bone = &mut armature.sel_bone_mut(&selections).unwrap();
+            selections.vert_ids = vec![];
             bone.vertices = verts;
             bone.indices = indices;
             bone.binds = vec![];
