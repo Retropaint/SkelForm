@@ -847,7 +847,7 @@ pub fn mesh_deformation(
         ui.label(shared_ui.loc("bone_panel.mesh_deformation.bone_label"));
         let hand = egui::CursorIcon::PointingHand;
         let bone_name = ui.selectable_label(false, bone_name).on_hover_cursor(hand);
-        if bone_name.clicked() {
+        if bone_name.clicked() && bone_id != -1 {
             let bones = &armature.bones;
             let idx = bones.iter().position(|b| b.id == bone_id).unwrap();
             events.select_bone(idx, false);
