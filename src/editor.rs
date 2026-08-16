@@ -467,6 +467,8 @@ pub fn simple_event(
             edit_mode.anim_open = false;
             camera.pos = Vec2::new(0., 0.);
             camera.zoom = 2000.;
+            ui.save_path = None;
+            ui.changed_window_name = false;
             *armature = Armature::default();
         }
         Events::NewStyle => {
