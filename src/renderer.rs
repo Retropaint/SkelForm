@@ -278,7 +278,9 @@ pub fn render(
         }
     }
 
-    if on_click_id != -1 && selections.hovering_bone_id != on_click_id {
+    // set hovering bone, if not already selected
+    let selected = selections.bone_ids.len() > 0 && selections.bone_ids[0] == on_click_id;
+    if on_click_id != -1 && selections.hovering_bone_id != on_click_id && !selected {
         events.set_hovering_bone_id(on_click_id);
     }
     renderer.on_point = false;
