@@ -1045,9 +1045,8 @@ enum_string!(JointConstraint);
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 #[serde(default)]
 pub struct Visuals {
-    #[serde(skip_serializing_if = "is_str_empty")]
     pub tex: String,
-    #[serde(default = "default_tint", skip_serializing_if = "is_tint_white")]
+    #[serde(default = "default_tint")]
     pub tint: TintColor,
     pub zindex: i32,
     pub pivot_pos: Vec2,
@@ -1063,11 +1062,11 @@ pub struct Visuals {
     #[serde(default, skip_serializing_if = "are_weights_empty")]
     pub binds: Vec<BoneBind>,
 
-    #[serde(skip_serializing_if = "is_str_empty", skip_deserializing)]
+    #[serde(skip_deserializing)]
     pub init_tex: String,
-    #[serde(skip_serializing_if = "is_tint_white", skip_deserializing)]
+    #[serde(skip_deserializing)]
     pub init_tint: TintColor,
-    #[serde(skip_serializing_if = "is_neg_one", skip_deserializing)]
+    #[serde(skip_deserializing)]
     pub init_zindex: i32,
 }
 
