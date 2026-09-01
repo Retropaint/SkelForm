@@ -645,7 +645,9 @@ fn colors(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         color_row!("center_point",          &mut colors!().center_point,          true);
         color_row!("inactive_center_point", &mut colors!().inactive_center_point, true);
         color_row!("transform_rings",       &mut colors!().transform_rings,       true);
-
+        color_row!("mesh_base",  &mut colors!().mesh_base, true);
+        color_row!("bound_vert", &mut colors!().bound_vert, true);
+        ui.add_space(10.);
     };
 }
 

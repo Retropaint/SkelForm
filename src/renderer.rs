@@ -350,7 +350,7 @@ pub fn render(
         }
         #[rustfmt::skip]
         let (mut lines_v, mut lines_i, on_line) =
-            vert_lines(bone, &temp_arm.bones, &mouse, &mut new_vert, true, on_vert != -1, camera, input, selections, events);
+            vert_lines(bone, &temp_arm.bones, &mouse, &mut new_vert, true, on_vert != -1, camera, input, selections, events, config);
         is_hovering_line |= on_line;
         lines_v.append(&mut verts);
         add_offseted_indices(&mut indices, &mut lines_i);
@@ -460,7 +460,7 @@ pub fn render(
             #[rustfmt::skip]
             let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, camera, config, events, armature, renderer, -1);
             #[rustfmt::skip]
-            let (mut verts_l, mut indices_l, _) = vert_lines(bone, &temp_arm.bones, &mouse, nw, false, false, camera, input, selections, events);
+            let (mut verts_l, mut indices_l, _) = vert_lines(bone, &temp_arm.bones, &mouse, nw, false, false, camera, input, selections, events, config);
 
             // color wireframes
             if bone.group_color.a == 0 {
@@ -1504,7 +1504,6 @@ pub fn bone_vertices(
     let mut all_indices = vec![];
     let mut hovering_vert_id = -1;
     let v2z = Vec2::ZERO;
-    let rotated = 45. * 3.14 / 180.;
     let sel = selections.clone();
     let radius = config.center_point_radius;
 
@@ -1546,9 +1545,9 @@ pub fn bone_vertices(
         let white = Color::new(255, 255, 255, 255);
         let mut col = if bound {
             rot = 0.;
-            Color::new(255, 255, 0, 255)
+            config.colors.bound_vert
         } else {
-            Color::new(0, 255, 0, 255)
+            config.colors.mesh_base
         };
 
         // white vertex if selected
@@ -1556,7 +1555,7 @@ pub fn bone_vertices(
         if selected {
             col = white;
         } else {
-            col.a = if editable { 125 } else { 38 };
+            col.a = if editable { 200 } else { 38 };
         }
 
         let (mut verts, mut indices) = point!(wv, col, size, rot);
@@ -1635,6 +1634,7 @@ pub fn vert_lines(
     input: &InputStates,
     sel: &SelectionState,
     events: &mut EventState,
+    config: &Config,
 ) -> (Vec<Vertex>, Vec<u32>, bool) {
     let mut added_vert = false;
 
@@ -1677,9 +1677,9 @@ pub fn vert_lines(
         let mut base = Vec2::new(width, width) / camera.zoom;
         base = utils::rotate(&base, dir.y.atan2(dir.x));
 
-        let mut col = Color::new(0, 255, 0, 255);
+        let mut col = config.colors.mesh_base;
         col -= Color::new(125, 125, 125, 0);
-        col.a = if editable { 150 } else { 100 };
+        col.a = if editable { 200 } else { 100 };
 
         #[rustfmt::skip]
         macro_rules! vert { ($pos:expr, $v:expr) => { Vertex { pos: $pos, color: col, ..$v } }; }

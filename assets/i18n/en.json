@@ -389,7 +389,9 @@
       "gridline": "Gridline",
       "center_point": "Center Point",
       "inactive_center_point": "Inactive Center Point",
-      "transform_rings": "Transform Rings"
+      "transform_rings": "Transform Rings",
+      "mesh_base": "Mesh Base",
+      "bound_vert": "Bound Vertex"
     },
     "miscellaneous": {
       "heading": "Miscellaneous",
