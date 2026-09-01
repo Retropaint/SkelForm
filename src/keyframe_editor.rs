@@ -950,7 +950,7 @@ fn draw_frame_lines(
         if let Some(b_top) = tops.iter().find(|bt| bt.id == b_id && bt.element == el) {
             top = b_top.height;
         } else {
-            return;
+            continue;
         }
         let x = shared_ui.lines_x[kf.frame as usize] + ui.min_rect().left();
         let pos = Vec2::new(x, top + size.y / 2.);
