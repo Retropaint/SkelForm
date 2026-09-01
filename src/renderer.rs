@@ -1494,8 +1494,8 @@ pub fn bone_vertices(
 
     #[rustfmt::skip]
     macro_rules! point {
-        ($idx:expr, $color:expr, $size:expr) => {
-            draw_point(&world_verts[$idx].pos, &camera, &config, &v2z, $color, v2z, rotated, radius * camera.zoom * $size)
+        ($idx:expr, $color:expr, $size:expr, $rot:expr) => {
+            draw_point(&world_verts[$idx].pos, &camera, &config, &v2z, $color, v2z, $rot, radius * camera.zoom * $size)
         };
     }
     macro_rules! add_point {
@@ -1522,11 +1522,14 @@ pub fn bone_vertices(
             verts_in_bind = bind.verts.iter().map(|v| v.id).collect()
         }
 
-        // yellow vertex if bound
+        let mut rot = 45. * 3.14 / 180.;
+
+        // yellow, square vertex if bound
         let idx = selections.bind;
         let bound = idx != -1 && verts_in_bind.contains(&(world_verts[wv].id as i32));
         let white = Color::new(255, 255, 255, 255);
         let mut col = if bound {
+            rot = 0.;
             Color::new(255, 255, 0, 255)
         } else {
             Color::new(0, 255, 0, 255)
@@ -1540,7 +1543,7 @@ pub fn bone_vertices(
             col.a = if editable { 125 } else { 38 };
         }
 
-        let (mut verts, mut indices) = point!(wv, col, size);
+        let (mut verts, mut indices) = point!(wv, col, size, rot);
         let mouse_on_it = utils::in_bounding_box(&input.mouse, &verts, &camera.window).1;
         if mouse_on_it {
             hovering_vert_id = world_verts[wv].id as i32;
