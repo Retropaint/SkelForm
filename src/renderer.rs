@@ -1000,11 +1000,20 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
         let bones = &constructed_bones;
         let parent = bones.iter().find(|b| b.id == const_bone.parent_id);
         if arm_bone.phys_sway > 0. && parent != None {
-            // interpolate to the angle difference between bone and parent
+            // interpolate bone's orbit to where it would be, in relation to bone's parent.
+            // eg;
+            // bone is top-left of parent, around 45°.
+            // This bone's orbit will interpolate to that angle of 45°.
+            // This is only used for swaying (orbit_diff).
+
             let diff = (const_bone.pos - parent.unwrap().pos).normalize();
             let diff_angle = diff.y.atan2(diff.x);
             let mut rest_rot = shortest_angle_delta(arm_bone.phys_global_orbit, diff_angle);
+
             // apply bounce
+            // eg;
+            // re-apply the orbit's rotation from previous frame so it overshoots.
+            // each frame it'll get weaker until eventually resting.
             if arm_bone.phys_rot_bounce > 0. && arm_bone.phys_rot_bounce <= 1. {
                 rest_rot += arm_bone.phys_global_orbit_vel / (2. - arm_bone.phys_rot_bounce);
                 arm_bone.phys_global_orbit_vel = rest_rot;
@@ -1012,13 +1021,19 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
             arm_bone.phys_global_orbit += rest_rot / 10.;
 
             // swing orbit based on position momentum
+            // eg;
+            // moving to the right would have a velocity of (1, 0).
+            // this vel will be reversed ((-1, 0)), and its angle will be 180°.
+            // the orbit will be influenced towards this angle.
+            // The strength of this influence is based on the user's sway value.
+
             let vel = (arm_bone.phys_global_pos - prev_pos).normalize();
             let angle = (-vel.y).atan2(-vel.x);
             let vel_rot = utils::shortest_angle_delta(arm_bone.phys_global_orbit, angle);
             let strength = (arm_bone.phys_global_pos - prev_pos).mag() / 1000.;
             arm_bone.phys_global_orbit += vel_rot * strength * arm_bone.phys_sway;
 
-            // apply difference in final angle and orbit
+            // save the difference in orbit, which will be used later in inheritance()
             arm_bone.phys_global_orbit_diff = diff_angle - arm_bone.phys_global_orbit;
         }
     }
