@@ -1418,7 +1418,8 @@ pub fn inheritance(
         // inherit parent
         if let Some(parent) = parent.clone() {
             let mut orbit_rot = parent.rot;
-            // apply orbital difference, if rotation resistance physics is active
+
+            // apply orbital difference, if rotation sway is active
             if arm_bones.len() > 0 && bones[i].phys_sway > 0. {
                 orbit_rot -= bones[i].phys_global_orbit_diff
             }
@@ -1554,7 +1555,9 @@ pub fn bone_vertices(
             continue;
         }
 
-        let (mut verts, mut indices) = point!(wv, col, size);
+        // mouse hovering on this vert
+
+        let (mut verts, mut indices) = point!(wv, col, size, rot);
         add_point!(verts, indices, wv);
         if input.right_clicked {
             if world_verts.len() <= 4 {
@@ -1708,6 +1711,7 @@ pub fn vert_lines(
                 }
             }
 
+            // highlight line if it's hovered on
             if is_hovering {
                 v0_top.add_color += add_color;
                 v0_bot.add_color += add_color;
@@ -1715,8 +1719,8 @@ pub fn vert_lines(
                 v1_bot.add_color += add_color;
             }
 
+            // highlight line if it's selected
             let mv = &sel.vert_ids;
-
             if mv.len() == 2 && mv[0] == i0 as usize && mv[1] == i1 as usize {
                 v0_top.add_color += add_color;
                 v0_bot.add_color += add_color;
