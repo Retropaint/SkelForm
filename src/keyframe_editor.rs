@@ -464,10 +464,8 @@ pub fn draw_bones_list(
                     if label.clicked() {
                         shared_ui.deleting_line_bone_id = kf.bone_id;
                         shared_ui.deleting_line_element = kf.element.clone();
-                        events.open_polar_modal(
-                            PolarId::DeleteKeyframeLine,
-                            shared_ui.loc("polar.delete_keyframe_line"),
-                        );
+                        let line = shared_ui.loc("polar.delete_keyframe_line");
+                        events.open_polar_modal(PolarId::DeleteKeyframeLine, line);
                     }
                 });
                 shared_ui.bone_tops.tops.push(BoneTop {
@@ -1020,10 +1018,35 @@ fn draw_frame_lines(
         if response.clicked() {
             shared_ui.last_selected = "keyframe".to_string();
             events.select_anim_frame(kf.frame as usize, false, false);
+            let mut kfs = vec![kf.clone()];
+
+            // select related keyframes if clicking this keyframe while selected
+            if shared_ui.selected_keyframes.contains(&kf) {
+                kfs = sel_anim.keyframes.clone();
+
+                type AE = AnimElement;
+                match kf.element {
+                    AE::PositionX | AE::PositionY => {
+                        is_relevant_keyframe(&mut kfs, &kf, &vec![AE::PositionX, AE::PositionY]);
+                    }
+                    AE::ScaleX | AE::ScaleY => {
+                        is_relevant_keyframe(&mut kfs, &kf, &vec![AE::ScaleX, AE::ScaleY]);
+                    }
+                    AE::TintR | AE::TintG | AE::TintB | AE::TintA => {
+                        let els = &vec![AE::TintR, AE::TintG, AE::TintB, AE::TintA];
+                        is_relevant_keyframe(&mut kfs, &kf, els);
+                    }
+                    _ => kfs = shared_ui.selected_keyframes.clone(),
+                }
+            }
+
             if is_multi {
-                add_selected_keyframes(&mut shared_ui.selected_keyframes, &kf);
+                // add these keyframes to the selection if holding mod/shift
+                for kf in kfs {
+                    add_selected_keyframes(&mut shared_ui.selected_keyframes, &kf);
+                }
             } else {
-                shared_ui.selected_keyframes = vec![kf.clone()];
+                shared_ui.selected_keyframes = kfs;
             }
         }
 
@@ -1120,4 +1143,11 @@ fn add_selected_keyframes(selected_keyframes: &mut Vec<Keyframe>, kf: &Keyframe)
     if !selected_keyframes.contains(&kf) {
         selected_keyframes.push(kf.clone());
     }
+}
+
+pub fn is_relevant_keyframe(kfs: &mut Vec<Keyframe>, kf: &Keyframe, els: &Vec<AnimElement>) {
+    kfs.retain(|okf| {
+        okf.frame == kf.frame && okf.bone_id == kf.bone_id && els.contains(&okf.element)
+    });
+    dbg!(&kfs);
 }
