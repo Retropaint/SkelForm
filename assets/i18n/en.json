@@ -420,6 +420,7 @@
     "duplicate": "Duplicate",
     "onion_desc": "Toggle onion layers",
     "zoom_kb_tip": "\nTip - hold $kb to zoom in/out by scrolling",
+    "double_click_tip": "Double-click to select related keyframes in this bone",
     "elements": {
       "PositionX": "Position X",
       "PositionY": "Position Y",

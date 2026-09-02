@@ -991,7 +991,9 @@ fn draw_frame_lines(
         }
 
         let rect = egui::Rect::from_center_size(pos.into(), (size * 0.5).into());
-        let response: egui::Response = ui.allocate_rect(rect, egui::Sense::click_and_drag());
+        let response: egui::Response = ui
+            .allocate_rect(rect, egui::Sense::click_and_drag())
+            .on_hover_text(shared_ui.loc("keyframe_editor.double_click_tip"));
 
         let mut icon_size: egui::Vec2 = [20., 20.].into();
         let mut final_color = base_color;
@@ -1020,7 +1022,7 @@ fn draw_frame_lines(
             events.select_anim_frame(kf.frame as usize, false, false);
             let mut kfs = vec![kf.clone()];
 
-            // select related keyframes if clicking this keyframe while selected
+            // select related keyframes if clicking this while it's selected
             if shared_ui.selected_keyframes.contains(&kf) {
                 kfs = sel_anim.keyframes.clone();
 
@@ -1149,5 +1151,4 @@ pub fn is_relevant_keyframe(kfs: &mut Vec<Keyframe>, kf: &Keyframe, els: &Vec<An
     kfs.retain(|okf| {
         okf.frame == kf.frame && okf.bone_id == kf.bone_id && els.contains(&okf.element)
     });
-    dbg!(&kfs);
 }
