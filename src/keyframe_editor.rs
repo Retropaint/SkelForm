@@ -394,37 +394,56 @@ pub fn draw_bones_list(
             let highlighted =
                 selections.bone_ids.len() != 0 && selections.bone_ids[0] == kf.bone_id;
 
+            // bone header (name label & fold button)
             if last_bone_id != kf.bone_id {
                 if !first {
                     ui.separator();
                 }
                 first = false;
+
+                // highlight bone name if it's selected
                 let mut bone_str = egui::RichText::new(bone.name.clone());
                 if highlighted {
                     bone_str = bone_str.strong();
                 }
-                let label = ui
-                    .label(bone_str)
-                    .on_hover_cursor(egui::CursorIcon::PointingHand)
-                    .interact(egui::Sense::click());
-                if label.clicked() {
-                    let kf_id = kf.bone_id;
-                    let sel = armature.bones.iter().position(|b| b.id == kf_id);
-                    events.select_bone(sel.unwrap(), false);
 
-                    let parents = armature.get_all_parents(false, kf.bone_id);
-                    for parent in &parents {
-                        let bones = &armature.bones;
-                        let idx = bones.iter().position(|b| b.id == parent.id).unwrap();
-                        events.toggle_bone_folded(idx, false);
+                ui.horizontal(|ui| {
+                    let label = ui
+                        .label(bone_str)
+                        .on_hover_cursor(egui::CursorIcon::PointingHand)
+                        .interact(egui::Sense::click());
+                    if label.clicked() {
+                        // go to bone if clicked
+                        let kf_id = kf.bone_id;
+                        let sel = armature.bones.iter().position(|b| b.id == kf_id);
+                        events.select_bone(sel.unwrap(), false);
+                        events.toggle_bone_anim_folded(sel.unwrap(), false);
+
+                        // unfold this bone's parent(s) so it appears in the hierarchy
+                        let parents = armature.get_all_parents(false, kf.bone_id);
+                        for parent in &parents {
+                            let bones = &armature.bones;
+                            let idx = bones.iter().position(|b| b.id == parent.id).unwrap();
+                            events.toggle_bone_folded(idx, false);
+                        }
                     }
-                }
-                last_bone_id = kf.bone_id;
+                    last_bone_id = kf.bone_id;
+
+                    // fold button
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let fold_icon = if bone.anim_folded { "⏴" } else { "⏷" };
+                        let hand = egui::CursorIcon::PointingHand;
+                        if ui.label(fold_icon).on_hover_cursor(hand).clicked() {
+                            let idx = bones.iter().position(|bone| bone.id == kf.bone_id).unwrap();
+                            events.toggle_bone_anim_folded(idx, !bone.anim_folded);
+                        }
+                    });
+                });
 
                 // reset element tracker, since this is a new bone
                 added_elements = vec![];
             }
-            if added_elements.contains(&kf.element) {
+            if added_elements.contains(&kf.element) || bone.anim_folded {
                 continue;
             }
             added_elements.push(kf.element.clone());
@@ -679,21 +698,24 @@ pub fn draw_timeline_graph(
                 // keep cursor on the frame
                 cursor.y -= shared_ui.timeline_offset.y;
 
-                // render darkened background after last keyframe
-                let sel = selections.clone();
-                let lkf = armature.sel_anim(&sel).unwrap().keyframes.last();
-                if lkf != None && (lkf.unwrap().frame as usize) < shared_ui.lines_x.len() {
-                    let left_top = egui::vec2(shared_ui.lines_x[lkf.unwrap().frame as usize], -3.);
-                    let right_bot =
-                        egui::vec2(0., shared_ui.bone_tops.tops.last().unwrap().height + 999.);
+                // // render darkened background after last keyframe
+                // let sel = selections.clone();
+                // let lkf = armature.sel_anim(&sel).unwrap().keyframes.last();
+                // if shared_ui.bone_tops.tops.len() > 0
+                //     && lkf != None
+                //     && (lkf.unwrap().frame as usize) < shared_ui.lines_x.len()
+                // {
+                //     let left_top = egui::vec2(shared_ui.lines_x[lkf.unwrap().frame as usize], -3.);
+                //     let right_bot =
+                //         egui::vec2(0., shared_ui.bone_tops.tops.last().unwrap().height + 999.);
 
-                    let rect_to_fill = egui::Rect::from_min_size(
-                        ui.min_rect().left_top() + left_top,
-                        ui.min_rect().size() + right_bot,
-                    );
-                    ui.painter()
-                        .rect_filled(rect_to_fill, 0., config.colors.dark_accent);
-                }
+                //     let rect_to_fill = egui::Rect::from_min_size(
+                //         ui.min_rect().left_top() + left_top,
+                //         ui.min_rect().size() + right_bot,
+                //     );
+                //     ui.painter()
+                //         .rect_filled(rect_to_fill, 0., config.colors.dark_accent);
+                // }
 
                 draw_frame_lines(
                     ui, shared_ui, armature, config, input, selections, events, hitbox, cursor,
@@ -1026,13 +1048,8 @@ fn draw_frame_lines(
         }
 
         if response.secondary_clicked() {
-            let context_id = &format!(
-                "keyframe_{}_{}_{}_{}",
-                &(kf.element.clone() as usize),
-                &kf.bone_id,
-                &kf.frame,
-                &i
-            );
+            let el = &(kf.element.clone() as usize);
+            let context_id = &format!("keyframe_{}_{}_{}_{}", el, &kf.bone_id, &kf.frame, &i);
             if is_multi || shared_ui.selected_keyframes.contains(&kf) {
                 add_selected_keyframes(&mut shared_ui.selected_keyframes, &kf);
             } else {

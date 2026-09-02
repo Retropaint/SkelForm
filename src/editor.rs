@@ -259,6 +259,11 @@ pub fn iterate_events(
         armature.bones[idx].folded = events.values[1] == 1.;
         events.events.remove(0);
         events.values.drain(0..=1);
+    } else if event == Events::ToggleBoneAnimFolded {
+        let idx = events.values[0] as usize;
+        armature.bones[idx].anim_folded = events.values[1] == 1.;
+        events.events.remove(0);
+        events.values.drain(0..=1);
     } else if event == Events::MoveTexture {
         let new_idx = events.values[0] as usize;
         let sel = &selections;

@@ -885,6 +885,7 @@ pub fn prepare_files(
             locked: bone.locked,
             group_color: bone.group_color,
             blacklist: bone.blacklist.clone(),
+            anim_folded: bone.anim_folded,
         });
     }
     for style in &armature_copy.styles {

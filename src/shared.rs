@@ -1222,6 +1222,8 @@ pub struct Bone {
     pub group_color: Color,
     #[serde(skip)]
     pub blacklist: Vec<u32>,
+    #[serde(skip)]
+    pub anim_folded: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
@@ -1266,6 +1268,7 @@ pub struct EditorBone {
     pub blacklist: Vec<u32>,
     #[serde(default = "default_0_alpha")]
     pub group_color: Color,
+    pub anim_folded: bool,
 }
 
 #[derive(
@@ -2378,6 +2381,7 @@ pub enum Events {
 
     DuplicateAnim,
     ToggleBoneFolded,
+    ToggleBoneAnimFolded,
     EditBone,
     UpdateCurrentEditing,
     SaveEditedBone,
@@ -2648,6 +2652,12 @@ impl EventState {
 
     pub fn toggle_bone_folded(&mut self, bone_idx: usize, folded: bool) {
         self.events.push(Events::ToggleBoneFolded);
+        self.values.push(bone_idx as f32);
+        self.values.push(if folded { 1. } else { 0. });
+    }
+
+    pub fn toggle_bone_anim_folded(&mut self, bone_idx: usize, folded: bool) {
+        self.events.push(Events::ToggleBoneAnimFolded);
         self.values.push(bone_idx as f32);
         self.values.push(if folded { 1. } else { 0. });
     }
