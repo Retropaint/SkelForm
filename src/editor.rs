@@ -31,27 +31,33 @@ pub fn iterate_events(
 
         type E = Events;
         #[rustfmt::skip]
-            match last_event {
-                E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone | E::RaiseGlobalZindex => undo_states.new_undo_bones(&armature.bones),
-                E::NewAnimation | E::DeleteAnim => undo_states.new_undo_anims(&armature.animations),
-                E::DeleteSelectedTextures       => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
-                E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
-                E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
-                E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::PasteKeyframesOnFrame => {
-                    undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
-                }
-                E::ResetVertices | E::CenterBoneVerts | E::DeleteVertex | E::TraceBoneVerts | E::NewVertex | E::DeleteTriangle => {
-                    undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
-                }
-                _ => {}
-            };
+        match last_event {
+            E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone | E::RaiseGlobalZindex => undo_states.new_undo_bones(&armature.bones),
+            E::NewAnimation | E::DeleteAnim => undo_states.new_undo_anims(&armature.animations),
+            E::DeleteSelectedTextures       => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
+            E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
+            E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
+            E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::PasteKeyframesOnFrame => {
+                undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
+            }
+            E::ResetVertices | E::CenterBoneVerts | E::DeleteVertex | E::TraceBoneVerts | E::NewVertex | E::DeleteTriangle => {
+                undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
+            }
+            _ => {}
+        };
     }
 
     if event == Events::MoveAnimation {
         let drag = events.values[0] as usize;
-        let hov = events.values[1] as usize;
+        let mut hov = events.values[1] as usize;
         let anim = armature.animations[drag].clone();
         armature.animations.remove(drag);
+
+        // anim will end up below selected if hov isn't adjusted
+        if hov > drag {
+            hov -= 1;
+        }
+
         armature.animations.insert(hov, anim);
 
         selections.anim = hov;
