@@ -44,7 +44,7 @@ if not args.nodocs:
 # Require create-dmg on mac
 if platform.system() == "Darwin" and args.dmg:
     if not shutil.which("create-dmg"):
-        subprocess.run("brew install create-dmg")
+        subprocess.run("brew install create-dmg", shell=True)
 
 binExt = ".exe" if platform.system() == "Windows" else ""
 
@@ -113,7 +113,7 @@ match platform.system():
         shutil.make_archive(dirname, 'zip', ".", dirname)
 
         # create installer (Inno Setup 7)
-        subprocess.run("ISCC.exe install.iss")
+        subprocess.run("ISCC.exe install.iss", shell=True)
     case "Darwin":
         shutil.copy("../ffmpeg/native/ffmpeg-mac-arm.zip", f"./{dirname}/ffmpeg.zip")
         shutil.unpack_archive(f"./{dirname}/ffmpeg.zip", extract_dir=f"./{dirname}")
