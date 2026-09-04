@@ -42,10 +42,9 @@ if not args.nodocs:
     shutil.copytree("skelform_user_docs/book", "./user-docs", dirs_exist_ok = True)
 
 # Require create-dmg on mac
-if platform.system() == "Darwin" and not shutil.which("create-dmg") and args.dmg:
-    print(f">>> {RED}!! create-dmg REQUIRED !!{RESET}")
-    print(">>> Install create-dmg - https://github.com/create-dmg/create-dmg")
-    exit()
+if platform.system() == "Darwin" and args.dmg:
+    if not shutil.which("create-dmg"):
+        subprocess.run("brew install create-dmg")
 
 binExt = ".exe" if platform.system() == "Windows" else ""
 

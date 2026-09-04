@@ -32,7 +32,7 @@ jobs:
           python-version: "3.13.6"
           
       - name: build binary
-        run: cd release && python3 release.py -nd
+        run: cd release && python3 release.py -nd -dmg
         
       - name: upload to nightly
         uses: softprops/action-gh-release@v2
