@@ -104,6 +104,7 @@ def darwin():
         ">>> Preparing Mac dmg...\n    The dmg will instantly open, but you should still wait."
     )
     subprocess.run("./create-dmg.sh" + stdout, shell=True)
+    os.rename(" SkelForm.dmg", "SkelForm.dmg")
     print(f">>> Mac release complete. Please look for {BLUE}SkelForm.dmg{RESET}.")
 
 match platform.system():
