@@ -44,7 +44,8 @@ jobs:
           prerelease: true
           overwrite_files: true
           files: |
-            release/SkelForm*
+            release/SkelForm.dmg
+            release/SkelForm.app.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -57,7 +58,8 @@ jobs:
           draft: true
           prerelease: true
           files: |
-            release/SkelForm*
+            release/SkelForm.dmg
+            release/SkelForm.app.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
