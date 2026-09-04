@@ -709,7 +709,7 @@ impl BackendRenderer {
             wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb => {
                 format = wgpu::TextureFormat::Bgra8Unorm;
             }
-            _ => format = wgpu::TextureFormat::Rgba8Unorm,
+            _ => format = self.gpu.surface_format,
         }
         let size = Vec2::new(
             (shared.camera.window.x as u32 / shared.config.pixel_magnification as u32) as f32,
