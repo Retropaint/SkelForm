@@ -106,6 +106,7 @@ jobs:
           draft: true
           prerelease: true
           files: |
+            release/Output/SkelForm*
             release/skelform_windows*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

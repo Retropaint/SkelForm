@@ -112,6 +112,9 @@ match platform.system():
         shutil.copy(f"../target/{path}/SkelForm.pdb", f"./{dirname}")
         #shutil.copy("../ffmpeg/native/ffmpeg.exe", f"./{dirname}/ffmpeg.exe")
         shutil.make_archive(dirname, 'zip', ".", dirname)
+
+        # create installer (Inno Setup 7)
+        subprocess.run("ISCC.exe install.iss")
     case "Darwin":
         shutil.copy("../ffmpeg/native/ffmpeg-mac-arm.zip", f"./{dirname}/ffmpeg.zip")
         shutil.unpack_archive(f"./{dirname}/ffmpeg.zip", extract_dir=f"./{dirname}")
@@ -121,4 +124,4 @@ match platform.system():
         darwin()
     case "Linux":
         #shutil.copy("../ffmpeg/native/ffmpeg-linux", f"./{dirname}/ffmpeg")
-        shutil.make_archive(dirname, 'zip', ".", dirname) 
+        shutil.make_archive(dirname, 'zip', ".", dirname)
