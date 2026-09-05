@@ -21,11 +21,10 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName="C:\Program Files\{#MyAppName}"
 DefaultGroupName={#MyAppName}
-AllowNoIcons=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
-OutputBaseFilename="SkelForm Install"
+DisableProgramGroupPage=yes
+OutputBaseFilename=SkelForm_Install
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
@@ -37,8 +36,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "D:\a\SkelForm\SkelForm\release\skelform_windows\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Users\o\projects\skelform\release\skelform_windows\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files.
 
 [Icons]
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppName}.exe"
 Name: "{autodesktop}\SkelForm"; Filename: "{app}\SkelForm.exe"; Tasks: desktopicon
