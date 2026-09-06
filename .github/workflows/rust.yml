@@ -95,7 +95,7 @@ jobs:
           prerelease: true
           overwrite_files: true
           files: |
-            release/Output/SkelForm*
+            release/Output/SkelForm_Install.exe
             release/skelform_windows*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -109,7 +109,7 @@ jobs:
           draft: true
           prerelease: true
           files: |
-            release/Output/SkelForm*
+            release/Output/SkelForm_Install.exe
             release/skelform_windows*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
