@@ -59,6 +59,7 @@ match platform.system():
 
 dirname = "skelform_" + platform_name
 
+# create clean release folder
 if os.path.exists(dirname):
     shutil.rmtree(dirname)
 os.mkdir(dirname)
@@ -69,11 +70,13 @@ if args.debug:
     mode = ""
     path = "debug"
 
+# download dependencies for Ubuntu
 if args.ubuntudeps:
     subprocess.run("sudo apt-get -y update", shell=True)
     subprocess.run("sudo apt-get -y install libglib2.0-dev", shell=True)
     subprocess.run("sudo apt-get -y install libgtk-3-dev", shell=True)
 
+# build user and dev docs (if --nodocs wasn't set)
 # yapf: disable
 subprocess.run (f"cargo build {mode}", shell=True)
 shutil.copy    (f"../target/{path}/SkelForm{binExt}", f"./{dirname}")
@@ -93,7 +96,7 @@ def darwin():
     shutil.copytree(dirname, bin_path)
 
     # sign the app in any way, so the OS doesn't show 'this app is damaged'
-    subprocess.run("codesign --force --deep --sign - SkelForm.app", shell=True)    
+    subprocess.run("codesign --force --deep --sign - SkelForm.app", shell=True)
 
     shutil.make_archive("SkelForm.app", "zip", ".", "SkelForm.app")
     
