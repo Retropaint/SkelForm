@@ -36,7 +36,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\o\projects\skelform\release\skelform_windows\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: ".\skelform_windows\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files.
 
 [Icons]
