@@ -697,6 +697,8 @@ pub struct Ui {
     pub flash_warn_timer: Option<Instant>,
 
     pub first_startup: bool,
+
+    pub is_unsaved: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

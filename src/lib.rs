@@ -356,8 +356,9 @@ impl ApplicationHandler for App {
 
                         // show asterisk after name if unsaved
                         let undo = &self.shared.undo_states;
-                        let is_unsaved = undo.unsaved_undo_actions != undo.undo_actions.len();
-                        let asterisk = if is_unsaved { " *" } else { "" };
+                        self.shared.ui.is_unsaved =
+                            undo.unsaved_undo_actions != undo.undo_actions.len();
+                        let asterisk = if self.shared.ui.is_unsaved { " *" } else { "" };
 
                         let title =
                             file + " - v" + &env!("CARGO_PKG_VERSION").to_string() + asterisk;

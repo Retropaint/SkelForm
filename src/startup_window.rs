@@ -75,8 +75,13 @@ fn left(
         // New button
         let empty = "".to_string();
         if leftside_button("+", &shared_ui.loc("new"), ui, None, None, empty, conf).clicked() {
-            events.new_armature();
-            shared_ui.startup_window = false;
+            if !shared_ui.is_unsaved {
+                events.new_armature();
+                shared_ui.startup_window = false;
+            } else {
+                // prevent new armature if current is unsaved
+                events.open_modal("startup.unsaved_new", false);
+            }
         }
 
         ui.add_space(padding);

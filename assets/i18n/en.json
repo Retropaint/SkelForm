@@ -45,6 +45,7 @@
     "error_ffmpeg": "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.",
     "no_updates": "You're up to date! This is the latest version.",
     "current_version": "Current: v",
+    "unsaved_new": "Cannot create new armature while current one is unsaved.",
     "resources": {
       "user_docs": "User Documentation",
       "starter_guide": "Starter Guide",
