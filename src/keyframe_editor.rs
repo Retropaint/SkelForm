@@ -719,20 +719,16 @@ pub fn draw_timeline_graph(
                     ui, shared_ui, armature, config, input, selections, events, hitbox, cursor,
                 );
             });
-            if !input.left_clicked && !input.left_down && !input.left_pressed && ui.ui_contains_pointer() {
+            if !input.left_clicked
+                && !input.left_down
+                && !input.left_pressed
+                && ui.ui_contains_pointer()
+            {
                 shared_ui.timeline_offset = response.state.offset.into();
             }
         });
     });
-    
 }
-
-// Fix for timeline cursor dragging behavior
-// Prevent timeline panning when dragging on frames
-// This is a workaround since we cannot directly control the scroll area's panning behavior
-// when dragging on frames, so we update the offset based on whether we're dragging on frames
-// The actual fix needs to be in how the scroll area handles the interaction
-
 
 pub fn draw_bottom_bar(
     ui: &mut egui::Ui,
@@ -893,27 +889,12 @@ fn draw_frame_lines(
             hovering = true;
             hovered_line_x = ui.min_rect().left() + x;
 
-            // Handle left-click-and-drag to move cursor (but don't select frame on hover)
+            // select frame if clicked/held down on.
+            // holding LMB lets frames be previewed via dragging.
             if input.left_down && shared_ui.context_menu.id == "" {
-                // Only update the current frame when dragging, not on hover
-                events.select_anim_frame(i as usize, false, false);
-            }
-            // select this frame if clicked (only for non-drag operations)
-            else if input.left_clicked && shared_ui.context_menu.id == "" {
-                if !input.holding_mod && !input.holding_shift {
-                    shared_ui.selected_keyframes = vec![];
-                }
                 events.select_anim_frame(i as usize, false, false);
                 shared_ui.last_selected = "keyframe".to_string();
             }
-            // select this frame if clicked
-            /*if input.left_clicked && shared_ui.context_menu.id == "" {
-                if !input.holding_mod && !input.holding_shift {
-                    shared_ui.selected_keyframes = vec![];
-                }
-                events.select_anim_frame(i as usize, false, false);
-                shared_ui.last_selected = "keyframe".to_string();
-            }*/
         }
 
         if !shared_ui.hovering_diamond && is_in && input.right_clicked {
