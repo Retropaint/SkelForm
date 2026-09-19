@@ -699,6 +699,9 @@ pub struct Ui {
     pub first_startup: bool,
 
     pub is_unsaved: bool,
+
+    // prevents keyframe editor from registering clicks while editing tint
+    pub bone_panel_popup_open: bool
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

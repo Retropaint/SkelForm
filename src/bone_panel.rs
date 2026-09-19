@@ -1295,7 +1295,8 @@ pub fn visuals(
             let og_col: [f32; 4] = [bone.tint.r, bone.tint.g, bone.tint.b, bone.tint.a];
             let mut col = og_col.clone();
             ui.color_edit_button_rgba_premultiplied(&mut col);
-            if col == og_col || !input.left_down || !egui::Popup::is_any_open(ui.ctx()) {
+            shared_ui.bone_panel_popup_open = egui::Popup::is_any_open(ui.ctx());
+            if col == og_col || !input.left_down || !shared_ui.bone_panel_popup_open {
                 return;
             }
             let anim_id = if edit_mode.anim_open {

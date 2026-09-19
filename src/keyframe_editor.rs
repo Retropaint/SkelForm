@@ -879,7 +879,7 @@ fn draw_frame_lines(
         } else if i != 0 && i % anim.fps == 0 {
             color = color + egui::Color32::from_rgb(20, 20, 20);
         }
-        if is_in && !shared_ui.hovering_diamond {
+        if is_in && !shared_ui.hovering_diamond && !shared_ui.bone_panel_popup_open {
             color = egui::Color32::from_rgb(175, 175, 175);
             shared_ui.hovering_frame = i;
             hovering = true;
