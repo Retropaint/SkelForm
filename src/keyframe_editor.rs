@@ -719,11 +719,7 @@ pub fn draw_timeline_graph(
                     ui, shared_ui, armature, config, input, selections, events, hitbox, cursor,
                 );
             });
-            if !input.left_clicked
-                && !input.left_down
-                && !input.left_pressed
-                && ui.ui_contains_pointer()
-            {
+            if ui.ui_contains_pointer() && shared_ui.hovering_frame == -1 {
                 shared_ui.timeline_offset = response.state.offset.into();
             }
         });
@@ -892,6 +888,9 @@ fn draw_frame_lines(
             // select frame if clicked/held down on.
             // holding LMB lets frames be previewed via dragging.
             if input.left_down && shared_ui.context_menu.id == "" {
+                if !input.holding_mod && !input.holding_shift {
+                    shared_ui.selected_keyframes = vec![];
+                }
                 events.select_anim_frame(i as usize, false, false);
                 shared_ui.last_selected = "keyframe".to_string();
             }
