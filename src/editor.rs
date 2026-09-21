@@ -580,13 +580,11 @@ pub fn simple_event(
                 for bone in targeters {
                     bone.ik_target_id = -1;
                 }
-
-                // de-select bone(s)
-                if selections.bone_idx == value as usize || selections.bone_ids.len() > 1 {
-                    selections.bone_idx = usize::MAX;
-                    selections.bone_ids = vec![];
-                }
             }
+
+            // de-select bone(s) to prevent any errors
+            selections.bone_idx = usize::MAX;
+            selections.bone_ids = vec![];
         }
         Events::DeleteSelectedTextures => {
             let style = &mut armature.sel_style_mut(selections).unwrap();
