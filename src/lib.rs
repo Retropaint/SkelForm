@@ -1354,7 +1354,7 @@ impl BackendRenderer {
             wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb => {
                 format = wgpu::TextureFormat::Bgra8Unorm;
             }
-            _ => format = wgpu::TextureFormat::Rgba8Unorm,
+            _ => format = self.gpu.surface_format,
         }
         let capture_texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
