@@ -16,7 +16,10 @@ use std::{
 
 use egui_wgpu::wgpu::ExperimentalFeatures;
 use shared::*;
-use wgpu::{util::DeviceExt, BindGroupLayout, Buffer, InstanceDescriptor};
+use wgpu::{
+    util::DeviceExt, BindGroupLayout, Buffer, Features, FeaturesWGPU, FeaturesWebGPU,
+    InstanceDescriptor,
+};
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
@@ -1622,12 +1625,23 @@ impl Gpu {
             })
             .await
             .unwrap();
+
+        // set some WGPU/WebGPU features as optional, but use if adapter allows
+        let adapter_features = adapter.features();
+        let mut features_wgpu = FeaturesWGPU::default();
+        if adapter_features.contains(Features::TEXTURE_FORMAT_16BIT_NORM) {
+            features_wgpu.insert(FeaturesWGPU::TEXTURE_FORMAT_16BIT_NORM);
+        }
+
         let (device, queue) = {
             adapter
                 .request_device(&wgpu::DeviceDescriptor {
                     label: Some("WGPU Device"),
                     memory_hints: wgpu::MemoryHints::default(),
-                    required_features: wgpu::Features::default(),
+                    required_features: wgpu::Features {
+                        features_wgpu,
+                        features_webgpu: wgpu::FeaturesWebGPU::default(),
+                    },
                     #[cfg(not(target_arch = "wasm32"))]
                     required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
                     #[cfg(all(target_arch = "wasm32"))]
