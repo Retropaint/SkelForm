@@ -719,7 +719,8 @@ pub fn draw_timeline_graph(
                     ui, shared_ui, armature, config, input, selections, events, hitbox, cursor,
                 );
             });
-            if ui.ui_contains_pointer() && shared_ui.hovering_frame == -1 {
+            let not_dragging = shared_ui.hovering_frame == -1 || !input.left_down;
+            if ui.ui_contains_pointer() && not_dragging {
                 shared_ui.timeline_offset = response.state.offset.into();
             }
         });
