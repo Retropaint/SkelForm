@@ -701,7 +701,7 @@ pub struct Ui {
     pub is_unsaved: bool,
 
     // prevents keyframe editor from registering clicks while editing tint
-    pub bone_panel_popup_open: bool
+    pub bone_panel_popup_open: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -2083,7 +2083,7 @@ pub struct BoneTops {
     pub tops: Vec<BoneTop>,
 }
 
-#[derive(Default, PartialEq, Clone, FromRepr)]
+#[derive(Default, PartialEq, Clone, FromRepr, Debug)]
 pub enum EditModes {
     #[default]
     Move,

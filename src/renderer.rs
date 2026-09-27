@@ -24,7 +24,7 @@ pub fn render(
     let sel = selections.clone();
 
     // no edits are being made if the LMB isn't down
-    if !input.left_down && (edit_mode.is_moving || edit_mode.is_rotating || edit_mode.is_scaling) {
+    if !input.left_down {
         events.update_current_editing(1);
     }
 
@@ -521,13 +521,11 @@ pub fn render(
 
     // show transform rings when editing a bone
     let ring_enabled = config.transform_rot_radius > 0. && config.transform_scale_radius > 0.;
-    let idle_mouse = !input.left_down && !input.left_clicked || camera.on_ui;
+    //let idle_mouse = !input.left_down && !input.left_clicked || camera.on_ui;
     let selected = armature.sel_bone(&sel) != None && selections.bone_ids.len() == 1;
-    if !edit_mode.editing_mesh && !has_ik && idle_mouse && selected && ring_enabled {
+    if !edit_mode.editing_mesh && !has_ik && selected && ring_enabled && !input.left_down {
         #[rustfmt::skip]
         transform_ring(config, camera, armature, &mut temp_arm, render_pass, renderer, events, edit_mode, &sel, queue, &mouse_pos);
-    } else if edit_mode.temporary != None {
-        events.set_temporary_edit_mode(3);
     }
 
     // if no SelectBone events have been called, unselect current if mouse is pressed
@@ -2372,9 +2370,7 @@ fn transform_ring(
         }
     }
 
-    if !renderer.on_point {
-        renderer.on_point = on_point;
-    }
+    renderer.on_point |= on_point;
 
     // draw rot and scale rings
     let cam = world_camera(&camera, &config);
@@ -2419,7 +2415,6 @@ fn transform_ring(
     setup_render_buffer(buffer, &sel_verts, &sel_indices, queue);
     draw(&buffer, render_pass, 0, indices_rot.len());
 
-    // set temporary mode to None only once, to prevent event spam
     if temporary == 3 && edit_mode.temporary != None {
         events.set_temporary_edit_mode(3);
     }
