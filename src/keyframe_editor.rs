@@ -844,7 +844,10 @@ fn draw_frame_lines(
     let panel = shared_ui.keyframe_panel_rect;
     let mut hovering = false;
 
-    let range = egui::Rangef { min: 0., max: 999. };
+    let range = egui::Rangef {
+        min: -9999999999.,
+        max: 999999999999.,
+    };
     let painter = ui.painter();
 
     let mut x = 0.;
