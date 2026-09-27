@@ -915,7 +915,8 @@ fn draw_frame_lines(
         shared_ui.hovering_frame = -1;
     }
 
-    let mut last_bone = -1;
+    // horizontal line (bone separator)
+    let mut last_bone = shared_ui.bone_tops.tops[0].id;
     for top in &shared_ui.bone_tops.tops {
         if last_bone != top.id {
             let range = egui::Rangef::new(0., ui.available_width());
