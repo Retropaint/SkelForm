@@ -1305,7 +1305,7 @@ pub fn visuals(
                 usize::MAX
             };
             let frame = selections.anim_frame;
-            let bone_ids = &selections.only_root_bones(&armature.bones);
+            let bone_ids = &selections.bone_ids;
             edit_bones(bone_ids, E::TintR, col[0], "", anim_id, frame, events);
             edit_bones(bone_ids, E::TintG, col[1], "", anim_id, frame, events);
             edit_bones(bone_ids, E::TintB, col[2], "", anim_id, frame, events);
