@@ -43,9 +43,27 @@ two siblings **`<name>_tex.json`** and **`<name>_tex.png`** next to it. So:
 Inkternity parses **DragonBones 5.5 JSON** via `DragonBonesCPP`'s `JSONDataParser`
 (there is also a binary `.dbbin` form — **do not** target that; JSON only).
 
+### 1.1 Decisions (2026-09-28)
+
+| topic | decision |
+|---|---|
+| scope | **Full in the first PR**: cutout *and* mesh displays (weights included) |
+| animation | **Translate keyframes** (key → DB frame, Bézier handles → `curve`). Bake per-frame only where a 1:1 mapping is impossible (IK-driven rotation) |
+| styles | **Active style(s) only**, emitted as the default skin (`""`), **one atlas**. Error out if it doesn't fit a single sheet |
+| platform | **Native only**; the DragonBones tab is hidden on wasm |
+| output | Save dialog picks `<base>_ske.json`; `<base>_tex.json` + `<base>_tex.png` are written next to it. Atlas is always PNG (the JPG option is ignored) |
+| IK | Always baked for this exporter (IK family bones get per-frame `rotateFrame`s; the setup pose uses the IK-solved rotation) |
+| physics | Dropped |
+
 ---
 
 ## 2. Target format (authoritative reference)
+
+> Every rule marked **[verified]** below was checked against upstream
+> `DragonBonesCPP` (`DragonBones/src/dragonBones/parser/JSONDataParser.cpp`,
+> `animation/BaseTimelineState.cpp`, `animation/TimelineState.cpp`,
+> `armature/Bone.cpp`, `Cocos2DX_3.x/.../CCSlot.cpp`). Where it conflicted with
+> the original draft of this doc, the draft was corrected.
 
 Field shapes below are taken from a real rig Inkternity ships as its import
 fixture (`mecha_1004d`). Coordinates are DragonBones' (see the fidelity notes in
@@ -95,9 +113,14 @@ An **armature**:
 { "name": "head", "parent": "head", "displayIndex": 0, "z": 5,
   "color": { "aM": 100, "rM": 100, "gM": 100, "bM": 100 } }   // color optional; *M = %
 ```
-- `z` sets draw order (higher = in front). DragonBones has **bone → slot →
-  display**; SkelForm has no slot concept, so **synthesize one slot per display-
-  bearing bone** (§4).
+- **[verified]** `z` is **ignored** by the parser — draw order is the slot's
+  **index in the `slot` array** (first = back). Emit slots sorted by SkelForm
+  `zindex` ascending. Animated draw order goes in the animation's `zOrder`
+  timeline: `{"frame":[{"duration":n,"zOrder":[slotIdx, offset, ...]}]}` where
+  each pair moves slot `slotIdx` to index `slotIdx+offset` (pairs in ascending
+  `slotIdx`; listing every slot is valid).
+- DragonBones has **bone → slot → display**; SkelForm has no slot concept, so
+  **synthesize one slot per display-bearing bone** (§4), named after the bone.
 
 **Skin** — maps each slot to its display(s):
 
@@ -118,19 +141,27 @@ An **armature**:
 ```jsonc
 { "name": "atlas/cloak", "type": "mesh",
   "width": 200, "height": 300,             // source region px
-  "vertices": [x0,y0, x1,y1, ...],         // local-space, px
-  "uvs": [u0,v0, u1,v1, ...],              // normalized 0..1, atlas-relative
+  "vertices": [x0,y0, x1,y1, ...],         // slot-local, px
+  "uvs": [u0,v0, u1,v1, ...],              // normalized 0..1, relative to the SubTexture REGION
   "triangles": [0,1,2, 2,3,0, ...],        // uint indices
   // weighted skin (FFD/skinning):
   "weights": [ /* per-vertex: boneCount, (boneIdx, weight)... */ ],
   "bonePose": [ /* per bound bone: boneIdx, a,b,c,d,tx,ty */ ],
   "slotPose": [ a,b,c,d,tx,ty ] }
 ```
-> Meshes are the trickiest part. If it saves scope, ship **cutout first** (every
-> display `type:"image"`) and gate meshes behind a follow-up — but SkelForm *does*
-> support meshes + multi-bone weights, so a complete exporter should emit them.
-> Study `DragonBonesCPP`'s `JSONDataParser::_parseMesh`/`_parseSkin` for the exact
-> `weights`/`bonePose`/`slotPose` packing before implementing.
+**[verified]** mesh packing (`_parseMesh`, `CCSlot::_updateFrame/_updateMesh`):
+- `uvs` are relative to the display's SubTexture region (`region.x + u*region.width`),
+  **not** the whole atlas. SkelForm's `Vertex.uv` is already region-relative with
+  v pointing down, so it maps 1:1.
+- `weights`: **every** vertex appears, as `n, (boneIdx, w) × n`. `boneIdx` is the
+  index into the armature's `bone` array.
+- `bonePose`: stride **7** per bound bone: `boneIdx, a, b, c, d, tx, ty`.
+- At load, each vertex is taken to armature space by `slotPose`, then into each
+  bound bone's space by `inverse(bonePose[bone])`. At runtime the vertex is
+  `Σ w · boneGlobalMatrix · local`, and the slot's own transform is ignored.
+- Matrices use `x' = a·x + c·y + tx`, `y' = b·x + d·y + ty`.
+- Only `translateFrame`/`rotateFrame`/`scaleFrame` + `displayFrame`/`colorFrame`
+  and `zOrder` are needed; SkelForm has no per-vertex animation, so no `ffd`.
 
 **Animation** — per-bone transform frames + per-slot display/color frames:
 
@@ -154,13 +185,36 @@ An **armature**:
 }
 ```
 - `duration` is **in frames**, and is the length of THAT frame (the gap until the
-  next). The last frame commonly has `duration: 0`. The animation's top-level
-  `duration` = sum of a track's frame durations = total frames.
-- `playTimes`: `0` = loop, `1` = once, n = n times.
-- `tweenEasing`: `0` = linear, `NaN`/absent = no tween (step/hold),
-  `(0,1]`/`[-1,0)` = quad ease out/in. Arbitrary curves use a `"curve": [...]`
-  sample array on the frame instead of `tweenEasing` (see §4 interpolation).
-- `rotate` is **degrees**, relative to the bone's rest rotation.
+  next). **[verified]** A timeline's first frame always starts at frame 0. The
+  last frame's `duration` is ignored: it lasts until the animation's top-level
+  `duration`, which is the total frame count.
+- **[verified]** If the last frame has a tween and the animation loops, it tweens
+  **back to frame 0's value** (`BaseTimelineState::_onArriveAtFrame`). SkelForm
+  holds the last value instead, so the exporter emits the last frame with **no**
+  `tweenEasing`/`curve`.
+- `playTimes`: `0` = loop, `1` = once, n = n times. **[verified]** The default
+  when absent is **1**, so the exporter always writes `0` to loop.
+- **[verified]** `tweenEasing`: absent = hold (no tween); `0` = linear; `<0` quad
+  in; `(0,1]` quad out; `>1` quad in-out.
+- **[verified]** `"curve"` takes precedence over `tweenEasing`. It holds cubic
+  Bézier **control points**, not samples: `[x1,y1, x2,y2]` for one segment, with
+  P0=(0,0) and P3=(1,1) implied. The parser samples it into
+  `durationFrames+1` points. SkelForm's `interp()` uses the same easing
+  model, so `curve = [start_handle.x, start_handle.y, end_handle.x, end_handle.y]`
+  of the **next** keyframe (SkelForm stores a segment's easing on its end key).
+- **[verified]** Frame values are **relative to the setup pose**
+  (`Bone.cpp`: `global = origin + animationPose`):
+  - translate `x`/`y` are px **added** to the setup position,
+  - `rotate` is degrees **added** to the setup rotation,
+  - scale `x`/`y` **multiply** the setup scale.
+- **[verified]** `rotateFrame` interpolates along the **shortest path**
+  (`normalizeRadian(delta)`) unless the *previous* frame has `"clockwise": n`
+  (n ≠ 0). If a segment turns more than 180°, the exporter writes the raw
+  (un-normalized) cumulative angle and puts `clockwise: ±1` on the segment's
+  start frame. With that, the parser's correction gives back exactly the raw
+  angle.
+- The animation-level `frameRate` is **not** read. All animations play at the
+  armature's `frameRate` (§4).
 
 ### 2.2 `<name>_tex.json`
 
@@ -231,56 +285,187 @@ existing exporters.
 - Other templates: spritesheet (`utils::render_spritesheets` ~L191),
   per-style PNG export (`App::check_export_style` `lib.rs` ~L927).
 
-**Dispatch to wire into:**
-1. `Saving` enum — `shared.rs` ~L2146 → add `DragonBones`.
-2. `utils::open_save_dialog` match — `utils.rs` ~L92-102 → add `("json",
-   "DragonBones")` (or a folder/zip).
-3. Save loop — `lib.rs` ~L846-870 polls `shared.ui.saving`; add a branch calling
-   your writer.
-4. Export modal — `src/export_modal.rs` `draw()` (~L33) has Armature/Image/Video
-   tabs (~L74-83); add a **4th "DragonBones" tab** (options: embed atlas, bake IK,
-   cutout-only). Its Export button sets `Saving::DragonBones` + `open_save_dialog`.
-5. File menu — `src/ui.rs` `top_bar_file` (~L1534) → sibling menu item; i18n key
-   in `assets/i18n/en.json`.
+**Dispatch to wire into (as built):**
+1. `Saving` enum (`shared.rs`): add `DragonBones`.
+2. `utils::open_save_dialog`: add `("json", "DragonBones")`.
+3. Save loop (`lib.rs`, the `saving != Saving::None` branch): `Saving::DragonBones`
+   goes to `App::save_dragonbones` (native only), which clones the armature and
+   writes the three files on a worker thread, like `App::save`.
+4. Export modal (`src/export_modal.rs`): add a 4th **DragonBones** tab. The tabs
+   reuse `SettingsState` variants as ids, and this one uses the free
+   `SettingsState::Rendering`. The tab is not shown on wasm. Its Export button
+   calls `open_save_dialog(.., Saving::DragonBones)`.
+5. No separate File-menu item: *File > Export* already opens the export modal.
+   The i18n keys live under `export_modal.dragonbones` in `assets/i18n/en.json`.
 
-**PSD import (context; already done)** — `src/file_reader.rs` `read_psd` (~L206):
-PSD groups → bones, each group flattened to one texture; `$pivot`/`$ik_*` marker
-layers configure pivot/IK. This is why the pipeline works today; your exporter is
-the reverse trip.
+**PSD import (context; already done)**: `src/file_reader.rs` `read_psd` (~L206)
+turns PSD groups into bones, flattening each group into one texture. `$pivot` and
+`$ik_*` marker layers configure pivot and IK. This is why the pipeline works
+today; the exporter is the reverse trip.
 
-**Suggested shape:** new `src/dragonbones_export.rs` with
-`fn export(armature: &Armature, atlas_png: Vec<Vec<u8>>, atlas_sizes: &[i32],
-opts) -> DbFiles` producing the three files; wire through the five dispatch points
-above; reuse `create_tex_sheet` for the atlas; imitate `App::save` for writing.
+**Shape:** `src/dragonbones_export.rs`:
+`pub fn export(armature: &Armature, base: &str) -> Result<DbFiles, String>`
+builds `{ ske_json, tex_json, tex_png }`. It is pure (no I/O, no GPU), so it
+is unit-testable.
 
 ---
 
 ## 4. Model mapping + fidelity gotchas
 
+**Coordinate system [verified in SkelForm source]:** SkelForm is **Y-up**
+(`read_psd` negates PSD Y; `create_tex_rect` puts the texture's top row at +y).
+DragonBones is **Y-down**. Conversion: `y_db = -y`, `rot_db = -rot` (in degrees).
+Scale is unchanged, and UVs are unchanged (both have v pointing down, region-relative).
+
+**Bone inheritance [verified at runtime]:** SkelForm composes transforms per component:
+`renderer::inheritance` does `rot += parent.rot`, `scale *= parent.scale`, and
+`pos = parent.pos + rotate(pos * parent.scale, parent.rot)`. DragonBones multiplies
+full matrices, which **skews** a rotated child under a non-uniform parent scale
+(e.g. a squash-and-stretch root). SkelForm never skews. The exporter matches
+SkelForm this way:
+- It sets `"inheritScale": false` on every child bone.
+- With that flag, DragonBones still places the child through the parent's matrix
+  and adds the rotations, but it takes the child's scale as-is.
+- So each bone's `scX/scY` is the **product of the SkelForm scales along its
+  ancestor chain**.
+- Scale timelines follow the same rule. If exactly one bone in the chain has scale
+  keys (the usual root squash), the keys still translate 1:1, just scaled by a
+  constant. Otherwise the scale product is sampled every frame.
+
 | SkelForm | DragonBones | notes |
 |---|---|---|
-| `Bone` (flat, `parent_id`) | `bone` (by `parent` **name**) | resolve id→name; root omits `parent` |
-| `Bone.rot` **radians** | `transform.skX/skY`, `rotateFrame.rotate` **degrees** | `deg = rad * 180/PI` |
-| `Bone.pos/scale` | `transform.x/y`, `scX/scY` | **Y-axis / pivot conventions differ** — verify sign of Y and rotation direction against the sample; expect to flip Y |
-| `Bone.tex` / `Visuals.tex` (name) | slot + skin `display.name` | **synthesize one slot per textured bone** (DB needs bone→slot→display) |
-| `Bone.zindex` | slot `z` / `Zindex` frames | draw order |
-| mesh `Vertex`+`indices`+`binds` | `type:"mesh"` display (`vertices/uvs/triangles/weights/bonePose/slotPose`) | UVs already normalized → direct; weights → DB weighted skin |
-| `Style` (texture set) | `skin` | one skin per style; the active/default style → skin name `""` |
-| `Texture` (`ser_offset/ser_size`, int) | `_tex.json` `SubTexture` (`x/y/width/height`) | use the **int** ser_* fields |
-| `Animation.fps` | armature/animation `frameRate` | |
-| flat `(bone_id, element)` keyframes | per-bone `translateFrame/rotateFrame/scaleFrame` + per-slot `displayFrame/colorFrame` | **re-aggregate** channels into DB frames; interpolate missing components; `Texture`→displayFrame, `Tint*`→colorFrame, `Hidden`→displayFrame value -1 |
-| Bézier `start_handle/end_handle` | frame `tweenEasing` or `curve` sample array | linear→`tweenEasing:0`; general cubic→bake to a `curve` sample array (DB samples the curve); `HandlePreset` Sine/Snap won't all have 1:1 constants |
-| IK families (`InverseKinematics`) | (partial) | SkelForm already can **bake IK → rotation keyframes** on export (`export_bake_ik` in `prepare_files`); default to baking |
-| `Physics` (spring/sway) | — | no clean DB target; **drop** (or bake into keyframes if feasible) |
+| `Bone` (flat, `parent_id`) | `bone` (by `parent` **name**) | resolve id→name; root omits `parent`. Bone names are de-duplicated (`name`, `name_2`, …) because DragonBones looks bones up by name |
+| `Bone.rot` **radians** | `transform.skX = skY`, `rotateFrame.rotate` **degrees** | `deg = -rad * 180/PI` (Y flip) |
+| `Bone.pos` / `Bone.scale` | `transform.x/y`, `scX/scY` | `y` negated |
+| `Bone.tex` (name, resolved via active styles like `Armature::tex_of`) | slot + skin display | one slot per bone that ever shows a texture (setup or `Texture` keys). Display list = the distinct textures it uses |
+| `pivot_pos/rot/scale` | display `transform` (image) or baked into vertices (mesh) | image: `x = w*pivot.x`, `y = -(h*pivot.y)`, `skX = skY = -deg(pivot_rot)`, `scX/scY = pivot_scale`. Exception: see "Pivot helpers" below |
+| `Bone.zindex` | slot array order + `zOrder` timeline | slots sorted by (zindex, bone order). `Zindex` keys become `zOrder` frames |
+| `hidden` (propagates to children) | slot `displayIndex = -1` | combine the bone's own `Hidden` keys with its ancestors' |
+| `Texture` keys (`value_str`) | `displayFrame.value` = index in the slot's display list | an empty or unknown texture becomes `-1` |
+| `tint` r/g/b/a (0..1) | slot `color` / `colorFrame` `rM/gM/bM/aM` (**int** %) | `round(v*100)` |
+| mesh without binds | `type:"mesh"`, no weights | vertices = the pivot transform applied to `Vertex.pos`, Y-flipped |
+| mesh with binds | weighted `type:"mesh"` | see "Weights" below |
+| path binds (`is_path`) | helper bone per bind, sampled | see "Path binds" below |
+| `Style` | skin `""` | active style(s) only, merged by name the same way `tex_of` resolves them |
+| `Texture` (`offset`/`size` after `create_tex_sheet`) | `SubTexture` | `SubTexture.name` = texture name |
+| `Animation.fps` | armature `frameRate` | DragonBones has one rate per armature. We use the max fps across animations and rescale the other animations' frame numbers (rounded) |
+| flat `(bone_id, element)` keyframes | `translateFrame` / `rotateFrame` / `scaleFrame` / `displayFrame` / `colorFrame` / `zOrder` | see "Keyframe translation" below |
+| IK families | baked `rotateFrame`s | see below |
+| `Physics` | — | dropped |
 
-**Frame-duration model:** SkelForm keyframes have an absolute `frame`; DragonBones
-frames carry a **relative `duration`** (frames until the next). Convert by sorting
-a channel's keyframes by `frame`, then `duration[i] = frame[i+1] - frame[i]`, with
-a trailing `{ "duration": 0 }`. Total animation `duration` = last `frame`.
+**Weights (SkelForm semantics → DragonBones).** In `renderer::construct_verts`,
+a vertex starts on its owner bone. Each bind then **lerps** it toward
+`inherit_vert(local, bindBone)` by `w`, in order. In both cases the same local
+coordinate is placed in the other bone's frame, not the bind-pose-relative one.
+So each bind multiplies the weights collected so far by `(1-w)` and adds `w` to
+its own bone; the owner starts at 1. The result is a normal linear blend in which
+**every bound bone sees the same local vertex**.
+
+In DragonBones this means every `bonePose` must equal the `slotPose`. We use the
+owner bone's setup world matrix for both, so
+`inverse(bonePose)·slotPose·v = v` for every bone. The pivot offset (`pivot_pos`)
+is rotated only by the owner bone, which DragonBones can't express on a skinned
+mesh. It is folded into the local vertex instead, which is exact when every weight
+goes to the owner and approximate otherwise.
+
+**Path binds [verified at runtime].** A path bind puts a vertex at
+`bindBone.worldPos + rotate(vertex * w, normal)`, where `normal` is the average
+normal of the segments from the previous bind bone to the next one
+(`renderer::get_path_normal_angle`). The rubber-hose limbs in `_skellington.skf` use
+this. DragonBones can't compute that normal, so:
+- Each path bind becomes a root-level helper bone named `<bone>__path<i>`. Its
+  position (the bind bone's world position) and rotation (the normal) are
+  **sampled every frame**.
+- Each path-bound vertex is weighted 1.0 to its helper, with the local coordinate
+  `vertex * w`, plus the setup pivot offset.
+- A weight bind that comes *after* a path bind for the same vertex is ignored for
+  that vertex. DragonBones stores only one local position per vertex/bone pair, so
+  it can't express that case.
+
+**Pivot helpers [verified at runtime].** SkelForm draws a texture with two quirks:
+- The pivot offset is added in **world axes**
+  (`rotate(size*pivot, rot) * worldScale`, see `renderer.rs` `final_pivot`).
+- `pivot_rot` is applied **after** the world scale
+  (`rotate(v * scale * pivot_scale, rot + pivot_rot)`).
+
+DragonBones applies a display's transform *before* the bone's. The two only differ
+while the bone's world scale is **non-uniform** (|sx| ≠ |sy|).
+
+So a slot whose bone has a pivot (`pivot_pos` or `pivot_rot`) and ever goes
+non-uniform (in the setup or any animation frame) is moved onto a root-level
+`<bone>__pivot` helper bone:
+- Its position, rotation (`rot + pivot_rot`) and scale (`scale * pivot_scale`) are
+  sampled every frame.
+- Its display transform becomes identity.
+- Weighted meshes don't use pivot helpers.
+
+**Keyframe translation.**
+- SkelForm keys hold **absolute** values. DragonBones frames are relative to the
+  setup pose: translate `v - rest`, rotate `v - rest`, scale `v / rest`.
+- **Before the first key**, SkelForm holds the first key's value. If that key
+  isn't at frame 0, a hold frame is inserted at 0.
+- **After the last key**, SkelForm holds; the last DragonBones frame is written
+  without a tween (see §2).
+- A segment's easing comes from the **end** key's `start_handle`/`end_handle`:
+  - Snap (`y == 999`) → no tween.
+  - Handles on the diagonal (`x == y` for both) → `tweenEasing: 0`. This covers
+    the Linear preset and legacy all-zero handles. SkelForm's 5-step Newton solver
+    is slightly off on all-zero handles near t=0, by up to ~3 px on Skellina; the
+    exported linear tween is the mathematically correct curve.
+  - Anything else → `curve: [sx, sy, ex, ey]`, with x clamped to [0,1].
+- **Multi-channel frames:** translate (X/Y), scale (X/Y) and color (R/G/B/A)
+  each share one easing per frame.
+  - If the channels' key frames and handles match, or all but one channel has no
+    keys, the translation is exact.
+  - Otherwise that track is **sampled every frame** with linear tweens.
+- **Duplicate keys on one frame** (seen in `_skellina.skf`): SkelForm tweens toward
+  the *first* one, then holds the *last*. That track is sampled every frame.
+- The animation's `duration` is the last keyframe's frame, because SkelForm loops
+  when it reaches it (`Animation::set_frame`). `playTimes` is 0.
+- **IK**: SkelForm solves IK every frame, so bones in an IK family get their
+  rotation **sampled every frame**. The rotation comes from
+  `Armature::animate` + `renderer::construction`, as local = world − parent world,
+  and it replaces their own Rotation keys. The setup pose uses the IK-solved
+  rotation too.
+- All sampled tracks drop frames that sit between two identical values.
 
 ---
 
 ## 5. Acceptance / testing
+
+### 5.1 What was run (2026-09-28)
+
+- `cargo test --test dragonbones_export` runs:
+  - structural checks: references resolve, and every field DragonBonesCPP reads with
+    `GetInt`/`GetUint` is an integer
+  - a synthetic rig covering a weighted mesh, a 360° spin, mismatched X/Y keys,
+    texture swaps, inherited hide, zOrder and tint
+  - `samples/_skellington.skf` and `samples/_skellina.skf`
+  - Set `DB_OUT_DIR=<dir>` to also write the three files plus `<name>_ref.json`,
+    SkelForm's own world-space pose for every frame (in DragonBones space).
+- **Runtime comparison:** a headless harness built on upstream **DragonBonesCPP**
+  (the runtime Inkternity embeds, compiled with MSVC with no renderer):
+  - It loads the exported files and samples every frame of every animation.
+  - It dumps bone matrices and slot vertices (world space), plus display index,
+    draw order and color.
+  - These were diffed against `<name>_ref.json`. Max error over every
+    frame of every animation:
+
+| rig | bone position | vertices | visibility / draw order / color |
+|---|---|---|---|
+| synthetic | 0.14 px | 0.33 px | exact |
+| skellington (61 bones, 7 meshes incl. path binds, IK) | 0.01 px | 0.01 px | exact |
+| skellina (32 bones, squash-and-stretch + pivots) | 3.1 px* | 0.57 px | exact |
+
+\* Only where SkelForm's own Bézier solver is off on legacy all-zero handles (§4).
+The sub-pixel residue comes from DragonBones sampling `curve`s into
+`frames+1` points.
+
+The harness and scripts are in `tools/dragonbones_verify/`. See
+`docs/DRAGONBONES_VERIFY.md` for how to build and run them
+(`python tools/dragonbones_verify/verify.py`).
+
+### 5.2 Original checklist
 
 1. **JSON validity:** `serde_json` round-trip your output; then confirm it parses
    in DragonBones. Inkternity ships a headless validator you can build against if

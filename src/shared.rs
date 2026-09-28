@@ -2151,6 +2151,7 @@ pub enum Saving {
     Exporting,
     Spritesheet,
     Video,
+    DragonBones,
 }
 enum_string!(Saving);
 

@@ -144,6 +144,7 @@
     "header_image": "Image",
     "header_video": "Video",
     "header_armature": "Armature",
+    "header_dragonbones": "DragonBones",
     "save_button": "Export",
     "armature": {
       "header": "Export Armature",
@@ -157,6 +158,11 @@
       "inverse_kinematics": "Inverse Kinematics",
       "tex_atlas": "Texture Atlas(es)",
       "warnings": "warning(s)"
+    },
+    "dragonbones": {
+      "header": "Export DragonBones",
+      "desc": "Writes <name>_ske.json, <name>_tex.json and <name>_tex.png (DragonBones 5.5 JSON) next to the chosen file.\n\nOnly the active style is exported, as a single atlas. Inverse kinematics is baked into rotations; physics is not exported.",
+      "padding": "Atlas padding:"
     },
     "image": {
       "header": "Export Image",

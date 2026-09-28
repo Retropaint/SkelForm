@@ -68,6 +68,8 @@ pub fn draw(
                     let str_armature = shared_ui.loc("export_modal.header_armature").clone();
                     let str_image = shared_ui.loc("export_modal.header_image").clone();
                     let str_video = shared_ui.loc("export_modal.header_video").clone();
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let str_dragonbones = shared_ui.loc("export_modal.header_dragonbones").clone();
 
                     let h = &mut is_hovered;
                     type SS = SettingsState;
@@ -81,6 +83,16 @@ pub fn draw(
                             crate::ensureFFmpeg();
                         }
                     };
+                    #[cfg(not(target_arch = "wasm32"))]
+                    settings_button(
+                        str_dragonbones,
+                        SS::Rendering,
+                        ui,
+                        shared_ui,
+                        &config,
+                        width,
+                        h,
+                    );
 
                     if !is_hovered {
                         shared_ui.hovering_setting = None;
@@ -104,6 +116,9 @@ pub fn draw(
                             SettingsState::Editing => image_export(ui, shared_ui, config, armature),
                             SettingsState::Keyboard => {
                                 video_export(ui, shared_ui, config, armature)
+                            }
+                            SettingsState::Rendering => {
+                                dragonbones_export(ui, shared_ui, edit_mode, events, config)
                             }
                             _ => {}
                         });
@@ -195,6 +210,12 @@ pub fn draw(
             }
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_save_dialog(&sui.file_path, &sui.saving, crate::Saving::Video);
+        }
+        // DragonBones Export (native only)
+        SettingsState::Rendering => {
+            #[cfg(not(target_arch = "wasm32"))]
+            utils::open_save_dialog(&sui.file_path, &sui.saving, crate::Saving::DragonBones);
+            sui.export_modal = false;
         }
         _ => {}
     }
@@ -289,6 +310,39 @@ pub fn armature_export(
             either |= edited;
             result.x = value;
             let (edited, value, _) = ui.float_input("padding_y".into(), shared_ui, pad.y, 1., None);
+            either |= edited;
+            result.y = value;
+            if either {
+                events.set_export_tex_padding(result);
+            }
+        });
+    });
+}
+
+pub fn dragonbones_export(
+    ui: &mut egui::Ui,
+    shared_ui: &mut crate::Ui,
+    edit_mode: &EditMode,
+    events: &mut EventState,
+    config: &Config,
+) {
+    ui.heading(shared_ui.loc("export_modal.dragonbones.header"));
+    ui.add_space(10.);
+    ui.label(shared_ui.loc("export_modal.dragonbones.desc"));
+    ui.add_space(20.);
+
+    alt_hor(ui, config, true, |ui| {
+        ui.label(shared_ui.loc("export_modal.dragonbones.padding"));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let pad = edit_mode.export_tex_padding;
+            let mut either = false;
+            let mut result = pad;
+            let (edited, value, _) =
+                ui.float_input("db_padding_x".into(), shared_ui, pad.x, 1., None);
+            either |= edited;
+            result.x = value;
+            let (edited, value, _) =
+                ui.float_input("db_padding_y".into(), shared_ui, pad.y, 1., None);
             either |= edited;
             result.y = value;
             if either {

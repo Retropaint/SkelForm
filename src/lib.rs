@@ -55,6 +55,7 @@ pub mod armature_window;
 pub mod atlas_modal;
 pub mod backwards_compat;
 pub mod bone_panel;
+pub mod dragonbones_export;
 pub mod editor;
 pub mod export_modal;
 pub mod file_reader;
@@ -858,7 +859,11 @@ impl BackendRenderer {
             }
 
             #[cfg(not(target_arch = "wasm32"))]
-            self.save(shared);
+            if saving == Saving::DragonBones {
+                self.save_dragonbones(shared);
+            } else {
+                self.save(shared);
+            }
         } else if recording {
             // recording animations for images/videos
             shared.events.open_modal("exporting", true);
@@ -1334,6 +1339,35 @@ impl BackendRenderer {
                 }
             }
         });
+    }
+
+    /// Write `<base>_ske.json`, `<base>_tex.json` and `<base>_tex.png` next to the picked path.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn save_dragonbones(&mut self, shared: &mut Shared) {
+        *shared.ui.saving.lock().unwrap() = Saving::None;
+        let path = shared.ui.file_path.lock().unwrap()[0].clone();
+        let dir = path.parent().map(|p| p.to_path_buf()).unwrap_or_default();
+        let file_name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("character");
+        let base = dragonbones_export::base_name(file_name);
+
+        let pad = shared.edit_mode.export_tex_padding;
+        let result = dragonbones_export::export(&shared.armature, &base, pad).and_then(|files| {
+            let write = |name: String, bytes: &[u8]| {
+                fs::write(dir.join(&name), bytes).map_err(|e| format!("{}: {}", name, e))
+            };
+            write(format!("{}_ske.json", base), files.ske_json.as_bytes())?;
+            write(format!("{}_tex.json", base), files.tex_json.as_bytes())?;
+            write(format!("{}_tex.png", base), &files.tex_png)
+        });
+
+        if let Err(err) = result {
+            shared.ui.custom_error = err;
+            let str = shared.ui.loc("error_skf");
+            editor::open_modal(&mut shared.ui, false, str);
+        }
     }
 
     pub fn take_screenshot(

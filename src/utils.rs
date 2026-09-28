@@ -100,6 +100,7 @@ pub fn open_save_dialog(
         Saving::Exporting => ("skfe", "SkelForm Armature"),
         Saving::Spritesheet => ("zip", "Sprites/Spritesheet"),
         Saving::Video => ("", "Video"),
+        Saving::DragonBones => ("json", "DragonBones Skeleton"),
         _ => ("skf", "SkelForm Armature"),
     };
     std::thread::spawn(move || {
