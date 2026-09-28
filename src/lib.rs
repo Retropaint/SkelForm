@@ -1018,7 +1018,7 @@ impl BackendRenderer {
 
         if *elapsed != None && elapsed.unwrap().elapsed().as_millis() > duration_in_millis {
             if shared.ui.exporting_video_type != ExportVideoType::None {
-                self.skf_export_videos(&shared.armature, &mut shared.ui);
+                self.skf_export_videos(&shared.armature, &mut shared.ui, &mut shared.events);
             } else {
                 #[cfg(not(target_arch = "wasm32"))]
                 self.skf_native_spritesheet(&shared.armature, &mut shared.ui);
@@ -1080,7 +1080,7 @@ impl BackendRenderer {
         }
     }
 
-    fn skf_export_videos(&self, armature: &Armature, shared_ui: &mut Ui) {
+    fn skf_export_videos(&self, armature: &Armature, shared_ui: &mut Ui, events: &mut EventState) {
         let path;
         #[cfg(target_arch = "wasm32")]
         {
@@ -1110,7 +1110,7 @@ impl BackendRenderer {
             }
             let _ = std::fs::create_dir(&path).unwrap();
         }
-        self.skf_pack_videos(armature, shared_ui, &path);
+        self.skf_pack_videos(armature, shared_ui, &path, events);
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -1175,7 +1175,13 @@ impl BackendRenderer {
         }
     }
 
-    fn skf_pack_videos(&self, armature: &Armature, shared_ui: &mut Ui, path: &PathBuf) {
+    fn skf_pack_videos(
+        &self,
+        armature: &Armature,
+        shared_ui: &mut Ui,
+        path: &PathBuf,
+        events: &mut EventState,
+    ) {
         #[rustfmt::skip]
         let ffmpeg_bin = if shared_ui.use_system_ffmpeg {
             "ffmpeg".to_string()
@@ -1201,13 +1207,19 @@ impl BackendRenderer {
             {
                 _path_str = &armature.animations[a].name;
             }
-            shared_ui.custom_error = if shared_ui.exporting_video_type == ExportVideoType::Mp4 {
+
+            // encode and export videos via ffmpeg
+            let custom_error = if shared_ui.exporting_video_type == ExportVideoType::Mp4 {
                 Self::encode_video(bufs[buf_idx].clone(), fps, size, _path_str, &ffmpeg_bin)
             } else {
                 Self::encode_gif(bufs[buf_idx].clone(), fps, size, _path_str, &ffmpeg_bin)
             };
 
-            if shared_ui.custom_error != "" {}
+            // show ffmpeg error, if there's any
+            if custom_error != "" {
+                events.open_modal_raw(&custom_error, false);
+            }
+
             buf_idx += 1;
         }
     }

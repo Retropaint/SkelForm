@@ -519,6 +519,9 @@ pub fn simple_event(
         Events::OpenModal => {
             open_modal(ui, value == 1., ui.loc(&str_value));
         }
+        Events::OpenModalRaw => {
+            open_modal(ui, value == 1., str_value);
+        }
         Events::OpenPolarModal => {
             ui.polar_id = PolarId::from_repr(value as usize).unwrap();
             ui.polar_modal = true;

@@ -2391,6 +2391,7 @@ pub enum Events {
     ToggleExcludeIk,
 
     OpenModal,
+    OpenModalRaw,
     UnselectAll,
     OpenPolarModal,
     PointerOnUi,
@@ -2581,6 +2582,12 @@ impl EventState {
         self.events.push(Events::OpenModal);
         self.values.push(if forced { 1. } else { 0. });
         self.str_values.push(loc_headline.to_string());
+    }
+
+    pub fn open_modal_raw(&mut self, headline: &str, forced: bool) {
+        self.events.push(Events::OpenModalRaw);
+        self.values.push(if forced { 1. } else { 0. });
+        self.str_values.push(headline.to_string());
     }
 
     pub fn select_bone(&mut self, bone_id: usize, from_renderer: bool) {
