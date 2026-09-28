@@ -1416,6 +1416,10 @@ pub fn undo_redo(
                 selections.style_id = -1;
             }
         }
+        ActionType::Armature => {
+            new_action.armatures = vec![armature.clone()];
+            *armature = action.armatures[0].clone();
+        }
         _ => {}
     }
 

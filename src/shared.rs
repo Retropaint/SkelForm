@@ -1296,7 +1296,7 @@ pub enum InverseKinematicsMode {
 }
 enum_string!(InverseKinematicsMode);
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 #[serde(default)]
 pub struct Armature {
     pub bones: Vec<Bone>,
@@ -2065,6 +2065,7 @@ pub enum ActionType {
     Styles,
     Texture,
     Textures,
+    Armature,
 }
 enum_string!(ActionType);
 
@@ -2074,6 +2075,8 @@ pub struct Action {
     pub bones: Vec<Bone>,
     pub animations: Vec<Animation>,
     pub styles: Vec<Style>,
+    pub armatures: Vec<Armature>,
+    pub tex_data: Vec<TextureData>,
     pub continued: bool,
 }
 enum_string!(AnimElement);
@@ -2236,6 +2239,14 @@ impl UndoStates {
         self.undo_actions.push(Action {
             action: ActionType::Styles,
             styles: styles.clone(),
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_armature(&mut self, armature: &Armature) {
+        self.undo_actions.push(Action {
+            action: ActionType::Armature,
+            armatures: vec![armature.clone()],
             ..Default::default()
         });
     }

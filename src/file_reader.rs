@@ -1,5 +1,4 @@
 //! Reading uploaded images to turn into textures.
-// test
 
 use std::sync::Mutex;
 
@@ -212,6 +211,9 @@ pub fn read_psd(
     ctx: Option<&egui::Context>,
 ) {
     let psd = psd::Psd::from_bytes(&bytes).unwrap();
+
+    // save armature to undo stack
+    shared.undo_states.new_undo_armature(&shared.armature);
 
     // reset armature (but not all of it) to make way for the psd rig
     shared.psd_armature.bones = vec![];
