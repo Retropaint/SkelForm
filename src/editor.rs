@@ -1297,7 +1297,14 @@ fn select_bone(
         for p in parents {
             bones.iter_mut().find(|b| b.id == p.id).unwrap().folded = false;
         }
+    } else if sel.bone_ids.contains(&armature.bones[idx].id) {
+        // unselect bone if already part of selection
+        sel.bone_ids.retain(|id| *id != armature.bones[idx].id);
+        if sel.bone_ids.len() == 0 {
+            sel.bone_idx = usize::MAX;
+        }
     } else {
+        // add bone to selection (holding cmd/shift)
         if sel.bone_idx == usize::MAX {
             sel.bone_idx = idx;
             sel.bone_ids = vec![armature.bones[idx].id];
