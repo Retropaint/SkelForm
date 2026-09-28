@@ -623,9 +623,28 @@ fn animations_list(
     width: f32,
     config: &Config,
 ) {
-    // selecting which animations to export
-    let text = shared_ui.loc("export_modal.image.animations");
-    ui.heading(text);
+    ui.horizontal(|ui| {
+        let text = shared_ui.loc("export_modal.image.animations");
+        ui.heading(text);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            // checkbox to toggle all anims on/off
+            let mut checked = true;
+            for anim in &shared_ui.exporting_anims {
+                if !anim {
+                    checked = false;
+                    break;
+                }
+            }
+            let og_checked = checked;
+            ui.checkbox(&mut checked, "".into_atoms())
+                .on_hover_text(shared_ui.loc("export_modal.image.animations_all_desc"));
+            if checked != og_checked {
+                for anim in &mut shared_ui.exporting_anims {
+                    *anim = checked
+                }
+            }
+        });
+    });
 
     ui.add_space(5.);
     for a in 0..armature.animations.len() {

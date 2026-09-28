@@ -169,7 +169,8 @@
       "animations": "Animations",
       "image_sequences": "Image sequences ℹ: ",
       "image_sequences_desc": "Instead of using sheets, sprites will be exported individually",
-      "animations_check_desc": "Include this animation in the export?"
+      "animations_check_desc": "Include this animation in the export?",
+      "animations_all_desc": "Toggle all animations on/off"
     },
     "video": {
       "header": "Export Video",
