@@ -977,6 +977,7 @@ pub fn simple_event(
         }
         Events::OpenExportModal => {
             ui.export_modal = true;
+            ui.exporting_anims = vec![];
             for _ in &armature.animations {
                 ui.exporting_anims.push({
                     #[cfg(target_arch = "wasm32")]
@@ -1249,7 +1250,8 @@ fn select_bone(
     }
 
     // rename bone if already selected and in right-side panel
-    if sel.bone_idx == idx && !from_renderer && ui.last_selected == "bone" {
+    let holding_mods = input.holding_mod || input.holding_shift;
+    if sel.bone_idx == idx && !from_renderer && ui.last_selected == "bone" && !holding_mods {
         ui.rename_id = "bone_".to_string() + &sel.bone_idx.to_string().clone();
         ui.edit_value = Some(armature.sel_bone(&sel).unwrap().name.clone());
         return;
@@ -1286,7 +1288,7 @@ fn select_bone(
     }
 
     // select only this bone if not holding modifiers
-    if !input.holding_mod && !input.holding_shift {
+    if !holding_mods {
         sel.bone_idx = idx;
         sel.bone_ids = vec![armature.bones[idx].id];
         edit_mode.showing_mesh = false;
