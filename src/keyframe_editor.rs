@@ -916,17 +916,19 @@ fn draw_frame_lines(
     }
 
     // horizontal line (bone separator)
-    let mut last_bone = shared_ui.bone_tops.tops[0].id;
-    for top in &shared_ui.bone_tops.tops {
-        if last_bone != top.id {
-            let range = egui::Rangef::new(0., ui.available_width());
-            let mut col = config.colors.dark_accent;
-            col -= Color::new(20, 20, 20, 0);
-            let color = egui::Stroke::new(1.5, config.colors.dark_accent);
-            ui.painter().hline(range, top.height - 25.5, color);
+    if shared_ui.bone_tops.tops.len() > 0 {
+        let mut last_bone = shared_ui.bone_tops.tops[0].id;
+        for top in &shared_ui.bone_tops.tops {
+            if last_bone != top.id {
+                let range = egui::Rangef::new(0., ui.available_width());
+                let mut col = config.colors.dark_accent;
+                col -= Color::new(20, 20, 20, 0);
+                let color = egui::Stroke::new(1.5, config.colors.dark_accent);
+                ui.painter().hline(range, top.height - 25.5, color);
+            }
+            last_bone = top.id;
+            continue;
         }
-        last_bone = top.id;
-        continue;
     }
 
     // draw hovered line
