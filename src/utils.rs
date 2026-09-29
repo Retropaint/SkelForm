@@ -250,10 +250,15 @@ pub fn render_spritesheets(
         // adjust camera to the biggest boundary
         let mut cam = camera.clone();
         cam.pos = (left_top + right_bot) / 2.;
+        // cam will zoom out until it gets the farthest boundary
         cam.zoom = (right_bot.x - cam.pos.x)
-            .max(right_bot.y.abs() - cam.pos.y)
+            .abs()
+            .max(cam.pos.y - right_bot.y)
+            .abs()
             .max(left_top.y - cam.pos.y)
-            .max(left_top.x.abs() - cam.pos.x);
+            .abs()
+            .max(cam.pos.x - left_top.x)
+            .abs();
 
         // take screenshots of each frame
         for f in 0..all_frames {
