@@ -185,7 +185,9 @@
       "cycles": "Cycles: ",
       "open_after_export": "Open after export: ",
       "global_bounds": "Use global boundaries:",
-      "global_bounds_desc": "If enabled, all videos will have consistent dimensions"
+      "global_bounds_desc": "If enabled, all videos will have consistent dimensions",
+      "only_keyframes": "Export only keyframes:",
+      "only_keyframes_desc": "If enabled, only frames containing keyframes will be exported."
     }
   },
   "armature_panel": {

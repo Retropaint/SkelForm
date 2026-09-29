@@ -262,6 +262,13 @@ pub fn render_spritesheets(
 
         // take screenshots of each frame
         for f in 0..all_frames {
+            // skip this frame if export_only_keyframes is enabled, and this frame is empty
+            if shared_ui.export_only_keyframes {
+                if anim.keyframes.iter().find(|kf| kf.frame == f) == None {
+                    continue;
+                }
+            }
+
             new_arm.bones = new_arm.animate(a, f % last_frame, None);
             new_arm.animated_bones = new_arm.bones.clone();
 

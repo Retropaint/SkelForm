@@ -376,6 +376,15 @@ pub fn image_export(
         false,
     );
 
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("export_modal.video.only_keyframes"),
+        &shared_ui.loc("export_modal.video.only_keyframes_desc"),
+        &mut shared_ui.export_only_keyframes,
+        config,
+        true,
+    );
+
     ui.add_space(20.);
     animations_list(ui, shared_ui, armature, width, config);
 }
@@ -469,6 +478,15 @@ pub fn video_export(
         &mut shared_ui.export_global_bounds,
         config,
         true,
+    );
+
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("export_modal.video.only_keyframes"),
+        &shared_ui.loc("export_modal.video.only_keyframes_desc"),
+        &mut shared_ui.export_only_keyframes,
+        config,
+        false,
     );
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -688,16 +706,30 @@ fn animations_list(
 
                     ui.add_space(10.);
 
-                    // show frame info, if this animation has any
-                    // (frameless anims are allowed for export)
-                    let total_frames = anim.keyframes.last();
-                    if total_frames == None {
-                        return;
+                    let str;
+                    if shared_ui.export_only_keyframes {
+                        // show only active keyframe count
+                        let mut active_kfs = 0;
+                        let mut last_frame = -1;
+                        for kf in &anim.keyframes {
+                            if kf.frame != last_frame {
+                                last_frame = kf.frame;
+                                active_kfs += 1;
+                            }
+                        }
+                        str = format!("{} frames", active_kfs);
+                    } else {
+                        // show frame info, if this animation has any
+                        let total_frames = anim.keyframes.last();
+                        if total_frames == None {
+                            return;
+                        }
+                        str = anim.fps.to_string()
+                            + &" FPS  -  ".to_string()
+                            + &total_frames.unwrap().frame.to_string()
+                            + &shared_ui.loc("export_modal.image.frames");
                     }
-                    let str = anim.fps.to_string()
-                        + &" FPS  -  ".to_string()
-                        + &total_frames.unwrap().frame.to_string()
-                        + &shared_ui.loc("export_modal.image.frames");
+
                     let mut meta_col = config.colors.text;
                     meta_col -= crate::Color::new(40, 40, 40, 0);
                     ui.label(egui::RichText::new(str).color(meta_col));

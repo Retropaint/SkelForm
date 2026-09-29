@@ -634,6 +634,7 @@ pub struct Ui {
     pub spritesheet_elapsed: Option<Instant>,
     pub rendered_spritesheets: Vec<Vec<RenderedFrame>>,
     pub exporting_anims: Vec<bool>,
+    pub export_only_keyframes: bool,
     pub image_sequences: bool,
     pub exporting_video_type: ExportVideoType,
     pub exporting_video_encoder: ExportVideoEncoder,
