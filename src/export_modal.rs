@@ -131,9 +131,12 @@ pub fn draw(
 
                         // export button
                         let str = &shared_ui.loc("export_modal.save_button");
-                        if ui.skf_button(str).clicked() {
-                            pressed_export = true;
-                        }
+                        let any_anim_selected = shared_ui.exporting_anims.contains(&true);
+                        ui.add_enabled_ui(any_anim_selected, |ui| {
+                            if ui.skf_button(str).clicked() {
+                                pressed_export = true;
+                            }
+                        });
                     });
                 });
 
@@ -518,7 +521,7 @@ pub fn video_export(
             &shared_ui.loc("export_modal.video.use_system_ffmpeg_desc"),
             &mut shared_ui.use_system_ffmpeg,
             config,
-            false,
+            true,
         );
 
         // download ffmpeg button (not needed for macos)
