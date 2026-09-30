@@ -32,7 +32,7 @@ pub fn iterate_events(
         type E = Events;
         #[rustfmt::skip]
         match last_event {
-            E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone | E::RaiseGlobalZindex => undo_states.new_undo_bones(&armature.bones),
+            E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone | E::RaiseGlobalZindex | E::SetBindPose | E::SetBindPoseAll | E::ClearBindPose => undo_states.new_undo_bones(&armature.bones),
             E::NewAnimation | E::DeleteAnim => undo_states.new_undo_anims(&armature.animations),
             E::DeleteSelectedTextures       => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
             E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
@@ -782,6 +782,19 @@ pub fn simple_event(
                 });
             }
 
+            if bind_pose::is_bind_posed(armature, id) {
+                return;
+            }
+            // classic binding misplaces a vertex that's in more than one bind: say so now
+            if bound {
+                let mesh = armature.sel_bone(&selections).unwrap();
+                if bind_pose::classic_multi_bind_verts(armature, mesh) > 0 {
+                    ui.warnings_open = true;
+                    ui.flash_warn_timer = Some(Instant::now());
+                }
+            }
+            let bone_mut = &mut armature.sel_bone_mut(&selections).unwrap();
+
             let temp_bone = renderer.temp_bones.iter().find(|b| b.id == id).unwrap();
             let temp_bones = &renderer.temp_bones;
 
@@ -893,6 +906,43 @@ pub fn simple_event(
         Events::DeleteKeyframesByFrame => {
             let anim = armature.sel_anim_mut(&selections).unwrap();
             anim.keyframes.retain(|kf| kf.frame != value as i32);
+        }
+        Events::TogglePoseMode => {
+            if edit_mode.pose_mode {
+                exit_pose_mode(armature, edit_mode, undo_states);
+            } else {
+                edit_mode.pose_snapshot = bind_pose::pose_snapshot(armature);
+                edit_mode.pose_undo_len = undo_states.undo_actions.len();
+                edit_mode.pose_mode = true;
+            }
+        }
+        // the bind pose is captured at rest, so these wait until Pose Mode is off
+        Events::SetBindPose | Events::SetBindPoseAll | Events::ClearBindPose
+            if edit_mode.pose_mode => {}
+        Events::SetBindPose => {
+            let bone_id = armature.sel_bone(&selections).unwrap().id;
+            if let Err(err) = bind_pose::set_bind_pose(armature, bone_id) {
+                ui.custom_error = err;
+                let headline = ui.loc("bone_panel.bind_pose.error");
+                open_modal(ui, false, headline);
+            }
+        }
+        Events::SetBindPoseAll => {
+            let report = bind_pose::set_bind_pose_all(armature);
+            let mut summary = format!("{} mesh(es) use bind pose.", report.converted.len());
+            if !report.skipped.is_empty() {
+                summary += &format!("\n\n{} skipped:", report.skipped.len());
+                for (name, reason) in &report.skipped {
+                    summary += &format!("\n- {name}: {reason}");
+                }
+            }
+            ui.custom_error = summary;
+            let headline = ui.loc("bone_panel.bind_pose.all_result");
+            open_modal(ui, false, headline);
+        }
+        Events::ClearBindPose => {
+            let bone_id = armature.sel_bone(&selections).unwrap().id;
+            bind_pose::clear_bind_pose(armature, bone_id);
         }
         Events::ResetVertices => {
             let sel_bone = armature.sel_bone(&selections).unwrap().clone();
@@ -1191,6 +1241,22 @@ pub fn simple_event(
     }
 }
 
+/// Leave Pose Mode: put every bone back to its rest transform, and drop the pose edits from
+/// undo history (undoing them later would write the test pose into the rest pose).
+pub fn exit_pose_mode(armature: &mut Armature, edit_mode: &mut EditMode, undo: &mut UndoStates) {
+    if !edit_mode.pose_mode {
+        return;
+    }
+    bind_pose::apply_pose(armature, &edit_mode.pose_snapshot);
+    let len = edit_mode.pose_undo_len.min(undo.undo_actions.len());
+    undo.undo_actions.truncate(len);
+    undo.redo_actions.clear();
+    undo.unsaved_undo_actions = undo.unsaved_undo_actions.min(len);
+    undo.prev_undo_actions = undo.prev_undo_actions.min(len);
+    edit_mode.pose_mode = false;
+    edit_mode.pose_snapshot = vec![];
+}
+
 pub fn center_verts(verts: &mut Vec<Vertex>) {
     let mut min = Vec2::default();
     let mut max = Vec2::default();
@@ -1265,7 +1331,8 @@ fn select_bone(
 
     // set this bone as bind if in bind mode
     if edit_mode.setting_bind_bone {
-        let id = armature.bones[idx].id;
+        let mesh_id = armature.sel_bone(&sel).map(|b| b.id).unwrap_or(-1);
+        let id = bind_pose::bind_target(armature, armature.bones[idx].id, mesh_id);
         if let Some(bind) = armature
             .sel_bone_mut(&sel)
             .and_then(|bone| bone.binds.get_mut(sel.bind as usize))

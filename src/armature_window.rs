@@ -223,7 +223,10 @@ pub fn draw_hierarchy(
             && (bone_id == selected_bone_id
                 || parents.iter().find(|bone| bone.id == selected_bone_id) != None);
 
-        ui.add_enabled_ui(!setting_ik_target, |ui| {
+        // Bind Pose helpers are shown greyed out and can't be edited
+        let is_helper = armature.bones[b].bind_owner.is_some();
+
+        ui.add_enabled_ui(!setting_ik_target && !is_helper, |ui| {
             ui.horizontal(|ui| {
                 let id = format!("bone_hidden{}", b.to_string());
                 let mut col = config.colors.text;

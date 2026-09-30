@@ -477,6 +477,7 @@ pub enum Warnings {
     BoneOutOfFamily,
     EmptyStyles,
     UnusedTextures,
+    ClassicMultiBind,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -1226,6 +1227,13 @@ pub struct Bone {
     pub blacklist: Vec<u32>,
     #[serde(skip)]
     pub anim_folded: bool,
+    /// Bind Pose helper: id of the mesh bone it serves (see `bind_pose.rs`).
+    /// Editor-only; saved in editor.json.
+    #[serde(skip)]
+    pub bind_owner: Option<i32>,
+    /// This mesh uses Bind Pose skinning (see `bind_pose.rs`). Editor-only; saved in editor.json.
+    #[serde(skip)]
+    pub bind_pose: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
@@ -1271,6 +1279,10 @@ pub struct EditorBone {
     #[serde(default = "default_0_alpha")]
     pub group_color: Color,
     pub anim_folded: bool,
+    #[serde(default = "default_neg_one", skip_serializing_if = "is_neg_one")]
+    pub bind_owner: i32,
+    #[serde(skip_serializing_if = "is_false")]
+    pub bind_pose: bool,
 }
 
 #[derive(
@@ -2097,6 +2109,9 @@ pub enum ExportImgFormat {
 }
 enum_string!(ExportImgFormat);
 
+/// Bone transforms (id, pos, rot, scale) of the rest pose, kept while in Pose Mode.
+pub type PoseSnapshot = Vec<(i32, Vec2, f32, Vec2)>;
+
 #[derive(Default, Clone)]
 pub struct EditMode {
     pub current: EditModes,
@@ -2120,6 +2135,11 @@ pub struct EditMode {
     pub holding_edit_mod: bool,
     pub holding_edit_snap: bool,
     pub editing_pivot: bool,
+    /// Pose Mode: bones can be posed to test skinning; leaving it restores `pose_snapshot`
+    pub pose_mode: bool,
+    pub pose_snapshot: PoseSnapshot,
+    /// undo stack length when Pose Mode was entered (pose edits are dropped on exit)
+    pub pose_undo_len: usize,
 }
 
 #[derive(Default, PartialEq, Debug, Clone)]
@@ -2401,6 +2421,10 @@ pub enum Events {
     CenterBoneVerts,
     TraceBoneVerts,
     SetBindWeight,
+    SetBindPose,
+    SetBindPoseAll,
+    TogglePoseMode,
+    ClearBindPose,
     OpenFileErrModal,
     SetExportClearColor,
     SetExportImgFormat,
@@ -2495,6 +2519,10 @@ impl EventState {
     generic_event!(new_vertex, Events::NewVertex);
     generic_event!(cancel_pending_texture, Events::CancelPendingTexture);
     generic_event!(reset_vertices, Events::ResetVertices);
+    generic_event!(set_bind_pose, Events::SetBindPose);
+    generic_event!(set_bind_pose_all, Events::SetBindPoseAll);
+    generic_event!(toggle_pose_mode, Events::TogglePoseMode);
+    generic_event!(clear_bind_pose, Events::ClearBindPose);
     generic_event!(delete_ik_target, Events::DeleteIkTarget);
     generic_event!(center_bone_verts, Events::CenterBoneVerts);
     generic_event!(trace_bone_verts, Events::TraceBoneVerts);

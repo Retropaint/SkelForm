@@ -1846,12 +1846,30 @@ fn animate_bar(
         ));
     window.show(egui_ctx, |ui| {
         ui.horizontal(|ui| {
+            // three modes: Armature (edit the rest pose), Pose (test-pose, see bind_pose.rs),
+            // Animation
+            let posing = edit_mode.pose_mode;
             let str_armature = &shared_ui.loc("armature_panel.heading");
-            if selection_button(str_armature, !edit_mode.anim_open, ui).clicked() {
+            let armature_mode = !edit_mode.anim_open && !posing;
+            if selection_button(str_armature, armature_mode, ui).clicked() {
+                if posing {
+                    events.toggle_pose_mode();
+                }
                 events.toggle_anim_panel_open(0);
+            }
+            let str_pose = shared_ui.loc("edit_bar.pose.heading");
+            let pose_mode = !edit_mode.anim_open && posing;
+            let pose = selection_button(str_pose, pose_mode, ui)
+                .on_hover_text(shared_ui.loc("edit_bar.pose.desc"));
+            if pose.clicked() && !posing {
+                events.toggle_anim_panel_open(0);
+                events.toggle_pose_mode();
             }
             let str_animation = &shared_ui.loc("keyframe_editor.heading");
             if selection_button(str_animation, edit_mode.anim_open, ui).clicked() {
+                if posing {
+                    events.toggle_pose_mode();
+                }
                 events.toggle_anim_panel_open(1);
             }
             shared_ui.anim_bar.scale = ui.min_rect().size().into();

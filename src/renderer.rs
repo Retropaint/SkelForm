@@ -2155,6 +2155,10 @@ pub fn draw_points(
         let bone = &temp_arm.bones[p];
         let mut color;
 
+        if bone.bind_owner.is_some() {
+            continue;
+        }
+
         if edit_mode.editing_mesh && !sel_bone_ids.contains(&bone.id) {
             continue;
         }
@@ -2253,6 +2257,10 @@ pub fn draw_kites(
 
     for p in 0..temp_arm.bones.len() {
         let bone = &temp_arm.bones[p];
+
+        if bone.bind_owner.is_some() {
+            continue;
+        }
 
         if !renderer.render_kites || (edit_mode.editing_mesh && !sel_bone_ids.contains(&bone.id)) {
             continue;

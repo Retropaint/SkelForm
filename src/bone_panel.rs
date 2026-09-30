@@ -44,6 +44,13 @@ pub fn draw(
         return;
     }
 
+    // Bind Pose helpers are derived data (see bind_pose.rs): read-only
+    if bone.bind_owner.is_some() {
+        ui.heading(&shared_ui.loc("bone_panel.heading"));
+        ui.label(shared_ui.loc("bone_panel.bind_pose.helper_note"));
+        return;
+    }
+
     ui.horizontal(|ui| {
         ui.heading(&shared_ui.loc("bone_panel.heading"));
         let hand = egui::CursorIcon::PointingHand;
@@ -802,6 +809,46 @@ pub fn mesh_deformation(
 
     ui.separator();
 
+    // Bind Pose (docs/BIND_POSE.md); captured at rest, so not while in Pose Mode
+    let bind_posed = bind_pose::is_bind_posed(armature, bone.id);
+    ui.add_enabled_ui(!edit_mode.pose_mode, |ui| {
+        ui.horizontal(|ui| {
+            ui.label(shared_ui.loc("bone_panel.bind_pose.label"))
+                .on_hover_text(shared_ui.loc("bone_panel.bind_pose.desc"));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if bind_posed {
+                    let str_clear = shared_ui.loc("bone_panel.bind_pose.clear");
+                    let desc = shared_ui.loc("bone_panel.bind_pose.clear_desc");
+                    if ui.skf_button(str_clear).on_hover_text(desc).clicked() {
+                        events.clear_bind_pose();
+                    }
+                    ui.label(shared_ui.loc("bone_panel.bind_pose.active"));
+                } else {
+                    let has_path = bone.binds.iter().any(|b| b.is_path);
+                    let can_set = !bone.vertices.is_empty() && !has_path;
+                    let desc = if has_path {
+                        shared_ui.loc("bone_panel.bind_pose.path_desc")
+                    } else {
+                        shared_ui.loc("bone_panel.bind_pose.set_desc")
+                    };
+                    let str_set = shared_ui.loc("bone_panel.bind_pose.set");
+                    ui.add_enabled_ui(can_set, |ui| {
+                        if ui.skf_button(str_set).on_hover_text(desc).clicked() {
+                            events.set_bind_pose();
+                        }
+                    });
+                }
+                let str_all = shared_ui.loc("bone_panel.bind_pose.all");
+                let desc_all = shared_ui.loc("bone_panel.bind_pose.all_desc");
+                if ui.skf_button(str_all).on_hover_text(desc_all).clicked() {
+                    events.set_bind_pose_all();
+                }
+            });
+        })
+    });
+
+    ui.separator();
+
     ui.horizontal(|ui| {
         ui.label(shared_ui.loc("bone_panel.mesh_deformation.binds_label"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -837,7 +884,13 @@ pub fn mesh_deformation(
     }
 
     ui.horizontal(|ui| {
-        let bone_id = binds[selections.bind as usize].bone_id;
+        let mut bone_id = binds[selections.bind as usize].bone_id;
+        // a Bind Pose helper stands in for its parent bone
+        if let Some(helper) = armature.bones.iter().find(|b| b.id == bone_id) {
+            if helper.bind_owner.is_some() {
+                bone_id = helper.parent_id;
+            }
+        }
         let mut bone_name = shared_ui.loc("none").to_string();
         if let Some(bone) = armature.bones.iter().find(|bone| bone.id == bone_id) {
             bone_name = bone.name.clone();
@@ -878,7 +931,7 @@ pub fn mesh_deformation(
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let bind = &armature.sel_bone(&sel).unwrap().binds[selected];
                 let mut new_path = bind.is_path;
-                ui.checkbox(&mut new_path, "".into_atoms());
+                ui.add_enabled(!bind_posed, egui::Checkbox::new(&mut new_path, ""));
                 if new_path != bind.is_path {
                     events.toggle_bind_pathing(selected, new_path);
                 }

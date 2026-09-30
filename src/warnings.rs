@@ -47,6 +47,13 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
             }
         }
 
+        // Warning::ClassicMultiBind
+        let multi = bind_pose::classic_multi_bind_verts(armature, bone);
+        if multi > 0 {
+            let id = vec![bone.id as usize];
+            warnings.push(Warning::valued(W::ClassicMultiBind, id, multi as f32));
+        }
+
         // Warning::NoVertsInBind
         if bone.binds.len() == 1 && bone.binds[0].is_path {
             warnings.push(Warning::new(W::OnlyPath, vec![bone.id as usize]));
@@ -186,6 +193,14 @@ pub fn warning_line(
             let str = shared_ui
                 .loc("warnings.NoVertsInBind")
                 .replace("$bind", &warning.value.to_string())
+                .replace("$bone", &bone.unwrap().name);
+            clickable_bone(ui, armature, str, events, warning, warn_color);
+        }
+        W::ClassicMultiBind => {
+            let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
+            let str = shared_ui
+                .loc("warnings.ClassicMultiBind")
+                .replace("$count", &warning.value.to_string())
                 .replace("$bone", &bone.unwrap().name);
             clickable_bone(ui, armature, str, events, warning, warn_color);
         }
