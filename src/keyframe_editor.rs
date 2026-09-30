@@ -235,7 +235,7 @@ fn draw_animations_list(
                                 ui.with_layout(align, |ui| {
                                     let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
                                     let button = ui.skf_button(icon).on_hover_text(
-                                        shared_ui.loc("keyframe_editor.side_play_tip"),
+                                        shared_ui.loc("keyframe_editor.play_tooltip"),
                                     );
                                     if button.clicked() {
                                         events.toggle_anim_playing(i, anim.elapsed == None);
@@ -768,20 +768,24 @@ pub fn draw_bottom_bar(
                     .fill(config.colors.light_accent)
                     .corner_radius(0.);
 
-                let button = ui
-                    .add_sized([50., 20.], button)
-                    .on_hover_cursor(egui::CursorIcon::PointingHand);
-
                 let mut pressed = ui.input_mut(|i| i.consume_shortcut(&config.keys.play_animation));
-                if button.clicked() {
-                    pressed = true;
+                ui.add_enabled_ui(armature.sel_anim(&sel).unwrap().keyframes.len() > 0, |ui| {
+                    let button = ui
+                        .add_sized([50., 20.], button)
+                        .on_hover_cursor(egui::CursorIcon::PointingHand)
+                        .on_hover_text(shared_ui.loc("keyframe_editor.play_tooltip"));
+                    if button.clicked() {
+                        pressed = true;
+                    }
+                    if button.secondary_clicked() {
+                        pressed = true;
+                        events.restart_anims();
+                    }
+                });
+                if pressed {
+                    let anim = armature.sel_anim(&sel).unwrap();
+                    events.toggle_anim_playing(selections.anim, anim.elapsed == None);
                 }
-                if !pressed || armature.sel_anim(&sel).unwrap().keyframes.len() == 0 {
-                    return;
-                }
-
-                let anim = armature.sel_anim(&sel).unwrap();
-                events.toggle_anim_playing(selections.anim, anim.elapsed == None);
             });
 
             let desc = shared_ui.loc("top_bar.view.zoom_in");
