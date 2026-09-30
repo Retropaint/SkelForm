@@ -2376,6 +2376,7 @@ pub enum Events {
     MoveAnimation,
 
     ToggleAnimPlaying,
+    RestartAnims,
     ToggleStyleActive,
     ToggleShowingMesh,
     ToggleEditingMesh,
@@ -2527,6 +2528,7 @@ impl EventState {
     generic_event!(delete_sel_texes, Events::DeleteSelectedTextures);
     generic_event!(toggle_editing_pivot, Events::ToggleEditingPivot);
     generic_event!(toggle_editing_mesh, Events::ToggleEditingMesh);
+    generic_event!(restart_anims, Events::RestartAnims);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, i32);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);

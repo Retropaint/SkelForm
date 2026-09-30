@@ -215,6 +215,7 @@ fn draw_animations_list(
                                 hovered = true;
                             }
                             if button.clicked() {
+                                // select animation if clicked
                                 if selections.anim != i {
                                     events.select_anim(i);
                                 } else {
@@ -227,13 +228,21 @@ fn draw_animations_list(
                                 shared_ui.context_menu.show(&context_id);
                             }
 
+                            // play button
                             if armature.animations[i].keyframes.len() > 0 {
                                 let anim = &armature.animations[i];
                                 let align = egui::Layout::right_to_left(egui::Align::Center);
                                 ui.with_layout(align, |ui| {
                                     let icon = if anim.elapsed == None { "⏵" } else { "⏹" };
-                                    if ui.skf_button(icon).clicked() {
+                                    let button = ui.skf_button(icon).on_hover_text(
+                                        shared_ui.loc("keyframe_editor.side_play_tip"),
+                                    );
+                                    if button.clicked() {
                                         events.toggle_anim_playing(i, anim.elapsed == None);
+                                    }
+                                    if button.secondary_clicked() {
+                                        events.toggle_anim_playing(i, true);
+                                        events.restart_anims();
                                     }
                                 });
                             }

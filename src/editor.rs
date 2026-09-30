@@ -1189,6 +1189,13 @@ pub fn simple_event(
                 }
             }
         }
+        Events::RestartAnims => {
+            for anim in &mut armature.animations {
+                if anim.elapsed != None {
+                    anim.elapsed = Some(Instant::now());
+                }
+            }
+        }
         _ => {}
     }
 }
