@@ -116,6 +116,10 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
 
         let mut all_bone_tex_names: Vec<String> =
             armature.bones.iter().map(|b| b.tex.clone()).collect();
+        // textures that animations swap in are used too
+        let keyed = armature.animations.iter().flat_map(|a| &a.keyframes);
+        let swapped = keyed.filter(|k| k.element == AnimElement::Texture);
+        all_bone_tex_names.extend(swapped.map(|k| k.value_str.clone()));
         all_bone_tex_names.dedup();
 
         remaining_texes.retain(|name| !all_bone_tex_names.contains(name));
