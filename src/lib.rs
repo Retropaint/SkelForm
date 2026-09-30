@@ -56,6 +56,7 @@ pub mod atlas_modal;
 pub mod backwards_compat;
 pub mod bind_pose;
 pub mod bone_panel;
+pub mod dragonbones_import;
 pub mod editor;
 pub mod export_modal;
 pub mod file_reader;

@@ -135,6 +135,7 @@ pub fn open_import_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<
             .add_filter("SkelForm file", &["skf", "skfe"])
             .add_filter("Shockwave Flash file", &["swf"])
             .add_filter("Photoshop Document", &["psd"])
+            .add_filter("DragonBones (_ske.json)", &["json"])
             .pick_file();
         if task == None {
             return;

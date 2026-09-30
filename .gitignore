@@ -14,3 +14,6 @@
 autosave.skf
 armature.json
 textures.png
+
+# dragonbones verification harness build output
+/tools/dragonbones_verify/build

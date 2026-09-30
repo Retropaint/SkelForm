@@ -704,6 +704,12 @@ pub fn read_import(
             #[cfg(target_arch = "wasm32")]
             read_psd(file, shared, queue, device, bgl, context)
         }
+        "json" => {
+            #[cfg(not(target_arch = "wasm32"))]
+            read_dragonbones(std::path::Path::new(&filepath), shared, queue, device, bgl, context);
+            #[cfg(target_arch = "wasm32")]
+            shared.events.open_modal("import_dragonbones_web", false);
+        }
         _ => {
             shared.events.open_modal("import_unrecognized", false);
         }
@@ -712,6 +718,46 @@ pub fn read_import(
 
     #[cfg(target_arch = "wasm32")]
     removeFile();
+}
+
+/// Import a DragonBones rig (`<name>_ske.json` + its `_tex` atlas pages) as the armature.
+#[cfg(not(target_arch = "wasm32"))]
+fn read_dragonbones(
+    path: &std::path::Path,
+    shared: &mut Shared,
+    queue: Option<&Queue>,
+    device: Option<&Device>,
+    bgl: Option<&BindGroupLayout>,
+    context: Option<&egui::Context>,
+) {
+    let result = crate::dragonbones_import::read_files(path)
+        .and_then(|(json, atlases)| crate::dragonbones_import::import(&json, &atlases));
+    let imported = match result {
+        Ok(imported) => imported,
+        Err(err) => {
+            shared.events.open_file_err_modal(err);
+            return;
+        }
+    };
+
+    let mut armature = imported.armature;
+    for data in &mut armature.tex_data {
+        let size = Vec2::new(data.image.width() as f32, data.image.height() as f32);
+        let (bind_group, ui_img) = create_texture(&data.image, size, queue, device, bgl, context);
+        data.bind_group = bind_group;
+        data.ui_img = ui_img;
+    }
+    shared.armature = armature;
+    shared.events.unselect_all();
+    shared.ui.startup_window = false;
+
+    // tell the user what couldn't be carried over exactly
+    if !imported.warnings.is_empty() {
+        let notes: Vec<String> = imported.warnings.iter().map(|w| format!("- {w}")).collect();
+        shared.ui.custom_error = notes.join("\n");
+        let headline = shared.ui.loc("import_dragonbones_notes");
+        editor::open_modal(&mut shared.ui, false, headline);
+    }
 }
 
 /// Load image by reading an `img` tag with the specified ID.
