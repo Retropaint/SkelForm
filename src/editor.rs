@@ -1575,13 +1575,13 @@ fn edit_bone(
     let bones = &mut armature.bones;
     let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
 
+    let mut init_value = 0.;
+    let mut init_value_str = "".to_string();
+
     // set rotation to 0 if this bone is part of IK
     if bone.ik_family_id != -1 && eff != JointEffector::End && element == AnimElement::Rotation {
         value = 0.;
     }
-
-    let mut init_value = 0.;
-    let mut init_value_str = "".to_string();
 
     // prevent recording into animation if bone is locked
     if bone.locked {
