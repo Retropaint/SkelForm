@@ -1,6 +1,6 @@
 use egui::IntoAtoms;
 
-use crate::{shared, ui::EguiUi, Display};
+use crate::{shared, ui::EguiUi, Config, Display};
 
 macro_rules! default {
     ($config:expr, $field:ident) => {
@@ -294,17 +294,37 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config)
             .max(0.)
             .min(1.);
 
-    ui.add_space(10.);
-    ui.heading(shared_ui.loc("settings_modal.editing.transform_rings.heading"));
-
     shared_ui.updated_config.center_point_radius = basic_input(
         "settings_modal.editing.transform_rings.center_point_radius",
         shared_ui.updated_config.center_point_radius,
         shared_ui,
         ui,
         config,
-        true,
+        false,
     );
+
+    ui.add_space(10.);
+    ui.heading(shared_ui.loc("settings_modal.editing.transform_rings.heading"));
+
+    // "Enable rings" checkbox
+    let mut selected = shared_ui.updated_config.transform_rot_radius != 0.
+        || shared_ui.updated_config.transform_scale_radius != 0.;
+    let og_selected = selected;
+    let str = &shared_ui.loc("settings_modal.editing.transform_rings.enabled");
+    basic_checkbox(ui, str, "", &mut selected, config, true);
+    if selected != og_selected {
+        if selected {
+            // set rings to their default sizes
+            shared_ui.updated_config.transform_rot_radius = Config::default().transform_rot_radius;
+            shared_ui.updated_config.transform_scale_radius =
+                Config::default().transform_scale_radius;
+        } else {
+            // set rings to 0, so they're effectively disabled
+            shared_ui.updated_config.transform_rot_radius = 0.;
+            shared_ui.updated_config.transform_scale_radius = 0.;
+        }
+    }
+
     shared_ui.updated_config.transform_rot_radius = basic_input(
         "settings_modal.editing.transform_rings.transform_rot_radius",
         shared_ui.updated_config.transform_rot_radius,

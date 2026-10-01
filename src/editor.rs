@@ -1767,8 +1767,8 @@ pub fn trace_mesh(
     let mut verts = vec![vert(Some(pos), None, Some(Vec2::new(uv_x, uv_y)))];
     let mut curr_poi = 0;
 
-    // get last point that current one has light of sight on
-    // if next point checked happens to be first and there's line of sight, tracing is over
+    // get last point that current one has light of sight on.
+    // if next point checked happens to be first and there's line of sight, tracing is over.
     for p in 0..poi.len() {
         if p == poi.len() - 1 {
             break;

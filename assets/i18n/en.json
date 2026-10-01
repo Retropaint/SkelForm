@@ -324,6 +324,7 @@
       "bone_translucency_desc": "How transparent (0-1) other bones should be if not selected",
       "transform_rings": {
         "heading": "Transform Rings",
+        "enabled": "Enabled:",
         "center_point_radius": "Center point radius:",
         "transform_rot_radius": "Rotation radius:",
         "transform_scale_radius": "Scale radius:"
