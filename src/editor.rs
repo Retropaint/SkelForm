@@ -2119,6 +2119,10 @@ fn paste_bone(
         }
     }
 
+    if id_refs.len() == 0 {
+        return;
+    }
+
     // select pasted bones
     selections.bone_ids = id_refs.into_values().collect();
     let sel_id = selections.bone_ids[0];
