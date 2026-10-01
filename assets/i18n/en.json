@@ -425,7 +425,7 @@
     "onion_desc": "Toggle onion layers",
     "zoom_kb_tip": "\nTip - hold $kb to zoom in/out by scrolling",
     "double_click_tip": "Double-click to select related keyframes in this bone",
-    "play_tooltip": "Left-click - play animation\nRight-click - play animation & restart all current ones",
+    "play_tooltip": "Left-click - play animation\nRight-click - play animation & restart current ones",
     "elements": {
       "PositionX": "Position X",
       "PositionY": "Position Y",

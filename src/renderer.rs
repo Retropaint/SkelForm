@@ -149,10 +149,11 @@ pub fn render(
             let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), final_pivot);
             vert.tint = tb.tint;
 
-            // make this translucent if not the selected bone
+            // make this translucent if not part of selected bone(s)
             if selections.bone_idx != usize::MAX {
-                let not_child = parents.iter().find(|b| b.id == selections.bone_ids[0]) == None;
-                if not_child && selections.bone_ids[0] != tb.id {
+                let not_child =
+                    parents.iter().find(|b| selections.bone_ids.contains(&b.id)) == None;
+                if not_child && !selections.bone_ids.contains(&tb.id) {
                     vert.tint.a = config.bone_translucency;
                 }
             }
