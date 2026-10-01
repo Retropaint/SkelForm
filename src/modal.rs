@@ -30,7 +30,15 @@ pub fn polar_modal(
     shared_ui: &mut crate::Ui,
     events: &mut crate::EventState,
 ) {
-    let headline = shared_ui.headline.to_string();
+    let mut headline = shared_ui.headline.to_string();
+
+    // destructive actions - these cannot be proceeded with the Yes shortcut
+    let dest_actions = vec![PolarId::StartNewWhileUnsaved, PolarId::Exiting];
+    let is_destructive = dest_actions.contains(&shared_ui.polar_id);
+
+    if is_destructive {
+        headline += &format!("\n\n{}", shared_ui.loc("polar.click_yes"));
+    }
 
     modal_template(
         ctx,
@@ -48,7 +56,7 @@ pub fn polar_modal(
             // This is to prevent users with muscle memory from accidentally exiting
             // upon pressing 'enter' upon seeing a modal.
             if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                if shared_ui.polar_id != PolarId::Exiting {
+                if !is_destructive {
                     shared_ui.polar_modal = false;
                     yes = true;
                 }
@@ -71,14 +79,13 @@ pub fn polar_modal(
             let mut str_yes = egui::text::LayoutJob::default();
             let str = &shared_ui.loc("polar.yes");
             crate::ui::job_text(str, Some(config.colors.text.into()), &mut str_yes);
-            if shared_ui.polar_id != PolarId::Exiting {
+            if !is_destructive {
+                // add keyboard shortcut if this action isn't destructive
                 let str_key = &format!(" ({})", &config.keys.polar_yes.display());
                 crate::ui::job_text(str_key, Some(key_col.into()), &mut str_yes);
             }
             let pressed_yes = ui.input_mut(|i| i.consume_shortcut(&config.keys.polar_yes));
-            if ui.skf_button(str_yes).clicked()
-                || (pressed_yes && shared_ui.polar_id != PolarId::Exiting)
-            {
+            if ui.skf_button(str_yes).clicked() || (pressed_yes && !is_destructive) {
                 shared_ui.polar_modal = false;
                 yes = true
             }
@@ -153,6 +160,10 @@ pub fn polar_modal(
                 }
                 PolarId::ImportedPsd => {
                     events.import_psd_armature();
+                }
+                PolarId::StartNewWhileUnsaved => {
+                    events.new_armature();
+                    shared_ui.startup_window = false;
                 }
             }
         },

@@ -45,7 +45,7 @@
     "error_ffmpeg": "ffmpeg is not available.\n\nPlease ensure it is installed and in your $PATH.",
     "no_updates": "You're up to date! This is the latest version.",
     "current_version": "Current: v",
-    "unsaved_new": "Cannot create new armature while current one is unsaved.",
+    "unsaved_new": "The current armature is unsaved. Start a new one anyway?",
     "resources": {
       "user_docs": "User Documentation",
       "starter_guide": "Starter Guide",
@@ -467,10 +467,11 @@
     "delete_file": "Are you sure to delete $?",
     "delete_tex": "Are you sure to delete this texture?",
     "delete_style": "Are you sure to delete this style?",
-    "unsaved": "Quit and discard unsaved changes?\n\n(Click 'Yes' to confirm)",
+    "unsaved": "Quit and discard unsaved changes?",
     "delete_keyframe_line": "Are you sure to delete this keyframe line?",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "click_yes": "(Click 'Yes' to confirm)"
   },
   "warnings": {
     "heading": "Warnings ℹ",

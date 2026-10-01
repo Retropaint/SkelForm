@@ -1619,6 +1619,7 @@ impl Gpu {
             });
         }
 
+        // force WebGL2 on web
         #[cfg(target_arch = "wasm32")]
         {
             instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {

@@ -80,7 +80,10 @@ fn left(
                 shared_ui.startup_window = false;
             } else {
                 // prevent new armature if current is unsaved
-                events.open_modal("startup.unsaved_new", false);
+                events.open_polar_modal(
+                    PolarId::StartNewWhileUnsaved,
+                    shared_ui.loc("startup.unsaved_new"),
+                );
             }
         }
 
