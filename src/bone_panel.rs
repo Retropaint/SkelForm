@@ -1294,9 +1294,40 @@ pub fn visuals(
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let og_col: [f32; 4] = [bone.tint.r, bone.tint.g, bone.tint.b, bone.tint.a];
             let mut col = og_col.clone();
+
+            // color picker
             ui.color_edit_button_rgba_premultiplied(&mut col);
+
+            // RGBA text input
+            let str = format!(
+                "{}, {}, {}, {}",
+                (og_col[0] * 255.).round() as u16,
+                (og_col[1] * 255.).round() as u16,
+                (og_col[2] * 255.).round() as u16,
+                (og_col[3] * 255.).round() as u16
+            );
+            let (edited, value, _) = ui.text_input(
+                "raw_tint".to_string(),
+                shared_ui,
+                str,
+                Some(TextInputOptions {
+                    size: Vec2::new(90., 20.),
+                    ..Default::default()
+                }),
+            );
+            if edited {
+                // update tint if text input was updated
+                let extract = value.split(',').collect::<Vec<_>>();
+                if extract.len() == 4 {
+                    col[0] = extract[0].trim().parse::<f32>().unwrap_or(og_col[0] * 255.) / 255.;
+                    col[1] = extract[1].trim().parse::<f32>().unwrap_or(og_col[1] * 255.) / 255.;
+                    col[2] = extract[2].trim().parse::<f32>().unwrap_or(og_col[2] * 255.) / 255.;
+                    col[3] = extract[3].trim().parse::<f32>().unwrap_or(og_col[3] * 255.) / 255.;
+                }
+            }
+
             shared_ui.bone_panel_popup_open = egui::Popup::is_any_open(ui.ctx());
-            if col == og_col || !shared_ui.bone_panel_popup_open {
+            if col == og_col {
                 return;
             }
             let anim_id = if edit_mode.anim_open {
