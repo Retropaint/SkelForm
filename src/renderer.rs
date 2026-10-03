@@ -284,6 +284,8 @@ pub fn render(
     let selected = selections.bone_ids.len() > 0 && selections.bone_ids[0] == on_click_id;
     if on_click_id != -1 && selections.hovering_bone_id != on_click_id && !selected {
         events.set_hovering_bone_id(on_click_id);
+    } else if selected {
+        on_click_id = -1;
     }
     renderer.on_point = false;
 

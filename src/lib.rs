@@ -16,10 +16,7 @@ use std::{
 
 use egui_wgpu::wgpu::ExperimentalFeatures;
 use shared::*;
-use wgpu::{
-    util::DeviceExt, BindGroupLayout, Buffer, Features, FeaturesWGPU,
-    InstanceDescriptor,
-};
+use wgpu::{util::DeviceExt, BindGroupLayout, Buffer, Features, FeaturesWGPU, InstanceDescriptor};
 
 // native-only imports
 #[cfg(not(target_arch = "wasm32"))]
