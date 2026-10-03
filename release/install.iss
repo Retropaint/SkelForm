@@ -3,7 +3,7 @@
 ; Non-commercial use only.
 
 #define MyAppName "SkelForm"
-#define MyAppVersion "0.8"
+#define MyAppVersion GetVersionNumbersString('skelform_windows\SkelForm.exe')
 #define MyAppPublisher "Retropaint"
 #define MyAppURL "https://www.skelform.org/"
 #define EscapeConstArgument(Value) StringChange(StringChange(StringChange(Value, "%", "%25"), ",", "%2c"), "}", "%7d")
