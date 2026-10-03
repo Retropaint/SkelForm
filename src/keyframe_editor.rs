@@ -1,6 +1,6 @@
 //! Animation keyframe editor. Very early and only proof-of-concept.
 
-use egui::{HoveredFile, Stroke};
+use egui::Stroke;
 
 use ui::{EguiUi, TextInputOptions};
 

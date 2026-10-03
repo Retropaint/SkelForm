@@ -2919,10 +2919,6 @@ fn default_0_alpha() -> Color {
     Color::new(0, 0, 0, 0)
 }
 
-fn is_neg_one(value: &i32) -> bool {
-    *value == -1
-}
-
 fn is_max(value: &f32) -> bool {
     *value == f32::MAX
 }
@@ -2937,10 +2933,6 @@ fn are_verts_empty(value: &Vec<Vertex>) -> bool {
 
 fn are_indices_empty<T: std::cmp::PartialEq<Vec<u32>>>(value: &T) -> bool {
     *value == vec![]
-}
-
-fn is_tint_white<T: std::cmp::PartialEq<TintColor>>(value: &T) -> bool {
-    *value == TintColor::new(1., 1., 1., 1.)
 }
 
 fn are_weights_empty<T: std::cmp::PartialEq<Vec<BoneBind>>>(value: &T) -> bool {

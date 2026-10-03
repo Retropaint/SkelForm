@@ -17,7 +17,7 @@ use std::{
 use egui_wgpu::wgpu::ExperimentalFeatures;
 use shared::*;
 use wgpu::{
-    util::DeviceExt, BindGroupLayout, Buffer, Features, FeaturesWGPU, FeaturesWebGPU,
+    util::DeviceExt, BindGroupLayout, Buffer, Features, FeaturesWGPU,
     InstanceDescriptor,
 };
 

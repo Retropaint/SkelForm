@@ -266,8 +266,7 @@ pub fn draw(
                 if shared_ui.last_selected == "bone" {
                     let bone = selected_bone.clone();
                     bone_panel::draw(
-                        bone, ui, selections, shared_ui, armature, config, events, &input,
-                        edit_mode,
+                        bone, ui, selections, shared_ui, armature, config, events, edit_mode,
                     );
                 } else if shared_ui.last_selected == "keyframe" {
                     keyframe_panel::draw(ui, &selections, &armature, events, shared_ui, config);

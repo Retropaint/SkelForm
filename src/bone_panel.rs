@@ -35,7 +35,6 @@ pub fn draw(
     armature: &mut Armature,
     config: &Config,
     events: &mut EventState,
-    input: &InputStates,
     edit_mode: &EditMode,
 ) {
     let sel = &selections.clone();
@@ -263,7 +262,7 @@ pub fn draw(
     }
 
     #[rustfmt::skip]
-    visuals(ui, &mut bone, shared_ui, &selections, config, &edit_mode, &input, armature, events);
+    visuals(ui, &mut bone, shared_ui, &selections, config, &edit_mode, armature, events);
     if !bone.effects_folded {
         ui.add_space(20.);
     }
@@ -1097,7 +1096,6 @@ pub fn visuals(
     selections: &SelectionState,
     config: &Config,
     edit_mode: &EditMode,
-    input: &InputStates,
     armature: &Armature,
     events: &mut EventState,
 ) {
