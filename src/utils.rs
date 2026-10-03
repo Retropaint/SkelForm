@@ -132,7 +132,7 @@ pub fn open_import_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<
     let filetype = Arc::clone(&file_type);
     std::thread::spawn(move || {
         let task = rfd::FileDialog::new()
-            .add_filter("SkelForm file", &["skf", "skfe"])
+            .add_filter("SkelForm file", &["skf", "skfe", "skf~"])
             .add_filter("Shockwave Flash file", &["swf"])
             .add_filter("Photoshop Document", &["psd"])
             .pick_file();
