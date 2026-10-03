@@ -116,6 +116,7 @@ pub fn render(
     temp_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
     prev_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
     next_arm.bones.sort_by(|a, b| b.zindex.cmp(&a.zindex));
+    same_zindex_sort(&mut temp_arm.bones);
 
     // many fight for spot of newest vertex; only one will emerge victorious.
     let mut new_vert: Option<Vertex> = None;
@@ -290,6 +291,7 @@ pub fn render(
 
     // runtime: sort bones by z-index for drawing
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
+    same_zindex_sort(&mut temp_arm.bones);
 
     // sort onions by zindex as well
     if selections.anim_frame != -1 && edit_mode.onion_layers {
@@ -2425,4 +2427,20 @@ pub fn is_facing_left(scale: Vec2) -> bool {
     let both = scale.x < 0. && scale.y < 0.;
     let either = scale.x < 0. || scale.y < 0.;
     either && !both
+}
+
+// reverses the order of bones with same zindex.
+// used for hover logic so bones that visually appear on top will have proper priority.
+pub fn same_zindex_sort(bones: &mut Vec<Bone>) {
+    let mut start = 0;
+    while start < bones.len() {
+        let mut end = start + 1;
+
+        while end < bones.len() && bones[end].zindex == bones[start].zindex {
+            end += 1;
+        }
+
+        bones[start..end].reverse();
+        start = end;
+    }
 }
