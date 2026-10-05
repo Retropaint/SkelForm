@@ -835,6 +835,32 @@ pub fn draw_bottom_bar(
             if button.inner.clicked() {
                 events.toggle_onion_layers(if edit_mode.onion_layers { 0 } else { 1 });
             }
+
+            if shared_ui.adjusting_anim_speed == -999. {
+                // adjust speed toggle
+                let button = ui
+                    .skf_button("Adjust Speed")
+                    .on_hover_text(shared_ui.loc("keyframe_editor.adjust_speed_tooltip"));
+                shared_ui.anim_speed_width = button.rect.width();
+                if button.clicked() {
+                    shared_ui.adjusting_anim_speed = 1.;
+                }
+            } else {
+                // adjust speed input
+                let speed = shared_ui.adjusting_anim_speed;
+                let id = "adjust_speed".to_string();
+                let options = TextInputOptions {
+                    size: Vec2::new(shared_ui.anim_speed_width, 20.),
+                    focus: true,
+                    default: "1.0".to_string(),
+                    ..Default::default()
+                };
+                let (edited, value, _) = ui.float_input(id, shared_ui, speed, 1., Some(options));
+                if edited {
+                    events.adjust_kfs_by_speed(value);
+                    shared_ui.adjusting_anim_speed = -999.;
+                }
+            }
         });
     });
 }

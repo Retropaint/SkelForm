@@ -37,7 +37,7 @@ pub fn iterate_events(
             E::DeleteSelectedTextures       => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
             E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
             E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
-            E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::PasteKeyframesOnFrame => {
+            E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::PasteKeyframesOnFrame | E::AdjustKeyframesByFPS | E::AdjustKeyframesBySpeed => {
                 undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
             }
             E::ResetVertices | E::CenterBoneVerts | E::DeleteVertex | E::TraceBoneVerts | E::NewVertex | E::DeleteTriangle => {
@@ -1200,6 +1200,11 @@ pub fn simple_event(
                 if anim.elapsed != None {
                     anim.elapsed = Some(Instant::now());
                 }
+            }
+        }
+        Events::AdjustKeyframesBySpeed => {
+            for kfs in &mut armature.sel_anim_mut(selections).unwrap().keyframes {
+                kfs.frame = (kfs.frame as f32 / value).round() as i32;
             }
         }
         _ => {}

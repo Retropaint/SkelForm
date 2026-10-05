@@ -9,6 +9,7 @@ use std::{
     str::FromStr,
 };
 
+use egui::Response;
 use std::sync::Mutex;
 use wgpu::BindGroup;
 
@@ -704,6 +705,10 @@ pub struct Ui {
 
     // prevents keyframe editor from registering clicks while editing tint
     pub bone_panel_popup_open: bool,
+
+    // Adjust Speed mode for keyframe editor
+    pub adjusting_anim_speed: f32,
+    pub anim_speed_width: f32,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -2461,6 +2466,7 @@ pub enum Events {
     ToggleSelectedTexture,
     ToggleEditingPivot,
     ReduceGlobalIkFamilyIds,
+    AdjustKeyframesBySpeed,
 }
 
 enum_string!(Events);
@@ -2577,6 +2583,7 @@ impl EventState {
     event_with_value!(set_hovering_line, E::SetHoveringLine, value, i32);
     event_with_value!(set_pos_ratio, E::SetPosRatio, value, f32);
     event_with_value!(set_scale_ratio, E::SetScaleRatio, value, f32);
+    event_with_value!(adjust_kfs_by_speed, E::AdjustKeyframesBySpeed, value, f32);
     #[rustfmt::skip]    event_with_value!(create_parent_bone, Events::CreateParentBone, of_bone_id, i32);
     #[rustfmt::skip]    event_with_value!(move_selected_keyframes, Events::MoveSelectedKeyframes, dropped_frame, i32);
     #[rustfmt::skip]    event_with_value!(toggle_edit_alt, Events::ToggleEditAlt, toggle, i32);
