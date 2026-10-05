@@ -1325,7 +1325,7 @@ pub fn visuals(
             }
 
             shared_ui.bone_panel_popup_open = egui::Popup::is_any_open(ui.ctx());
-            if col == og_col {
+            if colors_u16(col) == colors_u16(og_col) {
                 return;
             }
             let anim_id = if edit_mode.anim_open {
@@ -1335,6 +1335,7 @@ pub fn visuals(
             };
             let frame = selections.anim_frame;
             let bone_ids = &selections.bone_ids;
+            events.save_edited_bone(selections.bone_idx);
             edit_bones(bone_ids, E::TintR, col[0], "", anim_id, frame, events);
             edit_bones(bone_ids, E::TintG, col[1], "", anim_id, frame, events);
             edit_bones(bone_ids, E::TintB, col[2], "", anim_id, frame, events);
@@ -1556,4 +1557,15 @@ pub fn phys_sub_slider(
     });
 
     result
+}
+
+// converts a [1., 1., 1., 1.] array to [255, 255, 255, 255].
+// used for accurate comparisons against 2 color values.
+pub fn colors_u16(col1: [f32; 4]) -> [u16; 4] {
+    [
+        (col1[0] * 255.).round() as u16,
+        (col1[1] * 255.).round() as u16,
+        (col1[2] * 255.).round() as u16,
+        (col1[3] * 255.).round() as u16,
+    ]
 }
