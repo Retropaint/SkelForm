@@ -256,6 +256,7 @@ pub fn iterate_events(
 
         #[rustfmt::skip]
         edit_bone(armature, config, events.values[0] as i32, anim_el, events.values[2], events.str_values[0].clone(), anim_id, anim_frame);
+        cleanup_keyframes(&mut armature.animations);
 
         events.events.remove(0);
         events.values.drain(0..=4);
@@ -2186,4 +2187,13 @@ fn paste_keyframes_on_frame(
     }
 
     armature.sel_anim_mut(&selections).unwrap().sort_keyframes();
+}
+
+// remove invalid/duplicate keyframes
+pub fn cleanup_keyframes(anims: &mut Vec<Animation>) {
+    for anim in anims {
+        anim.keyframes.dedup_by(|a, b| {
+            a.bone_id == b.bone_id && a.frame == b.frame && a.element == b.element
+        });
+    }
 }

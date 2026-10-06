@@ -1045,6 +1045,8 @@ pub fn import<R: Read + std::io::Seek>(
         animated_bones: vec![],
     };
 
+    editor::cleanup_keyframes(&mut temp_arm.animations);
+
     // populate visuals data
     for b in 0..temp_arm.bones.len() {
         if temp_arm.bones[b].visuals_id == -1 {
