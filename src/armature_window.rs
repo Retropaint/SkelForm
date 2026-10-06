@@ -225,6 +225,7 @@ pub fn draw_hierarchy(
 
         ui.add_enabled_ui(!setting_ik_target, |ui| {
             ui.horizontal(|ui| {
+                // hidden toggle
                 let id = format!("bone_hidden{}", b.to_string());
                 let mut col = config.colors.text;
                 if bone_hidden {
@@ -238,14 +239,21 @@ pub fn draw_hierarchy(
                     events.save_edited_bone(b);
                     events.edit_bone(bone_id, &AnimElement::Hidden, hidden_f32, "", sel, frame);
                 }
+
+                // lock toggle
                 let locked = armature.bones[b].locked;
-                let mut col = config.colors.text;
+                let mut col = config.colors.warning_text;
                 if !locked {
+                    col = config.colors.text;
                     col -= Color::new(80, 80, 80, 0);
                 }
                 let offset = ui.cursor().min + [16., 3.].into();
                 let rect = egui::Rect::from_min_size(offset, [15., 15.].into());
-                let img = shared_ui.lock_img.as_ref().unwrap();
+                let img = if locked {
+                    shared_ui.lock_img.as_ref().unwrap()
+                } else {
+                    shared_ui.unlock_img.as_ref().unwrap()
+                };
                 egui::Image::new(img).tint(col).paint_at(ui, rect);
                 let response: egui::Response = ui
                     .allocate_rect(rect, egui::Sense::click())

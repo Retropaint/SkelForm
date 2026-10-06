@@ -102,6 +102,8 @@ pub fn draw(
     load_png(&mut shared_ui.ik_img, ik_bytes, "lucysir_ik", context);
     let lock_bytes = include_bytes!("../assets/lock.png");
     load_png(&mut shared_ui.lock_img, lock_bytes, "lock", context);
+    let unlock_bytes = include_bytes!("../assets/unlock.png");
+    load_png(&mut shared_ui.unlock_img, unlock_bytes, "unlock", context);
     let icon_size = 200;
     if shared_ui.icon_images.len() == 0 {
         // default animation icon file (baked-in)

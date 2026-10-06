@@ -105,9 +105,10 @@ pub fn draw(
         }
 
         // animation lock toggle
-        let mut col = config.colors.text;
+        let mut col = config.colors.warning_text;
         if !bone.locked {
-            col -= Color::new(60, 60, 60, 0);
+            col = config.colors.text;
+            col -= Color::new(80, 80, 80, 0);
         }
         let offset = ui.cursor().min + [0., 3.].into();
         let rect = egui::Rect::from_min_size(offset, [15., 15.].into());
@@ -119,7 +120,11 @@ pub fn draw(
             if response.hovered() || response.has_focus() {
                 col += Color::new(60, 60, 60, 0);
             }
-            let img = shared_ui.lock_img.as_ref().unwrap();
+            let img = if bone.locked {
+                shared_ui.lock_img.as_ref().unwrap()
+            } else {
+                shared_ui.unlock_img.as_ref().unwrap()
+            };
             egui::Image::new(img).tint(col).paint_at(ui, rect);
             if response.clicked() {
                 let locked_f32 = if bone.locked { 0. } else { 1. };

@@ -661,6 +661,7 @@ pub struct Ui {
     pub pointer_on_timeline: bool,
     pub ik_img: Option<egui::TextureHandle>,
     pub lock_img: Option<egui::TextureHandle>,
+    pub unlock_img: Option<egui::TextureHandle>,
     pub render_points: bool,
     pub render_kites: bool,
     pub render_textures: bool,
