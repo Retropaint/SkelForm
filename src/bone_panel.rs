@@ -93,7 +93,11 @@ pub fn draw(
         if bone.hidden {
             col -= Color::new(60, 60, 60, 0);
         }
-        let text = egui::RichText::new("👁").size(15.).color(col);
+        let text = if bone.hidden {
+            egui::RichText::new("––").size(13.).color(col)
+        } else {
+            egui::RichText::new("👁").size(15.).color(col)
+        };
         let desc = shared_ui.loc("hidden_desc");
         let label = ui.label(text).on_hover_cursor(hand).on_hover_text(desc);
         if label.clicked() {

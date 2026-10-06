@@ -232,7 +232,10 @@ pub fn draw_hierarchy(
                     col -= Color::new(80, 80, 80, 0);
                 }
                 let desc = shared_ui.loc("hidden_desc");
-                if bone_label("👁", true, ui, id, Vec2::new(-2., 18.), &desc, col).clicked() {
+                let hidden = armature.bones[b].hidden;
+                let hidden_icon = if hidden { "––" } else { "👁" };
+                if bone_label(&hidden_icon, true, ui, id, Vec2::new(-2., 18.), &desc, col).clicked()
+                {
                     let hidden_f32 = if !bone_hidden { 1. } else { 0. };
                     let sel = selections.anim;
                     let frame = selections.anim_frame;
