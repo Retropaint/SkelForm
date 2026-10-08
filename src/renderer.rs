@@ -380,8 +380,9 @@ pub fn render(
         hovered_vert = on_vert != -1 && !camera.on_ui;
 
         // draw vertex points and lines
-        setup_render_buffer(&mut renderer.meshframe_buffer, &lines_v, &lines_i, queue);
-        draw(&renderer.meshframe_buffer, render_pass, 0, lines_i.len());
+        let buffer = &mut renderer.edit_mesh_buffer;
+        setup_render_buffer(buffer, &lines_v, &lines_i, queue);
+        draw(buffer, render_pass, 0, lines_i.len());
     }
 
     // increment hovering tri countdown, to show tooltip on UI

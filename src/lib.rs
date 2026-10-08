@@ -1043,6 +1043,7 @@ impl BackendRenderer {
             renderer.ring_buffer.init(&self.gpu.device, 100);
             renderer.selected_ring_buffer.init(&self.gpu.device, 100);
             renderer.rect_buffer.init(&self.gpu.device, max);
+            renderer.edit_mesh_buffer.init(&self.gpu.device, 1000);
         }
         let bytes = include_bytes!("../assets/flow-kite.png");
         self.load_bindgroup(&mut renderer.flow_kite_bindgroup, bytes);

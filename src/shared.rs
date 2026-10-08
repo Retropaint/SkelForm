@@ -2317,6 +2317,7 @@ pub struct Renderer {
 
     // buffers
     pub meshframe_buffer: RenderBuffer,
+    pub edit_mesh_buffer: RenderBuffer,
     pub bone_buffer: RenderBuffer,
     pub prev_onion_buffer: RenderBuffer,
     pub next_onion_buffer: RenderBuffer,
