@@ -440,7 +440,7 @@ pub fn draw(
     }
 
     // show which temporary mode will activate on press
-    if !input.left_down {
+    if !input.left_down && !edit_mode.editing_mesh {
         if let Some(temporary) = &edit_mode.temporary {
             if *temporary == EditModes::Move {
                 helper_text!("Hold to Move", Vec2::new(0., -10.));
