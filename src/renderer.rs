@@ -1620,8 +1620,11 @@ fn bone_triangle(tb: &Bone, mouse_world_vert: &Vertex, wv: Vec<Vertex>) -> (u32,
         }
 
         hovering_tri.push(tb.world_verts[tb.indices[i * 3 + 0] as usize]);
+        hovering_tri.last_mut().unwrap().tint = TintColor::new(1., 1., 1., 1.);
         hovering_tri.push(tb.world_verts[tb.indices[i * 3 + 1] as usize]);
+        hovering_tri.last_mut().unwrap().tint = TintColor::new(1., 1., 1., 1.);
         hovering_tri.push(tb.world_verts[tb.indices[i * 3 + 2] as usize]);
+        hovering_tri.last_mut().unwrap().tint = TintColor::new(1., 1., 1., 1.);
         idx = i;
     }
     (idx as u32, hovering_tri)
@@ -1684,9 +1687,10 @@ pub fn vert_lines(
         let mut col = config.colors.mesh_base;
         col -= Color::new(125, 125, 125, 0);
         col.a = if editable { 200 } else { 100 };
+        let tint = TintColor::new(1., 1., 1., 1.);
 
         #[rustfmt::skip]
-        macro_rules! vert { ($pos:expr, $v:expr) => { Vertex { pos: $pos, color: col, ..$v } }; }
+        macro_rules! vert { ($pos:expr, $v:expr) => { Vertex { pos: $pos, color: col, tint, ..$v } }; }
 
         let mut v0_top = vert!(v0.pos + base, v0);
         let mut v0_bot = vert!(v0.pos - base, v0);
