@@ -1674,6 +1674,24 @@ pub fn open_link(url: &str) {
     }
 }
 
+pub fn world_mouse(input: &InputStates, camera: &Camera) -> (Vertex, Vec2) {
+    // create vert on cursor
+    let space = utils::screen_to_world_space(input.mouse, camera.window);
+    let mut mouse_world_vert = Vertex {
+        pos: space,
+        ..Default::default()
+    };
+    mouse_world_vert.pos.x *= camera.window.y / camera.window.x;
+
+    // mouse pos in world space
+    let mouse_pos = Vec2::new(
+        mouse_world_vert.pos.x * camera.zoom / camera.aspect_ratio() + camera.pos.x,
+        mouse_world_vert.pos.y * camera.zoom + camera.pos.y,
+    );
+
+    (mouse_world_vert, mouse_pos)
+}
+
 // I admit defeat:
 // https://chatgpt.com/share/697de90a-5a08-8004-9551-326e2ba6aee2
 pub fn shortest_angle_delta(from: f32, to: f32) -> f32 {

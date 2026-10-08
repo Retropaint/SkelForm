@@ -10,6 +10,7 @@ use std::{
 };
 
 use egui::Response;
+use renderer::construction;
 use std::sync::Mutex;
 use wgpu::BindGroup;
 
@@ -1567,8 +1568,8 @@ impl Armature {
 
     pub fn offset_pos_by_parent(&mut self, old_parents: Vec<Bone>, bone_id: i32) {
         for parent in old_parents {
-            let parent_pos = parent.pos;
-            self.find_bone_mut(bone_id).unwrap().pos += parent_pos;
+            self.find_bone_mut(bone_id).unwrap().pos += utils::rotate(&parent.pos, parent.rot);
+            self.find_bone_mut(bone_id).unwrap().pos *= parent.scale;
         }
 
         if self.find_bone_mut(bone_id).unwrap().parent_id == -1 {
@@ -1577,8 +1578,8 @@ impl Armature {
 
         let new_parents = self.get_all_parents(false, bone_id);
         for parent in new_parents {
-            let parent_pos = parent.pos;
-            self.find_bone_mut(bone_id).unwrap().pos -= parent_pos;
+            self.find_bone_mut(bone_id).unwrap().pos -= utils::rotate(&parent.pos, parent.rot);
+            self.find_bone_mut(bone_id).unwrap().pos /= parent.scale;
         }
     }
 
@@ -2468,6 +2469,7 @@ pub enum Events {
     ToggleEditingPivot,
     ReduceGlobalIkFamilyIds,
     AdjustKeyframesBySpeed,
+    CreateBindBone,
 }
 
 enum_string!(Events);
@@ -2587,8 +2589,9 @@ impl EventState {
     event_with_value!(adjust_kfs_by_speed, E::AdjustKeyframesBySpeed, value, f32);
     #[rustfmt::skip]    event_with_value!(create_parent_bone, Events::CreateParentBone, of_bone_id, i32);
     #[rustfmt::skip]    event_with_value!(move_selected_keyframes, Events::MoveSelectedKeyframes, dropped_frame, i32);
-    #[rustfmt::skip]    event_with_value!(toggle_edit_alt, Events::ToggleEditAlt, toggle, i32);
+    event_with_value!(toggle_edit_alt, Events::ToggleEditAlt, toggle, i32);
     #[rustfmt::skip]    event_with_value!(reduce_global_ik_family_ids, Events::ReduceGlobalIkFamilyIds, base, i32);
+    event_with_value!(create_bind_bone, Events::CreateBindBone, vert_id, i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

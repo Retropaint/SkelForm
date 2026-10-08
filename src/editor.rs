@@ -771,17 +771,14 @@ pub fn simple_event(
                 return;
             }
             let bone_mut = &mut armature.sel_bone_mut(&selections).unwrap();
-            let id = bone_mut.id;
             let idx = selections.bind as usize;
             let vert_id = bone_mut.vertices[value as usize].id;
             let bind = &bone_mut.binds[idx];
 
             // add/remove vertex to bind
             let mut bound = false;
-            let mut unbound_bone_id = -1; // track the unbound bone id, to adjust position later
             if let Some(v) = bind.verts.iter().position(|vert| vert.id == vert_id as i32) {
                 bone_mut.binds[idx].verts.remove(v);
-                unbound_bone_id = bone_mut.binds[idx].bone_id;
             } else {
                 bound = true;
                 bone_mut.binds[idx].verts.push(BoneBindVert {
@@ -790,47 +787,17 @@ pub fn simple_event(
                 });
             }
 
-            let temp_bone = renderer.temp_bones.iter().find(|b| b.id == id).unwrap();
-            let temp_bones = &renderer.temp_bones;
-
-            for bind in &mut bone_mut.binds {
-                let ids: Vec<u32> = bind.verts.iter().map(|v| v.id as u32).collect();
-                if !ids.contains(&vert_id) && unbound_bone_id != bind.bone_id {
-                    continue;
-                }
-
-                if temp_bones.iter().find(|b| b.id == bind.bone_id) == None {
-                    continue;
-                }
-
-                let bind_bone = temp_bones.iter().find(|b| b.id == bind.bone_id).unwrap();
-                let verts = &mut bone_mut.vertices;
-                let vert = verts.iter_mut().find(|v| v.id == vert_id).unwrap();
-
-                // get the rotation to offset by, based on bind type (weight, path, etc)
-                let bind_id = bind.bone_id;
-                let bind_idx = temp_bone.binds.iter().position(|b| b.bone_id == bind_id);
-                let rot = if bind.is_path {
-                    renderer::get_path_normal_angle(temp_bones, temp_bone, bind_idx.unwrap())
-                } else {
-                    bind_bone.rot
-                };
-
-                // offset vertex such that it stays still after binding/unbinding
-                // todo: this currently only works if vertex is in 1 bind.
-                // Make it account for all of them
-                if bound {
-                    vert.pos /= bind_bone.scale / temp_bone.scale;
-                    vert.pos = utils::rotate(&vert.pos, temp_bone.rot);
-                    vert.pos -= (bind_bone.pos - temp_bone.pos) / bind_bone.scale;
-                    vert.pos = utils::rotate(&vert.pos, -rot);
-                } else {
-                    vert.pos = utils::rotate(&vert.pos, rot);
-                    vert.pos += (bind_bone.pos - temp_bone.pos) / bind_bone.scale;
-                    vert.pos = utils::rotate(&vert.pos, -temp_bone.rot);
-                    vert.pos *= bind_bone.scale / temp_bone.scale;
-                }
-            }
+            adjust_vert_by_bind(
+                &mut bone_mut.vertices[value as usize],
+                bound,
+                &bone_mut.binds[idx],
+                &renderer.temp_bones,
+                renderer
+                    .temp_bones
+                    .iter()
+                    .find(|b| b.id == bone_mut.id)
+                    .unwrap(),
+            );
         }
         Events::DeleteTriangle => {
             let bone = &mut armature.sel_bone_mut(&selections).unwrap();
@@ -1207,6 +1174,48 @@ pub fn simple_event(
             for kfs in &mut armature.sel_anim_mut(selections).unwrap().keyframes {
                 kfs.frame = (kfs.frame as f32 / value).round() as i32;
             }
+        }
+        Events::CreateBindBone => {
+            // create new bone
+            let (_, idx) = armature.new_bone(-1);
+            let (_, mouse_pos) = utils::world_mouse(input, camera);
+            armature.bones[idx].pos = mouse_pos;
+
+            // set new bone as bind
+            let bone_id = armature.bones[idx].id;
+            let bind = BoneBind {
+                bone_id,
+                is_path: false,
+                verts: vec![BoneBindVert {
+                    id: selections.vert_ids[0] as i32,
+                    weight: 1.,
+                }],
+            };
+            armature.sel_bone_mut(selections).unwrap().binds.push(bind);
+
+            // add new bone to temp_bones for adjusting later
+            let bone = armature.bones.last().unwrap().clone();
+            renderer.temp_bones.push(bone);
+
+            let sel_bone_id = armature.sel_bone(selections).unwrap().id;
+
+            // adjust vertex pos so it stays with new bind
+            let binds = &armature.sel_bone(selections).unwrap().binds;
+            let bind = binds.last().unwrap().clone();
+            let vertices = &mut armature.sel_bone_mut(selections).unwrap().vertices;
+            let vert_id = selections.vert_ids[0] as u32;
+            let vert = &mut vertices.iter_mut().find(|v| v.id == vert_id).unwrap();
+            let temp_bones = &renderer.temp_bones;
+            let temp_bone = temp_bones.iter().find(|b| b.id == sel_bone_id).unwrap();
+            adjust_vert_by_bind(vert, true, &bind, &renderer.temp_bones, temp_bone);
+
+            // set bone as child of mesh
+            drag_bone(
+                armature,
+                selections.bone_ids[0],
+                &vec![armature.bones[idx].id],
+                false,
+            );
         }
         _ => {}
     }
@@ -2196,5 +2205,39 @@ pub fn cleanup_keyframes(anims: &mut Vec<Animation>) {
         anim.keyframes.dedup_by(|a, b| {
             a.bone_id == b.bone_id && a.frame == b.frame && a.element == b.element
         });
+    }
+}
+
+pub fn adjust_vert_by_bind(
+    vert: &mut Vertex,
+    bound: bool,
+    bind: &BoneBind,
+    temp_bones: &Vec<Bone>,
+    sel_temp_bone: &Bone,
+) {
+    // get the rotation to offset by, based on bind type (weight, path, etc)
+    let bind_id = bind.bone_id;
+    let bind_idx = sel_temp_bone
+        .binds
+        .iter()
+        .position(|b| b.bone_id == bind_id);
+    let bind_bone = temp_bones.iter().find(|b| b.id == bind.bone_id).unwrap();
+    let rot = if bind.is_path {
+        renderer::get_path_normal_angle(temp_bones, sel_temp_bone, bind_idx.unwrap())
+    } else {
+        bind_bone.rot
+    };
+
+    // offset vertex such that it stays still after binding/unbinding
+    if bound {
+        vert.pos /= bind_bone.scale / sel_temp_bone.scale;
+        vert.pos = utils::rotate(&vert.pos, sel_temp_bone.rot);
+        vert.pos -= (bind_bone.pos - sel_temp_bone.pos) / bind_bone.scale;
+        vert.pos = utils::rotate(&vert.pos, -rot);
+    } else {
+        vert.pos = utils::rotate(&vert.pos, rot);
+        vert.pos += (bind_bone.pos - sel_temp_bone.pos) / bind_bone.scale;
+        vert.pos = utils::rotate(&vert.pos, -sel_temp_bone.rot);
+        vert.pos *= bind_bone.scale / sel_temp_bone.scale;
     }
 }

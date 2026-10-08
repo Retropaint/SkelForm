@@ -35,16 +35,7 @@ pub fn render(
         renderer.has_loaded = true;
     }
 
-    // create vert on cursor
-    let space = utils::screen_to_world_space(input.mouse, camera.window);
-    let mut mouse_world_vert = vert(Some(space), None, None);
-    mouse_world_vert.pos.x *= camera.window.y / camera.window.x;
-
-    // mouse pos in world space
-    let mouse_pos = Vec2::new(
-        mouse_world_vert.pos.x * camera.zoom / camera.aspect_ratio() + camera.pos.x,
-        mouse_world_vert.pos.y * camera.zoom + camera.pos.y,
-    );
+    let (mouse_world_vert, mouse_pos) = utils::world_mouse(input, camera);
 
     if !config.gridline_front {
         draw_gridline(render_pass, renderer, &camera, &config, queue);
