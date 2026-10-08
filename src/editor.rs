@@ -415,7 +415,7 @@ pub fn simple_event(
             edit_mode.editing_mesh = !edit_mode.editing_mesh;
 
             // unselect all verts when switching modes
-            selections.vert_ids = vec![]
+            selections.vert_ids = vec![];
         }
         Events::ToggleSettingIkTarget => {
             edit_mode.setting_ik_target = value == 1.;
@@ -1368,6 +1368,7 @@ fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode, ui: &
     edit_mode.showing_mesh = false;
     edit_mode.setting_ik_target = false;
     edit_mode.setting_bind_bone = false;
+    edit_mode.editing_mesh = false;
     ui.last_selected = "".to_string();
 }
 
