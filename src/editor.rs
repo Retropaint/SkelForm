@@ -667,7 +667,6 @@ pub fn simple_event(
             let sel = selections;
             #[rustfmt::skip]
             macro_rules! verts {() => { armature.sel_bone_mut(&sel).unwrap().vertices }}
-            let vert_id = verts!()[value as usize].id;
 
             let tex_img = renderer::sel_tex_img(&armature.sel_bone(&sel).unwrap(), &armature);
             verts!().remove(value as usize);
@@ -679,7 +678,7 @@ pub fn simple_event(
             cleanup_vertices(bone);
 
             // remove vertex from selected IDs
-            let idx = sel.vert_ids.iter().position(|id| (*id) == vert_id as usize);
+            let idx = sel.vert_ids.iter().position(|id| (*id) == value as usize);
             if idx != None {
                 sel.vert_ids.remove(idx.unwrap());
             }
@@ -687,7 +686,7 @@ pub fn simple_event(
             // remove this vert from its binds
             'bind: for bind in &mut armature.sel_bone_mut(&sel).unwrap().binds {
                 for v in 0..bind.verts.len() {
-                    if bind.verts[v].id == vert_id as i32 {
+                    if bind.verts[v].id == value as i32 {
                         bind.verts.remove(v);
                         continue 'bind;
                     }
@@ -1158,7 +1157,8 @@ pub fn simple_event(
         Events::CreateBindBone => {
             // create new bone
             let (_, new_idx) = armature.new_bone(-1);
-            armature.bones[new_idx].pos = utils::world_mouse(input, camera).1;
+            armature.bones[new_idx].pos =
+                utils::world_mouse(ui.context_menu.last_mouse_pos, camera).1;
 
             // set new bone as bind
             let bone_id = armature.bones[new_idx].id;
@@ -1166,7 +1166,7 @@ pub fn simple_event(
                 bone_id,
                 is_path: false,
                 verts: vec![BoneBindVert {
-                    id: selections.vert_ids[0] as i32,
+                    id: value as i32,
                     weight: 1.,
                 }],
             };
@@ -1182,7 +1182,7 @@ pub fn simple_event(
             let binds = &armature.sel_bone(selections).unwrap().binds;
             let bind = binds.last().unwrap().clone();
             let vertices = &mut armature.sel_bone_mut(selections).unwrap().vertices;
-            let vert_id = selections.vert_ids[0] as u32;
+            let vert_id = value as u32;
             let vert = &mut vertices.iter_mut().find(|v| v.id == vert_id).unwrap();
             let temp_bones = &renderer.temp_bones;
             let temp_bone = temp_bones.iter().find(|b| b.id == sel_bone_id).unwrap();

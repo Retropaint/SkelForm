@@ -440,6 +440,9 @@ pub struct ContextMenu {
     pub hide: bool,
     pub keep: bool,
     pub pos: Vec2,
+
+    // mouse' position at the time this menu was opened
+    pub last_mouse_pos: Vec2,
 }
 
 impl ContextMenu {
@@ -452,6 +455,7 @@ impl ContextMenu {
         self.hide = true;
         self.keep = false;
         self.id = "".to_string();
+        self.pos = Vec2::new(-1., -1.);
     }
 
     pub fn is(&self, id: &String) -> bool {

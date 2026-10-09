@@ -1674,9 +1674,9 @@ pub fn open_link(url: &str) {
     }
 }
 
-pub fn world_mouse(input: &InputStates, camera: &Camera) -> (Vertex, Vec2) {
+pub fn world_mouse(pos: Vec2, camera: &Camera) -> (Vertex, Vec2) {
     // create vert on cursor
-    let space = utils::screen_to_world_space(input.mouse, camera.window);
+    let space = utils::screen_to_world_space(pos, camera.window);
     let mut mouse_world_vert = Vertex {
         pos: space,
         ..Default::default()

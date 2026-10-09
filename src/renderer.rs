@@ -35,7 +35,7 @@ pub fn render(
         renderer.has_loaded = true;
     }
 
-    let (mouse_world_vert, mouse_pos) = utils::world_mouse(input, camera);
+    let (mouse_world_vert, mouse_pos) = utils::world_mouse(input.mouse, camera);
 
     if !config.gridline_front {
         draw_gridline(render_pass, renderer, &camera, &config, queue);
@@ -1570,12 +1570,12 @@ pub fn bone_vertices(
         let (mut verts, mut indices) = point!(wv, col, size, rot);
         add_point!(verts, indices, wv);
         if input.right_clicked {
-            if world_verts.len() <= 4 {
-                events.open_modal("vert_limit", false);
-            } else {
-                events.delete_vertex(wv);
-                break;
-            }
+            //if world_verts.len() <= 4 {
+            //    events.open_modal("vert_limit", false);
+            //} else {
+            //    events.delete_vertex(wv);
+            //    break;
+            //}
         }
 
         if input.left_pressed {

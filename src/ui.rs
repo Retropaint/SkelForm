@@ -63,6 +63,7 @@ pub fn draw(
 
                     // get last mouse pos, to stick menu on
                     if let Some(pointer) = context.input_mut(|i| i.pointer.latest_pos()) {
+                        shared_ui.context_menu.last_mouse_pos = input.mouse;
                         shared_ui.context_menu.pos = pointer.into();
                     }
 
@@ -383,6 +384,12 @@ pub fn draw(
         let str = format!("#{}", selections.hovering_vert_id);
         let painter = context.debug_painter();
         painter.debug_text(pos, egui::Align2::CENTER_CENTER, egui::Color32::GREEN, str);
+
+        if input.right_clicked {
+            shared_ui.context_menu.close();
+            let context_id = &format!("vertex_{}", selections.hovering_vert_id);
+            shared_ui.context_menu.show(context_id);
+        }
     }
 
     // show hovered bone's name
@@ -907,16 +914,16 @@ fn context_menu_content(
         ui.context_rename(shared_ui, &config, context_id.clone());
         let delete_bone = PolarId::DeleteBone;
         ui.context_delete(shared_ui, &config, events, "delete_bone", delete_bone);
-        if ui.context_button("New Bone", &config).clicked() {
-            events.new_bone(split[1].parse().unwrap());
-            shared_ui.context_menu.close();
-        }
         if ui.context_button("Copy Bone", &config).clicked() {
             events.copy_bone(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
         if copy_buffer.bones.len() > 0 && ui.context_button("Paste Bone", &config).clicked() {
             events.paste_bone(split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
+        if ui.context_button("New Bone", &config).clicked() {
+            events.new_bone(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
         if ui.context_button("New Parent", &config).clicked() {
@@ -997,6 +1004,15 @@ fn context_menu_content(
         }
         if copy_buffer.bones.len() > 0 && ui.context_button("Paste Bones", &config).clicked() {
             events.paste_bone(usize::MAX);
+            shared_ui.context_menu.close();
+        }
+    } else if element_id == "vertex" {
+        if ui.context_button("Delete Vertex", &config).clicked() {
+            events.delete_vertex(split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
+        if ui.context_button("Create Bind", &config).clicked() {
+            events.create_bind_bone(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
     }
