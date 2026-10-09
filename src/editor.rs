@@ -1177,12 +1177,11 @@ pub fn simple_event(
         }
         Events::CreateBindBone => {
             // create new bone
-            let (_, idx) = armature.new_bone(-1);
-            let (_, mouse_pos) = utils::world_mouse(input, camera);
-            armature.bones[idx].pos = mouse_pos;
+            let (_, new_idx) = armature.new_bone(-1);
+            armature.bones[new_idx].pos = utils::world_mouse(input, camera).1;
 
             // set new bone as bind
-            let bone_id = armature.bones[idx].id;
+            let bone_id = armature.bones[new_idx].id;
             let bind = BoneBind {
                 bone_id,
                 is_path: false,
@@ -1210,12 +1209,7 @@ pub fn simple_event(
             adjust_vert_by_bind(vert, true, &bind, &renderer.temp_bones, temp_bone);
 
             // set bone as child of mesh
-            drag_bone(
-                armature,
-                selections.bone_ids[0],
-                &vec![armature.bones[idx].id],
-                false,
-            );
+            drag_bone(armature, selections.bone_ids[0], &vec![bone_id], false);
         }
         _ => {}
     }
