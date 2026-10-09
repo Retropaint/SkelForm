@@ -902,11 +902,15 @@ fn context_menu_content(
 ) {
     let raw_split = shared_ui.context_id_parsed();
     let split: Vec<String> = raw_split.iter().map(|s| s.to_string()).collect();
-    let id = &split[0];
-    if id == "bone" {
+    let element_id = &split[0];
+    if element_id == "bone" {
         ui.context_rename(shared_ui, &config, context_id.clone());
         let delete_bone = PolarId::DeleteBone;
         ui.context_delete(shared_ui, &config, events, "delete_bone", delete_bone);
+        if ui.context_button("New Bone", &config).clicked() {
+            events.new_bone(split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
         if ui.context_button("Copy Bone", &config).clicked() {
             events.copy_bone(split[1].parse().unwrap());
             shared_ui.context_menu.close();
@@ -919,7 +923,7 @@ fn context_menu_content(
             events.create_parent_bone(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
-    } else if id == "style" {
+    } else if element_id == "style" {
         ui.context_rename(shared_ui, config, context_id);
         let str = "delete_style";
         ui.context_delete(shared_ui, config, events, str, PolarId::DeleteStyle);
@@ -932,7 +936,7 @@ fn context_menu_content(
             }
             shared_ui.context_menu.close();
         }
-    } else if id == "tex" {
+    } else if element_id == "tex" {
         ui.context_rename(shared_ui, &config, context_id);
         let polar_id = PolarId::DeleteSelectedTextures;
         ui.context_delete(shared_ui, &config, events, "delete_tex", polar_id);
@@ -944,7 +948,7 @@ fn context_menu_content(
             events.trim_texture(style_idx.unwrap(), split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
-    } else if id == "anim" {
+    } else if element_id == "anim" {
         ui.context_rename(shared_ui, config, context_id);
         let del_anim = PolarId::DeleteAnim;
         ui.context_delete(shared_ui, config, events, "delete_anim", del_anim);
@@ -953,7 +957,7 @@ fn context_menu_content(
             events.duplicate_anim(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
-    } else if id == "keyframe" {
+    } else if element_id == "keyframe" {
         if ui.context_button("Copy Keyframe(s)", &config).clicked() {
             events.copy_selected_keyframes();
             shared_ui.context_menu.close();
@@ -968,7 +972,7 @@ fn context_menu_content(
             events.delete_selected_keyframes();
             shared_ui.context_menu.close();
         }
-    } else if id == "kfline" {
+    } else if element_id == "kfline" {
         // copy option, if there are any keyframes in this frame
         let frame: i32 = split[1].parse().unwrap();
         let anim = armature.sel_anim(&selections).unwrap();
@@ -986,12 +990,13 @@ fn context_menu_content(
         if !has_kf && copy_buffer.keyframes.len() == 0 {
             shared_ui.context_menu.close();
         }
-    } else if id == "armature" {
-        if copy_buffer.bones.len() > 0 && ui.context_button("Paste Bones", &config).clicked() {
-            events.paste_bone(usize::MAX);
+    } else if element_id == "armature" {
+        if ui.context_button("New Bone", &config).clicked() {
+            events.new_bone(-1);
             shared_ui.context_menu.close();
         }
-        if copy_buffer.bones.len() == 0 {
+        if copy_buffer.bones.len() > 0 && ui.context_button("Paste Bones", &config).clicked() {
+            events.paste_bone(usize::MAX);
             shared_ui.context_menu.close();
         }
     }

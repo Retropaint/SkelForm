@@ -677,6 +677,10 @@ pub struct Ui {
     pub edited_dragging: bool,
     pub started_edit_dragging: bool,
     pub drag_modifier: f32,
+
+    // used to prevent created bones from being auto-selected.
+    // when trying out skf for the first time, new users might feel
+    // overwhelemd with the bone panel if it opened unprompted
     pub selected_bone_first_time: bool,
 
     // last selected element (bone, anim, keyframe, etc).
@@ -1372,10 +1376,15 @@ impl Armature {
         }
     }
 
-    pub fn new_bone(&mut self, id: i32) -> (Bone, usize) {
+    pub fn new_bone(&mut self, target_id: i32) -> (Bone, usize) {
         let mut parent_id = -1;
-        if self.bones.iter().find(|b| b.id == id) != None {
-            parent_id = self.bones.iter().find(|b| b.id == id).unwrap().parent_id;
+        if self.bones.iter().find(|b| b.id == target_id) != None {
+            parent_id = self
+                .bones
+                .iter()
+                .find(|b| b.id == target_id)
+                .unwrap()
+                .parent_id;
         }
         let ids = self.bones.iter().map(|a| a.id).collect();
 
@@ -1400,12 +1409,12 @@ impl Armature {
             pivot_scale: Vec2::new(1., 1.),
             ..Default::default()
         };
-        if id == -1 {
+        if target_id == -1 {
             self.bones.push(new_bone.clone());
         } else {
             // add new bone below targeted one, keeping in mind its children
             for i in 0..self.bones.len() {
-                if self.bones[i].id != id {
+                if self.bones[i].id != target_id {
                     continue;
                 }
 
@@ -2508,7 +2517,6 @@ impl EventState {
     generic_event!(new_animation, Events::NewAnimation);
     generic_event!(apply_settings, Events::ApplySettings);
     generic_event!(reset_config, Events::ResetConfig);
-    generic_event!(new_bone, Events::NewBone);
     generic_event!(new_style, Events::NewStyle);
     generic_event!(unselect_all, Events::UnselectAll);
     generic_event!(cam_zoom_scroll, Events::CamZoomScroll);
@@ -2593,6 +2601,7 @@ impl EventState {
     event_with_value!(toggle_edit_alt, Events::ToggleEditAlt, toggle, i32);
     #[rustfmt::skip]    event_with_value!(reduce_global_ik_family_ids, Events::ReduceGlobalIkFamilyIds, base, i32);
     event_with_value!(create_bind_bone, Events::CreateBindBone, vert_id, i32);
+    event_with_value!(new_bone, Events::NewBone, target_id, i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

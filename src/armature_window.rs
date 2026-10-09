@@ -58,7 +58,7 @@ pub fn draw(
         ui.horizontal(|ui| {
             let button = ui.skf_button(shared_ui.loc("armature_panel.new_bone_button"));
             if button.clicked() {
-                events.new_bone();
+                events.new_bone(-1);
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if armature.bones.len() == 0 && armature.styles.len() == 0 {
@@ -394,7 +394,7 @@ pub fn draw_hierarchy(
                 }
 
                 let width = ui.available_width();
-                let context_id = "bone_".to_string() + &idx.to_string();
+                let context_id = "bone_".to_string() + &bone.id.to_string();
                 if shared_ui.rename_id == context_id {
                     let bone_name = shared_ui.loc("armature_panel.new_bone_name").to_string();
                     let bone = armature.bones[b].name.clone();

@@ -659,26 +659,6 @@ pub fn simple_event(
             ui.scale = config.ui_scale;
             crate::utils::save_config(&config);
         }
-        Events::NewBone => {
-            let idx;
-            if armature.sel_bone(&selections) == None {
-                (_, idx) = armature.new_bone(-1);
-            } else {
-                let id = armature.sel_bone(&selections).unwrap().id;
-                (_, idx) = armature.new_bone(id);
-            }
-            armature.bones[idx].name = "".to_string();
-            let sel = selections;
-            // don't select new bone until user has done it at least once this session.
-            // This is to prevent user from being overwhelmed with bone panel
-            if ui.selected_bone_first_time {
-                select_bone(sel, ui, armature, edit_mode, input, idx, false);
-            }
-            ui.rename_id = "bone_".to_string() + &idx.to_string();
-
-            // mark this bone as selected, so focus isn't taken away from bone name input
-            ui.prev_selected_bone_idx = idx;
-        }
         Events::SetBoneTexture => {
             let frame = selections.anim_frame;
             armature.set_bone_tex(value as i32, str_value.clone(), selections.anim, frame);
@@ -1210,6 +1190,36 @@ pub fn simple_event(
 
             // set bone as child of mesh
             drag_bone(armature, selections.bone_ids[0], &vec![bone_id], false);
+        }
+        Events::NewBone => {
+            // set target bone as either one selected via the event, or currently selected one
+            let target_id = if value != -1. {
+                value as i32
+            } else if armature.sel_bone(&selections) != None {
+                armature.sel_bone(&selections).unwrap().id
+            } else {
+                -1
+            };
+
+            // reset selected bones, so that only new bone will be selected later
+            selections.bone_ids = vec![];
+            selections.bone_idx = usize::MAX;
+
+            // create new bone
+            let idx;
+            (_, idx) = armature.new_bone(target_id);
+            armature.bones[idx].name = "".to_string();
+            let new_bone_id = armature.bones[idx].id;
+
+            // don't select new bone until user has done it at least once this session
+            if ui.selected_bone_first_time {
+                select_bone(selections, ui, armature, edit_mode, input, idx, false);
+            }
+
+            ui.rename_id = "bone_".to_string() + &new_bone_id.to_string();
+
+            // mark this bone as selected, so focus isn't taken away from bone name input
+            ui.prev_selected_bone_idx = idx;
         }
         _ => {}
     }
