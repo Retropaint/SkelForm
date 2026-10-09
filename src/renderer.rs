@@ -24,7 +24,7 @@ pub fn render(
     let sel = selections.clone();
 
     // no edits are being made if the LMB isn't down
-    if !input.left_down {
+    if !input.left_down && edit_mode.is_moving || edit_mode.is_rotating || edit_mode.is_scaling {
         events.update_current_editing(1);
     }
 
