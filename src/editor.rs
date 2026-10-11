@@ -535,11 +535,11 @@ pub fn simple_event(
             ui.headline = str_value.to_string();
         }
         Events::DeleteBone => {
-            let mut ids_to_delete = vec![armature.bones[value as usize].id];
+            let mut ids_to_delete = vec![value as i32];
 
             // delete all selected bones, if the one being deleted is also selected
-            let bone_id = &armature.bones[value as usize].id;
-            if selections.bone_ids.contains(bone_id) {
+            let bone_id = value as i32;
+            if selections.bone_ids.contains(&bone_id) {
                 for id in &selections.bone_ids {
                     ids_to_delete.push(*id);
                 }
