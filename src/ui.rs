@@ -1976,8 +1976,7 @@ fn render_bar(
                                 ui.style_mut().interaction.selectable_labels = false;
                                 ui.label(egui::RichText::new(str).size(font_size as f32));
                             });
-                        })
-                        .response;
+                        });
                     if button.hovered() || button.has_focus() {
                         shared_ui.hovering_render_toggle = idx;
                         hovered = true;
@@ -2215,13 +2214,8 @@ pub fn top_bar_button(
         text_col -= Color::new(60, 60, 60, 0);
     }
     let font = egui::FontId::new(13., egui::FontFamily::Proportional);
-    painter.text(
-        pos,
-        egui::Align2::LEFT_TOP,
-        text,
-        font.clone(),
-        text_col.into(),
-    );
+    let top = egui::Align2::LEFT_TOP;
+    painter.text(pos, top, text, font.clone(), text_col.into());
 
     let key_str = if key != None {
         key.unwrap().display()

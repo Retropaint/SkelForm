@@ -418,6 +418,8 @@ pub fn render(
 
             // color wireframes based on bone group color
             for vert in &mut world_verts {
+                vert.tint = TintColor::new(1., 1., 1., 1.);
+                vert.add_color = Color::new(0, 0, 0, 0);
                 if bone.group_color.a == 0 {
                     vert.color = config.colors.center_point;
                     vert.color.a -= 50;
@@ -1680,9 +1682,10 @@ pub fn vert_lines(
         col -= Color::new(125, 125, 125, 0);
         col.a = if editable { 200 } else { 100 };
         let tint = TintColor::new(1., 1., 1., 1.);
+        let add_color = Color::new(0, 0, 0, 0);
 
         #[rustfmt::skip]
-        macro_rules! vert { ($pos:expr, $v:expr) => { Vertex { pos: $pos, color: col, tint, ..$v } }; }
+        macro_rules! vert { ($pos:expr, $v:expr) => { Vertex { pos: $pos, color: col, tint, add_color, ..$v } }; }
 
         let mut v0_top = vert!(v0.pos + base, v0);
         let mut v0_bot = vert!(v0.pos - base, v0);
