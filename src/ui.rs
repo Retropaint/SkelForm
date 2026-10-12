@@ -709,7 +709,7 @@ pub fn kb_inputs(
         // delete selected bone(s)
         if last == "bone" {
             events.open_polar_modal(PolarId::DeleteBone, shared_ui.loc("polar.delete_bone"));
-            shared_ui.context_menu.id = format!("bone_{}", selections.bone_idx);
+            shared_ui.context_menu.id = format!("bone_{}", selections.bone_ids[0]);
         } else if last == "anim" {
             events.open_polar_modal(PolarId::DeleteAnim, shared_ui.loc("polar.delete_anim"));
             shared_ui.context_menu.id = format!("anim_{}", selections.anim);

@@ -668,8 +668,15 @@ pub fn simple_event(
             #[rustfmt::skip]
             macro_rules! verts {() => { armature.sel_bone_mut(&sel).unwrap().vertices }}
 
+            // don't delete if there are only 4 vertices
+            if verts!().len() == 4 {
+                open_modal(ui, false, ui.loc("vert_limit"));
+                return;
+            }
+
             let tex_img = renderer::sel_tex_img(&armature.sel_bone(&sel).unwrap(), &armature);
-            verts!().remove(value as usize);
+            let idx = verts!().iter().position(|v| v.id == value as u32).unwrap();
+            verts!().remove(idx);
             verts!() = sort_vertices(verts!().clone());
             let verts = verts!().clone();
             let bone = armature.sel_bone_mut(&sel).unwrap();
@@ -1284,7 +1291,7 @@ fn select_bone(
     // rename bone if already selected and in right-side panel
     let holding_mods = input.holding_mod || input.holding_shift;
     if sel.bone_idx == idx && !from_renderer && ui.last_selected == "bone" && !holding_mods {
-        ui.rename_id = "bone_".to_string() + &sel.bone_idx.to_string().clone();
+        ui.rename_id = "bone_".to_string() + &sel.bone_ids[0].to_string().clone();
         ui.edit_value = Some(armature.sel_bone(&sel).unwrap().name.clone());
         return;
     }
