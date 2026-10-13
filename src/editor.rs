@@ -1157,8 +1157,10 @@ pub fn simple_event(
             }
         }
         Events::AdjustKeyframesBySpeed => {
-            for kfs in &mut armature.sel_anim_mut(selections).unwrap().keyframes {
-                kfs.frame = (kfs.frame as f32 / value).round() as i32;
+            if value != 0. {
+                for kfs in &mut armature.sel_anim_mut(selections).unwrap().keyframes {
+                    kfs.frame = (kfs.frame as f32 / value).round() as i32;
+                }
             }
         }
         Events::CreateBindBone => {
