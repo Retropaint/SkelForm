@@ -613,8 +613,8 @@ pub fn simple_event(
             }
             styles.remove(idx);
         }
-        Events::CopyBone => copy_bone(copy_buffer, selections, armature, value as usize),
-        Events::PasteBone => paste_bone(copy_buffer, selections, armature, value as usize),
+        Events::CopyBone => copy_bone(copy_buffer, selections, armature, value as i32),
+        Events::PasteBone => paste_bone(copy_buffer, selections, armature, value as i32),
         Events::NewAnimation => {
             armature.new_animation();
             let idx = armature.animations.len() - 1;
@@ -1127,7 +1127,7 @@ pub fn simple_event(
         }
         Events::GlobalCopy => match ui.last_selected.as_str() {
             "keyframe" => copy_selected_keyframes(copy_buffer, ui),
-            "bone" => copy_bone(copy_buffer, selections, armature, selections.bone_idx),
+            "bone" => copy_bone(copy_buffer, selections, armature, selections.bone_ids[0]),
             _ => {}
         },
         Events::GlobalPaste => match ui.last_selected.as_str() {
@@ -1137,7 +1137,7 @@ pub fn simple_event(
             }
             "bone" => {
                 undo_states.new_undo_bones(&armature.bones);
-                paste_bone(copy_buffer, selections, armature, selections.bone_idx);
+                paste_bone(copy_buffer, selections, armature, value as i32);
             }
             _ => {}
         },
@@ -2059,17 +2059,17 @@ pub fn copy_bone(
     copy_buffer: &mut CopyBuffer,
     selections: &mut SelectionState,
     armature: &mut Armature,
-    bone_idx: usize,
+    bone_id: i32,
 ) {
     copy_buffer.bones = vec![];
 
     // ignore copying if there isn't a target bone
-    if bone_idx == usize::MAX {
+    if bone_id == i32::MAX {
         return;
     }
 
     // either get the bone ID from event, or selected bones if more than 1
-    let mut bones_to_copy = vec![armature.bones[bone_idx].id];
+    let mut bones_to_copy = vec![bone_id];
     if selections.bone_ids.len() > 1 {
         bones_to_copy = selections.bone_ids.clone();
     }
@@ -2092,7 +2092,7 @@ fn paste_bone(
     copy_buffer: &mut CopyBuffer,
     selections: &mut SelectionState,
     armature: &mut Armature,
-    pasted_idx: usize,
+    pasted_id: i32,
 ) {
     // determine which id to give the new bone(s), based on the highest current id
     let ids: Vec<i32> = armature.bones.iter().map(|bone| bone.id).collect();
@@ -2126,9 +2126,10 @@ fn paste_bone(
         // selected bone's parent is also pasted bone's
         if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
             bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
-        } else if pasted_idx != usize::MAX {
-            insert_idx = pasted_idx;
-            bone.parent_id = armature.bones[pasted_idx].parent_id;
+        } else if pasted_id != i32::MAX {
+            let bones = &armature.bones;
+            insert_idx = bones.iter().position(|b| b.id == pasted_id).unwrap();
+            bone.parent_id = armature.bones[insert_idx].parent_id;
         } else {
             bone.parent_id = -1;
         }
