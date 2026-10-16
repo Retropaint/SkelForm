@@ -372,8 +372,16 @@ pub fn simple_event(
     config: &mut crate::Config,
 ) {
     match event {
-        Events::CamZoomIn => camera.zoom = MIN_ZOOM.max(camera.zoom - 10.),
-        Events::CamZoomOut => camera.zoom += 10.,
+        Events::CamZoomIn => {
+            let old_zoom = camera.zoom;
+            camera.zoom = MIN_ZOOM.max(camera.zoom - 10.);
+            move_camera_with_zoom(camera, input, old_zoom);
+        }
+        Events::CamZoomOut => {
+            let old_zoom = camera.zoom;
+            camera.zoom += 10.;
+            move_camera_with_zoom(camera, input, old_zoom);
+        }
         Events::EditModeMove => edit_mode.current = EditModes::Move,
         Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
         Events::EditModeScale => edit_mode.current = EditModes::Scale,
@@ -447,7 +455,10 @@ pub fn simple_event(
             armature.sel_bone_mut(&selections).unwrap().effects_folded = value == 1.
         }
         Events::CamZoomScroll => {
+            let old_zoom = camera.zoom;
             camera.zoom = MIN_ZOOM.max(camera.zoom - input.scroll_delta);
+            move_camera_with_zoom(camera, input, old_zoom);
+
             match config.layout {
                 UiLayout::Right => camera.pos.x -= input.scroll_delta * 0.5,
                 UiLayout::Left => camera.pos.x += input.scroll_delta * 0.5,
@@ -2254,4 +2265,12 @@ pub fn adjust_vert_by_bind(
         vert.pos = utils::rotate(&vert.pos, -sel_temp_bone.rot);
         vert.pos *= bind_bone.scale / sel_temp_bone.scale;
     }
+}
+
+// move camera so mouse is at the same world position
+pub fn move_camera_with_zoom(camera: &mut Camera, input: &InputStates, old_zoom: f32) {
+    let center = camera.window / 2.;
+    let mouse_center = input.mouse - center;
+    let diff = (camera.zoom - old_zoom) / camera.window.y / 0.5;
+    camera.pos += Vec2::new(-mouse_center.x * diff, mouse_center.y * diff);
 }

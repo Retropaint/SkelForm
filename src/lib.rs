@@ -46,7 +46,7 @@ use image::ImageEncoder;
 
 use winit::{
     application::ApplicationHandler,
-    dpi::PhysicalSize,
+    dpi::{LogicalSize, PhysicalSize},
     event::WindowEvent,
     window::{Theme, Window},
 };
@@ -1588,10 +1588,6 @@ pub struct Gpu {
 }
 
 impl Gpu {
-    pub fn aspect_ratio(&self) -> f32 {
-        self.surface_config.width as f32 / self.surface_config.height.max(1) as f32
-    }
-
     pub fn resize(&mut self, width: u32, height: u32) {
         self.surface_config.width = width;
         self.surface_config.height = height;
