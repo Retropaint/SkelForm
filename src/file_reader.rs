@@ -693,6 +693,27 @@ pub fn read_import(
                 utils::import(file.unwrap(), shared, queue, device, bgl, context);
                 if !shared.ui.recent_file_paths.contains(&filepath) {
                     shared.ui.recent_file_paths.push(filepath);
+                } else {
+                    let paths = &shared.ui.recent_file_paths;
+                    let idx = &paths.iter().position(|p| p == &filepath).unwrap();
+                    shared.ui.recent_file_paths.remove(*idx);
+                    let len = shared.ui.recent_file_paths.len();
+                    let paths = &shared.ui.recent_file_paths;
+
+                    // check for autosave, and move it to first in the recent list
+                    let autosave = "autosave".to_string();
+                    let as_idx = paths.iter().position(|p| p.contains(&autosave));
+                    if let Some(as_idx) = as_idx {
+                        let autosave_path = paths[as_idx].clone();
+                        shared.ui.recent_file_paths.remove(as_idx);
+                        shared.ui.recent_file_paths.insert(0, autosave_path);
+
+                        // move opened file to 2nd in list (below autosave)
+                        shared.ui.recent_file_paths.insert(1.min(len), filepath)
+                    } else {
+                        // move opened file to 1st in list (no autosave)
+                        shared.ui.recent_file_paths.insert(0.min(len), filepath)
+                    }
                 }
                 utils::save_to_recent_files(shared.ui.recent_file_paths.clone());
             }
