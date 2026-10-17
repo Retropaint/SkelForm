@@ -116,22 +116,16 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 }
 
 fn init_shared(shared: &mut Shared) {
-    shared.selections.bone_idx = usize::MAX;
+    shared.selections.init();
     shared.camera.zoom = 2000.;
-    shared.selections.anim = usize::MAX;
     shared.ui.timeline_zoom = 1.;
-    shared.selections.anim_frame = -1;
     shared.ui.dragged_keyframe = Keyframe {
         frame: -1,
         ..Default::default()
     };
-    shared.selections.vert_ids = vec![];
     shared.ui.scale = 1.;
     shared.ui.context_menu.close();
     shared.ui.hovering_tex = -1;
-    shared.selections.style_id = -1;
-    shared.selections.style_id = -1;
-    shared.selections.bind = -1;
     shared.ui.styles_modal_size = Vec2::new(500., 500.);
     shared.screenshot_res = Vec2::new(128., 128.);
     shared.ui.sprite_size = Vec2::new(128., 128.);
@@ -152,8 +146,6 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.scale = shared.config.ui_scale;
     shared.ui.export_style_id = usize::MAX;
     shared.renderer.clicked_vert_id = -1;
-    shared.selections.hovering_vert_id = -1;
-    shared.selections.hovering_bone_id = -1;
     shared.ui.first_startup = true;
     shared.ui.adjusting_anim_speed = -999.;
 

@@ -2867,6 +2867,20 @@ pub struct SelectionState {
 }
 
 impl SelectionState {
+    pub fn init(&mut self) {
+        *self = Self {
+            bone_idx: usize::MAX,
+            anim: usize::MAX,
+            anim_frame: -1,
+            vert_ids: vec![],
+            style_id: -1,
+            bind: -1,
+            hovering_vert_id: -1,
+            hovering_bone_id: -1,
+            ..Default::default()
+        };
+    }
+
     pub fn only_root_bones(&self, bones: &Vec<Bone>) -> Vec<i32> {
         let mut c_bone_ids = self.bone_ids.clone();
         c_bone_ids.retain(|id| {

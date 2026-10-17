@@ -677,6 +677,10 @@ pub fn read_import(
         file = getFile();
     }
 
+    // reset editor state
+    shared.selections.init();
+    shared.ui.last_selected = "".to_string();
+
     let ext = filename.split('.').last().unwrap();
     match ext {
         "swf" => {
