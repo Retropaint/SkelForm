@@ -1138,17 +1138,23 @@ pub fn simple_event(
         }
         Events::GlobalCopy => match ui.last_selected.as_str() {
             "keyframe" => copy_selected_keyframes(copy_buffer, ui),
-            "bone" => copy_bone(copy_buffer, selections, armature, selections.bone_ids[0]),
+            "bone" => {
+                let sbi = &selections.bone_ids;
+                let bone_id = if sbi.len() > 0 { sbi[0] } else { i32::MAX };
+                copy_bone(copy_buffer, selections, armature, bone_id)
+            }
             _ => {}
         },
         Events::GlobalPaste => match ui.last_selected.as_str() {
             "keyframe" => {
                 undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap());
-                paste_keyframes_on_frame(copy_buffer, armature, selections, value as i32);
+                paste_keyframes_on_frame(copy_buffer, armature, selections, selections.anim_frame);
             }
             "bone" => {
                 undo_states.new_undo_bones(&armature.bones);
-                paste_bone(copy_buffer, selections, armature, value as i32);
+                let sbi = &selections.bone_ids;
+                let bone_id = if sbi.len() > 0 { sbi[0] } else { i32::MAX };
+                paste_bone(copy_buffer, selections, armature, bone_id);
             }
             _ => {}
         },
@@ -2187,7 +2193,7 @@ fn paste_keyframes_on_frame(
     selections: &mut SelectionState,
     frame: i32,
 ) {
-    if copy_buffer.keyframes.len() == 0 {
+    if frame < 0 || frame == i32::MAX || copy_buffer.keyframes.len() == 0 {
         return;
     }
 
