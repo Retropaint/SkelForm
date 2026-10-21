@@ -202,9 +202,10 @@ pub fn render(
                 let bones = &temp_arm.bones;
                 let v = &bones.iter().find(|bone| bone.id == tb.id).unwrap().vertices;
                 let uv = v[c0].uv * bary.3 + v[c1].uv * bary.1 + v[c2].uv * bary.2;
-                let mut pos = (utils::rotate(&(v[c0].pos - tb.pos), -tb.rot)) * bary.3
-                    + (utils::rotate(&(v[c1].pos - tb.pos), -tb.rot)) * bary.1
-                    + (utils::rotate(&(v[c2].pos - tb.pos), -tb.rot)) * bary.2;
+                let rot = tb.rot + tb.pivot_rot;
+                let mut pos = (utils::rotate(&(v[c0].pos - tb.pos), -rot)) * bary.3
+                    + (utils::rotate(&(v[c1].pos - tb.pos), -rot)) * bary.1
+                    + (utils::rotate(&(v[c2].pos - tb.pos), -rot)) * bary.2;
                 pos /= tb.scale;
 
                 // editing this bone's mesh, add this as new vertex candidate
@@ -1721,8 +1722,9 @@ pub fn vert_lines(
                 } else if input.left_clicked && !added_vert {
                     let bones = &bones;
                     let v = &bones.iter().find(|b| b.id == bone.id).unwrap().vertices;
-                    let wv0 = utils::rotate(&(v[i0 as usize].pos - bone.pos), -bone.rot);
-                    let wv1 = utils::rotate(&(v[i1 as usize].pos - bone.pos), -bone.rot);
+                    let rot = bone.rot + bone.pivot_rot;
+                    let wv0 = utils::rotate(&(v[i0 as usize].pos - bone.pos), -rot);
+                    let wv1 = utils::rotate(&(v[i1 as usize].pos - bone.pos), -rot);
                     let pos = wv0 + (wv1 - wv0) * interp;
                     *new_vert = Some(vert(Some(pos / bone.scale), None, Some(uv)));
                     added_vert = true;
