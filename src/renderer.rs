@@ -948,6 +948,12 @@ pub fn runtime_construction(
 
 // simulate physics on the armature, then apply it to constructed bones
 fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<Bone>) {
+    // since constructed_bones is based on temporary bones from the renderer,
+    // it can be misaligned if a new bone if a new bone was created on the frame before
+    if constructed_bones.len() != armature_bones.len() {
+        return;
+    }
+
     for b in 0..armature_bones.len() {
         let s = Vec2::new(0.3, 0.3);
         let e = Vec2::new(0.6, 0.6);

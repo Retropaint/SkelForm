@@ -1398,8 +1398,12 @@ impl Armature {
             highest_zindex = highest_zindex.max(bone.zindex);
         }
 
+        let mut name = "New Bone".to_string();
+        while self.bones.iter().find(|b| b.name == name) != None {
+            name += "-";
+        }
         let new_bone = Bone {
-            name: "New Bone".to_string(),
+            name,
             parent_id,
             id: generate_id(ids),
             scale: Vec2 { x: 1., y: 1. },

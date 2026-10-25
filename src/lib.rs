@@ -901,6 +901,7 @@ impl BackendRenderer {
             physics_active = shared.armature.has_physics(bone.id);
         }
         if !physics_active {
+            // apply runtime-based construction (including physics)
             shared.armature.bones = renderer::runtime_construction(
                 &mut shared.renderer.temp_bones,
                 &shared.armature.animated_bones,

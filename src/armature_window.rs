@@ -396,7 +396,11 @@ pub fn draw_hierarchy(
                 let width = ui.available_width();
                 let context_id = "bone_".to_string() + &bone.id.to_string();
                 if shared_ui.rename_id == context_id {
-                    let bone_name = shared_ui.loc("armature_panel.new_bone_name").to_string();
+                    let mut bone_name = shared_ui.loc("armature_panel.new_bone_name").to_string();
+                    while armature.bones.iter().find(|b| b.name == bone_name) != None {
+                        bone_name += "-";
+                    }
+
                     let bone = armature.bones[b].name.clone();
                     let options = Some(TextInputOptions {
                         size: Vec2::new(ui.available_width(), 21.),

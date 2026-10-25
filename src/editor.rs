@@ -402,7 +402,13 @@ pub fn simple_event(
                 config.colors = data;
             }
         }
-        Events::RenameBone => armature.bones[value as usize].name = str_value,
+        Events::RenameBone => {
+            if armature.bones.iter().find(|b| b.name == str_value) == None {
+                armature.bones[value as usize].name = str_value;
+            } else {
+                open_modal(ui, false, "For animation purposes, 2 or more bones can't have the same name.\n\nPlease give this bone another name.".to_string());
+            }
+        }
         Events::RenameAnim => {
             if !ui.just_made_anim {
                 undo_states.new_undo_anim(&armature.animations[value as usize]);
