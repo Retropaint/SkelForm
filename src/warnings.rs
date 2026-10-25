@@ -106,6 +106,7 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
 
     // Warning::UnassignedTextures
     {
+        // prepare all texture names in a list
         let mut remaining_texes: Vec<String> = vec![];
         for style in &armature.styles {
             let mut tex_names: Vec<String> =
@@ -114,11 +115,24 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
         }
         remaining_texes.dedup();
 
+        // get all textures from bones
         let mut all_bone_tex_names: Vec<String> =
             armature.bones.iter().map(|b| b.tex.clone()).collect();
         all_bone_tex_names.dedup();
 
-        remaining_texes.retain(|name| !all_bone_tex_names.contains(name));
+        // get all textures from animations
+        let mut all_anim_texes: Vec<String> = vec![];
+        for anim in &armature.animations {
+            for keyframe in &anim.keyframes {
+                if keyframe.element == AnimElement::Texture {
+                    all_anim_texes.push(keyframe.value_str.to_string());
+                }
+            }
+        }
+
+        // get textures that were unused in both bones and animations
+        remaining_texes
+            .retain(|name| !all_bone_tex_names.contains(name) && !all_anim_texes.contains(name));
         if remaining_texes.len() > 0 {
             let warn = W::UnusedTextures;
             warnings.push(Warning::full(warn, vec![], 0., remaining_texes));
