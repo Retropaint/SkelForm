@@ -638,6 +638,7 @@ pub fn prepare_files(
                         next_kf: -1,
                         label_top: 0.,
                         handle_preset: HandlePreset::Linear,
+                        bone_name: family[i].name.clone(),
                     });
                 }
             }
@@ -721,8 +722,12 @@ pub fn prepare_files(
             let keyframe = &mut armature_copy.animations[a].keyframes[kf];
             let bones = &mut armature_copy.bones.iter();
 
-            // populate keyframe bone_id
-            keyframe.bone_id = bones.position(|bone| bone.id == keyframe.bone_id).unwrap() as i32;
+            //// populate keyframe bone_id
+            //keyframe.bone_id = bones.position(|bone| bone.id == keyframe.bone_id).unwrap() as i32;
+
+            // populate keyframe bone_name
+            let kf_id = keyframe.bone_id;
+            keyframe.bone_name = bones.find(|b| b.id == kf_id).unwrap().name.clone();
 
             // populate value_str of constraint keyframes
             if keyframe.element == AnimElement::IkConstraint {
@@ -1044,6 +1049,15 @@ pub fn import<R: Read + std::io::Seek>(
         tex_data: vec![],
         animated_bones: vec![],
     };
+
+    // set bone_id for keyframes based on bone_name
+    for anim in &mut temp_arm.animations {
+        for keyframe in &mut anim.keyframes {
+            let bones = &temp_arm.bones;
+            let kf_name = &keyframe.bone_name;
+            keyframe.bone_id = bones.iter().find(|b| b.name == *kf_name).unwrap().id;
+        }
+    }
 
     editor::cleanup_keyframes(&mut temp_arm.animations);
 

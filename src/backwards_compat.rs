@@ -1,4 +1,4 @@
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use crate::{InverseKinematics, Physics, Root, Visuals};
 
@@ -8,6 +8,7 @@ macro_rules! get_array {
     };
 }
 
+// run backwards compatibility checks for this JSON data
 pub fn proceed(mut raw: serde_json::Value) -> (Root, String) {
     let version_raw = raw.get("version").unwrap().clone();
     let version = version_raw.as_str().unwrap();
@@ -31,10 +32,15 @@ pub fn proceed(mut raw: serde_json::Value) -> (Root, String) {
     from_ver!("0.3", v0d3_to_v0d4);
     from_ver!("0.4", v0d4_to_v0d4d1);
     from_ver!("0.5", v0d5_to_v0d6);
+    from_ver!("0.6", v0d6_7_8_to_v0d9);
+    from_ver!("0.7", v0d6_7_8_to_v0d9);
+    from_ver!("0.8", v0d6_7_8_to_v0d9);
 
     if err == "" {
+        // return new JSON version
         return (serde_json::from_value(raw).unwrap(), "".to_string());
     } else {
+        // return JSON parsing error
         return (Root::default(), err);
     }
 }
@@ -153,4 +159,23 @@ pub fn v0d5_to_v0d6(raw: &mut serde_json::Value) {
     }
 
     *raw = serde_json::to_value(&root.unwrap()).unwrap();
+}
+
+pub fn v0d6_7_8_to_v0d9(raw: &mut serde_json::Value) {
+    // initiate Root
+    let json_string = serde_json::to_string(&raw).unwrap();
+    let mut deserializer = serde_json::Deserializer::from_str(&json_string);
+    let root: Result<Root, _> = serde_path_to_error::deserialize(&mut deserializer);
+
+    // populate keyframe bone_name based on bone_id
+    for a in 0..raw.get("animations").unwrap().as_array().unwrap().len() {
+        let anim = &mut get_array!(raw, "animations")[a];
+        for k in 0..get_array!(anim, "keyframes").len() {
+            let kf = &mut get_array!(anim, "keyframes")[k];
+            let bones = &root.as_ref().unwrap().bones;
+            let name = &bones.iter().find(|b| b.id == kf["bone_id"]).unwrap().name;
+            kf["bone_name"] = serde_json::Value::String(name.to_string());
+            kf["bone_id"] = json!(-1);
+        }
+    }
 }
