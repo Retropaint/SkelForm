@@ -920,8 +920,6 @@ impl BackendRenderer {
             render_pass, &self.gpu.queue, &shared.camera, &shared.input, &mut shared.armature,
             &shared.config, &shared.edit_mode, &mut shared.selections, &mut shared.renderer, &mut shared.events,
         );
-
-        shared.ui.warnings = warnings::check_warnings(&shared.armature);
     }
 
     // processes style to export, if appropriate

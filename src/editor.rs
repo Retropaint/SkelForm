@@ -404,6 +404,7 @@ pub fn simple_event(
         }
         Events::RenameBone => {
             if let Some(idx) = armature.bones.iter().position(|b| b.name == str_value) {
+                // warn about using same-name bones (and don't rename bone)
                 ui.context_menu.id = format!("bone_{}", idx.to_string());
                 ui.polar_id = PolarId::GoToSameNameBone;
                 ui.polar_modal = true;
