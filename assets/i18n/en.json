@@ -470,6 +470,7 @@
     "delete_style": "Are you sure to delete this style?",
     "unsaved": "Quit and discard unsaved changes?",
     "delete_keyframe_line": "Are you sure to delete this keyframe line?",
+    "same_name_bone": "For animation purposes, 2 or more bones can't have the same name.\n\nGo to the bone with the same name?",
     "yes": "Yes",
     "no": "No",
     "click_yes": "(Click 'Yes' to confirm)"

@@ -165,6 +165,9 @@ pub fn polar_modal(
                     events.new_armature();
                     shared_ui.startup_window = false;
                 }
+                PolarId::GoToSameNameBone => {
+                    events.select_bone(ctx0, false);
+                }
             }
         },
     );

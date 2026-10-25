@@ -403,10 +403,13 @@ pub fn simple_event(
             }
         }
         Events::RenameBone => {
-            if armature.bones.iter().find(|b| b.name == str_value) == None {
-                armature.bones[value as usize].name = str_value;
+            if let Some(idx) = armature.bones.iter().position(|b| b.name == str_value) {
+                ui.context_menu.id = format!("bone_{}", idx.to_string());
+                ui.polar_id = PolarId::GoToSameNameBone;
+                ui.polar_modal = true;
+                ui.headline = ui.loc("polar.same_name_bone");
             } else {
-                open_modal(ui, false, "For animation purposes, 2 or more bones can't have the same name.\n\nPlease give this bone another name.".to_string());
+                armature.bones[value as usize].name = str_value;
             }
         }
         Events::RenameAnim => {

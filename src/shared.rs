@@ -430,6 +430,7 @@ pub enum PolarId {
     OpenCrashlog,
     ImportedPsd,
     StartNewWhileUnsaved,
+    GoToSameNameBone,
 }
 enum_string!(PolarId);
 
