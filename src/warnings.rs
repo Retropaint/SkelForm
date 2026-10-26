@@ -139,6 +139,44 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
         }
     }
 
+    // Warning::UnreachableStyles
+    {
+        // a style is unreachable if it's below another that has all overlapping texture names
+
+        let mut unr_style_ids = vec![];
+        let mut blocking_style_name = vec![];
+
+        for s0 in 0..armature.styles.len() {
+            let style0 = &armature.styles[s0];
+            if !style0.active {
+                continue;
+            }
+            for s1 in 0..armature.styles.len() {
+                if s1 >= s0 {
+                    break;
+                }
+                let style1 = &armature.styles[s1];
+                if !style1.active {
+                    continue;
+                }
+
+                let texes0: Vec<String> = style0.textures.iter().map(|t| t.name.clone()).collect();
+                let texes1: Vec<String> = style1.textures.iter().map(|t| t.name.clone()).collect();
+                if texes0.iter().all(|item| texes1.contains(item)) && texes1.len() >= texes0.len() {
+                    // style1 is blocking style0
+                    unr_style_ids.push(style0.id as usize);
+                    blocking_style_name.push(style1.name.to_string());
+                    break;
+                }
+            }
+        }
+
+        if unr_style_ids.len() > 0 {
+            let warn = W::UnreachableStyles;
+            warnings.push(Warning::full(warn, unr_style_ids, 0., blocking_style_name));
+        }
+    }
+
     warnings.sort_by(|a, b| (a.warn_type.clone() as usize).cmp(&(b.warn_type.clone() as usize)));
     warnings
 }
@@ -277,6 +315,24 @@ pub fn warning_line(
                     tex_str += ",";
                 }
                 ui.label(tex_str);
+            }
+        }
+        W::UnreachableStyles => {
+            let str = shared_ui.loc("warnings.UnreachableStyles");
+            ui.label(egui::RichText::new(str).color(warn_color))
+                .on_hover_text(shared_ui.loc("warnings.UnreachableStyles_desc"));
+            for s in 0..warning.ids.len() {
+                let id = warning.ids[s];
+                let style_name = &styles.iter().find(|b| b.id == id as i32).unwrap().name;
+                let mut str = format!("{}/{}", style_name.to_string(), warning.str_values[s]);
+                if s != warning.ids.len() - 1 {
+                    str += ",";
+                }
+                let egui_str = egui::RichText::new(str).underline();
+                if ui.clickable_label(egui_str).clicked() {
+                    events.select_style(warning.ids[s] as i32);
+                    shared_ui.styles_modal = true;
+                };
             }
         }
     }

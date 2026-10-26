@@ -56,10 +56,13 @@ pub fn draw(
         ui.separator();
 
         ui.horizontal(|ui| {
+            // New Bone button
             let button = ui.skf_button(shared_ui.loc("armature_panel.new_bone_button"));
             if button.clicked() {
                 events.new_bone(-1);
             }
+
+            // Styles dropdown
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if armature.bones.len() == 0 && armature.styles.len() == 0 {
                     return;
@@ -72,23 +75,64 @@ pub fn draw(
                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                     .show_ui(ui, |ui| {
                         for s in 0..armature.styles.len() {
+                            let style = &armature.styles[s];
                             ui.set_width(80.);
                             let active = armature.styles[s].active;
-                            let tick = if active { " 👁" } else { "" };
+                            let text_col;
+                            let mut blocking_style = "".to_string();
+
+                            // determine which icon to use
+                            let tick = if active {
+                                for warning in &shared_ui.warnings {
+                                    if warning.warn_type != Warnings::UnreachableStyles {
+                                        continue;
+                                    }
+                                    for i in 0..warning.ids.len() {
+                                        if warning.ids[i] == style.id as usize {
+                                            blocking_style = warning.str_values[i].clone();
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if blocking_style != "" {
+                                    // blocked style; show warning icon
+                                    text_col = config.colors.warning_text;
+                                    " ⚠"
+                                } else {
+                                    // active style; show eye icon
+                                    text_col = config.colors.text;
+                                    " 👁"
+                                }
+                            } else {
+                                blocking_style = "".to_string();
+
+                                // inactive style; show nothing
+                                text_col = config.colors.text;
+                                ""
+                            };
+
+                            // style name (truncated) and button
                             let mut name = armature.styles[s].name.to_string();
                             name = utils::trunc_str(ui, &name, ui.min_rect().width() - 20.);
-                            let label = ui.selectable_value(&mut -1, s as i32, name);
-                            #[rustfmt::skip]
-                            ui.painter().text(
-                                label.rect.right_center(),
-                                egui::Align2::RIGHT_CENTER,
-                                tick,
-                                egui::FontId::default(),
-                                config.colors.text.into(),
-                            );
+                            let label = if blocking_style == "" {
+                                ui.selectable_value(&mut -1, s as i32, name)
+                            } else {
+                                let warn = RichText::new(name).color(config.colors.warning_text);
+                                let label = ui.selectable_value(&mut -1, s as i32, warn);
+                                let loc = "armature_panel.unreachable_style";
+                                let desc = shared_ui.loc(loc).replace("$", &blocking_style);
+                                label.on_hover_text(desc)
+                            };
                             if label.clicked() {
                                 events.toggle_style_active(s, !armature.styles[s].active);
                             }
+
+                            // draw icon
+                            let rect = label.rect.right_center();
+                            let center = egui::Align2::RIGHT_CENTER;
+                            let font = egui::FontId::default();
+                            ui.painter().text(rect, center, tick, font, text_col.into());
                         }
                         let str_setup = shared_ui.loc("setup_option");
                         let label = ui.selectable_value(&mut -1, -2, str_setup);
