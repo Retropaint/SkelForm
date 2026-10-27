@@ -197,7 +197,7 @@
     "styles": "👕 Styles",
     "styles_desc": "Create a style, add textures, then assign bones to use it. Click on styles in the dropdown to toggle them.\n\nBones use textures based on their index. To change it, select a bone > 'Tex Index'.\n\nMultiple styles can be active at once. Bones assinged to multiple active styles will use the top-most first.",
     "empty_armature": "Check out:",
-    "unreachable_style": "This style is blocked by $. Check warnings (top-right) for more info.",
+    "blocked_style": "This style is blocked by $. Move it above, or de-activate $.",
     "fold_desc": "Fold/unfold this bone's children",
     "icons": {
       "tex": "Texture - $tex",
@@ -490,8 +490,8 @@
     "BoneOutOfFamilyCulprits": "Culprits:",
     "EmptyStyles": "Styles with no textures:",
     "UnusedTextures": "Unused textures:",
-    "UnreachableStyles": "Unreachable styles:",
-    "UnreachableStyles_desc": "The left-side style is active, but all textures are overridden by the right-side style."
+    "BlockedStyles": "Blocked styles:",
+    "BlockedStyles_desc": "The left-side style is active, but all textures are overridden by the right-side style."
   },
   "edit_bar": {
     "move": {

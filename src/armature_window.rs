@@ -84,7 +84,7 @@ pub fn draw(
                             // determine which icon to use
                             let tick = if active {
                                 for warning in &shared_ui.warnings {
-                                    if warning.warn_type != Warnings::UnreachableStyles {
+                                    if warning.warn_type != Warnings::BlockedStyles {
                                         continue;
                                     }
                                     for i in 0..warning.ids.len() {
@@ -120,7 +120,7 @@ pub fn draw(
                             } else {
                                 let warn = RichText::new(name).color(config.colors.warning_text);
                                 let label = ui.selectable_value(&mut -1, s as i32, warn);
-                                let loc = "armature_panel.unreachable_style";
+                                let loc = "armature_panel.blocked_style";
                                 let desc = shared_ui.loc(loc).replace("$", &blocking_style);
                                 label.on_hover_text(desc)
                             };

@@ -139,9 +139,9 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
         }
     }
 
-    // Warning::UnreachableStyles
+    // Warning::BlockedStyles
     {
-        // a style is unreachable if it's below another that has all overlapping texture names
+        // a style is blocked if it's below another that has all overlapping texture names
 
         let mut unr_style_ids = vec![];
         let mut blocking_style_name = vec![];
@@ -172,7 +172,8 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
         }
 
         if unr_style_ids.len() > 0 {
-            let warn = W::UnreachableStyles;
+            println!("{:?} {:?}", unr_style_ids, blocking_style_name);
+            let warn = W::BlockedStyles;
             warnings.push(Warning::full(warn, unr_style_ids, 0., blocking_style_name));
         }
     }
@@ -317,10 +318,10 @@ pub fn warning_line(
                 ui.label(tex_str);
             }
         }
-        W::UnreachableStyles => {
-            let str = shared_ui.loc("warnings.UnreachableStyles");
+        W::BlockedStyles => {
+            let str = shared_ui.loc("warnings.BlockedStyles");
             ui.label(egui::RichText::new(str).color(warn_color))
-                .on_hover_text(shared_ui.loc("warnings.UnreachableStyles_desc"));
+                .on_hover_text(shared_ui.loc("warnings.BlockedStyles_desc"));
             for s in 0..warning.ids.len() {
                 let id = warning.ids[s];
                 let style_name = &styles.iter().find(|b| b.id == id as i32).unwrap().name;

@@ -485,7 +485,7 @@ pub enum Warnings {
     BoneOutOfFamily,
     EmptyStyles,
     UnusedTextures,
-    UnreachableStyles,
+    BlockedStyles,
 }
 
 #[derive(Clone, Default, PartialEq)]
