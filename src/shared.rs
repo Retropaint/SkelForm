@@ -486,6 +486,7 @@ pub enum Warnings {
     EmptyStyles,
     UnusedTextures,
     BlockedStyles,
+    SameNameBones,
 }
 
 #[derive(Clone, Default, PartialEq)]

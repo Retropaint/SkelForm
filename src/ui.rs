@@ -1120,7 +1120,6 @@ fn top_panel(
 
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    shared_ui.warnings = warnings::check_warnings(&armature);
                     if shared_ui.warnings.len() == 0 {
                         return;
                     }

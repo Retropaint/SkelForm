@@ -5,6 +5,7 @@ use crate::*;
 type W = Warnings;
 
 pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
+    println!("test");
     let mut warnings: Vec<Warning> = vec![];
 
     for b in 0..armature.bones.len() {
@@ -47,7 +48,7 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
             }
         }
 
-        // Warning::NoVertsInBind
+        // Warning::OnlyPath
         if bone.binds.len() == 1 && bone.binds[0].is_path {
             warnings.push(Warning::new(W::OnlyPath, vec![bone.id as usize]));
         }
@@ -82,7 +83,7 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
 
         // Warning::NoWeights
         for b in 0..bone.binds.len() {
-            let mut no_weights = true;
+            let mut no_weights = bone.binds[b].verts.len() > 0;
             for vert in &bone.binds[b].verts {
                 if vert.weight > 0. {
                     no_weights = false;
@@ -177,6 +178,31 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
         }
     }
 
+    // Warning::SameNameBones
+    {
+        let warn = W::SameNameBones;
+        let mut name_groups: Vec<(&String, Vec<usize>)> = vec![];
+
+        for bone in &armature.bones {
+            if name_groups.iter().find(|ng| *ng.0 == bone.name) != None {
+                continue;
+            }
+            let id_group: Vec<usize> = armature
+                .bones
+                .iter()
+                .filter(|b| b.name == bone.name)
+                .map(|b| b.id as usize)
+                .collect();
+            if id_group.len() > 1 {
+                name_groups.push((&bone.name, id_group));
+            }
+        }
+
+        for group in name_groups {
+            warnings.push(Warning::new(warn.clone(), group.1));
+        }
+    }
+
     warnings.sort_by(|a, b| (a.warn_type.clone() as usize).cmp(&(b.warn_type.clone() as usize)));
     warnings
 }
@@ -197,22 +223,8 @@ pub fn warning_line(
         W::SameZIndex => {
             let str = shared_ui
                 .loc("warnings.SameZIndex")
-                .replace("$bone_count", &warning.ids.len().to_string())
                 .replace("$zindex", &warning.value.to_string());
-            ui.label(egui::RichText::new(str).color(warn_color));
-            for i in 0..warning.ids.len() {
-                let id = warning.ids[i];
-                let bone_name = &bones.iter().find(|b| b.id == id as i32).unwrap().name;
-                let mut str = bone_name.to_string();
-                if i != warning.ids.len() - 1 {
-                    str += ",";
-                }
-                let egui_str = egui::RichText::new(str).underline();
-                if ui.clickable_label(egui_str).clicked() {
-                    let idx = bones.iter().position(|b| b.id == id as i32).unwrap();
-                    events.select_bone(idx, true);
-                };
-            }
+            bone_list(str, "".to_string(), ui, warning, bones, events, warn_color);
         }
         W::NoIkTarget => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
@@ -335,6 +347,11 @@ pub fn warning_line(
                 };
             }
         }
+        W::SameNameBones => {
+            let str = shared_ui.loc("warnings.SameNameBones");
+            let tooltip = shared_ui.loc("warnings.SameNameBones_desc");
+            bone_list(str, tooltip, ui, warning, bones, events, warn_color);
+        }
     }
 }
 
@@ -353,4 +370,35 @@ fn clickable_bone(
         events.unselect_all();
         events.select_bone(idx.unwrap(), true);
     };
+}
+
+pub fn bone_list(
+    headline: String,
+    tooltip: String,
+    ui: &mut egui::Ui,
+    warning: &Warning,
+    bones: &Vec<Bone>,
+    events: &mut EventState,
+    warn_color: Color,
+) {
+    let text = egui::RichText::new(headline).color(warn_color);
+    if tooltip == "" {
+        ui.label(text);
+    } else {
+        ui.label(text).on_hover_text(tooltip);
+    }
+
+    for i in 0..warning.ids.len() {
+        let id = warning.ids[i];
+        let bone_name = &bones.iter().find(|b| b.id == id as i32).unwrap().name;
+        let mut str = bone_name.to_string();
+        if i != warning.ids.len() - 1 {
+            str += ",";
+        }
+        let egui_str = egui::RichText::new(str).underline();
+        if ui.clickable_label(egui_str).clicked() {
+            let idx = bones.iter().position(|b| b.id == id as i32).unwrap();
+            events.select_bone(idx, true);
+        };
+    }
 }

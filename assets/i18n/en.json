@@ -479,7 +479,7 @@
   "warnings": {
     "heading": "Warnings ℹ",
     "desc": "These are quirks that need your attention to fix.\nRuntimes may have issues with this armature if not dealt with.",
-    "SameZIndex": "$bone_count bones with Z-index of $zindex:",
+    "SameZIndex": "Bones with Z-index of $zindex:",
     "NoIkTarget": "$bone has no IK target.",
     "UnboundBind": "$bone's bind $bind has no bone attached.",
     "NoVertsInBind": "$bone's bind $bind has no vertices.",
@@ -490,8 +490,10 @@
     "BoneOutOfFamilyCulprits": "Culprits:",
     "EmptyStyles": "Styles with no textures:",
     "UnusedTextures": "Unused textures:",
-    "BlockedStyles": "Blocked styles:",
-    "BlockedStyles_desc": "The left-side style is active, but all textures are overridden by the right-side style."
+    "BlockedStyles": "Blocked styles ℹ:",
+    "BlockedStyles_desc": "The left-side style is active, but all textures are overridden by the right-side style.",
+    "SameNameBones": "Bones with same name ℹ:",
+    "SameNameBones_desc": "Animations use bone names; this bone may not be animated correctly in runtimes."
   },
   "edit_bar": {
     "move": {

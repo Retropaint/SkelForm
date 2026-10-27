@@ -12,6 +12,7 @@ use image::buffer::ConvertBuffer;
 use image::{RgbImage, Rgba, RgbaImage};
 use max_rects::packing_box::PackingBox;
 use renderer::construction;
+use warnings::check_warnings;
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
@@ -1256,6 +1257,9 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     shared.armature = temp_arm;
+
+    // update warnings for this armature
+    shared.ui.warnings = check_warnings(&shared.armature);
 
     shared.events.unselect_all();
     shared.ui.startup_window = false;

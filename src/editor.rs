@@ -45,6 +45,15 @@ pub fn iterate_events(
             }
             _ => {}
         };
+
+        if event == E::Undo || event == E::Redo {
+            match last_event {
+                E::EditBone | E::RenameBone => {
+                    ui.warnings = warnings::check_warnings(&armature);
+                }
+                _ => {}
+            }
+        }
     }
 
     if event == Events::MoveAnimation {
@@ -257,6 +266,7 @@ pub fn iterate_events(
         #[rustfmt::skip]
         edit_bone(armature, config, events.values[0] as i32, anim_el, events.values[2], events.str_values[0].clone(), anim_id, anim_frame);
         cleanup_keyframes(&mut armature.animations);
+        ui.warnings = warnings::check_warnings(&armature);
 
         events.events.remove(0);
         events.values.drain(0..=4);
@@ -403,15 +413,18 @@ pub fn simple_event(
             }
         }
         Events::RenameBone => {
-            if let Some(idx) = armature.bones.iter().position(|b| b.name == str_value) {
+            let idx = armature.bones.iter().position(|b| b.name == str_value);
+            if false && idx != None {
                 // warn about using same-name bones (and don't rename bone)
-                ui.context_menu.id = format!("bone_{}", idx.to_string());
+                // unused: same-names have a warning
+                ui.context_menu.id = format!("bone_{}", idx.unwrap());
                 ui.polar_id = PolarId::GoToSameNameBone;
                 ui.polar_modal = true;
                 ui.headline = ui.loc("polar.same_name_bone");
             } else {
                 armature.bones[value as usize].name = str_value;
             }
+            ui.warnings = warnings::check_warnings(&armature);
         }
         Events::RenameAnim => {
             if !ui.just_made_anim {
