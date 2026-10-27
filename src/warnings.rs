@@ -172,7 +172,6 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
         }
 
         if unr_style_ids.len() > 0 {
-            println!("{:?} {:?}", unr_style_ids, blocking_style_name);
             let warn = W::BlockedStyles;
             warnings.push(Warning::full(warn, unr_style_ids, 0., blocking_style_name));
         }

@@ -62,93 +62,7 @@ pub fn draw(
                 events.new_bone(-1);
             }
 
-            // Styles dropdown
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if armature.bones.len() == 0 && armature.styles.len() == 0 {
-                    return;
-                }
-                let id = format!("styles{}", armature.styles.len().to_string());
-                let dropdown = egui::ComboBox::new(id, "")
-                    .selected_text(&shared_ui.loc("armature_panel.styles"))
-                    .width(80.)
-                    .height(500.)
-                    .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
-                    .show_ui(ui, |ui| {
-                        for s in 0..armature.styles.len() {
-                            let style = &armature.styles[s];
-                            ui.set_width(80.);
-                            let active = armature.styles[s].active;
-                            let text_col;
-                            let mut blocking_style = "".to_string();
-
-                            // determine which icon to use
-                            let tick = if active {
-                                for warning in &shared_ui.warnings {
-                                    if warning.warn_type != Warnings::BlockedStyles {
-                                        continue;
-                                    }
-                                    for i in 0..warning.ids.len() {
-                                        if warning.ids[i] == style.id as usize {
-                                            blocking_style = warning.str_values[i].clone();
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if blocking_style != "" {
-                                    // blocked style; show warning icon
-                                    text_col = config.colors.warning_text;
-                                    " ⚠"
-                                } else {
-                                    // active style; show eye icon
-                                    text_col = config.colors.text;
-                                    " 👁"
-                                }
-                            } else {
-                                blocking_style = "".to_string();
-
-                                // inactive style; show nothing
-                                text_col = config.colors.text;
-                                ""
-                            };
-
-                            // style name (truncated) and button
-                            let mut name = armature.styles[s].name.to_string();
-                            name = utils::trunc_str(ui, &name, ui.min_rect().width() - 20.);
-                            let label = if blocking_style == "" {
-                                ui.selectable_value(&mut -1, s as i32, name)
-                            } else {
-                                let warn = RichText::new(name).color(config.colors.warning_text);
-                                let label = ui.selectable_value(&mut -1, s as i32, warn);
-                                let loc = "armature_panel.blocked_style";
-                                let desc = shared_ui.loc(loc).replace("$", &blocking_style);
-                                label.on_hover_text(desc)
-                            };
-                            if label.clicked() {
-                                events.toggle_style_active(s, !armature.styles[s].active);
-                            }
-
-                            // draw icon
-                            let rect = label.rect.right_center();
-                            let center = egui::Align2::RIGHT_CENTER;
-                            let font = egui::FontId::default();
-                            ui.painter().text(rect, center, tick, font, text_col.into());
-                        }
-                        let str_setup = shared_ui.loc("setup_option");
-                        let label = ui.selectable_value(&mut -1, -2, str_setup);
-                        if label.clicked() {
-                            shared_ui.styles_modal = true;
-                            ui.close();
-                        }
-                    })
-                    .response
-                    .on_hover_text(&shared_ui.loc("armature_panel.styles_desc"));
-
-                if shared_ui.focus_style_dropdown {
-                    dropdown.request_focus();
-                    shared_ui.focus_style_dropdown = false;
-                }
-            });
+            styles_dropdown(ui, shared_ui, armature, config, events);
         });
         ui.add_space(3.);
         let scroll_area = egui::ScrollArea::both().max_height(ui.available_height() - 10.);
@@ -760,4 +674,99 @@ fn luminance(color: Color) -> f32 {
     // https://en.wikipedia.org/wiki/Relative_luminance
     let y = (0.2125, 0.7154, 0.0721);
     (color.r as f32 * 255.) * y.0 + (color.g as f32 * 255.) * y.1 + (color.b as f32 * 255.) * y.2
+}
+
+pub fn styles_dropdown(
+    ui: &mut egui::Ui,
+    shared_ui: &mut crate::Ui,
+    armature: &Armature,
+    config: &Config,
+    events: &mut EventState,
+) {
+    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+        if armature.bones.len() == 0 && armature.styles.len() == 0 {
+            return;
+        }
+        let id = format!("styles{}", armature.styles.len().to_string());
+        let dropdown = egui::ComboBox::new(id, "")
+            .selected_text(&shared_ui.loc("armature_panel.styles"))
+            .width(80.)
+            .height(500.)
+            .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
+            .show_ui(ui, |ui| {
+                for s in 0..armature.styles.len() {
+                    let style = &armature.styles[s];
+                    ui.set_width(80.);
+                    let active = armature.styles[s].active;
+                    let text_col;
+                    let mut blocking_style = "".to_string();
+
+                    // determine which icon to use
+                    let tick = if active {
+                        for warning in &shared_ui.warnings {
+                            if warning.warn_type != Warnings::BlockedStyles {
+                                continue;
+                            }
+                            for i in 0..warning.ids.len() {
+                                if warning.ids[i] == style.id as usize {
+                                    blocking_style = warning.str_values[i].clone();
+                                    break;
+                                }
+                            }
+                        }
+
+                        if blocking_style != "" {
+                            // blocked style; show warning icon
+                            text_col = config.colors.warning_text;
+                            " ⚠"
+                        } else {
+                            // active style; show eye icon
+                            text_col = config.colors.text;
+                            " 👁"
+                        }
+                    } else {
+                        blocking_style = "".to_string();
+
+                        // inactive style; show nothing
+                        text_col = config.colors.text;
+                        ""
+                    };
+
+                    // style name (truncated) and button
+                    let mut name = armature.styles[s].name.to_string();
+                    name = utils::trunc_str(ui, &name, ui.min_rect().width() - 20.);
+                    let label = if blocking_style == "" {
+                        ui.selectable_value(&mut -1, s as i32, name)
+                    } else {
+                        let warn = RichText::new(name).color(config.colors.warning_text);
+                        let label = ui.selectable_value(&mut -1, s as i32, warn);
+                        let loc = "armature_panel.blocked_style";
+                        let desc = shared_ui.loc(loc).replace("$", &blocking_style);
+                        label.on_hover_text(desc)
+                    };
+                    if label.clicked() {
+                        events.toggle_style_active(s, !armature.styles[s].active);
+                    }
+
+                    // draw icon
+                    let rect = label.rect.right_center();
+                    let center = egui::Align2::RIGHT_CENTER;
+                    let font = egui::FontId::default();
+                    ui.painter().text(rect, center, tick, font, text_col.into());
+                }
+                let str_setup = shared_ui.loc("setup_option");
+                let label = ui.selectable_value(&mut -1, -2, str_setup);
+                if label.clicked() {
+                    shared_ui.styles_modal = true;
+                    ui.close();
+                }
+            })
+            .response
+            .on_hover_text(&shared_ui.loc("armature_panel.styles_desc"));
+
+        if shared_ui.focus_style_dropdown {
+            dropdown.request_focus();
+            shared_ui.focus_style_dropdown = false;
+        }
+    });
 }
