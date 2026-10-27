@@ -797,6 +797,12 @@ pub fn style_dropdown_list(
     config: &Config,
     events: &mut EventState,
 ) {
+    let blocked_warnings: Vec<&Warning> = shared_ui
+        .warnings
+        .iter()
+        .filter(|w| w.warn_type == Warnings::BlockedStyles)
+        .collect();
+
     for s in 0..armature.styles.len() {
         let style = &armature.styles[s];
         ui.set_width(80.);
@@ -806,10 +812,7 @@ pub fn style_dropdown_list(
 
         // determine which icon to use
         let tick = if active {
-            for warning in &shared_ui.warnings {
-                if warning.warn_type != Warnings::BlockedStyles {
-                    continue;
-                }
+            for warning in &blocked_warnings {
                 for i in 0..warning.ids.len() {
                     if warning.ids[i] == style.id as usize {
                         blocking_style = warning.str_values[i].clone();
