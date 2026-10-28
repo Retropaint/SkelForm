@@ -324,8 +324,7 @@ impl ApplicationHandler for App {
                 renderer.resize(width as u32, height as u32);
             }
             WindowEvent::RedrawRequested => {
-                let now = Instant::now();
-                *last_render_time = now;
+                *last_render_time = Instant::now();
 
                 // keep cursor in place, while dragging input
                 if self.shared.ui.edited_dragging {
@@ -430,7 +429,7 @@ impl ApplicationHandler for App {
                     .egui_ctx()
                     .set_pixels_per_point(self.shared.ui.scale);
 
-                // set some render buffers to dirty if animating
+                // ANIMATED_BUFFERS: set some render buffers to dirty if animating
                 let animations = &self.shared.armature.animations;
                 let is_any_anim_playing =
                     animations.iter().find(|anim| anim.elapsed != None) != None;

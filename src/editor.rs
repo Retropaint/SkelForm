@@ -2308,13 +2308,26 @@ pub fn move_camera_with_zoom(camera: &mut Camera, input: &InputStates, old_zoom:
 
 pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
     type E = Events;
+
+    // update gridline buffer
     match event {
-        E::Undo | E::Redo | E::CamZoomIn | E::CamZoomOut | E::CamZoomScroll | E::EditCamera => {
+        E::Undo
+        | E::Redo
+        | E::CamZoomIn
+        | E::CamZoomOut
+        | E::CamZoomScroll
+        | E::EditCamera
+        | E::UpdateConfig
+        | E::SelectBone => {
             renderer.gridline_buffer.dirty = true;
         }
         _ => {}
     }
 
+    // update point and kite buffers
+    //
+    // note: these are also updated when animations are being played.
+    // search ANIMATED_BUFFERS to find it in lib.rs
     match event {
         E::CamZoomIn
         | E::CamZoomOut
@@ -2322,10 +2335,13 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         | E::EditCamera
         | E::NewBone
         | E::EditBone
+        | E::DragBone
         | E::ToggleAnimPanelOpen
         | E::Undo
         | E::Redo
-        | E::UpdateRenderOptions => {
+        | E::UpdateRenderOptions
+        | E::UpdateConfig
+        | E::SelectBone => {
             renderer.point_buffer.dirty = true;
             renderer.kite_buffer.dirty = true;
         }
