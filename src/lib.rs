@@ -323,7 +323,7 @@ impl ApplicationHandler for App {
                 self.shared.camera.window = Vec2::new(width as f32, height as f32);
                 self.shared.renderer.gridline_buffer.dirty = true;
                 self.shared.renderer.kite_buffer.dirty = true;
-                self.shared.renderer.bone_buffer.dirty = true;
+                self.shared.renderer.point_buffer.dirty = true;
                 renderer.resize(width as u32, height as u32);
             }
             WindowEvent::RedrawRequested => {
