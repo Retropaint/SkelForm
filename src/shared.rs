@@ -2351,6 +2351,11 @@ pub struct Renderer {
     pub ring_buffer: RenderBuffer,
     pub selected_ring_buffer: RenderBuffer,
     pub rect_buffer: RenderBuffer,
+
+    pub gridline_index_len: usize,
+
+    // setup gridline buffers if this is true
+    pub new_gridline_frame: bool,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]
