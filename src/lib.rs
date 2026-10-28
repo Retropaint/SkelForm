@@ -880,7 +880,9 @@ impl BackendRenderer {
         self.check_export_style(&shared.armature, &mut shared.ui);
 
         // animated bones will be used throughout the program
-        utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
+        if shared.renderer.point_buffer.dirty || shared.renderer.kite_buffer.dirty {
+            utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
+        }
         shared.renderer.temp_bones = shared.armature.animated_bones.clone();
 
         // initialize non-mesh bone verts and indices
