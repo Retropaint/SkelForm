@@ -246,7 +246,7 @@ pub fn iterate_events(
     } else if event == Events::EditCamera {
         camera.pos = Vec2::new(events.values[0], events.values[1]);
         camera.zoom = MIN_ZOOM.max(events.values[2]);
-        renderer.new_gridline_frame = true;
+        renderer.gridline_buffer.dirty = true;
 
         events.events.remove(0);
         events.values.drain(0..=2);
@@ -382,13 +382,13 @@ pub fn simple_event(
             let old_zoom = camera.zoom;
             camera.zoom = MIN_ZOOM.max(camera.zoom - 10.);
             move_camera_with_zoom(camera, input, old_zoom);
-            renderer.new_gridline_frame = true;
+            renderer.gridline_buffer.dirty = true;
         }
         Events::CamZoomOut => {
             let old_zoom = camera.zoom;
             camera.zoom += 10.;
             move_camera_with_zoom(camera, input, old_zoom);
-            renderer.new_gridline_frame = true;
+            renderer.gridline_buffer.dirty = true;
         }
         Events::EditModeMove => edit_mode.current = EditModes::Move,
         Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
@@ -479,7 +479,7 @@ pub fn simple_event(
             let old_zoom = camera.zoom;
             camera.zoom = MIN_ZOOM.max(camera.zoom - input.scroll_delta);
             move_camera_with_zoom(camera, input, old_zoom);
-            renderer.new_gridline_frame = true;
+            renderer.gridline_buffer.dirty = true;
 
             match config.layout {
                 UiLayout::Right => camera.pos.x -= input.scroll_delta * 0.5,

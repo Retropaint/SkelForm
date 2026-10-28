@@ -558,8 +558,6 @@ pub fn render(
         events.select_vertex(-1, false);
     }
 
-    renderer.new_gridline_frame = false;
-
     // dragging vert stuff
     if !input.left_down {
         renderer.editing_bone = false;
@@ -2019,12 +2017,12 @@ fn draw_gridline(
     queue: &Queue,
 ) {
     render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
-    if !renderer.new_gridline_frame {
+    if !renderer.gridline_buffer.dirty {
         draw(
             &renderer.gridline_buffer,
             render_pass,
             0,
-            renderer.gridline_index_len,
+            renderer.gridline_buffer.index_len,
         );
         return;
     }
@@ -2089,8 +2087,9 @@ fn draw_gridline(
     }
 
     setup_render_buffer(&mut renderer.gridline_buffer, &verts, &indices, queue);
-    renderer.gridline_index_len = indices.len();
     draw(&renderer.gridline_buffer, render_pass, 0, indices.len());
+    renderer.gridline_buffer.index_len = indices.len();
+    renderer.gridline_buffer.dirty = false;
 }
 
 macro_rules! vert {
