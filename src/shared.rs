@@ -1099,6 +1099,10 @@ pub struct Visuals {
     pub init_zindex: i32,
 }
 
+// time (seconds) until physics stops processing after any edit.
+// todo: change this from a constant (preferrably user setting)
+pub const PHYSICS_CUTOFF: f32 = 3.;
+
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 #[serde(default)]
 pub struct Physics {
@@ -2149,6 +2153,7 @@ pub struct EditMode {
     pub anim_open: bool,
     pub time: f32,
     pub sel_time: f32,
+    pub edit_time: f32,
     pub export_bake_ik: bool,
     pub export_exclude_ik: bool,
     pub export_img_format: ExportImgFormat,

@@ -433,7 +433,7 @@ impl ApplicationHandler for App {
                 let animations = &self.shared.armature.animations;
                 let is_any_anim_playing =
                     animations.iter().find(|anim| anim.elapsed != None) != None;
-                if is_any_anim_playing {
+                if is_any_anim_playing || self.shared.edit_mode.edit_time < shared::PHYSICS_CUTOFF {
                     self.shared.renderer.point_buffer.dirty = true;
                     self.shared.renderer.kite_buffer.dirty = true;
                 }
@@ -880,9 +880,7 @@ impl BackendRenderer {
         self.check_export_style(&shared.armature, &mut shared.ui);
 
         // animated bones will be used throughout the program
-        if shared.renderer.point_buffer.dirty || shared.renderer.kite_buffer.dirty {
-            utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
-        }
+        utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
         shared.renderer.temp_bones = shared.armature.animated_bones.clone();
 
         // initialize non-mesh bone verts and indices
@@ -904,13 +902,18 @@ impl BackendRenderer {
 
         // disable physics if current edited bone has physics properties.
         // this prevents the bone from being uncontrollable.
-        let mut physics_active = false;
+        let mut physics_bone_edited = false;
         if shared.edit_mode.is_moving || shared.edit_mode.is_scaling || shared.edit_mode.is_rotating
         {
             let bone = shared.armature.sel_bone(&shared.selections).unwrap();
-            physics_active = shared.armature.has_physics(bone.id);
+            physics_bone_edited = shared.armature.has_physics(bone.id);
         }
-        if !physics_active {
+
+        // process physics if an anim is playing, or an edit was just made
+        let anims = &shared.armature.animations;
+        let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
+        let processing_physics = shared.edit_mode.edit_time < shared::PHYSICS_CUTOFF;
+        if !physics_bone_edited && (is_any_anim_playing || processing_physics) {
             // apply runtime-based construction (including physics)
             shared.armature.bones = renderer::runtime_construction(
                 &mut shared.renderer.temp_bones,

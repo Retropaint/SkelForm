@@ -269,6 +269,8 @@ pub fn iterate_events(
         edit_bone(armature, config, events.values[0] as i32, anim_el, events.values[2], events.str_values[0].clone(), anim_id, anim_frame);
         cleanup_keyframes(&mut armature.animations);
 
+        edit_mode.edit_time = 0.;
+
         events.events.remove(0);
         events.values.drain(0..=4);
         events.str_values.remove(0);
