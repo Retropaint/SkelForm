@@ -24,13 +24,16 @@ pub fn iterate_events(
 ) {
     let mut last_event = Events::None;
     let event = events.events[0].clone();
+    type E = Events;
+
+    // set buffers dirty (to be updated later) based on the event
+    set_buffers_dirty(renderer, &event);
 
     // for every new event, create a new undo state
     // note: `edit_bone` is not included, as its undo is conditional (see `save_edited_bone`)
     if last_event != event {
         last_event = event.clone();
 
-        type E = Events;
         #[rustfmt::skip]
         match last_event {
             E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone | E::RaiseGlobalZindex | E::CreateBindBone => undo_states.new_undo_bones(&armature.bones),
@@ -207,6 +210,9 @@ pub fn iterate_events(
         selections.bone_idx = selected_bone_idx;
         selections.bone_ids = selected_bone_ids;
         ui.last_selected_frame = selections.anim_frame;
+
+        renderer.point_buffer.dirty = true;
+
         events.events.remove(0);
         events.values.drain(0..=2);
     } else if event == Events::ToggleIkDisabled {
@@ -246,7 +252,6 @@ pub fn iterate_events(
     } else if event == Events::EditCamera {
         camera.pos = Vec2::new(events.values[0], events.values[1]);
         camera.zoom = MIN_ZOOM.max(events.values[2]);
-        renderer.gridline_buffer.dirty = true;
 
         events.events.remove(0);
         events.values.drain(0..=2);
@@ -382,13 +387,11 @@ pub fn simple_event(
             let old_zoom = camera.zoom;
             camera.zoom = MIN_ZOOM.max(camera.zoom - 10.);
             move_camera_with_zoom(camera, input, old_zoom);
-            renderer.gridline_buffer.dirty = true;
         }
         Events::CamZoomOut => {
             let old_zoom = camera.zoom;
             camera.zoom += 10.;
             move_camera_with_zoom(camera, input, old_zoom);
-            renderer.gridline_buffer.dirty = true;
         }
         Events::EditModeMove => edit_mode.current = EditModes::Move,
         Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
@@ -479,7 +482,6 @@ pub fn simple_event(
             let old_zoom = camera.zoom;
             camera.zoom = MIN_ZOOM.max(camera.zoom - input.scroll_delta);
             move_camera_with_zoom(camera, input, old_zoom);
-            renderer.gridline_buffer.dirty = true;
 
             match config.layout {
                 UiLayout::Right => camera.pos.x -= input.scroll_delta * 0.5,
@@ -549,7 +551,7 @@ pub fn simple_event(
         Events::SelectAnim => {
             let val = value as usize;
             selections.anim = if value == f32::MAX { usize::MAX } else { val };
-            selections.anim_frame = 0;
+            selections.anim_frame = -1;
         }
         Events::SelectStyle => {
             selections.style_id = value as i32;
@@ -2302,4 +2304,31 @@ pub fn move_camera_with_zoom(camera: &mut Camera, input: &InputStates, old_zoom:
     let mouse_center = input.mouse - center;
     let diff = (camera.zoom - old_zoom) / camera.window.y / 0.5;
     camera.pos += Vec2::new(-mouse_center.x * diff, mouse_center.y * diff);
+}
+
+pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
+    type E = Events;
+    match event {
+        E::Undo | E::Redo | E::CamZoomIn | E::CamZoomOut | E::CamZoomScroll | E::EditCamera => {
+            renderer.gridline_buffer.dirty = true;
+        }
+        _ => {}
+    }
+
+    match event {
+        E::CamZoomIn
+        | E::CamZoomOut
+        | E::CamZoomScroll
+        | E::EditCamera
+        | E::NewBone
+        | E::EditBone
+        | E::ToggleAnimPanelOpen
+        | E::Undo
+        | E::Redo
+        | E::UpdateRenderOptions => {
+            renderer.point_buffer.dirty = true;
+            renderer.kite_buffer.dirty = true;
+        }
+        _ => {}
+    }
 }

@@ -2018,12 +2018,8 @@ fn draw_gridline(
 ) {
     render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
     if !renderer.gridline_buffer.dirty {
-        draw(
-            &renderer.gridline_buffer,
-            render_pass,
-            0,
-            renderer.gridline_buffer.index_len,
-        );
+        let len = renderer.gridline_buffer.index_len;
+        draw(&renderer.gridline_buffer, render_pass, 0, len);
         return;
     }
 
@@ -2167,6 +2163,13 @@ pub fn draw_points(
     events: &mut EventState,
     armature: &Armature,
 ) {
+    if !renderer.point_buffer.dirty {
+        render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
+        let len = renderer.point_buffer.index_len;
+        draw(&renderer.point_buffer, render_pass, 0, len);
+        return;
+    }
+
     let cam = world_camera(&camera, &config);
     let zero = Vec2::default();
     let mut point_verts = vec![];
@@ -2254,6 +2257,8 @@ pub fn draw_points(
         let point_buffer = &mut renderer.point_buffer;
         setup_render_buffer(point_buffer, &point_verts, &point_indices, queue);
         draw(&renderer.point_buffer, render_pass, 0, point_indices.len());
+        renderer.point_buffer.index_len = point_indices.len();
+        renderer.point_buffer.dirty = false;
     }
 
     renderer.on_point |= on_point;
@@ -2269,6 +2274,13 @@ pub fn draw_kites(
     queue: &wgpu::Queue,
     render_pass: &mut RenderPass,
 ) {
+    if !renderer.kite_buffer.dirty {
+        render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
+        let len = renderer.kite_buffer.index_len;
+        draw(&renderer.kite_buffer, render_pass, 0, len);
+        return;
+    }
+
     let cam = world_camera(&camera, &config);
     let mut kite_verts = vec![];
     let mut kite_indices = vec![];
@@ -2317,6 +2329,8 @@ pub fn draw_kites(
         render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
         setup_render_buffer(&mut renderer.kite_buffer, &kite_verts, &kite_indices, queue);
         draw(&renderer.kite_buffer, render_pass, 0, kite_indices.len());
+        renderer.kite_buffer.index_len = kite_indices.len();
+        renderer.kite_buffer.dirty = false;
     }
 }
 

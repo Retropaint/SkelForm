@@ -430,6 +430,15 @@ impl ApplicationHandler for App {
                     .egui_ctx()
                     .set_pixels_per_point(self.shared.ui.scale);
 
+                // set some render buffers to dirty if animating
+                let animations = &self.shared.armature.animations;
+                let is_any_anim_playing =
+                    animations.iter().find(|anim| anim.elapsed != None) != None;
+                if is_any_anim_playing {
+                    self.shared.renderer.point_buffer.dirty = true;
+                    self.shared.renderer.kite_buffer.dirty = true;
+                }
+
                 // set hovering bone to -1 if neither the renderer nor UI have it
                 if !self.shared.renderer.is_hovering_bone && !self.shared.ui.is_hovering_bone {
                     self.shared.selections.hovering_bone_id = -1;
