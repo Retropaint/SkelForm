@@ -2346,6 +2346,31 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         | E::SelectBone => {
             renderer.point_buffer.dirty = true;
             renderer.kite_buffer.dirty = true;
+            renderer.bone_buffer.dirty = true;
+        }
+        _ => {}
+    }
+
+    // update point and kite buffers
+    //
+    // note: this is also updated when animations are being played.
+    // search ANIMATED_BUFFERS to find it in lib.rs
+    match event {
+        E::CamZoomIn
+        | E::CamZoomOut
+        | E::CamZoomScroll
+        | E::EditCamera
+        | E::NewBone
+        | E::EditBone
+        | E::DragBone
+        | E::ToggleAnimPanelOpen
+        | E::Undo
+        | E::Redo
+        | E::UpdateRenderOptions
+        | E::UpdateConfig
+        | E::SelectBone
+        | E::SetHoveringBoneId => {
+            renderer.bone_buffer.dirty = true;
         }
         _ => {}
     }

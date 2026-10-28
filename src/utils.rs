@@ -1260,6 +1260,7 @@ pub fn import<R: Read + std::io::Seek>(
 
     // update warnings for this armature
     shared.ui.warnings = check_warnings(&shared.armature);
+    shared.renderer.gridline_buffer.dirty = true;
 
     shared.events.unselect_all();
     shared.ui.startup_window = false;

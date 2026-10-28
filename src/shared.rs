@@ -2289,7 +2289,7 @@ impl UndoStates {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct RenderBuffer {
     pub vertex: Option<wgpu::Buffer>,
     pub index: Option<wgpu::Buffer>,
@@ -2359,6 +2359,10 @@ pub struct Renderer {
     pub ring_buffer: RenderBuffer,
     pub selected_ring_buffer: RenderBuffer,
     pub rect_buffer: RenderBuffer,
+
+    pub visible_bone_ids: Vec<i32>,
+    pub visible_prev_onion_ids: Vec<i32>,
+    pub visible_next_onion_ids: Vec<i32>,
 }
 
 #[derive(Default, PartialEq, Clone, Debug)]

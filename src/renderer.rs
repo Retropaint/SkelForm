@@ -50,6 +50,9 @@ pub fn render(
     let mut temp_arm = Armature::default();
     temp_arm.bones = renderer.temp_bones.clone();
 
+    // todo: don't update bone buffer every frame
+    renderer.bone_buffer.dirty = true;
+
     // animate next and previous frame armatures for onions
     let mut next_arm = Armature::default();
     let mut prev_arm = Armature::default();
@@ -296,15 +299,24 @@ pub fn render(
     // render onion layers
     if renderer.render_textures && selections.anim_frame != -1 && edit_mode.onion_layers {
         #[rustfmt::skip]
-        draw_armature(&prev_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass, &renderer.prev_onion_buffer);
+        draw_armature(
+            &prev_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass,
+            &mut renderer.prev_onion_buffer, &mut renderer.visible_prev_onion_ids
+        );
         #[rustfmt::skip]
-        draw_armature(&next_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass, &renderer.next_onion_buffer);
+        draw_armature(
+            &next_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass,
+            &mut renderer.next_onion_buffer, &mut renderer.visible_next_onion_ids
+        );
     }
 
     // render bones
     if renderer.render_textures {
         #[rustfmt::skip]
-        draw_armature(&temp_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass, &renderer.bone_buffer);
+        draw_armature(
+            &temp_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass,
+            &mut renderer.bone_buffer, &mut renderer.visible_bone_ids
+        );
     }
 
     // show selected bone's mesh wireframe if editing it
@@ -671,13 +683,27 @@ pub fn draw_armature(
     sel: &SelectionState,
     queue: &wgpu::Queue,
     render_pass: &mut RenderPass,
-    buffer: &RenderBuffer,
+    buffer: &mut RenderBuffer,
+    bone_ids_to_draw: &mut Vec<i32>,
 ) {
+    if !buffer.dirty {
+        let mut curr_indices = 0;
+        for bone_id in bone_ids_to_draw {
+            let tex = src_arm.anim_tex_of(*bone_id);
+            let bone = &armature.bones.iter().find(|b| b.id == *bone_id).unwrap();
+            let bg = &src_arm.tex_data(tex.unwrap()).unwrap().bind_group;
+            let indices_end = curr_indices + bone.indices.len();
+            render_pass.set_bind_group(0, bg, &[]);
+            draw(&buffer, render_pass, curr_indices, indices_end);
+            curr_indices += bone.indices.len();
+        }
+        return;
+    }
+
+    *bone_ids_to_draw = vec![];
+
     let mut all_verts = vec![];
     let mut all_indices = vec![];
-
-    // keep track of which bones should be rendered
-    let mut bone_ids_to_draw = vec![];
 
     let hiddens = src_arm.get_propagated_hidden();
 
@@ -701,18 +727,20 @@ pub fn draw_armature(
         all_verts.append(&mut world_verts);
         add_offseted_indices(&mut bone.indices.clone(), &mut all_indices);
     }
+
     setup_render_buffer(buffer, &all_verts, &all_indices, queue);
 
     let mut curr_indices = 0;
     for bone_id in bone_ids_to_draw {
-        let tex = src_arm.anim_tex_of(bone_id);
-        let bone = &armature.bones.iter().find(|b| b.id == bone_id).unwrap();
+        let tex = src_arm.anim_tex_of(*bone_id);
+        let bone = &armature.bones.iter().find(|b| b.id == *bone_id).unwrap();
         let bg = &src_arm.tex_data(tex.unwrap()).unwrap().bind_group;
         let indices_end = curr_indices + bone.indices.len();
         render_pass.set_bind_group(0, bg, &[]);
         draw(&buffer, render_pass, curr_indices, indices_end);
         curr_indices += bone.indices.len();
     }
+    buffer.dirty = false;
 }
 
 pub fn world_camera(camera: &Camera, config: &Config) -> Camera {
@@ -836,8 +864,11 @@ pub fn render_screenshot(
             temp_arm.bones[b].world_verts.push(new_vert);
         }
     }
+    let mut visible_bone_ids = vec![];
+    let mut buffer = renderer.bone_buffer.clone();
+    buffer.dirty = true;
     #[rustfmt::skip]
-    draw_armature(&temp_arm, armature, false, &sel, queue, render_pass, &renderer.bone_buffer);
+    draw_armature(&temp_arm, armature, false, &sel, queue, render_pass, &mut buffer, &mut visible_bone_ids);
 }
 
 pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {

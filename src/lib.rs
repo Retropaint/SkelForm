@@ -321,6 +321,9 @@ impl ApplicationHandler for App {
                     return;
                 }
                 self.shared.camera.window = Vec2::new(width as f32, height as f32);
+                self.shared.renderer.gridline_buffer.dirty = true;
+                self.shared.renderer.kite_buffer.dirty = true;
+                self.shared.renderer.bone_buffer.dirty = true;
                 renderer.resize(width as u32, height as u32);
             }
             WindowEvent::RedrawRequested => {
@@ -436,6 +439,7 @@ impl ApplicationHandler for App {
                 if is_any_anim_playing || self.shared.edit_mode.edit_time < shared::PHYSICS_CUTOFF {
                     self.shared.renderer.point_buffer.dirty = true;
                     self.shared.renderer.kite_buffer.dirty = true;
+                    self.shared.renderer.bone_buffer.dirty = true;
                 }
 
                 // set hovering bone to -1 if neither the renderer nor UI have it
