@@ -2343,6 +2343,7 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         | E::Redo
         | E::UpdateRenderOptions
         | E::UpdateConfig
+        | E::SetHoveringBoneId
         | E::SelectBone => {
             renderer.point_buffer.dirty = true;
             renderer.kite_buffer.dirty = true;

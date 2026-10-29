@@ -132,8 +132,6 @@ pub fn render(
             continue;
         }
 
-        let parents = temp_arm.get_all_parents(false, temp_arm.bones[b].id);
-
         // setup world verts
         let cam = world_camera(&camera, &config);
         for v in 0..temp_arm.bones[b].vertices.len() {
@@ -145,12 +143,8 @@ pub fn render(
             vert.tint = tb.tint;
 
             // make this translucent if not part of selected bone(s)
-            if selections.bone_idx != usize::MAX {
-                let not_child =
-                    parents.iter().find(|b| selections.bone_ids.contains(&b.id)) == None;
-                if not_child && !selections.bone_ids.contains(&tb.id) {
-                    vert.tint.a = config.bone_translucency;
-                }
+            if selections.bone_ids.len() > 0 && !selected_bone_ids.contains(&tb.id) {
+                vert.tint.a = config.bone_translucency;
             }
 
             tb.world_verts.push(vert);
@@ -2208,13 +2202,6 @@ pub fn draw_points(
     events: &mut EventState,
     armature: &Armature,
 ) {
-    if !renderer.point_buffer.dirty {
-        render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
-        let len = renderer.point_buffer.index_len;
-        draw(&renderer.point_buffer, render_pass, 0, len);
-        return;
-    }
-
     let cam = world_camera(&camera, &config);
     let zero = Vec2::default();
     let mut point_verts = vec![];
@@ -2293,17 +2280,21 @@ pub fn draw_points(
             on_point = true;
         }
 
-        point_verts.append(&mut this_verts);
-        add_offseted_indices(&mut this_indices, &mut point_indices);
+        if renderer.point_buffer.dirty {
+            point_verts.append(&mut this_verts);
+            add_offseted_indices(&mut this_indices, &mut point_indices);
+            renderer.point_buffer.index_len = point_indices.len();
+        }
     }
 
-    if point_indices.len() > 0 {
+    if renderer.point_buffer.index_len > 0 {
         render_pass.set_bind_group(0, &renderer.circle_bindgroup, &[]);
         let point_buffer = &mut renderer.point_buffer;
-        setup_render_buffer(point_buffer, &point_verts, &point_indices, queue);
-        draw(&renderer.point_buffer, render_pass, 0, point_indices.len());
-        renderer.point_buffer.index_len = point_indices.len();
-        renderer.point_buffer.dirty = false;
+        if point_buffer.dirty {
+            setup_render_buffer(point_buffer, &point_verts, &point_indices, queue);
+            point_buffer.dirty = false;
+        }
+        draw(&point_buffer, render_pass, 0, point_buffer.index_len);
     }
 
     renderer.on_point |= on_point;
