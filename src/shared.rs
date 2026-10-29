@@ -722,6 +722,8 @@ pub struct Ui {
     // Adjust Speed mode for keyframe editor
     pub adjusting_anim_speed: f32,
     pub anim_speed_width: f32,
+
+    pub armature_split: f32,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

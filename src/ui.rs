@@ -220,7 +220,7 @@ pub fn draw(
     }
 
     style_once!(armature_window::draw(
-        context, events, config, armature, selections, edit_mode, shared_ui, camera
+        context, events, config, armature, selections, edit_mode, shared_ui, camera, input
     ));
 
     let min_default_size = 210.;

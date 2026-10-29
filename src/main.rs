@@ -148,6 +148,7 @@ fn init_shared(shared: &mut Shared) {
     shared.renderer.clicked_vert_id = -1;
     shared.ui.first_startup = true;
     shared.ui.adjusting_anim_speed = -999.;
+    shared.ui.armature_split = 100.;
 
     shared.ui.video_clear_bg = shared.config.colors.background;
     shared.ui.exporting_video_type = ExportVideoType::Mp4;

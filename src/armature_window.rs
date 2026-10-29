@@ -3,6 +3,7 @@
 use egui::*;
 
 use crate::{
+    renderer,
     shared::Vec2,
     ui::{self, EguiUi, TextInputOptions},
     utils,
@@ -21,6 +22,7 @@ pub fn draw(
     edit_mode: &EditMode,
     shared_ui: &mut crate::Ui,
     camera: &Camera,
+    input: &InputStates,
 ) {
     let min_default_size = 175.;
     let panel_id = "Armature";
@@ -49,11 +51,8 @@ pub fn draw(
         }
         let gradient = config.colors.gradient.into();
         ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
-        ui.horizontal(|ui| {
-            ui.heading(&shared_ui.loc("armature_panel.heading"));
-        });
-
-        ui.separator();
+        ui.heading(&shared_ui.loc("armature_panel.heading"));
+        ui.add_space(3.);
 
         ui.horizontal(|ui| {
             // New Bone button
@@ -86,12 +85,12 @@ pub fn draw(
             });
         });
         ui.add_space(3.);
-        let scroll_area = egui::ScrollArea::both().max_height(ui.available_height() - 10.);
+
+        let scroll_area = egui::ScrollArea::both().max_height(shared_ui.armature_split);
         let area = scroll_area.show(ui, |ui| {
             // hierarchy
             let frame = Frame::default().inner_margin(5.);
             ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-                ui.set_min_height(ui.available_height());
                 ui.set_width(ui.available_width());
 
                 // The empty armature text should have blue hyperlinks to attract the user's
@@ -107,6 +106,74 @@ pub fn draw(
                     ui::empty_armature_starters(shared_ui, config, ui);
                 }
                 ui.add_space(4.);
+            })
+        });
+        ui.add_space(2.);
+
+        if ui.separator().interact(egui::Sense::drag()).dragged() {
+            egui_ctx.input_mut(|i| shared_ui.armature_split += i.pointer.delta().y);
+        }
+
+        ui.heading(&shared_ui.loc("styles_modal.heading"));
+        ui.add_space(3.);
+        let scroll_area = egui::ScrollArea::both()
+            .id_salt("style_panel")
+            .max_height(ui.available_height() - 10.);
+        let other_area = scroll_area.show(ui, |ui| {
+            // hierarchy
+            let frame = Frame::default().inner_margin(5.);
+            ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                ui.set_width(ui.available_width());
+                ui.set_height(ui.available_height());
+
+                let mut idx = -1;
+                let mut hovered = false;
+                for s in 0..armature.styles.len() {
+                    idx += 1;
+                    // brighten button if style is selected and/or hovered
+                    let mut col = config.colors.dark_accent;
+                    if armature.styles[s].id == selections.style_id {
+                        col += crate::Color::new(20, 20, 20, 0);
+                    }
+                    if s == shared_ui.hovering_set as usize {
+                        col += crate::Color::new(20, 20, 20, 0);
+                    }
+                    let context_id = format!("style_{}", &armature.styles[s].id);
+
+                    // render style button (also as draggable element)
+                    let button = ui
+                        .dnd_drag_source(egui::Id::new(("style_panel", idx, 0)), idx, |ui| {
+                            egui::Frame::new().fill(col.into()).show(ui, |ui| {
+                                ui.set_width(ui.available_width());
+                                ui.set_height(21.);
+                                ui.add_space(3.);
+                                let name = format!(" {}", &armature.styles[s].name);
+                                ui.label(egui::RichText::new(name).color(config.colors.text));
+                            });
+                        })
+                        .response
+                        //.on_hover_cursor(cursor_icon)
+                        .interact(egui::Sense::click());
+
+                    if (button.contains_pointer() || button.has_focus()) && !shared_ui.dragging_tex
+                    {
+                        shared_ui.hovering_set = s as i32;
+                        hovered = true;
+                    }
+
+                    // select style if clicked, or rename if already selected
+                    if button.clicked() {
+                        shared_ui.rename_id = "".to_string();
+                        if selections.style_id == armature.styles[s].id {
+                            shared_ui.rename_id = context_id.clone();
+                        }
+                        events.select_style(armature.styles[s].id as i32);
+                    }
+                }
+
+                if !hovered {
+                    shared_ui.hovering_set = -1;
+                }
             })
         });
 
