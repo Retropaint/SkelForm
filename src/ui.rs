@@ -273,6 +273,8 @@ pub fn draw(
                     );
                 } else if shared_ui.last_selected == "keyframe" {
                     keyframe_panel::draw(ui, &selections, &armature, events, shared_ui, config);
+                } else if shared_ui.last_selected == "style" {
+                    ui.label("est");
                 } else if armature.bones.len() > 1 {
                     ui.heading("Armature Shortcuts");
                     ui.add_space(10.);

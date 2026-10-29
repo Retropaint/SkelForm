@@ -976,6 +976,7 @@ pub fn draw_styles_list(
                 if selections.style_id == armature.styles[s].id {
                     shared_ui.rename_id = context_id.clone();
                 }
+                shared_ui.last_selected = "style".to_string();
                 events.select_style(armature.styles[s].id as i32);
             }
         });

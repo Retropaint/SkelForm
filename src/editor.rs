@@ -571,6 +571,8 @@ pub fn simple_event(
             selections.anim_frame = 0;
         }
         Events::SelectStyle => {
+            selections.bone_idx = usize::MAX;
+            selections.bone_ids = vec![];
             selections.style_id = value as i32;
             ui.last_selected = if value as i32 == -1 { "" } else { "style" }.to_string();
             selections.tex_ids = vec![];
@@ -1338,6 +1340,7 @@ fn select_bone(
     sel.vert_ids = vec![];
     ui.selected_bone_first_time = true;
     edit_mode.editing_pivot = false;
+    sel.style_id = -1;
 
     if idx == usize::MAX {
         sel.bone_idx = usize::MAX;
