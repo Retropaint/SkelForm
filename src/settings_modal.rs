@@ -75,7 +75,9 @@ pub fn draw(
                     tab!(str_colors, shared::SettingsState::Colors);
                     tab!(str_misc, shared::SettingsState::Misc);
 
-                    if shared_ui.settings_state != shared::SettingsState::Rendering {
+                    if shared_ui.settings_state != shared::SettingsState::Rendering
+                        && shared_ui.settings_state != shared::SettingsState::Colors
+                    {
                         shared_ui.translucent_settings = false;
                     }
 
@@ -615,6 +617,15 @@ fn colors(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         let str_colors = &shared_ui.loc("settings_modal.user_interface.colors_heading");
         ui.heading(str_colors);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            // translucent toggle
+            let label = ui
+                .heading("👁")
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .on_hover_text(shared_ui.loc("settings_modal.rendering.translucent_desc"));
+
+            if label.clicked() {
+                shared_ui.translucent_settings = !shared_ui.translucent_settings;
+            }
             let str_default = &shared_ui.loc("settings_modal.default");
             if ui.skf_button(str_default).clicked() {
                 shared_ui.updated_config.colors = crate::ColorConfig::default();
@@ -627,7 +638,7 @@ fn colors(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         ($title:expr, $color:expr, $alpha:expr) => {
             alt_col = !alt_col;
             let col = &shared_ui.updated_config.colors;
-            let color = if alt_col { col.main } else { col.dark_accent };
+            let mut color = if alt_col { col.main } else { col.dark_accent };
             let str_color = shared_ui
                 .loc(&format!("settings_modal.colors.{}", $title))
                 .clone();
