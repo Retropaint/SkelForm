@@ -523,9 +523,7 @@ pub fn draw_bone_buttons(
                 let col = config.colors.text;
                 let desc = shared_ui.loc("armature_panel.fold_desc");
                 let offset = Vec2::new(-2., 18.);
-                if armature_window::bone_label(fold_icon, true, ui, id, offset, &desc, col)
-                    .clicked()
-                {
+                if armature_window::bone_label(fold_icon, true, ui, id, offset, &desc, col) {
                     events.toggle_bone_folded(b, !armature.bones[b].folded);
                 }
             }

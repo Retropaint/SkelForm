@@ -137,6 +137,7 @@ pub fn draw_hierarchy(
     edit_mode: &EditMode,
     events: &mut EventState,
 ) {
+    let on_frame = ui.ui_contains_pointer();
     ui.set_min_width(ui.available_width());
     let mut idx: i32 = -1;
     let mut is_hovering = false;
@@ -213,8 +214,8 @@ pub fn draw_hierarchy(
                 let desc = shared_ui.loc("hidden_desc");
                 let hidden = armature.bones[b].hidden;
                 let hidden_icon = if hidden { "––" } else { "👁" };
-                if bone_label(&hidden_icon, true, ui, id, Vec2::new(-2., 18.), &desc, col).clicked()
-                {
+                let offset = Vec2::new(-2., 18.);
+                if bone_label(&hidden_icon, on_frame, ui, id, offset, &desc, col) {
                     let hidden_f32 = if !bone_hidden { 1. } else { 0. };
                     let sel = selections.anim;
                     let frame = selections.anim_frame;
@@ -328,7 +329,8 @@ pub fn draw_hierarchy(
                     }
                     let border_id = "bone_fold_border".to_string() + &b.to_string();
                     let ball_offset = Vec2::new(-2., 18.);
-                    let border = bone_label("⏺", true, ui, border_id, ball_offset, "", border_col);
+                    let border =
+                        bone_label("⏺", on_frame, ui, border_id, ball_offset, "", border_col);
 
                     // render folding arrow
 
@@ -345,7 +347,7 @@ pub fn draw_hierarchy(
                     let desc = "";
                     let arrow_offset = Vec2::new(-2., 18.5);
                     bone_label(fold_icon, false, ui, id, arrow_offset, &desc, arrow_col);
-                    if border.clicked() {
+                    if border {
                         events.toggle_bone_folded(idx as usize, !armature.bones[b].folded);
                     }
                 }
@@ -453,7 +455,7 @@ pub fn draw_hierarchy(
                                         .loc("armature_panel.icons.tex")
                                         .replace("$tex", &bone.tex);
                                     let id = format!("{}tex", b.to_string());
-                                    bone_label("🖻", false, ui, id, offset, &str, colors.texture);
+                                    bone_label("🖻", on_frame, ui, id, offset, &str, colors.texture);
                                     offset.x += 18.;
                                 } else if bone.tex != "" {
                                     let str = shared_ui
@@ -461,14 +463,14 @@ pub fn draw_hierarchy(
                                         .replace("$tex", &bone.tex);
                                     let id = format!("{}tex_in", b.to_string());
                                     let tex_col = config.colors.texture;
-                                    bone_label("🗋", false, ui, id, offset, &str, tex_col);
+                                    bone_label("🗋", on_frame, ui, id, offset, &str, tex_col);
                                     offset.x += 18.;
                                 };
                                 if bone.verts_edited {
                                     let str = shared_ui.loc("armature_panel.icons.mesh");
                                     let id = format!("{}mesh", b.to_string());
                                     let off = Vec2::new(offset.x, 19.);
-                                    bone_label("⬟", false, ui, id, off, &str, colors.meshdef);
+                                    bone_label("⬟", on_frame, ui, id, off, &str, colors.meshdef);
                                     offset.x += 18.;
                                 }
                                 if bone.ik_family_id != -1 {
@@ -494,7 +496,9 @@ pub fn draw_hierarchy(
                                     let id = format!("{}ik", b.to_string());
                                     let color = colors.inverse_kinematics;
                                     let id_offset = Vec2::new(0., 18.);
-                                    bone_label(&family_id, false, ui, id, id_offset, &desc, color);
+                                    bone_label(
+                                        &family_id, on_frame, ui, id, id_offset, &desc, color,
+                                    );
                                     offset.x += 18.;
                                 }
                                 if is_target != None {
@@ -508,7 +512,7 @@ pub fn draw_hierarchy(
                                     let mut color = config.colors.ik_target;
                                     color += Color::new(0, inc, inc, 0);
                                     let id = format!("⌖{}", family_id);
-                                    bone_label(&icon, false, ui, id, offset, &desc, color);
+                                    bone_label(&icon, on_frame, ui, id, offset, &desc, color);
                                     offset.x += 18.;
                                 }
                             });
@@ -544,6 +548,7 @@ pub fn draw_hierarchy(
     shared_ui.is_hovering_bone = is_hovering;
 }
 
+// returns whether this label was clicked on
 pub fn bone_label(
     icon: &str,
     interactable: bool,
@@ -552,7 +557,7 @@ pub fn bone_label(
     offset: Vec2,
     desc: &str,
     color: Color,
-) -> egui::Response {
+) -> bool {
     // draw icon
     let rect = ui.painter().text(
         ui.cursor().min + Vec2::new(offset.x, offset.y).into(),
@@ -561,6 +566,10 @@ pub fn bone_label(
         egui::FontId::default(),
         color.into(),
     );
+
+    if !interactable {
+        return false;
+    }
 
     // set sense based on whether it should be interactable
     let sense = if interactable {
@@ -587,7 +596,7 @@ pub fn bone_label(
             (color + HIGHLIGHT).into(),
         );
     }
-    rect
+    rect.clicked()
 }
 
 fn check_bone_dragging(
