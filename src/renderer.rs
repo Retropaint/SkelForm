@@ -621,10 +621,7 @@ pub fn render(
     if camera.on_ui {
         renderer.editing_bone = false;
     } else if idx != usize::MAX && input.left_down && selections.hovering_bone_id == -1 {
-        // only register edits if mouse is moving
-        if mouse_moved {
-            events.update_current_editing(0);
-        }
+        events.update_current_editing(0);
 
         // prioritize temporary edits (from transform rings) over edit mode
         let current_edit = if edit_mode.temporary == None {
