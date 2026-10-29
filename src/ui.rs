@@ -1174,7 +1174,7 @@ fn top_panel(
                         .frame(frame);
                     popup.show(|ui| {
                         ui.set_width(350.);
-                        ui.set_max_height(200.);
+                        ui.set_max_height(300.);
 
                         ui.heading(shared_ui.loc("warnings.heading"))
                             .on_hover_text(shared_ui.loc("warnings.desc"));
