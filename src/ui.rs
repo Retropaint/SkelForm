@@ -1119,6 +1119,7 @@ fn top_panel(
                 shared_ui.feedback_modal = true;
             }
 
+            // warnings
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if shared_ui.warnings.len() == 0 {
@@ -1154,6 +1155,7 @@ fn top_panel(
                         Color::new(0, 0, 0, 0)
                     };
 
+                    // warnings popup
                     let frame = egui::Frame {
                         corner_radius: 0.into(),
                         fill: (config.colors.main + flash).into(),
@@ -1172,29 +1174,35 @@ fn top_panel(
                         .frame(frame);
                     popup.show(|ui| {
                         ui.set_width(350.);
+                        ui.set_max_height(200.);
+
                         ui.heading(shared_ui.loc("warnings.heading"))
                             .on_hover_text(shared_ui.loc("warnings.desc"));
                         modal_x(ui, [0., 0.].into(), || {
                             shared_ui.warnings_open = false;
                         });
-                        ui.add_space(5.);
-                        for w in 0..shared_ui.warnings.len() {
-                            let warning = shared_ui.warnings[w].clone();
 
-                            egui::Frame::new().show(ui, |ui| {
-                                ui.horizontal(|ui| {
-                                    ui.set_height(21.);
-                                    ui.add_space(5.);
-                                    warnings::warning_line(
-                                        ui, &warning, shared_ui, &armature, config, events,
-                                    );
+                        // show all warnings
+                        egui::ScrollArea::both().show(ui, |ui| {
+                            ui.add_space(5.);
+                            for w in 0..shared_ui.warnings.len() {
+                                let warning = shared_ui.warnings[w].clone();
+
+                                egui::Frame::new().show(ui, |ui| {
+                                    ui.horizontal(|ui| {
+                                        ui.set_height(21.);
+                                        ui.add_space(5.);
+                                        warnings::warning_line(
+                                            ui, &warning, shared_ui, &armature, config, events,
+                                        );
+                                    });
                                 });
-                            });
 
-                            if w != shared_ui.warnings.len() - 1 {
-                                ui.separator();
+                                if w != shared_ui.warnings.len() - 1 {
+                                    ui.separator();
+                                }
                             }
-                        }
+                        });
                     });
                 })
             })
