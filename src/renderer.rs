@@ -1077,8 +1077,6 @@ fn simulate_physics(armature_bones: &mut Vec<Bone>, constructed_bones: &mut Vec<
 
 pub fn construct_verts(bones: &mut Vec<Bone>) {
     for b in 0..bones.len() {
-        let bone = bones[b].clone();
-
         // track vertex init pos for binds
         let mut init_vert_pos = vec![];
         for vert in &mut bones[b].vertices {
@@ -1087,9 +1085,14 @@ pub fn construct_verts(bones: &mut Vec<Bone>) {
 
         // move vertex to main bone.
         // this will be overridden if vertex has a bind.
-        for vert in &mut bones[b].vertices {
-            vert.pos = inherit_vert(vert.pos, &bone, bone.pivot_rot, bone.pivot_scale);
-            vert.offset_rot = 0.;
+        for v in 0..bones[b].vertices.len() {
+            bones[b].vertices[v].pos = inherit_vert(
+                bones[b].vertices[v].pos,
+                &bones[b],
+                bones[b].pivot_rot,
+                bones[b].pivot_scale,
+            );
+            bones[b].vertices[v].offset_rot = 0.;
         }
 
         for bi in 0..bones[b].binds.len() {
@@ -1105,21 +1108,28 @@ pub fn construct_verts(bones: &mut Vec<Bone>) {
                 break;
             }
 
-            let bind_bone = bind_bone_raw.unwrap().clone();
-            let bind = bones[b].binds[bi].clone();
+            let bind_bone = Bone {
+                pos: bind_bone_raw.unwrap().pos,
+                rot: bind_bone_raw.unwrap().rot,
+                scale: bind_bone_raw.unwrap().scale,
+                ..Default::default()
+            };
+            let bind = &bones[b].binds[bi].clone();
             for v_id in 0..bind.verts.len() {
                 let id = bind.verts[v_id].id as u32;
                 let idx = bones[b].vertices.iter().position(|vert| vert.id == id);
+                let weight = bind.verts[v_id].weight;
 
                 if !bind.is_path {
                     // weights
+                    let pivot_rot = bones[b].pivot_rot;
+                    let pivot_scale = bones[b].pivot_scale;
                     let vert = &mut bones[b].vertices[idx.unwrap()];
-                    let weight = bind.verts[v_id].weight;
                     let end_pos = inherit_vert(
                         init_vert_pos[idx.unwrap()],
                         &bind_bone,
-                        bone.pivot_rot,
-                        bone.pivot_scale,
+                        pivot_rot,
+                        pivot_scale,
                     ) - vert.pos;
                     vert.pos += end_pos * weight;
                     continue;
@@ -1130,7 +1140,7 @@ pub fn construct_verts(bones: &mut Vec<Bone>) {
                 // Vertices will follow along this path.
 
                 // get previous and next bone
-                let normal_angle = get_path_normal_angle(bones, &bone, bi);
+                let normal_angle = get_path_normal_angle(bones, &bones[b], bi);
                 if normal_angle == f32::MAX {
                     continue;
                 }
@@ -1139,7 +1149,7 @@ pub fn construct_verts(bones: &mut Vec<Bone>) {
                 let vert = &mut bones[b].vertices[idx.unwrap()];
                 vert.pos = init_vert_pos[idx.unwrap()] + bind_bone.pos;
                 let rotated = utils::rotate(&(vert.pos - bind_bone.pos), normal_angle);
-                vert.pos = bind_bone.pos + (rotated * bind.verts[v_id].weight);
+                vert.pos = bind_bone.pos + (rotated * weight);
                 vert.offset_rot = normal_angle;
             }
         }
@@ -1452,22 +1462,29 @@ pub fn edit_bone(
     }
 }
 
+struct TruncBone {
+    pos: Vec2,
+    rot: f32,
+    scale: Vec2,
+}
+
 pub fn inheritance(
     bones: &mut Vec<Bone>,
     ik_rot: std::collections::HashMap<i32, f32>,
     arm_bones: &Vec<Bone>,
 ) {
     for i in 0..bones.len() {
-        let mut parent: Option<Bone> = None;
-        for b in 0..bones.len() {
-            if bones[b].id == bones[i].parent_id {
-                parent = Some(bones[b].clone());
-                break;
-            }
+        let mut parent: Option<TruncBone> = None;
+        if let Some(parent_raw) = bones.iter().find(|bone| bone.id == bones[i].parent_id) {
+            parent = Some(TruncBone {
+                pos: parent_raw.pos,
+                rot: parent_raw.rot,
+                scale: parent_raw.scale,
+            });
         }
 
         // inherit parent
-        if let Some(parent) = parent.clone() {
+        if let Some(parent) = parent {
             let mut orbit_rot = parent.rot;
 
             // apply orbital difference, if rotation sway is active
