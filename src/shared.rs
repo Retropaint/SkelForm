@@ -475,6 +475,8 @@ pub struct UiBar {
 #[derive(Clone, Default, PartialEq)]
 pub enum Warnings {
     #[default]
+    SameNameBones,
+    BlockedStyles,
     SameZIndex,
     NoIkTarget,
     OnlyIk,
@@ -485,8 +487,6 @@ pub enum Warnings {
     BoneOutOfFamily,
     EmptyStyles,
     UnusedTextures,
-    BlockedStyles,
-    SameNameBones,
 }
 
 #[derive(Clone, Default, PartialEq)]
