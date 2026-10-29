@@ -196,7 +196,7 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
                 // this bone is part of an animation, so it could be problematic
                 culprit_anim = anim
             } else {
-                // this bone is anot in an animation; same-name is fine
+                // this bone is not in an animation; same-name is fine
                 continue;
             }
 

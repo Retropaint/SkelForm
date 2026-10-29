@@ -2300,7 +2300,7 @@ pub fn adjust_vert_by_bind(
     }
 }
 
-// move camera so mouse is at the same world position
+// move camera such that mouse is at the same world position
 pub fn move_camera_with_zoom(camera: &mut Camera, input: &InputStates, old_zoom: f32) {
     let center = camera.window / 2.;
     let mouse_center = input.mouse - center;
@@ -2351,10 +2351,7 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         _ => {}
     }
 
-    // update point and kite buffers
-    //
-    // note: this is also updated when animations are being played.
-    // search ANIMATED_BUFFERS to find it in lib.rs
+    // update bone buffers (ANIMATED_BUFFERS applies here too)
     match event {
         E::CamZoomIn
         | E::CamZoomOut
