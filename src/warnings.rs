@@ -5,7 +5,6 @@ use crate::*;
 type W = Warnings;
 
 pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
-    println!("test");
     let mut warnings: Vec<Warning> = vec![];
 
     for b in 0..armature.bones.len() {
@@ -181,12 +180,26 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
     // Warning::SameNameBones
     {
         let warn = W::SameNameBones;
-        let mut name_groups: Vec<(&String, Vec<usize>)> = vec![];
+        let mut name_groups: Vec<(&String, &String, Vec<usize>)> = vec![];
 
         for bone in &armature.bones {
             if name_groups.iter().find(|ng| *ng.0 == bone.name) != None {
                 continue;
             }
+
+            let culprit_anim;
+            if let Some(anim) = armature
+                .animations
+                .iter()
+                .find(|anim| anim.keyframes.iter().find(|kf| kf.bone_id == bone.id) != None)
+            {
+                // this bone is part of an animation, so it could be problematic
+                culprit_anim = anim
+            } else {
+                // this bone is anot in an animation; same-name is fine
+                continue;
+            }
+
             let id_group: Vec<usize> = armature
                 .bones
                 .iter()
@@ -194,12 +207,15 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
                 .map(|b| b.id as usize)
                 .collect();
             if id_group.len() > 1 {
-                name_groups.push((&bone.name, id_group));
+                // there's more than 1 bone with this name, meaning there's a duplicate!
+                name_groups.push((&bone.name, &culprit_anim.name, id_group));
             }
         }
 
+        // create warnings separately for each name group
         for group in name_groups {
-            warnings.push(Warning::new(warn.clone(), group.1));
+            let anim_name = vec![group.1.clone()];
+            warnings.push(Warning::full(warn.clone(), group.2, 0., anim_name));
         }
     }
 
@@ -348,7 +364,9 @@ pub fn warning_line(
             }
         }
         W::SameNameBones => {
-            let str = shared_ui.loc("warnings.SameNameBones");
+            let str = shared_ui
+                .loc("warnings.SameNameBones")
+                .replace("$anim", &warning.str_values[0]);
             let tooltip = shared_ui.loc("warnings.SameNameBones_desc");
             bone_list(str, tooltip, ui, warning, bones, events, warn_color);
         }

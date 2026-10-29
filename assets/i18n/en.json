@@ -492,8 +492,8 @@
     "UnusedTextures": "Unused textures:",
     "BlockedStyles": "Blocked styles ℹ:",
     "BlockedStyles_desc": "The left-side style is active, but all textures are overridden by the right-side style.",
-    "SameNameBones": "Bones with same name ℹ:",
-    "SameNameBones_desc": "Animations use bone names; this bone may not be animated correctly in runtimes."
+    "SameNameBones": "'$anim' uses same-name bone(s) ℹ:",
+    "SameNameBones_desc": "Animations identify bones by their name; these bones may not be animated correctly in runtimes."
   },
   "edit_bar": {
     "move": {
