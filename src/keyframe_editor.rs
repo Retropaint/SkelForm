@@ -935,7 +935,6 @@ fn draw_frame_lines(
                     shared_ui.selected_keyframes = vec![];
                 }
                 events.select_anim_frame(i as usize, false, false);
-                shared_ui.last_selected = "keyframe".to_string();
             }
         }
 
@@ -1065,7 +1064,6 @@ fn draw_frame_lines(
 
         // select this frame if icon is clicked
         if response.clicked() {
-            shared_ui.last_selected = "keyframe".to_string();
             events.select_anim_frame(kf.frame as usize, false, false);
             let mut kfs = vec![kf.clone()];
 

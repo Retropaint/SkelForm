@@ -190,13 +190,14 @@ pub fn iterate_events(
         let selected_anim = selections.anim;
         let selected_bone_idx = selections.bone_idx;
         let selected_bone_ids = selections.bone_ids.clone();
+        let last_selected = ui.last_selected.clone();
         unselect_all(selections, edit_mode, ui);
-        ui.last_selected = "keyframe".to_string();
         selections.anim = selected_anim;
         selections.anim_frame = events.values[0] as i32;
 
-        // select all keyframes in this frame if requested
+        // select keyframes in this frame if requested
         if events.values[1] == 1. {
+            ui.last_selected = "keyframe".to_string();
             if !input.holding_mod && !input.holding_shift && events.values[2] == 0. {
                 ui.selected_keyframes = vec![];
             }
@@ -223,8 +224,7 @@ pub fn iterate_events(
         selections.bone_idx = selected_bone_idx;
         selections.bone_ids = selected_bone_ids;
         ui.last_selected_frame = selections.anim_frame;
-
-        renderer.point_buffer.dirty = true;
+        ui.last_selected = last_selected;
 
         events.events.remove(0);
         events.values.drain(0..=2);
@@ -568,7 +568,7 @@ pub fn simple_event(
         Events::SelectAnim => {
             let val = value as usize;
             selections.anim = if value == f32::MAX { usize::MAX } else { val };
-            selections.anim_frame = -1;
+            selections.anim_frame = 0;
         }
         Events::SelectStyle => {
             selections.style_id = value as i32;
@@ -2358,6 +2358,8 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         | E::UpdateRenderOptions
         | E::UpdateConfig
         | E::SetHoveringBoneId
+        | E::SelectAnim
+        | E::SelectAnimFrame
         | E::SelectBone => {
             renderer.point_buffer.dirty = true;
             renderer.kite_buffer.dirty = true;
