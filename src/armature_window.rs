@@ -120,98 +120,11 @@ pub fn draw(
             .id_salt("style_panel")
             .max_height(ui.available_height() - 10.);
         let other_area = scroll_area.show(ui, |ui| {
-            // hierarchy
             let frame = Frame::default().inner_margin(5.);
             ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                 ui.set_width(ui.available_width());
                 ui.set_height(ui.available_height());
-
-                let mut idx = -1;
-                let mut hovered = false;
-                for s in 0..armature.styles.len() {
-                    idx += 1;
-                    // brighten button if style is selected and/or hovered
-                    let mut col = config.colors.dark_accent;
-                    if armature.styles[s].id == selections.style_id {
-                        col += crate::Color::new(20, 20, 20, 0);
-                    }
-                    if s == shared_ui.hovering_set as usize {
-                        col += crate::Color::new(20, 20, 20, 0);
-                    }
-                    let context_id = format!("style_{}", &armature.styles[s].id);
-
-                    ui.horizontal(|ui| {
-                        // visibility checkbox
-                        let str_style_active_desc = &shared_ui.loc("styles_modal.active_desc");
-                        let visible_checkbox = ui
-                            .allocate_rect(
-                                egui::Rect::from_min_size(
-                                    ui.cursor().left_top(),
-                                    [15., 20.].into(),
-                                ),
-                                egui::Sense::click(),
-                            )
-                            .on_hover_cursor(egui::CursorIcon::PointingHand)
-                            .on_hover_text(str_style_active_desc);
-                        let mut visible_col = config.colors.text;
-                        if visible_checkbox.contains_pointer() || visible_checkbox.has_focus() {
-                            visible_col += Color::new(60, 60, 60, 0);
-                        }
-                        let style = &armature.styles[s];
-                        let visible = if style.active { "👁" } else { "---" };
-                        ui.painter().text(
-                            visible_checkbox.rect.left_top() - egui::Vec2::new(0., 1.),
-                            egui::Align2::LEFT_TOP,
-                            visible,
-                            egui::FontId::new(20., egui::FontFamily::default()),
-                            visible_col.into(),
-                        );
-                        if visible_checkbox.clicked() {
-                            events.toggle_style_active(s, false);
-                        }
-
-                        let cursor_icon = if selections.style_id != armature.styles[s].id {
-                            egui::CursorIcon::PointingHand
-                        } else {
-                            egui::CursorIcon::Default
-                        };
-
-                        // render style button (also as draggable element)
-                        let button = ui
-                            .dnd_drag_source(egui::Id::new(("style_panel", idx, 0)), idx, |ui| {
-                                egui::Frame::new().fill(col.into()).show(ui, |ui| {
-                                    ui.set_width(ui.available_width());
-                                    ui.set_height(21.);
-                                    ui.add_space(3.);
-                                    let name = format!(" {}", &armature.styles[s].name);
-                                    ui.label(egui::RichText::new(name).color(config.colors.text));
-                                });
-                            })
-                            .response
-                            .on_hover_cursor(cursor_icon)
-                            .interact(egui::Sense::click());
-
-                        if (button.contains_pointer() || button.has_focus())
-                            && !shared_ui.dragging_tex
-                        {
-                            shared_ui.hovering_set = s as i32;
-                            hovered = true;
-                        }
-
-                        // select style if clicked, or rename if already selected
-                        if button.clicked() {
-                            shared_ui.rename_id = "".to_string();
-                            if selections.style_id == armature.styles[s].id {
-                                shared_ui.rename_id = context_id.clone();
-                            }
-                            events.select_style(armature.styles[s].id as i32);
-                        }
-                    });
-                }
-
-                if !hovered {
-                    shared_ui.hovering_set = -1;
-                }
+                draw_styles_list(ui, shared_ui, armature, selections, config, events);
             })
         });
 
@@ -979,5 +892,96 @@ pub fn style_dropdown_list(
     if label.clicked() {
         shared_ui.styles_modal = true;
         ui.close();
+    }
+}
+
+pub fn draw_styles_list(
+    ui: &mut egui::Ui,
+    shared_ui: &mut crate::Ui,
+    armature: &Armature,
+    selections: &SelectionState,
+    config: &Config,
+    events: &mut EventState,
+) {
+    let mut idx = -1;
+    let mut hovered = false;
+    for s in 0..armature.styles.len() {
+        idx += 1;
+        // brighten button if style is selected and/or hovered
+        let mut col = config.colors.dark_accent;
+        if armature.styles[s].id == selections.style_id {
+            col += crate::Color::new(20, 20, 20, 0);
+        }
+        if s == shared_ui.hovering_set as usize {
+            col += crate::Color::new(20, 20, 20, 0);
+        }
+        let context_id = format!("style_{}", &armature.styles[s].id);
+
+        ui.horizontal(|ui| {
+            // visibility checkbox
+            let str_style_active_desc = &shared_ui.loc("styles_modal.active_desc");
+            let visible_checkbox = ui
+                .allocate_rect(
+                    egui::Rect::from_min_size(ui.cursor().left_top(), [15., 20.].into()),
+                    egui::Sense::click(),
+                )
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .on_hover_text(str_style_active_desc);
+            let mut visible_col = config.colors.text;
+            if visible_checkbox.contains_pointer() || visible_checkbox.has_focus() {
+                visible_col += Color::new(60, 60, 60, 0);
+            }
+            let style = &armature.styles[s];
+            let visible = if style.active { "👁" } else { "---" };
+            ui.painter().text(
+                visible_checkbox.rect.left_top() - egui::Vec2::new(0., 1.),
+                egui::Align2::LEFT_TOP,
+                visible,
+                egui::FontId::new(20., egui::FontFamily::default()),
+                visible_col.into(),
+            );
+            if visible_checkbox.clicked() {
+                events.toggle_style_active(s, false);
+            }
+
+            let cursor_icon = if selections.style_id != armature.styles[s].id {
+                egui::CursorIcon::PointingHand
+            } else {
+                egui::CursorIcon::Default
+            };
+
+            // render style button (also as draggable element)
+            let button = ui
+                .dnd_drag_source(egui::Id::new(("style_panel", idx, 0)), idx, |ui| {
+                    egui::Frame::new().fill(col.into()).show(ui, |ui| {
+                        ui.set_width(ui.available_width());
+                        ui.set_height(21.);
+                        ui.add_space(3.);
+                        let name = format!(" {}", &armature.styles[s].name);
+                        ui.label(egui::RichText::new(name).color(config.colors.text));
+                    });
+                })
+                .response
+                .on_hover_cursor(cursor_icon)
+                .interact(egui::Sense::click());
+
+            if (button.contains_pointer() || button.has_focus()) && !shared_ui.dragging_tex {
+                shared_ui.hovering_set = s as i32;
+                hovered = true;
+            }
+
+            // select style if clicked, or rename if already selected
+            if button.clicked() {
+                shared_ui.rename_id = "".to_string();
+                if selections.style_id == armature.styles[s].id {
+                    shared_ui.rename_id = context_id.clone();
+                }
+                events.select_style(armature.styles[s].id as i32);
+            }
+        });
+    }
+
+    if !hovered {
+        shared_ui.hovering_set = -1;
     }
 }
