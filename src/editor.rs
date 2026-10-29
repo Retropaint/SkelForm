@@ -321,9 +321,13 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::MoveStyle {
-        armature
-            .styles
-            .swap(events.values[0] as usize, events.values[1] as usize);
+        let style = armature.styles[events.values[0] as usize].clone();
+        armature.styles.insert(events.values[1] as usize, style);
+        let mut idx = events.values[0] as usize;
+        if events.values[0] > events.values[1] {
+            idx += 1;
+        }
+        armature.styles.remove(idx);
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::ToggleStyleActive {
