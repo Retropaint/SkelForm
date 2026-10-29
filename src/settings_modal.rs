@@ -467,7 +467,7 @@ fn misc(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config) {
         ui,
         &shared_ui.loc("settings_modal.miscellaneous.skip_startup_window"),
         "",
-        &mut shared_ui.use_fallback,
+        &mut shared_ui.updated_config.skip_startup,
         config,
         true,
     );
