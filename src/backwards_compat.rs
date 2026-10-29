@@ -10,20 +10,12 @@ macro_rules! get_array {
 
 // run backwards compatibility checks for this JSON data
 pub fn proceed(mut raw: serde_json::Value) -> (Root, String) {
-    let version_raw = raw.get("version").unwrap().clone();
-    let version = version_raw.as_str().unwrap();
     let mut err = "".to_string();
 
     macro_rules! from_ver {
         ($ver:expr, $func:ident) => {
-            if version.contains($ver) {
+            if raw.get("version").unwrap().as_str().unwrap().contains($ver) {
                 $func(&mut raw);
-                let json_string = serde_json::to_string(&raw).unwrap();
-                let mut deserializer = serde_json::Deserializer::from_str(&json_string);
-                let result: Result<Root, _> = serde_path_to_error::deserialize(&mut deserializer);
-                if let Err(invalid) = result {
-                    err = format!("from v{}: \n\n{}", $ver, &invalid.to_string());
-                }
             }
         };
     }
@@ -31,10 +23,18 @@ pub fn proceed(mut raw: serde_json::Value) -> (Root, String) {
     from_ver!("0.2", v0d2_to_v0d3);
     from_ver!("0.3", v0d3_to_v0d4);
     from_ver!("0.4", v0d4_to_v0d4d1);
+    from_ver!("0.4.1", v0d4d1_to_v0d5);
     from_ver!("0.5", v0d5_to_v0d6);
     from_ver!("0.6", v0d6_7_8_to_v0d9);
     from_ver!("0.7", v0d6_7_8_to_v0d9);
     from_ver!("0.8", v0d6_7_8_to_v0d9);
+
+    let json_string = serde_json::to_string(&raw).unwrap();
+    let mut deserializer = serde_json::Deserializer::from_str(&json_string);
+    let result: Result<Root, _> = serde_path_to_error::deserialize(&mut deserializer);
+    if let Err(invalid) = result {
+        err = format!("from v{}: \n\n{}", "test", &invalid.to_string());
+    }
 
     if err == "" {
         // return new JSON version
@@ -46,7 +46,7 @@ pub fn proceed(mut raw: serde_json::Value) -> (Root, String) {
 }
 
 pub fn v0d2_to_v0d3(raw: &mut serde_json::Value) {
-    raw["version"] = "v0.4.0".into();
+    raw["version"] = "v0.3.0".into();
 }
 
 pub fn v0d3_to_v0d4(raw: &mut serde_json::Value) {
@@ -81,6 +81,9 @@ pub fn v0d4_to_v0d4d1(raw: &mut serde_json::Value) {
     }
 
     raw["version"] = "v0.4.1".into();
+}
+pub fn v0d4d1_to_v0d5(raw: &mut serde_json::Value) {
+    raw["version"] = "v0.5.0".into();
 }
 
 pub fn v0d5_to_v0d6(raw: &mut serde_json::Value) {
@@ -158,7 +161,12 @@ pub fn v0d5_to_v0d6(raw: &mut serde_json::Value) {
         root.as_mut().unwrap().bones[b].physics_id = len as i32 - 1;
     }
 
-    *raw = serde_json::to_value(&root.unwrap()).unwrap();
+    raw["bones"] = serde_json::to_value(&root.as_ref().unwrap().bones).unwrap();
+    raw["visuals"] = serde_json::to_value(&root.as_ref().unwrap().visuals).unwrap();
+    raw["inverse_kinematics"] =
+        serde_json::to_value(&root.as_ref().unwrap().inverse_kinematics).unwrap();
+    raw["physics"] = serde_json::to_value(&root.as_ref().unwrap().physics).unwrap();
+    raw["version"] = "v0.6".into();
 }
 
 pub fn v0d6_7_8_to_v0d9(raw: &mut serde_json::Value) {
@@ -173,9 +181,13 @@ pub fn v0d6_7_8_to_v0d9(raw: &mut serde_json::Value) {
         for k in 0..get_array!(anim, "keyframes").len() {
             let kf = &mut get_array!(anim, "keyframes")[k];
             let bones = &root.as_ref().unwrap().bones;
-            let name = &bones.iter().find(|b| b.id == kf["bone_id"]).unwrap().name;
-            kf["bone_name"] = serde_json::Value::String(name.to_string());
+            let name = &bones.iter().find(|b| b.id == kf["bone_id"]);
+            if name.is_none() {
+                continue;
+            }
+            kf["bone_name"] = serde_json::Value::String(name.unwrap().name.to_string());
             kf["bone_id"] = json!(-1);
         }
     }
+    raw["version"] = "v0.9".into();
 }
