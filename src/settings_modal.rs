@@ -638,7 +638,7 @@ fn colors(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
         ($title:expr, $color:expr, $alpha:expr) => {
             alt_col = !alt_col;
             let col = &shared_ui.updated_config.colors;
-            let mut color = if alt_col { col.main } else { col.dark_accent };
+            let color = if alt_col { col.main } else { col.dark_accent };
             let str_color = shared_ui
                 .loc(&format!("settings_modal.colors.{}", $title))
                 .clone();
