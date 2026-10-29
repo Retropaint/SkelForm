@@ -949,14 +949,15 @@ fn context_menu_content(
         let polar_id = PolarId::DeleteSelectedTextures;
         let styles = &armature.styles;
         let style_idx = styles.iter().position(|s| s.id == selections.style_id);
-        if ui.context_button("Trim", config).clicked() {
-            events.trim_texture(style_idx.unwrap(), split[1].parse().unwrap());
-            shared_ui.context_menu.close();
-        }
         if ui.context_button("Duplicate", config).clicked() {
             events.duplicate_texture(style_idx.unwrap(), split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
+        if ui.context_button("Trim", config).clicked() {
+            events.trim_texture(style_idx.unwrap(), split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
+
         ui.context_delete(shared_ui, &config, events, "delete_tex", polar_id);
     } else if element_id == "anim" {
         ui.context_rename(shared_ui, config, context_id);
