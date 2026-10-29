@@ -510,7 +510,7 @@ pub fn render(
 
     // draw bone center points, and kites representing hierarchy
     #[rustfmt::skip]
-    draw_points(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids.clone(), selections, renderer, queue, render_pass, events, armature);
+    draw_render_points(config, camera, input, edit_mode, &mut temp_arm, selected_bone_ids.clone(), selections, renderer, queue, render_pass, events, armature);
     #[rustfmt::skip]
     draw_kites(config, camera, edit_mode, &mut temp_arm, selected_bone_ids, renderer, queue, render_pass);
 
@@ -2188,7 +2188,7 @@ pub fn add_offseted_indices(src: &mut Vec<u32>, dst: &mut Vec<u32>) {
     dst.append(src);
 }
 
-pub fn draw_points(
+pub fn draw_render_points(
     config: &Config,
     camera: &Camera,
     input: &InputStates,
