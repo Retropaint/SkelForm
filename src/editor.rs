@@ -55,7 +55,19 @@ pub fn iterate_events(
         }
     }
 
-    if event == Events::MoveAnimation {
+    if event == Events::DuplicateTexture {
+        for id in &selections.tex_ids {
+            // get texture data of this selected texture
+            let style = armature.sel_style_mut(&selections).unwrap();
+
+            // duplicate texture
+            let new_tex = style.textures[*id as usize].clone();
+            style.textures.push(new_tex);
+        }
+
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::MoveAnimation {
         let drag = events.values[0] as usize;
         let mut hov = events.values[1] as usize;
         let anim = armature.animations[drag].clone();
@@ -88,6 +100,7 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::TrimTexture {
+        // search WGPU_EVENTS
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::SetExportTexPadding {

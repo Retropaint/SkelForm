@@ -449,7 +449,7 @@ impl ApplicationHandler for App {
 
                 // iterate and process all events for this frame
                 while self.shared.events.events.len() > 0 {
-                    // these events are processed here due to using WGPU features
+                    // WGUP_EVENTS: these events are processed here due to using WGPU features
                     let queue = Some(&self.renderer.as_ref().unwrap().gpu.queue);
                     let device = Some(&self.renderer.as_ref().unwrap().gpu.device);
                     let bgl = Some(&self.renderer.as_ref().unwrap().bind_group_layout);

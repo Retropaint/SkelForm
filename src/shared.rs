@@ -2506,6 +2506,7 @@ pub enum Events {
     ReduceGlobalIkFamilyIds,
     AdjustKeyframesBySpeed,
     CreateBindBone,
+    DuplicateTexture,
 }
 
 enum_string!(Events);
@@ -2869,6 +2870,12 @@ impl EventState {
         self.events.push(Events::MoveAnimation);
         self.values.push(hov_id as f32);
         self.values.push(drag_id as f32);
+    }
+
+    pub fn duplicate_texture(&mut self, style_idx: usize, tex_idx: usize) {
+        self.events.push(Events::DuplicateTexture);
+        self.values.push(style_idx as f32);
+        self.values.push(tex_idx as f32);
     }
 }
 
