@@ -1056,7 +1056,9 @@ pub fn import<R: Read + std::io::Seek>(
         for keyframe in &mut anim.keyframes {
             let bones = &temp_arm.bones;
             let kf_name = &keyframe.bone_name;
-            keyframe.bone_id = bones.iter().find(|b| b.name == *kf_name).unwrap().id;
+            if let Some(bone) = bones.iter().find(|b| b.name == *kf_name) {
+                keyframe.bone_id = bone.id;
+            }
         }
     }
 
