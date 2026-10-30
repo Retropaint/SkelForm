@@ -300,12 +300,16 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::MoveTexture {
-        let new_idx = events.values[0] as usize;
         let sel = &selections;
         let textures = &mut armature.sel_style_mut(sel).unwrap().textures;
-        let tex = textures[events.values[1] as usize].clone();
-        textures.remove(events.values[1] as usize);
-        textures.insert(new_idx, tex);
+        let tex = textures[events.values[0] as usize].clone();
+        textures.insert(events.values[1] as usize, tex);
+        let mut remove_idx = events.values[0] as usize;
+        if events.values[0] > events.values[1] {
+            remove_idx += 1;
+        }
+        println!("{} {}", events.values[0], remove_idx);
+        textures.remove(remove_idx);
 
         events.events.remove(0);
         events.values.drain(0..=1);
