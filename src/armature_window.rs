@@ -976,8 +976,39 @@ pub fn draw_styles_list(
                 if selections.style_id == armature.styles[s].id {
                     shared_ui.rename_id = context_id.clone();
                 }
-                shared_ui.last_selected = "style".to_string();
                 events.select_style(armature.styles[s].id as i32);
+            }
+
+            // dragging stuff below
+
+            let pointer = ui.input(|i| i.pointer.interact_pos());
+            let hovered_payload = button.dnd_hover_payload::<i32>();
+            let dragged_payload = button.dnd_release_payload::<i32>();
+
+            if pointer == None || hovered_payload == None {
+                return;
+            }
+
+            let rect = button.rect;
+            let stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
+            ui.painter().hline(rect.x_range(), rect.top(), stroke);
+
+            // highlight entire button if a texture is being dragged onto it
+            if shared_ui.dragging_tex {
+                ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
+                ui.painter().vline(rect.right(), rect.y_range(), stroke);
+                ui.painter().vline(rect.left(), rect.y_range(), stroke);
+            }
+
+            if dragged_payload == None {
+                return;
+            }
+
+            let hov = *hovered_payload.clone().unwrap() as usize;
+            if !shared_ui.dragging_tex {
+                events.move_style(hov as usize, idx as usize);
+            } else if armature.styles[s].id != selections.style_id {
+                events.migrate_texture(hov, idx as usize);
             }
         });
     }
