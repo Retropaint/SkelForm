@@ -2723,8 +2723,8 @@ impl EventState {
 
     pub fn move_texture(&mut self, old_idx: usize, new_idx: usize) {
         self.events.push(Events::MoveTexture);
-        self.values.push(new_idx as f32);
         self.values.push(old_idx as f32);
+        self.values.push(new_idx as f32);
     }
 
     pub fn toggle_bone_folded(&mut self, bone_idx: usize, folded: bool) {
