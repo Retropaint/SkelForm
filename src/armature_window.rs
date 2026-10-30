@@ -552,7 +552,15 @@ pub fn draw_hierarchy(
                     shared_ui.context_menu.show(&context_id);
                 }
 
-                if check_bone_dragging(events, &armature, ui, button, idx as usize) {
+                if check_bone_dragging(
+                    shared_ui,
+                    selections,
+                    events,
+                    &armature,
+                    ui,
+                    button,
+                    idx as usize,
+                ) {
                     dragged = true;
                 }
             });
@@ -618,6 +626,8 @@ pub fn bone_label(
 }
 
 fn check_bone_dragging(
+    shared_ui: &crate::Ui,
+    selections: &SelectionState,
     events: &mut EventState,
     armature: &Armature,
     ui: &mut egui::Ui,
@@ -657,11 +667,20 @@ fn check_bone_dragging(
         return false;
     };
 
-    events.drag_bone(
-        is_above,
-        armature.bones[idx].id as usize,
-        armature.bones[*drag_payload.unwrap() as usize].id as usize,
-    );
+    if !shared_ui.dragging_tex {
+        events.drag_bone(
+            is_above,
+            armature.bones[idx].id as usize,
+            armature.bones[*drag_payload.unwrap() as usize].id as usize,
+        );
+    } else {
+        let bone = &armature.bones[idx as usize];
+        let id = bone.id;
+        let style = &armature.sel_style(selections).unwrap();
+        let tex_str = style.textures[*drag_payload.unwrap() as usize].name.clone();
+        events.set_bone_texture(id as usize, tex_str);
+    }
+
     return true;
 }
 
@@ -1007,7 +1026,7 @@ pub fn draw_styles_list(
             let hov = *hovered_payload.clone().unwrap() as usize;
             if !shared_ui.dragging_tex {
                 events.move_style(hov as usize, idx as usize);
-            } else if armature.styles[s].id != selections.style_id {
+            } else if armature.styles[idx as usize].id != selections.style_id {
                 events.migrate_texture(hov, idx as usize);
             }
         });
