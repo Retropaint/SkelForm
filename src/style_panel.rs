@@ -29,7 +29,7 @@ pub fn draw(
         }
     });
 
-    ui.add_space(5.);
+    ui.add_space(10.);
 
     // dropdown for new texture types
     ui.horizontal(|ui| {
@@ -177,6 +177,7 @@ pub fn draw(
                             let frame = egui::Frame::popup(ui.style());
                             frame.show(ui, |ui| {
                                 ui.set_min_size(egui::Vec2::new(150., 200.));
+                                ui.set_max_size(egui::Vec2::new(150., 200.));
                                 let pos =
                                     egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top());
                                 let rect = &egui::Rect::from_min_size(pos, [150., 150.].into());
