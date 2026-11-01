@@ -49,8 +49,11 @@ pub fn draw(
             shared_ui.armature_panel_rect = Some(ui.min_rect());
             return;
         }
+
         let panel_rect = &shared_ui.armature_panel_rect.unwrap();
         let top_panel_rect = &shared_ui.top_panel_rect.unwrap();
+
+        // armature list
         ui.scope(|ui| {
             let split = shared_ui.armature_split;
             ui.set_min_height(panel_rect.height() * split - top_panel_rect.height());
@@ -101,11 +104,7 @@ pub fn draw(
                 let frame = Frame::default().inner_margin(5.);
                 ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                     ui.set_width(ui.available_width());
-
-                    // The empty armature text should have blue hyperlinks to attract the user's
-                    // attention. The blue makes it clear of being a hyperlink, while also sticking
-                    // out (without being too jarring).
-                    ui.style_mut().visuals.hyperlink_color = egui::Color32::from_rgb(94, 156, 255);
+                    ui.set_min_height(ui.available_height());
 
                     if armature.bones.len() != 0 {
                         let sel = &selections;
@@ -156,6 +155,7 @@ pub fn draw(
             });
         });
 
+        // styles list
         ui.scope(|ui| {
             ui.set_min_height(ui.available_height());
             ui.set_max_height(ui.available_height());
@@ -166,7 +166,7 @@ pub fn draw(
                 .id_salt("style_panel")
                 .min_scrolled_height(0.)
                 .max_height(ui.available_height() - 10.);
-            let other_area = scroll_area.show(ui, |ui| {
+            scroll_area.show(ui, |ui| {
                 let frame = Frame::default().inner_margin(5.);
                 ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                     ui.set_width(ui.available_width());
