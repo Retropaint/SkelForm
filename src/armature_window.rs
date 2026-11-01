@@ -128,6 +128,8 @@ pub fn draw(
             })
         });
 
+        shared_ui.pointer_on_armature = area.inner.0.response.contains_pointer();
+
         // unselect all bones if frame is clicked
         let left_clicked = ui.ctx().input(|i| i.pointer.primary_clicked());
         if area.inner.0.response.hovered() && left_clicked {
@@ -155,7 +157,7 @@ pub fn draw_hierarchy(
     edit_mode: &EditMode,
     events: &mut EventState,
 ) {
-    let on_frame = ui.ui_contains_pointer();
+    let on_frame = shared_ui.pointer_on_armature;
     ui.set_min_width(ui.available_width());
     let mut idx: i32 = -1;
     let mut is_hovering = false;
