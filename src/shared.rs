@@ -725,6 +725,7 @@ pub struct Ui {
 
     pub armature_split: f32,
     pub pointer_on_armature: bool,
+    pub hovering_on_resizer: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

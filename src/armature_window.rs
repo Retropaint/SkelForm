@@ -110,9 +110,23 @@ pub fn draw(
         });
         ui.add_space(2.);
 
-        if ui.separator().interact(egui::Sense::drag()).dragged() {
-            egui_ctx.input_mut(|i| shared_ui.armature_split += i.pointer.delta().y);
-        }
+        // resizer
+        ui.scope(|ui| {
+            let bg_stroke = &mut ui.style_mut().visuals.widgets.noninteractive.bg_stroke;
+            if shared_ui.hovering_on_resizer {
+                *bg_stroke = egui::Stroke::new(1., config.colors.text);
+            }
+            let separator = ui.separator().interact(egui::Sense::drag());
+            if separator.dragged() {
+                egui_ctx.input_mut(|i| shared_ui.armature_split += i.pointer.delta().y);
+            }
+            if separator.hovered() {
+                shared_ui.hovering_on_resizer = true;
+                shared_ui.cursor_icon = CursorIcon::ResizeVertical;
+            } else {
+                shared_ui.hovering_on_resizer = false;
+            }
+        });
 
         ui.heading(&shared_ui.loc("styles_modal.heading"));
         ui.add_space(3.);
