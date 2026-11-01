@@ -1008,6 +1008,9 @@ pub fn draw_styles_list(
                 }
                 events.select_style(armature.styles[s].id as i32);
             }
+            if button.secondary_clicked() {
+                shared_ui.context_menu.show(&context_id);
+            }
 
             // dragging stuff below
 
