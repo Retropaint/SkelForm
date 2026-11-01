@@ -1012,26 +1012,21 @@ pub fn draw_styles_list(
             if button.secondary_clicked() {
                 shared_ui.context_menu.show(&context_id);
             }
-            if button.hovered() {
+            if button.hovered() && shared_ui.context_menu.id == "" {
+                let area_pos = Vec2::new(shared_ui.armature_panel_rect.unwrap().right(), frame_y);
                 let area = egui::Area::new("context_menu".into())
-                    .fixed_pos(Vec2::new(
-                        shared_ui.armature_panel_rect.unwrap().right(),
-                        frame_y,
-                    ))
+                    .fixed_pos(area_pos)
                     .order(egui::Order::Foreground);
                 area.show(ui.ctx(), |ui| {
                     ui.set_max_size(egui::Vec2::new(200., 200.));
 
                     let frame = egui::Frame::popup(ui.style());
                     frame.show(ui, |ui| {
-                        ui.set_min_size(egui::Vec2::new(200., 200.));
-                        let id = shared_ui.context_menu.id.clone();
-
                         let mut offset = Vec2::new(0., 0.);
                         let mut row_height = 0.;
                         for tex in &armature.styles[shared_ui.hovering_set as usize].textures {
                             let data = armature.tex_data(tex).unwrap();
-                            let size = resize_tex_img(tex.size, 30);
+                            let size = resize_tex_img(tex.size, 50);
 
                             if offset.x + size.x > ui.available_width() {
                                 offset.x = 0.;
@@ -1049,6 +1044,7 @@ pub fn draw_styles_list(
                             egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, rect);
                             offset.x += size.x;
                         }
+                        ui.set_min_size(egui::Vec2::new(200., offset.y + row_height));
                     })
                 });
             }
