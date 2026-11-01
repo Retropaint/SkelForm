@@ -908,6 +908,6 @@ pub fn draw_tex_buttons(
         shared_ui.hovering_tex = -1;
     }
     if dragged {
-        shared_ui.dragging_element == "texture"
+        shared_ui.dragging_element = "texture".to_string();
     }
 }

@@ -554,6 +554,13 @@ pub fn draw_hierarchy(
                     shared_ui.context_menu.show(&context_id);
                 }
 
+                // set dragging_tex true later, so styles will know that the element being
+                // dropped is a texture (migration)
+                let drag_id = ui.ctx().dragged_id();
+                if drag_id != None && drag_id.unwrap() == id {
+                    shared_ui.dragging_element = "bone".to_string();
+                }
+
                 if check_bone_dragging(
                     shared_ui,
                     selections,
@@ -669,13 +676,13 @@ fn check_bone_dragging(
         return false;
     };
 
-    if shared_ui.dragging_element != "texture" {
+    if shared_ui.dragging_element == "bone" {
         events.drag_bone(
             is_above,
             armature.bones[idx].id as usize,
             armature.bones[*drag_payload.unwrap() as usize].id as usize,
         );
-    } else {
+    } else if shared_ui.dragging_element == "texture" {
         let bone = &armature.bones[idx as usize];
         let id = bone.id;
         let style = &armature.sel_style(selections).unwrap();
@@ -1028,9 +1035,11 @@ pub fn draw_styles_list(
             }
 
             let hov = *hovered_payload.clone().unwrap() as usize;
-            if shared_ui.dragging_element != "texture" {
+            let element = &shared_ui.dragging_element;
+            let dragging_on_self = armature.styles[idx as usize].id == selections.style_id;
+            if element == "style" {
                 events.move_style(hov as usize, idx as usize);
-            } else if armature.styles[idx as usize].id != selections.style_id {
+            } else if element == "texture" && !dragging_on_self {
                 events.migrate_texture(hov, idx as usize);
             }
         });

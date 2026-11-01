@@ -447,60 +447,63 @@ pub fn draw(
         };
     }
 
-    if armature.sel_bone(&sel) == None {
-        return;
-    }
+    if armature.sel_bone(&sel) != None {
+        // show which temporary mode will activate on press
+        if !input.left_down && !edit_mode.editing_mesh {
+            if let Some(temporary) = &edit_mode.temporary {
+                if *temporary == EditModes::Move {
+                    helper_text!("Hold to Move", Vec2::new(0., -10.));
+                } else if *temporary == EditModes::Rotate {
+                    helper_text!("Hold to Rotate", Vec2::new(0., -10.));
+                } else if *temporary == EditModes::Scale {
+                    helper_text!("Hold to Scale", Vec2::new(0., -10.));
+                }
+            }
+        }
 
-    // show which temporary mode will activate on press
-    if !input.left_down && !edit_mode.editing_mesh {
-        if let Some(temporary) = &edit_mode.temporary {
-            if *temporary == EditModes::Move {
-                helper_text!("Hold to Move", Vec2::new(0., -10.));
-            } else if *temporary == EditModes::Rotate {
-                helper_text!("Hold to Rotate", Vec2::new(0., -10.));
-            } else if *temporary == EditModes::Scale {
-                helper_text!("Hold to Scale", Vec2::new(0., -10.));
+        // show rotation/scale values (either bone or pivot) above cursor
+        if selections.bone_ids.len() == 1 {
+            if edit_mode.is_rotating {
+                let offset = Vec2::new(50., 0.);
+                let rot = if edit_mode.editing_pivot {
+                    selected_bone.pivot_rot
+                } else {
+                    selected_bone.rot
+                } / 3.14
+                    * 180.;
+                let formatted = (rot * 100.).round() / 100.;
+                helper_text!(formatted.to_string() + "°", offset);
+            } else if edit_mode.is_scaling {
+                let offset = Vec2::new(50., 0.);
+                let scale = if edit_mode.editing_pivot {
+                    selected_bone.pivot_scale
+                } else {
+                    selected_bone.scale
+                };
+
+                let formatted = (scale.x * 100.).round() / 100.;
+                let mut padding = "";
+                if formatted.to_string() == "1" {
+                    padding = ".00";
+                }
+                let helper_str = format!("⏵ w: {}{}", formatted.to_string(), padding);
+                helper_text!(helper_str.to_string(), offset);
+
+                let offset = Vec2::new(-1., -38.);
+                let formatted = (scale.y * 100.).round() / 100.;
+                let mut padding = "";
+                if formatted.to_string() == "1" {
+                    padding = ".00";
+                }
+                let helper_str = format!("h: {}{}\n     ⏶", &formatted.to_string(), padding);
+                helper_text!(helper_str.to_string(), offset);
             }
         }
     }
 
-    // show rotation/scale values (either bone or pivot) above cursor
-    if selections.bone_ids.len() == 1 {
-        if edit_mode.is_rotating {
-            let offset = Vec2::new(50., 0.);
-            let rot = if edit_mode.editing_pivot {
-                selected_bone.pivot_rot
-            } else {
-                selected_bone.rot
-            } / 3.14
-                * 180.;
-            let formatted = (rot * 100.).round() / 100.;
-            helper_text!(formatted.to_string() + "°", offset);
-        } else if edit_mode.is_scaling {
-            let offset = Vec2::new(50., 0.);
-            let scale = if edit_mode.editing_pivot {
-                selected_bone.pivot_scale
-            } else {
-                selected_bone.scale
-            };
-
-            let formatted = (scale.x * 100.).round() / 100.;
-            let mut padding = "";
-            if formatted.to_string() == "1" {
-                padding = ".00";
-            }
-            let helper_str = format!("⏵ w: {}{}", formatted.to_string(), padding);
-            helper_text!(helper_str.to_string(), offset);
-
-            let offset = Vec2::new(-1., -38.);
-            let formatted = (scale.y * 100.).round() / 100.;
-            let mut padding = "";
-            if formatted.to_string() == "1" {
-                padding = ".00";
-            }
-            let helper_str = format!("h: {}{}\n     ⏶", &formatted.to_string(), padding);
-            helper_text!(helper_str.to_string(), offset);
-        }
+    // clear dragging_element if nothing is being dragged
+    if context.dragged_id() == None {
+        shared_ui.dragging_element = "".to_string();
     }
 }
 

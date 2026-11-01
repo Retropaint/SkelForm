@@ -80,7 +80,7 @@ pub fn draw(
                         .response
                         .on_hover_text(str_desc)
                         .on_hover_cursor(egui::CursorIcon::PointingHand)
-                        .interact(egui::Sense::click());
+                        .interact(egui::Sense::click_and_drag());
 
                     if button.clicked() {
                         if selections.tex_ids.contains(&(i as i32)) {
@@ -124,7 +124,7 @@ pub fn draw(
                     // dropped is a texture (migration)
                     let drag_id = ui.ctx().dragged_id();
                     if drag_id != None && drag_id.unwrap() == button_id {
-                        dragged = true;
+                        shared_ui.dragging_element = "texture".to_string();
                     }
 
                     // dragging stuff
@@ -142,7 +142,6 @@ pub fn draw(
                     };
 
                     let stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
-                    let mut is_below = false;
                     if pointer.unwrap().y < rect.center().y {
                         ui.painter().hline(rect.x_range(), rect.top(), stroke);
                     } else {
@@ -151,6 +150,9 @@ pub fn draw(
                     };
 
                     if let Some(dp) = dragged_payload {
+                        if shared_ui.dragging_element != "texture" {
+                            return;
+                        }
                         // if the dragged texture was dropped on another, move the dragged one above or below
                         let mut old_name_order: Vec<String> = vec![];
                         let sel = selections.clone();
@@ -164,9 +166,6 @@ pub fn draw(
 
             if !hovered || dragged {
                 shared_ui.hovering_tex = -1;
-            }
-            if dragged {
-                shared_ui.dragging_element = "texture".to_string();
             }
         });
     });
