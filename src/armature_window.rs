@@ -1086,7 +1086,7 @@ pub fn draw_styles_list(
                     ui.painter().vline(rect.left(), rect.y_range(), stroke);
                 }
 
-                if dragged_payload == None {
+                if dragged_payload != None {
                     let hov = *hovered_payload.clone().unwrap() as usize;
                     let element = &shared_ui.dragging_element;
                     let dragging_on_self = armature.styles[idx as usize].id == selections.style_id;
