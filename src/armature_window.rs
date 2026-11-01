@@ -931,6 +931,7 @@ pub fn draw_styles_list(
     config: &Config,
     events: &mut EventState,
 ) {
+    let frame_y = ui.min_rect().top();
     let mut idx = -1;
     let mut hovered = false;
     for s in 0..armature.styles.len() {
@@ -1011,6 +1012,46 @@ pub fn draw_styles_list(
             if button.secondary_clicked() {
                 shared_ui.context_menu.show(&context_id);
             }
+            if button.hovered() {
+                let area = egui::Area::new("context_menu".into())
+                    .fixed_pos(Vec2::new(
+                        shared_ui.armature_panel_rect.unwrap().right(),
+                        frame_y,
+                    ))
+                    .order(egui::Order::Foreground);
+                area.show(ui.ctx(), |ui| {
+                    ui.set_max_size(egui::Vec2::new(200., 200.));
+
+                    let frame = egui::Frame::popup(ui.style());
+                    frame.show(ui, |ui| {
+                        ui.set_min_size(egui::Vec2::new(200., 200.));
+                        let id = shared_ui.context_menu.id.clone();
+
+                        let mut offset = Vec2::new(0., 0.);
+                        let mut row_height = 0.;
+                        for tex in &armature.styles[shared_ui.hovering_set as usize].textures {
+                            let data = armature.tex_data(tex).unwrap();
+                            let size = resize_tex_img(tex.size, 30);
+
+                            if offset.x + size.x > ui.available_width() {
+                                offset.x = 0.;
+                                offset.y += row_height;
+                                row_height = 0.;
+                            }
+
+                            if size.y > row_height {
+                                row_height = size.y;
+                            }
+                            let rect = egui::Rect::from_min_size(
+                                ui.min_rect().left_top() + offset.into(),
+                                size.into(),
+                            );
+                            egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, rect);
+                            offset.x += size.x;
+                        }
+                    })
+                });
+            }
 
             // dragging stuff below
 
@@ -1051,4 +1092,21 @@ pub fn draw_styles_list(
     if !hovered {
         shared_ui.hovering_set = -1;
     }
+}
+
+pub fn resize_tex_img(mut size: Vec2, max: usize) -> Vec2 {
+    let mut mult = 1.;
+    if size.x > max as f32 {
+        mult = max as f32 / size.x;
+    }
+    size.x *= mult;
+    size.y *= mult;
+
+    mult = 1.;
+    if size.y > max as f32 {
+        mult = max as f32 / size.y
+    }
+    size.x *= mult;
+    size.y *= mult;
+    size
 }
