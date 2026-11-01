@@ -49,112 +49,131 @@ pub fn draw(
             shared_ui.armature_panel_rect = Some(ui.min_rect());
             return;
         }
-        let gradient = config.colors.gradient.into();
-        ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
-        ui.heading(&shared_ui.loc("armature_panel.heading"));
-        ui.add_space(3.);
+        let panel_rect = &shared_ui.armature_panel_rect.unwrap();
+        let top_panel_rect = &shared_ui.top_panel_rect.unwrap();
+        ui.scope(|ui| {
+            let split = shared_ui.armature_split;
+            ui.set_min_height(panel_rect.height() * split - top_panel_rect.height());
+            ui.set_max_height(panel_rect.height() * split - top_panel_rect.height());
 
-        ui.horizontal(|ui| {
-            // New Bone button
-            let button = ui.skf_button(shared_ui.loc("armature_panel.new_bone_button"));
-            if button.clicked() {
-                events.new_bone(-1);
+            let gradient = config.colors.gradient.into();
+            ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
+            ui.heading(&shared_ui.loc("armature_panel.heading"));
+            ui.add_space(3.);
+
+            ui.horizontal(|ui| {
+                // New Bone button
+                let button = ui.skf_button(shared_ui.loc("armature_panel.new_bone_button"));
+                if button.clicked() {
+                    events.new_bone(-1);
+                }
+
+                // Styles dropdown
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if armature.bones.len() == 0 && armature.styles.len() == 0 {
+                        return;
+                    }
+                    let id = format!("styles{}", armature.styles.len().to_string());
+                    let dropdown = egui::ComboBox::new(id, "")
+                        .selected_text(&shared_ui.loc("armature_panel.styles"))
+                        .width(80.)
+                        .height(500.)
+                        .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
+                        .show_ui(ui, |ui| {
+                            style_dropdown_list(ui, shared_ui, armature, config, events);
+                        })
+                        .response
+                        .on_hover_text(&shared_ui.loc("armature_panel.styles_desc"));
+
+                    if shared_ui.focus_style_dropdown {
+                        dropdown.request_focus();
+                        shared_ui.focus_style_dropdown = false;
+                    }
+                });
+            });
+            ui.add_space(3.);
+
+            let scroll_area = egui::ScrollArea::both()
+                .min_scrolled_height(0.)
+                .max_height(ui.available_height() - 15.);
+            let area = scroll_area.show(ui, |ui| {
+                // hierarchy
+                let frame = Frame::default().inner_margin(5.);
+                ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                    ui.set_width(ui.available_width());
+
+                    // The empty armature text should have blue hyperlinks to attract the user's
+                    // attention. The blue makes it clear of being a hyperlink, while also sticking
+                    // out (without being too jarring).
+                    ui.style_mut().visuals.hyperlink_color = egui::Color32::from_rgb(94, 156, 255);
+
+                    if armature.bones.len() != 0 {
+                        let sel = &selections;
+                        draw_hierarchy(ui, shared_ui, sel, &armature, &config, &edit_mode, events);
+                    } else {
+                        ui.add_space(5.);
+                        ui::empty_armature_starters(shared_ui, config, ui);
+                    }
+                    ui.add_space(4.);
+                })
+            });
+
+            // unselect all bones if frame is clicked
+            let left_clicked = ui.ctx().input(|i| i.pointer.primary_clicked());
+            if area.inner.0.response.hovered() && left_clicked {
+                events.select_bone(usize::MAX, false);
             }
 
-            // Styles dropdown
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if armature.bones.len() == 0 && armature.styles.len() == 0 {
-                    return;
-                }
-                let id = format!("styles{}", armature.styles.len().to_string());
-                let dropdown = egui::ComboBox::new(id, "")
-                    .selected_text(&shared_ui.loc("armature_panel.styles"))
-                    .width(80.)
-                    .height(500.)
-                    .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
-                    .show_ui(ui, |ui| {
-                        style_dropdown_list(ui, shared_ui, armature, config, events);
-                    })
-                    .response
-                    .on_hover_text(&shared_ui.loc("armature_panel.styles_desc"));
+            // open context menu if right clicking on hierarchy frame
+            let right_clicked = ui.ctx().input(|i| i.pointer.secondary_clicked());
+            if area.inner.0.response.hovered() && right_clicked {
+                shared_ui.context_menu.show(&"armature".to_string());
+            }
 
-                if shared_ui.focus_style_dropdown {
-                    dropdown.request_focus();
-                    shared_ui.focus_style_dropdown = false;
+            shared_ui.pointer_on_armature = area.inner.0.response.contains_pointer();
+
+            ui.add_space(2.);
+
+            // resizer
+            ui.scope(|ui| {
+                let bg_stroke = &mut ui.style_mut().visuals.widgets.noninteractive.bg_stroke;
+                if shared_ui.hovering_on_resizer {
+                    *bg_stroke = egui::Stroke::new(1., config.colors.text);
+                }
+                let separator = ui.separator().interact(egui::Sense::drag());
+                if separator.dragged() {
+                    let delta = egui_ctx.input_mut(|i| i.pointer.delta());
+                    let panel = &shared_ui.armature_panel_rect.unwrap();
+                    shared_ui.armature_split += delta.y / panel_rect.height();
+                    shared_ui.armature_split = shared_ui.armature_split.max(0.1).min(0.95);
+                }
+                if separator.hovered() {
+                    shared_ui.hovering_on_resizer = true;
+                    shared_ui.cursor_icon = CursorIcon::ResizeVertical;
+                } else {
+                    shared_ui.hovering_on_resizer = false;
                 }
             });
         });
-        ui.add_space(3.);
 
-        let scroll_area = egui::ScrollArea::both().max_height(shared_ui.armature_split);
-        let area = scroll_area.show(ui, |ui| {
-            // hierarchy
-            let frame = Frame::default().inner_margin(5.);
-            ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-                ui.set_width(ui.available_width());
-
-                // The empty armature text should have blue hyperlinks to attract the user's
-                // attention. The blue makes it clear of being a hyperlink, while also sticking
-                // out (without being too jarring).
-                ui.style_mut().visuals.hyperlink_color = egui::Color32::from_rgb(94, 156, 255);
-
-                if armature.bones.len() != 0 {
-                    let sel = &selections;
-                    draw_hierarchy(ui, shared_ui, sel, &armature, &config, &edit_mode, events);
-                } else {
-                    ui.add_space(5.);
-                    ui::empty_armature_starters(shared_ui, config, ui);
-                }
-                ui.add_space(4.);
-            })
-        });
-        ui.add_space(2.);
-
-        // resizer
         ui.scope(|ui| {
-            let bg_stroke = &mut ui.style_mut().visuals.widgets.noninteractive.bg_stroke;
-            if shared_ui.hovering_on_resizer {
-                *bg_stroke = egui::Stroke::new(1., config.colors.text);
-            }
-            let separator = ui.separator().interact(egui::Sense::drag());
-            if separator.dragged() {
-                egui_ctx.input_mut(|i| shared_ui.armature_split += i.pointer.delta().y);
-            }
-            if separator.hovered() {
-                shared_ui.hovering_on_resizer = true;
-                shared_ui.cursor_icon = CursorIcon::ResizeVertical;
-            } else {
-                shared_ui.hovering_on_resizer = false;
-            }
+            ui.set_min_height(ui.available_height());
+            ui.set_max_height(ui.available_height());
+
+            ui.heading(&shared_ui.loc("styles_modal.heading"));
+            ui.add_space(3.);
+            let scroll_area = egui::ScrollArea::both()
+                .id_salt("style_panel")
+                .min_scrolled_height(0.)
+                .max_height(ui.available_height() - 10.);
+            let other_area = scroll_area.show(ui, |ui| {
+                let frame = Frame::default().inner_margin(5.);
+                ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                    ui.set_width(ui.available_width());
+                    draw_styles_list(ui, shared_ui, armature, selections, config, events);
+                })
+            });
         });
-
-        ui.heading(&shared_ui.loc("styles_modal.heading"));
-        ui.add_space(3.);
-        let scroll_area = egui::ScrollArea::both()
-            .id_salt("style_panel")
-            .max_height(ui.available_height() - 10.);
-        let other_area = scroll_area.show(ui, |ui| {
-            let frame = Frame::default().inner_margin(5.);
-            ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-                ui.set_width(ui.available_width());
-                ui.set_height(ui.available_height());
-                draw_styles_list(ui, shared_ui, armature, selections, config, events);
-            })
-        });
-
-        shared_ui.pointer_on_armature = area.inner.0.response.contains_pointer();
-
-        // unselect all bones if frame is clicked
-        let left_clicked = ui.ctx().input(|i| i.pointer.primary_clicked());
-        if area.inner.0.response.hovered() && left_clicked {
-            events.select_bone(usize::MAX, false);
-        }
-
-        // open context menu if right clicking on hierarchy frame
-        let right_clicked = ui.ctx().input(|i| i.pointer.secondary_clicked());
-        if area.inner.0.response.hovered() && right_clicked {
-            shared_ui.context_menu.show(&"armature".to_string());
-        }
 
         shared_ui.armature_panel_rect = Some(ui.min_rect());
     });
