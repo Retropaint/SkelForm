@@ -589,7 +589,7 @@ pub struct Ui {
 
     pub styles_modal_size: Vec2,
     pub bones_assigned_scroll: f32,
-    pub dragging_tex: bool,
+    pub dragging_element: String,
 
     pub pending_textures: Vec<Texture>,
     pub done_pending: bool,

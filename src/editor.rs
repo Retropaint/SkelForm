@@ -320,7 +320,7 @@ pub fn iterate_events(
         armature.styles[events.values[1] as usize]
             .textures
             .push(tex);
-        ui.dragging_tex = false;
+        ui.dragging_element = "".to_string();
 
         events.events.remove(0);
         events.values.drain(0..=1);

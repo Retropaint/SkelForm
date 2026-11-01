@@ -181,7 +181,8 @@ pub fn draw_styles_list(
                         .on_hover_cursor(cursor_icon)
                         .interact(egui::Sense::click());
 
-                    if (button.contains_pointer() || button.has_focus()) && !shared_ui.dragging_tex
+                    if (button.contains_pointer() || button.has_focus())
+                        && shared_ui.dragging_element != "texture"
                     {
                         shared_ui.hovering_set = s as i32;
                         hovered = true;
@@ -240,7 +241,7 @@ pub fn draw_styles_list(
                     ui.painter().hline(rect.x_range(), rect.top(), stroke);
 
                     // highlight entire button if a texture is being dragged onto it
-                    if shared_ui.dragging_tex {
+                    if shared_ui.dragging_element == "texture" {
                         ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
                         ui.painter().vline(rect.right(), rect.y_range(), stroke);
                         ui.painter().vline(rect.left(), rect.y_range(), stroke);
@@ -251,7 +252,7 @@ pub fn draw_styles_list(
                     }
 
                     let hov = *hovered_payload.clone().unwrap() as usize;
-                    if !shared_ui.dragging_tex {
+                    if shared_ui.dragging_element != "texture" {
                         events.move_style(hov as usize, idx as usize);
                     } else if armature.styles[s].id != selections.style_id {
                         events.migrate_texture(hov, idx as usize);
@@ -906,5 +907,7 @@ pub fn draw_tex_buttons(
     if !hovered || dragged {
         shared_ui.hovering_tex = -1;
     }
-    shared_ui.dragging_tex = dragged;
+    if dragged {
+        shared_ui.dragging_element == "texture"
+    }
 }

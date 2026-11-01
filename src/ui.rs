@@ -266,23 +266,18 @@ pub fn draw(
             let scroll_area = egui::ScrollArea::vertical()
                 .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
             scroll_area.show(ui, |ui| {
-                if shared_ui.last_selected == "bone" {
+                let last_selected = &shared_ui.last_selected;
+                if last_selected == "bone" {
                     let bone = selected_bone.clone();
                     bone_panel::draw(
                         bone, ui, selections, shared_ui, armature, config, events, edit_mode,
                     );
-                } else if shared_ui.last_selected == "keyframe" {
+                } else if last_selected == "keyframe" {
                     keyframe_panel::draw(ui, &selections, &armature, events, shared_ui, config);
-                } else if shared_ui.last_selected == "style" {
-                    style_panel::draw(
-                        ui,
-                        shared_ui,
-                        &config,
-                        &selections,
-                        armature,
-                        events,
-                        input,
-                    );
+                } else if (last_selected == "style" || last_selected == "texture")
+                    && armature.sel_style(&sel) != None
+                {
+                    style_panel::draw(ui, shared_ui, &config, &selections, armature, events, input);
                 } else if armature.bones.len() > 1 {
                     ui.heading("Armature Shortcuts");
                     ui.add_space(10.);
@@ -954,7 +949,7 @@ fn context_menu_content(
             }
             shared_ui.context_menu.close();
         }
-    } else if element_id == "tex" {
+    } else if element_id == "texture" {
         ui.context_rename(shared_ui, &config, context_id);
         let polar_id = PolarId::DeleteSelectedTextures;
         let styles = &armature.styles;
