@@ -139,14 +139,14 @@ pub fn draw(
             shared_ui.icon_images.push(tex);
         }
     }
+
+    // render certain UI elements only if startup isn't open (performance)
     if !shared_ui.startup_window {
         camera_bar(context, config, shared_ui, camera, events);
-    }
-
-    if !shared_ui.startup_window {
         render_bar(context, config, shared_ui, events, armature);
     }
 
+    // open certain UI elements if requested
     if shared_ui.polar_modal {
         modal::polar_modal(context, &config, shared_ui, events);
     }
@@ -181,6 +181,8 @@ pub fn draw(
     if shared_ui.feedback_modal {
         modal::feedback_modal(context, shared_ui, &config, events);
     }
+
+    // check for any update, if requested
     #[cfg(not(target_arch = "wasm32"))]
     if shared_ui.checking_update {
         modal::modal(context, shared_ui, &config);
@@ -209,32 +211,23 @@ pub fn draw(
 
         shared_ui.checking_update = false;
     }
+
+    // render top panel
     let buffer = &copy_buffer;
     style_once!(top_panel(
         context, config, shared_ui, events, selections, armature, camera, edit_mode, buffer
     ));
 
+    // render keyframe editor if in Animation mode
     if edit_mode.anim_open {
         #[rustfmt::skip]
         style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, &edit_mode, camera));
     }
 
+    // render armature window
     style_once!(armature_window::draw(
         context, events, config, armature, selections, edit_mode, shared_ui, camera, input
     ));
-
-    let min_default_size = 210.;
-    let mut max_size = min_default_size;
-    if selections.bone_idx != usize::MAX {
-        max_size = 250.;
-    } else if selections.anim_frame != -1 {
-        max_size = 250.;
-    }
-
-    let mut enable_bone_panel = true;
-    if let Some(_) = armature.sel_bone(&sel) {
-        enable_bone_panel = !edit_mode.setting_ik_target && !edit_mode.setting_bind_bone;
-    }
 
     // get current properties of selected bone, including animations
     let mut selected_bone = Bone::default();
@@ -248,6 +241,8 @@ pub fn draw(
         }
     }
 
+    let min_default_size = 210.;
+    let max_size = 250.;
     let bone_panel_id = "Bone";
     let mut side_panel = egui::SidePanel::right(bone_panel_id)
         .resizable(false)
@@ -259,6 +254,15 @@ pub fn draw(
     }
     let panel = side_panel.show(context, |ui| {
         ui.set_width(min_default_size);
+
+        // if right-side panel is bone, determine if it should be enabled
+        let mut enable_bone_panel = true;
+        if shared_ui.last_selected == "bone" {
+            if let Some(_) = armature.sel_bone(&sel) {
+                enable_bone_panel = !edit_mode.setting_ik_target && !edit_mode.setting_bind_bone;
+            }
+        }
+
         ui.add_enabled_ui(enable_bone_panel, |ui| {
             let gradient = config.colors.gradient.into();
             ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
