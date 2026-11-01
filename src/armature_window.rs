@@ -1025,6 +1025,11 @@ pub fn draw_styles_list(
                         let mut offset = Vec2::new(0., 0.);
                         let mut row_height = 0.;
                         for tex in &armature.styles[shared_ui.hovering_set as usize].textures {
+                            // don't show empty texture pixel
+                            if tex.size == Vec2::new(1., 1.) {
+                                continue;
+                            }
+
                             let data = armature.tex_data(tex).unwrap();
                             let size = resize_tex_img(tex.size, 50);
 
