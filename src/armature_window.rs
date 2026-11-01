@@ -932,7 +932,7 @@ pub fn draw_styles_list(
     events: &mut EventState,
 ) {
     let frame_y = ui.min_rect().top();
-    let mut idx = -1;
+    let mut idx: i32 = -1;
     let mut hovered = false;
     for s in 0..armature.styles.len() {
         idx += 1;
@@ -1013,8 +1013,8 @@ pub fn draw_styles_list(
                 shared_ui.context_menu.show(&context_id);
             }
             if button.hovered() && shared_ui.context_menu.id == "" {
-                let area_pos = Vec2::new(shared_ui.armature_panel_rect.unwrap().right(), frame_y);
-                let area = egui::Area::new("context_menu".into())
+                let area_pos = Pos2::new(shared_ui.armature_panel_rect.unwrap().right(), frame_y);
+                let area = egui::Area::new("style_preview".into())
                     .fixed_pos(area_pos)
                     .order(egui::Order::Foreground);
                 area.show(ui.ctx(), |ui| {
@@ -1024,7 +1024,7 @@ pub fn draw_styles_list(
                     frame.show(ui, |ui| {
                         let mut offset = Vec2::new(0., 0.);
                         let mut row_height = 0.;
-                        for tex in &armature.styles[shared_ui.hovering_set as usize].textures {
+                        for tex in &armature.styles[idx as usize].textures {
                             // don't show empty texture pixel
                             if tex.size == Vec2::new(1., 1.) {
                                 continue;
@@ -1060,32 +1060,28 @@ pub fn draw_styles_list(
             let hovered_payload = button.dnd_hover_payload::<i32>();
             let dragged_payload = button.dnd_release_payload::<i32>();
 
-            if pointer == None || hovered_payload == None {
-                return;
-            }
+            if pointer != None && hovered_payload != None {
+                let rect = button.rect;
+                let stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
+                ui.painter().hline(rect.x_range(), rect.top(), stroke);
 
-            let rect = button.rect;
-            let stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
-            ui.painter().hline(rect.x_range(), rect.top(), stroke);
+                // highlight entire button if a texture is being dragged onto it
+                if shared_ui.dragging_element == "texture" {
+                    ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
+                    ui.painter().vline(rect.right(), rect.y_range(), stroke);
+                    ui.painter().vline(rect.left(), rect.y_range(), stroke);
+                }
 
-            // highlight entire button if a texture is being dragged onto it
-            if shared_ui.dragging_element == "texture" {
-                ui.painter().hline(rect.x_range(), rect.bottom(), stroke);
-                ui.painter().vline(rect.right(), rect.y_range(), stroke);
-                ui.painter().vline(rect.left(), rect.y_range(), stroke);
-            }
-
-            if dragged_payload == None {
-                return;
-            }
-
-            let hov = *hovered_payload.clone().unwrap() as usize;
-            let element = &shared_ui.dragging_element;
-            let dragging_on_self = armature.styles[idx as usize].id == selections.style_id;
-            if element == "style" {
-                events.move_style(hov as usize, idx as usize);
-            } else if element == "texture" && !dragging_on_self {
-                events.migrate_texture(hov, idx as usize);
+                if dragged_payload == None {
+                    let hov = *hovered_payload.clone().unwrap() as usize;
+                    let element = &shared_ui.dragging_element;
+                    let dragging_on_self = armature.styles[idx as usize].id == selections.style_id;
+                    if element == "style" {
+                        events.move_style(hov as usize, idx as usize);
+                    } else if element == "texture" && !dragging_on_self {
+                        events.migrate_texture(hov, idx as usize);
+                    }
+                }
             }
         });
     }

@@ -724,7 +724,7 @@ pub struct Ui {
     pub anim_speed_width: f32,
 
     pub armature_split: f32,
-    pub pointer_on_armature: bool
+    pub pointer_on_armature: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

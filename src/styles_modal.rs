@@ -110,7 +110,12 @@ pub fn draw_styles_list(
             let mut idx = -1;
 
             if shared_ui.hovering_tex != -1 {
-                draw_tex_preview(armature, shared_ui, selections, ui);
+                let left_top = egui::Pos2::new(
+                    ui.min_rect().center().x - size.x / 2.,
+                    ui.min_rect().center().y - size.y / 2.,
+                );
+                let rect = egui::Rect::from_min_size(left_top, [ui.available_width(), 0.].into());
+                draw_tex_preview(armature, shared_ui, selections, ui, &rect);
                 return;
             }
 
@@ -331,7 +336,7 @@ pub fn draw_textures_list(
 
                         // immediately start renaming empty texture when created
                         let len = armature.styles[set_idx].textures.len();
-                        shared_ui.rename_id = "tex_".to_owned() + &len.to_string();
+                        shared_ui.rename_id = "texture_".to_owned() + &len.to_string();
                     }
                 });
             });
@@ -706,19 +711,20 @@ pub fn draw_tex_preview(
     shared_ui: &mut crate::Ui,
     selections: &crate::SelectionState,
     ui: &mut egui::Ui,
-) {
+    display: &egui::Rect,
+) -> Vec2 {
     let tex = &armature.sel_style(selections).unwrap().textures[shared_ui.hovering_tex as usize];
-    let size = resize_tex_img(tex.size, ui.available_width() as usize);
+    let size = resize_tex_img(tex.size, display.width().min(display.height()) as usize);
     let left_top = egui::Pos2::new(
-        ui.min_rect().center().x - size.x / 2.,
-        ui.min_rect().center().y - size.y / 2. - 40.,
+        display.left() + (display.width() / 2. - size.x / 2.),
+        display.top() + (display.height() / 2. - size.y / 2.),
     );
-    let rect = egui::Rect::from_min_size(left_top, size.into());
     let data = armature.tex_data(tex).unwrap();
     if data.ui_img == None {
-        return;
+        return Vec2::new(0., 0.);
     }
-    egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, rect);
+    let texture_rect = egui::Rect::from_min_size(left_top, size.into());
+    egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, texture_rect);
 
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         let mut name = egui::text::LayoutJob::default();
@@ -733,6 +739,8 @@ pub fn draw_tex_preview(
         ui.label(name);
         ui.label(size);
     });
+
+    size
 }
 
 pub fn resize_tex_img(mut size: Vec2, max: usize) -> Vec2 {
@@ -772,7 +780,7 @@ pub fn draw_tex_buttons(
         idx += 1;
         let og_name = armature.sel_style(&sel).unwrap().textures[i].name.clone();
         let trimmed_name = utils::trunc_str(ui, &og_name, width - 10.);
-        let context_id = format!("tex_{}", &i.to_string());
+        let context_id = format!("texture_{}", &i.to_string());
 
         let str_desc = &shared_ui.loc("styles_modal.texture_desc").clone();
 

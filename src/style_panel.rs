@@ -1,4 +1,5 @@
 use crate::{
+    bone_panel, styles_modal,
     ui::{EguiUi, TextInputOptions},
     utils, Armature, Config, EventState, InputStates, SelectionState,
 };
@@ -12,7 +13,53 @@ pub fn draw(
     events: &mut EventState,
     input: &InputStates,
 ) {
-    ui.horizontal(|ui| ui.heading(&shared_ui.loc("bone_panel.heading")));
+    ui.horizontal(|ui| {
+        ui.heading(&shared_ui.loc("styles_modal.heading"));
+    });
+
+    ui.add_space(2.);
+
+    // style name field
+    ui.horizontal(|ui| {
+        ui.label(&shared_ui.loc("bone_panel.name"));
+        let style_name = armature.sel_style(&selections).unwrap().name.clone();
+        let (edited, value, _) = ui.text_input("Name".to_string(), shared_ui, style_name, None);
+        if edited {
+            events.rename_style(0, value);
+        }
+    });
+
+    ui.add_space(5.);
+
+    // dropdown for new texture types
+    ui.horizontal(|ui| {
+        ui.label(&shared_ui.loc("styles_modal.textures"));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Max), |ui| {
+            let combo_box = egui::ComboBox::new("new_tex", "")
+                .selected_text(shared_ui.loc("new"))
+                .width(40.);
+            combo_box.show_ui(ui, |ui| {
+                let mut selected = -1;
+                ui.selectable_value(&mut selected, 0, shared_ui.loc("styles_modal.import"));
+                ui.selectable_value(&mut selected, 1, shared_ui.loc("styles_modal.empty"));
+                if selected == 0 {
+                    // import texture (via file dialog)
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        bone_panel::open_file_dialog(&shared_ui.file_path, &shared_ui.file_type);
+                    }
+                    #[cfg(target_arch = "wasm32")]
+                    crate::clickFileInput(true);
+                } else if selected == 1 {
+                    events.create_empty_texture();
+
+                    // immediately start renaming empty texture when created
+                    let len = armature.sel_style(selections).unwrap().textures.len();
+                    shared_ui.rename_id = "texture_".to_owned() + &len.to_string();
+                }
+            });
+        });
+    });
 
     let frame = egui::Frame::new()
         .fill(config.colors.dark_accent.into())
@@ -28,7 +75,7 @@ pub fn draw(
                 idx += 1;
                 let og_name = armature.sel_style(&sel).unwrap().textures[i].name.clone();
                 let trimmed_name = utils::trunc_str(ui, &og_name, ui.available_width());
-                let context_id = format!("tex_{}", &i.to_string());
+                let context_id = format!("texture_{}", &i.to_string());
                 let str_desc = &shared_ui.loc("styles_modal.texture_desc").clone();
 
                 let mut col = config.colors.dark_accent;
@@ -114,10 +161,30 @@ pub fn draw(
                         }
                         events.toggle_sel_tex(i as i32, true);
                     }
-
                     if button.contains_pointer() || button.has_focus() {
                         shared_ui.hovering_tex = i as i32;
                         hovered = true;
+                    }
+                    if button.hovered() && shared_ui.context_menu.id == "" {
+                        let area_pos = egui::Pos2::new(
+                            shared_ui.bone_panel_rect.unwrap().left() - 175.,
+                            shared_ui.bone_panel_rect.unwrap().top(),
+                        );
+                        let area = egui::Area::new("texture_preview".into())
+                            .fixed_pos(area_pos)
+                            .order(egui::Order::Foreground);
+                        area.show(ui.ctx(), |ui| {
+                            let frame = egui::Frame::popup(ui.style());
+                            frame.show(ui, |ui| {
+                                ui.set_min_size(egui::Vec2::new(150., 200.));
+                                let pos =
+                                    egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top());
+                                let rect = &egui::Rect::from_min_size(pos, [150., 150.].into());
+                                styles_modal::draw_tex_preview(
+                                    armature, shared_ui, selections, ui, rect,
+                                );
+                            });
+                        });
                     }
 
                     // set dragging_tex true later, so styles will know that the element being

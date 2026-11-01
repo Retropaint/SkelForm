@@ -734,7 +734,7 @@ pub fn kb_inputs(
                 PolarId::DeleteSelectedTextures,
                 shared_ui.loc("polar.delete_tex"),
             );
-            shared_ui.context_menu.id = format!("tex_{}", selections.style_id);
+            shared_ui.context_menu.id = format!("texture_{}", selections.style_id);
         }
     }
 

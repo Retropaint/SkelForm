@@ -96,7 +96,7 @@
     "feedback": "Feedback"
   },
   "styles_modal": {
-    "heading": "Styles ℹ",
+    "heading": "Styles",
     "default": "Default",
     "heading_desc": "Styles allow hotswapping of textures to create multiple outfits/skins.\n\nThe first active style containing the bone's texture name will be used.",
     "texture_preview": "Texture Preview",

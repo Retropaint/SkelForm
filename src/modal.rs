@@ -105,7 +105,11 @@ pub fn polar_modal(
 
             // reset the last selected element, so deletion won't accidentally
             // allow it again
-            shared_ui.last_selected = "".to_string();
+            if shared_ui.polar_id != PolarId::DeleteSelectedTextures {
+                shared_ui.last_selected = "".to_string();
+            } else {
+                shared_ui.last_selected = "style".to_string();
+            }
 
             // extract first arg from context ID
             let mut ctx0: usize = 0;
