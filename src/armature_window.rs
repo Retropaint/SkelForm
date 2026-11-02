@@ -121,7 +121,6 @@ pub fn draw(
                 let separator = ui.separator().interact(egui::Sense::drag());
                 if separator.dragged() {
                     let delta = egui_ctx.input_mut(|i| i.pointer.delta());
-                    let panel = &shared_ui.armature_panel_rect.unwrap();
                     shared_ui.armature_split += delta.y / panel_rect.height();
                     shared_ui.armature_split = shared_ui.armature_split.max(0.1).min(0.95);
                 }
@@ -136,6 +135,9 @@ pub fn draw(
 
         // styles list
         ui.scope(|ui| {
+            if armature.bones.len() == 0 || !shared_ui.selected_bone_first_time {
+                return;
+            }
             ui.set_min_height(ui.available_height());
             ui.set_max_height(ui.available_height());
 
@@ -154,10 +156,16 @@ pub fn draw(
                 .max_height(ui.available_height() - 10.);
             scroll_area.show(ui, |ui| {
                 let frame = Frame::default().inner_margin(5.);
-                ui.dnd_drop_zone::<i32, _>(frame, |ui| {
-                    ui.set_width(ui.available_width());
-                    draw_styles_list(ui, shared_ui, armature, selections, config, events);
-                })
+                if armature.styles.len() > 0 {
+                    // show all styles
+                    ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                        ui.set_width(ui.available_width());
+                        draw_styles_list(ui, shared_ui, armature, selections, config, events);
+                    });
+                } else {
+                    // empty style list
+                    ui.label(shared_ui.loc("styles_modal.styles_empty"));
+                }
             });
         });
         shared_ui.armature_panel_rect = Some(ui.min_rect());
