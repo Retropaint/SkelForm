@@ -182,7 +182,7 @@ pub fn draw(
                                     egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top());
                                 let rect = &egui::Rect::from_min_size(pos, [150., 150.].into());
                                 styles_modal::draw_tex_preview(
-                                    armature, shared_ui, selections, ui, rect,
+                                    armature, shared_ui, selections, ui, rect, &config,
                                 );
                             });
                         });

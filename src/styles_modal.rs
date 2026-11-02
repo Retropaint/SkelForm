@@ -115,7 +115,7 @@ pub fn draw_styles_list(
                     ui.min_rect().center().y - size.y / 2.,
                 );
                 let rect = egui::Rect::from_min_size(left_top, [ui.available_width(), 0.].into());
-                draw_tex_preview(armature, shared_ui, selections, ui, &rect);
+                draw_tex_preview(armature, shared_ui, selections, ui, &rect, &config);
                 return;
             }
 
@@ -712,35 +712,47 @@ pub fn draw_tex_preview(
     selections: &crate::SelectionState,
     ui: &mut egui::Ui,
     display: &egui::Rect,
-) -> Vec2 {
+    config: &Config,
+) {
     let tex = &armature.sel_style(selections).unwrap().textures[shared_ui.hovering_tex as usize];
     let size = resize_tex_img(tex.size, display.width().min(display.height()) as usize);
     let left_top = egui::Pos2::new(
         display.left() + (display.width() / 2. - size.x / 2.),
         display.top() + (display.height() / 2. - size.y / 2.),
     );
-    let data = armature.tex_data(tex).unwrap();
-    if data.ui_img == None {
-        return Vec2::new(0., 0.);
+    if tex.size == Vec2::new(1., 1.) {
+        // empty texture
+        ui.painter().text(
+            left_top,
+            egui::Align2::CENTER_CENTER,
+            "[Empty texture]",
+            egui::FontId::proportional(14.),
+            config.colors.text.into(),
+        );
+    } else {
+        // draw texture
+        let data = armature.tex_data(tex).unwrap();
+        if data.ui_img == None {
+            return;
+        }
+        let texture_rect = egui::Rect::from_min_size(left_top, size.into());
+        egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, texture_rect);
     }
-    let texture_rect = egui::Rect::from_min_size(left_top, size.into());
-    egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, texture_rect);
 
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+        let col = Some(config.colors.text.into());
         let mut name = egui::text::LayoutJob::default();
         let img_name_str = &shared_ui.loc("styles_modal.img_name");
-        ui::job_text(img_name_str, Some(egui::Color32::WHITE), &mut name);
+        ui::job_text(img_name_str, col, &mut name);
         ui::job_text(&tex.name, None, &mut name);
         let mut size = egui::text::LayoutJob::default();
         let img_size_header_str = &shared_ui.loc("styles_modal.img_size");
-        ui::job_text(img_size_header_str, Some(egui::Color32::WHITE), &mut size);
+        ui::job_text(img_size_header_str, col, &mut size);
         let img_size_str = &(tex.size.x.to_string() + " x " + &tex.size.y.to_string());
         ui::job_text(img_size_str, None, &mut size);
         ui.label(name);
         ui.label(size);
     });
-
-    size
 }
 
 pub fn resize_tex_img(mut size: Vec2, max: usize) -> Vec2 {
