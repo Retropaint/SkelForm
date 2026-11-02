@@ -3,7 +3,6 @@
 use egui::*;
 
 use crate::{
-    renderer,
     shared::Vec2,
     ui::{self, EguiUi, TextInputOptions},
     utils,
@@ -61,36 +60,16 @@ pub fn draw(
 
             let gradient = config.colors.gradient.into();
             ui.gradient(ui.ctx().content_rect(), Color32::TRANSPARENT, gradient);
-            ui.heading(&shared_ui.loc("armature_panel.heading"));
             ui.add_space(3.);
 
             ui.horizontal(|ui| {
+                ui.heading(&shared_ui.loc("armature_panel.heading"));
+
                 // New Bone button
-                let button = ui.skf_button(shared_ui.loc("armature_panel.new_bone_button"));
-                if button.clicked() {
-                    events.new_bone(-1);
-                }
-
-                // Styles dropdown
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if armature.bones.len() == 0 && armature.styles.len() == 0 {
-                        return;
-                    }
-                    let id = format!("styles{}", armature.styles.len().to_string());
-                    let dropdown = egui::ComboBox::new(id, "")
-                        .selected_text(&shared_ui.loc("armature_panel.styles"))
-                        .width(80.)
-                        .height(500.)
-                        .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
-                        .show_ui(ui, |ui| {
-                            style_dropdown_list(ui, shared_ui, armature, config, events);
-                        })
-                        .response
-                        .on_hover_text(&shared_ui.loc("armature_panel.styles_desc"));
-
-                    if shared_ui.focus_style_dropdown {
-                        dropdown.request_focus();
-                        shared_ui.focus_style_dropdown = false;
+                ui.with_layout(Layout::right_to_left(Align::Max), |ui| {
+                    let button = ui.skf_button(shared_ui.loc("armature_panel.new_bone_button"));
+                    if button.clicked() {
+                        events.new_bone(-1);
                     }
                 });
             });
@@ -160,7 +139,14 @@ pub fn draw(
             ui.set_min_height(ui.available_height());
             ui.set_max_height(ui.available_height());
 
-            ui.heading(&shared_ui.loc("styles_modal.heading"));
+            ui.horizontal(|ui| {
+                ui.heading(&shared_ui.loc("styles_modal.heading"));
+                ui.with_layout(Layout::right_to_left(Align::Max), |ui| {
+                    if ui.skf_button(&shared_ui.loc("new")).clicked() {
+                        events.new_style();
+                    }
+                });
+            });
             ui.add_space(3.);
             let scroll_area = egui::ScrollArea::both()
                 .id_salt("style_panel")
@@ -979,7 +965,49 @@ pub fn draw_styles_list(
         }
         let context_id = format!("style_{}", &armature.styles[s].id);
 
+        if shared_ui.rename_id == context_id {
+            // renaming style
+            let (edited, value, _) = ui.text_input(
+                context_id,
+                shared_ui,
+                armature.styles[s].name.clone(),
+                Some(crate::ui::TextInputOptions {
+                    size: Vec2::new(ui.available_width(), 20.),
+                    focus: true,
+                    placeholder: shared_ui.loc("styles_modal.new_style").to_string(),
+                    default: shared_ui.loc("styles_modal.new_style").to_string(),
+                    ..Default::default()
+                }),
+            );
+            if edited {
+                events.select_style(armature.styles[s].id as i32);
+                events.rename_style(armature.styles[s].id as usize, value);
+            }
+            continue;
+        }
+
         ui.horizontal(|ui| {
+            let cursor_icon = if selections.style_id != armature.styles[s].id {
+                egui::CursorIcon::PointingHand
+            } else {
+                egui::CursorIcon::Default
+            };
+
+            // render style button (also as draggable element)
+            let button = ui
+                .dnd_drag_source(egui::Id::new(("style_panel", idx, 0)), idx, |ui| {
+                    egui::Frame::new().fill(col.into()).show(ui, |ui| {
+                        ui.set_width(ui.available_width() - 30.);
+                        ui.set_height(21.);
+                        ui.add_space(3.);
+                        let name = format!(" {}", &armature.styles[s].name);
+                        ui.label(egui::RichText::new(name).color(config.colors.text));
+                    });
+                })
+                .response
+                .on_hover_cursor(cursor_icon)
+                .interact(egui::Sense::click());
+
             // visibility checkbox
             let str_style_active_desc = &shared_ui.loc("styles_modal.active_desc");
             let visible_checkbox = ui
@@ -1005,27 +1033,6 @@ pub fn draw_styles_list(
             if visible_checkbox.clicked() {
                 events.toggle_style_active(s, false);
             }
-
-            let cursor_icon = if selections.style_id != armature.styles[s].id {
-                egui::CursorIcon::PointingHand
-            } else {
-                egui::CursorIcon::Default
-            };
-
-            // render style button (also as draggable element)
-            let button = ui
-                .dnd_drag_source(egui::Id::new(("style_panel", idx, 0)), idx, |ui| {
-                    egui::Frame::new().fill(col.into()).show(ui, |ui| {
-                        ui.set_width(ui.available_width());
-                        ui.set_height(21.);
-                        ui.add_space(3.);
-                        let name = format!(" {}", &armature.styles[s].name);
-                        ui.label(egui::RichText::new(name).color(config.colors.text));
-                    });
-                })
-                .response
-                .on_hover_cursor(cursor_icon)
-                .interact(egui::Sense::click());
 
             if (button.contains_pointer() || button.has_focus())
                 && shared_ui.dragging_element != "texture"
