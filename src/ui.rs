@@ -1210,6 +1210,7 @@ fn top_panel(
                                     ui.separator();
                                 }
                             }
+                            ui.add_space(10.);
                         });
                     });
                 })
