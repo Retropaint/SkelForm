@@ -1071,6 +1071,13 @@ pub fn draw_styles_list(
                     frame.show(ui, |ui| {
                         let mut offset = Vec2::new(0., 0.);
                         let mut row_height = 0.;
+
+                        if armature.styles[idx as usize].textures.len() == 0 {
+                            // no textures in this style
+                            ui.label("[No textures]");
+                            return;
+                        }
+
                         for tex in &armature.styles[idx as usize].textures {
                             // don't show empty texture pixel
                             if tex.size == Vec2::new(1., 1.) {
