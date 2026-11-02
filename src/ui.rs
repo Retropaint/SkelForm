@@ -153,11 +153,6 @@ pub fn draw(
     if shared_ui.modal {
         modal::modal(context, shared_ui, &config);
     }
-    if shared_ui.styles_modal {
-        styles_modal::draw(
-            context, shared_ui, config, camera, armature, selections, events, input,
-        );
-    }
     if shared_ui.settings_modal {
         settings_modal::draw(shared_ui, config, camera, events, context);
     }
@@ -672,7 +667,7 @@ pub fn kb_inputs(
     // cancel key
     let ui = &shared_ui;
     #[rustfmt::skip]
-    let modal_open = ui.styles_modal || ui.polar_modal || ui.settings_modal
+    let modal_open = ui.polar_modal || ui.settings_modal
         || ui.export_modal || ui.lang_import_modal || ui.feedback_modal;
     if input.consume_shortcut(&config.keys.cancel) {
         if shared_ui.context_menu.id != "" && !shared_ui.context_menu.hide {
@@ -686,8 +681,6 @@ pub fn kb_inputs(
         } else if shared_ui.polar_modal {
             shared_ui.polar_modal = false;
         } else if modal_open {
-            shared_ui.styles_modal = false;
-            shared_ui.settings_modal = false;
             shared_ui.atlas_modal = false;
             shared_ui.export_modal = false;
             shared_ui.feedback_modal = false;

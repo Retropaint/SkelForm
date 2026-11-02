@@ -587,7 +587,6 @@ pub struct Ui {
     pub mobile: bool,
     pub thumb_ui_tex: std::collections::HashMap<String, egui::TextureHandle>,
 
-    pub styles_modal_size: Vec2,
     pub bones_assigned_scroll: f32,
     pub dragging_element: String,
 
@@ -603,7 +602,6 @@ pub struct Ui {
     pub just_made_style: bool,
 
     // states
-    pub styles_modal: bool,
     pub exiting: bool,
     pub confirmed_exit: bool,
     pub forced_modal: bool,

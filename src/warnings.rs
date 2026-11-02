@@ -330,7 +330,6 @@ pub fn warning_line(
                 let egui_str = egui::RichText::new(str).underline();
                 if ui.clickable_label(egui_str).clicked() {
                     events.select_style(warning.ids[i] as i32);
-                    shared_ui.styles_modal = true;
                 };
             }
         }
@@ -359,7 +358,6 @@ pub fn warning_line(
                 let egui_str = egui::RichText::new(str).underline();
                 if ui.clickable_label(egui_str).clicked() {
                     events.select_style(warning.ids[s] as i32);
-                    shared_ui.styles_modal = true;
                 };
             }
         }

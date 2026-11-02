@@ -1,7 +1,7 @@
 use crate::{
-    bone_panel, styles_modal,
+    bone_panel,
     ui::{EguiUi, TextInputOptions},
-    utils, Armature, Config, EventState, InputStates, SelectionState,
+    utils, Armature, Config, EventState, InputStates, SelectionState, Ui,
 };
 
 pub fn draw(
@@ -181,7 +181,7 @@ pub fn draw(
                                 let pos =
                                     egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top());
                                 let rect = &egui::Rect::from_min_size(pos, [150., 150.].into());
-                                styles_modal::draw_tex_preview(
+                                draw_tex_preview(
                                     armature, shared_ui, selections, ui, rect, &config,
                                 );
                             });
@@ -237,4 +237,70 @@ pub fn draw(
             }
         });
     });
+}
+
+pub fn draw_tex_preview(
+    armature: &Armature,
+    shared_ui: &mut crate::Ui,
+    selections: &crate::SelectionState,
+    ui: &mut egui::Ui,
+    display: &egui::Rect,
+    config: &Config,
+) {
+    let tex = &armature.sel_style(selections).unwrap().textures[shared_ui.hovering_tex as usize];
+    let size = resize_tex_img(tex.size, display.width().min(display.height()) as usize);
+    let left_top = egui::Pos2::new(
+        display.left() + (display.width() / 2. - size.x / 2.),
+        display.top() + (display.height() / 2. - size.y / 2.),
+    );
+    if tex.size == crate::Vec2::new(1., 1.) {
+        // empty texture
+        ui.painter().text(
+            left_top,
+            egui::Align2::CENTER_CENTER,
+            "[Empty texture]",
+            egui::FontId::proportional(14.),
+            config.colors.text.into(),
+        );
+    } else {
+        // draw texture
+        let data = armature.tex_data(tex).unwrap();
+        if data.ui_img == None {
+            return;
+        }
+        let texture_rect = egui::Rect::from_min_size(left_top, size.into());
+        egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, texture_rect);
+    }
+
+    ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+        let col = Some(config.colors.text.into());
+        let mut name = egui::text::LayoutJob::default();
+        let img_name_str = &shared_ui.loc("styles_modal.img_name");
+        crate::ui::job_text(img_name_str, col, &mut name);
+        crate::ui::job_text(&tex.name, None, &mut name);
+        let mut size = egui::text::LayoutJob::default();
+        let img_size_header_str = &shared_ui.loc("styles_modal.img_size");
+        crate::ui::job_text(img_size_header_str, col, &mut size);
+        let img_size_str = &(tex.size.x.to_string() + " x " + &tex.size.y.to_string());
+        crate::ui::job_text(img_size_str, None, &mut size);
+        ui.label(name);
+        ui.label(size);
+    });
+}
+
+pub fn resize_tex_img(mut size: crate::Vec2, max: usize) -> crate::Vec2 {
+    let mut mult = 1.;
+    if size.x > max as f32 {
+        mult = max as f32 / size.x;
+    }
+    size.x *= mult;
+    size.y *= mult;
+
+    mult = 1.;
+    if size.y > max as f32 {
+        mult = max as f32 / size.y
+    }
+    size.x *= mult;
+    size.y *= mult;
+    size
 }

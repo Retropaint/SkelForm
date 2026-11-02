@@ -126,7 +126,6 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.scale = 1.;
     shared.ui.context_menu.close();
     shared.ui.hovering_tex = -1;
-    shared.ui.styles_modal_size = Vec2::new(500., 500.);
     shared.screenshot_res = Vec2::new(128., 128.);
     shared.ui.sprite_size = Vec2::new(128., 128.);
     shared.ui.sprites_per_row = 4;

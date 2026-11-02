@@ -66,7 +66,6 @@ pub mod settings_modal;
 pub mod shared;
 pub mod startup_window;
 pub mod style_panel;
-pub mod styles_modal;
 pub mod ui;
 pub mod utils;
 pub mod warnings;
