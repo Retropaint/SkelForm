@@ -1179,14 +1179,10 @@ pub fn visuals(
                     let button = ui.selectable_value(&mut selected_tex, tex.clone(), &name);
                     changed |= button.clicked();
                 }
-                let setup = ui.selectable_value(&mut selected_tex, str_setup.clone(), &str_setup);
-                changed |= setup.clicked();
             });
         });
     });
-    if selected_tex == str_setup {
-        shared_ui.styles_modal = true;
-    } else if changed {
+    if changed {
         events.save_edited_bone(selections.bone_idx);
         for id in &selections.bone_ids {
             events.set_bone_texture(*id as usize, selected_tex.clone());
