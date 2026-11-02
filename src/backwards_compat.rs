@@ -176,18 +176,21 @@ pub fn v0d6_7_8_to_v0d9(raw: &mut serde_json::Value) {
     let root: Result<Root, _> = serde_path_to_error::deserialize(&mut deserializer);
 
     // populate keyframe bone_name based on bone_id
-    for a in 0..raw.get("animations").unwrap().as_array().unwrap().len() {
-        let anim = &mut get_array!(raw, "animations")[a];
-        for k in 0..get_array!(anim, "keyframes").len() {
-            let kf = &mut get_array!(anim, "keyframes")[k];
-            let bones = &root.as_ref().unwrap().bones;
-            let name = &bones.iter().find(|b| b.id == kf["bone_id"]);
-            if name.is_none() {
-                continue;
+    if raw.get("animations") != None {
+        for a in 0..raw.get("animations").unwrap().as_array().unwrap().len() {
+            let anim = &mut get_array!(raw, "animations")[a];
+            for k in 0..get_array!(anim, "keyframes").len() {
+                let kf = &mut get_array!(anim, "keyframes")[k];
+                let bones = &root.as_ref().unwrap().bones;
+                let name = &bones.iter().find(|b| b.id == kf["bone_id"]);
+                if name.is_none() {
+                    continue;
+                }
+                kf["bone_name"] = serde_json::Value::String(name.unwrap().name.to_string());
+                kf["bone_id"] = json!(-1);
             }
-            kf["bone_name"] = serde_json::Value::String(name.unwrap().name.to_string());
-            kf["bone_id"] = json!(-1);
         }
     }
+
     raw["version"] = "v0.9".into();
 }
