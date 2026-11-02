@@ -55,7 +55,16 @@ pub fn iterate_events(
         }
     }
 
-    if event == Events::NewBonesFromTextures {
+    if event == Events::UpdateRenderOptions {
+        edit_mode.render_options.textures = events.values[0] == 1.;
+        edit_mode.render_options.points = events.values[1] == 1.;
+        edit_mode.render_options.kites = events.values[2] == 1.;
+        edit_mode.render_options.meshes = events.values[3] == 1.;
+        edit_mode.render_options.rects = events.values[4] == 1.;
+
+        events.events.remove(0);
+        events.values.drain(0..=4);
+    } else if event == Events::NewBonesFromTextures {
         let dragged_tex_id = events.values[0] as i32;
         let pos = Vec2::new(events.values[1], events.values[2]);
 
@@ -1049,13 +1058,6 @@ pub fn simple_event(
         Events::SaveAnimation => {
             undo_states.new_undo_anim(&armature.sel_anim(&selections).unwrap());
         }
-        Events::UpdateRenderOptions => {
-            renderer.render_points = ui.render_points;
-            renderer.render_kites = ui.render_kites;
-            renderer.render_textures = ui.render_textures;
-            renderer.render_mesh_wf = ui.render_mesh_wf;
-            renderer.render_rects = ui.render_rects;
-        }
         Events::SetTemporaryEditMode => {
             if value == 3. {
                 edit_mode.temporary = None;
@@ -1325,6 +1327,7 @@ pub fn simple_event(
             // mark this bone as selected, so focus isn't taken away from bone name input
             ui.prev_selected_bone_idx = idx;
         }
+        Events::SetArmatureSplit => edit_mode.armature_split = value,
         _ => {}
     }
 }

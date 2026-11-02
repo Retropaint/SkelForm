@@ -890,6 +890,8 @@ pub fn prepare_files(
     // iterable editor bone exports
     let mut editor = EditorOptions {
         camera,
+        armature_split: edit_mode.armature_split,
+        render_options: edit_mode.render_options.clone(),
         bones: vec![],
         styles: vec![],
     };
@@ -1177,6 +1179,8 @@ pub fn import<R: Read + std::io::Seek>(
                 let ed_style = &editor.styles[s];
                 style.active = ed_style.active;
             }
+            shared.edit_mode.render_options = editor.render_options;
+            shared.edit_mode.armature_split = editor.armature_split;
         }
     }
 
@@ -1263,6 +1267,8 @@ pub fn import<R: Read + std::io::Seek>(
     // update warnings for this armature
     shared.ui.warnings = check_warnings(&shared.armature);
     shared.renderer.gridline_buffer.dirty = true;
+    shared.renderer.point_buffer.dirty = true;
+    shared.renderer.kite_buffer.dirty = true;
 
     shared.events.unselect_all();
     shared.ui.startup_window = false;

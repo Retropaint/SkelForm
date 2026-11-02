@@ -54,7 +54,7 @@ pub fn draw(
 
         // armature list
         ui.scope(|ui| {
-            let split = shared_ui.armature_split;
+            let split = edit_mode.armature_split;
             ui.set_min_height(panel_rect.height() * split - top_panel_rect.height());
             ui.set_max_height(panel_rect.height() * split - top_panel_rect.height());
 
@@ -127,8 +127,9 @@ pub fn draw(
                 let separator = ui.separator().interact(egui::Sense::drag());
                 if separator.dragged() {
                     let delta = egui_ctx.input_mut(|i| i.pointer.delta());
-                    shared_ui.armature_split += delta.y / panel_rect.height();
-                    shared_ui.armature_split = shared_ui.armature_split.max(0.1).min(0.95);
+                    let mut split = edit_mode.armature_split;
+                    split += delta.y / panel_rect.height();
+                    events.set_armature_split(split.max(0.1).min(0.95));
                 }
                 if separator.hovered() {
                     shared_ui.hovering_on_resizer = true;

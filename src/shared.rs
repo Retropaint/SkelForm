@@ -669,11 +669,6 @@ pub struct Ui {
     pub ik_img: Option<egui::TextureHandle>,
     pub lock_img: Option<egui::TextureHandle>,
     pub unlock_img: Option<egui::TextureHandle>,
-    pub render_points: bool,
-    pub render_kites: bool,
-    pub render_textures: bool,
-    pub render_mesh_wf: bool,
-    pub render_rects: bool,
     pub use_fallback: bool,
     pub language: String,
     pub lang_import_modal: bool,
@@ -722,7 +717,6 @@ pub struct Ui {
     pub adjusting_anim_speed: f32,
     pub anim_speed_width: f32,
 
-    pub armature_split: f32,
     pub pointer_on_armature: bool,
     pub hovering_on_resizer: bool,
 }
@@ -1280,10 +1274,26 @@ pub struct EditorStyle {
     pub active: bool,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
+pub struct RenderOptions {
+    #[serde(default = "default_true")]
+    pub textures: bool,
+    #[serde(default = "default_true")]
+    pub points: bool,
+    #[serde(default = "default_true")]
+    pub kites: bool,
+    pub meshes: bool,
+    pub rects: bool,
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 #[serde(default)]
 pub struct EditorOptions {
     pub camera: Camera,
+    #[serde(default = "default_armature_split")]
+    pub armature_split: f32,
+    #[serde(default = "default_render_options")]
+    pub render_options: RenderOptions,
     pub bones: Vec<EditorBone>,
     pub styles: Vec<EditorStyle>,
 }
@@ -2166,6 +2176,8 @@ pub struct EditMode {
     pub holding_edit_mod: bool,
     pub holding_edit_snap: bool,
     pub editing_pivot: bool,
+    pub armature_split: f32,
+    pub render_options: RenderOptions,
 }
 
 #[derive(Default, PartialEq, Debug, Clone)]
@@ -2332,11 +2344,6 @@ pub struct Renderer {
     pub new_vert: Option<Vertex>,
     pub started_dragging_verts: bool,
     pub temp_bones: Vec<Bone>,
-    pub render_points: bool,
-    pub render_kites: bool,
-    pub render_textures: bool,
-    pub render_mesh_wf: bool,
-    pub render_rects: bool,
     pub on_point: bool,
     pub clicked_vert_id: i32,
     pub is_hovering_bone: bool,
@@ -2511,6 +2518,7 @@ pub enum Events {
     CreateBindBone,
     DuplicateTexture,
     NewBonesFromTextures,
+    SetArmatureSplit,
 }
 
 enum_string!(Events);
@@ -2568,7 +2576,6 @@ impl EventState {
     generic_event!(open_export_modal, Events::OpenExportModal);
     generic_event!(update_config, Events::UpdateConfig);
     generic_event!(save_animation, Events::SaveAnimation);
-    generic_event!(update_render_options, Events::UpdateRenderOptions);
     generic_event!(create_empty_texture, Events::CreateEmptyTexture);
     generic_event!(import_psd_armature, Events::ImportPsdArmature);
     generic_event!(delete_selected_keyframes, Events::DeleteSelectedKeyframes);
@@ -2633,6 +2640,7 @@ impl EventState {
     #[rustfmt::skip]    event_with_value!(reduce_global_ik_family_ids, Events::ReduceGlobalIkFamilyIds, base, i32);
     event_with_value!(create_bind_bone, Events::CreateBindBone, vert_id, i32);
     event_with_value!(new_bone, Events::NewBone, target_id, i32);
+    event_with_value!(set_armature_split, Events::SetArmatureSplit, value, f32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -2888,6 +2896,22 @@ impl EventState {
         self.values.push(pos.x);
         self.values.push(pos.y);
     }
+
+    pub fn update_render_options(
+        &mut self,
+        tex: bool,
+        points: bool,
+        kites: bool,
+        mesh: bool,
+        rects: bool,
+    ) {
+        self.events.push(Events::UpdateRenderOptions);
+        self.values.push(tex as i32 as f32);
+        self.values.push(points as i32 as f32);
+        self.values.push(kites as i32 as f32);
+        self.values.push(mesh as i32 as f32);
+        self.values.push(rects as i32 as f32);
+    }
 }
 
 #[derive(Default, Clone)]
@@ -3048,6 +3072,24 @@ fn is_vec2_max(value: &Vec2) -> bool {
 
 pub fn f32_as_bool(value: f32) -> bool {
     value == 1.
+}
+
+pub fn default_armature_split() -> f32 {
+    0.5
+}
+
+pub fn default_true() -> bool {
+    true
+}
+
+pub fn default_render_options() -> RenderOptions {
+    RenderOptions {
+        textures: true,
+        points: true,
+        kites: true,
+        meshes: false,
+        rects: false
+    }
 }
 
 pub fn bool_as_f32(value: bool) -> f32 {

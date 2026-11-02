@@ -144,7 +144,7 @@ pub fn draw(
     // render certain UI elements only if startup isn't open (performance)
     if !shared_ui.startup_window {
         camera_bar(context, config, shared_ui, camera, events);
-        render_bar(context, config, shared_ui, events, armature);
+        render_bar(context, config, shared_ui, events, armature, &edit_mode);
     }
 
     // open certain UI elements if requested
@@ -1935,6 +1935,7 @@ fn render_bar(
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     armature: &Armature,
+    edit_mode: &EditMode,
 ) {
     // check which toggles are eligible, and return if none are
     let mut eligibles = vec![false, false, false, false, false];
@@ -1977,6 +1978,7 @@ fn render_bar(
     window.show(egui_ctx, |ui| {
         let mut hovered = false;
         let mut idx = -1;
+        let mut clicked = false;
 
         if shared_ui.render_bar.expanded {
             ui.set_width(101.);
@@ -2030,18 +2032,28 @@ fn render_bar(
                         shared_ui.render_bar.expanded = true;
                     }
                     if button.on_hover_cursor(cursor).clicked() {
+                        clicked = true;
                         $field = !$field;
-                        events.update_render_options();
                     }
                 }
             };
         }
 
-        button!(shared_ui.render_textures, "Textures", "🖻");
-        button!(shared_ui.render_points, "Points", "⏺");
-        button!(shared_ui.render_kites, "Kites", "♦");
-        button!(shared_ui.render_mesh_wf, "Mesh Wires", "⬟");
-        button!(shared_ui.render_rects, "Rects", "⬛");
+        let mut render_options = edit_mode.render_options.clone();
+        button!(render_options.textures, "Textures", "🖻");
+        button!(render_options.points, "Points", "⏺");
+        button!(render_options.kites, "Kites", "♦");
+        button!(render_options.meshes, "Mesh Wires", "⬟");
+        button!(render_options.rects, "Rects", "⬛");
+        if clicked {
+            events.update_render_options(
+                render_options.textures,
+                render_options.points,
+                render_options.kites,
+                render_options.meshes,
+                render_options.rects
+            );
+        }
 
         shared_ui.render_bar.prev_expanded = shared_ui.render_bar.expanded;
         if !hovered {

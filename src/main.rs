@@ -135,19 +135,16 @@ fn init_shared(shared: &mut Shared) {
     shared.edit_mode.onion_layers = false;
     shared.ui.tracing_gap = 25.;
     shared.ui.tracing_padding = 50.;
-    shared.ui.render_points = true;
-    shared.ui.render_kites = true;
-    shared.ui.render_textures = true;
-    shared.renderer.render_points = true;
-    shared.renderer.render_kites = true;
-    shared.renderer.render_textures = true;
+    shared.edit_mode.render_options.points = true;
+    shared.edit_mode.render_options.kites = true;
+    shared.edit_mode.render_options.textures = true;
     shared.ui.use_fallback = true;
     shared.ui.scale = shared.config.ui_scale;
     shared.ui.export_style_id = usize::MAX;
     shared.renderer.clicked_vert_id = -1;
     shared.ui.first_startup = true;
     shared.ui.adjusting_anim_speed = -999.;
-    shared.ui.armature_split = 0.5;
+    shared.edit_mode.armature_split = 0.5;
 
     shared.ui.video_clear_bg = shared.config.colors.background;
     shared.ui.exporting_video_type = ExportVideoType::Mp4;

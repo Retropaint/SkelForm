@@ -182,7 +182,7 @@ pub fn render(
             && (!input.left_down || input.left_pressed) // allow detection on LMB press
             && !camera.on_ui
             && selected_mesh
-            && renderer.render_textures
+            && edit_mode.render_options.textures
         {
             let wv = &temp_arm.bones[b].world_verts;
             for (_, chunk) in temp_arm.bones[b].indices.chunks_exact(3).enumerate() {
@@ -291,7 +291,7 @@ pub fn render(
     }
 
     // render onion layers
-    if renderer.render_textures && selections.anim_frame != -1 && edit_mode.onion_layers {
+    if edit_mode.render_options.textures && selections.anim_frame != -1 && edit_mode.onion_layers {
         #[rustfmt::skip]
         draw_armature(
             &prev_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass,
@@ -305,7 +305,7 @@ pub fn render(
     }
 
     // render bones
-    if renderer.render_textures {
+    if edit_mode.render_options.textures {
         #[rustfmt::skip]
         draw_armature(
             &temp_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass,
@@ -324,7 +324,7 @@ pub fn render(
 
         // render texture, so it appears above everything else
         let tex = armature.tex_of(bone.id);
-        if renderer.render_textures && tex != None {
+        if edit_mode.render_options.textures && tex != None {
             let bind_group = &armature.tex_data(tex.unwrap()).unwrap().bind_group;
             let sel_bone_buffer = &mut renderer.sel_bone_buffer;
             let mut world_verts = bone.world_verts.clone();
@@ -412,7 +412,7 @@ pub fn render(
     }
 
     // draw render rects if enabled
-    if renderer.render_rects {
+    if edit_mode.render_options.rects {
         let mut verts = vec![];
         let mut indices = vec![];
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
@@ -448,7 +448,7 @@ pub fn render(
     }
 
     // render mesh wireframes if on
-    if renderer.render_mesh_wf {
+    if edit_mode.render_options.meshes {
         let mut verts = vec![];
         let mut indices = vec![];
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
@@ -2225,7 +2225,7 @@ pub fn draw_render_points(
         }
 
         // skip points if they shouldn't be rendered, and this isn't a selected bone
-        if !renderer.render_points && !selections.bone_ids.contains(&bone.id) {
+        if !edit_mode.render_options.points && !selections.bone_ids.contains(&bone.id) {
             continue;
         }
 
@@ -2332,7 +2332,9 @@ pub fn draw_kites(
     for p in 0..temp_arm.bones.len() {
         let bone = &temp_arm.bones[p];
 
-        if !renderer.render_kites || (edit_mode.editing_mesh && !sel_bone_ids.contains(&bone.id)) {
+        if !edit_mode.render_options.kites
+            || (edit_mode.editing_mesh && !sel_bone_ids.contains(&bone.id))
+        {
             continue;
         }
 
