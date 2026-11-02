@@ -14,7 +14,7 @@ pub fn draw(
     input: &InputStates,
 ) {
     ui.horizontal(|ui| {
-        ui.heading(&shared_ui.loc("styles_modal.heading"));
+        ui.heading(&shared_ui.loc("style_panel.heading"));
     });
 
     ui.add_space(2.);
@@ -33,15 +33,15 @@ pub fn draw(
 
     // dropdown for new texture types
     ui.horizontal(|ui| {
-        ui.label(&shared_ui.loc("styles_modal.textures"));
+        ui.label(&shared_ui.loc("style_panel.textures"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Max), |ui| {
             let combo_box = egui::ComboBox::new("new_tex", "")
                 .selected_text(shared_ui.loc("new"))
                 .width(40.);
             combo_box.show_ui(ui, |ui| {
                 let mut selected = -1;
-                ui.selectable_value(&mut selected, 0, shared_ui.loc("styles_modal.import"));
-                ui.selectable_value(&mut selected, 1, shared_ui.loc("styles_modal.empty"));
+                ui.selectable_value(&mut selected, 0, shared_ui.loc("style_panel.import"));
+                ui.selectable_value(&mut selected, 1, shared_ui.loc("style_panel.empty"));
                 if selected == 0 {
                     // import texture (via file dialog)
                     #[cfg(not(target_arch = "wasm32"))]
@@ -76,7 +76,7 @@ pub fn draw(
                 let og_name = armature.sel_style(&sel).unwrap().textures[i].name.clone();
                 let trimmed_name = utils::trunc_str(ui, &og_name, ui.available_width());
                 let context_id = format!("texture_{}", &i.to_string());
-                let str_desc = &shared_ui.loc("styles_modal.texture_desc").clone();
+                let str_desc = &shared_ui.loc("style_panel.texture_desc").clone();
 
                 let mut col = config.colors.dark_accent;
                 if i == shared_ui.hovering_tex as usize {
@@ -275,11 +275,11 @@ pub fn draw_tex_preview(
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         let col = Some(config.colors.text.into());
         let mut name = egui::text::LayoutJob::default();
-        let img_name_str = &shared_ui.loc("styles_modal.img_name");
+        let img_name_str = &shared_ui.loc("style_panel.img_name");
         crate::ui::job_text(img_name_str, col, &mut name);
         crate::ui::job_text(&tex.name, None, &mut name);
         let mut size = egui::text::LayoutJob::default();
-        let img_size_header_str = &shared_ui.loc("styles_modal.img_size");
+        let img_size_header_str = &shared_ui.loc("style_panel.img_size");
         crate::ui::job_text(img_size_header_str, col, &mut size);
         let img_size_str = &(tex.size.x.to_string() + " x " + &tex.size.y.to_string());
         crate::ui::job_text(img_size_str, None, &mut size);

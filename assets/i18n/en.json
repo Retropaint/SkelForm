@@ -463,6 +463,15 @@
       "Custom": "Custom"
     }
   },
+  "style_panel": {
+    "heading": "Style",
+    "textures": "Textures",
+    "import": "Import",
+    "empty": "Empty",
+    "texture_desc": "Drag to a bone to set this as it's texture.\nDrag above/below another texture to change order.",
+    "img_name": "Name: ",
+    "img_size": "Size: "
+  },
   "polar": {
     "delete_bone": "Are you sure to delete this bone?",
     "delete_anim": "Are you sure to delete this animation?",
