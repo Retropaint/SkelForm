@@ -55,7 +55,34 @@ pub fn iterate_events(
         }
     }
 
-    if event == Events::DuplicateTexture {
+    if event == Events::NewBonesFromTextures {
+        let dragged_tex_id = events.values[0] as i32;
+        let pos = Vec2::new(events.values[1], events.values[2]);
+
+        // add dragged texture to list
+        let mut tex_ids = selections.tex_ids.clone();
+        if !tex_ids.contains(&dragged_tex_id) {
+            tex_ids.push(dragged_tex_id);
+        }
+
+        for tex_id in &tex_ids {
+            armature.new_bone(-1);
+            let tex_name = armature.sel_style(&selections).unwrap().textures[*tex_id as usize]
+                .name
+                .clone();
+            let bone = armature.bones.last_mut().unwrap();
+            let bone_id = bone.id;
+            bone.name = tex_name.clone();
+            bone.pos = pos;
+            armature.set_bone_tex(bone_id, tex_name, usize::MAX, -1);
+        }
+
+        // activate style so the texture is immediately visible
+        armature.sel_style_mut(&selections).unwrap().active = true;
+
+        events.events.remove(0);
+        events.values.drain(0..=2);
+    } else if event == Events::DuplicateTexture {
         for id in &selections.tex_ids {
             // get texture data of this selected texture
             let style = armature.sel_style_mut(&selections).unwrap();
@@ -1298,22 +1325,6 @@ pub fn simple_event(
             // mark this bone as selected, so focus isn't taken away from bone name input
             ui.prev_selected_bone_idx = idx;
         }
-        Events::NewBonesFromTextures => {
-            let mut tex_ids = selections.tex_ids.clone();
-            if !tex_ids.contains(&(value as i32)) {
-                tex_ids.push(value as i32);
-            }
-            for tex_id in &tex_ids {
-                armature.new_bone(-1);
-                let tex_name = armature.sel_style(&selections).unwrap().textures[*tex_id as usize]
-                    .name
-                    .clone();
-                let bone = armature.bones.last_mut().unwrap();
-                let bone_id = bone.id;
-                bone.name = tex_name.clone();
-                armature.set_bone_tex(bone_id, tex_name, usize::MAX, -1);
-            }
-        }
         _ => {}
     }
 }
@@ -2387,7 +2398,8 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         | E::SetHoveringBoneId
         | E::SelectAnim
         | E::SelectAnimFrame
-        | E::SelectBone => {
+        | E::SelectBone
+        | E::DeleteBone => {
             renderer.point_buffer.dirty = true;
             renderer.kite_buffer.dirty = true;
             renderer.bone_buffer.dirty = true;

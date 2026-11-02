@@ -96,7 +96,7 @@ pub fn draw(
                 });
 
                 if dragged != None && shared_ui.dragging_element == "texture" {
-                    events.new_bones_from_textures(*dragged.unwrap());
+                    events.new_bones_from_textures(*dragged.unwrap(), Vec2::new(0., 0.));
                 }
 
                 zone

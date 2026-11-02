@@ -1,6 +1,7 @@
 //! Core user interface (UI) logic.
 use egui::{Color32, Context, Shadow, Stroke};
 use modal::modal_x;
+use utils::{screen_to_world_space, world_mouse};
 
 use crate::*;
 
@@ -304,6 +305,27 @@ pub fn draw(
         shared_ui.bone_panel_rect = Some(ui.min_rect());
     });
     draw_resizable_panel(bone_panel_id, panel, events, context, camera);
+
+    // create bone(s) from texture(s) if dropped on renderer
+    if shared_ui.dragging_element == "texture" && !camera.on_ui {
+        if context.dragged_id() != None {
+            egui::Area::new("dragging_texture".into()).show(context, |ui| {
+                let tex_size = armature.sel_style(selections).unwrap().textures
+                    [shared_ui.dragging_id as usize]
+                    .size
+                    / 4.;
+                let pos = input.mouse / 2. - tex_size / 2.;
+                let rect = egui::Rect::from_min_size(pos.into(), tex_size.into());
+                let drag_id = shared_ui.dragging_id as usize;
+                style_panel::draw_tex_preview(
+                    drag_id, armature, shared_ui, selections, ui, &rect, config,
+                );
+            });
+        } else if context.drag_stopped_id() != None {
+            let mouse_pos = world_mouse(input.mouse, &camera);
+            events.new_bones_from_textures(shared_ui.dragging_id as i32, mouse_pos.1);
+        }
+    }
 
     // adjust bar positions
     let bone_panel = shared_ui.bone_panel_rect.unwrap();

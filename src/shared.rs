@@ -589,6 +589,7 @@ pub struct Ui {
 
     pub bones_assigned_scroll: f32,
     pub dragging_element: String,
+    pub dragging_id: u32,
 
     pub pending_textures: Vec<Texture>,
     pub done_pending: bool,
@@ -2632,7 +2633,6 @@ impl EventState {
     #[rustfmt::skip]    event_with_value!(reduce_global_ik_family_ids, Events::ReduceGlobalIkFamilyIds, base, i32);
     event_with_value!(create_bind_bone, Events::CreateBindBone, vert_id, i32);
     event_with_value!(new_bone, Events::NewBone, target_id, i32);
-    #[rustfmt::skip]    event_with_value!(new_bones_from_textures,Events::NewBonesFromTextures,dragged_tex_id,i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -2880,6 +2880,13 @@ impl EventState {
         self.events.push(Events::DuplicateTexture);
         self.values.push(style_idx as f32);
         self.values.push(tex_idx as f32);
+    }
+
+    pub fn new_bones_from_textures(&mut self, dragging_tex_id: i32, pos: Vec2) {
+        self.events.push(Events::NewBonesFromTextures);
+        self.values.push(dragging_tex_id as f32);
+        self.values.push(pos.x);
+        self.values.push(pos.y);
     }
 }
 

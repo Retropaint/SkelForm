@@ -68,7 +68,7 @@ pub fn draw(
     frame.show(ui, |ui| {
         let scroll_area = egui::ScrollArea::vertical().id_salt("tex_list");
         scroll_area.show(ui, |ui| {
-            let mut idx = -1;
+            let mut idx: i32 = -1;
             let sel = &selections;
             let mut hovered = false;
             let mut dragged = false;
@@ -78,6 +78,7 @@ pub fn draw(
                 let trimmed_name = utils::trunc_str(ui, &og_name, ui.available_width());
                 let context_id = format!("texture_{}", &i.to_string());
                 let str_desc = &shared_ui.loc("style_panel.texture_desc").clone();
+                let tex = &armature.sel_style(&sel).unwrap().textures[i];
 
                 let mut col = config.colors.dark_accent;
                 if i == shared_ui.hovering_tex as usize {
@@ -193,9 +194,26 @@ pub fn draw(
                                 let pos =
                                     egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top());
                                 let rect = &egui::Rect::from_min_size(pos, [150., 150.].into());
+                                let tex_id = shared_ui.hovering_tex as usize;
                                 draw_tex_preview(
-                                    armature, shared_ui, selections, ui, rect, &config,
+                                    tex_id, armature, shared_ui, selections, ui, rect, &config,
                                 );
+                                ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+                                    let col = Some(config.colors.text.into());
+                                    let mut name = egui::text::LayoutJob::default();
+                                    let img_name_str = &shared_ui.loc("style_panel.img_name");
+                                    crate::ui::job_text(img_name_str, col, &mut name);
+                                    crate::ui::job_text(&tex.name, None, &mut name);
+                                    let mut size = egui::text::LayoutJob::default();
+                                    let img_size_header_str =
+                                        &shared_ui.loc("style_panel.img_size");
+                                    crate::ui::job_text(img_size_header_str, col, &mut size);
+                                    let img_size_str =
+                                        &(tex.size.x.to_string() + " x " + &tex.size.y.to_string());
+                                    crate::ui::job_text(img_size_str, None, &mut size);
+                                    ui.label(name);
+                                    ui.label(size);
+                                });
                             });
                         });
                     }
@@ -205,6 +223,7 @@ pub fn draw(
                     let drag_id = ui.ctx().dragged_id();
                     if drag_id != None && drag_id.unwrap() == button_id {
                         shared_ui.dragging_element = "texture".to_string();
+                        shared_ui.dragging_id = idx as u32;
                     }
 
                     // dragging stuff
@@ -252,6 +271,7 @@ pub fn draw(
 }
 
 pub fn draw_tex_preview(
+    tex_id: usize,
     armature: &Armature,
     shared_ui: &mut crate::Ui,
     selections: &crate::SelectionState,
@@ -259,12 +279,13 @@ pub fn draw_tex_preview(
     display: &egui::Rect,
     config: &Config,
 ) {
-    let tex = &armature.sel_style(selections).unwrap().textures[shared_ui.hovering_tex as usize];
+    let tex = &armature.sel_style(selections).unwrap().textures[tex_id];
     let size = resize_tex_img(tex.size, display.width().min(display.height()) as usize);
     let left_top = egui::Pos2::new(
         display.left() + (display.width() / 2. - size.x / 2.),
         display.top() + (display.height() / 2. - size.y / 2.),
     );
+
     if tex.size == crate::Vec2::new(1., 1.) {
         // empty texture
         ui.painter().text(
@@ -283,21 +304,6 @@ pub fn draw_tex_preview(
         let texture_rect = egui::Rect::from_min_size(left_top, size.into());
         egui::Image::new(data.ui_img.as_ref().unwrap()).paint_at(ui, texture_rect);
     }
-
-    ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-        let col = Some(config.colors.text.into());
-        let mut name = egui::text::LayoutJob::default();
-        let img_name_str = &shared_ui.loc("style_panel.img_name");
-        crate::ui::job_text(img_name_str, col, &mut name);
-        crate::ui::job_text(&tex.name, None, &mut name);
-        let mut size = egui::text::LayoutJob::default();
-        let img_size_header_str = &shared_ui.loc("style_panel.img_size");
-        crate::ui::job_text(img_size_header_str, col, &mut size);
-        let img_size_str = &(tex.size.x.to_string() + " x " + &tex.size.y.to_string());
-        crate::ui::job_text(img_size_str, None, &mut size);
-        ui.label(name);
-        ui.label(size);
-    });
 }
 
 pub fn resize_tex_img(mut size: crate::Vec2, max: usize) -> crate::Vec2 {

@@ -2211,6 +2211,11 @@ pub fn draw_render_points(
     let mut point_indices = vec![];
     let mut on_point = false;
 
+    // set point buffer as empty first
+    if renderer.point_buffer.dirty {
+        renderer.point_buffer.index_len = 0;
+    }
+
     for p in 0..temp_arm.bones.len() {
         let bone = &temp_arm.bones[p];
         let mut color;
