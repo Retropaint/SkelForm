@@ -1007,7 +1007,8 @@ pub fn draw_styles_list(
                         ui.set_width(ui.available_width() - 30.);
                         ui.set_height(21.);
                         ui.add_space(3.);
-                        let name = format!(" {}", &armature.styles[s].name);
+                        let mut name = format!(" {}", &armature.styles[s].name);
+                        name = utils::trunc_str(ui, &name, ui.min_rect().width());
                         ui.label(egui::RichText::new(name).color(config.colors.text));
                     });
                 })
