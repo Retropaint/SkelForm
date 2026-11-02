@@ -12,6 +12,7 @@ pub fn draw(
     armature: &Armature,
     events: &mut EventState,
     input: &InputStates,
+    camera: &crate::Camera,
 ) {
     ui.horizontal(|ui| {
         ui.heading(&shared_ui.loc("style_panel.heading"));
@@ -110,17 +111,28 @@ pub fn draw(
                     // render texture button (as draggable element)
                     let bin_width = 13.;
                     let button_id = egui::Id::new(("tex", idx));
+
+                    let drag_id = ui.ctx().dragged_id();
+                    let mut opacity = 1.;
+                    if drag_id != None && drag_id.unwrap() == button_id && !camera.on_ui {
+                        opacity = 0.;
+                    }
                     let button = ui
                         .dnd_drag_source(button_id, idx, |ui| {
-                            egui::Frame::new().fill(col.into()).show(ui, |ui| {
+                            let frame = egui::Frame::new()
+                                .fill(col.into())
+                                .multiply_with_opacity(opacity);
+                            frame.show(ui, |ui| {
                                 ui.horizontal(|ui| {
                                     ui.set_width(ui.available_width());
                                     ui.set_height(21.);
                                     ui.add_space(5.);
-                                    ui.label(
-                                        egui::RichText::new(&trimmed_name)
-                                            .color(config.colors.text),
-                                    );
+                                    let text = if opacity == 0. {
+                                        egui::RichText::new("")
+                                    } else {
+                                        egui::RichText::new(&trimmed_name).color(config.colors.text)
+                                    };
+                                    ui.label(text);
                                 });
                             });
                         })

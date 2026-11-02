@@ -276,7 +276,16 @@ pub fn draw(
                 } else if (last_selected == "style" || last_selected == "texture")
                     && armature.sel_style(&sel) != None
                 {
-                    style_panel::draw(ui, shared_ui, &config, &selections, armature, events, input);
+                    style_panel::draw(
+                        ui,
+                        shared_ui,
+                        &config,
+                        &selections,
+                        armature,
+                        events,
+                        input,
+                        &camera,
+                    );
                 } else if armature.bones.len() > 1 {
                     ui.heading("Armature Shortcuts");
                     ui.add_space(10.);
@@ -375,9 +384,7 @@ pub fn draw(
     }
 
     // check if mouse is on ui
-    //
-    // this check always returns false on mouse click, so it's only checked when the mouse isn't clicked
-    if !input.left_down && camera.on_ui != context.is_pointer_over_area() {
+    if camera.on_ui != context.is_pointer_over_area() {
         events.toggle_pointer_on_ui(context.is_pointer_over_area());
     }
 
