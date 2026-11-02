@@ -81,7 +81,7 @@ pub fn draw(
             let area = scroll_area.show(ui, |ui| {
                 // hierarchy
                 let frame = Frame::default().inner_margin(5.);
-                ui.dnd_drop_zone::<i32, _>(frame, |ui| {
+                let (zone, dragged) = ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                     ui.set_width(ui.available_width());
                     ui.set_min_height(ui.available_height());
 
@@ -93,22 +93,28 @@ pub fn draw(
                         ui::empty_armature_starters(shared_ui, config, ui);
                     }
                     ui.add_space(4.);
-                })
+                });
+
+                if dragged != None && shared_ui.dragging_element == "texture" {
+                    events.new_bones_from_textures(*dragged.unwrap());
+                }
+
+                zone
             });
 
             // unselect all bones if frame is clicked
             let left_clicked = ui.ctx().input(|i| i.pointer.primary_clicked());
-            if area.inner.0.response.hovered() && left_clicked {
+            if area.inner.response.hovered() && left_clicked {
                 events.select_bone(usize::MAX, false);
             }
 
             // open context menu if right clicking on hierarchy frame
             let right_clicked = ui.ctx().input(|i| i.pointer.secondary_clicked());
-            if area.inner.0.response.hovered() && right_clicked {
+            if area.inner.response.hovered() && right_clicked {
                 shared_ui.context_menu.show(&"armature".to_string());
             }
 
-            shared_ui.pointer_on_armature = area.inner.0.response.contains_pointer();
+            shared_ui.pointer_on_armature = area.inner.response.contains_pointer();
 
             ui.add_space(2.);
 

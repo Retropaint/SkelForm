@@ -138,7 +138,7 @@ pub fn draw(
                             for id in &selections.tex_ids {
                                 events.toggle_sel_tex(*id, false);
                             }
-                        } else if input.holding_shift {
+                        } else if input.holding_shift && selections.tex_ids.len() > 0 {
                             // select all textures between top-most and this one
                             let top = selections.tex_ids[0].min(i as i32);
                             let bottom = selections.tex_ids[0].max(i as i32);

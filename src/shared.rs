@@ -2509,6 +2509,7 @@ pub enum Events {
     AdjustKeyframesBySpeed,
     CreateBindBone,
     DuplicateTexture,
+    NewBonesFromTextures,
 }
 
 enum_string!(Events);
@@ -2631,6 +2632,7 @@ impl EventState {
     #[rustfmt::skip]    event_with_value!(reduce_global_ik_family_ids, Events::ReduceGlobalIkFamilyIds, base, i32);
     event_with_value!(create_bind_bone, Events::CreateBindBone, vert_id, i32);
     event_with_value!(new_bone, Events::NewBone, target_id, i32);
+    #[rustfmt::skip]    event_with_value!(new_bones_from_textures,Events::NewBonesFromTextures,dragged_tex_id,i32);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

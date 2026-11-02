@@ -1298,6 +1298,22 @@ pub fn simple_event(
             // mark this bone as selected, so focus isn't taken away from bone name input
             ui.prev_selected_bone_idx = idx;
         }
+        Events::NewBonesFromTextures => {
+            let mut tex_ids = selections.tex_ids.clone();
+            if !tex_ids.contains(&(value as i32)) {
+                tex_ids.push(value as i32);
+            }
+            for tex_id in &tex_ids {
+                armature.new_bone(-1);
+                let tex_name = armature.sel_style(&selections).unwrap().textures[*tex_id as usize]
+                    .name
+                    .clone();
+                let bone = armature.bones.last_mut().unwrap();
+                let bone_id = bone.id;
+                bone.name = tex_name.clone();
+                armature.set_bone_tex(bone_id, tex_name, usize::MAX, -1);
+            }
+        }
         _ => {}
     }
 }
