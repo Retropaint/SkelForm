@@ -44,7 +44,7 @@ pub fn draw(
     }
 
     let panel = side_panel.resizable(true).show(egui_ctx, |ui| {
-        if shared_ui.startup_window {
+        if shared_ui.startup_window || shared_ui.armature_panel_rect == None {
             shared_ui.armature_panel_rect = Some(ui.min_rect());
             return;
         }
@@ -160,7 +160,6 @@ pub fn draw(
                 })
             });
         });
-
         shared_ui.armature_panel_rect = Some(ui.min_rect());
     });
 
