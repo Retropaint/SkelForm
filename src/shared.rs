@@ -393,12 +393,16 @@ pub struct InputStates {
     pub left_clicked: bool,
     pub left_pressed: bool,
     pub right_clicked: bool,
+    pub right_pressed: bool,
     pub left_down: bool,
     pub right_down: bool,
     pub holding_mod: bool,
     pub holding_shift: bool,
     pub mouse_init: Option<Vec2>,
     pub scroll_delta: f32,
+
+    // mouse was pressed on UI for the duration of it being down
+    pub mouse_pressed_on_ui: bool,
 
     pub mod_q: Option<global_hotkey::hotkey::HotKey>,
     pub mod_w: Option<global_hotkey::hotkey::HotKey>,
@@ -3088,7 +3092,7 @@ pub fn default_render_options() -> RenderOptions {
         points: true,
         kites: true,
         meshes: false,
-        rects: false
+        rects: false,
     }
 }
 

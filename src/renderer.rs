@@ -528,9 +528,9 @@ pub fn render(
     // show transform rings when editing a bone
     let ring_enabled = config.transform_rot_radius > 0. && config.transform_scale_radius > 0.;
     //let idle_mouse = !input.left_down && !input.left_clicked || camera.on_ui;
-    let selected = armature.sel_bone(&sel) != None && selections.bone_ids.len() == 1;
-    let holding_lmb = !input.left_down || camera.on_ui;
-    if ring_enabled && !edit_mode.editing_mesh && !has_ik && selected && holding_lmb {
+    let selected = selections.bone_ids.len() == 1;
+    let holding_lmb = input.left_down && !input.mouse_pressed_on_ui;
+    if ring_enabled && !edit_mode.editing_mesh && !has_ik && selected && !holding_lmb {
         #[rustfmt::skip]
         transform_ring(config, camera, armature, &mut temp_arm, render_pass, renderer, events, edit_mode, &sel, queue, &mouse_pos);
     }
@@ -595,7 +595,7 @@ pub fn render(
     }
 
     // move camera
-    if input.right_down && !camera.on_ui {
+    if input.right_down && !input.mouse_pressed_on_ui {
         let vel = renderer::mouse_vel(&input, &camera) * camera.zoom;
         events.edit_camera(camera.pos.x + vel.x, camera.pos.y + vel.y, camera.zoom);
         return;
@@ -612,7 +612,7 @@ pub fn render(
     let idx = sel.bone_idx;
     let input = &input;
     let mouse_moved = input.mouse != input.mouse_prev_left;
-    if camera.on_ui {
+    if input.mouse_pressed_on_ui {
         renderer.editing_bone = false;
     } else if idx != usize::MAX && input.left_down && selections.hovering_bone_id == -1 {
         // don't flash edit shortcuts if mouse was just pressed

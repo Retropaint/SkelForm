@@ -1,7 +1,7 @@
 //! Core user interface (UI) logic.
 use egui::{Color32, Context, Shadow, Stroke};
 use modal::modal_x;
-use utils::{screen_to_world_space, world_mouse};
+use utils::world_mouse;
 
 use crate::*;
 
@@ -430,13 +430,14 @@ pub fn draw(
     let sel_bone = armature.sel_bone(selections);
     if hbid != -1 && !camera.on_ui && (sel_bone == None || hbid != sel_bone.unwrap().id) {
         let mouse = input.mouse / shared_ui.scale;
-        let bone = armature.bones.iter().find(|b| b.id == hbid);
-        context.debug_painter().debug_text(
-            egui::Pos2::new(mouse.x, mouse.y - 13.),
-            egui::Align2::CENTER_CENTER,
-            egui::Color32::GREEN,
-            bone.unwrap().name.to_string(),
-        );
+        if let Some(bone) = armature.bones.iter().find(|b| b.id == hbid) {
+            context.debug_painter().debug_text(
+                egui::Pos2::new(mouse.x, mouse.y - 13.),
+                egui::Align2::CENTER_CENTER,
+                egui::Color32::GREEN,
+                bone.name.to_string(),
+            );
+        }
     }
 
     // show hovering triangle helpers
@@ -568,6 +569,7 @@ pub fn process_inputs(
         }
 
         input.right_clicked = i.pointer.secondary_clicked();
+        input.right_pressed = i.pointer.secondary_pressed();
         input.right_down = i.pointer.secondary_down();
 
         if shared_ui.mobile {
@@ -581,7 +583,12 @@ pub fn process_inputs(
 
         if input.left_pressed {
             input.mouse_init = Some(input.mouse);
+            input.mouse_pressed_on_ui = camera.on_ui;
         }
+        if input.right_pressed {
+            input.mouse_pressed_on_ui = camera.on_ui;
+        }
+
         if i.pointer.primary_released() {
             input.mouse_init = None;
         }
