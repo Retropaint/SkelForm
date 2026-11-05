@@ -119,6 +119,8 @@ pub struct App {
     pub shared: shared::Shared,
 }
 
+const IMG_FORMATS: [&str; 4] = ["webp", "png", "jpeg", "jpg"];
+
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         #[allow(unused_mut)]
@@ -273,9 +275,8 @@ impl ApplicationHandler for App {
                     if !name.contains(".") {
                         return;
                     }
-                    let ext = name.split('.').collect::<Vec<_>>()[1]
-                        .to_string()
-                        .to_lowercase();
+                    let name_split = name.split('.').collect::<Vec<_>>();
+                    let ext = name_split.last().unwrap().to_string().to_lowercase();
 
                     if ext.contains("skf") || ext.contains("psd") {
                         // load .skf or .skfe file
@@ -822,18 +823,17 @@ impl BackendRenderer {
         self.init_buffers_and_bindgroups(&mut shared.renderer);
         self.check_export(shared);
 
-        // import dropped files
-        // this uses file_elapsed since winit does not buffer multiple dropped files
+        // import dropped files.
+        // this uses file_elapsed since winit does not buffer multiple dropped files.
         if shared.ui.file_elapsed != None
             && shared.ui.file_elapsed.unwrap().elapsed().as_millis() > 150
         {
             *shared.ui.file_path.lock().unwrap() = shared.ui.dropped_file_path.clone();
             #[rustfmt::skip]
             let name = shared.ui.file_path.lock().unwrap()[0].as_path().file_name().unwrap().to_str().unwrap().to_string();
-            let ext = name.split('.').collect::<Vec<_>>()[1]
-                .to_string()
-                .to_lowercase();
-            if ext == "png" || ext == "webp" {
+            let name_split = name.split('.').collect::<Vec<_>>();
+            let ext = name_split.last().unwrap().to_string().to_lowercase();
+            if IMG_FORMATS.contains(&ext.as_str()) {
                 *shared.ui.file_type.lock().unwrap() = 1;
             } else if ext.contains("skf") {
                 *shared.ui.file_type.lock().unwrap() = 2;
@@ -843,6 +843,7 @@ impl BackendRenderer {
         }
 
         if *shared.ui.save_finished.lock().unwrap() {
+            // stuff to do when saving has been completed
             shared.undo_states.unsaved_undo_actions = shared.undo_states.undo_actions.len();
             shared.undo_states.prev_undo_actions = shared.undo_states.undo_actions.len();
             shared.ui.changed_window_name = false;
@@ -850,6 +851,7 @@ impl BackendRenderer {
             shared.ui.can_quit = true;
             *shared.ui.save_finished.lock().unwrap() = false;
         } else if *shared.ui.export_finished.lock().unwrap() {
+            // stuff to do when exporting has been completed
             shared.ui.modal = false;
             shared.ui.can_quit = true;
             *shared.ui.export_finished.lock().unwrap() = false;

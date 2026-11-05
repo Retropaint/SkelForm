@@ -628,7 +628,10 @@ pub struct Ui {
     pub recent_file_paths: Vec<String>,
 
     pub file_path: Arc<Mutex<Vec<PathBuf>>>,
+
+    // temporary buffer for file dropped onto the window
     pub dropped_file_path: Vec<PathBuf>,
+
     pub file_type: Arc<Mutex<i32>>, // 1: image, 2: skf
     pub file_elapsed: Option<Instant>,
 

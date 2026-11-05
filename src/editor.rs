@@ -26,6 +26,8 @@ pub fn iterate_events(
     let event = events.events[0].clone();
     type E = Events;
 
+    println!("{}", event);
+
     // set buffers dirty (to be updated later) based on the event
     set_buffers_dirty(renderer, &event);
 
@@ -1371,6 +1373,10 @@ fn select_bone(
     idx: usize,
     from_renderer: bool,
 ) {
+    if ui.atlas_modal {
+        return;
+    }
+
     edit_mode.showing_mesh = false;
     edit_mode.editing_mesh = false;
     edit_mode.sel_time = 0.;

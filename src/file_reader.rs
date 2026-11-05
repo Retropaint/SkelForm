@@ -124,8 +124,6 @@ pub fn read_image_loaders(
     shared.undo_states.new_undo_style(&style);
 
     for i in 0..images.len() {
-        // trim transparent padding
-        //let image: image::DynamicImage = trim_transparent(&images[i]).into();
         let dims = Vec2::new(images[i].width() as f32, images[i].height() as f32);
 
         if images[i].clone().into_rgba8().to_vec().len() == 0 {

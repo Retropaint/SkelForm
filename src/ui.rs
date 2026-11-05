@@ -704,7 +704,7 @@ pub fn kb_inputs(
     let ui = &shared_ui;
     #[rustfmt::skip]
     let modal_open = ui.polar_modal || ui.settings_modal
-        || ui.export_modal || ui.lang_import_modal || ui.feedback_modal;
+        || ui.export_modal || ui.lang_import_modal || ui.feedback_modal || ui.atlas_modal;
     if input.consume_shortcut(&config.keys.cancel) {
         if shared_ui.context_menu.id != "" && !shared_ui.context_menu.hide {
             shared_ui.context_menu.close();
