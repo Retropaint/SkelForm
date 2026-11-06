@@ -220,13 +220,14 @@
         <script>
             let fileData = [];
             let fileName = "";
-            let imgName = "";
             let hasLoaded = false;
             let config = {};
             let loadedAllImages = false;
             let realError = false;
             let langData = [];
             let langName = "";
+            let loadedImages = [];
+            let loadedImageNames = [];
             loadConfig();
 
             toggleElement(true, "focusInitiator");
@@ -285,20 +286,25 @@
 
             async function loadImage(event) {
                 let idx = 0;
-                let len = event.target.files.length;
                 for (file of event.target.files) {
-                    var reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    let name = "image-" + idx.toString();
-                    let filename = file.name;
-                    let img = document.createElement("img");
-                    document.body.appendChild(img);
-                    img.id = name;
-                    img.src = await readFileData(file);
-                    img.dataname = filename;
-                    idx++;
+                    const arrayBuffer = await file.arrayBuffer();
+                    fileData = new Uint8Array(arrayBuffer);
+                    loadedImages.push(fileData);
+                    loadedImageNames.push(file.name);
                 }
                 loadedAllImages = true;
+            }
+
+            function getImgName(idx) {
+                return loadedImageNames[idx];
+            }
+
+            function getLoadedImage(index) {
+                return loadedImages[index];
+            }
+
+            function getLoadedImageLen() {
+                return loadedImages.length;
             }
 
             async function readFileData(file) {
@@ -325,21 +331,14 @@
                 return fileName;
             }
 
-            function getImgName(id) {
-                return document.getElementById("image-" + id).dataname;
-            }
-
             function removeFile() {
                 fileData = [];
                 fileName = "";
             }
 
             function removeImage() {
-                let idx = 0;
-                while (document.getElementById("image-" + idx)) {
-                    document.getElementById("image-" + idx).remove();
-                    idx++;
-                }
+                loadedImages = [];
+                loadedImageNames = [];
                 loadedAllImages = false;
             }
 

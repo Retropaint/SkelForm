@@ -24,10 +24,6 @@ pub const EXPORT_VID_DONE: &str = "Done!";
 pub const IMPORT_IMG_ERR: &str = "Could not extract image data.";
 
 pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &egui::Context) {
-    if renderer.as_ref().is_none() {
-        return;
-    }
-
     // load images as textures
     let (images, names) = read_image_loaders(shared);
     if images.len() > 0 && names.len() > 0 {
@@ -90,15 +86,11 @@ pub fn read_image_loaders(shared: &mut Shared) -> (Vec<image::DynamicImage>, Vec
             return (vec![], vec![]);
         }
 
+        // extract all imported images
         let mut idx = 0;
-        while hasElement(&("image-".to_string() + &idx.to_string())) {
-            // extract all imported images
-            let img = load_image_wasm("image-".to_string() + &idx.to_string());
-            let pixels = img.as_ref().unwrap().0.clone();
-            let dims = img.as_ref().unwrap().1;
-            images.push(image::DynamicImage::ImageRgba8(
-                image::ImageBuffer::from_raw(dims.x as u32, dims.y as u32, pixels).unwrap(),
-            ));
+        while idx < getLoadedImageLen() {
+            let img = getLoadedImage(idx as u32);
+            images.push(image::load_from_memory(&img).unwrap());
 
             if getImgName(idx).contains(".") {
                 names.push(getImgName(idx).split('.').collect::<Vec<_>>()[0].to_string());
@@ -682,7 +674,7 @@ pub fn read_import(
             #[cfg(target_arch = "wasm32")]
             {
                 let cursor = std::io::Cursor::new(getFile());
-                utils::import(cursor, shared, queue, device, bgl, context);
+                utils::import(cursor, shared, backend_renderer, context);
             }
             #[cfg(not(target_arch = "wasm32"))]
             {
@@ -721,7 +713,7 @@ pub fn read_import(
                 read_psd(file, shared, backend_renderer, context);
             }
             #[cfg(target_arch = "wasm32")]
-            read_psd(file, shared, queue, device, bgl, context)
+            read_psd(file, shared, backend_renderer, context)
         }
         _ => {
             shared.events.open_modal("import_unrecognized", false);
@@ -733,58 +725,6 @@ pub fn read_import(
 
     #[cfg(target_arch = "wasm32")]
     removeFile();
-}
-
-/// Load image by reading an `img` tag with the specified ID.
-#[cfg(target_arch = "wasm32")]
-pub fn load_image_wasm(id: String) -> Option<(Vec<u8>, Vec2)> {
-    let mut result: Vec<u8> = vec![];
-    let mut dimensions = Vec2::default();
-
-    let document: Document = window().unwrap().document().unwrap();
-    if let Some(img_element) = document.get_element_by_id(&id) {
-        let img = img_element.dyn_into::<HtmlImageElement>().unwrap();
-
-        let canvas = document
-            .create_element("canvas")
-            .unwrap()
-            .dyn_into::<HtmlCanvasElement>()
-            .unwrap();
-
-        canvas.set_width(img.width());
-        canvas.set_height(img.height());
-
-        // get 2D rendering context
-        let context = canvas
-            .get_context("2d")
-            .unwrap()
-            .unwrap()
-            .dyn_into::<CanvasRenderingContext2d>()
-            .unwrap();
-
-        if img.width() == 0 && img.height() == 0 {
-            return None;
-        }
-
-        // draw image onto canvas
-        context
-            .draw_image_with_html_image_element(&img, 0.0, 0.0)
-            .unwrap();
-
-        // extract image data (RGBA pixels)
-        let image_data = context
-            .get_image_data(0.0, 0.0, img.width() as f64, img.height() as f64)
-            .unwrap();
-        let pixels = image_data.data();
-
-        // convert js_sys::Uint8ClampedArray to Vec<u8>
-        pixels.to_vec();
-
-        dimensions = Vec2::new(img.width() as f32, img.height() as f32);
-        result = pixels.to_vec();
-    }
-
-    return Some((result, dimensions));
 }
 
 fn load_psd_tex(
