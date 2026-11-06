@@ -1293,6 +1293,34 @@ pub fn save_to_recent_files(mut paths: Vec<String>) {
         .unwrap();
 }
 
+pub fn add_to_recent_paths(to_add: &String, paths: &mut Vec<String>) {
+    if !paths.contains(&to_add) {
+        paths.push(to_add.clone());
+    } else {
+        let idx = &paths.iter().position(|p| p == to_add).unwrap();
+        paths.remove(*idx);
+        let len = paths.len();
+        let fp = to_add.clone();
+
+        // check for autosave, and move it to first in the recent list
+        let autosave = "autosave".to_string();
+        let as_idx = paths.iter().position(|p| p.contains(&autosave));
+        if let Some(as_idx) = as_idx {
+            let autosave_path = paths[as_idx].clone();
+            paths.remove(as_idx);
+            paths.insert(0, autosave_path);
+
+            // move opened file to 2nd in list (below autosave)
+            paths.insert(1.min(len), fp)
+        } else {
+            // move opened file to 1st in list (no autosave)
+            paths.insert(0.min(len), fp)
+        }
+    }
+
+    save_to_recent_files(paths.to_vec());
+}
+
 // unused: use `bone.verts_edited` instead
 pub fn bone_meshes_edited(tex_size: Vec2, verts: &Vec<Vertex>) -> bool {
     let mut is_rect = true;

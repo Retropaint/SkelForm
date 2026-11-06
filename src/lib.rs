@@ -284,7 +284,7 @@ impl ApplicationHandler for App {
                 self.shared.ui.modal = false;
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    *self.shared.ui.file_paths.lock().unwrap() = vec![_path_buf];
+                    self.shared.ui.file_paths.lock().unwrap().push(_path_buf);
                     self.shared.ui.file_elapsed = Some(Instant::now());
                 }
             }

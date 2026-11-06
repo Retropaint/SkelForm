@@ -31,8 +31,7 @@ pub fn read(
     context: &egui::Context,
 ) {
     // load images as textures
-    let (images, names) = read_image_loaders(shared);
-    if images.len() > 0 && names.len() > 0 {
+    if let Some((images, names)) = read_image_loaders(shared) {
         add_images_as_textures(
             &shared.selections,
             &mut shared.armature,
@@ -43,12 +42,16 @@ pub fn read(
             &backend_renderer.as_ref(),
             Some(&context),
         );
+
         // clear file buffer
         *shared.ui.file_paths.lock().unwrap() = vec![];
+        *shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
+
         // open atlas modal
         shared.ui.atlas_modal = images.len() == 1;
     }
 
+    // read other file imports
     if let Some((file, filename, filepath)) = read_import(shared) {
         // reset editor state
         shared.selections.init();
@@ -59,6 +62,10 @@ pub fn read(
 
         // don't replicate new user behavior for imported files
         shared.ui.selected_bone_first_time = true;
+
+        // clear file buffer
+        *shared.ui.file_paths.lock().unwrap() = vec![];
+        *shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
 
         #[cfg(target_arch = "wasm32")]
         removeFile();
@@ -71,7 +78,7 @@ pub fn read(
 }
 
 /// read temporary files created from file dialogs (native & WASM)
-pub fn read_image_loaders(shared: &mut Shared) -> (Vec<image::DynamicImage>, Vec<String>) {
+pub fn read_image_loaders(shared: &mut Shared) -> Option<(Vec<image::DynamicImage>, Vec<String>)> {
     let mut images: Vec<image::DynamicImage> = vec![];
     #[allow(unused_assignments, unused_mut)]
     let mut names: Vec<String> = vec![];
@@ -79,7 +86,7 @@ pub fn read_image_loaders(shared: &mut Shared) -> (Vec<image::DynamicImage>, Vec
     #[cfg(not(target_arch = "wasm32"))]
     {
         if *shared.ui.file_type.lock().unwrap() != ImportedFileType::Image {
-            return (vec![], vec![]);
+            return None;
         }
         *shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
         let len = shared.ui.file_paths.lock().unwrap().len();
@@ -103,7 +110,7 @@ pub fn read_image_loaders(shared: &mut Shared) -> (Vec<image::DynamicImage>, Vec
     #[cfg(target_arch = "wasm32")]
     {
         if !hasLoadedAllImages() {
-            return (vec![], vec![]);
+            return None;
         }
 
         // extract all imported images
@@ -123,7 +130,7 @@ pub fn read_image_loaders(shared: &mut Shared) -> (Vec<image::DynamicImage>, Vec
         removeImage();
     }
 
-    (images, names)
+    Some((images, names))
 }
 
 pub fn add_images_as_textures(
@@ -702,32 +709,7 @@ pub fn import_file(
             #[cfg(not(target_arch = "wasm32"))]
             {
                 utils::import(file.unwrap(), shared, backend_renderer, *context);
-                if !shared.ui.recent_file_paths.contains(&filepath) {
-                    shared.ui.recent_file_paths.push(filepath.clone());
-                } else {
-                    let paths = &shared.ui.recent_file_paths;
-                    let idx = &paths.iter().position(|p| p == filepath).unwrap();
-                    shared.ui.recent_file_paths.remove(*idx);
-                    let len = shared.ui.recent_file_paths.len();
-                    let paths = &shared.ui.recent_file_paths;
-                    let fp = filepath.clone();
-
-                    // check for autosave, and move it to first in the recent list
-                    let autosave = "autosave".to_string();
-                    let as_idx = paths.iter().position(|p| p.contains(&autosave));
-                    if let Some(as_idx) = as_idx {
-                        let autosave_path = paths[as_idx].clone();
-                        shared.ui.recent_file_paths.remove(as_idx);
-                        shared.ui.recent_file_paths.insert(0, autosave_path);
-
-                        // move opened file to 2nd in list (below autosave)
-                        shared.ui.recent_file_paths.insert(1.min(len), fp)
-                    } else {
-                        // move opened file to 1st in list (no autosave)
-                        shared.ui.recent_file_paths.insert(0.min(len), fp)
-                    }
-                }
-                utils::save_to_recent_files(shared.ui.recent_file_paths.clone());
+                utils::add_to_recent_paths(filepath, &mut shared.ui.recent_file_paths);
             }
         }
         "psd" => {

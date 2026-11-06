@@ -1371,7 +1371,7 @@ fn select_bone(
     idx: usize,
     from_renderer: bool,
 ) {
-    if ui.atlas_modal {
+    if ui.atlas_modal || ui.file_elapsed != None {
         return;
     }
 
