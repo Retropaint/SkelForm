@@ -3,6 +3,8 @@
 use std::sync::Mutex;
 
 use egui::TextureHandle;
+use fs::File;
+use utils::import;
 use wgpu::*;
 
 use crate::*;
@@ -23,7 +25,11 @@ pub use web::*;
 pub const EXPORT_VID_DONE: &str = "Done!";
 pub const IMPORT_IMG_ERR: &str = "Could not extract image data.";
 
-pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &egui::Context) {
+pub fn read(
+    shared: &mut Shared,
+    backend_renderer: &Option<BackendRenderer>,
+    context: &egui::Context,
+) {
     // load images as textures
     let (images, names) = read_image_loaders(shared);
     if images.len() > 0 && names.len() > 0 {
@@ -34,7 +40,7 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
             &mut shared.events,
             &images,
             &names,
-            &renderer.as_ref(),
+            &backend_renderer.as_ref(),
             Some(&context),
         );
         // clear file buffer
@@ -43,9 +49,23 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
         shared.ui.atlas_modal = images.len() == 1;
     }
 
-    read_import(shared, &renderer.as_ref(), Some(context));
+    if let Some((file, filename, filepath)) = read_import(shared) {
+        // reset editor state
+        shared.selections.init();
+        shared.ui.last_selected = "".to_string();
+
+        let br = &backend_renderer.as_ref();
+        import_file(&filename, &filepath, shared, file, br, &Some(context));
+
+        // don't replicate new user behavior for imported files
+        shared.ui.selected_bone_first_time = true;
+
+        #[cfg(target_arch = "wasm32")]
+        removeFile();
+    }
+
     if shared.ui.done_pending {
-        add_pending_textures(shared, &renderer.as_ref(), Some(context));
+        add_pending_textures(shared, &backend_renderer.as_ref(), Some(context));
         shared.ui.done_pending = false;
     }
 }
@@ -623,11 +643,7 @@ pub fn add_texture(
     });
 }
 
-pub fn read_import(
-    shared: &mut Shared,
-    backend_renderer: &Option<&BackendRenderer>,
-    context: Option<&egui::Context>,
-) {
+pub fn read_import(shared: &mut Shared) -> Option<(Result<File, std::io::Error>, String, String)> {
     let file;
     let filename: String;
     #[cfg(not(target_arch = "wasm32"))]
@@ -636,7 +652,7 @@ pub fn read_import(
     #[cfg(not(target_arch = "wasm32"))]
     {
         if *shared.ui.file_type.lock().unwrap() != ImportedFileType::SkelForm {
-            return;
+            return None;
         }
         *shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
         let raw_filepath = &shared.ui.file_paths.lock().unwrap()[0];
@@ -645,7 +661,7 @@ pub fn read_import(
         file = std::fs::File::open(filepath.to_string());
         if let Err(err) = file {
             shared.events.open_file_err_modal(err.to_string());
-            return;
+            return None;
         }
 
         let raw_filename = raw_filepath.as_path().file_name();
@@ -656,15 +672,22 @@ pub fn read_import(
     {
         filename = getFileName();
         if filename == "" {
-            return;
+            return None;
         }
         file = getFile();
     }
 
-    // reset editor state
-    shared.selections.init();
-    shared.ui.last_selected = "".to_string();
+    Some((file, filename, filepath))
+}
 
+pub fn import_file(
+    filename: &String,
+    filepath: &String,
+    shared: &mut Shared,
+    file: Result<File, std::io::Error>,
+    backend_renderer: &Option<&BackendRenderer>,
+    context: &Option<&egui::Context>,
+) {
     let ext = filename.split('.').last().unwrap();
     match ext {
         "swf" => {
@@ -678,15 +701,16 @@ pub fn read_import(
             }
             #[cfg(not(target_arch = "wasm32"))]
             {
-                utils::import(file.unwrap(), shared, backend_renderer, context);
+                utils::import(file.unwrap(), shared, backend_renderer, *context);
                 if !shared.ui.recent_file_paths.contains(&filepath) {
-                    shared.ui.recent_file_paths.push(filepath);
+                    shared.ui.recent_file_paths.push(filepath.clone());
                 } else {
                     let paths = &shared.ui.recent_file_paths;
-                    let idx = &paths.iter().position(|p| p == &filepath).unwrap();
+                    let idx = &paths.iter().position(|p| p == filepath).unwrap();
                     shared.ui.recent_file_paths.remove(*idx);
                     let len = shared.ui.recent_file_paths.len();
                     let paths = &shared.ui.recent_file_paths;
+                    let fp = filepath.clone();
 
                     // check for autosave, and move it to first in the recent list
                     let autosave = "autosave".to_string();
@@ -697,10 +721,10 @@ pub fn read_import(
                         shared.ui.recent_file_paths.insert(0, autosave_path);
 
                         // move opened file to 2nd in list (below autosave)
-                        shared.ui.recent_file_paths.insert(1.min(len), filepath)
+                        shared.ui.recent_file_paths.insert(1.min(len), fp)
                     } else {
                         // move opened file to 1st in list (no autosave)
-                        shared.ui.recent_file_paths.insert(0.min(len), filepath)
+                        shared.ui.recent_file_paths.insert(0.min(len), fp)
                     }
                 }
                 utils::save_to_recent_files(shared.ui.recent_file_paths.clone());
@@ -710,7 +734,7 @@ pub fn read_import(
             #[cfg(not(target_arch = "wasm32"))]
             {
                 let file = std::fs::read(filepath).unwrap();
-                read_psd(file, shared, backend_renderer, context);
+                read_psd(file, shared, backend_renderer, *context);
             }
             #[cfg(target_arch = "wasm32")]
             read_psd(file, shared, backend_renderer, context)
@@ -719,12 +743,6 @@ pub fn read_import(
             shared.events.open_modal("import_unrecognized", false);
         }
     };
-
-    // don't replicate new user behavior for imported files
-    shared.ui.selected_bone_first_time = true;
-
-    #[cfg(target_arch = "wasm32")]
-    removeFile();
 }
 
 fn load_psd_tex(
