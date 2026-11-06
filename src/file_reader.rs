@@ -40,7 +40,27 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
         };
     }
 
-    func!(read_image_loaders);
+    // load images as textures
+    let (images, names) = read_image_loaders(shared);
+    if images.len() > 0 && names.len() > 0 {
+        add_images_as_textures(
+            &shared.selections,
+            &mut shared.armature,
+            &mut shared.undo_states,
+            &images,
+            &names,
+            &mut shared.events,
+            Some(&renderer.as_ref().unwrap().gpu.queue),
+            Some(&renderer.as_ref().unwrap().gpu.device),
+            Some(&renderer.as_ref().unwrap().bind_group_layout),
+            Some(&context),
+        );
+        // clear file buffer
+        *shared.ui.file_paths.lock().unwrap() = vec![];
+        // open atlas modal
+        shared.ui.atlas_modal = images.len() == 1;
+    }
+
     func!(read_import);
     if shared.ui.done_pending {
         func!(add_pending_textures);
@@ -49,13 +69,7 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
 }
 
 /// read temporary files created from file dialogs (native & WASM)
-pub fn read_image_loaders(
-    shared: &mut Shared,
-    queue: Option<&Queue>,
-    device: Option<&Device>,
-    bind_group_layout: Option<&BindGroupLayout>,
-    ctx: Option<&egui::Context>,
-) {
+pub fn read_image_loaders(shared: &mut Shared) -> (Vec<image::DynamicImage>, Vec<String>) {
     let mut images: Vec<image::DynamicImage> = vec![];
     #[allow(unused_assignments, unused_mut)]
     let mut names: Vec<String> = vec![];
@@ -63,7 +77,7 @@ pub fn read_image_loaders(
     #[cfg(not(target_arch = "wasm32"))]
     {
         if *shared.ui.file_type.lock().unwrap() != ImportedFileType::Image {
-            return;
+            return (vec![], vec![]);
         }
         *shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
         let len = shared.ui.file_paths.lock().unwrap().len();
@@ -111,24 +125,7 @@ pub fn read_image_loaders(
         removeImage();
     }
 
-    add_images_as_textures(
-        &shared.selections,
-        &mut shared.armature,
-        &mut shared.undo_states,
-        &images,
-        &names,
-        &mut shared.events,
-        queue,
-        device,
-        bind_group_layout,
-        ctx,
-    );
-
-    // clear file buffer
-    *shared.ui.file_paths.lock().unwrap() = vec![];
-
-    // open atlas modal
-    shared.ui.atlas_modal = images.len() == 1;
+    (images, names)
 }
 
 pub fn add_images_as_textures(
