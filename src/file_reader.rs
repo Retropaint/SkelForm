@@ -28,15 +28,6 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
         return;
     }
 
-    #[cfg(target_arch = "wasm32")]
-    {
-        let file = crate::getLang();
-        if file.len() != 0 {
-            shared.ui.init_lang(&file, "");
-            crate::clearLang();
-        }
-    }
-
     macro_rules! func {
         ($func:expr) => {
             $func(

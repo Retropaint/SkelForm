@@ -233,6 +233,16 @@ impl ApplicationHandler for App {
             }
         }
 
+        // change lang if lang file detected (web only)
+        #[cfg(target_arch = "wasm32")]
+        {
+            let file = crate::getLang();
+            if file.len() != 0 {
+                shared.ui.init_lang(&file, "");
+                crate::clearLang();
+            }
+        }
+
         file_reader::read(
             &mut self.shared,
             &self.renderer,
