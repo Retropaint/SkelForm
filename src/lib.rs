@@ -270,27 +270,8 @@ impl ApplicationHandler for App {
                 self.shared.ui.modal = false;
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    let raw_name = _path_buf.as_path().file_name().unwrap();
-                    let name = raw_name.to_str().unwrap().to_string();
-                    if !name.contains(".") {
-                        return;
-                    }
-                    let name_split = name.split('.').collect::<Vec<_>>();
-                    let ext = name_split.last().unwrap().to_string().to_lowercase();
-
-                    if ext.contains("skf") || ext.contains("psd") {
-                        // load .skf or .skfe file
-                        *self.shared.ui.file_paths.lock().unwrap() = vec![_path_buf];
-                        *self.shared.ui.file_type.lock().unwrap() = ImportedFileType::SkelForm;
-                    } else {
-                        // only load images if a style is selected in styles modal
-                        if self.shared.selections.style_id != -1 {
-                            self.shared.ui.dropped_file_paths.push(_path_buf);
-                            self.shared.ui.file_elapsed = Some(Instant::now());
-                        } else {
-                            self.shared.events.open_modal("img_unselected_style", false);
-                        }
-                    }
+                    *self.shared.ui.file_paths.lock().unwrap() = vec![_path_buf];
+                    self.shared.ui.file_elapsed = Some(Instant::now());
                 }
             }
             WindowEvent::CloseRequested => {
@@ -825,21 +806,24 @@ impl BackendRenderer {
 
         // import dropped files.
         // this uses file_elapsed since winit does not buffer multiple dropped files.
-        if shared.ui.file_elapsed != None
-            && shared.ui.file_elapsed.unwrap().elapsed().as_millis() > 150
-        {
-            *shared.ui.file_paths.lock().unwrap() = shared.ui.dropped_file_paths.clone();
-            #[rustfmt::skip]
-            let name = shared.ui.file_paths.lock().unwrap()[0].as_path().file_name().unwrap().to_str().unwrap().to_string();
+        let file_elapsed = &mut shared.ui.file_elapsed;
+        if *file_elapsed != None && file_elapsed.unwrap().elapsed().as_millis() > 150 {
+            let file_paths = shared.ui.file_paths.lock().unwrap();
+            let filename = file_paths[0].as_path().file_name().unwrap();
+            let name = filename.to_str().unwrap().to_string();
             let name_split = name.split('.').collect::<Vec<_>>();
             let ext = name_split.last().unwrap().to_string().to_lowercase();
             if IMG_FORMATS.contains(&ext.as_str()) {
-                *shared.ui.file_type.lock().unwrap() = ImportedFileType::Image;
+                if shared.armature.sel_style(&shared.selections) != None {
+                    *shared.ui.file_type.lock().unwrap() = ImportedFileType::Image;
+                } else {
+                    *shared.ui.file_paths.lock().unwrap() = vec![];
+                    *shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
+                }
             } else if ext.contains("skf") {
                 *shared.ui.file_type.lock().unwrap() = ImportedFileType::SkelForm;
             }
-            shared.ui.file_elapsed = None;
-            shared.ui.dropped_file_paths = vec![];
+            *file_elapsed = None;
         }
 
         if *shared.ui.save_finished.lock().unwrap() {

@@ -638,9 +638,6 @@ pub struct Ui {
 
     pub file_paths: Arc<Mutex<Vec<PathBuf>>>,
 
-    // temporary buffer for file dropped onto the window
-    pub dropped_file_paths: Vec<PathBuf>,
-
     // used to delay file processing.
     pub file_elapsed: Option<Instant>,
 

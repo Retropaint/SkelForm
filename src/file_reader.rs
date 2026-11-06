@@ -120,28 +120,61 @@ pub fn read_image_loaders(
         removeImage();
     }
 
-    let sel = &shared.selections;
-    let style = shared.armature.sel_style(sel).unwrap().clone();
-    shared.undo_states.new_undo_style(&style);
-
-    for i in 0..images.len() {
-        if images[i].clone().into_rgba8().to_vec().len() == 0 {
-            // this image is empty; something went wrong
-            shared.events.open_modal("img_err", false);
-            return;
-        }
-
-        // add image as texture
-        let dims = Vec2::new(images[i].width() as f32, images[i].height() as f32);
-        #[rustfmt::skip]
-        add_texture(images[i].clone(), shared.selections.style_id, dims, &names[i], &mut shared.armature, queue, device, bind_group_layout, ctx);
-    }
+    add_images_as_textures(
+        &shared.selections,
+        &mut shared.armature,
+        &mut shared.undo_states,
+        &images,
+        &names,
+        &mut shared.events,
+        queue,
+        device,
+        bind_group_layout,
+        ctx,
+    );
 
     // clear file buffer
     *shared.ui.file_paths.lock().unwrap() = vec![];
 
     // open atlas modal
     shared.ui.atlas_modal = images.len() == 1;
+}
+
+pub fn add_images_as_textures(
+    selections: &SelectionState,
+    armature: &mut Armature,
+    undo_states: &mut UndoStates,
+    images: &Vec<image::DynamicImage>,
+    names: &Vec<String>,
+    events: &mut EventState,
+    queue: Option<&Queue>,
+    device: Option<&Device>,
+    bind_group_layout: Option<&BindGroupLayout>,
+    ctx: Option<&egui::Context>,
+) {
+    let style = armature.sel_style(&selections).unwrap().clone();
+    undo_states.new_undo_style(&style);
+    for i in 0..images.len() {
+        if images[i].clone().into_rgba8().to_vec().len() == 0 {
+            // this image is empty; something went wrong
+            events.open_modal("img_err", false);
+            return;
+        }
+
+        // add image as texture
+        let dims = Vec2::new(images[i].width() as f32, images[i].height() as f32);
+        add_texture(
+            images[i].clone(),
+            selections.style_id,
+            dims,
+            &names[i],
+            armature,
+            queue,
+            device,
+            bind_group_layout,
+            ctx,
+        );
+    }
 }
 
 pub fn trim_transparent(img: &image::DynamicImage) -> image::DynamicImage {
