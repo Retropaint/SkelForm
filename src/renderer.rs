@@ -1942,16 +1942,15 @@ fn draw_rect(
 pub fn create_texture_bind_group(
     pixels: Vec<u8>,
     dimensions: Vec2,
-    queue: &Queue,
-    device: &Device,
-    bind_group_layout: &BindGroupLayout,
+    backend_renderer: &Option<&BackendRenderer>,
 ) -> BindGroup {
+    let br = backend_renderer.as_ref().unwrap();
     let tex_size = wgpu::Extent3d {
         width: dimensions.x as u32,
         height: dimensions.y as u32,
         depth_or_array_layers: 1,
     };
-    let tex = device.create_texture(&wgpu::TextureDescriptor {
+    let tex = br.gpu.device.create_texture(&wgpu::TextureDescriptor {
         size: tex_size,
         mip_level_count: 1,
         sample_count: 1,
@@ -1964,7 +1963,7 @@ pub fn create_texture_bind_group(
         label: Some("diffuse_texture"),
         view_formats: &[],
     });
-    queue.write_texture(
+    br.gpu.queue.write_texture(
         wgpu::TexelCopyTextureInfo {
             texture: &tex,
             mip_level: 0,
@@ -1982,7 +1981,7 @@ pub fn create_texture_bind_group(
 
     let tex_view = tex.create_view(&wgpu::TextureViewDescriptor::default());
 
-    let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+    let sampler = br.gpu.device.create_sampler(&wgpu::SamplerDescriptor {
         address_mode_u: wgpu::AddressMode::ClampToEdge,
         address_mode_v: wgpu::AddressMode::ClampToEdge,
         address_mode_w: wgpu::AddressMode::ClampToEdge,
@@ -1993,8 +1992,8 @@ pub fn create_texture_bind_group(
         ..Default::default()
     });
 
-    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        layout: &bind_group_layout,
+    let bind_group = br.gpu.device.create_bind_group(&wgpu::BindGroupDescriptor {
+        layout: &br.bind_group_layout,
         entries: &[
             wgpu::BindGroupEntry {
                 binding: 0,

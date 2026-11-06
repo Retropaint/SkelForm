@@ -128,7 +128,10 @@ pub fn open_style_dialog(file_path: &Arc<Mutex<PathBuf>>) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_import_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mutex<ImportedFileType>>) {
+pub fn open_import_dialog(
+    file_path: &Arc<Mutex<Vec<PathBuf>>>,
+    file_type: &Arc<Mutex<ImportedFileType>>,
+) {
     let filepath = Arc::clone(&file_path);
     let filetype = Arc::clone(&file_type);
     std::thread::spawn(move || {
@@ -1010,9 +1013,7 @@ pub fn prepare_files(
 pub fn import<R: Read + std::io::Seek>(
     data: R,
     shared: &mut crate::Shared,
-    queue: Option<&wgpu::Queue>,
-    device: Option<&wgpu::Device>,
-    bind_group_layout: Option<&BindGroupLayout>,
+    backend_renderer: &Option<&BackendRenderer>,
     context: Option<&egui::Context>,
 ) {
     let mut zip = zip::ZipArchive::new(data);
@@ -1234,11 +1235,13 @@ pub fn import<R: Read + std::io::Seek>(
                     imgs[tex.atlas_idx as usize].crop(u_offset_x, u_offset_y, u_size_x, u_size_y);
                 let mut bind_group: Option<wgpu::BindGroup> = None;
 
-                if queue != None && device != None && bind_group_layout != None {
+                if backend_renderer.is_some() {
                     let rgba = image.clone().into_rgba8().to_vec();
-                    let bgl = bind_group_layout.unwrap();
-                    let func = renderer::create_texture_bind_group;
-                    bind_group = Some(func(rgba, tex.size, queue.unwrap(), device.unwrap(), bgl));
+                    bind_group = Some(renderer::create_texture_bind_group(
+                        rgba,
+                        tex.size,
+                        &backend_renderer,
+                    ));
                 }
 
                 if context == None {

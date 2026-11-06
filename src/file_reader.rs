@@ -28,18 +28,6 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
         return;
     }
 
-    macro_rules! func {
-        ($func:expr) => {
-            $func(
-                shared,
-                Some(&renderer.as_ref().unwrap().gpu.queue),
-                Some(&renderer.as_ref().unwrap().gpu.device),
-                Some(&renderer.as_ref().unwrap().bind_group_layout),
-                Some(&context),
-            )
-        };
-    }
-
     // load images as textures
     let (images, names) = read_image_loaders(shared);
     if images.len() > 0 && names.len() > 0 {
@@ -47,12 +35,10 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
             &shared.selections,
             &mut shared.armature,
             &mut shared.undo_states,
+            &mut shared.events,
             &images,
             &names,
-            &mut shared.events,
-            Some(&renderer.as_ref().unwrap().gpu.queue),
-            Some(&renderer.as_ref().unwrap().gpu.device),
-            Some(&renderer.as_ref().unwrap().bind_group_layout),
+            &renderer.as_ref(),
             Some(&context),
         );
         // clear file buffer
@@ -61,9 +47,9 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
         shared.ui.atlas_modal = images.len() == 1;
     }
 
-    func!(read_import);
+    read_import(shared, &renderer.as_ref(), Some(context));
     if shared.ui.done_pending {
-        func!(add_pending_textures);
+        add_pending_textures(shared, &renderer.as_ref(), Some(context));
         shared.ui.done_pending = false;
     }
 }
@@ -101,7 +87,7 @@ pub fn read_image_loaders(shared: &mut Shared) -> (Vec<image::DynamicImage>, Vec
     #[cfg(target_arch = "wasm32")]
     {
         if !hasLoadedAllImages() {
-            return;
+            return (vec![], vec![]);
         }
 
         let mut idx = 0;
@@ -132,12 +118,10 @@ pub fn add_images_as_textures(
     selections: &SelectionState,
     armature: &mut Armature,
     undo_states: &mut UndoStates,
+    events: &mut EventState,
     images: &Vec<image::DynamicImage>,
     names: &Vec<String>,
-    events: &mut EventState,
-    queue: Option<&Queue>,
-    device: Option<&Device>,
-    bind_group_layout: Option<&BindGroupLayout>,
+    backend_renderer: &Option<&BackendRenderer>,
     ctx: Option<&egui::Context>,
 ) {
     let style = armature.sel_style(&selections).unwrap().clone();
@@ -157,9 +141,7 @@ pub fn add_images_as_textures(
             dims,
             &names[i],
             armature,
-            queue,
-            device,
-            bind_group_layout,
+            backend_renderer,
             ctx,
         );
     }
@@ -200,9 +182,7 @@ pub fn trim_transparent(img: &image::DynamicImage) -> image::DynamicImage {
 
 pub fn add_pending_textures(
     shared: &mut Shared,
-    queue: Option<&Queue>,
-    device: Option<&Device>,
-    bind_group_layout: Option<&BindGroupLayout>,
+    backend_renderer: &Option<&BackendRenderer>,
     ctx: Option<&egui::Context>,
 ) {
     // get last texture of selected style (will be the atlas)
@@ -220,7 +200,7 @@ pub fn add_pending_textures(
         let crop = image.crop_imm(tex.offset.x as u32, tex.offset.y as u32, tex.size.x as u32, tex.size.y as u32);
         let crop_size = Vec2::new(crop.width() as f32, crop.height() as f32);
         #[rustfmt::skip]
-        add_texture(crop.clone(), shared.selections.style_id, crop_size, &tex.name, &mut shared.armature, queue, device, bind_group_layout, ctx);
+        add_texture(crop.clone(), shared.selections.style_id, crop_size, &tex.name, &mut shared.armature, backend_renderer, ctx);
     }
 
     shared.ui.pending_textures = vec![];
@@ -229,9 +209,7 @@ pub fn add_pending_textures(
 pub fn read_psd(
     bytes: Vec<u8>,
     shared: &mut Shared,
-    queue: Option<&Queue>,
-    device: Option<&Device>,
-    bind_group_layout: Option<&BindGroupLayout>,
+    backend_renderer: &Option<&BackendRenderer>,
     ctx: Option<&egui::Context>,
 ) {
     let psd = psd::Psd::from_bytes(&bytes).unwrap();
@@ -380,8 +358,7 @@ pub fn read_psd(
             }
 
             let arm = &mut shared.psd_armature;
-            let bgl = bind_group_layout;
-            add_texture(img, style_id, dims, tex_name, arm, queue, device, bgl, ctx);
+            add_texture(img, style_id, dims, tex_name, arm, backend_renderer, ctx);
 
             let styles = &shared.psd_armature.styles;
             let str_default = str_default.clone();
@@ -586,9 +563,7 @@ pub fn read_psd(
 pub fn create_texture(
     image: &image::DynamicImage,
     dimensions: Vec2,
-    queue: Option<&Queue>,
-    device: Option<&Device>,
-    bind_group_layout: Option<&BindGroupLayout>,
+    backend_renderer: &Option<&BackendRenderer>,
     ctx: Option<&egui::Context>,
 ) -> (Option<BindGroup>, Option<TextureHandle>) {
     let img_buf = <image::ImageBuffer<image::Rgba<u8>, _>>::from_raw(
@@ -599,13 +574,11 @@ pub fn create_texture(
     .unwrap();
 
     let mut bind_group = None;
-    if queue != None && device != None && bind_group_layout != None {
+    if backend_renderer.is_some() {
         bind_group = Some(renderer::create_texture_bind_group(
             image.clone().into_rgba8().to_vec(),
             dimensions,
-            queue.unwrap(),
-            device.unwrap(),
-            bind_group_layout.unwrap(),
+            backend_renderer,
         ));
     }
 
@@ -629,13 +602,10 @@ pub fn add_texture(
     dimensions: Vec2,
     tex_name: &str,
     armature: &mut Armature,
-    queue: Option<&Queue>,
-    device: Option<&Device>,
-    bind_group_layout: Option<&BindGroupLayout>,
+    backend_renderer: &Option<&BackendRenderer>,
     ctx: Option<&egui::Context>,
 ) {
-    let (bind_group, ui_img) =
-        create_texture(&image, dimensions, queue, device, bind_group_layout, ctx);
+    let (bind_group, ui_img) = create_texture(&image, dimensions, backend_renderer, ctx);
 
     let ids = armature.tex_data.iter().map(|td| td.id).collect();
     let id = generate_id(ids);
@@ -663,9 +633,7 @@ pub fn add_texture(
 
 pub fn read_import(
     shared: &mut Shared,
-    queue: Option<&Queue>,
-    device: Option<&Device>,
-    bgl: Option<&BindGroupLayout>,
+    backend_renderer: &Option<&BackendRenderer>,
     context: Option<&egui::Context>,
 ) {
     let file;
@@ -718,7 +686,7 @@ pub fn read_import(
             }
             #[cfg(not(target_arch = "wasm32"))]
             {
-                utils::import(file.unwrap(), shared, queue, device, bgl, context);
+                utils::import(file.unwrap(), shared, backend_renderer, context);
                 if !shared.ui.recent_file_paths.contains(&filepath) {
                     shared.ui.recent_file_paths.push(filepath);
                 } else {
@@ -750,7 +718,7 @@ pub fn read_import(
             #[cfg(not(target_arch = "wasm32"))]
             {
                 let file = std::fs::read(filepath).unwrap();
-                read_psd(file, shared, queue, device, bgl, context);
+                read_psd(file, shared, backend_renderer, context);
             }
             #[cfg(target_arch = "wasm32")]
             read_psd(file, shared, queue, device, bgl, context)

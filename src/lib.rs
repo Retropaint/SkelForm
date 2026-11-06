@@ -238,7 +238,7 @@ impl ApplicationHandler for App {
         {
             let file = crate::getLang();
             if file.len() != 0 {
-                shared.ui.init_lang(&file, "");
+                self.shared.ui.init_lang(&file, "");
                 crate::clearLang();
             }
         }
@@ -449,13 +449,14 @@ impl ApplicationHandler for App {
 
                     let shared = &mut self.shared;
 
+                    let render_ref = &self.renderer.as_ref();
                     if shared.events.events[0] == Events::CreateEmptyTexture {
                         let img = image::DynamicImage::new(1, 1, image::ColorType::Rgba8);
                         let style_id = shared.selections.style_id;
                         let armature = &mut shared.armature;
                         let dims = Vec2::new(1., 1.);
                         file_reader::add_texture(
-                            img, style_id, dims, "", armature, queue, device, bgl, ctx,
+                            img, style_id, dims, "", armature, render_ref, ctx,
                         );
                     } else if shared.events.events[0] == Events::TrimTexture {
                         for id in &shared.selections.tex_ids {
@@ -471,7 +472,7 @@ impl ApplicationHandler for App {
                             let dims =
                                 Vec2::new(img.dimensions().0 as f32, img.dimensions().1 as f32);
                             let (bind_group, ui_img) =
-                                file_reader::create_texture(&img, dims, queue, device, bgl, ctx);
+                                file_reader::create_texture(&img, dims, render_ref, ctx);
                             tex_data.image = img;
                             tex_data.bind_group = bind_group;
                             tex_data.ui_img = ui_img;
@@ -1070,9 +1071,7 @@ impl BackendRenderer {
             renderer.generic_bindgroup = Some(renderer::create_texture_bind_group(
                 vec![255, 255, 255, 255],
                 Vec2::new(1., 1.),
-                &self.gpu.queue,
-                &self.gpu.device,
-                &self.bind_group_layout,
+                &Some(self),
             ));
         }
     }
@@ -1083,9 +1082,7 @@ impl BackendRenderer {
             *bindgroup = Some(renderer::create_texture_bind_group(
                 img.clone().into_rgba8().to_vec(),
                 Vec2::new(img.width() as f32, img.height() as f32),
-                &self.gpu.queue,
-                &self.gpu.device,
-                &self.bind_group_layout,
+                &Some(self),
             ));
         }
     }
