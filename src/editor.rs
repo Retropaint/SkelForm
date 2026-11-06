@@ -26,8 +26,6 @@ pub fn iterate_events(
     let event = events.events[0].clone();
     type E = Events;
 
-    println!("{}", event);
-
     // set buffers dirty (to be updated later) based on the event
     set_buffers_dirty(renderer, &event);
 

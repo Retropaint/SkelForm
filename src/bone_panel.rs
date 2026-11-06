@@ -1083,7 +1083,10 @@ pub fn selected_verts_inputs(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_file_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mutex<i32>>) {
+pub fn open_file_dialog(
+    file_path: &Arc<Mutex<Vec<PathBuf>>>,
+    file_type: &Arc<Mutex<ImportedFileType>>,
+) {
     let filepath = Arc::clone(file_path);
     let filetype = Arc::clone(file_type);
     thread::spawn(move || {
@@ -1094,7 +1097,7 @@ pub fn open_file_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mu
             return;
         }
         *filepath.lock().unwrap() = task.unwrap();
-        *filetype.lock().unwrap() = 1;
+        *filetype.lock().unwrap() = ImportedFileType::Image;
     });
 }
 

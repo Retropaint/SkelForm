@@ -47,7 +47,7 @@ pub fn draw(
                     // import texture (via file dialog)
                     #[cfg(not(target_arch = "wasm32"))]
                     {
-                        bone_panel::open_file_dialog(&shared_ui.file_path, &shared_ui.file_type);
+                        bone_panel::open_file_dialog(&shared_ui.file_paths, &shared_ui.file_type);
                     }
                     #[cfg(target_arch = "wasm32")]
                     crate::clickFileInput(true);

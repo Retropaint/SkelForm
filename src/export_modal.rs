@@ -175,7 +175,7 @@ pub fn draw(
                 *sui.saving.lock().unwrap() = crate::Saving::Spritesheet;
             }
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(&sui.file_path, &sui.saving, crate::Saving::Exporting);
+            utils::open_save_dialog(&sui.file_paths, &sui.saving, crate::Saving::Exporting);
             sui.export_modal = false;
         }
         // Image Export
@@ -187,7 +187,7 @@ pub fn draw(
                 sui.spritesheet_elapsed = Some(Instant::now());
             }
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(&sui.file_path, &sui.saving, crate::Saving::Spritesheet);
+            utils::open_save_dialog(&sui.file_paths, &sui.saving, crate::Saving::Spritesheet);
         }
         // Video Export
         SettingsState::Keyboard => {
@@ -197,7 +197,7 @@ pub fn draw(
                 sui.spritesheet_elapsed = Some(Instant::now());
             }
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_save_dialog(&sui.file_path, &sui.saving, crate::Saving::Video);
+            utils::open_save_dialog(&sui.file_paths, &sui.saving, crate::Saving::Video);
         }
         _ => {}
     }

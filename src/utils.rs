@@ -128,7 +128,7 @@ pub fn open_style_dialog(file_path: &Arc<Mutex<PathBuf>>) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn open_import_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mutex<i32>>) {
+pub fn open_import_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<Mutex<ImportedFileType>>) {
     let filepath = Arc::clone(&file_path);
     let filetype = Arc::clone(&file_type);
     std::thread::spawn(move || {
@@ -141,7 +141,7 @@ pub fn open_import_dialog(file_path: &Arc<Mutex<Vec<PathBuf>>>, file_type: &Arc<
             return;
         }
         *filepath.lock().unwrap() = vec![task.unwrap()];
-        *filetype.lock().unwrap() = 2;
+        *filetype.lock().unwrap() = ImportedFileType::SkelForm;
     });
 }
 
@@ -422,13 +422,13 @@ pub fn save_native(shared_ui: &mut shared::Ui) {
         let filename = path.as_path().file_name().unwrap();
         filename.to_str().unwrap().to_string();
         if filename != "autosave.skf" {
-            *shared_ui.file_path.lock().unwrap() = vec![shared_ui.save_path.clone().unwrap()];
+            *shared_ui.file_paths.lock().unwrap() = vec![shared_ui.save_path.clone().unwrap()];
             *shared_ui.saving.lock().unwrap() = Saving::CustomPath;
             open_dialog = false;
         }
     }
     if open_dialog {
-        utils::open_save_dialog(&shared_ui.file_path, &shared_ui.saving, Saving::CustomPath);
+        utils::open_save_dialog(&shared_ui.file_paths, &shared_ui.saving, Saving::CustomPath);
     }
 }
 

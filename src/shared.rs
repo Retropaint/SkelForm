@@ -530,6 +530,14 @@ impl Warning {
     }
 }
 
+#[derive(Clone, Default, PartialEq)]
+pub enum ImportedFileType {
+    #[default]
+    None,
+    Image,
+    SkelForm,
+}
+
 #[derive(Clone, Default)]
 pub struct Ui {
     pub startup: Startup,
@@ -625,15 +633,18 @@ pub struct Ui {
     default_loc_strings: std::collections::HashMap<String, String>,
     pub cursor_icon: egui::CursorIcon,
     pub last_pressed: Option<egui::Key>,
+
     pub recent_file_paths: Vec<String>,
 
-    pub file_path: Arc<Mutex<Vec<PathBuf>>>,
+    pub file_paths: Arc<Mutex<Vec<PathBuf>>>,
 
     // temporary buffer for file dropped onto the window
-    pub dropped_file_path: Vec<PathBuf>,
+    pub dropped_file_paths: Vec<PathBuf>,
 
-    pub file_type: Arc<Mutex<i32>>, // 1: image, 2: skf
+    // used to delay file processing.
     pub file_elapsed: Option<Instant>,
+
+    pub file_type: Arc<Mutex<ImportedFileType>>,
 
     pub saving: Arc<Mutex<Saving>>,
     pub save_finished: Arc<Mutex<bool>>,

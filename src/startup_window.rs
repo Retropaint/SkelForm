@@ -97,7 +97,7 @@ fn left(
             #[cfg(target_arch = "wasm32")]
             crate::clickFileInput(false);
             #[cfg(not(target_arch = "wasm32"))]
-            utils::open_import_dialog(&shared_ui.file_path, &shared_ui.file_type);
+            utils::open_import_dialog(&shared_ui.file_paths, &shared_ui.file_type);
         }
 
         // Sample button and list (native only)
@@ -133,8 +133,8 @@ fn left(
                         {
                             let mut buf = PathBuf::new();
                             buf.push($path);
-                            *shared_ui.file_path.lock().unwrap() = vec![buf];
-                            *shared_ui.file_type.lock().unwrap() = 2;
+                            *shared_ui.file_paths.lock().unwrap() = vec![buf];
+                            *shared_ui.file_type.lock().unwrap() = ImportedFileType::SkelForm;
                             shared_ui.startup_window = false;
                         }
                     };
@@ -615,8 +615,8 @@ pub fn skf_file_button(
         if button.clicked() {
             let mut buf = PathBuf::new();
             buf.push(path.clone());
-            *shared_ui.file_path.lock().unwrap() = vec![buf.clone()];
-            *shared_ui.file_type.lock().unwrap() = 2;
+            *shared_ui.file_paths.lock().unwrap() = vec![buf.clone()];
+            *shared_ui.file_type.lock().unwrap() = ImportedFileType::SkelForm;
             shared_ui.save_path = Some(buf);
             shared_ui.changed_window_name = false;
         }

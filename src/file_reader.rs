@@ -24,6 +24,19 @@ pub const EXPORT_VID_DONE: &str = "Done!";
 pub const IMPORT_IMG_ERR: &str = "Could not extract image data.";
 
 pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &egui::Context) {
+    if renderer.as_ref().is_none() {
+        return;
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        let file = crate::getLang();
+        if file.len() != 0 {
+            shared.ui.init_lang(&file, "");
+            crate::clearLang();
+        }
+    }
+
     macro_rules! func {
         ($func:expr) => {
             $func(
@@ -34,20 +47,6 @@ pub fn read(shared: &mut Shared, renderer: &Option<BackendRenderer>, context: &e
                 Some(&context),
             )
         };
-    }
-
-    match renderer.as_ref() {
-        None => return,
-        _ => {}
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        let file = crate::getLang();
-        if file.len() != 0 {
-            shared.ui.init_lang(&file, "");
-            crate::clearLang();
-        }
     }
 
     func!(read_image_loaders);
@@ -72,13 +71,14 @@ pub fn read_image_loaders(
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if *shared.ui.file_type.lock().unwrap() != 1 {
+        if *shared.ui.file_type.lock().unwrap() != ImportedFileType::Image {
             return;
         }
-        *shared.ui.file_type.lock().unwrap() = 0;
-        let len = shared.ui.file_path.lock().unwrap().len();
+        *shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
+        let len = shared.ui.file_paths.lock().unwrap().len();
         for f in 0..len {
-            let file = &shared.ui.file_path.lock().unwrap()[f];
+            // extract all imported images
+            let file = &shared.ui.file_paths.lock().unwrap()[f];
             let raw_name = file.as_path().file_name().unwrap();
             let name = raw_name.to_str().unwrap().to_string();
             if name.contains(".") {
@@ -101,6 +101,7 @@ pub fn read_image_loaders(
 
         let mut idx = 0;
         while hasElement(&("image-".to_string() + &idx.to_string())) {
+            // extract all imported images
             let img = load_image_wasm("image-".to_string() + &idx.to_string());
             let pixels = img.as_ref().unwrap().0.clone();
             let dims = img.as_ref().unwrap().1;
@@ -124,18 +125,22 @@ pub fn read_image_loaders(
     shared.undo_states.new_undo_style(&style);
 
     for i in 0..images.len() {
-        let dims = Vec2::new(images[i].width() as f32, images[i].height() as f32);
-
         if images[i].clone().into_rgba8().to_vec().len() == 0 {
+            // this image is empty; something went wrong
             shared.events.open_modal("img_err", false);
             return;
         }
 
+        // add image as texture
+        let dims = Vec2::new(images[i].width() as f32, images[i].height() as f32);
         #[rustfmt::skip]
         add_texture(images[i].clone(), shared.selections.style_id, dims, &names[i], &mut shared.armature, queue, device, bind_group_layout, ctx);
     }
 
-    *shared.ui.file_path.lock().unwrap() = vec![];
+    // clear file buffer
+    *shared.ui.file_paths.lock().unwrap() = vec![];
+
+    // open atlas modal
     shared.ui.atlas_modal = images.len() == 1;
 }
 
@@ -649,11 +654,11 @@ pub fn read_import(
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if *shared.ui.file_type.lock().unwrap() != 2 {
+        if *shared.ui.file_type.lock().unwrap() != ImportedFileType::SkelForm {
             return;
         }
-        *shared.ui.file_type.lock().unwrap() = 0;
-        let raw_filepath = &shared.ui.file_path.lock().unwrap()[0];
+        *shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
+        let raw_filepath = &shared.ui.file_paths.lock().unwrap()[0];
 
         filepath = raw_filepath.as_path().to_str().unwrap().to_string();
         file = std::fs::File::open(filepath.to_string());

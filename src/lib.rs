@@ -280,12 +280,12 @@ impl ApplicationHandler for App {
 
                     if ext.contains("skf") || ext.contains("psd") {
                         // load .skf or .skfe file
-                        *self.shared.ui.file_path.lock().unwrap() = vec![_path_buf];
-                        *self.shared.ui.file_type.lock().unwrap() = 2;
+                        *self.shared.ui.file_paths.lock().unwrap() = vec![_path_buf];
+                        *self.shared.ui.file_type.lock().unwrap() = ImportedFileType::SkelForm;
                     } else {
                         // only load images if a style is selected in styles modal
                         if self.shared.selections.style_id != -1 {
-                            self.shared.ui.dropped_file_path.push(_path_buf);
+                            self.shared.ui.dropped_file_paths.push(_path_buf);
                             self.shared.ui.file_elapsed = Some(Instant::now());
                         } else {
                             self.shared.events.open_modal("img_unselected_style", false);
@@ -828,18 +828,18 @@ impl BackendRenderer {
         if shared.ui.file_elapsed != None
             && shared.ui.file_elapsed.unwrap().elapsed().as_millis() > 150
         {
-            *shared.ui.file_path.lock().unwrap() = shared.ui.dropped_file_path.clone();
+            *shared.ui.file_paths.lock().unwrap() = shared.ui.dropped_file_paths.clone();
             #[rustfmt::skip]
-            let name = shared.ui.file_path.lock().unwrap()[0].as_path().file_name().unwrap().to_str().unwrap().to_string();
+            let name = shared.ui.file_paths.lock().unwrap()[0].as_path().file_name().unwrap().to_str().unwrap().to_string();
             let name_split = name.split('.').collect::<Vec<_>>();
             let ext = name_split.last().unwrap().to_string().to_lowercase();
             if IMG_FORMATS.contains(&ext.as_str()) {
-                *shared.ui.file_type.lock().unwrap() = 1;
+                *shared.ui.file_type.lock().unwrap() = ImportedFileType::Image;
             } else if ext.contains("skf") {
-                *shared.ui.file_type.lock().unwrap() = 2;
+                *shared.ui.file_type.lock().unwrap() = ImportedFileType::SkelForm;
             }
             shared.ui.file_elapsed = None;
-            shared.ui.dropped_file_path = vec![];
+            shared.ui.dropped_file_paths = vec![];
         }
 
         if *shared.ui.save_finished.lock().unwrap() {
@@ -1104,7 +1104,7 @@ impl BackendRenderer {
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            path = shared_ui.file_path.lock().unwrap()[0].clone();
+            path = shared_ui.file_paths.lock().unwrap()[0].clone();
 
             // attempt to remove the existing dir, if it exists
             let can_proceed = if let Ok(exists) = std::fs::exists(&path) {
@@ -1131,7 +1131,7 @@ impl BackendRenderer {
 
     #[cfg(not(target_arch = "wasm32"))]
     fn skf_native_spritesheet(&self, armature: &Armature, shared_ui: &mut Ui) {
-        let path = shared_ui.file_path.lock().unwrap()[0].clone();
+        let path = shared_ui.file_paths.lock().unwrap()[0].clone();
         let mut zip = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
         let options = zip::write::FullFileOptions::default()
             .compression_method(zip::CompressionMethod::Stored);
@@ -1246,7 +1246,7 @@ impl BackendRenderer {
         let saving_type = shared.ui.saving.lock().unwrap().clone();
         match saving_type {
             Saving::CustomPath => {
-                let path = &shared.ui.file_path.lock().unwrap()[0];
+                let path = &shared.ui.file_paths.lock().unwrap()[0];
                 save_path = path.as_path().to_str().unwrap().to_string();
                 shared.ui.changed_window_name = false;
                 shared.events.open_modal("saving", true);
@@ -1258,7 +1258,7 @@ impl BackendRenderer {
                 }
             }
             Saving::Exporting => {
-                let path = &shared.ui.file_path.lock().unwrap()[0];
+                let path = &shared.ui.file_paths.lock().unwrap()[0];
                 save_path = path.as_path().to_str().unwrap().to_string();
                 shared.events.open_modal("exporting", true);
                 *shared.ui.export_finished.lock().unwrap() = false;
