@@ -95,6 +95,7 @@ pub fn draw(
                 }
 
                 if shared_ui.dragging_slice != usize::MAX {
+                    // dragging existing slice
                     let tex = &mut shared_ui.pending_textures[shared_ui.dragging_slice];
                     tex.offset += atlas.size * (interp - shared_ui.prev_pending_interp);
                     if tex.offset.x < 0. {
