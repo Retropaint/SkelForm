@@ -861,6 +861,39 @@ pub fn draw_styles_list(
             } else {
                 egui::CursorIcon::Default
             };
+            let style = &armature.styles[s];
+
+            let mut blocking_style = "".to_string();
+            let mut tooltip = shared_ui.loc("styles_modal.active_desc");
+            let tick = if style.active {
+                for warning in &shared_ui.warnings {
+                    if warning.warn_type != Warnings::BlockedStyles {
+                        continue;
+                    }
+                    for i in 0..warning.ids.len() {
+                        if warning.ids[i] == style.id as usize {
+                            blocking_style = warning.str_values[i].clone();
+                            break;
+                        }
+                    }
+                }
+
+                if blocking_style != "" {
+                    // blocked style; show warning icon
+                    tooltip = shared_ui
+                        .loc("armature_panel.blocked_style")
+                        .replace("$", &blocking_style);
+                    "⚠"
+                } else {
+                    // active style; show eye icon
+                    "👁"
+                }
+            } else {
+                blocking_style = "".to_string();
+
+                // inactive style; show nothing
+                "---"
+            };
 
             // render style button (also as draggable element)
             let style_id = egui::Id::new(("style_panel", idx, 0));
@@ -870,9 +903,18 @@ pub fn draw_styles_list(
                         ui.set_width(ui.available_width() - 30.);
                         ui.set_height(21.);
                         ui.add_space(3.);
+
                         let mut name = format!(" {}", &armature.styles[s].name);
                         name = utils::trunc_str(ui, &name, ui.min_rect().width());
-                        ui.label(egui::RichText::new(name).color(config.colors.text));
+                        if blocking_style == "" {
+                            ui.selectable_value(&mut -1, s as i32, name)
+                        } else {
+                            let warn = RichText::new(name).color(config.colors.warning_text);
+                            let label = ui.selectable_value(&mut -1, s as i32, warn);
+                            let loc = "armature_panel.blocked_style";
+                            let desc = shared_ui.loc(loc).replace("$", &blocking_style);
+                            label.on_hover_text(desc)
+                        };
                     });
                 })
                 .response
@@ -880,22 +922,26 @@ pub fn draw_styles_list(
                 .interact(egui::Sense::click());
 
             // visibility checkbox
-            let str_style_active_desc = &shared_ui.loc("styles_modal.active_desc");
             let rect = egui::Rect::from_min_size(ui.cursor().left_top(), [15., 20.].into());
             let visible_checkbox = ui
                 .allocate_rect(rect, egui::Sense::click())
                 .on_hover_cursor(egui::CursorIcon::PointingHand)
-                .on_hover_text(str_style_active_desc);
-            let mut visible_col = config.colors.text;
+                .on_hover_text(tooltip);
+            let mut visible_col = if blocking_style == "" {
+                config.colors.text
+            } else {
+                config.colors.warning_text
+            };
+
+            // highlight checkbox if focused
             if visible_checkbox.contains_pointer() || visible_checkbox.has_focus() {
                 visible_col += Color::new(60, 60, 60, 0);
             }
-            let style = &armature.styles[s];
-            let visible = if style.active { "👁" } else { "---" };
+
             ui.painter().text(
                 visible_checkbox.rect.left_top() - egui::Vec2::new(0., 1.),
                 egui::Align2::LEFT_TOP,
-                visible,
+                tick,
                 egui::FontId::new(20., egui::FontFamily::default()),
                 visible_col.into(),
             );

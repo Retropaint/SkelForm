@@ -368,6 +368,7 @@ pub fn iterate_events(
             idx += 1;
         }
         armature.styles.remove(idx);
+        ui.warnings = check_warnings(armature);
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::ToggleStyleActive {
@@ -379,6 +380,7 @@ pub fn iterate_events(
                 armature.set_bone_tex(bone.id, bone.tex.clone(), usize::MAX, -1);
             }
         }
+        ui.warnings = check_warnings(armature);
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::ToggleAnimPlaying {
