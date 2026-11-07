@@ -837,8 +837,9 @@ pub fn draw_styles_list(
             };
 
             // render style button (also as draggable element)
+            let style_id = egui::Id::new(("style_panel", idx, 0));
             let button = ui
-                .dnd_drag_source(egui::Id::new(("style_panel", idx, 0)), idx, |ui| {
+                .dnd_drag_source(style_id, idx, |ui| {
                     egui::Frame::new().fill(col.into()).show(ui, |ui| {
                         ui.set_width(ui.available_width() - 30.);
                         ui.set_height(21.);
@@ -854,11 +855,9 @@ pub fn draw_styles_list(
 
             // visibility checkbox
             let str_style_active_desc = &shared_ui.loc("styles_modal.active_desc");
+            let rect = egui::Rect::from_min_size(ui.cursor().left_top(), [15., 20.].into());
             let visible_checkbox = ui
-                .allocate_rect(
-                    egui::Rect::from_min_size(ui.cursor().left_top(), [15., 20.].into()),
-                    egui::Sense::click(),
-                )
+                .allocate_rect(rect, egui::Sense::click())
                 .on_hover_cursor(egui::CursorIcon::PointingHand)
                 .on_hover_text(str_style_active_desc);
             let mut visible_col = config.colors.text;
@@ -945,7 +944,11 @@ pub fn draw_styles_list(
                 });
             }
 
-            // dragging stuff below
+            // set dragging element to style
+            let drag_id = ui.ctx().dragged_id();
+            if drag_id != None && drag_id.unwrap() == style_id {
+                shared_ui.dragging_element = "style".to_string();
+            }
 
             let pointer = ui.input(|i| i.pointer.interact_pos());
             let hovered_payload = button.dnd_hover_payload::<i32>();
