@@ -1,6 +1,6 @@
 //! Animation keyframe editor. Very early and only proof-of-concept.
 
-use egui::Stroke;
+use egui::{scroll_area::ScrollSource, Stroke};
 
 use ui::{EguiUi, TextInputOptions};
 
@@ -696,12 +696,14 @@ pub fn draw_timeline_graph(
         frame.show(ui, |ui| {
             let area = egui::ScrollArea::both()
                 .scroll_offset(shared_ui.timeline_offset.into())
+                .scroll_source(ScrollSource::SCROLL_BAR)
                 .id_salt("test");
+            let mut cursor = Vec2::new(0., 0.);
             let response = area.show(ui, |ui| {
                 ui.set_width(width);
                 ui.set_height(ui.available_height());
 
-                let mut cursor = get_cursor(ui);
+                cursor = get_cursor(ui);
                 // keep cursor on the frame
                 cursor.y -= shared_ui.timeline_offset.y;
 
@@ -728,8 +730,9 @@ pub fn draw_timeline_graph(
                     ui, shared_ui, armature, config, input, selections, events, hitbox, cursor,
                 );
             });
+
             let not_dragging = shared_ui.hovering_frame == -1 || !input.left_down;
-            if ui.ui_contains_pointer() && not_dragging {
+            if (ui.ui_contains_pointer() && not_dragging) || ui.ctx().is_using_pointer() {
                 shared_ui.timeline_offset = response.state.offset.into();
             }
         });
@@ -911,7 +914,7 @@ fn draw_frame_lines(
 
         // several checks for whether frameline can/is being hovered on
         let below_top_bar = cursor.y < ui.min_rect().height() - 13.;
-        let in_ui = cursor.y > -25.;
+        let in_ui = cursor.y > -25. && !ui.ctx().is_using_pointer();
         let can_hover =
             in_ui && !shared_ui.modal && !shared_ui.settings_modal && !shared_ui.export_modal;
         let cur = cursor;
