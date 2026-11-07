@@ -92,13 +92,13 @@ fn main() -> Result<(), winit::error::EventLoopError> {
                 let mut buf = PathBuf::new();
                 buf.push(config_path().parent().unwrap().join("autosave.skf"));
                 *app.shared.ui.file_paths.lock().unwrap() = vec![buf];
-                *app.shared.ui.file_type.lock().unwrap() = ImportedFileType::SkelForm;
+                *app.shared.ui.file_type.lock().unwrap() = ImportedFileType::Other;
             } else {
                 // attempt to load specified skf file
                 let mut buf = PathBuf::new();
                 buf.push(arg);
                 *app.shared.ui.file_paths.lock().unwrap() = vec![buf];
-                *app.shared.ui.file_type.lock().unwrap() = ImportedFileType::SkelForm;
+                *app.shared.ui.file_type.lock().unwrap() = ImportedFileType::Other;
             }
         }
     }

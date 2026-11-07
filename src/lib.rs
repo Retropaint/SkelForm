@@ -832,8 +832,8 @@ impl BackendRenderer {
                     *shared.ui.file_paths.lock().unwrap() = vec![];
                     *shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
                 }
-            } else if ext.contains("skf") {
-                *shared.ui.file_type.lock().unwrap() = ImportedFileType::SkelForm;
+            } else if ext.contains("skf") || ext.contains("psd") {
+                *shared.ui.file_type.lock().unwrap() = ImportedFileType::Other;
             }
             *file_elapsed = None;
         }

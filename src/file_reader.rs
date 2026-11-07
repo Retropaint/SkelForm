@@ -3,7 +3,6 @@
 use std::sync::Mutex;
 
 use egui::TextureHandle;
-use fs::File;
 use utils::import;
 use wgpu::*;
 
@@ -21,6 +20,9 @@ mod web {
 }
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
+
+#[cfg(not(target_arch = "wasm32"))]
+use std::fs::File;
 
 pub const EXPORT_VID_DONE: &str = "Done!";
 pub const IMPORT_IMG_ERR: &str = "Could not extract image data.";
@@ -650,33 +652,34 @@ pub fn add_texture(
     });
 }
 
-pub fn read_import(shared: &mut Shared) -> Option<(Result<File, std::io::Error>, String, String)> {
+pub fn read_import(shared: &mut Shared) -> Option<(Vec<u8>, String, String)> {
     let file;
     let filename: String;
-    #[cfg(not(target_arch = "wasm32"))]
     let filepath: String;
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if *shared.ui.file_type.lock().unwrap() != ImportedFileType::SkelForm {
+        if *shared.ui.file_type.lock().unwrap() != ImportedFileType::Other {
             return None;
         }
         *shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
         let raw_filepath = &shared.ui.file_paths.lock().unwrap()[0];
 
         filepath = raw_filepath.as_path().to_str().unwrap().to_string();
-        file = std::fs::File::open(filepath.to_string());
-        if let Err(err) = file {
+        let raw_file = File::open(filepath.to_string());
+        if let Err(err) = raw_file {
             shared.events.open_file_err_modal(err.to_string());
             return None;
         }
 
         let raw_filename = raw_filepath.as_path().file_name();
         filename = raw_filename.unwrap().to_str().unwrap().to_string();
+        file = raw_file.unwrap().bytes().map(|b| b.unwrap()).collect();
     }
 
     #[cfg(target_arch = "wasm32")]
     {
+        filepath = "".to_string();
         filename = getFileName();
         if filename == "" {
             return None;
@@ -691,7 +694,7 @@ pub fn import_file(
     filename: &String,
     filepath: &String,
     shared: &mut Shared,
-    file: Result<File, std::io::Error>,
+    file: Vec<u8>,
     backend_renderer: &Option<&BackendRenderer>,
     context: &Option<&egui::Context>,
 ) {
@@ -701,14 +704,14 @@ pub fn import_file(
             shared.events.open_modal("import_swf", false);
         }
         "skf" | "skfe" | "skf~" => {
+            let cursor = std::io::Cursor::new(file);
             #[cfg(target_arch = "wasm32")]
             {
-                let cursor = std::io::Cursor::new(getFile());
-                utils::import(cursor, shared, backend_renderer, context);
+                utils::import(cursor, shared, backend_renderer, *context);
             }
             #[cfg(not(target_arch = "wasm32"))]
             {
-                utils::import(file.unwrap(), shared, backend_renderer, *context);
+                utils::import(cursor, shared, backend_renderer, *context);
                 utils::add_to_recent_paths(filepath, &mut shared.ui.recent_file_paths);
             }
         }
@@ -719,7 +722,7 @@ pub fn import_file(
                 read_psd(file, shared, backend_renderer, *context);
             }
             #[cfg(target_arch = "wasm32")]
-            read_psd(file, shared, backend_renderer, context)
+            read_psd(file, shared, backend_renderer, *context)
         }
         _ => {
             shared.events.open_modal("import_unrecognized", false);

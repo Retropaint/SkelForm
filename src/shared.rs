@@ -530,13 +530,14 @@ impl Warning {
     }
 }
 
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Default, PartialEq, Debug)]
 pub enum ImportedFileType {
     #[default]
     None,
     Image,
-    SkelForm,
+    Other,
 }
+enum_string!(ImportedFileType);
 
 #[derive(Clone, Default)]
 pub struct Ui {

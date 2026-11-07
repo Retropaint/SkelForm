@@ -134,7 +134,7 @@ fn left(
                             let mut buf = PathBuf::new();
                             buf.push($path);
                             *shared_ui.file_paths.lock().unwrap() = vec![buf];
-                            *shared_ui.file_type.lock().unwrap() = ImportedFileType::SkelForm;
+                            *shared_ui.file_type.lock().unwrap() = ImportedFileType::Other;
                             shared_ui.startup_window = false;
                         }
                     };
@@ -616,7 +616,7 @@ pub fn skf_file_button(
             let mut buf = PathBuf::new();
             buf.push(path.clone());
             *shared_ui.file_paths.lock().unwrap() = vec![buf.clone()];
-            *shared_ui.file_type.lock().unwrap() = ImportedFileType::SkelForm;
+            *shared_ui.file_type.lock().unwrap() = ImportedFileType::Other;
             shared_ui.save_path = Some(buf);
             shared_ui.changed_window_name = false;
         }

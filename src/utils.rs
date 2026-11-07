@@ -144,7 +144,7 @@ pub fn open_import_dialog(
             return;
         }
         *filepath.lock().unwrap() = vec![task.unwrap()];
-        *filetype.lock().unwrap() = ImportedFileType::SkelForm;
+        *filetype.lock().unwrap() = ImportedFileType::Other;
     });
 }
 
@@ -1293,6 +1293,7 @@ pub fn save_to_recent_files(mut paths: Vec<String>) {
         .unwrap();
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn add_to_recent_paths(to_add: &String, paths: &mut Vec<String>) {
     if !paths.contains(&to_add) {
         paths.push(to_add.clone());
