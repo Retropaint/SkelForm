@@ -866,14 +866,16 @@ pub fn draw_styles_list(
             let mut blocking_style = "".to_string();
             let mut tooltip = shared_ui.loc("styles_modal.active_desc");
             let tick = if style.active {
-                for warning in &shared_ui.warnings {
-                    if warning.warn_type != Warnings::BlockedStyles {
-                        continue;
-                    }
-                    for i in 0..warning.ids.len() {
-                        if warning.ids[i] == style.id as usize {
-                            blocking_style = warning.str_values[i].clone();
-                            break;
+                if style.textures.len() > 0 {
+                    for warning in &shared_ui.warnings {
+                        if warning.warn_type != Warnings::BlockedStyles {
+                            continue;
+                        }
+                        for i in 0..warning.ids.len() {
+                            if warning.ids[i] == style.id as usize {
+                                blocking_style = warning.str_values[i].clone();
+                                break;
+                            }
                         }
                     }
                 }
