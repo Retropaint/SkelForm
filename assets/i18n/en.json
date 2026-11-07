@@ -199,6 +199,7 @@
     "empty_armature": "Check out:",
     "blocked_style": "This style is blocked by $. Move it above, or de-activate $.",
     "fold_desc": "Fold/unfold this bone's children",
+    "same_name_warning": "There's another bone with this name. Animations using this bone may be broken.\nCheck warnings (top-right) for more info.",
     "icons": {
       "tex": "Texture - $tex",
       "tex_inactive": "Texture - $tex\n(no active styles to display)",

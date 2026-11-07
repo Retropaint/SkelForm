@@ -220,6 +220,15 @@ pub fn draw_hierarchy(
     }
     let hiddens = armature.get_propagated_hidden();
 
+    // collect all bone IDs that have same-name warning applied to them
+    let mut same_name_ids = vec![];
+    for warning in &shared_ui.warnings {
+        if warning.warn_type != Warnings::SameNameBones {
+            continue;
+        }
+        same_name_ids.extend_from_slice(&warning.ids);
+    }
+
     for b in 0..armature.bones.len() {
         // stop rendering if bones go below this panel
         if panel != None && ui.cursor().top() > panel.unwrap().bottom() {
@@ -464,6 +473,11 @@ pub fn draw_hierarchy(
                             text_col += Color::new(40, 40, 40, 0)
                         }
 
+                        if same_name_ids.contains(&(bone.id as usize)) {
+                            // same-name bone names should be warned explicitly
+                            text_col = config.colors.warning_text;
+                        }
+
                         // flash bone button if flash timer has been activated
                         let timer = &mut shared_ui.flash_armature_timer;
                         if *timer != None {
@@ -503,6 +517,18 @@ pub fn draw_hierarchy(
 
                                 let mut offset = Vec2::new(0., 18.);
                                 let colors = &config.colors;
+
+                                // warning icon for same-name bones
+                                if same_name_ids.contains(&(bone.id as usize)) {
+                                    let str = shared_ui
+                                        .loc("armature_panel.same_name_warning")
+                                        .replace("$anim", &bone.tex);
+                                    let id = format!("{}warning", b.to_string());
+                                    let warning = colors.warning_text;
+                                    bone_label("⚠", on_frame, ui, id, offset, &str, warning);
+                                    offset.x += 18.;
+                                }
+
                                 if armature.anim_tex_of(bone.id) != None {
                                     let str = shared_ui
                                         .loc("armature_panel.icons.tex")
