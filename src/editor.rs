@@ -476,9 +476,8 @@ pub fn simple_event(
         }
         Events::RenameBone => {
             let idx = armature.bones.iter().position(|b| b.name == str_value);
-            if false && idx != None {
-                // warn about using same-name bones (and don't rename bone)
-                // unused: same-names have a warning
+            if idx != None {
+                // there's another bone with the same name
                 ui.context_menu.id = format!("bone_{}", idx.unwrap());
                 ui.polar_id = PolarId::GoToSameNameBone;
                 ui.polar_modal = true;
