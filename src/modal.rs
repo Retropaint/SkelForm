@@ -46,7 +46,9 @@ pub fn polar_modal(
         &config,
         |ui| {
             let mut cache = egui_commonmark::CommonMarkCache::default();
-            let str = utils::markdown(headline.clone()).replace("$psd_page", "");
+            let str = utils::markdown(headline.clone())
+                .replace("$psd_page", "")
+                .replace("$github_list", "");
             egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
         },
         |ui| {
@@ -92,10 +94,21 @@ pub fn polar_modal(
 
             // psd help page link, if $psd_page is in the loc
             ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                ui.add_space(5.);
                 let psd_button = headline.contains("$psd_page");
                 let str = egui::RichText::new(shared_ui.loc("psd_help")).color(config.colors.link);
                 if psd_button && ui.clickable_label(str).clicked() {
                     utils::open_docs(false, "psd.html");
+                };
+            });
+
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                ui.add_space(5.);
+                let github_button = headline.contains("$github_list");
+                let str = egui::RichText::new(shared_ui.loc("startup.versions_link"))
+                    .color(config.colors.link);
+                if github_button && ui.clickable_label(str).clicked() {
+                    open::that("https://github.com/Retropaint/SkelForm/releases").unwrap();
                 };
             });
 
@@ -144,6 +157,9 @@ pub fn polar_modal(
                     events.delete_style(ctx0);
                 }
                 PolarId::NewUpdate => {
+                    utils::self_update();
+                    shared_ui.confirmed_exit = true;
+                    return;
                     #[cfg(not(target_arch = "wasm32"))]
                     {
                         let base_url = "https://github.com/Retropaint/SkelForm/releases/latest";
@@ -184,15 +200,11 @@ pub fn modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &Config) {
         "modal".to_string(),
         &config,
         |ui| {
-            let psd_button = headline.contains("$psd_page");
             let mut cache = egui_commonmark::CommonMarkCache::default();
-            let str = utils::markdown(headline).replace("$psd_page", "");
+            let str = utils::markdown(headline)
+                .replace("$psd_page", "")
+                .replace("$github_list", "");
             egui_commonmark::CommonMarkViewer::new().show(ui, &mut cache, &str);
-            ui.add_space(5.);
-            let str = egui::RichText::new("PSD Rigging").color(config.colors.link);
-            if psd_button && ui.clickable_label(str).clicked() {
-                utils::open_docs(false, "psd.html");
-            };
         },
         |ui| {
             if shared_ui.forced_modal || !ui.button("OK").clicked() {
