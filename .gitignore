@@ -1,5 +1,4 @@
 /target
-/updater/target
 /dist
 /user_docs
 /dev_docs
@@ -16,3 +15,6 @@ autosave.skf
 armature.json
 textures.png
 flamegraph.svg
+
+/updater/target
+/updater/src/*app
