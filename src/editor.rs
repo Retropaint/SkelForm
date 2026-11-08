@@ -344,18 +344,39 @@ pub fn iterate_events(
         if events.values[0] > events.values[1] {
             remove_idx += 1;
         }
-        println!("{} {}", events.values[0], remove_idx);
         textures.remove(remove_idx);
 
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::MigrateTexture {
-        let style = &mut armature.sel_style_mut(selections).unwrap();
-        let tex = style.textures[events.values[0] as usize].clone();
-        style.textures.remove(events.values[0] as usize);
-        armature.styles[events.values[1] as usize]
+        // add dragged texture to ID list
+        let mut tex_ids = selections.tex_ids.clone();
+        if !tex_ids.contains(&(events.values[0] as i32)) {
+            tex_ids.push(events.values[0] as i32);
+        }
+
+        // move textures to other style
+        for tex_id in &tex_ids {
+            let tex = armature.sel_style(selections).unwrap().textures[*tex_id as usize].clone();
+            armature.styles[events.values[1] as usize]
+                .textures
+                .push(tex);
+        }
+
+        // remove those textures from current style
+        let mut idx = -1;
+        armature
+            .sel_style_mut(selections)
+            .unwrap()
             .textures
-            .push(tex);
+            .retain(|_| {
+                idx += 1;
+                !tex_ids.contains(&idx)
+            });
+
+        // reset selected IDs, since it's outdated now
+        selections.tex_ids = vec![];
+
         ui.dragging_element = "".to_string();
 
         events.events.remove(0);

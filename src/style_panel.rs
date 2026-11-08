@@ -62,6 +62,10 @@ pub fn draw(
         });
     });
 
+    if armature.sel_style(&selections).unwrap().textures.len() == 0 {
+        return;
+    }
+
     let frame = egui::Frame::new()
         .fill(config.colors.dark_accent.into())
         .inner_margin(5.);

@@ -93,24 +93,26 @@ pub fn polar_modal(
             }
 
             // psd help page link, if $psd_page is in the loc
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                ui.add_space(5.);
-                let psd_button = headline.contains("$psd_page");
-                let str = egui::RichText::new(shared_ui.loc("psd_help")).color(config.colors.link);
-                if psd_button && ui.clickable_label(str).clicked() {
-                    utils::open_docs(false, "psd.html");
-                };
-            });
+            if headline.contains("$psd_page") {
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                    let str =
+                        egui::RichText::new(shared_ui.loc("psd_help")).color(config.colors.link);
+                    if ui.clickable_label(str).clicked() {
+                        utils::open_docs(false, "psd.html");
+                    };
+                });
+            }
 
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                ui.add_space(5.);
-                let github_button = headline.contains("$github_list");
-                let str = egui::RichText::new(shared_ui.loc("startup.versions_link"))
-                    .color(config.colors.link);
-                if github_button && ui.clickable_label(str).clicked() {
-                    open::that("https://github.com/Retropaint/SkelForm/releases").unwrap();
-                };
-            });
+            // github versions page for update modal
+            if headline.contains("$github_list") {
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                    let str = egui::RichText::new(shared_ui.loc("startup.versions_link"))
+                        .color(config.colors.link);
+                    if ui.clickable_label(str).clicked() {
+                        open::that("https://github.com/Retropaint/SkelForm/releases").unwrap();
+                    };
+                });
+            }
 
             if !yes {
                 return;
