@@ -10,25 +10,45 @@ fn main() {
     let url = "https://skelform.org/versions.json";
     let request = ureq::get(url).header("Example-Header", "header value");
 
+    let destination = if cfg!(target_os = "macos") {
+        "../../../skf.zip"
+    } else {
+        "../skf.zip"
+    };
+
+    let output = if cfg!(target_os = "macos") {
+        "../../../"
+    } else {
+        "../"
+    };
+
+    let version = if cfg!(target_os = "macos") {
+        "https://github.com/Retropaint/SkelForm/releases/latest/download/SkelForm.app.zip"
+    } else if cfg!(target_os = "windows") {
+        "https://github.com/Retropaint/SkelForm/releases/latest/download/skelform_windows.zip"
+    } else {
+        "https://github.com/Retropaint/SkelForm/releases/latest/download/skelform_linux.zip"
+    };
+
+    println!("started");
+
     let manifest: serde_json::Value = match request.call() {
         Ok(mut data) => serde_json::from_str(&data.body_mut().read_to_string().unwrap()).unwrap(),
         Err(_) => serde_json::Value::default(),
     };
 
     // get downloaded zip file
-    let resp = ureq::get(
-        "https://github.com/Retropaint/SkelForm/releases/latest/download/SkelForm.app.zip",
-    )
-    .call()
-    .unwrap();
-    let mut ffmpeg_zip = std::fs::File::create("../../../skf.zip").unwrap();
+    let resp = ureq::get(version).call().unwrap();
+    let mut ffmpeg_zip = std::fs::File::create(destination).unwrap();
     let bytes_result: Result<Vec<u8>, _> = resp.into_body().into_reader().bytes().collect();
     if let Ok(bytes) = bytes_result {
         _ = ffmpeg_zip.write(&bytes);
     }
 
+    println!("downloaded");
+
     // extract ffmpeg from zip
-    let file = File::open("../../../skf.zip").unwrap();
+    let file = File::open(destination).unwrap();
     let mut archive = ZipArchive::new(file).unwrap();
 
     for i in 0..archive.len() {
@@ -37,7 +57,7 @@ fn main() {
             continue;
         };
 
-        let output_path = std::path::Path::new("../../../").join(relative_path);
+        let output_path = std::path::Path::new(output).join(relative_path);
 
         if entry.is_dir() {
             continue;
@@ -60,6 +80,8 @@ fn main() {
             }
         }
     }
+
+    println!("extracted");
 
     //move_contents(Path::new("../../../"));
 }
