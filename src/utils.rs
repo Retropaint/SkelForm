@@ -27,7 +27,7 @@ use zip::ZipArchive;
 use std::io::{Read, Write};
 use std::path::Path;
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
 /// Convert a point from screen to world space.
