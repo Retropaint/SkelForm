@@ -285,7 +285,7 @@ pub fn render_spritesheets(
                     (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
                     let bone = &mut new_arm.animated_bones[b];
                     (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
-                    bone.verts_edited = false;
+                    bone.set_editing_vertices(false);
                 }
             }
 
@@ -1112,7 +1112,7 @@ pub fn import<R: Read + std::io::Seek>(
         for (i, vert) in bone.vertices.iter_mut().enumerate() {
             vert.id = i as u32;
         }
-        bone.verts_edited = bone.vertices.len() > 0;
+        bone.set_editing_vertices(bone.vertices.len() > 0);
     }
 
     // populate style ids

@@ -1268,6 +1268,17 @@ pub struct Bone {
     pub anim_folded: bool,
 }
 
+impl Bone {
+    pub fn set_editing_vertices(&mut self, toggle: bool) {
+        self.verts_edited = toggle;
+        if toggle {
+            self.pivot_pos = Vec2::default();
+            self.pivot_rot = 0.;
+            self.pivot_scale = Vec2::new(1., 1.);
+        }
+    }
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Default, Debug)]
 #[serde(default)]
 pub struct BoneBind {

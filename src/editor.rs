@@ -847,7 +847,7 @@ pub fn simple_event(
             let mouse_vel = renderer::mouse_vel(&input, &camera);
             let zoom = camera.zoom;
             let og_bone = &mut armature.sel_bone_mut(&selections).unwrap();
-            og_bone.verts_edited = true;
+            og_bone.set_editing_vertices(true);
             let vert_mut = og_bone.vertices.iter_mut().find(|v| v.id == value as u32);
             vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), -total_rot) / scale;
         }
@@ -963,7 +963,7 @@ pub fn simple_event(
             bone.vertices = verts;
             bone.indices = indices;
             bone.binds = vec![];
-            bone.verts_edited = false;
+            bone.set_editing_vertices(false);
             selections.bind = -1;
         }
         Events::SelectBind => {
@@ -1000,7 +1000,7 @@ pub fn simple_event(
             bone.indices = indices;
             bone.binds = vec![];
             bone.blacklist = vec![];
-            bone.verts_edited = true;
+            bone.set_editing_vertices(true);
             cleanup_vertices(bone);
             selections.bind = -1;
         }

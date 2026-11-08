@@ -898,7 +898,7 @@ impl BackendRenderer {
                 let bone = &mut shared.renderer.temp_bones[b];
                 (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
 
-                bone.verts_edited = false;
+                bone.set_editing_vertices(false);
             }
         }
 
