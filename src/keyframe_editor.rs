@@ -303,15 +303,24 @@ fn timeline_editor(
 
         // draw animated bones list
         if armature.sel_anim(&sel).unwrap().keyframes.len() > 0 {
-            let frame = egui::Frame::new().inner_margin(egui::Margin {
-                top: 27,
-                bottom: 27,
-                left: 0,
-                right: 0,
-            });
-            frame.show(ui, |ui| {
-                ui.vertical(|ui| {
-                    draw_bones_list(ui, selections, armature, config, shared_ui, events);
+            let full_height = ui.available_height();
+            let resize = egui::Resize::default()
+                .min_height(full_height) // make height unadjustable
+                .max_height(full_height) //
+                .default_width(100.)
+                .max_width(300.)
+                .with_stroke(false);
+            resize.show(ui, |ui| {
+                let frame = egui::Frame::new().inner_margin(egui::Margin {
+                    top: 27,
+                    bottom: 27,
+                    left: 0,
+                    right: 0,
+                });
+                frame.show(ui, |ui| {
+                    ui.vertical(|ui| {
+                        draw_bones_list(ui, selections, armature, config, shared_ui, events);
+                    });
                 });
             });
         }
@@ -379,7 +388,6 @@ pub fn draw_bones_list(
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
 ) {
-    ui.set_width(150.);
     let sel = &selections;
     let scroll_area = egui::ScrollArea::vertical()
         .id_salt("bones_list")
