@@ -301,6 +301,7 @@ fn timeline_editor(
 
         let sel = selections.clone();
 
+        // draw animated bones list
         if armature.sel_anim(&sel).unwrap().keyframes.len() > 0 {
             let frame = egui::Frame::new().inner_margin(egui::Margin {
                 top: 27,
@@ -694,9 +695,16 @@ pub fn draw_timeline_graph(
             .fill(config.colors.light_accent.into())
             .inner_margin(3);
         frame.show(ui, |ui| {
+            // disable scroll by dragging - that's reserved for frame previews
+            let source = ScrollSource {
+                scroll_bar: true,
+                drag: false,
+                mouse_wheel: true,
+            };
+
             let area = egui::ScrollArea::both()
                 .scroll_offset(shared_ui.timeline_offset.into())
-                .scroll_source(ScrollSource::SCROLL_BAR)
+                .scroll_source(source)
                 .id_salt("test");
             let mut cursor = Vec2::new(0., 0.);
             let response = area.show(ui, |ui| {
@@ -707,34 +715,12 @@ pub fn draw_timeline_graph(
                 // keep cursor on the frame
                 cursor.y -= shared_ui.timeline_offset.y;
 
-                // // render darkened background after last keyframe
-                // let sel = selections.clone();
-                // let lkf = armature.sel_anim(&sel).unwrap().keyframes.last();
-                // if shared_ui.bone_tops.tops.len() > 0
-                //     && lkf != None
-                //     && (lkf.unwrap().frame as usize) < shared_ui.lines_x.len()
-                // {
-                //     let left_top = egui::vec2(shared_ui.lines_x[lkf.unwrap().frame as usize], -3.);
-                //     let right_bot =
-                //         egui::vec2(0., shared_ui.bone_tops.tops.last().unwrap().height + 999.);
-
-                //     let rect_to_fill = egui::Rect::from_min_size(
-                //         ui.min_rect().left_top() + left_top,
-                //         ui.min_rect().size() + right_bot,
-                //     );
-                //     ui.painter()
-                //         .rect_filled(rect_to_fill, 0., config.colors.dark_accent);
-                // }
-
                 draw_frame_lines(
                     ui, shared_ui, armature, config, input, selections, events, hitbox, cursor,
                 );
             });
 
-            let not_dragging = shared_ui.hovering_frame == -1 || !input.left_down;
-            if (ui.ui_contains_pointer() && not_dragging) || ui.ctx().is_using_pointer() {
-                shared_ui.timeline_offset = response.state.offset.into();
-            }
+            shared_ui.timeline_offset = response.state.offset.into();
         });
     });
 }
