@@ -83,6 +83,8 @@ pub fn draw(
                 let frame = Frame::default().inner_margin(5.);
                 let (zone, dragged) = ui.dnd_drop_zone::<i32, _>(frame, |ui| {
                     ui.set_width(ui.available_width());
+
+                    // make frame always take up available top-side space
                     ui.set_min_height(ui.available_height());
 
                     if armature.bones.len() != 0 {

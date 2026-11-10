@@ -719,6 +719,12 @@ pub fn kb_inputs(
         } else if shared_ui.polar_modal {
             shared_ui.polar_modal = false;
         } else if modal_open {
+            // reset config if settings modal was open
+            if shared_ui.settings_modal {
+                events.reset_config();
+            }
+            shared_ui.settings_modal = false;
+
             shared_ui.atlas_modal = false;
             shared_ui.export_modal = false;
             shared_ui.feedback_modal = false;

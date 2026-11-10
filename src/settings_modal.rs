@@ -118,7 +118,7 @@ pub fn draw(
         });
         modal_ui.add_space(5.);
         modal_ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            // apply button
+            // cancel button
             let str = shared_ui.loc("settings_modal.cancel");
             if ui.skf_button(str).clicked() {
                 events.reset_config();
@@ -126,7 +126,7 @@ pub fn draw(
                 shared_ui.translucent_settings = false;
             }
 
-            // cancel button
+            // apply button
             let str = shared_ui.loc("settings_modal.apply");
             if ui.skf_button(str).clicked() {
                 events.apply_settings();
