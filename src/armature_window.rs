@@ -972,7 +972,15 @@ pub fn draw_styles_list(
                 shared_ui.context_menu.show(&context_id);
             }
             if button.hovered() && shared_ui.context_menu.id == "" {
-                let area_pos = Pos2::new(shared_ui.armature_panel_rect.unwrap().right(), frame_y);
+                let x = if config.layout == UiLayout::Right {
+                    // styles preview is to the left of armature if layout is Right
+                    shared_ui.armature_panel_rect.unwrap().left() - 230.
+                } else {
+                    // style preview is to the right of armature if layout is split/left
+                    shared_ui.armature_panel_rect.unwrap().right()
+                };
+
+                let area_pos = Pos2::new(x, frame_y);
                 let area = egui::Area::new("style_preview".into())
                     .fixed_pos(area_pos)
                     .order(egui::Order::Foreground);
@@ -990,6 +998,7 @@ pub fn draw_styles_list(
                             return;
                         }
 
+                        // render textures
                         for tex in &armature.styles[idx as usize].textures {
                             // don't show empty texture pixel
                             if tex.size == Vec2::new(1., 1.) {
