@@ -1417,9 +1417,13 @@ impl EguiUi for egui::Ui {
             }
 
             if entered {
-                let mut final_value = shared_ui.edit_value.as_ref().unwrap();
+                let mut final_value = shared_ui.edit_value.as_ref().unwrap().to_string();
+
+                // prevent accidental whitespaces
+                final_value = final_value.trim().to_string();
+
                 if final_value == "" {
-                    final_value = &options.as_ref().unwrap().default;
+                    final_value = options.as_ref().unwrap().default.to_string();
                 }
                 shared_ui.input_focused = false;
                 shared_ui.rename_id = "".to_string();
