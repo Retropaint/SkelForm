@@ -779,7 +779,7 @@ pub fn draw_bottom_bar(
                         events.restart_anims();
                     }
                 });
-                if pressed {
+                if pressed && shared_ui.rename_id == "" {
                     let anim = armature.sel_anim(&sel).unwrap();
                     events.toggle_anim_playing(selections.anim, anim.elapsed == None);
                 }
