@@ -3,7 +3,6 @@
 use std::sync::Mutex;
 
 use egui::TextureHandle;
-use utils::import;
 use wgpu::*;
 
 use crate::*;

@@ -1795,7 +1795,7 @@ pub fn self_update() {
         "https://github.com/Retropaint/SkelForm/releases/latest/download/skelform_linux.zip"
     };
 
-    let manifest: serde_json::Value = match request.call() {
+    let _manifest: serde_json::Value = match request.call() {
         Ok(mut data) => serde_json::from_str(&data.body_mut().read_to_string().unwrap()).unwrap(),
         Err(_) => serde_json::Value::default(),
     };

@@ -1153,7 +1153,6 @@ pub fn visuals(
     } else {
         shared_ui.loc("none")
     };
-    let str_setup = shared_ui.loc("setup_option");
     ui.horizontal(|ui| {
         ui.label(&shared_ui.loc("bone_panel.texture"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {

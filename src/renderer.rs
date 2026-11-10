@@ -3,7 +3,7 @@
 use crate::*;
 use image::GenericImageView;
 use utils::shortest_angle_delta;
-use wgpu::{BindGroup, BindGroupLayout, Device, Queue, RenderPass};
+use wgpu::{BindGroup, Device, Queue, RenderPass};
 
 /// The `main` of this module.
 pub fn render(

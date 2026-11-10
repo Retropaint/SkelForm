@@ -1,7 +1,7 @@
 use crate::{
     bone_panel,
     ui::{EguiUi, TextInputOptions},
-    utils, Armature, Config, EventState, InputStates, SelectionState, Ui,
+    utils, Armature, Config, EventState, InputStates, SelectionState,
 };
 
 pub fn draw(
@@ -75,7 +75,6 @@ pub fn draw(
             let mut idx: i32 = -1;
             let sel = &selections;
             let mut hovered = false;
-            let mut dragged = false;
             for i in 0..armature.sel_style(&sel).unwrap().textures.len() {
                 idx += 1;
                 let og_name = armature.sel_style(&sel).unwrap().textures[i].name.clone();
@@ -114,7 +113,6 @@ pub fn draw(
                     }
 
                     // render texture button (as draggable element)
-                    let bin_width = 13.;
                     let button_id = egui::Id::new(("tex", idx));
 
                     let drag_id = ui.ctx().dragged_id();
@@ -199,9 +197,7 @@ pub fn draw(
                                     egui::Pos2::new(ui.min_rect().left(), ui.min_rect().top());
                                 let rect = &egui::Rect::from_min_size(pos, [150., 150.].into());
                                 let tex_id = shared_ui.hovering_tex as usize;
-                                draw_tex_preview(
-                                    tex_id, armature, shared_ui, selections, ui, rect, &config,
-                                );
+                                draw_tex_preview(tex_id, armature, selections, ui, rect, &config);
                                 ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                                     let col = Some(config.colors.text.into());
                                     let mut name = egui::text::LayoutJob::default();
@@ -267,7 +263,7 @@ pub fn draw(
                 });
             }
 
-            if !hovered || dragged {
+            if !hovered {
                 shared_ui.hovering_tex = -1;
             }
         });
@@ -277,7 +273,6 @@ pub fn draw(
 pub fn draw_tex_preview(
     tex_id: usize,
     armature: &Armature,
-    shared_ui: &mut crate::Ui,
     selections: &crate::SelectionState,
     ui: &mut egui::Ui,
     display: &egui::Rect,

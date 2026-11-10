@@ -46,7 +46,7 @@ use image::ImageEncoder;
 
 use winit::{
     application::ApplicationHandler,
-    dpi::{LogicalSize, PhysicalSize},
+    dpi::PhysicalSize,
     event::WindowEvent,
     window::{Theme, Window},
 };

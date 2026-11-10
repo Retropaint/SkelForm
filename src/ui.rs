@@ -224,7 +224,7 @@ pub fn draw(
 
     // render armature window
     style_once!(armature_window::draw(
-        context, events, config, armature, selections, edit_mode, shared_ui, camera, input
+        context, events, config, armature, selections, edit_mode, shared_ui, camera
     ));
 
     // get current properties of selected bone, including animations
@@ -319,9 +319,7 @@ pub fn draw(
                 let pos = input.mouse / 2. - tex_size / 2.;
                 let rect = egui::Rect::from_min_size(pos.into(), tex_size.into());
                 let drag_id = shared_ui.dragging_id as usize;
-                style_panel::draw_tex_preview(
-                    drag_id, armature, shared_ui, selections, ui, &rect, config,
-                );
+                style_panel::draw_tex_preview(drag_id, armature, selections, ui, &rect, config);
             });
         } else if context.drag_stopped_id() != None {
             let mouse_pos = world_mouse(input.mouse, &camera);

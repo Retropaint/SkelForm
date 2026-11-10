@@ -21,7 +21,6 @@ pub fn draw(
     edit_mode: &EditMode,
     shared_ui: &mut crate::Ui,
     camera: &Camera,
-    input: &InputStates,
 ) {
     let min_default_size = 175.;
     let panel_id = "Armature";
