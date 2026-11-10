@@ -307,7 +307,7 @@ fn timeline_editor(
             let resize = egui::Resize::default()
                 .min_height(full_height) // make height unadjustable
                 .max_height(full_height) //
-                .default_width(100.)
+                .default_width(150.)
                 .max_width(300.)
                 .with_stroke(false);
             resize.show(ui, |ui| {
