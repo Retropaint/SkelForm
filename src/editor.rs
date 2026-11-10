@@ -565,12 +565,6 @@ pub fn simple_event(
             let old_zoom = camera.zoom;
             camera.zoom = MIN_ZOOM.max(camera.zoom - input.scroll_delta);
             move_camera_with_zoom(camera, input, old_zoom);
-
-            match config.layout {
-                UiLayout::Right => camera.pos.x -= input.scroll_delta * 0.5,
-                UiLayout::Left => camera.pos.x += input.scroll_delta * 0.5,
-                _ => {}
-            }
         }
         Events::ToggleAnimPanelOpen => {
             edit_mode.anim_open = value == 1.;
