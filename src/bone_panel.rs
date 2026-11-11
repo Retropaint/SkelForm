@@ -1219,6 +1219,7 @@ pub fn visuals(
             let (edited, value, _) =
                 ui.float_input(id, shared_ui, bone.pivot_pos.x, 1., options.clone());
             if edited {
+                events.save_edited_bone(selections.bone_idx);
                 events.edit_bone(bone.id, &AnimElement::PivotX, value, "", usize::MAX, -1);
             }
 
@@ -1227,6 +1228,7 @@ pub fn visuals(
             let (edited, value, _) =
                 ui.float_input(id, shared_ui, bone.pivot_pos.y, 1., options.clone());
             if edited {
+                events.save_edited_bone(selections.bone_idx);
                 events.edit_bone(bone.id, &AnimElement::PivotY, value, "", usize::MAX, -1);
             }
         });
@@ -1241,6 +1243,7 @@ pub fn visuals(
             let (edited, value, _) =
                 ui.float_input(id, shared_ui, bone.pivot_scale.x, 1., options.clone());
             if edited {
+                events.save_edited_bone(selections.bone_idx);
                 events.edit_bone(bone.id, &AE::PivotScaleX, value, "", usize::MAX, -1);
             }
 
@@ -1249,6 +1252,7 @@ pub fn visuals(
             let (edited, value, _) =
                 ui.float_input(id, shared_ui, bone.pivot_scale.y, 1., options.clone());
             if edited {
+                events.save_edited_bone(selections.bone_idx);
                 events.edit_bone(bone.id, &AE::PivotScaleY, value, "", usize::MAX, -1);
             }
         });
@@ -1261,6 +1265,7 @@ pub fn visuals(
                 let (edited, value, _) =
                     ui.float_input(id, shared_ui, bone.pivot_rot, deg_mod, options);
                 if edited {
+                    events.save_edited_bone(selections.bone_idx);
                     events.edit_bone(bone.id, &AnimElement::PivotRot, value, "", usize::MAX, -1);
                 }
             });
@@ -1285,8 +1290,8 @@ pub fn visuals(
         if edited {
             let el = &AnimElement::Zindex;
             events.save_edited_bone(selections.bone_idx);
-            #[rustfmt::skip]
-                events.edit_bone(bone.id, el, value, "", selections.anim, selections.anim_frame);
+            let frame = selections.anim_frame;
+            events.edit_bone(bone.id, el, value, "", selections.anim, frame);
         }
 
         // raise global zindex button
