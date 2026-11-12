@@ -579,8 +579,14 @@ pub fn simple_event(
             _ = armature.sel_style_mut(&selections).unwrap().textures.pop()
         }
         Events::DeleteAnim => {
-            _ = armature.animations.remove(value as usize);
-            selections.anim = usize::MAX
+            if let Some(idx) = armature
+                .animations
+                .iter()
+                .position(|anim| anim.id == value as i32)
+            {
+                _ = armature.animations.remove(idx);
+                selections.anim = usize::MAX
+            }
         }
         Events::RenameStyle => {
             armature.sel_style_mut(&selections).unwrap().name = str_value;
