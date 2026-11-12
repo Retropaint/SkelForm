@@ -1356,7 +1356,7 @@ pub fn edit_bone(
             vel = utils::rotate(&vel, -bone.rot);
 
             let mut pivot = bone.pivot_pos;
-            pivot -= vel;
+            pivot -= vel / tex.unwrap().size;
 
             if pivot.x != bone.pivot_pos.x {
                 edit!(bone, AnimElement::PivotX, pivot.x, false);
