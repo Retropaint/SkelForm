@@ -36,15 +36,20 @@ pub fn iterate_events(
 
         #[rustfmt::skip]
         match last_event {
-            E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone | E::RaiseGlobalZindex | E::CreateBindBone | E::NewBonesFromTextures => undo_states.new_undo_bones(&armature.bones),
+            E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone | E::RaiseGlobalZindex |
+            E::CreateBindBone | E::NewBonesFromTextures | E::CreateParentBone => {
+                undo_states.new_undo_bones(&armature.bones)
+            }
             E::NewAnimation | E::DeleteAnim => undo_states.new_undo_anims(&armature.animations),
             E::DeleteSelectedTextures       => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
             E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
             E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
-            E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::PasteKeyframesOnFrame | E::AdjustKeyframesByFPS | E::AdjustKeyframesBySpeed => {
+            E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::PasteKeyframesOnFrame |
+            E::AdjustKeyframesByFPS | E::AdjustKeyframesBySpeed => {
                 undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
             }
-            E::ResetVertices | E::CenterBoneVerts | E::DeleteVertex | E::TraceBoneVerts | E::NewVertex | E::DeleteTriangle => {
+            E::ResetVertices | E::CenterBoneVerts | E::DeleteVertex |E::TraceBoneVerts |
+            E::NewVertex | E::DeleteTriangle => {
                 undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
             }
             _ => {}
@@ -1197,8 +1202,7 @@ pub fn simple_event(
             // activate renaming for new bone
             armature.find_bone_mut(parent.id).unwrap().name = "".to_string();
             let bones = &armature.bones;
-            let idx = bones.iter().position(|b| b.id == parent.id).unwrap();
-            ui.rename_id = format!("bone_{}", idx);
+            ui.rename_id = format!("bone_{}", parent.id);
 
             // select new parent
             selections.bone_ids = vec![parent.id];
