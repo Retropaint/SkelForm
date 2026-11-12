@@ -1797,7 +1797,7 @@ fn edit_mode_bar(
                     })
                 };
             }
-            let ikd = !edit_mode.showing_mesh && !has_ik;
+            let ikd = !edit_mode.showing_mesh && (!has_ik || edit_mode.editing_pivot);
             type E = EditModes;
 
             let key_move = keys.transform_move.display();
