@@ -33,7 +33,11 @@ pub fn polar_modal(
     let mut headline = shared_ui.headline.to_string();
 
     // destructive actions - these cannot be proceeded with the Yes shortcut
-    let dest_actions = vec![PolarId::StartNewWhileUnsaved, PolarId::Exiting];
+    let dest_actions = vec![
+        PolarId::StartNewWhileUnsaved,
+        PolarId::Exiting,
+        PolarId::DeleteFile,
+    ];
     let is_destructive = dest_actions.contains(&shared_ui.polar_id);
 
     if is_destructive {
@@ -150,7 +154,9 @@ pub fn polar_modal(
                     shared_ui.context_menu.close();
                 }
                 PolarId::DeleteFile => {
-                    std::fs::remove_file(&shared_ui.selected_path).unwrap();
+                    if let Err(_) = std::fs::remove_file(&shared_ui.selected_path) {
+                        events.open_modal("startup.delete_file_err", false);
+                    }
                 }
                 PolarId::DeleteSelectedTextures => {
                     events.delete_sel_texes();

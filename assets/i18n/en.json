@@ -47,6 +47,7 @@
     "no_updates": "You're up to date! This is the latest version.",
     "current_version": "Current: v",
     "unsaved_new": "The current armature is unsaved. Start a new one anyway?",
+    "delete_file_err": "There was a problem deleting the file:\n\n$err\n\nYou can still delete the file manually.",
     "resources": {
       "user_docs": "User Documentation",
       "starter_guide": "Starter Guide",
