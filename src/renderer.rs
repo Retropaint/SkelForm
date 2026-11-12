@@ -1507,9 +1507,13 @@ pub fn inheritance(
             // angles.
             let cos = bones[i].rot.cos();
             let sin = bones[i].rot.sin();
+            let dir = Vec2::new(
+                if parent.scale.x > 0. { 1. } else { -1. },
+                if parent.scale.y > 0. { 1. } else { -1. },
+            );
             let inherited_scale = Vec2::new(
-                ((parent.scale.x * cos).powi(2) + (parent.scale.y * sin).powi(2)).sqrt(),
-                ((parent.scale.x * sin).powi(2) + (parent.scale.y * cos).powi(2)).sqrt(),
+                ((parent.scale.x * cos).powi(2) + (parent.scale.y * sin).powi(2)).sqrt() * dir.x,
+                ((parent.scale.x * sin).powi(2) + (parent.scale.y * cos).powi(2)).sqrt() * dir.y,
             );
             bones[i].scale *= inherited_scale;
 
