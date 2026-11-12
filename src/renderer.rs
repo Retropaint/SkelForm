@@ -137,8 +137,10 @@ pub fn render(
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &mut temp_arm.bones[b];
             let left = if is_facing_left(tb.scale) { -1. } else { 1. };
-            let final_pivot =
-                utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot * left) * tb.scale;
+            let final_pivot = utils::rotate(
+                &(tex.unwrap().size * tb.pivot_pos * tb.scale),
+                tb.rot * left,
+            );
             let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), final_pivot);
             vert.tint = tb.tint;
 
@@ -157,8 +159,11 @@ pub fn render(
                     for v in 0..$armature.bones[b].vertices.len() {
                         let tb = &mut $armature.bones[b];
                         let ratio = camera.aspect_ratio();
-                        let final_pivot =
-                            utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot) * tb.scale;
+                        let left = if is_facing_left(tb.scale) { -1. } else { 1. };
+                        let final_pivot = utils::rotate(
+                            &(tex.unwrap().size * tb.pivot_pos * tb.scale),
+                            tb.rot * left,
+                        );
                         let mut vert = world_vert(tb.vertices[v], &camera, ratio, final_pivot);
                         vert.tint = $color;
                         tb.world_verts.push(vert);
@@ -603,8 +608,7 @@ pub fn render(
 
     // bone's transforms can't be edited if editing its verts or it's IK,
     // but an exception is made if editing pivot
-    let is_editing_pivot = !has_ik || edit_mode.editing_pivot;
-    if edit_mode.editing_mesh || !is_editing_pivot {
+    if edit_mode.editing_mesh || (has_ik && !edit_mode.editing_pivot) {
         return;
     }
 
@@ -852,7 +856,11 @@ pub fn render_screenshot(
 
         for v in 0..temp_arm.bones[b].vertices.len() {
             let tb = &temp_arm.bones[b];
-            let final_pivot = utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot);
+            let left = if is_facing_left(tb.scale) { -1. } else { 1. };
+            let final_pivot = utils::rotate(
+                &(tex.unwrap().size * tb.pivot_pos * tb.scale),
+                tb.rot * left,
+            );
             let mut new_vert = world_vert(tb.vertices[v], camera, 1., final_pivot);
             new_vert.tint = temp_arm.bones[b].tint;
             temp_arm.bones[b].world_verts.push(new_vert);
@@ -964,7 +972,7 @@ pub fn runtime_construction(
 
     // re-construct bones, accounting for physics
     *bones = og_bones.clone();
-    inheritance(bones, ik_rot.clone(), &armature_bones);
+    inheritance(bones, ik_rot.clone(), &og_bones);
 
     construct_verts(bones);
 
@@ -1348,7 +1356,7 @@ pub fn edit_bone(
             vel = utils::rotate(&vel, -bone.rot);
 
             let mut pivot = bone.pivot_pos;
-            pivot -= vel / tex.unwrap().size;
+            pivot -= vel;
 
             if pivot.x != bone.pivot_pos.x {
                 edit!(bone, AnimElement::PivotX, pivot.x, false);
@@ -1490,12 +1498,28 @@ pub fn inheritance(
                 bones[i].rot = -bones[i].rot;
             }
 
+            // scale this bone by its parent with respect to its initial rotation
+            //
+            // eg; if parent is widened and this bone is at 90 deg, its height should be
+            // increased rather than its width.
+            //
+            // distnace formula (sqrt of a^2 + b^2) is used to counter elongation in diagonal
+            // angles.
+            let cos = bones[i].rot.cos();
+            let sin = bones[i].rot.sin();
+            let inherited_scale = Vec2::new(
+                ((parent.scale.x * cos).powi(2) + (parent.scale.y * sin).powi(2)).sqrt(),
+                ((parent.scale.x * sin).powi(2) + (parent.scale.y * cos).powi(2)).sqrt(),
+            );
+            bones[i].scale *= inherited_scale;
+
+            // apply parent's rotation to bone
             bones[i].rot += orbit_rot;
-            bones[i].scale *= parent.scale;
 
             // adjust bone's position based on parent's scale
             bones[i].pos *= parent.scale;
 
+            // rotate bone such that it orbits the parent
             bones[i].pos = utils::rotate(&bones[i].pos, orbit_rot);
 
             // inherit position from parent
