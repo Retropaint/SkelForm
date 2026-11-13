@@ -398,6 +398,7 @@ pub struct InputStates {
     pub holding_shift: bool,
     pub mouse_init: Option<Vec2>,
     pub scroll_delta: f32,
+    pub global_bone: bool,
 
     // mouse was pressed on UI for the duration of it being down
     pub mouse_pressed_on_ui: bool,

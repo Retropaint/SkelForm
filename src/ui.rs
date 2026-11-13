@@ -31,6 +31,7 @@ pub fn draw(
     camera: &Camera,
     armature: &mut Armature,
     copy_buffer: &CopyBuffer,
+    temp_bones: &Vec<Bone>,
 ) {
     shared_ui.context_menu.keep = false;
 
@@ -40,6 +41,29 @@ pub fn draw(
     shared_ui.cursor_icon = egui::CursorIcon::Default;
 
     default_styling(context, &config);
+
+    // show global transforms of selected bone if holding ;
+    if input.global_bone && selections.bone_ids.len() != 0 {
+        if let Some(bone) = temp_bones
+            .iter()
+            .find(|bone| bone.id == selections.bone_ids[0])
+        {
+            let area_pos = egui::Pos2::new(0., 0.);
+            let area = egui::Area::new("globl_bone".into()).fixed_pos(area_pos);
+            area.show(context, |ui| {
+                let frame = egui::Frame::popup(ui.style());
+                frame.show(ui, |ui| {
+                    ui.label("Global Transforms for this bone");
+                    ui.label("");
+                    ui.set_min_size(Vec2::new(200., 100.).into());
+                    ui.label(format!(
+                        "Pos X: {}\nPos Y: {}\nScale X: {}\nScale Y: {}\nRot: {}",
+                        bone.pos.x, bone.pos.y, bone.scale.x, bone.scale.y, bone.rot,
+                    ));
+                });
+            });
+        }
+    }
 
     // context menu
     let is_different = shared_ui.context_menu.id != shared_ui.context_menu.last_id;
@@ -638,6 +662,9 @@ pub fn process_inputs(
         edit_mode.sel_time += i.time as f32 - edit_mode.time;
         edit_mode.edit_time += i.time as f32 - edit_mode.time;
         edit_mode.time = i.time as f32;
+
+        // show global bone transforms if pressing hardcoded key (dev stuff only)
+        input.global_bone = i.key_down(egui::Key::Semicolon);
 
         // dragging inputs
         let drag_mod = shared_ui.drag_modifier;

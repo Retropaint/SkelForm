@@ -2432,6 +2432,10 @@ fn transform_ring(
     queue: &wgpu::Queue,
     mouse_pos: &Vec2,
 ) {
+    if armature.sel_bone(&sel) == None {
+        return;
+    }
+
     // initiate temporary edit mode if mouse is close enough to bone
     let distance_move = 0.02;
     let distance_rot = config.transform_rot_radius;

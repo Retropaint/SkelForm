@@ -379,7 +379,8 @@ impl ApplicationHandler for App {
                 #[rustfmt::skip]
                 ui::draw(
                     gui_state.egui_ctx(), &mut s.ui, &mut s.input, &mut s.selections,
-                    &mut s.config, &mut s.events, &mut s.edit_mode, &s.camera, &mut s.armature, &s.copy_buffer
+                    &mut s.config, &mut s.events, &mut s.edit_mode, &s.camera,
+                    &mut s.armature, &s.copy_buffer, &s.renderer.temp_bones
                 );
 
                 let egui_winit::egui::FullOutput {
