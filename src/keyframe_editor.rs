@@ -14,7 +14,7 @@ pub fn draw(
     input: &InputStates,
     armature: &mut Armature,
     config: &Config,
-    selections: &mut SelectionState,
+    selections: &SelectionState,
     events: &mut EventState,
     edit_mode: &EditMode,
     camera: &Camera,
@@ -280,7 +280,7 @@ fn draw_animations_list(
 
 fn timeline_editor(
     ui: &mut egui::Ui,
-    selections: &mut SelectionState,
+    selections: &SelectionState,
     armature: &mut Armature,
     events: &mut EventState,
     shared_ui: &mut crate::Ui,
@@ -735,7 +735,7 @@ pub fn draw_timeline_graph(
 
 pub fn draw_bottom_bar(
     ui: &mut egui::Ui,
-    selections: &mut SelectionState,
+    selections: &SelectionState,
     config: &Config,
     armature: &Armature,
     shared_ui: &mut crate::Ui,
@@ -803,11 +803,15 @@ pub fn draw_bottom_bar(
 
             // current frame input
             ui.label(&shared_ui.loc("keyframe_editor.frame"));
+            let mut frame = selections.anim_frame;
             ui.add(
-                egui::DragValue::new(&mut selections.anim_frame)
+                egui::DragValue::new(&mut frame)
                     .speed(0.1)
                     .update_while_editing(false),
             );
+            if frame != sel.anim_frame {
+                events.select_anim_frame(frame as usize, false, false);
+            }
 
             // FPS input
             let fps = armature.sel_anim(&sel).unwrap().fps;

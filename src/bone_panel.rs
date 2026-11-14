@@ -30,7 +30,7 @@ type E = AnimElement;
 pub fn draw(
     mut bone: Bone,
     ui: &mut egui::Ui,
-    selections: &mut SelectionState,
+    selections: &SelectionState,
     shared_ui: &mut crate::Ui,
     armature: &mut Armature,
     config: &Config,
@@ -333,7 +333,7 @@ pub fn draw(
 pub fn inverse_kinematics(
     ui: &mut egui::Ui,
     bone: &Bone,
-    selections: &mut SelectionState,
+    selections: &SelectionState,
     shared_ui: &mut crate::Ui,
     config: &Config,
     armature: &Armature,
@@ -638,7 +638,7 @@ pub fn mesh_deformation(
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     config: &Config,
-    selections: &mut SelectionState,
+    selections: &SelectionState,
     armature: &mut Armature,
     edit_mode: &EditMode,
 ) -> bool {
@@ -840,7 +840,7 @@ pub fn mesh_deformation(
 
     let binds = armature.sel_bone(&sel).unwrap().binds.clone();
     if binds.len() == 0 || selections.bind as usize > binds.len() - 1 {
-        selections.bind = -1;
+        events.select_bind(-3);
         return false;
     }
 
@@ -1377,7 +1377,7 @@ pub fn edit_bones(
 pub fn physics(
     ui: &mut egui::Ui,
     bone: &Bone,
-    selections: &mut SelectionState,
+    selections: &SelectionState,
     shared_ui: &mut crate::Ui,
     config: &Config,
     armature: &Armature,

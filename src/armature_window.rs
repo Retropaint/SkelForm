@@ -195,7 +195,7 @@ pub fn draw_hierarchy(
     ui.set_min_width(ui.available_width());
     let mut idx: i32 = -1;
     let mut is_hovering = false;
-    let sel = selections.clone();
+    let sel = &selections;
     let panel = shared_ui.armature_panel_rect;
     let mut def_line_col = config.colors.dark_accent;
     def_line_col += Color::new(20, 20, 20, 0);
@@ -446,17 +446,20 @@ pub fn draw_hierarchy(
                         default_name += "-";
                     }
 
-                    let bone_name = armature.bones[b].name.clone();
                     let options = Some(TextInputOptions {
                         size: Vec2::new(ui.available_width(), 21.),
                         focus: true,
-                        placeholder: default_name.clone(),
+                        placeholder: default_name.to_string(),
                         default: default_name,
                         ..Default::default()
                     });
-                    let (edited, value, _) =
-                        ui.text_input(context_id, shared_ui, bone_name.clone(), options);
-                    if edited && value != bone_name {
+                    let (edited, value, _) = ui.text_input(
+                        context_id,
+                        shared_ui,
+                        armature.bones[b].name.to_string(),
+                        options,
+                    );
+                    if edited && value != armature.bones[b].name {
                         events.save_bone(idx as usize);
                         events.rename_bone(idx as usize, value);
                     }
@@ -746,8 +749,8 @@ fn check_bone_dragging(
         let bone = &armature.bones[idx as usize];
         let id = bone.id;
         let style = &armature.sel_style(selections).unwrap();
-        let tex_str = style.textures[*drag_payload.unwrap() as usize].name.clone();
-        events.set_bone_texture(id as usize, tex_str);
+        let tex_str = &style.textures[*drag_payload.unwrap() as usize].name;
+        events.set_bone_texture(id as usize, tex_str.to_string());
     }
 
     return true;
@@ -840,7 +843,7 @@ pub fn draw_styles_list(
             let (edited, value, _) = ui.text_input(
                 context_id,
                 shared_ui,
-                armature.styles[s].name.clone(),
+                armature.styles[s].name.to_string(),
                 Some(crate::ui::TextInputOptions {
                     size: Vec2::new(ui.available_width(), 20.),
                     focus: true,
@@ -874,7 +877,7 @@ pub fn draw_styles_list(
                         }
                         for i in 0..warning.ids.len() {
                             if warning.ids[i] == style.id as usize {
-                                blocking_style = warning.str_values[i].clone();
+                                blocking_style = warning.str_values[i].to_string();
                                 break;
                             }
                         }
@@ -963,7 +966,7 @@ pub fn draw_styles_list(
             if button.clicked() {
                 shared_ui.rename_id = "".to_string();
                 if selections.style_id == armature.styles[s].id {
-                    shared_ui.rename_id = context_id.clone();
+                    shared_ui.rename_id = context_id.to_string();
                 }
                 events.select_style(armature.styles[s].id as i32);
             }
@@ -1051,7 +1054,7 @@ pub fn draw_styles_list(
                 }
 
                 if dragged_payload != None {
-                    let hov = *hovered_payload.clone().unwrap() as usize;
+                    let hov = *hovered_payload.unwrap() as usize;
                     let element = &shared_ui.dragging_element;
                     let dragging_on_self = armature.styles[idx as usize].id == selections.style_id;
                     if element == "style" {

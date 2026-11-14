@@ -302,7 +302,7 @@ fn right(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, conf: &Config) {
                 }
 
                 for i in 0..shared_ui.startup.resources.len() {
-                    let item = shared_ui.startup.resources[i].clone();
+                    let item = &shared_ui.startup.resources[i];
 
                     if item.update_checker && web {
                         continue;
@@ -361,7 +361,7 @@ fn right(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, conf: &Config) {
                                 let assets = utils::bin_path().join("assets");
                                 let file = fs::read(assets.join("i18n").join(language));
                                 if let Ok(file) = file {
-                                    shared_ui.init_lang(&file, "");
+                                    //shared_ui.init_lang(&file, "");
                                 }
                             }
                             #[cfg(target_arch = "wasm32")]
@@ -466,7 +466,7 @@ pub fn leftside_button(
         let white = egui::Color32::WHITE;
         let font25 = egui::FontId::new(25., egui::FontFamily::default());
         ui.painter()
-            .text(icon_pos, align, icon.to_string(), font25.clone(), white);
+            .text(icon_pos, align, icon.to_string(), font25, white);
 
         let label_pos = egui::Pos2::new(
             ui.min_rect().left_center().x + 50.,

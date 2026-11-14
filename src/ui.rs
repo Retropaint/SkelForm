@@ -14,7 +14,7 @@ pub trait EguiUi {
     fn text_input(&mut self,id: String, shared_ui: &mut crate::Ui, value: String, options: Option<TextInputOptions>) -> (bool, String, egui::Response);
     fn float_input(&mut self, id: String, shared_ui: &mut crate::Ui, value: f32, modifier: f32, options: Option<TextInputOptions>) -> (bool, f32, egui::Response);
     fn debug_rect(&mut self, rect: egui::Rect);
-    fn context_rename(&mut self, shared_ui: &mut crate::Ui, config: &Config, id: String);
+    fn context_rename(&mut self, shared_ui: &mut crate::Ui, config: &Config);
     fn context_delete(&mut self, shared_ui: &mut crate::Ui, config: &Config, events: &mut EventState, loc_code: &str, polar_id: PolarId);
     fn context_button(&mut self, text: &str, config: &Config) -> egui::Response;
 }
@@ -35,7 +35,7 @@ pub fn draw(
 ) {
     shared_ui.context_menu.keep = false;
 
-    let sel = selections.clone();
+    let sel = &selections;
 
     context.set_cursor_icon(shared_ui.cursor_icon);
     shared_ui.cursor_icon = egui::CursorIcon::Default;
@@ -78,7 +78,7 @@ pub fn draw(
             .fixed_pos(Vec2::new(pos.x, pos.y))
             .order(egui::Order::Foreground);
         area.show(context, |ui| {
-            let id = shared_ui.context_menu.id.clone();
+            let id = &shared_ui.context_menu.id;
             let frame = egui::Frame::popup(ui.style());
             let response = frame.show(ui, |ui| {
                 if shared_ui.context_menu.pos == Vec2::new(-1., -1.) {
@@ -97,7 +97,7 @@ pub fn draw(
                 }
                 let s = &selections;
                 let cb = &copy_buffer;
-                context_menu_content(config, shared_ui, events, ui, id, &armature, &s, &cb);
+                context_menu_content(config, shared_ui, events, ui, &armature, &s, &cb);
             });
 
             // close if clicked out of it
@@ -135,7 +135,7 @@ pub fn draw(
         // default animation icon file (baked-in)
         let default_img =
             image::load_from_memory(include_bytes!("../assets/anim_icons.png")).unwrap();
-        let mut full_img = default_img.clone();
+        let mut full_img = DynamicImage::default();
 
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -241,7 +241,7 @@ pub fn draw(
     // render keyframe editor if in Animation mode
     if edit_mode.anim_open {
         #[rustfmt::skip]
-        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, selections, events, &edit_mode, camera));
+        style_once!(keyframe_editor::draw(context, shared_ui, input, armature, config, sel, events, &edit_mode, camera));
     }
 
     // render armature window
@@ -294,22 +294,15 @@ pub fn draw(
                 if last_selected == "bone" {
                     let bone = selected_bone.clone();
                     bone_panel::draw(
-                        bone, ui, selections, shared_ui, armature, config, events, edit_mode,
+                        bone, ui, &sel, shared_ui, armature, config, events, edit_mode,
                     );
                 } else if last_selected == "keyframe" {
-                    keyframe_panel::draw(ui, &selections, &armature, events, shared_ui, config);
+                    keyframe_panel::draw(ui, &sel, &armature, events, shared_ui, config);
                 } else if (last_selected == "style" || last_selected == "texture")
                     && armature.sel_style(&sel) != None
                 {
                     style_panel::draw(
-                        ui,
-                        shared_ui,
-                        &config,
-                        &selections,
-                        armature,
-                        events,
-                        input,
-                        &camera,
+                        ui, shared_ui, &config, &sel, armature, events, input, &camera,
                     );
                 } else if armature.bones.len() > 1 {
                     ui.heading("Armature Shortcuts");
@@ -975,7 +968,6 @@ fn context_menu_content(
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     ui: &mut egui::Ui,
-    context_id: String,
     armature: &Armature,
     selections: &SelectionState,
     copy_buffer: &CopyBuffer,
@@ -984,7 +976,7 @@ fn context_menu_content(
     let split: Vec<String> = raw_split.iter().map(|s| s.to_string()).collect();
     let element_id = &split[0];
     if element_id == "bone" {
-        ui.context_rename(shared_ui, &config, context_id.clone());
+        ui.context_rename(shared_ui, &config);
         let delete_bone = PolarId::DeleteBone;
         ui.context_delete(shared_ui, &config, events, "delete_bone", delete_bone);
         if ui.context_button("Copy Bone", &config).clicked() {
@@ -1004,7 +996,7 @@ fn context_menu_content(
             shared_ui.context_menu.close();
         }
     } else if element_id == "style" {
-        ui.context_rename(shared_ui, config, context_id);
+        ui.context_rename(shared_ui, config);
         let str = "delete_style";
         ui.context_delete(shared_ui, config, events, str, PolarId::DeleteStyle);
         if ui.context_button("Export", &config).clicked() {
@@ -1017,7 +1009,7 @@ fn context_menu_content(
             shared_ui.context_menu.close();
         }
     } else if element_id == "texture" {
-        ui.context_rename(shared_ui, &config, context_id);
+        ui.context_rename(shared_ui, &config);
         let polar_id = PolarId::DeleteSelectedTextures;
         let styles = &armature.styles;
         let style_idx = styles.iter().position(|s| s.id == selections.style_id);
@@ -1032,7 +1024,7 @@ fn context_menu_content(
 
         ui.context_delete(shared_ui, &config, events, "delete_tex", polar_id);
     } else if element_id == "anim" {
-        ui.context_rename(shared_ui, config, context_id);
+        ui.context_rename(shared_ui, config);
         let del_anim = PolarId::DeleteAnim;
         ui.context_delete(shared_ui, config, events, "delete_anim", del_anim);
         let duplicate_str = shared_ui.loc("keyframe_editor.duplicate");
@@ -1529,10 +1521,10 @@ impl EguiUi for egui::Ui {
         );
     }
 
-    fn context_rename(&mut self, shared_ui: &mut crate::Ui, config: &Config, id: String) {
+    fn context_rename(&mut self, shared_ui: &mut crate::Ui, config: &Config) {
         let str = shared_ui.loc("rename");
         if self.context_button(&str, config).clicked() {
-            shared_ui.rename_id = id;
+            shared_ui.rename_id = shared_ui.context_menu.id.to_string();
             shared_ui.context_menu.close();
         };
     }
@@ -2329,7 +2321,7 @@ pub fn top_bar_button(
         let pos = egui::Pos2::new(ui.min_rect().right(), ui.min_rect().top() + *offset)
             + egui::vec2(-5., 2.5);
         let align = egui::Align2::RIGHT_TOP;
-        painter.text(pos, align, key_str, font.clone(), egui::Color32::DARK_GRAY);
+        painter.text(pos, align, key_str, font, egui::Color32::DARK_GRAY);
     }
 
     // set next button's Y to below this one
