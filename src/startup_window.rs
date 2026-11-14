@@ -499,10 +499,10 @@ pub fn skf_file_button(
     events: &mut EventState,
     idx: usize,
 ) -> bool {
-    let filename = path.file_name().unwrap().to_str().unwrap().to_string();
+    let filename = path.file_name().unwrap().to_str().unwrap();
 
     // generate thumbnail UI texture
-    if !shared_ui.thumb_ui_tex.contains_key(&filename) {
+    if !shared_ui.thumb_ui_tex.contains_key(filename) {
         // remove this file from the list if file failed to be opened
         let file = std::fs::File::open(path);
         if let Err(_) = file {
@@ -522,10 +522,10 @@ pub fn skf_file_button(
             for byte in file.unwrap().bytes() {
                 thumb_bytes.push(byte.unwrap());
             }
-            let ui_tex = ui::create_ui_texture(thumb_bytes, false, ctx, &filename).unwrap();
-            shared_ui
-                .thumb_ui_tex
-                .insert(filename.clone(), ui_tex.clone());
+            shared_ui.thumb_ui_tex.insert(
+                filename.to_string(),
+                ui::create_ui_texture(thumb_bytes, false, ctx, &filename).unwrap(),
+            );
         }
     }
 
@@ -574,7 +574,7 @@ pub fn skf_file_button(
                 egui::Pos2::new(ui.cursor().min.x, ui.cursor().min.y),
                 thumb_size.into(),
             );
-            if let Some(thumb_tex) = shared_ui.thumb_ui_tex.get(&filename) {
+            if let Some(thumb_tex) = shared_ui.thumb_ui_tex.get(filename) {
                 egui::Image::new(thumb_tex).paint_at(ui, thumb_rect);
             }
 
@@ -586,7 +586,7 @@ pub fn skf_file_button(
             ui.painter().text(
                 heading_pos,
                 egui::Align2::LEFT_BOTTOM,
-                filename.clone(),
+                &filename,
                 egui::FontId::new(16., egui::FontFamily::Proportional),
                 config.colors.text.into(),
             );

@@ -2368,7 +2368,7 @@ pub struct Renderer {
     pub bone_init_pivot_rot: f32,
     pub new_vert: Option<Vertex>,
     pub started_dragging_verts: bool,
-    pub temp_bones: Vec<Bone>,
+    pub temp_arm: Armature,
     pub on_point: bool,
     pub clicked_vert_id: i32,
     pub is_hovering_bone: bool,

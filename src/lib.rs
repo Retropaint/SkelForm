@@ -380,7 +380,7 @@ impl ApplicationHandler for App {
                 ui::draw(
                     gui_state.egui_ctx(), &mut s.ui, &mut s.input, &mut s.selections,
                     &mut s.config, &mut s.events, &mut s.edit_mode, &s.camera,
-                    &mut s.armature, &s.copy_buffer, &s.renderer.temp_bones
+                    &mut s.armature, &s.copy_buffer, &s.renderer.temp_arm.bones
                 );
 
                 let egui_winit::egui::FullOutput {
@@ -884,7 +884,10 @@ impl BackendRenderer {
 
         // animated bones will be used throughout the program
         utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
-        shared.renderer.temp_bones = shared.armature.animated_bones.clone();
+        shared.renderer.temp_arm = Armature {
+            bones: shared.armature.animated_bones.clone(),
+            ..Default::default()
+        };
 
         // initialize non-mesh bone verts and indices
         for b in 0..shared.armature.bones.len() {
@@ -896,7 +899,7 @@ impl BackendRenderer {
                 (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
                 let bone = &mut shared.armature.animated_bones[b];
                 (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
-                let bone = &mut shared.renderer.temp_bones[b];
+                let bone = &mut shared.renderer.temp_arm.bones[b];
                 (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
 
                 bone.set_editing_vertices(false);
@@ -919,13 +922,13 @@ impl BackendRenderer {
         if !physics_bone_edited && (is_any_anim_playing || processing_physics) {
             // apply runtime-based construction (including physics)
             shared.armature.bones = renderer::runtime_construction(
-                &mut shared.renderer.temp_bones,
+                &mut shared.renderer.temp_arm.bones,
                 &shared.armature.animated_bones,
                 shared.armature.bones.clone(),
             );
         } else {
             renderer::construction(
-                &mut shared.renderer.temp_bones,
+                &mut shared.renderer.temp_arm.bones,
                 &shared.armature.animated_bones,
             );
         }

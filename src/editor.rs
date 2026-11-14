@@ -289,7 +289,7 @@ pub fn iterate_events(
         // adjust vertices, so they stay in place
         let bind = &armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].clone();
         let sel_bone = &mut armature.sel_bone_mut(&selections).unwrap();
-        let temp_bones = &renderer.temp_bones;
+        let temp_bones = &renderer.temp_arm.bones;
         let temp_bone = temp_bones.iter().find(|b| b.id == sel_bone.id).unwrap();
         for vert in &bind.verts {
             let id = vert.id as u32;
@@ -826,7 +826,7 @@ pub fn simple_event(
             }
         }
         Events::DragVertex => {
-            let bones = &renderer.temp_bones;
+            let bones = &renderer.temp_arm.bones;
             let sel_id = armature.sel_bone(selections).unwrap().id;
             let bone = bones.iter().find(|b| b.id == sel_id).clone().unwrap();
             let temp_vert = bone.vertices.iter().find(|v| v.id == value as u32);
@@ -855,7 +855,7 @@ pub fn simple_event(
                     continue;
                 }
 
-                let bones = &renderer.temp_bones;
+                let bones = &renderer.temp_arm.bones;
                 let bind_bone = bones.iter().find(|b| b.id == bind.bone_id).unwrap();
                 scale = bind_bone.scale;
                 if !bind.is_path {
@@ -902,9 +902,10 @@ pub fn simple_event(
                 &mut bone_mut.vertices[value as usize],
                 bound,
                 &bone_mut.binds[idx],
-                &renderer.temp_bones,
+                &renderer.temp_arm.bones,
                 renderer
-                    .temp_bones
+                    .temp_arm
+                    .bones
                     .iter()
                     .find(|b| b.id == bone_mut.id)
                     .unwrap(),
@@ -1306,7 +1307,7 @@ pub fn simple_event(
 
             // add new bone to temp_bones for adjusting later
             let bone = armature.bones.last().unwrap().clone();
-            renderer.temp_bones.push(bone);
+            renderer.temp_arm.bones.push(bone);
 
             let sel_bone_id = armature.sel_bone(selections).unwrap().id;
 
@@ -1316,9 +1317,9 @@ pub fn simple_event(
             let vertices = &mut armature.sel_bone_mut(selections).unwrap().vertices;
             let vert_id = value as u32;
             let vert = &mut vertices.iter_mut().find(|v| v.id == vert_id).unwrap();
-            let temp_bones = &renderer.temp_bones;
+            let temp_bones = &renderer.temp_arm.bones;
             let temp_bone = temp_bones.iter().find(|b| b.id == sel_bone_id).unwrap();
-            adjust_vert_by_bind(vert, true, &bind, &renderer.temp_bones, temp_bone);
+            adjust_vert_by_bind(vert, true, &bind, &renderer.temp_arm.bones, temp_bone);
 
             // set bone as child of mesh
             drag_bone(armature, selections.bone_ids[0], &vec![bone_id], false);

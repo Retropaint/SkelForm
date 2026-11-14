@@ -21,7 +21,7 @@ pub fn render(
     if camera.window == Vec2::ZERO {
         return;
     }
-    let sel = selections.clone();
+    let sel = &selections;
 
     // no edits are being made if the LMB isn't down
     if !input.left_down && edit_mode.is_moving || edit_mode.is_rotating || edit_mode.is_scaling {
@@ -48,7 +48,7 @@ pub fn render(
 
     // temporary armature, to be used for rendering
     let mut temp_arm = Armature::default();
-    temp_arm.bones = renderer.temp_bones.clone();
+    temp_arm.bones = renderer.temp_arm.bones.clone();
 
     // todo: don't update bone buffer every frame
     renderer.bone_buffer.dirty = true;
@@ -281,7 +281,7 @@ pub fn render(
     }
     renderer.on_point = false;
 
-    renderer.temp_bones = temp_arm.bones.clone();
+    renderer.temp_arm.bones = temp_arm.bones.clone();
 
     // runtime: sort bones by z-index for drawing
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
