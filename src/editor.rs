@@ -799,13 +799,18 @@ pub fn simple_event(
                 return;
             }
 
-            let tex_img = renderer::sel_tex_img(&armature.sel_bone(&sel).unwrap(), &armature);
             let idx = verts!().iter().position(|v| v.id == value as u32).unwrap();
             verts!().remove(idx);
-            verts!() = sort_vertices(verts!().clone());
-            let verts = verts!().clone();
+            sort_vertices(&mut verts!());
+
+            let bone_id = armature.sel_bone(&sel).unwrap().id;
+            let tex = armature.tex_of(bone_id).unwrap();
+            let tex_img = &armature.tex_data(tex).unwrap().image;
+
+            let indices = triangulate(&armature.sel_bone(&sel).unwrap().vertices, &tex_img);
             let bone = armature.sel_bone_mut(&sel).unwrap();
-            bone.indices = triangulate(&verts, &tex_img);
+            bone.indices = indices;
+
             remove_blacklisted_tris(&mut bone.indices, &bone.vertices, &mut bone.blacklist);
             cleanup_vertices(bone);
 
@@ -927,17 +932,24 @@ pub fn simple_event(
             undo_states.new_undo_bone(&armature.bones[selections.bone_idx]);
 
             let sel = &selections;
-            let tex_img = renderer::sel_tex_img(armature.sel_bone(sel).unwrap(), &armature);
-            let bone_mut = armature.sel_bone_mut(sel).unwrap();
 
             // give unique ID to vertex
-            bone_mut.vertices.push(renderer.new_vert.unwrap());
-            let ids: Vec<i32> = bone_mut.vertices.iter().map(|v| v.id as i32).collect();
-            bone_mut.vertices.last_mut().unwrap().id = generate_id(ids) as u32;
+            let bone_verts = &mut armature.sel_bone_mut(sel).unwrap().vertices;
+            bone_verts.push(renderer.new_vert.unwrap());
+            let ids: Vec<i32> = bone_verts.iter().map(|v| v.id as i32).collect();
+            bone_verts.last_mut().unwrap().id = generate_id(ids) as u32;
 
             // add vertex to mesh
-            bone_mut.vertices = sort_vertices(bone_mut.vertices.clone());
-            bone_mut.indices = triangulate(&mut bone_mut.vertices, &tex_img);
+            sort_vertices(&mut armature.sel_bone_mut(sel).unwrap().vertices);
+
+            let bone_id = armature.sel_bone(&sel).unwrap().id;
+            let tex = armature.tex_of(bone_id).unwrap();
+            let tex_img = &armature.tex_data(tex).unwrap().image;
+            let indices = triangulate(&armature.sel_bone(sel).unwrap().vertices, &tex_img);
+
+            let bone_mut = armature.sel_bone_mut(sel).unwrap();
+            bone_mut.indices = indices;
+
             remove_blacklisted_tris(
                 &mut bone_mut.indices,
                 &bone_mut.vertices,
@@ -1994,7 +2006,7 @@ pub fn trace_mesh(
     //    });
     //}
 
-    verts = sort_vertices(verts);
+    sort_vertices(&mut verts);
     editor::center_verts(&mut verts);
     (verts.clone(), triangulate(&verts, texture))
 }
@@ -2016,7 +2028,7 @@ fn winding_sort(mut points: Vec<Vec2>) -> Vec<Vec2> {
 }
 
 /// sort vertices in cw (or ccw?) order
-pub fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
+pub fn sort_vertices(verts: &mut Vec<Vertex>) {
     let mut center = Vec2::default();
     for v in 0..verts.len() {
         center += verts[v].pos;
@@ -2028,8 +2040,6 @@ pub fn sort_vertices(mut verts: Vec<Vertex>) -> Vec<Vertex> {
         let angle_b = (b.pos.y - center.y).atan2(b.pos.x - center.x);
         angle_a.partial_cmp(&angle_b).unwrap()
     });
-
-    verts
 }
 
 fn vert(pos: Option<Vec2>, col: Option<Color>, uv: Option<Vec2>) -> Vertex {
