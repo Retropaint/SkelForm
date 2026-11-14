@@ -1275,7 +1275,7 @@ impl BackendRenderer {
             _ => {}
         }
 
-        utils::save_to_recent_files(shared.ui.recent_file_paths.clone());
+        utils::save_recent_paths(shared.ui.recent_file_paths.clone());
 
         let mut frames = vec![];
         #[rustfmt::skip]

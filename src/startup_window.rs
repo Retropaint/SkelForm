@@ -217,16 +217,6 @@ fn middle(
 
                         has_files = true;
 
-                        if let Err(_) = std::fs::File::open(&path) {
-                            let recent = &shared_ui.recent_file_paths;
-                            let idx = recent
-                                .iter()
-                                .position(|r_path| PathBuf::from(r_path) == path)
-                                .unwrap();
-                            shared_ui.recent_file_paths.remove(idx);
-                            continue;
-                        }
-
                         let width = available_width;
                         if skf_file_button(&path, ui, ctx, width, shared_ui, conf, _events, p) {
                             hovered = true;
@@ -510,14 +500,22 @@ pub fn skf_file_button(
     idx: usize,
 ) -> bool {
     let filename = path.file_name().unwrap().to_str().unwrap().to_string();
-    let file = std::fs::File::open(path.clone()).unwrap();
-    let mut zip = zip::ZipArchive::new(file);
-    if let Err(_) = zip {
-        return false;
-    }
 
     // generate thumbnail UI texture
     if !shared_ui.thumb_ui_tex.contains_key(&filename) {
+        // remove this file from the list if file failed to be opened
+        let file = std::fs::File::open(path);
+        if let Err(_) = file {
+            let recent = &shared_ui.recent_file_paths;
+            let idx = recent
+                .iter()
+                .position(|r_path| PathBuf::from(r_path) == *path)
+                .unwrap();
+            shared_ui.recent_file_paths.remove(idx);
+            return false;
+        }
+
+        let mut zip = zip::ZipArchive::new(file.unwrap());
         let mut thumb_bytes = vec![];
         let file = zip.as_mut().unwrap().by_name("thumbnail.png");
         if let Ok(_) = file {
@@ -647,7 +645,7 @@ pub fn skf_file_button(
                 .position(|rfp| PathBuf::from(rfp) == *path)
                 .unwrap();
             shared_ui.recent_file_paths.remove(idx);
-            utils::save_to_recent_files(shared_ui.recent_file_paths.clone());
+            utils::save_recent_paths(shared_ui.recent_file_paths.clone());
         }
         pos += egui::Vec2::new(-21., 0.);
 

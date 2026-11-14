@@ -900,8 +900,10 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
 
         // save rotations for the next forward kinematics call
         for j in 0..joints.len() {
+            let bone = bones.iter().find(|b| b.id == joints[j].id).unwrap();
             if j == joints.len() - 1 {
-                if bones[b].ik_mimic_target {
+                // if mimicking is on, follow rotation based on target bone
+                if bone.ik_mimic_target {
                     ik_rot.insert(joints[j].id, target.unwrap().rot);
                 }
                 continue;

@@ -1283,7 +1283,7 @@ pub fn import<R: Read + std::io::Seek>(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn save_to_recent_files(mut paths: Vec<String>) {
+pub fn save_recent_paths(mut paths: Vec<String>) {
     // clean up paths and remove any that start with _
     paths.retain(|path| {
         let filename = Path::new(path).file_name().unwrap();
@@ -1324,7 +1324,7 @@ pub fn add_to_recent_paths(to_add: &String, paths: &mut Vec<String>) {
         }
     }
 
-    save_to_recent_files(paths.to_vec());
+    save_recent_paths(paths.to_vec());
 }
 
 // unused: use `bone.verts_edited` instead
