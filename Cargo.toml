@@ -13,6 +13,11 @@ opt-level = "s"
 lto = true
 debug = true
 
+[profile.dhat]
+inherits = "release"
+debug = true
+strip = "none"
+
 [dependencies]
 bytemuck = { version = "1.24.0", features = ["derive"] }
 egui = { version = "0.33.0", features=["serde"] }
@@ -32,6 +37,7 @@ backtrace = "0.3.76"
 # https://github.com/rust-windowing/winit/issues/2776#issuecomment-2477222703
 global-hotkey = "0.7.0"
 serde_path_to_error = "0.1.20"
+dhat = "0.3.3"
 
 [profile.dev.package.psd]
 opt-level = 3
@@ -64,6 +70,7 @@ web-time = "1.1.0"
 default = ["wgpu/default"]
 webgl = ["wgpu/webgl"]
 webgpu = ["wgpu/webgpu"]
+dhat = []
 
 [build-dependencies]
 winresource = "0.1.23"

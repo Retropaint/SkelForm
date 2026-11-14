@@ -13,7 +13,14 @@ use std::path::PathBuf;
 
 pub const CRASHLOG_END: &str = "###";
 
+#[cfg(feature = "dhat")]
+#[global_allocator]
+static ALLOC: dhat::Alloc = dhat::Alloc;
+
 fn main() -> Result<(), winit::error::EventLoopError> {
+    #[cfg(feature = "dhat")]
+    let _profiler = dhat::Profiler::new_heap();
+
     // set up panic hooks, for crash logs and the like
     #[cfg(not(target_arch = "wasm32"))]
     {
