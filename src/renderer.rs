@@ -1496,7 +1496,7 @@ pub fn inheritance(
                 bones[i].rot = -bones[i].rot;
             }
 
-            // scale this bone by its parent with respect to its initial rotation
+            // scale this bone by its parent with respect to the bone's initial rotation
             //
             // eg; if parent is widened and this bone is at 90 deg, its height should be
             // increased rather than its width.

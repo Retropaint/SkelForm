@@ -2029,6 +2029,7 @@ impl Animation {
 #[serde(default)]
 pub struct Keyframe {
     pub frame: i32,
+    pub bone_name: String,
     #[serde(skip)]
     pub bone_id: i32,
 
@@ -2050,8 +2051,6 @@ pub struct Keyframe {
 
     #[serde(skip)]
     pub label_top: f32,
-
-    pub bone_name: String,
 }
 
 #[derive(PartialEq, serde::Serialize, serde::Deserialize, Clone, Default, Debug, FromRepr)]
