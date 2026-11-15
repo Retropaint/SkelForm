@@ -1487,14 +1487,7 @@ impl Armature {
     }
 
     pub fn animate(&self, anim_idx: usize, anim_frame: i32) -> Vec<Bone> {
-        let mut bones = if self.animated_bones != None {
-            // keep using animated_bones if it exists
-            self.animated_bones.as_ref().unwrap()
-        } else {
-            // start with a fresh copy of bones
-            &self.bones
-        }
-        .clone();
+        let mut bones = self.bones.clone();
 
         // ignore if this animation has no keyframes
         let kf_len = self.animations[anim_idx].keyframes.len();

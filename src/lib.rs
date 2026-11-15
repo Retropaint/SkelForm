@@ -941,8 +941,8 @@ impl BackendRenderer {
                 &mut shared.armature.try_anim_bones_mut(),
             );
 
-            // the construction above usually changes animated_bones physics values,
-            // so apply it to the actual bones to keep it consistent
+            // the construction above usually affects the physics of animated_bones
+            // instead of actual, so keep them consistent
             if shared.armature.animated_bones != None {
                 for b in 0..shared.armature.bones.len() {
                     let anim_bone = &shared.armature.animated_bones.as_ref().unwrap()[b];
