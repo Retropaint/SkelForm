@@ -885,7 +885,7 @@ impl BackendRenderer {
         // animated bones will be used throughout the program
         utils::animate_bones(&mut shared.armature, &shared.selections, &shared.edit_mode);
         shared.renderer.temp_arm = Armature {
-            bones: shared.armature.animated_bones.clone(),
+            bones: shared.armature.try_anim_bones().clone(),
             ..Default::default()
         };
 
@@ -897,7 +897,7 @@ impl BackendRenderer {
 
                 let bone = &mut shared.armature.bones[b];
                 (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
-                let bone = &mut shared.armature.animated_bones[b];
+                let bone = &mut shared.armature.try_anim_bones_mut()[b];
                 (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
                 let bone = &mut shared.renderer.temp_arm.bones[b];
                 (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
@@ -923,13 +923,13 @@ impl BackendRenderer {
             // apply runtime-based construction (including physics)
             shared.armature.bones = renderer::runtime_construction(
                 &mut shared.renderer.temp_arm.bones,
-                &shared.armature.animated_bones,
+                &shared.armature.try_anim_bones(),
                 shared.armature.bones.clone(),
             );
         } else {
             renderer::construction(
                 &mut shared.renderer.temp_arm.bones,
-                &shared.armature.animated_bones,
+                &shared.armature.try_anim_bones(),
             );
         }
 

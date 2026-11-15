@@ -251,14 +251,14 @@ pub fn draw(
 
     // get current properties of selected bone, including animations
     let mut selected_bone = Bone::default();
-    if selections.bone_idx != usize::MAX && selections.bone_idx < armature.bones.len() {
-        selected_bone = armature.sel_bone(&sel).unwrap().clone();
-
-        if edit_mode.anim_open && selections.anim != usize::MAX {
-            let frame = selections.anim_frame;
-            let animated_bones = armature.animate(selections.anim, frame, None);
-            selected_bone = animated_bones[selections.bone_idx].clone();
-        }
+    if selections.bone_ids.len() != 0 {
+        let bone_id = selections.bone_ids[0];
+        selected_bone = armature
+            .try_anim_bones()
+            .iter()
+            .find(|bone| bone.id == selections.bone_ids[0])
+            .unwrap()
+            .clone();
     }
 
     let min_default_size = 210.;
@@ -292,7 +292,7 @@ pub fn draw(
             scroll_area.show(ui, |ui| {
                 let last_selected = &shared_ui.last_selected;
                 if last_selected == "bone" {
-                    let bone = selected_bone.clone();
+                    let bone = &selected_bone;
                     bone_panel::draw(
                         bone, ui, &sel, shared_ui, armature, config, events, edit_mode,
                     );

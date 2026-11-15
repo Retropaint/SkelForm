@@ -279,7 +279,7 @@ pub fn render_spritesheets(
             }
 
             new_arm.bones = new_arm.animate(a, f % last_frame, None);
-            new_arm.animated_bones = new_arm.bones.clone();
+            new_arm.animated_bones = Some(new_arm.bones.clone());
 
             // initialize non-mesh bone verts and indices
             for b in 0..new_arm.bones.len() {
@@ -288,7 +288,7 @@ pub fn render_spritesheets(
                     let size = tex.unwrap().size;
                     let bone = &mut new_arm.bones[b];
                     (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
-                    let bone = &mut new_arm.animated_bones[b];
+                    let bone = &mut new_arm.animated_bones.as_mut().unwrap()[b];
                     (bone.vertices, bone.indices) = renderer::create_tex_rect(&size);
                     bone.set_editing_vertices(false);
                 }
@@ -1056,7 +1056,7 @@ pub fn import<R: Read + std::io::Seek>(
         animations: root.animations.clone(),
         styles: root.styles.clone(),
         tex_data: vec![],
-        animated_bones: vec![],
+        animated_bones: None,
     };
 
     // set bone_id for keyframes based on bone_name
@@ -1630,7 +1630,6 @@ pub fn animate_bones(armature: &mut Armature, selection: &SelectionState, edit_m
     // runtime:
     // armature bones should normally be mutable to animation for smoothing,
     // but that's not ideal when editing
-    armature.animated_bones = armature.bones.clone();
 
     let anims = &armature.animations;
     let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
@@ -1644,11 +1643,14 @@ pub fn animate_bones(armature: &mut Armature, selection: &SelectionState, edit_m
             }
             let frame = anim.set_frame();
             let anim_bones = armature.animated_bones.clone();
-            armature.animated_bones = armature.animate(a, frame, Some(&anim_bones));
+            armature.animated_bones = Some(armature.animate(a, frame, Some(&anim_bones.unwrap())));
         }
     } else if edit_mode.anim_open && selection.anim != usize::MAX && selection.anim_frame != -1 {
         // display the selected animation's frame
-        armature.animated_bones = armature.animate(selection.anim, selection.anim_frame, None);
+        armature.animated_bones =
+            Some(armature.animate(selection.anim, selection.anim_frame, None));
+    } else {
+        armature.animated_bones = None;
     }
 }
 

@@ -62,8 +62,11 @@ pub fn render(
         let idx = keyframes.iter().position(|kf| kf.frame > sel.anim_frame);
         prev_sel.anim_frame = keyframes[idx.unwrap_or_else(|| 1) - 1].frame;
         utils::animate_bones(&mut prev_arm, &prev_sel, edit_mode);
-        prev_arm.bones = prev_arm.animated_bones.clone();
-        construction(&mut prev_arm.bones, &prev_arm.animated_bones);
+        prev_arm.bones = prev_arm.try_anim_bones().clone();
+        construction(
+            &mut prev_arm.bones,
+            &prev_arm.animated_bones.as_ref().unwrap(),
+        );
 
         // set up next onion
         next_arm.bones = armature.bones.clone();
@@ -73,8 +76,11 @@ pub fn render(
             next_sel.anim_frame = next_kf.frame;
         }
         utils::animate_bones(&mut next_arm, &next_sel, edit_mode);
-        next_arm.bones = next_arm.animated_bones.clone();
-        construction(&mut next_arm.bones, &next_arm.animated_bones);
+        next_arm.bones = next_arm.try_anim_bones().clone();
+        construction(
+            &mut next_arm.bones,
+            &next_arm.animated_bones.as_ref().unwrap(),
+        );
     }
 
     // get all children of selected bone(s)
@@ -605,7 +611,7 @@ pub fn render(
     // keep track of selected bone's initial rotation, if mouse isn't being pressed
     if input.mouse_init == None {
         if let Some(bone) = armature.sel_bone(&sel) {
-            let anim_bones = &armature.animated_bones;
+            let anim_bones = &armature.try_anim_bones();
             let sel_anim_bone = anim_bones.iter().find(|b| b.id == bone.id).unwrap();
             renderer.bone_init_rot = sel_anim_bone.rot;
             renderer.bone_init_pivot_rot = sel_anim_bone.pivot_rot;
@@ -857,10 +863,10 @@ pub fn render_screenshot(
     queue: &wgpu::Queue,
 ) {
     let mut temp_arm = Armature::default();
-    temp_arm.bones = armature.animated_bones.clone();
+    temp_arm.bones = armature.try_anim_bones().clone();
     armature.bones = runtime_construction(
         &mut temp_arm.bones,
-        &armature.animated_bones,
+        &armature.try_anim_bones(),
         armature.bones.clone(),
     );
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));

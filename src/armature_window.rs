@@ -216,9 +216,6 @@ pub fn draw_hierarchy(
 
     let mut cached_children: std::collections::HashMap<i32, Vec<Bone>> = Default::default();
 
-    if armature.animated_bones.len() == 0 {
-        return;
-    }
     let hiddens = armature.get_propagated_hidden();
 
     // collect all bone IDs that have same-name warning applied to them

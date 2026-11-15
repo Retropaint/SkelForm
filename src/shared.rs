@@ -1369,7 +1369,7 @@ pub struct Armature {
     #[serde(skip)]
     pub tex_data: Vec<TextureData>,
     #[serde(skip)]
-    pub animated_bones: Vec<Bone>,
+    pub animated_bones: Option<Vec<Bone>>,
 }
 
 impl Armature {
@@ -1606,11 +1606,7 @@ impl Armature {
     }
 
     pub fn get_all_parents(&self, is_anim: bool, bone_id: i32) -> Vec<Bone> {
-        let bones = if is_anim {
-            &self.animated_bones
-        } else {
-            &self.bones
-        };
+        let bones = self.try_anim_bones();
 
         let bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
 
@@ -1674,7 +1670,7 @@ impl Armature {
     }
 
     pub fn anim_tex_of(&self, bone_id: i32) -> Option<&Texture> {
-        let bone = self.animated_bones.iter().find(|bone| bone.id == bone_id);
+        let bone = self.try_anim_bones().iter().find(|bone| bone.id == bone_id);
         if bone == None {
             return None;
         }
@@ -1793,7 +1789,7 @@ impl Armature {
 
     pub fn get_propagated_hidden(&self) -> std::collections::HashMap<i32, bool> {
         let mut hiddens: std::collections::HashMap<i32, bool> = Default::default();
-        let bones = &self.animated_bones;
+        let bones = &self.try_anim_bones();
         for b in 0..bones.len() {
             let bone = &bones[b];
             let mut hidden = bone.hidden;
@@ -1817,6 +1813,22 @@ impl Armature {
             || bone.phys_sway > 0.
             || bone.phys_scale_damping > 0.
             || bone.phys_rot_damping > 0.
+    }
+
+    pub fn try_anim_bones(&self) -> &Vec<Bone> {
+        if self.animated_bones != None {
+            self.animated_bones.as_ref().unwrap()
+        } else {
+            &self.bones
+        }
+    }
+
+    pub fn try_anim_bones_mut(&mut self) -> &mut Vec<Bone> {
+        if self.animated_bones != None {
+            self.animated_bones.as_mut().unwrap()
+        } else {
+            &mut self.bones
+        }
     }
 }
 

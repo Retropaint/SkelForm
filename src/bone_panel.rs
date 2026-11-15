@@ -28,7 +28,7 @@ pub use web::*;
 type E = AnimElement;
 
 pub fn draw(
-    mut bone: Bone,
+    bone: &Bone,
     ui: &mut egui::Ui,
     selections: &SelectionState,
     shared_ui: &mut crate::Ui,
@@ -225,16 +225,18 @@ pub fn draw(
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.position"), ui);
             ui.add_space(ui.available_width() - input_widths);
-            input!(bone.pos.x, "pos_x", AE::PositionX, 1., 1., ui, "X");
-            input!(bone.pos.y, "pos_y", AE::PositionY, 1., 1., ui, "Y");
+            let mut pos = bone.pos;
+            input!(pos.x, "pos_x", AE::PositionX, 1., 1., ui, "X");
+            input!(pos.y, "pos_y", AE::PositionY, 1., 1., ui, "Y");
         });
 
         ui.horizontal(|ui| {
             label!(&shared_ui.loc("bone_panel.scale"), ui);
             ui.add_space(ui.available_width() - input_widths - 5.);
             type AE = AnimElement;
-            input!(bone.scale.x, "scale_x", AE::ScaleX, 1., 0.05, ui, "W");
-            input!(bone.scale.y, "scale_y", AE::ScaleY, 1., 0.05, ui, "H");
+            let mut scale = bone.scale;
+            input!(scale.x, "scale_x", AE::ScaleX, 1., 0.05, ui, "W");
+            input!(scale.y, "scale_y", AE::ScaleY, 1., 0.05, ui, "H");
         });
 
         ui.horizontal(|ui| {
@@ -242,7 +244,8 @@ pub fn draw(
             ui.add_space(ui.available_width() - 40.);
             let rot_el = AnimElement::Rotation;
             let deg_mod = 180. / std::f32::consts::PI;
-            input!(bone.rot, "rot", rot_el, deg_mod, -0.25, ui, "");
+            let mut rot = bone.rot;
+            input!(rot, "rot", rot_el, deg_mod, -0.25, ui, "");
         });
     })
     .response
@@ -271,7 +274,7 @@ pub fn draw(
     }
 
     #[rustfmt::skip]
-    visuals(ui, &mut bone, shared_ui, &selections, config, &edit_mode, armature, events);
+    visuals(ui, &bone, shared_ui, &selections, config, &edit_mode, armature, events);
     if !bone.effects_folded {
         ui.add_space(20.);
     }
@@ -1103,7 +1106,7 @@ pub fn open_file_dialog(
 
 pub fn visuals(
     ui: &mut egui::Ui,
-    bone: &mut Bone,
+    bone: &Bone,
     shared_ui: &mut crate::Ui,
     selections: &SelectionState,
     config: &Config,
