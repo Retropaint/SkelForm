@@ -46,8 +46,12 @@ pub fn render(
         events.set_hovering_vert_id(-1);
     }
 
-    // todo: don't update bone buffer every frame
+    // todo: don't update these buffers every frame.
+    // physics complicates this greatly since these buffers need to keep updating
+    // to display physics effects when nothing's really happening.
     renderer.bone_buffer.dirty = true;
+    renderer.point_buffer.dirty = true;
+    renderer.kite_buffer.dirty = true;
 
     // animate next and previous frame armatures for onions
     let mut next_arm = Armature::default();
