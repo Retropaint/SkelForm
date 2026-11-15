@@ -1627,9 +1627,8 @@ pub fn attempt_exit(undo_states: &mut UndoStates, config: &Config, ui: &mut Ui) 
 }
 
 pub fn animate_bones(armature: &mut Armature, selection: &SelectionState, edit_mode: &EditMode) {
-    // runtime:
-    // armature bones should normally be mutable to animation for smoothing,
-    // but that's not ideal when editing
+    // start a fresh copy of bones, to prevent lingering from previous animations
+    armature.animated_bones = None;
 
     if armature.is_any_anim_playing() {
         // runtime: playing animations (single & simultaneous)
@@ -1644,8 +1643,6 @@ pub fn animate_bones(armature: &mut Armature, selection: &SelectionState, edit_m
     } else if edit_mode.anim_open && selection.anim != usize::MAX && selection.anim_frame != -1 {
         // display the selected animation's frame
         armature.animated_bones = Some(armature.animate(selection.anim, selection.anim_frame));
-    } else {
-        armature.animated_bones = None;
     }
 }
 

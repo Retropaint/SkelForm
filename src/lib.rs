@@ -447,9 +447,7 @@ impl ApplicationHandler for App {
                     .set_pixels_per_point(self.shared.ui.scale);
 
                 // ANIMATED_BUFFERS: set some render buffers to dirty if animating
-                if self.shared.armature.is_any_anim_playing()
-                    || self.shared.edit_mode.edit_time < shared::PHYSICS_CUTOFF
-                {
+                if self.shared.armature.is_any_anim_playing() {
                     self.shared.renderer.point_buffer.dirty = true;
                     self.shared.renderer.kite_buffer.dirty = true;
                     self.shared.renderer.bone_buffer.dirty = true;
@@ -936,14 +934,27 @@ impl BackendRenderer {
             physics_bone_edited = shared.armature.has_physics(bone.id);
         }
 
-        // process physics if an anim is playing, or an edit was just made
-        let processing_physics = shared.edit_mode.edit_time < shared::PHYSICS_CUTOFF;
-        if !physics_bone_edited && (shared.armature.is_any_anim_playing() || processing_physics) {
+        if !physics_bone_edited {
             // apply runtime-based construction (including physics)
             renderer::runtime_construction(
                 &mut shared.renderer.temp_arm.bones,
                 &mut shared.armature.try_anim_bones_mut(),
             );
+
+            // the construction above usually changes animated_bones physics values,
+            // so apply it to the actual bones to keep it consistent
+            if shared.armature.animated_bones != None {
+                for b in 0..shared.armature.bones.len() {
+                    let anim_bone = &shared.armature.animated_bones.as_ref().unwrap()[b];
+                    let bone = &mut shared.armature.bones[b];
+                    bone.phys_global_pos = anim_bone.phys_global_pos;
+                    bone.phys_global_rot = anim_bone.phys_global_rot;
+                    bone.phys_global_scale = anim_bone.phys_global_scale;
+                    bone.phys_global_orbit = anim_bone.phys_global_orbit;
+                    bone.phys_global_orbit_diff = anim_bone.phys_global_orbit_diff;
+                    bone.phys_global_orbit_vel = anim_bone.phys_global_orbit_vel;
+                }
+            }
         } else {
             renderer::construction(
                 &mut shared.renderer.temp_arm.bones,
