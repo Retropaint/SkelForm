@@ -864,11 +864,7 @@ pub fn render_screenshot(
 ) {
     let mut temp_arm = Armature::default();
     temp_arm.bones = armature.try_anim_bones().clone();
-    armature.bones = runtime_construction(
-        &mut temp_arm.bones,
-        &armature.try_anim_bones(),
-        armature.bones.clone(),
-    );
+    runtime_construction(&mut temp_arm.bones, &mut armature.try_anim_bones_mut());
     temp_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
     let sel = SelectionState::default();
 
@@ -949,11 +945,9 @@ pub fn construction(bones: &mut Vec<Bone>, og_bones: &Vec<Bone>) {
     construct_verts(bones);
 }
 
-pub fn runtime_construction(
-    bones: &mut Vec<Bone>,
-    og_bones: &Vec<Bone>,
-    mut armature_bones: Vec<Bone>,
-) -> Vec<Bone> {
+// Runtime Construct(), with physics included.
+// `og_bones` is mutable to allow for physics to persist.
+pub fn runtime_construction(bones: &mut Vec<Bone>, og_bones: &mut Vec<Bone>) {
     inheritance(bones, &std::collections::HashMap::new(), &vec![]);
 
     let mut ik_rot: std::collections::HashMap<i32, f32> = std::collections::HashMap::new();
@@ -998,15 +992,13 @@ pub fn runtime_construction(
     *bones = og_bones.clone();
     inheritance(bones, &ik_rot, &vec![]);
 
-    simulate_physics(&mut armature_bones, bones);
+    simulate_physics(og_bones, bones);
 
     // re-construct bones, accounting for physics
     *bones = og_bones.clone();
     inheritance(bones, &ik_rot, &og_bones);
 
     construct_verts(bones);
-
-    return armature_bones;
 }
 
 // simulate physics on the armature, then apply it to constructed bones

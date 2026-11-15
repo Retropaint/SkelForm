@@ -940,10 +940,9 @@ impl BackendRenderer {
         let processing_physics = shared.edit_mode.edit_time < shared::PHYSICS_CUTOFF;
         if !physics_bone_edited && (shared.armature.is_any_anim_playing() || processing_physics) {
             // apply runtime-based construction (including physics)
-            shared.armature.bones = renderer::runtime_construction(
+            renderer::runtime_construction(
                 &mut shared.renderer.temp_arm.bones,
-                &shared.armature.try_anim_bones(),
-                shared.armature.bones.clone(),
+                &mut shared.armature.try_anim_bones_mut(),
             );
         } else {
             renderer::construction(
