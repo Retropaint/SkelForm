@@ -1486,18 +1486,13 @@ impl Armature {
         (new_bone, self.bones.len() - 1)
     }
 
-    // runtime: core animation logic
-    pub fn animate(
-        &mut self,
-        anim_idx: usize,
-        anim_frame: i32,
-        og_bones: Option<&Vec<Bone>>,
-    ) -> Vec<Bone> {
-        let mut bones = if og_bones != None {
-            og_bones.unwrap().clone()
+    pub fn animate(&self, anim_idx: usize, anim_frame: i32) -> Vec<Bone> {
+        let mut bones = if self.animated_bones != None {
+            self.animated_bones.as_ref().unwrap()
         } else {
-            self.bones.clone()
-        };
+            &self.bones
+        }
+        .clone();
 
         // ignore if this animation has no keyframes
         let kf_len = self.animations[anim_idx].keyframes.len();

@@ -221,7 +221,7 @@ pub fn render_spritesheets(
             let all_frames = last_frame * shared_ui.anim_cycles;
             let mut new_arm = armature.clone();
             for f in 0..all_frames {
-                new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
+                new_arm.bones = armature.animate(a, f % last_frame);
                 let (lt, br) = renderer::get_sprite_boundary(&new_arm, camera, config);
                 left_top = Vec2::new(left_top.x.min(lt.x), left_top.y.max(lt.y));
                 right_bot = Vec2::new(right_bot.x.max(br.x), right_bot.y.min(br.y));
@@ -249,7 +249,7 @@ pub fn render_spritesheets(
             left_top = Vec2::new(f32::MAX, -f32::MAX);
             right_bot = Vec2::new(-f32::MAX, f32::MAX);
             for f in 0..all_frames {
-                new_arm.bones = new_arm.animate(a, f % last_frame, Some(&armature.bones));
+                new_arm.bones = armature.animate(a, f % last_frame);
                 let (lt, br) = renderer::get_sprite_boundary(&new_arm, camera, config);
                 left_top = Vec2::new(left_top.x.min(lt.x), left_top.y.max(lt.y));
                 right_bot = Vec2::new(right_bot.x.max(br.x), right_bot.y.min(br.y));
@@ -278,7 +278,7 @@ pub fn render_spritesheets(
                 }
             }
 
-            new_arm.bones = new_arm.animate(a, f % last_frame, None);
+            new_arm.bones = new_arm.animate(a, f % last_frame);
             new_arm.animated_bones = Some(new_arm.bones.clone());
 
             // initialize non-mesh bone verts and indices
@@ -609,7 +609,7 @@ pub fn prepare_files(
             }
 
             let mut anim_arm = armature_copy.clone();
-            anim_arm.bones = anim_arm.animate(a, keyframe.frame, None);
+            anim_arm.bones = anim_arm.animate(a, keyframe.frame);
             let bones = anim_arm.bones.clone();
             construction(&mut anim_arm.bones, &bones);
 
@@ -1639,13 +1639,11 @@ pub fn animate_bones(armature: &mut Armature, selection: &SelectionState, edit_m
                 continue;
             }
             let frame = anim.set_frame();
-            let anim_bones = armature.animated_bones.clone();
-            armature.animated_bones = Some(armature.animate(a, frame, Some(&anim_bones.unwrap())));
+            armature.animated_bones = Some(armature.animate(a, frame));
         }
     } else if edit_mode.anim_open && selection.anim != usize::MAX && selection.anim_frame != -1 {
         // display the selected animation's frame
-        armature.animated_bones =
-            Some(armature.animate(selection.anim, selection.anim_frame, None));
+        armature.animated_bones = Some(armature.animate(selection.anim, selection.anim_frame));
     } else {
         armature.animated_bones = None;
     }
