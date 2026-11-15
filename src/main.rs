@@ -36,6 +36,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 
     // setup default values for shared values
     let mut app = skelform_lib::App::default();
+    app.last_action_time = Some(std::time::Instant::now());
     init_shared(&mut app.shared);
 
     // open 'SkelForm has crashed' modal if there's an untagged crash log

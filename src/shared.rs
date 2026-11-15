@@ -1830,6 +1830,10 @@ impl Armature {
             &mut self.bones
         }
     }
+
+    pub fn is_any_anim_playing(&self) -> bool {
+        self.animations.iter().find(|anim| anim.elapsed != None) != None
+    }
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]

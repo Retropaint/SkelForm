@@ -1631,10 +1631,7 @@ pub fn animate_bones(armature: &mut Armature, selection: &SelectionState, edit_m
     // armature bones should normally be mutable to animation for smoothing,
     // but that's not ideal when editing
 
-    let anims = &armature.animations;
-    let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
-
-    if is_any_anim_playing {
+    if armature.is_any_anim_playing() {
         // runtime: playing animations (single & simultaneous)
         for a in 0..armature.animations.len() {
             let anim = &mut armature.animations[a];

@@ -1748,6 +1748,7 @@ fn edit_bone(
     mut anim_id: usize,
     mut anim_frame: i32,
 ) {
+    let is_any_anim_playing = armature.is_any_anim_playing();
     let eff = armature.bone_eff(bone_id);
     let bones = &mut armature.bones;
     let bone = bones.iter_mut().find(|b| b.id == bone_id).unwrap();
@@ -1767,8 +1768,6 @@ fn edit_bone(
     }
 
     // do nothing if anim is playing and 'edit while playing' config is false
-    let anims = &armature.animations;
-    let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
     if !config.edit_while_playing && is_any_anim_playing {
         return;
     }

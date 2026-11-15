@@ -119,6 +119,7 @@ pub struct App {
     #[cfg(target_arch = "wasm32")]
     pub renderer_receiver: Option<futures::channel::oneshot::Receiver<BackendRenderer>>,
     pub shared: shared::Shared,
+    pub last_action_time: Option<Instant>,
 }
 
 const IMG_FORMATS: [&str; 4] = ["webp", "png", "jpeg", "jpg"];
@@ -271,6 +272,13 @@ impl ApplicationHandler for App {
             //return;
         }
 
+        // repeatedly redraw if any of the following are true
+        let is_any_anim_playing = self.shared.armature.is_any_anim_playing();
+        let something_being_renamed = self.shared.ui.rename_id != "";
+        if is_any_anim_playing || something_being_renamed {
+            window.request_redraw();
+        }
+
         // If the gui didn't consume the event, handle it
         match event {
             WindowEvent::HoveredFile(_) => {
@@ -322,6 +330,13 @@ impl ApplicationHandler for App {
                 self.shared.renderer.point_buffer.dirty = true;
                 renderer.resize(width as u32, height as u32);
             }
+
+            // redraw window and reset action time if user input was detected
+            WindowEvent::KeyboardInput { .. } | WindowEvent::CursorMoved { .. } => {
+                self.last_action_time = Some(Instant::now());
+                window.request_redraw();
+            }
+
             WindowEvent::RedrawRequested => {
                 *last_render_time = Instant::now();
 
@@ -332,6 +347,7 @@ impl ApplicationHandler for App {
                         .set_cursor_position(winit::dpi::PhysicalPosition::new(mouse.x, mouse.y));
                 }
 
+                // window name stuff
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     let undo = &mut self.shared.undo_states;
@@ -368,6 +384,7 @@ impl ApplicationHandler for App {
                 let input = gui_state.take_egui_input(&window);
                 gui_state.egui_ctx().begin_pass(input);
 
+                // most keyboard inputs handled here
                 let s = &mut self.shared;
                 #[rustfmt::skip]
                 ui::process_inputs(
@@ -383,6 +400,7 @@ impl ApplicationHandler for App {
                     &mut s.armature, &s.copy_buffer, &s.renderer.temp_arm.bones
                 );
 
+                // backend egui stuff
                 let egui_winit::egui::FullOutput {
                     textures_delta,
                     shapes,
@@ -390,10 +408,8 @@ impl ApplicationHandler for App {
                     platform_output,
                     ..
                 } = gui_state.egui_ctx().end_pass();
-
                 gui_state.handle_platform_output(window, platform_output);
                 let paint_jobs = gui_state.egui_ctx().tessellate(shapes, pixels_per_point);
-
                 let size = window.inner_size();
                 let config = &renderer.gpu.surface_config;
                 let screen_descriptor = egui_wgpu::ScreenDescriptor {
@@ -401,6 +417,7 @@ impl ApplicationHandler for App {
                     pixels_per_point,
                 };
 
+                // make sure window is properly initialized at least once
                 if !self.shared.renderer.initialized_window && size.width != 0 && size.height != 0 {
                     renderer.resize(size.width as u32, size.height as u32);
                     self.shared.renderer.initialized_window = true;
@@ -430,10 +447,9 @@ impl ApplicationHandler for App {
                     .set_pixels_per_point(self.shared.ui.scale);
 
                 // ANIMATED_BUFFERS: set some render buffers to dirty if animating
-                let animations = &self.shared.armature.animations;
-                let is_any_anim_playing =
-                    animations.iter().find(|anim| anim.elapsed != None) != None;
-                if is_any_anim_playing || self.shared.edit_mode.edit_time < shared::PHYSICS_CUTOFF {
+                if self.shared.armature.is_any_anim_playing()
+                    || self.shared.edit_mode.edit_time < shared::PHYSICS_CUTOFF
+                {
                     self.shared.renderer.point_buffer.dirty = true;
                     self.shared.renderer.kite_buffer.dirty = true;
                     self.shared.renderer.bone_buffer.dirty = true;
@@ -493,6 +509,13 @@ impl ApplicationHandler for App {
                         &mut s.undo_states, &mut s.armature, &mut s.psd_armature, &mut s.copy_buffer, &mut s.ui, &mut s.renderer
                     );
                 }
+
+                // redraw repeatedly if these timers have not exceeded their limit
+                if self.last_action_time.unwrap().elapsed().as_secs() < 1
+                    || self.shared.edit_mode.edit_time < shared::PHYSICS_CUTOFF
+                {
+                    window.request_redraw();
+                }
             }
             _ => (),
         }
@@ -528,8 +551,6 @@ impl ApplicationHandler for App {
             }
             event_loop.exit();
         }
-
-        window.request_redraw();
     }
 }
 
@@ -916,10 +937,8 @@ impl BackendRenderer {
         }
 
         // process physics if an anim is playing, or an edit was just made
-        let anims = &shared.armature.animations;
-        let is_any_anim_playing = anims.iter().find(|anim| anim.elapsed != None) != None;
         let processing_physics = shared.edit_mode.edit_time < shared::PHYSICS_CUTOFF;
-        if !physics_bone_edited && (is_any_anim_playing || processing_physics) {
+        if !physics_bone_edited && (shared.armature.is_any_anim_playing() || processing_physics) {
             // apply runtime-based construction (including physics)
             shared.armature.bones = renderer::runtime_construction(
                 &mut shared.renderer.temp_arm.bones,
