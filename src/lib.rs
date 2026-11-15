@@ -930,8 +930,8 @@ impl BackendRenderer {
         // disable physics if current edited bone has physics properties.
         // this prevents the bone from being uncontrollable.
         let mut physics_bone_edited = false;
-        if shared.edit_mode.is_moving || shared.edit_mode.is_scaling || shared.edit_mode.is_rotating
-        {
+        let mode = &shared.edit_mode;
+        if mode.is_moving || mode.is_scaling || mode.is_rotating {
             let bone = shared.armature.sel_bone(&shared.selections).unwrap();
             physics_bone_edited = shared.armature.has_physics(bone.id);
         }
