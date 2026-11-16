@@ -283,6 +283,8 @@ impl ApplicationHandler for App {
         match event {
             WindowEvent::HoveredFile(_) => {
                 self.shared.events.open_modal("drop_file", true);
+                self.last_action_time = Some(Instant::now());
+                window.request_redraw();
             }
             WindowEvent::HoveredFileCancelled => {
                 self.shared.ui.modal = false;

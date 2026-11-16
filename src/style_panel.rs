@@ -1,5 +1,4 @@
 use crate::{
-    bone_panel,
     ui::{EguiUi, TextInputOptions},
     utils, Armature, Config, EventState, InputStates, SelectionState,
 };
@@ -47,7 +46,10 @@ pub fn draw(
                     // import texture (via file dialog)
                     #[cfg(not(target_arch = "wasm32"))]
                     {
-                        bone_panel::open_file_dialog(&shared_ui.file_paths, &shared_ui.file_type);
+                        crate::bone_panel::open_file_dialog(
+                            &shared_ui.file_paths,
+                            &shared_ui.file_type,
+                        );
                     }
                     #[cfg(target_arch = "wasm32")]
                     crate::clickFileInput(true);

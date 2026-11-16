@@ -23,10 +23,8 @@ use image::{GenericImage, ImageEncoder};
 use std::sync::Mutex;
 use std::{collections::HashMap, path::PathBuf};
 use zip::read::ZipFile;
-use zip::ZipArchive;
 
 use std::io::{Read, Write};
-use std::path::Path;
 
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
@@ -1287,7 +1285,7 @@ pub fn import<R: Read + std::io::Seek>(
 pub fn save_recent_paths(mut paths: Vec<String>) {
     // clean up paths and remove any that start with _
     paths.retain(|path| {
-        let filename = Path::new(path).file_name().unwrap();
+        let filename = std::path::Path::new(path).file_name().unwrap();
         let first_letter = filename.to_str().unwrap().to_string().chars().next();
         first_letter.unwrap() != '_'
     });
@@ -1804,7 +1802,7 @@ pub fn self_update() {
 
     // extract ffmpeg from zip
     let file = File::open(&destination).unwrap();
-    let mut archive = ZipArchive::new(file).unwrap();
+    let mut archive = zip::ZipArchive::new(file).unwrap();
 
     for i in 0..archive.len() {
         let mut entry = archive.by_index(i).unwrap();

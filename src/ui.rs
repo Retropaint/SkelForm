@@ -1,8 +1,8 @@
 //! Core user interface (UI) logic.
 use egui::{Color32, Context, Shadow, Stroke};
+use image::DynamicImage;
 use modal::modal_x;
 use utils::world_mouse;
-use image::DynamicImage;
 
 use crate::*;
 

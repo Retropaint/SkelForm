@@ -79,21 +79,21 @@ pub fn read(
 }
 
 /// read temporary files created from file dialogs (native & WASM)
-pub fn read_image_loaders(shared: &mut Shared) -> Option<(Vec<image::DynamicImage>, Vec<String>)> {
+pub fn read_image_loaders(_shared: &mut Shared) -> Option<(Vec<image::DynamicImage>, Vec<String>)> {
     let mut images: Vec<image::DynamicImage> = vec![];
     #[allow(unused_assignments, unused_mut)]
     let mut names: Vec<String> = vec![];
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if *shared.ui.file_type.lock().unwrap() != ImportedFileType::Image {
+        if *_shared.ui.file_type.lock().unwrap() != ImportedFileType::Image {
             return None;
         }
-        *shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
-        let len = shared.ui.file_paths.lock().unwrap().len();
+        *_shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
+        let len = _shared.ui.file_paths.lock().unwrap().len();
         for f in 0..len {
             // extract all imported images
-            let file = &shared.ui.file_paths.lock().unwrap()[f];
+            let file = &_shared.ui.file_paths.lock().unwrap()[f];
             let raw_name = file.as_path().file_name().unwrap();
             let name = raw_name.to_str().unwrap().to_string();
             if name.contains(".") {
@@ -651,23 +651,23 @@ pub fn add_texture(
     });
 }
 
-pub fn read_import(shared: &mut Shared) -> Option<(Vec<u8>, String, String)> {
+pub fn read_import(_shared: &mut Shared) -> Option<(Vec<u8>, String, String)> {
     let file;
     let filename: String;
     let filepath: String;
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        if *shared.ui.file_type.lock().unwrap() != ImportedFileType::Other {
+        if *_shared.ui.file_type.lock().unwrap() != ImportedFileType::Other {
             return None;
         }
-        *shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
-        let raw_filepath = &shared.ui.file_paths.lock().unwrap()[0];
+        *_shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
+        let raw_filepath = &_shared.ui.file_paths.lock().unwrap()[0];
 
         filepath = raw_filepath.as_path().to_str().unwrap().to_string();
         let raw_file = File::open(filepath.to_string());
         if let Err(err) = raw_file {
-            shared.events.open_file_err_modal(err.to_string());
+            _shared.events.open_file_err_modal(err.to_string());
             return None;
         }
 
@@ -691,7 +691,7 @@ pub fn read_import(shared: &mut Shared) -> Option<(Vec<u8>, String, String)> {
 
 pub fn import_file(
     filename: &String,
-    filepath: &String,
+    _filepath: &String,
     shared: &mut Shared,
     file: Vec<u8>,
     backend_renderer: &Option<&BackendRenderer>,
@@ -711,13 +711,13 @@ pub fn import_file(
             #[cfg(not(target_arch = "wasm32"))]
             {
                 utils::import(cursor, shared, backend_renderer, *context);
-                utils::add_to_recent_paths(filepath, &mut shared.ui.recent_file_paths);
+                utils::add_to_recent_paths(_filepath, &mut shared.ui.recent_file_paths);
             }
         }
         "psd" => {
             #[cfg(not(target_arch = "wasm32"))]
             {
-                let file = std::fs::read(filepath).unwrap();
+                let file = std::fs::read(_filepath).unwrap();
                 read_psd(file, shared, backend_renderer, *context);
             }
             #[cfg(target_arch = "wasm32")]
