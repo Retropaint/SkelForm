@@ -902,7 +902,7 @@ impl Default for Config {
             transform_scale_radius: 0.16,
             rot_snap_step: 22.5,
             bone_translucency: 0.25,
-            allow_same_name: false
+            allow_same_name: false,
         }
     }
 }
@@ -1598,7 +1598,12 @@ impl Armature {
     }
 
     pub fn get_all_parents(&self, is_anim: bool, bone_id: i32) -> Vec<Bone> {
-        let bones = self.try_anim_bones();
+        let bones = if is_anim {
+            &self.bones
+        } else {
+            self.try_anim_bones()
+        }
+        .clone();
 
         let bone = bones.iter().find(|b| b.id == bone_id).unwrap().clone();
 
