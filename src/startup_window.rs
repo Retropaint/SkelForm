@@ -361,7 +361,7 @@ fn right(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, conf: &Config) {
                                 let assets = utils::bin_path().join("assets");
                                 let file = fs::read(assets.join("i18n").join(language));
                                 if let Ok(file) = file {
-                                    //shared_ui.init_lang(&file, "");
+                                    shared_ui.init_lang(&file, "");
                                 }
                             }
                             #[cfg(target_arch = "wasm32")]
@@ -375,6 +375,7 @@ fn right(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, conf: &Config) {
                         }
                     }
 
+                    let item = &shared_ui.startup.resources[i];
                     for sub in &item.items {
                         if item.language {
                             break;

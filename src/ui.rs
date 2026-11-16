@@ -78,7 +78,6 @@ pub fn draw(
             .fixed_pos(Vec2::new(pos.x, pos.y))
             .order(egui::Order::Foreground);
         area.show(context, |ui| {
-            let id = &shared_ui.context_menu.id;
             let frame = egui::Frame::popup(ui.style());
             let response = frame.show(ui, |ui| {
                 if shared_ui.context_menu.pos == Vec2::new(-1., -1.) {
@@ -252,7 +251,6 @@ pub fn draw(
     // get current properties of selected bone, including animations
     let mut selected_bone = Bone::default();
     if selections.bone_ids.len() != 0 {
-        let bone_id = selections.bone_ids[0];
         selected_bone = armature
             .try_anim_bones()
             .iter()
