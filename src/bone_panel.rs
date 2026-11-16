@@ -1279,8 +1279,21 @@ pub fn visuals(
 
     ui.horizontal(|ui| {
         ui.label(&shared_ui.loc("bone_panel.zindex"));
-        let widgets_width = 70.;
+
+        // if exists, show same z-index warning for this bone
+        let warnings: Vec<&Warning> = shared_ui
+            .warnings
+            .iter()
+            .filter(|w| w.warn_type == Warnings::SameZIndex && w.ids.contains(&(bone.id as usize)))
+            .collect();
+
+        let widgets_width = if warnings.len() > 0 { 92. } else { 70. };
         ui.add_space(ui.available_width() - widgets_width);
+
+        if warnings.len() > 0 {
+            ui.label(egui::RichText::new("⚠").color(config.colors.warning_text))
+                .on_hover_text(shared_ui.loc("bone_panel.same_zindex_warning"));
+        }
 
         // zindex input
         let zindex = bone.zindex as f32;

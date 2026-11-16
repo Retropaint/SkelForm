@@ -225,6 +225,7 @@
     "target_bone": "Target of: ",
     "group_color_desc": "Color used to represent this bone and it's children.\n\nSet alpha to 0 to use default color.",
     "no_pivots_during_meshes": "Meshes cannot have pivots.\nTo edit this bone's pivot, reset its vertices.",
+    "same_zindex_warning": "Other bones have the same z-index.\n\nCheck warnings (top-right) for more info.",
     "inverse_kinematics": {
       "heading": "Inverse Kinematics",
       "desc": "Automatically adjust and bend bones to reach a specified target.\nBest used for joints like shoulders and legs.\n\nAfter the joints have been set up, click the checkbox next to this header to activate IK.",
