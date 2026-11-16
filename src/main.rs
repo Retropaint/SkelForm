@@ -11,6 +11,11 @@ use std::io::{Read, Write};
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
 
+#[cfg(not(target_arch = "wasm32"))]
+pub use std::time::Instant;
+#[cfg(target_arch = "wasm32")]
+pub use web_time::Instant;
+
 pub const CRASHLOG_END: &str = "###";
 
 #[cfg(feature = "dhat")]
@@ -36,7 +41,7 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 
     // setup default values for shared values
     let mut app = skelform_lib::App::default();
-    app.last_action_time = Some(std::time::Instant::now());
+    app.last_action_time = Some(Instant::now());
     init_shared(&mut app.shared);
 
     // open 'SkelForm has crashed' modal if there's an untagged crash log

@@ -314,7 +314,7 @@ fn right(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, conf: &Config) {
                         let heading = ui.clickable_label(text);
                         if heading.clicked() {
                             if !item.update_checker {
-                                open_link(&item, &item.url_type);
+                                open_item_link(&item, &item.url_type);
                             } else {
                                 shared_ui.checking_update = true;
                             }
@@ -403,7 +403,7 @@ fn right(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, conf: &Config) {
                                 .size(sub_size);
                             let sub_text = ui.clickable_label(text);
                             if sub_text.clicked() {
-                                open_link(&sub, &item.url_type);
+                                open_item_link(&sub, &item.url_type);
                             }
                         });
                         ui.add_space(sub_line_height);
@@ -793,12 +793,16 @@ pub fn file_button_icon(
         .on_hover_text(name)
 }
 
-fn open_link(item: &StartupResourceItem, url_type: &StartupItemType) {
+fn open_link(url: &str) {
+    #[cfg(not(target_arch = "wasm32"))]
+    let _ = open::that(url);
+    #[cfg(target_arch = "wasm32")]
+    crate::openLink(url);
+}
+
+fn open_item_link(item: &StartupResourceItem, url_type: &StartupItemType) {
     if *url_type == StartupItemType::Custom {
-        #[cfg(not(target_arch = "wasm32"))]
-        let _ = open::that(item.url.clone());
-        #[cfg(target_arch = "wasm32")]
-        crate::openLink(item.url.clone());
+        open_link(&item.url);
     } else {
         utils::open_docs(*url_type == StartupItemType::DevDocs, &item.url);
     }

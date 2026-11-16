@@ -8,7 +8,6 @@ mod web {
     pub use web_sys::*;
     pub use zip::write::FileOptions;
 }
-use fs::File;
 use image::buffer::ConvertBuffer;
 use image::{RgbImage, Rgba, RgbaImage};
 use max_rects::packing_box::PackingBox;
@@ -17,6 +16,8 @@ use warnings::check_warnings;
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
 
+#[cfg(not(target_arch = "wasm32"))]
+use fs::File;
 use image::{GenericImage, ImageEncoder};
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::Mutex;
@@ -1566,7 +1567,7 @@ pub fn process_screenshot_raw(
     rgba
 }
 
-pub fn markdown(mut str: String) -> String {
+pub fn markdown(str: String) -> String {
     #[allow(unused_mut)]
     let mut user_docs = "https://skelform.org/user-docs".to_string();
     #[allow(unused_mut)]
@@ -1589,10 +1590,8 @@ pub fn markdown(mut str: String) -> String {
         };
     }
 
-    str = str
-        .replace("user-docs", &user_docs)
-        .replace("dev-docs", &dev_docs);
-    str
+    str.replace("user-docs", &user_docs)
+        .replace("dev-docs", &dev_docs)
 }
 
 // Simulate text being added to egui and truncate it to fit the max width
@@ -1725,7 +1724,7 @@ pub fn color_within_range(src: [u8; 3], dst: [u8; 3], tol: u8) -> bool {
 
 pub fn open_link(url: &str) {
     #[cfg(target_arch = "wasm32")]
-    crate::openLink(url.to_string());
+    crate::openLink(url);
     #[cfg(not(target_arch = "wasm32"))]
     {
         _ = open::that(url);
@@ -1765,6 +1764,7 @@ pub fn shortest_angle_delta(from: f32, to: f32) -> f32 {
     delta
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn self_update() {
     let url = "https://skelform.org/versions.json";
     let request = ureq::get(url).header("Example-Header", "header value");

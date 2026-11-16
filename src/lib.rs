@@ -91,7 +91,7 @@ extern "C" {
     pub fn openDocumentation(docs_name: String, path: String);
     pub fn updateUiSlider();
     pub fn downloadSample(filename: String);
-    pub fn openLink(url: String);
+    pub fn openLink(url: &str);
     pub fn isMobile() -> bool;
     pub fn clickFileInput(isImage: bool);
     pub fn hasElement(id: &str) -> bool;

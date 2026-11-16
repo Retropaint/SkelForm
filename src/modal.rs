@@ -1,4 +1,9 @@
-use crate::{shared::Display, ui::EguiUi, utils, Config, PolarId};
+use crate::{
+    shared::Display,
+    ui::EguiUi,
+    utils::{self, open_link},
+    Config, PolarId,
+};
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
     ctx: &egui::Context,
@@ -113,7 +118,7 @@ pub fn polar_modal(
                     let str = egui::RichText::new(shared_ui.loc("startup.versions_link"))
                         .color(config.colors.link);
                     if ui.clickable_label(str).clicked() {
-                        open::that("https://github.com/Retropaint/SkelForm/releases").unwrap();
+                        open_link("https://github.com/Retropaint/SkelForm/releases");
                     };
                 });
             }
@@ -246,7 +251,7 @@ pub fn donating_modal(ctx: &egui::Context, shared_ui: &mut crate::Ui, config: &C
 
                 #[cfg(target_arch = "wasm32")]
                 {
-                    crate::openLink("https://ko-fi.com/retropaintt".to_string());
+                    crate::openLink(&"https://ko-fi.com/retropaintt");
                 }
 
                 // wait a second before closing
@@ -319,8 +324,7 @@ pub fn lang_import_modal(
                 #[cfg(target_arch = "wasm32")]
                 {
                     crate::openLink(
-                        "https://github.com/Retropaint/SkelForm/tree/master/assets/i18n"
-                            .to_string(),
+                        &"https://github.com/Retropaint/SkelForm/tree/master/assets/i18n",
                     );
                 }
             }
