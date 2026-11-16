@@ -280,19 +280,28 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config)
         true,
     );
 
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("settings_modal.editing.allow_same_name"),
+        &shared_ui.loc("settings_modal.editing.allow_same_name_desc"),
+        &mut shared_ui.updated_config.allow_same_name,
+        config,
+        false,
+    );
+
     shared_ui.updated_config.rot_snap_step = basic_input(
         "settings_modal.editing.rot_snap_step",
         shared_ui.updated_config.rot_snap_step,
         shared_ui,
         ui,
         config,
-        false,
+        true,
     );
 
     let trans_str = "settings_modal.editing.bone_translucency";
     let trans = shared_ui.updated_config.bone_translucency;
     shared_ui.updated_config.bone_translucency =
-        basic_input(trans_str, trans, shared_ui, ui, config, true)
+        basic_input(trans_str, trans, shared_ui, ui, config, false)
             .max(0.)
             .min(1.);
 
@@ -302,8 +311,10 @@ fn editing(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::Config)
         shared_ui,
         ui,
         config,
-        false,
+        true,
     );
+
+    // Transform Rings
 
     ui.add_space(10.);
     ui.heading(shared_ui.loc("settings_modal.editing.transform_rings.heading"));

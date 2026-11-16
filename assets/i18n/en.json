@@ -327,6 +327,8 @@
       "rot_snap_step": "Rotation snap step (degrees): ",
       "bone_translucency": "Bone translucency:",
       "bone_translucency_desc": "How transparent (0-1) other bones should be if not selected",
+      "allow_same_name": "Allow same-name bones",
+      "allow_same_name_desc": "By default, bones are not allowed to have the same name to prevent conflicts in animation.\n\nTick this to enable it (warnings will still appear for the respective bones).",
       "transform_rings": {
         "heading": "Transform Rings",
         "enabled": "Enabled:",

@@ -849,6 +849,7 @@ pub struct Config {
     pub transform_scale_radius: f32,
     pub rot_snap_step: f32,
     pub bone_translucency: f32,
+    pub allow_same_name: bool,
 
     #[serde(skip)]
     pub colors: ColorConfig,
@@ -901,6 +902,7 @@ impl Default for Config {
             transform_scale_radius: 0.16,
             rot_snap_step: 22.5,
             bone_translucency: 0.25,
+            allow_same_name: false
         }
     }
 }

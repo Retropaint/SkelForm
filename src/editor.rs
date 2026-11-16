@@ -54,10 +54,6 @@ pub fn iterate_events(
             }
             _ => {}
         };
-
-        if event == E::Undo || event == E::Redo {
-            ui.warnings = warnings::check_warnings(&armature);
-        }
     }
 
     if event == Events::UpdateRenderOptions {
@@ -489,10 +485,12 @@ pub fn simple_event(
         Events::Undo => {
             undo_redo(true, undo_states, armature, selections);
             ui.changed_window_name = false;
+            ui.warnings = check_warnings(armature);
         }
         Events::Redo => {
             undo_redo(false, undo_states, armature, selections);
             ui.changed_window_name = false;
+            ui.warnings = check_warnings(armature);
         }
         Events::ResetConfig => {
             if let Ok(data) = serde_json::from_str(&utils::config_str()) {
@@ -504,7 +502,7 @@ pub fn simple_event(
         }
         Events::RenameBone => {
             let idx = armature.bones.iter().position(|b| b.name == str_value);
-            if idx != None {
+            if idx != None && !config.allow_same_name {
                 // there's another bone with the same name
                 ui.context_menu.id = format!("bone_{}", idx.unwrap());
                 ui.polar_id = PolarId::GoToSameNameBone;
