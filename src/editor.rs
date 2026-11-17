@@ -1049,22 +1049,23 @@ pub fn simple_event(
             }
 
             let style = style.unwrap();
-            let t = value as usize;
-            let og_name = style.textures[t].name.clone();
             let trimmed = str_value.trim_start().trim_end().to_string();
-            style.textures[t].name = trimmed.clone();
             let tex_names: Vec<String> = style.textures.iter().map(|t| t.name.clone()).collect();
 
             let filter = tex_names.iter().filter(|name| **name == trimmed);
-            if filter.count() > 1 {
-                style.textures[t].name = og_name.clone();
+            if filter.count() > 0 {
+                // already 1 or more textures with this name - don't do anything
                 open_modal(ui, false, ui.loc("styles_modal.same_name"));
-            }
+            } else {
+                let og_name = style.textures[value as usize].name.clone();
+                style.textures[value as usize].name = trimmed.clone();
 
-            if !config.keep_tex_str {
-                for bone in &mut armature.bones {
-                    if bone.tex != "" && bone.tex == og_name {
-                        bone.tex = trimmed.clone();
+                if !config.keep_tex_str {
+                    // change all bone tex names to point to the new one
+                    for bone in &mut armature.bones {
+                        if bone.tex != "" && bone.tex == og_name {
+                            bone.tex = trimmed.clone();
+                        }
                     }
                 }
             }
