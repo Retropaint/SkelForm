@@ -379,6 +379,7 @@ pub fn iterate_events(
         selections.tex_ids = vec![];
 
         ui.dragging_element = "".to_string();
+        ui.warnings = check_warnings(armature);
 
         events.events.remove(0);
         events.values.drain(0..=1);
@@ -1062,6 +1063,8 @@ pub fn simple_event(
                     }
                 }
             }
+
+            ui.warnings = check_warnings(armature);
         }
         Events::OpenFileErrModal => {
             open_modal(ui, false, ui.loc("import_err") + &str_value);

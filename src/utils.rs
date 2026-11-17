@@ -820,6 +820,7 @@ pub fn prepare_files(
         armature_copy.styles[s].id = s as i32;
         for t in 0..armature.styles[s].textures.len() {
             let tex = &mut armature_copy.styles[s].textures[t];
+            tex.id = t as i32;
             tex.ser_offset = Vec2I::new(tex.offset.x as i32, tex.offset.y as i32);
             tex.ser_size = Vec2I::new(tex.size.x as i32, tex.size.y as i32);
         }
@@ -1122,6 +1123,9 @@ pub fn import<R: Read + std::io::Seek>(
     // populate style ids
     for s in 0..temp_arm.styles.len() {
         temp_arm.styles[s].id = s as i32;
+        for t in 0..temp_arm.styles[s].textures.len() {
+            temp_arm.styles[s].textures[t].id = t as i32;
+        }
     }
 
     // populate bone IK data

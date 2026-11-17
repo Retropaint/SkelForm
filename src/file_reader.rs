@@ -640,8 +640,10 @@ pub fn add_texture(
     if *style == None {
         return;
     }
+    let tex_len = style.as_ref().unwrap().textures.len();
     style.as_mut().unwrap().textures.push(crate::Texture {
         offset: Vec2::ZERO,
+        id: tex_len as i32 + 1,
         size: dimensions,
         name: tex_name.to_string(),
         ser_offset: Vec2I::new(0, 0),

@@ -480,6 +480,7 @@ pub enum Warnings {
     #[default]
     SameNameBones,
     BlockedStyles,
+    BlockedTextures,
     SameZIndex,
     NoIkTarget,
     OnlyIk,
@@ -1909,6 +1910,7 @@ impl Vec2I {
 #[serde(default)]
 pub struct Texture {
     pub name: String,
+    pub id: i32,
 
     #[serde(skip)]
     pub offset: Vec2,

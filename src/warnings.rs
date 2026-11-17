@@ -148,16 +148,13 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
 
         for s0 in 0..armature.styles.len() {
             let style0 = &armature.styles[s0];
-            if !style0.active {
+            if !style0.active || style0.textures.is_empty() {
                 continue;
             }
             for s1 in 0..armature.styles.len() {
-                if s1 >= s0 {
-                    break;
-                }
                 let style1 = &armature.styles[s1];
-                if !style1.active {
-                    continue;
+                if s1 >= s0 || !style1.active || style1.textures.is_empty() {
+                    break;
                 }
 
                 let texes0: Vec<String> = style0.textures.iter().map(|t| t.name.clone()).collect();
@@ -216,6 +213,43 @@ pub fn check_warnings(armature: &Armature) -> Vec<Warning> {
         for group in name_groups {
             let anim_name = vec![group.1.clone()];
             warnings.push(Warning::full(warn.clone(), group.2, 0., anim_name));
+        }
+    }
+
+    // Warning::BlockedTextures
+    {
+        // a texture is blocked if there is another of the same name above it
+        let warn = W::BlockedTextures;
+        let mut groups: Vec<(usize, Vec<usize>)> = vec![];
+
+        for style in &armature.styles {
+            'tex: for tex in &style.textures {
+                for group in &groups {
+                    if group.1.contains(&(tex.id as usize)) {
+                        continue 'tex;
+                    }
+                }
+                let textures: Vec<&Texture> = style
+                    .textures
+                    .iter()
+                    .filter(|t| t.name == tex.name)
+                    .collect();
+                if textures.len() > 1 {
+                    groups.push((
+                        style.id as usize,
+                        textures.iter().map(|t| t.id as usize).collect(),
+                    ));
+                }
+            }
+        }
+
+        for group in &groups {
+            warnings.push(Warning::full(
+                warn.clone(),
+                group.1.clone(),
+                group.0 as f32,
+                vec![],
+            ));
         }
     }
 
@@ -367,6 +401,24 @@ pub fn warning_line(
                 .replace("$anim", &warning.str_values[0]);
             let tooltip = shared_ui.loc("warnings.SameNameBones_desc");
             bone_list(str, tooltip, ui, warning, bones, events, warn_color);
+        }
+        W::BlockedTextures => {
+            let style = &armature.styles;
+            let style = style.iter().find(|s| s.id == warning.value as i32).unwrap();
+            let str = shared_ui
+                .loc("warnings.BlockedTextures")
+                .replace("$style", &style.name);
+            ui.label(egui::RichText::new(str).color(warn_color))
+                .on_hover_text(
+                    shared_ui
+                        .loc("warnings.BlockedTextures_desc")
+                        .replace("$style", &style.name)
+                        .replace("$tex_len", &warning.ids.len().to_string()),
+                );
+            let textures = &style.textures;
+            let warn_id = warning.ids[0] as i32;
+            let tex_name = &textures.iter().find(|b| b.id == warn_id).unwrap().name;
+            ui.label(tex_name);
         }
     }
 }
