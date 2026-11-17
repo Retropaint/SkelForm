@@ -1043,7 +1043,12 @@ pub fn simple_event(
             selections.bind = -1;
         }
         Events::RenameTex => {
-            let style = armature.sel_style_mut(&selections).unwrap();
+            let style = armature.sel_style_mut(&selections);
+            if style == None {
+                return;
+            }
+
+            let style = style.unwrap();
             let t = value as usize;
             let og_name = style.textures[t].name.clone();
             let trimmed = str_value.trim_start().trim_end().to_string();
