@@ -476,6 +476,7 @@
     "import": "Import",
     "empty": "Empty",
     "texture_desc": "Drag to a bone to set this as it's texture.\nDrag above/below another texture to change order.",
+    "blocked_texture_desc": "There is another texture with this name in this style.\n\nAll textures must have unique names to prevent conflicts.",
     "img_name": "Name: ",
     "img_size": "Size: "
   },
