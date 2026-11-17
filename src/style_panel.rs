@@ -112,6 +112,7 @@ pub fn draw_texture_list(
                         focus: true,
                         placeholder: "Texture".to_string(),
                         default: "Texture".to_string(),
+                        size: crate::Vec2::new(ui.available_width(), 21.),
                         ..Default::default()
                     });
                     let (edited, value, _) =
