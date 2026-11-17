@@ -445,8 +445,10 @@ pub fn render(
         let mut verts = vec![];
         let mut indices = vec![];
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
+        let hiddens = armature.get_propagated_hidden();
         for bone in &renderer.temp_arm.bones {
-            if bone.verts_edited || bone.hidden {
+            let is_hidden = hiddens.get(&bone.id) == None || *hiddens.get(&bone.id).unwrap();
+            if bone.verts_edited || is_hidden {
                 continue;
             }
 
@@ -480,12 +482,14 @@ pub fn render(
     if edit_mode.render_options.meshes {
         let mut verts = vec![];
         let mut indices = vec![];
+        let hiddens = armature.get_propagated_hidden();
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         for b in 0..renderer.temp_arm.bones.len() {
             let bone = &renderer.temp_arm.bones[b];
             let already_editing =
                 edit_mode.editing_mesh && armature.sel_bone(&sel).unwrap().id == bone.id;
-            if !bone.verts_edited || bone.hidden || already_editing {
+            let is_hidden = hiddens.get(&bone.id) == None || *hiddens.get(&bone.id).unwrap();
+            if !bone.verts_edited || is_hidden || already_editing {
                 continue;
             }
 
