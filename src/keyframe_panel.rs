@@ -94,10 +94,13 @@ pub fn draw(
     let bezier_frame = egui::Frame::new().fill(config.colors.dark_accent.into());
     let mut dragged = false;
     ui.add_enabled_ui(keyframe.handle_preset != HandlePreset::Snap, |ui| {
+        let rect = Rect::from_min_size(ui.cursor().min, egui::Vec2::splat(ui.available_width()));
         bezier_frame.show(ui, |ui| {
-            dragged = bezier_graph(ui, &mut keyframe);
+            dragged = bezier_graph(ui, &mut keyframe, rect, config);
         });
     });
+
+    ui.add_space(ui.available_width());
 
     if !dragged {
         shared_ui.dragging_handles = false;
@@ -156,20 +159,20 @@ pub fn draw(
     }
 }
 
-pub fn bezier_graph(ui: &mut egui::Ui, keyframe: &mut Keyframe) -> bool {
-    let size = egui::Vec2::new(ui.available_width(), ui.available_width());
-    let (response, painter) = ui.allocate_painter(size, Sense::hover());
+pub fn bezier_graph(
+    ui: &mut egui::Ui,
+    keyframe: &mut Keyframe,
+    rect: Rect,
+    config: &Config,
+) -> bool {
+    let size = rect.size();
     let mut dragged = false;
 
+    // used to translate positions from a rect at origin, to the requested rect
     let to_screen = egui::emath::RectTransform::from_to(
-        egui::Rect::from_min_size(Pos2::ZERO, response.rect.size()),
-        response.rect,
+        egui::Rect::from_min_size(Pos2::ZERO, rect.size()),
+        rect,
     );
-
-    let col_prev = Color32::from_rgb(200, 25, 25);
-    let col_next = Color32::from_rgb(25, 100, 200);
-
-    let control_point_radius = 8.0;
 
     let start_handle = keyframe.start_handle;
     let end_handle = keyframe.end_handle;
@@ -180,64 +183,75 @@ pub fn bezier_graph(ui: &mut egui::Ui, keyframe: &mut Keyframe) -> bool {
         pos2(size.x, 0.0),
     ];
 
-    let control_point_shapes: Vec<Shape> = control_points
-        .iter_mut()
-        .enumerate()
-        .map(|(i, point)| {
-            if i == 0 || i == 3 {
-                return Shape::circle_stroke([-100., -100.].into(), 0., egui::Stroke::default());
-            }
+    let radius = 8.0;
+    let mut col_prev = Color32::from_rgb(200, 25, 25);
+    let mut col_next = Color32::from_rgb(25, 100, 200);
+    for p in 0..control_points.len() {
+        let point = &mut control_points[p];
+        if p == 0 || p == 3 {
+            continue;
+        }
 
-            let size = egui::Vec2::splat(2.0 * control_point_radius);
-            let point_in_screen = to_screen.transform_pos(*point);
-            let point_rect = Rect::from_center_size(point_in_screen, size);
-            let point_response = ui.interact(point_rect, response.id.with(i), Sense::drag());
+        let size = egui::Vec2::splat(2.0 * radius);
+        let point_in_screen = to_screen.transform_pos(*point);
+        let point_rect = Rect::from_center_size(point_in_screen, size);
+        let point_response = ui.interact(
+            point_rect,
+            egui::Id::new(format!("{}p{}", rect.left(), p)),
+            Sense::drag(),
+        );
 
-            *point += point_response.drag_delta();
-            *point = to_screen.from().clamp(*point);
+        *point += point_response.drag_delta();
+        *point = to_screen.from().clamp(*point);
 
-            if point_response.dragged() {
-                dragged = true;
-            }
+        if point_response.dragged() {
+            dragged = true;
+        }
 
-            let mut col = if i == 1 { col_prev } else { col_next };
-            if point_response.contains_pointer() {
-                col = col + Color32::from_rgb(40, 40, 40);
-            }
-            Shape::circle_filled(to_screen.transform_pos(*point), control_point_radius, col)
-        })
-        .collect();
+        if point_response.contains_pointer() {
+            let col = if p == 1 { &mut col_prev } else { &mut col_next };
+            *col = *col + Color32::from_rgb(40, 40, 40);
+        }
+    }
 
-    let points_in_screen: Vec<Pos2> = control_points
+    // draw rect
+    ui.painter()
+        .rect_filled(rect, 0.0, config.colors.dark_accent);
+
+    let screen_points: Vec<Pos2> = control_points
         .iter()
         .take(4)
         .map(|p| to_screen * *p)
         .collect();
 
-    let bounding_box_stroke = Stroke::new(0.0, Color32::LIGHT_GREEN.linear_multiply(0.25));
-    let stroke = Stroke::new(1.0, Color32::from_rgb(25, 200, 100));
-    let points = points_in_screen.clone().try_into().unwrap();
-    let empty = egui::Color32::default();
-    let shape = egui::epaint::CubicBezierShape::from_points_stroke(points, false, empty, stroke);
-    #[rustfmt::skip]
-    painter.add(epaint::RectShape::stroke(shape.visual_bounding_rect(), 0.0, bounding_box_stroke, StrokeKind::Outside));
-    painter.add(shape);
+    // draw bezier curve
+    ui.painter()
+        .add(egui::epaint::CubicBezierShape::from_points_stroke(
+            screen_points.clone().try_into().unwrap(),
+            false,
+            egui::Color32::default(),
+            Stroke::new(1.0, Color32::from_rgb(25, 200, 100)),
+        ));
 
-    let points = control_points;
+    // draw lines
+    let p0p1: Vec<Pos2> = screen_points[0..=1].into();
+    let p2p3: Vec<Pos2> = screen_points[2..=3].into();
+    ui.painter().line(p0p1, Stroke::new(1., col_prev));
+    ui.painter().line(p2p3, Stroke::new(1., col_next));
+
+    // draw circles
+    ui.painter()
+        .circle_filled(screen_points[1], radius, col_prev);
+    ui.painter()
+        .circle_filled(screen_points[2], radius, col_next);
+
     if keyframe.handle_preset != HandlePreset::Snap {
-        let p1 = Vec2::new(points[1].x / size.x, 1. - (points[1].y / size.y));
-        let p2 = Vec2::new(points[2].x / size.x, 1. - (points[2].y / size.y));
+        let cp = &control_points;
+        let p1 = Vec2::new(cp[1].x / size.x, 1. - (cp[1].y / size.y));
+        let p2 = Vec2::new(cp[2].x / size.x, 1. - (cp[2].y / size.y));
         keyframe.start_handle = p1;
         keyframe.end_handle = p2;
     }
 
-    let prev = Stroke::new(1., col_prev);
-    let next = Stroke::new(1., col_next);
-    let cp = &control_points;
-    let p0p1: Vec<Pos2> = cp[0..=1].iter().map(|p| to_screen * *p).collect();
-    let p2p3: Vec<Pos2> = cp[2..=3].iter().map(|p| to_screen * *p).collect();
-    painter.add(egui::epaint::PathShape::line(p0p1, prev));
-    painter.add(egui::epaint::PathShape::line(p2p3, next));
-    painter.extend(control_point_shapes);
     dragged
 }
