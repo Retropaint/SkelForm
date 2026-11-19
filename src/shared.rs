@@ -735,6 +735,8 @@ pub struct Ui {
 
     pub pointer_on_armature: bool,
     pub hovering_on_resizer: bool,
+
+    pub anim_transitions: bool
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]

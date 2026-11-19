@@ -2,6 +2,7 @@
 
 use egui::{scroll_area::ScrollSource, Stroke};
 
+use keyframe_panel::bezier_graph;
 use ui::{EguiUi, TextInputOptions};
 
 use crate::*;
@@ -723,14 +724,82 @@ pub fn draw_timeline_graph(
                 // keep cursor on the frame
                 cursor.y -= shared_ui.timeline_offset.y;
 
-                draw_frame_lines(
-                    ui, shared_ui, armature, config, input, selections, events, hitbox, cursor,
-                );
+                setup_frame_lines(ui, shared_ui, hitbox);
+
+                if shared_ui.anim_transitions {
+                    let anim = armature.sel_anim(&selections).unwrap();
+                    draw_transitions(ui, anim, shared_ui, config, events);
+                } else {
+                    draw_frame_lines(
+                        ui, shared_ui, armature, config, input, selections, events, hitbox, cursor,
+                    );
+                }
             });
 
             shared_ui.timeline_offset = response.state.offset.into();
         });
     });
+}
+
+pub fn draw_transitions(
+    ui: &mut egui::Ui,
+    anim: &Animation,
+    shared_ui: &mut Ui,
+    config: &Config,
+    events: &mut EventState,
+) {
+    let mut prev_frame = 0;
+    let mut current_frame = 0;
+    for kf in &anim.keyframes {
+        // draw frame line
+        let range = egui::Rangef {
+            min: ui.min_rect().top() - 99.,
+            max: ui.min_rect().top() + 999999.,
+        };
+        let color = config.colors.frameline.into();
+        ui.painter().vline(
+            ui.min_rect().left() + shared_ui.lines_x[current_frame],
+            range,
+            Stroke { width: 2., color },
+        );
+
+        if current_frame == kf.frame as usize {
+            continue;
+        }
+        current_frame = kf.frame as usize;
+        let mut keyframe = kf.clone();
+        let ui_rect = ui.min_rect();
+        let pos = egui::Pos2::new(
+            ui_rect.left() + shared_ui.lines_x[prev_frame],
+            ui_rect.top(),
+        );
+        let size = egui::Vec2::new(
+            shared_ui.lines_x[current_frame] - shared_ui.lines_x[prev_frame],
+            ui.available_height(),
+        );
+        let rect = egui::Rect::from_min_size(pos, size);
+
+        if !bezier_graph(ui, &mut keyframe, rect, config) {
+            shared_ui.dragging_handles = false;
+        } else {
+            // process bezier dragging
+            if !shared_ui.dragging_handles {
+                events.save_animation();
+                shared_ui.dragging_handles = true;
+            }
+            events.update_keyframe_transition(
+                current_frame as i32,
+                true,
+                keyframe.start_handle,
+                -1,
+            );
+            events.update_keyframe_transition(current_frame as i32, false, keyframe.end_handle, -1);
+        }
+
+        if prev_frame != current_frame {
+            prev_frame = current_frame;
+        }
+    }
 }
 
 pub fn draw_bottom_bar(
@@ -809,7 +878,7 @@ pub fn draw_bottom_bar(
                     .speed(0.1)
                     .update_while_editing(false),
             );
-            if frame != sel.anim_frame {
+            if frame != sel.anim_frame && frame >= 0 {
                 events.select_anim_frame(frame as usize, false, false);
             }
 
@@ -862,8 +931,28 @@ pub fn draw_bottom_bar(
                     shared_ui.adjusting_anim_speed = -999.;
                 }
             }
+
+            let trans_str = if shared_ui.anim_transitions {
+                "Keyframes"
+            } else {
+                "Transitions"
+            };
+            if ui.skf_button(trans_str).clicked() {
+                shared_ui.anim_transitions = !shared_ui.anim_transitions;
+            }
         });
     });
+}
+
+fn setup_frame_lines(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, hitbox: f32) {
+    shared_ui.lines_x = vec![];
+    let mut x = 0.;
+    let mut i = 0;
+    while x < ui.min_rect().width() {
+        x = i as f32 * hitbox * 2. + LINE_OFFSET;
+        shared_ui.lines_x.push(x);
+        i += 1;
+    }
 }
 
 /// Draw all lines representing frames in the timeline.
@@ -878,7 +967,6 @@ fn draw_frame_lines(
     hitbox: f32,
     cursor: Vec2,
 ) {
-    shared_ui.lines_x = vec![];
     let mut selected_line_x = 0.;
     let mut hovered_line_x = -1.;
     let panel = shared_ui.keyframe_panel_rect;
@@ -890,23 +978,20 @@ fn draw_frame_lines(
     };
     let painter = ui.painter();
 
-    let mut x = 0.;
-    let mut i = 0;
-    while x < ui.min_rect().width() {
-        x = i as f32 * hitbox * 2. + LINE_OFFSET;
-        shared_ui.lines_x.push(x);
+    for i in 0..shared_ui.lines_x.len() {
+        let x = shared_ui.lines_x[i];
 
         let mut color: egui::Color32 = config.colors.frameline.into();
 
         // use different color for frameline if it exceeds last keyframe
         let last_keyframe = armature.animations[selections.anim].keyframes.last();
-        if last_keyframe != None && i > last_keyframe.unwrap().frame {
+        if last_keyframe != None && i > last_keyframe.unwrap().frame as usize {
             color = config.colors.dark_accent.into();
         }
 
         // brighten frameline if current animation is playing, and on this frame
         let anim = &armature.animations[selections.anim];
-        if i == anim.get_frame() && anim.elapsed != None {
+        if i == anim.get_frame() as usize && anim.elapsed != None {
             color = color + egui::Color32::from_rgb(60, 60, 60);
         }
 
@@ -918,14 +1003,14 @@ fn draw_frame_lines(
         let cur = cursor;
         let is_in = can_hover && cur.x < x + hitbox && cur.x > x - hitbox && below_top_bar;
 
-        if selections.anim_frame == i {
+        if selections.anim_frame as usize == i {
             selected_line_x = ui.min_rect().left() + x;
-        } else if i != 0 && i % anim.fps == 0 {
+        } else if i != 0 && i % anim.fps as usize == 0 {
             color = color + egui::Color32::from_rgb(20, 20, 20);
         }
         if is_in && !shared_ui.hovering_diamond && !shared_ui.bone_panel_popup_open {
             color = egui::Color32::from_rgb(175, 175, 175);
-            shared_ui.hovering_frame = i;
+            shared_ui.hovering_frame = i as i32;
             hovering = true;
             hovered_line_x = ui.min_rect().left() + x;
 
@@ -946,8 +1031,6 @@ fn draw_frame_lines(
 
         // draw the line!
         painter.vline(ui.min_rect().left() + x, range, Stroke { width: 2., color });
-
-        i += 1;
     }
 
     if !hovering {
