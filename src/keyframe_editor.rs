@@ -728,7 +728,7 @@ pub fn draw_timeline_graph(
 
                 if shared_ui.anim_transitions {
                     let anim = armature.sel_anim(&selections).unwrap();
-                    draw_transitions(ui, anim, shared_ui, config, events, input);
+                    draw_transitions(ui, anim, shared_ui, config, events, input, selections);
                 } else {
                     draw_frame_lines(
                         ui, shared_ui, armature, config, input, selections, events, hitbox, cursor,
@@ -748,21 +748,21 @@ pub fn draw_transitions(
     config: &Config,
     events: &mut EventState,
     input: &InputStates,
+    selections: &SelectionState,
 ) {
     let mut prev_frame = 0;
     let mut current_frame = 0;
+
+    let range = egui::Rangef {
+        min: ui.min_rect().top() - 99.,
+        max: ui.min_rect().top() + 999999.,
+    };
+
     for kf in &anim.keyframes {
         // draw frame line
-        let range = egui::Rangef {
-            min: ui.min_rect().top() - 99.,
-            max: ui.min_rect().top() + 999999.,
-        };
         let color = config.colors.frameline.into();
-        ui.painter().vline(
-            ui.min_rect().left() + shared_ui.lines_x[current_frame],
-            range,
-            Stroke { width: 2., color },
-        );
+        let x = ui.min_rect().left() + shared_ui.lines_x[current_frame];
+        ui.painter().vline(x, range, Stroke { width: 2., color });
 
         if current_frame == kf.frame as usize {
             continue;
@@ -805,6 +805,18 @@ pub fn draw_transitions(
             prev_frame = current_frame;
         }
     }
+
+    // draw selected/animated frame line
+    let mut frameline_col = config.colors.frameline;
+    frameline_col += Color::new(20, 20, 20, 0);
+    let color: egui::Color32 = frameline_col.into();
+    let x = ui.min_rect().left()
+        + if anim.elapsed != None {
+            shared_ui.lines_x[anim.get_frame() as usize]
+        } else {
+            shared_ui.lines_x[selections.anim_frame as usize]
+        };
+    ui.painter().vline(x, range, Stroke { width: 2., color });
 }
 
 pub fn draw_bottom_bar(
