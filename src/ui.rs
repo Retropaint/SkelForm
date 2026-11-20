@@ -1082,6 +1082,24 @@ fn context_menu_content(
             events.create_bind_bone(split[1].parse().unwrap());
             shared_ui.context_menu.close();
         }
+    } else if element_id == "transition" {
+        macro_rules! button {
+            ($str:expr, $preset:expr) => {
+                if ui.context_button($str, &config).clicked() {
+                    let (start, end) = utils::interp_preset($preset);
+                    let sel = $preset as i32;
+                    let frame = split[1].parse().unwrap();
+                    events.update_keyframe_transition(frame, true, start, sel);
+                    events.update_keyframe_transition(frame, false, end, sel as i32);
+                    shared_ui.context_menu.close();
+                }
+            };
+        }
+        button!("Linear", HandlePreset::Linear);
+        button!("Sine-In", HandlePreset::SineIn);
+        button!("Sine-Out", HandlePreset::SineOut);
+        button!("Sine-In-Out", HandlePreset::SineInOut);
+        button!("Snap", HandlePreset::Snap);
     }
 }
 

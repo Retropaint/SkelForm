@@ -675,8 +675,6 @@ pub struct Ui {
 
     pub bone_tops: BoneTops,
 
-    pub dragging_handles: bool,
-
     pub tracing: bool,
     pub tracing_gap: f32,
     pub tracing_padding: f32,

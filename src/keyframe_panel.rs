@@ -92,23 +92,22 @@ pub fn draw(
 
     // render bezier curve
     let bezier_frame = egui::Frame::new().fill(config.colors.dark_accent.into());
-    let mut dragged = false;
+    let og_start_handle = keyframe.start_handle;
+    let og_end_handle = keyframe.end_handle;
     ui.add_enabled_ui(keyframe.handle_preset != HandlePreset::Snap, |ui| {
         let rect = Rect::from_min_size(ui.cursor().min, egui::Vec2::splat(ui.available_width()));
         bezier_frame.show(ui, |ui| {
-            dragged = bezier_graph(ui, &mut keyframe, rect, config);
+            bezier_graph(ui, &mut keyframe, rect, config);
         });
     });
 
     ui.add_space(ui.available_width());
 
-    if !dragged {
-        shared_ui.dragging_handles = false;
-    } else {
+    if og_start_handle != keyframe.start_handle || og_end_handle != keyframe.end_handle {
         // process bezier dragging
-        if !shared_ui.dragging_handles {
+        if !shared_ui.started_edit_dragging {
             events.save_animation();
-            shared_ui.dragging_handles = true;
+            shared_ui.started_edit_dragging = true;
         }
         events.update_keyframe_transition(frame, true, keyframe.start_handle, -1);
         events.update_keyframe_transition(frame, false, keyframe.end_handle, -1);

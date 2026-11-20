@@ -728,7 +728,7 @@ pub fn draw_timeline_graph(
 
                 if shared_ui.anim_transitions {
                     let anim = armature.sel_anim(&selections).unwrap();
-                    draw_transitions(ui, anim, shared_ui, config, events);
+                    draw_transitions(ui, anim, shared_ui, config, events, input);
                 } else {
                     draw_frame_lines(
                         ui, shared_ui, armature, config, input, selections, events, hitbox, cursor,
@@ -747,6 +747,7 @@ pub fn draw_transitions(
     shared_ui: &mut Ui,
     config: &Config,
     events: &mut EventState,
+    input: &InputStates,
 ) {
     let mut prev_frame = 0;
     let mut current_frame = 0;
@@ -779,21 +780,25 @@ pub fn draw_transitions(
         );
         let rect = egui::Rect::from_min_size(pos, size);
 
-        if !bezier_graph(ui, &mut keyframe, rect, config) {
-            shared_ui.dragging_handles = false;
-        } else {
+        let og_start_handle = keyframe.start_handle;
+        let og_end_handle = keyframe.end_handle;
+        bezier_graph(ui, &mut keyframe, rect, config);
+        if og_start_handle != keyframe.start_handle || og_end_handle != keyframe.end_handle {
             // process bezier dragging
-            if !shared_ui.dragging_handles {
+            if !shared_ui.started_edit_dragging {
                 events.save_animation();
-                shared_ui.dragging_handles = true;
+                shared_ui.started_edit_dragging = true;
             }
-            events.update_keyframe_transition(
-                current_frame as i32,
-                true,
-                keyframe.start_handle,
-                -1,
-            );
+            let start_handle = keyframe.start_handle;
+            events.update_keyframe_transition(current_frame as i32, true, start_handle, -1);
             events.update_keyframe_transition(current_frame as i32, false, keyframe.end_handle, -1);
+        }
+
+        // context menu if right-clicking on this graph
+        let cursor = get_cursor(ui) + ui.min_rect().left_top().into();
+        if input.right_clicked && rect.contains(cursor.into()) {
+            let context_id = &format!("transition_{}", kf.frame);
+            shared_ui.context_menu.show(context_id);
         }
 
         if prev_frame != current_frame {
