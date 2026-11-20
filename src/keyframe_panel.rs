@@ -90,6 +90,8 @@ pub fn draw(
         });
     });
 
+    ui.add_space(10.);
+
     // render bezier curve
     let bezier_frame = egui::Frame::new().fill(config.colors.dark_accent.into());
     let og_start_handle = keyframe.start_handle;
@@ -101,7 +103,7 @@ pub fn draw(
         });
     });
 
-    ui.add_space(ui.available_width());
+    ui.add_space(ui.available_width() + 10.);
 
     if og_start_handle != keyframe.start_handle || og_end_handle != keyframe.end_handle {
         // process bezier dragging
