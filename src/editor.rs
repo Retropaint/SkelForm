@@ -1444,7 +1444,6 @@ fn select_bone(
     sel.style_id = -1;
 
     if idx == usize::MAX {
-        sel.bone_idx = usize::MAX;
         sel.bone_ids = vec![];
         sel.bind = -1;
         edit_mode.setting_ik_target = false;
@@ -1454,7 +1453,8 @@ fn select_bone(
 
     // rename bone if already selected and in right-side panel
     let holding_mods = input.holding_mod || input.holding_shift;
-    if sel.bone_idx == idx && !from_renderer && ui.last_selected == "bone" && !holding_mods {
+    if sel.sel_bone() == idx as i32 && !from_renderer && ui.last_selected == "bone" && !holding_mods
+    {
         ui.rename_id = "bone_".to_string() + &sel.bone_ids[0].to_string().clone();
         ui.edit_value = Some(armature.sel_bone(&sel).unwrap().name.clone());
         return;
@@ -1492,7 +1492,6 @@ fn select_bone(
 
     // select only this bone if not holding modifiers
     if !holding_mods {
-        sel.bone_idx = idx;
         sel.bone_ids = vec![armature.bones[idx].id];
         edit_mode.showing_mesh = false;
 
@@ -1505,24 +1504,21 @@ fn select_bone(
     } else if sel.bone_ids.contains(&armature.bones[idx].id) {
         // unselect bone if already part of selection
         sel.bone_ids.retain(|id| *id != armature.bones[idx].id);
-        if sel.bone_ids.len() == 0 {
-            sel.bone_idx = usize::MAX;
-        }
     } else {
         // add bone to selection (holding cmd/shift)
         if sel.bone_ids.len() == 0 {
-            sel.bone_idx = idx;
             sel.bone_ids = vec![armature.bones[idx].id];
         }
         if input.holding_mod {
             let id = armature.bones[idx as usize].id;
             sel.bone_ids.push(id);
         } else {
-            let mut first = sel.bone_idx;
+            let bones = &armature.bones;
+            let mut first = bones.iter().position(|b| b.id == sel.sel_bone()).unwrap();
             let mut second = idx as usize;
             if first > second {
                 first = idx as usize;
-                second = sel.bone_idx;
+                second = bones.iter().position(|b| b.id == sel.sel_bone()).unwrap();
             }
             for i in first..second as usize + 1 {
                 let bone = &armature.bones[i];
@@ -1543,7 +1539,6 @@ fn select_bone(
 }
 
 fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode, ui: &mut crate::Ui) {
-    selections.bone_idx = usize::MAX;
     selections.bone_ids = vec![];
     selections.anim_frame = -1;
     selections.anim = usize::MAX;
@@ -1591,17 +1586,6 @@ pub fn undo_redo(
         ActionType::Bones => {
             new_action.bones = armature.bones.clone();
             armature.bones = action.bones.clone();
-            if selections.bone_ids.len() == 0 {
-                selections.bone_idx = usize::MAX;
-            } else {
-                let sel_id = selections.sel_bone();
-                let sel_idx = armature.bones.iter().position(|b| b.id == sel_id);
-                if sel_idx != None {
-                    selections.bone_idx = sel_idx.unwrap();
-                } else {
-                    selections.bone_idx = usize::MAX
-                }
-            }
         }
         ActionType::Animation => {
             let anim_id = action.animations[0].id;
@@ -2320,8 +2304,6 @@ fn paste_bone(
 
     // select pasted bones
     selections.bone_ids = id_refs.into_values().collect();
-    let sel_id = selections.sel_bone();
-    selections.bone_idx = armature.bones.iter().position(|b| b.id == sel_id).unwrap();
 }
 
 fn copy_selected_keyframes(copy_buffer: &mut CopyBuffer, ui: &mut crate::Ui) {

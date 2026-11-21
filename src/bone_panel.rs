@@ -143,7 +143,7 @@ pub fn draw(
         let text = egui::RichText::new("🗑").size(15.).color(col);
         if ui.label(text).on_hover_cursor(hand).clicked() {
             let str = shared_ui.loc("polar.delete_bone").clone().to_string();
-            let context_id = format!("b_{}", sel.bone_idx.to_string());
+            let context_id = format!("b_{}", sel.sel_bone().to_string());
             shared_ui.context_menu.id = context_id;
             shared_ui.context_menu.keep = true;
             events.open_polar_modal(PolarId::DeleteBone, str);

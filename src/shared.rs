@@ -3000,6 +3000,7 @@ impl SelectionState {
         c_bone_ids
     }
 
+    // Returns the first selected bone ID, or -1 if there's none.
     pub fn sel_bone(&self) -> i32 {
         if self.bone_ids.len() > 0 {
             self.bone_ids[0]
